@@ -36,6 +36,11 @@ const (
 
 var _true = true // for *bool
 
+var (
+	notifyCfg1 = manifest.NotifyConfig{"a": 1}
+	notifyCfg2 = manifest.NotifyConfig{"b": 1}
+)
+
 func TestBuild(t *testing.T) {
 	t.Parallel()
 
@@ -85,7 +90,7 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
-				Notify:       []string{"notify-a", "notify-b"},
+				Notify:       []manifest.NotifyConfig{notifyCfg1, notifyCfg2},
 			})
 			So(err, ShouldBeNil)
 
@@ -104,7 +109,7 @@ func TestBuild(t *testing.T) {
 					BuildID:      "b1",
 				},
 				ViewBuildURL: testLogURL,
-				Notify:       []string{"notify-a", "notify-b"},
+				Notify:       []manifest.NotifyConfig{notifyCfg1, notifyCfg2},
 			})
 
 			// Tagged it with canonical tag.

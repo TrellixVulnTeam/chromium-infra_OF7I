@@ -189,6 +189,9 @@ func TestExtends(t *testing.T) {
 		Convey("Works", func() {
 			var falseVal = false
 
+			notifyBase := NotifyConfig{"base": 1}
+			notifyMid := NotifyConfig{"mid": 1}
+
 			write("base.yaml", Manifest{
 				Name:      "base",
 				ImagePins: "pins.yaml",
@@ -196,7 +199,7 @@ func TestExtends(t *testing.T) {
 					"base": {
 						Storage:  "gs://base-storage",
 						Registry: "base-registry",
-						Notify:   []string{"base"},
+						Notify:   []NotifyConfig{notifyBase},
 					},
 				},
 				Build: []*BuildStep{
@@ -217,7 +220,7 @@ func TestExtends(t *testing.T) {
 							Project: "mid-project",
 							Docker:  "mid-docker",
 						},
-						Notify: []string{"mid"},
+						Notify: []NotifyConfig{notifyMid},
 					},
 				},
 				Build: []*BuildStep{
@@ -238,7 +241,6 @@ func TestExtends(t *testing.T) {
 						CloudBuild: CloudBuildConfig{
 							Docker: "leaf-docker",
 						},
-						Notify: []string{"leaf"},
 					},
 				},
 				Build: []*BuildStep{
@@ -267,7 +269,7 @@ func TestExtends(t *testing.T) {
 					"base": {
 						Storage:  "gs://base-storage",
 						Registry: "base-registry",
-						Notify:   []string{"base"},
+						Notify:   []NotifyConfig{notifyBase},
 					},
 					"mid": {
 						Storage:  "gs://mid-storage",
@@ -276,7 +278,7 @@ func TestExtends(t *testing.T) {
 							Project: "mid-project",
 							Docker:  "leaf-docker",
 						},
-						Notify: []string{"leaf", "mid"},
+						Notify: []NotifyConfig{notifyMid},
 					},
 				},
 			})

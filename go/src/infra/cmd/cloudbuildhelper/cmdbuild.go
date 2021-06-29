@@ -210,22 +210,22 @@ type buildParams struct {
 	Stage stageCallback
 
 	// Infra.
-	Store    storageImpl  // where to upload the tarball, mocked in tests
-	Builder  builderImpl  // where to build images, mocked in tests
-	Registry registryImpl // how to talk to docker registry, mocked in tests
-	Notify   []string     // what downstream systems to notify, copied from the manifest
+	Store    storageImpl             // where to upload the tarball, mocked in tests
+	Builder  builderImpl             // where to build images, mocked in tests
+	Registry registryImpl            // how to talk to docker registry, mocked in tests
+	Notify   []manifest.NotifyConfig // what downstream systems to notify, copied from the manifest
 }
 
 // buildResult is returned by runBuild and put into -json-output.
 //
 // Some fields are populated in reportResult right prior writing to the output.
 type buildResult struct {
-	Name         string    `json:"name"`                     // artifacts name from the manifest YAML
-	Error        string    `json:"error,omitempty"`          // non-empty if the build failed
-	Image        *imageRef `json:"image,omitempty"`          // built or reused image (if any)
-	Notify       []string  `json:"notify,omitempty"`         // copied from the manifest YAML
-	ViewImageURL string    `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
-	ViewBuildURL string    `json:"view_build_url,omitempty"` // URL for humans to look at the Cloud Build log
+	Name         string                  `json:"name"`                     // artifacts name from the manifest YAML
+	Error        string                  `json:"error,omitempty"`          // non-empty if the build failed
+	Image        *imageRef               `json:"image,omitempty"`          // built or reused image (if any)
+	Notify       []manifest.NotifyConfig `json:"notify,omitempty"`         // copied from the manifest YAML
+	ViewImageURL string                  `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
+	ViewBuildURL string                  `json:"view_build_url,omitempty"` // URL for humans to look at the Cloud Build log
 }
 
 // prepBuildResult prepopulates some buildResult fields based on buildParams.
