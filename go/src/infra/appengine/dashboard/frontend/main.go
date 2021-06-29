@@ -40,8 +40,8 @@ var templateBundle = &templates.Bundle{
 
 func newRPCServer() *prpc.Server {
 	return &prpc.Server{
-		AccessControl: func(c context.Context, origin string) bool {
-			return true
+		AccessControl: func(c context.Context, origin string) prpc.AccessControlDecision {
+			return prpc.AccessAllowWithoutCredentials
 		},
 		Authenticator: &auth.Authenticator{
 			Methods: []auth.Method{server.CookieAuth},

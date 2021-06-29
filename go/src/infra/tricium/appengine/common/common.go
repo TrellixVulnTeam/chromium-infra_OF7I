@@ -117,8 +117,6 @@ func NewRPCServer() *prpc.Server {
 	// TODO(vadimsh): Enable monitoring interceptor.
 	// UnaryServerInterceptor: grpcmon.NewUnaryServerInterceptor(nil),
 	return &prpc.Server{
-		AccessControl: func(c context.Context, origin string) bool {
-			return true
-		},
+		AccessControl: prpc.AllowOriginAll,
 	}
 }
