@@ -23,12 +23,12 @@ import (
 //   - Collect DUTs info.
 //   - Load execution plan for required task with verification.
 //   - Send DUTs info to inventory.
-func Run(ctx context.Context, in *Input) error {
-	if err := in.verify(); err != nil {
+func Run(ctx context.Context, args *RunArgs) error {
+	if err := args.verify(); err != nil {
 		return errors.Annotate(err, "run recovery: verify input").Err()
 	}
 	// Get resources involved.
-	resources, err := in.Access.ListResourcesForUnit(ctx, in.UnitName)
+	resources, err := args.Access.ListResourcesForUnit(ctx, args.UnitName)
 	if err != nil {
 		return errors.Annotate(err, "run recovery").Err()
 	}
@@ -36,20 +36,20 @@ func Run(ctx context.Context, in *Input) error {
 	var errs []error
 	for ir, resource := range resources {
 		log.Printf("Resource %q: started", resource)
-		dut, err := in.Access.GetDut(ctx, resource)
+		dut, err := args.Access.GetDut(ctx, resource)
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
 		log.Printf("Resource %q: received DUT %q info", resource, dut.Name)
 		// TODO(otabek@): Generate list of plans based task name and DUT info.
-		plans, err := config.LoadPlans(ctx, dutPlans(dut), in.ConfigReader)
+		plans, err := config.LoadPlans(ctx, dutPlans(dut), args.ConfigReader)
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", dut.Name).Err()
 		}
 		// Creating one run argument for each resource.
 		ea := &execs.RunArgs{
 			DUT:    dut,
-			Access: in.Access,
+			Access: args.Access,
 		}
 		for ip, p := range plans {
 			if err := p.Run(ctx, ea); err != nil {
@@ -79,8 +79,8 @@ func Run(ctx context.Context, in *Input) error {
 	return nil
 }
 
-// Input provides input arguments for recovery process.
-type Input struct {
+// RunArgs holds input arguments for recovery process.
+type RunArgs struct {
 	Access tlw.Access
 	// UnitName represents some device setup against which running some tests or task in the system.
 	// The unit can be represented as a single DUT or group of the DUTs registered in inventory as single unit.
@@ -89,12 +89,12 @@ type Input struct {
 	ConfigReader io.Reader
 }
 
-func (in *Input) verify() error {
-	if in == nil {
-		return errors.Reason("input is empty").Err()
-	} else if in.UnitName == "" {
+func (a *RunArgs) verify() error {
+	if a == nil {
+		return errors.Reason("is empty").Err()
+	} else if a.UnitName == "" {
 		return errors.Reason("unit name is not provided").Err()
-	} else if in.Access == nil {
+	} else if a.Access == nil {
 		return errors.Reason("access point is not provided").Err()
 	}
 	return nil
