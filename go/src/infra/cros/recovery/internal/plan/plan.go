@@ -7,6 +7,7 @@ package plan
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"go.chromium.org/luci/common/errors"
@@ -27,7 +28,7 @@ type Plan struct {
 
 // Run runs the recovery plan.
 func (p *Plan) Run(ctx context.Context, args *execs.RunArgs) error {
-	log.Printf("Plan %q: started.", p.Name)
+	log.Printf("Plan %q: started.\n%s", p.Name, p.Describe())
 	c := newRunCache()
 	defer c.close()
 	// TODO(otabek@): Add start-over loop if any recovery action was used and passed.
@@ -65,4 +66,19 @@ func (p *Plan) runVerifiers(ctx context.Context, c *runCache, args *execs.RunArg
 		}
 	}
 	return nil
+}
+
+// Describe describes the plan details with verifiers.
+func (p *Plan) Describe() string {
+	r := fmt.Sprintf("Plan %q, AllowFail: %v ", p.Name, p.AllowFail)
+	if len(p.Verifiers) > 0 {
+		prefix := "\n "
+		r += fmt.Sprintf("%sVerifiers:", prefix)
+		for i, a := range p.Verifiers {
+			r += fmt.Sprintf("%s %d: %s", prefix, i, a.Describe(prefix+"  "))
+		}
+	} else {
+		r += "\n No verifiers"
+	}
+	return r
 }

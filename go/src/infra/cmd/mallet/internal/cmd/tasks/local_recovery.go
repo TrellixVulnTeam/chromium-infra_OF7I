@@ -7,6 +7,7 @@ package tasks
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -36,6 +37,8 @@ For now only running in testing mode.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.CommonFlags.Register(&c.Flags)
 		c.envFlags.Register(&c.Flags)
+		// TODO(otabek@) Add more details with instruction how to get default config as example.
+		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
 		return c
 	},
 }
@@ -45,6 +48,8 @@ type localRecoveryRun struct {
 	commonFlags.CommonFlags
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
+
+	configFile string
 }
 
 // Run initiates execution of local recovery.
@@ -97,6 +102,12 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	in := &recovery.Input{
 		UnitName: unit,
 		Access:   access,
+	}
+	if c.configFile != "" {
+		in.ConfigReader, err = os.Open(c.configFile)
+		if err != nil {
+			return errors.Annotate(err, "local recovery: open config file").Err()
+		}
 	}
 	if err = recovery.Run(ctx, in); err != nil {
 		return errors.Annotate(err, "local recovery").Err()

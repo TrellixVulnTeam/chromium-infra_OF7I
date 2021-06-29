@@ -6,6 +6,7 @@ package plan
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"go.chromium.org/luci/common/errors"
@@ -88,4 +89,22 @@ func (a *Action) logAllowedFailFault(i, count int) {
 	} else {
 		log.Printf("Continue to next action as %q is allowed to fail.", a.Name)
 	}
+}
+
+// Describe describes the action structure recursively.
+func (a *Action) Describe(prefix string) string {
+	ap := fmt.Sprintf("Action %q, Exec: %s, AllowFail: %v, AllowCache: %v", a.Name, a.ExecName, a.AllowFail, a.AllowCache)
+	if len(a.Dependencies) > 0 {
+		ap += fmt.Sprintf("%sDependencies:", prefix)
+		for i, d := range a.Dependencies {
+			ap += fmt.Sprintf("%s%d: %s", prefix, i, d.Describe(prefix+"  "))
+		}
+	}
+	if len(a.Recoveries) > 0 {
+		ap += fmt.Sprintf("%sRecoveries:", prefix)
+		for i, r := range a.Recoveries {
+			ap += fmt.Sprintf("%s%d: %s", prefix, i, r.Describe(prefix+"  "))
+		}
+	}
+	return ap
 }

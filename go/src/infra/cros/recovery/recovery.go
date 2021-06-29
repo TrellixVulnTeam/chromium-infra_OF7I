@@ -7,6 +7,7 @@ package recovery
 
 import (
 	"context"
+	"io"
 	"log"
 
 	"go.chromium.org/luci/common/errors"
@@ -41,7 +42,7 @@ func Run(ctx context.Context, in *Input) error {
 		}
 		log.Printf("Resource %q: received DUT %q info", resource, dut.Name)
 		// TODO(otabek@): Generate list of plans based task name and DUT info.
-		plans, err := config.LoadPlans([]string{"simple_plan"})
+		plans, err := config.LoadPlans(ctx, dutPlans(dut), in.ConfigReader)
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", dut.Name).Err()
 		}
@@ -84,6 +85,8 @@ type Input struct {
 	// UnitName represents some device setup against which running some tests or task in the system.
 	// The unit can be represented as a single DUT or group of the DUTs registered in inventory as single unit.
 	UnitName string
+	// Provide access to read custom plans outside recovery. The default plans with actions will be ignored.
+	ConfigReader io.Reader
 }
 
 func (in *Input) verify() error {
@@ -95,4 +98,35 @@ func (in *Input) verify() error {
 		return errors.Reason("access point is not provided").Err()
 	}
 	return nil
+}
+
+// List of predefined plans.
+// TODO(otabek@): Update list of plans and mapping with final version.
+const (
+	PlanRepairDUT        = "repair_dut"
+	PlanRepairServo      = "repair_servo"
+	PlanRepairLabstation = "repair_labstation"
+	PlanRepairJetstream  = "repair_jetstream"
+)
+
+// dutPlans creates list of plans for DUT.
+// TODO(otabek@): Update list of plans and mapping with final version.
+// Plans will chosen based on:
+// 1) SetupType of DUT.
+// 2) Peripherals information.
+func dutPlans(dut *tlw.Dut) []string {
+	// TODO(otabek@): Add logic to run simple action by request.
+	var plans []string
+	switch dut.SetupType {
+	case tlw.DUTSetupTypeLabstation:
+		plans = append(plans, PlanRepairLabstation)
+	case tlw.DUTSetupTypeJetstream:
+		plans = append(plans, PlanRepairServo, PlanRepairJetstream)
+	default:
+		if dut.ServoHost != nil {
+			plans = append(plans, PlanRepairServo)
+		}
+		plans = append(plans, PlanRepairDUT)
+	}
+	return plans
 }
