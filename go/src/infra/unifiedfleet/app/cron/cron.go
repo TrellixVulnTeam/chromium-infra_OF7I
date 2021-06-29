@@ -12,6 +12,8 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/runtime/paniccatcher"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DurationType int
@@ -23,6 +25,15 @@ const (
 	WEEKDAYS        // Run the task every weekday. At minInterval(<24 Hours) after 00:00
 	WEEKEND         // Run the task everyweekend. At minInterval(<48Hours) after 00:00
 )
+
+// CronTab describes the job to be run by cron
+type CronTab struct {
+	Name     string                          // Name of the job
+	Time     time.Duration                   // Min inteval between triggers
+	TrigType DurationType                    // Refer to the const above for available options
+	Job      func(ctx context.Context) error // Target routine to trigger
+	preempt  chan int                        // Int channel to preempt timer and trigger the job
+}
 
 // estimateTriggerTime checks to see if start + interval > start + quanta. If that happens, (ex: Hourly mode
 // triggered with 65 minutes of interval) it throws a warning and returns trigger for next available trigger
@@ -102,10 +113,23 @@ func skipDays(tt time.Time, weekend bool) time.Time {
 	return tt
 }
 
-// Run runs f repeatedly, until the context is cancelled.
-//
-// Ensures f is not called too often (minInterval).
-func Run(ctx context.Context, minInterval time.Duration, d DurationType, f func(context.Context) error) {
+// Trigger triggers a crontab immediately.
+func Trigger(cronTab *CronTab) (err error) {
+	defer func() {
+		// The write to channel panics if the channel is closed.
+		if r := recover(); r != nil {
+			err = status.Errorf(codes.AlreadyExists,
+				"Cannot trigger %s. Job might already be running. %v", cronTab.Name, r)
+			return
+		}
+	}()
+	// Send a signal on the preempt channel to trigger the job.
+	cronTab.preempt <- 1
+	return nil
+}
+
+// Run runs cronTab.Job repeatedly, until the context is cancelled..
+func Run(ctx context.Context, cronTab *CronTab) {
 	defer logging.Warningf(ctx, "Exiting cron")
 
 	// call calls f and catches a panic, will stop once the whole context is cancelled.
@@ -113,7 +137,7 @@ func Run(ctx context.Context, minInterval time.Duration, d DurationType, f func(
 		defer paniccatcher.Catch(func(p *paniccatcher.Panic) {
 			logging.Errorf(ctx, "Caught panic: %s\n%s", p.Reason, p.Stack)
 		})
-		return f(ctx)
+		return cronTab.Job(ctx)
 	}
 	// Run all tasks with MTV time ref.
 	location, err := time.LoadLocation("America/Los_Angeles")
@@ -122,39 +146,50 @@ func Run(ctx context.Context, minInterval time.Duration, d DurationType, f func(
 	}
 
 	for {
-
 		start := clock.Now(ctx)
 		start = start.In(location)
 		var trigTime time.Time
-		switch d {
+		switch cronTab.TrigType {
 		case EVERY:
 			// Just add the interval specified to the start time.
-			trigTime = start.Add(minInterval)
+			trigTime = start.Add(cronTab.Time)
 
 		case HOURLY:
-			trigTime = estimateTriggerTime(ctx, start, minInterval, 1*time.Hour)
+			trigTime = estimateTriggerTime(ctx, start, cronTab.Time, 1*time.Hour)
 
 		case DAILY:
-			trigTime = estimateTriggerTime(ctx, start, minInterval, 24*time.Hour)
+			trigTime = estimateTriggerTime(ctx, start, cronTab.Time, 24*time.Hour)
 
 		case WEEKDAYS:
-			trigTime = estimateTriggerTime(ctx, start, minInterval, 24*time.Hour)
+			trigTime = estimateTriggerTime(ctx, start, cronTab.Time, 24*time.Hour)
 			trigTime = skipDays(trigTime, false)
 
 		case WEEKEND:
-			trigTime = estimateTriggerTime(ctx, start, minInterval, 24*time.Hour)
+			trigTime = estimateTriggerTime(ctx, start, cronTab.Time, 24*time.Hour)
 			trigTime = skipDays(trigTime, true)
+
+		default:
+			// Don't start the cron if the tab is bad
+			logging.Errorf(ctx, "Unable to trigger %s. Bad type of trigger", cronTab.Name)
+			return
 		}
 
 		// Wait until trigTime.
 		if sleep := time.Until(trigTime); sleep > 0 {
 			// Add jitter: +5% of sleep time to desynchronize cron jobs.
 			sleep = sleep + time.Duration(mathrand.Intn(ctx, int(sleep/20)))
+			timer := time.NewTimer(sleep)
+			cronTab.preempt = make(chan int)
 			select {
-			case <-time.After(sleep):
+			case <-timer.C:
+			case <-cronTab.preempt:
+				// Stop the timer
+				timer.Stop()
 			case <-ctx.Done():
 				return
 			}
+			// Close the channel. This will disable trigger when the job is running..
+			close(cronTab.preempt)
 		}
 
 		if err := call(ctx); err != nil {

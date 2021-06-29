@@ -12,6 +12,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	bqlib "infra/cros/lab_inventory/bq"
 	"infra/unifiedfleet/app/config"
@@ -20,58 +22,106 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
-// Options is the dumper server configuration.
-type Options struct {
-	// CronInterval setups the user-specific cron interval for data dumping
-	CronInterval time.Duration
+// Jobs is a list of all the cron jobs that are currently available for running
+var Jobs = []*cron.CronTab{
+	{
+		// Dump configs, registrations, inventory and states to BQ
+		Name:     "ufs.dumper",
+		Time:     20 * time.Minute,
+		TrigType: cron.DAILY,
+		Job:      dump,
+	},
+	{
+		// Import inventory from IV2
+		Name:     "ufs.cros_inventory.dump",
+		Time:     60 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      dumpCrosInventory,
+	},
+	{
+		// Dump change events to BQ
+		Name:     "ufs.change_event.BqDump",
+		Time:     10 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      dumpChangeEvent,
+	},
+	{
+		// Dump snapshots to BQ
+		Name:     "ufs.snapshot_msg.BqDump",
+		Time:     10 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      dumpChangeSnapshots,
+	},
+	{
+		// Dump network configs to BQ
+		Name:     "ufs.cros_network.dump",
+		Time:     60 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      dumpCrosNetwork,
+	},
+	{
+		// Sync asset info from HaRT
+		Name:     "ufs.sync_devices.sync",
+		TrigType: cron.HOURLY,
+		Job:      SyncAssetInfoFromHaRT,
+	},
+	{
+		// Sync assets from IV2
+		Name:     "ufs.sync_assets.sync",
+		Time:     5 * time.Minute,
+		TrigType: cron.HOURLY,
+		Job:      SyncAssetsFromIV2,
+	},
+	{
+		// Push changes to dron queen
+		Name:     "ufs.push_to_drone_queen",
+		Time:     10 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      pushToDroneQueen,
+	},
+	{
+		// Dump assets to IV2
+		Name:     "ufs.dump_to_invv2_devices",
+		Time:     10 * time.Minute,
+		TrigType: cron.DAILY,
+		Job:      DumpToInventoryDeviceSnapshot,
+	},
+	{
+		// Dump dut states to IV2
+		Name:     "ufs.dump_to_invv2_dutstates",
+		Time:     15 * time.Minute,
+		TrigType: cron.DAILY,
+		Job:      DumpToInventoryDutStateSnapshot,
+	},
+	{
+		// Report UFS metrics
+		Name:     "ufs.report_inventory",
+		Time:     5 * time.Minute,
+		TrigType: cron.EVERY,
+		Job:      reportUFSInventoryCronHandler,
+	},
 }
 
-// InitServer initializes a purger server.
-func InitServer(srv *server.Server, opts Options) {
-	srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
-		minInterval := 20 * time.Minute
-		if opts.CronInterval > 0 {
-			minInterval = opts.CronInterval
+// InitServer initializes a cron server.
+func InitServer(srv *server.Server) {
+	for _, job := range Jobs {
+		// make a copy of the job to avoid race condition.
+		t := job
+		// Start all the cron jobs in background.
+		srv.RunInBackground(job.Name, func(ctx context.Context) {
+			cron.Run(ctx, t)
+		})
+	}
+}
+
+// Triggers a job by name. Returns error if the job is not found.
+func TriggerJob(name string) error {
+	for _, job := range Jobs {
+		if job.Name == name {
+			return cron.Trigger(job)
 		}
-		run(ctx, minInterval)
-	})
-	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, cron.EVERY, dumpCrosInventory)
-	})
-	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, cron.EVERY, dumpChangeEvent)
-	})
-	srv.RunInBackground("ufs.snapshot_msg.BqDump", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, cron.EVERY, dumpChangeSnapshots)
-	})
-	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, cron.EVERY, dumpCrosNetwork)
-	})
-	/*srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, cron.HOURLY, SyncMachinesFromAssets)
-	})*/
-	srv.RunInBackground("ufs.sync_devices.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, cron.HOURLY, SyncAssetInfoFromHaRT)
-	})
-	srv.RunInBackground("ufs.sync_assets.sync", func(ctx context.Context) {
-		cron.Run(ctx, 5*time.Minute, cron.HOURLY, SyncAssetsFromIV2)
-	})
-	srv.RunInBackground("ufs.push_to_drone_queen", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, cron.EVERY, pushToDroneQueen)
-	})
-	srv.RunInBackground("ufs.dump_to_invV2_devices", func(ctx context.Context) {
-		cron.Run(ctx, 10*time.Minute, cron.DAILY, DumpToInventoryDeviceSnapshot)
-	})
-	srv.RunInBackground("ufs.dump_to_invV2_dutstates", func(ctx context.Context) {
-		cron.Run(ctx, 15*time.Minute, cron.DAILY, DumpToInventoryDutStateSnapshot)
-	})
-	srv.RunInBackground("ufs.report_inventory", func(ctx context.Context) {
-		cron.Run(ctx, 5*time.Minute, cron.EVERY, reportUFSInventoryCronHandler)
-	})
-}
-
-func run(ctx context.Context, minInterval time.Duration) {
-	cron.Run(ctx, minInterval, cron.DAILY, dump)
+	}
+	return status.Errorf(codes.NotFound, "Invalid cron job %s. Not found", name)
 }
 
 func dump(ctx context.Context) error {
