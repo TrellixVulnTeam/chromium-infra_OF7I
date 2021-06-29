@@ -72,3 +72,9 @@ infra:
     cloudbuild:
       project: chops-public-images-prod
       docker: 18.09.6  # see https://gcr.io/cloud-builders/docker
+    notify:
+      # Roll the built production images into the repo with k8s configs. This
+      # YAML section is interpreted by images_builder.py recipe.
+      - kind: git
+        repo: https://chrome-internal.googlesource.com/infradata/k8s
+        script: scripts/roll_images.py
