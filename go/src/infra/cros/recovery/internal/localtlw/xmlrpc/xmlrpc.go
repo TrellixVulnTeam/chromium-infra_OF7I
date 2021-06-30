@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -238,6 +239,17 @@ func newValue(in interface{}) (value, error) {
 	case float64:
 		f := float64ToXMLDouble(v)
 		return value{Double: &f}, nil
+	case *xmlrpc.Value:
+		sv := v.GetScalarOneof()
+		if x, ok := sv.(*xmlrpc.Value_Int); ok {
+			return newValue(x.Int)
+		} else if x, ok := sv.(*xmlrpc.Value_Boolean); ok {
+			return newValue(x.Boolean)
+		} else if x, ok := sv.(*xmlrpc.Value_String_); ok {
+			return newValue(x.String_)
+		} else if x, ok := sv.(*xmlrpc.Value_Double); ok {
+			return newValue(x.Double)
+		}
 	}
 	return value{}, errors.Reason("%q is not a supported type for newValue", reflect.TypeOf(in)).Err()
 }
@@ -372,6 +384,38 @@ func unpackValue(val value, out interface{}) error {
 				return err
 			}
 			*o = append(*o, i)
+		}
+	case *xmlrpc.Value:
+		if val.Str != nil {
+			o.ScalarOneof = &xmlrpc.Value_String_{
+				String_: *val.Str,
+			}
+		} else if val.Boolean != nil {
+			v, err := xmlBooleanToBool(*val.Boolean)
+			if err != nil {
+				return err
+			}
+			o.ScalarOneof = &xmlrpc.Value_Boolean{
+				Boolean: v,
+			}
+		} else if val.Int != nil {
+			i, err := xmlIntegerToInt(*val.Int)
+			if err != nil {
+				return err
+			}
+			o.ScalarOneof = &xmlrpc.Value_Int{
+				Int: int32(i),
+			}
+		} else if val.Double != nil {
+			f, err := xmlDoubleToFloat64(*val.Double)
+			if err != nil {
+				return err
+			}
+			o.ScalarOneof = &xmlrpc.Value_Double{
+				Double: f,
+			}
+		} else {
+			return errors.Reason("%q is not a supported type for unpackValue", reflect.TypeOf(out)).Err()
 		}
 	default:
 		return errors.Reason("%q is not a supported type for unpackValue", reflect.TypeOf(out)).Err()

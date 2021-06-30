@@ -22,9 +22,13 @@ type Access interface {
 	Ping(ctx context.Context, resourceName string, count int) error
 	// Run executes command on device by SSH related to resource name.
 	Run(ctx context.Context, resourceName, command string) *RunResult
+	// InitServod initiates servod daemon on servo-host.
+	InitServod(ctx context.Context, req *InitServodRequest) error
+	// StopServod stops servod daemon on servo-host.
+	StopServod(ctx context.Context, resourceName string) error
 	// CallServod executes a command on servod related to resource name.
 	// Commands will be run against servod on servo-host.
-	CallServod(ctx context.Context, req *CallServoRequest) *CallServoResponse
+	CallServod(ctx context.Context, req *CallServodRequest) *CallServodResponse
 	// CopyFileTo copies file to destination device from local.
 	CopyFileTo(ctx context.Context, req *CopyRequest) error
 	// CopyFileFrom copies file from destination device to local.
@@ -127,6 +131,9 @@ const (
 	// Set methods used to set values or call methods with providing paramenter.
 	// Example: power_state:reset, lid_open:no.
 	ServodMethodSet ServodMethod = "set"
+	// Verify if control is known and present in servod daemon.
+	// Example: ec_board, lid_open.
+	ServodMethodDoc ServodMethod = "doc"
 )
 
 // ServodOption represents options to start servod.
@@ -135,16 +142,22 @@ type ServodOptions struct {
 	RecoveryMode bool
 }
 
-// CallServoRequest represents data to run command on servod.
-type CallServoRequest struct {
+// InitServodRequest represents data to initiate servod daemon on servo-host.
+type InitServodRequest struct {
+	Resource string
+	Options  *ServodOptions
+}
+
+// CallServodRequest represents data to run command on servod.
+type CallServodRequest struct {
 	Resource string
 	Method   ServodMethod
 	Args     []*xmlrpc.Value
 	Options  *ServodOptions
 }
 
-// CallServoResponse represents result data from running command on servod.
-type CallServoResponse struct {
+// CallServodResponse represents result data from running command on servod.
+type CallServodResponse struct {
 	Value *xmlrpc.Value
 	Fault bool
 }
@@ -345,7 +358,7 @@ const (
 	RPMStateWorking RPMState = "WORKING"
 )
 
-// RPMOutlet is wall-power source for DUT which allow us perfrom action to do OFF/ON/CYCLE on it.
+// RPMOutlet is wall-power source for DUT which allow us perform action to do OFF/ON/CYCLE on it.
 type RPMOutlet struct {
 	// Name is the resource name.
 	Name string
