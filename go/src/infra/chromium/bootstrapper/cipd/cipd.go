@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
 // Client provides the recipe-related operations required for bootstrapping.
@@ -51,7 +52,10 @@ func NewClient(ctx context.Context, cipdRoot string) (*Client, error) {
 	factory, _ := ctx.Value(&ctxKey).(CipdClientFactory)
 	if factory == nil {
 		factory = func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-			return cipd.NewClient(cipd.ClientOptions{Root: cipdRoot})
+			return cipd.NewClient(cipd.ClientOptions{
+				ServiceURL: chromeinfra.CIPDServiceURL,
+				Root:       cipdRoot,
+			})
 		}
 	}
 	cipdClient, err := factory(ctx, cipdRoot)
