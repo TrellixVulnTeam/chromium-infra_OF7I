@@ -10,6 +10,7 @@ import (
 
 	"infra/cmd/shivas/utils"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
+	dumper "infra/unifiedfleet/app/dumper"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -1860,7 +1861,17 @@ Example SchedulingUnit:
 
 The protobuf definition of SchedulingUnit is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/scheduling_unit.proto`
+
+	TriggerCronDescription string = `Triggers a cron job on UFS. Available jobs: ` + CronTriggerAvailableJobsString()
 )
+
+func CronTriggerAvailableJobsString() string {
+	cronJobs := []string{}
+	for _, job := range dumper.Jobs {
+		cronJobs = append(cronJobs, job.Name)
+	}
+	return fmt.Sprintf("\n********\n%s\n********", strings.Join(cronJobs, "\n"))
+}
 
 // ServoSetupTypeAllowedValuesString returns a string description of all allowed values for servo setup type.
 func ServoSetupTypeAllowedValuesString() string {

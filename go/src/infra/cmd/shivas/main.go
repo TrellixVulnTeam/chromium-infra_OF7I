@@ -61,6 +61,7 @@ Full documentation http://go/shivas-cli`,
 			queen_cmds.PushDuts,
 			subcommands.Section("Internal use"),
 			bot_cmds.PrintBotInfo,
+			operations.AdminCmd,
 		},
 	}
 }
