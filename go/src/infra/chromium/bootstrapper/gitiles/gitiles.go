@@ -7,8 +7,8 @@ package gitiles
 import (
 	"context"
 	"fmt"
-	"net/http"
 
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gitiles"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"google.golang.org/grpc"
@@ -52,7 +52,11 @@ func NewClient(ctx context.Context) *Client {
 	factory, _ := ctx.Value(&ctxKey).(GitilesClientFactory)
 	if factory == nil {
 		factory = func(ctx context.Context, host string) (GitilesClient, error) {
-			return gitiles.NewRESTClient(http.DefaultClient, host, true)
+			authClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, auth.Options{Scopes: []string{gitiles.OAuthScope}}).Client()
+			if err != nil {
+				return nil, fmt.Errorf("could not initialize auth client: %w", err)
+			}
+			return gitiles.NewRESTClient(authClient, host, true)
 		}
 	}
 	return &Client{map[string]GitilesClient{}, factory}
