@@ -126,10 +126,11 @@
       "upload",
       "--force",
       "--bypass-hooks",
-      "--tbrs=a@tbr.com",
-      "--tbrs=b@tbr.com",
+      "--reviewers=a@tbr.com",
+      "--reviewers=b@tbr.com",
       "--cc=a@cc.com",
       "--cc=b@cc.com",
+      "--set-bot-commit",
       "--use-commit-queue",
       "--message-file",
       "Title\n\nBody"

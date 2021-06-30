@@ -448,9 +448,10 @@
       "upload",
       "--force",
       "--bypass-hooks",
-      "--tbrs=someone@example.com",
+      "--reviewers=someone@example.com",
       "--cc=n1@example.com",
       "--cc=n2@example.com",
+      "--set-bot-commit",
       "--use-commit-queue",
       "--message-file",
       "[images] Rolling in tarballs.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated staging deployments:\n  * example/target: prev-version -> 197293-5e03a58\n"

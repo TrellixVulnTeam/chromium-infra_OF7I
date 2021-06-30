@@ -451,9 +451,9 @@
       "upload",
       "--force",
       "--bypass-hooks",
-      "--tbrs=vadimsh@google.com",
       "--cc=n1@example.com",
       "--cc=n2@example.com",
+      "--set-bot-commit",
       "--use-commit-queue",
       "--message-file",
       "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated deployments:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58\n"

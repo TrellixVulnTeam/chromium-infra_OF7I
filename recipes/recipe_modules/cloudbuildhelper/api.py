@@ -394,10 +394,10 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           '--force',        # skip asking for description, we already set it
           '--bypass-hooks', # we may not have the full checkout
       ] + [
-          '--tbrs=%s' % tbr for tbr in sorted(set(verdict.tbr or []))
+          '--reviewers=%s' % tbr for tbr in sorted(set(verdict.tbr or []))
       ] + [
           '--cc=%s' % cc for cc in sorted(set(verdict.cc or []))
-      ] +(['--use-commit-queue' if verdict.commit else '--cq-dry-run']))
+      ] +(['--set-bot-commit', '--use-commit-queue'] if verdict.commit else []))
 
       # Put a link to the uploaded CL.
       step = self.m.git_cl(
