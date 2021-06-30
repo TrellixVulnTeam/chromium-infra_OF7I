@@ -356,7 +356,7 @@ def _mutate_repo(api, root, notify, images, meta):
   return api.cloudbuildhelper.RollCL(
       message=message,
       cc=extra_cc,
-      tbr=[],
+      tbr=['vadimsh@google.com'], # TODO: remove and switch to Bot-Commit.
       commit=True)
 
 

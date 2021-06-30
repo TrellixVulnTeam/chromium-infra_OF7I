@@ -451,6 +451,7 @@
       "upload",
       "--force",
       "--bypass-hooks",
+      "--tbrs=vadimsh@google.com",
       "--cc=n1@example.com",
       "--cc=n2@example.com",
       "--use-commit-queue",
