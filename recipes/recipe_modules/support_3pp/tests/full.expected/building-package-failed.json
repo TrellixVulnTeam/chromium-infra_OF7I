@@ -1151,7 +1151,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/checkout",

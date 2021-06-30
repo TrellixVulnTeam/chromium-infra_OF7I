@@ -67,7 +67,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/recipe_autoroller/build",
@@ -481,7 +481,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/recipe_autoroller/depot_tools",
