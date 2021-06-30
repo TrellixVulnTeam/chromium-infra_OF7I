@@ -135,6 +135,126 @@ In all cases, resulting tags applied to new (or reused) images are shows on
 the build page in annotations for `cloudbuildhelper build ...` steps.
 
 
+Triggering downstream rolls
+---------------------------
+
+The YAML manifests may have a `notify` section that declares what systems should
+be notified by `images_builder.py` recipe when it builds (or rebuilds) the
+image.
+
+The default value is defined in the `prod` infra section in [base.yaml] and it
+indicates that the builder should attempt to roll produced images into the
+Kubernetes configuration repository to update staging deployments there.
+
+This behavior can be overridden on per-image basis like this:
+
+```yaml
+name: ...
+extends: ...
+
+build:
+  ...
+
+infra:
+  prod:
+    notify:
+      - kind: git
+        repo: https://example.googlesource.com/repo
+        script: scripts/roll_images.py
+```
+
+Only `git` kind is supported currently.
+
+After building (or rebuilding) an image based on this manifest, the recipe would
+clone `HEAD` of `https://example.googlesource.com/repo` repository and run
+`scripts/roll_images.py` executable there, passing it the following JSON via
+stdin:
+
+```json
+{
+  "tags": [
+    {
+      "image": "<the full image name including the registry>",
+      "tag": {
+        "tag": "<the immutable image tag e.g. ci-2019.10.11-26433-028cefc>",
+        "digest": "sha256:<image-digest>",
+        "metadata": {
+          "date": "<RFC3389 timstamp in UTC zone>",
+          "source": {
+            "repo": "<the repository with manifests>",
+            "revision": "<its latest revision>"
+          },
+          "links": {
+            "buildbucket": "https://cr-buildbucket.appspot.com/build/...",
+            "cloudbuild": "<link to view Cloud Build logs>",
+            "gcr": "<link to view the image in GCR UI>"
+          }
+        }
+      },
+    },
+    {
+      ...
+    }
+  ]
+}
+```
+
+This JSON dict identifies the current versions of images built by the builder
+(their canonical tags, as well as raw SHA256 digests matching these tags). The
+rolling script should compare this information to the state stored in its
+repository checkout, and update files there if necessary. It should write to the
+stdout a JSON dict with information about images it rolled (if any) and who to
+CC on the resulting roll CL:
+
+```json
+{
+  "deployments": [
+    {
+      "image": "<the full image name including the registry>",
+      "from": "<the previously used canonical tag>",
+      "to": "<the new canonical tag matching the one from `tags`">,
+      "cc": ["someone@example.com"]
+    },
+    {
+      ...
+    }
+  ]
+}
+```
+
+The recipe then would use `git diff` to see if anything in the repository has
+changed, and if so, upload a CL (using `git cl upload`) with all changes and
+the following commit message:
+
+```
+[images] Rolling in images.
+
+Produced by https://cr-buildbucket.appspot.com/build/<build id>
+
+Updated deployments:
+  * <the full image name including the registry>: <from> -> <to>
+  * ...
+
+CC=someone@example.com
+```
+
+It then will attempt to land the CL via the Commit Queue.
+
+Few caveats:
+
+* Images with the exact same `notify` sections are grouped together and result
+  in a single call to the rolling script (with multiple `tags` entries in the
+  input JSON), to make a single roll that updates a bunch of images at once.
+* The rolling script is called **even if the image version exists already**,
+  i.e. it was built by some previous builder run. The rolling script should be
+  idempotent and just do nothing if it detects no changes are necessary. **All**
+  declared rolling scripts will be called **every time** the images builder
+  runs, even if nothing really changes.
+
+
+[base.yaml]: ./base.yaml
+
+
 Adding a pinned base image
 --------------------------
 

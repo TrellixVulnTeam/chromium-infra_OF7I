@@ -344,6 +344,18 @@ infra:
       project: some-dev-project  # name of Cloud Project to use for builds
       docker: 18.09.6            # version of "docker" tool to use for builds
 
+    # What systems to notify when the image is built (or rebuilt).
+    #
+    # This section is *not* interpreted by cloudbuildhelper, just passed through
+    # to its `-json-output ...` where whoever called cloudbuildhelper can decide
+    # how to deal with it. Normally it is images_builder.py recipe.
+    notify:
+      # Checkout example.googlesource.com/repo and call a script there to
+      # update this checkout based on produced images.
+      - kind: git
+        repo: https://example.googlesource.com/repo
+        script: scripts/roll_images.py
+
 # An optional list of local build steps. Each step may add more files to the
 # context directory. The actual `contextdir` directory on disk won't be
 # modified. Files produced here are stored in a temp directory and the final
