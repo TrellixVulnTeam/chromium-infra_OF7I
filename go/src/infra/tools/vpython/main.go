@@ -66,10 +66,9 @@ var defaultConfig = application.Config{
 		PythonVersion: "2",
 	},
 	VENVPackage: vpython.Spec_Package{
-		Name:    "infra/3pp/tools/virtualenv",
-		Version: "version:2@16.7.10",
+		Name:    "infra/python/virtualenv",
+		Version: "version:15.1.0",
 	},
-	VENVOmitUseWheel:        true,
 	PruneThreshold:          7 * 24 * time.Hour, // One week.
 	MaxPrunesPerSweep:       3,
 	DefaultVerificationTags: verificationScenarios,
