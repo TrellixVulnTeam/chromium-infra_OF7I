@@ -341,7 +341,7 @@ def _mutate_repo(api, root, notify, images, meta):
   ]
   if deployments:
     message.extend([
-        'Updated staging deployments:',
+        'Updated deployments:',
     ] + [
         '  * %s: %s -> %s' % (d['image'], d['from'], d['to'])
         for d in deployments
