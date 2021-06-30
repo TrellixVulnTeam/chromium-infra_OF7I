@@ -102,11 +102,11 @@ func execute(ctx context.Context) error {
 	flag.Parse()
 
 	cmd, err := performBootstrap(ctx, os.Stdin, "cipd", *outputPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	if err != nil {
 		return err
 	}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
