@@ -247,7 +247,7 @@
     "cmd": [],
     "name": "upload roll CL",
     "~followup_annotations": [
-      "@@@STEP_LINK@Issue 123456789@https://chromium-review.googlesource.com/c/1234567@@@"
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
@@ -399,92 +399,15 @@
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "add",
-      "."
-    ],
-    "cwd": "[CACHE]/builder/roll/0941bf89",
-    "infra_step": true,
-    "name": "upload roll CL.git add",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "diff",
-      "--cached",
-      "--exit-code"
-    ],
-    "cwd": "[CACHE]/builder/roll/0941bf89",
-    "infra_step": true,
-    "name": "upload roll CL.git diff",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "commit",
-      "-m",
-      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated staging deployments:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58\n"
-    ],
-    "cwd": "[CACHE]/builder/roll/0941bf89",
-    "infra_step": true,
-    "name": "upload roll CL.git commit",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "upload",
-      "--force",
-      "--bypass-hooks",
-      "--cc=n1@example.com",
-      "--cc=n2@example.com",
-      "--use-commit-queue",
-      "--message-file",
-      "[images] Rolling in images.\n\nProduced by https://cr-buildbucket.appspot.com/build/0\n\nUpdated staging deployments:\n  * example.com/fake-registry/target: prev-version -> ci-2012.05.14-197293-5e03a58\n"
-    ],
-    "cwd": "[CACHE]/builder/roll/0941bf89",
-    "name": "upload roll CL.git cl upload",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "issue",
-      "--json",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[CACHE]/builder/roll/0941bf89",
-    "name": "upload roll CL.git cl issue",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"issue\": 123456789, @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"issue_url\": \"https://chromium-review.googlesource.com/c/1234567\"@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@Issue 123456789@https://chromium-review.googlesource.com/c/1234567@@@"
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
+    "failure": {
+      "failure": {},
+      "humanReason": "Failed to roll: https://roll.example.com/repo"
+    },
     "name": "$result"
   }
 ]

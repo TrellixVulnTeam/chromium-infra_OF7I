@@ -22,6 +22,14 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'tag',            # its canonical tag, if any
       'view_image_url', # link to GCR page, for humans, optional
       'view_build_url', # link to GCB page, for humans, optional
+      'notify',         # a list of NotifyConfig tuples
+  ])
+
+  # NotifyConfig identifies a system to notify about the image.
+  NotifyConfig = namedtuple('NotifyConfig', [
+      'kind',   # only "git" is supported currently
+      'repo',   # a repository URL to checkout and update
+      'script', # a script inside the repository to call to update the checkout
   ])
 
   # Reference to a tarball in GS produced by `upload`.
@@ -46,7 +54,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
   #
   # This happens if the target manifest doesn't specify a registry to upload
   # the image to. This is rare.
-  NotUploadedImage = Image(None, None, None, None, None)
+  NotUploadedImage = Image(None, None, None, None, None, None)
 
   def __init__(self, **kwargs):
     super(CloudBuildHelperApi, self).__init__(**kwargs)
@@ -165,9 +173,21 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           tag=out['image'].get('tag'),
           view_image_url=out.get('view_image_url'),
           view_build_url=out.get('view_build_url'),
+          notify=[self._parse_notify_config(n) for n in out.get('notify', [])],
       )
     finally:
       self._make_build_step_pretty(self.m.step.active_result, tags)
+
+  @staticmethod
+  def _parse_notify_config(cfg):
+    kind = cfg.get('kind')
+    if kind != 'git':  # pragma: no cover
+      raise recipe_api.InfraFailure('Unrecognized `notify` kind %r' % (kind,))
+    return CloudBuildHelperApi.NotifyConfig(
+        kind=kind,
+        repo=cfg['repo'],
+        script=cfg['script'],
+    )
 
   @staticmethod
   def _make_build_step_pretty(r, tags):
@@ -371,7 +391,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       # Upload a CL.
       self.m.git('commit', '-m', verdict.message)
       self.m.git_cl.upload(verdict.message, name='git cl upload', upload_args=[
-          '--force', # skip asking for description, we already set it
+          '--force',        # skip asking for description, we already set it
+          '--bypass-hooks', # we may not have the full checkout
       ] + [
           '--tbrs=%s' % tbr for tbr in sorted(set(verdict.tbr or []))
       ] + [

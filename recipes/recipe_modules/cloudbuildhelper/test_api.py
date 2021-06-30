@@ -24,6 +24,11 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
     if img:
       out['image'] = {'image': img, 'digest': digest, 'tag': tag}
       out['view_image_url'] = 'https://example.com/image/%s' % target
+      if image and image.notify:
+        out['notify'] = [
+            {'kind': n.kind, 'repo': n.repo, 'script': n.script}
+            for n in image.notify
+        ]
 
     return self.m.json.output(out)
 

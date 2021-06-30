@@ -59,6 +59,9 @@ message Inputs {
   //
   // If at least one image file was added, runs `scripts/prune_images.py` from
   // this repo to delete older unused images.
+  //
+  // TODO(vadimsh): No longer used, will be removed once builder configs are
+  // updated.
   message RollInto {
     // Repository to roll built images into (usually infradata/k8s).
     string repo_url = 1;

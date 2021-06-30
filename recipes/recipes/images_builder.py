@@ -2,10 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
+from hashlib import sha256
 from recipe_engine import recipe_api
 
 from PB.recipes.infra import images_builder as images_builder_pb
+
 
 DEPS = [
     'recipe_engine/buildbucket',
@@ -94,16 +96,35 @@ def RunSteps(api, properties):
     except api.step.StepFailure:
       fails.append(api.path.basename(futures[fut]))
 
-  # Try to roll even if something failed. One broken image should not block the
-  # rest of them.
-  if built and properties.HasField('roll_into'):
-    with api.step.nest('upload roll CL') as roll:
-      num, url = _roll_built_images(api, properties.roll_into, built, meta)
-      if num is not None:
-        roll.presentation.links['Issue %s' % num] = url
+  # Group successfully built images by their roll destinations.
+  per_notify = defaultdict(list)
+  for img in built:
+    for n in img.notify:
+      per_notify[n].append(img)
+
+  # Perform all rolls in parallel.
+  futures = {}
+  for notify in sorted(per_notify):
+    fut = api.futures.spawn(
+        _roll_built_images,
+        api=api,
+        notify=notify,
+        images=per_notify[notify],
+        meta=meta)
+    futures[fut] = notify
+
+  # Wait for all rolls to finish.
+  roll_fails = []
+  for fut in api.futures.iwait(list(futures.keys())):
+    try:
+      fut.result()
+    except api.step.StepFailure:
+      roll_fails.append(futures[fut].repo)
 
   if fails:
     raise recipe_api.StepFailure('Failed to build: %s' % ', '.join(fails))
+  if roll_fails:
+    raise recipe_api.StepFailure('Failed to roll: %s' % ', '.join(roll_fails))
 
 
 def _validate_props(p):  # pragma: no cover
@@ -120,8 +141,6 @@ def _validate_props(p):  # pragma: no cover
   # of infra.git checkout.
   if p.project == PROPERTIES.PROJECT_LUCI_GO and p.mode != PROPERTIES.MODE_CL:
     raise ValueError('PROJECT_LUCI_GO can be used only together with MODE_CL')
-  if p.HasField('roll_into') and p.mode == PROPERTIES.MODE_CL:
-    raise ValueError('"roll_into" can\'t be used in MODE_CL')
 
 
 def _checkout_committed(api, mode, project):
@@ -239,14 +258,12 @@ def _date(api):
   return api.time.utcnow().strftime('%Y.%m.%d')
 
 
-def _roll_built_images(api, spec, images, meta):
+def _roll_built_images(api, notify, images, meta):
   """Uploads a CL with info about built images into a repo with pinned images.
-
-  See comments in images_builder.proto for more details.
 
   Args:
     api: recipes API.
-    spec: instance of images_builder.Inputs.RollInto proto with the config.
+    notify: a CloudBuildHelperApi.NotifyConfig describing where to roll.
     images: a list of CloudBuildHelperApi.Image with info about built images.
     meta: Metadata struct, as returned by _checkout_committed.
 
@@ -254,19 +271,23 @@ def _roll_built_images(api, spec, images, meta):
     (None, None) if didn't create a CL (because nothing has changed).
     (Issue number, Issue URL) if created a CL.
   """
-  return api.cloudbuildhelper.do_roll(
-      repo_url=spec.repo_url,
-      root=api.path['cache'].join('builder', 'roll'),
-      callback=lambda root: _mutate_pins_repo(api, root, spec, images, meta))
+  repo_id = sha256(notify.repo).hexdigest()[:8]
+  with api.step.nest('upload roll CL') as roll:
+    num, url = api.cloudbuildhelper.do_roll(
+        repo_url=notify.repo,
+        root=api.path['cache'].join('builder', 'roll', repo_id),
+        callback=lambda root: _mutate_repo(api, root, notify, images, meta))
+    if num is not None:
+      roll.presentation.links['Issue %s' % num] = url
 
 
-def _mutate_pins_repo(api, root, spec, images, meta):
+def _mutate_repo(api, root, notify, images, meta):
   """Modifies the checked out repo with image pins.
 
   Args:
     api: recipes API.
     root: the directory where the repo is checked out.
-    spec: instance of images_builder.Inputs.RollInto proto with the config.
+    notify: a CloudBuildHelperApi.NotifyConfig describing where to roll.
     images: a list of CloudBuildHelperApi.Image with info about built images.
     meta: Metadata struct, as returned by _checkout_committed.
 
@@ -303,38 +324,31 @@ def _mutate_pins_repo(api, root, spec, images, meta):
 
   # Add all new tags (if any).
   res = api.step(
-      name='roll_images.py',
-      cmd=[root.join('scripts', 'roll_images.py')],
+      name=notify.script,
+      cmd=[root.join(notify.script)],
       stdin=api.json.input({'tags': tags}),
       stdout=api.json.output(),
       step_test_data=lambda: api.json.test_api.output_stream(
           _roll_images_test_data(tags)))
-  rolled = res.stdout['tags']
   deployments = res.stdout.get('deployments') or []
 
-  # If added new pins, delete old unused ones (if any). Note that if we are
-  # building a rollback CL, we often do not add new pins (since we actually
-  # rebuild a previously built image). We still need to land a CL to do the
-  # rollback. If it turns out nothing has changed, api.cloudbuildhelper.do_roll
-  # will just skip uploading the change.
-  if rolled:
-    api.step(
-        name='prune_images.py',
-        cmd=[root.join('scripts', 'prune_images.py'), '--verbose'])
-
   # Generate the commit message.
-  message = str('\n'.join([
+  message = [
       '[images] Rolling in images.',
       '',
       'Produced by %s' % api.buildbucket.build_url(),
       '',
-      'Updated staging deployments:',
-  ] + [
-      '  * %s: %s -> %s' % (d['image'], d['from'], d['to'])
-      for d in deployments
-  ] + ['']))
+  ]
+  if deployments:
+    message.extend([
+        'Updated staging deployments:',
+    ] + [
+        '  * %s: %s -> %s' % (d['image'], d['from'], d['to'])
+        for d in deployments
+    ] + [''])
+  message = str('\n'.join(message))
 
-  # List of people to CC based on what staging deployments were updated.
+  # List of people to CC based on what deployments were updated.
   extra_cc = set()
   for dep in deployments:
     extra_cc.update(dep.get('cc') or [])
@@ -342,8 +356,8 @@ def _mutate_pins_repo(api, root, spec, images, meta):
   return api.cloudbuildhelper.RollCL(
       message=message,
       cc=extra_cc,
-      tbr=spec.tbr,
-      commit=spec.commit)
+      tbr=[],
+      commit=True)
 
 
 def _roll_images_test_data(tags):
@@ -352,9 +366,7 @@ def _roll_images_test_data(tags):
       'deployments': [
           {
               'cc': ['n1@example.com', 'n2@example.com'],
-              'channel': 'staging',
               'from': 'prev-version',
-              'spec': 'projects/something/channels.json',
               'image': t['image'],
               'to': t['tag']['tag'],
           }
@@ -389,6 +401,23 @@ def GenTests(api):
         )
     )
 
+  from RECIPE_MODULES.infra.cloudbuildhelper.api import CloudBuildHelperApi
+
+  def build_success_with_notify():
+    return api.cloudbuildhelper.build_success_output(CloudBuildHelperApi.Image(
+        image='example.com/fake-registry/target',
+        digest='sha256:abcdef',
+        tag='ci-2012.05.14-197293-5e03a58',
+        view_image_url=None,
+        view_build_url=None,
+        notify=[
+            CloudBuildHelperApi.NotifyConfig(
+                kind='git',
+                repo='https://roll.example.com/repo',
+                script='scripts/roll.py',
+            ),
+        ],
+    ))
 
   yield (
       api.test('try-infra') +
@@ -460,13 +489,27 @@ def GenTests(api):
           project=PROPERTIES.PROJECT_INFRA,
           infra='prod',
           manifests=['infra/build/images/deterministic'],
-          roll_into={
-              'repo_url': 'https://images.repo.example.com',
-              'tbr': ['someone@example.com'],
-              'commit': True,
-          },
+      ) +
+      api.step_data(
+          'cloudbuildhelper build target',
+          build_success_with_notify(),
       ) +
       api.step_data('upload roll CL.git diff', retcode=1)
+  )
+
+  yield (
+      api.test('ci-infra-with-roll-failure') +
+      api.properties(
+          mode=PROPERTIES.MODE_CI,
+          project=PROPERTIES.PROJECT_INFRA,
+          infra='prod',
+          manifests=['infra/build/images/deterministic'],
+      ) +
+      api.step_data(
+          'cloudbuildhelper build target',
+          build_success_with_notify(),
+      ) +
+      api.step_data('upload roll CL.scripts/roll.py', retcode=1)
   )
 
   yield (

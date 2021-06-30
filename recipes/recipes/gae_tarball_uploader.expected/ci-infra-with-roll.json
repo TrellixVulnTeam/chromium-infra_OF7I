@@ -447,6 +447,7 @@
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
       "--force",
+      "--bypass-hooks",
       "--tbrs=someone@example.com",
       "--cc=n1@example.com",
       "--cc=n2@example.com",

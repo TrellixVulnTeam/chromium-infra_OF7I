@@ -39,7 +39,8 @@ def build(api):
       digest='sha256:34a04005bcaf206e...',
       tag='123_456',
       view_image_url='https://example.com/image/target',
-      view_build_url='https://example.com/build/target')
+      view_build_url='https://example.com/build/target',
+      notify=[])
   assert img == expected, img
 
   # With minimal args and custom emulated output.
@@ -48,7 +49,14 @@ def build(api):
       digest='yyy',
       tag=None,
       view_image_url='https://example.com/image/another',
-      view_build_url='https://example.com/build/another')
+      view_build_url='https://example.com/build/another',
+      notify=[
+          api.cloudbuildhelper.NotifyConfig(
+              kind='git',
+              repo='https://some.example.com/repo',
+              script='scripts/another_roll.py',
+          ),
+      ])
   img = api.cloudbuildhelper.build('another.yaml', step_test_image=custom)
   assert img == custom, img
 
