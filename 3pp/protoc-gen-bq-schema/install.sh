@@ -4,11 +4,9 @@
 # found in the LICENSE file.
 
 set -e
-set -x
 set -o pipefail
 
 PREFIX="$1"
 
-make
-
-cp bin/protoc-gen-bq-schema "${PREFIX}"
+GO111MODULE=off go build -o protoc-gen-bq-schema
+cp ./protoc-gen-bq-schema "${PREFIX}"

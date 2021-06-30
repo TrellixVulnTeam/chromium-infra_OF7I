@@ -9,7 +9,10 @@ create {
     }
   }
 
-  build { tool: "tools/go" }
+  build {
+    tool: "tools/go"
+    dep: "go/github.com/protocolbuffers/protoc-gen-go"
+  }
 }
 
 upload { pkg_prefix: "go/github.com/googlecloudplatform/protoc-gen-bq-schema" }
