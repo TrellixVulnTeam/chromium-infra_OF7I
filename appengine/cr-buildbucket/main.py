@@ -4,7 +4,6 @@
 
 import logging
 
-from google.appengine.api import app_identity
 from google.appengine.ext import ndb
 
 from components import endpoints_webapp2
@@ -52,8 +51,7 @@ def initialize():  # pragma: no cover
   """Bootstraps the global state and creates WSGI applications."""
   ereporter2.register_formatter()
   fe, be = create_frontend_app(), create_backend_app()
-  if app_identity.get_application_id().endswith('-dev'):
-    logging.info('disabling memcache on dev instance')
-    fe.router.set_dispatcher(memcache_disabling_dispatcher)
-    be.router.set_dispatcher(memcache_disabling_dispatcher)
+  logging.info('disabling memcache')
+  fe.router.set_dispatcher(memcache_disabling_dispatcher)
+  be.router.set_dispatcher(memcache_disabling_dispatcher)
   return fe, be

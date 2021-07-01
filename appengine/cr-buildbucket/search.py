@@ -749,6 +749,11 @@ class TagIndex(ndb.Model):
   )
 
   @classmethod
+  def _use_memcache(cls, _):
+    # See main.py for reasons why memcache is being disabled.
+    return False
+
+  @classmethod
   def make_key(cls, shard_index, tag):
     """Returns a TagIndex entity key."""
     assert shard_index >= 0
