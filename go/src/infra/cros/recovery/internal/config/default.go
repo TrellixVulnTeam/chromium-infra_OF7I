@@ -12,12 +12,7 @@ const defaultPlans = `
 {
   "repair_dut": {
     "verifiers": [
-      "dut_rpm_info",
-      "dut_rpm_info",
-      "dut_ping",
-      "dut_ping",
-      "dut_ssh",
-      "servo_host_servod_stop"
+      "dut_ssh"
     ],
     "actions": {
       "dut_rpm_info": {
@@ -25,6 +20,7 @@ const defaultPlans = `
       },
       "dut_ping":{
         "recoveries": [
+          "sample_pass",
           "sample_pass",
           "servod_dut_cold_reset"
         ],
@@ -61,11 +57,10 @@ const defaultPlans = `
           "servod_echo"
         ],
         "recoveries": [
-          "servo_host_servod_stop",
           "servod_lidopen_recover",
+          "servo_host_servod_restart",
           "sample_pass"
-        ],
-        "allow_fail": true
+        ]
       },
       "servod_lidopen_recover":{
         "dependencies": [
@@ -75,20 +70,27 @@ const defaultPlans = `
       "servo_host_servod_init": {
         "dependencies":[
           "servo_host_ssh"
+        ],
+        "recoveries": [
+          "servo_host_servod_restart"
         ]
       },
       "servod_echo": {
         "dependencies":[
           "servo_host_servod_init"
+        ],
+        "recoveries": [
+          "servo_host_servod_restart"
         ]
+      },
+      "servo_host_servod_restart":{
+        "cache_strategy":"never"
       }
     },
     "allow_fail": true
   },
   "repair_labstation": {
     "verifiers": [
-      "dut_rpm_info",
-      "dut_ping",
       "dut_ssh"
     ],
     "actions": {

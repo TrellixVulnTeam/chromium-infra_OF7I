@@ -26,14 +26,28 @@ type Plan struct {
 	AllowFail bool
 }
 
+// Error to request run start-over all verifiers.
+// Requested side has to clean cache by itself before request start-over.
+var startOver = errors.Reason("request to start over").Err()
+
 // Run runs the recovery plan.
 func (p *Plan) Run(ctx context.Context, args *execs.RunArgs) error {
 	log.Printf("Plan %q: started.\n%s", p.Name, p.Describe())
-	c := newRunCache()
+	c := newCache()
 	defer c.close()
-	// TODO(otabek@): Add start-over loop if any recovery action was used and passed.
-	if err := p.runVerifiers(ctx, c, args); err != nil {
-		return errors.Annotate(err, "run plan %q", p.Name).Err()
+	for {
+		if err := p.runVerifiers(ctx, c, args); err != nil {
+			if err == startOver {
+				log.Printf("Plan %q: received request to start over.", p.Name)
+				// Reset cache for all verifiers and dependencies.
+				for _, v := range p.Verifiers {
+					c.resetForAction(v)
+				}
+				continue
+			}
+			return errors.Annotate(err, "run plan %q", p.Name).Err()
+		}
+		break
 	}
 	log.Printf("Plan %q: finished successfully.", p.Name)
 	return nil
@@ -55,6 +69,10 @@ func (p *Plan) runVerifiers(ctx context.Context, c *runCache, args *execs.RunArg
 			return errors.Annotate(err, "run verifier %q: fail (cached)", v.Name).Err()
 		}
 		if err := v.run(ctx, c, args); err != nil {
+			if err == startOver {
+				log.Printf("Verifier %q: received request to start over.", v.Name)
+				return err
+			}
 			if v.AllowFail {
 				log.Printf("Verifier %q: fail. Error: %s", v.Name, err)
 				v.logAllowedFailFault(i, len(p.Verifiers))

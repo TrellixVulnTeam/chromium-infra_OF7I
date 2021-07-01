@@ -14,6 +14,7 @@ import (
 	"infra/cros/recovery/internal/retry"
 )
 
+// TODO(otabek@): Extract all commands to constants.
 // NOTE: That is just fake execs for local testing during developing phase. The correct/final execs will be introduced later.
 
 func servodEchoActionExec(ctx context.Context, args *RunArgs) error {
@@ -30,6 +31,8 @@ func servodLidopenActionExec(ctx context.Context, args *RunArgs) error {
 	res, err := ServodCallGet(ctx, args, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
+	} else if res.Value.GetString_() == "not_applicable" {
+		log.Printf("Device does not support this action. Skipping...")
 	} else if res.Value.GetString_() != "yes" {
 		return errors.Reason("servod lid_open: expected to received 'yes'").Err()
 	}
@@ -79,7 +82,7 @@ func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *RunArgs) err
 	if _, err := ServodCallSet(ctx, args, "power_state", "rec"); err != nil {
 		return errors.Annotate(err, "servod boot in recovery-mode").Err()
 	}
-	return retry.WithTimeout(ctx, 20, usbkeyBootTimeout, func() error {
+	return retry.WithTimeout(ctx, 10*time.Second, usbkeyBootTimeout, func() error {
 		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
 			return errors.Reason("servod boot in recovery-mode: check ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
 		}
@@ -91,12 +94,9 @@ func servodDUTColdResetActionExec(ctx context.Context, args *RunArgs) error {
 	if _, err := ServodCallSet(ctx, args, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servod cold_reset dut").Err()
 	}
-	return retry.WithTimeout(ctx, 20, dutBootTimeout, func() error {
-		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
-			return errors.Reason("servod cold_reset dut: check ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
-		}
-		return nil
-	}, "servod cold_reset dut: check ssh access")
+	return retry.WithTimeout(ctx, 5*time.Second, dutBootTimeout, func() error {
+		return args.Access.Ping(ctx, args.DUT.Name, 2)
+	}, "servod cold_reset dut: check ping access")
 }
 
 func init() {

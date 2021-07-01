@@ -39,11 +39,22 @@ type Action struct {
 // runAction represents recursive executable function to run single action with dependencies and recoveries.
 func (a *Action) run(ctx context.Context, c *runCache, args *execs.RunArgs) error {
 	if err := a.runDependencies(ctx, c, args); err != nil {
+		if err == startOver {
+			log.Printf("Action %q: received request to start over.", a.Name)
+			return err
+		}
 		c.cacheAction(a, err)
 		return errors.Annotate(err, "run action %q", a.Name).Err()
 	}
 	if err := execs.Run(ctx, a.ExecName, args); err != nil {
-		// TODO(otabek@): Add logic to try to recover the failure.
+		if len(a.Recoveries) > 0 {
+			if rErr := a.runRecoveries(ctx, c, args); rErr == startOver {
+				return rErr
+			}
+			log.Printf("Run action %q: No recoveries left to try.", a.Name)
+		}
+		// Cache the action error only after running recoveries.
+		// If no recoveries were run, we still cache the action.
 		c.cacheAction(a, err)
 		return errors.Annotate(err, "run action %q", a.Name).Err()
 	}
@@ -68,6 +79,10 @@ func (a *Action) runDependencies(ctx context.Context, c *runCache, args *execs.R
 			return errors.Annotate(r, "run dependency %q: fail (cached)", dep.Name).Err()
 		}
 		if err := dep.run(ctx, c, args); err != nil {
+			if err == startOver {
+				log.Printf("Dependency %q: received request to start over.", dep.Name)
+				return err
+			}
 			if dep.AllowFail {
 				log.Printf("Dependency %q: fail. Error: %s", dep.Name, err)
 				dep.logAllowedFailFault(i, len(a.Dependencies))
@@ -77,6 +92,32 @@ func (a *Action) runDependencies(ctx context.Context, c *runCache, args *execs.R
 		} else {
 			log.Printf("Dependency %q: finished successfully.", dep.Name)
 		}
+	}
+	return nil
+}
+
+// runRecoveries runs recoveries of the action.
+// Recovery are expected to fail. If recovery action then next will be attempt.
+// Function will return error only to request start over or finished quite.
+// Each recovery usage is caching to prevent second run if verifier fails again.
+func (a *Action) runRecoveries(ctx context.Context, c *runCache, args *execs.RunArgs) error {
+	for _, recovery := range a.Recoveries {
+		log.Printf("Run recovery %q: started.", recovery.Name)
+		if c.isRecoveryUsed(a, recovery) {
+			log.Printf("Recovery %q: used (cached).", recovery.Name)
+			continue
+		}
+		if err := recovery.run(ctx, c, args); err != nil {
+			c.cacheRecovery(a, recovery, err)
+			if !recovery.AllowFail {
+				log.Printf("Recovery %q: fail. Error: %s ", recovery.Name, err)
+				continue
+			}
+		} else {
+			c.cacheRecovery(a, recovery, nil)
+		}
+		log.Printf("Recovery %q: request to start-over.", recovery.Name)
+		return startOver
 	}
 	return nil
 }
