@@ -106,10 +106,9 @@ ci_builder(
 )
 
 # Builds arm64-flavored docker images for swarm_docker.
-# TODO(crbug/1213119): upgrade ARM bot & builder to 18.04.
 ci_builder(
     name = "swarm-docker-arm64-image-builder",
-    os = "Ubuntu-16.04",
+    os = "Ubuntu-18.04",
     cpu = "arm64",
     # Make sure we're not building Docker images inside another container.
     extra_dimensions = {"inside_docker": "0"},
