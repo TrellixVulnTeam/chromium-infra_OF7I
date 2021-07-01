@@ -6,15 +6,14 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 
 	"infra/cros/internal/assert"
 	gerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/gs"
 	"infra/cros/internal/repo"
 
 	"github.com/golang/mock/gomock"
-	lgs "go.chromium.org/luci/common/gcloud/gs"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
@@ -64,25 +63,6 @@ const (
 var (
 	application = GetApplication(chromeinfra.DefaultAuthOptions())
 )
-
-type fakeGSClient struct {
-	t              *testing.T
-	expectedWrites map[string]*repo.Manifest
-}
-
-// WriteFileToGS writes the specified data to the specified gs path.
-func (f *fakeGSClient) WriteFileToGS(gsPath lgs.Path, data []byte) error {
-	expected, ok := f.expectedWrites[string(gsPath)]
-	if !ok {
-		f.t.Fatalf("unexpected write at %s", string(gsPath))
-	}
-	got, err := repo.ParseManifest(data)
-	assert.NilError(f.t, err)
-	if !reflect.DeepEqual(expected, got) {
-		f.t.Fatalf("mismatch for write at %s: expected:\n%v\ngot:\n%v\n", string(gsPath), expected, got)
-	}
-	return nil
-}
 
 func TestCreateProjectBuildspec(t *testing.T) {
 	program := "galaxy"
@@ -166,9 +146,9 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		"gs://chromeos-galaxy/buildspecs/" + buildspec:          expected,
 		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: expected,
 	}
-	f := &fakeGSClient{
-		t:              t,
-		expectedWrites: expectedWrites,
+	f := &gs.FakeClient{
+		T:              t,
+		ExpectedWrites: expectedWrites,
 	}
 
 	b := projectBuildspec{

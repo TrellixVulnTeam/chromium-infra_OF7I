@@ -14,16 +14,20 @@ import (
 	"strings"
 
 	gitiles "infra/cros/internal/gerrit"
+	"infra/cros/internal/gs"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
 const (
+	chromeExternalHost = "chromium.googlesource.com"
 	chromeInternalHost = "chrome-internal.googlesource.com"
 )
 
@@ -52,11 +56,14 @@ type setupProject struct {
 	subcommands.CommandRunBase
 	authFlags            authcli.Flags
 	chromeosCheckoutPath string
-	program              string
-	project              string
-	allProjects          bool
-	localManifestBranch  string
-	chipset              string
+	// Settings for which local manifests to use.
+	program     string
+	project     string
+	allProjects bool
+	chipset     string
+	// Modifiers on where to get the local manifests.
+	localManifestBranch string
+	buildspec           string
 }
 
 func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
@@ -76,10 +83,15 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 				"Project to sync to.")
 			b.Flags.BoolVar(&b.allProjects, "all_projects", false,
 				"If specified, will include all projects under the specified program.")
-			b.Flags.StringVar(&b.localManifestBranch, "branch", "main",
-				"Sync the project from the local manifest at the given branch.")
 			b.Flags.StringVar(&b.chipset, "chipset", "",
 				"Name of the chipset overlay to sync a local manifest from.")
+			b.Flags.StringVar(&b.localManifestBranch, "branch", "main",
+				"Sync the project from the local manifest at the given branch.")
+			b.Flags.StringVar(&b.buildspec, "buildspec", "",
+				text.Doc(`Specific version to sync to, e.g. 85/13277.0.0.xml. Requires
+				per-project buildspecs to have been created for the appropriate
+				projects for the appropriate version, see go/per-project-buildspecs.
+				If set, takes priority over --branch.`))
 			return b
 		}}
 }
@@ -98,6 +110,10 @@ func (b *setupProject) validate() error {
 	}
 	if b.program != "" && b.allProjects {
 		return fmt.Errorf("--program and --all_projects cannot both be set")
+	}
+
+	if b.chipset != "" && b.buildspec != "" {
+		return fmt.Errorf("using --buildspec with --chipset is not currently supported")
 	}
 
 	return nil
@@ -123,18 +139,29 @@ func (b *setupProject) Run(a subcommands.Application, args []string, env subcomm
 		LogErr(err.Error())
 		return 3
 	}
-	if err := b.setupProject(ctx, authedClient); err != nil {
+	gsClient, err := gs.NewProdClient(ctx, authedClient)
+	if err != nil {
 		LogErr(err.Error())
 		return 4
+	}
+
+	if err := b.setupProject(ctx, authedClient, gsClient); err != nil {
+		LogErr(err.Error())
+		return 5
 	}
 
 	return 0
 }
 
 type localManifest struct {
-	project    string
-	branch     string
-	path       string
+	// If blank, chromeInternalHost will be used.
+	host    string
+	project string
+	branch  string
+	path    string
+	// If set, file will be sourced from GS instead of from gerrit via the
+	// gitiles API.
+	gsPath     lgs.Path
 	downloadTo string
 }
 
@@ -154,21 +181,39 @@ func projectsInProgram(ctx context.Context, authedClient *http.Client, program s
 	return programProjects, nil
 }
 
-func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client) error {
+// gsProjectPath returns the appropriate GS path for the given project/version.
+func gsProjectPath(program, project, buildspec string) lgs.Path {
+	bucket := fmt.Sprintf("chromeos-%s-%s", program, project)
+	relPath := filepath.Join("buildspecs/", buildspec)
+	return lgs.MakePath(bucket, relPath)
+}
+
+// gsProgramPath returns the appropriate GS path for the given program/version.
+func gsProgramPath(program, buildspec string) lgs.Path {
+	relPath := filepath.Join("buildspecs/", buildspec)
+	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
+}
+
+func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client, gsClient gs.Client) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
 	if err := os.Mkdir(localManifestPath, os.ModePerm); err != nil && !gerrs.Is(err, os.ErrExist) {
 		return err
 	}
 
-	files := []localManifest{
-		{
-			project:    fmt.Sprintf("chromeos/program/%s", b.program),
-			branch:     b.localManifestBranch,
-			path:       "local_manifest.xml",
-			downloadTo: fmt.Sprintf("%s_program.xml", b.program),
-		},
+	files := []localManifest{}
+
+	var gspath lgs.Path
+	if b.buildspec != "" {
+		gspath = gsProgramPath(b.program, b.buildspec)
 	}
+	files = append(files, localManifest{
+		project:    fmt.Sprintf("chromeos/program/%s", b.program),
+		branch:     b.localManifestBranch,
+		path:       "local_manifest.xml",
+		gsPath:     gspath,
+		downloadTo: fmt.Sprintf("%s_program.xml", b.program),
+	})
 
 	var projects []string
 	if b.allProjects {
@@ -185,15 +230,20 @@ func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Clie
 		return fmt.Errorf("no projects found")
 	}
 	for _, project := range projects {
+		var gspath lgs.Path
+		if b.buildspec != "" {
+			gspath = gsProjectPath(b.program, project, b.buildspec)
+		}
 		files = append(files, localManifest{
 			project:    fmt.Sprintf("chromeos/project/%s/%s", b.program, project),
 			branch:     b.localManifestBranch,
 			path:       "local_manifest.xml",
+			gsPath:     gspath,
 			downloadTo: fmt.Sprintf("%s_project.xml", project),
 		})
 	}
 
-	if b.chipset != "" {
+	if b.chipset != "" && b.buildspec == "" {
 		files = append(files,
 			localManifest{
 				project:    fmt.Sprintf("chromeos/overlays/chipset-%s-private", b.chipset),
@@ -214,21 +264,41 @@ func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Clie
 	// Download each local_manifest.xml.
 	for _, file := range files {
 		downloadPath := filepath.Join(localManifestPath, file.downloadTo)
-		err := gitiles.DownloadFileFromGitilesToPath(ctx, authedClient, chromeInternalHost,
-			file.project, file.branch, file.path, downloadPath)
+		var err error
+		var errmsg string
+		if string(file.gsPath) != "" {
+			err = gsClient.Download(file.gsPath, downloadPath)
+			errmsg = fmt.Sprintf("error downloading %s", file.gsPath)
+		} else {
+			host := chromeInternalHost
+			if file.host != "" {
+				host = file.host
+			}
+			err = gitiles.DownloadFileFromGitilesToPath(ctx, authedClient, host,
+				file.project, file.branch, file.path, downloadPath)
+			errmsg = fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
+				chromeInternalHost, file.project, file.path, file.branch)
+		}
 
 		if err != nil {
 			cleanup(writtenFiles)
-			errmsg := fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
-				chromeInternalHost, file.project, file.path, file.branch)
 			return errors.Annotate(err, errmsg).Err()
 		}
 		writtenFiles = append(writtenFiles, downloadPath)
 	}
 
-	LogOut(`Local manifest setup complete, sync new projects with:
+	if b.buildspec != "" {
+		LogOut("You are syncing to a per-project/program buildspec, make sure " +
+			"that you've run the equivalent of:" +
+			"\n\nrepo init -u https://chromium.googlesource.com/chromiumos/manifest-versions -b main" +
+			fmt.Sprintf(" -m buildspecs/%s", b.buildspec) + "\n\n")
+		LogOut("Local manifest setup complete, sync new projects with:" +
+			"\n\nrepo sync --force-sync -j48")
+	} else {
+		LogOut("Local manifest setup complete, sync new projects with:" +
+			"\n\nrepo sync --force-sync -j48")
+	}
 
-repo sync --force-sync -j48`)
 	return nil
 }
 
@@ -257,6 +327,7 @@ func main() {
 		gerrit.OAuthScope,
 		auth.OAuthScopeEmail,
 	}
+	opts.Scopes = append(opts.Scopes, lgs.ReadWriteScopes...)
 	s := &setupProjectApplication{
 		GetApplication(opts),
 		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
