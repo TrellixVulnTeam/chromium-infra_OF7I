@@ -1,5 +1,5 @@
-application: chopsdash
-runtime: go111
+service: default
+runtime: go115
 
 handlers:
 - url: /static
@@ -24,3 +24,12 @@ handlers:
 - url: /.*
   script: auto
   secure: always
+
+
+entrypoint: >
+  main
+  -auth-service-host chrome-infra-auth.appspot.com
+  -encrypted-cookies-tink-aead-key sm://tink-aead-primary
+  -encrypted-cookies-client-id 675659380192-5ppotpdoss3shoncsdud2c0c1mvol8bs.apps.googleusercontent.com
+  -encrypted-cookies-client-secret sm://oauth-client-secret
+  -encrypted-cookies-redirect-url https://chopsdash.appspot.com/auth/openid/callback

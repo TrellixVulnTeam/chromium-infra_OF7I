@@ -8,173 +8,125 @@ import (
 	"context"
 	"html/template"
 	"net/http"
-	"strconv"
 	"time"
 
-	"go.chromium.org/luci/appengine/gaeauth/server"
-	"go.chromium.org/luci/appengine/gaemiddleware/standard"
 	"go.chromium.org/luci/auth/identity"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/gae/service/info"
-	"go.chromium.org/luci/grpc/discovery"
 	"go.chromium.org/luci/grpc/prpc"
+	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/encryptedcookies"
+	"go.chromium.org/luci/server/gaeemulation"
+	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
+	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/templates"
-	"google.golang.org/appengine"
+
+	// Using datastore for user sessions.
+	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
 	dashpb "infra/appengine/dashboard/api/dashboard"
 )
 
 const authGroup = "chopsdash-access"
 
-var templateBundle = &templates.Bundle{
-	Loader:    templates.FileSystemLoader("templates"),
-	DebugMode: info.IsDevAppServer,
-	FuncMap: template.FuncMap{
-		"fmtDate": func(date time.Time) string {
-			return date.Format("1-2-2006")
+// prepareTemplates configures templates.Bundle used by all UI handlers.
+func prepareTemplates(opts *server.Options) *templates.Bundle {
+	return &templates.Bundle{
+		Loader:    templates.FileSystemLoader("templates"),
+		DebugMode: func(context.Context) bool { return !opts.Prod },
+		FuncMap: template.FuncMap{
+			"fmtDate": func(date time.Time) string {
+				return date.Format("1-2-2006")
+			},
 		},
-	},
-}
+		DefaultArgs: func(ctx context.Context, e *templates.Extra) (templates.Args, error) {
+			loginURL, err := auth.LoginURL(ctx, e.Request.URL.RequestURI())
+			if err != nil {
+				return nil, err
+			}
+			logoutURL, err := auth.LogoutURL(ctx, e.Request.URL.RequestURI())
+			if err != nil {
+				return nil, err
+			}
 
-func newRPCServer() *prpc.Server {
-	return &prpc.Server{
-		AccessControl: func(c context.Context, origin string) prpc.AccessControlDecision {
-			return prpc.AccessAllowWithoutCredentials
-		},
-		Authenticator: &auth.Authenticator{
-			Methods: []auth.Method{server.CookieAuth},
+			isAnonymous := true
+			isGoogler := false
+			isTrooper := false
+			if auth.CurrentIdentity(ctx) != identity.AnonymousIdentity {
+				isAnonymous = false
+				isGoogler, err = auth.IsMember(ctx, authGroup)
+				if err != nil {
+					return nil, err
+				}
+				isTrooper, err = auth.IsMember(ctx, announcementGroup)
+				if err != nil {
+					return nil, err
+				}
+			}
+			return templates.Args{
+				"IsAnonymous": isAnonymous,
+				"IsGoogler":   isGoogler,
+				"IsTrooper":   isTrooper,
+				"User":        auth.CurrentUser(ctx).Email,
+				"LoginURL":    loginURL,
+				"LogoutURL":   logoutURL,
+			}, nil
 		},
 	}
+
 }
 
-func pageBase() router.MiddlewareChain {
-	a := auth.Authenticator{
-		Methods: []auth.Method{
-			&server.OAuth2Method{Scopes: []string{server.EmailScope}},
-			&server.InboundAppIDAuthMethod{},
-			server.CookieAuth,
-		},
-	}
-	return standard.Base().Extend(a.GetMiddleware()).Extend(
-		templates.WithTemplates(templateBundle),
+func pageBase(srv *server.Server) router.MiddlewareChain {
+	mw := router.NewMiddlewareChain(
+		auth.Authenticate(
+			&auth.GoogleOAuth2Method{Scopes: []string{"https://www.googleapis.com/auth/userinfo.email"}},
+			srv.CookieAuth,
+		),
 	)
+	return mw.Extend(templates.WithTemplates(prepareTemplates(&srv.Options)))
 }
 
 func main() {
-	r := router.New()
-	standard.InstallHandlers(r)
-	r.GET("/", pageBase(), dashboard)
-	http.DefaultServeMux.Handle("/", r)
 
-	r.GET("/old", pageBase(), oldDashboard)
-	http.DefaultServeMux.Handle("/old", r)
+	modules := []module.Module{
+		encryptedcookies.NewModuleFromFlags(),
+		secrets.NewModuleFromFlags(),
+		gaeemulation.NewModuleFromFlags(),
+	}
 
-	api := newRPCServer()
-	dashpb.RegisterChopsServiceStatusServer(api, &dashboardService{})
-	dashpb.RegisterChopsAnnouncementsServer(api, &dashpb.DecoratedChopsAnnouncements{
-		Service: &announcementsServiceImpl{},
-		Prelude: announcementsPrelude,
+	server.Main(nil, modules, func(srv *server.Server) error {
+		// When running locally, serve static files ourself.
+		if !srv.Options.Prod {
+			srv.Routes.Static("/static", router.MiddlewareChain{}, http.Dir("./static"))
+		}
+
+		// Register prpc API servers.
+		dashpb.RegisterChopsServiceStatusServer(srv.PRPC, &dashboardService{})
+		dashpb.RegisterChopsAnnouncementsServer(srv.PRPC, &dashpb.DecoratedChopsAnnouncements{
+			Service: &announcementsServiceImpl{},
+			Prelude: announcementsPrelude,
+		})
+		srv.PRPC.AccessControl = func(c context.Context, origin string) prpc.AccessControlDecision {
+			// AccessAllowWithoutCredentials sets access control headers
+			// (so sites like gerrit can query for announcements) without sharing
+			// credentials (so we can use cookies auth).
+			return prpc.AccessAllowWithoutCredentials
+		}
+		srv.PRPC.Authenticator = &auth.Authenticator{
+			Methods: []auth.Method{
+				&auth.GoogleOAuth2Method{
+					Scopes: []string{"https://www.googleapis.com/auth/userinfo.email"},
+				},
+				srv.CookieAuth,
+			},
+		}
+
+		srv.Routes.GET("/", pageBase(srv), dashboard)
+
+		return nil
 	})
-	discovery.Enable(api)
-	api.InstallHandlers(r, standard.Base())
-	appengine.Main()
 }
 
 func dashboard(ctx *router.Context) {
-	c, w := ctx.Context, ctx.Writer
-
-	loginURL, err := auth.LoginURL(c, "/")
-	if err != nil {
-		http.Error(w, "failed to get login URL", http.StatusInternalServerError)
-		logging.Errorf(c, "failed to get login URL: %v", err)
-		return
-	}
-	logoutURL, err := auth.LogoutURL(c, "/")
-	if err != nil {
-		http.Error(w, "failed to get logout URL", http.StatusInternalServerError)
-		logging.Errorf(c, "failed to get logout URL: %v", err)
-		return
-	}
-
-	var isTrooper bool
-	var isGoogler bool
-	var isAnonymous bool
-	var user string
-	if userIdentity := auth.CurrentIdentity(c); userIdentity == identity.AnonymousIdentity {
-		isAnonymous = true
-		isGoogler = false
-		isTrooper = false
-	} else {
-		user = userIdentity.Email()
-		isAnonymous = false
-		isGoogler, err = auth.IsMember(c, authGroup)
-		if err != nil {
-			http.Error(w, "failed to determine chopsdash membership status", http.StatusInternalServerError)
-			logging.Errorf(c, "failed to determine chopsdash membership status: %v", err)
-			return
-		}
-		isTrooper, err = auth.IsMember(c, announcementGroup)
-		if err != nil {
-			http.Error(w, "failed to determine announcements membership status", http.StatusInternalServerError)
-			logging.Errorf(c, "failed to determine announcements membership status: %v", err)
-			return
-		}
-	}
-
-	templates.MustRender(c, w, "pages/home.html", templates.Args{
-		"IsAnoymous": isAnonymous,
-		"User":       user,
-		"IsGoogler":  isGoogler,
-		"IsTrooper":  isTrooper,
-		"LoginURL":   loginURL,
-		"LogoutURL":  logoutURL,
-	})
-}
-
-func oldDashboard(ctx *router.Context) {
-	c, w, r := ctx.Context, ctx.Writer, ctx.Request
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Failed to parse form",
-			http.StatusInternalServerError)
-		return
-	}
-	upto := r.Form.Get("upto")
-	lastDate := time.Now()
-	if upto != "" {
-		unixInt, err := strconv.ParseInt(upto, 10, 64)
-		if err != nil {
-			logging.Infof(c, "%v, %v", err, lastDate)
-			http.Error(w, "failed to parse \"upto\" date paramater",
-				http.StatusBadRequest)
-			return
-		}
-		dateFromParams := time.Unix(unixInt, 0)
-		lastDate = dateFromParams
-	}
-
-	dates := []time.Time{}
-	for i := 6; i >= 0; i-- {
-		dates = append(dates, lastDate.AddDate(0, 0, -i))
-	}
-
-	// Lower limit of date span is pushed back for timezones that are behind
-	// UTC and may have a current time that is still one calendar day behind the UTC
-	// day. Incidents from the query that are too far back are filtered out
-	// in the front end when all Dates are local.
-	firstDateCushion := dates[0].AddDate(0, 0, -1)
-	sla, nonSLA, err := createServicesPageData(c, firstDateCushion, lastDate)
-	if err != nil {
-		http.Error(w, "failed to create Services page data, see logs",
-			http.StatusInternalServerError)
-		return
-	}
-
-	templates.MustRender(c, w, "pages/dash.tmpl", templates.Args{
-		"ChopsServices":  sla,
-		"NonSLAServices": nonSLA,
-		"Dates":          dates,
-		"LastDate":       dates[6],
-	})
+	templates.MustRender(ctx.Context, ctx.Writer, "pages/home.html", nil)
 }

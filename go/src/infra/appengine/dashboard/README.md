@@ -21,7 +21,7 @@ gae.py switch -A chopsdash
 
 To run a local instance:
 ```
-make serve
+go run ./
 ```
 
 To run backend tests:
