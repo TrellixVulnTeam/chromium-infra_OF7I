@@ -11,12 +11,10 @@ import (
 	"os"
 
 	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
 	"infra/cros/cmd/crosgrep/internal/cmds"
-	"infra/cros/karte/site"
 )
 
 // NewApplication returns an application object for the crosgrep command line client.
@@ -30,10 +28,8 @@ func newApplication() *cli.Application {
 			cmds.ListAllTasks,
 			cmds.RandTask,
 			cmds.StatusLog,
-			subcommands.Section("Auth"),
-			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
-			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
-			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
+			// TODO(gregorynisbet): Add authentication subcommands here.
+			// Specifically add the commands "login", "logout", and "whoami".
 		},
 	}
 }
