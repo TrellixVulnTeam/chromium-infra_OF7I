@@ -31,10 +31,12 @@ import (
 )
 
 func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error) {
+	logging.Infof(ctx, "reading build input")
 	data, err := ioutil.ReadAll(input)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to read build input").Err()
 	}
+	logging.Infof(ctx, "unmarshalling build input")
 	build := &buildbucketpb.Build{}
 	if err = proto.Unmarshal(data, build); err != nil {
 		return nil, errors.Annotate(err, "failed to unmarshall build").Err()
@@ -48,6 +50,7 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 		return nil, err
 	}
 
+	logging.Infof(ctx, "creating bootstrapper")
 	bootstrapper, err := bootstrap.NewBootstrapper(build)
 	if err != nil {
 		return nil, err
@@ -59,12 +62,14 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 	// Get the arguments for the command
 	group.Go(func() error {
-		recipeClient, err := cipd.NewClient(ectx, cipdRoot)
+		logging.Infof(ctx, "creating CIPD client")
+		cipdClient, err := cipd.NewClient(ectx, cipdRoot)
 		if err != nil {
 			return err
 		}
 
-		cmd, err = bootstrapper.SetupExe(ectx, recipeClient)
+		logging.Infof(ctx, "setting up bootstrapped executable")
+		cmd, err = bootstrapper.SetupExe(ectx, cipdClient)
 		if err != nil {
 			return err
 		}
@@ -78,11 +83,13 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 	// Get the input for the command
 	group.Go(func() error {
+		logging.Infof(ctx, "computing bootstrapped properties")
 		properties, err := bootstrapper.ComputeBootstrappedProperties(ectx, gitiles.NewClient(ectx))
 		if err != nil {
 			return err
 		}
 
+		logging.Infof(ctx, "marshalling bootstrapped build input")
 		build.Input.Properties = properties
 		recipeInput, err = proto.Marshal(build)
 		return errors.Annotate(err, "failed to marshall bootstrapped build input: <%s>", build).Err()
@@ -108,6 +115,7 @@ func execute(ctx context.Context) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	logging.Infof(ctx, "executing %s", cmd.Args)
 	return cmd.Run()
 }
 

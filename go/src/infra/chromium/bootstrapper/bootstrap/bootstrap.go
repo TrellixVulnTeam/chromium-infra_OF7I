@@ -14,6 +14,7 @@ import (
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/luciexe/exe"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -85,12 +86,14 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 	}
 	modProperties.Commits = append(modProperties.Commits, configCommit)
 
+	logging.Infof(ctx, "downloading %s/%s/+/%s", configCommit.Host, configCommit.Project, configCommit.Ref, configCommit.Id)
 	contents, err := gitilesClient.DownloadFile(ctx, configCommit.Host, configCommit.Project, configCommit.Id, b.properties.PropertiesFile)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to get %s/%s/+/%s/%s", configCommit.Host, configCommit.Project, configCommit.Id, b.properties.PropertiesFile).Err()
 	}
 
 	properties := &structpb.Struct{}
+	logging.Infof(ctx, "unmarshalling builder properties file")
 	if err := protojson.Unmarshal([]byte(contents), properties); err != nil {
 		return nil, errors.Annotate(err, "failed to unmarshall builder properties file: {%s}", contents).Err()
 	}
@@ -105,6 +108,7 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 
 func (b *Bootstrapper) populateCommitId(ctx context.Context, gitilesClient *gitiles.Client, commit *buildbucketpb.GitilesCommit) error {
 	if commit.Id == "" {
+		logging.Infof(ctx, "getting revision for %s/%s/+/%s", commit.Host, commit.Project, commit.Ref)
 		revision, err := gitilesClient.FetchLatestRevision(ctx, commit.Host, commit.Project, commit.Ref)
 		if err != nil {
 			return err
@@ -121,6 +125,7 @@ func matchGitilesCommit(commit *buildbucketpb.GitilesCommit, repo *GitilesRepo) 
 // SetupExe fetches the CIPD bundle identified by the exe field of the build's
 // $bootstrap property and returns the command for invoking the executable.
 func (b *Bootstrapper) SetupExe(ctx context.Context, cipdClient *cipd.Client) ([]string, error) {
+	logging.Infof(ctx, "downloading CIPD package %s@%s", b.properties.Exe.CipdPackage, b.properties.Exe.CipdVersion)
 	packagePath, err := cipdClient.DownloadPackage(ctx, b.properties.Exe.CipdPackage, b.properties.Exe.CipdVersion)
 	if err != nil {
 		return nil, err
