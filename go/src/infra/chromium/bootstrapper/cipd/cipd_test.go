@@ -20,7 +20,7 @@ import (
 
 type fakeCipdClient struct {
 	resolveVersion func(context.Context, string, string) (common.Pin, error)
-	ensurePackages func(context.Context, common.PinSliceBySubdir, cipd.ParanoidMode, int, bool) (cipd.ActionMap, error)
+	ensurePackages func(context.Context, common.PinSliceBySubdir, cipd.ParanoidMode, bool) (cipd.ActionMap, error)
 }
 
 func (f *fakeCipdClient) ResolveVersion(ctx context.Context, packageName, version string) (common.Pin, error) {
@@ -34,10 +34,10 @@ func (f *fakeCipdClient) ResolveVersion(ctx context.Context, packageName, versio
 	}, nil
 }
 
-func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error) {
+func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
 	ensurePackages := f.ensurePackages
 	if ensurePackages != nil {
-		return ensurePackages(ctx, packages, paranoia, maxThreads, dryRun)
+		return ensurePackages(ctx, packages, paranoia, dryRun)
 	}
 	return nil, nil
 }
@@ -45,7 +45,7 @@ func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.Pin
 func factoryForRecipesCfg(contents string) CipdClientFactory {
 	return func(ctx context.Context, cipdRoot string) (CipdClient, error) {
 		return &fakeCipdClient{
-			ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error) {
+			ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
 				layout := map[string]string{}
 				for subdir := range packages {
 					layout[strings.Join([]string{subdir, "infra", "config", "recipes.cfg"}, "/")] = contents
@@ -115,7 +115,7 @@ func TestClient(t *testing.T) {
 
 			Convey("fails if ensuring package fails", func() {
 				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error) {
+					return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
 						return nil, errors.New("test EnsurePackages failure")
 					}}, nil
 				}

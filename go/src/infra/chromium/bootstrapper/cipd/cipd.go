@@ -23,7 +23,7 @@ type Client struct {
 // CipdClient provides a subset of the cipd.Client interface
 type CipdClient interface {
 	ResolveVersion(ctx context.Context, packageName, version string) (common.Pin, error)
-	EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error)
+	EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error)
 }
 
 // Enforce that the CIPD client interface is a subset of the cipd.Client
@@ -76,7 +76,7 @@ func (c *Client) DownloadPackage(ctx context.Context, name, version string) (str
 		return "", err
 	}
 	packages := common.PinSliceBySubdir{name: common.PinSlice{pin}}
-	if _, err := c.client.EnsurePackages(ctx, packages, cipd.CheckIntegrity, 0, false); err != nil {
+	if _, err := c.client.EnsurePackages(ctx, packages, cipd.CheckIntegrity, false); err != nil {
 		return "", err
 	}
 	return filepath.Join(c.cipdRoot, name), nil

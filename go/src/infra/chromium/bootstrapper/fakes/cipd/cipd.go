@@ -81,7 +81,7 @@ func (c *Client) ResolveVersion(ctx context.Context, packageName, version string
 	return common.Pin{PackageName: packageName, InstanceID: instanceId}, nil
 }
 
-func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, maxThreads int, dryRun bool) (cipd.ActionMap, error) {
+func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
 	if err := paranoia.Validate(); err != nil {
 		return nil, err
 	}

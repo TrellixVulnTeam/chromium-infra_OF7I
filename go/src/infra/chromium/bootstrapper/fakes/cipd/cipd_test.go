@@ -101,7 +101,7 @@ func TestCipdClient(t *testing.T) {
 			Convey("succeeds by default", func() {
 				client, _ := Factory(nil)(ctx, cipdRoot)
 
-				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, 0, false)
+				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, false)
 
 				So(err, ShouldBeNil)
 			})
@@ -111,7 +111,7 @@ func TestCipdClient(t *testing.T) {
 					"fake-package": nil,
 				})(ctx, cipdRoot)
 
-				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, 0, false)
+				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, false)
 
 				So(err, ShouldErrLike, "unknown package")
 			})
@@ -125,7 +125,7 @@ func TestCipdClient(t *testing.T) {
 					},
 				})(ctx, cipdRoot)
 
-				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, 0, false)
+				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, false)
 
 				So(err, ShouldErrLike, "unknown instance ID")
 			})
@@ -144,7 +144,7 @@ func TestCipdClient(t *testing.T) {
 					},
 				})(ctx, cipdRoot)
 
-				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, 0, false)
+				_, err := client.EnsurePackages(ctx, pkgs, cipd.CheckIntegrity, false)
 
 				So(err, ShouldBeNil)
 				layout := collect(cipdRoot, "fake-subdir")
