@@ -507,7 +507,7 @@ import:
   version: master
   repo: https://go.googlesource.com/xerrors.git
 - package: github.com/bazelbuild/remote-apis
-  version: upstream/master
+  version: upstream/main
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - package: github.com/antlr/antlr4
   version: master
