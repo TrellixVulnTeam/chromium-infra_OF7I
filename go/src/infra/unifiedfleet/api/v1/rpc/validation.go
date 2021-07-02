@@ -56,7 +56,6 @@ var (
 	EmptyRackName                  string = "Invalid input - Rack name cannot be empty."
 	FilterFormat                   string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
 	InvalidFilterFormat            string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
-	IPV4Format                     string = "Invalid input - %s pattern should be an ipv4 address"
 )
 
 var (
@@ -88,9 +87,6 @@ var schedulingUnitRegex = regexp.MustCompile(`schedulingunits\.*`)
 
 // matches "cachingservices/{hostname or ipv4}"
 var cachingServiceRegex = regexp.MustCompile(`cachingservices/[a-zA-Z0-9-.]{1,63}$`)
-
-// Ipv4Regex matches an ipv4 address
-var Ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)

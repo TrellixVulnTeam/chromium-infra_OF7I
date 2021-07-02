@@ -1712,7 +1712,7 @@ Adds a CachingService by reading a JSON file input.
 shivas add cachingService -f CachingService.csv
 Adds a CachingService by reading a MCSV file input.
 
-shivas add cachingService -name {name} -port {portnumber} -subnets "subnet1,subnet2" -primary {primary ipv4} -state {state}
+shivas add cachingService -name {name} -port {portnumber} -subnets "subnet1,subnet2" -primary {primary hostname} -state {state}
 Adds a CachingService by specifying several attributes directly.`
 
 	// UpdateCachingServiceLongDesc long description for UpdateCachingServiceCmd

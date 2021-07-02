@@ -177,14 +177,17 @@ func (c *addCachingService) validateArgs() error {
 		if c.name == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if !ufsAPI.Ipv4Regex.MatchString(c.name) {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' must be an ipv4 address.")
+		if !ufsAPI.HostnameRegex.MatchString(c.name) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' must be a hostname or ipv4 address.")
 		}
-		if c.primary != "" && !ufsAPI.Ipv4Regex.MatchString(c.primary) {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-primary' must be an ipv4 address.")
+		if len(c.subnets) == 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-subnets' is required.")
 		}
-		if c.secondary != "" && !ufsAPI.Ipv4Regex.MatchString(c.secondary) {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-secondary' must be an ipv4 address.")
+		if !ufsAPI.HostnameRegex.MatchString(c.primary) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-primary' must be a hostname or ipv4 address.")
+		}
+		if !ufsAPI.HostnameRegex.MatchString(c.secondary) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-secondary' must be a hostname or ipv4 address.")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state name, please check help info for '-state'.", c.state)
@@ -214,8 +217,8 @@ func (c *addCachingService) parseMCSV() ([]*ufspb.CachingService, error) {
 			value := rec[i]
 			switch name {
 			case "name":
-				if !ufsAPI.Ipv4Regex.MatchString(value) {
-					return nil, fmt.Errorf("Error in line %d.\nFailed to parse name(must be an ipv4 address) %s", i, value)
+				if !ufsAPI.HostnameRegex.MatchString(value) {
+					return nil, fmt.Errorf("Error in line %d.\nFailed to parse name(must be a hostname or ipv4 address) %s", i, value)
 				}
 				cs.Name = value
 			case "port":
@@ -227,13 +230,13 @@ func (c *addCachingService) parseMCSV() ([]*ufspb.CachingService, error) {
 			case "subnets":
 				cs.ServingSubnets = strings.Fields(value)
 			case "primary":
-				if !ufsAPI.Ipv4Regex.MatchString(value) {
-					return nil, fmt.Errorf("Error in line %d.\nFailed to parse primary(must be an ipv4 address) %s", i, value)
+				if !ufsAPI.HostnameRegex.MatchString(value) {
+					return nil, fmt.Errorf("Error in line %d.\nFailed to parse primary(must be a hostname or ipv4 address) %s", i, value)
 				}
 				cs.PrimaryNode = value
 			case "secondary":
-				if !ufsAPI.Ipv4Regex.MatchString(value) {
-					return nil, fmt.Errorf("Error in line %d.\nFailed to parse secondary(must be an ipv4 address) %s", i, value)
+				if !ufsAPI.HostnameRegex.MatchString(value) {
+					return nil, fmt.Errorf("Error in line %d.\nFailed to parse secondary(must be a hostname or ipv4 address) %s", i, value)
 				}
 				cs.SecondaryNode = value
 			case "state":
