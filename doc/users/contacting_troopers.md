@@ -36,6 +36,11 @@ handled by the Systems team, please follow their
 For fastest response, please use the provided templates:
 
 *   **[General requests]**: for most cases.
+*   Permission/ACL requests:
+    *   [Git repos]: file a bug at [go/fix-chrome-git] for read/write access to
+        specific git repos
+    *   [Google Storage, CIPD, other]: chops-security team will handle these
+        requests
 *   [Machine restart requests]: if a machine appears to be offline and you
     know that it's managed by the Labs team.
 *   [Mobile device restart requests]: if a mobile device appears to be offline
@@ -108,8 +113,11 @@ Common Non-Trooper Requests:
 [chops-hangout channel]: http://go/chops-hangout
 [Machine restart requests]: http://go/chrome-labs-fixit-bug
 [Mobile device restart requests]: http://go/chrome-labs-fixit-bug
+[Git repos]: http://go/fix-chrome-git
+[Google Storage, CIPD, other]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google&components=Infra%3ESecurity&summary=%5BBrief%20description%20of%20problem%5D&comment=Please%20provide%20the%20details%20for%20your%20request%20here.%0A%0ASet%20Pri-0%20iff%20it%20requires%20immediate%20attention,%20Pri-1%20if%20resolution%20within%20a%20few%20hours%20is%20acceptable,%20and%20Pri-2%20if%20it%20just%20needs%20to%20be%20handled%20today.
 [General requests]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google,Infra-Troopers&summary=%5BBrief%20description%20of%20problem%5D&comment=Please%20provide%20the%20details%20for%20your%20request%20here.%0A%0ASet%20Pri-0%20iff%20it%20requires%20immediate%20attention,%20Pri-1%20if%20resolution%20within%20a%20few%20hours%20is%20acceptable,%20and%20Pri-2%20if%20it%20just%20needs%20to%20be%20handled%20today.
 [current trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=Infra%3DTroopers+-has%3Aowner+OR+owner%3Ame+Infra%3DTroopers+OR+Infra%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
 [DevX trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=DevX%3DTroopers+-has%3Aowner+OR+owner%3Ame+DevX%3DTroopers+OR+DevX%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
 [Foundation trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=Foundation%3DTroopers+-has%3Aowner+OR+owner%3Ame+Foundation%3DTroopers+OR+Foundation%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
 [go/bug-a-trooper]: http://go/bug-a-trooper
+[go/fix-chrome-git]: http://go/fix-chrome-git
