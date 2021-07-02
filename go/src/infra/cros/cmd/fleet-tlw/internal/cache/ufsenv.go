@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/url"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -49,21 +47,6 @@ func (e *ufsEnv) Subnets() []Subnet {
 		log.Printf("UFSEnv: fallback to cached data due to refresh failure: %s", err)
 	}
 	return e.subnets
-}
-
-func (e *ufsEnv) IsBackendHealthy(s string) bool {
-	// We registered all devservers to UFS, so we still need to check the server
-	// health.
-	// TODO(guocb): We can remove this function after we remove all devservers
-	// from UFS.
-
-	// We think the backend is healthy as long as it responds.
-	// Due to restricted subnets, TLW may not access caching server via HTTP.
-	// Instead we use SSH and issue a `curl` command remotely.
-	u, _ := url.Parse(s) // `s` is a verified URL string, so no worries about parsing error.
-	host, _, _ := net.SplitHostPort(u.Host)
-	err := exec.Command("ssh", host, "curl", s).Run()
-	return err == nil
 }
 
 func (e *ufsEnv) refreshSubnets() error {

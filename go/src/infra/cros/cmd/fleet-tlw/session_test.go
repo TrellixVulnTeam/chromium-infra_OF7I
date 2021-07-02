@@ -123,7 +123,3 @@ type fakeEnv struct{}
 func (fakeEnv) Subnets() []cache.Subnet {
 	return nil
 }
-
-func (fakeEnv) IsBackendHealthy(string) bool {
-	return false
-}
