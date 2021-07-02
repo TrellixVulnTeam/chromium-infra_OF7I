@@ -9436,7 +9436,7 @@ type CreateCachingServiceRequest struct {
 	// The ID to use for the CachingService, which will become the final component of
 	// the CachingService's resource name.
 	//
-	// Pattern is {ipv4} address.
+	// Pattern is {hostname or ipv4}.
 	CachingServiceId string `protobuf:"bytes,2,opt,name=cachingService_id,json=cachingServiceId,proto3" json:"cachingService_id,omitempty"`
 }
 
@@ -9549,7 +9549,7 @@ type GetCachingServiceRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// The name of the CachingService to retrieve.
-	// Pattern is 'cachingservices/{ipv4}'
+	// Pattern is 'cachingservices/{hostname or ipv4}'
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
@@ -9739,7 +9739,7 @@ type DeleteCachingServiceRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// The name of the CachingService to delete.
-	// Pattern is 'cachingservices/{ipv4}'
+	// Pattern is 'cachingservices/{hostname or ipv4}'
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 

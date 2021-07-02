@@ -150,7 +150,7 @@ func TestUpdateCachingService(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
-		Convey("Update CachingService - Invalid input invalid name ipv4", func() {
+		Convey("Update CachingService - Invalid input invalid name", func() {
 			cs := mockCachingService("a.b)7&")
 			req := &ufsAPI.UpdateCachingServiceRequest{
 				CachingService: cs,
@@ -163,24 +163,24 @@ func TestUpdateCachingService(t *testing.T) {
 
 		Convey("Update new CachingService with invalid primary node", func() {
 			cs := mockCachingService("128.0.0.1")
-			cs.PrimaryNode = "128.0.0.856"
+			cs.PrimaryNode = "invalid name"
 			req := &ufsAPI.UpdateCachingServiceRequest{
 				CachingService: cs,
 			}
 			_, err := tf.Fleet.UpdateCachingService(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "primaryNode"))
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidHostname)
 		})
 
 		Convey("Update new CachingService with invalid secondary node", func() {
 			cs := mockCachingService("129.0.0.1")
-			cs.SecondaryNode = "129.0.0.856"
+			cs.SecondaryNode = "invalid name"
 			req := &ufsAPI.UpdateCachingServiceRequest{
 				CachingService: cs,
 			}
 			_, err := tf.Fleet.UpdateCachingService(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, fmt.Sprintf(ufsAPI.IPV4Format, "secondaryNode"))
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidHostname)
 		})
 
 	})

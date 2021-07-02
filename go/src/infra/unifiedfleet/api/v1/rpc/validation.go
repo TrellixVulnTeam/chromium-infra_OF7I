@@ -36,7 +36,7 @@ var (
 	MachineNameFormat              string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                 string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat       string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
-	CachingServiceNameFormat       string = "Invalid input - Entity Name pattern should be cachingservices/{ipv4}."
+	CachingServiceNameFormat       string = "Invalid input - Entity Name pattern should be cachingservices/{hostname or ipv4}."
 	MachineLSENameFormat           string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
 	MachineLSEDeploymentNameFormat string = "Invalid input - Entity Name pattern should be machineLSEDeployments/{name}."
 	VMNameFormat                   string = "Invalid input - Entity Name pattern should be vms/{vm}."
@@ -86,8 +86,8 @@ var assetRegex = regexp.MustCompile(`assets\.*`)
 var machineLSEDeploymentRegex = regexp.MustCompile(`machineLSEDeployments\.*`)
 var schedulingUnitRegex = regexp.MustCompile(`schedulingunits\.*`)
 
-// matches "cachingservices/{ipv4}"
-var cachingServiceRegex = regexp.MustCompile(`cachingservices/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`)
+// matches "cachingservices/{hostname or ipv4}"
+var cachingServiceRegex = regexp.MustCompile(`cachingservices/[a-zA-Z0-9-.]{1,63}$`)
 
 // Ipv4Regex matches an ipv4 address
 var Ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
@@ -1183,17 +1183,30 @@ func (r *ListMachineLSEDeploymentsRequest) Validate() error {
 
 // Validate validates input requests of CreateCachingService.
 func (r *CreateCachingServiceRequest) Validate() error {
-	switch {
-	case r.CachingService == nil:
+	if r.CachingService == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
-	case strings.TrimSpace(r.CachingServiceId) == "":
+	}
+	id := strings.TrimSpace(r.CachingServiceId)
+	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
-	case len(r.GetCachingService().GetServingSubnets()) == 0:
+	}
+	if !HostnameRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("name: %s", InvalidHostname))
+	}
+	if len(r.GetCachingService().GetServingSubnets()) == 0 {
 		return status.Error(codes.InvalidArgument, "Empty serving subnets.")
-	case r.GetCachingService().GetPrimaryNode() == "":
+	}
+	switch n := r.GetCachingService().GetPrimaryNode(); {
+	case n == "":
 		return status.Errorf(codes.InvalidArgument, "Empty primary node name.")
-	case r.GetCachingService().GetSecondaryNode() == "":
+	case !HostnameRegex.MatchString(n):
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("primaryNode: %s", InvalidHostname))
+	}
+	switch n := r.GetCachingService().GetSecondaryNode(); {
+	case n == "":
 		return status.Errorf(codes.InvalidArgument, "Empty secondary node name.")
+	case !HostnameRegex.MatchString(n):
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("secondaryNode: %s", InvalidHostname))
 	}
 	return nil
 }
@@ -1210,11 +1223,12 @@ func (r *UpdateCachingServiceRequest) Validate() error {
 	if !cachingServiceRegex.MatchString(name) {
 		return status.Errorf(codes.InvalidArgument, CachingServiceNameFormat)
 	}
-	if r.GetCachingService().GetPrimaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetPrimaryNode()) {
-		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "primaryNode"))
+
+	if n := r.GetCachingService().GetPrimaryNode(); n != "" && !HostnameRegex.MatchString(n) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("primaryNode: %s", InvalidHostname))
 	}
-	if r.GetCachingService().GetSecondaryNode() != "" && !Ipv4Regex.MatchString(r.GetCachingService().GetSecondaryNode()) {
-		return status.Errorf(codes.InvalidArgument, fmt.Sprintf(IPV4Format, "secondaryNode"))
+	if n := r.GetCachingService().GetSecondaryNode(); n != "" && !HostnameRegex.MatchString(n) {
+		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("secondaryNode: %s", InvalidHostname))
 	}
 	return nil
 }

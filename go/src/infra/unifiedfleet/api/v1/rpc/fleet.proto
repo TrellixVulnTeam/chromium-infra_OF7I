@@ -2068,7 +2068,7 @@ message CreateCachingServiceRequest {
   // The ID to use for the CachingService, which will become the final component of
   // the CachingService's resource name.
   //
-  // Pattern is {ipv4} address.
+  // Pattern is {hostname or ipv4}.
    string cachingService_id = 2;
 }
 
@@ -2082,7 +2082,7 @@ message UpdateCachingServiceRequest {
 
 message GetCachingServiceRequest {
   // The name of the CachingService to retrieve.
-  // Pattern is 'cachingservices/{ipv4}'
+  // Pattern is 'cachingservices/{hostname or ipv4}'
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/CachingService" }
@@ -2122,7 +2122,7 @@ message ListCachingServicesResponse {
 
 message DeleteCachingServiceRequest {
   // The name of the CachingService to delete.
-  // Pattern is 'cachingservices/{ipv4}'
+  // Pattern is 'cachingservices/{hostname or ipv4}'
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/CachingService" }
