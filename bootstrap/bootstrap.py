@@ -197,22 +197,32 @@ def activate_env(env, manifest, quiet=False):
     shutil.rmtree(env, ignore_errors=True)
     cur_manifest = None
 
+  virtualenv_dir = os.path.join(os.path.dirname(__file__), 'virtualenv-ext')
+  os.environ.pop('PYTHONPATH', None)
+  virtualenv_py = os.path.join(virtualenv_dir, 'virtualenv.py')
+
+  # This script itself is run in a virtualenv, and weird behavior can
+  # result if our version of virtualenv is of a different version than
+  # virtualenv-ext/. To avoid this, execute virtualenv.py under the real
+  # Python interpreter.
+  real_python = sys.executable
+  if hasattr(sys, 'real_prefix'):
+    real_python = sys.real_prefix
+    if not real_python.endswith('bin'):
+      real_python = os.path.join(real_python, 'bin')
+    real_python = os.path.join(real_python, 'python')
+    if sys.platform.startswith('win'):
+      real_python += '.exe'
+
   if cur_manifest is None:
     check_pydistutils()
 
     if not quiet:
       print '  Building new environment'
-    # Add in bundled virtualenv lib
-    sys.path.insert(0,
-        os.path.join(os.path.dirname(__file__), 'virtualenv-ext'))
-    import virtualenv  # pylint: disable=F0401
-    virtualenv.create_environment(
-        env, search_dirs=virtualenv.file_search_dirs())
+    subprocess.check_call([real_python, virtualenv_py, env, '--no-download'])
 
   if not quiet:
     print '  Activating environment'
-  # Ensure hermeticity during activation.
-  os.environ.pop('PYTHONPATH', None)
   bin_dir = 'Scripts' if sys.platform.startswith('win') else 'bin'
   activate_this = os.path.join(env, bin_dir, 'activate_this.py')
   execfile(activate_this, dict(__file__=activate_this))
@@ -223,7 +233,7 @@ def activate_env(env, manifest, quiet=False):
       print '  Installing deps'
       print_deps(deps, indent=2, with_implicit=False)
     install(deps)
-    virtualenv.make_environment_relocatable(env)
+    subprocess.check_call([real_python, virtualenv_py, env, '--relocatable'])
 
     # Write the original deps (including metadata) as manifest.
     with open(manifest_path, 'wb') as f:
