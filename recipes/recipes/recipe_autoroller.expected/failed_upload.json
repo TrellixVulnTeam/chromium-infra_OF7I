@@ -67,7 +67,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/recipe_autoroller/build",
@@ -155,7 +155,9 @@
     "cmd": [
       "git",
       "new-branch",
-      "roll"
+      "roll",
+      "--upstream",
+      "origin/main"
     ],
     "cwd": "[CACHE]/builder/recipe_autoroller/build",
     "env_suffixes": {

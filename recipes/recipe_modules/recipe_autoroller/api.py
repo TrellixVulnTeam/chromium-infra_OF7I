@@ -188,7 +188,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     # like chromium/src.
     workdir = self.m.path['cache'].join(
         'builder', 'recipe_autoroller', project_id)
-    self.m.git.checkout(project_url, dir_path=workdir, submodules=False)
+    self.m.git.checkout(
+        project_url, dir_path=workdir, submodules=False, ref='main')
 
     with self.m.context(cwd=workdir):
       # On LUCI user.email is already configured to match that of task service
@@ -201,7 +202,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
       # git cl upload cannot work with detached HEAD, it requires a branch.
       with self.m.depot_tools.on_path():
-        self.m.git('new-branch', 'roll')
+        self.m.git('new-branch', 'roll', '--upstream', 'origin/main')
 
     return workdir
 
