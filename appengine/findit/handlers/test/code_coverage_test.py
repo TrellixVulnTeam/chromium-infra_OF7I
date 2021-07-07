@@ -1360,6 +1360,31 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
+  def testServeFullRepo_ReferencedMode(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = 'aaaaa'
+    path = '//dir/'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(
+        builder='linux-code-coverage_referenced')
+    report.put()
+
+    dir_coverage_data = _CreateSampleDirectoryCoverageData(
+        builder='linux-code-coverage_referenced')
+    dir_coverage_data.put()
+
+    request_url = (
+        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '&path=%s&platform=%s&reference_mode=true') % (host, project, ref,
+                                                       revision, path, platform)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
   @mock.patch.object(code_coverage, '_GetFileContentFromGs')
   def testServeFullRepoFileView(self, mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)

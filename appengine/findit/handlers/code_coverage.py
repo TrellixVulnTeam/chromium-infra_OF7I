@@ -1389,9 +1389,11 @@ class ServeCodeCoverageData(BaseHandler):
     ref = self.request.get('ref', default_config['ref'])
     revision = self.request.get('revision')
     platform = self.request.get('platform', default_config['platform'])
-    list_reports = self.request.get('list_reports', "False").lower() == 'true'
+    list_reports = self.request.get('list_reports', 'False').lower() == 'true'
     path = self.request.get('path')
     test_suite_type = self.request.get('test_suite_type', 'any')
+    reference_mode = self.request.get('reference_mode',
+                                      'False').lower() == 'true'
 
     logging.info('host=%s', host)
     logging.info('project=%s', project)
@@ -1414,6 +1416,8 @@ class ServeCodeCoverageData(BaseHandler):
     builder = platform_info_map[platform]['builder']
     if test_suite_type == 'unit':
       builder += '_unit'
+    if reference_mode:
+      builder += '_referenced'
     warning = platform_info_map[platform].get('warning')
 
     if list_reports:
@@ -1608,6 +1612,8 @@ class ServeCodeCoverageData(BaseHandler):
                 data_type,
             'test_suite_type':
                 test_suite_type,
+            'reference_mode':
+                reference_mode,
             'path_parts':
                 path_parts,
             'platform_select':

@@ -148,6 +148,16 @@
             <option value=">>">By Component</option>
           {% endif %}
           </select>
+          Include Commits Since:
+          <select id = "reference_mode_select" name = "reference_mode" onchange="switchPlatform()">
+            {% if reference_mode == False %}
+              <option value = "False" selected="selected">The beginning of time</option>
+              <option value = "True" >The beginning of 2021</option>
+            {% else %}
+            <option value = "False">The beginning of time</option>
+            <option value = "True" selected="selected">The beginning of 2021</option>
+            {% endif %}
+          </select>
           {% for name, value in platform_select.params.iteritems() %}
             <input type="hidden" name="{{name}}" value="{{value}}"/>
           {% endfor %}
