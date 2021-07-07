@@ -1,8 +1,8 @@
 hash: 03b12a0584cd951ae548ee3f3c93df07e441fc7341af9602e0d345925f5e45ae
-updated: 2021-07-02T13:49:10.177723259+09:00
+updated: 2021-07-07T11:01:09.990743903+09:00
 imports:
 - name: cloud.google.com/go
-  version: 16b006a877024c80b692613547c8f36c896ebd30
+  version: 35d98c8cad3a71400c2b47218a0fb9c80154e613
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigquery
@@ -38,7 +38,7 @@ imports:
   version: 3e385366f152e99adda5ab5e4857b1ab221ba2fe
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: f9e6595d5634ac4d4221ba6dca9f5c2e64114b3f
+  version: d965bf95d0af9d88d90e9723aee6b332dc3ef93e
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -67,7 +67,7 @@ imports:
   version: 3b82fb7d186719faeedd0c2864f868c74fbf79a1
   repo: https://chromium.googlesource.com/external/github.com/cespare/xxhash.git
 - name: github.com/chromedp/cdproto
-  version: 810000e4a4fc1bf7f37ba9d92dc8988dc38a3390
+  version: 2bc298e8be7fa0d3f87c73b4892c375515a9ff3d
   repo: https://chromium.googlesource.com/external/github.com/chromedp/cdproto.git
   subpackages:
   - '...'
@@ -99,7 +99,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/dgraph-io/badger/v3
-  version: aaab25305b94b57e461b09d5dc9c399b1bd6635f
+  version: 725913b83470967abd97e850331d7ebe4926fa79
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
 - name: github.com/dgraph-io/ristretto
   version: 01b9f37dd0fd453225e042d6f3a27cd14f252cd0
@@ -111,7 +111,7 @@ imports:
   - api/types
   - client
 - name: github.com/dustin/go-humanize
-  version: afde56e7acacd811f6c94228c2c61af2b0e93158
+  version: 249ff6c91207eb7d29cdd84d01f921def792922a
   repo: https://chromium.googlesource.com/external/github.com/dustin/go-humanize.git
 - name: github.com/emirpasic/gods
   version: 79df803e554cab06f835fb729064282b2fd4cc99
@@ -131,7 +131,7 @@ imports:
   version: 21f789cd2353b7ac81538f41426e9cfd2b1fcc87
   repo: https://chromium.googlesource.com/external/github.com/go-sql-driver/mysql.git
 - name: github.com/gogo/protobuf
-  version: b03c65ea87cdc3521ede29f62fe3ce239267c1bc
+  version: 226206f39bd7276e88ec684ea0028c18ec2c91ae
   repo: https://chromium.googlesource.com/external/github.com/gogo/protobuf.git
 - name: github.com/golang/glog
   version: 424d2337a5299a465c8a8228fc3ba4b1c28337a2
@@ -369,7 +369,7 @@ imports:
   version: 5dd12d0cfe7f152f80558d591504ce685299311e
   repo: https://chromium.googlesource.com/external/github.com/pkg/errors.git
 - name: github.com/pkg/sftp
-  version: 35cb1f0616badf0f76e62c1e515ed744e47dadfa
+  version: eaa697cc218a359c1922adde90c6696f134ff104
   repo: https://chromium.googlesource.com/external/github.com/pkg/sftp.git
 - name: github.com/pmezard/go-difflib
   version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
@@ -411,7 +411,7 @@ imports:
   subpackages:
   - convey
 - name: github.com/spf13/cobra
-  version: 07861c800d0779867f821501b892e635660847d2
+  version: de187e874d1ca382320088f8f6d76333408e5c2e
   repo: https://chromium.googlesource.com/external/github.com/spf13/cobra.git
 - name: github.com/spf13/pflag
   version: d5e0c0615acee7028e1e2740a11102313be88de1
@@ -527,7 +527,7 @@ imports:
   version: 38a9dc6acbc6efd7758b7376c52f89090df822bd
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 20dafe5d6055a2382de349face79f568e574d9fd
+  version: 7edcfe523185159315c58e134f5589ce877b4662
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -548,7 +548,7 @@ imports:
   subpackages:
   - stat
 - name: google.golang.org/api
-  version: 4929d8cd5c882054c09a1449ac909245343f4bb0
+  version: dcca33541c9c7d049feb34e82432d9c9cc566ef9
   repo: https://chromium.googlesource.com/external/github.com/google/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -584,7 +584,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 52546c5d89b7e362064f2a21c9d10803b44af15f
+  version: dd589923e1a17f5cc7c667359ae12d56bc1d3113
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
