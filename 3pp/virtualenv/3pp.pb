@@ -7,8 +7,11 @@ create {
         val: "16.7.10"
       }
     }
+    patch_version: "chromium.1"
   }
-  build {}
+  build {
+    dep: "build_support/pip_bootstrap"
+  }
 }
 
 upload {
