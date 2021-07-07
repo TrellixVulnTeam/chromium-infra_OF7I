@@ -7,6 +7,7 @@ create {
     }
     patch_version: "chromium.1"
     unpack_archive: true
+    cpe_base_address: "cpe:/a:libffi_project:libffi"
   }
   build {
     tool: "tools/autoconf"
