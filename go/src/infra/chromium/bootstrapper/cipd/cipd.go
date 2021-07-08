@@ -8,6 +8,7 @@ import (
 	"context"
 	"path/filepath"
 
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
 	"go.chromium.org/luci/common/errors"
@@ -52,9 +53,14 @@ func NewClient(ctx context.Context, cipdRoot string) (*Client, error) {
 	factory, _ := ctx.Value(&ctxKey).(CipdClientFactory)
 	if factory == nil {
 		factory = func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+			authClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, auth.Options{}).Client()
+			if err != nil {
+				return nil, errors.Annotate(err, "could not initialize auth client").Err()
+			}
 			return cipd.NewClient(cipd.ClientOptions{
-				ServiceURL: chromeinfra.CIPDServiceURL,
-				Root:       cipdRoot,
+				ServiceURL:          chromeinfra.CIPDServiceURL,
+				Root:                cipdRoot,
+				AuthenticatedClient: authClient,
 			})
 		}
 	}
