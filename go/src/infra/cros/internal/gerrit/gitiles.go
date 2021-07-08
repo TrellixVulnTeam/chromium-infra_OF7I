@@ -77,7 +77,7 @@ func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, hos
 	return contents.Contents, err
 }
 
-// DownloadFileFromGitiles downloads a file from Gitiles to a specified path.
+// DownloadFileFromGitilesToPath downloads a file from Gitiles to a specified path.
 func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Client, host, project, ref, path, saveToPath string) error {
 	contents, err := DownloadFileFromGitiles(ctx, authedClient, host, project, ref, path)
 	if err != nil {

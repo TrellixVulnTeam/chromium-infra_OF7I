@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 	igerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/pointless"
+	"infra/cros/internal/shared"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -134,6 +136,11 @@ type checkBuild struct {
 }
 
 func (c *checkBuild) readInput() (*testplans_pb.PointlessBuildCheckRequest, error) {
+	if len(c.inputBinaryPb) == 0 && len(c.inputJSON) == 0 {
+		return nil, errors.New("Build check must be run with either --input_json or --input_binary_pb; got neither")
+	} else if len(c.inputBinaryPb) > 0 && len(c.inputJSON) > 0 {
+		return nil, errors.New("Build check must be run with either --input_json or --input_binary_pb; got both")
+	}
 	// use input_binary_pb if it's specified
 	if len(c.inputBinaryPb) > 0 {
 		inputPb, err := ioutil.ReadFile(c.inputBinaryPb)
@@ -170,12 +177,16 @@ func (c *checkBuild) fetchConfigFromGitiles() (*testplans_pb.BuildIrrelevanceCfg
 	if err != nil {
 		return nil, err
 	}
-	configData, err := igerrit.DownloadFileFromGitiles(ctx, authedClient,
-		"chrome-internal.googlesource.com",
-		"chromeos/infra/config",
-		"main",
-		buildIrrelevanceConfigPath)
-	if err != nil {
+	var configData string
+	if err = shared.DoWithRetry(ctx, shared.DefaultOpts, func() error {
+		configData, err = igerrit.DownloadFileFromGitiles(ctx, authedClient,
+			"chrome-internal.googlesource.com",
+			"chromeos/infra/config",
+			"main",
+			buildIrrelevanceConfigPath,
+		)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	buildIrrelevanceConfig := &testplans_pb.BuildIrrelevanceCfg{}
