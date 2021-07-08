@@ -20,5 +20,5 @@ func (c *CronServerImpl) TriggerCronJob(ctx context.Context, job *api.TriggerCro
 	if err := job.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, TriggerJob(job.JobName)
+	return &empty.Empty{}, TriggerJob(job.JobName)
 }
