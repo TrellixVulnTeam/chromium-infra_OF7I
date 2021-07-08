@@ -4,13 +4,6 @@
     "name": "ensure windows adk present"
   },
   {
-    "cmd": [],
-    "name": "ensure windows adk present.ensure windows adk present",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd.bat",
       "ensure",
@@ -24,9 +17,9 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure windows adk present.ensure_installed",
+    "name": "ensure windows adk present.ensure_installed",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
@@ -50,16 +43,16 @@
       "+"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure windows adk present.Install ADK",
+    "name": "ensure windows adk present.Install ADK",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "ensure windows adk present.ensure windows adk present.Read install logs",
+    "name": "ensure windows adk present.Read install logs",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@[CLEANUP]\\logs\\adk\\adk.log@i007: Exit code: 0x0@@@",
       "@@@STEP_LOG_END@[CLEANUP]\\logs\\adk\\adk.log@@@"
     ]
@@ -75,9 +68,9 @@
       "[CLEANUP]\\logs\\adk"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure windows adk present.Read install logs.Listing all logs",
+    "name": "ensure windows adk present.Read install logs.Listing all logs",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@listdir@[CLEANUP]\\logs\\adk\\adk.log@@@",
       "@@@STEP_LOG_END@listdir@@@"
     ]
@@ -94,17 +87,14 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure windows adk present.Read install logs.Reading [CLEANUP]\\logs\\adk\\adk.log",
+    "name": "ensure windows adk present.Read install logs.Reading [CLEANUP]\\logs\\adk\\adk.log",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "ensure windows adk present.ensure win-pe add-on present",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "ensure win-pe add-on present"
   },
   {
     "cmd": [
@@ -120,9 +110,9 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure win-pe add-on present.ensure_installed",
+    "name": "ensure win-pe add-on present.ensure_installed",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
@@ -146,16 +136,16 @@
       "+"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure win-pe add-on present.Install WinPE",
+    "name": "ensure win-pe add-on present.Install WinPE",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs",
+    "name": "ensure win-pe add-on present.Read install logs",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@[CLEANUP]\\logs\\winpe\\winpe.log@i007: Exit code: 0x0@@@",
       "@@@STEP_LOG_END@[CLEANUP]\\logs\\winpe\\winpe.log@@@"
     ]
@@ -171,9 +161,9 @@
       "[CLEANUP]\\logs\\winpe"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs.Listing all logs",
+    "name": "ensure win-pe add-on present.Read install logs.Listing all logs",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@listdir@[CLEANUP]\\logs\\winpe\\winpe.log@@@",
       "@@@STEP_LOG_END@listdir@@@"
     ]
@@ -190,9 +180,9 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs.Reading [CLEANUP]\\logs\\winpe\\winpe.log",
+    "name": "ensure win-pe add-on present.Read install logs.Reading [CLEANUP]\\logs\\winpe\\winpe.log",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {

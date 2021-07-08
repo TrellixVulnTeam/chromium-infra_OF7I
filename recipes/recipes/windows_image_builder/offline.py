@@ -30,8 +30,8 @@ def RunSteps(api, inputs):
   if not inputs.config_path:
     raise api.step.StepFailure("`config_path` is a required property")
 
-  with api.step.nest('ensure windows adk present'):
-    api.windows_adk.ensure()
+  # Ensure windows adk is installed
+  api.windows_adk.ensure()
 
   builder_named_cache = api.path['cache'].join('builder')
   config = None
