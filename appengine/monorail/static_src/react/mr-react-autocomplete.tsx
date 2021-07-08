@@ -163,6 +163,8 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
       } case 'project': {
         const {ownerOf = [], memberOf = [], contributorTo = []} = this._projects;
         return [...ownerOf, ...memberOf, ...contributorTo];
+      } case '': {
+        return [];
       } default: {
         throw new Error(`Unknown vocabulary name: ${this.vocabularyName}`);
       }

@@ -144,6 +144,11 @@ describe('mr-react-autocomplete', () => {
         ['penguins', 'birds', 'canary', 'owl-island']);
   });
 
+  it('_options gives empty array for empty vocabulary name', () => {
+    element.vocabularyName = '';
+    assert.deepEqual(element._options(), []);
+  });
+
   it('_options throws error on unknown vocabulary', () => {
     element.vocabularyName = 'whatever';
 

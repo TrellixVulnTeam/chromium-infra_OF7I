@@ -305,9 +305,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const input = element.querySelector('#ownerInput');
-    fireEvent.change(input, {target: {value: 'new-owner@bird.org'}});
-    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
-    await element.updateComplete;
+    await enterInput(element, input, 'new-owner@bird.org');
 
     const expected = {ownerRef: {displayName: 'new-owner@bird.org'}};
     assert.deepEqual(element.delta, expected);
@@ -321,8 +319,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const input = element.querySelector('#ccInput');
-    fireEvent.change(input, {target: {value: 'another@bird.org'}});
-    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    await enterInput(element, input, 'another@bird.org');
 
     await element.updateComplete;
 
@@ -357,28 +354,32 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    ['blockedOn', 'blocking'].forEach((fieldName) => {
+    for (const fieldName of ['blockedOn', 'blocking']) {
       const input =
         element.querySelector(`#${fieldName}Input`);
-      input.setValue(['123']);
+      await enterInput(element, input, '123');
       assert.deepEqual(element.delta, {});
       assert.equal(
           element.error,
           `Invalid issue ref: 123. Cannot merge or block an issue on itself.`);
+      fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
+      await element.updateComplete;
 
-      input.setValue(['proj:123']);
+      await enterInput(element, input, 'proj:123');
       assert.deepEqual(element.delta, {});
       assert.equal(
           element.error,
           `Invalid issue ref: proj:123. ` +
         'Cannot merge or block an issue on itself.');
+      fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
+      await element.updateComplete;
 
-      input.setValue(['proj2:123']);
+      await enterInput(element, input, 'proj2:123');
       assert.notDeepEqual(element.delta, {});
       assert.equal(element.error, '');
-
-      input.setValue([]);
-    });
+      fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
+      await element.updateComplete;
+    }
   });
 
   it('cannot merge an issue into itself', async () => {
@@ -421,8 +422,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const ccInput = element.querySelector('#ccInput');
-    fireEvent.change(ccInput, {target: {value: 'invalid!email'}});
-    fireEvent.keyDown(ccInput, {key: 'Enter', code: 'Enter'});
+    await enterInput(element, ccInput, 'invalid!email');
 
     assert.deepEqual(element.delta, {});
     assert.equal(
@@ -430,8 +430,7 @@ describe('mr-edit-metadata', () => {
         `Invalid email address: invalid!email`);
 
     const input = element.querySelector('#ownerInput');
-    fireEvent.change(input, {target: {value: 'invalid!email2'}});
-    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+    await enterInput(element, input, 'invalid!email2');
 
     assert.deepEqual(element.delta, {});
     assert.equal(
@@ -463,9 +462,12 @@ describe('mr-edit-metadata', () => {
     const mergedIntoInput =
       statusInput.shadowRoot.querySelector('#mergedIntoInput');
 
-    blockedOnInput.setValue([]);
-    blockingInput.setValue([]);
+    fireEvent.keyDown(blockedOnInput, {key: 'Backspace', code: 'Backspace'});
+    await element.updateComplete;
+    fireEvent.keyDown(blockingInput, {key: 'Backspace', code: 'Backspace'});
+    await element.updateComplete;
     mergedIntoInput.setValue('proj:124');
+    await element.updateComplete;
 
     assert.deepEqual(
         element.delta,
@@ -642,7 +644,7 @@ describe('mr-edit-metadata', () => {
     });
   });
 
-  it('changing blockedon produces delta change', async () => {
+  it('changing blockedon produces delta change (React)', async () => {
     element.blockedOn = [
       {projectName: 'chromium', localId: '1234'},
       {projectName: 'monorail', localId: '4567'},
@@ -652,10 +654,12 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    const blockedOnInput = element.querySelector('#blockedOnInput');
-    blockedOnInput.setValue(['1234', 'v8:5678']);
+    const input = element.querySelector('#blockedOnInput');
 
+    fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
     await element.updateComplete;
+
+    await enterInput(element, input, 'v8:5678');
 
     assert.deepEqual(element.delta, {
       blockedOnRefsAdd: [{
@@ -858,8 +862,11 @@ describe('mr-edit-metadata', () => {
       {displayName: 'flamingo@bird.com', userId: '1234'},
       {displayName: 'penguin@bird.com', userId: '5678'},
     ];
-    element.labelNames = ['chickadee-chirp'];
     element.components = [{path: 'Bird>Penguin'}];
+    element.labelNames = ['chickadee-chirp'];
+    element.blockedOn = [{localId: 1234, projectName: 'project'}];
+    element.blocking = [{localId: 5678, projectName: 'other-project'}];
+    element.projectName = 'project';
 
     // Update cycle is needed because <mr-edit-metadata> initializes
     // this.values in updated().
@@ -870,6 +877,8 @@ describe('mr-edit-metadata', () => {
       cc: ['flamingo@bird.com', 'penguin@bird.com'],
       components: ['Bird>Penguin'],
       labels: ['chickadee-chirp'],
+      blockedOn: ['1234'],
+      blocking: ['other-project:5678'],
     };
 
     assert.deepEqual(element._values, initialValues);
@@ -998,20 +1007,6 @@ describe('mr-edit-metadata', () => {
         root.querySelector('#mergedIntoInput').value, 'monorail:1234');
   });
 
-  it('blocking issues are rendered correctly', async () => {
-    element.blocking = [
-      {projectName: 'chromium', localId: '1234'},
-      {projectName: 'monorail', localId: '4567'},
-    ];
-    element.projectName = 'chromium';
-
-    await element.updateComplete;
-
-    const blockingInput = element.querySelector('#blockingInput');
-
-    assert.deepEqual(['1234', 'monorail:4567'], blockingInput.values);
-  });
-
   it('filter out deleted users', async () => {
     element.cc = [
       {displayName: 'test@example.com', userId: '1234'},
@@ -1067,3 +1062,15 @@ describe('mr-edit-metadata', () => {
     assert.isNull(previewMarkdown);
   });
 });
+
+/**
+ * Types text into an input field and presses Enter.
+ * @param {MrEditMetadata} element The component that controls the input field.
+ * @param {HTMLInputElement} input The input field to enter text in.
+ * @param {string} value The text to enter in the input field.
+ */
+async function enterInput(element, input, value) {
+  fireEvent.change(input, {target: {value}});
+  fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+  await element.updateComplete;
+}

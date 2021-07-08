@@ -376,7 +376,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
   _renderOwner() {
     const ownerPresubmit = this._ownerPresubmit;
     return html`
-      <label for="ownerInput" @click=${this._clickLabelForCustomInput}>
+      <label for="ownerInput">
         ${ownerPresubmit.message ? html`
           <i
             class=${`material-icons inline-${ownerPresubmit.icon}`}
@@ -401,7 +401,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderCC() {
     return html`
-      <label for="ccInput" @click=${this._clickLabelForCustomInput}>CC:</label>
+      <label for="ccInput">CC:</label>
       <mr-react-autocomplete
         label="ccInput"
         vocabularyName="member"
@@ -419,10 +419,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderComponents() {
     return html`
-      <label
-        for="componentsInput"
-        @click=${this._clickLabelForCustomInput}
-      >Components:</label>
+      <label for="componentsInput">Components:</label>
       <mr-react-autocomplete
         label="componentsInput"
         vocabularyName="component"
@@ -496,23 +493,23 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderRelatedIssues() {
     return html`
-      <label for="blockedOnInput" @click=${this._clickLabelForCustomInput}>BlockedOn:</label>
-      <mr-edit-field
-        id="blockedOnInput"
-        .initialValues=${issueRefsToStrings(this.blockedOn, this.projectName)}
-        .name=${'blockedOn'}
-        @change=${this._processChanges}
-        multi
-      ></mr-edit-field>
+      <label for="blockedOnInput">BlockedOn:</label>
+      <mr-react-autocomplete
+        label="blockedOnInput"
+        vocabularyName="component"
+        .multiple=${true}
+        .value=${this._values.blockedOn}
+        .onChange=${this._changeHandlers.blockedOn}
+      ></mr-react-autocomplete>
 
-      <label for="blockingInput" @click=${this._clickLabelForCustomInput}>Blocking:</label>
-      <mr-edit-field
-        id="blockingInput"
-        .initialValues=${issueRefsToStrings(this.blocking, this.projectName)}
-        .name=${'blocking'}
-        @change=${this._processChanges}
-        multi
-      ></mr-edit-field>
+      <label for="blockingInput">Blocking:</label>
+      <mr-react-autocomplete
+        label="blockingInput"
+        vocabularyName="component"
+        .multiple=${true}
+        .value=${this._values.blocking}
+        .onChange=${this._changeHandlers.blocking}
+      ></mr-react-autocomplete>
     `;
   }
 
@@ -522,7 +519,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderLabels() {
     return html`
-      <label for="labelsInput" @click=${this._clickLabelForCustomInput}>Labels:</label>
+      <label for="labelsInput">Labels:</label>
       <mr-react-autocomplete
         label="labelsInput"
         vocabularyName="label"
@@ -651,11 +648,14 @@ export class MrEditMetadata extends connectStore(LitElement) {
     this._values = {};
     this._initialValues = {};
 
+    // Memoize change handlers so property updates don't cause excess rerenders.
     this._changeHandlers = {
       owner: this._onChange.bind(this, 'owner'),
       cc: this._onChange.bind(this, 'cc'),
       components: this._onChange.bind(this, 'components'),
       labels: this._onChange.bind(this, 'labels'),
+      blockedOn: this._onChange.bind(this, 'blockedOn'),
+      blocking: this._onChange.bind(this, 'blocking'),
     };
   }
 
@@ -673,11 +673,16 @@ export class MrEditMetadata extends connectStore(LitElement) {
   updated(changedProperties) {
     if (changedProperties.has('ownerName') || changedProperties.has('cc')
         || changedProperties.has('components')
-        || changedProperties.has('labels')) {
+        || changedProperties.has('labelNames')
+        || changedProperties.has('blockedOn')
+        || changedProperties.has('blocking')
+        || changedProperties.has('projectName')) {
       this._initialValues.owner = this.ownerName;
       this._initialValues.cc = this._ccNames;
       this._initialValues.components = componentRefsToStrings(this.components);
       this._initialValues.labels = this.labelNames;
+      this._initialValues.blockedOn = issueRefsToStrings(this.blockedOn, this.projectName);
+      this._initialValues.blocking = issueRefsToStrings(this.blocking, this.projectName);
 
       this._values = {...this._initialValues};
     }
@@ -996,40 +1001,24 @@ export class MrEditMetadata extends connectStore(LitElement) {
         result.ownerRef = displayNameToUserRef(this._values.owner);
       }
 
+      const blockerAddFn = (refString) =>
+        issueStringToBlockingRef({projectName, localId}, refString);
+      const blockerRemoveFn = (refString) =>
+        issueStringToRef(refString, projectName);
+
       result = {
         ...result,
         ...this._changedValuesControlled(
           'cc', 'ccRefs', displayNameToUserRef),
-      }
-
-      result = {
-        ...result,
         ...this._changedValuesControlled(
           'components', 'compRefs', componentStringToRef),
-      }
-
-      result = {
-        ...result,
         ...this._changedValuesControlled(
           'labels', 'labelRefs', labelStringToRef),
-      }
-
-      if (this._canEditIssue) {
-        const blockerAddFn = (refString) =>
-          issueStringToBlockingRef({projectName, localId}, refString);
-        const blockerRemoveFn = (refString) =>
-          issueStringToRef(refString, projectName);
-        result = {
-          ...result,
-          ...this._changedValuesDom(
-            'blockedOn', 'blockedOnRefs', blockerAddFn, blockerRemoveFn),
-        };
-        result = {
-          ...result,
-          ...this._changedValuesDom(
-            'blocking', 'blockingRefs', blockerAddFn, blockerRemoveFn),
-        };
-      }
+        ...this._changedValuesControlled(
+          'blockedOn', 'blockedOnRefs', blockerAddFn, blockerRemoveFn),
+        ...this._changedValuesControlled(
+          'blocking', 'blockingRefs', blockerAddFn, blockerRemoveFn),
+      };
     }
 
     if (this._canEditIssue) {
