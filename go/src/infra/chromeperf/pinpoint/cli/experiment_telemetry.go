@@ -96,7 +96,7 @@ func (e *experimentTelemetryRun) RegisterFlags(p Param) {
 }
 
 // Generates the set of jobs to be run from a preset and CLI flags
-func getTelemetryBatchExperiment(e *experimentTelemetryRun,
+func getTelemetryBatchExperiments(e *experimentTelemetryRun,
 	ctx context.Context,
 	p preset) ([]telemetryBatchExperiment, error) {
 	var batch_experiments []telemetryBatchExperiment
@@ -116,6 +116,12 @@ func getTelemetryBatchExperiment(e *experimentTelemetryRun,
 		}
 		batch_experiments = []telemetryBatchExperiment{single_experiment}
 	} else {
+		// The job is specified in command line flags.
+		if len(e.configurations) == 0 || len(e.benchmark) == 0 ||
+			(len(e.stories) == 0 && len(e.storyTags) == 0) {
+			// We can't generate a complete job.
+			return make([]telemetryBatchExperiment, 0), nil
+		}
 		// This single entry will be populated by applyFlags
 		batch_experiments = make([]telemetryBatchExperiment, 1)
 	}
@@ -327,10 +333,14 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		return fmt.Errorf("Preset must be a telemetry_batch_experiment or telemetry_experiment")
 	}
 
-	batch_experiments, err := getTelemetryBatchExperiment(e, ctx, p)
+	batch_experiments, err := getTelemetryBatchExperiments(e, ctx, p)
 	if err != nil {
 		return err
 	}
+	if len(batch_experiments) == 0 {
+		return fmt.Errorf("No jobs specified to start. Provide a preset or benchmark + config + (story or story tag).")
+	}
+
 	experiment := getExperiment(e)
 	batch_id := uuid.New().String()
 	fmt.Fprintf(a.GetOut(), "Created job batch: %s\n", batch_id)

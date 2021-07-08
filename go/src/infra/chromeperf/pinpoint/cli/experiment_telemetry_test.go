@@ -263,8 +263,18 @@ func TestCLIFlagOverriding(t *testing.T) {
 	})
 }
 
-func TestGetTelemetryBatchExperiment(t *testing.T) {
+func TestGetTelemetryBatchExperiments(t *testing.T) {
 	t.Parallel()
+
+	Convey("Zero experiments are generated from no preset and incomplete CLI flags", t, func() {
+		p := preset{}
+		runner := experimentTelemetryRun{}
+		runner.configurations = []string{"config1", "config2"}
+		runner.benchmark = "benchmark"
+		actual, _ := getTelemetryBatchExperiments(&runner, nil, p)
+		expected := []telemetryBatchExperiment{}
+		So(actual, ShouldResemble, expected)
+	})
 
 	Convey("A valid experiment is generated from only CLI flags", t, func() {
 		p := preset{}
@@ -274,7 +284,7 @@ func TestGetTelemetryBatchExperiment(t *testing.T) {
 		runner.storyTags = []string{"tag1", "tag2"}
 		runner.measurement = "measurement"
 		runner.benchmark = "benchmark"
-		actual, _ := getTelemetryBatchExperiment(&runner, nil, p)
+		actual, _ := getTelemetryBatchExperiments(&runner, nil, p)
 		expected := []telemetryBatchExperiment{
 			{
 				Benchmark:   "benchmark",
@@ -300,7 +310,7 @@ func TestGetTelemetryBatchExperiment(t *testing.T) {
 		}
 		runner := experimentTelemetryRun{}
 		runner.configurations = []string{"config1", "config2"}
-		actual, _ := getTelemetryBatchExperiment(&runner, nil, p)
+		actual, _ := getTelemetryBatchExperiments(&runner, nil, p)
 		expected := []telemetryBatchExperiment{
 			{
 				Benchmark:   "benchmark",
@@ -335,7 +345,7 @@ func TestGetTelemetryBatchExperiment(t *testing.T) {
 		}
 		runner := experimentTelemetryRun{}
 		runner.configurations = []string{"config1", "config2"}
-		actual, _ := getTelemetryBatchExperiment(&runner, nil, p)
+		actual, _ := getTelemetryBatchExperiments(&runner, nil, p)
 		expected := []telemetryBatchExperiment{
 			{
 				Benchmark:   "desktop",
