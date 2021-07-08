@@ -8,6 +8,7 @@ import {prpcClient} from 'prpc-client-instance.js';
 import * as projectV0 from './projectV0.js';
 import {store} from './base.js';
 import * as example from 'shared/test/constants-projectV0.js';
+import {restrictionLabelsForPermissions} from 'shared/convertersV0.js';
 import {fieldTypes, SITEWIDE_DEFAULT_COLUMNS} from 'shared/issue-fields.js';
 
 describe('project reducers', () => {
@@ -118,6 +119,15 @@ describe('project selectors', () => {
     assert.deepEqual(actual, example.VISIBLE_MEMBERS);
   });
 
+  it('viewedCustomPermissions', () => {
+    assert.deepEqual(projectV0.viewedCustomPermissions({}), []);
+    assert.deepEqual(projectV0.viewedCustomPermissions({projectV0: {}}), []);
+    assert.deepEqual(projectV0.viewedCustomPermissions(
+        {projectV0: {customPermissions: {}}}), []);
+    const actual = projectV0.viewedCustomPermissions(example.STATE);
+    assert.deepEqual(actual, example.CUSTOM_PERMISSIONS);
+  });
+
   it('viewedPresentationConfig', () => {
     assert.deepEqual(projectV0.viewedPresentationConfig({}), {});
     assert.deepEqual(projectV0.viewedPresentationConfig({projectV0: {}}), {});
@@ -151,25 +161,48 @@ describe('project selectors', () => {
   });
 
   it('labelDefMap', () => {
-    assert.deepEqual(projectV0.labelDefMap({projectV0: {}}), new Map());
-    assert.deepEqual(projectV0.labelDefMap({projectV0: {config: {}}}),
-        new Map());
+    const labelDefs = (permissions) =>
+        restrictionLabelsForPermissions(permissions).map((labelDef) =>
+            [labelDef.label.toLowerCase(), labelDef]);
+
+    assert.deepEqual(
+      projectV0.labelDefMap({projectV0: {}}), new Map(labelDefs([])));
+    assert.deepEqual(
+      projectV0.labelDefMap({projectV0: {config: {}}}), new Map(labelDefs([])));
     const expected = new Map([
       ['one', {label: 'One'}],
       ['enum', {label: 'EnUm'}],
       ['enum-options', {label: 'eNuM-Options'}],
       ['hello-world', {label: 'hello-world', docstring: 'hmmm'}],
       ['hello-me', {label: 'hello-me', docstring: 'hmmm'}],
+      ...labelDefs(example.CUSTOM_PERMISSIONS),
     ]);
     assert.deepEqual(projectV0.labelDefMap(example.STATE), expected);
   });
 
   it('labelPrefixValueMap', () => {
+    const builtInLabelPrefixes = [
+      ['Restrict', new Set(['View-EditIssue', 'AddIssueComment-EditIssue'])],
+      ['Restrict-View', new Set(['EditIssue'])],
+      ['Restrict-AddIssueComment', new Set(['EditIssue'])],
+    ];
     assert.deepEqual(projectV0.labelPrefixValueMap({projectV0: {}}),
-        new Map());
+        new Map(builtInLabelPrefixes));
+
     assert.deepEqual(projectV0.labelPrefixValueMap(
-        {projectV0: {config: {}}}), new Map());
+        {projectV0: {config: {}}}), new Map(builtInLabelPrefixes));
+
     const expected = new Map([
+      ['Restrict', new Set(['View-Google', 'View-Security', 'EditIssue-Google',
+          'EditIssue-Security', 'AddIssueComment-Google',
+          'AddIssueComment-Security', 'DeleteIssue-Google',
+          'DeleteIssue-Security', 'FlagSpam-Google', 'FlagSpam-Security',
+          'View-EditIssue', 'AddIssueComment-EditIssue'])],
+      ['Restrict-View', new Set(['Google', 'Security', 'EditIssue'])],
+      ['Restrict-EditIssue', new Set(['Google', 'Security'])],
+      ['Restrict-AddIssueComment', new Set(['Google', 'Security', 'EditIssue'])],
+      ['Restrict-DeleteIssue', new Set(['Google', 'Security'])],
+      ['Restrict-FlagSpam', new Set(['Google', 'Security'])],
       ['eNuM', new Set(['Options'])],
       ['hello', new Set(['world', 'me'])],
     ]);
@@ -177,10 +210,14 @@ describe('project selectors', () => {
   });
 
   it('labelPrefixFields', () => {
-    assert.deepEqual(projectV0.labelPrefixFields({projectV0: {}}), []);
-    assert.deepEqual(projectV0.labelPrefixFields({projectV0: {config: {}}}),
-        []);
-    const expected = ['hello'];
+    const fields1 = projectV0.labelPrefixFields({projectV0: {}});
+    assert.deepEqual(fields1, ['Restrict']);
+    const fields2 = projectV0.labelPrefixFields({projectV0: {config: {}}});
+    assert.deepEqual(fields2, ['Restrict']);
+    const expected = [
+      'hello', 'Restrict', 'Restrict-View', 'Restrict-EditIssue',
+      'Restrict-AddIssueComment', 'Restrict-DeleteIssue', 'Restrict-FlagSpam'
+    ];
     assert.deepEqual(projectV0.labelPrefixFields(example.STATE), expected);
   });
 

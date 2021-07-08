@@ -159,6 +159,8 @@ export const configs =
   createSelector(project, (project) => project.configs || {});
 export const presentationConfigs =
   createSelector(project, (project) => project.presentationConfigs || {});
+export const customPermissions =
+  createSelector(project, (project) => project.customPermissions || {});
 export const visibleMembers =
   createSelector(project, (project) => project.visibleMembers || {});
 export const templates =
@@ -176,6 +178,9 @@ export const viewedPresentationConfig = createSelector(
 export const viewedPresentationConfigLoaded = createSelector(
     [viewedProjectName, presentationConfigs],
     (projectName, configs) => !!configs[projectName]);
+export const viewedCustomPermissions = createSelector(
+    [viewedProjectName, customPermissions],
+    (projectName, permissions) => permissions[projectName] || []);
 export const viewedVisibleMembers = createSelector(
     [viewedProjectName, visibleMembers],
     (projectName, visibleMembers) => visibleMembers[projectName] || {});
@@ -229,7 +234,11 @@ export const fieldDefMap = createSelector(
 );
 
 export const labelDefs = createSelector(
-    viewedConfig, (config) => ((config && config.labelDefs) || []),
+    [viewedConfig, viewedCustomPermissions],
+    (config, permissions) => [
+      ...((config && config.labelDefs) || []),
+      ...restrictionLabelsForPermissions(permissions),
+    ],
 );
 
 // labelDefs stored in an easily findable format with label names as keys.

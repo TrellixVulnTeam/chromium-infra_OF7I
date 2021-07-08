@@ -59,6 +59,7 @@ describe('mr-show-columns-dropdown', () => {
     it('sorts default column options', async () => {
       element.defaultFields = ['ID', 'Summary', 'AllLabels'];
       element.columns = [];
+      element._labelPrefixFields = [];
 
       // Re-compute menu items on update.
       await element.updateComplete;
@@ -79,6 +80,7 @@ describe('mr-show-columns-dropdown', () => {
     it('sorts selected columns above unselected columns', async () => {
       element.defaultFields = ['ID', 'Summary', 'AllLabels'];
       element.columns = ['ID'];
+      element._labelPrefixFields = [];
 
       // Re-compute menu items on update.
       await element.updateComplete;
@@ -136,6 +138,7 @@ describe('mr-show-columns-dropdown', () => {
       element._fieldDefs = [
         {fieldRef: {fieldName: 'HelloWorld', type: 'APPROVAL_TYPE'}},
       ];
+      element._labelPrefixFields = [];
 
       // Re-compute menu items on update.
       await element.updateComplete;
@@ -156,6 +159,7 @@ describe('mr-show-columns-dropdown', () => {
         {fieldRef: {fieldName: 'Number', type: 'INT_TYPE'}, isPhaseField: true},
         {fieldRef: {fieldName: 'Speak', type: 'STR_TYPE'}, isPhaseField: true},
       ];
+      element._labelPrefixFields = [];
       element.phaseNames = ['cow', 'chicken'];
 
       // Re-compute menu items on update.

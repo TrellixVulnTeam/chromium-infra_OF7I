@@ -74,6 +74,7 @@ export const STATE = Object.freeze({projectV0: {
   name: PROJECT_NAME,
   configs: {[PROJECT_NAME]: CONFIG},
   presentationConfigs: {[PROJECT_NAME]: PRESENTATION_CONFIG},
+  customPermissions: {[PROJECT_NAME]: CUSTOM_PERMISSIONS},
   visibleMembers: {[PROJECT_NAME]: VISIBLE_MEMBERS},
   templates: {[PROJECT_NAME]: TEMPLATE_DEF},
 }});
