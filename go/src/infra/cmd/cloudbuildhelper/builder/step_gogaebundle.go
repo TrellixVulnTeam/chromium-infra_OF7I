@@ -14,9 +14,9 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/tools/go/packages"
 	"gopkg.in/yaml.v2"
 
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
@@ -56,36 +56,19 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	// The directory with `main` package.
 	mainDir := filepath.Dir(yamlPath)
 
-	// Get a build.Context as if we are building for linux amd64.
-	bc := build.Default
-	bc.GOARCH = "amd64"
-	bc.GOOS = "linux"
-	bc.Dir = mainDir
+	// Get a build.Context as if we are building for linux amd64. We primarily use
+	// it to call its MatchFile method to check build tags.
+	bc := buildContext(mainDir, int(goMinorVer))
 
-	// Enable all Go versions up to the one in the app.yaml.
-	if goMinorVer != 0 {
-		bc.ReleaseTags = nil
-		for i := 1; i <= int(goMinorVer); i++ {
-			bc.ReleaseTags = append(bc.ReleaseTags, fmt.Sprintf("go1.%d", i))
-		}
-	}
-
-	// Find where main package is actually located.
-	mainPkg, err := bc.ImportDir(mainDir, 0)
+	// Load the main package and all its transitive dependencies.
+	mainPkg, err := loadPackageTree(ctx, bc)
 	if err != nil {
-		return errors.Annotate(err, "failed to locate the go code").Err()
-	}
-	if mainPkg.ImportPath == "" {
-		return errors.Reason("could not figure out import path of the main package").Err()
-	}
-	logging.Infof(ctx, "Import path is %q", mainPkg.ImportPath)
-	if mainPkg.Name != "main" {
-		return errors.Annotate(err, "only \"main\" package can be bundled, got %q", mainPkg.Name).Err()
+		return err
 	}
 
 	// We'll copy `mainPkg` directly into its final location in _gopath, but make
 	// the original intended destination point to it as a symlink.
-	goPathDest := filepath.Join(inv.Manifest.ContextDir, "_gopath", "src", mainPkg.ImportPath)
+	goPathDest := filepath.Join(inv.Manifest.ContextDir, "_gopath", "src", mainPkg.PkgPath)
 	linkName, err := relPath(inv.Manifest.ContextDir, inv.BuildStep.Dest)
 	if err != nil {
 		return err
@@ -148,51 +131,88 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	// uses more than one runtime, all packages will be visited more than once.
 	// Each separate visit may add more files to the output (or just revisit
 	// already added ones, which is a noop).
-	goStdlib := inv.State.goStdlib(runtime)
 	goDeps := inv.State.goDeps(runtime)
 
-	// Find all packages that mainPkg transitively depends on.
-	if len(goStdlib) == 0 {
-		logging.Infof(ctx, "Enumerating stdlib packages to know when to skip them...")
-		if err = findStdlib(bc.GOROOT, goStdlib); err != nil {
-			return err
-		}
-	}
-	logging.Infof(ctx, "Discovering transitive dependencies...")
-	deps, err := findDeps(&bc, mainPkg, goStdlib)
-	if err != nil {
-		return err
+	errs := 0    // number of errors in packages.Visit below
+	visited := 0 // number of packages actually visited
+	copied := 0  // number of files copied
+
+	reportErr := func(format string, args ...interface{}) {
+		logging.Errorf(ctx, format, args...)
+		errs++
 	}
 
-	// Add them all to the tarball.
-	logging.Infof(ctx, "Found %d dependencies. Copying them to the output...", len(deps))
-	for _, pkg := range deps {
-		if !goDeps.Add(pkg.ImportPath) {
-			continue // added it already in some previous build step
+	// Copy all transitive dependencies into _gopath/src/<pkg>.
+	logging.Infof(ctx, "Copying transitive dependencies...")
+	packages.Visit([]*packages.Package{mainPkg}, nil, func(pkg *packages.Package) {
+		switch {
+		case errs != 0:
+			return // failing already
+		case !goDeps.Add(pkg.ID):
+			return // added it already in some previous build step
+		case isStdlib(bc, pkg):
+			return // we are not bundling stdlib packages
+		default:
+			visited++
 		}
 
-		srcDir := filepath.Join(pkg.SrcRoot, pkg.ImportPath)
-		dstDir := filepath.Join("_gopath", "src", pkg.ImportPath)
+		// List of file names to copy into the output. They all must be in the same
+		// directory.
+		filesToAdd := make([]string, 0, len(pkg.GoFiles)+len(pkg.IgnoredFiles)+len(pkg.OtherFiles))
 
-		// All non-test files Go compiler ever touches.
-		var names []string
-		names = append(names, pkg.GoFiles...)
-		names = append(names, pkg.CgoFiles...)
-		names = append(names, pkg.CFiles...)
-		names = append(names, pkg.CXXFiles...)
-		names = append(names, pkg.MFiles...)
-		names = append(names, pkg.HFiles...)
-		names = append(names, pkg.FFiles...)
-		names = append(names, pkg.SFiles...)
+		// All non-go source files (like *.c) go into the tarball as is.
+		filesToAdd = append(filesToAdd, pkg.OtherFiles...)
 
-		// Add them all to the tarball if not already there.
-		for _, name := range names {
-			err := inv.Output.AddFromDisk(filepath.Join(srcDir, name), filepath.Join(dstDir, name), nil)
-			if err != nil {
-				return errors.Annotate(err, "failed to copy %q from %q", name, srcDir).Err()
+		// We visit GoFiles and IgnoredFiles because we want to recheck the build
+		// tags using bc.MatchFile: packages.Load *always* uses the current Go
+		// version tags, but we want to apply bc.ReleaseTags instead. It means we
+		// may need to pick up some files rejected by packages.Load (they end up in
+		// IgnoredFiles list), or reject some files from GoFiles.
+		addGoFiles := func(paths []string) {
+			for _, p := range paths {
+				switch match, err := bc.MatchFile(filepath.Split(p)); {
+				case err != nil:
+					reportErr("Failed to check build tags of %q: %s", p, err)
+				case match:
+					filesToAdd = append(filesToAdd, p)
+				}
 			}
 		}
+		addGoFiles(pkg.GoFiles)
+		addGoFiles(pkg.IgnoredFiles)
+
+		if len(filesToAdd) == 0 || errs != 0 {
+			return
+		}
+
+		// Verify all files come from the same directory (since we are placing them
+		// into the same directory in the tarball).
+		srcDir := filepath.Dir(filesToAdd[0])
+		for _, path := range filesToAdd {
+			if filepath.Dir(path) != srcDir {
+				reportErr("Expected %q to be under %q", path, srcDir)
+			}
+		}
+		if errs != 0 {
+			return
+		}
+
+		// Add them all to the tarball if not already there.
+		dstDir := filepath.Join("_gopath", "src", pkg.PkgPath)
+		for _, path := range filesToAdd {
+			name := filepath.Base(path)
+			err := inv.Output.AddFromDisk(path, filepath.Join(dstDir, name), nil)
+			if err != nil {
+				reportErr("Failed to copy %q to the tarball: %s", path, err)
+			} else {
+				copied++
+			}
+		}
+	})
+	if errs != 0 {
+		return errors.Reason("failed to add Go files to the tarball, see the log").Err()
 	}
+	logging.Infof(ctx, "Visited %d packages and copied %d files", visited, copied)
 
 	// Drop a script that can be used to test sanity of this tarball.
 	envPath := filepath.Join("_gopath", "env")
@@ -218,6 +238,80 @@ func readRuntime(path string) (string, error) {
 	return appYaml.Runtime, nil
 }
 
+// buildContext returns a build.Context targeting linux-amd64.
+//
+// If goMinorVer is not 0, sets ReleaseTags to pick the specific go release.
+func buildContext(mainDir string, goMinorVer int) *build.Context {
+	bc := build.Default
+	bc.GOARCH = "amd64"
+	bc.GOOS = "linux"
+	bc.Dir = mainDir
+	if goMinorVer != 0 {
+		bc.ReleaseTags = nil
+		for i := 1; i <= goMinorVer; i++ {
+			bc.ReleaseTags = append(bc.ReleaseTags, fmt.Sprintf("go1.%d", i))
+		}
+	}
+	return &bc
+}
+
+// loadPackageTree loads the main package with its dependencies.
+func loadPackageTree(ctx context.Context, bc *build.Context) (*packages.Package, error) {
+	logging.Infof(ctx, "Loading the package tree...")
+
+	// Note: this can actually download files into the modules cache when running
+	// in module mode and thus can be quite slow.
+	pkgs, err := packages.Load(&packages.Config{
+		Mode: packages.NeedName |
+			packages.NeedFiles |
+			packages.NeedImports |
+			packages.NeedDeps |
+			packages.NeedModule,
+		Context: ctx,
+		Logf:    func(format string, args ...interface{}) { logging.Debugf(ctx, format, args...) },
+		Dir:     bc.Dir,
+		Env:     append(os.Environ(), "GOOS="+bc.GOOS, "GOARCH="+bc.GOARCH),
+	}, ".")
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to load the main package").Err()
+	}
+
+	// `packages.Load` records some errors inside packages.Package.
+	errs := 0
+	visited := 0
+	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
+		visited++
+		for _, err := range pkg.Errors {
+			logging.Errorf(ctx, "Error loading package %q: %s", pkg.ID, err)
+			errs++
+		}
+	})
+	if errs != 0 {
+		return nil, errors.Reason("failed to load the package tree").Err()
+	}
+
+	// We expect only one package to match our load query.
+	if len(pkgs) != 1 {
+		return nil, errors.Reason("expected to load 1 package, but got %d", len(pkgs)).Err()
+	}
+
+	// Make sure it is indeed `main` and log its path in the package tree.
+	mainPkg := pkgs[0]
+	if mainPkg.PkgPath == "" {
+		return nil, errors.Reason("could not figure out import path of the main package").Err()
+	}
+	logging.Infof(ctx, "Import path is %q", mainPkg.PkgPath)
+	if mainPkg.Name != "main" {
+		return nil, errors.Annotate(err, "only \"main\" package can be bundled, got %q", mainPkg.Name).Err()
+	}
+	if mainPkg.Module != nil {
+		logging.Infof(ctx, "Module is %q at %q", mainPkg.Module.Path, mainPkg.Module.Dir)
+	}
+
+	logging.Infof(ctx, "Transitively depends on %d packages (including stdlib)", visited-1)
+	return mainPkg, nil
+}
+
 // relPath calls filepath.Rel and annotates the error.
 func relPath(base, path string) (string, error) {
 	rel, err := filepath.Rel(base, path)
@@ -239,100 +333,17 @@ func isGoSourceFile(rel string) bool {
 	}
 }
 
-// findStdlib examines GOROOT to find names of most of stdlib packages.
-//
-// Puts them into the given string set.
-func findStdlib(goRoot string, s stringset.Set) (err error) {
-	dir := filepath.Join(goRoot, "src")
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || !info.IsDir() {
-			return err
-		}
-
-		// Convert to an import path.
-		rel, err := relPath(dir, path)
-		if err != nil {
-			return err
-		}
-		rel = filepath.ToSlash(rel)
-
-		// Skip some not really importable magic directories.
-		if rel == "cmd" || rel == "vendor" || rel == "internal" || strings.HasSuffix(rel, "/internal") {
-			return filepath.SkipDir
-		}
-
-		s.Add(rel)
-		return err
-	})
-	return
-}
-
-// findDeps finds all non-stdlib dependencies that `pkg` depends on.
-func findDeps(bc *build.Context, pkg *build.Package, stdlib stringset.Set) (deps []*build.Package, err error) {
-	goRootSrc := filepath.Join(bc.GOROOT, "src")
-	visitedDeps := stringset.New(0)
-
-	// In go `import "a/b/c"` can import physically different packages depending
-	// on what package contains the import, due to existence of magical "vendor"
-	// folder. We account for that by using importFrom struct as a map key instead
-	// of just ImportPath. It records both what package is imported and from
-	// where.
-	type importFrom struct {
-		path string
-		from string
+// isStdlib returns true if the package has its *.go files under GOROOT.
+func isStdlib(bc *build.Context, pkg *packages.Package) bool {
+	switch {
+	case pkg.Name == "unsafe":
+		return true // this package is a magical indicator and has no Go files
+	case len(pkg.GoFiles) == 0:
+		return false // assume other stdlib packages have Go files
+	default:
+		root := filepath.Clean(bc.GOROOT) + string(filepath.Separator)
+		return strings.HasPrefix(pkg.GoFiles[0], root)
 	}
-	queue := make([]importFrom, 0, len(pkg.Imports))
-	visited := make(map[importFrom]bool, len(pkg.Imports))
-
-	enqueue := func(i importFrom) {
-		// Skip stdlib package. This check is fast, but may not be 100% reliable
-		// since `stdlib` is constructed in not very rigorous way. We'll do a
-		// separate strict check later. The check here is just an optimization.
-		if !stdlib.Has(i.path) && !visited[i] {
-			queue = append(queue, i)
-			visited[i] = true
-		}
-	}
-
-	for _, importPath := range pkg.Imports {
-		enqueue(importFrom{
-			path: importPath,
-			from: pkg.Dir,
-		})
-	}
-
-	for len(queue) != 0 {
-		cur := queue[0]
-		queue = queue[1:]
-
-		pkg, err := bc.Import(cur.path, cur.from, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		// Skip stdlib packages (in case our simplistic first check failed). Note
-		// that relying on this strong check exclusively makes the code very slow,
-		// since it keeps revisiting stdlib packages (via bc.Import) a lot.
-		if pkg.SrcRoot == goRootSrc {
-			continue
-		}
-
-		// Get the actual physical location of the package on disk. And make sure
-		// we didn't pick it up already.
-		if visitedDeps.Add(filepath.Join(pkg.SrcRoot, pkg.ImportPath)) {
-			deps = append(deps, pkg)
-
-			// Visit its imports.
-			for _, importPath := range pkg.Imports {
-				enqueue(importFrom{
-					path: importPath,
-					from: pkg.Dir,
-				})
-			}
-		}
-	}
-
-	return deps, nil
 }
 
 // envScript spits out a script that modifies Go env vars to point to files

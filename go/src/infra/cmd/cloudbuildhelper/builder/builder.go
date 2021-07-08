@@ -130,21 +130,7 @@ type stepRunnerInv struct {
 //
 // They can mutate it if they want.
 type builderState struct {
-	goStdlibPerVersion map[string]stringset.Set // names of stdlib packaged discovered in GOROOT
-	goDepsPerVersion   map[string]stringset.Set // import paths of packages copied to the _gopath already
-}
-
-// goStdlib is a set of stdlib packaged in GOROOT.
-func (s *builderState) goStdlib(goVer string) stringset.Set {
-	if s.goStdlibPerVersion == nil {
-		s.goStdlibPerVersion = make(map[string]stringset.Set, 1)
-	}
-	ss := s.goStdlibPerVersion[goVer]
-	if ss == nil {
-		ss = stringset.New(0)
-		s.goStdlibPerVersion[goVer] = ss
-	}
-	return ss
+	goDepsPerVersion map[string]stringset.Set // import paths of packages copied to the _gopath already
 }
 
 // goDeps is a set of imported packages copied to the _gopath already.
