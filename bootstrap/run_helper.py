@@ -42,7 +42,7 @@ def boot_venv(script, env_path):
 
   if not is_in_venv(env_path):
     if RUN_PY_RECURSION_BLOCKER in os.environ:
-      print >> sys.stderr, 'TOO MUCH RECURSION IN RUN.PY'
+      sys.stderr.write('TOO MUCH RECURSION IN RUN.PY\n')
       sys.exit(-1)
 
     # not in the venv
@@ -76,11 +76,11 @@ def boot_venv(script, env_path):
         os._exit(os.spawnv(os.P_WAIT, python, args))
       else:
         os.execv(python, args)
-      print >> sys.stderr, "Exec is busted :("
+      sys.stderr.write('Exec is busted :(\n')
       sys.exit(-1)  # should never reach
 
-    print 'You must use the virtualenv in ENV for scripts in the infra repo.'
-    print 'Running `gclient runhooks` will create this environment for you.'
+    print('You must use the virtualenv in ENV for scripts in the infra repo.')
+    print('Running `gclient runhooks` will create this environment for you.')
     sys.exit(1)
 
   # In case some poor script ends up calling run.py, don't explode them.
@@ -116,18 +116,18 @@ def run_py_main(args, runpy_path, env_path, package):
     if completing:
       # Argcomplete is listening for strings on fd 8
       with os.fdopen(8, 'wb') as f:
-        print >> f, '\n'.join(commands)
+        f.write('\n'.join(commands))
       return
 
-    print textwrap.dedent("""\
+    print(textwrap.dedent("""\
     usage: run.py %s.<module.path.to.tool> [args for tool]
 
     %s
 
-    Available tools are:""") % (
-        package, sys.modules['__main__'].__doc__.strip())
+    Available tools are:""") %
+          (package, sys.modules['__main__'].__doc__.strip()))
     for command in commands:
-      print '  *', command
+      print('  *', command)
     return 1
 
   if completing:
