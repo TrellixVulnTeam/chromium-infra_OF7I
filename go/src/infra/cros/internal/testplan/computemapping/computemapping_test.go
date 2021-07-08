@@ -1,4 +1,4 @@
-package testplan
+package computemapping_test
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
+	"infra/cros/internal/testplan/computemapping"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
@@ -94,10 +95,12 @@ func TestComputeProjectMappingInfos(t *testing.T) {
 
 	// Set workdirFn so the CommandRunners can know where commands are run,
 	// and the DIR_METADATA in testdata is read. Don't cleanup the testdata.
-	workdirFn = func(_, _ string) (string, error) { return "./testdata", nil }
-	workdirCleanupFn = func(_ string) error { return nil }
+	workdirFn := func() (string, func() error, error) {
+		cleanup := func() error { return nil }
+		return "../testdata", cleanup, nil
+	}
 
-	projectMappingInfos, err := computeProjectMappingInfos(ctx, changeRevs)
+	projectMappingInfos, err := computemapping.ProjectInfos(ctx, changeRevs, workdirFn)
 	if err != nil {
 		t.Fatalf("computeProjectMappingInfos(%v) failed: %s", changeRevs, err)
 	}

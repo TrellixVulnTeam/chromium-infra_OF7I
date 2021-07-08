@@ -1,33 +1,30 @@
-package testplan
+package computemapping
 
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
-	"go.chromium.org/luci/common/data/stringset"
-	"go.chromium.org/luci/common/logging"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/git"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
+
+	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/logging"
 )
 
-// projectMappingInfo groups a computed Mapping and affected files for a set
+// MappingInfo groups a computed Mapping and affected files for a set
 // of ChangeRevs in a project.
-type projectMappingInfo struct {
+type MappingInfo struct {
 	Mapping       *dirmd.Mapping
 	AffectedFiles []string
 }
 
-var (
-	// Allow overriding workdir creation and cleanup behavior for testing.
-	workdirFn        = ioutil.TempDir
-	workdirCleanupFn = os.RemoveAll
-)
+// WorkdirCreation is a function signature that returns a path to a workdir,
+// a cleanup function, and an error if one occurred.
+type WorkdirCreation func() (string, func() error, error)
 
 // checkoutChangeRevs checkouts changeRevs to dir.
 //
@@ -58,11 +55,13 @@ func checkoutChangeRevs(ctx context.Context, dir string, changeRevs []*gerrit.Ch
 	remote := fmt.Sprintf("https://%s/%s", googlesourceHost, changeRev.Project)
 
 	logging.Debugf(ctx, "cloning repo %q", remote)
+
 	if err := git.Clone(remote, dir, git.Depth(1), git.NoTags()); err != nil {
 		return err
 	}
 
 	logging.Debugf(ctx, "fetching ref %q from repo %q", changeRev.Ref, remote)
+
 	if err := git.Fetch(dir, remote, changeRev.Ref, git.Depth(1), git.NoTags()); err != nil {
 		return err
 	}
@@ -74,24 +73,43 @@ func checkoutChangeRevs(ctx context.Context, dir string, changeRevs []*gerrit.Ch
 // computes the Mapping.
 //
 // changeRevs must all have the same project.
-func computeMappingForChangeRevs(ctx context.Context, changeRevs []*gerrit.ChangeRev) (*dirmd.Mapping, error) {
-	workdir, err := workdirFn("", "")
+func computeMappingForChangeRevs(
+	ctx context.Context,
+	changeRevs []*gerrit.ChangeRev,
+	workdirFn WorkdirCreation,
+) (mapping *dirmd.Mapping, err error) {
+	workdir, cleanup, err := workdirFn()
 	if err != nil {
 		return nil, err
 	}
 
-	defer workdirCleanupFn(workdir)
+	defer func() {
+		err = cleanup()
+	}()
 
-	if err := checkoutChangeRevs(ctx, workdir, changeRevs); err != nil {
+	if err = checkoutChangeRevs(ctx, workdir, changeRevs); err != nil {
 		return nil, err
 	}
 
-	return dirmd.ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, workdir)
+	mapping, err = dirmd.ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, workdir)
+	if err != nil {
+		return nil, err
+	}
+
+	if mapping == nil {
+		return nil, fmt.Errorf("got nil mapping for change revs %q", changeRevs)
+	}
+
+	return mapping, nil
 }
 
 // computeProjectMappingInfos calculates a projectMappingInfo for each project
 // in changeRevs.
-func computeProjectMappingInfos(ctx context.Context, changeRevs []*gerrit.ChangeRev) ([]*projectMappingInfo, error) {
+func ProjectInfos(
+	ctx context.Context,
+	changeRevs []*gerrit.ChangeRev,
+	workdirFn WorkdirCreation,
+) ([]*MappingInfo, error) {
 	projectToChangeRevs := make(map[string][]*gerrit.ChangeRev)
 	projectToAffectedFiles := make(map[string]stringset.Set)
 
@@ -111,7 +129,7 @@ func computeProjectMappingInfos(ctx context.Context, changeRevs []*gerrit.Change
 		projectToAffectedFiles[project].AddAll(changeRev.Files)
 	}
 
-	projectMappingInfos := make([]*projectMappingInfo, 0, len(projectToChangeRevs))
+	projectMappingInfos := make([]*MappingInfo, 0, len(projectToChangeRevs))
 
 	// Use a sorted list of keys from projectToChangeRevs, so iteration order is
 	// deterministic.
@@ -127,12 +145,12 @@ func computeProjectMappingInfos(ctx context.Context, changeRevs []*gerrit.Change
 
 		logging.Infof(ctx, "computing metadata for project %q", project)
 
-		mapping, err := computeMappingForChangeRevs(ctx, changeRevs)
+		mapping, err := computeMappingForChangeRevs(ctx, changeRevs, workdirFn)
 		if err != nil {
 			return nil, err
 		}
 
-		projectMappingInfos = append(projectMappingInfos, &projectMappingInfo{
+		projectMappingInfos = append(projectMappingInfos, &MappingInfo{
 			AffectedFiles: projectToAffectedFiles[project].ToSlice(),
 			Mapping:       mapping,
 		})

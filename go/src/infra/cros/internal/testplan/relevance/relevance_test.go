@@ -1,4 +1,4 @@
-package testplan
+package relevance_test
 
 import (
 	"context"
@@ -7,10 +7,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"go.chromium.org/chromiumos/config/go/test/plan"
+	"infra/cros/internal/testplan/relevance"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
 )
 
 // buildMapping is a convenience to reduce boilerplate building Mappings.
@@ -29,7 +31,7 @@ func buildMapping(dirToSourceTestPlans map[string][]*plan.SourceTestPlan) *dirmd
 	return mapping
 }
 
-func TestRelevantSourceTestPlans(t *testing.T) {
+func TestSourceTestPlans(t *testing.T) {
 	ctx := context.Background()
 	// Define example SourceTestPlans for use in test cases.
 	// Make each a fn. so each SourceTestPlan in a mapping is unique.
@@ -166,14 +168,14 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			plans, err := relevantSourceTestPlans(ctx, test.mapping, test.affectedFiles)
+			plans, err := relevance.SourceTestPlans(ctx, test.mapping, test.affectedFiles)
 			if err != nil {
-				t.Fatalf("relevantSourceTestPlans(%v, %v) failed: %s", test.mapping, test.affectedFiles, err)
+				t.Fatalf("relevance.SourceTestPlans(%v, %v) failed: %s", test.mapping, test.affectedFiles, err)
 			}
 
 			if len(plans) != len(test.expected) {
 				t.Fatalf(
-					"relevantSourceTestPlans(%v, %v) returned %d plans, expected %d",
+					"relevance.SourceTestPlans(%v, %v) returned %d plans, expected %d",
 					test.mapping, test.affectedFiles, len(plans), len(test.expected),
 				)
 			}
@@ -181,7 +183,7 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 			for i, stp := range plans {
 				if diff := cmp.Diff(test.expected[i], stp, protocmp.Transform()); diff != "" {
 					t.Errorf(
-						"relevantSourceTestPlans(%v, %v) returned unexpected diff on plan at index %d (-want +got):\n%s",
+						"relevance.SourceTestPlans(%v, %v) returned unexpected diff on plan at index %d (-want +got):\n%s",
 						test.mapping, test.affectedFiles, i, diff,
 					)
 				}
@@ -190,7 +192,7 @@ func TestRelevantSourceTestPlans(t *testing.T) {
 	}
 }
 
-func TestRelevantSourceTestPlansErrors(t *testing.T) {
+func TestSourceTestPlansErrors(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name          string
@@ -223,8 +225,8 @@ func TestRelevantSourceTestPlansErrors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := relevantSourceTestPlans(ctx, test.mapping, test.affectedFiles); err == nil {
-				t.Errorf("relevantSourceTestPlans(%v, %v) succeeded for bad input, want err", test.mapping, test.affectedFiles)
+			if _, err := relevance.SourceTestPlans(ctx, test.mapping, test.affectedFiles); err == nil {
+				t.Errorf("relevance.SourceTestPlans(%v, %v) succeeded for bad input, want err", test.mapping, test.affectedFiles)
 			}
 		})
 	}

@@ -1,14 +1,15 @@
-package testplan
+package relevance
 
 import (
 	"context"
 	"regexp"
 	"strings"
 
-	"go.chromium.org/chromiumos/config/go/test/plan"
-	"go.chromium.org/luci/common/logging"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
+	"go.chromium.org/luci/common/logging"
 )
 
 // matchesAnyPattern returns true if s matches any pattern in patterns.
@@ -52,7 +53,9 @@ func metadataForFile(mapping *dirmd.Mapping, file string) *dirmdpb.Metadata {
 //
 // SourceTestPlan has descriptions of how relevant file paths are determined.
 // The paths in mapping and affectedFiles must have the same root.
-func relevantSourceTestPlans(ctx context.Context, mapping *dirmd.Mapping, affectedFiles []string) ([]*plan.SourceTestPlan, error) {
+func SourceTestPlans(
+	ctx context.Context, mapping *dirmd.Mapping, affectedFiles []string,
+) ([]*plan.SourceTestPlan, error) {
 	// Use a map to keep track of what plans have been added, so the same plan
 	// isn't added twice. Accumulate plans in a slice, so the return order is
 	// stable, based on the order of files and SourceTestPlans in mapping.
@@ -87,8 +90,10 @@ func relevantSourceTestPlans(ctx context.Context, mapping *dirmd.Mapping, affect
 
 			if fileIncluded {
 				logging.Debugf(ctx, "file %q included in SourceTestPlan: %q", file, plan)
+
 				if _, added := addedPlans[plan]; !added {
 					addedPlans[plan] = true
+
 					plans = append(plans, plan)
 				}
 			}

@@ -4,15 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 
-	protov1 "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	buildpb "go.chromium.org/chromiumos/config/go/build/api"
-	testpb "go.chromium.org/chromiumos/config/go/test/api"
+	igerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/testplan"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
+
 	"go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -23,10 +27,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
-	igerrit "infra/cros/internal/gerrit"
-	"infra/cros/internal/testplan"
-	"infra/tools/dirmd"
-	dirmdpb "infra/tools/dirmd/proto"
 )
 
 var logCfg = gologger.LoggerConfig{
@@ -38,16 +38,17 @@ func errToCode(a subcommands.Application, err error) int {
 		fmt.Fprintf(os.Stderr, "%s: %s\n", a.GetName(), err)
 		return 1
 	}
+
 	return 0
 }
 
 func app(authOpts auth.Options) *cli.Application {
 	return &cli.Application{
 		Name:    "test_plan",
-		Title:   "A tool to generate ChromeOS test plans from config in DIR_METADATA files.",
+		Title:   "A tool to work with SourceTestPlan protos in DIR_METADATA files.",
 		Context: logCfg.Use,
 		Commands: []*subcommands.Command{
-			cmdGenerate(authOpts),
+			cmdRelevantPlans(authOpts),
 			cmdValidate,
 
 			authcli.SubcommandInfo(authOpts, "auth-info", false),
@@ -59,30 +60,25 @@ func app(authOpts auth.Options) *cli.Application {
 	}
 }
 
-func cmdGenerate(authOpts auth.Options) *subcommands.Command {
+func cmdRelevantPlans(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "generate (-cl CL1 [-cl CL2] | -plan PLAN1 [-plan PLAN2]) -out OUTPUT",
-		ShortDesc: "generate a test plan",
+		UsageLine: "relevant-plans -cl CL1 [-cl CL2] -out OUTPUT",
+		ShortDesc: "Find SourceTestPlans relevant to a set of CLs",
 		LongDesc: text.Doc(`
-		Generate a test plan.
+		Find SourceTestPlans relevant to a set of CLs.
 
-		Computes test config from "DIR_METADATA" files or SourceTestPlan text
-		protos and generates a test plan.
+		Computes SourceTestPlans from "DIR_METADATA" files and returns plans
+		relevant to the files changed by a CL.
 	`),
 		CommandRun: func() subcommands.CommandRun {
-			r := &generateRun{}
+			r := &relevantPlansRun{}
 			r.authFlags = authcli.Flags{}
 			r.authFlags.Register(r.GetFlags(), authOpts)
 			r.Flags.Var(luciflag.StringSlice(&r.cls), "cl", text.Doc(`
-			CL URL for the patchsets being tested. Must be specified at least once
-			if "plan" is not specified.
+			CL URL for the patchsets being tested. Must be specified at least once.
 
 			Example: https://chromium-review.googlesource.com/c/chromiumos/platform2/+/123456
 		`))
-			r.Flags.Var(luciflag.StringSlice(&r.planPaths), "plan", text.Doc(`
-			Text proto file with a SourceTestPlan to use. Must be specified at least
-			once if "cl" is not specified.
-			`))
 			r.Flags.StringVar(&r.out, "out", "", "Path to the output test plan")
 
 			r.logLevel = logging.Info
@@ -95,16 +91,15 @@ func cmdGenerate(authOpts auth.Options) *subcommands.Command {
 	}
 }
 
-type generateRun struct {
+type relevantPlansRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	cls       []string
-	planPaths []string
 	out       string
 	logLevel  logging.Level
 }
 
-func (r *generateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (r *relevantPlansRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, r, env)
 	return errToCode(a, r.run(ctx))
 }
@@ -132,84 +127,29 @@ func getChangeRevs(ctx context.Context, authedClient *http.Client, rawCLURLs []s
 	return changeRevs, nil
 }
 
-// unmarshalProtojson wraps protojson.Unmarshal for v1 protos.
+// writePlans writes each of plans to a textproto file. The first plan is in a
+// file named "relevant_plan_1.textpb", the second is in
+// "relevant_plan_2.textpb", etc.
 //
-// The jsonpb package directly unmarshals v1 protos, but has known issues that
-// cause errors when unmarshaling data needed by test_plan (specifically, no
-// support for FieldMask, https://github.com/golang/protobuf/issues/745).
-//
-// Use the protojson package to unmarshal, which fixes this issue. This function
-// is a convinience to convert the v1 proto to v2 so it can use protojson.
-func unmarshalProtojson(b []byte, m protov1.Message) error {
-	return protojson.Unmarshal(b, protov1.MessageV2(m))
-}
+// TODO(b/182898188): Consider making a message to hold multiple SourceTestPlans
+// instead of writing multiple files.
+func writePlans(ctx context.Context, plans []*plan.SourceTestPlan, outPath string) error {
+	logging.Infof(ctx, "writing output to %s", outPath)
 
-// getBuildSummaryList reads the HEAD BuildSummaryList from
-// chromeos/config-internal.
-//
-// TODO(b/182898188): Return BuildSummaryList specific to given builds, once it
-// is available.
-func getBuildSummaryList(
-	ctx context.Context, authedClient *http.Client,
-) (*buildpb.SystemImage_BuildSummaryList, error) {
-	buildSummaryListStr, err := igerrit.DownloadFileFromGitiles(
-		ctx, authedClient,
-		"chrome-internal.googlesource.com",
-		"chromeos/config-internal",
-		"HEAD",
-		"build/generated/build_summary.jsonproto",
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	buildSummaryList := &buildpb.SystemImage_BuildSummaryList{}
-	if err = unmarshalProtojson([]byte(buildSummaryListStr), buildSummaryList); err != nil {
-		return nil, err
-	}
-
-	return buildSummaryList, nil
-}
-
-func getDutAttributeList(
-	ctx context.Context, authedClient *http.Client,
-) (*testpb.DutAttributeList, error) {
-	dutAttributeListStr, err := igerrit.DownloadFileFromGitiles(
-		ctx, authedClient,
-		"chrome-internal.googlesource.com",
-		"chromeos/config-internal",
-		"HEAD",
-		"dut_attributes/generated/dut_attributes.jsonproto",
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	dutAttributeList := &testpb.DutAttributeList{}
-	if err = unmarshalProtojson([]byte(dutAttributeListStr), dutAttributeList); err != nil {
-		return nil, err
-	}
-
-	return dutAttributeList, nil
-}
-
-// writeRules writes a newline-delimited json file containing rules to outPath.
-func writeRules(rules []*testpb.CoverageRule, outPath string) error {
-	outFile, err := os.Create(outPath)
+	err := os.MkdirAll(outPath, os.ModePerm)
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
 
-	for _, rule := range rules {
-		jsonBytes, err := protojson.Marshal(protov1.MessageV2(rule))
+	for i, plan := range plans {
+		outFile, err := os.Create(path.Join(outPath, fmt.Sprintf("relevant_plan_%d.textpb", i)))
 		if err != nil {
 			return err
 		}
+		defer outFile.Close()
 
-		jsonBytes = append(jsonBytes, '\n')
-
-		if _, err = outFile.Write(jsonBytes); err != nil {
+		err = proto.MarshalText(outFile, plan)
+		if err != nil {
 			return err
 		}
 	}
@@ -217,13 +157,9 @@ func writeRules(rules []*testpb.CoverageRule, outPath string) error {
 	return nil
 }
 
-func (r *generateRun) validateFlags() error {
-	if len(r.cls) == 0 && len(r.planPaths) == 0 {
-		return errors.New("-cl or -plan must be specified at least once")
-	}
-
-	if len(r.cls) > 0 && len(r.planPaths) > 0 {
-		return errors.New("-cl and -plan cannot both be specified")
+func (r *relevantPlansRun) validateFlags() error {
+	if len(r.cls) == 0 {
+		return errors.New("-cl must be specified at least once")
 	}
 
 	if r.out == "" {
@@ -233,7 +169,7 @@ func (r *generateRun) validateFlags() error {
 	return nil
 }
 
-func (r *generateRun) run(ctx context.Context) error {
+func (r *relevantPlansRun) run(ctx context.Context) error {
 	if err := r.validateFlags(); err != nil {
 		return err
 	}
@@ -252,59 +188,34 @@ func (r *generateRun) run(ctx context.Context) error {
 
 	var changeRevs []*igerrit.ChangeRev
 
-	var plans []*plan.SourceTestPlan
+	logging.Infof(ctx, "fetching metadata for CLs")
 
-	if len(r.cls) > 0 {
-		logging.Infof(ctx, "fetching metadata for CLs")
+	changeRevs, err = getChangeRevs(ctx, authedClient, r.cls)
+	if err != nil {
+		return err
+	}
 
-		changeRevs, err = getChangeRevs(ctx, authedClient, r.cls)
+	for i, changeRev := range changeRevs {
+		logging.Debugf(ctx, "change rev %d: %q", i, changeRev)
+	}
+
+	// Use a workdir creation function that returns a tempdir, and removes the
+	// entire tempdir on cleanup.
+	workdirFn := func() (string, func() error, error) {
+		workdir, err := ioutil.TempDir("", "")
 		if err != nil {
-			return err
+			return "", nil, err
 		}
-	} else {
-		logging.Infof(ctx, "reading plan text protos")
 
-		for _, planPath := range r.planPaths {
-			fileBytes, err := os.ReadFile(planPath)
-			if err != nil {
-				return err
-			}
-
-			plan := &plan.SourceTestPlan{}
-			if err := protov1.UnmarshalText(string(fileBytes), plan); err != nil {
-				return err
-			}
-
-			plans = append(plans, plan)
-		}
+		return workdir, func() error { return os.RemoveAll((workdir)) }, nil
 	}
 
-	logging.Infof(ctx, "fetching build metadata")
-
-	buildSummaryList, err := getBuildSummaryList(ctx, authedClient)
+	plans, err := testplan.FindRelevantPlans(ctx, changeRevs, workdirFn)
 	if err != nil {
 		return err
 	}
 
-	logging.Debugf(ctx, "fetched %d BuildSummaries", len(buildSummaryList.Values))
-
-	logging.Infof(ctx, "fetching dut attributes")
-
-	dutAttributeList, err := getDutAttributeList(ctx, authedClient)
-	if err != nil {
-		return err
-	}
-
-	logging.Debugf(ctx, "fetched dut attributes:\n%s", dutAttributeList)
-
-	rules, err := testplan.Generate(
-		ctx, changeRevs, plans, buildSummaryList, dutAttributeList,
-	)
-	if err != nil {
-		return err
-	}
-
-	return writeRules(rules, r.out)
+	return writePlans(ctx, plans, r.out)
 }
 
 var cmdValidate = &subcommands.Command{
@@ -340,15 +251,12 @@ func (r *validateRun) Run(a subcommands.Application, args []string, env subcomma
 func (r *validateRun) run(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, r, env)
 	mapping, err := dirmd.ReadMapping(ctx, dirmdpb.MappingForm_SPARSE, args...)
+
 	if err != nil {
 		return err
 	}
 
-	if err = testplan.ValidateMapping(mapping); err != nil {
-		return err
-	}
-
-	return nil
+	return testplan.ValidateMapping(mapping)
 }
 
 func main() {
