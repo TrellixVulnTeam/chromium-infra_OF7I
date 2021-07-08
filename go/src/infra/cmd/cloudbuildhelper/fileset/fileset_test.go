@@ -190,6 +190,28 @@ func TestSet(t *testing.T) {
 		})
 	}
 
+	Convey("Materialize works", t, func(c C) {
+		set := &Set{}
+		set.Add(memFile("f", "hello"))
+		set.Add(File{Path: "dir", Directory: true})
+		set.Add(memFile("dir/f", "another"))
+
+		rw := memFile("rw", "read-write")
+		rw.Writable = true
+		set.Add(rw)
+
+		exe := memFile("exe", "executable")
+		exe.Executable = runtime.GOOS != "windows"
+		set.Add(exe)
+
+		d := newTempDir(c)
+		So(set.Materialize(d.join("")), ShouldBeNil)
+
+		scanned := &Set{}
+		So(scanned.AddFromDisk(d.join(""), "", nil), ShouldBeNil)
+		assertEqualSets(scanned, set)
+	})
+
 	Convey("ToTar works", t, func(c C) {
 		s := prepSet()
 

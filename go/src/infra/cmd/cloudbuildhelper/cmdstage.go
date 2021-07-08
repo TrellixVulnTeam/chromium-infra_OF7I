@@ -28,6 +28,10 @@ all local build steps there, and rewrites Dockerfile to use pinned digests
 instead of tags. Writes the resulting context dir to a *.tar.gz file specified
 via "-output-tarball". The contents of this tarball is exactly what will be sent
 to the docker daemon or to a Cloud Build worker.
+
+If given "-output-directory" flag, copies the context directory content into
+the given output directory instead of writing it into a tarball. Creates the
+directory if it doesn't exist.
 `,
 
 	CommandRun: func() subcommands.CommandRun {
@@ -40,36 +44,58 @@ to the docker daemon or to a Cloud Build worker.
 type cmdStageRun struct {
 	commandBase
 
-	targetManifest string
-	outputTarball  string
+	targetManifest  string
+	outputTarball   string
+	outputDirectory string
 }
 
 func (c *cmdStageRun) init() {
 	c.commandBase.init(c.exec, extraFlags{}, []*string{
 		&c.targetManifest,
 	})
-	c.Flags.StringVar(&c.outputTarball, "output-tarball", "", "Where to write the tarball with the context dir.")
+	c.Flags.StringVar(&c.outputTarball, "output-tarball", "", "Where to write the tarball with the context directory.")
+	c.Flags.StringVar(&c.outputDirectory, "output-directory", "", "Where to copy the context directory to.")
 }
 
 func (c *cmdStageRun) exec(ctx context.Context) error {
-	if c.outputTarball == "" {
-		return errBadFlag("-output-tarball", "this flag is required")
+	var outputWriter func(out *fileset.Set) error
+
+	switch {
+	case c.outputTarball == "" && c.outputDirectory == "":
+		return errors.Reason("either -output-tarball or -output-directory flags are required").Tag(isCLIError).Err()
+
+	case c.outputTarball != "" && c.outputDirectory != "":
+		return errors.Reason("-output-tarball and -output-directory flags can't be used together").Tag(isCLIError).Err()
+
+	case c.outputTarball != "":
+		outputWriter = func(out *fileset.Set) error {
+			logging.Infof(ctx, "Writing %d files to %q...", out.Len(), c.outputTarball)
+			hash, err := out.ToTarGzFile(c.outputTarball)
+			if err != nil {
+				return errors.Annotate(err, "failed to save the output").Err()
+			}
+			logging.Infof(ctx, "Resulting tarball SHA256 is %q", hash)
+			return nil
+		}
+
+	case c.outputDirectory != "":
+		outputWriter = func(out *fileset.Set) error {
+			logging.Infof(ctx, "Writing %d files to %q...", out.Len(), c.outputDirectory)
+			if err := out.Materialize(c.outputDirectory); err != nil {
+				return errors.Annotate(err, "failed to save the output").Err()
+			}
+			return nil
+		}
+
+	default:
+		panic("impossible")
 	}
 
 	m, _, err := c.loadManifest(c.targetManifest, false, false)
 	if err != nil {
 		return err
 	}
-
-	return stage(ctx, m, func(out *fileset.Set) error {
-		logging.Infof(ctx, "Writing %d files to %s...", out.Len(), c.outputTarball)
-		hash, err := out.ToTarGzFile(c.outputTarball)
-		if err != nil {
-			return errors.Annotate(err, "failed to save the output").Err()
-		}
-		logging.Infof(ctx, "Resulting tarball SHA256 is %q", hash)
-		return nil
-	})
+	return stage(ctx, m, outputWriter)
 }
 
 // stage executes logic of 'stage' subcommand, calling the callback in the

@@ -24,7 +24,7 @@ import (
 
 const (
 	// Version is the version of cloudbuildhelper tool.
-	Version = "1.1.8"
+	Version = "1.1.9"
 	// UserAgent is used in HTTP headers of requests from cloudbuildhelper.
 	UserAgent = "cloudbuildhelper v" + Version
 )

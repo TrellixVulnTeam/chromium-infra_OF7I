@@ -82,7 +82,8 @@ type Excluder func(absPath string, isDir bool) bool
 // Set represents a set of regular files, directories and symlinks.
 //
 // Such set can be constructed from existing files on disk (perhaps scattered
-// across many directories), and it then can be written into a tarball.
+// across many directories), and it then can be either materialized on disk
+// in some root directory, or written into a tarball.
 type Set struct {
 	files map[string]File // unix-style path inside the set => File
 }
@@ -199,6 +200,49 @@ func (s *Set) Files() []File {
 		return nil
 	})
 	return out
+}
+
+// Materialize dumps all files in this set into the given directory.
+//
+// The directory will be created if it doesn't exist. If it exists, the contents
+// of 's' will be written on top of whatever is in the directory already.
+//
+// Doesn't cleanup on errors.
+func (s *Set) Materialize(root string) error {
+	if err := os.MkdirAll(root, 0777); err != nil {
+		return errors.Annotate(err, "failed to create the output directory").Err()
+	}
+	buf := make([]byte, 64*1024)
+	return s.Enumerate(func(f File) error {
+		p := filepath.Join(root, filepath.FromSlash(f.Path))
+		switch {
+		case f.Directory:
+			return os.Mkdir(p, 0700)
+		case f.SymlinkTarget != "":
+			return os.Symlink(f.SymlinkTarget, p)
+		}
+
+		r, err := f.Body()
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+
+		w, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.filePerm())
+		if err != nil {
+			return err
+		}
+		defer w.Close() // this is for early exits, we'll also explicitly close later
+
+		copied, err := io.CopyBuffer(w, r, buf)
+		if err != nil {
+			return err
+		}
+		if copied != f.Size {
+			return errors.Reason("file %q has unexpected size (expecting %d, got %d)", f.Path, f.Size, copied).Err()
+		}
+		return w.Close()
+	})
 }
 
 // ToTar dumps all files in this set into a tar.Writer.
