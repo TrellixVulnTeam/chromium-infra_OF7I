@@ -415,6 +415,40 @@ def JshintChecks(input_api, output_api):  # pragma: no cover
   return tests
 
 
+# string pattern, sequence of strings to show when pattern matches,
+# error flag. True if match is a presubmit error, otherwise it's a warning.
+_NON_INCLUSIVE_TERMS = (
+    (
+        # Note that \b pattern in python re is pretty particular. In this
+        # regexp, 'class WhiteList ...' will match, but 'class FooWhiteList
+        # ...' will not. This may require some tweaking to catch these cases
+        # without triggering a lot of false positives. Leaving it naive and
+        # less matchy for now.
+        r'/\b(?i)((black|white)list|master|slave)\b',  # nocheck
+        (
+            'Please don\'t use blacklist, whitelist, '  # nocheck
+            'master, or slave in your',  # nocheck
+            'code and make every effort to use other terms. Using "// nocheck"',
+            'at the end of the offending line will bypass this PRESUBMIT error',
+            'but avoid using this whenever possible. Reach out to',
+            'community@chromium.org if you have questions'),
+        True),)
+
+
+def CheckInclusiveLanguage(input_api, output_api):
+  """Make sure that banned non-inclusive terms are not used."""
+  results = []
+  results.extend(
+      input_api.canned_checks.CheckInclusiveLanguage(
+          input_api,
+          output_api,
+          excluded_directories_relative_path=[
+              'infra', 'inclusive_language_presubmit_exempt_dirs.txt'
+          ],
+          non_inclusive_terms=_NON_INCLUSIVE_TERMS))
+  return results
+
+
 def CommonChecks(input_api, output_api):  # pragma: no cover
   output = []
 
@@ -483,35 +517,3 @@ def CheckChangeOnCommit(input_api, output_api):  # pragma: no cover
       json_url='http://infra-status.appspot.com/current?format=json'))
   return output
 
-# string pattern, sequence of strings to show when pattern matches,
-# error flag. True if match is a presubmit error, otherwise it's a warning.
-_NON_INCLUSIVE_TERMS = (
-    (
-        # Note that \b pattern in python re is pretty particular. In this
-        # regexp, 'class WhiteList ...' will match, but 'class FooWhiteList
-        # ...' will not. This may require some tweaking to catch these cases
-        # without triggering a lot of false positives. Leaving it naive and
-        # less matchy for now.
-        r'/\b(?i)((black|white)list|master|slave)\b',  # nocheck
-        (
-            'Please don\'t use blacklist, whitelist, '  # nocheck
-            'master, or slave in your',  # nocheck
-            'code and make every effort to use other terms. Using "// nocheck"',
-            'at the end of the offending line will bypass this PRESUBMIT error',
-            'but avoid using this whenever possible. Reach out to',
-            'community@chromium.org if you have questions'),
-        True),)
-
-
-def CheckInclusiveLanguage(input_api, output_api):
-  """Make sure that banned non-inclusive terms are not used."""
-  results = []
-  results.extend(
-      input_api.canned_checks.CheckInclusiveLanguage(
-          input_api,
-          output_api,
-          excluded_directories_relative_path=[
-              'infra', 'inclusive_language_presubmit_exempt_dirs.txt'
-          ],
-          non_inclusive_terms=_NON_INCLUSIVE_TERMS))
-  return results
