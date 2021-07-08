@@ -15,7 +15,7 @@
       "cipd.bat",
       "ensure",
       "-root",
-      "[START_DIR]\\cipd\\3pp",
+      "[START_DIR]\\cipd\\3pp\\adk",
       "-ensure-file",
       "infra/3pp/tools/win_adk/windows-amd64 latest",
       "-max-threads",
@@ -41,6 +41,65 @@
     ]
   },
   {
+    "cmd": [
+      "[START_DIR]\\cipd\\3pp\\adk\\raw_source_0.exe",
+      "/q",
+      "/l",
+      "[CLEANUP]\\logs\\adk\\adk.log",
+      "/features",
+      "+"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure windows adk present.Install ADK",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "ensure windows adk present.ensure windows adk present.Read install logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@[CLEANUP]\\logs\\adk\\adk.log@i007: Exit code: 0x0@@@",
+      "@@@STEP_LOG_END@[CLEANUP]\\logs\\adk\\adk.log@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[CLEANUP]\\logs\\adk"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure windows adk present.Read install logs.Listing all logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]\\logs\\adk\\adk.log@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\logs\\adk\\adk.log",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure windows adk present.Read install logs.Reading [CLEANUP]\\logs\\adk\\adk.log",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "ensure windows adk present.ensure win-pe add-on present",
     "~followup_annotations": [
@@ -52,7 +111,7 @@
       "cipd.bat",
       "ensure",
       "-root",
-      "[START_DIR]\\cipd\\3pp",
+      "[START_DIR]\\cipd\\3pp\\winpe",
       "-ensure-file",
       "infra/3pp/tools/win_adk_winpe/windows-amd64 latest",
       "-max-threads",
@@ -75,6 +134,65 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]\\cipd\\3pp\\winpe\\raw_source_0.exe",
+      "/q",
+      "/l",
+      "[CLEANUP]\\logs\\winpe\\winpe.log",
+      "/features",
+      "+"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure win-pe add-on present.Install WinPE",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@[CLEANUP]\\logs\\winpe\\winpe.log@i007: Exit code: 0x0@@@",
+      "@@@STEP_LOG_END@[CLEANUP]\\logs\\winpe\\winpe.log@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[CLEANUP]\\logs\\winpe"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs.Listing all logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]\\logs\\winpe\\winpe.log@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\logs\\winpe\\winpe.log",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "ensure windows adk present.ensure win-pe add-on present.Read install logs.Reading [CLEANUP]\\logs\\winpe\\winpe.log",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@"
     ]
   },
   {

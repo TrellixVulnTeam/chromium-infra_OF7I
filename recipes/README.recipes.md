@@ -67,7 +67,6 @@
   * [tricium_infra](#recipes-tricium_infra)
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
-  * [windows_adk:examples/exec](#recipes-windows_adk_examples_exec)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline)
   * [windows_scripts_executor:examples/test](#recipes-windows_scripts_executor_examples_test)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
@@ -873,31 +872,35 @@ Args:
   disable_path_prefix: disable filtering out DEPS by path prefix.
 ### *recipe_modules* / [windows\_adk](/recipes/recipe_modules/windows_adk)
 
-[DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 #### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows ADK distributed via CIPD.
 
-&mdash; **def [ensure](/recipes/recipe_modules/windows_adk/api.py#24)(self, install=True):**
+&mdash; **def [cleanup](/recipes/recipe_modules/windows_adk/api.py#136)(self):**
+
+Remove the ADK and WinPE.
+
+&mdash; **def [cleanup\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#102)(self):**
+
+Cleanup the Windows ADK.
+
+&mdash; **def [cleanup\_winpe](/recipes/recipe_modules/windows_adk/api.py#119)(self):**
+
+Cleanup WinPE.
+
+&mdash; **def [ensure](/recipes/recipe_modules/windows_adk/api.py#26)(self, install=True):**
 
 Ensure the presence of the Windows ADK.
 
-&mdash; **def [ensure\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#36)(self, refs):**
+&mdash; **def [ensure\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#42)(self, refs):**
 
 Downloads & Installs the Windows ADK.
 
-&mdash; **def [ensure\_win\_adk\_winpe](/recipes/recipe_modules/windows_adk/api.py#45)(self, refs):**
+&mdash; **def [ensure\_win\_adk\_winpe](/recipes/recipe_modules/windows_adk/api.py#72)(self, refs):**
 
 Ensures that the WinPE add-on is available.
-
-&mdash; **def [execute\_config](/recipes/recipe_modules/windows_adk/api.py#52)(self, config):**
-
-Executes the user config.
-
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_adk/api.py#62)(self):**
-
-Executes the scripts to perform the required action.
 ### *recipe_modules* / [windows\_scripts\_executor](/recipes/recipe_modules/windows_scripts_executor)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1325,14 +1328,9 @@ This recipe runs legacy analyzers for the infra repo.
 &mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#54)(api, source_repo, target_repo, extra_submodules, refs, overlays):**
 ### *recipes* / [windows\_adk:examples/ensure](/recipes/recipe_modules/windows_adk/examples/ensure.py)
 
-[DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#13)(api):**
-### *recipes* / [windows\_adk:examples/exec](/recipes/recipe_modules/windows_adk/examples/exec.py)
-
-[DEPS](/recipes/recipe_modules/windows_adk/examples/exec.py#8): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/exec.py#16)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#15)(api):**
 ### *recipes* / [windows\_image\_builder/offline](/recipes/recipes/windows_image_builder/offline.py)
 
 [DEPS](/recipes/recipes/windows_image_builder/offline.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
