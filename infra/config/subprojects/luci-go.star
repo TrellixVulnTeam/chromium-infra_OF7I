@@ -60,7 +60,6 @@ def try_builder(
             builder = name,
             cq_group = "luci-go",
             experiment_percentage = experiment_percentage,
-            disable_reuse = (properties or {}).get("presubmit"),
             owner_whitelist = owner_whitelist,
             mode_allowlist = mode_allowlist,
         )
