@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { TodayOutlined } from '@material-ui/icons';
 import dataSourceReducer, { actions } from './dataSourcesSlice';
 
 // Tests the updateCurrent reducer
