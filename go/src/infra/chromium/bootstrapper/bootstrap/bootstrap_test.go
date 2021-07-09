@@ -26,16 +26,24 @@ func strPtr(s string) *string {
 	return &s
 }
 
+func setPropertiesFromJson(build *buildbucketpb.Build, propsJson map[string]string) {
+	props := make(map[string]interface{}, len(propsJson))
+	for key, p := range propsJson {
+		s := &structpb.Value{}
+		if err := protojson.Unmarshal([]byte(p), s); err != nil {
+			panic(err)
+		}
+		props[key] = s
+	}
+	if err := exe.WriteProperties(build.Input.Properties, props); err != nil {
+		panic(err)
+	}
+}
+
 func setBootstrapProperties(build *buildbucketpb.Build, propsJson string) {
-	props := &structpb.Struct{}
-	if err := protojson.Unmarshal([]byte(propsJson), props); err != nil {
-		panic(err)
-	}
-	if err := exe.WriteProperties(build.Input.Properties, map[string]interface{}{
-		"$bootstrap": props,
-	}); err != nil {
-		panic(err)
-	}
+	setPropertiesFromJson(build, map[string]string{
+		"$bootstrap": propsJson,
+	})
 }
 
 func getBootstrapper(build *buildbucketpb.Build) *Bootstrapper {
@@ -225,6 +233,35 @@ func TestBootstrapper(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(getValueAtPath(properties, "$build/baz"), ShouldResembleProtoJSON, `{"quux": "quuz"}`)
 					So(getValueAtPath(properties, "foo"), ShouldResembleProtoJSON, `"bar"`)
+					So(properties.Fields, ShouldNotContainKey, "$bootstrap")
+				})
+
+				Convey("with build properties merged with properties from the properties file", func() {
+					topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
+					topLevelProject.Files[fakegitiles.FileRevId{
+						Revision: "top-level-top-level-head",
+						Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
+					}] = strPtr(`{
+						"$build/baz": {
+							"quux": "quuz"
+						},
+						"foo": "bar"
+					}`)
+					setPropertiesFromJson(build, map[string]string{
+						"$build/baz": `{
+							"quuy": "quuw"
+						}`,
+						"shaz": `1337.0`,
+					})
+					bootstrapper := getBootstrapper(build)
+
+					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, gitilesClient)
+
+					So(err, ShouldBeNil)
+					So(getValueAtPath(properties, "$build/baz"), ShouldResembleProtoJSON, `{"quuy": "quuw"}`)
+					So(getValueAtPath(properties, "foo"), ShouldResembleProtoJSON, `"bar"`)
+					So(getValueAtPath(properties, "shaz"), ShouldResembleProtoJSON, `1337`)
+					So(properties.Fields, ShouldNotContainKey, "$bootstrap")
 				})
 
 				Convey("for top level project with commits in $build/chromium_bootstrap property", func() {

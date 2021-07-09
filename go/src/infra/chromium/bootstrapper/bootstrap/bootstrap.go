@@ -24,8 +24,9 @@ import (
 // Bootstrapper reads the $bootstrap properties and communicates with external
 // services to prepare the bootstrapped recipe to run.
 type Bootstrapper struct {
-	commit     *buildbucketpb.GitilesCommit
-	properties *BootstrapProperties
+	commit          *buildbucketpb.GitilesCommit
+	buildProperties *structpb.Struct
+	properties      *BootstrapProperties
 }
 
 // NewBootstrapper creates a new Bootstrapper, returning an error if the
@@ -46,7 +47,15 @@ func NewBootstrapper(build *buildbucketpb.Build) (*Bootstrapper, error) {
 		return nil, errors.Annotate(err, "failed to validate $bootstrap property").Err()
 	}
 
-	return &Bootstrapper{proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit), bootstrapProperties}, nil
+	properties = proto.Clone(properties).(*structpb.Struct)
+	delete(properties.Fields, "$bootstrap")
+
+	bootstrapper := &Bootstrapper{
+		commit:          proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit),
+		buildProperties: properties,
+		properties:      bootstrapProperties,
+	}
+	return bootstrapper, nil
 }
 
 // ComputeBootstrappedProperties gets the properties that should be set for the
@@ -60,6 +69,9 @@ func NewBootstrapper(build *buildbucketpb.Build) (*Bootstrapper, error) {
 //     the bootstrapping process that the bootstrapped recipe can use to ensure
 //     it operates in a manner that is consistent with the bootstrapping
 //     process. See chromium_bootstrap.proto for more information.
+//   * The build's input properties with the $bootstrap property removed. Values
+//     specified in the build's properties override properties in the properties
+//     file.
 func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitilesClient *gitiles.Client) (*structpb.Struct, error) {
 	modProperties := &ChromiumBootstrapModuleProperties{}
 	var configCommit *buildbucketpb.GitilesCommit
@@ -82,7 +94,7 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 	}
 
 	if err := b.populateCommitId(ctx, gitilesClient, configCommit); err != nil {
-		return nil, errors.Annotate(err, "failed to resolve ID for config commit: {%s}", configCommit.String()).Err()
+		return nil, errors.Annotate(err, "failed to resolve ID for config commit: {%s}", configCommit).Err()
 	}
 	modProperties.Commits = append(modProperties.Commits, configCommit)
 
@@ -100,7 +112,13 @@ func (b *Bootstrapper) ComputeBootstrappedProperties(ctx context.Context, gitile
 	if err := exe.WriteProperties(properties, map[string]interface{}{
 		"$build/chromium_bootstrap": modProperties,
 	}); err != nil {
-		return nil, errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: {%s}", modProperties.String()).Err()
+		return nil, errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: {%s}", modProperties).Err()
+	}
+	for key := range b.buildProperties.Fields {
+		delete(properties.Fields, key)
+	}
+	if err := exe.WriteProperties(properties, b.buildProperties.AsMap()); err != nil {
+		return nil, errors.Annotate(err, "failed to write out properties from the build: {%s}", b.buildProperties).Err()
 	}
 
 	return properties, nil
