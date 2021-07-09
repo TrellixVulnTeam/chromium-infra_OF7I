@@ -153,7 +153,7 @@ import:
 - package: github.com/shurcooL/sanitized_anchor_name
   version: master
   repo: https://chromium.googlesource.com/external/github.com/shurcooL/sanitized_anchor_name.git
-- package: gopkg.in/russross/blackfriday.v2
+- package: github.com/russross/blackfriday/v2
   version: v2
   repo: https://chromium.googlesource.com/external/github.com/russross/blackfriday.git
 - package: gopkg.in/yaml.v2
