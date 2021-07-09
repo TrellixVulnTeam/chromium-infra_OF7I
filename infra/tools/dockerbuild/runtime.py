@@ -11,6 +11,7 @@ import sys
 import subprocess
 import tempfile
 
+from . import concurrency
 from . import cipd
 from . import dockcross
 from . import source
@@ -195,7 +196,20 @@ class System(object):
       kwargs['env'].update(env)
 
     stdout_lines = []
-    proc = subprocess.Popen(args, **kwargs)
+
+    # Acquire an exclusive lock before running the subprocess. The lock is
+    # acquired in shared mode by threads writing files, to ensure the subprocess
+    # doesn't inherit file handles and keep them open. See the comment on
+    # PROCESS_SPAWN_LOCK for more detail.
+    with concurrency.PROCESS_SPAWN_LOCK.write():
+      # Flush any pending writes before executing. Not exactly sure, but this
+      # seems to reduce problems with shell scripts failing to execute with the
+      # error: "bash: bad interpreter: text file busy". Although it could just
+      # be that the extra time taken here reduces the chance of a race.
+      if sys.platform != 'win32':
+        subprocess.call('sync')
+
+      proc = subprocess.Popen(args, **kwargs)
 
     if kwargs['stdout'] is subprocess.PIPE:
       for stdout_line in iter(proc.stdout.readline, ""):
@@ -210,10 +224,11 @@ class System(object):
     util.LOGGER.debug('Command finished with return code %d.', returncode)
     if retcodes is not None and proc.returncode not in retcodes:
       if not util.LOGGER.isEnabledFor(logging.DEBUG):
-        util.LOGGER.error('Command failed (rc=%d):\n%s', returncode, stdout)
+        util.LOGGER.error('Command failed: %s (rc=%d):\n%s', args, returncode,
+                          stdout)
       else:
         # Already dumped STDOUT to debug.
-        util.LOGGER.error('Command failed (rc=%d)', returncode)
+        util.LOGGER.error('Command failed: %s (rc=%d)', args, returncode)
       raise self.SubcommandError(returncode, stdout)
     return returncode, stdout
 

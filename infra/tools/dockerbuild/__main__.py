@@ -59,7 +59,8 @@ def main(argv):
   args = parser.parse_args(argv)
 
   logging.basicConfig(
-      level=args.log_level, format='%(asctime)s:%(levelname)s: %(message)s')
+      level=args.log_level,
+      format='%(asctime)s:%(levelname)s:%(thread)d: %(message)s')
 
   dockerbuild.run(args)
   return 0

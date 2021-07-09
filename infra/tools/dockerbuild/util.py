@@ -4,6 +4,7 @@
 
 import contextlib
 import datetime
+import errno
 import logging
 import os
 import shutil
@@ -27,8 +28,15 @@ LOGGER = logging.getLogger('dockerbuild')
 
 def ensure_directory(*parts):
   name = os.path.join(*parts)
-  if not os.path.exists(name):
+  try:
     os.makedirs(name)
+  except OSError as e:
+    # NOTE: Python 3 provides the 'exist_ok' keyword argument for os.makedirs,
+    # which we can use instead of catching this exception. Or perhaps
+    # pathlib.Path.mkdir.
+    if e.errno != errno.EEXIST:
+      raise
+
   return name
 
 
@@ -36,10 +44,12 @@ def copy_to(src, dest_dir):
   dst = os.path.join(dest_dir, os.path.basename(src))
 
   LOGGER.debug('Copy %r => %r', src, dst)
-  if os.path.isdir(src):
-    shutil.copytree(src, dst, symlinks=True)
-  else:
-    shutil.copy(src, dst)
+
+  with concurrency.PROCESS_SPAWN_LOCK.shared():
+    if os.path.isdir(src):
+      shutil.copytree(src, dst, symlinks=True)
+    else:
+      shutil.copy(src, dst)
   return dst
 
 
@@ -221,5 +231,3 @@ def check_run_script(system, dx, work_root, script, args=None, cwd=None,
   if args:
     cmd.extend(args)
   return check_run(system, dx, work_root, cmd, cwd=cwd, env=env)
-
-

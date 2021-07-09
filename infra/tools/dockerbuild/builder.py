@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 
+from . import concurrency
 from . import util
 
 from .build_types import Wheel
@@ -181,7 +182,8 @@ class Builder(object):
     with system.temp_subdir('cipd_%s_%s' % wheel.spec.tuple) as tdir:
       for w in built_wheels:
         universal_wheel_path = os.path.join(tdir, w.universal_filename())
-        shutil.copy(w.path(system), universal_wheel_path)
+        with concurrency.PROCESS_SPAWN_LOCK.shared():
+          shutil.copy(w.path(system), universal_wheel_path)
       _, git_revision = system.check_run(['git', 'rev-parse', 'HEAD'])
       system.cipd.create_package(wheel.cipd_package(git_revision),
                                  tdir, pkg_path)
@@ -210,7 +212,8 @@ def StageWheelForPackage(system, wheel_dir, wheel):
 
   source_path = wheels[0]
   util.LOGGER.debug('Identified source wheel: %s', source_path)
-  shutil.copy(source_path, dst)
+  with concurrency.PROCESS_SPAWN_LOCK.shared():
+    shutil.copy(source_path, dst)
 
   return os.path.basename(source_path)
 
@@ -218,6 +221,11 @@ def StageWheelForPackage(system, wheel_dir, wheel):
 def BuildPackageFromPyPiWheel(system, wheel):
   """Builds a wheel by obtaining a matching wheel from PyPi."""
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
+    # TODO: This can copy the Python package unnecessarily: even if the platform
+    # uses docker, we don't run 'pip download' using docker, but
+    # SetupPythonPackages doesn't know this, and infers that we need it for
+    # docker based on the platform, and hence copies it to the temporary
+    # directory.
     interpreter, env = SetupPythonPackages(system, wheel, tdir)
     util.check_run(
         system,
@@ -291,6 +299,9 @@ def HostCipdPlatform():
   raise Exception("No CIPD platform for %s, %s" % (system, machine))
 
 
+CIPD_PYTHON_LOCK = concurrency.KeyedLock()
+
+
 def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   PY_CIPD_VERSION_MAP = {
       '27': 'version:2@2.7.18.chromium.39',
@@ -301,14 +312,19 @@ def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   package_ident = 'py_%s_%s' % (wheel.pyversion, cipd_platform)
   common_dir = os.path.join(system.root, 'cipd_python', package_ident)
 
-  if not os.path.exists(common_dir):
-    os.makedirs(common_dir)
-    system.cipd.init(common_dir)
+  # Lock to prevent races with other threads trying to install the same CIPD
+  # package. The cipd_python CIPD root is shared between all threads, so we need
+  # to ensure we don't try to install the same package to it multiple times
+  # concurrently.
+  with CIPD_PYTHON_LOCK.get(package_ident):
+    if not os.path.exists(common_dir):
+      os.makedirs(common_dir)
+      system.cipd.init(common_dir)
 
-    cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % (
-        '3' if wheel.pyversion[0] == '3' else '', cipd_platform)
-    version = PY_CIPD_VERSION_MAP[wheel.pyversion]
-    system.cipd.install(cipd_pkg, version, common_dir)
+      cipd_pkg = 'infra/3pp/tools/cpython%s/%s' % (
+          '3' if wheel.pyversion[0] == '3' else '', cipd_platform)
+      version = PY_CIPD_VERSION_MAP[wheel.pyversion]
+      system.cipd.install(cipd_pkg, version, common_dir)
 
   # For docker builds, we need the Python interpreter in the base working dir
   # for this particular build. Ideally we'd just mount the cipd_python directory
@@ -317,7 +333,17 @@ def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   if wheel.plat.dockcross_base:
     pkg_dir = os.path.join(
         base_dir, 'cipd_python_%s_%s' % (wheel.pyversion, cipd_platform))
-    shutil.copytree(common_dir, pkg_dir)
+    # Grab a shared lock on the system process spawn RWLock while copying
+    # binaries. We copy to a subdirectory of `base_dir', which is a unique,
+    # per-build temporary directory. Since each directory is unique, we can copy
+    # to multiple directories in parallel without a problem.
+    #
+    # This one is particularly important as we're copying Python binaries, which
+    # are large enough to give a high chance of in-flight copies when a process
+    # is spawned, and are executed, which can't be done when they're open in
+    # write mode.
+    with concurrency.PROCESS_SPAWN_LOCK.shared():
+      shutil.copytree(common_dir, pkg_dir)
   else:
     pkg_dir = common_dir
 

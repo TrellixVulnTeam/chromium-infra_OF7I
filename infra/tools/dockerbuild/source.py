@@ -22,6 +22,7 @@ import tempfile
 import zipfile
 
 from . import cipd
+from . import concurrency
 from . import util
 
 
@@ -120,6 +121,8 @@ class Repository(object):
     for suffix in ('.zip',):
       self._archive_suffixes[suffix] = self._unpack_zip_generic
 
+    self.lock = concurrency.KeyedLock()
+
   @property
   def missing_sources(self):
     return self._missing_sources
@@ -138,67 +141,76 @@ class Repository(object):
         compress_level=cipd.COMPRESS_NONE,
     )
     package_path = os.path.join(self._root, '%s.pkg' % (src.tag,))
-    package_dest = util.ensure_directory(self._root, src.tag)
 
-    # If the package doesn't exist, or if we are forcing a download, create a
-    # local package.
-    have_package = False
-    if os.path.isfile(package_path):
-      # Package file is on disk, reuse unless we're forcing a download.
-      if not self._force_download:
+    # Lock around accesses to the shared self._root directory, which is a
+    # central cache for source packages which may be used between different
+    # wheel builds.
+    with self.lock.get(src.tag):
+      package_dest = util.ensure_directory(self._root, src.tag)
+
+      # If the package doesn't exist, or if we are forcing a download, create a
+      # local package.
+      have_package = False
+      if os.path.isfile(package_path):
+        # Package file is on disk, reuse unless we're forcing a download.
+        if not self._force_download:
+          have_package = True
+
+      # By default, assume the cached source package exists and try to download
+      # it. If this produces an error we infer that it doesn't exist and go
+      # create and upload it. This saves a call to CIPD compared to making an
+      # explicit check up-front.
+      cipd_exists = True
+      if not have_package:
+        # Don't even try downloading it if force_download is set.
+        if not self._force_download:
+          try:
+            self._system.cipd.fetch_package(package.name, package.tags[0],
+                                            package_path)
+          except self._system.SubcommandError as e:
+            # The CIPD command line tool returns 1 for all errors, so we're
+            # forced to just check its stdout.
+            if e.returncode == 1 and ('no such tag' in e.output or
+                                      'no such package' in e.output):
+              cipd_exists = False
+            else:
+              raise
+
+        if not cipd_exists or self._force_download:
+          self._create_cipd_package(package, src, package_path)
+
         have_package = True
 
-    # By default, assume the cached source package exists and try to download
-    # it. If this produces an error we infer that it doesn't exist and go create
-    # and upload it. This saves a call to CIPD compared to making an explicit
-    # check up-front.
-    cipd_exists = True
-    if not have_package:
-      # Don't even try downloading it if force_download is set.
-      if not self._force_download:
-        try:
-          self._system.cipd.fetch_package(package.name, package.tags[0],
-                                          package_path)
-        except self._system.SubcommandError as e:
-          # The CIPD command line tool returns 1 for all errors, so we're forced
-          # to just check its stdout.
-          if e.returncode == 1 and ('no such tag' in e.output or
-                                    'no such package' in e.output):
-            cipd_exists = False
-          else:
-            raise
+      # We must have acquired the package at "package_path" by now.
+      assert have_package
 
-      if not cipd_exists or self._force_download:
-        self._create_cipd_package(package, src, package_path)
+      # If we built a CIPD package, upload it. This will be fatal if we could
+      # not perform the upload; if a user wants to not care about this, set
+      # "upload" to False.
+      if not cipd_exists:
+        if self._upload:
+          self._system.cipd.register_package(package_path, package.tags)
+          util.LOGGER.info('Uploaded CIPD source package')
+        else:
+          self._missing_sources = True
+          util.LOGGER.warning('Missing CIPD source package, but not uploaded.')
 
-      have_package = True
+      # Install the CIPD package into our source directory. This is a no-op if
+      # it is already installed.
+      self._system.cipd.deploy_package(package_path, package_dest)
 
-    # We must have acquired the package at "package_path" by now.
-    assert have_package
+      # The package directory should contain exactly one file.
+      package_files = [
+          f for f in os.listdir(package_dest) if not f.startswith('.')
+      ]
+      if len(package_files) != 1:
+        raise ValueError('Package contains %d (!= 1) files: %s' %
+                         (len(package_files), package_dest))
+      package_file = package_files[0]
+      package_file_path = os.path.join(package_dest, package_file)
 
-    # If we built a CIPD package, upload it. This will be fatal if we could not
-    # perform the upload; if a user wants to not care about this, set "upload"
-    # to False.
-    if not cipd_exists:
-      if self._upload:
-        self._system.cipd.register_package(package_path, package.tags)
-        util.LOGGER.info('Uploaded CIPD source package')
-      else:
-        self._missing_sources = True
-        util.LOGGER.warning('Missing CIPD source package, but not uploaded.')
-
-    # Install the CIPD package into our source directory. This is a no-op if it
-    # is already installed.
-    self._system.cipd.deploy_package(package_path, package_dest)
-
-    # The package directory should contain exactly one file.
-    package_files = [f for f in os.listdir(package_dest)
-                     if not f.startswith('.')]
-    if len(package_files) != 1:
-      raise ValueError('Package contains %d (!= 1) files: %s' % (
-          len(package_files), package_dest))
-    package_file = package_files[0]
-    package_file_path = os.path.join(package_dest, package_file)
+    # The same destination path must not be accessed concurrently, so we can
+    # safely release the lock before copying.
 
     # Unpack or copy the source file into the destination path.
     if unpack:
@@ -209,7 +221,8 @@ class Repository(object):
     # Single file.
     dest = os.path.join(dest_dir, os.path.basename(package_file))
     util.LOGGER.debug('Installing source from [%s] => [%s]', package_file, dest)
-    shutil.copyfile(package_file_path, dest)
+    with concurrency.PROCESS_SPAWN_LOCK.shared():
+      shutil.copyfile(package_file_path, dest)
     return dest
 
   def _create_cipd_package(self, package, src, package_path):
@@ -229,7 +242,8 @@ class Repository(object):
       self._system.cipd.create_package(package, package_dir, package_path)
 
   def _unpack_archive(self, path, dest_dir, unpack_func):
-    with self._system.temp_subdir(os.path.basename(path)) as tdir:
+    with self._system.temp_subdir(os.path.basename(
+        path)) as tdir, concurrency.PROCESS_SPAWN_LOCK.shared():
       unpack_func(path, tdir)
 
       contents = os.listdir(tdir)

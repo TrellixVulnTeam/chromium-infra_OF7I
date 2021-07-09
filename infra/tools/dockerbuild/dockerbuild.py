@@ -17,6 +17,7 @@ import os
 import re
 import sys
 
+from . import concurrency
 from . import dockcross
 from . import markdown
 from . import runtime
@@ -97,54 +98,24 @@ def _main_wheel_build(args, system):
   # Packages that we've updated this run.  Used to determine which packages
   # need their refs updated.
   updated_packages = set()
-
   platforms, specs = _filter_platform_specs(args.platform, to_build)
-
   _, git_revision = system.check_run(['git', 'rev-parse', 'HEAD'])
+
+  # Create a pool to run multiple wheel builds in parallel. Target level of
+  # concurrency is determined via '-j'.
+  work_queue = concurrency.Pool(args.processes)
+
   for spec_name in specs:
     build = wheels.SPECS[spec_name]
 
     for plat in platforms:
-      try:
-        w = build.wheel(system, plat)
-      except PlatformNotSupported as e:
-        util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
-        continue
-      package = w.cipd_package(git_revision)
+      work_queue.apply(_build_one_wheel, [
+          system, args, git_revision, updated_packages, spec_name, plat, build
+      ])
 
-      # Figure out the unique version id for this wheel build.
-      buildid = build.version_fn(system)
-      version_tag = 'version:%s' % (buildid,)
-      if not args.rebuild and system.cipd.exists(package.name, version_tag):
-        util.LOGGER.info('Package [%s] with buildid [%s] already exists.',
-            package, buildid)
-        continue
-
-      util.LOGGER.info('Running wheel build [%s] with buildid [%s] for [%s]',
-          spec_name, buildid, plat.name)
-      try:
-        pkg_path = build.build(w, system, rebuild=args.rebuild)
-        if not pkg_path:
-          continue
-      except PlatformNotSupported as e:
-        util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
-        continue
-      util.LOGGER.info('Finished wheel for package: %s', package.name)
-
-      dryrun = True
-      if not args.upload:
-        util.LOGGER.info('--upload not passed, not uploading package')
-      elif system.cipd.exists(package.name, version_tag):
-        util.LOGGER.info('CIPD package already exists; ignoring --upload.')
-      else:
-        util.LOGGER.info('Uploading CIPD package for: %s', package)
-        dryrun = False
-
-      # When we register it, we want to attach all tags.
-      system.cipd.register_package(pkg_path, package.tags, dryrun=dryrun)
-
-      # Note packages that we've updated so we can update all the refs.
-      updated_packages.add(package.name)
+  # This will block until all tasks have finished, or raise an exception if any
+  # fail.
+  work_queue.run_all()
 
   # Now that we've registered all our packages, update all the refs.
   # We first create a reverse mapping for the cipd name to wheels.
@@ -217,6 +188,53 @@ def _main_wheel_build(args, system):
           package_name, refs, version_tag)
       system.cipd.set_refs(
           package_name, version_tag, refs, dryrun=not args.upload)
+
+
+def _build_one_wheel(system, args, git_revision, updated_packages, spec_name,
+                     plat, build):
+  try:
+    w = build.wheel(system, plat)
+  except PlatformNotSupported as e:
+    util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
+    return
+  package = w.cipd_package(git_revision)
+
+  # Figure out the unique version id for this wheel build.
+  buildid = build.version_fn(system)
+  version_tag = 'version:%s' % (buildid,)
+  if not args.rebuild and system.cipd.exists(package.name, version_tag):
+    util.LOGGER.info('Package [%s] with buildid [%s] already exists.', package,
+                     buildid)
+    return
+
+  util.LOGGER.info('Running wheel build [%s] with buildid [%s] for [%s]',
+                   spec_name, buildid, plat.name)
+
+  try:
+    pkg_path = build.build(w, system, rebuild=args.rebuild)
+    if not pkg_path:
+      return
+  except PlatformNotSupported as e:
+    util.LOGGER.warning('Not supported on: %s: %s', plat.name, str(e))
+    return
+  util.LOGGER.info('Finished wheel for package: %s', package.name)
+
+  dryrun = True
+  if not args.upload:
+    util.LOGGER.info('--upload not passed, not uploading package')
+  elif system.cipd.exists(package.name, version_tag):
+    util.LOGGER.info('CIPD package already exists; ignoring --upload.')
+  else:
+    util.LOGGER.info('Uploading CIPD package for: %s', package)
+    dryrun = False
+
+  # When we register it, we want to attach all tags.
+  system.cipd.register_package(pkg_path, package.tags, dryrun=dryrun)
+
+  # Note packages that we've updated so we can update all the refs.
+  # Concurrently updating this set is fine is each operation is independent and
+  # set updates acquire the GIL.
+  updated_packages.add(package.name)
 
 
 def _main_wheel_dump(args, system):
@@ -360,6 +378,14 @@ def add_argparse_options(parser):
       help='Force rebuild of package even if it is already built.')
   subparser.add_argument('--upload', action='store_true',
       help='Upload any missing CIPD packages.')
+  subparser.add_argument(
+      '-j',
+      action='store',
+      type=int,
+      default=0,
+      dest='processes',
+      help='Number of threads to run in parallel. Defaults to the number of '
+      'cpus on the system')
   subparser.set_defaults(func=_main_wheel_build)
 
   # Subcommand: wheel-dump

@@ -11,7 +11,10 @@ import stat
 import string
 import sys
 import tempfile
+import threading
+import uuid
 
+from . import concurrency
 from . import source
 from . import util
 
@@ -62,6 +65,9 @@ class Builder(object):
       'mysql_relpath',
   ))
 
+  FETCH_LOCK = concurrency.KeyedLock()
+  BUILD_LOCK = threading.Lock()
+
 
   def __init__(self, system):
     self._system = system
@@ -89,7 +95,8 @@ class Builder(object):
 
     # Symlink in our resources directory.
     resources = os.path.join(root, 'resources')
-    shutil.copytree(util.RESOURCES_DIR, resources)
+    with concurrency.PROCESS_SPAWN_LOCK.shared():
+      shutil.copytree(util.RESOURCES_DIR, resources)
 
     # Install the sources that we use.
     src_dir = util.ensure_directory(root, 'sources')
@@ -145,6 +152,9 @@ class Builder(object):
   def _ensure_builder_image(self, plat, rebuild, upload):
     """Ensures that the builder image for the specified platform is installed.
 
+    This is called with FETCH_LOCK held, to avoid races around installing the
+    same image from multiple threads at once.
+
     Returns: (dx, regenerated)
       dx (Image): The Image for the specified platform.
       regenerated (bool): True if the image was locally regenerated, False if it
@@ -168,8 +178,8 @@ class Builder(object):
       if dx.exists():
         return dx, False
 
-      # The image doesn't exist locally, but it might exist remotely. See if we
-      # can pull it.
+      # The image doesn't exist locally, but it might exist remotely. See if
+      # we can pull it.
       try:
         self._pull_image(dx.identifier)
         return dx, True
@@ -178,30 +188,32 @@ class Builder(object):
                           dx.identifier)
 
     # Either we're forcing a rebuild, or the image doesn't exist locally.
-    #
-    # First, confirm that our base image exists locally. If not, mirror it.
-    base_image = self._docker_base_image(plat)
-    if not _docker_image_exists(self._system, base_image.internal_id):
-      self.mirror_base_image(plat)
+    # Building images is expensive enough that we shouldn't build multiple at
+    # the same time, so we acquire a lock around building images.
+    with Builder.BUILD_LOCK:
+      # First, confirm that our base image exists locally. If not, mirror it.
+      base_image = self._docker_base_image(plat)
+      if not _docker_image_exists(self._system, base_image.internal_id):
+        self.mirror_base_image(plat)
 
-    # In order to build our image, we need to stage a Docker environment with
-    # all of its prerequisites.
-    with self._system.temp_subdir(dx.platform.name) as tdir:
-      # Populate our Dockerfile template and generate our Dockerfile.
-      #
-      # This will also unpack prerequisites into the Docker root.
-      dt = self._generic_template(dx, tdir)
-      dockerfile = os.path.join(tdir, 'Dockerfile.%s' % (plat.name,))
-      with open(dockerfile, 'w') as fd:
-        fd.write(self._gen_dockerfile(dt))
+      # In order to build our image, we need to stage a Docker environment
+      # with all of its prerequisites.
+      with self._system.temp_subdir(dx.platform.name) as tdir:
+        # Populate our Dockerfile template and generate our Dockerfile.
+        #
+        # This will also unpack prerequisites into the Docker root.
+        dt = self._generic_template(dx, tdir)
+        dockerfile = os.path.join(tdir, 'Dockerfile.%s' % (plat.name,))
+        with open(dockerfile, 'w') as fd:
+          fd.write(self._gen_dockerfile(dt))
 
-      # Build the Docker image.
-      self._system.docker([
-        'build',
-        '-t', dx.identifier,
-        '-f', dockerfile,
-        tdir,
-      ], retcodes=[0])
+        # Build the Docker image.
+        self._system.docker([
+            'build',
+            '-t', dx.identifier,
+            '-f', dockerfile,
+            tdir,
+        ], retcodes=[0])
 
     if upload:
       util.LOGGER.info('Uploading generated image [%s]', dx.identifier)
@@ -214,21 +226,24 @@ class Builder(object):
       return None
 
     # Ensure that our builder's base image exists locally.
-    dx, regenerated = self._ensure_builder_image(plat, rebuild, upload)
+    # Avoid any races with trying to install/rebuild the same image from
+    # multiple threads at once.
+    with Builder.FETCH_LOCK.get(plat.name):
+      dx, regenerated = self._ensure_builder_image(plat, rebuild, upload)
 
-    # If the image was regenerated, run it to generate the "dockcross" entry
-    # point script.
-    if regenerated or not os.path.exists(dx.bin):
-      with open(dx.bin, 'w') as fd:
-        self._system.docker([
-            'run',
-            '--rm',
-            dx.identifier,
-        ], stdout=fd)
+      # If the image was regenerated, run it to generate the "dockcross" entry
+      # point script.
+      if regenerated or not os.path.exists(dx.bin):
+        with open(dx.bin, 'w') as fd:
+          self._system.docker([
+              'run',
+              '--rm',
+              dx.identifier,
+          ], stdout=fd)
 
-        # Make the generated script executable.
-        st = os.stat(dx.bin)
-        os.chmod(dx.bin, st.st_mode | stat.S_IEXEC)
+          # Make the generated script executable.
+          st = os.stat(dx.bin)
+          os.chmod(dx.bin, st.st_mode | stat.S_IEXEC)
 
     return dx
 
@@ -309,8 +324,14 @@ class Image(collections.namedtuple('_Image', (
       cwd = work_dir
 
       args += [self.bin]
-      if run_args:
-        args += ['-a', ' '.join(run_args)]
+
+      # The dockcross script uses bash $RANDOM to generate container names. This
+      # is insufficiently random, and produces collisions fairly often when
+      # running several containers in parallel as we do. Luckily we can override
+      # the earlier argument by specifying '--name' ourself via '-a'.
+      run_args.append('--name=dockcross_%s' % uuid.uuid4())
+
+      args += ['-a', ' '.join(run_args)]
 
       args.append('/start.sh')
 
