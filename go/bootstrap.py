@@ -488,6 +488,7 @@ def get_go_environ_diff(layout):
         'GOPATH': None,
         'GOMODCACHE': os.path.join(layout.workspace, '.modcache'),
         'GOPRIVATE': '*.googlesource.com,*.google.com',
+        'GAE_PY_USE_CLOUDBUILDHELPER': '1',
     })
   else:
     env.update({
@@ -496,6 +497,7 @@ def get_go_environ_diff(layout):
         'GOPATH': os.pathsep.join(gopath),
         'GOMODCACHE': None,
         'GOPRIVATE': None,
+        'GAE_PY_USE_CLOUDBUILDHELPER': None,
     })
 
   if sys.platform == 'win32':
