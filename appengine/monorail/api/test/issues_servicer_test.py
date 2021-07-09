@@ -294,6 +294,32 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(actual_issue_4.attachment_count, 0)
     self.assertEqual(actual_issue_4.local_id, 4)
 
+  @patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testListIssues_No_visible_results(self, mock_pipeline):
+    """Ensure ListIssues handles the no visible results case."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=None, auth=None)
+    users_by_id = framework_views.MakeAllUserViews(
+        mc.cnxn, self.services.user, [111])
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+
+    instance = Mock(
+        spec=True,
+        users_by_id=users_by_id,
+        harmonized_config=config,
+        # When there are no results, these default to None.
+        visible_results=None,
+        pagination=None)
+    mock_pipeline.return_value = instance
+    instance.SearchForIIDs = Mock()
+    instance.MergeAndSortIssues = Mock()
+    instance.Paginate = Mock()
+
+    request = issues_pb2.ListIssuesRequest(query='', project_names=['proj'])
+    response = self.CallWrapped(self.issues_svcr.ListIssues, mc, request)
+
+    self.assertEqual(len(response.issues), 0)
+
   def testListReferencedIssues(self):
     """We can get the referenced issues that exist."""
     self.services.project.TestAddProject(
