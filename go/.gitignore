@@ -1,4 +1,5 @@
 /.cache
+/.modcache
 /.glide
 /.vendor
 /bin

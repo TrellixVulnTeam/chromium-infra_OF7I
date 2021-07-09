@@ -34,7 +34,6 @@ if os.path.abspath(bootstrap.__file__) not in (want, want + 'c'):
       'Imported wrong bootstrap.py %s instead of %s' %
       (bootstrap.__file__, want))
 
-old = os.environ.copy()
 
 def _escape_special(v):
   """Returns (str): The supplied value, with special shell characters escaped.
@@ -60,6 +59,8 @@ if sys.platform == 'win32':
     # TODO: The quoting here is probably insufficient for all corner cases.
     # We strip "'" because cmd.exe doesn't like it in PATH for some reason.
     print('set %s=%s' % (key, pipes.quote(value).strip("'")))
+  def unset_env_var(key):
+    print('set %s=' % (key,))
 else:
   def emit_env_var(key, value):
     orig_value, value = value, _escape_special(value)
@@ -67,6 +68,8 @@ else:
     # in the string.
     print('export %s=%s%s' % (key, ('$') if orig_value != value else
                               (''), pipes.quote(value)))
+  def unset_env_var(key):
+    print('unset %s' % (key,))
 
 
 def main():
@@ -74,31 +77,11 @@ def main():
   if args and args[0] == '--':
     args.pop(0)
 
+  old = os.environ.copy()
   new = bootstrap.prepare_go_environ()
-  if not args:
-    for key, value in sorted(new.items()):
-      if old.get(key) != value:
-        emit_env_var(key, value)
-    # VIRTUAL_ENV is added by the vpython wrapper. It usually *does not* exist
-    # in os.environ of the outer shell that executes eval `./env.py`. Since we
-    # are about to replace the native python in PATH with virtualenv's one, we
-    # must also make sure the new environment has VIRTUAL_ENV set. Otherwise
-    # some virtualenv-aware tools (like gcloud) get confused.
-    #
-    # Note that once env.py finishes execution, nothing is holding a lock on
-    # vpython virtualenv directory, and it may eventually be garbage collected
-    # (while the user is still inside a shell that references it). We assume it
-    # is rare, and the users can manually recover (by reexecuting env.py). This
-    # won't be happening on bots, since they don't use eval `./env.py`.
-    if 'VIRTUAL_ENV' in old:
-      emit_env_var('VIRTUAL_ENV', old['VIRTUAL_ENV'])
-    if sys.platform != 'win32' and sys.stdout.isatty():
-      print()
-      print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-      print('# WRAP THIS COMMAND IN "eval" TO HAVE AN EFFECT!')
-      print('#    eval `./env.py`')
-      print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-  else:
+
+  # If given args, it means env.py is executed as a wrapper.
+  if args:
     exe = args[0]
     if exe == 'python':
       exe = sys.executable
@@ -108,6 +91,36 @@ def main():
       if os.sep not in exe:
         exe = bootstrap.find_executable(exe, [bootstrap.WORKSPACE])
     sys.exit(subprocess.call([exe] + args[1:], env=new))
+
+  # If not given args, emit a shell script to modify environ.
+  for key, value in sorted(new.items()):
+    if old.get(key) != value:
+      emit_env_var(key, value)
+  for key in sorted(old):
+    if key not in new:
+      unset_env_var(key)
+
+  # VIRTUAL_ENV is added by the vpython wrapper. It usually *does not* exist
+  # in os.environ of the outer shell that executes eval `./env.py`. Since we
+  # are about to replace the native python in PATH with virtualenv's one, we
+  # must also make sure the new environment has VIRTUAL_ENV set. Otherwise
+  # some virtualenv-aware tools (like gcloud) get confused.
+  #
+  # Note that once env.py finishes execution, nothing is holding a lock on
+  # vpython virtualenv directory, and it may eventually be garbage collected
+  # (while the user is still inside a shell that references it). We assume it
+  # is rare, and the users can manually recover (by reexecuting env.py). This
+  # won't be happening on bots, since they don't use eval `./env.py`.
+  if 'VIRTUAL_ENV' in old:
+    emit_env_var('VIRTUAL_ENV', old['VIRTUAL_ENV'])
+
+  # Warn for common misuse.
+  if sys.platform != 'win32' and sys.stdout.isatty():
+    print()
+    print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('# WRAP THIS COMMAND IN "eval" TO HAVE AN EFFECT!')
+    print('#    eval `./env.py`')
+    print('# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
 
 main()

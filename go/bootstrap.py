@@ -83,17 +83,30 @@ _Layout = collections.namedtuple('Layout', (
     # The workspace path.
     'workspace',
 
+    # True to run in "go modules" mode instead of GOPATH mode.
+    'use_modules',
+
     # The list of vendor directories. Each will have a Glide "deps.yaml" in it.
+    #
+    # Ignored in modules mode.
     'vendor_paths',
 
     # List of paths to append to GOPATH (in additional to `workspace`).
+    #
+    # Ignored in modules mode.
     'go_paths',
 
     # The list of DEPS'd in paths that contain Go sources. This is used to
     # determine when our vendored tools need to be re-installed.
+    #
+    # Ignored in modules mode.
     'go_deps_paths',
 
     # Go package paths of tools to install into the bootstrap environment.
+    #
+    # TODO(vadimsh). Ignored in modules mode and we'll need to figure out a
+    # replacement (probably something like
+    # https://marcofranssen.nl/manage-go-tools-via-go-modules).
     'go_install_tools',
 ))
 
@@ -110,6 +123,7 @@ class Layout(_Layout):
 _EMPTY_LAYOUT = Layout(
     toolset_root=None,
     workspace=None,
+    use_modules=False,
     vendor_paths=None,
     go_paths=None,
     go_deps_paths=None,
@@ -120,6 +134,7 @@ _EMPTY_LAYOUT = Layout(
 LAYOUT = Layout(
     toolset_root=TOOLSET_ROOT,
     workspace=WORKSPACE,
+    use_modules=os.getenv('INFRA_GO_USE_MODULES')=='1',
     vendor_paths=[WORKSPACE],
     go_paths=[],
     go_deps_paths=[os.path.join(WORKSPACE, _p) for _p in (
@@ -430,13 +445,12 @@ def get_go_environ_diff(layout):
   Returns:
     EnvironDiff.
   """
-  # Paths to search Go code for. Order is important.
-  vendor_paths = layout.vendor_paths or ()
-  all_go_paths = []
-  all_go_paths.extend(os.path.join(p, '.vendor') for p in vendor_paths)
-  if layout.go_paths:
-    all_go_paths.extend(layout.go_paths)
-  all_go_paths.append(layout.workspace)
+  # GOPATH to search Go code for. Order is important.
+  gopath = []
+  if not layout.use_modules:
+    gopath.extend(os.path.join(p, '.vendor') for p in layout.vendor_paths or ())
+    gopath.extend(layout.go_paths or ())
+    gopath.append(layout.workspace)
 
   # Need to make sure we pick up our `go` and .vendor/bin tools before the
   # system ones.
@@ -447,7 +461,9 @@ def get_go_environ_diff(layout):
       os.path.join(ROOT, 'luci', 'appengine', 'components', 'tools'),
       os.path.join(GCLIENT_ROOT, 'gcloud', 'bin'),
   ]
-  path_prefixes.extend(os.path.join(p, '.vendor', 'bin') for p in vendor_paths)
+  if not layout.use_modules:
+    path_prefixes.extend(
+        os.path.join(p, '.vendor', 'bin') for p in layout.vendor_paths or ())
 
   # GOBIN often contain "WIP" variant of system binaries, pick them up last.
   path_suffixes = [os.path.join(layout.workspace, 'bin')]
@@ -455,7 +471,6 @@ def get_go_environ_diff(layout):
   env = {
       'GOROOT': os.path.join(layout.toolset_root, 'go'),
       'GOBIN': os.path.join(layout.workspace, 'bin'),
-      'GOPATH': os.pathsep.join(all_go_paths),
 
       # Don't use default cache in '~'.
       'GOCACHE': os.path.join(layout.workspace, '.cache'),
@@ -464,12 +479,24 @@ def get_go_environ_diff(layout):
       # which inject custom `gopackagesdriver` binary. See also
       # https://github.com/golang/tools/blob/54c614fe050cac95ace393a63f164149942ecbde/go/packages/external.go#L49
       'GOPACKAGESDRIVER': 'off',
-
-      # Infra Go workspace is not ready for modules yet, attempting to use
-      # them will cause pain.
-      'GOPROXY': 'off',
-      'GO111MODULE': 'off',
   }
+
+  if layout.use_modules:
+    env.update({
+        'GO111MODULE': 'on',
+        'GOPROXY': None,
+        'GOPATH': None,
+        'GOMODCACHE': os.path.join(layout.workspace, '.modcache'),
+        'GOPRIVATE': '*.googlesource.com,*.google.com',
+    })
+  else:
+    env.update({
+        'GO111MODULE': 'off',
+        'GOPROXY': 'off',
+        'GOPATH': os.pathsep.join(gopath),
+        'GOMODCACHE': None,
+        'GOPRIVATE': None,
+    })
 
   if sys.platform == 'win32':
     # Windows doesn't have gcc.
@@ -573,8 +600,8 @@ def bootstrap(layout, logging_level, args=None):
   if not toolset_version:
     raise Failure('Unrecognized INFRA_GO_VERSION_VARIANT %r' % variant)
 
-  # We need to build and run some Go binaries during bootstrap (e.g. glide), so
-  # make sure cross-compilation mode is disabled during bootstrap. Restore it
+  # We may need to build and run some Go binaries during bootstrap (e.g. glide),
+  # so make sure cross-compilation mode is disabled during bootstrap. Restore it
   # back once bootstrap is finished.
   prev_environ = {}
   for k in ('GOOS', 'GOARCH', 'GOARM'):
@@ -583,17 +610,19 @@ def bootstrap(layout, logging_level, args=None):
   try:
     toolset_updated = ensure_toolset_installed(
         layout.toolset_root, toolset_version)
-    ensure_glide_installed(layout.toolset_root)
-    vendor_updated = toolset_updated
-    for p in layout.vendor_paths:
-      vendor_updated |= update_vendor_packages(layout, p, force=toolset_updated)
-    if toolset_updated:
-      # GOPATH/pkg may have binaries generated with previous version of toolset,
-      # they may not be compatible and "go build" isn't smart enough to rebuild
-      # them.
+    if not layout.use_modules:
+      ensure_glide_installed(layout.toolset_root)
+      vendor_updated = toolset_updated
       for p in layout.vendor_paths:
-        remove_directory([p, 'pkg'])
-    install_deps_tools(layout, vendor_updated)
+        vendor_updated |= update_vendor_packages(
+            layout, p, force=toolset_updated)
+      if toolset_updated:
+        # GOPATH/pkg may have binaries generated with previous version of
+        # toolset, they may not be compatible and "go build" isn't smart enough
+        # to rebuild them.
+        for p in layout.vendor_paths:
+          remove_directory([p, 'pkg'])
+      install_deps_tools(layout, vendor_updated)
   finally:
     # Restore os.environ back. Have to do it key-by-key to actually modify the
     # process environment (replacing os.environ object as a whole does nothing).
