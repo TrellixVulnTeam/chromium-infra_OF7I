@@ -68,6 +68,7 @@ var (
 		"git cl upstream",
 		"git cl web",
 		"git nav-downstream",
+		"git reparent-branch",
 	)
 
 	knownArguments = stringset.NewFromSlice(
