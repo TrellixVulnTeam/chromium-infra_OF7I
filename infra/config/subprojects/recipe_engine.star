@@ -30,12 +30,14 @@ build.presubmit(
     name = "recipes-py-try-presubmit",
     cq_group = "recipes-py",
     repo_name = "recipes_py",
+    timeout_s = 600,
     os = "Ubuntu-18.04",
 )
 build.presubmit(
     name = "recipes-py-try-presubmit-win",
     cq_group = "recipes-py",
     repo_name = "recipes_py",
+    timeout_s = 600,
     os = "Windows-10",
     experiment_percentage = 100,
 )
