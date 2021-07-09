@@ -206,9 +206,9 @@
     "cmd": [
       "go",
       "build",
-      "go.chromium.org/luci/..."
+      "./..."
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {
       "GOARCH": "386",
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
@@ -230,9 +230,9 @@
     "cmd": [
       "go",
       "test",
-      "go.chromium.org/luci/..."
+      "./..."
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {
       "GOARCH": "386",
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
@@ -255,9 +255,9 @@
       "go",
       "test",
       "-race",
-      "go.chromium.org/luci/..."
+      "./..."
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {
       "GOARCH": "386",
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",

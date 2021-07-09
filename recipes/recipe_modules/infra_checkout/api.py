@@ -21,6 +21,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                named_cache=None,
                generate_env_with_system_python=False,
                go_version_variant=None,
+               go_modules=False,
                **kwargs):
     """Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -54,6 +55,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         the builder to use a non-default Go version. What exact Go versions
         correspond to "legacy" and "bleeding_edge" and default is defined in
         bootstrap.py in infra.git.
+      * go_modules - if True, bootstrap Go in Modules mode.
       * kwargs - passed as is to bot_update.ensure_checkout.
 
     Returns:
@@ -85,6 +87,9 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
     env_with_override = {}
     if go_version_variant:
       env_with_override['INFRA_GO_VERSION_VARIANT'] = go_version_variant
+    if go_modules:
+      env_with_override['INFRA_GO_USE_MODULES'] = '1'
+      env_with_override['GOFLAGS'] = '-mod=readonly'
 
     class Checkout(object):
       def __init__(self, m):
@@ -194,6 +199,9 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
         with self.m.context(cwd=self.path, env=env_with_override):
           where = 'infra_internal' if internal else 'infra'
+          test_env = {'GOROOT': str(path.join('golang', 'go'))}
+          if not go_modules:
+            test_env['GOPATH'] = str(path.join(where, 'go'))
           step = self.m.python(
               'init infra go env',
               path.join(where, 'go', 'bootstrap.py'),
@@ -202,10 +210,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
               infra_step=True,
               step_test_data=lambda: self.m.json.test_api.output({
                   'go_version': '1.66.6',
-                  'env': {
-                      'GOROOT': str(path.join('golang', 'go')),
-                      'GOPATH': str(path.join(where, 'go')),
-                  },
+                  'env': test_env,
                   'env_prefixes': {
                       'PATH': [str(path.join('golang', 'go'))],
                   },

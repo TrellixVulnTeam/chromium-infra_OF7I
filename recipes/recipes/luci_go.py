@@ -32,6 +32,9 @@ PROPERTIES = {
             default=None,
             kind=str,
             help='A go version variant to bootstrap, see bootstrap.py'),
+    'go_modules':
+        Property(
+            default=False, kind=bool, help='Whether to run in Go Modules mode'),
     'run_integration_tests':
         Property(
             default=False, kind=bool, help='Whether to run integration tests'),
@@ -86,11 +89,14 @@ def apply_golangci_lint(api, co):
   api.tricium.write_comments()
 
 
-def RunSteps(api, GOARCH, go_version_variant, run_integration_tests, run_lint):
+def RunSteps(
+    api, GOARCH, go_version_variant, go_modules,
+    run_integration_tests, run_lint):
   co = api.infra_checkout.checkout(
       'luci_go',
       patch_root=LUCI_GO_PATH_IN_INFRA,
-      go_version_variant=go_version_variant)
+      go_version_variant=go_version_variant,
+      go_modules=go_modules)
   is_presubmit = 'presubmit' in api.buildbucket.builder_name.lower()
   if is_presubmit or run_lint:
     co.commit_change()
@@ -115,13 +121,13 @@ def RunSteps(api, GOARCH, go_version_variant, run_integration_tests, run_lint):
       with api.context(cwd=luci_go):
         apply_golangci_lint(api, co)
     else:
-      api.step('go build', ['go', 'build', 'go.chromium.org/luci/...'])
-      api.step('go test', ['go', 'test', 'go.chromium.org/luci/...'])
-      if not api.platform.is_win:
-        # Windows bots do not have gcc installed at the moment.
-        api.step('go test -race', [
-            'go', 'test', '-race', 'go.chromium.org/luci/...',
-        ])
+      luci_go = co.path.join('infra', 'go', 'src', 'go.chromium.org', 'luci')
+      with api.context(cwd=luci_go):
+        api.step('go build', ['go', 'build', './...'])
+        api.step('go test', ['go', 'test', './...'])
+        if not api.platform.is_win:
+          # Windows bots do not have gcc installed at the moment.
+          api.step('go test -race', ['go', 'test', '-race', './...'])
 
 
 def GenTests(api):
@@ -188,4 +194,15 @@ def GenTests(api):
         change_number=607472,
         patch_set=2,
     ) + api.properties(go_version_variant='bleeding_edge')
+  )
+
+  yield (
+    api.test('go_modules') +
+    api.platform('linux', 64) +
+    api.buildbucket.try_build(
+        'infra', 'try', 'luci-go-trusty-64',
+        git_repo='https://chromium.googlesource.com/infra/luci/luci-go',
+        change_number=607472,
+        patch_set=2,
+    ) + api.properties(go_modules=True)
   )

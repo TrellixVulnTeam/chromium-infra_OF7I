@@ -89,11 +89,29 @@ try_builder(name = "luci-go-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "run_integration_tests": True,
     "go_version_variant": "bleeding_edge",
 })
-
 try_builder(name = "luci-go-try-mac", os = "Mac-10.15", properties = {
     "go_version_variant": "legacy",
 })
 try_builder(name = "luci-go-try-win", os = "Windows-10")
+
+try_builder(
+    name = "luci-go-try-modules-bionic-64",
+    os = "Ubuntu-18.04",
+    experiment_percentage = 100,
+    properties = {"go_modules": True},
+)
+try_builder(
+    name = "luci-go-try-modules-mac",
+    os = "Mac-10.15",
+    experiment_percentage = 100,
+    properties = {"go_modules": True},
+)
+try_builder(
+    name = "luci-go-try-modules-win",
+    os = "Windows-10",
+    experiment_percentage = 100,
+    properties = {"go_modules": True},
+)
 
 try_builder(
     name = "luci-go-try-presubmit",
