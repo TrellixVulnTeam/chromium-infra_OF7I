@@ -66,10 +66,10 @@ else:
     orig_value, value = value, _escape_special(value)
     # We will only use the $'...' notation if there was an escaped character
     # in the string.
-    print('export %s=%s%s' % (key, ('$') if orig_value != value else
+    print('export %s=%s%s;' % (key, ('$') if orig_value != value else
                               (''), pipes.quote(value)))
   def unset_env_var(key):
-    print('unset %s' % (key,))
+    print('unset %s;' % (key,))
 
 
 def main():
