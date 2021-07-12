@@ -23,8 +23,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
-	"infra/cmd/cros_test_platform/internal/execution/types"
+	"google.golang.org/grpc"
 
+	"infra/cmd/cros_test_platform/internal/execution/types"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
@@ -133,7 +134,7 @@ func TestLaunchRequest(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 		).Do(
-			func(_ context.Context, r *buildbucket_pb.ScheduleBuildRequest) {
+			func(_ context.Context, r *buildbucket_pb.ScheduleBuildRequest, opts ...grpc.CallOption) {
 				gotRequest = r
 			},
 		).Return(&buildbucket_pb.Build{Id: 42}, nil)
@@ -203,7 +204,7 @@ func TestFetchRequest(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 		).Do(
-			func(_ context.Context, r *buildbucket_pb.GetBuildRequest) {
+			func(_ context.Context, r *buildbucket_pb.GetBuildRequest, opts ...grpc.CallOption) {
 				gotRequest = r
 			},
 		).Return(&buildbucket_pb.Build{}, nil)

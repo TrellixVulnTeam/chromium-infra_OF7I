@@ -72,6 +72,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	t.Cleanup(ctl.Finish)
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	// Mock manifest-internal branches request.

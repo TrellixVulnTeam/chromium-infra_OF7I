@@ -43,7 +43,9 @@ func TestAutoRollRules(t *testing.T) {
 
 		Convey("Only modifies DEPS", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -74,7 +76,9 @@ func TestAutoRollRules(t *testing.T) {
 		Convey("Introduces unexpected changes", func() {
 			Convey("Modifies other file", func() {
 				// Inject gitiles log response
-				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
@@ -107,7 +111,9 @@ func TestAutoRollRules(t *testing.T) {
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 			Convey("Renames DEPS", func() {
-				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}

@@ -15,6 +15,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -82,7 +83,7 @@ func TestBuildUpdater(t *testing.T) {
 		}
 
 		Convey("build token is sent", func() {
-			updateBuild := func(ctx context.Context, req *buildbucketpb.UpdateBuildRequest) (*buildbucketpb.Build, error) {
+			updateBuild := func(ctx context.Context, req *buildbucketpb.UpdateBuildRequest, opts ...grpc.CallOption) (*buildbucketpb.Build, error) {
 				md, ok := metadata.FromOutgoingContext(ctx)
 				c.So(ok, ShouldBeTrue)
 				c.So(md.Get(buildbucket.BuildTokenHeader), ShouldResemble, []string{"build token"})

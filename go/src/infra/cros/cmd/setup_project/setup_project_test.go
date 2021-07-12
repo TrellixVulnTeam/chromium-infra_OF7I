@@ -42,6 +42,7 @@ func checkFiles(t *testing.T, path string, expected map[string]string) {
 func TestSetupProject(t *testing.T) {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	defer ctl.Finish()
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	branch := "mybranch"
@@ -89,6 +90,7 @@ func TestSetupProject(t *testing.T) {
 func TestSetupProject_allProjects(t *testing.T) {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	defer ctl.Finish()
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
@@ -150,6 +152,7 @@ func TestSetupProject_buildspecs(t *testing.T) {
 
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	defer ctl.Finish()
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(

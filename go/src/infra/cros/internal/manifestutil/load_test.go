@@ -154,6 +154,7 @@ func TestLoadManifestFromFileWithIncludes(t *testing.T) {
 func TestLoadManifestFromGitiles(t *testing.T) {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	defer ctl.Finish()
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	project := "foo"
@@ -305,6 +306,7 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	defer ctl.Finish()
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
 	project := "foo"

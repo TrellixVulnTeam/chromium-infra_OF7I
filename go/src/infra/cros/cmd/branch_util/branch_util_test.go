@@ -507,6 +507,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
+	t.Cleanup(ctl.Finish)
 
 	// Mock manifest request
 	reqManifest := &gitilespb.DownloadFileRequest{

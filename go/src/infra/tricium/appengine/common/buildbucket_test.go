@@ -9,14 +9,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/ptypes/struct"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/logging/memlogger"
 	"go.chromium.org/luci/gae/impl/memory"
+	"google.golang.org/grpc"
 
 	admin "infra/tricium/api/admin/v1"
-	"infra/tricium/api/v1"
+	tricium "infra/tricium/api/v1"
 )
 
 func TestTrigger(t *testing.T) {
@@ -47,7 +48,7 @@ func TestTrigger(t *testing.T) {
 		defer ctrl.Finish()
 		client := buildbucketpb.NewMockBuildsClient(ctrl)
 
-		scheduleBuild := func(ctx context.Context, req *buildbucketpb.ScheduleBuildRequest) (*buildbucketpb.Build, error) {
+		scheduleBuild := func(ctx context.Context, req *buildbucketpb.ScheduleBuildRequest, opts ...grpc.CallOption) (*buildbucketpb.Build, error) {
 			res := &buildbucketpb.Build{Id: 1}
 			return res, nil
 		}
@@ -96,7 +97,7 @@ func TestCollect(t *testing.T) {
 		defer ctrl.Finish()
 		client := buildbucketpb.NewMockBuildsClient(ctrl)
 
-		getBuild := func(ctx context.Context, req *buildbucketpb.GetBuildRequest) (*buildbucketpb.Build, error) {
+		getBuild := func(ctx context.Context, req *buildbucketpb.GetBuildRequest, opts ...grpc.CallOption) (*buildbucketpb.Build, error) {
 			res := &buildbucketpb.Build{
 				Id:     1,
 				Status: buildbucketpb.Status_SUCCESS,

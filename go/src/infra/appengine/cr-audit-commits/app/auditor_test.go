@@ -121,8 +121,11 @@ func TestTaskAuditor(t *testing.T) {
 				configGet = configGetOld
 			}()
 
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+
 			escapedRepoURL := url.QueryEscape("https://dummy.googlesource.com/dummy.git/+/refs/heads/master")
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			auditorTestClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -486,21 +489,6 @@ func TestTaskAuditor(t *testing.T) {
 				})
 			})
 			Convey("Test unpausing", func() {
-				gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
-					Project:  "dummy",
-					RefsPath: "refs/heads/master",
-				}).Return(&gitilespb.RefsResponse{
-					Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
-				}, nil)
-				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
-					Project:            "dummy",
-					Committish:         "abcdef000123123",
-					ExcludeAncestorsOf: "999999",
-					PageSize:           int32(config.MaxCommitsPerRefUpdate),
-				}).Return(&gitilespb.LogResponse{
-					Log: []*git.Commit{},
-				}, nil)
-
 				auditorTestClients.Monorail = rules.MockMonorailClient{
 					Ii: &monorail.InsertIssueResponse{
 						Issue: &monorail.Issue{
@@ -509,6 +497,21 @@ func TestTaskAuditor(t *testing.T) {
 					},
 				}
 				Convey("Unpausing successfully", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
+					}, nil)
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:            "dummy",
+						Committish:         "abcdef000123123",
+						ExcludeAncestorsOf: "999999",
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
+					}).Return(&gitilespb.LogResponse{
+						Log: []*git.Commit{},
+					}, nil)
+
 					ds.Put(ctx, &rules.RepoState{
 						RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 						ConfigName:         "dummy-repo",

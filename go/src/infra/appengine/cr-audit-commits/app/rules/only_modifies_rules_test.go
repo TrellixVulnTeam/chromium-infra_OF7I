@@ -45,7 +45,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 
 		Convey("Only modifies file", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -82,7 +84,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Only modifies dir", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -118,7 +122,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Only modifies Files+Dirs", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -161,7 +167,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Modifies unexpected file", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -202,7 +210,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Confuse dir check", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -243,7 +253,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Adds a file in allowlisted dir", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -279,7 +291,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 		})
 		Convey("Deletes a file in allowlisted dir", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -341,7 +355,9 @@ func TestReleaseBotRules(t *testing.T) {
 
 		Convey("Only modifies version", func() {
 			// Inject gitiles log response
-			gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+			gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
@@ -382,7 +398,9 @@ func TestReleaseBotRules(t *testing.T) {
 		Convey("Introduces unexpected changes", func() {
 			Convey("Modifies other file", func() {
 				// Inject gitiles log response
-				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
@@ -423,7 +441,9 @@ func TestReleaseBotRules(t *testing.T) {
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
 			Convey("Renames VERSION", func() {
-				gitilesMockClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+				gitilesMockClient := mock_gitiles.NewMockGitilesClient(ctl)
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}

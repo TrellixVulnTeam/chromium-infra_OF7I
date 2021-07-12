@@ -40,7 +40,10 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("returns gitiles client from factory", func() {
-				mockGitilesClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
@@ -53,8 +56,11 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("re-uses gitiles client for host", func() {
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
-					return mock_gitiles.NewMockGitilesClient(gomock.NewController(t)), nil
+					return mock_gitiles.NewMockGitilesClient(ctl), nil
 				})
 
 				client := NewClient(ctx)
@@ -84,7 +90,10 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("fails if API call fails", func() {
-				mockGitilesClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
@@ -100,7 +109,10 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("returns latest revision for ref", func() {
-				mockGitilesClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
@@ -140,7 +152,10 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("fails if API call fails", func() {
-				mockGitilesClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
@@ -156,7 +171,10 @@ func TestClient(t *testing.T) {
 			})
 
 			Convey("returns latest revision for ref", func() {
-				mockGitilesClient := mock_gitiles.NewMockGitilesClient(gomock.NewController(t))
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
