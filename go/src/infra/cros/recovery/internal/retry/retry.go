@@ -8,10 +8,11 @@ package retry
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/log"
 )
 
 // TODO(otabek@): Migrate to custom logger interface.
@@ -26,10 +27,10 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 	for {
 		attempts++
 		if err = f(); err == nil {
-			log.Printf(getSuccessMessage(opName, attempts, startTime))
+			log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
 			return
 		}
-		log.Printf(
+		log.Debug(ctx,
 			"Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s",
 			opName,
 			attempts,
@@ -52,10 +53,10 @@ func LimitCount(ctx context.Context, count int, interval time.Duration, f func()
 	for {
 		attempts++
 		if err = f(); err == nil {
-			log.Printf(getSuccessMessage(opName, attempts, startTime))
+			log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
 			return
 		}
-		log.Printf("Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
+		log.Debug(ctx, "Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
 		if attempts >= count {
 			break
 		}

@@ -9,11 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/plan"
 )
 
@@ -26,13 +26,13 @@ import (
 func LoadPlans(ctx context.Context, planNames []string, cr io.Reader) (plans []*plan.Plan, err error) {
 	var data []byte
 	if cr != nil {
-		log.Printf("Load plans: using provided custom config.")
+		log.Debug(ctx, "Load plans: using provided custom config.")
 		data, err = io.ReadAll(cr)
 		if err != nil {
 			return plans, errors.Annotate(err, "load plans").Err()
 		}
 	} else {
-		log.Printf("Load plans: use default config.")
+		log.Debug(ctx, "Load plans: use default config.")
 		data = []byte(defaultPlans)
 	}
 	var config map[string]interface{}
@@ -40,7 +40,7 @@ func LoadPlans(ctx context.Context, planNames []string, cr io.Reader) (plans []*
 		return plans, errors.Annotate(err, "load plans").Err()
 	}
 	for _, planName := range planNames {
-		log.Printf("Load plan %q: started.", planName)
+		log.Info(ctx, "Load plan %q: started.", planName)
 		j, ok := config[planName]
 		if !ok {
 			return plans, errors.Reason("load plan %q: not found", planName).Err()
@@ -54,7 +54,7 @@ func LoadPlans(ctx context.Context, planNames []string, cr io.Reader) (plans []*
 			return plans, errors.Annotate(err, "load plans").Err()
 		}
 		plans = append(plans, p)
-		log.Printf("Load plan %q: finished.", planName)
+		log.Info(ctx, "Load plan %q: finished.", planName)
 	}
 	return plans, nil
 }

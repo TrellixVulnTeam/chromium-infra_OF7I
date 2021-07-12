@@ -8,10 +8,10 @@ package plan
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/plan/execs"
 )
 
@@ -32,16 +32,17 @@ var startOver = errors.Reason("request to start over").Err()
 
 // Run runs the recovery plan.
 func (p *Plan) Run(ctx context.Context, args *execs.RunArgs) error {
-	log.Printf("Plan %q: started.\n%s", p.Name, p.Describe())
+	log.Info(ctx, "Plan %q: started", p.Name)
+	log.Debug(ctx, "\n%s", p.Describe())
 	c := newCache()
 	defer c.close()
 	for {
 		if err := p.runVerifiers(ctx, c, args); err != nil {
 			if err == startOver {
-				log.Printf("Plan %q: received request to start over.", p.Name)
+				log.Info(ctx, "Plan %q: received request to start over.", p.Name)
 				// Reset cache for all verifiers and dependencies.
 				for _, v := range p.Verifiers {
-					c.resetForAction(v)
+					c.resetForAction(ctx, v)
 				}
 				continue
 			}
@@ -49,7 +50,7 @@ func (p *Plan) Run(ctx context.Context, args *execs.RunArgs) error {
 		}
 		break
 	}
-	log.Printf("Plan %q: finished successfully.", p.Name)
+	log.Info(ctx, "Plan %q: finished successfully.", p.Name)
 	return nil
 }
 
@@ -59,28 +60,28 @@ func (p *Plan) runVerifiers(ctx context.Context, c *runCache, args *execs.RunArg
 	for i, v := range p.Verifiers {
 		if err, ok := c.getActionError(v); ok {
 			if err == nil {
-				log.Printf("Verifier %q: pass (cached).", v.Name)
+				log.Info(ctx, "Verifier %q: pass (cached).", v.Name)
 				continue
 			} else if v.AllowFail {
-				log.Printf("Verifier %q: fail (cached). Error: %s", v.Name, err)
-				v.logAllowedFailFault(i, len(p.Verifiers))
+				log.Info(ctx, "Verifier %q: fail (cached). Error: %s", v.Name, err)
+				v.logAllowedFailFault(ctx, i, len(p.Verifiers))
 				continue
 			}
 			return errors.Annotate(err, "run verifier %q: fail (cached)", v.Name).Err()
 		}
 		if err := v.run(ctx, c, args); err != nil {
 			if err == startOver {
-				log.Printf("Verifier %q: received request to start over.", v.Name)
+				log.Info(ctx, "Verifier %q: received request to start over.", v.Name)
 				return err
 			}
 			if v.AllowFail {
-				log.Printf("Verifier %q: fail. Error: %s", v.Name, err)
-				v.logAllowedFailFault(i, len(p.Verifiers))
+				log.Info(ctx, "Verifier %q: fail. Error: %s", v.Name, err)
+				v.logAllowedFailFault(ctx, i, len(p.Verifiers))
 			} else {
 				return errors.Annotate(err, "run verifier %q", v.Name).Err()
 			}
 		} else {
-			log.Printf("Verifier %q: finished successfully.", v.Name)
+			log.Info(ctx, "Verifier %q: finished successfully.", v.Name)
 		}
 	}
 	return nil

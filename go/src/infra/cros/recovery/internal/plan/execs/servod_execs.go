@@ -6,11 +6,11 @@ package execs
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
 )
 
@@ -32,7 +32,7 @@ func servodLidopenActionExec(ctx context.Context, args *RunArgs) error {
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
 	} else if res.Value.GetString_() == "not_applicable" {
-		log.Printf("Device does not support this action. Skipping...")
+		log.Info(ctx, "Device does not support this action. Skipping...")
 	} else if res.Value.GetString_() != "yes" {
 		return errors.Reason("servod lid_open: expected to received 'yes'").Err()
 	}
@@ -44,7 +44,7 @@ func servodLidopenRecoveryActionExec(ctx context.Context, args *RunArgs) error {
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
 	} else if res.Value.GetString_() == "yes" {
-		log.Printf("Servod lid_open recovery: received expected value, skip the recovery execution.")
+		log.Debug(ctx, "Servod lid_open recovery: received expected value, skip the recovery execution.")
 		return nil
 	}
 	// Fix is to first try to set `no` then 'yes'. Then verify.
@@ -58,13 +58,13 @@ func servodLidopenRecoveryActionExec(ctx context.Context, args *RunArgs) error {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
 	}
 	// Wait 5 seconds to apply effect.
-	log.Printf("Servod lid_open recovery: waiting 5 seconds to apply after set lid_open to `yes`.")
+	log.Debug(ctx, "Servod lid_open recovery: waiting 5 seconds to apply after set lid_open to `yes`.")
 	time.Sleep(5 * time.Second)
 	res, err = ServodCallGet(ctx, args, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
 	} else if res.Value.GetString_() == "yes" {
-		log.Printf("Servod lid_open recovery: fixed")
+		log.Info(ctx, "Servod lid_open recovery: fixed")
 		return nil
 	}
 	return errors.Reason("servod lid_open recovery: not able to get expected value 'yes' after toggling lid_open attempt").Err()

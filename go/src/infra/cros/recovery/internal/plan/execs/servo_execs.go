@@ -6,11 +6,11 @@ package execs
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
 	"infra/cros/recovery/tlw"
 )
@@ -53,7 +53,7 @@ func servodStopActionExec(ctx context.Context, args *RunArgs) error {
 
 func servodRestartActionExec(ctx context.Context, args *RunArgs) error {
 	if err := servodStopActionExec(ctx, args); err != nil {
-		log.Printf("Servod restart: fail stop servod. Error: %s", err)
+		log.Debug(ctx, "Servod restart: fail stop servod. Error: %s", err)
 	}
 	if err := servodInitActionExec(ctx, args); err != nil {
 		return errors.Annotate(err, "restart servod").Err()

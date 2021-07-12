@@ -8,18 +8,20 @@ package recovery
 import (
 	"context"
 	"io"
-	"log"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/config"
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/plan/execs"
+	"infra/cros/recovery/logger"
 	"infra/cros/recovery/tlw"
 )
 
 // Run runs the recovery tasks against the provide unit.
 // Process includes:
 //   - Verification of input data.
+//   - Set logger.
 //   - Collect DUTs info.
 //   - Load execution plan for required task with verification.
 //   - Send DUTs info to inventory.
@@ -27,6 +29,10 @@ func Run(ctx context.Context, args *RunArgs) error {
 	if err := args.verify(); err != nil {
 		return errors.Annotate(err, "run recovery: verify input").Err()
 	}
+	if args.Logger != nil {
+		ctx = log.WithLogger(ctx, args.Logger)
+	}
+	log.Info(ctx, "Run recovery for %q", args.UnitName)
 	// Get resources involved.
 	resources, err := args.Access.ListResourcesForUnit(ctx, args.UnitName)
 	if err != nil {
@@ -35,12 +41,12 @@ func Run(ctx context.Context, args *RunArgs) error {
 	// Keep track of fail to run resources.
 	var errs []error
 	for ir, resource := range resources {
-		log.Printf("Resource %q: started", resource)
+		log.Info(ctx, "Resource %q: started", resource)
 		dut, err := args.Access.GetDut(ctx, resource)
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
-		log.Printf("Resource %q: received DUT %q info", resource, dut.Name)
+		log.Debug(ctx, "Resource %q: received DUT %q info", resource, dut.Name)
 		// TODO(otabek@): Generate list of plans based task name and DUT info.
 		plans, err := config.LoadPlans(ctx, dutPlans(dut), args.ConfigReader)
 		if err != nil {
@@ -53,24 +59,24 @@ func Run(ctx context.Context, args *RunArgs) error {
 		}
 		for ip, p := range plans {
 			if err := p.Run(ctx, ea); err != nil {
-				log.Printf("Plan %q: fail. Error: %s", p.Name, err)
+				log.Error(ctx, "Plan %q: fail. Error: %s", p.Name, err)
 				if p.AllowFail {
 					if ip == len(plans)-1 {
-						log.Printf("Ignore error as plan %q is allowed to fail.", p.Name)
+						log.Debug(ctx, "Ignore error as plan %q is allowed to fail.", p.Name)
 					} else {
-						log.Printf("Continue to next plan as %q is allowed to fail.", p.Name)
+						log.Debug(ctx, "Continue to next plan as %q is allowed to fail.", p.Name)
 					}
 				} else {
 					errs = append(errs, err)
-					log.Printf("Resource %q: finished with error: %s.", dut.Name, err)
+					log.Debug(ctx, "Resource %q: finished with error: %s.", dut.Name, err)
 					if ir != len(resources)-1 {
-						log.Printf("Continue to the next resource.")
+						log.Debug(ctx, "Continue to the next resource.")
 					}
 					break
 				}
 			}
 		}
-		log.Printf("Resource %q: finished successfully.", dut.Name)
+		log.Info(ctx, "Resource %q: finished successfully.", dut.Name)
 	}
 	// TODO(otabek@): Add logic to update DUT's info to inventory.
 	if len(errs) > 0 {
@@ -87,6 +93,8 @@ type RunArgs struct {
 	UnitName string
 	// Provide access to read custom plans outside recovery. The default plans with actions will be ignored.
 	ConfigReader io.Reader
+	// Logger prints message to the logs.
+	Logger logger.Logger
 }
 
 func (a *RunArgs) verify() error {

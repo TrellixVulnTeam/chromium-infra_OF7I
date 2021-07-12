@@ -5,8 +5,10 @@
 package plan
 
 import (
+	"context"
 	"fmt"
-	"log"
+
+	"infra/cros/recovery/internal/log"
 )
 
 // runCache holds cache per actions for running plan.
@@ -72,11 +74,11 @@ func (c *runCache) getActionError(a *Action) (err error, ok bool) {
 }
 
 // Reset action and its dependencies results from cache.
-func (c *runCache) resetForAction(a *Action) {
-	log.Printf("Reset cache for action %q", a.Name)
+func (c *runCache) resetForAction(ctx context.Context, a *Action) {
+	log.Debug(ctx, "Reset cache for action %q", a.Name)
 	delete(c.actions, a.Name)
 	for _, dep := range a.Dependencies {
-		c.resetForAction(dep)
+		c.resetForAction(ctx, dep)
 	}
 }
 

@@ -7,10 +7,10 @@ package plan
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/plan/execs"
 )
 
@@ -40,7 +40,7 @@ type Action struct {
 func (a *Action) run(ctx context.Context, c *runCache, args *execs.RunArgs) error {
 	if err := a.runDependencies(ctx, c, args); err != nil {
 		if err == startOver {
-			log.Printf("Action %q: received request to start over.", a.Name)
+			log.Debug(ctx, "Action %q: received request to start over.", a.Name)
 			return err
 		}
 		c.cacheAction(a, err)
@@ -51,7 +51,7 @@ func (a *Action) run(ctx context.Context, c *runCache, args *execs.RunArgs) erro
 			if rErr := a.runRecoveries(ctx, c, args); rErr == startOver {
 				return rErr
 			}
-			log.Printf("Run action %q: No recoveries left to try.", a.Name)
+			log.Info(ctx, "Run action %q: No recoveries left to try.", a.Name)
 		}
 		// Cache the action error only after running recoveries.
 		// If no recoveries were run, we still cache the action.
@@ -66,31 +66,31 @@ func (a *Action) run(ctx context.Context, c *runCache, args *execs.RunArgs) erro
 // Method the first check the result of action from cache and if not exist then perform action.
 func (a *Action) runDependencies(ctx context.Context, c *runCache, args *execs.RunArgs) error {
 	for i, dep := range a.Dependencies {
-		log.Printf("Run dependency %q: started.", dep.Name)
+		log.Debug(ctx, "Run dependency %q: started.", dep.Name)
 		if r, ok := c.getActionError(dep); ok {
 			if r == nil {
-				log.Printf("Dependency %q: pass (cached).", dep.Name)
+				log.Debug(ctx, "Dependency %q: pass (cached).", dep.Name)
 				continue
 			} else if dep.AllowFail {
-				log.Printf("Dependency %q: fail (cached). Error: %s", dep.Name, r)
-				dep.logAllowedFailFault(i, len(a.Dependencies))
+				log.Debug(ctx, "Dependency %q: fail (cached). Error: %s", dep.Name, r)
+				dep.logAllowedFailFault(ctx, i, len(a.Dependencies))
 				continue
 			}
 			return errors.Annotate(r, "run dependency %q: fail (cached)", dep.Name).Err()
 		}
 		if err := dep.run(ctx, c, args); err != nil {
 			if err == startOver {
-				log.Printf("Dependency %q: received request to start over.", dep.Name)
+				log.Debug(ctx, "Dependency %q: received request to start over.", dep.Name)
 				return err
 			}
 			if dep.AllowFail {
-				log.Printf("Dependency %q: fail. Error: %s", dep.Name, err)
-				dep.logAllowedFailFault(i, len(a.Dependencies))
+				log.Debug(ctx, "Dependency %q: fail. Error: %s", dep.Name, err)
+				dep.logAllowedFailFault(ctx, i, len(a.Dependencies))
 			} else {
 				return errors.Annotate(err, "run dependency %q", dep.Name).Err()
 			}
 		} else {
-			log.Printf("Dependency %q: finished successfully.", dep.Name)
+			log.Debug(ctx, "Dependency %q: finished successfully.", dep.Name)
 		}
 	}
 	return nil
@@ -102,21 +102,21 @@ func (a *Action) runDependencies(ctx context.Context, c *runCache, args *execs.R
 // Each recovery usage is caching to prevent second run if verifier fails again.
 func (a *Action) runRecoveries(ctx context.Context, c *runCache, args *execs.RunArgs) error {
 	for _, recovery := range a.Recoveries {
-		log.Printf("Run recovery %q: started.", recovery.Name)
+		log.Info(ctx, "Run recovery %q: started.", recovery.Name)
 		if c.isRecoveryUsed(a, recovery) {
-			log.Printf("Recovery %q: used (cached).", recovery.Name)
+			log.Debug(ctx, "Recovery %q: used (cached).", recovery.Name)
 			continue
 		}
 		if err := recovery.run(ctx, c, args); err != nil {
 			c.cacheRecovery(a, recovery, err)
 			if !recovery.AllowFail {
-				log.Printf("Recovery %q: fail. Error: %s ", recovery.Name, err)
+				log.Debug(ctx, "Recovery %q: fail. Error: %s ", recovery.Name, err)
 				continue
 			}
 		} else {
 			c.cacheRecovery(a, recovery, nil)
 		}
-		log.Printf("Recovery %q: request to start-over.", recovery.Name)
+		log.Info(ctx, "Recovery %q: request to start-over.", recovery.Name)
 		return startOver
 	}
 	return nil
@@ -124,11 +124,11 @@ func (a *Action) runRecoveries(ctx context.Context, c *runCache, args *execs.Run
 
 // logAllowedFailFault logs fault when action allowed to fail and AllowFail=true.
 // Supported cases when have next action we report that we will proceed with next one or if we do not have next then just ignore result of this one.
-func (a *Action) logAllowedFailFault(i, count int) {
+func (a *Action) logAllowedFailFault(ctx context.Context, i, count int) {
 	if i == count-1 {
-		log.Printf("Ignore error as action %q is allowed to fail.", a.Name)
+		log.Debug(ctx, "Ignore error as action %q is allowed to fail.", a.Name)
 	} else {
-		log.Printf("Continue to next action as %q is allowed to fail.", a.Name)
+		log.Debug(ctx, "Continue to next action as %q is allowed to fail.", a.Name)
 	}
 }
 

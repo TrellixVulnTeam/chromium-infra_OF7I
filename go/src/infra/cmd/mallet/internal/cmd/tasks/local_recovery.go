@@ -6,7 +6,6 @@ package tasks
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/maruel/subcommands"
@@ -23,6 +22,9 @@ import (
 	"infra/cros/recovery"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
+
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/gologger"
 )
 
 // LocalRecovery subcommand: Running verify/recovery against the DUT from local environment.
@@ -73,15 +75,21 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.New("unit is not specified")
 	}
 	ctx := cli.GetContext(a, c, env)
+	ctx = gologger.StdConfig.Use(ctx)
+	if c.Verbose() {
+		ctx = logging.SetLevel(ctx, logging.Debug)
+	}
+	logger := &recoveryLogger{
+		log:       logging.Get(ctx),
+		callDepth: 2,
+	}
 	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return errors.Annotate(err, "local recovery: create http client").Err()
 	}
 	e := c.envFlags.Env()
-	if c.Verbose() {
-		log.Printf("Init TLW with inventory: %s and csa: %s sources", e.UFSService, e.AdminService)
-	}
+	logger.Debug("Init TLW with inventory: %s and csa: %s sources", e.UFSService, e.AdminService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UFSService,
@@ -102,6 +110,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	in := &recovery.RunArgs{
 		UnitName: unit,
 		Access:   access,
+		Logger:   logger,
 	}
 	if c.configFile != "" {
 		in.ConfigReader, err = os.Open(c.configFile)
@@ -112,7 +121,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	if err = recovery.Run(ctx, in); err != nil {
 		return errors.Annotate(err, "local recovery").Err()
 	}
-	log.Printf("Task on %q has completed successfully", unit)
+	logger.Info("Task on %q has completed successfully", unit)
 	return nil
 }
 
@@ -120,4 +129,31 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 func setupContextNamespace(ctx context.Context, namespace string) context.Context {
 	md := metadata.Pairs(ufsUtil.Namespace, namespace)
 	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// recoveryLogger represents local recovery logger implementation.
+type recoveryLogger struct {
+	log logging.Logger
+	// callDepth sets desired stack depth (code line at which logging message is reported).
+	callDepth int
+}
+
+// Debug log message at Debug level.
+func (l *recoveryLogger) Debug(format string, args ...interface{}) {
+	l.log.LogCall(logging.Debug, l.callDepth, format, args)
+}
+
+// Info is like Debug, but logs at Info level.
+func (l *recoveryLogger) Info(format string, args ...interface{}) {
+	l.log.LogCall(logging.Info, l.callDepth, format, args)
+}
+
+// Warning is like Debug, but logs at Warning level.
+func (l *recoveryLogger) Warning(format string, args ...interface{}) {
+	l.log.LogCall(logging.Warning, l.callDepth, format, args)
+}
+
+// Error is like Debug, but logs at Error level.
+func (l *recoveryLogger) Error(format string, args ...interface{}) {
+	l.log.LogCall(logging.Error, l.callDepth, format, args)
 }

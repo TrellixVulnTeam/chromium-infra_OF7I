@@ -7,12 +7,12 @@ package execs
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 )
 
@@ -34,7 +34,7 @@ func ServodCallSet(ctx context.Context, in *RunArgs, command string, value inter
 		Args:     packToXMLRPCValues(command, value),
 		Options:  defaultServodOptions,
 	})
-	log.Printf("Servod call set %q: received %s", command, res.Value.String())
+	log.Debug(ctx, "Servod call set %q: received %s", command, res.Value.String())
 	if res.Fault {
 		return nil, errors.Reason("servod call set %q: received %s", command, res.Value.GetString_()).Err()
 	}
@@ -52,7 +52,7 @@ func ServodCallGet(ctx context.Context, in *RunArgs, command string) (*tlw.CallS
 		Args:     packToXMLRPCValues(command),
 		Options:  defaultServodOptions,
 	})
-	log.Printf("Servod call get %q: received %s", command, res.Value.String())
+	log.Debug(ctx, "Servod call get %q: received %s", command, res.Value.String())
 	if res.Fault {
 		return nil, errors.Reason("servod call get %q: received %s", command, res.Value.GetString_()).Err()
 	}
@@ -70,7 +70,7 @@ func ServodCallHas(ctx context.Context, in *RunArgs, command string) (*tlw.CallS
 		Args:     packToXMLRPCValues(command),
 		Options:  defaultServodOptions,
 	})
-	log.Printf("Servod call has %q: received %s", command, res.Value.String())
+	log.Debug(ctx, "Servod call has %q: received %s", command, res.Value.String())
 	if res.Fault {
 		return nil, errors.Reason("servod call has %q: received %s", command, res.Value.GetString_()).Err()
 	}
@@ -112,7 +112,6 @@ func packToXMLRPCValues(values ...interface{}) []*xmlrpc.Value {
 		default:
 			// TODO(otabek@): Extend for more type if required. For now recovery is not using these types.
 			message := fmt.Sprintf("%q is not a supported yet to be pack XMLRPC Value ", reflect.TypeOf(val))
-			log.Printf(message)
 			r = append(r, &xmlrpc.Value{
 				ScalarOneof: &xmlrpc.Value_String_{
 					String_: message,
