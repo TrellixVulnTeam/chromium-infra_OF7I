@@ -60,7 +60,13 @@ def apply_golangci_lint(api, co):
                                 'version:2@1.40.0')
   result = api.step(
       'run golangci-lint',
-      [linter, 'run', '--out-format=json', '--issues-exit-code=0'] + go_files,
+      [
+          linter,
+          'run',
+          '--out-format=json',
+          '--issues-exit-code=0',
+          '--timeout=5m',
+      ] + go_files,
       step_test_data=lambda: api.json.test_api.output_stream({
           "Issues": [{
               "FromLinter": "deadcode",
@@ -115,19 +121,17 @@ def RunSteps(
   with api.context(env=env), api.osx_sdk('mac'), co.go_env():
     if is_presubmit:
       co.run_presubmit()
-    elif run_lint:
-      luci_go = api.path['checkout'].join('go', 'src', 'go.chromium.org',
-                                          'luci')
-      with api.context(cwd=luci_go):
-        apply_golangci_lint(api, co)
     else:
       luci_go = co.path.join('infra', 'go', 'src', 'go.chromium.org', 'luci')
       with api.context(cwd=luci_go):
-        api.step('go build', ['go', 'build', './...'])
-        api.step('go test', ['go', 'test', './...'])
-        if not api.platform.is_win:
-          # Windows bots do not have gcc installed at the moment.
-          api.step('go test -race', ['go', 'test', '-race', './...'])
+        if run_lint:
+          apply_golangci_lint(api, co)
+        else:
+          api.step('go build', ['go', 'build', './...'])
+          api.step('go test', ['go', 'test', './...'])
+          if not api.platform.is_win:
+            # Windows bots do not have gcc installed at the moment.
+            api.step('go test -race', ['go', 'test', '-race', './...'])
 
 
 def GenTests(api):

@@ -335,6 +335,7 @@
       "run",
       "--out-format=json",
       "--issues-exit-code=0",
+      "--timeout=5m",
       "client/cmd/isolate/lib/...",
       "client/cmd/isolated/lib/..."
     ],

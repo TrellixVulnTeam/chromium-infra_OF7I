@@ -1233,7 +1233,7 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 [DEPS](/recipes/recipes/luci_go.py#9): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/tricium][recipe_engine/recipe_modules/tricium]
 
-&mdash; **def [RunSteps](/recipes/recipes/luci_go.py#92)(api, GOARCH, go_version_variant, go_modules, run_integration_tests, run_lint):**
+&mdash; **def [RunSteps](/recipes/recipes/luci_go.py#98)(api, GOARCH, go_version_variant, go_modules, run_integration_tests, run_lint):**
 
 &mdash; **def [apply\_golangci\_lint](/recipes/recipes/luci_go.py#48)(api, co):**
 ### *recipes* / [luci\_py](/recipes/recipes/luci_py.py)
