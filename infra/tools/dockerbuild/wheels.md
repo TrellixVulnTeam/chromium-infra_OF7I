@@ -3620,6 +3620,7 @@ wheel: <
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 * *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **oauth2client**
 
