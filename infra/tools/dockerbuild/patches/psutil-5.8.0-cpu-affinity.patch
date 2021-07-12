@@ -1,0 +1,16 @@
+From 9a7282fec36eec855a70230f0db82394a60d19cb Mon Sep 17 00:00:00 2001
+From: Owen Rodley <orodley@chromium.org>
+Date: Fri, 9 Jul 2021 16:12:41 +1000
+
+Enable cpu_affinity support.
+
+--- a/setup.py
++++ b/setup.py
+@@ -52,6 +52,7 @@ PYPY = '__pypy__' in sys.builtin_module_names
+ macros = []
+ if POSIX:
+     macros.append(("PSUTIL_POSIX", 1))
++    macros.append(("PSUTIL_HAVE_CPU_AFFINITY", 1))
+ if BSD:
+     macros.append(("PSUTIL_BSD", 1))
+ 

@@ -18,6 +18,7 @@ class SourceOrPrebuilt(Builder):
                version,
                pyversions=None,
                default=True,
+               patches=(),
                patch_version=None,
                **kwargs):
     """General-purpose wheel builder.
@@ -43,7 +44,9 @@ class SourceOrPrebuilt(Builder):
           source.
       kwargs: Keyword arguments forwarded to Builder.
     """
-    self._pypi_src = source.pypi_sdist(name, version)
+    if patches and patch_version:
+      raise ValueError('patches and patch_version may not be used together.')
+    self._pypi_src = source.pypi_sdist(name, version, patches)
     self._packaged = set(
         kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
     self._env = kwargs.pop('env', None)

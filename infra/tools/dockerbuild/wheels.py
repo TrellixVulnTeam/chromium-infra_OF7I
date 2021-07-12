@@ -478,6 +478,16 @@ SPECS.update({
             'psutil',
             '5.8.0',
             packaged=[],
+            patches=('cpu-affinity',),
+            skip_plat=[
+                'linux-mips64',
+                'linux-mipsel',
+                'linux-mips',
+                'windows-x86',
+                'windows-x64',
+                'windows-x86-py3',
+                'windows-x64-py3',
+            ],
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
