@@ -34,7 +34,6 @@ github.com/Microsoft/go-winio
 
 # gopkg.in
 gopkg.in/fsnotify.v1
-gopkg.in/russross/blackfriday.v2
 gopkg.in/src-d/go-git.v4/plumbing/format/gitignore
 gopkg.in/yaml.v2
 
@@ -43,7 +42,9 @@ github.com/DATA-DOG/go-sqlmock
 github.com/Masterminds/squirrel
 github.com/StackExchange/wmi
 github.com/VividCortex/mysqlerr
+github.com/aclements/go-moremath
 github.com/andygrunwald/go-gerrit
+github.com/bmatcuk/doublestar
 github.com/dgraph-io/badger/v3
 github.com/dustin/go-humanize
 github.com/go-sql-driver/mysql
@@ -62,16 +63,15 @@ github.com/mattn/go-tty
 github.com/mgutz/ansi
 github.com/mitchellh/go-homedir
 github.com/op/go-logging
+github.com/otiai10/copy
 github.com/pmezard/go-difflib/difflib
+github.com/russross/blackfriday/v2
 github.com/sergi/go-diff/diffmatchpatch
 github.com/shirou/gopsutil/
 github.com/smartystreets/
 github.com/waigani/diffparser
 github.com/xtgo/set
 github.com/yosuke-furukawa/json5/encoding/json5
-github.com/bmatcuk/doublestar
-github.com/otiai10/copy
-github.com/aclements/go-moremath
 
 # Kubernetes related packages
 k8s.io/
