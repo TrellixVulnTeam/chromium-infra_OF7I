@@ -379,10 +379,37 @@ def _validate_required_params(params) -> None:
                 f'Parameters must not be empty: {empty_keys}')
 
 
+# TODO(crbug.com/1203798): Add fallback logic like in crrev.com/c/2951291 once
+# work on the new execution engine resumes.
 EXPERIMENTAL_TELEMETRY_BENCHMARKS = {
-    'performance_test_suite', 'performance_webview_test_suite',
-    'telemetry_perf_tests', 'telemetry_perf_webview_tests'
+    'performance_webview_test_suite',
+    'telemetry_perf_webview_tests',
 }
+SUFFIXED_EXPERIMENTAL_TELEMETRY_BENCHMARKS = {
+    'performance_test_suite',
+    'telemetry_perf_tests',
+}
+SUFFIXES = {
+    '',
+    '_android_chrome',
+    '_android_monochrome',
+    '_android_monochrome_bundle',
+    '_android_weblayer',
+    '_android_webview',
+    '_android_clank_chrome',
+    '_android_clank_monochrome',
+    '_android_clank_monochrome_64_32_bundle',
+    '_android_clank_monochrome_bundle',
+    '_android_clank_trichrome_bundle',
+    '_android_clank_trichrome_webview',
+    '_android_clank_trichrome_webview_bundle',
+    '_android_clank_webview',
+    '_android_clank_webview_bundle',
+}
+for test in SUFFIXED_EXPERIMENTAL_TELEMETRY_BENCHMARKS:
+  for suffix in SUFFIXES:
+    EXPERIMENTAL_TELEMETRY_BENCHMARKS.add(test + suffix)
+
 EXPERIMENTAL_VR_BENCHMARKS = {'vr_perf_tests'}
 EXPERIMENTAL_TARGET_SUPPORT = (
     EXPERIMENTAL_TELEMETRY_BENCHMARKS | EXPERIMENTAL_VR_BENCHMARKS)
