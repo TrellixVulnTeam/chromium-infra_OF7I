@@ -6,12 +6,13 @@ package ssh
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 )
@@ -29,7 +30,7 @@ func SSHConfig() *ssh.ClientConfig {
 }
 
 // Run executes command on the target address by SSH.
-func Run(pool *sshpool.Pool, addr string, cmd string) (result *tlw.RunResult) {
+func Run(ctx context.Context, pool *sshpool.Pool, addr string, cmd string) (result *tlw.RunResult) {
 	result = &tlw.RunResult{
 		Command:  cmd,
 		ExitCode: -1,
@@ -51,7 +52,7 @@ func Run(pool *sshpool.Pool, addr string, cmd string) (result *tlw.RunResult) {
 	}
 	defer pool.Put(addr, sc)
 	result = internalRunSSH(cmd, sc)
-	log.Printf("run SSH %q: Cmd: %q; ExitCode: %d; Stdout: %q;  Stderr: %q", addr, result.Command, result.ExitCode, result.Stdout, result.Stderr)
+	log.Debug(ctx, "run SSH %q: Cmd: %q; ExitCode: %d; Stdout: %q;  Stderr: %q", addr, result.Command, result.ExitCode, result.Stdout, result.Stderr)
 	return
 }
 

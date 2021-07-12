@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 
@@ -23,6 +22,7 @@ import (
 	"infra/cros/recovery/internal/localtlw/dutinfo"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -79,7 +79,7 @@ func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) er
 // Run executes command on device by SSH related to resource name.
 func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *tlw.RunResult {
 	host := net.JoinHostPort(resourceName, strconv.Itoa(22))
-	return ssh.Run(c.sshPool, host, command)
+	return ssh.Run(ctx, c.sshPool, host, command)
 }
 
 // InitServod initiates servod daemon on servo-host.
@@ -105,7 +105,7 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 	if err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
-	if err := s.Prepare(c.sshPool); err != nil {
+	if err := s.Prepare(ctx, c.sshPool); err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
 	return nil
@@ -123,7 +123,7 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	}
 	servo := dut.GetPeripherals().GetServo()
 	if servo == nil {
-		log.Printf("Stop servod %q: servo is not specified", resourceName)
+		log.Debug(ctx, "Stop servod %q: servo is not specified", resourceName)
 		return nil
 	}
 	host := net.JoinHostPort(servo.GetServoHostname(), strconv.Itoa(22))
@@ -131,7 +131,7 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
-	if err := s.Stop(c.sshPool); err != nil {
+	if err := s.Stop(ctx, c.sshPool); err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
 	return nil
@@ -157,12 +157,12 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	}
 	dut := dd.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetDut()
 	if dut == nil {
-		log.Printf("Call servod %q: dut is not found", req.Resource)
+		log.Debug(ctx, "Call servod %q: dut is not found", req.Resource)
 		return nil
 	}
 	servo := dut.GetPeripherals().GetServo()
 	if servo == nil {
-		log.Printf("Call servod %q: servo is not specified", req.Resource)
+		log.Debug(ctx, "Call servod %q: servo is not specified", req.Resource)
 		return nil
 	}
 	host := net.JoinHostPort(servo.GetServoHostname(), strconv.Itoa(22))
@@ -218,19 +218,19 @@ func (c *tlwClient) ListResourcesForUnit(ctx context.Context, name string) ([]st
 	})
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			log.Printf("List resources %q: record not found.", name)
+			log.Debug(ctx, "List resources %q: record not found.", name)
 		} else {
 			return nil, errors.Reason("list resources %q", name).Err()
 		}
 	} else if dd.GetLabConfig() == nil {
 		return nil, errors.Reason("list resources %q: device data is empty", name).Err()
 	} else {
-		log.Printf("List resources %q: cached received device.", name)
+		log.Debug(ctx, "List resources %q: cached received device.", name)
 		c.devices[name] = dd
 		return []string{dd.GetLabConfig().GetName()}, nil
 	}
 	suName := ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name)
-	log.Printf("list resources %q: trying to find scheduling unit by name %q.", name, suName)
+	log.Debug(ctx, "list resources %q: trying to find scheduling unit by name %q.", name, suName)
 	su, err := c.ufsClient.GetSchedulingUnit(ctx, &ufsAPI.GetSchedulingUnitRequest{
 		Name: suName,
 	})
@@ -254,14 +254,14 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 		return nil, errors.Annotate(err, "get DUT %q", name).Err()
 	}
 	dut, err := dutinfo.ConvertDut(dd)
-	printAsJSON("DUT", dut)
+	printAsJSON(ctx, "DUT", dut)
 	return dut, errors.Annotate(err, "get DUT %q", name).Err()
 }
 
 // getDevice receives device from inventory.
 func (c *tlwClient) getDevice(ctx context.Context, name string) (*ufspb.ChromeOSDeviceData, error) {
 	if d, ok := c.devices[name]; ok {
-		log.Printf("Get device %q: received from cache.", name)
+		log.Debug(ctx, "Get device %q: received from cache.", name)
 		return d, nil
 	}
 	req := &ufsAPI.GetChromeOSDeviceDataRequest{Hostname: name}
@@ -275,7 +275,7 @@ func (c *tlwClient) getDevice(ctx context.Context, name string) (*ufspb.ChromeOS
 		return nil, errors.Reason("get device %q: received empty data", name).Err()
 	}
 	c.devices[name] = dd
-	log.Printf("Get device %q: cached received device.", name)
+	log.Debug(ctx, "Get device %q: cached received device.", name)
 	return dd, nil
 }
 
@@ -285,9 +285,9 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 }
 
 // printAsJSON prints JSON representation of the struct.
-func printAsJSON(name string, d interface{}) {
+func printAsJSON(ctx context.Context, name string, d interface{}) {
 	if d != nil {
 		s, _ := json.MarshalIndent(d, "", "\t")
-		log.Printf("%s: %s", name, s)
+		log.Debug(ctx, "%s: %s", name, s)
 	}
 }

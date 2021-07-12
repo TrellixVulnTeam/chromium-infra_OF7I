@@ -5,7 +5,7 @@
 package ssh
 
 import (
-	"log"
+	"fmt"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -51,7 +51,6 @@ func init() {
 	var err error
 	SSHSigner, err = ssh.ParsePrivateKey([]byte(sshKeyContent))
 	if err != nil {
-		log.Println("Fail to prepare key for SSH access!")
-		panic(err.Error())
+		panic(fmt.Sprintf("Failed to prepare key for SSH access! %s", err.Error()))
 	}
 }

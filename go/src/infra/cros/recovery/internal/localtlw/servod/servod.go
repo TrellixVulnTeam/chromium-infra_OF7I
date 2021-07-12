@@ -8,7 +8,6 @@ package servod
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	xmlrpc_value "go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/localtlw/xmlrpc"
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 )
@@ -56,14 +56,14 @@ type servod struct {
 // Prepare prepares servod before call it to run commands.
 // If servod is running: do nothing.
 // If servod is not running: start servod.
-func (s *servod) Prepare(pool *sshpool.Pool) error {
-	status, err := s.getStatus(pool)
+func (s *servod) Prepare(ctx context.Context, pool *sshpool.Pool) error {
+	status, err := s.getStatus(ctx, pool)
 	if err != nil {
 		return errors.Annotate(err, "prepare servod").Err()
 	}
 	switch status {
 	case servodNotRunning:
-		err = s.start(pool)
+		err = s.start(ctx, pool)
 		if err != nil {
 			return errors.Annotate(err, "prepare servod").Err()
 		}
@@ -74,8 +74,8 @@ func (s *servod) Prepare(pool *sshpool.Pool) error {
 }
 
 // getStatus return status of servod daemon on the servo-host.
-func (s *servod) getStatus(pool *sshpool.Pool) (status, error) {
-	r := ssh.Run(pool, s.host, fmt.Sprintf("status servod PORT=%d", s.port))
+func (s *servod) getStatus(ctx context.Context, pool *sshpool.Pool) (status, error) {
+	r := ssh.Run(ctx, pool, s.host, fmt.Sprintf("status servod PORT=%d", s.port))
 	if r.ExitCode == 0 {
 		if strings.Contains(strings.ToLower(r.Stdout), "start/running") {
 			return servodRunning, nil
@@ -85,37 +85,37 @@ func (s *servod) getStatus(pool *sshpool.Pool) (status, error) {
 	} else if strings.Contains(strings.ToLower(r.Stderr), "unknown instance") {
 		return servodNotRunning, nil
 	}
-	log.Printf("Status check: %s", r.Stderr)
+	log.Debug(ctx, "Status check: %s", r.Stderr)
 	return servodUndefined, errors.Reason("servo status %q: fail to check status", s.host).Err()
 }
 
 // start starts servod daemon on servo-host.
-func (s *servod) start(pool *sshpool.Pool) error {
+func (s *servod) start(ctx context.Context, pool *sshpool.Pool) error {
 	params, err := s.getParams()
 	if err != nil {
 		return errors.Annotate(err, "start servod").Err()
 	}
 	cmd := strings.Join(append([]string{"start", "servod"}, params...), " ")
-	r := ssh.Run(pool, s.host, cmd)
+	r := ssh.Run(ctx, pool, s.host, cmd)
 	if r.ExitCode != 0 {
 		return errors.Reason("start servod: %s", r.Stderr).Err()
 	}
 	// Waiting to start servod.
 	// TODO(otabek@): Replace to use servod tool to wait servod start.
-	log.Printf("Start servod: waiting %d seconds to initialize daemon.", startServodTimeout)
+	log.Debug(ctx, "Start servod: waiting %d seconds to initialize daemon.", startServodTimeout)
 	time.Sleep(startServodTimeout * time.Second)
 	return nil
 }
 
 // Stop stops servod daemon on servo-host.
-func (s *servod) Stop(pool *sshpool.Pool) error {
-	r := ssh.Run(pool, s.host, fmt.Sprintf("stop servod PORT=%d", s.port))
+func (s *servod) Stop(ctx context.Context, pool *sshpool.Pool) error {
+	r := ssh.Run(ctx, pool, s.host, fmt.Sprintf("stop servod PORT=%d", s.port))
 	if r.ExitCode != 0 {
-		log.Printf("stop servod: %s", r.Stderr)
+		log.Debug(ctx, "stop servod: %s", r.Stderr)
 		return errors.Reason("stop servod: %s", r.Stderr).Err()
 	} else {
 		// Wait to teardown the servod.
-		log.Printf("Stop servod: waiting %d seconds to fully teardown the daemon.", stopServodTimeout)
+		log.Debug(ctx, "Stop servod: waiting %d seconds to fully teardown the daemon.", stopServodTimeout)
 		time.Sleep(stopServodTimeout * time.Second)
 	}
 	return nil
