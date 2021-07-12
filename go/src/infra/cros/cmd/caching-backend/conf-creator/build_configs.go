@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"net"
 	"strings"
 
 	models "infra/unifiedfleet/api/v1/models"
@@ -77,9 +78,27 @@ func findService(services []*models.CachingService, nodeIP, nodeName string) (_ 
 }
 
 // nodeVirtualIP gets the virtual IP of the current node.
-func nodeVirtualIP(service *models.CachingService) string {
-	// The service name is in the format cachingservice/<Virtual IP>. So do the
-	// required string manipulation to obtain the virtual IP.
+func nodeVirtualIP(service *models.CachingService) (string, error) {
+	// The service name is in the format cachingservice/<hostname>. So do the
+	// required string manipulation to obtain the name.
 	splitName := strings.Split(service.GetName(), "/")
-	return splitName[len(splitName)-1]
+	name := splitName[len(splitName)-1]
+	vip, err := lookupHost(name)
+	if err != nil {
+		return "", fmt.Errorf("get node virtual IP of %q: %s", name, err)
+	}
+	return vip, nil
+}
+
+// lookupHost looks up the IP address of the provided host by using the local
+// resolver.
+func lookupHost(hostname string) (string, error) {
+	addrs, err := net.LookupHost(hostname)
+	if err != nil {
+		return "", fmt.Errorf("lookup IP of %q: %s", hostname, err)
+	}
+	if len(addrs) == 0 {
+		return "", fmt.Errorf("lookup IP of %q: No addresses found", hostname)
+	}
+	return addrs[0], nil
 }

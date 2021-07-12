@@ -74,7 +74,10 @@ func innerMain() error {
 		}
 		return nil
 	}
-	vip := nodeVirtualIP(service)
+	vip, err := nodeVirtualIP(service)
+	if err != nil {
+		return err
+	}
 	n := nginxConfData{
 		WorkerCount: *nginxWorkerCount,
 		// TODO(sanikak): Define types to make the unit clearer.
@@ -90,13 +93,21 @@ func innerMain() error {
 	}
 	switch {
 	case nodeIP == service.GetPrimaryNode() || nodeName == service.GetPrimaryNode():
-		n.UpstreamHost = net.JoinHostPort(service.GetSecondaryNode(), strconv.Itoa(int(service.GetPort())))
-		k.UnicastPeer = service.GetSecondaryNode()
+		peerIP, err := lookupHost(service.GetSecondaryNode())
+		if err != nil {
+			return err
+		}
+		n.UpstreamHost = net.JoinHostPort(peerIP, strconv.Itoa(int(service.GetPort())))
+		k.UnicastPeer = peerIP
 		// Keepalived configuration uses the following non-inclusive language.
 		k.State = "MASTER"
 		k.Priority = 150
 	case nodeIP == service.GetSecondaryNode() || nodeName == service.GetSecondaryNode():
-		k.UnicastPeer = service.GetPrimaryNode()
+		peerIP, err := lookupHost(service.GetPrimaryNode())
+		if err != nil {
+			return err
+		}
+		k.UnicastPeer = peerIP
 		k.State = "BACKUP"
 		k.Priority = 100
 	default:
