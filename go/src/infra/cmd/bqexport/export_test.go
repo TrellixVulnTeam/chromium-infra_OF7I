@@ -96,7 +96,13 @@ func TestBQExport(t *testing.T) {
 }
 
 func withTempDir(fn func(string) error) error {
-	tdir, err := ioutil.TempDir("", "bqexport_test")
+	// Need to create the temp directory in the source tree so that "go run"
+	// can discover and use infra's go.mod.
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	tdir, err := ioutil.TempDir(cwd, ".bqexport_test")
 	if err != nil {
 		return err
 	}
