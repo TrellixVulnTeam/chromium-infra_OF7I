@@ -209,6 +209,22 @@ type Dut struct {
 	ServoHost *ServoHost
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
+	// StableVersion of the DUT.
+	StableVersion *StableVersion
+}
+
+// StableVersion holds info about stable versions used for recovery devices.
+type StableVersion struct {
+	// ChromeOS stable image in standard GS path format.
+	// Example: board-release/R90-13816.47.0
+	CrosImage string
+	// ChromeOS firmware version in a format that align with omaha manifest data,
+	// and crossystem or chromeos-firmwareupdate output.
+	// Example: Google_Board.13434.261.0
+	CrosFirmwareVersion string
+	// ChromeOS firmware image in standard GS path format.
+	// Example: board-firmware/R87-13434.261.0
+	CrosFirmwareImage string
 }
 
 // HardwareState describes the state of hardware components.

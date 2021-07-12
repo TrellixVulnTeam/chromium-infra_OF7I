@@ -254,8 +254,17 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 		return nil, errors.Annotate(err, "get DUT %q", name).Err()
 	}
 	dut, err := dutinfo.ConvertDut(dd)
+	if err != nil {
+		return nil, errors.Annotate(err, "get DUT %q", name).Err()
+	}
+	gv, err := c.getStableVersion(ctx, dut)
+	if err != nil {
+		log.Info(ctx, "Get DUT %q: failed to receive stable-version. Error: %s", name, err)
+	} else {
+		dut.StableVersion = gv
+	}
 	printAsJSON(ctx, "DUT", dut)
-	return dut, errors.Annotate(err, "get DUT %q", name).Err()
+	return dut, nil
 }
 
 // getDevice receives device from inventory.
@@ -277,6 +286,26 @@ func (c *tlwClient) getDevice(ctx context.Context, name string) (*ufspb.ChromeOS
 	c.devices[name] = dd
 	log.Debug(ctx, "Get device %q: cached received device.", name)
 	return dd, nil
+}
+
+// getStableVersion receives stable versions of device.
+func (c *tlwClient) getStableVersion(ctx context.Context, dut *tlw.Dut) (*tlw.StableVersion, error) {
+	req := &fleet.GetStableVersionRequest{Hostname: dut.Name}
+	res, err := c.csaClient.GetStableVersion(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, errors.Reason("get stable-version %q: record not found", dut.Name).Err()
+		}
+		return nil, errors.Annotate(err, "get stable-version %q", dut.Name).Err()
+	}
+	if res.GetCrosVersion() == "" {
+		return nil, errors.Reason("get stable-version %q: version is empty", dut.Name).Err()
+	}
+	return &tlw.StableVersion{
+		CrosImage:           fmt.Sprintf("%s-release/%s", dut.Board, res.GetCrosVersion()),
+		CrosFirmwareVersion: res.GetFirmwareVersion(),
+		CrosFirmwareImage:   res.GetFaftVersion(),
+	}, nil
 }
 
 // UpdateDut updates DUT info into inventory.
