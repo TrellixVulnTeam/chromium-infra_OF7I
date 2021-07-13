@@ -110,7 +110,11 @@ func extractBackendInfo(s *ufsmodels.CachingService) (name string, subnets []str
 		return "", nil, fmt.Errorf("extract cache backend info: wrong format service name: %q", s.GetName())
 	}
 	port := strconv.Itoa(int(s.GetPort()))
-	name = fmt.Sprintf("http://%s", net.JoinHostPort(nameParts[1], port))
+	ip, err := lookupHost(nameParts[1])
+	if err != nil {
+		return "", nil, fmt.Errorf("extract backend info: %s", err)
+	}
+	name = fmt.Sprintf("http://%s", net.JoinHostPort(ip, port))
 	subnets = s.GetServingSubnets()
 	return name, subnets, nil
 }
@@ -124,4 +128,17 @@ func fetchCachingServicesFromUFS(ctx context.Context, c ufsapi.FleetClient) ([]*
 		return nil, fmt.Errorf("list caching service from UFS: %s", err)
 	}
 	return resp.GetCachingServices(), nil
+}
+
+// lookupHost looks up the IP address of the provided host by using the local
+// resolver.
+func lookupHost(hostname string) (string, error) {
+	addrs, err := net.LookupHost(hostname)
+	if err != nil {
+		return "", fmt.Errorf("look up IP of %q: %s", hostname, err)
+	}
+	if len(addrs) == 0 {
+		return "", fmt.Errorf("look up IP of %q: No addresses found", hostname)
+	}
+	return addrs[0], nil
 }
