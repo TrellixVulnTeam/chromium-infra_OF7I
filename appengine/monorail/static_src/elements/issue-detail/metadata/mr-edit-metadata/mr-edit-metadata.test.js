@@ -341,7 +341,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const statusComponent = element.querySelector('#statusInput');
-    statusComponent.shadowRoot.querySelector('#mergedIntoInput').setValue('xx');
+    statusComponent.shadowRoot.querySelector('#mergedIntoInput').value = 'xx';
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
@@ -401,19 +401,19 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    root.querySelector('#mergedIntoInput').setValue('proj:123');
+    root.querySelector('#mergedIntoInput').value = 'proj:123';
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
         `Invalid issue ref: proj:123. Cannot merge or block an issue on itself.`);
 
-    root.querySelector('#mergedIntoInput').setValue('123');
+    root.querySelector('#mergedIntoInput').value = '123';
     assert.deepEqual(element.delta, {});
     assert.equal(
         element.error,
         `Invalid issue ref: 123. Cannot merge or block an issue on itself.`);
 
-    root.querySelector('#mergedIntoInput').setValue('proj2:123');
+    root.querySelector('#mergedIntoInput').value = 'proj2:123';
     assert.notDeepEqual(element.delta, {});
     assert.equal(element.error, '');
   });
@@ -466,7 +466,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     fireEvent.keyDown(blockingInput, {key: 'Backspace', code: 'Backspace'});
     await element.updateComplete;
-    mergedIntoInput.setValue('proj:124');
+    mergedIntoInput.value = 'proj:124';
     await element.updateComplete;
 
     assert.deepEqual(
@@ -516,8 +516,7 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    root.querySelector('#mergedIntoInput').setValue(
-        'chromium:1234');
+    root.querySelector('#mergedIntoInput').value = 'chromium:1234';
     assert.deepEqual(element.delta, {
       status: 'Duplicate',
       mergedIntoRef: {

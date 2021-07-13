@@ -56,7 +56,7 @@ describe('mr-edit-status', () => {
 
     await element.updateComplete;
 
-    element.shadowRoot.querySelector('#mergedIntoInput').setValue('proj:123');
+    element.shadowRoot.querySelector('#mergedIntoInput').value = 'proj:123';
     assert.deepEqual(element.delta, {
       status: 'Duplicate',
       mergedInto: 'proj:123',

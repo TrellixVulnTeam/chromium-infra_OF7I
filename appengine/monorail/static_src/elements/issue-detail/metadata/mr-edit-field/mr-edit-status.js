@@ -40,6 +40,9 @@ export class MrEditStatus extends LitElement {
           word-wrap: break-word;
           text-align: left;
         }
+        #mergedIntoInput {
+          width: 160px;
+        }
       `,
     ];
   }
@@ -81,11 +84,11 @@ export class MrEditStatus extends LitElement {
 
       <div class="grid-input" ?hidden=${!this._showMergedInto}>
         <label for="mergedIntoInput" id="mergedIntoLabel">Merged into:</label>
-        <mr-edit-field
+        <input
           id="mergedIntoInput"
-          .initialValues=${this.mergedInto ? [this.mergedInto] : []}
+          value=${this.mergedInto || ''}
           @change=${this._changeHandler}
-        ></mr-edit-field>
+        ></input>
       </div>`;
   }
 
@@ -136,7 +139,7 @@ export class MrEditStatus extends LitElement {
     await this.updateComplete;
     const mergedIntoInput = this.shadowRoot.querySelector('#mergedIntoInput');
     if (mergedIntoInput) {
-      mergedIntoInput.reset();
+      mergedIntoInput.value = this.mergedInto || '';
     }
     this.status = this.initialStatus;
   }
