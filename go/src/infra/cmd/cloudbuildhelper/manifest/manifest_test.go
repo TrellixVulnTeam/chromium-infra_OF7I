@@ -108,6 +108,7 @@ func TestManifest(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
 		So(m.Build[0].Dest, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx/tool"))
+		So(m.Build[0].Cwd, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx"))
 		So(m.Build[0].Concrete(), ShouldResemble, &GoBuildStep{
 			GoBinary: "go.pkg/some/tool",
 		})
@@ -119,9 +120,9 @@ func TestManifest(t *testing.T) {
 			]}`, "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m.Build, ShouldHaveLength, 1)
+		So(m.Build[0].Cwd, ShouldEqual, filepath.FromSlash("root/1/2/3/4/ctx"))
 		So(m.Build[0].Concrete(), ShouldResemble, &RunBuildStep{
 			Run: []string{"a", "b"},
-			Cwd: filepath.FromSlash("root/1/2/3/4/ctx"),
 		})
 	})
 

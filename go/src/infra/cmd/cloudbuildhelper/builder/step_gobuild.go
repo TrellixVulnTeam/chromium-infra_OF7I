@@ -18,8 +18,8 @@ import (
 
 // runGoBuildStep executes manifest.GoBuildStep.
 func runGoBuildStep(ctx context.Context, inv *stepRunnerInv) error {
-	// Name of a file in inv.TempDir to drop the binary into.
-	tmpName := "go_bin" + inv.TempSuffix
+	// Name of a file to drop the binary into.
+	tmpName := filepath.Join(inv.TempDir, "go_bin"+inv.TempSuffix)
 
 	// TODO(vadimsh): We can make this configurable via the YAML if necessary.
 	extraEnv := environ.New(nil)
@@ -38,11 +38,12 @@ func runGoBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	}
 	args = append(args, "-o", tmpName, inv.BuildStep.GoBuildStep.GoBinary)
 
-	logging.Infof(ctx, "Running %q",
-		strings.Join(extraEnv.Sorted(), " ")+" "+strings.Join(args, " "))
+	logging.Infof(ctx, "Running %q in %q",
+		strings.Join(extraEnv.Sorted(), " ")+" "+strings.Join(args, " "),
+		inv.BuildStep.Cwd)
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
-	cmd.Dir = inv.TempDir
+	cmd.Dir = inv.BuildStep.Cwd
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = env.Sorted()
@@ -50,5 +51,5 @@ func runGoBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return errors.Annotate(err, "go build invocation failed").Err()
 	}
 
-	return inv.addFilesToOutput(ctx, filepath.Join(inv.TempDir, tmpName), inv.BuildStep.Dest, nil)
+	return inv.addFilesToOutput(ctx, tmpName, inv.BuildStep.Dest, nil)
 }

@@ -234,6 +234,13 @@ type BuildStep struct {
 	// See individual *BuildStep structs for defaults.
 	Dest string `yaml:"dest,omitempty"`
 
+	// Cwd is a working directory to run the command in.
+	//
+	// Applies to `run` and `go_build` steps.
+	//
+	// Default is ${contextdir}, ${inputsdir} or ${manifestdir}, whichever is set.
+	Cwd string `yaml:"cwd,omitempty"`
+
 	// Disjoint set of possible build kinds.
 	//
 	// To add a new step kind:
@@ -319,6 +326,9 @@ func (s *GoBuildStep) String() string { return fmt.Sprintf("go build %q", s.GoBi
 func (s *GoBuildStep) isEmpty() bool { return s.GoBinary == "" }
 
 func (s *GoBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
+	if err = renderCwd(&bs.Cwd, dirs); err != nil {
+		return
+	}
 	if bs.Dest == "" {
 		bs.Dest = "${contextdir}/" + path.Base(s.GoBinary)
 	}
@@ -336,11 +346,6 @@ type RunBuildStep struct {
 	// "${manifestdir}/" will be rendered as absolute paths.
 	Run []string `yaml:"run,omitempty"`
 
-	// Cwd is a working directory to run the command in.
-	//
-	// Default is ${contextdir}.
-	Cwd string `yaml:"cwd,omitempty"`
-
 	// Outputs is a list of files or directories to put into the output.
 	//
 	// They are something that `run` should be generating.
@@ -356,9 +361,9 @@ type RunBuildStep struct {
 	Outputs []string
 }
 
-func (s *RunBuildStep) String() string { return fmt.Sprintf("run %q in %q", s.Run, s.Cwd) }
+func (s *RunBuildStep) String() string { return fmt.Sprintf("run %q", s.Run) }
 
-func (s *RunBuildStep) isEmpty() bool { return len(s.Run) == 0 && s.Cwd == "" && len(s.Outputs) == 0 }
+func (s *RunBuildStep) isEmpty() bool { return len(s.Run) == 0 && len(s.Outputs) == 0 }
 
 func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
 	if len(s.Run) == 0 {
@@ -379,10 +384,7 @@ func (s *RunBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err erro
 		}
 	}
 
-	if s.Cwd == "" {
-		s.Cwd = "${contextdir}"
-	}
-	if s.Cwd, err = renderPath("cwd", s.Cwd, dirs); err != nil {
+	if err = renderCwd(&bs.Cwd, dirs); err != nil {
 		return err
 	}
 
@@ -669,4 +671,21 @@ func renderPath(title, p string, dirs map[string]string) (string, error) {
 	default:
 		return filepath.Join(val, filepath.FromSlash(parts[1])), nil
 	}
+}
+
+// renderCwd renders `cwd` to be an absolute path.
+func renderCwd(cwd *string, dirs map[string]string) error {
+	if *cwd == "" {
+		switch {
+		case dirs["contextdir"] != "":
+			*cwd = "${contextdir}"
+		case dirs["inputsdir"] != "":
+			*cwd = "${inputsdir}"
+		case dirs["manifestdir"] != "":
+			*cwd = "${manifestdir}"
+		}
+	}
+	var err error
+	*cwd, err = renderPath("cwd", *cwd, dirs)
+	return err
 }
