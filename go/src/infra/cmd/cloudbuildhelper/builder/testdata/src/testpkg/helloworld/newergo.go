@@ -13,4 +13,4 @@ package main
 // of newergo.go, even though cloudbuildhelper assembles a tarball targeting
 // go1.11. There appears to be no easy way to discard such dependencies.
 //
-// import "infra/cmd/cloudbuildhelper/builder/testing/nope"
+// import "testpkg/nope"

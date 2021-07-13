@@ -22,11 +22,15 @@ def group_by_dir(filestream):
 
   If the filestream has paths in sorted order, then directories
   shouldn't be repeated.
+
+  Skips files that reside in a "testdata" directory.
   """
   prefix = None
   group = []
   for fname in filestream:
     dirname = os.path.dirname(fname)
+    if '/testdata/' in os.path.normpath(dirname):
+      continue
     if dirname != prefix:
       if group:
         yield prefix

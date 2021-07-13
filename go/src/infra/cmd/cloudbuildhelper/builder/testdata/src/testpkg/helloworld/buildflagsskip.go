@@ -2,9 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// +build windows
+
 package main
 
-import "infra/cmd/cloudbuildhelper/builder/testing/pkg1"
+import "testpkg/nope"
 
-// A exists to make golint happy.
-const A = pkg1.A
+// B3 exists to make golint happy.
+const B3 = nope.A

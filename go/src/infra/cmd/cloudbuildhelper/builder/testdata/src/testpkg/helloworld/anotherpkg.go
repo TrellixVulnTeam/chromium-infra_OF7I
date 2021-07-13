@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package pkg1
+package main
 
-import "infra/cmd/cloudbuildhelper/builder/testing/pkg2"
+import "testpkg/pkg1"
 
 // A exists to make golint happy.
-const A = pkg2.A
+const A = pkg1.A

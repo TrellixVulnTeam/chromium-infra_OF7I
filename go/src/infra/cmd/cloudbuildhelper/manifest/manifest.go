@@ -238,7 +238,7 @@ type BuildStep struct {
 	//
 	// Applies to `run` and `go_build` steps.
 	//
-	// Default is ${contextdir}, ${inputsdir} or ${manifestdir}, whichever is set.
+	// Default is ${inputsdir}, ${contextdir} or ${manifestdir}, whichever is set.
 	Cwd string `yaml:"cwd,omitempty"`
 
 	// Disjoint set of possible build kinds.
@@ -627,7 +627,7 @@ func wireStep(bs *BuildStep, m *Manifest, index int) error {
 func normPath(p *string, cwd string) {
 	if *p != "" {
 		*p = filepath.FromSlash(*p)
-		if cwd != "" {
+		if !filepath.IsAbs(*p) && cwd != "" {
 			*p = filepath.Join(cwd, *p)
 		}
 	}
@@ -677,10 +677,10 @@ func renderPath(title, p string, dirs map[string]string) (string, error) {
 func renderCwd(cwd *string, dirs map[string]string) error {
 	if *cwd == "" {
 		switch {
-		case dirs["contextdir"] != "":
-			*cwd = "${contextdir}"
 		case dirs["inputsdir"] != "":
 			*cwd = "${inputsdir}"
+		case dirs["contextdir"] != "":
+			*cwd = "${contextdir}"
 		case dirs["manifestdir"] != "":
 			*cwd = "${manifestdir}"
 		}

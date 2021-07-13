@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package pkg
 
-import "infra/cmd/cloudbuildhelper/builder/testing/nope"
+import "example.com/another"
 
-// B1 exists to make golint happy.
-const B1 = nope.A
+// A exists to make golint happy.
+const A = another.A

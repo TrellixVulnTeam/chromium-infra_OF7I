@@ -4,7 +4,7 @@
 
 package main
 
-import "infra/cmd/cloudbuildhelper/builder/testing/nope"
+import "testpkg/nope"
 
 // B2 exists to make golint happy.
 const B2 = nope.A
