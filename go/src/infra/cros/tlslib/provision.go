@@ -9,8 +9,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
@@ -246,14 +249,21 @@ func (s *Server) provisionLacros(req *tls.ProvisionLacrosRequest, opName string)
 func runCmd(c *ssh.Client, cmd string) error {
 	s, err := c.NewSession()
 	if err != nil {
-		return err
+		return fmt.Errorf("runCmd: failed to create session, %v", err)
 	}
 	defer s.Close()
-	b, err := s.CombinedOutput(cmd)
+
+	s.Stdout = os.Stdout
+	s.Stderr = os.Stderr
+
+	log.Printf("Running command: %s", cmd)
+	err = s.Run(cmd)
+
 	if err != nil {
-		err = fmt.Errorf("runCmd: %v, output: %q", err, b)
+		return fmt.Errorf("runCmd: failed to run command, %v", err)
 	}
-	return err
+
+	return nil
 }
 
 // runCmdOutput interprets the given string command in a shell and returns stdout.
@@ -263,8 +273,21 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 		return "", err
 	}
 	defer s.Close()
-	b, err := s.Output(cmd)
-	return string(b), err
+
+	stdoutBuf := new(strings.Builder)
+
+	s.Stdout = io.MultiWriter(os.Stdout, stdoutBuf)
+	s.Stderr = os.Stderr
+
+	log.Printf("Running command: %s", cmd)
+	err = s.Run(cmd)
+
+	stdoutStr := stdoutBuf.String()
+	if err != nil {
+		return "", fmt.Errorf("runCmd: failed to run command, %v", err)
+	}
+
+	return stdoutStr, err
 }
 
 // newOperationError is a helper in creating Operation_Error and marshals ErrorInfo.
