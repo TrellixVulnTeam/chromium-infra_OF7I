@@ -131,7 +131,7 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bootstrap.py",
+      "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bootstrap_internal.py",
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",

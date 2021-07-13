@@ -199,12 +199,13 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
         with self.m.context(cwd=self.path, env=env_with_override):
           where = 'infra_internal' if internal else 'infra'
+          bootstrap = 'bootstrap_internal.py' if internal else 'bootstrap.py'
           test_env = {'GOROOT': str(path.join('golang', 'go'))}
           if not go_modules:
             test_env['GOPATH'] = str(path.join(where, 'go'))
           step = self.m.python(
               'init infra go env',
-              path.join(where, 'go', 'bootstrap.py'),
+              path.join(where, 'go', bootstrap),
               [self.m.json.output()],
               venv=True,
               infra_step=True,
