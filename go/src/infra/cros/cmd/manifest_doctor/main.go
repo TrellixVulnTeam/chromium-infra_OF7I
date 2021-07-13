@@ -63,6 +63,7 @@ func GetApplication(authOpts auth.Options) *subcommands.DefaultApplication {
 			authcli.SubcommandLogout(authOpts, "auth-logout", false),
 			cmdLocalManifestBrancher(authOpts),
 			cmdProjectBuildspec(authOpts),
+			cmdPublicBuildspec(authOpts),
 		},
 	}
 }

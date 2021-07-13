@@ -227,6 +227,30 @@ func TestGetProjects(t *testing.T) {
 	assert.Assert(t, reflect.DeepEqual(totProjects, m.Projects[3:4]))
 }
 
+func TestGetAnnotation(t *testing.T) {
+	r := Remote{
+		Annotations: []Annotation{
+			{Name: "foo", Value: "bar"},
+		},
+	}
+	v, ok := r.GetAnnotation("foo")
+	assert.Assert(t, ok)
+	assert.StringsEqual(t, v, "bar")
+	_, ok = r.GetAnnotation("baz")
+	assert.Assert(t, !ok)
+
+	p := Remote{
+		Annotations: []Annotation{
+			{Name: "foo", Value: "bar"},
+		},
+	}
+	v, ok = p.GetAnnotation("foo")
+	assert.Assert(t, ok)
+	assert.StringsEqual(t, v, "bar")
+	_, ok = p.GetAnnotation("baz")
+	assert.Assert(t, !ok)
+}
+
 var canBranchTestManifestAnnotation = Manifest{
 	Projects: []Project{
 		// Projects with annotations labeling branch mode.

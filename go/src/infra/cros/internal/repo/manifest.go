@@ -57,10 +57,11 @@ type Include struct {
 
 // Remote is a manifest element that lists a remote.
 type Remote struct {
-	Fetch    string `xml:"fetch,attr,omitempty"`
-	Name     string `xml:"name,attr,omitempty"`
-	Revision string `xml:"revision,attr,omitempty"`
-	Alias    string `xml:"alias,attr,omitempty"`
+	Fetch       string       `xml:"fetch,attr,omitempty"`
+	Name        string       `xml:"name,attr,omitempty"`
+	Revision    string       `xml:"revision,attr,omitempty"`
+	Alias       string       `xml:"alias,attr,omitempty"`
+	Annotations []Annotation `xml:"annotation"`
 }
 
 // Default is a manifest element that lists the default.
@@ -313,6 +314,18 @@ func (m *Manifest) ProjectBranchMode(project Project) BranchMode {
 // whether or not the annotation exists.
 func (p *Project) GetAnnotation(name string) (string, bool) {
 	for _, annotation := range p.Annotations {
+		if annotation.Name == name {
+			return annotation.Value, true
+		}
+	}
+	return "", false
+}
+
+// GetAnnotation returns the value of the annotation with the
+// given name, if it exists. It also returns a bool indicating
+// whether or not the annotation exists.
+func (r *Remote) GetAnnotation(name string) (string, bool) {
+	for _, annotation := range r.Annotations {
 		if annotation.Name == name {
 			return annotation.Value, true
 		}
