@@ -450,7 +450,9 @@ def CheckInclusiveLanguage(input_api, output_api):
 
 
 def CommonChecks(input_api, output_api):  # pragma: no cover
-  output = []
+  file_filter = lambda x: x.LocalPath() == 'infra/config/recipes.cfg'
+  output = input_api.canned_checks.CheckJsonParses(
+      input_api, output_api, file_filter=file_filter)
 
   # Collect all potential Go tests
   tests = GoCheckers(input_api, output_api)
@@ -510,4 +512,3 @@ def CheckChangeOnCommit(input_api, output_api):  # pragma: no cover
   output.extend(input_api.RunTests(
     PylintChecks(input_api, output_api, only_changed=False)))
   return output
-
