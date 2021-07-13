@@ -79,6 +79,13 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
       host_cpu="x86_64"
   fi
   EXTRA_CONFIGURE_ARGS="$EXTRA_CONFIGURE_ARGS --build=${host_cpu}-apple-darwin"
+
+  # Python 3.8 detects these functions at build time, which does not work when the binary
+  # is run on older OS versions. Hardcode them to not be detected.
+  if [[ $_3PP_VERSION = 3.8.* ]]; then
+    export ac_cv_func_futimens=no
+    export ac_cv_func_utimensat=no
+  fi
 else
   PYTHONEXE=python
 
