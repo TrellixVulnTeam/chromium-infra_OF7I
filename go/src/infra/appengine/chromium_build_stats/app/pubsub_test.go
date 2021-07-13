@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/storage"
-	"github.com/GoogleCloudPlatform/google-cloud-go-testing/storage/stiface"
+	"github.com/googleapis/google-cloud-go-testing/storage/stiface"
 
 	"infra/appengine/chromium_build_stats/ninjalog"
 )

@@ -14,19 +14,16 @@ github.com/luci/
 github.com/maruel/subcommands
 
 # Google-related github packages
-github.com/GoogleCloudPlatform/
 github.com/bazelbuild/buildtools
 github.com/bazelbuild/remote-apis
 github.com/bazelbuild/remote-apis-sdks
-github.com/docker/
 github.com/golang/mock/gomock
 github.com/golang/protobuf/
 github.com/google/cel-go
 github.com/google/shlex
 github.com/google/tink
 github.com/google/uuid
-github.com/googleapis/gax-go
-github.com/pkg/errors
+github.com/googleapis/
 github.com/protocolbuffers/txtpbfmt/
 
 # Microsoft related github packages
@@ -46,6 +43,7 @@ github.com/aclements/go-moremath
 github.com/andygrunwald/go-gerrit
 github.com/bmatcuk/doublestar
 github.com/dgraph-io/badger/v3
+github.com/docker/
 github.com/dustin/go-humanize
 github.com/go-sql-driver/mysql
 github.com/gomodule/redigo/redis
@@ -64,6 +62,7 @@ github.com/mgutz/ansi
 github.com/mitchellh/go-homedir
 github.com/op/go-logging
 github.com/otiai10/copy
+github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 github.com/russross/blackfriday/v2
 github.com/sergi/go-diff/diffmatchpatch
