@@ -383,6 +383,8 @@ func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 	p.ServoUsbState = setHardwareState(s.GetServoUsbState())
 	p.StorageState = setHardwareState(s.GetStorageState())
 	p.BatteryState = setHardwareState(s.GetBatteryState())
+	p.WifiState = setHardwareState(s.GetWifiState())
+	p.BluetoothState = setHardwareState(s.GetBluetoothState())
 	p.RpmState = setPeripheralState(s.GetRpmState())
 
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
