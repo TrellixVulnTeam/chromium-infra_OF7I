@@ -57,6 +57,8 @@ peripherals: {
   }
   servo_type: ""
   servo_usb_state: 3
+  wifi_state: 2
+  bluetooth_state: 3
   smart_usbhub: false
   mimo: true
   huddly: true
@@ -159,6 +161,8 @@ peripherals: {
   servo_state: 1
   servo_type: ""
   servo_usb_state: 3
+  wifi_state: 2
+  bluetooth_state: 3
   smart_usbhub: false
   mimo: true
   huddly: true
@@ -279,6 +283,8 @@ var fullDimensions = Dimensions{
 	"label-touchpad":         {"True"},
 	"label-touchscreen":      {"True"},
 	"label-servo":            {"True"},
+	"label-wifi_state":       {"ACCEPTABLE"},
+	"label-bluetooth_state":  {"NEED_REPLACEMENT"},
 	"label-servo_state":      {"WORKING"},
 	"label-servo_component":  {"servo_v4", "ccd_cr50"},
 	"label-servo_usb_state":  {"NEED_REPLACEMENT"},

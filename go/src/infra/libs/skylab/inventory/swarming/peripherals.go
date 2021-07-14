@@ -121,11 +121,25 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 		}
 	}
 
+	hardwareStatePrefixLength := len("HARDWARE_")
 	if servoUSBState := p.GetServoUsbState(); servoUSBState != inventory.HardwareState_HARDWARE_UNKNOWN {
 		if usbState, ok := lab.HardwareState_name[int32(p.GetServoUsbState())]; ok {
-			appendDim(dims, "label-servo_usb_state", usbState[len("HARDWARE_"):])
+			appendDim(dims, "label-servo_usb_state", usbState[hardwareStatePrefixLength:])
 		}
 	}
+
+	if wifiState := p.GetWifiState(); wifiState != inventory.HardwareState_HARDWARE_UNKNOWN {
+		if wState, ok := lab.HardwareState_name[int32(wifiState)]; ok {
+			appendDim(dims, "label-wifi_state", wState[hardwareStatePrefixLength:])
+		}
+	}
+
+	if bluetoothState := p.GetBluetoothState(); bluetoothState != inventory.HardwareState_HARDWARE_UNKNOWN {
+		if btState, ok := lab.HardwareState_name[int32(bluetoothState)]; ok {
+			appendDim(dims, "label-bluetooth_state", btState[hardwareStatePrefixLength:])
+		}
+	}
+
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -184,6 +198,21 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 			p.ServoUsbState = &state
 		}
 		delete(d, "label-servo_usb_state")
+	}
+
+	if wifiState, ok := getLastStringValue(d, "label-wifi_state"); ok {
+		if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(wifiState)]; ok {
+			state := inventory.HardwareState(labSStateVal)
+			p.WifiState = &state
+		}
+		delete(d, "label-wifi_state")
+	}
+	if bluetoothState, ok := getLastStringValue(d, "label-bluetooth_state"); ok {
+		if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(bluetoothState)]; ok {
+			state := inventory.HardwareState(labSStateVal)
+			p.BluetoothState = &state
+		}
+		delete(d, "label-bluetooth_state")
 	}
 
 	return d
