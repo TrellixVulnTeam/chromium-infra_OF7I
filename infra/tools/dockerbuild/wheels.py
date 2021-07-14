@@ -1719,9 +1719,6 @@ SPECS.update({
             ]),
             only_plat=['mac-x64-cp38', 'mac-arm64-cp38'],
             pyversions=['py3'],
-            # TODO(crbug/111221): Don't build this by default until we have
-            # environment variables set up correctly to do so.
-            default=False,
         ),
     )
 })
