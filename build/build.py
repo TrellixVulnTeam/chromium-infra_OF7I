@@ -60,6 +60,19 @@ KNOWN_GOARCHS = frozenset([
   's390x',
 ])
 
+# A package prefix => cwd to use when building this package.
+INFRA_MODULE_MAP = {
+  # The luci-go module is checked out separately, use its go.mod.
+  'go.chromium.org/luci/':
+      os.path.join(ROOT, 'go', 'src', 'go.chromium.org', 'luci'),
+  # All infra packages should use go.mod in infra.git.
+ 'infra/':
+      os.path.join(ROOT, 'go', 'src', 'infra'),
+  # Use infra's go.mod when building goldctl.
+  'go.skia.org/infra/gold-client/cmd/goldctl':
+      os.path.join(ROOT, 'go', 'src', 'infra')
+}
+
 
 class PackageDefException(Exception):
   """Raised if a package definition is invalid."""
@@ -211,17 +224,21 @@ class PackageDef(collections.namedtuple(
     return out_path, gen_files
 
 
-# Carries modifications for go-related env vars.
+# Carries modifications for go-related env vars and cwd.
 #
 # If a field has value None, it will be popped from the environment in
 # 'apply_to_environ'.
 class GoEnviron(collections.namedtuple(
-    'GoEnviron', ['GOOS', 'GOARCH', 'CGO_ENABLED'])):
+    'GoEnviron', ['GOOS', 'GOARCH', 'CGO_ENABLED', 'cwd'])):
 
   @staticmethod
   def host_native():
     """Returns GoEnviron that instructs Go to not cross-compile."""
-    return GoEnviron(GOOS=None, GOARCH=None, CGO_ENABLED=None)
+    return GoEnviron(
+        GOOS=None,
+        GOARCH=None,
+        CGO_ENABLED=None,
+        cwd=os.getcwd())
 
   @staticmethod
   def from_environ():
@@ -238,10 +255,11 @@ class GoEnviron(collections.namedtuple(
     return GoEnviron(
         GOOS=os.environ.get('GOOS'),
         GOARCH=os.environ.get('GOARCH'),
-        CGO_ENABLED=cgo)
+        CGO_ENABLED=cgo,
+        cwd=os.getcwd())
 
   def apply_to_environ(self):
-    """Applies GoEnviron to the current os.environ."""
+    """Applies GoEnviron to the current os.environ and cwd."""
     if self.GOOS is not None:
       os.environ['GOOS'] = self.GOOS
     else:
@@ -254,6 +272,8 @@ class GoEnviron(collections.namedtuple(
       os.environ['CGO_ENABLED'] = '1' if self.CGO_ENABLED else '0'
     else:
       os.environ.pop('CGO_ENABLED', None)
+    if self.cwd is not None:
+      os.chdir(self.cwd)
 
 
 def render_path(p, pkg_vars):
@@ -391,26 +411,34 @@ def print_title(title):
 
 def print_go_step_title(title):
   """Same as 'print_title', but also appends values of GOOS, GOARCH, etc."""
+  go_mod = None
+  if os.environ['GO111MODULE'] != 'off' and os.path.exists('go.mod'):
+    go_mod = os.path.abspath('go.mod')
   go_vars = [
     (k, os.environ[k])
     for k in ('GOOS', 'GOARCH', 'GOARM', 'CGO_ENABLED')
     if k in os.environ
   ]
-  if go_vars:
+  if go_vars or go_mod:
     title += '\n' + '-' * 80
-    for k, v in go_vars:
-      title += '\n  %s=%s' % (k, v)
+  if go_mod:
+    title += '\n  go.mod: %s' % go_mod
+  for k, v in go_vars:
+    title += '\n  %s=%s' % (k, v)
   print_title(title)
 
 
 @contextlib.contextmanager
 def workspace_env(go_environ):
-  """Puts Go env vars from go_environ into os.environ.
+  """Puts Go env vars from go_environ into os.environ and changes cwd.
 
   Args:
     go_environ: instance of GoEnviron object with go related env vars.
   """
+  orig_cwd = os.getcwd()
   orig_environ = os.environ.copy()
+
+  # Change os.environ and cwd.
   go_environ.apply_to_environ()
 
   # Make sure we build ARMv6 code even if the host is ARMv7. See the comment in
@@ -422,26 +450,10 @@ def workspace_env(go_environ):
   else:
     os.environ.pop('GOARM', None)
 
-  # Debug info (DW_AT_comp_dir attribute in particular) contains current
-  # working directory, which by default depends on the build directory, making
-  # the build non-deterministic. 'ld' uses os.Getcwd(), and os.Getcwd()'s doc
-  # says: "If the current directory can be reached via multiple paths (due to
-  # symbolic links), Getwd may return any one of them." It happens indeed. So we
-  # can't switch to a checkout directory. Switch to '/' instead, cwd is actually
-  # not important when building Go code.
-  #
-  # Protip: To view debug info in an obj file:
-  #   gobjdump -g <binary>
-  #   gobjdump -g --target=elf32-littlearm <binary>
-  # (gobjdump is part of binutils package in Homebrew).
-
-  prev_cwd = os.getcwd()
-  if not IS_WINDOWS:
-    os.chdir('/')
   try:
     yield
   finally:
-    os.chdir(prev_cwd)
+    os.chdir(orig_cwd)
     # Apparently 'os.environ = orig_environ' doesn't actually modify process
     # environment, only modifications of os.environ object itself do.
     for k, v in orig_environ.iteritems():
@@ -497,7 +509,8 @@ def run_go_clean(go_workspace, go_environ, packages):
   """Removes object files and executables left from building given packages.
 
   Transitively cleans all dependencies (including stdlib!) and removes
-  executables from GOBIN.
+  executables from GOBIN. In Go modules mode this also appears to be downloading
+  modules.
 
   Args:
     go_workspace: path to 'infra/go' or 'infra_internal/go'.
@@ -505,7 +518,7 @@ def run_go_clean(go_workspace, go_environ, packages):
     packages: list of go packages to clean (can include '...' patterns).
   """
   with workspace_env(go_environ):
-    print_go_step_title('Cleaning:\n  %s' % '\n  '.join(packages))
+    print_go_step_title('Preparing:\n  %s' % '\n  '.join(packages))
     subprocess.check_call(
         args=[
           'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
@@ -518,7 +531,7 @@ def run_go_clean(go_workspace, go_environ, packages):
     print 'Done.'
 
 
-def run_go_install(go_workspace, go_environ, packages, rebuild=False):
+def run_go_install(go_workspace, go_environ, packages):
   """Builds (and installs) Go packages into GOBIN via 'go install ...'.
 
   Compiles and installs packages into default GOBIN, which is <go_workspace>/bin
@@ -530,20 +543,18 @@ def run_go_install(go_workspace, go_environ, packages, rebuild=False):
     packages: list of go packages to build (can include '...' patterns).
     rebuild: if True, will forcefully rebuild all dependences.
   """
-  rebuild_opt = ['-a'] if rebuild else []
-  title = 'Rebuilding' if rebuild else 'Building'
   with workspace_env(go_environ):
-    print_go_step_title('%s:\n  %s' % (title, '\n  '.join(packages)))
+    print_go_step_title('Building:\n  %s' % '\n  '.join(packages))
     subprocess.check_call(
         args=[
           'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
-          'go', 'install', '-trimpath', "-ldflags=-buildid=", '-v',
-        ] + rebuild_opt + list(packages),
+          'go', 'install', '-trimpath', '-ldflags=-buildid=', '-v',
+        ] + list(packages),
         executable=sys.executable,
         stderr=subprocess.STDOUT)
 
 
-def run_go_build(go_workspace, go_environ, package, output, rebuild=False):
+def run_go_build(go_workspace, go_environ, package, output):
   """Builds single Go package.
 
   Args:
@@ -551,24 +562,42 @@ def run_go_build(go_workspace, go_environ, package, output, rebuild=False):
     go_environ: instance of GoEnviron object with go related env vars.
     package: go package to build.
     output: where to put the resulting binary.
-    rebuild: if True, will forcefully rebuild all dependences.
   """
-  rebuild_opt = ['-a'] if rebuild else []
-  title = 'Rebuilding' if rebuild else 'Building'
   with workspace_env(go_environ):
-    print_go_step_title('%s %s' % (title, package))
+    print_go_step_title('Building %s' % (package,))
     subprocess.check_call(
         args=[
           'python', '-u', os.path.join(go_workspace, get_env_dot_py()),
-          'go', 'build',
-        ] + rebuild_opt + [
-          '-trimpath', "-ldflags=-buildid=", '-v', '-o', output, package,
+          'go', 'build', '-trimpath', '-ldflags=-buildid=', '-v', '-o',
+          output, package,
         ],
         executable=sys.executable,
         stderr=subprocess.STDOUT)
 
 
-def build_go_code(go_workspace, pkg_defs):
+def find_main_module(module_map, pkg):
+  """Returns a path to the main module to use when building `pkg`.
+
+  Args:
+    module_map: a dict "go package prefix => directory with main module".
+    pkg: a Go package name to look up.
+  """
+  matches = set()
+  for pfx, main_dir in module_map.items():
+    if pkg.startswith(pfx):
+      matches.add(main_dir)
+  if len(matches) == 0:
+    raise BuildException(
+        'Package %r is not in the module map %s' %
+        (pkg, module_map))
+  if len(matches) > 1:
+    raise BuildException(
+        'Package %r matches multiple modules in the module map %s' %
+        (pkg, module_map))
+  return list(matches)[0]
+
+
+def build_go_code(go_workspace, module_map, pkg_defs):
   """Builds and installs all Go packages used by the given PackageDefs.
 
   Understands GOOS and GOARCH and uses slightly different build strategy when
@@ -577,14 +606,9 @@ def build_go_code(go_workspace, pkg_defs):
 
   Args:
     go_workspace: path to 'infra/go' or 'infra_internal/go'.
+    module_map: a dict "go package prefix => directory with main module".
     pkg_defs: list of PackageDef objects that define what to build.
   """
-  # TODO(vadimsh): Revisit this once Go 1.10 (with its content-addressed build
-  # cache) is released. In theory, Go 1.10 will be smart enough to efficiently
-  # build packages in arbitrary order, regardless of their intended build
-  # environment. Until then, group 'go build' calls by the environment, to
-  # avoid rebuilding common packages all the time.
-
   # Exclude all disabled packages.
   pkg_defs = [p for p in pkg_defs if not p.disabled]
 
@@ -596,7 +620,7 @@ def build_go_code(go_workspace, pkg_defs):
   target_goos = default_environ.GOOS or get_host_goos()
 
   # Grab a set of all go packages we need to build and install into GOBIN,
-  # figuring out a go environment they want.
+  # figuring out a go environment (and cwd) they want.
   go_packages = {}  # go package name => GoEnviron
   for pkg_def in pkg_defs:
     pkg_env = default_environ
@@ -605,6 +629,7 @@ def build_go_code(go_workspace, pkg_defs):
       if cgo_enabled is not None:
         pkg_env = default_environ._replace(CGO_ENABLED=cgo_enabled)
     for name in pkg_def.go_packages:
+      pkg_env = pkg_env._replace(cwd=find_main_module(module_map, name))
       if name in go_packages and go_packages[name] != pkg_env:
         raise BuildException(
             'Go package %s is being built in two different go environments '
@@ -1135,7 +1160,7 @@ def build_infra(pkg_defs, should_refresh_python):
           os.path.join(ROOT, 'ENV'),
         ])
   # Build all necessary go binaries.
-  build_go_code(os.path.join(ROOT, 'go'), pkg_defs)
+  build_go_code(os.path.join(ROOT, 'go'), INFRA_MODULE_MAP, pkg_defs)
 
 
 def main(

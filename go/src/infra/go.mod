@@ -20,7 +20,6 @@ require (
 	github.com/containerd/containerd v1.5.3 // indirect
 	github.com/danjacques/gofslock v0.0.0-20200623023034-5d0bd0fa6ef0
 	github.com/docker/docker v20.10.7+incompatible
-	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
@@ -28,7 +27,6 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.6.0
 	github.com/google/go-cmp v0.5.6
-	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/subcommands v1.2.0
 	github.com/google/tink/go v1.6.1 // indirect
@@ -43,7 +41,6 @@ require (
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/otiai10/copy v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/sergi/go-diff v1.2.0
@@ -54,8 +51,9 @@ require (
 	github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d
 	go.chromium.org/chromiumos/config/go v0.0.0-20210225201405-02ec5b5e84b7
 	go.chromium.org/chromiumos/infra/proto/go v0.0.0-00010101000000-000000000000
-	go.chromium.org/luci v0.0.0-00010101000000-000000000000
+	go.chromium.org/luci v0.0.0-20201029184154-594d11850ebf
 	go.opencensus.io v0.23.0
+	go.skia.org/infra v0.0.0-20210713223222-9189a6f07020
 	golang.org/x/build v0.0.0-20210707153545-1e8f54ee4ce3
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
