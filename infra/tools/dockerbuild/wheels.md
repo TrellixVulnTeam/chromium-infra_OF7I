@@ -4930,6 +4930,7 @@ wheel: <
 ```
 
 
+* *mac-arm64-cp38*
 * *mac-x64-cp38*
 
 ## **pyopenssl**
