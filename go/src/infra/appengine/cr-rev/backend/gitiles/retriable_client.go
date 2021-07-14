@@ -18,13 +18,13 @@ const (
 )
 
 type retriableClient struct {
-	client       gitilesProto.GitilesClient
+	client       Client
 	retryFactory retry.Factory
 }
 
 // NewRetriableClient creates Gitiles client that automatically retries with
 // exponential backoff if error was insufficient quota.
-func NewRetriableClient(c gitilesProto.GitilesClient) gitilesProto.GitilesClient {
+func NewRetriableClient(c Client) *retriableClient {
 	retryFactory := func() retry.Iterator {
 		return &retry.ExponentialBackoff{
 			Limited: retry.Limited{

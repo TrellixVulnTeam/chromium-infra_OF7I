@@ -24,7 +24,7 @@ const (
 )
 
 type gitilesImporter struct {
-	gitiesClient gitilesProto.GitilesClient
+	gitiesClient gitiles.Client
 	leaser       *leaser
 	repo         common.GitRepository
 	config       *config.Repository

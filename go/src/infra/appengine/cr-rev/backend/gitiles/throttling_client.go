@@ -18,7 +18,7 @@ import (
 // NewThrottlingClient creates REST Gitiles client and consumes limiter quota
 // on each API call to Gitiles. If there is no quota left, it blocks until
 // there is.
-func NewThrottlingClient(host string, limiter *rate.Limiter) (gitilesProto.GitilesClient, error) {
+func NewThrottlingClient(host string, limiter *rate.Limiter) (Client, error) {
 	c, err := gitiles.NewRESTClient(&http.Client{}, host, false)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", "couldn't initialize Gitiles REST client", err)
@@ -28,7 +28,7 @@ func NewThrottlingClient(host string, limiter *rate.Limiter) (gitilesProto.Gitil
 
 type throttlingClient struct {
 	limiter *rate.Limiter
-	client  gitilesProto.GitilesClient
+	client  Client
 }
 
 // Log retrieves commit log.
