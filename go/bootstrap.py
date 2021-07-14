@@ -18,6 +18,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -76,47 +77,45 @@ GLIDE_SOURCE = {
 }
 
 # Layout is the layout of the bootstrap installation.
-_Layout = collections.namedtuple('Layout', (
-    # The path where the Go toolset is checked out at.
-    'toolset_root',
+Layout = collections.namedtuple(
+    'Layout',
+    (
+        # The path where the Go toolset is checked out at.
+        'toolset_root',
 
-    # The workspace path.
-    'workspace',
+        # The workspace path.
+        'workspace',
 
-    # True to run in "go modules" mode instead of GOPATH mode.
-    'use_modules',
+        # True to run in "go modules" mode instead of GOPATH mode.
+        'use_modules',
 
-    # The list of vendor directories. Each will have a Glide "deps.yaml" in it.
-    #
-    # Ignored in modules mode.
-    'vendor_paths',
+        # The list of vendor directories. Each will have a Glide "deps.yaml".
+        #
+        # Ignored in modules mode.
+        'vendor_paths',
 
-    # List of paths to append to GOPATH (in additional to `workspace`).
-    #
-    # Ignored in modules mode.
-    'go_paths',
+        # List of paths to append to GOPATH (in additional to `workspace`).
+        #
+        # Ignored in modules mode.
+        'go_paths',
 
-    # The list of DEPS'd in paths that contain Go sources. This is used to
-    # determine when our vendored tools need to be re-installed.
-    #
-    # Ignored in modules mode.
-    'go_deps_paths',
+        # The list of DEPS'd in paths that contain Go sources. This is used to
+        # determine when our vendored tools need to be re-installed.
+        #
+        # Ignored in modules mode.
+        'go_deps_paths',
 
-    # Go package paths of tools to install into the bootstrap environment.
-    #
-    # TODO(vadimsh). Ignored in modules mode and we'll need to figure out a
-    # replacement (probably something like
-    # https://marcofranssen.nl/manage-go-tools-via-go-modules).
-    'go_install_tools',
-))
+        # Go package paths of tools to install into the bootstrap environment.
+        #
+        # Ignored in modules mode.
+        'go_install_tools',
 
-class Layout(_Layout):
-
-  @property
-  def go_repo_versions_path(self):
-    """The path where the latest installed Go repository versions are recorded.
-    """
-    return os.path.join(self.workspace, '.deps_repo_versions.json')
+        # The list of paths to tools.go files which are parsed to figure out
+        # what binaries to "go install ..." into the GOBIN.
+        #
+        # Ignored in GOPATH mode.
+        'go_tools_specs',
+    ))
 
 
 # A base empty Layout.
@@ -127,19 +126,20 @@ _EMPTY_LAYOUT = Layout(
     vendor_paths=None,
     go_paths=None,
     go_deps_paths=None,
-    go_install_tools=None)
+    go_install_tools=None,
+    go_tools_specs=None)
 
 
 # Infra standard layout.
 LAYOUT = Layout(
     toolset_root=TOOLSET_ROOT,
     workspace=WORKSPACE,
-    use_modules=os.getenv('INFRA_GO_USE_MODULES')=='1',
+    use_modules=os.getenv('INFRA_GO_USE_MODULES') == '1',
     vendor_paths=[WORKSPACE],
     go_paths=[],
-    go_deps_paths=[os.path.join(WORKSPACE, _p) for _p in (
-        'src/go.chromium.org/luci',
-    )],
+    go_deps_paths=[
+        os.path.join(WORKSPACE, _p) for _p in ('src/go.chromium.org/luci',)
+    ],
     go_install_tools=[
         # Note: please add only tools that really should be in PATH in default
         # dev environment.
@@ -150,6 +150,13 @@ LAYOUT = Layout(
         'go.chromium.org/luci/tools/cmd/...',
         'infra/cmd/bqexport',
         'infra/cmd/cloudsqlhelper',
+    ],
+    # Note: order is important, a tool is installed only the first time it is
+    # mentioned, using go.mod matching the corresponding tools.go for
+    # dependencies.
+    go_tools_specs=[
+        os.path.join(WORKSPACE, 'src', 'go.chromium.org', 'luci', 'tools.go'),
+        os.path.join(WORKSPACE, 'src', 'infra', 'tools.go'),
     ],
 )
 
@@ -181,6 +188,17 @@ def write_file(path, data):
   assert isinstance(path, (list, tuple))
   with open(os.path.join(*path), 'w') as f:
     f.write(data)
+
+
+def read_json(path):
+  """Reads |path| and parses it as JSON, returning None if it is missing."""
+  blob = read_file(path)
+  return json.loads(blob) if blob is not None else None
+
+
+def write_json(path, data):
+  """Serializes |data| to JSON and writes it at |path|."""
+  write_file(path, json.dumps(data, indent=2, sort_keys=True))
 
 
 def remove_directory(path):
@@ -366,23 +384,6 @@ def get_git_repository_head(path):
   return head.strip()
 
 
-def get_deps_repo_versions(layout):
-  """Loads the repository version object stored at GO_REPO_VERSIONS.
-
-  If no version object exists, an empty dictionary will be returned.
-  """
-  if not os.path.isfile(layout.go_repo_versions_path):
-    return {}
-  with open(layout.go_repo_versions_path, 'r') as fd:
-    return json.load(fd)
-
-
-def save_deps_repo_versions(layout, v):
-  """Records the repository version object, "v", as JSON at GO_REPO_VERSIONS."""
-  with open(layout.go_repo_versions_path, 'w') as fd:
-    json.dump(v, fd, indent=2, sort_keys=True)
-
-
 def install_deps_tools(layout, force):
   if not layout.go_install_tools:
     return False
@@ -393,7 +394,8 @@ def install_deps_tools(layout, force):
     current_versions[path] = get_git_repository_head(path)
 
   # Only install the tools if our checkout versions have changed.
-  if not force and get_deps_repo_versions(layout) == current_versions:
+  versions_path = [layout.workspace, '.deps_repo_versions.json']
+  if not force and read_json(versions_path) == current_versions:
     return False
 
   # (Re)install all of our Go packages.
@@ -402,7 +404,7 @@ def install_deps_tools(layout, force):
   subprocess.check_call([get_go_exe(layout.toolset_root), 'install'] +
                         list(layout.go_install_tools),
                         stdout=sys.stderr, stderr=sys.stderr, env=env)
-  save_deps_repo_versions(layout, current_versions)
+  write_json(versions_path, current_versions)
   return True
 
 
@@ -431,6 +433,50 @@ def update_vendor_packages(layout, workspace, force=False):
       cmd.append('--force')
     subprocess.check_call(cmd, stdout=sys.stderr, env=get_go_environ(layout))
     return os.path.isfile(update_out_path)
+
+
+def install_go_tools(layout, force):
+  """Calls "go install ..." for each tool mentioned in tools.go."""
+  if not layout.go_tools_specs:
+    return
+
+  # Figure out what needs to be installed and from where.
+  spec = []
+  seen = set()
+  for path in layout.go_tools_specs:
+    with open(path, 'r') as f:
+      tools = re.findall(r'^\s+_ "(.*)" *(//.*)?$', f.read(), re.MULTILINE)
+    spec.append({
+        'spec':
+            os.path.relpath(path, layout.workspace),
+        'rev':
+            get_git_repository_head(os.path.dirname(path)),
+        'tools': [
+            tool[0]
+            for tool in tools
+            if tool[0] not in seen and 'noinstall' not in tool[1]
+        ],
+    })
+    seen.update(spec[-1]['tools'])
+
+  # Use HEAD revisions to detect if anything has changed. This is sloppy but
+  # significantly faster than relying on Go to check its build caches.
+  tools_spec_path = [layout.workspace, '.tools_spec.json']
+  if not force and read_json(tools_spec_path) == spec:
+    return
+
+  for entry in spec:
+    if not entry['tools']:
+      continue
+    LOGGER.info('Installing tools from %s', entry['spec'])
+    subprocess.check_call(
+        [get_go_exe(layout.toolset_root), 'install'] + entry['tools'],
+        stdout=sys.stderr,
+        stderr=sys.stderr,
+        cwd=os.path.join(layout.workspace, os.path.dirname(entry['spec'])),
+        env=get_go_environ(layout))
+
+  write_json(tools_spec_path, spec)
 
 
 def get_go_environ_diff(layout):
@@ -612,7 +658,9 @@ def bootstrap(layout, logging_level, args=None):
   try:
     toolset_updated = ensure_toolset_installed(
         layout.toolset_root, toolset_version)
-    if not layout.use_modules:
+    if layout.use_modules:
+      install_go_tools(layout, toolset_updated)
+    else:
       ensure_glide_installed(layout.toolset_root)
       vendor_updated = toolset_updated
       for p in layout.vendor_paths:

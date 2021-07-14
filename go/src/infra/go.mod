@@ -15,7 +15,7 @@ require (
 	github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794
 	github.com/andygrunwald/go-gerrit v0.0.0-20210709065208-9d38b0be0268
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210707120613-a80295a60b3e // indirect
-	github.com/aws/aws-sdk-go v1.39.6 // indirect
+	github.com/aws/aws-sdk-go v1.40.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.5.3 // indirect
 	github.com/danjacques/gofslock v0.0.0-20200623023034-5d0bd0fa6ef0
@@ -47,14 +47,14 @@ require (
 	github.com/shirou/gopsutil v3.21.6+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4
-	github.com/tklauser/go-sysconf v0.3.6 // indirect
+	github.com/tklauser/go-sysconf v0.3.7 // indirect
 	github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d
 	go.chromium.org/chromiumos/config/go v0.0.0-20210225201405-02ec5b5e84b7
 	go.chromium.org/chromiumos/infra/proto/go v0.0.0-00010101000000-000000000000
 	go.chromium.org/luci v0.0.0-20201029184154-594d11850ebf
 	go.opencensus.io v0.23.0
 	go.skia.org/infra v0.0.0-20210713223222-9189a6f07020
-	golang.org/x/build v0.0.0-20210707153545-1e8f54ee4ce3
+	golang.org/x/build v0.0.0-20210714161125-11654a71d3e2
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
@@ -65,8 +65,9 @@ require (
 	gonum.org/v1/gonum v0.9.3
 	google.golang.org/api v0.50.0
 	google.golang.org/appengine v1.6.7
-	google.golang.org/genproto v0.0.0-20210713002101-d411969a0d9a
+	google.golang.org/genproto v0.0.0-20210714021259-044028024a4f
 	google.golang.org/grpc v1.39.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/src-d/go-git.v4 v4.13.1

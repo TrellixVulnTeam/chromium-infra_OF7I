@@ -54,10 +54,13 @@ def mk_checker(*tool_name):
 
     for dpath in group_by_dir(filestream):
       proc = subprocess.Popen(
-          tool_cmd + [dpath],
+          tool_cmd + ['.'],
+          cwd=dpath,
           stdout=subprocess.PIPE,
           stderr=subprocess.STDOUT)
       out = proc.communicate()[0].strip()
+      if proc.returncode and 'build constraints exclude all Go files' in out:
+        continue
       if out or proc.returncode:
         found_errs.append(out or 'Unrecognized error')
         retcode = proc.returncode or 1

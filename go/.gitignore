@@ -6,3 +6,4 @@
 /coverage
 /pkg
 .deps_repo_versions.json
+.tools_spec.json
