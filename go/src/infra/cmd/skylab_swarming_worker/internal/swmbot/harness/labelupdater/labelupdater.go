@@ -143,6 +143,8 @@ func getUFSDutComponentStateFromSpecs(dutID string, specs *inventory.CommonDevic
 		state.StorageState = chromeosLab.HardwareState(int32(p.GetStorageState()))
 		state.ServoUsbState = chromeosLab.HardwareState(int32(p.GetServoUsbState()))
 		state.BatteryState = chromeosLab.HardwareState(int32(p.GetBatteryState()))
+		state.WifiState = chromeosLab.HardwareState(int32(p.GetWifiState()))
+		state.BluetoothState = chromeosLab.HardwareState(int32(p.GetBluetoothState()))
 	}
 	return state
 }
