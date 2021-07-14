@@ -3,19 +3,20 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
+import {fireEvent} from '@testing-library/react';
+
 import {MrBulkApprovalUpdate, NO_APPROVALS_MESSAGE,
   NO_UPDATES_MESSAGE} from './mr-bulk-approval-update.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
-let root;
 
 describe('mr-bulk-approval-update', () => {
   beforeEach(() => {
     element = document.createElement('mr-bulk-approval-update');
     document.body.appendChild(element);
 
-    root = element.shadowRoot;
     sinon.stub(prpcClient, 'call');
   });
 
@@ -64,7 +65,7 @@ describe('mr-bulk-approval-update', () => {
 
     await element.updateComplete;
 
-    root.querySelector('.js-showApprovals').click();
+    element.querySelector('.js-showApprovals').click();
     assert.isTrue(element.fetchApprovals.calledOnce);
 
     // Wait for promise in fetchApprovals to resolve.
@@ -83,7 +84,7 @@ describe('mr-bulk-approval-update', () => {
 
     await element.updateComplete;
 
-    root.querySelector('.js-showApprovals').click();
+    element.querySelector('.js-showApprovals').click();
 
     await promise;
 
@@ -105,12 +106,13 @@ describe('mr-bulk-approval-update', () => {
 
     await element.updateComplete;
 
-    root.querySelector('#commentText').value = 'comment';
-    root.querySelector('#statusInput').value = 'NotApproved';
-    root.querySelector('.js-save').click();
+    fireEvent.change(element.querySelector('#commentText'), {target: {value: 'comment'}});
+    fireEvent.change(element.querySelector('#statusInput'), {target: {value: 'NotApproved'}});
+    element.querySelector('.js-save').click();
 
     // Wait for promise in save() to resolve.
     await promise;
+    await element.updateComplete;
 
     // Assert messages correct
     assert.equal(
@@ -120,15 +122,15 @@ describe('mr-bulk-approval-update', () => {
     assert.equal('', element.errorMessage);
 
     // Assert all inputs not disabled.
-    root.querySelectorAll('input, textarea, select').forEach((input) => {
+    element.querySelectorAll('input, textarea, select').forEach((input) => {
       assert.equal(input.disabled, false);
     });
 
     // Assert all inputs cleared.
-    root.querySelectorAll('input, textarea').forEach((input) => {
+    element.querySelectorAll('input, textarea').forEach((input) => {
       assert.equal(input.value, '');
     });
-    root.querySelectorAll('select').forEach((select) => {
+    element.querySelectorAll('select').forEach((select) => {
       assert.equal(select.selectedIndex, 0);
     });
 
@@ -160,9 +162,9 @@ describe('mr-bulk-approval-update', () => {
 
     await element.updateComplete;
 
-    root.querySelector('#commentText').value = 'comment';
-    root.querySelector('#statusInput').value = 'NotApproved';
-    root.querySelector('.js-save').click();
+    element.querySelector('#commentText').value = 'comment';
+    element.querySelector('#statusInput').value = 'NotApproved';
+    element.querySelector('.js-save').click();
 
     // Wait for promise in save() to resolve
     await promise;
@@ -172,11 +174,11 @@ describe('mr-bulk-approval-update', () => {
     assert.equal(NO_UPDATES_MESSAGE, element.errorMessage);
 
     // Assert inputs not cleared.
-    assert.equal(root.querySelector('#commentText').value, 'comment');
-    assert.equal(root.querySelector('#statusInput').value, 'NotApproved');
+    assert.equal(element.querySelector('#commentText').value, 'comment');
+    assert.equal(element.querySelector('#statusInput').value, 'NotApproved');
 
     // Assert inputs not disabled.
-    root.querySelectorAll('input, textarea, select').forEach((input) => {
+    element.querySelectorAll('input, textarea, select').forEach((input) => {
       assert.equal(input.disabled, false);
     });
   });

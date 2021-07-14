@@ -2,9 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 import 'elements/issue-detail/metadata/mr-edit-field/mr-edit-field.js';
 import 'elements/framework/mr-error/mr-error.js';
+import 'react/mr-react-autocomplete.tsx';
 import {prpcClient} from 'prpc-client-instance.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {TEXT_TO_STATUS_ENUM} from 'shared/consts/approval.js';
@@ -16,43 +17,42 @@ export const NO_APPROVALS_MESSAGE = 'These issues don\'t have any approvals.';
 
 export class MrBulkApprovalUpdate extends LitElement {
   /** @override */
-  static get styles() {
-    return css`
-      :host {
-        display: block;
-        margin-top: 30px;
-        position: relative;
-      }
-      button.clickable-text {
-        background: none;
-        border: 0;
-        color: hsl(0, 0%, 39%);
-        cursor: pointer;
-        text-decoration: underline;
-      }
-      .hidden {
-        display: none; !important;
-      }
-      .message {
-        background-color: beige;
-        width: 500px;
-      }
-      .note {
-        color: hsl(0, 0%, 25%);
-        font-size: 0.85em;
-        font-style: italic;
-      }
-      table {
-        border: 1px dotted black;
-        cellspacing: 0;
-        cellpadding: 3;
-      }
-    `;
-  }
-
-  /** @override */
   render() {
     return html`
+      <style>
+        mr-bulk-approval-update {
+          display: block;
+          margin-top: 30px;
+          position: relative;
+        }
+        button.clickable-text {
+          background: none;
+          border: 0;
+          color: hsl(0, 0%, 39%);
+          cursor: pointer;
+          text-decoration: underline;
+        }
+        .hidden {
+          display: none; !important;
+        }
+        .message {
+          background-color: beige;
+          width: 500px;
+        }
+        .note {
+          color: hsl(0, 0%, 25%);
+          font-size: 0.85em;
+          font-style: italic;
+        }
+        mr-bulk-approval-update table {
+          border: 1px dotted black;
+          cellspacing: 0;
+          cellpadding: 3;
+        }
+        #approversInput {
+          border-style: none;
+        }
+      </style>
       <button
         class="js-showApprovals clickable-text"
         ?hidden=${this.approvalsFetched}
@@ -64,10 +64,16 @@ export class MrBulkApprovalUpdate extends LitElement {
             <tbody><tr>
               <th><label for="approvalSelect">Approval:</label></th>
               <td>
-                <select id="approvalSelect">
-                  ${this.approvals.map((approval) => html`
-                    <option value=${approval.fieldRef.fieldName}>
-                      ${approval.fieldRef.fieldName}
+                <select
+                  id="approvalSelect"
+                  @change=${this._changeHandlers.approval}
+                >
+                  ${this.approvals.map(({fieldRef}) => html`
+                    <option
+                      value=${fieldRef.fieldName}
+                      .selected=${fieldRef.fieldName === this._values.approval}
+                    >
+                      ${fieldRef.fieldName}
                     </option>
                   `)}
                 </select>
@@ -76,21 +82,29 @@ export class MrBulkApprovalUpdate extends LitElement {
             <tr>
               <th><label for="approversInput">Approvers:</label></th>
               <td>
-                <mr-edit-field
-                  id="approversInput"
-                  type="USER_TYPE"
-                  multi=""
-                  name="approver"
-                  acType="member"
-                ></mr-edit-field>
+                <mr-react-autocomplete
+                  label="approversInput"
+                  vocabularyName="member"
+                  .multiple=${true}
+                  .value=${this._values.approvers}
+                  .onChange=${this._changeHandlers.approvers}
+                ></mr-react-autocomplete>
               </td>
             </tr>
             <tr><th><label for="statusInput">Status:</label></th>
               <td>
-                <select id="statusInput">
-                  <option>${EMPTY_FIELD_VALUE}</option>
+                <select
+                  id="statusInput"
+                  @change=${this._changeHandlers.status}
+                >
+                  <option .selected=${!this._values.status}>
+                    ${EMPTY_FIELD_VALUE}
+                  </option>
                   ${this.statusOptions.map((status) => html`
-                    <option value=${status}>${status}</option>
+                    <option
+                      value=${status}
+                      .selected=${status === this._values.status}
+                    >${status}</option>
                   `)}
                 </select>
               </td>
@@ -103,6 +117,8 @@ export class MrBulkApprovalUpdate extends LitElement {
                   rows="3"
                   id="commentText"
                   placeholder="Add an approval comment"
+                  .value=${this._values.comment || ''}
+                  @change=${this._changeHandlers.comment}
                 ></textarea>
               </td>
             </tr>
@@ -141,6 +157,7 @@ export class MrBulkApprovalUpdate extends LitElement {
       localIdsStr: {type: String},
       projectName: {type: String},
       responseMessage: {type: String},
+      _values: {type: Object},
     };
   }
 
@@ -150,6 +167,19 @@ export class MrBulkApprovalUpdate extends LitElement {
     this.approvals = [];
     this.statusOptions = Object.keys(TEXT_TO_STATUS_ENUM);
     this.responseMessage = '';
+
+    this._values = {};
+    this._changeHandlers = {
+      approval: this._onChange.bind(this, 'approval'),
+      approvers: this._onChange.bind(this, 'approvers'),
+      status: this._onChange.bind(this, 'status'),
+      comment: this._onChange.bind(this, 'comment'),
+    };
+  }
+
+  /** @override */
+  createRenderRoot() {
+    return this;
   }
 
   get issueRefs() {
@@ -186,29 +216,21 @@ export class MrBulkApprovalUpdate extends LitElement {
     this.responseMessage = '';
     this.errorMessage = '';
     this.toggleDisableForm();
-    const root = this.shadowRoot;
     const selectedFieldDef = this.approvals.find(
-        (approval) => {
-          return approval.fieldRef.fieldName == root.querySelector('#approvalSelect').value;
-        }
-    );
+        (approval) => approval.fieldRef.fieldName === this._values.approval
+    ) || this.approvals[0];
     const message = {
       issueRefs: this.issueRefs,
       fieldRef: selectedFieldDef.fieldRef,
       send_email: true,
     };
-    const commentContent = root.querySelector('#commentText').value;
-    if (commentContent) {
-      message.commentContent = commentContent;
-    }
+    message.commentContent = this._values.comment;
     const delta = {};
-    const statusInput = root.querySelector('#statusInput');
-    if (statusInput.value !== EMPTY_FIELD_VALUE) {
-      delta.status = TEXT_TO_STATUS_ENUM[statusInput.value];
+    if (this._values.status !== EMPTY_FIELD_VALUE) {
+      delta.status = TEXT_TO_STATUS_ENUM[this._values.status];
     }
-    const approversInput = root.querySelector('#approversInput');
-    const approversAdded = approversInput.getValuesAdded();
-    if (approversAdded.length) {
+    const approversAdded = this._values.approvers;
+    if (approversAdded) {
       delta.approverRefsAdd = approversAdded.map(
           (name) => ({'displayName': name}));
     }
@@ -223,7 +245,7 @@ export class MrBulkApprovalUpdate extends LitElement {
             this.responseMessage = `${this.getTimeStamp()}: Updated ${
               selectedFieldDef.fieldRef.fieldName} in issues: ${idsStr} (${
               resp.issueRefs.length} of ${this.issueRefs.length}).`;
-            root.querySelector('form').reset();
+            this._values = {};
           } else {
             this.errorMessage = NO_UPDATES_MESSAGE;
           };
@@ -240,11 +262,21 @@ export class MrBulkApprovalUpdate extends LitElement {
   }
 
   toggleDisableForm() {
-    const root = this.shadowRoot;
-    root.querySelectorAll('input, textarea, select, button').forEach(
+    this.querySelectorAll('input, textarea, select, button').forEach(
         (input) => {
           input.disabled = !input.disabled;
         });
+  }
+
+  /**
+   * Generic onChange handler to be bound to each form field.
+   * @param {string} key Unique name for the form field we're binding this
+   *   handler to. For example, 'owner', 'cc', or the name of a custom field.
+   * @param {Event | React.SyntheticEvent} event
+   * @param {string} value The new form value.
+   */
+  _onChange(key, event, value) {
+    this._values = {...this._values, [key]: value || event.target.value};
   }
 }
 
