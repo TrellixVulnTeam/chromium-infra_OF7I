@@ -139,6 +139,20 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
+	if wifiState := p.GetWifiState(); wifiState != inventory.HardwareState_HARDWARE_UNKNOWN {
+		if labState, ok := lab.HardwareState_name[int32(wifiState)]; ok {
+			name := labState[len("HARDWARE_"):]
+			labels = append(labels, "wifi_state:"+name)
+		}
+	}
+
+	if bluetoothState := p.GetBluetoothState(); bluetoothState != inventory.HardwareState_HARDWARE_UNKNOWN {
+		if labState, ok := lab.HardwareState_name[int32(bluetoothState)]; ok {
+			name := labState[len("HARDWARE_"):]
+			labels = append(labels, "bluetooth_state:"+name)
+		}
+	}
+
 	if n := p.GetWorkingBluetoothBtpeer(); n > 0 {
 		labels = append(labels, fmt.Sprintf("working_bluetooth_btpeer:%d", n))
 	}
@@ -246,6 +260,16 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
 				state := inventory.HardwareState(labSStateVal)
 				p.BatteryState = &state
+			}
+		case "wifi_state":
+			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
+				state := inventory.HardwareState(labSStateVal)
+				p.WifiState = &state
+			}
+		case "bluetooth_state":
+			if labSStateVal, ok := lab.HardwareState_value["HARDWARE_"+strings.ToUpper(v)]; ok {
+				state := inventory.HardwareState(labSStateVal)
+				p.BluetoothState = &state
 			}
 		case "servo_type":
 			p.ServoType = &v

@@ -68,6 +68,8 @@ peripherals: {
   storage_state: 1
   servo_usb_state: 3
   battery_state: 3
+  wifi_state: 3
+  bluetooth_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -144,6 +146,7 @@ var fullLabels = []string{
 	"audio_loopback_dongle",
 	"battery_state:NEED_REPLACEMENT",
 	"bluetooth",
+	"bluetooth_state:NEED_REPLACEMENT",
 	"board:boardval",
 	"brand-code:HOMH",
 	"camerabox",
@@ -222,6 +225,7 @@ var fullLabels = []string{
 	"variant:somevariant",
 	"webcam",
 	"wifi_chip:wireless_xxxx",
+	"wifi_state:NEED_REPLACEMENT",
 	"wificell",
 	"working_bluetooth_btpeer:3",
 }
@@ -505,6 +509,8 @@ peripherals: {
   storage_state: 2
   servo_usb_state: 3
   battery_state: 3
+  wifi_state: 3
+  bluetooth_state: 3
   mimo: true
   huddly: true
   conductive: true
@@ -580,6 +586,8 @@ var fullLabelsSpecial = []string{
 	"audio_cable",
 	"audio_loopback_dongle",
 	"battery_state:NEED_REPLACEMENT",
+	"wifi_state:NEED_REPLACEMENT",
+	"bluetooth_state:NEED_REPLACEMENT",
 	"bluetooth",
 	"board:boardval",
 	"brand-code:HOMH",
