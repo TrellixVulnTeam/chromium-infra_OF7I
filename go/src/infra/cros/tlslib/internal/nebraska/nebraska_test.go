@@ -25,7 +25,7 @@ type fakeEnv struct {
 	startFakeNebraska func([]string) (Process, error)
 }
 
-func (e fakeEnv) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload) (string, error) {
+func (e fakeEnv) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload, dir string) (string, error) {
 	return "", nil
 }
 
@@ -167,7 +167,7 @@ func TestEnv_DownloadMetadata(t *testing.T) {
 					return exec.Command("true")
 				},
 			}
-			e.DownloadMetadata(context.Background(), gsPrefix, tc.types)
+			e.DownloadMetadata(context.Background(), gsPrefix, tc.types, "")
 			w := []string{"gsutil cp"}
 			for _, p := range tc.patterns {
 				w = append(w, fmt.Sprintf("%s/%s", gsPrefix, p))

@@ -38,10 +38,10 @@ type Process interface {
 // implementation. The main goal of it is for unit test.
 type Environment interface {
 	// DownloadMetadata downloads update metadata for specified build and type
-	// of payloads from GS to a temporary directory and returns the path of it.
+	// of payloads from GS to directory "dir" and returns the path of it.
 	// It is the caller's responsibility to remove the temporary directory after
 	// use.
-	DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload) (string, error)
+	DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload, dir string) (string, error)
 	StartNebraska([]string) (Process, error)
 }
 
@@ -126,12 +126,15 @@ func (n *Server) start(ctx context.Context, gsPathPrefix string, payloads []*tls
 	if n.proc != nil {
 		panic(fmt.Sprintf("%s already started: %#v", n.proc, n.proc.Args()))
 	}
-	var err error
-	n.metadataDir, err = n.env.DownloadMetadata(ctx, gsPathPrefix, payloads)
+	rootTmpDir, err := createRootTempDir()
 	if err != nil {
 		return fmt.Errorf("start Nebraska: %s", err)
 	}
-	n.runtimeRoot, err = ioutil.TempDir("", "nebraska_runtimeroot_")
+	n.metadataDir, err = n.env.DownloadMetadata(ctx, gsPathPrefix, payloads, rootTmpDir)
+	if err != nil {
+		return fmt.Errorf("start Nebraska: %s", err)
+	}
+	n.runtimeRoot, err = ioutil.TempDir(rootTmpDir, "nebraska_runtime_")
 	if err != nil {
 		return fmt.Errorf("start Nebraska: create runtime root: %s", err)
 	}
@@ -147,6 +150,20 @@ func (n *Server) start(ctx context.Context, gsPathPrefix string, payloads []*tls
 	}
 	log.Printf("Nebraska is listening on %d", n.port)
 	return nil
+}
+
+// createRootTempDir creates a directory as the root of other temp
+// files/directories.
+// This is a singleton directory shared with all instances of Nebraska, so we
+// don't need to remove it as cleanup.
+// It prevents us from creating too many entries in /tmp which causes issues
+// with Swarming (see b/193141845 for details).
+func createRootTempDir() (string, error) {
+	dir := path.Join(os.TempDir(), "fake_omaha")
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("create root temp dir: %s", err)
+	}
+	return dir, nil
 }
 
 // Close terminates the nebraska server process and cleans up all temp
@@ -229,10 +246,10 @@ type env struct {
 	runCmd func(context.Context, string, ...string) *exec.Cmd
 }
 
-func (e env) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload) (string, error) {
+func (e env) DownloadMetadata(ctx context.Context, gsPathPrefix string, payloads []*tls.FakeOmaha_Payload, dir string) (string, error) {
 	paths := metadataGSPaths(gsPathPrefix, payloads)
 	log.Printf("New Nebraska: metadata to download: %#v", paths)
-	metadataDir, err := ioutil.TempDir("", "AU_metadata_")
+	metadataDir, err := ioutil.TempDir(dir, "AU_metadata_")
 	if err != nil {
 		return "", fmt.Errorf("download metadata: %s", err)
 	}
