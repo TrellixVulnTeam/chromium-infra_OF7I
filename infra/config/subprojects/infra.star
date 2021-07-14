@@ -213,6 +213,8 @@ wheel_tryjob("infra-internal:try/Universal wheel builder")
 wheel_tryjob("infra-internal:try/Linux x64 wheel builder")
 wheel_tryjob("infra-internal:try/Linux ARM wheel builder")
 wheel_tryjob("infra-internal:try/Mac wheel builder")
-wheel_tryjob("infra-internal:try/Mac ARM64 wheel builder")
+
+# Disabled due to https://crbug.com/1228856
+# wheel_tryjob("infra-internal:try/Mac ARM64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x86 wheel builder")
