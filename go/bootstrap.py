@@ -519,7 +519,7 @@ def get_go_environ_diff(layout):
       'GOBIN': os.path.join(layout.workspace, 'bin'),
 
       # Don't use default cache in '~'.
-      'GOCACHE': os.path.join(layout.workspace, '.cache'),
+      'GOCACHE': os.path.join(GCLIENT_ROOT, '.gocache'),
 
       # Infra Go workspace doesn't use advanced build systems,
       # which inject custom `gopackagesdriver` binary. See also
@@ -532,7 +532,7 @@ def get_go_environ_diff(layout):
         'GO111MODULE': 'on',
         'GOPROXY': None,
         'GOPATH': None,
-        'GOMODCACHE': os.path.join(layout.workspace, '.modcache'),
+        'GOMODCACHE': os.path.join(GCLIENT_ROOT, '.modcache'),
         'GOPRIVATE': '*.googlesource.com,*.google.com',
         'GAE_PY_USE_CLOUDBUILDHELPER': '1',
     })
