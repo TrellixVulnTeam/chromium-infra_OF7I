@@ -327,24 +327,22 @@ func findCcsToAdd(task *model.Task, existingCCs, proposedCCs []*monorail.UserRef
 }
 
 func genCommentContent(c context.Context, assigner *model.Assigner, task *model.Task) string {
-	taskURL := fmt.Sprintf(
-		"https://%s.appspot.com/assigner/%s/task/%d",
-		info.AppID(c), url.QueryEscape(assigner.ID), task.ID,
-	)
 	messages := []string{
-		"Issue update by Arquebus.",
-		"Task details: " + taskURL,
-		fmt.Sprintf(
-			"To stop Arquebus updating this issue, please add the label %q.",
-			OptOutLabel,
-		),
+		"Issue update by Arquebus - [Task details]  ",
+		fmt.Sprintf("To stop Arquebus updating this issue, please add the label %q.", OptOutLabel),
+		"",
 	}
 	if assigner.Comment != "" {
-		messages = append(
-			messages, "-----------------------------------------------",
+		messages = append(messages,
+			"-----------------------------------------------",
+			assigner.Comment,
+			"",
 		)
-		messages = append(messages, assigner.Comment)
 	}
+	messages = append(messages, fmt.Sprintf(
+		"[Task details]: https://%s.appspot.com/assigner/%s/task/%d",
+		info.AppID(c), url.QueryEscape(assigner.ID), task.ID,
+	))
 	return strings.Join(messages, "\n")
 }
 
