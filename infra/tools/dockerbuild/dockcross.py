@@ -166,10 +166,10 @@ class Builder(object):
         system=self._system,
         platform=plat,
         bin=os.path.join(self._system.bin_dir,
-                         'dockcross-%s' % (plat.name,)),
+                         'dockcross-%s-v2' % (plat.name,)),
         docker_image=DockerImage(
-          name='infra-dockerbuild/%s' % (plat.name,),
-          tag=self.DOCKER_IMAGE_TAG,
+            name='infra-dockerbuild/%s' % (plat.name,),
+            tag=self.DOCKER_IMAGE_TAG,
         ),
     )
 
@@ -234,16 +234,25 @@ class Builder(object):
       # If the image was regenerated, run it to generate the "dockcross" entry
       # point script.
       if regenerated or not os.path.exists(dx.bin):
-        with open(dx.bin, 'w') as fd:
+        with tempfile.TemporaryFile() as script_tmp:
           self._system.docker([
               'run',
               '--rm',
               dx.identifier,
-          ], stdout=fd)
+          ],
+                              stdout=script_tmp)
 
-          # Make the generated script executable.
-          st = os.stat(dx.bin)
-          os.chmod(dx.bin, st.st_mode | stat.S_IEXEC)
+          # Modify the generated script so that we can pass in a container name.
+          script_tmp.seek(0)
+          with open(dx.bin, 'w') as fd:
+            for line in script_tmp:
+              if line.startswith('CONTAINER_NAME='):
+                line = 'CONTAINER_NAME=${CONTAINER_NAME:-dockcross_$RANDOM}\n'
+              fd.write(line)
+
+        # Make the generated script executable.
+        st = os.stat(dx.bin)
+        os.chmod(dx.bin, st.st_mode | stat.S_IEXEC)
 
     return dx
 
@@ -291,10 +300,9 @@ class Image(collections.namedtuple('_Image', (
     # Replace (system) paths that include the work directory with (dockcross)
     # paths within the work directory.
     args = []
+    # Have to handle env vars specially
+    env = kwargs.pop('env', None) or {}
     if self.docker_image:
-      # Have to handle env vars specially
-      env = kwargs.pop('env', None) or {}
-
       # Build arguments to run within "dockcross" image.
       for i, arg in enumerate(cmd):
         if arg.startswith(work_dir):
@@ -320,17 +328,17 @@ class Image(collections.namedtuple('_Image', (
         assert ' ' not in v, 'BUG: spaces in env vars not supported correctly'
         run_args.extend(['-e', '%s=%s' % (k, v)])
 
+      # The dockcross script uses bash $RANDOM to generate container names. This
+      # is insufficiently random, and produces collisions fairly often when
+      # running several containers in parallel as we do. Specify the container
+      # name ourself to avoid this problem. We also reset 'env' to a new
+      # dictionary, since the given variables have been passed to the container.
+      env = {'CONTAINER_NAME': 'dockcross_%s' % uuid.uuid4()}
+
       # Run the process within the working directory.
       cwd = work_dir
 
       args += [self.bin]
-
-      # The dockcross script uses bash $RANDOM to generate container names. This
-      # is insufficiently random, and produces collisions fairly often when
-      # running several containers in parallel as we do. Luckily we can override
-      # the earlier argument by specifying '--name' ourself via '-a'.
-      run_args.append('--name=dockcross_%s' % uuid.uuid4())
-
       args += ['-a', ' '.join(run_args)]
 
       args.append('/start.sh')
@@ -342,7 +350,7 @@ class Image(collections.namedtuple('_Image', (
         cmd[0] = self.system.native_python
 
     args += cmd
-    return self.system.run(args, cwd=cwd, **kwargs)
+    return self.system.run(args, cwd=cwd, env=env, **kwargs)
 
   def check_run(self, work_dir, cmd, **kwargs):
     kwargs.setdefault('retcodes', [0])
