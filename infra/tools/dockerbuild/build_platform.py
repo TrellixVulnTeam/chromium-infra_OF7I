@@ -4,7 +4,6 @@
 
 import collections
 import platform
-import subprocess
 import sys
 
 
@@ -330,28 +329,10 @@ ALL = {
         ),
     )
 }
-
-
-# Detect whether we're on an ARM64 Mac running emulated x86_64 Python.
-# In this situation, we still consider ARM64 the native platform.
-def _CheckTranslated():
-  if sys.platform != 'darwin':
-    return False
-
-  try:
-    output = subprocess.check_output(
-        ["/usr/sbin/sysctl", "-n", "sysctl.proc_translated"])
-    return output[0] == '1'
-  except subprocess.CalledProcessError:
-    # The call will fail on x86_64 Macs.
-    return False
-
-
 NAMES = sorted(ALL.keys())
 PACKAGED = [p for p in ALL.itervalues() if p.packaged]
 ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
 UNIVERSAL = [p.name for p in ALL.itervalues() if 'universal' in p.name]
-_IS_TRANSLATED = _CheckTranslated()
 
 
 def NativePlatforms():
@@ -360,12 +341,9 @@ def NativePlatforms():
 
   # Identify our native platforms.
   if sys.platform == 'darwin':
-    machine = platform.machine()
-    if machine == 'x86_64' and _IS_TRANSLATED:
-      machine = 'arm64'
-    if machine == 'x86_64':
+    if platform.machine() == 'x86_64':
       return plats + [ALL['mac-x64'], ALL['mac-x64-cp38']]
-    elif machine == 'arm64':
+    elif platform.machine() == 'arm64':
       return plats + [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
   elif sys.platform == 'win32':
     return plats + [
