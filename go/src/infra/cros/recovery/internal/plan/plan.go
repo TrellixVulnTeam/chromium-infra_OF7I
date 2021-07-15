@@ -11,8 +11,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/plan/execs"
 )
 
 // Plan describes a recovery plan, including the verification actions used to determine success.

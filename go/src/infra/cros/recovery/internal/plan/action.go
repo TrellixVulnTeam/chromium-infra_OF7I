@@ -10,8 +10,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/plan/execs"
 )
 
 // Action represents a recovery action, which can perform either a verification action or a repair action.
