@@ -69,17 +69,8 @@ class HTMLStatusGenerator(StatusGeneratorStub):  # pragma: no cover
     self.rows.append(row)
 
   def _get_luci_location(self, category):
-    master_config = self.config.get('masters', {}).get(category)
-    bucket_config = self.config.get('buckets', {}).get(category)
-    if master_config:
-      return (master_config.get('luci_project'),
-              master_config.get('luci_bucket'))
-    elif bucket_config:
-      luci_project, luci_bucket = category.split('/', 1)
-      old_style_luci_bucket = 'luci.%s.%s' % (luci_project, luci_bucket)
-      return (luci_project, old_style_luci_bucket)
-    return (None, None)
-
+    luci_project, luci_bucket = category.split('/', 1)
+    return (luci_project, luci_bucket)
 
   def build_cb(self, category, builder, status, build_num=None):
     stat_txt = STATUS.tostr(status)
