@@ -13,7 +13,7 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
 
 // This proto defines setup labels in lab config of a DUT.
 
-// Peripherals of device. Next Tag: 15
+// Peripherals of device. Next Tag: 16
 message Peripherals {
   Servo servo = 1;
   Chameleon chameleon = 2;
@@ -36,6 +36,10 @@ message Peripherals {
   Camerabox camerabox_info = 12;
   // Indicate if device is connected to a smart usb hub, detected in AdminRepair task.
   bool smart_usbhub = 13;
+  // Indicate if the DUT's back camera supports region of interest
+  bool camera_roi_back = 14;
+  // Indicate if the DUT's front camera supports region of interest
+  bool camera_roi_front = 15;
 }
 
 // NOTE: RPM cannot be used as there's a same message in api/v1/models/peripherals.proto
