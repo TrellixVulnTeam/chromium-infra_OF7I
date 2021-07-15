@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -221,6 +222,7 @@ type buildParams struct {
 // Some fields are populated in reportResult right prior writing to the output.
 type buildResult struct {
 	Name         string                  `json:"name"`                     // artifacts name from the manifest YAML
+	ContextDir   string                  `json:"context_dir,omitempty"`    // absolute path to a context directory used to build the image
 	Error        string                  `json:"error,omitempty"`          // non-empty if the build failed
 	Image        *imageRef               `json:"image,omitempty"`          // built or reused image (if any)
 	Notify       []manifest.NotifyConfig `json:"notify,omitempty"`         // copied from the manifest YAML
@@ -229,18 +231,29 @@ type buildResult struct {
 }
 
 // prepBuildResult prepopulates some buildResult fields based on buildParams.
-func prepBuildResult(p *buildParams) buildResult {
-	return buildResult{
-		Name:   p.Manifest.Name,
-		Notify: p.Notify,
+func prepBuildResult(p *buildParams) (buildResult, error) {
+	contextDir := p.Manifest.ContextDir
+	if contextDir != "" {
+		var err error
+		if contextDir, err = filepath.Abs(contextDir); err != nil {
+			return buildResult{}, errors.Annotate(err, "bad context directory path").Err()
+		}
 	}
+	return buildResult{
+		Name:       p.Manifest.Name,
+		ContextDir: contextDir,
+		Notify:     p.Notify,
+	}, nil
 }
 
 // runBuild is top-level logic of "build" command.
 //
 // On errors may return partially populated buildResult.
 func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
-	res = prepBuildResult(&p)
+	res, err = prepBuildResult(&p)
+	if err != nil {
+		return
+	}
 
 	// Skip the build completely if there's already an image with the requested
 	// canonical tag. This check is delayed until later if ":inputs-hash" is used
@@ -310,7 +323,10 @@ func maybeReuseExistingImage(ctx context.Context, p buildParams) (*imageRef, err
 //
 // On errors may return partially populated buildResult.
 func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buildResult, err error) {
-	res = prepBuildResult(&p)
+	res, err = prepBuildResult(&p)
+	if err != nil {
+		return
+	}
 
 	f, digest, err := writeToTemp(ctx, out)
 	if err != nil {
