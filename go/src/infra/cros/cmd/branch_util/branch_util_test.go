@@ -514,7 +514,6 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		Project:    "chromeos/manifest-versions",
 		Path:       buildspecName,
 		Committish: "HEAD",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 
 	// Mock version file request
@@ -522,7 +521,6 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		Project:    "chromiumos/overlays/chromiumos-overlay",
 		Path:       "chromeos/config/chromeos_version.sh",
 		Committish: "refs/heads/" + versionBranch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 
 	// Mock out calls to gerrit.DownloadFileFromGitiles.

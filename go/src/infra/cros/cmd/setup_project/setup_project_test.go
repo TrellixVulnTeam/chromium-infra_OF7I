@@ -57,7 +57,6 @@ func TestSetupProject(t *testing.T) {
 			Project:    projectName,
 			Path:       "local_manifest.xml",
 			Committish: branch,
-			Format:     gitilespb.DownloadFileRequest_TEXT,
 		}
 		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
 			&gitilespb.DownloadFileResponse{
@@ -116,7 +115,6 @@ func TestSetupProject_allProjects(t *testing.T) {
 			Project:    projectName,
 			Path:       "local_manifest.xml",
 			Committish: branch,
-			Format:     gitilespb.DownloadFileRequest_TEXT,
 		}
 		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
 			&gitilespb.DownloadFileResponse{

@@ -97,7 +97,6 @@ func (c *Client) GetFile(ctx context.Context, path string) (string, error) {
 		Project:    c.project,
 		Committish: c.latestSHA1,
 		Path:       path,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	res, err := c.gitilesC.DownloadFile(ctx, req)
 	if err != nil {

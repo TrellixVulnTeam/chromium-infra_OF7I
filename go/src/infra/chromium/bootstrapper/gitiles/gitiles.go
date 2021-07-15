@@ -107,7 +107,6 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 		Project:    project,
 		Committish: revision,
 		Path:       path,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	response, err := gitilesClient.DownloadFile(ctx, request)
 	if err != nil {

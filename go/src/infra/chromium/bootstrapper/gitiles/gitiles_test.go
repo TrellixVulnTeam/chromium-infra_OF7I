@@ -182,7 +182,6 @@ func TestClient(t *testing.T) {
 					Project:    "fake/project",
 					Committish: "fake-revision",
 					Path:       "fake-file",
-					Format:     gitilespb.DownloadFileRequest_TEXT,
 				})).Return(&gitilespb.DownloadFileResponse{
 					Contents: "fake-contents",
 				}, nil)

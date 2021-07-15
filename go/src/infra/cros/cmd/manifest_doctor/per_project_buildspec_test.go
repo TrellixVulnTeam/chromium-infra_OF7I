@@ -101,7 +101,6 @@ func TestCreateProjectBuildspec(t *testing.T) {
 			Project:    project,
 			Path:       "local_manifest.xml",
 			Committish: releaseBranch,
-			Format:     gitilespb.DownloadFileRequest_TEXT,
 		}
 		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
 			&gitilespb.DownloadFileResponse{
@@ -116,7 +115,6 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		Project:    "chromiumos/manifest-versions",
 		Path:       "buildspecs/" + buildspec,
 		Committish: "HEAD",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
 		&gitilespb.DownloadFileResponse{
@@ -130,7 +128,6 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		Project:    "chromeos/manifest-versions",
 		Path:       "buildspecs/" + buildspec,
 		Committish: "HEAD",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqBuildspecs)).Return(
 		&gitilespb.DownloadFileResponse{

@@ -16,7 +16,6 @@ func TestDownloadFileRequestMatcher(t *testing.T) {
 		Project:    "chromeos/manifest-versions",
 		Path:       "foo",
 		Committish: "HEAD",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	matcher := DownloadFileRequestEq(req)
 
@@ -24,13 +23,11 @@ func TestDownloadFileRequestMatcher(t *testing.T) {
 		Project:    "chromeos/manifest-versions",
 		Path:       "foo",
 		Committish: "HEAD",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	b := &gitilespb.DownloadFileRequest{
 		Project:    "chromeos/manifest-versions",
 		Path:       "bar",
 		Committish: "HEAD^1",
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	assert.Assert(t, matcher.Matches(a))
 	assert.Assert(t, !matcher.Matches(b))

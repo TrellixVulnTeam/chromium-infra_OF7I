@@ -62,7 +62,6 @@ func DownloadCfgProto(ctx context.Context, client gitiles.GitilesClient, project
 		Project:    project,
 		Committish: committish,
 		Path:       path,
-		Format:     gitiles.DownloadFileRequest_TEXT,
 	}
 	content, err := downloadDeviceConfigCfg(ctx, client, req)
 	if err != nil {

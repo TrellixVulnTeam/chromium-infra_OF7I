@@ -185,7 +185,6 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 		Project:    project,
 		Path:       "manifest.xml",
 		Committish: branch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).AnyTimes().Return(
 		&gitilespb.DownloadFileResponse{
@@ -197,7 +196,6 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 		Project:    project,
 		Path:       "sub.xml",
 		Committish: branch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqSubManifest)).AnyTimes().Return(
 		&gitilespb.DownloadFileResponse{
@@ -324,7 +322,6 @@ func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 		Project:    project,
 		Path:       "default.xml",
 		Committish: branch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqSymlink)).AnyTimes().Return(
 		&gitilespb.DownloadFileResponse{
@@ -336,7 +333,6 @@ func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 		Project:    project,
 		Path:       "snapshot.xml",
 		Committish: branch,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).AnyTimes().Return(
 		&gitilespb.DownloadFileResponse{

@@ -106,9 +106,6 @@ func (c *Client) Log(ctx context.Context, request *gitilespb.LogRequest, options
 }
 
 func (c *Client) DownloadFile(ctx context.Context, request *gitilespb.DownloadFileRequest, options ...grpc.CallOption) (*gitilespb.DownloadFileResponse, error) {
-	if request.Format != gitilespb.DownloadFileRequest_TEXT {
-		panic(errors.Reason("unexpected format in DownloadRequest: %v", request.Format))
-	}
 	var contents *string
 	if project, err := c.getProject(request.Project); err != nil {
 		return nil, err

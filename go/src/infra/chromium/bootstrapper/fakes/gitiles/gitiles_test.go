@@ -75,7 +75,6 @@ func downloadFileRequest(project, revision, path string) *gitilespb.DownloadFile
 		Project:    project,
 		Committish: revision,
 		Path:       path,
-		Format:     gitilespb.DownloadFileRequest_TEXT,
 	}
 }
 
