@@ -20,6 +20,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'image',          # <registry>/<name>
       'digest',         # sha256:...
       'tag',            # its canonical tag, if any
+      'context_dir',    # absolute path to a context directory passed to Docker
       'view_image_url', # link to GCR page, for humans, optional
       'view_build_url', # link to GCB page, for humans, optional
       'notify',         # a list of NotifyConfig tuples
@@ -54,7 +55,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
   #
   # This happens if the target manifest doesn't specify a registry to upload
   # the image to. This is rare.
-  NotUploadedImage = Image(None, None, None, None, None, None)
+  NotUploadedImage = Image(None, None, None, None, None, None, None)
 
   def __init__(self, **kwargs):
     super(CloudBuildHelperApi, self).__init__(**kwargs)
@@ -171,6 +172,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           image=out['image']['image'],
           digest=out['image']['digest'],
           tag=out['image'].get('tag'),
+          context_dir=out.get('context_dir'),
           view_image_url=out.get('view_image_url'),
           view_build_url=out.get('view_build_url'),
           notify=[self._parse_notify_config(n) for n in out.get('notify', [])],

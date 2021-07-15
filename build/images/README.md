@@ -178,6 +178,7 @@ stdin:
       "tag": {
         "tag": "<the immutable image tag e.g. ci-2019.10.11-26433-028cefc>",
         "digest": "sha256:<image-digest>",
+        "context_dir": "<absolute path to the context directory used by cloudbuildhelper>",
         "metadata": {
           "date": "<RFC3389 timstamp in UTC zone>",
           "source": {

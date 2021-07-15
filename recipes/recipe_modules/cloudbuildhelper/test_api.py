@@ -15,12 +15,17 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
       tag = canonical_tag
       if tag == ':inputs-hash':
         tag = 'cbh-inputs-deadbead...'
+      context_dir = None
     else:
       img = image.image
       digest = image.digest
       tag = image.tag
+      context_dir = image.context_dir
 
-    out = {'view_build_url': 'https://example.com/build/%s' % target}
+    out = {
+      'view_build_url': 'https://example.com/build/%s' % target,
+      'context_dir': context_dir or '/some/context/directory/for/%s' % target,
+    }
     if img:
       out['image'] = {'image': img, 'digest': digest, 'tag': tag}
       out['view_image_url'] = 'https://example.com/image/%s' % target

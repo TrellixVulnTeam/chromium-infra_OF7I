@@ -306,6 +306,7 @@ def _mutate_repo(api, root, notify, images, meta):
         'tag': {
             'tag': img.tag,
             'digest': img.digest,
+            'context_dir': img.context_dir,
             'metadata': {
                 'date': date,
                 'source': {
@@ -362,7 +363,6 @@ def _mutate_repo(api, root, notify, images, meta):
 
 def _roll_images_test_data(tags):
   return {
-      'tags': tags,
       'deployments': [
           {
               'cc': ['n1@example.com', 'n2@example.com'],
@@ -408,6 +408,7 @@ def GenTests(api):
         image='example.com/fake-registry/target',
         digest='sha256:abcdef',
         tag='ci-2012.05.14-197293-5e03a58',
+        context_dir='/some/context/directory/for/target',
         view_image_url=None,
         view_build_url=None,
         notify=[

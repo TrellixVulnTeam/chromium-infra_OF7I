@@ -223,6 +223,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/target:ts-2012.05.14-0<br/>Digest: sha256:34a04005bcaf206e...<br/>Tag: ts-2012.05.14-0<br/>Tag: latest@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/directory/for/target\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:34a04005bcaf206e...\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/target\", @@@",

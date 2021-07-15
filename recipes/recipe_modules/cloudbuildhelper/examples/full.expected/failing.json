@@ -63,6 +63,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/target:123_456<br/>Digest: sha256:34a04005bcaf206e...<br/>Tag: 123_456<br/>Tag: another<br/>Tag: latest@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/directory/for/target\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:34a04005bcaf206e...\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/target\", @@@",
@@ -88,6 +89,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image: xxx@yyy<br/>Digest: yyy@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/dir\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"digest\": \"yyy\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"image\": \"xxx\", @@@",
@@ -122,6 +124,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/a:something<br/>Digest: sha256:ca978112ca1bbdca...<br/>Tag: something@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/directory/for/a\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:ca978112ca1bbdca...\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/a\", @@@",
@@ -149,6 +152,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image: example.com/fake-registry/b:cbh-inputs-deadbead...<br/>Digest: sha256:3e23e8160039594a...<br/>Tag: cbh-inputs-deadbead...@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/directory/for/b\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"image\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"digest\": \"sha256:3e23e8160039594a...\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"image\": \"example.com/fake-registry/b\", @@@",
@@ -174,6 +178,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Image builds successfully@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"context_dir\": \"/some/context/directory/for/third\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"view_build_url\": \"https://example.com/build/third\"@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",

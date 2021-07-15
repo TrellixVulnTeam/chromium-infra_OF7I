@@ -38,6 +38,7 @@ def build(api):
       image='example.com/fake-registry/target',
       digest='sha256:34a04005bcaf206e...',
       tag='123_456',
+      context_dir='/some/context/directory/for/target',
       view_image_url='https://example.com/image/target',
       view_build_url='https://example.com/build/target',
       notify=[])
@@ -48,6 +49,7 @@ def build(api):
       image='xxx',
       digest='yyy',
       tag=None,
+      context_dir='/some/context/dir',
       view_image_url='https://example.com/image/another',
       view_build_url='https://example.com/build/another',
       notify=[
