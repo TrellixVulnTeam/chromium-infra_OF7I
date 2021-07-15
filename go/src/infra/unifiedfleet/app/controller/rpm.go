@@ -47,7 +47,7 @@ func CreateRPM(ctx context.Context, rpm *ufspb.RPM) (*ufspb.RPM, error) {
 
 		// Create a rpm entry
 		// we use this func as it is a non-atomic operation and can be used to
-		// run within a transaction to make it atomic. Datastore doesnt allow
+		// run within a transaction to make it atomic. Datastore doesn't allow
 		// nested transactions.
 		if _, err = registration.BatchUpdateRPMs(ctx, []*ufspb.RPM{rpm}); err != nil {
 			return errors.Annotate(err, "Unable to create rpm %s", rpm.Name).Err()
