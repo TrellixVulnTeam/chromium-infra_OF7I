@@ -47,9 +47,6 @@ class Builder(object):
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
 
-  # The upstream tag to use when building.
-  UPSTREAM_TAG = 'latest'
-
   # _Template contains the template parameters used in the "Dockerfile.template"
   # resource.
   _Template = collections.namedtuple('_Template', (
@@ -81,7 +78,17 @@ class Builder(object):
   @classmethod
   def _docker_base_image(cls, plat):
     assert plat.dockcross_base_image
-    return DockerImage(plat.dockcross_base_image, cls.UPSTREAM_TAG)
+    return DockerImage(
+        plat.dockcross_base_image,
+        cls._dockcross_upstream_tag(plat),
+    )
+
+  @staticmethod
+  def _dockcross_upstream_tag(plat):
+    # Pinned non-manylinux images to Debian Stretch
+    if not plat.dockcross_base_image.startswith('manylinux'):
+      return '20210624-de7b1b0'
+    return 'latest'
 
   def _generic_template(self, dx, root):
     """Unpack our sources in the expected Docker system layout. Populate our
