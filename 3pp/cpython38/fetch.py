@@ -51,8 +51,9 @@ def get_webinstaller_suffix(platform):
   raise ValueError('fetch.py is only supported for windows-386, windows-amd64')
 
 
-# Only look at versions in 3.8.x for now.
-_VERSION_LIMIT = parse_version("3.9.0a0")
+# Python 3.8.10 was the last 3.8.x release that will have a binary installer
+# available.
+_VERSION_LIMIT = parse_version("3.8.11")
 
 
 def do_latest(platform):

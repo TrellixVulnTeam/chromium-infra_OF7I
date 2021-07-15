@@ -14,8 +14,10 @@ create {
       repo: "https://chromium.googlesource.com/external/github.com/python/cpython"
       tag_pattern: "v%s",
 
-      # Pin to 3.8.x for now.
-      version_restriction: { op: LT val: "3.9a0"}
+      # Python 3.8.10 was the last 3.8.x release that will have a binary
+      # installer available for Windows. Pin to that version on all platforms
+      # for consistency.
+      version_restriction: { op: LT val: "3.8.11"}
     }
     patch_dir: "patches"
   }
