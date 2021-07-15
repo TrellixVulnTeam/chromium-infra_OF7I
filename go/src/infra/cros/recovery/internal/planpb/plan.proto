@@ -1,0 +1,68 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromeos.recovery;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "infra/cros/recovery/internal/planpb;planpb";
+
+// Configuration provides the plans to be used by the recovery engine.
+message Configuration {
+  // Map of plans provided by configuration.
+  map<string, Plan> plans = 1;
+}
+
+// Plan holds information about actions for recovery engine to execute.
+message Plan {
+  // Critical actions are actions which have to pass for plan to succeed.
+  // Order matters.
+  repeated string critical_actions = 1;
+  // Map of all actions used by the plan.
+  map<string, Action> actions = 2;
+  // When running multiple plans, whether to continue running the next plan
+  // if this plan fails.
+  bool allow_fail = 3;
+}
+
+// Action describes how to run the action, including its dependencies,
+// conditions, and other attributes.
+message Action {
+  // List of actions to determine if this action is applicable for the resource.
+  // If any condition fails then this action will be skipped.
+  repeated string conditions = 1;
+  // List of actions that must pass before executing this action's exec
+  // function.
+  repeated string dependencies = 2;
+  // Name of the exec function to use.
+  // The name of the action will be used if not provided.
+  string exec_name = 3;
+  // Allowed time to execute exec function.
+  // If not specified, defaults to 60 seconds.
+  // The default may change in the future.
+  google.protobuf.Duration exec_timeout = 4;
+  // Extra arguments provided to the exec function.
+  // What arguments are allowed depends on the exec function.
+  repeated string exec_extra_args = 5;
+  // List of actions used to recover this action if exec function fails.
+  repeated string recovery_actions = 6;
+  // If set to true, then the action is treated as if it passed even if it
+  // and all its recovery actions failed.
+  bool allow_fail_after_recovery = 7;
+  // Controls how and when the action can be rerun throughout the plan.
+  RunControl run_control = 8;
+}
+
+// RunControl describe when and how often an action runs per plan execution.
+enum RunControl {
+  // The action is run once per plan and rerun again after each successful
+  // recovery action.
+  RERUN_AFTER_RECOVERY = 0;
+  // The action runs every time.
+  ALWAYS_RUN = 1;
+  // The action is run only once per plan.
+  RUN_ONCE = 2;
+}
