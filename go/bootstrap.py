@@ -29,6 +29,15 @@ import tempfile
 LOGGER = logging.getLogger(__name__)
 
 
+# If this env var is set to '1', bootstrap.py will not "go install ..." tools.
+INFRA_GO_SKIP_TOOLS_INSTALL = 'INFRA_GO_SKIP_TOOLS_INSTALL'
+
+# If this env var is set to '1', use Go Modules instead of deps.py.
+INFRA_GO_USE_MODULES = 'INFRA_GO_USE_MODULES'
+
+# This env var defines what version variant of the toolset to install.
+INFRA_GO_VERSION_VARIANT = 'INFRA_GO_VERSION_VARIANT'
+
 # /path/to/infra
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -134,7 +143,7 @@ _EMPTY_LAYOUT = Layout(
 LAYOUT = Layout(
     toolset_root=TOOLSET_ROOT,
     workspace=WORKSPACE,
-    use_modules=os.getenv('INFRA_GO_USE_MODULES') == '1',
+    use_modules=os.getenv(INFRA_GO_USE_MODULES) == '1',
     vendor_paths=[WORKSPACE],
     go_paths=[],
     go_deps_paths=[
@@ -643,7 +652,7 @@ def bootstrap(layout, logging_level, args=None):
     json_output = parser.parse_args(args=args).json_output
 
   # Figure out what Go version to install based on INFRA_GO_VERSION_VARIANT.
-  variant = os.environ.get('INFRA_GO_VERSION_VARIANT') or 'default'
+  variant = os.environ.get(INFRA_GO_VERSION_VARIANT) or 'default'
   toolset_version = TOOLSET_VERSIONS.get(variant)
   if not toolset_version:
     raise Failure('Unrecognized INFRA_GO_VERSION_VARIANT %r' % variant)
@@ -659,7 +668,8 @@ def bootstrap(layout, logging_level, args=None):
     toolset_updated = ensure_toolset_installed(
         layout.toolset_root, toolset_version)
     if layout.use_modules:
-      install_go_tools(layout, toolset_updated)
+      if os.environ.get(INFRA_GO_SKIP_TOOLS_INSTALL) != '1':
+        install_go_tools(layout, toolset_updated)
     else:
       ensure_glide_installed(layout.toolset_root)
       vendor_updated = toolset_updated

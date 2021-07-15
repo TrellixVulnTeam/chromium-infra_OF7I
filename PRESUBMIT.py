@@ -134,6 +134,46 @@ def GoPackageImportsCheck(input_api, output_api):
   return []
 
 
+def GoCheckGoModTidy(input_api, output_api):
+  if os.environ.get('INFRA_GO_USE_MODULES') != '1':
+    return []
+
+  def is_interesting(p):
+    return p == 'DEPS' or p.endswith(('.go', 'go.mod', 'go.sum'))
+
+  run = any(
+      is_interesting(f.LocalPath())
+      for f in input_api.change.AffectedFiles(include_deletes=True))
+  if not run:
+    return []
+
+  # Don't run "go install ...", it may blow up with untidy go.mod.
+  env = os.environ.copy()
+  env['INFRA_GO_SKIP_TOOLS_INSTALL'] = '1'
+
+  root = input_api.change.RepositoryRoot()
+  return input_api.RunTests([
+      CommandInGoEnv(
+          input_api,
+          output_api,
+          name='Check go.mod tidiness',
+          cmd=[
+              input_api.python_executable,
+              os.path.join(
+                  root,
+                  'go',
+                  'src',
+                  'go.chromium.org',
+                  'luci',
+                  'scripts',
+                  'check_go_mod_tidy.py',
+              ),
+              os.path.join(root, 'go', 'src', 'infra'),
+          ],
+          kwargs={'env': env}),
+  ])
+
+
 # Forked from depot_tools/presubmit_canned_checks._FetchAllFiles
 def FetchAllFiles(input_api, files_to_check, files_to_skip):
   import datetime
@@ -449,34 +489,51 @@ def CheckInclusiveLanguage(input_api, output_api):
   return results
 
 
-def CommonChecks(input_api, output_api):  # pragma: no cover
-  file_filter = lambda x: x.LocalPath() == 'infra/config/recipes.cfg'
-  output = input_api.canned_checks.CheckJsonParses(
-      input_api, output_api, file_filter=file_filter)
+def GoChecks(input_api, output_api):  # pragma: no cover
+  # "go.mod" tidiness test needs to run first because if go.mod is untidy,
+  # the rest of Go tests may blow up in a noisy way. Running this check also
+  # bootstraps the go environment, but without tools. The tools are installed
+  # later in `bootstrap go env` step.
+  output = GoCheckGoModTidy(input_api, output_api)
+  if any(x.fatal for x in output):
+    return output, []
 
-  # Collect all potential Go tests
+  # Collect all other potential Go tests
   tests = GoCheckers(input_api, output_api)
   tests += GoPackageImportsCheck(input_api, output_api)
-  if tests:
-    # depot_tools runs tests in parallel. If go env is not setup, each test will
-    # attempt to bootstrap it simultaneously, which doesn't currently work
-    # correctly.
-    #
-    # Because we use RunTests here, this will run immediately. The actual go
-    # tests will run after this, assuming the bootstrap is successful.
-    output = input_api.RunTests([
-      input_api.Command(
-        name='bootstrap go env',
-        cmd=[
-          'vpython',
-          input_api.os_path.join(
-            input_api.change.RepositoryRoot(), 'go', 'bootstrap.py')
-        ],
-        kwargs={},
-        message=output_api.PresubmitError)
-    ])
-    if any(x.fatal for x in output):
-      return output
+  if not tests:
+    return output, []
+
+  # depot_tools runs tests in parallel. If go env is not setup, each test will
+  # attempt to bootstrap it simultaneously, which doesn't currently work
+  # correctly.
+  #
+  # Because we use RunTests here, this will run immediately. The actual go
+  # tests will run after this, assuming the bootstrap is successful.
+  output.extend(
+      input_api.RunTests([
+          input_api.Command(
+              name='bootstrap go env',
+              cmd=[
+                  'vpython',
+                  input_api.os_path.join(input_api.change.RepositoryRoot(),
+                                         'go', 'bootstrap.py')
+              ],
+              kwargs={},
+              message=output_api.PresubmitError)
+      ]))
+  if any(x.fatal for x in output):
+    return output, []
+  return output, tests
+
+
+def CommonChecks(input_api, output_api):  # pragma: no cover
+  output, tests = GoChecks(input_api, output_api)
+
+  file_filter = lambda x: x.LocalPath() == 'infra/config/recipes.cfg'
+  output.extend(
+      input_api.canned_checks.CheckJsonParses(
+          input_api, output_api, file_filter=file_filter))
 
   # Add non-go tests
   tests += JshintChecks(input_api, output_api)
