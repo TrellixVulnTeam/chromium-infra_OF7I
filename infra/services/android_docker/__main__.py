@@ -37,7 +37,9 @@ def get_disk_partition_size(path, android_devices, usage_ratio=0.8):
   # needed caches. Note that some devices may temporarily disappear, so let's
   # provision for at least seven per bot. (In case 6 of the 7 drop off
   # momentarily and the remainder suddenly has the entire disk to work with.)
-  number_of_caches = max(7, len(android_devices))
+  # TODO(crbug.com/1143122): Return this to max(7, len(android_devices)) after
+  # the isolate -> CAS migration is complete and we don't need both caches.
+  number_of_caches = max(14, len(android_devices) * 2)
   partition_size = total_size / number_of_caches
   # Round to nearest block size
   partition_size = int(fs_stat.f_bsize * round(partition_size/fs_stat.f_bsize))
