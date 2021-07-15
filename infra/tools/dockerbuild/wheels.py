@@ -223,7 +223,7 @@ SPECS.update({
         SourceOrPrebuilt(
             'coverage',
             '5.5',
-            pyversions=['py3'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'crcmod',
