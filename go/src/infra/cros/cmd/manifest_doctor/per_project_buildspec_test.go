@@ -11,7 +11,6 @@ import (
 	"infra/cros/internal/assert"
 	gerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
-	"infra/cros/internal/repo"
 
 	"github.com/golang/mock/gomock"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
@@ -50,14 +49,12 @@ const (
 </manifest>
 `
 
-	pinnedLocalManifestXML = `
-<manifest>
-	<remote fetch="https://chrome-internal.googlesource.com" name="cros-internal"></remote>
-	<default></default>
-	<project path="src/foo" name="foo" revision="revision-foo" remote="cros-internal"></project>
-	<project path="src/bar" name="bar" remote="cros-internal"></project>
-</manifest>
-`
+	pinnedLocalManifestXML = `<manifest>
+  <remote fetch="https://chrome-internal.googlesource.com" name="cros-internal" review="https://chrome-internal-review.googlesource.com"></remote>
+  <default></default>
+  <project path="src/foo" name="foo" revision="revision-foo" remote="cros-internal"></project>
+  <project path="src/bar" name="bar" remote="cros-internal"></project>
+</manifest>`
 )
 
 var (
@@ -138,11 +135,9 @@ func TestCreateProjectBuildspec(t *testing.T) {
 
 	gerrit.MockGitiles = gitilesMock
 
-	expected, err := repo.ParseManifest([]byte(pinnedLocalManifestXML))
-	assert.NilError(t, err)
-	expectedWrites := map[string]*repo.Manifest{
-		"gs://chromeos-galaxy/buildspecs/" + buildspec:          expected,
-		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: expected,
+	expectedWrites := map[string][]byte{
+		"gs://chromeos-galaxy/buildspecs/" + buildspec:          []byte(pinnedLocalManifestXML),
+		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: []byte(pinnedLocalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,

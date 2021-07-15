@@ -62,6 +62,7 @@ type Remote struct {
 	Revision    string       `xml:"revision,attr,omitempty"`
 	Alias       string       `xml:"alias,attr,omitempty"`
 	Annotations []Annotation `xml:"annotation"`
+	Review      string       `xml:"review,attr,omitempty"`
 }
 
 // Default is a manifest element that lists the default.
@@ -397,13 +398,22 @@ func (m *Manifest) ToBytes() ([]byte, error) {
 	return data, nil
 }
 
+// WriteToBytes returns the manifest as a byte array in its final output format.
+func (m *Manifest) WriteToBytes() ([]byte, error) {
+	data, err := m.ToBytes()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(xml.Header + string(data)), nil
+}
+
 // Write writes the manifest to the given path.
 func (m *Manifest) Write(path string) error {
-	data, err := m.ToBytes()
+	data, err := m.WriteToBytes()
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path, []byte(xml.Header+string(data)), 0644)
+	err = ioutil.WriteFile(path, data, 0644)
 	if err != nil {
 		return errors.Annotate(err, "failed to write manifest").Err()
 	}

@@ -124,6 +124,8 @@ func updateElement(manifest, elt string, attrs map[string]string) string {
 // The function will return an error if there is more than one <default> element
 // in the raw manifest. The function will also return an error if elements in
 // the reference manifest do not exist in the raw manifest.
+// This function will NOT remove elements from the manifest just because they
+// do not exist in the reference manifest.
 func UpdateManifestElements(reference *repo.Manifest, rawManifest []byte) ([]byte, error) {
 	manifest := string(rawManifest)
 

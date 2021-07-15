@@ -4,6 +4,7 @@
 package gs
 
 import (
+	"bytes"
 	"context"
 	gerrs "errors"
 	"io"
@@ -12,16 +13,23 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
+
+	"cloud.google.com/go/storage"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 type Client interface {
 	WriteFileToGS(gsPath gs.Path, data []byte) error
 	Download(gsPath gs.Path, localPath string) error
+	Read(gsPath gs.Path) ([]byte, error)
+	List(ctx context.Context, bucket string, prefix string) ([]string, error)
 }
 
 type ProdClient struct {
-	client gs.Client
+	client      gs.Client
+	plainClient *storage.Client
 }
 
 func NewProdClient(ctx context.Context, authedClient *http.Client) (*ProdClient, error) {
@@ -29,8 +37,13 @@ func NewProdClient(ctx context.Context, authedClient *http.Client) (*ProdClient,
 	if err != nil {
 		return nil, errors.Annotate(err, "new Google Storage client").Err()
 	}
+	plainClient, err := storage.NewClient(ctx, option.WithHTTPClient(&http.Client{
+		Transport: authedClient.Transport,
+	}))
+
 	return &ProdClient{
-		client: gsClient,
+		client:      gsClient,
+		plainClient: plainClient,
 	}, nil
 }
 
@@ -57,7 +70,7 @@ func (g *ProdClient) WriteFileToGS(gsPath gs.Path, data []byte) error {
 	return nil
 }
 
-// ReadFileFromGS reads the specified path from gs to the specified local path.
+// Download reads the specified path from gs to the specified local path.
 func (g *ProdClient) Download(gsPath gs.Path, localPath string) error {
 	r, err := g.client.NewReader(gsPath, 0, -1)
 	if err != nil {
@@ -71,4 +84,37 @@ func (g *ProdClient) Download(gsPath gs.Path, localPath string) error {
 		return errors.Annotate(err, "download %s to %s", gsPath, localPath).Err()
 	}
 	return nil
+}
+
+// Read reads the specified path from gs and returns its contents.
+func (g *ProdClient) Read(gsPath gs.Path) ([]byte, error) {
+	r, err := g.client.NewReader(gsPath, 0, -1)
+	if err != nil {
+		return nil, errors.Annotate(err, "download").Err()
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r)
+
+	return buf.Bytes(), nil
+}
+
+// List lists all the files in a specific bucket matching the given prefix.
+func (g *ProdClient) List(ctx context.Context, bucket string, prefix string) ([]string, error) {
+	bkt := g.plainClient.Bucket(bucket)
+	query := &storage.Query{Prefix: prefix}
+
+	var names []string
+	it := bkt.Objects(ctx, query)
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		names = append(names, attrs.Name)
+	}
+	return names, nil
 }
