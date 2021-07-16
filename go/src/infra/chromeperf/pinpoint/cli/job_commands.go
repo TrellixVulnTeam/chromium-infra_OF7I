@@ -106,8 +106,7 @@ func (lj *listJobs) RegisterFlags(p Param) {
 	lj.baseCommandRun.RegisterFlags(p)
 	// TODO(dberris): Link to documentation about supported fields in the filter.
 	lj.Flags.StringVar(&lj.filter, "filter", "", text.Doc(`
-		Optional filter to apply to restrict the set of jobs listed. See
-		https://aip.dev/160 for details on the filter syntax.
+		Optional filter to apply to restrict the set of jobs listed. Jobs can be filtered by user, configuration, or batch_id. Example: --filter='user=your-email'
 	`))
 }
 
