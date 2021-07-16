@@ -86,7 +86,7 @@ class Builder(object):
   @staticmethod
   def _dockcross_upstream_tag(plat):
     # Pinned non-manylinux images to Debian Stretch
-    if not plat.dockcross_base_image.startswith('manylinux'):
+    if not plat.dockcross_base_image.startswith('dockcross/manylinux'):
       return '20210624-de7b1b0'
     return 'latest'
 
