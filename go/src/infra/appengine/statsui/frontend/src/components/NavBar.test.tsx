@@ -25,7 +25,7 @@ describe('when rendering NavBar', () => {
     expect(screen.getByText('Test DataSource')).toBeInTheDocument();
   });
 
-  it('should render ', () => {
+  it('should render NavPanel toggle if there are multiple data sources', () => {
     const ds1 = {
       name: 'ds1',
       prettyName: 'DS 1',
@@ -40,6 +40,6 @@ describe('when rendering NavBar', () => {
         available: [ds1, ds2],
       },
     });
-    expect(screen.getByTestId('toggle-nav-panel-button')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-bar-toggle-panel')).toBeInTheDocument();
   });
 });

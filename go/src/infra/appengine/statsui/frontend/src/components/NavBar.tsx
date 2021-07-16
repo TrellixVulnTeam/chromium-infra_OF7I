@@ -39,7 +39,7 @@ const NavBar: React.FunctionComponent<Props> = ({ toggleNavPanel }: Props) => {
             edge="start"
             color="inherit"
             onClick={toggleNavPanel}
-            data-testid="toggle-nav-panel-button"
+            data-testid="nav-bar-toggle-panel"
           >
             <MenuIcon />
           </IconButton>

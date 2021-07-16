@@ -1,0 +1,25 @@
+tr.odd {
+  background: #f1f3f4;
+}
+
+.section .rank {
+  vertical-align: top;
+  padding-right: 0px;
+}
+
+.section .name {
+  vertical-align: top;
+  border-right: 1px solid #e0e0e0;
+}
+
+.indent .name {
+  padding-left: 32px;
+}
+
+.section td {
+  white-space: nowrap;
+}
+
+.section td.data:last-child {
+  padding-right: 46px;
+}

@@ -6,9 +6,16 @@ import React, { ReactElement } from 'react';
 import { render, RenderResult } from '@testing-library/react';
 import { configureStore, DeepPartial } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 // Reducers
-import dataSourcesReducer from '../features/dataSources/dataSourcesSlice';
-import metricsReducer from '../features/metrics/metricsSlice';
+import { Period } from './dateUtils';
+import { Unit } from './formatUtils';
+import dataSourcesReducer, {
+  DataSource,
+  DataSourcesState,
+  MetricOption,
+} from '../features/dataSources/dataSourcesSlice';
+import metricsReducer, { MetricsState } from '../features/metrics/metricsSlice';
 import preferencesReducer from '../features/preferences/preferencesSlice';
 import { AppState } from '../app/store';
 
@@ -26,5 +33,68 @@ export function renderWithRedux(
     },
     preloadedState: initialState,
   });
-  return render(<Provider store={store}>{ui}</Provider>);
+  return render(
+    <MemoryRouter>
+      <Provider store={store}>{ui}</Provider>
+    </MemoryRouter>
+  );
+}
+
+const emptyMetricsState: MetricsState = {
+  visibleDates: [],
+  visibleMetrics: [],
+  visibleData: {},
+
+  dataSource: '',
+  period: Period.Undefined,
+  numPeriods: 4,
+  maxDate: '2021-01-02',
+
+  precachePeriods: 0,
+  cachedDates: [],
+  cachedMetrics: [],
+  loadingDates: [],
+  loadingMetrics: [],
+  cache: {},
+};
+
+export function initMetricsState(state: Partial<MetricsState>): MetricsState {
+  return Object.assign({}, emptyMetricsState, state);
+}
+
+// Sets up a current DataSource with the given metric
+export function initDataSourceWithMetrics(
+  name: string,
+  sectionName: string,
+  ...metrics: Partial<MetricOption>[]
+): DataSourcesState {
+  const ds: DataSource = {
+    name: name,
+    prettyName: name,
+    apiDataSource: '',
+    sectionName: sectionName,
+    metrics: [],
+    periods: [{ name: 'Week', period: Period.Week }],
+    metricMap: {},
+  };
+  metrics.forEach((metric) => {
+    const m: MetricOption = Object.assign(
+      {
+        name: '',
+        unit: Unit.Number,
+        description: '',
+      },
+      metric
+    );
+    ds.metrics.push(m);
+    ds.metricMap[m.name] = m;
+  });
+
+  const state: DataSourcesState = {
+    current: ds.name,
+    available: [ds],
+    availableMap: {},
+  };
+  state.availableMap[name] = ds;
+  return state;
 }

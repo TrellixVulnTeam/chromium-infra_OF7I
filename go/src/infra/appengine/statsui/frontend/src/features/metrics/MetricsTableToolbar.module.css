@@ -1,0 +1,16 @@
+.toolbar .section {
+  width: 100%;
+}
+
+.toolbar .metrics {
+  width: 90%;
+  max-width: 250px;
+}
+
+.toolbar .date {
+  margin-right: 30px;
+}
+
+.toolbar .period {
+  padding-right: 30px;
+}

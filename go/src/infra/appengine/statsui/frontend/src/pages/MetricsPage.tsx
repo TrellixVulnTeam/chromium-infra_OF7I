@@ -7,6 +7,7 @@ import { Redirect, RouteComponentProps } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 
+import MetricsTable from '../features/metrics/MetricsTable';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   selectAvailable,
@@ -36,10 +37,20 @@ const MetricsPage: React.FunctionComponent<Props> = ({
   const params = new URLSearchParams(location.search);
   dispatch(setCurrent(match.params.dataSource, params));
 
+  const filter = params.get('filter');
+  const orderBy = params.get('orderBy');
+  const order = params.get('order');
+
   return (
     <Container maxWidth={false}>
       <Grid container spacing={3}>
-        <Grid item xs={12}></Grid>
+        <Grid item xs={12}>
+          <MetricsTable
+            initialFilter={filter || undefined}
+            initialOrderBy={orderBy ? Number.parseInt(orderBy) : undefined}
+            initialOrder={order || undefined}
+          />
+        </Grid>
       </Grid>
     </Container>
   );
