@@ -35,7 +35,7 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
 	// TODO(otabek@): Verify only critical action can have recovery actions.
-	// TODO(otabek@): Verify if all used exec is exist in recovery.
+	// TODO(otabek@): Verify if all used exec is exist in recovery and set the name if missing.
 	log.Debug(ctx, "Load configuration: finished successfully.")
 	return &config, nil
 }
