@@ -41,19 +41,19 @@ def _to_versions(raw_ls_remote_lines, version_join, tag_re):
 
 # Maps the operator OP(a, b) to the reverse function. For example:
 #
-#    A < B   maps to   B >= A
+#    A < B   maps to   B > A
 #
 # This will allow us to use functools.partial to pre-fill the value of B.
 FILTER_TO_REVERSE_OP = {
-  LT: operator.ge,
-  LE: operator.gt,
-  GT: operator.le,
-  GE: operator.lt,
+    LT: operator.gt,
+    LE: operator.ge,
+    GT: operator.lt,
+    GE: operator.le,
 
-  # EQ and NE are commutative comparisons, so they map directly to their
-  # equivalent function in `operator`.
-  EQ: operator.eq,
-  NE: operator.ne,
+    # EQ and NE are commutative comparisons, so they map directly to their
+    # equivalent function in `operator`.
+    EQ: operator.eq,
+    NE: operator.ne,
 }
 
 def _filters_to_func(filters):
