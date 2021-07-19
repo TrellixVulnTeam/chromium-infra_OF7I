@@ -16,6 +16,7 @@ require (
 	github.com/andygrunwald/go-gerrit v0.0.0-20210709065208-9d38b0be0268
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210707120613-a80295a60b3e // indirect
 	github.com/aws/aws-sdk-go v1.40.0 // indirect
+	github.com/bazelbuild/remote-apis-sdks v0.0.0-20210719032003-1cec173a5bf7
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.5.3 // indirect
 	github.com/danjacques/gofslock v0.0.0-20200623023034-5d0bd0fa6ef0

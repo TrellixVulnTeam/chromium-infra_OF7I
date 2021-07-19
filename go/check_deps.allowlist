@@ -49,6 +49,7 @@ github.com/go-sql-driver/mysql
 github.com/gomodule/redigo/redis
 github.com/google/go-cmp/cmp
 github.com/gorhill/cronexpr
+github.com/jordan-wright/email
 github.com/julienschmidt/httprouter
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
