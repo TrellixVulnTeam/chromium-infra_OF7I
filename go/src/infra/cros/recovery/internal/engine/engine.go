@@ -24,6 +24,7 @@ type recoveryEngine struct {
 	args     *execs.RunArgs
 	// Caches
 	actionResultsCache map[string]error
+	recoveryUsageCache map[recoveryUsageKey]error
 }
 
 // Error tag to track error with request to start critical actions over.
@@ -164,7 +165,7 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) error {
 	a := r.getAction(actionName)
 	for _, recoveryName := range a.GetRecoveryActions() {
-		if r.isRecoveryUsed(ctx, actionName, recoveryName) {
+		if r.isRecoveryUsed(actionName, recoveryName) {
 			// Engine allows to use each recovery action only once in scope of the action.
 			continue
 		}
@@ -245,6 +246,7 @@ func (r *recoveryEngine) describeActionExec(actionName string) string {
 // The function extracted to supported testing.
 func (r *recoveryEngine) initCache() {
 	r.actionResultsCache = make(map[string]error, len(r.plan.GetActions()))
+	r.recoveryUsageCache = make(map[recoveryUsageKey]error)
 }
 
 // actionResultFromCache reads action's result from cache.
@@ -274,14 +276,30 @@ func (r *recoveryEngine) resetCacheAfterSuccessfulRecoveryAction() {
 }
 
 // isRecoveryUsed checks if recovery action is used in plan or action level scope.
-func (r *recoveryEngine) isRecoveryUsed(ctx context.Context, actionName, recoveryName string) bool {
-	// TODO(otabek@): Read action results cache and recovery usage cache.
-	// TODO(otabek@): Update recovery usage cache if response found in action results cache.
-	return false
+func (r *recoveryEngine) isRecoveryUsed(actionName, recoveryName string) bool {
+	k := recoveryUsageKey{
+		action:   actionName,
+		recovery: recoveryName,
+	}
+	// If the recovery has been used in previous actions then it can be in
+	// the action result cache.
+	if err, ok := r.actionResultsCache[recoveryName]; ok {
+		r.recoveryUsageCache[k] = err
+	}
+	_, ok := r.recoveryUsageCache[k]
+	return ok
 }
 
 // registerRecoveryUsage sets recovery action usage to the cache.
 func (r *recoveryEngine) registerRecoveryUsage(actionName, recoveryName string, err error) {
-	// TODO(otabek@): Set result to the action result cache based on run-control.
-	// TODO(otabek@): Update recovery usage cache.
+	r.recoveryUsageCache[recoveryUsageKey{
+		action:   actionName,
+		recovery: recoveryName,
+	}] = err
+}
+
+// recoveryUsageKey holds action and action's recovery name as key for recovery-usage cache.
+type recoveryUsageKey struct {
+	action   string
+	recovery string
 }

@@ -589,3 +589,83 @@ func TestCacheActionResult(t *testing.T) {
 		})
 	}
 }
+
+var isRecoveryUsageTestCases = []struct {
+	name          string
+	actionCache   []string
+	recoveryCache []recoveryUsageKey
+	used          bool
+}{
+	{
+		"not used",
+		[]string{"a", "b"},
+		[]recoveryUsageKey{
+			{
+				action:   "a",
+				recovery: "a",
+			},
+			{
+				action:   "a",
+				recovery: "b",
+			},
+			{
+				action:   "b",
+				recovery: "a",
+			},
+			{
+				action:   "b",
+				recovery: "r",
+			},
+		},
+		false,
+	},
+	{
+		"used by action result",
+		[]string{"r"},
+		nil,
+		true,
+	},
+	{
+		"used by recovery result from other action",
+		nil,
+		[]recoveryUsageKey{
+			{
+				action:   "a",
+				recovery: "r",
+			},
+		},
+		true,
+	},
+}
+
+func TestRecoveryCachePersistence(t *testing.T) {
+	t.Parallel()
+	for _, c := range isRecoveryUsageTestCases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			r := recoveryEngine{
+				plan: &planpb.Plan{
+					Actions: map[string]*planpb.Action{
+						"a": {},
+						"b": {},
+						"r": {},
+					},
+				},
+			}
+			r.initCache()
+			for _, name := range c.actionCache {
+				r.cacheActionResult(name, nil)
+			}
+			for _, k := range c.recoveryCache {
+				r.registerRecoveryUsage(k.action, k.recovery, nil)
+			}
+			if r.isRecoveryUsed("a", "r") != c.used {
+				t.Errorf("Case %q before rest: expectaton did not matche expectations: Expected: %v, Got: %v", c.name, c.used, !c.used)
+			}
+			r.resetCacheAfterSuccessfulRecoveryAction()
+			if r.isRecoveryUsed("a", "r") != c.used {
+				t.Errorf("Case %q after reset: expectaton did not matche expectations: Expected: %v, Got: %v", c.name, c.used, !c.used)
+			}
+		})
+	}
+}
