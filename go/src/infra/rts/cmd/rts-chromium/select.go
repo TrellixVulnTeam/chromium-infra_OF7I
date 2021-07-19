@@ -58,6 +58,7 @@ func cmdSelect() *subcommands.Command {
 				The target fraction of bad changes to be caught by the selection strategy.
 				It must be a value in (0.0, 1.0) range.
 			`))
+			r.Flags.BoolVar(&r.ignoreExceptions, "ignore-exceptions", false, "For debugging. Whether we should ignore exceptions.")
 			return r
 		},
 	}
@@ -72,6 +73,7 @@ type selectRun struct {
 	modelDir           string
 	out                string
 	targetChangeRecall float64
+	ignoreExceptions   bool
 
 	// Indirect input.
 

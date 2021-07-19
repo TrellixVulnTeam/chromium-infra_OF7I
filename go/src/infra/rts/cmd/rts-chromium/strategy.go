@@ -81,13 +81,15 @@ func (r *selectRun) selectTests(skipFile func(*TestFile) error) (err error) {
 	}
 
 	// Check if any of the changed files requires all tests.
-	for f := range r.changedFiles {
-		if requireAllTestsRegexp.MatchString(f) {
-			return errors.Reason(
-				"%q was changed, which matches regexp %s",
-				f,
-				requireAllTests,
-			).Tag(disableRTS).Err()
+	if !r.ignoreExceptions {
+		for f := range r.changedFiles {
+			if requireAllTestsRegexp.MatchString(f) {
+				return errors.Reason(
+					"%q was changed, which matches regexp %s",
+					f,
+					requireAllTests,
+				).Tag(disableRTS).Err()
+			}
 		}
 	}
 	r.strategy.Select(r.changedFiles.ToSlice(), func(fileName string) (keepGoing bool) {
