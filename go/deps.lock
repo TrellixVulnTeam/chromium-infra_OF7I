@@ -1,5 +1,5 @@
-hash: a25f48f2b2354d264c253331adb1bca4a6f9eeed740fbdd5994c5b05a018747f
-updated: 2021-07-19T12:57:19.283398537-04:00
+hash: 6afd723029571f37effbadf68cde516e34e78c55a7a9beb539780041a67da8d5
+updated: 2021-07-19T10:33:16.719151-07:00
 imports:
 - name: cloud.google.com/go
   version: 66fa14733af777d3835235ef31a7a51418a8d607
@@ -247,6 +247,9 @@ imports:
 - name: github.com/jmoiron/sqlx
   version: a62bc6088664eb854c3d5ebbd08a1ffd59662ef1
   repo: https://chromium.googlesource.com/external/github.com/jmoiron/sqlx.git
+- name: github.com/jordan-wright/email
+  version: 943e75fe5223047b345337ea74d5951d19d229ed
+  repo: https://chromium.googlesource.com/external/github.com/jordan-wright/email.git
 - name: github.com/json-iterator/go
   version: e6b9536d3649bda3e8842bb7e4fab489d79a97ea
   repo: https://chromium.googlesource.com/external/github.com/json-iterator/go.git

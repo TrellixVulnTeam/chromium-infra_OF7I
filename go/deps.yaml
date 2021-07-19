@@ -636,3 +636,6 @@ import:
 - package: sigs.k8s.io/yaml
   repo: https://chromium.googlesource.com/external/github.com/kubernetes-sigs/yaml.git
   version: upstream/master
+- package: github.com/jordan-wright/email
+  repo: https://chromium.googlesource.com/external/github.com/jordan-wright/email.git
+  version: upstream/master
