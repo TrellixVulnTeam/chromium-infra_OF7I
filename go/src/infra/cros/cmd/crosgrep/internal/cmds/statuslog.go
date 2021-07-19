@@ -56,7 +56,7 @@ func (c *statusLogCmd) innerRun(a subcommands.Application, args []string, env su
 	ctx = logging.SetContextVerbosity(ctx, c.Verbose())
 	bqClient, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
-		return errors.Annotate(err, "status-log: getting BigQuery client").Err()
+		return errors.Annotate(err, "status-log: getting BigQuery client with project %q", c.GetBQProject()).Err()
 	}
 	_, err = storage.NewClient(ctx)
 	if err != nil {

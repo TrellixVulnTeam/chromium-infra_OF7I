@@ -56,7 +56,7 @@ func (c *brokenByCmd) Run(a subcommands.Application, args []string, env subcomma
 func (c *brokenByCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	client, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
-		return errors.Annotate(err, "broken-by: getting bigquery client").Err()
+		return errors.Annotate(err, "broken-by: getting bigquery client with project %q", c.GetBQProject()).Err()
 	}
 	it, err := query.RunBrokenBy(
 		ctx,

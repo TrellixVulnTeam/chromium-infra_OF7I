@@ -51,7 +51,7 @@ func (c *randTaskCmd) Run(a subcommands.Application, args []string, env subcomma
 func (c *randTaskCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
 	client, err := bigquery.NewClient(ctx, c.GetBQProject())
 	if err != nil {
-		return errors.Annotate(err, "rand-task: getting BigQuery client").Err()
+		return errors.Annotate(err, "rand-task: getting BigQuery client for project %q", c.GetBQProject()).Err()
 	}
 	it, err := query.RunRandTaskQuery(
 		ctx,
