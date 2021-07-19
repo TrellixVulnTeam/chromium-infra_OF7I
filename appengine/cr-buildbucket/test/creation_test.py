@@ -407,6 +407,7 @@ class CreationTest(testing.AppengineTestCase):
             '-chromium.exp_foo',
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
+            '-' + experiments.RECIPE_PY3,
             '-' + experiments.USE_REALMS,
         ]
     )
@@ -431,6 +432,7 @@ class CreationTest(testing.AppengineTestCase):
             '-chromium.exp_bar',
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
+            '-' + experiments.RECIPE_PY3,
             '-' + experiments.USE_REALMS,
         ]
     )

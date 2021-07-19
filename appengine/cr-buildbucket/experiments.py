@@ -7,12 +7,14 @@ import re
 # Names of well-known experiments
 CANARY = 'luci.buildbucket.canary_software'
 NON_PROD = 'luci.non_production'
+RECIPE_PY3 = 'luci.recipes.use_python3'
 USE_BBAGENT = 'luci.buildbucket.use_bbagent'
 USE_REALMS = 'luci.use_realms'
 
 WELL_KNOWN = frozenset([
     CANARY,
     NON_PROD,
+    RECIPE_PY3,
     USE_BBAGENT,
     USE_REALMS,
 ])
