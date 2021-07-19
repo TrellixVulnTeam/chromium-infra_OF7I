@@ -143,7 +143,14 @@ func TestLoadConfiguration(t *testing.T) {
 	for _, c := range testCases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
+			// t.Parallel() Test cannot be parallel because it modifies a global variable.
+			oldExecsExist := execsExist
+			execsExist = func(string) bool {
+				return true
+			}
+			defer func() {
+				execsExist = oldExecsExist
+			}()
 			cr := strings.NewReader(c.got)
 			config, err := LoadConfiguration(ctx, cr)
 			if err != nil {

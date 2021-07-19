@@ -35,3 +35,9 @@ func Run(ctx context.Context, name string, args *RunArgs) error {
 	}
 	return e(ctx, args)
 }
+
+// Exist check if exec function with name is present.
+func Exist(name string) bool {
+	_, ok := execMap[name]
+	return ok
+}
