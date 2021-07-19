@@ -239,7 +239,8 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	}
 	j, err := c.ScheduleJob(ctx, &proto.ScheduleJobRequest{Job: js})
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to ScheduleJob").Err()
+		job_debug := fmt.Sprintf("Bot: %s Benchmark: %s Story: %s StoryTags: %s", bot_cfg, benchmark, story, storyTags)
+		return nil, errors.Annotate(err, "failed to ScheduleJob for "+job_debug).Err()
 	}
 	jobURL, err := render.JobURL(j)
 	if err != nil {
