@@ -2,7 +2,7 @@
 [is cue "privacy_click_through"][define show_code_of_conduct]True[end][end]
 [is cue "code_of_conduct"][define show_code_of_conduct]True[end][end]
 
-[define code_of_conduct_url]https://chromium.googlesource.com/chromium/src/+/master/CODE_OF_CONDUCT.md[end]
+[define code_of_conduct_url]https://chromium.googlesource.com/chromium/src/+/main/CODE_OF_CONDUCT.md[end]
 [is projectname "fuchsia"]
   [define code_of_conduct_url]https://fuchsia.dev/fuchsia-src/CODE_OF_CONDUCT[end]
 [end]

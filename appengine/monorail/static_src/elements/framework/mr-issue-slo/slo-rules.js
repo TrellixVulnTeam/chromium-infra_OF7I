@@ -38,7 +38,7 @@ export const SloCompletionStatus = {
  * Chrome OS Software's SLO for issue closure (go/chromeos-software-bug-slos).
  *
  * Implementation based on the queries defined in Sheriffbot
- * https://team.git.corp.google.com/clusterfuzz-team/sheriffbot/+/refs/heads/master/src/sheriffbot/bug_slo_daily_queries.py
+ * https://chrome-internal.googlesource.com/infra/infra_internal/+/refs/heads/main/appengine/sheriffbot/src/sheriffbot/bug_slo_daily_queries.py
  *
  * @const {SloRule}
  * @private Only visible for testing.
@@ -94,7 +94,7 @@ export const _CROS_CLOSURE_SLO_DAYS_BY_PRIORITY = Object.freeze({
   '1': 42,
 });
 
-// https://team.git.corp.google.com/clusterfuzz-team/sheriffbot/+/refs/heads/master/src/sheriffbot/bug_slo_daily_queries.py#97
+// https://chrome-internal.googlesource.com/infra/infra_internal/+/refs/heads/main/appengine/sheriffbot/src/sheriffbot/bug_slo_daily_queries.py#97
 const CROS_ELIGIBLE_COMPONENT_PATHS = new Set([
   'OS>Systems>CrashReporting',
   'OS>Systems>Displays',

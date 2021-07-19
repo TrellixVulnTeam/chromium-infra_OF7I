@@ -162,7 +162,7 @@ export class MrCue extends connectStore(LitElement) {
       return 'https://fuchsia.dev/fuchsia-src/CODE_OF_CONDUCT';
     }
     return ('https://chromium.googlesource.com/' +
-            'chromium/src/+/master/CODE_OF_CONDUCT.md');
+            'chromium/src/+/main/CODE_OF_CONDUCT.md');
   }
 
   /** @override */
