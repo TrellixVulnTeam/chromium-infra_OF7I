@@ -261,9 +261,13 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 // Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
 // the chunks for the projectId. Each chunk contains at most 100 bugID.
 // Monorail only returns a maximum of 100 bugs at a time, so we need to break queries into chunks.
-func createProjectChunksMapping(bugs []model.MonorailBug, chunkSize int) map[string][][]string {
+// Note: Buganizer bugs will be filtered out
+func createMonorailProjectChunksMapping(bugs []model.MonorailBug, chunkSize int) map[string][][]string {
 	projectIDToBugIDMap := make(map[string][]string)
 	for _, bug := range bugs {
+		if bug.ProjectID == "b" { // Do not query buganizer bugs in Monorail
+			continue
+		}
 		if bugList, ok := projectIDToBugIDMap[bug.ProjectID]; ok {
 			projectIDToBugIDMap[bug.ProjectID] = append(bugList, bug.BugID)
 		} else {
@@ -352,7 +356,7 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 	}
 
 	allBugs = filterDuplicateBugs(allBugs)
-	projectChunkMap := createProjectChunksMapping(allBugs, maxMonorailQuerySize)
+	projectChunkMap := createMonorailProjectChunksMapping(allBugs, maxMonorailQuerySize)
 	reqs := createSearchIssueRequests(c, projectChunkMap)
 	m := make(map[string]*monorailv3.Issue)
 	lock := sync.Mutex{}

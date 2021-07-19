@@ -119,9 +119,13 @@ func TestCreateProjectChunksMapping(t *testing.T) {
 				BugID:     "bug_5",
 				ProjectID: "project_1",
 			},
+			{
+				BugID:     "bug_6",
+				ProjectID: "b",
+			},
 		}
 
-		result := createProjectChunksMapping(bugs, 100)
+		result := createMonorailProjectChunksMapping(bugs, 100)
 		So(
 			result,
 			ShouldResemble,
@@ -132,7 +136,7 @@ func TestCreateProjectChunksMapping(t *testing.T) {
 			},
 		)
 
-		result = createProjectChunksMapping(bugs, 2)
+		result = createMonorailProjectChunksMapping(bugs, 2)
 		So(
 			result,
 			ShouldResemble,
