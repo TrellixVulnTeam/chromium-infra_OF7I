@@ -1,8 +1,8 @@
 hash: e82b7bf5f89a0ba4b61f437b56f4024f370a4ef5587a80d0fa79ede736490b75
-updated: 2021-07-19T12:36:22.067014951+09:00
+updated: 2021-07-13T13:05:48.389932-07:00
 imports:
 - name: cloud.google.com/go
-  version: 8f3275c8ca368c5d765bf66d3e3310f9300007f1
+  version: 209c465d38acb3e9a2552b509f80c1829a7c1ba7
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigquery
@@ -24,7 +24,7 @@ imports:
   version: 9d38b0be0268a8e22ac38014c30aabfa23243ab7
   repo: https://chromium.googlesource.com/external/github.com/andygrunwald/go-gerrit.git
 - name: github.com/antlr/antlr4
-  version: a231a1a7f1cc9c8cf9bc97c65ccce61e0509f35a
+  version: a80295a60b3ec63dbdc2f28d5600eaf0017cb7f7
   repo: https://chromium.googlesource.com/external/github.com/antlr/antlr4.git
   subpackages:
   - runtime/Go/antlr
@@ -35,10 +35,10 @@ imports:
   version: 4890966c38b910fd5bd1ad78a3dd88538d09854f
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
-  version: 0ecef08215cf8ae2f992d2861a8f91a8ef89acc2
+  version: 3e385366f152e99adda5ab5e4857b1ab221ba2fe
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 1cec173a5bf76c02f435050d6fc9a02e1ccea637
+  version: d965bf95d0af9d88d90e9723aee6b332dc3ef93e
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -72,7 +72,7 @@ imports:
   subpackages:
   - '...'
 - name: github.com/chromedp/chromedp
-  version: f8d4df0d2eaaac13e5aade351ec900406f26cf32
+  version: e43a19294d5a396bb88956dd98c9af542db7bac8
   repo: https://chromium.googlesource.com/external/github.com/chromedp/chromedp.git
 - name: github.com/chzyer/readline
   version: 2972be24d48e78746da79ba8e24e8b488c9880de
@@ -99,7 +99,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/dgraph-io/badger/v3
-  version: eee0591c9e2ce12d82e041c9206a5073b1c915e9
+  version: bcccb26b5fa2699e0e31d52d96cb8a7ba44d7284
   repo: https://chromium.googlesource.com/external/github.com/dgraph-io/badger.git
 - name: github.com/dgraph-io/ristretto
   version: 01b9f37dd0fd453225e042d6f3a27cd14f252cd0
@@ -128,7 +128,7 @@ imports:
   version: fa01fcca8640d661015d7cfbf691f48830fba115
   repo: https://chromium.googlesource.com/external/github.com/go-ole/go-ole.git
 - name: github.com/go-sql-driver/mysql
-  version: e8f8fcdbd3e06fc74b6cf745c13eaebedff68c49
+  version: 75d09acc46ea1a7074058d31da50293052248047
   repo: https://chromium.googlesource.com/external/github.com/go-sql-driver/mysql.git
 - name: github.com/gogo/protobuf
   version: 226206f39bd7276e88ec684ea0028c18ec2c91ae
@@ -166,7 +166,7 @@ imports:
   version: 385dcdcbc4865cb64aa953c12d7549615cb5fd03
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
 - name: github.com/google/flatbuffers
-  version: dd5bb55cad8f75162a5a43dfb2eac8bcac3ccd55
+  version: 0980e39c9b99659cfd17e8fa33e00a3177345029
   repo: https://chromium.googlesource.com/external/github.com/google/flatbuffers.git
 - name: github.com/google/go-cmp
   version: d103655696d8ae43c4125ee61454dbf03d8e8324
@@ -180,7 +180,7 @@ imports:
   version: db92cf7ae75e4a7a28abc005addab2b394362888
   repo: https://chromium.googlesource.com/external/github.com/google/gofuzz.git
 - name: github.com/google/pprof
-  version: 86eeefc3e4714e359ff19990b871874910636148
+  version: a478d1d731e942fbe69291748caafefe749a19ea
   repo: https://chromium.googlesource.com/external/github.com/google/pprof.git
   subpackages:
   - profile
@@ -474,7 +474,7 @@ imports:
   version: 1cdb82c9e17a3e18b5067713955f174b08776f8b
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 1fc0f0684de46d44b59eeb84fbb45c1fa229d922
+  version: 1e8f54ee4ce37fb547fc85566a06e84448fe03ad
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -530,7 +530,7 @@ imports:
   version: 38a9dc6acbc6efd7758b7376c52f89090df822bd
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 6e9046bfcd34178dc116189817430a2ad1ee7b43
+  version: 8e85a283cd8fafe9c1d8213076c09906f100482e
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -551,7 +551,7 @@ imports:
   subpackages:
   - stat
 - name: google.golang.org/api
-  version: ce146d9d069f4ccf74532ee4793995469f85ce68
+  version: 8dd3e112c022bfedbf7d074f5c80a76c67fd7b3d
   repo: https://chromium.googlesource.com/external/github.com/google/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -581,13 +581,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: ce7ef5c701ead31e54779ac1ce54cdee9fabd707
+  version: d411969a0d9aa0432e58283cdb3f860cbe50c8a5
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: ce7bdf50abb1f7c7a5ba1a54890e6dac46eb87f7
+  version: ebfe3be62a82434bc83fd7b36410141a603a96be
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
