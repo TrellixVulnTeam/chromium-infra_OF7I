@@ -1,0 +1,9 @@
+name: luci/mailer
+extends: ../../base.yaml
+
+contextdir: ../../../../go/src/go.chromium.org/luci/mailer/cmd/mailer/docker
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/mailer/cmd/mailer
+    dest: ${contextdir}/bin/mailer
