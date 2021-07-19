@@ -17,8 +17,10 @@ import (
 	"infra/cros/recovery/internal/planpb"
 )
 
-// LoadConfiguration performs loading the configuration source with data validation.
 // TODO(otabek@): Add data validation for loaded config.
+// 1) Looping actions
+
+// LoadConfiguration performs loading the configuration source with data validation.
 func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration, error) {
 	log.Debug(ctx, "Load configuration: started.")
 	if r == nil {
@@ -35,14 +37,28 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
-	// TODO(otabek@): Verify only critical action can have recovery actions.
 	for _, p := range config.GetPlans() {
+		createMissingActions(p, p.GetCriticalActions())
+		for _, a := range p.GetActions() {
+			createMissingActions(p, a.GetConditions())
+			createMissingActions(p, a.GetDependencies())
+			createMissingActions(p, a.GetRecoveryActions())
+		}
 		if err := setAndVerifyExecs(p); err != nil {
 			return nil, errors.Annotate(err, "load configuration").Err()
 		}
 	}
 	log.Debug(ctx, "Load configuration: finished successfully.")
 	return &config, nil
+}
+
+// createMissingActions creates missing actions to the plan.
+func createMissingActions(p *planpb.Plan, actions []string) {
+	for _, a := range actions {
+		if _, ok := p.GetActions()[a]; !ok {
+			p.GetActions()[a] = &planpb.Action{}
+		}
+	}
 }
 
 // execsExist is link to the function to check if exec function is present.

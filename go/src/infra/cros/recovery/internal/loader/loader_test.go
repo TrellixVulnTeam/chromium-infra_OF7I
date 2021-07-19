@@ -48,7 +48,8 @@ var testCases = []struct {
 			"plans":{
 				"full": {
 					"critical_actions": [
-					  "a1-full"
+					  "a1-full",
+					  "missing_critical_action"
 					],
 					"actions": {
 						"a1-full": {
@@ -88,47 +89,44 @@ var testCases = []struct {
 					AllowFail: true,
 					CriticalActions: []string{
 						"a1-full",
+						"missing_critical_action",
 					},
 					Actions: map[string]*planpb.Action{
 						"a1-full": {
 							ExecName:               "a1",
 							Conditions:             []string{"c1", "c2"},
 							Dependencies:           []string{"d1"},
-							ExecTimeout:            nil,
-							ExecExtraArgs:          []string{},
 							RecoveryActions:        []string{"r2"},
 							AllowFailAfterRecovery: true,
 							RunControl:             planpb.RunControl_RUN_ONCE,
 						},
+						"c1": {
+							ExecName: "c1",
+						},
+						"c2": {
+							ExecName: "c2",
+						},
 						"d1": {
-							ExecName:               "d1-exec",
-							Conditions:             []string{},
-							Dependencies:           []string{"d2"},
-							ExecTimeout:            nil,
-							ExecExtraArgs:          []string{},
-							RecoveryActions:        []string{"r1"},
-							AllowFailAfterRecovery: false,
-							RunControl:             planpb.RunControl_RERUN_AFTER_RECOVERY,
+							ExecName:        "d1-exec",
+							Dependencies:    []string{"d2"},
+							ExecTimeout:     nil,
+							RecoveryActions: []string{"r1"},
 						},
 						"d2": {
 							ExecName:               "d2-exec",
-							Conditions:             []string{},
-							Dependencies:           []string{},
-							ExecTimeout:            nil,
-							ExecExtraArgs:          []string{},
-							RecoveryActions:        []string{},
 							AllowFailAfterRecovery: true,
-							RunControl:             planpb.RunControl_RERUN_AFTER_RECOVERY,
+						},
+						"r1": {
+							ExecName: "r1",
 						},
 						"r2": {
-							ExecName:               "r2-exec",
-							Conditions:             []string{},
-							Dependencies:           []string{"d2"},
-							ExecTimeout:            &durationpb.Duration{Seconds: 1000},
-							ExecExtraArgs:          []string{},
-							RecoveryActions:        []string{},
-							AllowFailAfterRecovery: false,
-							RunControl:             planpb.RunControl_ALWAYS_RUN,
+							ExecName:     "r2-exec",
+							Dependencies: []string{"d2"},
+							ExecTimeout:  &durationpb.Duration{Seconds: 1000},
+							RunControl:   planpb.RunControl_ALWAYS_RUN,
+						},
+						"missing_critical_action": {
+							ExecName: "missing_critical_action",
 						},
 					},
 				},
