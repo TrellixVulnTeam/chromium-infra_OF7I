@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 
+from . import build_platform
 from . import concurrency
 from . import util
 
@@ -274,8 +275,8 @@ def HostCipdPlatform():
   cross-compiled.
   """
 
-  ARM64_MACHINES = {'aarch64_be', 'aarch64', 'armv8b', 'armv8l'}
-  system, machine = platform.system(), platform.machine()
+  ARM64_MACHINES = {'aarch64_be', 'aarch64', 'armv8b', 'armv8l', 'arm64'}
+  system, machine = platform.system(), build_platform.NativeMachine()
 
   # Note that we don't need to match all possible values or combinations of
   # 'system' and 'machine', only the ones we actually have Python interpreters

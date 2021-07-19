@@ -151,7 +151,9 @@ SPECS.update({
                 'windows-x64',
             ],
             pyversions=['py2', 'py3'],
-            skip_plat=['mac-x64-cp38'],
+            # To build this on mac-arm64, we would need to supply the
+            # arm64 cffi wheel.
+            skip_plat=['mac-x64-cp38', 'mac-arm64', 'mac-arm64-cp38'],
         ),
         SourceOrPrebuilt(
             'cffi',
@@ -253,7 +255,7 @@ SPECS.update({
                 'manylinux-x64-py3.9',
                 'windows-x64-py3',
                 'mac-x64-cp38',
-                'mac-arm64-cp38',
+                # 'mac-arm64-cp38',  Needs cffi to build
             ],
             pyversions=['py3'],
         ),
@@ -418,6 +420,7 @@ SPECS.update({
             skip_plat=[
                 'manylinux-x64-py3.9',
                 'mac-x64-cp38',
+                'mac-arm64-cp38',
                 'windows-x86-py3',
                 'windows-x64-py3',
             ],
@@ -440,6 +443,7 @@ SPECS.update({
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
             pyversions=['py2'],
+            skip_plat=['mac-arm64'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -451,6 +455,7 @@ SPECS.update({
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             packaged=['windows-x86', 'windows-x64'],
             pyversions=['py2'],
+            skip_plat=['mac-arm64'],
         ),
         SourceOrPrebuilt(
             'psutil',
@@ -463,6 +468,7 @@ SPECS.update({
             packaged=['windows-x86', 'windows-x64'],
             skip_plat=[
                 'linux-arm64-py3',
+                'mac-arm64',
                 'manylinux-x64-py3',
                 'manylinux-x64-py3.9',
             ],
@@ -1717,7 +1723,7 @@ SPECS.update({
                     ]
                 ]
             ]),
-            only_plat=['mac-x64-cp38', 'mac-arm64-cp38'],
+            only_plat=['mac-x64-cp38'],
             pyversions=['py3'],
         ),
     )

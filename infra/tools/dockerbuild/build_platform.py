@@ -4,6 +4,7 @@
 
 import collections
 import platform
+import subprocess
 import sys
 
 
@@ -329,10 +330,35 @@ ALL = {
         ),
     )
 }
+
+
+# Detect whether we're on an ARM64 Mac running emulated x86_64 Python.
+# In this situation, we still consider ARM64 the native platform.
+def _CheckTranslated():
+  if sys.platform != 'darwin':
+    return False
+
+  try:
+    output = subprocess.check_output(
+        ["/usr/sbin/sysctl", "-n", "sysctl.proc_translated"])
+    return output[0] == '1'
+  except subprocess.CalledProcessError:
+    # The call will fail on x86_64 Macs.
+    return False
+
+
 NAMES = sorted(ALL.keys())
 PACKAGED = [p for p in ALL.itervalues() if p.packaged]
 ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
 UNIVERSAL = [p.name for p in ALL.itervalues() if 'universal' in p.name]
+_IS_TRANSLATED = _CheckTranslated()
+
+
+def NativeMachine():
+  machine = platform.machine()
+  if sys.platform == 'darwin' and machine == 'x86_64' and _IS_TRANSLATED:
+    machine = 'arm64'
+  return machine
 
 
 def NativePlatforms():
@@ -341,10 +367,9 @@ def NativePlatforms():
 
   # Identify our native platforms.
   if sys.platform == 'darwin':
-    if platform.machine() == 'x86_64':
-      return plats + [ALL['mac-x64'], ALL['mac-x64-cp38']]
-    elif platform.machine() == 'arm64':
-      return plats + [ALL['mac-arm64'], ALL['mac-arm64-cp38']]
+    arch = {'x86_64': 'x64', 'arm64': 'arm64'}[NativeMachine()]
+    plat_name = 'mac-%s' % arch
+    return plats + [ALL[plat_name], ALL[plat_name + '-cp38']]
   elif sys.platform == 'win32':
     return plats + [
         ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
@@ -355,4 +380,4 @@ def NativePlatforms():
     # non-universal platforms natively.
     return plats
   raise ValueError('Cannot identify native image for %r-%r.' %
-                   (sys.platform, platform.machine()))
+                   (sys.platform, machine))

@@ -5,8 +5,8 @@
 import os
 
 from .build_types import Spec
-from .builder import (Builder, BuildPackageFromPyPiWheel, StageWheelForPackage,
-                      SetupPythonPackages)
+from .builder import (Builder, BuildPackageFromPyPiWheel, HostCipdPlatform,
+                      StageWheelForPackage, SetupPythonPackages)
 
 from . import source
 from . import util
@@ -114,8 +114,12 @@ class Cryptography(Builder):
           vpython_spec = '.vpython3'
         py_binary += ' %s' % interpreter_flag
 
+        # Work around the fact that we may be running an emulated vpython
+        # with a native python interpreter.
+        vpython_platform = '%s_${py_python}_${py_abi}' % HostCipdPlatform()
+
         with open(os.path.join(crypt_dir, vpython_spec), 'w') as spec:
-          for name, version in [('cffi/${vpython_platform}', '1.14.5'),
+          for name, version in [('cffi/%s' % vpython_platform, '1.14.5'),
                                 ('pycparser-py2_py3', '2.17')]:
             spec.write('wheel: <\n')
             spec.write('  name: "infra/python/wheels/%s"\n' % name)
