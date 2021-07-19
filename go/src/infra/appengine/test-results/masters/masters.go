@@ -8,6 +8,10 @@ package masters
 // Known is the list of known masters.
 var Known = []*Master{
 	{
+		Name:       "ANGLE",
+		Identifier: "angle",
+	},
+	{
 		Name:       "ChromiumAndroid",
 		Identifier: "chromium.android",
 	},
