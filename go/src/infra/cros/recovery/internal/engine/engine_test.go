@@ -169,6 +169,25 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	r := recoveryEngine{
+		plan: &planpb.Plan{
+			CriticalActions: []string{"a"},
+			Actions: map[string]*planpb.Action{
+				"a": {},
+			},
+		},
+	}
+	r.initCache()
+	r.cacheActionResult("a", nil)
+	err := r.runPlan(ctx)
+	if err != nil {
+		t.Errorf("Expected plan pass as single action cached with result=nil. Received error: %s", err)
+	}
+}
+
 var recoveryTestCases = []struct {
 	name         string
 	got          map[string]*planpb.Action
@@ -230,6 +249,7 @@ func TestRunRecovery(t *testing.T) {
 					Actions: c.got,
 				},
 			}
+			r.initCache()
 			err := r.runRecoveries(ctx, "a")
 			if c.expStartOver {
 				if !startOverTag.In(err) {
@@ -320,6 +340,7 @@ func TestActionExec(t *testing.T) {
 					Actions: c.got,
 				},
 			}
+			r.initCache()
 			err := r.runActionExec(ctx, "a", c.canUseRecovery)
 			if c.expError && c.expStartOver {
 				if !startOverTag.In(err) {
@@ -332,6 +353,237 @@ func TestActionExec(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("Case %q expected to receive nil. Received error: %s", c.name, err)
+				}
+			}
+		})
+	}
+}
+
+var actionResultsCacheTestCases = []struct {
+	name       string
+	got        map[string]*planpb.Action
+	expInCashe bool
+	expError   bool
+}{
+	{
+		"set pass to the cache",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName: exec_pass,
+			},
+		},
+		true,
+		false,
+	},
+	{
+		"do not set pass to the cache when run_control:run_always",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName:   exec_pass,
+				RunControl: planpb.RunControl_ALWAYS_RUN,
+			},
+		},
+		false,
+		false,
+	},
+	{
+		"set fail to the cache",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName: exec_fail,
+			},
+		},
+		true,
+		true,
+	},
+	{
+		"do not set if recovery finished with success",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName:        exec_fail,
+				RecoveryActions: []string{"r"},
+			},
+			"r": {
+				ExecName: exec_pass,
+			},
+		},
+		false,
+		false,
+	},
+	{
+		"set fail when all recoveries failed",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName:        exec_fail,
+				RecoveryActions: []string{"r"},
+			},
+			"r": {
+				ExecName: exec_fail,
+			},
+		},
+		true,
+		true,
+	},
+	{
+		"do not set pass to cache when all recoveries failed and action has run_control:run_always",
+		map[string]*planpb.Action{
+			"a": {
+				ExecName:        exec_fail,
+				RecoveryActions: []string{"r"},
+				RunControl:      planpb.RunControl_ALWAYS_RUN,
+			},
+			"r": {
+				ExecName: exec_fail,
+			},
+		},
+		false,
+		false,
+	},
+}
+
+func TestActionExecCache(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	for _, c := range actionResultsCacheTestCases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			r := recoveryEngine{
+				plan: &planpb.Plan{
+					Actions: c.got,
+				},
+			}
+			r.initCache()
+			r.runActionExec(ctx, "a", true)
+			err, ok := r.actionResultFromCache("a")
+			if c.expInCashe {
+				if !ok {
+					t.Errorf("Case %q: action result in not in the cache", c.name)
+				}
+				if c.expError && err == nil {
+					t.Errorf("Case %q: expected has error as action result but got nil", c.name)
+				} else if !c.expError && err != nil {
+					t.Errorf("Case %q: expected do not have error as action result but got it: %s", c.name, err)
+				}
+			} else {
+				if ok {
+					t.Errorf("Case %q: does not expected result in the cache", c.name)
+				}
+			}
+		})
+	}
+}
+
+var resetCacheTestCases = []struct {
+	name    string
+	got     map[string]planpb.RunControl
+	present []string
+	removed []string
+}{
+	{
+		"clean all",
+		map[string]planpb.RunControl{
+			"a1": planpb.RunControl_RERUN_AFTER_RECOVERY,
+			"a2": planpb.RunControl_RERUN_AFTER_RECOVERY,
+			"a3": planpb.RunControl_RERUN_AFTER_RECOVERY,
+			"a4": planpb.RunControl_RERUN_AFTER_RECOVERY,
+		},
+		nil,
+		[]string{"a1", "a2", "a3", "a4"},
+	},
+	{
+		"partially clean up",
+		map[string]planpb.RunControl{
+			"a1": planpb.RunControl_RUN_ONCE,
+			"a2": planpb.RunControl_RUN_ONCE,
+			"a3": planpb.RunControl_RERUN_AFTER_RECOVERY,
+			"a4": planpb.RunControl_RERUN_AFTER_RECOVERY,
+		},
+		[]string{"a1", "a2"},
+		[]string{"a3", "a4"},
+	},
+}
+
+func TestResetCacheAfterSuccessfulRecoveryAction(t *testing.T) {
+	t.Parallel()
+	for _, c := range resetCacheTestCases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			actions := make(map[string]*planpb.Action)
+			for name, rc := range c.got {
+				actions[name] = &planpb.Action{
+					RunControl: rc,
+				}
+			}
+			r := recoveryEngine{
+				plan: &planpb.Plan{
+					Actions: actions,
+				},
+			}
+			r.initCache()
+			for name := range c.got {
+				r.cacheActionResult(name, nil)
+			}
+			r.resetCacheAfterSuccessfulRecoveryAction()
+			for _, name := range c.present {
+				if _, ok := r.actionResultFromCache(name); !ok {
+					t.Errorf("Case %q: expected to have result for action %q in the cache", c.name, name)
+				}
+			}
+			for _, name := range c.removed {
+				if _, ok := r.actionResultFromCache(name); ok {
+					t.Errorf("Case %q: not expected to have result for action %q in the cache", c.name, name)
+				}
+			}
+		})
+	}
+}
+
+var setCacheTestCases = []struct {
+	name string
+	got  planpb.RunControl
+	exp  bool
+}{
+	{
+		"run once",
+		planpb.RunControl_RUN_ONCE,
+		true,
+	},
+	{
+		"rerun after recovery",
+		planpb.RunControl_RERUN_AFTER_RECOVERY,
+		true,
+	},
+	{
+		"always run",
+		planpb.RunControl_ALWAYS_RUN,
+		false,
+	},
+}
+
+func TestCacheActionResult(t *testing.T) {
+	t.Parallel()
+	for _, c := range setCacheTestCases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			r := recoveryEngine{
+				plan: &planpb.Plan{
+					Actions: map[string]*planpb.Action{
+						"a": {
+							RunControl: c.got,
+						},
+					},
+				},
+			}
+			r.initCache()
+			r.cacheActionResult("a", nil)
+			_, ok := r.actionResultFromCache("a")
+			if c.exp {
+				if !ok {
+					t.Errorf("Case %q: expected to have result but not present in cache", c.name)
+				}
+			} else {
+				if ok {
+					t.Errorf("Case %q: not expected to have result but present in cache", c.name)
 				}
 			}
 		})
