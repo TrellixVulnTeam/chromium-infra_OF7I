@@ -123,16 +123,19 @@ func testInitialize(t *testing.T, config *Config) {
 }
 
 func TestInitialize_simple(t *testing.T) {
+	t.Parallel()
 	testInitialize(t, &simpleHarnessConfig)
 }
 
 // Test that a project with a multi-level name (e.g. foo/bar) is properly
 // created in the appropriate remote.
 func TestInitialize_multilevelProject(t *testing.T) {
+	t.Parallel()
 	testInitialize(t, &multilevelProjectHarnessConfig)
 }
 
 func TestInitialize_badRevision(t *testing.T) {
+	t.Parallel()
 	harnessConfig := Config{
 		Manifest: repo.Manifest{
 			Projects: []repo.Project{
@@ -151,6 +154,7 @@ func TestInitialize_badRevision(t *testing.T) {
 }
 
 func TestInitializeNoRemotes(t *testing.T) {
+	t.Parallel()
 	config := &Config{
 		Manifest: repo.Manifest{
 			Projects: []repo.Project{
@@ -165,6 +169,7 @@ func TestInitializeNoRemotes(t *testing.T) {
 }
 
 func TestInitializeDefaultDefault(t *testing.T) {
+	t.Parallel()
 	config := &Config{
 		Manifest: repo.Manifest{
 			Remotes: []repo.Remote{
@@ -181,6 +186,7 @@ func TestInitializeDefaultDefault(t *testing.T) {
 }
 
 func TestCreateRemoteRef(t *testing.T) {
+	t.Parallel()
 	root, err := ioutil.TempDir("", "create_remote_ref_test")
 	defer os.RemoveAll(root)
 	assert.NilError(t, err)
@@ -230,6 +236,7 @@ func TestCreateRemoteRef(t *testing.T) {
 }
 
 func TestAddFiles_simple(t *testing.T) {
+	t.Parallel()
 	harnessConfig := simpleHarnessConfig
 	harness := &RepoHarness{}
 	defer harness.Teardown()
@@ -275,6 +282,7 @@ func TestAddFiles_simple(t *testing.T) {
 // Creating a file in a branch other than main
 // Creating a nested file (e.g. a/b/c.txt)
 func TestAddFile(t *testing.T) {
+	t.Parallel()
 	harnessConfig := simpleHarnessConfig
 	harness := &RepoHarness{}
 	defer harness.Teardown()
@@ -417,9 +425,13 @@ func TestCheckout(t *testing.T) {
 	checkout2, err := harness.Checkout(manifestProject, "main", "default.xml")
 	assert.NilError(t, err)
 	assert.StringsEqual(t, checkout1, checkout2)
+
+	// Set command runner back to the real one. Most tests in this package do not mock repo.
+	repo.CommandRunnerImpl = cmd.RealCommandRunner{}
 }
 
 func TestReadFile(t *testing.T) {
+	t.Parallel()
 	harnessConfig := simpleHarnessConfig
 	harness := &RepoHarness{}
 	defer harness.Teardown()
@@ -446,6 +458,7 @@ func TestReadFile(t *testing.T) {
 }
 
 func TestTeardown(t *testing.T) {
+	t.Parallel()
 	// Pretend that harness has been initialized and harness root has been created.
 	tmpDir := "harness_root"
 	tmpDir, err := ioutil.TempDir("", tmpDir)
@@ -466,6 +479,7 @@ func TestTeardown(t *testing.T) {
 }
 
 func TestGetRemotePath(t *testing.T) {
+	t.Parallel()
 	harness := &RepoHarness{
 		harnessRoot: "foo/",
 	}
@@ -559,6 +573,7 @@ func checkFooBarBaz(t *testing.T, root, bazContents string) {
 }
 
 func TestSnapshot(t *testing.T) {
+	t.Parallel()
 	root, err := ioutil.TempDir("", "assert_test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(root)
@@ -580,6 +595,7 @@ func TestSnapshot(t *testing.T) {
 }
 
 func TestSnapshotRemotes(t *testing.T) {
+	t.Parallel()
 	config := simpleHarnessConfig
 	r := &RepoHarness{}
 	defer r.Teardown()
@@ -598,6 +614,7 @@ func TestSnapshotRemotes(t *testing.T) {
 }
 
 func TestAssertProjectBranchEqual(t *testing.T) {
+	t.Parallel()
 	root, err := ioutil.TempDir("", "assert_test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(root)
@@ -633,6 +650,7 @@ func TestAssertProjectBranchEqual(t *testing.T) {
 }
 
 func TestAssertProjectBranchHasAncestor(t *testing.T) {
+	t.Parallel()
 	root, err := ioutil.TempDir("", "assert_test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(root)

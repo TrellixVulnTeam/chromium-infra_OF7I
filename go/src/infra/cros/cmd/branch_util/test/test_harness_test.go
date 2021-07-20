@@ -77,10 +77,12 @@ func testInitialize(t *testing.T, config *CrosRepoHarnessConfig) {
 }
 
 func TestInitializeSimple(t *testing.T) {
+	t.Parallel()
 	testInitialize(t, &DefaultCrosHarnessConfig)
 }
 
 func TestInitializeAllProjectTypes(t *testing.T) {
+	t.Parallel()
 	config := &CrosRepoHarnessConfig{
 		Manifest:       testManifest,
 		VersionProject: "chromiumos/version",
@@ -89,6 +91,7 @@ func TestInitializeAllProjectTypes(t *testing.T) {
 }
 
 func TestInitialize_badVersionProject(t *testing.T) {
+	t.Parallel()
 	config := &CrosRepoHarnessConfig{
 		Manifest:       testManifest,
 		VersionProject: "bogus",
@@ -100,6 +103,7 @@ func TestInitialize_badVersionProject(t *testing.T) {
 }
 
 func TestSetVersion(t *testing.T) {
+	t.Parallel()
 	config := DefaultCrosHarnessConfig
 	r := &CrosRepoHarness{}
 	defer r.Teardown()
@@ -134,6 +138,7 @@ func TestSetVersion(t *testing.T) {
 }
 
 func TestAssertCrosBranches_true(t *testing.T) {
+	t.Parallel()
 	manifest := testManifest
 	config := &CrosRepoHarnessConfig{
 		Manifest:       manifest,
@@ -162,6 +167,7 @@ func TestAssertCrosBranches_true(t *testing.T) {
 }
 
 func TestAssertCrosBranches_false(t *testing.T) {
+	t.Parallel()
 	manifest := testManifest
 	config := &CrosRepoHarnessConfig{
 		Manifest:       manifest,
@@ -184,6 +190,7 @@ func TestAssertCrosBranches_false(t *testing.T) {
 }
 
 func TestAssertCrosBranchFromManifest_true(t *testing.T) {
+	t.Parallel()
 	manifest := testManifest
 	config := &CrosRepoHarnessConfig{
 		Manifest:       manifest,
@@ -210,6 +217,7 @@ func TestAssertCrosBranchFromManifest_true(t *testing.T) {
 }
 
 func TestAssertCrosBranchFromManifest_false(t *testing.T) {
+	t.Parallel()
 	manifest := testManifest
 	config := &CrosRepoHarnessConfig{
 		Manifest:       manifest,
@@ -239,6 +247,7 @@ func TestAssertCrosBranchFromManifest_false(t *testing.T) {
 }
 
 func TestAssertCrosVersion(t *testing.T) {
+	t.Parallel()
 	config := DefaultCrosHarnessConfig
 	r := &CrosRepoHarness{}
 	defer r.Teardown()
@@ -262,6 +271,7 @@ func TestAssertCrosVersion(t *testing.T) {
 }
 
 func TestAssertNoDefaultRevisions(t *testing.T) {
+	t.Parallel()
 	manifest := repo.Manifest{
 		Default: repo.Default{},
 		Remotes: []repo.Remote{
@@ -290,6 +300,7 @@ func TestAssertNoDefaultRevisions(t *testing.T) {
 }
 
 func TestAssertProjectRevisionsMatchBranch(t *testing.T) {
+	t.Parallel()
 	config := CrosRepoHarnessConfig{
 		Manifest:       testManifest,
 		VersionProject: "chromiumos/version",
