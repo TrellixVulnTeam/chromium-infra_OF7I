@@ -106,13 +106,6 @@ func (c *Client) DownloadFileFromGitiles(ctx context.Context, host, project, ref
 	}
 	return contents.Contents, err
 }
-func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref, path string) (string, error) {
-	c, err := NewClient(authedClient)
-	if err != nil {
-		return "", err
-	}
-	return c.DownloadFileFromGitiles(ctx, host, project, ref, path)
-}
 
 // DownloadFileFromGitilesToPath downloads a file from Gitiles to a specified path.
 func (c *Client) DownloadFileFromGitilesToPath(ctx context.Context, host, project, ref, path, saveToPath string) error {
@@ -130,13 +123,6 @@ func (c *Client) DownloadFileFromGitilesToPath(ctx context.Context, host, projec
 	}
 
 	return os.WriteFile(saveToPath, []byte(contents), fileMode)
-}
-func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Client, host, project, ref, path, saveToPath string) error {
-	c, err := NewClient(authedClient)
-	if err != nil {
-		return err
-	}
-	return c.DownloadFileFromGitilesToPath(ctx, host, project, ref, path, saveToPath)
 }
 
 func obtainGitilesBytes(ctx context.Context, gc gitilespb.GitilesClient, project string, ref string) ([]byte, error) {

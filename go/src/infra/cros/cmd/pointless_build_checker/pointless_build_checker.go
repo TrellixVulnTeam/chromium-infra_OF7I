@@ -177,9 +177,13 @@ func (c *checkBuild) fetchConfigFromGitiles() (*testplans_pb.BuildIrrelevanceCfg
 	if err != nil {
 		return nil, err
 	}
+	gerritClient, err := igerrit.NewClient(authedClient)
+	if err != nil {
+		return nil, err
+	}
 	var configData string
 	if err = shared.DoWithRetry(ctx, shared.DefaultOpts, func() error {
-		configData, err = igerrit.DownloadFileFromGitiles(ctx, authedClient,
+		configData, err = gerritClient.DownloadFileFromGitiles(ctx,
 			"chrome-internal.googlesource.com",
 			"chromeos/infra/config",
 			"main",
