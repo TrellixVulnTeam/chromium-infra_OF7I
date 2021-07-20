@@ -1,0 +1,12 @@
+diff -ur gettext-0.19.8.orig/gettext-tools/misc/autopoint.in gettext-0.19.8/gettext-tools/misc/autopoint.in
+--- gettext-0.19.8.orig/gettext-tools/misc/autopoint.in	2016-06-09 15:50:41.000000000 +1000
++++ gettext-0.19.8/gettext-tools/misc/autopoint.in	2021-07-20 04:27:34.724607304 +1000
+@@ -27,7 +27,7 @@
+ 
+ # Set variables
+ # - gettext_datadir     directory where the data files are stored.
+-prefix="@prefix@"
++prefix="$(CDPATH= cd -- "$(dirname "$(dirname -- "$0")")" && pwd -P)"
+ datarootdir="@datarootdir@"
+ : ${gettext_datadir="@datadir@/gettext"}
+ : ${AUTOM4TE=autom4te}
