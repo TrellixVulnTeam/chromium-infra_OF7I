@@ -30,7 +30,6 @@ import (
 	"infra/cros/cmd/branch_util/test"
 
 	"github.com/golang/mock/gomock"
-	"github.com/maruel/subcommands"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
@@ -791,6 +790,7 @@ func TestCreatExistingVersion(t *testing.T) {
 }
 
 func TestRename(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -803,12 +803,16 @@ func TestRename(t *testing.T) {
 	oldBranch := existingBranchName // "old-branch"
 	newBranch := "new-branch"
 
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"rename", "--push",
-		"--manifest-url", manifestDir,
-		oldBranch, newBranch,
-	})
+	bc := &branch.Client{}
+	c := renameBranchRun{
+		CommonFlags: CommonFlags{
+			Push:        true,
+			ManifestURL: manifestDir,
+		},
+		old: oldBranch,
+		new: newBranch,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{newBranch}))
@@ -837,6 +841,7 @@ func TestRename(t *testing.T) {
 }
 
 func TestRenameDryRun(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -848,12 +853,15 @@ func TestRenameDryRun(t *testing.T) {
 	oldBranch := "old-branch"
 	newBranch := "new-branch"
 
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"rename",
-		"--manifest-url", manifestDir,
-		oldBranch, newBranch,
-	})
+	bc := &branch.Client{}
+	c := renameBranchRun{
+		CommonFlags: CommonFlags{
+			ManifestURL: manifestDir,
+		},
+		old: oldBranch,
+		new: newBranch,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret == 0)
 
 	assertNoRemoteDiff(t, r)
@@ -861,6 +869,7 @@ func TestRenameDryRun(t *testing.T) {
 
 // Test rename successfully force overwrites.
 func TestRenameOverwrite(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -892,12 +901,17 @@ func TestRenameOverwrite(t *testing.T) {
 
 	// Gah! Turns out we actually wanted what's in oldBranch. Let's try force renaming
 	// oldBranch to main, overwriting the existing contents of main in the process.
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"rename", "--push", "--force",
-		"--manifest-url", manifestDir,
-		oldBranch, "main",
-	})
+	bc := &branch.Client{}
+	c := renameBranchRun{
+		CommonFlags: CommonFlags{
+			Push:        true,
+			Force:       true,
+			ManifestURL: manifestDir,
+		},
+		old: oldBranch,
+		new: "main",
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{newBranch}))
@@ -920,6 +934,7 @@ func TestRenameOverwrite(t *testing.T) {
 
 // Test rename dies if it tries to overwrite without --force.
 func TestRenameOverwriteMissingForce(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -932,18 +947,25 @@ func TestRenameOverwriteMissingForce(t *testing.T) {
 
 	var stderrBuf bytes.Buffer
 	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
-	s := &branchApplication{application, nil, stderrLog}
-	ret := subcommands.Run(s, []string{
-		"rename", "--push",
-		"--manifest-url", manifestDir,
-		"main", oldBranch,
-	})
+	bc := &branch.Client{
+		StderrLog: stderrLog,
+	}
+	c := renameBranchRun{
+		CommonFlags: CommonFlags{
+			Push:        true,
+			ManifestURL: manifestDir,
+		},
+		old: "main",
+		new: oldBranch,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "rerun with --force"))
 	assertNoRemoteDiff(t, r)
 }
 
 func TestDelete(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -955,12 +977,16 @@ func TestDelete(t *testing.T) {
 
 	manifestDir := r.Harness.GetRemotePath(manifestInternalProject)
 
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"delete", "--push", "--force",
-		"--manifest-url", manifestDir,
-		branchToDelete,
-	})
+	bc := &branch.Client{}
+	c := deleteBranchRun{
+		CommonFlags: CommonFlags{
+			Push:        true,
+			Force:       true,
+			ManifestURL: manifestDir,
+		},
+		branchName: branchToDelete,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranchesMissing([]string{branchToDelete}))
@@ -968,6 +994,7 @@ func TestDelete(t *testing.T) {
 
 // Test delete does not modify remote repositories without --push.
 func TestDeleteDryRun(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -983,18 +1010,25 @@ func TestDeleteDryRun(t *testing.T) {
 	stdoutLog := log.New(&outputBuf, "stdout: ", log.LstdFlags|log.Lmicroseconds)
 	stderrLog := log.New(&outputBuf, "stderr: ", log.LstdFlags|log.Lmicroseconds)
 
-	s := &branchApplication{application, stdoutLog, stderrLog}
-	ret := subcommands.Run(s, []string{
-		"delete", "--force",
-		"--manifest-url", manifestDir,
-		branchToDelete,
-	})
+	bc := &branch.Client{
+		StdoutLog: stdoutLog,
+		StderrLog: stderrLog,
+	}
+	c := deleteBranchRun{
+		CommonFlags: CommonFlags{
+			Force:       true,
+			ManifestURL: manifestDir,
+		},
+		branchName: branchToDelete,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret == 0)
 	assertNoRemoteDiff(t, r)
 }
 
 // Test delete does not modify remote when --push set without --force.
 func TestDeleteMissingForce(t *testing.T) {
+	t.Parallel()
 	r := setUp(t)
 	defer r.Teardown()
 
@@ -1007,12 +1041,17 @@ func TestDeleteMissingForce(t *testing.T) {
 	manifestDir := r.Harness.GetRemotePath(manifestInternalProject)
 	var stderrBuf bytes.Buffer
 	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
-	s := &branchApplication{application, nil, stderrLog}
-	ret := subcommands.Run(s, []string{
-		"delete", "--push",
-		"--manifest-url", manifestDir,
-		branchToDelete,
-	})
+	bc := &branch.Client{
+		StderrLog: stderrLog,
+	}
+	c := deleteBranchRun{
+		CommonFlags: CommonFlags{
+			Push:        true,
+			ManifestURL: manifestDir,
+		},
+		branchName: branchToDelete,
+	}
+	ret := c.innerRun(bc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "Must set --force to delete remote branches."))
 	assertNoRemoteDiff(t, r)

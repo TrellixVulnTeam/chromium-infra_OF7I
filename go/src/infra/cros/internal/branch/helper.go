@@ -218,6 +218,9 @@ func (c *Client) assertBranchesDoNotExistWorker(
 
 // AssertBranchesDoNotExist checks that branches do not already exist.
 func (c *Client) AssertBranchesDoNotExist(branches []ProjectBranch, workerCount int) error {
+	if workerCount < 1 {
+		workerCount = 1
+	}
 	projectBranches := make(chan ProjectBranch, len(branches))
 	errs := make(chan error, len(branches))
 
@@ -426,6 +429,9 @@ func (c *Client) createRemoteBranchesWorker(
 // CreateRemoteBranches makes the requested branches on the remote Gerrit hosts
 // using git checkouts and pushes.
 func (c *Client) CreateRemoteBranches(branches []ProjectBranch, dryRun, force bool, workerCount int) error {
+	if workerCount < 1 {
+		workerCount = 1
+	}
 	branchChan := make(chan ProjectBranch, len(branches))
 	errs := make(chan error, len(branches))
 

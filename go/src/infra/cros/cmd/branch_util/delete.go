@@ -61,6 +61,11 @@ func (c *deleteBranchRun) Run(a subcommands.Application, args []string,
 	if ret != 0 {
 		return ret
 	}
+
+	return c.innerRun(bc)
+}
+
+func (c *deleteBranchRun) innerRun(bc *branch.Client) int {
 	if c.Push && !c.Force {
 		bc.LogErr("Must set --force to delete remote branches.")
 		return 1

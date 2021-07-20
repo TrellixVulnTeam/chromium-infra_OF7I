@@ -60,11 +60,17 @@ func (c *renameBranchRun) Run(a subcommands.Application, args []string,
 		StdoutLog: a.(*branchApplication).stdoutLog,
 		StderrLog: a.(*branchApplication).stderrLog,
 	}
+
+	// Common setup (argument validation, repo init, etc.)
 	ret := Run(c, a, args, env)
 	if ret != 0 {
 		return ret
 	}
 
+	return c.innerRun(bc)
+}
+
+func (c *renameBranchRun) innerRun(bc *branch.Client) int {
 	if err := bc.InitWorkingManifest(c.getManifestURL(), c.old); err != nil {
 		bc.LogErr("%s\n", err.Error())
 		return 1
