@@ -1,8 +1,8 @@
-hash: 6afd723029571f37effbadf68cde516e34e78c55a7a9beb539780041a67da8d5
-updated: 2021-07-19T10:33:16.719151-07:00
+hash: 7dcb7ba1099c15b537fca6a9ad9cc696e9aec6743c53971b6c24660bee6d20e4
+updated: 2021-07-20T15:43:31.801358832-04:00
 imports:
 - name: cloud.google.com/go
-  version: 66fa14733af777d3835235ef31a7a51418a8d607
+  version: 43ad3cb7be981fff9dc5dcf4510f1cd7bea99957
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigquery
@@ -166,7 +166,7 @@ imports:
   version: 385dcdcbc4865cb64aa953c12d7549615cb5fd03
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
 - name: github.com/google/flatbuffers
-  version: dd5bb55cad8f75162a5a43dfb2eac8bcac3ccd55
+  version: 2bfc8e9f019951220f765b5beb72d9c43019c3f1
   repo: https://chromium.googlesource.com/external/github.com/google/flatbuffers.git
 - name: github.com/google/go-cmp
   version: d103655696d8ae43c4125ee61454dbf03d8e8324
@@ -180,7 +180,7 @@ imports:
   version: db92cf7ae75e4a7a28abc005addab2b394362888
   repo: https://chromium.googlesource.com/external/github.com/google/gofuzz.git
 - name: github.com/google/pprof
-  version: 86eeefc3e4714e359ff19990b871874910636148
+  version: 4bb14d4b1be14417e47d0bbaf2bd4e188eda647f
   repo: https://chromium.googlesource.com/external/github.com/google/pprof.git
   subpackages:
   - profile
@@ -197,7 +197,7 @@ imports:
   version: 44b5fee7c49cf3bcdf723f106b36d56ef13ccc88
   repo: https://chromium.googlesource.com/external/github.com/google/uuid.git
 - name: github.com/googleapis/gax-go
-  version: 7d9845630d12c9b047ba17c4872133633f645c6d
+  version: 723d690881b8388e15099f3ae27f8c5635520677
   repo: https://chromium.googlesource.com/external/github.com/googleapis/gax-go.git
 - name: github.com/googleapis/gnostic
   version: ee43cbb60db7bd22502942cccbc39059117352ab
@@ -469,7 +469,7 @@ imports:
   version: fb455b0a56818b2d4caf7f9bff94764f98a28f29
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
 - name: go.skia.org/infra
-  version: c3c02c52274711893549ee288a6f394ac29306ba
+  version: f4b2a64601c0fc79b209a4b04f5ce4f45b376bd6
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -554,7 +554,7 @@ imports:
   subpackages:
   - stat
 - name: google.golang.org/api
-  version: 82bb716555e3a77c145f75a452bc2d29ade41962
+  version: 2d82097ff6859543be153450b1e8bacc7c4f9ae9
   repo: https://chromium.googlesource.com/external/github.com/google/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -590,7 +590,7 @@ imports:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: ce7bdf50abb1f7c7a5ba1a54890e6dac46eb87f7
+  version: 65cabd74d8e18d7347fecd414fa8d83a00035f5f
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
