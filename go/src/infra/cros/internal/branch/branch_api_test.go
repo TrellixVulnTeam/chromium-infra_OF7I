@@ -76,7 +76,8 @@ func TestCreateRemoteBranchesAPI_success(t *testing.T) {
 		fmt.Fprint(w, `)]}'`+"\n"+string(branchInfoRaw))
 	})
 
-	if err := CreateRemoteBranchesAPI(httpClient,
+	c := &Client{}
+	if err := CreateRemoteBranchesAPI(c, httpClient,
 		branchesToCreate, false, largeQPS); err != nil {
 		t.Error(err)
 	}
@@ -109,7 +110,8 @@ func TestCreateRemoteBranchesAPI_apiError(t *testing.T) {
 		http.Error(w, branchName, http.StatusBadRequest)
 	})
 
-	if err := CreateRemoteBranchesAPI(httpClient,
+	c := &Client{}
+	if err := CreateRemoteBranchesAPI(c, httpClient,
 		branchesToCreate, false, largeQPS); err != nil {
 	} else {
 		t.Errorf("expected an error, instead nil")

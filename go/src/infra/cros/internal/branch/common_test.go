@@ -14,15 +14,17 @@ import (
 )
 
 func TestProjectFetchURL(t *testing.T) {
-	WorkingManifest = repo.Manifest{
-		Remotes: []repo.Remote{
-			{Name: "remote", Fetch: "file:///tmp/path/to/remote"},
-		},
-		Projects: []repo.Project{
-			{Path: "foo/bar/project", Name: "foo/bar/project", RemoteName: "remote"},
+	c := Client{
+		WorkingManifest: repo.Manifest{
+			Remotes: []repo.Remote{
+				{Name: "remote", Fetch: "file:///tmp/path/to/remote"},
+			},
+			Projects: []repo.Project{
+				{Path: "foo/bar/project", Name: "foo/bar/project", RemoteName: "remote"},
+			},
 		},
 	}
-	url, err := ProjectFetchURL("foo/bar/project")
+	url, err := c.ProjectFetchURL("foo/bar/project")
 	assert.NilError(t, err)
 	assert.StringsEqual(t, url, "file:///tmp/path/to/remote/foo/bar/project")
 }

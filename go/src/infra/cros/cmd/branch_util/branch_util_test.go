@@ -457,7 +457,7 @@ type fakeCreateRemoteBranchesAPI struct {
 	force  bool
 }
 
-func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
+func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(_ *branch.Client,
 	_ *http.Client, branches []branch.GerritProjectBranch, dryRun bool, _ float64) error {
 	if f.dryRun {
 		return nil

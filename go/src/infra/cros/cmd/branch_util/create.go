@@ -24,7 +24,7 @@ const (
 	branchCreatorGroup = "mdb/chromeos-branch-creators"
 )
 
-type createRemoteBranchesAPIType func(authedClient *http.Client, branches []branch.GerritProjectBranch, dryRun bool, gerritQPS float64) error
+type createRemoteBranchesAPIType func(c *branch.Client, authedClient *http.Client, branches []branch.GerritProjectBranch, dryRun bool, gerritQPS float64) error
 
 var (
 	CreateRemoteBranchesAPI createRemoteBranchesAPIType = branch.CreateRemoteBranchesAPI
@@ -118,6 +118,11 @@ func (c *createBranch) getManifestURL() string {
 
 func (c *createBranch) Run(a subcommands.Application, args []string,
 	env subcommands.Env) int {
+	bc := &branch.Client{
+		StdoutLog: a.(*branchApplication).stdoutLog,
+		StderrLog: a.(*branchApplication).stderrLog,
+	}
+
 	// Common setup (argument validation, repo init, etc.)
 	ret := Run(c, a, args, env)
 	if ret != 0 {
@@ -126,14 +131,14 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	ctx := context.Background()
 	authOpts, err := c.authFlags.Options()
 	if err != nil {
-		branch.LogErr(errors.Annotate(err, "failed to configure auth").Err().Error())
+		bc.LogErr(errors.Annotate(err, "failed to configure auth").Err().Error())
 		return 1
 	}
 
 	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
 
 	if err != nil {
-		branch.LogErr(errors.Annotate(err, "Please run `%s auth-login` and sign in with your @google.com account", os.Args[0]).Err().Error())
+		bc.LogErr(errors.Annotate(err, "Please run `%s auth-login` and sign in with your @google.com account", os.Args[0]).Err().Error())
 		return 1
 	}
 
@@ -144,11 +149,11 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	if c.Push && !c.SkipGroupCheck {
 		inGroup, err := branch.CheckSelfGroupMembership(authedClient, "https://chromium-review.googlesource.com", branchCreatorGroup)
 		if err != nil {
-			branch.LogErr(errors.Annotate(err, "failed to confirm that the running user is in %v", branchCreatorGroup).Err().Error())
+			bc.LogErr(errors.Annotate(err, "failed to confirm that the running user is in %v", branchCreatorGroup).Err().Error())
 			return 1
 		}
 		if !inGroup {
-			branch.LogErr("you appear not to be in %v, and so you won't be able to create a branch.\n"+
+			bc.LogErr("you appear not to be in %v, and so you won't be able to create a branch.\n"+
 				"See http://go/cros-branch#access for instructions for gaining access.", branchCreatorGroup)
 			return 1
 		}
@@ -158,47 +163,47 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 		// Branch from file.
 		file, err := manifestutil.LoadManifestFromFileWithIncludes(c.file)
 		if err != nil {
-			branch.LogErr(errors.Annotate(err, "Error: Failed to load manifest from file ").Err().Error())
+			bc.LogErr(errors.Annotate(err, "Error: Failed to load manifest from file ").Err().Error())
 			return 1
 		}
-		branch.LogOut("Got manifest from filepath %v", c.file)
+		bc.LogOut("Got manifest from filepath %v", c.file)
 		file.ResolveImplicitLinks()
-		branch.WorkingManifest = *file
+		bc.WorkingManifest = *file
 	} else {
 		file, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, "chrome-internal.googlesource.com",
 			"chromeos/manifest-versions", "HEAD", "buildspecs/"+c.buildSpecManifest)
 		if err != nil {
-			branch.LogErr(errors.Annotate(err, "failed to fetch buildspec %v", c.buildSpecManifest).Err().Error())
+			bc.LogErr(errors.Annotate(err, "failed to fetch buildspec %v", c.buildSpecManifest).Err().Error())
 			return 1
 		}
-		branch.LogOut("Got %v from Gitiles", c.buildSpecManifest)
+		bc.LogOut("Got %v from Gitiles", c.buildSpecManifest)
 		wm, err := ioutil.TempFile("", "working-manifest.xml")
 		if err != nil {
-			branch.LogErr("%s\n", err.Error())
+			bc.LogErr("%s\n", err.Error())
 			return 1
 		}
 		_, err = wm.WriteString(file)
 		if err != nil {
-			branch.LogErr("%s\n", err.Error())
+			bc.LogErr("%s\n", err.Error())
 			return 1
 		}
 		manifest, err := manifestutil.LoadManifestFromFile(wm.Name())
 		if err != nil {
 			err = errors.Annotate(err, "failed to load manifests").Err()
-			branch.LogErr("%s\n", err.Error())
+			bc.LogErr("%s\n", err.Error())
 			return 1
 		}
-		branch.WorkingManifest = *manifest
-		branch.WorkingManifest.ResolveImplicitLinks()
-		branch.LogOut("Fetched working manifest.\n")
+		bc.WorkingManifest = *manifest
+		bc.WorkingManifest.ResolveImplicitLinks()
+		bc.LogOut("Fetched working manifest.\n")
 	}
 
 	// Use manifest-internal as a sentinel repository to get the appropriate branch name.
 	// We know that manifest-internal is a single-checkout so its revision should be
-	// master or the name of the Chrome OS branch.
-	manifestInternal, err := branch.WorkingManifest.GetUniqueProject("chromeos/manifest-internal")
+	// main or the name of the Chrome OS branch.
+	manifestInternal, err := bc.WorkingManifest.GetUniqueProject("chromeos/manifest-internal")
 	if err != nil {
-		branch.LogErr(errors.Annotate(err, "Could not get chromeos/manifest-internal project.").Err().Error())
+		bc.LogErr(errors.Annotate(err, "Could not get chromeos/manifest-internal project.").Err().Error())
 		return 1
 	}
 	sourceRevision := manifestInternal.Revision
@@ -211,15 +216,15 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 		sourceUpstream = "main"
 	}
 
-	branch.LogOut("Using sourceRevision %s for manifestInternal", sourceRevision)
-	branch.LogOut("Using sourceUpstream %s for manifestInternal", sourceUpstream)
+	bc.LogOut("Using sourceRevision %s for manifestInternal", sourceRevision)
+	bc.LogOut("Using sourceUpstream %s for manifestInternal", sourceUpstream)
 
 	// Validate the version.
 	// Double check that the checkout has a zero patch number. Otherwise we cannot branch from it.
-	versionProject, err := branch.WorkingManifest.GetProjectByPath(branch.VersionFileProjectPath)
+	versionProject, err := bc.WorkingManifest.GetProjectByPath(branch.VersionFileProjectPath)
 	if err != nil {
 		err = errors.Annotate(err, "could not get project %s from manifest", branch.VersionFileProjectPath).Err()
-		branch.LogErr("%s\n", err)
+		bc.LogErr("%s\n", err)
 		return 1
 	}
 
@@ -228,24 +233,24 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 		"chromium.googlesource.com", versionProject.Name, versionProject.Revision, mv.VersionFileProjectPath)
 
 	if err != nil {
-		branch.LogErr(errors.Annotate(err, "failed to fetch versionFile").Err().Error())
+		bc.LogErr(errors.Annotate(err, "failed to fetch versionFile").Err().Error())
 		return 1
 	}
 
 	vinfo, err := mv.ParseVersionInfo([]byte(versionFile))
 	if err != nil {
-		branch.LogErr(errors.Annotate(err, "error reading version").Err().Error())
+		bc.LogErr(errors.Annotate(err, "error reading version").Err().Error())
 		return 1
 	}
 
 	if vinfo.PatchNumber != 0 {
-		branch.LogErr("Cannot branch version with nonzero patch number (version %s).",
+		bc.LogErr("Cannot branch version with nonzero patch number (version %s).",
 			vinfo.VersionString())
 		return 1
 	}
-	branch.LogOut("Version found: %s.\n", vinfo.VersionString())
+	bc.LogOut("Version found: %s.\n", vinfo.VersionString())
 
-	branch.LogOut("Have manifest = %v", manifestInternal)
+	bc.LogOut("Have manifest = %v", manifestInternal)
 
 	branchType := ""
 
@@ -266,46 +271,46 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	branchName := branch.NewBranchName(vinfo, c.custom, c.descriptor, c.release, c.factory, c.firmware, c.stabilize)
 	componentToBump, err := branch.WhichVersionShouldBump(vinfo)
 	if err != nil {
-		branch.LogErr(err.Error())
+		bc.LogErr(err.Error())
 		return 1
 	}
 
-	if err = branch.CheckIfAlreadyBranched(vinfo, manifestInternal, c.Force, branchType, branchName); err != nil {
-		branch.LogErr("%v", err)
+	if err = bc.CheckIfAlreadyBranched(vinfo, manifestInternal, c.Force, branchType, branchName); err != nil {
+		bc.LogErr("%v", err)
 		return 1
 	}
 
 	// Generate git branch names.
-	branches := branch.ProjectBranches(branchName, git.StripRefs(sourceRevision))
+	branches := bc.ProjectBranches(branchName, git.StripRefs(sourceRevision))
 	// Do not change the format of this string, it is parsed by the brancher recipe.
-	branch.LogOut("Creating branch: %s\n", branchName)
+	bc.LogOut("Creating branch: %s\n", branchName)
 
-	projectBranches, err := branch.GerritProjectBranches(branches)
+	projectBranches, err := bc.GerritProjectBranches(branches)
 	if err != nil {
-		branch.LogErr(err.Error())
+		bc.LogErr(err.Error())
 		return 1
 	}
 
 	// Repair manifest repositories.
-	if err = branch.RepairManifestRepositories(branches, !c.Push, c.Force); err != nil {
-		branch.LogErr(err.Error())
+	if err = bc.RepairManifestRepositories(branches, !c.Push, c.Force); err != nil {
+		bc.LogErr(err.Error())
 		return 1
 	}
 
 	// Create git branches for new branch. Exclude the ManifestProjects, which we just updated.
-	if err = CreateRemoteBranchesAPI(authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
-		branch.LogErr(err.Error())
+	if err = CreateRemoteBranchesAPI(bc, authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
+		bc.LogErr(err.Error())
 		return 1
 	}
 
 	// Bump version.
-	if err = branch.BumpForCreate(componentToBump, c.release, c.Push, branchName, sourceUpstream); err != nil {
-		branch.LogErr(err.Error())
+	if err = bc.BumpForCreate(componentToBump, c.release, c.Push, branchName, sourceUpstream); err != nil {
+		bc.LogErr(err.Error())
 		return 1
 	}
 
 	if !c.Push {
-		branch.LogOut("Dry run (no --push): completed successfully")
+		bc.LogOut("Dry run (no --push): completed successfully")
 	}
 	return 0
 }

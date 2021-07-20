@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-func bumpVersion(
+func (c *Client) bumpVersion(
 	component mv.VersionComponent,
 	br, commitMsg string,
 	dryRun bool) error {
@@ -31,7 +31,7 @@ func bumpVersion(
 		Depth: 1,
 		Ref:   br,
 	}
-	versionProjectCheckout, err := GetProjectCheckout(VersionFileProjectPath, opts)
+	versionProjectCheckout, err := c.GetProjectCheckout(VersionFileProjectPath, opts)
 	defer os.RemoveAll(versionProjectCheckout)
 	if err != nil {
 		return errors.Annotate(err, "bumpVersion: local checkout of version project failed").Err()
@@ -69,25 +69,25 @@ func bumpVersion(
 
 // BumpForCreate bumps the version in mv.sh, as needed, in the
 // source branch for a branch creation command.
-func BumpForCreate(componentToBump mv.VersionComponent, release, push bool, branchName, sourceUpstream string) error {
+func (c *Client) BumpForCreate(componentToBump mv.VersionComponent, release, push bool, branchName, sourceUpstream string) error {
 	commitMsg := fmt.Sprintf("Bump %s number after creating branch %s", componentToBump, branchName)
-	LogOut(commitMsg)
-	if err := bumpVersion(componentToBump, branchName, commitMsg, !push); err != nil {
+	c.LogOut(commitMsg)
+	if err := c.bumpVersion(componentToBump, branchName, commitMsg, !push); err != nil {
 		return err
 	}
 
 	if release {
 		// Bump milestone after creating release branch.
 		commitMsg = fmt.Sprintf("Bump milestone after creating release branch %s", branchName)
-		LogOut(commitMsg)
-		if err := bumpVersion(mv.ChromeBranch, sourceUpstream, commitMsg, !push); err != nil {
+		c.LogOut(commitMsg)
+		if err := c.bumpVersion(mv.ChromeBranch, sourceUpstream, commitMsg, !push); err != nil {
 			return err
 		}
 		// Also need to bump the build number, otherwise two release will have conflicting versions.
 		// See crbug.com/213075.
 		commitMsg = fmt.Sprintf("Bump build number after creating release branch %s", branchName)
-		LogOut(commitMsg)
-		if err := bumpVersion(mv.Build, sourceUpstream, commitMsg, !push); err != nil {
+		c.LogOut(commitMsg)
+		if err := c.bumpVersion(mv.Build, sourceUpstream, commitMsg, !push); err != nil {
 			return err
 		}
 	} else {
@@ -108,8 +108,8 @@ func BumpForCreate(componentToBump mv.VersionComponent, release, push bool, bran
 		}
 		commitMsg = fmt.Sprintf("Bump %s number for source branch %s after creating branch %s",
 			sourceComponentToBump, sourceUpstream, branchName)
-		LogOut(commitMsg)
-		if err := bumpVersion(sourceComponentToBump, sourceUpstream, commitMsg, !push); err != nil {
+		c.LogOut(commitMsg)
+		if err := c.bumpVersion(sourceComponentToBump, sourceUpstream, commitMsg, !push); err != nil {
 			return err
 		}
 	}

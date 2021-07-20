@@ -20,7 +20,7 @@ import (
 )
 
 func TestRepairManifest_success(t *testing.T) {
-	manifestRepo := ManifestRepo{
+	manifestRepo := &ManifestRepo{
 		Project: repo.Project{
 			Name: "chromiumos/manifest",
 		},
@@ -59,8 +59,9 @@ func TestRepairManifest_success(t *testing.T) {
 	 </manifest>
 	`
 
-	err := xml.Unmarshal([]byte(originalManifest), &WorkingManifest)
-	WorkingManifest.ResolveImplicitLinks()
+	c := &Client{}
+	err := xml.Unmarshal([]byte(originalManifest), &c.WorkingManifest)
+	c.WorkingManifest.ResolveImplicitLinks()
 
 	assert.NilError(t, err)
 
@@ -72,7 +73,7 @@ func TestRepairManifest_success(t *testing.T) {
 		Stdout: "123 test",
 	}
 
-	manifestRaw, err := manifestRepo.repairManifest("fake_path", branchPathMap)
+	manifestRaw, err := c.repairManifest(manifestRepo, "fake_path", branchPathMap)
 	assert.NilError(t, err)
 
 	manifest := repo.Manifest{}
@@ -175,7 +176,7 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	manifests["full.xml"] = &fullManifest
 	manifestPath := make(map[string]string)
 
-	manifestRepo := ManifestRepo{
+	manifestRepo := &ManifestRepo{
 		Project: repo.Project{
 			Name: tmpDir,
 		},
@@ -198,8 +199,10 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	branchMap := make(map[string]string)
 	branchMap[fooProject.Path] = "newbranch"
 
-	WorkingManifest = fullManifest
-	err = manifestRepo.RepairManifestsOnDisk(branchMap)
+	c := &Client{
+		WorkingManifest: fullManifest,
+	}
+	err = c.RepairManifestsOnDisk(manifestRepo, branchMap)
 	assert.NilError(t, err)
 	// Read repaired manifests from disk, check expectations.
 	defaultManifestMap, err := manifestutil.LoadManifestTreeFromFile(manifestPath["default.xml"])

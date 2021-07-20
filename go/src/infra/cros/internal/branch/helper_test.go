@@ -99,26 +99,32 @@ func TestBranchExist(t *testing.T) {
 
 func TestProjectBranchName(t *testing.T) {
 	manifest := branchNameTestManifest
-	WorkingManifest = manifest
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[0], ""), "mybranch")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[1], ""), "mybranch-factory-100")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[2], ""), "mybranch-101")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[6], ""), "mybranch-myfactory-2.6")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[7], ""), "mybranch")
+	c := Client{
+		WorkingManifest: manifest,
+	}
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[0], ""), "mybranch")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[1], ""), "mybranch-factory-100")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[2], ""), "mybranch-101")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[6], ""), "mybranch-myfactory-2.6")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[7], ""), "mybranch")
 }
 
 func TestProjectBranchName_MappingFunctionality(t *testing.T) {
 	manifest := branchNameTestManifest
-	WorkingManifest = manifest
-	assert.StringsEqual(t, projectBranchName("coreboot", manifest.Projects[9], ""), "coreboot")
+	c := Client{
+		WorkingManifest: manifest,
+	}
+	assert.StringsEqual(t, c.projectBranchName("coreboot", manifest.Projects[9], ""), "coreboot")
 }
 
 func TestProjectBranchName_withOriginal(t *testing.T) {
 	manifest := branchNameTestManifest
-	WorkingManifest = manifest
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[3], "oldbranch"), "mybranch-factory-100")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[4], "oldbranch"), "mybranch-factory-101")
-	assert.StringsEqual(t, projectBranchName("mybranch", manifest.Projects[6], "oldbranch"), "mybranch-myfactory-2.6")
+	c := Client{
+		WorkingManifest: manifest,
+	}
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[3], "oldbranch"), "mybranch-factory-100")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[4], "oldbranch"), "mybranch-factory-101")
+	assert.StringsEqual(t, c.projectBranchName("mybranch", manifest.Projects[6], "oldbranch"), "mybranch-myfactory-2.6")
 }
 
 func TestCanBranchProject(t *testing.T) {
@@ -146,13 +152,15 @@ var branchesTestManifest = repo.Manifest{
 
 func TestProjectBranches(t *testing.T) {
 	manifest := branchesTestManifest
-	WorkingManifest = manifest
+	c := Client{
+		WorkingManifest: manifest,
+	}
 	expected := []ProjectBranch{
 		{Project: manifest.Projects[0], BranchName: "mybranch"},
 		{Project: manifest.Projects[1], BranchName: "mybranch-factory-100"},
 	}
 
-	branchNames := ProjectBranches("mybranch", "oldbranch")
+	branchNames := c.ProjectBranches("mybranch", "oldbranch")
 	assert.Assert(t, reflect.DeepEqual(expected, branchNames))
 }
 

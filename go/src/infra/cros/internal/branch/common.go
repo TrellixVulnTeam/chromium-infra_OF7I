@@ -25,17 +25,18 @@ import (
 // the version file, relative to the checkout root.
 const VersionFileProjectPath = "src/third_party/chromiumos-overlay"
 
-var (
-	// StdoutLog contains the stdout logger for this package.
-	StdoutLog *log.Logger
-	// StderrLog contains the stderr logger for this package.
-	StderrLog *log.Logger
+// Client provides various utility functions for branch_util.
+type Client struct {
+	// ManifestCheckout is a path to the manifest project checkout.
+	ManifestCheckout string
 	// WorkingManifest contains the working manifest this package
 	// (i.e. the manifest being used as the source of truth).
 	WorkingManifest repo.Manifest
-	// ManifestCheckout is a path to the manifest project checkout.
-	ManifestCheckout string
-)
+	// StdoutLog contains the stdout logger for this client.
+	StdoutLog *log.Logger
+	// StderrLog contains the stderr logger for this client.
+	StderrLog *log.Logger
+}
 
 // CheckoutOptions describes how to check out a Git repo.
 type CheckoutOptions struct {
@@ -47,27 +48,27 @@ type CheckoutOptions struct {
 }
 
 // LogOut logs to stdout.
-func LogOut(format string, a ...interface{}) {
-	if StdoutLog != nil {
-		StdoutLog.Printf(format, a...)
+func (c *Client) LogOut(format string, a ...interface{}) {
+	if c.StdoutLog != nil {
+		c.StdoutLog.Printf(format, a...)
 	}
 }
 
 // LogErr logs to stderr.
-func LogErr(format string, a ...interface{}) {
-	if StderrLog != nil {
-		StderrLog.Printf(format, a...)
+func (c *Client) LogErr(format string, a ...interface{}) {
+	if c.StderrLog != nil {
+		c.StderrLog.Printf(format, a...)
 	}
 }
 
 // ProjectFetchURL returns the fetch URL for a remote Project.
-func ProjectFetchURL(projectPath string) (string, error) {
-	project, err := WorkingManifest.GetProjectByPath(projectPath)
+func (c *Client) ProjectFetchURL(projectPath string) (string, error) {
+	project, err := c.WorkingManifest.GetProjectByPath(projectPath)
 	if err != nil {
 		return "", err
 	}
 
-	remote := WorkingManifest.GetRemoteByName(project.RemoteName)
+	remote := c.WorkingManifest.GetRemoteByName(project.RemoteName)
 	if remote == nil {
 		return "", fmt.Errorf("remote %s does not exist in working manifest", project.RemoteName)
 	}
@@ -126,8 +127,8 @@ func getProjectCheckoutFromURL(projectURL string, opts *CheckoutOptions) (string
 }
 
 // GetProjectCheckout gets a local checkout of a particular project.
-func GetProjectCheckout(projectPath string, opts *CheckoutOptions) (string, error) {
-	projectURL, err := ProjectFetchURL(projectPath)
+func (c *Client) GetProjectCheckout(projectPath string, opts *CheckoutOptions) (string, error) {
+	projectURL, err := c.ProjectFetchURL(projectPath)
 
 	if err != nil {
 		return "", errors.Annotate(err, "failed to get project fetch url").Err()
@@ -135,27 +136,26 @@ func GetProjectCheckout(projectPath string, opts *CheckoutOptions) (string, erro
 	return getProjectCheckoutFromURL(projectURL, opts)
 }
 
-// InitWorkingManifest initializes a local working manifest (a.k.a. buildspec)
-// from a Gerrit path.
-func InitWorkingManifest(manifestURL, br string) error {
+// InitWorkingManifest initializes a branch client from a specified gerrit path.
+func (c *Client) InitWorkingManifest(manifestURL, br string) error {
 	opts := &CheckoutOptions{
 		Depth: 1,
 		Ref:   br,
 	}
 	var err error
-	ManifestCheckout, err = getProjectCheckoutFromURL(manifestURL, opts)
+	c.ManifestCheckout, err = getProjectCheckoutFromURL(manifestURL, opts)
 	if err != nil {
 		return errors.Annotate(err, "could not checkout %s", manifestURL).Err()
 	}
 
 	if br != "" {
-		err := git.Checkout(ManifestCheckout, br)
+		err := git.Checkout(c.ManifestCheckout, br)
 		if err != nil {
 			return errors.Annotate(err, "failed to checkout br %s of %s", br, manifestURL).Err()
 		}
 	}
 
-	manifestPath := filepath.Join(ManifestCheckout, "default.xml")
+	manifestPath := filepath.Join(c.ManifestCheckout, "default.xml")
 
 	// Read in manifest from file (and resolve includes).
 	manifest, err := manifestutil.LoadManifestFromFileWithIncludes(manifestPath)
@@ -163,6 +163,6 @@ func InitWorkingManifest(manifestURL, br string) error {
 		return errors.Annotate(err, "failed to load manifests").Err()
 	}
 	manifest.ResolveImplicitLinks()
-	WorkingManifest = *manifest
+	c.WorkingManifest = *manifest
 	return nil
 }

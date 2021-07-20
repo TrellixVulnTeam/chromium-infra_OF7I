@@ -28,7 +28,6 @@ type GerritProjectBranch struct {
 func qpsToPeriod(qps float64) time.Duration {
 	if qps <= 0 {
 		// some very generous default duration
-		LogOut("Got qps %v, <= 0. Using a default duration instead.", qps)
 		return time.Second * 10
 	}
 	periodSec := float64(time.Second) / qps
@@ -62,12 +61,12 @@ func createRemoteBranch(authedClient *http.Client, b GerritProjectBranch, dryRun
 
 // CreateRemoteBranchesAPI creates a bunch of branches on remote Gerrit instances
 // for the specified inputs using the Gerrit API.
-func CreateRemoteBranchesAPI(authedClient *http.Client, branches []GerritProjectBranch, dryRun bool, gerritQPS float64) error {
+func CreateRemoteBranchesAPI(c *Client, authedClient *http.Client, branches []GerritProjectBranch, dryRun bool, gerritQPS float64) error {
 	if dryRun {
-		LogOut("Dry run (no --push): would create remote branches for %v Gerrit repos", len(branches))
+		c.LogOut("Dry run (no --push): would create remote branches for %v Gerrit repos", len(branches))
 		return nil
 	}
-	LogOut("Creating remote branches for %v Gerrit repos. This will take a few minutes, since otherwise Gerrit would throttle us.", len(branches))
+	c.LogOut("Creating remote branches for %v Gerrit repos. This will take a few minutes, since otherwise Gerrit would throttle us.", len(branches))
 	var g errgroup.Group
 	throttle := time.Tick(qpsToPeriod(gerritQPS))
 
@@ -82,13 +81,13 @@ func CreateRemoteBranchesAPI(authedClient *http.Client, branches []GerritProject
 			}
 			count := atomic.AddInt64(&createCount, 1)
 			if count%10 == 0 {
-				LogOut("Created %v of %v remote branches", count, len(branches))
+				c.LogOut("Created %v of %v remote branches", count, len(branches))
 			}
 			return nil
 		})
 	}
 	err := g.Wait()
-	LogOut("Successfully created %v of %v remote branches", atomic.LoadInt64(&createCount), len(branches))
+	c.LogOut("Successfully created %v of %v remote branches", atomic.LoadInt64(&createCount), len(branches))
 	return err
 }
 

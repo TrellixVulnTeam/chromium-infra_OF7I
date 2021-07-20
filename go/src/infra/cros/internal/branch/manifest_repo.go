@@ -37,12 +37,12 @@ const (
 var loadManifestFromFileRaw = manifestutil.LoadManifestFromFileRaw
 var loadManifestTree = manifestutil.LoadManifestTreeFromFile
 
-func (m *ManifestRepo) gitRevision(project repo.Project) (string, error) {
+func (c *Client) gitRevision(m *ManifestRepo, project repo.Project) (string, error) {
 	if git.IsSHA(project.Revision) {
 		return project.Revision, nil
 	}
 
-	remoteURL, err := ProjectFetchURL(project.Path)
+	remoteURL, err := c.ProjectFetchURL(project.Path)
 	if err != nil {
 		return "", err
 	}
@@ -116,7 +116,7 @@ func findProjectTag(project *repo.Project, rawManifest string) string {
 // code readability and explicitly sets revision on every project in the manifest,
 // deleting any defaults.
 // branchesByPath maps project paths to branch names.
-func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]string) ([]byte, error) {
+func (c *Client) repairManifest(m *ManifestRepo, path string, branchesByPath map[string]string) ([]byte, error) {
 	manifestData, err := loadManifestFromFileRaw(path)
 	if err != nil {
 		return nil, errors.Annotate(err, "error loading manifest").Err()
@@ -144,16 +144,16 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 			project.Path = project.Name
 		}
 
-		workingProject, err := WorkingManifest.GetProjectByPath(project.Path)
+		workingProject, err := c.WorkingManifest.GetProjectByPath(project.Path)
 		if err != nil {
 			// We don't really know what to do with a project that doesn't exist in the working manifest,
 			// which is our source of truth. Our best bet is to just use what we have in the manifest
 			// we're repairing.
-			LogErr("Warning: project %s does not exist in working manifest. Using it as it exists in %s.", project.Path, path)
+			c.LogErr("Warning: project %s does not exist in working manifest. Using it as it exists in %s.", project.Path, path)
 			continue
 		}
 
-		switch branchMode := WorkingManifest.ProjectBranchMode(project); branchMode {
+		switch branchMode := c.WorkingManifest.ProjectBranchMode(project); branchMode {
 		case repo.Create:
 			branchName, inDict := branchesByPath[project.Path]
 			if !inDict {
@@ -168,7 +168,7 @@ func (m *ManifestRepo) repairManifest(path string, branchesByPath map[string]str
 				return nil, fmt.Errorf("project %s tracking ToT but has no revision/default revision", project.Path)
 			}
 		case repo.Pinned:
-			revision, err := m.gitRevision(*workingProject)
+			revision, err := c.gitRevision(m, *workingProject)
 			if err != nil {
 				return nil, errors.Annotate(err, "error repairing manifest").Err()
 			}
@@ -219,15 +219,15 @@ func (m *ManifestRepo) listManifests(rootPaths []string) ([]string, error) {
 
 // RepairManifestsOnDisk repairs the revision and upstream attributes of
 // manifest elements on disk for the given projects.
-func (m *ManifestRepo) RepairManifestsOnDisk(branchesByPath map[string]string) error {
-	LogOut("Repairing manifest project %s", m.Project.Name)
+func (c *Client) RepairManifestsOnDisk(m *ManifestRepo, branchesByPath map[string]string) error {
+	c.LogOut("Repairing manifest project %s", m.Project.Name)
 	manifestPaths, err := m.listManifests([]string{defaultManifest, officialManifest})
 
 	if err != nil {
 		return errors.Annotate(err, "failed to listManifests").Err()
 	}
 	for _, manifestPath := range manifestPaths {
-		manifest, err := m.repairManifest(manifestPath, branchesByPath)
+		manifest, err := c.repairManifest(m, manifestPath, branchesByPath)
 		if err != nil {
 			return errors.Annotate(err, "failed to repair manifest %s", manifestPath).Err()
 		}

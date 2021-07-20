@@ -9,8 +9,6 @@ import (
 	"log"
 	"os"
 
-	"infra/cros/internal/branch"
-
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -53,7 +51,7 @@ type branchCommand interface {
 	getManifestURL() string
 }
 
-// CommonFlags contains flags shared amongst all sub commands.
+// Common contains flags shared amongst all sub commands.
 type CommonFlags struct {
 	subcommands.CommandRunBase
 	Push           bool
@@ -88,9 +86,6 @@ func (c *CommonFlags) InitFlags(authOpts auth.Options) {
 
 // Run runs the CLI.
 func Run(c branchCommand, a subcommands.Application, args []string, env subcommands.Env) int {
-	branch.StdoutLog = a.(*branchApplication).stdoutLog
-	branch.StderrLog = a.(*branchApplication).stderrLog
-
 	// Validate flags/arguments.
 	ok, errMsg := c.validate(args)
 	if !ok {

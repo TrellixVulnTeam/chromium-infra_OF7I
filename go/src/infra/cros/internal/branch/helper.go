@@ -77,13 +77,13 @@ func canBranchProject(manifest repo.Manifest, project repo.Project) bool {
 }
 
 // projectBranchName determines the git branch name for the Project.
-func projectBranchName(br string, project repo.Project, original string) string {
+func (c *Client) projectBranchName(br string, project repo.Project, original string) string {
 	// If the Project has only one checkout that requires creating a new branch,
 	// then the base branch name is fine.
 	numBranchCreates := 0
-	for _, proj := range WorkingManifest.Projects {
+	for _, proj := range c.WorkingManifest.Projects {
 		if proj.Name == project.Name {
-			branchMode := WorkingManifest.ProjectBranchMode(proj)
+			branchMode := c.WorkingManifest.ProjectBranchMode(proj)
 			if branchMode != repo.Tot && branchMode != repo.Pinned {
 				numBranchCreates++
 			}
@@ -134,14 +134,14 @@ func projectBranchName(br string, project repo.Project, original string) string 
 // ProjectBranches returns a list of ProjectBranch structs:
 // one for each branchable project.
 // The original parameter is the CrOS branch from which the current checkout stems.
-func ProjectBranches(br, original string) []ProjectBranch {
+func (c *Client) ProjectBranches(br, original string) []ProjectBranch {
 	var projectBranches []ProjectBranch
-	for _, project := range WorkingManifest.Projects {
-		if canBranchProject(WorkingManifest, project) {
+	for _, project := range c.WorkingManifest.Projects {
+		if canBranchProject(c.WorkingManifest, project) {
 			projectBranches = append(projectBranches,
 				ProjectBranch{
 					Project:    project,
-					BranchName: projectBranchName(br, project, original),
+					BranchName: c.projectBranchName(br, project, original),
 				})
 		}
 	}
@@ -169,8 +169,8 @@ func BranchExists(branchPattern *regexp.Regexp, buildNumber string, branchType s
 
 // branchExistsExplicit checks that the given branch exists in the project.
 // It is a good bit faster than BranchExists.
-func branchExistsExplicit(project repo.Project, br string) (bool, error) {
-	remoteURL, err := ProjectFetchURL(project.Path)
+func (c *Client) branchExistsExplicit(project repo.Project, br string) (bool, error) {
+	remoteURL, err := c.ProjectFetchURL(project.Path)
 	if err != nil {
 		return false, errors.Annotate(err, "failed to get remote project url").Err()
 	}
@@ -197,13 +197,13 @@ func branchExistsExplicit(project repo.Project, br string) (bool, error) {
 	return <-ch, nil
 }
 
-func assertBranchesDoNotExistWorker(
+func (c *Client) assertBranchesDoNotExistWorker(
 	wg *sync.WaitGroup, projectBranches <-chan ProjectBranch, errs chan<- error) {
 	for projectBranch := range projectBranches {
-		LogOut("...checking that %s does not exist in %s.\n",
+		c.LogOut("...checking that %s does not exist in %s.\n",
 			projectBranch.BranchName,
 			projectBranch.Project.Name)
-		exists, err := branchExistsExplicit(projectBranch.Project, projectBranch.BranchName)
+		exists, err := c.branchExistsExplicit(projectBranch.Project, projectBranch.BranchName)
 		if err == nil {
 			if exists {
 				errs <- fmt.Errorf("branch %s exists for %s. Please rerun with --force to proceed.",
@@ -217,13 +217,13 @@ func assertBranchesDoNotExistWorker(
 }
 
 // AssertBranchesDoNotExist checks that branches do not already exist.
-func AssertBranchesDoNotExist(branches []ProjectBranch, workerCount int) error {
+func (c *Client) AssertBranchesDoNotExist(branches []ProjectBranch, workerCount int) error {
 	projectBranches := make(chan ProjectBranch, len(branches))
 	errs := make(chan error, len(branches))
 
 	var wg sync.WaitGroup
 	for i := 1; i <= workerCount; i++ {
-		go assertBranchesDoNotExistWorker(&wg, projectBranches, errs)
+		go c.assertBranchesDoNotExistWorker(&wg, projectBranches, errs)
 	}
 
 	for _, projectBranch := range branches {
@@ -245,10 +245,10 @@ func AssertBranchesDoNotExist(branches []ProjectBranch, workerCount int) error {
 // GerritProjectBranches creates a slice of GerritProjectBranch objects, which
 // are representations of ProjectBranches that are useful for API based
 // branching.
-func GerritProjectBranches(pbs []ProjectBranch) ([]GerritProjectBranch, error) {
+func (c *Client) GerritProjectBranches(pbs []ProjectBranch) ([]GerritProjectBranch, error) {
 	var result []GerritProjectBranch
 	for _, pb := range pbs {
-		remote := WorkingManifest.GetRemoteByName(pb.Project.RemoteName)
+		remote := c.WorkingManifest.GetRemoteByName(pb.Project.RemoteName)
 		if remote == nil {
 			return result, fmt.Errorf("remote %s does not exist in working manifest", pb.Project.RemoteName)
 		}
@@ -306,7 +306,7 @@ func GetNonManifestBranches(branches []GerritProjectBranch) []GerritProjectBranc
 // RepairManifestRepositories repairs all manifests in all manifest repositories
 // on the current branch and commits the changes. It then pushes the state of
 // the local git branches to remote.
-func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) error {
+func (c *Client) RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) error {
 	manifestBranchNames := make(map[string]string)
 	var stdoutBuf, stderrBuf bytes.Buffer
 	// Find names of manifest project branches so that we can push changes.
@@ -317,7 +317,7 @@ func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) er
 	}
 
 	for projectName := range ManifestProjects {
-		manifestProject, err := WorkingManifest.GetUniqueProject(projectName)
+		manifestProject, err := c.WorkingManifest.GetUniqueProject(projectName)
 		if err != nil {
 			return err
 		}
@@ -325,7 +325,7 @@ func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) er
 			Depth: 1,
 			Ref:   manifestProject.Revision,
 		}
-		manifestCheckout, err := GetProjectCheckout(manifestProject.Path, opts)
+		manifestCheckout, err := c.GetProjectCheckout(manifestProject.Path, opts)
 
 		defer os.RemoveAll(manifestCheckout)
 
@@ -333,11 +333,11 @@ func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) er
 			return errors.Annotate(err, "failed to checkout project %s", manifestProject.Path).Err()
 		}
 
-		manifestRepo := ManifestRepo{
+		manifestRepo := &ManifestRepo{
 			ProjectCheckout: manifestCheckout,
 			Project:         manifestProject,
 		}
-		if err := manifestRepo.RepairManifestsOnDisk(getBranchesByPath(branches)); err != nil {
+		if err := c.RepairManifestsOnDisk(manifestRepo, getBranchesByPath(branches)); err != nil {
 			return errors.Annotate(err, "failed to repair manifest project %s", projectName).Err()
 		}
 
@@ -371,7 +371,7 @@ func RepairManifestRepositories(branches []ProjectBranch, dryRun, force bool) er
 	return nil
 }
 
-func createRemoteBranchesWorker(
+func (c *Client) createRemoteBranchesWorker(
 	wg *sync.WaitGroup,
 	branches <-chan ProjectBranch,
 	errs chan<- error,
@@ -381,7 +381,7 @@ func createRemoteBranchesWorker(
 			Depth: 1,
 			Ref:   projectBranch.Project.Revision,
 		}
-		projectCheckout, err := GetProjectCheckout(projectBranch.Project.Path, opts)
+		projectCheckout, err := c.GetProjectCheckout(projectBranch.Project.Path, opts)
 		defer os.RemoveAll(projectCheckout)
 		if err != nil {
 			errs <- errors.Annotate(err, "could not checkout %s:%s",
@@ -403,7 +403,7 @@ func createRemoteBranchesWorker(
 			cmd = append(cmd, "--force")
 			logMode += " (with --force flag)"
 		}
-		LogOut("%s ref %s for project %s\n", logMode, branchName, projectBranch.Project.Path)
+		c.LogOut("%s ref %s for project %s\n", logMode, branchName, projectBranch.Project.Path)
 
 		ctx, cancel := context.WithTimeout(context.Background(), gitTimeout)
 		defer cancel()
@@ -425,13 +425,13 @@ func createRemoteBranchesWorker(
 
 // CreateRemoteBranches makes the requested branches on the remote Gerrit hosts
 // using git checkouts and pushes.
-func CreateRemoteBranches(branches []ProjectBranch, dryRun, force bool, workerCount int) error {
+func (c *Client) CreateRemoteBranches(branches []ProjectBranch, dryRun, force bool, workerCount int) error {
 	branchChan := make(chan ProjectBranch, len(branches))
 	errs := make(chan error, len(branches))
 
 	var wg sync.WaitGroup
 	for i := 1; i <= workerCount; i++ {
-		go createRemoteBranchesWorker(&wg, branchChan, errs, dryRun, force)
+		go c.createRemoteBranchesWorker(&wg, branchChan, errs, dryRun, force)
 	}
 
 	// Push the local git branches to remote.
@@ -526,7 +526,7 @@ func NewBranchName(vinfo mv.VersionInfo, custom, descriptor string, release, fac
 
 // CheckIfAlreadyBranched checks if there's already a branch for the desired new
 // branch to create on the manifest-internal repo.
-func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project, force bool, branchType, branchName string) error {
+func (c *Client) CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project, force bool, branchType, branchName string) error {
 	// Check that we did not already branch from this version.
 	// manifest-internal serves as the sentinel project.
 	pattern := regexp.MustCompile(fmt.Sprintf(`.*-%s.B$`, vinfo.StrippedVersionString()))
@@ -535,7 +535,7 @@ func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project,
 	majorMinor := fmt.Sprintf("%v.%v", vinfo.BuildNumber, vinfo.BranchBuildNumber)
 
 	// Fetch remoteURL
-	remoteURL, err := ProjectFetchURL(manifestInternal.Path)
+	remoteURL, err := c.ProjectFetchURL(manifestInternal.Path)
 	if err != nil {
 		err = errors.Annotate(err, "failed to get remote project url").Err()
 	}
@@ -556,7 +556,7 @@ func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project,
 			return fmt.Errorf("already branched %s. Please rerun with --force if you "+
 				"would like to proceed", vinfo.VersionString())
 		}
-		LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
+		c.LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
 	} else {
 		// If the branch type is custom, we also need to check that the named branch
 		// does not already exist.
@@ -576,9 +576,9 @@ func CheckIfAlreadyBranched(vinfo mv.VersionInfo, manifestInternal repo.Project,
 				return fmt.Errorf("already have branch %s. Please rerun with --force if you "+
 					"would like to proceed", branchName)
 			}
-			LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
+			c.LogOut("Overwriting branch with version %s (--force was set).\n", vinfo.VersionString())
 		} else {
-			LogOut("No branch exists for version %s. Continuing...\n", vinfo.VersionString())
+			c.LogOut("No branch exists for version %s. Continuing...\n", vinfo.VersionString())
 		}
 	}
 	return nil
