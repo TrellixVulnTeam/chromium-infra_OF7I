@@ -9,7 +9,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"regexp"
 
@@ -80,8 +79,8 @@ func loadManifestFromFile(file string, mergeManifests bool) (*repo.Manifest, err
 	return loadManifest(filepath.Base(file), getFile, mergeManifests)
 }
 
-func loadManifestFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string, mergeManifests bool) (*repo.Manifest, error) {
-	getFile := loadFromGitilesInnerFunc(ctx, authedClient, host, project, branch, file)
+func loadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string, mergeManifests bool) (*repo.Manifest, error) {
+	getFile := loadFromGitilesInnerFunc(ctx, gerritClient, host, project, branch, file)
 	return loadManifest(file, getFile, mergeManifests)
 }
 
@@ -122,17 +121,17 @@ func LoadManifestFromFileRaw(file string) ([]byte, error) {
 	return data, nil
 }
 
-func loadFromGitilesInnerFunc(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
+func loadFromGitilesInnerFunc(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
 	return func(f string) ([]byte, error) {
 		path := filepath.Join(filepath.Dir(file), f)
-		data, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, host, project, branch, f)
+		data, err := gerritClient.DownloadFileFromGitiles(ctx, host, project, branch, f)
 		if err != nil {
 			return nil, errors.Annotate(err, "failed to open and read %s", path).Err()
 		}
 		// If the manifest file just contains another file name, it's a symlink
 		// and we need to follow it.
 		for xmlFileRegex.MatchString(data) {
-			data, err = gerrit.DownloadFileFromGitiles(ctx, authedClient, host, project, branch, data)
+			data, err = gerritClient.DownloadFileFromGitiles(ctx, host, project, branch, data)
 			if err != nil {
 				return nil, errors.Annotate(err, "failed to open and read %s", path).Err()
 			}
@@ -144,19 +143,19 @@ func loadFromGitilesInnerFunc(ctx context.Context, authedClient *http.Client, ho
 // LoadManifestTree loads the manifest from the specified remote location into
 // a Manifest struct. It also loads all included manifests.
 // Returns a map mapping manifest filenames to file contents.
-func LoadManifestTreeFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
-	getFile := loadFromGitilesInnerFunc(ctx, authedClient, host, project, branch, file)
+func LoadManifestTreeFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (map[string]*repo.Manifest, error) {
+	getFile := loadFromGitilesInnerFunc(ctx, gerritClient, host, project, branch, file)
 	return loadManifestTree(file, getFile, true)
 }
 
 // LoadManifestFromGitiles loads the manifest from the specified remote location
 // using the Gitiles API.
-func LoadManifestFromGitiles(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (*repo.Manifest, error) {
-	return loadManifestFromGitiles(ctx, authedClient, host, project, branch, file, false)
+func LoadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
+	return loadManifestFromGitiles(ctx, gerritClient, host, project, branch, file, false)
 }
 
 // LoadManifestFromGitilesWithIncludes loads the manifest from the specified remote location
 // using the Gitiles API and also calls MergeManifests to resolve includes.
-func LoadManifestFromGitilesWithIncludes(ctx context.Context, authedClient *http.Client, host, project, branch, file string) (*repo.Manifest, error) {
-	return loadManifestFromGitiles(ctx, authedClient, host, project, branch, file, true)
+func LoadManifestFromGitilesWithIncludes(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
+	return loadManifestFromGitiles(ctx, gerritClient, host, project, branch, file, true)
 }

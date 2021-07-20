@@ -252,11 +252,15 @@ func (c *checkBuild) getRepoToSourceRoot(gc *bbproto.GitilesCommit) (*map[string
 	if err != nil {
 		return nil, err
 	}
+	gerritClient, err := igerrit.NewClient(authedClient)
+	if err != nil {
+		return nil, err
+	}
 	if gc.Id == "" {
 		log.Print("No manifest commit provided. Using 'snapshot' instead.")
 		gc.Id = "snapshot"
 	}
-	repoToRemoteBranchToSrcRoot, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromGitiles(ctx, authedClient, gc)
+	repoToRemoteBranchToSrcRoot, err := manifestutil.GetRepoToRemoteBranchToSourceRootFromGitiles(ctx, gerritClient, gc)
 	if err != nil {
 		return nil, fmt.Errorf("Error with repo tool call\n%v", err)
 	}

@@ -480,8 +480,8 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 	return nil
 }
 
-// setUpCreate creates the necessary mocks we need to test the create-v2 function
-func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, error) {
+// setUpCreate creates the necessary mocks we need to test the create function
+func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, *gerrit.Client, error) {
 	r := setUp(t)
 
 	// Get manifest contents for return
@@ -493,7 +493,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 	}
 	manifestFile, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	manifest := string(manifestFile)
 
@@ -538,7 +538,10 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		},
 		nil,
 	)
-	gerrit.MockGitiles = gitilesMock
+	mockClientMap := map[string]gitilespb.GitilesClient{
+		internalGerritURL: gitilesMock,
+		externalGerritURL: gitilesMock,
+	}
 
 	// Mock out call to CreateRemoteBranchesAPI.
 	f := &fakeCreateRemoteBranchesAPI{t: t, r: r, dryRun: dryRun, force: force}
@@ -546,11 +549,12 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
 	}
 
-	return r, bc, nil
+	return r, bc, gerrit.NewTestClient(mockClientMap), nil
 }
 
 func TestCreate(t *testing.T) {
-	r, bc, err := setUpCreate(t, false, false, false)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -565,7 +569,7 @@ func TestCreate(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret == 0)
 
 	manifest := r.Harness.Manifest()
@@ -600,7 +604,8 @@ func TestCreate(t *testing.T) {
 // bumped in the correct branch.
 // Covers crbug.com/1744928.
 func TestCreateReleaseNonmain(t *testing.T) {
-	r, bc, err := setUpCreate(t, false, false, true)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, false, false, true)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -617,7 +622,7 @@ func TestCreateReleaseNonmain(t *testing.T) {
 		release:           true,
 		buildSpecManifest: "12/2.1.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -649,7 +654,8 @@ func TestCreateReleaseNonmain(t *testing.T) {
 	assertCommentsPersist(t, r, getExistingBranchManifestFiles, branch)
 }
 func TestCreateDryRun(t *testing.T) {
-	r, bc, err := setUpCreate(t, true, false, false)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, true, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -663,14 +669,15 @@ func TestCreateDryRun(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret == 0)
 	assertNoRemoteDiff(t, r)
 }
 
 // Test create overwrites existing branches when --force is set.
 func TestCreateOverwrite(t *testing.T) {
-	r, bc, err := setUpCreate(t, false, true, false)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, false, true, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -688,7 +695,7 @@ func TestCreateOverwrite(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -714,7 +721,8 @@ func TestCreateOverwrite(t *testing.T) {
 
 // Test create dies when it tries to overwrite without --force.
 func TestCreateOverwriteMissingForce(t *testing.T) {
-	r, bc, err := setUpCreate(t, false, false, false)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -733,7 +741,7 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 		custom:            branch,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "rerun with --force"))
 
@@ -748,7 +756,8 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 
 // Test create dies when given a version that was already branched.
 func TestCreatExistingVersion(t *testing.T) {
-	r, bc, err := setUpCreate(t, false, false, false)
+	t.Parallel()
+	r, bc, gc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -775,7 +784,7 @@ func TestCreatExistingVersion(t *testing.T) {
 		stabilize:         true,
 		buildSpecManifest: "12/3.0.0.xml",
 	}
-	ret := c.innerRun(context.Background(), bc, nil)
+	ret := c.innerRun(context.Background(), bc, nil, gc)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "already branched 3.0.0"))
 	assertNoRemoteDiff(t, r)

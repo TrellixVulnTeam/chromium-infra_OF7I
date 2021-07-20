@@ -104,9 +104,15 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 		return 4
 	}
 
-	if err := b.CreateProjectBuildspec(authedClient, gsClient); err != nil {
+	gerritClient, err := gerrit.NewClient(authedClient)
+	if err != nil {
 		LogErr(err.Error())
 		return 5
+	}
+
+	if err := b.CreateProjectBuildspec(authedClient, gsClient, gerritClient); err != nil {
+		LogErr(err.Error())
+		return 6
 	}
 
 	return 0
@@ -126,7 +132,7 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
-func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsClient gs.Client) error {
+func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	buildspecInfo, err := branch.ParseBuildspec(b.buildspec)
 	if err != nil {
 		return err
@@ -149,7 +155,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 	}
 
 	publicBuildspecPath := "buildspecs/" + b.buildspec
-	_, err = gerrit.DownloadFileFromGitiles(ctx, authedClient, chromeExternalHost,
+	_, err = gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
 		"chromiumos/manifest-versions", "HEAD", publicBuildspecPath)
 	if err != nil {
 		errorCode, ok := status.FromError(err)
@@ -163,7 +169,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 	}
 
 	// Load the internal buildspec.
-	buildspecManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+	buildspecManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 		"chromeos/manifest-versions", "HEAD", "buildspecs/"+b.buildspec)
 	if err != nil {
 		return errors.Annotate(err, "error loading buildspec manifest").Err()
@@ -177,7 +183,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsC
 	}
 	for project, uploadPath := range projects {
 		// Load the local manifest for the appropriate project/branch.
-		localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, authedClient, chromeInternalHost,
+		localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 			project, releaseBranch, "local_manifest.xml")
 		if err != nil {
 			return errors.Annotate(err, "error loading tip-of-branch manifest").Err()

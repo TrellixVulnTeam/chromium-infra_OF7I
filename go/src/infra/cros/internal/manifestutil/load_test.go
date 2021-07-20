@@ -203,6 +203,10 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 		},
 		nil,
 	)
+	mockMap := map[string]gitilespb.GitilesClient{
+		"host": gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
 
 	expected := map[string]*repo.Manifest{
 		"manifest.xml": {
@@ -282,21 +286,20 @@ func TestLoadManifestFromGitiles(t *testing.T) {
 			},
 		},
 	}
-	gerrit.MockGitiles = gitilesMock
 	ctx := context.Background()
 
 	// Test LoadManifestFromGitiles
-	got, err := LoadManifestFromGitiles(ctx, nil, "host", project, branch, "manifest.xml")
+	got, err := LoadManifestFromGitiles(ctx, gc, "host", project, branch, "manifest.xml")
 	assert.NilError(t, err)
 	assert.Assert(t, ManifestEq(got, expected["manifest.xml"]))
 
 	// Test LoadManifestFromGitilesWithIncludes
-	got, err = LoadManifestFromGitilesWithIncludes(ctx, nil, "host", project, branch, "manifest.xml")
+	got, err = LoadManifestFromGitilesWithIncludes(ctx, gc, "host", project, branch, "manifest.xml")
 	assert.NilError(t, err)
 	assert.Assert(t, ManifestEq(got, expectedMerged))
 
 	// Test LoadManifestTreeFromGitiles
-	gotMap, err := LoadManifestTreeFromGitiles(ctx, nil, "host", project, branch, "manifest.xml")
+	gotMap, err := LoadManifestTreeFromGitiles(ctx, gc, "host", project, branch, "manifest.xml")
 	assert.NilError(t, err)
 	assert.NilError(t, ManifestMapEq(gotMap, expected))
 }
@@ -340,6 +343,10 @@ func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 		},
 		nil,
 	)
+	mockMap := map[string]gitilespb.GitilesClient{
+		"host": gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
 
 	expected := map[string]*repo.Manifest{
 		"default.xml": {
@@ -360,16 +367,15 @@ func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 			},
 		},
 	}
-	gerrit.MockGitiles = gitilesMock
 	ctx := context.Background()
 
 	// Test LoadManifestFromGitiles
-	got, err := LoadManifestFromGitiles(ctx, nil, "host", project, branch, "default.xml")
+	got, err := LoadManifestFromGitiles(ctx, gc, "host", project, branch, "default.xml")
 	assert.NilError(t, err)
 	assert.Assert(t, ManifestEq(got, expected["default.xml"]))
 
 	// Test LoadManifestTreeFromGitiles
-	gotMap, err := LoadManifestTreeFromGitiles(ctx, nil, "host", project, branch, "default.xml")
+	gotMap, err := LoadManifestTreeFromGitiles(ctx, gc, "host", project, branch, "default.xml")
 	assert.NilError(t, err)
 	assert.NilError(t, ManifestMapEq(gotMap, expected))
 

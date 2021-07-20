@@ -22,6 +22,8 @@ import (
 
 const (
 	branchCreatorGroup = "mdb/chromeos-branch-creators"
+	internalGerritURL  = "chrome-internal.googlesource.com"
+	externalGerritURL  = "chromium.googlesource.com"
 )
 
 func getCmdCreateBranch(opts auth.Options) *subcommands.Command {
@@ -131,17 +133,22 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	}
 
 	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
-
 	if err != nil {
 		bc.LogErr(errors.Annotate(err, "Please run `%s auth-login` and sign in with your @google.com account", os.Args[0]).Err().Error())
 		return 3
 	}
 
+	gitilesClient, err := gerrit.NewClient(authedClient)
+	if err != nil {
+		bc.LogErr(errors.Annotate(err, "failed to create gitiles client").Err().Error())
+		return 4
+	}
+
 	// Do work.
-	return c.innerRun(ctx, bc, authedClient)
+	return c.innerRun(ctx, bc, authedClient, gitilesClient)
 }
 
-func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client) int {
+func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client, gc *gerrit.Client) int {
 	// Check if the user is in mdb/chromeos-branch-creators, unless SkipGroupCheck is set.
 	// This is not to say that an unauthorized user can simply call the tool with --skip-group-check;
 	// ACLs will still be enforced. Skipping this check is necessary for bot invocations,
@@ -170,7 +177,7 @@ func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedCl
 		file.ResolveImplicitLinks()
 		bc.WorkingManifest = *file
 	} else {
-		file, err := gerrit.DownloadFileFromGitiles(ctx, authedClient, "chrome-internal.googlesource.com",
+		file, err := gc.DownloadFileFromGitiles(ctx, internalGerritURL,
 			"chromeos/manifest-versions", "HEAD", "buildspecs/"+c.buildSpecManifest)
 		if err != nil {
 			bc.LogErr(errors.Annotate(err, "failed to fetch buildspec %v", c.buildSpecManifest).Err().Error())
@@ -229,8 +236,8 @@ func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedCl
 	}
 
 	// Fetch chromeos_version.sh from the source branch
-	versionFile, err := gerrit.DownloadFileFromGitiles(ctx, authedClient,
-		"chromium.googlesource.com", versionProject.Name, versionProject.Revision, mv.VersionFileProjectPath)
+	versionFile, err := gc.DownloadFileFromGitiles(ctx,
+		externalGerritURL, versionProject.Name, versionProject.Revision, mv.VersionFileProjectPath)
 
 	if err != nil {
 		bc.LogErr(errors.Annotate(err, "failed to fetch versionFile").Err().Error())

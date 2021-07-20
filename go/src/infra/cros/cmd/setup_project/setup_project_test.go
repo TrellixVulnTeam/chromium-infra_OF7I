@@ -65,7 +65,11 @@ func TestSetupProject(t *testing.T) {
 			nil,
 		)
 	}
-
+	mockMap := map[string]gitilespb.GitilesClient{
+		chromeInternalHost: gitilesMock,
+		chromeExternalHost: gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
 	gerrit.MockGitiles = gitilesMock
 
 	dir, err := ioutil.TempDir("", "setup_project")
@@ -82,7 +86,7 @@ func TestSetupProject(t *testing.T) {
 		chipset:              "baz",
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, nil))
+	assert.NilError(t, b.setupProject(ctx, nil, nil, gc))
 	checkFiles(t, localManifestDir, expectedFiles)
 }
 
@@ -123,7 +127,11 @@ func TestSetupProject_allProjects(t *testing.T) {
 			nil,
 		)
 	}
-
+	mockMap := map[string]gitilespb.GitilesClient{
+		chromeInternalHost: gitilesMock,
+		chromeExternalHost: gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
 	gerrit.MockGitiles = gitilesMock
 
 	dir, err := ioutil.TempDir("", "setup_project")
@@ -141,7 +149,7 @@ func TestSetupProject_allProjects(t *testing.T) {
 		chipset:              "baz",
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, nil))
+	assert.NilError(t, b.setupProject(ctx, nil, nil, gc))
 	checkFiles(t, localManifestDir, expectedFiles)
 }
 
@@ -191,7 +199,7 @@ func TestSetupProject_buildspecs(t *testing.T) {
 		buildspec:            buildspec,
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, f))
+	assert.NilError(t, b.setupProject(ctx, nil, f, nil))
 	expectedFiles := map[string]string{
 		"foo_program.xml":  "chromeos/program/foo",
 		"bar1_project.xml": "chromeos/project/foo/bar1",

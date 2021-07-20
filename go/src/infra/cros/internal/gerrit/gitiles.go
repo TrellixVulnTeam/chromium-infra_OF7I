@@ -11,6 +11,7 @@ import (
 	"compress/gzip"
 	"context"
 	gerrs "errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -25,9 +26,21 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
+// A note on this package wrt testing:
+// Historically this package did not have a Client interface and functions were
+// always called directly. To improve testability and allow for better/more
+// isolated mocking, a Client was added. In most places the functions are still
+// called without a client, which is why not every function has a Client
+// version. Client versions of the functions should be added as needed.
+// For the time being, the global MockGitiles remains. New tests should not use
+// this global mock and should instead pass a Client created with
+// NewTestClient -- use of the global mock prevents tests in the same package
+// from being run in parallel. TODO add example
+
 var (
 	// MockGitiles is used for testing purposes.
-	// Override this to use a mock GitilesClient rather than the real one.
+	// Deprecated: Override this to use a mock GitilesClient rather than the
+	// real one.
 	MockGitiles gitilespb.GitilesClient
 )
 
@@ -36,6 +49,49 @@ func getGitilesClient(authedClient *http.Client, host string, auth bool) (gitile
 		return MockGitiles, nil
 	}
 	return gitiles.NewRESTClient(authedClient, host, true)
+}
+
+// Client is a client for interacting with gerrit.
+type Client struct {
+	isTestClient bool
+	authedClient *http.Client
+	// gitilesClient maps individual gerrit host to gitiles client.
+	gitilesClient map[string]gitilespb.GitilesClient
+}
+
+// NewClient returns a new Client object.
+func NewClient(authedClient *http.Client) (*Client, error) {
+	return &Client{
+		isTestClient:  false,
+		authedClient:  authedClient,
+		gitilesClient: map[string]gitilespb.GitilesClient{},
+	}, nil
+}
+
+// getHostClient retrieves the inner gitilespb.GitilesClient for the specific
+// host if it exists and creates a new one if it does not.
+func (c *Client) getHostClient(host string) (gitilespb.GitilesClient, error) {
+	if client, ok := c.gitilesClient[host]; ok {
+		return client, nil
+	}
+	if c.isTestClient {
+		return nil, fmt.Errorf("test clients must have all inner clients set at initialization.")
+	}
+	var err error
+	c.gitilesClient[host], err = gitiles.NewRESTClient(c.authedClient, host, true)
+	if err != nil {
+		return nil, err
+	}
+	return c.gitilesClient[host], err
+}
+
+// NewTestClient returns a new Client that uses the provided GitilesClient
+// objects.
+func NewTestClient(gcs map[string]gitilespb.GitilesClient) *Client {
+	return &Client{
+		isTestClient:  true,
+		gitilesClient: gcs,
+	}
 }
 
 // FetchFilesFromGitiles fetches file contents from gitiles.
@@ -59,8 +115,8 @@ func FetchFilesFromGitiles(ctx context.Context, authedClient *http.Client, host,
 }
 
 // DownloadFileFromGitiles downloads a file from Gitiles.
-func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref, path string) (string, error) {
-	gc, err := getGitilesClient(authedClient, host, true)
+func (c *Client) DownloadFileFromGitiles(ctx context.Context, host, project, ref, path string) (string, error) {
+	gc, err := c.getHostClient(host)
 	if err != nil {
 		return "", err
 	}
@@ -75,10 +131,17 @@ func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, hos
 	}
 	return contents.Contents, err
 }
+func DownloadFileFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref, path string) (string, error) {
+	c, err := NewClient(authedClient)
+	if err != nil {
+		return "", err
+	}
+	return c.DownloadFileFromGitiles(ctx, host, project, ref, path)
+}
 
 // DownloadFileFromGitilesToPath downloads a file from Gitiles to a specified path.
-func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Client, host, project, ref, path, saveToPath string) error {
-	contents, err := DownloadFileFromGitiles(ctx, authedClient, host, project, ref, path)
+func (c *Client) DownloadFileFromGitilesToPath(ctx context.Context, host, project, ref, path, saveToPath string) error {
+	contents, err := c.DownloadFileFromGitiles(ctx, host, project, ref, path)
 	if err != nil {
 		return err
 	}
@@ -92,6 +155,13 @@ func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Clien
 	}
 
 	return os.WriteFile(saveToPath, []byte(contents), fileMode)
+}
+func DownloadFileFromGitilesToPath(ctx context.Context, authedClient *http.Client, host, project, ref, path, saveToPath string) error {
+	c, err := NewClient(authedClient)
+	if err != nil {
+		return err
+	}
+	return c.DownloadFileFromGitilesToPath(ctx, host, project, ref, path, saveToPath)
 }
 
 func obtainGitilesBytes(ctx context.Context, gc gitilespb.GitilesClient, project string, ref string) ([]byte, error) {

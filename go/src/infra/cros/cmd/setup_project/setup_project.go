@@ -145,9 +145,15 @@ func (b *setupProject) Run(a subcommands.Application, args []string, env subcomm
 		return 4
 	}
 
-	if err := b.setupProject(ctx, authedClient, gsClient); err != nil {
+	gitilesClient, err := gitiles.NewClient(authedClient)
+	if err != nil {
 		LogErr(err.Error())
 		return 5
+	}
+
+	if err := b.setupProject(ctx, authedClient, gsClient, gitilesClient); err != nil {
+		LogErr(err.Error())
+		return 6
 	}
 
 	return 0
@@ -194,7 +200,7 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
 }
 
-func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client, gsClient gs.Client) error {
+func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client, gsClient gs.Client, gitilesClient *gitiles.Client) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
 	if err := os.Mkdir(localManifestPath, os.ModePerm); err != nil && !gerrs.Is(err, os.ErrExist) {
@@ -274,7 +280,7 @@ func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Clie
 			if file.host != "" {
 				host = file.host
 			}
-			err = gitiles.DownloadFileFromGitilesToPath(ctx, authedClient, host,
+			err = gitilesClient.DownloadFileFromGitilesToPath(ctx, host,
 				file.project, file.branch, file.path, downloadPath)
 			errmsg = fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
 				chromeInternalHost, file.project, file.path, file.branch)
