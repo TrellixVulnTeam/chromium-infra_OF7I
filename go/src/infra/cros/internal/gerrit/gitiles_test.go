@@ -159,9 +159,11 @@ func TestProjects(t *testing.T) {
 		nil,
 	)
 	host := "limited-review.googlesource.com"
-
-	MockGitiles = gitilesMock
-	got, err := Projects(context.Background(), http.DefaultClient, host)
+	mockMap := map[string]gitilespb.GitilesClient{
+		host: gitilesMock,
+	}
+	gc := NewTestClient(mockMap)
+	got, err := gc.Projects(context.Background(), host)
 
 	assert.NilError(t, err)
 	assert.Assert(t, reflect.DeepEqual(got, projects))

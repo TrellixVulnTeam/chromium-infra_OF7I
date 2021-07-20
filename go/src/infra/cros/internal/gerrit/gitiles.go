@@ -283,8 +283,8 @@ func Branches(ctx context.Context, authedClient *http.Client, host, project stri
 }
 
 // Projects returns a list of projects for a given host.
-func Projects(ctx context.Context, authedClient *http.Client, host string) ([]string, error) {
-	gc, err := getGitilesClient(authedClient, host, true)
+func (c *Client) Projects(ctx context.Context, host string) ([]string, error) {
+	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
 	}

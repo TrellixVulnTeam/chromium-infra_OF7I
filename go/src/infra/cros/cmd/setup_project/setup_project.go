@@ -8,7 +8,6 @@ import (
 	gerrs "errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -151,7 +150,7 @@ func (b *setupProject) Run(a subcommands.Application, args []string, env subcomm
 		return 5
 	}
 
-	if err := b.setupProject(ctx, authedClient, gsClient, gitilesClient); err != nil {
+	if err := b.setupProject(ctx, gsClient, gitilesClient); err != nil {
 		LogErr(err.Error())
 		return 6
 	}
@@ -171,8 +170,8 @@ type localManifest struct {
 	downloadTo string
 }
 
-func projectsInProgram(ctx context.Context, authedClient *http.Client, program string) ([]string, error) {
-	projects, err := gitiles.Projects(ctx, authedClient, chromeInternalHost)
+func projectsInProgram(ctx context.Context, gitilesClient *gitiles.Client, program string) ([]string, error) {
+	projects, err := gitilesClient.Projects(ctx, chromeInternalHost)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +199,7 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
 }
 
-func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Client, gsClient gs.Client, gitilesClient *gitiles.Client) error {
+func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, gitilesClient *gitiles.Client) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
 	if err := os.Mkdir(localManifestPath, os.ModePerm); err != nil && !gerrs.Is(err, os.ErrExist) {
@@ -224,7 +223,7 @@ func (b *setupProject) setupProject(ctx context.Context, authedClient *http.Clie
 	var projects []string
 	if b.allProjects {
 		var err error
-		projects, err = projectsInProgram(ctx, authedClient, b.program)
+		projects, err = projectsInProgram(ctx, gitilesClient, b.program)
 		if err != nil {
 			return errors.Annotate(err, "error getting all projects for program %s", b.program).Err()
 		}

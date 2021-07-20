@@ -67,10 +67,8 @@ func TestSetupProject(t *testing.T) {
 	}
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
-		chromeExternalHost: gitilesMock,
 	}
 	gc := gerrit.NewTestClient(mockMap)
-	gerrit.MockGitiles = gitilesMock
 
 	dir, err := ioutil.TempDir("", "setup_project")
 	defer os.RemoveAll(dir)
@@ -86,7 +84,7 @@ func TestSetupProject(t *testing.T) {
 		chipset:              "baz",
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, nil, gc))
+	assert.NilError(t, b.setupProject(ctx, nil, gc))
 	checkFiles(t, localManifestDir, expectedFiles)
 }
 
@@ -129,10 +127,8 @@ func TestSetupProject_allProjects(t *testing.T) {
 	}
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
-		chromeExternalHost: gitilesMock,
 	}
 	gc := gerrit.NewTestClient(mockMap)
-	gerrit.MockGitiles = gitilesMock
 
 	dir, err := ioutil.TempDir("", "setup_project")
 	defer os.RemoveAll(dir)
@@ -149,7 +145,7 @@ func TestSetupProject_allProjects(t *testing.T) {
 		chipset:              "baz",
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, nil, gc))
+	assert.NilError(t, b.setupProject(ctx, nil, gc))
 	checkFiles(t, localManifestDir, expectedFiles)
 }
 
@@ -170,6 +166,10 @@ func TestSetupProject_buildspecs(t *testing.T) {
 		},
 		nil,
 	)
+	mockMap := map[string]gitilespb.GitilesClient{
+		chromeInternalHost: gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
 
 	gsSuffix := "/buildspecs/" + buildspec
 	expectedDownloads := map[string][]byte{
@@ -182,8 +182,6 @@ func TestSetupProject_buildspecs(t *testing.T) {
 		T:                 t,
 		ExpectedDownloads: expectedDownloads,
 	}
-
-	gerrit.MockGitiles = gitilesMock
 
 	dir, err := ioutil.TempDir("", "setup_project")
 	defer os.RemoveAll(dir)
@@ -199,7 +197,7 @@ func TestSetupProject_buildspecs(t *testing.T) {
 		buildspec:            buildspec,
 	}
 	ctx := context.Background()
-	assert.NilError(t, b.setupProject(ctx, nil, f, nil))
+	assert.NilError(t, b.setupProject(ctx, f, gc))
 	expectedFiles := map[string]string{
 		"foo_program.xml":  "chromeos/program/foo",
 		"bar1_project.xml": "chromeos/project/foo/bar1",
