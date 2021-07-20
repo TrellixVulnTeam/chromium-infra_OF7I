@@ -24,12 +24,6 @@ const (
 	branchCreatorGroup = "mdb/chromeos-branch-creators"
 )
 
-type createRemoteBranchesAPIType func(c *branch.Client, authedClient *http.Client, branches []branch.GerritProjectBranch, dryRun bool, gerritQPS float64) error
-
-var (
-	CreateRemoteBranchesAPI createRemoteBranchesAPIType = branch.CreateRemoteBranchesAPI
-)
-
 func getCmdCreateBranch(opts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "create <options>",
@@ -128,20 +122,26 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	if ret != 0 {
 		return ret
 	}
+
 	ctx := context.Background()
 	authOpts, err := c.authFlags.Options()
 	if err != nil {
 		bc.LogErr(errors.Annotate(err, "failed to configure auth").Err().Error())
-		return 1
+		return 2
 	}
 
 	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
 
 	if err != nil {
 		bc.LogErr(errors.Annotate(err, "Please run `%s auth-login` and sign in with your @google.com account", os.Args[0]).Err().Error())
-		return 1
+		return 3
 	}
 
+	// Do work.
+	return c.innerRun(ctx, bc, authedClient)
+}
+
+func (c *createBranch) innerRun(ctx context.Context, bc *branch.Client, authedClient *http.Client) int {
 	// Check if the user is in mdb/chromeos-branch-creators, unless SkipGroupCheck is set.
 	// This is not to say that an unauthorized user can simply call the tool with --skip-group-check;
 	// ACLs will still be enforced. Skipping this check is necessary for bot invocations,
@@ -298,7 +298,7 @@ func (c *createBranch) Run(a subcommands.Application, args []string,
 	}
 
 	// Create git branches for new branch. Exclude the ManifestProjects, which we just updated.
-	if err = CreateRemoteBranchesAPI(bc, authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
+	if err = bc.CreateRemoteBranchesAPI(authedClient, branch.GetNonManifestBranches(projectBranches), !c.Push, c.gerritWriteQPS); err != nil {
 		bc.LogErr(err.Error())
 		return 1
 	}

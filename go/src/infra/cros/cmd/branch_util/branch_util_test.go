@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -457,7 +458,7 @@ type fakeCreateRemoteBranchesAPI struct {
 	force  bool
 }
 
-func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(_ *branch.Client,
+func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 	_ *http.Client, branches []branch.GerritProjectBranch, dryRun bool, _ float64) error {
 	if f.dryRun {
 		return nil
@@ -479,8 +480,8 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(_ *branch.Client,
 	return nil
 }
 
-// setUpCreate creates the neccessary mocks we need to test the create-v2 function
-func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, error) {
+// setUpCreate creates the necessary mocks we need to test the create-v2 function
+func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, error) {
 	r := setUp(t)
 
 	// Get manifest contents for return
@@ -492,7 +493,7 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 	}
 	manifestFile, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	manifest := string(manifestFile)
 
@@ -541,28 +542,30 @@ func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHar
 
 	// Mock out call to CreateRemoteBranchesAPI.
 	f := &fakeCreateRemoteBranchesAPI{t: t, r: r, dryRun: dryRun, force: force}
-	CreateRemoteBranchesAPI = f.CreateRemoteBranchesAPI
+	bc := &branch.Client{
+		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
+	}
 
-	return r, nil
+	return r, bc, nil
 }
 
 func TestCreate(t *testing.T) {
-	r, err := setUpCreate(t, false, false, false)
+	r, bc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
 	branch := "new-branch"
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"create", "--push",
-		"--custom", branch,
-		"--buildspec-manifest", "12/3.0.0.xml",
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-		// Test with two workers for kicks.
-		"-j", "2",
-	})
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		custom:            branch,
+		buildSpecManifest: "12/3.0.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret == 0)
 
 	manifest := r.Harness.Manifest()
@@ -597,22 +600,24 @@ func TestCreate(t *testing.T) {
 // bumped in the correct branch.
 // Covers crbug.com/1744928.
 func TestCreateReleaseNonmain(t *testing.T) {
-	r, err := setUpCreate(t, false, false, true)
+	r, bc, err := setUpCreate(t, false, false, true)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
 	manifest := r.Harness.Manifest()
 	branch := "release-R12-2.1.B"
 
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"create", "--push",
-		"--buildspec-manifest", "12/2.1.0.xml",
-		"--release",
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-	})
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		release:           true,
+		buildSpecManifest: "12/2.1.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -644,43 +649,46 @@ func TestCreateReleaseNonmain(t *testing.T) {
 	assertCommentsPersist(t, r, getExistingBranchManifestFiles, branch)
 }
 func TestCreateDryRun(t *testing.T) {
-	r, err := setUpCreate(t, true, false, false)
+	r, bc, err := setUpCreate(t, true, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
 	branch := "new-branch"
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"create",
-		"--buildspec-manifest", "12/3.0.0.xml",
-		"--custom", branch,
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-	})
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		custom:            branch,
+		buildSpecManifest: "12/3.0.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret == 0)
 	assertNoRemoteDiff(t, r)
 }
 
 // Test create overwrites existing branches when --force is set.
 func TestCreateOverwrite(t *testing.T) {
-	r, err := setUpCreate(t, false, true, false)
+	r, bc, err := setUpCreate(t, false, true, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
 	manifest := r.Harness.Manifest()
 
 	branch := "old-branch"
-	s := &branchApplication{application, nil, nil}
-	ret := subcommands.Run(s, []string{
-		"create", "--push",
-		"--force",
-		"--buildspec-manifest", "12/3.0.0.xml",
-		"--custom", branch,
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-	})
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push:  true,
+			Force: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		custom:            branch,
+		buildSpecManifest: "12/3.0.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret == 0)
 
 	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
@@ -706,7 +714,7 @@ func TestCreateOverwrite(t *testing.T) {
 
 // Test create dies when it tries to overwrite without --force.
 func TestCreateOverwriteMissingForce(t *testing.T) {
-	r, err := setUpCreate(t, false, false, false)
+	r, bc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -714,16 +722,18 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 
 	branch := "old-branch"
 	var stderrBuf bytes.Buffer
-	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
-	s := &branchApplication{application, nil, stderrLog}
-	ret := subcommands.Run(s, []string{
-		"create", "--push",
-		"--buildspec-manifest", "12/3.0.0.xml",
-		"--custom", branch,
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-	})
+	bc.StderrLog = log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		custom:            branch,
+		buildSpecManifest: "12/3.0.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "rerun with --force"))
 
@@ -738,7 +748,7 @@ func TestCreateOverwriteMissingForce(t *testing.T) {
 
 // Test create dies when given a version that was already branched.
 func TestCreatExistingVersion(t *testing.T) {
-	r, err := setUpCreate(t, false, false, false)
+	r, bc, err := setUpCreate(t, false, false, false)
 	defer r.Teardown()
 	assert.NilError(t, err)
 
@@ -754,16 +764,18 @@ func TestCreatExistingVersion(t *testing.T) {
 	assert.NilError(t, r.Harness.SnapshotRemotes())
 
 	var stderrBuf bytes.Buffer
-	stderrLog := log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
-	s := &branchApplication{application, nil, stderrLog}
-	ret := subcommands.Run(s, []string{
-		"create-v1", "--push",
-		"--buildspec-manifest", "12/3.0.0.xml",
-		"--stabilize",
-		// We don't really care about this check as ACLs are still enforced
-		// (just a less elegant failure), and it's one less thing to mock.
-		"--skip-group-check",
-	})
+	bc.StderrLog = log.New(&stderrBuf, "", log.LstdFlags|log.Lmicroseconds)
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		stabilize:         true,
+		buildSpecManifest: "12/3.0.0.xml",
+	}
+	ret := c.innerRun(context.Background(), bc, nil)
 	assert.Assert(t, ret != 0)
 	assert.Assert(t, strings.Contains(stderrBuf.String(), "already branched 3.0.0"))
 	assertNoRemoteDiff(t, r)

@@ -61,7 +61,11 @@ func createRemoteBranch(authedClient *http.Client, b GerritProjectBranch, dryRun
 
 // CreateRemoteBranchesAPI creates a bunch of branches on remote Gerrit instances
 // for the specified inputs using the Gerrit API.
-func CreateRemoteBranchesAPI(c *Client, authedClient *http.Client, branches []GerritProjectBranch, dryRun bool, gerritQPS float64) error {
+func (c *Client) CreateRemoteBranchesAPI(authedClient *http.Client, branches []GerritProjectBranch, dryRun bool, gerritQPS float64) error {
+	if c.FakeCreateRemoteBranchesAPI != nil {
+		return c.FakeCreateRemoteBranchesAPI(authedClient, branches, dryRun, gerritQPS)
+	}
+
 	if dryRun {
 		c.LogOut("Dry run (no --push): would create remote branches for %v Gerrit repos", len(branches))
 		return nil

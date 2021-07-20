@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -36,6 +37,10 @@ type Client struct {
 	StdoutLog *log.Logger
 	// StderrLog contains the stderr logger for this client.
 	StderrLog *log.Logger
+	// FakeCreateRemoteBranchesAPI contains a fake version of the
+	// CreateRemoteBranchesAPI function. If it is nil, the real function will
+	// be used. This exists only for testing purposes.
+	FakeCreateRemoteBranchesAPI func(authedClient *http.Client, branches []GerritProjectBranch, dryRun bool, gerritQPS float64) error
 }
 
 // CheckoutOptions describes how to check out a Git repo.
