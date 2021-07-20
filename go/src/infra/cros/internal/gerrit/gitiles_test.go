@@ -6,7 +6,8 @@ package gerrit
 import (
 	"context"
 	"encoding/base64"
-	"net/http"
+	"io/ioutil"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -16,6 +17,52 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
+
+func testDownloadFileFromGitilesSetUp(t *testing.T) *Client {
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	t.Cleanup(ctl.Finish)
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+
+	// Mock buildspec file request.
+	req := &gitilespb.DownloadFileRequest{
+		Project:    "chromeos/foo",
+		Path:       "bar.xml",
+		Committish: "HEAD",
+	}
+	fileData := "foobar!"
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), DownloadFileRequestEq(req)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: fileData,
+		},
+		nil,
+	)
+	mockMap := map[string]gitilespb.GitilesClient{
+		"host": gitilesMock,
+	}
+	return NewTestClient(mockMap)
+}
+
+func TestDownloadFileFromGitiles(t *testing.T) {
+	gc := testDownloadFileFromGitilesSetUp(t)
+	contents, err := gc.DownloadFileFromGitiles(context.Background(), "host", "chromeos/foo", "HEAD", "bar.xml")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, contents, "foobar!")
+}
+
+func TestDownloadFileFromGitilesToPath(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "TestDownlaodFileFromGitilesToPath")
+	assert.NilError(t, err)
+
+	outputPath := filepath.Join(tmpDir, "output")
+
+	gc := testDownloadFileFromGitilesSetUp(t)
+	err = gc.DownloadFileFromGitilesToPath(context.Background(), "host", "chromeos/foo", "HEAD", "bar.xml", outputPath)
+	assert.NilError(t, err)
+	got, err := ioutil.ReadFile(outputPath)
+	assert.NilError(t, err)
+	assert.StringsEqual(t, "foobar!", string(got))
+}
 
 func TestFetchFilesFromGitiles_success(t *testing.T) {
 	ctl := gomock.NewController(t)
@@ -46,9 +93,12 @@ hTPnBcGXkjUAEgAA
 	project := "chromiumos/for/the/win"
 	ref := "main"
 	paths := []string{"dir/file1"}
-	MockGitiles = gitilesMock
+	mockMap := map[string]gitilespb.GitilesClient{
+		host: gitilesMock,
+	}
+	gc := NewTestClient(mockMap)
 
-	m, err := FetchFilesFromGitiles(context.Background(), http.DefaultClient, host, project, ref, paths)
+	m, err := gc.FetchFilesFromGitiles(context.Background(), host, project, ref, paths)
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,9 +142,12 @@ yZyOACgAAA==
 	project := "chromiumos/for/the/win"
 	ref := "main"
 	paths := []string{"dir/file1", "dir/file3"}
-	MockGitiles = gitilesMock
+	mockMap := map[string]gitilespb.GitilesClient{
+		host: gitilesMock,
+	}
+	gc := NewTestClient(mockMap)
 
-	m, err := FetchFilesFromGitiles(context.Background(), http.DefaultClient, host, project, ref, paths)
+	m, err := gc.FetchFilesFromGitiles(context.Background(), host, project, ref, paths)
 	if err != nil {
 		t.Error(err)
 	}

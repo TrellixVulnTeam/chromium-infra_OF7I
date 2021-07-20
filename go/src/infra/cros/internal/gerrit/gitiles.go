@@ -26,31 +26,6 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
-// A note on this package wrt testing:
-// Historically this package did not have a Client interface and functions were
-// always called directly. To improve testability and allow for better/more
-// isolated mocking, a Client was added. In most places the functions are still
-// called without a client, which is why not every function has a Client
-// version. Client versions of the functions should be added as needed.
-// For the time being, the global MockGitiles remains. New tests should not use
-// this global mock and should instead pass a Client created with
-// NewTestClient -- use of the global mock prevents tests in the same package
-// from being run in parallel. TODO add example
-
-var (
-	// MockGitiles is used for testing purposes.
-	// Deprecated: Override this to use a mock GitilesClient rather than the
-	// real one.
-	MockGitiles gitilespb.GitilesClient
-)
-
-func getGitilesClient(authedClient *http.Client, host string, auth bool) (gitilespb.GitilesClient, error) {
-	if MockGitiles != nil {
-		return MockGitiles, nil
-	}
-	return gitiles.NewRESTClient(authedClient, host, true)
-}
-
 // Client is a client for interacting with gerrit.
 type Client struct {
 	isTestClient bool
@@ -102,8 +77,8 @@ func NewTestClient(gcs map[string]gitilespb.GitilesClient) *Client {
 //
 // fetchFilesFromGitiles returns a map from path in the git project to the
 // contents of the file at that path for each requested path.
-func FetchFilesFromGitiles(ctx context.Context, authedClient *http.Client, host, project, ref string, paths []string) (*map[string]string, error) {
-	gc, err := getGitilesClient(authedClient, host, true)
+func (c *Client) FetchFilesFromGitiles(ctx context.Context, host, project, ref string, paths []string) (*map[string]string, error) {
+	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
 	}

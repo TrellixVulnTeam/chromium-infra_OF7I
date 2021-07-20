@@ -222,7 +222,11 @@ func (c *checkBuild) fetchConfigFromGitiles() (*fetchConfigResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	m, err := igerrit.FetchFilesFromGitiles(ctx, authedClient,
+	gerritClient, err := igerrit.NewClient(authedClient)
+	if err != nil {
+		return nil, err
+	}
+	m, err := gerritClient.FetchFilesFromGitiles(ctx,
 		"chrome-internal.googlesource.com",
 		"chromeos/infra/config",
 		"main",
