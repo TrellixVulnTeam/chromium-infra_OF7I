@@ -99,14 +99,10 @@ class WfSuspectedCL(BaseSuspectedCL):
     sample_build = build_id.split('/')
     sample_build_url = buildbot.CreateBuildbucketUrl(*sample_build)
     return textwrap.dedent("""
-          Note: It is reported that sheriffs cannot submit CL created by Findit
-          (crbug.com/1187426). A workaround in the mean time is to abandon this
-          CL and create another revert CL.
-
           Findit (https://goo.gl/kROfz5) identified CL at revision %s as the
           culprit for failures in the build cycles as shown on:
           https://analysis.chromium.org/waterfall/culprit?key=%s\n
           Sample Failed Build: %s\n
-          Sample Failed Step: %s""") % (commit_position or
-                                        revision, self.key.urlsafe(),
-                                        sample_build_url, sample_step_name)
+          Sample Failed Step: %s""") % (commit_position or revision,
+                                        self.key.urlsafe(), sample_build_url,
+                                        sample_step_name)
