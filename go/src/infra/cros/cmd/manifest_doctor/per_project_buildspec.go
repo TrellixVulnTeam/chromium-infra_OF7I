@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -110,7 +109,7 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 		return 5
 	}
 
-	if err := b.CreateProjectBuildspec(authedClient, gsClient, gerritClient); err != nil {
+	if err := b.CreateProjectBuildspec(gsClient, gerritClient); err != nil {
 		LogErr(err.Error())
 		return 6
 	}
@@ -132,13 +131,13 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
-func (b *projectBuildspec) CreateProjectBuildspec(authedClient *http.Client, gsClient gs.Client, gerritClient *gerrit.Client) error {
+func (b *projectBuildspec) CreateProjectBuildspec(gsClient gs.Client, gerritClient *gerrit.Client) error {
 	buildspecInfo, err := branch.ParseBuildspec(b.buildspec)
 	if err != nil {
 		return err
 	}
 	ctx := context.Background()
-	branches, err := gerrit.Branches(ctx, authedClient, chromeInternalHost, manifestInternalProject)
+	branches, err := gerritClient.Branches(ctx, chromeInternalHost, manifestInternalProject)
 	if err != nil {
 		return err
 	}

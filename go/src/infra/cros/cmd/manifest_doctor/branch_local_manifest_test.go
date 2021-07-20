@@ -12,13 +12,10 @@ import (
 	"testing"
 
 	"infra/cros/internal/assert"
-	"infra/cros/internal/gerrit"
 	"infra/cros/internal/repo"
 	rh "infra/cros/internal/repoharness"
 
 	"cloud.google.com/go/firestore"
-	"github.com/golang/mock/gomock"
-	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
 
 const (
@@ -94,11 +91,6 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 		Name:     "local_manifest.xml",
 		Contents: []byte(fmt.Sprintf(localManifestXML, "main")),
 	}
-
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-	gerrit.MockGitiles = gitilesMock
 
 	branchSHAs := make(map[string]string)
 	for _, branch := range branches {

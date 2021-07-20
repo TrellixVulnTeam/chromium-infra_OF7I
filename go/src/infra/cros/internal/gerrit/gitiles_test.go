@@ -138,8 +138,11 @@ func TestBranches(t *testing.T) {
 	host := "limited-review.googlesource.com"
 	project := "my-project"
 
-	MockGitiles = gitilesMock
-	m, err := Branches(context.Background(), http.DefaultClient, host, project)
+	mockMap := map[string]gitilespb.GitilesClient{
+		host: gitilesMock,
+	}
+	gc := NewTestClient(mockMap)
+	m, err := gc.Branches(context.Background(), host, project)
 
 	assert.NilError(t, err)
 	assert.StringsEqual(t, m["refs/heads/foo"], "deadbeef")

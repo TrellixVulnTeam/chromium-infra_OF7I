@@ -266,8 +266,8 @@ func extractGitilesArchive(ctx context.Context, data []byte, paths []string) (*m
 }
 
 // Branches returns a map of branches (to revisions) for a given repo.
-func Branches(ctx context.Context, authedClient *http.Client, host, project string) (map[string]string, error) {
-	gc, err := getGitilesClient(authedClient, host, true)
+func (c *Client) Branches(ctx context.Context, host, project string) (map[string]string, error) {
+	gc, err := c.getHostClient(host)
 	if err != nil {
 		return nil, err
 	}

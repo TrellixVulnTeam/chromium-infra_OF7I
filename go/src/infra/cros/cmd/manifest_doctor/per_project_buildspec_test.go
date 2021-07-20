@@ -137,7 +137,6 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		chromeExternalHost: gitilesMock,
 	}
 	gc := gerrit.NewTestClient(mockMap)
-	gerrit.MockGitiles = gitilesMock
 
 	expectedWrites := map[string][]byte{
 		"gs://chromeos-galaxy/buildspecs/" + buildspec:          []byte(pinnedLocalManifestXML),
@@ -153,5 +152,5 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		program:   program,
 		project:   project,
 	}
-	assert.NilError(t, b.CreateProjectBuildspec(nil, f, gc))
+	assert.NilError(t, b.CreateProjectBuildspec(f, gc))
 }
