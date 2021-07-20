@@ -45,7 +45,18 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		log.Printf("provision: finished %v", opName)
 	}()
 
+	var p *provisionState
+	createProvisionFailedMarker := func() {
+		if p == nil {
+			return
+		}
+		if err := runCmd(p.c, "touch "+provisionFailed); err != nil {
+			log.Printf("Failed to create provisionFailed file, %s", err)
+		}
+	}
+
 	setError := func(opErr *status.Status) {
+		createProvisionFailedMarker()
 		if err := s.lroMgr.SetError(opName, opErr); err != nil {
 			log.Printf("provision: failed to set Operation error, %s", err)
 		}
@@ -82,9 +93,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	defer disconnect()
 
 	// Create a marker so the lab knows to repair the device on failure.
-	if err := runCmd(p.c, "touch "+provisionFailed); err != nil {
-		log.Printf("Failed to create provisionFailed file, %s", err)
-	}
+	createProvisionFailedMarker()
 
 	// Provision the OS.
 	select {
@@ -197,6 +206,13 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	if err := s.lroMgr.SetResult(opName, &tls.ProvisionDutResponse{}); err != nil {
 		log.Printf("provision: failed to set Opertion result, %s", err)
 	}
+
+	// Remove the provisionFailed marker as provisioning stateful is skipped if OS
+	// is already on the requested version.
+	if err := runCmd(p.c, "rm "+provisionFailed); err != nil {
+		log.Printf("Failed to remove provisionFailed file, %s", err)
+	}
+
 }
 
 func (s *Server) provisionLacros(req *tls.ProvisionLacrosRequest, opName string) {
