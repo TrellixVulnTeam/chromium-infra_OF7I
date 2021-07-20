@@ -11,9 +11,11 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cros/recovery/internal/config"
+	"infra/cros/recovery/internal/engine"
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/loader"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/tlw"
 )
@@ -36,10 +38,18 @@ func Run(ctx context.Context, args *RunArgs) error {
 	// Get resources involved.
 	resources, err := args.Access.ListResourcesForUnit(ctx, args.UnitName)
 	if err != nil {
-		return errors.Annotate(err, "run recovery").Err()
+		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
+	}
+	config, err := loader.LoadConfiguration(ctx, DefaultConfig())
+	if err != nil {
+		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
+	}
+	if len(config.GetPlans()) == 0 {
+		return errors.Reason("run recovery %q: no plans provided by configuration", args.UnitName).Err()
 	}
 	// Keep track of fail to run resources.
 	var errs []error
+	lastResourceIndex := len(resources) - 1
 	for ir, resource := range resources {
 		log.Info(ctx, "Resource %q: started", resource)
 		dut, err := args.Access.GetDut(ctx, resource)
@@ -47,40 +57,54 @@ func Run(ctx context.Context, args *RunArgs) error {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
 		log.Debug(ctx, "Resource %q: received DUT %q info", resource, dut.Name)
-		// TODO(otabek@): Generate list of plans based task name and DUT info.
-		plans, err := config.LoadPlans(ctx, dutPlans(dut), args.ConfigReader)
-		if err != nil {
-			return errors.Annotate(err, "run recovery %q", dut.Name).Err()
-		}
-		// Creating one run argument for each resource.
-		ea := &execs.RunArgs{
-			DUT:    dut,
-			Access: args.Access,
-		}
-		for ip, p := range plans {
-			if err := p.Run(ctx, ea); err != nil {
-				log.Error(ctx, "Plan %q: fail. Error: %s", p.Name, err)
-				if p.AllowFail {
-					if ip == len(plans)-1 {
-						log.Debug(ctx, "Ignore error as plan %q is allowed to fail.", p.Name)
-					} else {
-						log.Debug(ctx, "Continue to next plan as %q is allowed to fail.", p.Name)
-					}
-				} else {
-					errs = append(errs, err)
-					log.Debug(ctx, "Resource %q: finished with error: %s.", dut.Name, err)
-					if ir != len(resources)-1 {
-						log.Debug(ctx, "Continue to the next resource.")
-					}
-					break
-				}
+
+		if err := runDUTPlans(ctx, dut, config, args); err != nil {
+			errs = append(errs, err)
+			log.Debug(ctx, "Resource %q: finished with error: %s.", resource, err)
+			if ir != lastResourceIndex {
+				log.Debug(ctx, "Continue to the next resource.")
 			}
+		} else {
+			log.Info(ctx, "Resource %q: finished successfully.", resource)
 		}
-		log.Info(ctx, "Resource %q: finished successfully.", dut.Name)
 	}
 	// TODO(otabek@): Add logic to update DUT's info to inventory.
 	if len(errs) > 0 {
 		return errors.Annotate(errors.MultiError(errs), "run recovery").Err()
+	}
+	return nil
+}
+
+// runDUTPlans runs DUT's plans.
+func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration, args *RunArgs) error {
+	planNames := dutPlans(dut)
+	log.Debug(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
+	for _, planName := range planNames {
+		if _, ok := config.GetPlans()[planName]; !ok {
+			return errors.Reason("run dut %q plans: plan %q not found in configuration", dut.Name, planName).Err()
+		}
+	}
+	// Creating one run argument for each resource.
+	execArgs := &execs.RunArgs{
+		DUT:    dut,
+		Access: args.Access,
+	}
+	// TODO(otabek@): Add closing plan logic.
+	lastPlanIndex := len(planNames) - 1
+	for ip, planName := range planNames {
+		plan := config.GetPlans()[planName]
+		if err := engine.Run(ctx, planName, plan, execArgs); err != nil {
+			log.Error(ctx, "Run DUT %q plans: plan %q fail. Error: %s", dut.Name, planName, err)
+			if plan.GetAllowFail() {
+				if ip == lastPlanIndex {
+					log.Debug(ctx, "Ignore error as plan %q is allowed to fail.", planName)
+				} else {
+					log.Debug(ctx, "Continue to next plan as %q is allowed to fail.", planName)
+				}
+			} else {
+				return errors.Annotate(err, "run dut %q plans", planName).Err()
+			}
+		}
 	}
 	return nil
 }
@@ -97,6 +121,7 @@ type RunArgs struct {
 	Logger logger.Logger
 }
 
+// verify verifies input arguments.
 func (a *RunArgs) verify() error {
 	if a == nil {
 		return errors.Reason("is empty").Err()
@@ -111,10 +136,12 @@ func (a *RunArgs) verify() error {
 // List of predefined plans.
 // TODO(otabek@): Update list of plans and mapping with final version.
 const (
-	PlanRepairDUT        = "repair_dut"
-	PlanRepairServo      = "repair_servo"
-	PlanRepairLabstation = "repair_labstation"
-	PlanRepairJetstream  = "repair_jetstream"
+	PlanCrOSRepair       = "cros_repair"
+	PlanCrOSDeploy       = "cros_deploy"
+	PlanCrOSAudit        = "cros_audit"
+	PlanLabstationRepair = "labstation_repair"
+	PlanLabstationDeploy = "labstation_deploy"
+	PlanServoRepair      = "servo_repair"
 )
 
 // dutPlans creates list of plans for DUT.
@@ -127,14 +154,12 @@ func dutPlans(dut *tlw.Dut) []string {
 	var plans []string
 	switch dut.SetupType {
 	case tlw.DUTSetupTypeLabstation:
-		plans = append(plans, PlanRepairLabstation)
-	case tlw.DUTSetupTypeJetstream:
-		plans = append(plans, PlanRepairServo, PlanRepairJetstream)
+		plans = append(plans, PlanLabstationRepair)
 	default:
 		if dut.ServoHost != nil {
-			plans = append(plans, PlanRepairServo)
+			plans = append(plans, PlanServoRepair)
 		}
-		plans = append(plans, PlanRepairDUT)
+		plans = append(plans, PlanCrOSRepair)
 	}
 	return plans
 }

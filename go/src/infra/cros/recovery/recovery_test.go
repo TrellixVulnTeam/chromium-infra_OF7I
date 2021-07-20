@@ -5,10 +5,13 @@
 package recovery
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	. "github.com/smartystreets/goconvey/convey"
 
+	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/tlw"
 )
 
@@ -23,7 +26,7 @@ var dutPlansCases = []struct {
 		&tlw.Dut{
 			SetupType: tlw.DUTSetupTypeDefault,
 		},
-		[]string{PlanRepairDUT},
+		[]string{"cros_repair"},
 	},
 	{
 		"default with servo",
@@ -31,21 +34,14 @@ var dutPlansCases = []struct {
 			SetupType: tlw.DUTSetupTypeDefault,
 			ServoHost: &tlw.ServoHost{},
 		},
-		[]string{PlanRepairServo, PlanRepairDUT},
+		[]string{"servo_repair", "cros_repair"},
 	},
 	{
 		"labstation",
 		&tlw.Dut{
 			SetupType: tlw.DUTSetupTypeLabstation,
 		},
-		[]string{PlanRepairLabstation},
-	},
-	{
-		"jetstream",
-		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeJetstream,
-		},
-		[]string{PlanRepairServo, PlanRepairJetstream},
+		[]string{"labstation_repair"},
 	},
 }
 
@@ -61,4 +57,69 @@ func TestDUTPlans(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunDUTPlans(t *testing.T) {
+	t.Parallel()
+	Convey("bad cases", t, func() {
+		ctx := context.Background()
+		dut := &tlw.Dut{
+			Name: "test_dut",
+		}
+		args := &RunArgs{}
+		config := &planpb.Configuration{}
+		Convey("fail when no plans in config", func() {
+			config.Plans = map[string]*planpb.Plan{
+				"something": nil,
+			}
+			err := runDUTPlans(ctx, dut, config, args)
+			if err == nil {
+				t.Errorf("Expected fail but passed")
+			}
+			So(err.Error(), ShouldContainSubstring, "run dut \"test_dut\" plans:")
+			So(err.Error(), ShouldContainSubstring, "not found in configuration")
+			// So("jk", ShouldContainSubstring, "j")
+		})
+		Convey("fail when bad action in the plan", func() {
+			config.Plans = map[string]*planpb.Plan{
+				PlanCrOSRepair: {
+					CriticalActions: []string{"sample_fail"},
+					Actions: map[string]*planpb.Action{
+						"sample_fail": {
+							ExecName: "sample_fail",
+						},
+					},
+				},
+			}
+			err := runDUTPlans(ctx, dut, config, args)
+			if err == nil {
+				t.Errorf("Expected fail but passed")
+			}
+			So(err.Error(), ShouldContainSubstring, "run dut \"cros_repair\" plans:")
+			So(err.Error(), ShouldContainSubstring, "exec: failed")
+			// So("jk", ShouldContainSubstring, "j")
+		})
+	})
+	Convey("Happy path", t, func() {
+		ctx := context.Background()
+		dut := &tlw.Dut{
+			Name: "test_dut",
+		}
+		args := &RunArgs{}
+		config := &planpb.Configuration{
+			Plans: map[string]*planpb.Plan{
+				PlanCrOSRepair: {
+					CriticalActions: []string{"sample_pass"},
+					Actions: map[string]*planpb.Action{
+						"sample_pass": {
+							ExecName: "sample_pass",
+						},
+					},
+				},
+			},
+		}
+		if err := runDUTPlans(ctx, dut, config, args); err != nil {
+			t.Errorf("Expected pass but failed: %s", err)
+		}
+	})
 }
