@@ -34,6 +34,9 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 )
 
+// TODO(crbug/1230880): Increase concurrency after we solve the underlying Datastore issue.
+const MaxScheduleConcurrency = 1
+
 type experimentTelemetryRun struct {
 	experimentBaseRun
 	benchmark, measurement string
@@ -267,7 +270,7 @@ func runBatchJob(e *experimentTelemetryRun,
 	var jobsMu sync.Mutex
 	jobs := []*proto.Job{}
 
-	err = parallel.WorkPool(MaxConcurrency, func(workC chan<- func() error) {
+	err = parallel.WorkPool(MaxScheduleConcurrency, func(workC chan<- func() error) {
 		for _, config := range batch_experiments {
 			config := config
 			for _, bot_config := range config.Configs {
