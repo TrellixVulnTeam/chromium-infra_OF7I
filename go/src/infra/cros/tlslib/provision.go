@@ -23,6 +23,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// provisionFailed - A flag file to indicate provision failures.
+	// The file's location in stateful means that on successful update
+	// it will be removed.  Thus, if this file exists, it indicates that
+	// we've tried and failed in a previous attempt to update.
+	// The file will be created every time a OS provision is kicked off.
+	provisionFailed = "/var/tmp/provision_failed"
+)
+
 func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	log.Printf("provision: started %v", opName)
 
@@ -71,6 +80,11 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		return
 	}
 	defer disconnect()
+
+	// Create a marker so the lab knows to repair the device on failure.
+	if err := runCmd(p.c, "touch "+provisionFailed); err != nil {
+		log.Printf("Failed to create provisionFailed file, %s", err)
+	}
 
 	// Provision the OS.
 	select {
