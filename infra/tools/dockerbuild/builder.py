@@ -344,7 +344,9 @@ def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
     # is spawned, and are executed, which can't be done when they're open in
     # write mode.
     with concurrency.PROCESS_SPAWN_LOCK.shared():
-      shutil.copytree(common_dir, pkg_dir)
+      # Don't copy the '__pycache__' bytecode cache directory, to avoid races
+      # between Python processes running out of the common dir and us.
+      shutil.copytree(common_dir, pkg_dir, ignore=lambda *_: {'__pycache__'})
   else:
     pkg_dir = common_dir
 
