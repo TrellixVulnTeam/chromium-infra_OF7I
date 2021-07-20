@@ -47,6 +47,7 @@ var crosEcTypeBoards = []string{
 	"snappy",
 	"soraka",
 	"strago",
+	"strongbad",
 	"trogdor",
 	"veyron",
 	"volteer",
