@@ -320,7 +320,7 @@
   },
   {
     "cmd": [],
-    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for amd64 in [CACHE]\\WinPEImage",
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@"
     ]
@@ -329,14 +329,117 @@
     "cmd": [
       "powershell",
       "-Command",
-      "RECIPE_MODULE[infra::windows_scripts_executor]\\resources\\WindowsPowerShell\\Scripts\\Copy-PE.ps1 -WinPeArch amd64 -Destination [CACHE]\\WinPEImage"
+      "RECIPE_MODULE[infra::windows_scripts_executor]\\resources\\WindowsPowerShell\\Scripts\\Copy-PE.ps1 -WinPeArch unspecified -Destination [CACHE]\\WinPEImage"
     ],
-    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for amd64 in [CACHE]\\WinPEImage.Exec powershell",
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Exec powershell",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@4@@@",
       "@@@STEP_LOG_END@json.output (invalid)@@@",
       "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
       "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Mount wim for modification",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@4@@@",
+      "@@@STEP_LOG_LINE@Mount-WindowsImage@dism mount logs@@@",
+      "@@@STEP_LOG_END@Mount-WindowsImage@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CLEANUP]\\Mount-WindowsImage"
+    ],
+    "infra_step": true,
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Mount wim for modification.Check logs folder",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@5@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "powershell",
+      "-Command",
+      "Set-ItemProperty -Path [CLEANUP]\\Mount-WindowsImage -Name Attributes -Value Normal"
+    ],
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Mount wim for modification.chmod [CLEANUP]\\Mount-WindowsImage",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@5@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "powershell",
+      "-Command",
+      "Mount-WindowsImage -ImagePath \"[CACHE]\\WinPEImage\\media\\sources\\boot.wim\" -Index 1 -Path \"[CACHE]\\WinPEImage\\mount\" -LogPath \"[CLEANUP]\\Mount-WindowsImage\\mount.log\" -LogLevel WarningsInfo"
+    ],
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Mount wim for modification.Mount wim to [CACHE]\\WinPEImage\\mount",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@5@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\Mount-WindowsImage\\mount.log",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "performing configuration.execute config .offline winpe customization .generate windows image folder for unspecified in [CACHE]\\WinPEImage.Mount wim for modification.Reading [CLEANUP]\\Mount-WindowsImage",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@5@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "performing configuration.execute config .offline winpe customization .Unmount wim",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@",
+      "@@@STEP_LOG_LINE@Dismount-WindowsImage@dism unmount logs@@@",
+      "@@@STEP_LOG_END@Dismount-WindowsImage@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "powershell",
+      "-Command",
+      "Dismount-WindowsImage -Path \"[CACHE]\\WinPEImage\\mount\" -LogPath \"[CLEANUP]\\Mount-WindowsImage\\unmount.log\" -LogLevel WarningsInfo -Save"
+    ],
+    "name": "performing configuration.execute config .offline winpe customization .Unmount wim.Unmount wim at [CACHE]\\WinPEImage\\mount",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@4@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\Mount-WindowsImage\\unmount.log",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "performing configuration.execute config .offline winpe customization .Unmount wim.Reading [CLEANUP]\\Mount-WindowsImage",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@4@@@"
     ]
   },
   {
