@@ -37,7 +37,7 @@ class InfraPackage(Builder):
           system,
           None,
           '.',
-          ['python', os.path.join(pkg_path, 'setup.py'), '--version'],
+          ['python', 'setup.py', '--version'],
           cwd=pkg_path,
       )
     return self._resolved_version
