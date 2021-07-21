@@ -164,7 +164,8 @@ def validate_settings_cfg(cfg, ctx):  # pragma: no cover
   if not cfg.logdog.hostname:
     ctx.error('logdog: hostname is required')
 
-  # TODO(crbug.com/1027762): make resultdb hostname required
+  if not cfg.resultdb.hostname:
+    ctx.error('resultdb: hostname is required')
 
 
 class Project(ndb.Model):
