@@ -25,7 +25,7 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/infra/testing/expect_tests
 """
 
-lucicfg.check_version("1.24.2", "Please update depot_tools")
+lucicfg.check_version("1.27.0", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")

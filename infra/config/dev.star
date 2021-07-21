@@ -12,7 +12,7 @@ This is also enforced by PRESUBMIT.py script.
 load("//lib/build.star", "build")
 load("//lib/infra.star", "infra")
 
-lucicfg.check_version("1.23.4", "Please update depot_tools")
+lucicfg.check_version("1.27.0", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
