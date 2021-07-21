@@ -112,6 +112,10 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         assert patch_root
         return path.join(patch_root)
 
+      @property
+      def go_modules(self):
+        return go_modules
+
       def commit_change(self):
         assert patch_root
         with self.m.context(cwd=path.join(patch_root)):
@@ -185,9 +189,10 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
 
       @contextlib.contextmanager
       def go_env(self):
+        name = 'infra_internal' if internal else 'infra'
         self._ensure_go_env()
         with self.m.context(
-            cwd=self.path,
+            cwd=self.path.join(name, 'go', 'src', name),
             env=self._go_env,
             env_prefixes=self._go_env_prefixes,
             env_suffixes=self._go_env_suffixes):

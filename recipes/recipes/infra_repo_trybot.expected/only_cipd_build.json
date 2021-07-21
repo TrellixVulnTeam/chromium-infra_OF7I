@@ -252,7 +252,7 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
@@ -275,7 +275,7 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/build.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
@@ -298,7 +298,7 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/test_packages.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"

@@ -162,7 +162,7 @@
       "cloudbuildhelper",
       "version"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
@@ -197,7 +197,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",

@@ -151,7 +151,7 @@
       "test",
       "infra/..."
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOFLAGS": "-mod=readonly",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
@@ -175,7 +175,7 @@
       "test",
       "infra/..."
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOFLAGS": "-mod=readonly",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",

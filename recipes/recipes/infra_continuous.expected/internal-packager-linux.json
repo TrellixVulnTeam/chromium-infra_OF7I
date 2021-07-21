@@ -148,7 +148,7 @@
       "-u",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
@@ -175,7 +175,7 @@
       "--builder",
       "infra-internal-packager-linux-64"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
@@ -199,7 +199,7 @@
       "-u",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/test_packages.py"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
@@ -233,7 +233,7 @@
       "git_repository:https://chrome-internal.googlesource.com/infra/infra_internal",
       "git_revision:2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOPATH": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
@@ -276,7 +276,7 @@
       "--builder",
       "infra-internal-packager-linux-64"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm",
       "GOOS": "linux",
@@ -312,7 +312,7 @@
       "git_repository:https://chrome-internal.googlesource.com/infra/infra_internal",
       "git_revision:2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm",
       "GOOS": "linux",
@@ -357,7 +357,7 @@
       "--builder",
       "infra-internal-packager-linux-64"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm64",
       "GOOS": "linux",
@@ -393,7 +393,7 @@
       "git_repository:https://chrome-internal.googlesource.com/infra/infra_internal",
       "git_revision:2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm64",
       "GOOS": "linux",
@@ -438,7 +438,7 @@
       "--builder",
       "infra-internal-packager-linux-64"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm64",
       "GOOS": "darwin",
@@ -474,7 +474,7 @@
       "git_repository:https://chrome-internal.googlesource.com/infra/infra_internal",
       "git_revision:2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
       "GOARCH": "arm64",
       "GOOS": "darwin",

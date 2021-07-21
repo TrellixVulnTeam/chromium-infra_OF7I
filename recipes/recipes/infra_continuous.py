@@ -218,7 +218,8 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
     # back to fetching dependencies from git directly. When the bundle is
     # up-to-date, 'deps.py bundle' finishes right away not doing anything.
     if (buildername == GO_DEPS_BUNDLING_BUILDER and
-        not api.runtime.is_experimental):
+        not api.runtime.is_experimental and
+        not checkout.go_modules):
       api.python(
           'bundle go deps',
           api.path['checkout'].join('go', 'deps.py'),

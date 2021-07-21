@@ -202,7 +202,7 @@
       "[CACHE]/infra_gclient_with_go/infra/go/deps.py",
       "bundle"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
@@ -226,7 +226,7 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
@@ -253,7 +253,7 @@
       "--builder",
       "infra-packager-mac-64"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
@@ -277,7 +277,7 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/test_packages.py"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
@@ -311,7 +311,7 @@
       "git_repository:https://chromium.googlesource.com/infra/infra",
       "git_revision:2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
       "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
