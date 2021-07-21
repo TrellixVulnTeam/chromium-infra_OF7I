@@ -19,6 +19,7 @@ class SourceOrPrebuilt(Builder):
                pyversions=None,
                default=True,
                patches=(),
+               patch_base=None,
                patch_version=None,
                **kwargs):
     """General-purpose wheel builder.
@@ -33,6 +34,8 @@ class SourceOrPrebuilt(Builder):
       pyversions (iterable or None): The list of "python" wheel fields (see
           "Wheel.pyversion_str"). If None, a default Python version will be
           used.
+      patches (tuple): Short patch names to apply to the source tree.
+      patch_base (str or None): Optionally override the base names for patches.
       patch_version (str or None): If set, this string is appended to the CIPD
           version tag, for example if set to 'chromium.1', the version tag
           for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
@@ -46,7 +49,8 @@ class SourceOrPrebuilt(Builder):
     """
     if patches and patch_version:
       raise ValueError('patches and patch_version may not be used together.')
-    self._pypi_src = source.pypi_sdist(name, version, patches)
+    self._pypi_src = source.pypi_sdist(
+        name, version, patches=patches, patch_base=patch_base)
     self._packaged = set(
         kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
     self._env = kwargs.pop('env', None)
@@ -179,6 +183,7 @@ class UniversalSource(Builder):
                pyversions=None,
                pypi_name=None,
                patches=(),
+               patch_base=None,
                patch_version=None,
                **kwargs):
     """Universal wheel version of SourceOrPrebuilt that always builds from
@@ -194,6 +199,7 @@ class UniversalSource(Builder):
           when translating between the CIPD package name (uses underscores) and
           the PyPi package name (may use hyphens).
       patches (tuple): Short patch names to apply to the source tree.
+      patch_base (str or None): Optionally override the base name for patches.
       patch_version (str or None): If set, this string is appended to the CIPD
           version tag, for example if set to 'chromium.1', the version tag
           for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
@@ -208,7 +214,8 @@ class UniversalSource(Builder):
     self._pypi_src = source.pypi_sdist(
         name=pypi_name or name,
         version=pypi_version,
-        patches=patches)
+        patches=patches,
+        patch_base=patch_base)
     super(UniversalSource, self).__init__(
         Spec(
             name,

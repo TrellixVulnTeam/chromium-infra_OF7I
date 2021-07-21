@@ -4948,6 +4948,19 @@ wheel: <
 
 * *mac-x64-cp38*
 
+### 7.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyobjc/${vpython_platform}"
+  version: "version:7.3"
+>
+```
+
+
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+
 ## **pyopenssl**
 
 ### 17.2.0

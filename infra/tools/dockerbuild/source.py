@@ -26,19 +26,25 @@ from . import concurrency
 from . import util
 
 
-class Source(collections.namedtuple('Source', (
-  'name', # The name of the source.
-  'version', # The version of the source.
-  'download_type', # Type of download function to use.
-  'download_meta', # Arbitrary metadata to pass to download function.
-  'patches', # Short patch names to apply to the source tree.
-  ))):
+class Source(
+    collections.namedtuple(
+        'Source',
+        (
+            'name',  # The name of the source.
+            'version',  # The version of the source.
+            'download_type',  # Type of download function to use.
+            'download_meta',  # Arbitrary metadata to pass to download function.
+            'patches',  # Short patch names to apply to the source tree.
+            'patch_base',  # Base name of patches, defaults to 'name'.
+        ))):
 
   # A registry of all created Source instances.
   _REGISTRY = {}
 
   def __new__(cls, *args, **kwargs):
     kwargs.setdefault('patches', ())
+    if not kwargs.get('patch_base'):
+      kwargs['patch_base'] = kwargs['name']
     src = super(Source, cls).__new__(cls, *args, **kwargs)
 
     src._patches_hash = None
@@ -93,9 +99,11 @@ class Source(collections.namedtuple('Source', (
 
   def get_patches(self):
     """Return list of patches (full paths) to be applied."""
-    return [os.path.join(util.PATCHES_DIR,
-                         '%s-%s-%s.patch' % (self.name, self.version, x))
-            for x in self.patches]
+    return [
+        os.path.join(util.PATCHES_DIR,
+                     '%s-%s-%s.patch' % (self.patch_base, self.version, x))
+        for x in self.patches
+    ]
 
 
 class Repository(object):
@@ -345,13 +353,14 @@ def local_directory(name, version, path):
 Repository._DOWNLOAD_MAP['local_directory'] = _download_local
 
 
-def pypi_sdist(name, version, patches=()):
+def pypi_sdist(name, version, patches=(), patch_base=None):
   """Defines a Source whose remote data is a PyPi source distribution."""
 
   return Source(
-    name=name,
-    version=version,
-    download_type='pypi_archive',
-    download_meta=(name, version),
-    patches=patches,
+      name=name,
+      version=version,
+      download_type='pypi_archive',
+      download_meta=(name, version),
+      patches=patches,
+      patch_base=patch_base,
   )

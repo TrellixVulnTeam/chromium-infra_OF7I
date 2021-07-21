@@ -1,0 +1,16 @@
+--- pyobjc-core-7.3.orig/setup.py	2021-06-05 20:25:38.000000000 +1000
++++ pyobjc-core-7.3/setup.py	2021-07-21 03:13:44.469757654 +1000
+@@ -552,11 +552,11 @@
+ 
+         CFLAGS.append(
+             "-DPyObjC_BUILD_RELEASE=%02d%02d"
+-            % (tuple(map(int, get_sdk_level(self.sdk_root).split("."))))
++            % (tuple(map(int, get_sdk_level(self.sdk_root).split(".")[:2])))
+         )
+         EXT_CFLAGS.append(
+             "-DPyObjC_BUILD_RELEASE=%02d%02d"
+-            % (tuple(map(int, get_sdk_level(self.sdk_root).split("."))))
++            % (tuple(map(int, get_sdk_level(self.sdk_root).split(".")[:2])))
+         )
+ 
+         _fixup_compiler(use_ccache=any(cmd in sys.argv for cmd in ["develop", "test"]))
