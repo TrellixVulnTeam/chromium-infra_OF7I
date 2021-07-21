@@ -2,13 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Hack; Pre-import cryptography wheel in order to suppress python 2
-# deprecation warnings.
-import warnings
-with warnings.catch_warnings():
-  warnings.simplefilter("ignore")
-  import cryptography
-
 import argparse
 import base64
 import distutils.version
