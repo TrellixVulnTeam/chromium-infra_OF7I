@@ -159,7 +159,9 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "DEPOT_TOOLS_REPORT_BUILD": "infra/try/generic tester/8945511751514863184"
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/try/generic tester/8945511751514863184",
+      "GOFLAGS": "-mod=readonly",
+      "INFRA_GO_USE_MODULES": "1"
     },
     "env_suffixes": {
       "PATH": [
@@ -223,13 +225,16 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "env": {
+      "GOFLAGS": "-mod=readonly",
+      "INFRA_GO_USE_MODULES": "1"
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
       "@@@STEP_TEXT@Using go 1.66.6@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"GOPATH\": \"[CACHE]/infra_gclient_with_go/infra/go\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"env_prefixes\": {@@@",
@@ -255,8 +260,9 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
-      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
+      "GOFLAGS": "-mod=readonly",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
+      "INFRA_GO_USE_MODULES": "1"
     },
     "env_prefixes": {
       "PATH": [
