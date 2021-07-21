@@ -37,7 +37,8 @@ type CreateActionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// An action is the action record being created.
+	// An action, internally, contains a received_time timestamp that is
+	// managed by Karte. This field will be overwritten.
 	Action *Action `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
 }
 

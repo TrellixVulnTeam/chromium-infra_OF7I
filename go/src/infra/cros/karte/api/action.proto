@@ -9,12 +9,13 @@ package chromeos.karte;
 option go_package = "infra/cros/karte/api;kartepb";
 
 import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
 
-// An action represents an event performed on a DUT. Examples include
-// running a command on a DUT or resetting the servo attached to a
-// DUT.
+// An action represents an event that was intentionally performed on a DUT.
+// Examples include running a command on a DUT or resetting the servo
+// attached to a DUT.
 //
-// Next Tag: 4
+// Next Tag: 11
 message Action {
   reserved 2;
   reserved "action_kind";
@@ -31,4 +32,36 @@ message Action {
   // ssh-attempt. New action_kinds will be created frequently so this field
   // is a string; see https://google.aip.dev/126 for details.
   string kind = 3;
+
+  // A swarming task ID is the ID of a single swarming task.
+  // The swarming task of an action is the swarming task that invoked the
+  // action.
+  // For example, "4f6c0ba2ef3fc610" is a swarming task ID.
+  string swarming_task_id = 4;
+
+  // An asset tag is the tag of a given asset in UFS.
+  // An asset tag may be a short number such as C444444 printed on a device,
+  // or it may be a UUID in some circumstances.
+  string asset_tag = 5;
+
+  // The start time is the time that an action started.
+  google.protobuf.Timestamp start_time = 6;
+
+  // The stop time is the time that an action finished.
+  google.protobuf.Timestamp stop_time = 7;
+
+  // The receive time is the time that an action was received.
+  google.protobuf.Timestamp receive_time = 8;
+
+  // The status of an action is whether the action succeeded or failed.
+  // Next Tag: 3
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAIL = 2;
+  };
+  Status status = 9;
+
+  // The error reason of an event is a diagnostic message.
+  string error_reason = 10;
 };

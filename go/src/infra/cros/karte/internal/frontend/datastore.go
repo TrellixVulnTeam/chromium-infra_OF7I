@@ -6,11 +6,13 @@ package frontend
 
 import (
 	"context"
-	kartepb "infra/cros/karte/api"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+
+	kartepb "infra/cros/karte/api"
 )
 
 // DefaultBatchSize is the default size of a batch for a datastore query.
@@ -22,16 +24,31 @@ const ActionKind = "ActionKind"
 // ObservationKind is the kind of an observation.
 const ObservationKind = "ObservationKind"
 
-// ActionEntity is the datastore entitiy for actions.
+// ActionEntity is the datastore entity for actions.
 type ActionEntity struct {
-	_kind string `gae:"$kind,ActionKind"`
-	ID    string `gae:"$id"`
+	_kind          string    `gae:"$kind,ActionKind"`
+	ID             string    `gae:"$id"`
+	Kind           string    `gae:"kind"`
+	SwarmingTaskID string    `gae:"swarming_task_id"`
+	AssetTag       string    `gae:"asset_tag"`
+	StartTime      time.Time `gae:"start_time"`
+	StopTime       time.Time `gae:"stop_time"`
+	ReceiveTime    time.Time `gae:"receive_time"`
+	Status         int32     `gae:"status"`
+	ErrorReason    string    `gae:"error_reason"`
 }
 
 // ConvertToAction converts a datastore action entity to an action proto.
 func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 	return &kartepb.Action{
-		Name: e.ID,
+		Name:           e.ID,
+		Kind:           e.Kind,
+		SwarmingTaskId: e.SwarmingTaskID,
+		AssetTag:       e.AssetTag,
+		StartTime:      convertTimeToTimestampPtr(e.StartTime),
+		StopTime:       convertTimeToTimestampPtr(e.StopTime),
+		ReceiveTime:    convertTimeToTimestampPtr(e.ReceiveTime),
+		Status:         convertInt32ToActionStatus(e.Status),
 	}
 }
 
@@ -170,7 +187,14 @@ func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		return nil, errors.New("action cannot be nil")
 	}
 	return &ActionEntity{
-		ID: action.GetName(),
+		ID:             action.GetName(),
+		Kind:           action.Kind,
+		SwarmingTaskID: action.SwarmingTaskId,
+		AssetTag:       action.AssetTag,
+		StartTime:      convertTimestampPtrToTime(action.StartTime),
+		StopTime:       convertTimestampPtrToTime(action.StopTime),
+		ReceiveTime:    convertTimestampPtrToTime(action.ReceiveTime),
+		Status:         convertActionStatusToInt32(action.Status),
 	}, nil
 }
 
