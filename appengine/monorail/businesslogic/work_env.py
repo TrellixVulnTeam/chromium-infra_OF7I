@@ -2000,8 +2000,11 @@ class WorkEnv(object):
         # Update closed timestamp before filter rules because filter rules
         # may affect them.
         old_effective_status = changes.old_statuses_by_iid.get(issue.issue_id)
-        tracker_helpers.UpdateClosedTimestamp(
-            config, issue, old_effective_status)
+        # The old status might be None because the IssueDeltas did not contain
+        # a status change and MeansOpenInProject treats None as "Open".
+        if old_effective_status:
+          tracker_helpers.UpdateClosedTimestamp(
+              config, issue, old_effective_status)
 
         filterrules_helpers.ApplyFilterRules(
               self.mc.cnxn, self.services, issue, config)
@@ -2010,8 +2013,11 @@ class WorkEnv(object):
 
         # Update closed timestamp after filter rules because filter rules
         # could change effective status.
-        tracker_helpers.UpdateClosedTimestamp(
-            config, issue, old_effective_status)
+        # The old status might be None because the IssueDeltas did not contain
+        # a status change and MeansOpenInProject treats None as "Open".
+        if old_effective_status:
+          tracker_helpers.UpdateClosedTimestamp(
+              config, issue, old_effective_status)
 
     # PHASE 6: Update modified timestamps for issues in RAM.
     all_involved_iids = main_issue_ids.union(

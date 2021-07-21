@@ -765,6 +765,8 @@ def FilterOutNonViewableIssues(
 def MeansOpenInProject(status, config):
   """Return true if this status means that the issue is still open.
 
+  This defaults to true if we could not find a matching status.
+
   Args:
     status: issue status string. E.g., 'New'.
     config: the config of the current project.
@@ -780,7 +782,6 @@ def MeansOpenInProject(status, config):
     if wks.status.lower() == status_lower:
       return wks.means_open
 
-  # if we didn't find a matching status we consider the status open
   return True
 
 

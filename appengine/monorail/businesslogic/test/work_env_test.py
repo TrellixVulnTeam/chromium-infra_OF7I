@@ -4028,6 +4028,11 @@ class WorkEnvTest(unittest.TestCase):
     fake_bulk_notify.assert_not_called()
     fake_notify.assert_called()
     self.mr.cnxn.Commit.assert_called()
+    # The closed_timestamp has ben reset to its default value of 0.
+    self.assertEqual(
+        0,
+        self.services.issue.GetIssue(self.cnxn,
+                                     exp_issue.issue_id).closed_timestamp)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
