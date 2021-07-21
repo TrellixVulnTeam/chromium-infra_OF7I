@@ -11,7 +11,6 @@ import (
 var verificationScenarios = []*vpython.PEP425Tag{
 	{Python: "cp27", Abi: "cp27mu", Platform: "manylinux1_x86_64"},
 	{Python: "cp27", Abi: "cp27mu", Platform: "linux_arm64"},
-	{Python: "cp27", Abi: "cp27mu", Platform: "linux_mips64"},
 
 	// NOTE: CIPD generalizes "platform" to "armv6l" even on armv7l platforms.
 	{Python: "cp27", Abi: "cp27mu", Platform: "linux_armv6l"},
