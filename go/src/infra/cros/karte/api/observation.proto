@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package karte;
+package chromeos.karte;
 
 import "google/api/resource.proto";
 

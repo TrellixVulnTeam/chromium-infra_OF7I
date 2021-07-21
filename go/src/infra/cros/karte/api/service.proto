@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package karte;
+package chromeos.karte;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
@@ -55,7 +55,7 @@ service Karte {
 // CreateActionRequest creates a single action.
 message CreateActionRequest {
   // An action is the action record being created.
-  Action action = 1 [
+  chromeos.karte.Action action = 1 [
     (google.api.field_behavior) = REQUIRED
   ];
 }
@@ -87,7 +87,7 @@ message ListActionsRequest {
 message ListActionsResponse {
   // These are all the actions fitting the criteria specified. Currently, no
   // criteria can be provided, so every action matches.
-  repeated Action actions = 1;
+  repeated chromeos.karte.Action actions = 1;
 
   // This is the page token that is needed for pagination. This token
   // must be supplied verbatim to subsequent calls to ListActions.
@@ -117,7 +117,7 @@ message ListObservationsRequest {
 message ListObservationsResponse {
   // These are all the actions fitting the criteria specified. Currently, no
   // criteria can be provided, so every action matches.
-  repeated Observation observations = 1;
+  repeated chromeos.karte.Observation observations = 1;
 
   // This is the page token that is needed for pagination. This token
   // must be supplied verbatim to subsequent calls to ListActions.

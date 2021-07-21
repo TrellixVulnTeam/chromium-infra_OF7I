@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package karte;
+package chromeos.karte;
 
 option go_package = "infra/cros/karte/api;kartepb";
 
