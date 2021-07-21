@@ -92,16 +92,6 @@ def GenTests(api):
   )
 
   yield api.test(
-      'no go modules',
-      api.properties(go_modules=False),
-      api.buildbucket.ci_build(
-          project='infra',
-          bucket='ci',
-          git_repo='https://chromium.googlesource.com/infra/infra',
-      )
-  )
-
-  yield api.test(
       'go modules',
       api.properties(go_modules=True),
       api.buildbucket.ci_build(

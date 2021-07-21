@@ -21,7 +21,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                named_cache=None,
                generate_env_with_system_python=False,
                go_version_variant=None,
-               go_modules=True,
+               go_modules=False,
                **kwargs):
     """Fetches infra gclient checkout into a given path OR named_cache.
 
