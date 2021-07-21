@@ -38,7 +38,7 @@ WITH
       (SELECT value FROM UNNEST((ARRAY_CONCAT(tags, parent.tags))) WHERE key = "step_name" limit 1) as step_name,
       (SELECT value FROM UNNEST(tags) WHERE key = "test_name") as test_name,
     FROM
-      `RESULTDB_PROJECT.chromium.ci_test_results`
+      `RESULTDB_DATASET.ci_test_results`
     WHERE
       partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
     GROUP BY

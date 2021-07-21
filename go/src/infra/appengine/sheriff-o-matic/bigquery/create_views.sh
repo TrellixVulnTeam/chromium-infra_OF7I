@@ -7,16 +7,16 @@
 APP_ID=sheriff-o-matic-staging
 project_names_without_test_results=("chromeos" "fuchsia")
 
-resultdb_project="luci-resultdb-dev"
+resultdb_dataset="chrome-luci-data.chromium_staging"
 if [ "$APP_ID" == "sheriff-o-matic" ]; then
-  resultdb_project="luci-resultdb"
+  resultdb_dataset="luci-resultdb.chromium"
 fi
 
 project_name="chrome"
 echo "creating data set and views for project chrome"
 bq --project_id $APP_ID mk -d "$project_name"
 sed -e s/APP_ID/$APP_ID/g step_status_transitions_chrome.sql | bq --project_id $APP_ID query --use_legacy_sql=false
-sed -e s/APP_ID/$APP_ID/g -e s/RESULTDB_PROJECT/"$resultdb_project"/g failing_steps_chrome.sql | bq query --project_id $APP_ID --use_legacy_sql=false
+sed -e s/APP_ID/$APP_ID/g -e s/RESULTDB_DATASET/"$resultdb_dataset"/g failing_steps_chrome.sql | bq query --project_id $APP_ID --use_legacy_sql=false
 sed -e s/APP_ID/$APP_ID/g -e s/PROJECT_NAME/"$project_name"/g sheriffable_failures.sql | bq --project_id $APP_ID query --use_legacy_sql=false
 
 for project_name in "${project_names_without_test_results[@]}"
