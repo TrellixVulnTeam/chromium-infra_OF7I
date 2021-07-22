@@ -151,32 +151,6 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"
-    ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
-    "env": {
-      "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
-    },
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_internal_gclient_with_go/golang/go"
-      ]
-    },
-    "env_suffixes": {
-      "PATH": [
-        "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
-      ]
-    },
-    "name": "infra go tests"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/build.py",
       "--no-freshen-python-env",
       "--builder",
@@ -201,32 +175,6 @@
       ]
     },
     "name": "cipd - build packages"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]/infra_internal_gclient_with_go/infra_internal/build/test_packages.py"
-    ],
-    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
-    "env": {
-      "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
-    },
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_internal_gclient_with_go/golang/go"
-      ]
-    },
-    "env_suffixes": {
-      "PATH": [
-        "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
-      ]
-    },
-    "name": "cipd - test packages integrity"
   },
   {
     "cmd": [

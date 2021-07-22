@@ -111,7 +111,7 @@ CIPD_PACKAGE_BUILDERS = {
   # In comments is approximate runtime for building and testing packages, per
   # platform (as of Feb 23 2021). We try to balance xc1 and xc2.
   'infra-packager-linux-64': [
-    'native:test',       # ~120 sec
+    'native',            # ~120 sec
     'darwin-arm64',      # ~60 sec
   ],
   'infra-packager-linux-xc1': [
@@ -129,25 +129,25 @@ CIPD_PACKAGE_BUILDERS = {
     'aix-ppc64',         # ~5 sec
   ],
   'infra-packager-mac-64': [
-    'native:test:legacy',  # ~150 sec
+    'native:legacy',     # ~150 sec
   ],
   'infra-packager-win-64': [
-    'native:test',         # ~60 sec
-    'windows-386:test',    # ~100 sec
+    'native',            # ~60 sec
+    'windows-386',       # ~100 sec
   ],
 
   'infra-internal-packager-linux-64': [
-    'native:test',   # ~60 sec
+    'native',        # ~60 sec
     'linux-arm',     # ~30 sec
     'linux-arm64',   # ~30 sec
     'darwin-arm64',  # ~30 sec (note: need go 1.16)
   ],
   'infra-internal-packager-mac-64': [
-    'native:test:legacy',  # ~40 sec
+    'native:legacy',  # ~40 sec
   ],
   'infra-internal-packager-win-64': [
-    'native:test',        # ~60 sec
-    'windows-386:test',   # ~40 sec
+    'native',        # ~60 sec
+    'windows-386',   # ~40 sec
   ],
 }
 
@@ -226,10 +226,11 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
           ['bundle'],
           venv=True)
 
-    api.python(
-        'infra go tests',
-        api.path['checkout'].join('go', 'test.py'),
-        venv=True)
+    if not is_packager:
+      api.python(
+          'infra go tests',
+          api.path['checkout'].join('go', 'test.py'),
+          venv=True)
 
     for plat in CIPD_PACKAGE_BUILDERS.get(buildername, []):
       options = plat.split(':')
