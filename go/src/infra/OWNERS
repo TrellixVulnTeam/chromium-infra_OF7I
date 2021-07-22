@@ -1,0 +1,17 @@
+# go.mod and go.sum have tricky interaction with DEPS (due to "replace"
+# directives). When the gclient checkout is inconsistent, "go build" will modify
+# or suggest *wrong* changes to go.mod/go.sum.
+#
+# Require review from folks that support Go infra build environment to avoid
+# mistakenly landing bad go.mod/go.sum.
+#
+# Generally you'll need it *only* when adding new dependencies or updating
+# existing ones or when landing DEPS rolls. If you just modify *.go code in
+# the infra repository, and "go build" insists on changing go.mod or asks you to
+# run "go get", then most likely you have inconsistent gclient checkout and need
+# to run "gclient sync" or equivalent to update it.
+per-file go.*=set noparent
+per-file go.*=vadimsh@chromium.org
+per-file go.*=iannucci@chromium.org
+per-file go.*=tandrii@google.com
+per-file go.*=tikuta@chromium.org
