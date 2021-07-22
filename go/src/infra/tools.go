@@ -22,6 +22,9 @@ import (
 
 	_ "infra/cmd/bqexport"
 
+	// Used by mobile_env.py script.
+	_ "golang.org/x/mobile/cmd/gomobile"
+
 	// Used exclusively to build a CIPD package out of it.
 	_ "go.skia.org/infra/gold-client/cmd/goldctl" // noinstall
 )
