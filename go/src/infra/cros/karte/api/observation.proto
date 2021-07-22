@@ -17,7 +17,7 @@ option go_package = "infra/cros/karte/api;kartepb";
 //      rrd:present      - rrd metric is present on device
 //      disk_usage:35    - 35% internal storage used
 //
-// Next Tag: 2
+// Next Tag: 6
 message Observation {
   option (google.api.resource) = {
     type: "karte.appspot.com/Observation"
@@ -27,4 +27,19 @@ message Observation {
   // The resource name of the observation. Names are generated
   // automatically when a new observation is created.
   string name = 1;
+
+  // A reference to a Karte action.
+  string action_name = 2
+      [(google.api.resource_reference) = { type: "karte.appspot.com/Action" }];
+
+  // The metric kind records what measurement is being performed, e.g.
+  // "battery_level" or "disk_usage"
+  string metric_kind = 3;
+
+  // Value records the concrete measurement that was made. It can be a string or
+  // a number.
+  oneof value {
+    string value_string = 4;
+    double value_number = 5;
+  }
 }

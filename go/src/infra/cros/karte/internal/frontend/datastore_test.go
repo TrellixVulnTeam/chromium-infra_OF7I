@@ -7,6 +7,8 @@ package frontend
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
 )
@@ -90,6 +92,92 @@ func TestReadSingleObservationEntityFromDatastore(t *testing.T) {
 	}
 	if len(es) != 1 {
 		t.Errorf("unexpected entities: %v", es)
+	}
+}
+
+func TestWriteAndReadObservationEntitiesFromDatastore(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	data := []struct {
+		name     string
+		entities []*ObservationEntity
+	}{
+		{
+			"empty",
+			[]*ObservationEntity{},
+		},
+		{
+			"a few observations",
+			[]*ObservationEntity{
+				{
+					ID:         "a",
+					ActionID:   "b",
+					MetricKind: "c",
+				},
+				{
+					ID:          "d",
+					ActionID:    "e",
+					MetricKind:  "f",
+					ValueString: "g",
+				},
+			},
+		},
+		{
+			"many observations",
+			[]*ObservationEntity{
+				{
+					ID:         "a",
+					ActionID:   "b",
+					MetricKind: "c",
+				},
+				{
+					ID:          "d",
+					ActionID:    "e",
+					MetricKind:  "f",
+					ValueString: "g",
+				},
+				{
+					ID: "1",
+				},
+				{
+					ID: "2",
+				},
+				{
+					ID: "3",
+				},
+				{
+					ID: "4",
+				},
+			},
+		},
+	}
+
+	for _, tt := range data {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := PutObservationEntities(ctx, tt.entities...); err != nil {
+				t.Errorf("test case %s %s", tt.name, err)
+			}
+			q := MakeAllObservationEntitiesQuery("")
+			es, err := q.Next(ctx, 100)
+			if err != nil {
+				t.Errorf("test case %s %s", tt.name, err)
+			}
+			if diff := cmp.Diff(
+				tt.entities,
+				es,
+				cmp.AllowUnexported(ObservationEntity{}),
+				cmpopts.SortSlices(func(a *ObservationEntity, b *ObservationEntity) bool {
+					return a.cmp(b) == -1
+				}),
+			); diff != "" {
+				if len(es) == 0 && len(tt.entities) == 0 {
+					// Both are tt.entities and es are empty, forgive this case.
+				} else {
+					t.Errorf("test case %s %s", tt.name, diff)
+				}
+			}
+		})
 	}
 }
 

@@ -9,8 +9,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
 )
@@ -43,9 +41,21 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 }
 
 // CreateObservation creates an observation and then returns the just-created observation.
-// TODO(gregorynisbet): Replace CreateObservation with a real implementation.
 func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.CreateObservationRequest) (*kartepb.Observation, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if req == nil {
+		return nil, errors.New("request cannot be nil")
+	}
+	if req.GetObservation() == nil {
+		return nil, errors.New("cannot create nil observation")
+	}
+	observationEntity, err := ConvertObservationToObservationEntity(req.GetObservation())
+	if err != nil {
+		return nil, err
+	}
+	if err := PutObservationEntities(ctx, observationEntity); err != nil {
+		return nil, errors.Annotate(err, "writing action to datastore").Err()
+	}
+	return req.GetObservation(), nil
 }
 
 // ListActions lists the actions that Karte knows about.

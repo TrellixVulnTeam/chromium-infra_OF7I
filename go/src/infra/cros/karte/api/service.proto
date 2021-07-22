@@ -60,8 +60,11 @@ message CreateActionRequest {
 }
 
 // CreateObservationRequest creates a single action.
-// TODO(gregorynisbet): Make the observation request non-empty.
-message CreateObservationRequest {}
+message CreateObservationRequest {
+  // An observation is the observation record being created.
+  chromeos.karte.Observation observation = 1
+      [(google.api.field_behavior) = REQUIRED];
+}
 
 // ListActionsRequest takes a page size and a token indicating where to start.
 message ListActionsRequest {

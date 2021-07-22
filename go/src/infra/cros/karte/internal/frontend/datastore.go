@@ -53,14 +53,80 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 }
 
 // ObservationEntity is the datastore entity for observations.
+// Only one of value_string or value_number can have a non-default value. If this constraint is not satisfied, then the record is ill-formed.
 type ObservationEntity struct {
-	_kind string `gae:"$kind,ObservationKind"`
-	ID    string `gae:"$id"`
+	_kind       string  `gae:"$kind,ObservationKind"`
+	ID          string  `gae:"$id"`
+	ActionID    string  `gae:"action_id"`
+	MetricKind  string  `gae:"metric_kind"`
+	ValueString string  `gae:"value_string"`
+	ValueNumber float64 `gae:"value_number"`
+}
+
+// Cmp compares two ObservationEntities. ObservationEntities are linearly ordered by all their fields.
+// This order is not related to the semantics of an ObservationEntity.
+func (e *ObservationEntity) cmp(o *ObservationEntity) int {
+	if e._kind > o._kind {
+		return +1
+	}
+	if e._kind < o._kind {
+		return -1
+	}
+	if e.ID > o.ID {
+		return +1
+	}
+	if e.ID < o.ID {
+		return -1
+	}
+	if e.ActionID > o.ActionID {
+		return +1
+	}
+	if e.ActionID < o.ActionID {
+		return -1
+	}
+	if e.MetricKind > o.MetricKind {
+		return +1
+	}
+	if e.MetricKind < o.MetricKind {
+		return -1
+	}
+	if e.ValueString > o.ValueString {
+		return +1
+	}
+	if e.ValueNumber < o.ValueNumber {
+		return -1
+	}
+	return 0
+}
+
+// Validate performs shallow validation on an observation entity.
+// It enforces the constraint that only one of ValueString or ValueNumber can have a non-zero value.
+func (e *ObservationEntity) Validate() error {
+	if e.ValueString == "" && e.ValueNumber == 0.0 {
+		return errors.New("datastore.go Validate: observation entity can have at most one value")
+	}
+	return nil
 }
 
 // ConvertToObservation converts a datastore observation entity to an observation proto.
+// ConvertToObservation does NOT perform validation on the observation entity it is given;
+// this function assumes that its receiver is shallowly valid.
 func (e *ObservationEntity) ConvertToObservation() *kartepb.Observation {
-	return &kartepb.Observation{}
+	obs := &kartepb.Observation{
+		Name:       e.ID,
+		ActionName: e.ActionID,
+		MetricKind: e.MetricKind,
+	}
+	if e.ValueString != "" {
+		obs.Value = &kartepb.Observation_ValueString{
+			ValueString: e.ValueString,
+		}
+	} else {
+		obs.Value = &kartepb.Observation_ValueNumber{
+			ValueNumber: e.ValueNumber,
+		}
+	}
+	return obs
 }
 
 // ActionEntitiesQuery is a wrapped query of action entities bearing a page token.
@@ -203,7 +269,21 @@ func PutActionEntities(ctx context.Context, entities ...*ActionEntity) error {
 	return datastore.Put(ctx, entities)
 }
 
-// PutObservationEntities writes multiple observation entites to datastore.
+// ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
+func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
+	if observation == nil {
+		return nil, errors.New("action cannot be nil")
+	}
+	return &ObservationEntity{
+		ID:          observation.GetName(),
+		ActionID:    observation.GetActionName(),
+		MetricKind:  observation.GetMetricKind(),
+		ValueString: observation.GetValueString(),
+		ValueNumber: observation.GetValueNumber(),
+	}, nil
+}
+
+// PutObservationEntities writes multiple observation entities to datastore.
 func PutObservationEntities(ctx context.Context, entities ...*ObservationEntity) error {
 	return datastore.Put(ctx, entities)
 }
