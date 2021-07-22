@@ -1,0 +1,11 @@
+<histogram-configuration>
+<histogram_suffixes_list>
+
+<histogram_suffixes name="Suffixes1" separator=".">
+  <suffix name="TestSuffix1" label="forTest1"/>
+  <suffix name="TestSuffix2" label="forTest2"/>
+  <affected-histogram name="Test.Histogram1"/>
+</histogram_suffixes>
+
+</histogram_suffixes_list>
+</histogram-configuration>

@@ -1,0 +1,12 @@
+diff --git a/suffixes/update_suffixes.xml b/suffixes/update_suffixes.xml
+index 83ab469..192b9bc 100644
+--- a/suffixes/update_suffixes.xml
++++ b/suffixes/update_suffixes.xml
+@@ -3,6 +3,7 @@
+ 
+ <histogram_suffixes name="Suffixes1" separator=".">
+   <suffix name="TestSuffix1" label="forTest1"/>
++  <suffix name="TestSuffix2" label="forTest2"/>
+   <affected-histogram name="Test.Histogram1"/>
+ </histogram_suffixes>
+ 

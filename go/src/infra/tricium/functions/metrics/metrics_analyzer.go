@@ -63,7 +63,11 @@ func main() {
 		f := openFileOrDie(inputPath)
 		defer closeFileOrDie(f)
 		if filepath.Ext(filePath) == ".xml" {
-			results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *prevDir, filesChanged, singletonEnums)...)
+			if filepath.Base(filePath) == "histograms" {
+				results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *prevDir, filesChanged, singletonEnums)...)
+			} else if filepath.Base(filePath) == "histograms_suffixes_list" {
+				results.Comments = append(results.Comments, analyzeHistogramSuffixesFile(f, filePath, filesChanged)...)
+			}
 		} else if filepath.Ext(filePath) == ".json" {
 			results.Comments = append(results.Comments, analyzeFieldTrialTestingConfig(f, filePath)...)
 		}

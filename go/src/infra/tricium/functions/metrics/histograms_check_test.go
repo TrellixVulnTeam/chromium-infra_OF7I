@@ -69,6 +69,17 @@ func analyzeHistogramTestFile(t *testing.T, filePath, patch, prevDir string) []*
 	return analyzeHistogramFile(f, filePath, prevDir, filesChanged, singletonEnums)
 }
 
+func analyzeHistogramSuffixesTestFile(t *testing.T, filePath, patch string) []*tricium.Data_Comment {
+	filesChanged, err := getDiffsPerFile([]string{filePath}, patch)
+	if err != nil {
+		t.Errorf("Failed to get diffs per file for %s: %v", filePath, err)
+	}
+	inputPath := filepath.Join(inputDir, filePath)
+	f := openFileOrDie(inputPath)
+	defer closeFileOrDie(f)
+	return analyzeHistogramSuffixesFile(f, filePath, filesChanged)
+}
+
 func TestHistogramsCheck(t *testing.T) {
 	patchPath := filepath.Join(inputDir, emptyPatch)
 	patchFile, err := os.Create(patchPath)
@@ -497,6 +508,20 @@ func TestHistogramsCheck(t *testing.T) {
 				StartChar:            42,
 				EndChar:              62,
 				Path:                 "units/microseconds_bad_summary.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
+	})
+
+	Convey("Analyze histogram suffixes file, update an existing <histogram_suffixes>", t, func() {
+		results := analyzeHistogramSuffixesTestFile(t, "suffixes/update_suffixes.xml", "prevdata/add_new_suffix_diff.patch")
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Suffixes",
+				Message:              SuffixesDeprecationWarning,
+				StartLine:            6,
+				EndLine:              6,
+				Path:                 "suffixes/update_suffixes.xml",
 				ShowOnUnchangedLines: true,
 			},
 		})
