@@ -14,7 +14,9 @@ import (
 	luciflag "go.chromium.org/luci/common/flag"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
 
+	"infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
+	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 )
 
@@ -77,16 +79,22 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 		return 4
 	}
 
-	if err := b.CreatePublicBuildspecs(ctx, gsClient); err != nil {
+	gerritClient, err := gerrit.NewClient(authedClient)
+	if err != nil {
 		LogErr(err.Error())
 		return 5
+	}
+
+	if err := b.CreatePublicBuildspecs(ctx, gsClient, gerritClient); err != nil {
+		LogErr(err.Error())
+		return 6
 	}
 
 	return 0
 }
 
 // CreateProjectBuildspec creates a public buildspec as outlined in go/per-project-buildspecs.
-func (b *publicBuildspec) createPublicBuildspec(buildspecPath string, gsClient gs.Client) error {
+func (b *publicBuildspec) createPublicBuildspec(buildspecPath string, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	internalPath := lgs.MakePath(internalBuildspecsGSBucket, buildspecPath)
 	buildspecData, err := gsClient.Read(internalPath)
 	if err != nil {
@@ -97,12 +105,43 @@ func (b *publicBuildspec) createPublicBuildspec(buildspecPath string, gsClient g
 		return err
 	}
 
+	remoteReference := buildspec
+	anyAnnotations := false
+	for _, remote := range buildspec.Remotes {
+		if len(remote.Annotations) > 0 {
+			anyAnnotations = true
+			break
+		}
+	}
+
+	if !anyAnnotations {
+		// If annotations are missing, fall back to downloading the ToT
+		// manifest and using that as reference.
+		remoteReference, err = manifestutil.LoadManifestFromGitilesWithIncludes(
+			context.Background(), gerritClient, chromeInternalHost, manifestInternalProject,
+			"HEAD", "default.xml")
+		if err != nil {
+			return err
+		}
+	}
+
 	// Look at remotes, filter out non public projects.
 	publicRemote := make(map[string]bool, len(buildspec.Remotes))
 	var publicRemotes []repo.Remote
 	for _, remote := range buildspec.Remotes {
-		public, ok := remote.GetAnnotation("public")
+		referenceRemote := remoteReference.GetRemoteByName(remote.Name)
+		if referenceRemote == nil {
+			return fmt.Errorf("could not get public status for remote %v from reference manifest", remote.Name)
+		}
+
+		public, ok := referenceRemote.GetAnnotation("public")
+		if !ok {
+			return fmt.Errorf("could not get public status for remote %v from reference manifest", remote.Name)
+		}
 		publicRemote[remote.Name] = ok && (public == "true")
+		if remoteReference != buildspec {
+			remote.Annotations = referenceRemote.Annotations
+		}
 		if publicRemote[remote.Name] {
 			publicRemotes = append(publicRemotes, remote)
 		}
@@ -143,7 +182,7 @@ func (b *publicBuildspec) createPublicBuildspec(buildspecPath string, gsClient g
 
 // CreateProjectBuildspec creates a public buildspec as
 // outlined in go/per-project-buildspecs.
-func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client) error {
+func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	errs := []error{}
 	for _, watchPath := range b.watchPaths {
 		LogOut("Looking at gs://%s/%s...\n", internalBuildspecsGSBucket, watchPath)
@@ -172,7 +211,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 
 			// Create and upload external buildspec.
 			LogOut("Attempting to create external buildspec for %s...", internalBuildspec)
-			if err := b.createPublicBuildspec(internalBuildspec, gsClient); err != nil {
+			if err := b.createPublicBuildspec(internalBuildspec, gsClient, gerritClient); err != nil {
 				LogErr(errors.Annotate(err, "failed to create external buildspec %s", internalBuildspec).Err().Error())
 				errs = append(errs, err)
 			}
