@@ -77,7 +77,7 @@ func Run(ctx context.Context, args *RunArgs) error {
 
 // runDUTPlans runs DUT's plans.
 func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration, args *RunArgs) error {
-	planNames := dutPlans(dut)
+	planNames := dutPlans(dut, args)
 	log.Debug(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
 	for _, planName := range planNames {
 		if _, ok := config.GetPlans()[planName]; !ok {
@@ -109,6 +109,17 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 	return nil
 }
 
+// TaskName describes which flow/plans will be involved in the process.
+type TaskName string
+
+const (
+	// Task used to run auto recovery/repair flow in the lab.
+	// This task is default task used by the engine.
+	TaskNameRecovery TaskName = "recovery"
+	// Task used to prepare device to be used in the lab.
+	TaskNameDeploy TaskName = "deploy"
+)
+
 // RunArgs holds input arguments for recovery process.
 type RunArgs struct {
 	Access tlw.Access
@@ -119,6 +130,8 @@ type RunArgs struct {
 	ConfigReader io.Reader
 	// Logger prints message to the logs.
 	Logger logger.Logger
+	// TaskName used to drive the recovery process.
+	TaskName TaskName
 }
 
 // verify verifies input arguments.
@@ -149,17 +162,28 @@ const (
 // Plans will chosen based on:
 // 1) SetupType of DUT.
 // 2) Peripherals information.
-func dutPlans(dut *tlw.Dut) []string {
+func dutPlans(dut *tlw.Dut, args *RunArgs) []string {
 	// TODO(otabek@): Add logic to run simple action by request.
+	// If the task was provide then use recovery as default task.
 	var plans []string
 	switch dut.SetupType {
 	case tlw.DUTSetupTypeLabstation:
-		plans = append(plans, PlanLabstationRepair)
+		switch args.TaskName {
+		case TaskNameDeploy:
+			plans = append(plans, PlanLabstationDeploy)
+		default:
+			plans = append(plans, PlanLabstationRepair)
+		}
 	default:
 		if dut.ServoHost != nil {
 			plans = append(plans, PlanServoRepair)
 		}
-		plans = append(plans, PlanCrOSRepair)
+		switch args.TaskName {
+		case TaskNameDeploy:
+			plans = append(plans, PlanCrOSDeploy)
+		default:
+			plans = append(plans, PlanCrOSRepair)
+		}
 	}
 	return plans
 }

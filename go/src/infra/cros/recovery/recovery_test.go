@@ -17,9 +17,10 @@ import (
 
 // Test cases for TestDUTPlans
 var dutPlansCases = []struct {
-	name string
-	dut  *tlw.Dut
-	exp  []string
+	name     string
+	dut      *tlw.Dut
+	exp      []string
+	taskName TaskName
 }{
 	{
 		"default no servo",
@@ -27,6 +28,7 @@ var dutPlansCases = []struct {
 			SetupType: tlw.DUTSetupTypeDefault,
 		},
 		[]string{"cros_repair"},
+		"",
 	},
 	{
 		"default with servo",
@@ -35,6 +37,7 @@ var dutPlansCases = []struct {
 			ServoHost: &tlw.ServoHost{},
 		},
 		[]string{"servo_repair", "cros_repair"},
+		"",
 	},
 	{
 		"labstation",
@@ -42,16 +45,46 @@ var dutPlansCases = []struct {
 			SetupType: tlw.DUTSetupTypeLabstation,
 		},
 		[]string{"labstation_repair"},
+		"",
+	},
+	{
+		"deploy default no servo",
+		&tlw.Dut{
+			SetupType: tlw.DUTSetupTypeDefault,
+		},
+		[]string{"cros_deploy"},
+		TaskNameDeploy,
+	},
+	{
+		"default with servo",
+		&tlw.Dut{
+			SetupType: tlw.DUTSetupTypeDefault,
+			ServoHost: &tlw.ServoHost{},
+		},
+		[]string{"servo_repair", "cros_deploy"},
+		TaskNameDeploy,
+	},
+	{
+		"deploy labstation",
+		&tlw.Dut{
+			SetupType: tlw.DUTSetupTypeLabstation,
+		},
+		[]string{"labstation_deploy"},
+		TaskNameDeploy,
 	},
 }
 
 // Testing dutPlans method
 func TestDUTPlans(t *testing.T) {
+	t.Parallel()
 	for _, c := range dutPlansCases {
 		cs := c
 		t.Run(cs.name, func(t *testing.T) {
-			t.Parallel()
-			got := dutPlans(cs.dut)
+			args := &RunArgs{}
+			if c.taskName != "" {
+				args.TaskName = c.taskName
+			}
+			got := dutPlans(cs.dut, args)
 			if !cmp.Equal(got, cs.exp) {
 				t.Errorf("got: %v\nwant: %v", got, cs.exp)
 			}
