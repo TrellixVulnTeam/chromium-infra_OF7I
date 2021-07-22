@@ -89,6 +89,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       env_with_override['INFRA_GO_VERSION_VARIANT'] = go_version_variant
     if go_modules:
       env_with_override['INFRA_GO_USE_MODULES'] = '1'
+      env_with_override['INFRA_GO_SKIP_TOOLS_INSTALL'] = '1'
       env_with_override['GOFLAGS'] = '-mod=readonly'
 
     class Checkout(object):
