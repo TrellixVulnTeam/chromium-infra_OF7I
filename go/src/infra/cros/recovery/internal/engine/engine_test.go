@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/planpb"
 )
 
@@ -155,7 +156,10 @@ func TestRun(t *testing.T) {
 	for _, c := range planTestCases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			err := Run(ctx, c.name, c.got, nil)
+			args := &execs.RunArgs{
+				EnableRecovery: true,
+			}
+			err := Run(ctx, c.name, c.got, args)
 			if c.expSuccess {
 				if err != nil {
 					t.Errorf("Case %q fail but expected to pass. Received error: %s", c.name, err)
@@ -179,6 +183,7 @@ func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
 				"a": {},
 			},
 		},
+		args: &execs.RunArgs{},
 	}
 	r.initCache()
 	r.cacheActionResult("a", nil)
@@ -266,7 +271,7 @@ func TestRunRecovery(t *testing.T) {
 
 var runExecTestCases = []struct {
 	name           string
-	canUseRecovery bool
+	enableRecovery bool
 	got            map[string]*planpb.Action
 	expError       bool
 	expStartOver   bool
@@ -341,7 +346,7 @@ func TestActionExec(t *testing.T) {
 				},
 			}
 			r.initCache()
-			err := r.runActionExec(ctx, "a", c.canUseRecovery)
+			err := r.runActionExec(ctx, "a", c.enableRecovery)
 			if c.expError && c.expStartOver {
 				if !startOverTag.In(err) {
 					t.Errorf("Case %q expected to get request to start over. Received error: %s", c.name, err)

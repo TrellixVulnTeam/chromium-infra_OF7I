@@ -25,6 +25,8 @@ var (
 type RunArgs struct {
 	DUT    *tlw.Dut
 	Access tlw.Access
+	// EnableRecovery tells if recovery actions are enabled.
+	EnableRecovery bool
 }
 
 // Run runs exec function provided by this package by name.

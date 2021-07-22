@@ -55,7 +55,7 @@ func (r *recoveryEngine) close() {
 func (r *recoveryEngine) runPlan(ctx context.Context) error {
 	log.Info(ctx, "Plan %q: started", r.planName)
 	for {
-		if err := r.runActions(ctx, r.plan.GetCriticalActions(), true); err != nil {
+		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
 				log.Info(ctx, "Plan %q: received request to start over.", r.planName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
@@ -80,7 +80,7 @@ func (r *recoveryEngine) runPlan(ctx context.Context) error {
 // 2) Check if the action is applicable based on conditions. Skip if any fail.
 // 3) Run dependencies of the action. Fail if any fails.
 // 4) Run action exec function. Fail if any fail.
-func (r *recoveryEngine) runActions(ctx context.Context, actions []string, canUseRecovery bool) error {
+func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enableRecovery bool) error {
 	for _, actionName := range actions {
 		if err, ok := r.actionResultFromCache(actionName); ok {
 			if err == nil {
@@ -99,10 +99,10 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, canUs
 			log.Info(ctx, "Action %q: one of conditions failed, skipping...", actionName)
 			continue
 		}
-		if err := r.runDependencies(ctx, actionName, canUseRecovery); err != nil {
+		if err := r.runDependencies(ctx, actionName, enableRecovery); err != nil {
 			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
-		if err := r.runActionExec(ctx, actionName, canUseRecovery); err != nil {
+		if err := r.runActionExec(ctx, actionName, enableRecovery); err != nil {
 			if startOverTag.In(err) {
 				return errors.Annotate(err, "run action %q", actionName).Err()
 			}
@@ -121,11 +121,11 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, canUs
 }
 
 // runActionExec runs action's exec function and initiates recovery flow if exec fails.
-// The recover flow start only if it is allowed by canUseRecovery.
-func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, canUseRecovery bool) error {
+// The recover flow start only recoveries is enabled.
+func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, enableRecovery bool) error {
 	a := r.getAction(actionName)
 	if err := execs.Run(ctx, a.ExecName, r.args); err != nil {
-		if canUseRecovery && len(a.GetRecoveryActions()) > 0 {
+		if enableRecovery && len(a.GetRecoveryActions()) > 0 {
 			if rErr := r.runRecoveries(ctx, actionName); rErr != nil {
 				return errors.Annotate(rErr, "run action %q exec", actionName).Err()
 			}
@@ -151,9 +151,9 @@ func (r *recoveryEngine) isActionApplicable(ctx context.Context, actionName stri
 }
 
 // runDependencies runs action's dependencies.
-func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, canUseRecovery bool) error {
+func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) error {
 	a := r.getAction(actionName)
-	err := r.runActions(ctx, a.GetDependencies(), canUseRecovery)
+	err := r.runActions(ctx, a.GetDependencies(), enableRecovery)
 	return errors.Annotate(err, "run dependencies").Err()
 }
 

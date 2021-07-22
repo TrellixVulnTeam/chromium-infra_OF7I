@@ -41,6 +41,7 @@ For now only running in testing mode.`,
 		c.envFlags.Register(&c.Flags)
 		// TODO(otabek@) Add more details with instruction how to get default config as example.
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
+		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		return c
 	},
 }
@@ -52,6 +53,7 @@ type localRecoveryRun struct {
 	envFlags  site.EnvFlags
 
 	configFile string
+	onlyVerify bool
 }
 
 // Run initiates execution of local recovery.
@@ -108,9 +110,10 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	}
 	defer access.Close()
 	in := &recovery.RunArgs{
-		UnitName: unit,
-		Access:   access,
-		Logger:   logger,
+		UnitName:       unit,
+		Access:         access,
+		Logger:         logger,
+		EnableRecovery: c.onlyVerify,
 	}
 	if c.configFile != "" {
 		in.ConfigReader, err = os.Open(c.configFile)

@@ -34,6 +34,9 @@ func Run(ctx context.Context, args *RunArgs) error {
 	if args.Logger != nil {
 		ctx = log.WithLogger(ctx, args.Logger)
 	}
+	if !args.EnableRecovery {
+		log.Info(ctx, "Recovery actions is blocker by run arguments.")
+	}
 	log.Info(ctx, "Run recovery for %q", args.UnitName)
 	// Get resources involved.
 	resources, err := args.Access.ListResourcesForUnit(ctx, args.UnitName)
@@ -86,8 +89,9 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 	}
 	// Creating one run argument for each resource.
 	execArgs := &execs.RunArgs{
-		DUT:    dut,
-		Access: args.Access,
+		DUT:            dut,
+		Access:         args.Access,
+		EnableRecovery: args.EnableRecovery,
 	}
 	// TODO(otabek@): Add closing plan logic.
 	lastPlanIndex := len(planNames) - 1
@@ -122,6 +126,7 @@ const (
 
 // RunArgs holds input arguments for recovery process.
 type RunArgs struct {
+	// Access to the lab TLW layer.
 	Access tlw.Access
 	// UnitName represents some device setup against which running some tests or task in the system.
 	// The unit can be represented as a single DUT or group of the DUTs registered in inventory as single unit.
@@ -132,6 +137,8 @@ type RunArgs struct {
 	Logger logger.Logger
 	// TaskName used to drive the recovery process.
 	TaskName TaskName
+	// EnableRecovery tells if recovery actions are enabled.
+	EnableRecovery bool
 }
 
 // verify verifies input arguments.
