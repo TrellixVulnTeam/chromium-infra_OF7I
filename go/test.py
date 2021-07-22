@@ -45,7 +45,7 @@ def clean_go_bin():
   for gitwrapper), that get mistakenly picked up by the tests.
   """
   gobin = os.environ.get('GOBIN')
-  if not gobin:
+  if not gobin or not os.path.exists(gobin):
     return
   for p in os.listdir(gobin):
     os.remove(os.path.join(gobin, p))
