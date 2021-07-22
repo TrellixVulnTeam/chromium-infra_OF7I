@@ -26,4 +26,12 @@ message ChromiumBootstrapModuleProperties {
   // enable the bootstrapped executable to check out the same version of the
   // code that the properties were retrieved from.
   repeated buildbucket.v2.GitilesCommit commits = 1;
+
+  // Any reasons that the bootstrapped builder should skip analysis
+  //
+  // Some builders will use analyze to determine what targets need to be
+  // re-built and what tests need to be re-run. If reasons are specified, the
+  // builder should skip performing analysis and instead build all targets and
+  // run all tests.
+  repeated string skip_analysis_reasons = 2;
 }
