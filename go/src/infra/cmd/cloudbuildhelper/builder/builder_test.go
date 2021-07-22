@@ -28,6 +28,12 @@ func init() {
 			panic(err)
 		}
 		os.Setenv("GOPATH", srcDir)
+	} else {
+		// Our test module has "vendor" directory and has go >=1.14 in go.mod, so
+		// "-mod=vendor" is the mode that Go should be picking. But on CI builder
+		// GOFLAGS may override it to "-mod=readonly" which breaks the test. Set it
+		// explicitly.
+		os.Setenv("GOFLAGS", "-mod=vendor")
 	}
 }
 
