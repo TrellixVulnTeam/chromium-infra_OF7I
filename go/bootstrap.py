@@ -485,13 +485,13 @@ def install_go_tools(layout, force):
     if not entry['tools']:
       continue
     LOGGER.info('Installing tools from %s', entry['spec'])
-    res = subprocess.run(
+    code = subprocess.call(
         [get_go_exe(layout.toolset_root), 'install'] + entry['tools'],
         stdout=sys.stderr,
         stderr=sys.stderr,
         cwd=os.path.join(layout.workspace, os.path.dirname(entry['spec'])),
         env=get_go_environ(layout))
-    if res.returncode:
+    if code:
       LOGGER.warning(
           'Failed to install Go tools, your gclient checkout is likely in '
           'inconsistent state.')
