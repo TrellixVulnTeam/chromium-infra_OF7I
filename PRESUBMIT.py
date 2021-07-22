@@ -111,29 +111,6 @@ def GoCheckers(input_api, output_api):
   return ret
 
 
-def GoPackageImportsCheck(input_api, output_api):
-  trigger_on = [
-      'DEPS',
-      'go/check_deps.py',
-      'go/check_deps.allowlist',
-      'go/deps.lock',
-      'go/deps.yaml',
-  ]
-  for f in input_api.change.AffectedFiles(include_deletes=True):
-    lp = f.LocalPath()
-    if lp.endswith('.go') or lp in trigger_on:
-      check_script = input_api.os_path.join(
-        input_api.change.RepositoryRoot(), 'go', 'check_deps.py')
-      return [
-        CommandInGoEnv(
-          input_api, output_api,
-          name='Check Go Imports',
-          cmd=[input_api.python_executable, check_script],
-          kwargs={}),
-      ]
-  return []
-
-
 def GoCheckGoModTidy(input_api, output_api):
   if os.environ.get('INFRA_GO_USE_MODULES') != '1':
     return []
@@ -500,7 +477,6 @@ def GoChecks(input_api, output_api):  # pragma: no cover
 
   # Collect all other potential Go tests
   tests = GoCheckers(input_api, output_api)
-  tests += GoPackageImportsCheck(input_api, output_api)
   if not tests:
     return output, []
 
