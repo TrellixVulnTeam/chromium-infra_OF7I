@@ -445,7 +445,13 @@ def update_vendor_packages(layout, workspace, force=False):
 
 
 def install_go_tools(layout, force):
-  """Calls "go install ..." for each tool mentioned in tools.go."""
+  """Calls "go install ..." for each tool mentioned in tools.go.
+
+  Always succeeds, even if some installation fails. This happens quite often
+  if go.mod/go.sum is in a bad shape. We still need a working Go environment
+  to fix them (e.g. to run "go mod tidy" or "go get"), so a failing installation
+  should not block the bootstrap.
+  """
   if not layout.go_tools_specs:
     return
 
@@ -474,18 +480,25 @@ def install_go_tools(layout, force):
   if not force and read_json(tools_spec_path) == spec:
     return
 
+  ok = True
   for entry in spec:
     if not entry['tools']:
       continue
     LOGGER.info('Installing tools from %s', entry['spec'])
-    subprocess.check_call(
+    res = subprocess.run(
         [get_go_exe(layout.toolset_root), 'install'] + entry['tools'],
         stdout=sys.stderr,
         stderr=sys.stderr,
         cwd=os.path.join(layout.workspace, os.path.dirname(entry['spec'])),
         env=get_go_environ(layout))
+    if res.returncode:
+      LOGGER.warning(
+          'Failed to install Go tools, your gclient checkout is likely in '
+          'inconsistent state.')
+      ok = False
 
-  write_json(tools_spec_path, spec)
+  if ok:
+    write_json(tools_spec_path, spec)
 
 
 def get_go_environ_diff(layout):
