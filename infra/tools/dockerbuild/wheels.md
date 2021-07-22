@@ -4454,6 +4454,18 @@ wheel: <
 
 ## **py**
 
+### 1.10.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/py-py2_py3"
+  version: "version:1.10.0"
+>
+```
+
+
+* *universal*
+
 ### 1.5.3
 
 ```protobuf
