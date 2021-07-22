@@ -20,7 +20,9 @@
       "-u",
       "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
       "--spec-path",
-      "cache_dir = '[CACHE]/git'\nsolutions = [{'custom_vars': {'infra_env_python': '/opt/infra-system/bin/python'}, 'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "--patch_root",
+      "infra",
       "--revision_mapping_file",
       "{\"got_revision\": \"infra\"}",
       "--git-cache-dir",
@@ -36,7 +38,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/infra-continuous-trusty-64/8945511751514863184",
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/builder/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
       "GIT_HTTP_LOW_SPEED_TIME": "1800"
     },
@@ -97,11 +99,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/infra-continuous-trusty-64/8945511751514863184",
-      "GOFLAGS": "-mod=readonly",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/builder/8945511751514863184"
     },
     "env_suffixes": {
       "PATH": [
@@ -112,34 +110,19 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "test.py",
-      "test"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
-    "name": "infra python tests"
-  },
-  {
-    "cmd": [
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/go/bootstrap.py",
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env": {
-      "GOFLAGS": "-mod=readonly",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
-    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
       "@@@STEP_TEXT@Using go 1.66.6@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"GOPATH\": \"[CACHE]/infra_gclient_with_go/infra/go\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"env_prefixes\": {@@@",
@@ -159,17 +142,14 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/go/test.py"
+      "go",
+      "test",
+      "infra/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
-      "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
     },
     "env_prefixes": {
       "PATH": [
@@ -181,24 +161,18 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
-    "name": "infra go tests"
+    "name": "go test"
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
-      "--no-freshen-python-env",
-      "--builder",
-      "infra-continuous-trusty-64"
+      "go",
+      "test",
+      "infra/..."
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
-      "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
+      "GOPATH": "[CACHE]/infra_gclient_with_go/infra/go",
+      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go"
     },
     "env_prefixes": {
       "PATH": [
@@ -210,64 +184,27 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
-    "name": "cipd - build packages"
+    "name": "go test (2)"
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/build/test_packages.py"
+      "test.py",
+      "test",
+      "infra"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
-    "env": {
-      "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
-    },
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go"
-      ]
-    },
-    "env_suffixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/go/bin"
-      ]
-    },
-    "name": "cipd - test packages integrity"
+    "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "name": "python tests"
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
-      "--no-freshen-python-env",
-      "--builder",
-      "infra-continuous-trusty-64"
+      "\n        import sys, os\n        print '\n'.join(os.listdir('./'))\n    "
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
-    "env": {
-      "GOARCH": "386",
-      "GOFLAGS": "-mod=readonly",
-      "GOOS": "linux",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
-      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
-      "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
-    },
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go"
-      ]
-    },
-    "env_suffixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/go/bin"
-      ]
-    },
-    "name": "[GOOS:linux GOARCH:386]cipd - build packages"
+    "cwd": "[CACHE]/infra_gclient_with_go",
+    "name": "dirs"
   },
   {
     "name": "$result"
