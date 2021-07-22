@@ -27,4 +27,4 @@ message Observation {
   // The resource name of the observation. Names are generated
   // automatically when a new observation is created.
   string name = 1;
-};
+}

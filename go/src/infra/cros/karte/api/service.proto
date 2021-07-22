@@ -56,9 +56,7 @@ service Karte {
 message CreateActionRequest {
   // An action, internally, contains a received_time timestamp that is
   // managed by Karte. This field will be overwritten.
-  chromeos.karte.Action action = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  chromeos.karte.Action action = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // CreateObservationRequest creates a single action.
@@ -98,17 +96,16 @@ message ListActionsResponse {
 // ListObservationsRequest take a page size and a token indicating where to
 // start.
 message ListObservationsRequest {
-  // The maximum number of observations to return. The service may return fewer than
-  // this value.
-  // If unspecified, at most 50 observations will be returned.
+  // The maximum number of observations to return. The service may return fewer
+  // than this value. If unspecified, at most 50 observations will be returned.
   // The maximum value is 1000; values above 1000 will be coerced to 1000.
   int32 page_size = 1;
 
   // A page token, received from a previous `ListObservations` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListObservations` must match
-  // the call that provided the page token.
+  // When paginating, all other parameters provided to `ListObservations` must
+  // match the call that provided the page token.
   string page_token = 2;
 }
 

@@ -6,10 +6,10 @@ syntax = "proto3";
 
 package chromeos.karte;
 
-option go_package = "infra/cros/karte/api;kartepb";
-
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
+
+option go_package = "infra/cros/karte/api;kartepb";
 
 // An action represents an event that was intentionally performed on a DUT.
 // Examples include running a command on a DUT or resetting the servo
@@ -17,12 +17,13 @@ import "google/protobuf/timestamp.proto";
 //
 // Next Tag: 11
 message Action {
-  reserved 2;
-  reserved "action_kind";
   option (google.api.resource) = {
     type: "karte.appspot.com/Action"
     pattern: "actions/{action}"
   };
+
+  reserved 2;
+  reserved "action_kind";
 
   // The resource name of the action. Names are generated
   // automatically when a new action is created.
@@ -59,9 +60,9 @@ message Action {
     STATUS_UNSPECIFIED = 0;
     STATUS_SUCCESS = 1;
     STATUS_FAIL = 2;
-  };
+  }
   Status status = 9;
 
   // The error reason of an event is a diagnostic message.
   string error_reason = 10;
-};
+}
