@@ -306,7 +306,7 @@ CIPD_PYTHON_LOCK = concurrency.KeyedLock()
 def _InstallCipdPythonPackage(system, cipd_platform, wheel, base_dir):
   PY_CIPD_VERSION_MAP = {
       '27': 'version:2@2.7.18.chromium.39',
-      '38': 'version:2@3.8.10.chromium.19',
+      '38': 'version:2@3.8.10.chromium.20',
       '39': 'version:2@3.9.5.chromium.19',
   }
 
