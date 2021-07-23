@@ -170,6 +170,22 @@ def _FetchChangeDetails(host, project, change):
   return json.loads(response)
 
 
+def FetchMergedChangesWithHashtag(host, project, hashtag):
+  template = ('https://%s/changes/?q=%s+is:merged+hashtag:%s'
+              '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES')
+  url = template % (host, project, hashtag)
+  status_code, response, _ = FinditHttpClient().Get(url)
+  if status_code != 200:
+    logging.info(
+        ('Failed to fetch changes with hashtag %s, status_code: %d response: %s'
+         % (hashtag, status_code, response)))
+    return []
+  # Remove XSSI magic prefix
+  if response.startswith(')]}\''):
+    response = response[4:]
+  return json.loads(response)
+
+
 def _CheckChangeDetailsResponseCode(status_code, response):
   if status_code == 200:
     return

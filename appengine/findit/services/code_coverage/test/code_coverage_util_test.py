@@ -414,7 +414,7 @@ class CodeCoverageUtilTest(WaterfallTestCase):
     self.assertEqual(0, len(results))
 
   # Tests the scenario when two patchsets have different set of changed files
-  # Even when they're traivial rebase away.
+  # Even when they're trivial rebase away.
   @mock.patch.object(code_coverage_util.gitiles, 'get_file_content_async')
   @mock.patch.object(code_coverage_util.FinditHttpClient, 'Get')
   def testRebasePresubmitCoverageDataFileIsDroped(self, mock_http_client,
@@ -603,3 +603,25 @@ class CodeCoverageUtilTest(WaterfallTestCase):
     ]
     self.assertListEqual(
         expected, code_coverage_util.MergeFilesCoverageDataForPerCL(a, b))
+
+  @mock.patch.object(code_coverage_util.FinditHttpClient, 'Get')
+  def testFetchMergedChangesWithHashtag(self, mock_http_client):
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    hashtag = 'my_new_feature'
+    response = [{
+        'project': project,
+        'hashtags': [hashtag],
+        'status': 'MERGED',
+        'current_revision': 'revision_hash'
+    }]
+    mock_http_client.return_value = (200, ')]}\'' + json.dumps(response), None)
+
+    changes = code_coverage_util.FetchMergedChangesWithHashtag(
+        host, project, hashtag)
+
+    mock_http_client.assert_called_with(
+        ('https://chromium-review.googlesource.com/changes/'
+         '?q=chromium/src+is:merged+hashtag:my_new_feature'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
+    self.assertEqual(changes, response)
