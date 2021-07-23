@@ -7,7 +7,6 @@ package tlslib
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -144,7 +143,11 @@ func (p *provisionState) verifyOSProvision() error {
 }
 
 const (
-	fetchUngzipConvertCmd = "curl %s | gzip -d | dd of=%s obs=2M"
+	fetchUngzipConvertCmd = `if type wget >/dev/null 2>&1; then
+wget --progress=dot:giga -S --tries=1 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
+else
+curl %[1]s | gzip -d | dd of=%[2]s obs=2M
+fi`
 )
 
 // installKernel updates kernelPartition on disk.
@@ -176,6 +179,7 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("install stateful: failed to get GS Cache URL, %s", err)
 	}
+	// wget isn't available after stateful is wiped, so use curl.
 	return runCmd(p.c, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
 		fmt.Sprintf("curl %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
@@ -258,30 +262,15 @@ func (p *provisionState) provisionDLCs(ctx context.Context, specs []*tls.Provisi
 		return fmt.Errorf("provision DLCs: failed to get root device from DUT, %s", err)
 	}
 
-	errCh := make(chan error)
+	// TODO(kimjae): Can parallelize, once outputs can be sorted.
 	for _, spec := range specs {
-		go func(spec *tls.ProvisionDutRequest_DLCSpec) {
-			dlcID := spec.GetId()
-			dlcOutputDir := path.Join(dlcCacheDir, dlcID, dlcPackage)
-			if err := p.installDLC(ctx, spec, dlcOutputDir, getActiveDLCSlot(r)); err != nil {
-				errMsg := fmt.Sprintf("failed to install DLC %s, %s", dlcID, err)
-				errCh <- errors.New(errMsg)
-				return
-			}
-			errCh <- nil
-		}(spec)
+		dlcID := spec.GetId()
+		dlcOutputDir := path.Join(dlcCacheDir, dlcID, dlcPackage)
+		if err := p.installDLC(ctx, spec, dlcOutputDir, getActiveDLCSlot(r)); err != nil {
+			return fmt.Errorf("provision DLCs: failed to install the following DLC %s (%s)", dlcID, err)
+		}
 	}
 
-	for range specs {
-		errTmp := <-errCh
-		if errTmp == nil {
-			continue
-		}
-		err = fmt.Errorf("%s, %s", err, errTmp)
-	}
-	if err != nil {
-		return fmt.Errorf("provision DLCs: failed to install the following DLCs (%s)", err)
-	}
 	return nil
 }
 
@@ -306,7 +295,12 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 
 	dlcOutputSlotDir := path.Join(dlcOutputDir, string(slot))
 	dlcOutputImage := path.Join(dlcOutputSlotDir, dlcImage)
-	dlcCmd := fmt.Sprintf("mkdir -p %s && curl --output %s %s", dlcOutputSlotDir, dlcOutputImage, url)
+	dlcCmd := fmt.Sprintf(`if type wget >/dev/null 2>&1; then
+mkdir -p %[1]s && wget --progress=dot:giga -S --tries=1 -O %[2]s %[3]s
+else
+mkdir -p %[1]s && curl --output %[2]s %[3]s
+fi`,
+		dlcOutputSlotDir, dlcOutputImage, url)
 	if err := runCmd(p.c, dlcCmd); err != nil {
 		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
 	}
