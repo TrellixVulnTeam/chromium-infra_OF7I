@@ -60,7 +60,7 @@ class System(object):
     tools = cls._Tools(
         cipd=cls._find_tool('cipd'),
     )
-    missing_tools = [k for k, v in tools._asdict().iteritems() if not v]
+    missing_tools = [k for k, v in tools._asdict().items() if not v]
     if missing_tools:
       raise MissingToolsError('Missing required tools: %r' % (
           sorted(missing_tools),))
@@ -142,7 +142,7 @@ class System(object):
         return dx
 
     if plat.dockcross_base:
-      if sys.platform != 'linux2':
+      if not sys.platform.startswith('linux'):
         raise PlatformNotSupported(
             ('Docker builds are only supported on Linux, skipping %r' %
              plat.name))
@@ -212,8 +212,10 @@ class System(object):
       proc = subprocess.Popen(args, **kwargs)
 
     if kwargs['stdout'] is subprocess.PIPE:
-      for stdout_line in iter(proc.stdout.readline, ""):
-        stdout_line = stdout_line.rstrip()
+      for stdout_line in iter(proc.stdout.readline, b""):
+        # TODO: Once ported fully to Python 3 we can specify the encoding in the
+        # Popen constructor instead.
+        stdout_line = stdout_line.decode('utf-8').rstrip()
         util.LOGGER.debug('STDOUT: "%s"', stdout_line)
         stdout_lines.append(stdout_line)
 

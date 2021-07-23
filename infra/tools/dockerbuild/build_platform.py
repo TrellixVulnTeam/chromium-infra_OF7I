@@ -348,9 +348,9 @@ def _CheckTranslated():
 
 
 NAMES = sorted(ALL.keys())
-PACKAGED = [p for p in ALL.itervalues() if p.packaged]
-ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
-UNIVERSAL = [p.name for p in ALL.itervalues() if 'universal' in p.name]
+PACKAGED = [p for p in ALL.values() if p.packaged]
+ALL_LINUX = [p.name for p in ALL.values() if 'linux' in p.name]
+UNIVERSAL = [p.name for p in ALL.values() if 'universal' in p.name]
 _IS_TRANSLATED = _CheckTranslated()
 
 
@@ -375,9 +375,9 @@ def NativePlatforms():
         ALL['windows-x86'], ALL['windows-x86-py3'], ALL['windows-x64'],
         ALL['windows-x64-py3']
     ]
-  elif sys.platform == 'linux2':
+  elif sys.platform.startswith('linux'):
     # Linux platforms are built with docker, so Linux doesn't support any
     # non-universal platforms natively.
     return plats
   raise ValueError('Cannot identify native image for %r-%r.' %
-                   (sys.platform, machine))
+                   (sys.platform, NativeMachine()))

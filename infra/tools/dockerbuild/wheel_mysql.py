@@ -53,10 +53,10 @@ class MySQLPython(Builder):
         f.truncate(0)
         f.seek(0)
         for line in current:
-          if line.startswith('static'):
-            f.write('static = True\n')
-          elif line.startswith('threadsafe'):
-            f.write('threadsafe = False\n')
+          if line.startswith(b'static'):
+            f.write(b'static = True\n')
+          elif line.startswith(b'threadsafe'):
+            f.write(b'threadsafe = False\n')
           else:
             f.write(line)
 

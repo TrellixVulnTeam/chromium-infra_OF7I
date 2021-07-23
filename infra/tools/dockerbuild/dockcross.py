@@ -330,7 +330,7 @@ class Image(collections.namedtuple('_Image', (
         # Change working directory that the image uses.
         run_args.append('-w=%s' % (self.workrel(work_dir, cwd),))
 
-      for k, v in env.iteritems():
+      for k, v in env.items():
         v = v.replace(work_dir, '/work/')
         assert ' ' not in v, 'BUG: spaces in env vars not supported correctly'
         run_args.extend(['-e', '%s=%s' % (k, v)])

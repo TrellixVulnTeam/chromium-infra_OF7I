@@ -10,8 +10,8 @@ import os
 import shutil
 import stat
 import tempfile
-import urllib
-import urlparse
+
+from six.moves import urllib
 
 import requests
 import requests.exceptions
@@ -139,7 +139,8 @@ def download_to(url, dst_fd, hash_obj=None):
     fd = None
     try:
       LOGGER.debug('Downloading via "urllib": %s', url)
-      fd = urllib.urlopen(url)
+      fd = urllib.request.urlopen(url)
+
       def _chunk_gen():
         while True:
           data = fd.read(DOWNLOAD_CHUNK_SIZE)
@@ -151,7 +152,7 @@ def download_to(url, dst_fd, hash_obj=None):
       if fd:
         fd.close()
 
-  parsed_url = urlparse.urlparse(url)
+  parsed_url = urllib.parse.urlparse(url)
   return parsed_url.path.rsplit('/', 1)[-1]
 
 
@@ -224,7 +225,7 @@ def check_run_script(system, dx, work_root, script, args=None, cwd=None,
     for line in script:
       fd.write(line)
       fd.write('\n')
-  os.chmod(fd.name, 0755)
+  os.chmod(fd.name, 0o755)
 
   LOGGER.debug('Running script (path=%s): %s', fd.name, script)
   cmd = [fd.name]

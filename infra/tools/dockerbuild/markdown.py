@@ -85,14 +85,14 @@ contact Chrome Operations:
     fd.write(self._HEADER)
 
     categorized_packages = {}
-    for (name, version, pyversions), (whl, plats) in self._packages.iteritems():
-      for pyversion in (pyversions or (None,)):
+    for (name, version, pyversions), (whl, plats) in self._packages.items():
+      for pyversion in (pyversions or ('',)):
         key = (name, pyversion)
         categorized_packages.setdefault(key, {})[version] = (whl, plats)
 
     for (name, pyversion), versions in sorted(categorized_packages.items()):
       wheel_name_template = self._WHEEL_NAME_TEMPLATE_23
-      if pyversion is not None:
+      if pyversion:
         wheel_name_template = self._WHEEL_NAME_TEMPLATE
       fd.write(wheel_name_template % dict(
           name=name,

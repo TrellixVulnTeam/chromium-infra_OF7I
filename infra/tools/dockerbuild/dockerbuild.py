@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import base64
 import distutils.version
@@ -35,7 +37,7 @@ def _filter_platform_specs(selected_platforms, selected_specs):
 def _main_sources(args, system):
   for src in sorted(source.Source.all()):
     if args.list:
-      print 'Source: %s @ %s' % (src.name, src.version)
+      print('Source: %s @ %s' % (src.name, src.version))
       continue
 
     util.LOGGER.info('Source: %s @ %s', src.name, src.version)
@@ -233,8 +235,8 @@ def _build_one_wheel(system, args, git_revision, updated_packages, spec_name,
 def _main_wheel_dump(args, system):
   try:
     md = markdown.Generator()
-    for build in wheels.SPECS.itervalues():
-      for plat in build_platform.ALL.itervalues():
+    for build in wheels.SPECS.values():
+      for plat in build_platform.ALL.values():
         if not build.supported(plat):
           continue
         w = build.wheel(system, plat)
@@ -249,8 +251,8 @@ def _main_wheel_dump(args, system):
 
 def _main_wheel_json(_, system):
   all_wheels = []
-  for build in wheels.SPECS.itervalues():
-    for plat in build_platform.ALL.itervalues():
+  for build in wheels.SPECS.values():
+    for plat in build_platform.ALL.values():
       if build.supported(plat):
         w = build.wheel(system, plat)._asdict()
         w['spec'] = w['spec']._asdict()
@@ -289,7 +291,7 @@ def _main_run(args, system):
   for var, value in args.env_suffix:
     affixes.setdefault('DOCKERBUILD_APPEND_'+var, []).append(
       value.replace(args.workdir, '/work/'))
-  for k, vals in affixes.iteritems():
+  for k, vals in affixes.items():
     env[k] = base64.b64encode(':'.join(vals))
 
   retcode, _ = dx.run(args.workdir, dx_args, stdout=sys.stdout,

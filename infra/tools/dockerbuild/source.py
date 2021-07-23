@@ -91,7 +91,7 @@ class Source(
       if patches:
         hash_obj = hashlib.md5()
         for patch in sorted(patches):
-          with open(patch) as f:
+          with open(patch, 'rb') as f:
             hash_obj.update(f.read())
         self._patches_hash = hash_obj.hexdigest().lower()
 
@@ -222,7 +222,7 @@ class Repository(object):
 
     # Unpack or copy the source file into the destination path.
     if unpack:
-      for suffix, unpack_func in self._archive_suffixes.iteritems():
+      for suffix, unpack_func in self._archive_suffixes.items():
         if package_file.endswith(suffix):
           return self._unpack_archive(package_file_path, dest_dir, unpack_func)
 
