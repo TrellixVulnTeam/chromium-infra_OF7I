@@ -218,7 +218,7 @@ describe('mr-edit-metadata', () => {
 
     // Reset form.
     await element.updateComplete;
-    element.reset();
+    await element.reset();
 
     // Check that save button is still disabled.
     assert.isTrue(element.disabled);

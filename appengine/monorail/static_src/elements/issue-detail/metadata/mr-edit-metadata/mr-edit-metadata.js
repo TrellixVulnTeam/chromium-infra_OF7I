@@ -811,7 +811,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
   /**
    * Resets the edit form values to their default values.
    */
-  reset() {
+  async reset() {
     this._values = {...this._initialValues};
 
     const form = this.querySelector('#editForm');
@@ -844,6 +844,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
     if (uploader) {
       uploader.reset();
     }
+
+    // TODO(dtu, zhangtiff): Remove once all form fields are controlled.
+    await this.updateComplete;
 
     this._processChanges();
   }
@@ -997,7 +1000,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
         }
       }
 
-      if (this._values.owner !== this.ownerName) {
+      if (this._values.owner !== this._initialValues.owner) {
         result.ownerRef = displayNameToUserRef(this._values.owner);
       }
 
