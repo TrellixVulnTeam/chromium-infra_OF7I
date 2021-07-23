@@ -140,10 +140,11 @@ func testRecordsToTestProtos(ctx context.Context, records map[string]*TestRecord
 					"Status for test %s is missing from the list of test events. Setting to `pass` because package passed.", testId)
 				tr.Status = resultpb.TestStatus_PASS
 				tr.Expected = true
+			} else {
+				// A test interrupted by SIGTERM, SIGABORT, SIGKILL will usually
+				// have its status unset.
+				tr.Status = resultpb.TestStatus_ABORT
 			}
-			// A test interrupted by SIGTERM, SIGABORT, SIGKILL will usually
-			// have its status unset.
-			tr.Status = resultpb.TestStatus_ABORT
 		}
 		parentRecord := records[record.PackageName]
 		if parentRecord.Output.Len() > 0 {
