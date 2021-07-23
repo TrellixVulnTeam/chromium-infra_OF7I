@@ -174,10 +174,8 @@ func TestRunDUTPlans(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
-			So(err.Error(), ShouldContainSubstring, "run dut \"cros_repair\" plans:")
-			So(err.Error(), ShouldContainSubstring, "exec: run exec \"sample_fail\" ")
+			So(err.Error(), ShouldContainSubstring, "run plan \"cros_repair\" for \"test_dut\":")
 			So(err.Error(), ShouldContainSubstring, ": failed")
-			// So("jk", ShouldContainSubstring, "j")
 		})
 	})
 	Convey("Happy path", t, func() {

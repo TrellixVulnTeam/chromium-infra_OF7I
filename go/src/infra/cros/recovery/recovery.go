@@ -112,20 +112,52 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		EnableRecovery: args.EnableRecovery,
 	}
 	// TODO(otabek@): Add closing plan logic.
-	lastPlanIndex := len(planNames) - 1
-	for ip, planName := range planNames {
+	for _, planName := range planNames {
+		resources := collectResourcesForPlan(planName, dut)
+		if len(resources) == 0 {
+			log.Info(ctx, "Run plan %q: no resources found.", planName)
+		}
 		plan := config.GetPlans()[planName]
-		if err := engine.Run(ctx, planName, plan, execArgs); err != nil {
-			log.Error(ctx, "Run DUT %q plans: plan %q fail. Error: %s", dut.Name, planName, err)
-			if plan.GetAllowFail() {
-				if ip == lastPlanIndex {
-					log.Debug(ctx, "Ignore error as plan %q is allowed to fail.", planName)
+		for _, resource := range resources {
+			execArgs.ResourceName = resource
+			log.Info(ctx, "Run plan %q for %q: started", planName, resource)
+			if err := engine.Run(ctx, planName, plan, execArgs); err != nil {
+				log.Error(ctx, "Run plan %q for %q: fail. Error: %s", resource, planName, err)
+				if plan.GetAllowFail() {
+					log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
 				} else {
-					log.Debug(ctx, "Continue to next plan as %q is allowed to fail.", planName)
+					return errors.Annotate(err, "run plan %q for %q", planName, resource).Err()
 				}
-			} else {
-				return errors.Annotate(err, "run dut %q plans", planName).Err()
 			}
+		}
+	}
+	return nil
+}
+
+// collectResourcesForPlan collect resource names for supported plan.
+// Mostly we have one resource per plan by in some cases we can have more
+// resources and then we will run the same plan for each resource.
+func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
+	switch planName {
+	case PlanCrOSRepair, PlanCrOSDeploy, PlanLabstationRepair, PlanLabstationDeploy:
+		if dut.Name != "" {
+			return []string{dut.Name}
+		}
+	case PlanServoRepair:
+		if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+			return []string{dut.ServoHost.Name}
+		}
+	case PlanBluetoothPeerRepair:
+		var resources []string
+		for _, bp := range dut.BluetoothPeerHosts {
+			if bp.Name != "" {
+				resources = append(resources, bp.Name)
+			}
+		}
+		return resources
+	case PlanChameleonRepair:
+		if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
+			return []string{dut.ChameleonHost.Name}
 		}
 	}
 	return nil

@@ -23,8 +23,10 @@ var (
 
 // RunArgs holds input arguments for an exec function.
 type RunArgs struct {
-	DUT    *tlw.Dut
-	Access tlw.Access
+	// Resource name targeted by plan.
+	ResourceName string
+	DUT          *tlw.Dut
+	Access       tlw.Access
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
 }
