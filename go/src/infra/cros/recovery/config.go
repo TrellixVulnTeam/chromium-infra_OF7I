@@ -30,6 +30,20 @@ const defaultConfig = `
 			"actions": {},
 			"allow_fail": true
 		},
+		"chameleon_repair":{
+			"critical_actions": [
+				"sample_pass"
+			],
+			"actions": {},
+			"allow_fail": true
+		},
+		"bluetooth_peer_repair":{
+			"critical_actions": [
+				"sample_pass"
+			],
+			"actions": {},
+			"allow_fail": true
+		},
 		"cros_repair":{
 			"critical_actions": [
 				"sample_pass"

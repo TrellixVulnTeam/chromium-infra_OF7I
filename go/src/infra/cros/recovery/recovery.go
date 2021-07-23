@@ -176,12 +176,13 @@ func (a *RunArgs) verify() error {
 // List of predefined plans.
 // TODO(otabek@): Update list of plans and mapping with final version.
 const (
-	PlanCrOSRepair       = "cros_repair"
-	PlanCrOSDeploy       = "cros_deploy"
-	PlanCrOSAudit        = "cros_audit"
-	PlanLabstationRepair = "labstation_repair"
-	PlanLabstationDeploy = "labstation_deploy"
-	PlanServoRepair      = "servo_repair"
+	PlanCrOSRepair          = "cros_repair"
+	PlanCrOSDeploy          = "cros_deploy"
+	PlanLabstationRepair    = "labstation_repair"
+	PlanLabstationDeploy    = "labstation_deploy"
+	PlanServoRepair         = "servo_repair"
+	PlanChameleonRepair     = "chameleon_repair"
+	PlanBluetoothPeerRepair = "bluetooth_peer_repair"
 )
 
 // dutPlans creates list of plans for DUT.
@@ -202,13 +203,19 @@ func dutPlans(dut *tlw.Dut, args *RunArgs) []string {
 			plans = append(plans, PlanLabstationRepair)
 		}
 	default:
-		if dut.ServoHost != nil {
+		if dut.ServoHost != nil && dut.ServoHost.Name != "" {
 			plans = append(plans, PlanServoRepair)
 		}
 		switch args.TaskName {
 		case TaskNameDeploy:
 			plans = append(plans, PlanCrOSDeploy)
 		default:
+			if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
+				plans = append(plans, PlanChameleonRepair)
+			}
+			if len(dut.BluetoothPeerHosts) > 0 {
+				plans = append(plans, PlanBluetoothPeerRepair)
+			}
 			plans = append(plans, PlanCrOSRepair)
 		}
 	}

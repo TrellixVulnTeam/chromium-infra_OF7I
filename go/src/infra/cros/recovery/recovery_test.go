@@ -25,7 +25,10 @@ var dutPlansCases = []struct {
 	{
 		"default no servo",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeDefault,
+			SetupType:          tlw.DUTSetupTypeDefault,
+			ServoHost:          &tlw.ServoHost{},
+			ChameleonHost:      &tlw.ChameleonHost{},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
 		},
 		[]string{"cros_repair"},
 		"",
@@ -33,16 +36,47 @@ var dutPlansCases = []struct {
 	{
 		"default with servo",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeDefault,
-			ServoHost: &tlw.ServoHost{},
+			SetupType:          tlw.DUTSetupTypeDefault,
+			ServoHost:          &tlw.ServoHost{Name: "Servo"},
+			ChameleonHost:      &tlw.ChameleonHost{},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
 		},
 		[]string{"servo_repair", "cros_repair"},
 		"",
 	},
 	{
+		"default with servo and chameleon",
+		&tlw.Dut{
+			SetupType:          tlw.DUTSetupTypeDefault,
+			ServoHost:          &tlw.ServoHost{Name: "Servo"},
+			ChameleonHost:      &tlw.ChameleonHost{Name: "Chameleon"},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
+		},
+		[]string{"servo_repair", "chameleon_repair", "cros_repair"},
+		"",
+	},
+	{
+		"default with servo,chameleon and bluetoothPeer",
+		&tlw.Dut{
+			SetupType:     tlw.DUTSetupTypeDefault,
+			ServoHost:     &tlw.ServoHost{Name: "Servo"},
+			ChameleonHost: &tlw.ChameleonHost{Name: "Chameleon"},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{
+				{
+					Name: "bp",
+				},
+			},
+		},
+		[]string{"servo_repair", "chameleon_repair", "bluetooth_peer_repair", "cros_repair"},
+		"",
+	},
+	{
 		"labstation",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeLabstation,
+			SetupType:          tlw.DUTSetupTypeLabstation,
+			ServoHost:          &tlw.ServoHost{},
+			ChameleonHost:      &tlw.ChameleonHost{},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
 		},
 		[]string{"labstation_repair"},
 		"",
@@ -50,7 +84,10 @@ var dutPlansCases = []struct {
 	{
 		"deploy default no servo",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeDefault,
+			SetupType:          tlw.DUTSetupTypeDefault,
+			ServoHost:          &tlw.ServoHost{},
+			ChameleonHost:      &tlw.ChameleonHost{},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
 		},
 		[]string{"cros_deploy"},
 		TaskNameDeploy,
@@ -58,8 +95,14 @@ var dutPlansCases = []struct {
 	{
 		"default with servo",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeDefault,
-			ServoHost: &tlw.ServoHost{},
+			SetupType:     tlw.DUTSetupTypeDefault,
+			ServoHost:     &tlw.ServoHost{Name: "Servo"},
+			ChameleonHost: &tlw.ChameleonHost{Name: "Chameleon"},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{
+				{
+					Name: "bp",
+				},
+			},
 		},
 		[]string{"servo_repair", "cros_deploy"},
 		TaskNameDeploy,
@@ -67,7 +110,10 @@ var dutPlansCases = []struct {
 	{
 		"deploy labstation",
 		&tlw.Dut{
-			SetupType: tlw.DUTSetupTypeLabstation,
+			SetupType:          tlw.DUTSetupTypeLabstation,
+			ServoHost:          &tlw.ServoHost{},
+			ChameleonHost:      &tlw.ChameleonHost{},
+			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
 		},
 		[]string{"labstation_deploy"},
 		TaskNameDeploy,
