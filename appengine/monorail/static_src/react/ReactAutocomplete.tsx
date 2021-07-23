@@ -21,6 +21,7 @@ interface AutocompleteProps<T> {
   options: T[];
   value?: Value<T, boolean, false, true>;
   fixedValues?: T[];
+  inputType?: React.InputHTMLAttributes<unknown>['type'];
   multiple?: boolean;
   placeholder?: string;
   onChange?: (
@@ -44,9 +45,9 @@ interface AutocompleteProps<T> {
  */
 export function ReactAutocomplete<T>(
   {
-    label, options, value = undefined, fixedValues = [], multiple = false,
-    placeholder = '', onChange = () => {}, getOptionDescription = () => '',
-    getOptionLabel = (o) => String(o)
+    label, options, value = undefined, fixedValues = [], inputType = 'text',
+    multiple = false, placeholder = '', onChange = () => {},
+    getOptionDescription = () => '', getOptionLabel = (o) => String(o)
   }: AutocompleteProps<T>
 ): React.ReactNode {
   value = value || (multiple ? [] : '');
@@ -63,7 +64,7 @@ export function ReactAutocomplete<T>(
     onChange={_onChange(fixedValues, multiple, onChange)}
     onKeyDown={_onKeyDown}
     options={options}
-    renderInput={_renderInput(placeholder)}
+    renderInput={_renderInput(inputType, placeholder)}
     renderOption={_renderOption(getOptionDescription, getOptionLabel)}
     renderTags={_renderTags(fixedValues, getOptionLabel)}
     style={{width: 'var(--mr-edit-field-width)'}}
@@ -144,15 +145,17 @@ function _onKeyDown(e: React.KeyboardEvent) {
 }
 
 /**
+ * @param inputType A valid HTML 5 input type for the `input` element.
  * @param placeholder Placeholder text for the input.
  * @return A function that renders the input element used by
  *   ReactAutocomplete.
  */
-function _renderInput(placeholder = ''):
+function _renderInput(inputType = 'text', placeholder = ''):
     (params: AutocompleteRenderInputParams) => React.ReactNode {
   return (params: AutocompleteRenderInputParams): React.ReactNode =>
     <TextField
-      {...params} variant="standard" size="small" placeholder={placeholder}
+      {...params} variant="standard" size="small"
+      type={inputType} placeholder={placeholder}
     />;
 }
 

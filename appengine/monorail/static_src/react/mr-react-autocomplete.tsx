@@ -46,6 +46,8 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   @property({
     hasChanged: (oldVal, newVal) => !deepEqual(oldVal, newVal),
   }) fixedValues: string[] = [];
+  /** A valid HTML 5 input type for the `input` element. */
+  @property() inputType: string = 'text';
   /** True for chip input that takes multiple values, false for single input. */
   @property() multiple: boolean = false;
   /** Placeholder for the form input. */
@@ -99,6 +101,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
         options={this._options()}
         value={this.value}
         fixedValues={this.fixedValues}
+        inputType={this.inputType}
         multiple={this.multiple}
         placeholder={this.placeholder}
         onChange={this.onChange}
