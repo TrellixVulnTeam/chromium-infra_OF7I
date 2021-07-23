@@ -73,6 +73,54 @@ func TestMainFunc(t *testing.T) {
 	}
 }
 
+func runStartupOverhead(b *testing.B, spec string) {
+	self, err := os.Executable()
+	if err != nil {
+		b.Fatalf("could not get executable path: %s", err)
+	}
+	os.Setenv(vpythonTestBinaryEnv, self)
+
+	td, err := ioutil.TempDir(b.TempDir(), "vpython")
+	if err != nil {
+		b.Fatalf("could not get executable path: %s", err)
+	}
+	defer func() {
+		if err := filesystem.RemoveAll(td); err != nil {
+			b.Logf("Failed to remove test dir %q: %s", td, err)
+		}
+	}()
+
+	c, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	tc := testCase{
+		self:   self,
+		name:   "bench_nop",
+		script: filepath.Join(testDataDir, "bench_nop.py"),
+		spec:   filepath.Join(testDataDir, spec),
+	}
+
+	// Vpython environment is lazy setup after first called
+	tdc := tc.getDelegateCommand(c, td, environ.System())
+	_ = tdc.Run(b)
+	_ = tdc.Wait(b)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		tdc := tc.getDelegateCommand(c, td, environ.System())
+		_ = tdc.Run(b)
+		_ = tdc.Wait(b)
+	}
+}
+
+func BenchmarkStartupOverheadEmptyWheel(b *testing.B) {
+	runStartupOverhead(b, "bench_empty.vpython")
+}
+
+func BenchmarkStartupOverheadYAMLWheel(b *testing.B) {
+	runStartupOverhead(b, "bench_yaml.vpython")
+}
+
 type testDelegateParams struct {
 	Args []string
 }
@@ -96,20 +144,20 @@ func (tdc *testDelegateCommand) Start() error {
 	return tdc.Cmd.Start()
 }
 
-func (tdc *testDelegateCommand) Run(t *testing.T) error {
+func (tdc *testDelegateCommand) Run(t testing.TB) error {
 	tdc.prepare()
 	err := tdc.Cmd.Run()
 	t.Logf("Test output for %q:\n%s", tdc.tc.name, tdc.output.Bytes())
 	return err
 }
 
-func (tdc *testDelegateCommand) Wait(t *testing.T) error {
+func (tdc *testDelegateCommand) Wait(t testing.TB) error {
 	err := tdc.Cmd.Wait()
 	t.Logf("Test output for %q:\n%s", tdc.tc.name, tdc.output.Bytes())
 	return err
 }
 
-func (tdc *testDelegateCommand) CheckOutput(t *testing.T) bool {
+func (tdc *testDelegateCommand) CheckOutput(t testing.TB) bool {
 	matches := bytes.Equal(
 		bytes.Replace(tdc.output.Bytes(), []byte("\r\n"), []byte("\n"), -1),
 		tdc.tc.output)
@@ -124,6 +172,7 @@ type testCase struct {
 	name   string
 	script string
 	output []byte
+	spec   string
 }
 
 func loadTestCases(t *testing.T, self string) []testCase {
@@ -175,6 +224,9 @@ func (tc *testCase) getDelegateCommand(c context.Context, root string, env envir
 	}
 	if *vpythonDebug {
 		args = append(args, "-vpython-log-level", "debug")
+	}
+	if tc.spec != "" {
+		args = append(args, "-vpython-spec", tc.spec)
 	}
 	args = append(args, "-u", tc.script)
 
