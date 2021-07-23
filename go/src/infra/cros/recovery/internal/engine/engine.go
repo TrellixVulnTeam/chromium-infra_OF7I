@@ -9,6 +9,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -124,7 +125,7 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // The recover flow start only recoveries is enabled.
 func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, enableRecovery bool) error {
 	a := r.getAction(actionName)
-	if err := execs.Run(ctx, a.ExecName, r.args); err != nil {
+	if err := r.runActionExecWithTimeout(ctx, a); err != nil {
 		if enableRecovery && len(a.GetRecoveryActions()) > 0 {
 			if rErr := r.runRecoveries(ctx, actionName); rErr != nil {
 				return errors.Annotate(rErr, "run action %q exec", actionName).Err()
@@ -138,6 +139,35 @@ func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, e
 	}
 	r.cacheActionResult(actionName, nil)
 	return nil
+}
+
+// Default time limit per action exec function.
+const defaultExecTimeout = 60 * time.Second
+
+func actionExecTimeout(a *planpb.Action) time.Duration {
+	if a.ExecTimeout != nil {
+		return a.ExecTimeout.AsDuration()
+	}
+	return defaultExecTimeout
+}
+
+// runActionExecWithTimeout runs action's exec function with timeout.
+func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb.Action) error {
+	timeout := actionExecTimeout(a)
+	newCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	cw := make(chan error, 1)
+	go func() {
+		err := execs.Run(newCtx, a.ExecName, r.args)
+		cw <- err
+	}()
+	select {
+	case err := <-cw:
+		return errors.Annotate(err, "run exec %q with timeout %s", a.ExecName, timeout).Err()
+	case <-newCtx.Done():
+		log.Info(newCtx, "Run exec %q with timeout %s: excited timeout", a.ExecName, timeout)
+		return errors.Reason("run exec %q with timeout %s: excited timeout", a.ExecName, timeout).Err()
+	}
 }
 
 // isActionApplicable checks if action is applicable based on condition actions.
