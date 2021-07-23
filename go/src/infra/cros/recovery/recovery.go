@@ -7,6 +7,7 @@ package recovery
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 
 	"go.chromium.org/luci/common/errors"
@@ -59,23 +60,40 @@ func Run(ctx context.Context, args *RunArgs) error {
 		if err != nil {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
-		log.Debug(ctx, "Resource %q: received DUT %q info", resource, dut.Name)
-
+		logDUTInfo(ctx, resource, dut, "DUT info from inventory")
 		if err := runDUTPlans(ctx, dut, config, args); err != nil {
 			errs = append(errs, err)
 			log.Debug(ctx, "Resource %q: finished with error: %s.", resource, err)
-			if ir != lastResourceIndex {
-				log.Debug(ctx, "Continue to the next resource.")
-			}
 		} else {
 			log.Info(ctx, "Resource %q: finished successfully.", resource)
 		}
+		logDUTInfo(ctx, resource, dut, "updated DUT info")
+		if args.EnableUpdateInventory {
+			log.Info(ctx, "Resource %q: starting update DUT in inventory.", resource)
+			// Update DUT info in inventory in any case. When fail and when it passed
+			if err := args.Access.UpdateDut(ctx, dut); err != nil {
+				return errors.Annotate(err, "run recovery %q", resource).Err()
+			}
+		} else {
+			log.Info(ctx, "Resource %q: update inventory is disabled.", resource)
+		}
+		if ir != lastResourceIndex {
+			log.Debug(ctx, "Continue to the next resource.")
+		}
 	}
-	// TODO(otabek@): Add logic to update DUT's info to inventory.
 	if len(errs) > 0 {
 		return errors.Annotate(errors.MultiError(errs), "run recovery").Err()
 	}
 	return nil
+}
+
+func logDUTInfo(ctx context.Context, resource string, dut *tlw.Dut, msg string) {
+	s, err := json.MarshalIndent(dut, "", "\t")
+	if err != nil {
+		log.Debug(ctx, "Resource %q: %s. Fail to print DUT info. Error: %s", resource, msg, err)
+	} else {
+		log.Debug(ctx, "Resource %q: %s \n%s", resource, msg, s)
+	}
 }
 
 // runDUTPlans runs DUT's plans.
@@ -139,6 +157,8 @@ type RunArgs struct {
 	TaskName TaskName
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
+	// EnableUpdateInventory tells if update inventory after finishing the plans is enabled.
+	EnableUpdateInventory bool
 }
 
 // verify verifies input arguments.

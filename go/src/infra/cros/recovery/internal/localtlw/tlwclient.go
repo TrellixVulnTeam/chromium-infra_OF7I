@@ -7,7 +7,6 @@ package localtlw
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -26,6 +25,7 @@ import (
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -36,6 +36,8 @@ type UFSClient interface {
 	GetSchedulingUnit(ctx context.Context, req *ufsAPI.GetSchedulingUnitRequest, opts ...grpc.CallOption) (rsp *ufspb.SchedulingUnit, err error)
 	// GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
 	GetChromeOSDeviceData(ctx context.Context, req *ufsAPI.GetChromeOSDeviceDataRequest, opts ...grpc.CallOption) (rsp *ufspb.ChromeOSDeviceData, err error)
+	// UpdateDutState updates the state config for a DUT
+	UpdateDutState(ctx context.Context, in *ufsAPI.UpdateDutStateRequest, opts ...grpc.CallOption) (*ufslab.DutState, error)
 }
 
 // CSAClient is a client that knows how to respond to the GetStableVersion RPC call.
@@ -265,7 +267,6 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 	} else {
 		dut.StableVersion = gv
 	}
-	printAsJSON(ctx, "DUT", dut)
 	return dut, nil
 }
 
@@ -312,13 +313,22 @@ func (c *tlwClient) getStableVersion(ctx context.Context, dut *tlw.Dut) (*tlw.St
 
 // UpdateDut updates DUT info into inventory.
 func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
-	return status.Errorf(codes.Unimplemented, "not implemented")
-}
-
-// printAsJSON prints JSON representation of the struct.
-func printAsJSON(ctx context.Context, name string, d interface{}) {
-	if d != nil {
-		s, _ := json.MarshalIndent(d, "", "\t")
-		log.Debug(ctx, "%s: %s", name, s)
+	if dut == nil {
+		return errors.Reason("update DUT: DUT is not provided").Err()
 	}
+	dd, err := c.getDevice(ctx, dut.Name)
+	if err != nil {
+		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
+	}
+	dutID := dd.GetMachine().GetName()
+	req, err := dutinfo.CreateUpdateDutRequest(dutID, dut)
+	if err != nil {
+		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
+	}
+	log.Debug(ctx, "Update DUT: update request: %s", req)
+	if _, err := c.ufsClient.UpdateDutState(ctx, req); err != nil {
+		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
+	}
+	delete(c.devices, dut.Name)
+	return nil
 }

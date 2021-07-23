@@ -10,6 +10,8 @@ import (
 	ufslab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 )
 
+// TODO(otabek@): Use bidirectional maps when will be available.
+
 var hardwareStates = map[ufslab.HardwareState]tlw.HardwareState{
 	ufslab.HardwareState_HARDWARE_NORMAL:           tlw.HardwareStateNormal,
 	ufslab.HardwareState_HARDWARE_ACCEPTABLE:       tlw.HardwareStateAcceptable,
@@ -22,6 +24,15 @@ func convertHardwareState(s ufslab.HardwareState) tlw.HardwareState {
 		return ns
 	}
 	return tlw.HardwareStateUnspecified
+}
+
+func convertHardwareStateToUFS(s tlw.HardwareState) ufslab.HardwareState {
+	for us, ls := range hardwareStates {
+		if ls == s {
+			return us
+		}
+	}
+	return ufslab.HardwareState_HARDWARE_UNKNOWN
 }
 
 var firmwareChannels = map[ufslab.ServoFwChannel]tlw.ServoFirmwareChannel{
@@ -168,6 +179,33 @@ func convertServoTopologyFromUFS(st *ufslab.ServoTopology) *tlw.ServoTopology {
 		}
 		t = &tlw.ServoTopology{
 			Root:     convertServoTopologyItemFromUFS(st.Main),
+			Children: children,
+		}
+	}
+	return t
+}
+
+func convertServoTopologyItemToUFS(i *tlw.ServoTopologyItem) *ufslab.ServoTopologyItem {
+	if i == nil {
+		return nil
+	}
+	return &ufslab.ServoTopologyItem{
+		Type:         i.Type,
+		SysfsProduct: i.SysfsProduct,
+		Serial:       i.Serial,
+		UsbHubPort:   i.UsbHubPort,
+	}
+}
+
+func convertServoTopologyToUFS(st *tlw.ServoTopology) *ufslab.ServoTopology {
+	var t *ufslab.ServoTopology
+	if st != nil {
+		var children []*ufslab.ServoTopologyItem
+		for _, child := range st.Children {
+			children = append(children, convertServoTopologyItemToUFS(child))
+		}
+		t = &ufslab.ServoTopology{
+			Main:     convertServoTopologyItemToUFS(st.Root),
 			Children: children,
 		}
 	}
