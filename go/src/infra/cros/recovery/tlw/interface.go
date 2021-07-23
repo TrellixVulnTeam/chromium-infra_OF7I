@@ -79,7 +79,7 @@ type CopyRequest struct {
 type PowerSupplyAction int
 
 const (
-	PowerSupplyActionUnknown PowerSupplyAction = iota
+	PowerSupplyActionUnspecified PowerSupplyAction = iota
 	// Switch state to ON.
 	PowerSupplyActionOn
 	// Switch state to OFF.
@@ -100,7 +100,7 @@ type SetPowerSupplyRequest struct {
 type PowerSupplyResponseStatus int
 
 const (
-	PowerSupplyResponseStatusUnknown PowerSupplyResponseStatus = iota
+	PowerSupplyResponseStatusUnspecified PowerSupplyResponseStatus = iota
 	PowerSupplyResponseStatusOK
 	// RPM config is not present of incorrect.
 	PowerSupplyResponseStatusNoConfig
@@ -184,6 +184,24 @@ const (
 	PowerSupplyTypeBattery PowerSupplyType = "BATTERY"
 )
 
+// Cr50Phase describes different phases of CR50 firmware used on DUT.
+type Cr50Phase string
+
+const (
+	Cr50PhaseUnspecified Cr50Phase = "UNSPECIFIED"
+	Cr50PhasePVT         Cr50Phase = "CR50_PHASE_PREPVT"
+	Cr50PhasePREPVT      Cr50Phase = "CR50_PHASE_PVT"
+)
+
+// Cr50KeyEnv describes key env for cr50 RW version.
+type Cr50KeyEnv string
+
+const (
+	Cr50KeyEnvUnspecified Cr50KeyEnv = "UNSPECIFIED"
+	Cr50KeyEnvProd        Cr50KeyEnv = "CR50_KEYENV_PROD"
+	Cr50KeyEnvDev         Cr50KeyEnv = "CR50_KEYENV_DEV"
+)
+
 // Dut holds info about setup used as testbed.
 type Dut struct {
 	// Name is the resource name for the DUT.
@@ -200,15 +218,31 @@ type Dut struct {
 	SetupType DUTSetupType
 	// PowerSupplyType describes the DUT's power supply type.
 	PowerSupplyType PowerSupplyType
+	// Cr50 firmware phase used on the DUT.
+	Cr50Phase Cr50Phase
+	// Key env for RW Cr50 firmware version.
+	Cr50KeyEnv Cr50KeyEnv
+
 	// Physical parts of DUT.
 	// Internal storage info.
-	Storage *DutStorage
-	// Battery info (if applicable).
-	Battery *DutBattery
+	Storage *DUTStorage
+	// Battery info.
+	Battery *DUTBattery
+	// Wifi info.
+	Wifi *DUTWifi
+	// Bluetooth info.
+	Bluetooth *DUTBluetooth
+
+	// Peripheral devices.
 	// ServoHost of the DUT setup.
 	ServoHost *ServoHost
+	// Chameleon device of the DUT setup.
+	ChameleonHost *ChameleonHost
+	// BluetoothPeer info of DUT setup.
+	BluetoothPeerHosts []*BluetoothPeerHost
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
+
 	// StableVersion of the DUT.
 	StableVersion *StableVersion
 }
@@ -232,7 +266,7 @@ type HardwareState string
 
 const (
 	// Keep for all unknown state by default.
-	HardwareStateUnknown HardwareState = "UNKNOWN"
+	HardwareStateUnspecified HardwareState = "UNSPECIFIED"
 	// Hardware is in good shape and pass all verifiers.
 	HardwareStateNormal HardwareState = "NORMAL"
 	// Hardware is still good but close to became bad.
@@ -256,18 +290,91 @@ const (
 	StorageTypeUFS         StorageType = "UFS"
 )
 
-// DutStorage holds info about internal storage of the DUT.
-type DutStorage struct {
+// DUTStorage holds info about internal storage of the DUT.
+type DUTStorage struct {
 	// State of the component.
 	State HardwareState
 	// Type of storage used on device.
 	Type StorageType
 }
 
-// DutBattery holds info about battery of the DUT.
-type DutBattery struct {
+// DUTWifi holds info about internal wifi of the DUT.
+type DUTWifi struct {
 	// State of the component.
 	State HardwareState
+	// Name of wifi chip used on the device.
+	ChipName string
+}
+
+// DUTBluetooth holds info about internal bluetooth of the DUT.
+type DUTBluetooth struct {
+	// State of the component.
+	State HardwareState
+}
+
+// DUTBattery holds info about battery of the DUT.
+type DUTBattery struct {
+	// State of the component.
+	State HardwareState
+}
+
+// ChameleonState describes the state of chameleon device.
+type ChameleonState string
+
+const (
+	ChameleonStateUnspecified ChameleonState = "UNSPECIFIED"
+	// Device and software on it is working as expected.
+	ChameleonStateWorking ChameleonState = "WORKING"
+	// Device is broken or not working as expected.
+	ChameleonStateBroken ChameleonState = "BROKEN"
+)
+
+// ChameleonHost holds info about chameleon device.
+type ChameleonHost struct {
+	// Name is the resource name.
+	Name string
+	// State of the device.
+	State ChameleonState
+}
+
+// BluetoothPeerState describes the state of bluetooth peer device.
+type BluetoothPeerState string
+
+const (
+	BluetoothPeerStateUnspecified BluetoothPeerState = "UNSPECIFIED"
+	// Device and software on it is working as expected.
+	BluetoothPeerStateWorking BluetoothPeerState = "WORKING"
+	// Device is broken or not working as expected.
+	BluetoothPeerStateBroken BluetoothPeerState = "BROKEN"
+)
+
+// BluetoothPeer peer devices
+type BluetoothPeerHost struct {
+	// Name is the resource name.
+	Name string
+	// State of the device.
+	State BluetoothPeerState
+}
+
+// RPMState describes the state of RPM outlet.
+type RPMState string
+
+const (
+	RPMStateUnspecified RPMState = "UNSPECIFIED"
+	// Configuration for RPM outlet missed which block from execution the actions.
+	RPMStateMissingConfig RPMState = "MISSING_CONFIG"
+	// Configuration for RPM outlet provided but does not working which can be several reasons.
+	RPMStateWrongConfig RPMState = "WRONG_CONFIG"
+	// RPM outlet can successfully perform the actions.
+	RPMStateWorking RPMState = "WORKING"
+)
+
+// RPMOutlet is wall-power source for DUT which allow us perform action to do OFF/ON/CYCLE on it.
+type RPMOutlet struct {
+	// Name is the resource name.
+	Name string
+	// State of the component.
+	State RPMState
 }
 
 // ServoHost holds info about host to manage servod services and verify connected servo devices.
@@ -283,6 +390,31 @@ type ServoHost struct {
 	ServodPort int
 	// Smart USB-hub is present on setup.
 	SmartUsbhubPresent bool
+	// Servo Topology of servo devices.
+	ServoTopology *ServoTopology
+}
+
+// ServoTopology describes servo devices used to provide servo functionality.
+type ServoTopology struct {
+	Root     *ServoTopologyItem
+	Children []*ServoTopologyItem
+}
+
+// ServoTopologyItem describes details of one servo device.
+type ServoTopologyItem struct {
+	// type provides the type of servo device. Keeping as String to avoid issue with introduce new type.
+	Type string
+	// sysfs_product provides the product name of the device recorded in File System.
+	SysfsProduct string
+	// serial provides the serial number of the device.
+	Serial string
+	// usb_hub_port provides the port connection to the device.
+	// e.g. '1-6.2.2' where
+	//   '1-6'  - port on the labstation
+	//   '2'    - port on smart-hub connected to the labstation
+	//   '2'    - port on servo hub (part of servo_v4 or servo_v4.1) connected to the smart-hub
+	// The same path will look '1-6.2' if connected servo_v4 directly to the labstation.
+	UsbHubPort string
 }
 
 // ServoState describes the state of setup/communication issue related to servo functionality provided by servo.
@@ -349,6 +481,7 @@ const (
 	ServoFirmwareChannelAlpha ServoFirmwareChannel = "alpha"
 )
 
+// Servo holds info about servo functionality.
 type Servo struct {
 	// State of the servo.
 	State ServoState
@@ -359,25 +492,4 @@ type Servo struct {
 	// Self representation of servo-setup by servod.
 	// Example: servo_v4_with_servo_micro, servo_v4_with_ccd_cr50.
 	Type string
-}
-
-// RPMState describes the state of RPM outlet.
-type RPMState string
-
-const (
-	RPMStateUnspecified RPMState = "UNSPECIFIED"
-	// Configuration for RPM outlet missed which block from execution the actions.
-	RPMStateMissingConfig RPMState = "MISSING_CONFIG"
-	// Configuration for RPM outlet provided but does not working which can be several reasons.
-	RPMStateWrongConfig RPMState = "WRONG_CONFIG"
-	// RPM outlet can successfully perform the actions.
-	RPMStateWorking RPMState = "WORKING"
-)
-
-// RPMOutlet is wall-power source for DUT which allow us perform action to do OFF/ON/CYCLE on it.
-type RPMOutlet struct {
-	// Name is the resource name.
-	Name string
-	// State of the component.
-	State RPMState
 }

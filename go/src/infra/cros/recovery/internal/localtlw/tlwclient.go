@@ -32,7 +32,9 @@ import (
 
 // UFSClient is a client that knows how to work with UFS RPC methods.
 type UFSClient interface {
+	// GetSchedulingUnit retrieves the details of the SchedulingUnit.
 	GetSchedulingUnit(ctx context.Context, req *ufsAPI.GetSchedulingUnitRequest, opts ...grpc.CallOption) (rsp *ufspb.SchedulingUnit, err error)
+	// GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
 	GetChromeOSDeviceData(ctx context.Context, req *ufsAPI.GetChromeOSDeviceDataRequest, opts ...grpc.CallOption) (rsp *ufspb.ChromeOSDeviceData, err error)
 }
 
