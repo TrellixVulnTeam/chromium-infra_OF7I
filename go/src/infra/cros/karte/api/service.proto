@@ -54,8 +54,6 @@ service Karte {
 
 // CreateActionRequest creates a single action.
 message CreateActionRequest {
-  // An action, internally, contains a received_time timestamp that is
-  // managed by Karte. This field will be overwritten.
   chromeos.karte.Action action = 1 [(google.api.field_behavior) = REQUIRED];
 }
 

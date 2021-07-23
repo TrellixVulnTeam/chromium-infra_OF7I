@@ -33,7 +33,7 @@ type ActionEntity struct {
 	AssetTag       string    `gae:"asset_tag"`
 	StartTime      time.Time `gae:"start_time"`
 	StopTime       time.Time `gae:"stop_time"`
-	ReceiveTime    time.Time `gae:"receive_time"`
+	CreateTime     time.Time `gae:"receive_time"`
 	Status         int32     `gae:"status"`
 	ErrorReason    string    `gae:"error_reason"`
 }
@@ -47,7 +47,7 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		AssetTag:       e.AssetTag,
 		StartTime:      convertTimeToTimestampPtr(e.StartTime),
 		StopTime:       convertTimeToTimestampPtr(e.StopTime),
-		ReceiveTime:    convertTimeToTimestampPtr(e.ReceiveTime),
+		CreateTime:     convertTimeToTimestampPtr(e.CreateTime),
 		Status:         convertInt32ToActionStatus(e.Status),
 	}
 }
@@ -259,7 +259,7 @@ func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		AssetTag:       action.AssetTag,
 		StartTime:      convertTimestampPtrToTime(action.StartTime),
 		StopTime:       convertTimestampPtrToTime(action.StopTime),
-		ReceiveTime:    convertTimestampPtrToTime(action.ReceiveTime),
+		CreateTime:     convertTimestampPtrToTime(action.CreateTime),
 		Status:         convertActionStatusToInt32(action.Status),
 	}, nil
 }

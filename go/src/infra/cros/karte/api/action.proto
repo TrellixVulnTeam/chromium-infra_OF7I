@@ -7,6 +7,7 @@ syntax = "proto3";
 package chromeos.karte;
 
 import "google/api/resource.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "infra/cros/karte/api;kartepb";
@@ -51,18 +52,22 @@ message Action {
   // The stop time is the time that an action finished.
   google.protobuf.Timestamp stop_time = 7;
 
-  // The receive time is the time that an action was received.
-  google.protobuf.Timestamp receive_time = 8;
+  // The create time is the time that an action was created by Karte.
+  // This is the time that the event was first received, since events are
+  // immutable outside of rare cases.
+  // This field is managed by Karte itself.
+  google.protobuf.Timestamp create_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The status of an action is whether the action succeeded or failed.
   // Next Tag: 3
   enum Status {
     STATUS_UNSPECIFIED = 0;
-    STATUS_SUCCESS = 1;
-    STATUS_FAIL = 2;
+    SUCCESS = 1;
+    FAIL = 2;
   }
   Status status = 9;
 
-  // The error reason of an event is a diagnostic message.
-  string error_reason = 10;
+  // The fail reason of an event is a diagnostic message that is emitted when
+  // the action in question has failed.
+  string fail_reason = 10;
 }
