@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -56,7 +57,14 @@ func TestGTestConversions(t *testing.T) {
 							"elapsed_time_ms": 1856,
 							"losless_snippet": false,
 							"output_snippet_base64": "c29tZSBkYXRhIHdpdGggACBhbmQg77u/",
-							"status": "FAILURE"
+							"status": "FAILURE",
+							"result_parts":[{
+								"summary_base64":"VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+								"type":"failure"
+							}, {
+								"summary_base64":"VGhpcyBpcyBhIGZhdGFsIGZhaWx1cmUgbWVzc2FnZS4=",
+								"type":"fatal_failure"
+							}]
 						}
 					],
 					"FooTest.TestDoBaz": [
@@ -65,7 +73,10 @@ func TestGTestConversions(t *testing.T) {
 							"losless_snippet": true,
 							"output_snippet": "[ RUN      ] FooTest.TestDoBaz",
 							"output_snippet_base64": "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmF6",
-							"status": "SUCCESS"
+							"status": "SUCCESS",
+							"result_parts":[{
+								"type":"success"
+							}]
 						},
 						{
 							"elapsed_time_ms": 856,
@@ -74,7 +85,8 @@ func TestGTestConversions(t *testing.T) {
 							"status": "SUCCESS",
 							"links": {
 								"logcat": "https://luci-logdog.appspot.com/v/?s=logcat"
-							}
+							},
+							"result_parts":[{}]
 						}
 					]
 				}],
@@ -109,6 +121,16 @@ func TestGTestConversions(t *testing.T) {
 						Status:              "FAILURE",
 						ElapsedTimeMs:       1856,
 						OutputSnippetBase64: "c29tZSBkYXRhIHdpdGggACBhbmQg77u/",
+						ResultParts: []*GTestRunResultPart{
+							{
+								SummaryBase64: "VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+								Type:          "failure",
+							},
+							{
+								SummaryBase64: "VGhpcyBpcyBhIGZhdGFsIGZhaWx1cmUgbWVzc2FnZS4=",
+								Type:          "fatal_failure",
+							},
+						},
 					},
 				},
 				"FooTest.TestDoBaz": {
@@ -117,6 +139,11 @@ func TestGTestConversions(t *testing.T) {
 						ElapsedTimeMs:       837,
 						LosslessSnippet:     true,
 						OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmF6",
+						ResultParts: []*GTestRunResultPart{
+							{
+								Type: "success",
+							},
+						},
 					},
 					{
 						Status:              "SUCCESS",
@@ -126,6 +153,7 @@ func TestGTestConversions(t *testing.T) {
 							"logcat": json.RawMessage(
 								`"https://luci-logdog.appspot.com/v/?s=logcat"`),
 						},
+						ResultParts: []*GTestRunResultPart{{}},
 					},
 				},
 			},
@@ -275,6 +303,153 @@ func TestGTestConversions(t *testing.T) {
 				},
 			})
 			So(tr.SummaryHtml, ShouldEqual, `<ul><li><a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a></li></ul>`)
+		})
+
+		Convey("result_parts", func() {
+			Convey("first failure takes precedence", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							// "This is a failure message."
+							SummaryBase64: "VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+							Type:          "failure",
+						},
+						{
+							// "This is a second failure message."
+							SummaryBase64: "VGhpcyBpcyBhIHNlY29uZCBmYWlsdXJlIG1lc3NhZ2Uu",
+							Type:          "failure",
+						},
+					},
+				})
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `This is a failure message.`)
+			})
+			Convey("first fatal failure takes precedence", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							// "This is a failure message."
+							SummaryBase64: "VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+							Type:          "failure",
+						},
+						{
+							// "This is a fatal failure message."
+							SummaryBase64: "VGhpcyBpcyBhIGZhdGFsIGZhaWx1cmUgbWVzc2FnZS4=",
+							Type:          "fatal_failure",
+						},
+						{
+							// "This is a second fatal failure message."
+							SummaryBase64: "VGhpcyBpcyBhIHNlY29uZCBmYXRhbCBmYWlsdXJlIG1lc3NhZ2Uu",
+							Type:          "fatal_failure",
+						},
+					},
+				})
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `This is a fatal failure message.`)
+			})
+			Convey("empty", func() {
+				tr := convert(&GTestRunResult{
+					Status:      "FAILURE",
+					ResultParts: []*GTestRunResultPart{},
+				})
+				So(tr.FailureReason, ShouldEqual, nil)
+			})
+			Convey("primary error message truncated at 1024 bytes", func() {
+				var input bytes.Buffer
+				var expected bytes.Buffer
+				// Print 1020 bytes as 340 3-byte runes.
+				for i := 0; i < 340; i++ {
+					// Use swedish "Place of interest symbol", which encodes as three-bytes, e2 8c 98.
+					// See https://blog.golang.org/strings.
+					input.WriteRune('\u2318')
+					expected.WriteRune('\u2318')
+				}
+				// Numbers and dots are one byte in UTF-8. Construct input to be 1025 bytes,
+				// expected to be the 1024-byte truncation.
+				input.WriteString("12345")
+				expected.WriteString("1...")
+
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							SummaryBase64: base64.StdEncoding.EncodeToString(input.Bytes()),
+							Type:          "failure",
+						},
+					},
+				})
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, expected.String())
+			})
+			Convey("invalid type does not cause a fatal error", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							// "This is a failure message."
+							SummaryBase64: "VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+							Type:          "undefined",
+						},
+					},
+				})
+				So(tr.FailureReason, ShouldEqual, nil)
+			})
+			Convey("invalid UTF-8 does not cause a fatal error", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							// Encodes (hexadecimal byte) ff, which is invalid UTF-8.
+							// See https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt.
+							SummaryBase64: "/w8=",
+							Type:          "fatal_failure",
+						},
+					},
+				})
+				So(tr.FailureReason, ShouldEqual, nil)
+			})
+			Convey("invalid base64 does not cause a fatal error", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							SummaryBase64: "Invalid base 64.",
+							Type:          "fatal_failure",
+						},
+					},
+				})
+				So(tr.FailureReason, ShouldEqual, nil)
+			})
+		})
+	})
+
+	Convey("truncateString", t, func() {
+		Convey("one-byte runes", func() {
+			Convey("longer than desired length", func() {
+				result := truncateString("12345678", 5)
+				So(result, ShouldEqual, "12...")
+			})
+			Convey("exactly desired length", func() {
+				result := truncateString("12345", 5)
+				So(result, ShouldEqual, "12345")
+			})
+			Convey("shorter than desired length", func() {
+				result := truncateString("1234", 5)
+				So(result, ShouldEqual, "1234")
+			})
+		})
+		Convey("three-byte runes", func() {
+			Convey("longer than desired length", func() {
+				result := truncateString("\u2318\u2318\u2318", 7)
+				So(result, ShouldEqual, "\u2318...")
+			})
+			Convey("exactly desired length", func() {
+				result := truncateString("\u2318\u2318", 6)
+				So(result, ShouldEqual, "\u2318\u2318")
+			})
+			Convey("shorter than desired length", func() {
+				result := truncateString("\u2318\u2318", 7)
+				So(result, ShouldEqual, "\u2318\u2318")
+			})
 		})
 	})
 
