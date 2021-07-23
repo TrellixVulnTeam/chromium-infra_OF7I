@@ -58,45 +58,50 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 	var recipeInput []byte
 	var cmd []string
-	group, ectx := errgroup.WithContext(ctx)
 
-	// Get the arguments for the command
-	group.Go(func() error {
-		logging.Infof(ctx, "creating CIPD client")
-		cipdClient, err := cipd.NewClient(ectx, cipdRoot)
-		if err != nil {
-			return err
+	// Introduce a new block to shadow the ctx variable so that the outer
+	// value can't be used accidentally
+	{
+		group, ctx := errgroup.WithContext(ctx)
+
+		// Get the arguments for the command
+		group.Go(func() error {
+			logging.Infof(ctx, "creating CIPD client")
+			cipdClient, err := cipd.NewClient(ctx, cipdRoot)
+			if err != nil {
+				return err
+			}
+
+			logging.Infof(ctx, "setting up bootstrapped executable")
+			cmd, err = bootstrapper.SetupExe(ctx, cipdClient)
+			if err != nil {
+				return err
+			}
+
+			if buildOutputPath != "" {
+				cmd = append(cmd, "--output", buildOutputPath)
+			}
+
+			return nil
+		})
+
+		// Get the input for the command
+		group.Go(func() error {
+			logging.Infof(ctx, "computing bootstrapped properties")
+			properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, gitiles.NewClient(ctx))
+			if err != nil {
+				return err
+			}
+
+			logging.Infof(ctx, "marshalling bootstrapped build input")
+			build.Input.Properties = properties
+			recipeInput, err = proto.Marshal(build)
+			return errors.Annotate(err, "failed to marshall bootstrapped build input: <%s>", build).Err()
+		})
+
+		if err := group.Wait(); err != nil {
+			return nil, err
 		}
-
-		logging.Infof(ctx, "setting up bootstrapped executable")
-		cmd, err = bootstrapper.SetupExe(ectx, cipdClient)
-		if err != nil {
-			return err
-		}
-
-		if buildOutputPath != "" {
-			cmd = append(cmd, "--output", buildOutputPath)
-		}
-
-		return nil
-	})
-
-	// Get the input for the command
-	group.Go(func() error {
-		logging.Infof(ctx, "computing bootstrapped properties")
-		properties, err := bootstrapper.ComputeBootstrappedProperties(ectx, gitiles.NewClient(ectx))
-		if err != nil {
-			return err
-		}
-
-		logging.Infof(ctx, "marshalling bootstrapped build input")
-		build.Input.Properties = properties
-		recipeInput, err = proto.Marshal(build)
-		return errors.Annotate(err, "failed to marshall bootstrapped build input: <%s>", build).Err()
-	})
-
-	if err := group.Wait(); err != nil {
-		return nil, err
 	}
 
 	cmdCtx := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
