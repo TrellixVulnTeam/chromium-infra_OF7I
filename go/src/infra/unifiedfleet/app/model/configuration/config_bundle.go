@@ -7,7 +7,6 @@ package configuration
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 	"strings"
 	"time"
 
@@ -60,14 +59,10 @@ func GenerateCBEntityId(cb *payload.ConfigBundle) (string, error) {
 }
 
 func newConfigBundleEntity(ctx context.Context, pm proto.Message) (cbEntity ufsds.FleetEntity, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			logging.Errorf(ctx, "Failed to create ConfigBundleEntity: %s", r)
-			debug.PrintStack()
-			err = errors.Reason("Failed to create ConfigBundleEntity: %s", r).Err()
-		}
-	}()
-	p := pm.(*payload.ConfigBundle)
+	p, ok := pm.(*payload.ConfigBundle)
+	if !ok {
+		return nil, errors.Reason("Failed to create ConfigBundleEntity: %s", pm).Err()
+	}
 
 	id, err := GenerateCBEntityId(p)
 	if err != nil {
@@ -99,14 +94,6 @@ func UpdateConfigBundle(ctx context.Context, cb *payload.ConfigBundle) (*payload
 // GetConfigBundle returns ConfigBundle for the given id
 // (${programId}-${designId}) from datastore.
 func GetConfigBundle(ctx context.Context, id string) (rsp *payload.ConfigBundle, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			logging.Errorf(ctx, "Failed to get ConfigBundleEntity: %s", r)
-			debug.PrintStack()
-			err = errors.Reason("Failed to create ConfigBundleEntity: %s", r).Err()
-		}
-	}()
-
 	ids := strings.Split(id, "-")
 	if len(ids) != 2 {
 		logging.Errorf(ctx, "Faulty id value; please make sure the format is ${programId}-${designId}")
@@ -129,5 +116,10 @@ func GetConfigBundle(ctx context.Context, id string) (rsp *payload.ConfigBundle,
 	if err != nil {
 		return nil, err
 	}
-	return pm.(*payload.ConfigBundle), nil
+
+	p, ok := pm.(*payload.ConfigBundle)
+	if !ok {
+		return nil, errors.Reason("Failed to create ConfigBundleEntity: %s", pm).Err()
+	}
+	return p, nil
 }
