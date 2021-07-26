@@ -9,7 +9,7 @@ Search, view, and navigate Chromium code:
 
 The service currently supports the following:
 
-* **Code covered**, see [build/scripts/slave/recipes/chromium\_codesearch.py](https://cs.chromium.org/chromium/build/scripts/slave/recipes/chromium_codesearch.py) for included repos.
+* **Code covered**, see [recipes/recipes/chromium_codesearch.py](https://source.chromium.org/chromium/chromium/tools/build/+/main:recipes/recipes/chromium_codesearch.py) for included repos.
 * **Search** for all covered code.
 * **Code Visualization**, that is, syntax highlighting and formatting, for C++, Python,
   JavaScript, Java, ObjC, Go, and Proto files.
