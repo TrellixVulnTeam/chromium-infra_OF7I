@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import 'elements/chops/chops-collapse/chops-collapse.js';
@@ -16,7 +16,6 @@ import 'elements/framework/mr-comment-content/mr-description.js';
 import '../mr-comment-list/mr-comment-list.js';
 import 'elements/issue-detail/metadata/mr-edit-metadata/mr-edit-metadata.js';
 import 'elements/issue-detail/metadata/mr-metadata/mr-metadata.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {APPROVER_RESTRICTED_STATUSES, STATUS_ENUM_TO_TEXT, TEXT_TO_STATUS_ENUM,
   STATUS_CLASS_MAP, CLASS_ICON_MAP, APPROVAL_STATUSES,
 } from 'shared/consts/approval.js';
@@ -39,11 +38,12 @@ const APPROVAL_METADATA_FIELDS = ['ApprovalStatus', 'Approvers', 'Setter',
  */
 export class MrApprovalCard extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-      css`
-        :host {
+  render() {
+    return html`
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet">
+      <style>
+        mr-approval-card {
           width: 100%;
           background-color: var(--chops-white);
           font-size: var(--chops-main-font-size);
@@ -56,27 +56,27 @@ export class MrApprovalCard extends connectStore(LitElement) {
           --approval-bg-color: var(--chops-purple-50);
           --approval-accent-color: var(--chops-purple-700);
         }
-        :host(.status-na) {
+        mr-approval-card .status-na {
           --approval-bg-color: hsl(227, 20%, 92%);
           --approval-accent-color: hsl(227, 80%, 40%);
         }
-        :host(.status-approved) {
+        mr-approval-card .status-approved {
           --approval-bg-color: hsl(78, 55%, 90%);
           --approval-accent-color: hsl(78, 100%, 30%);
         }
-        :host(.status-pending) {
+        mr-approval-card .status-pending {
           --approval-bg-color: hsl(40, 75%, 90%);
           --approval-accent-color: hsl(33, 100%, 39%);
         }
-        :host(.status-rejected) {
+        mr-approval-card .status-rejected {
           --approval-bg-color: hsl(5, 60%, 92%);
           --approval-accent-color: hsl(357, 100%, 39%);
         }
-        chops-button.edit-survey {
+        mr-approval-card chops-button.edit-survey {
           border: var(--chops-normal-border);
           margin: 0;
         }
-        h3 {
+        mr-approval-card h3 {
           margin: 0;
           padding: 0;
           display: inline;
@@ -84,7 +84,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
           font-size: inherit;
           line-height: inherit;
         }
-        mr-description {
+        mr-approval-card mr-description {
           display: block;
           margin-bottom: 0.5em;
         }
@@ -107,7 +107,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
           margin-right: 8px;
           color: hsl(0, 0%, 45%);
         }
-        .header {
+        mr-approval-card .header {
           margin: 0;
           width: 100%;
           border: 0;
@@ -121,38 +121,30 @@ export class MrApprovalCard extends connectStore(LitElement) {
           background-color: var(--approval-bg-color);
           cursor: pointer;
         }
-        .status {
+        mr-approval-card .status {
           font-size: var(--chops-main-font-size);
           color: var(--approval-accent-color);
           display: inline-flex;
           align-items: center;
           margin-left: 32px;
         }
-        .survey {
+        mr-approval-card .survey {
           padding: 0.5em 0;
           max-height: 500px;
           overflow-y: auto;
           max-width: 100%;
           box-sizing: border-box;
         }
-        [role="heading"] {
+        mr-approval-card [role="heading"] {
           display: flex;
           flex-direction: row;
           justify-content: space-between;
           align-items: flex-end;
         }
-        .edit-header {
+        mr-approval-card .edit-header {
           margin-top: 40px;
         }
-      `,
-    ];
-  }
-
-  /** @override */
-  render() {
-    return html`
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-            rel="stylesheet">
+      </style>
       <button
         class="header"
         @click=${this.toggleCard}
@@ -263,6 +255,11 @@ export class MrApprovalCard extends connectStore(LitElement) {
   }
 
   /** @override */
+  createRenderRoot() {
+    return this;
+  }
+
+  /** @override */
   stateChanged(state) {
     const fieldDefsByApproval = projectV0.fieldDefsByApprovalName(state);
     if (fieldDefsByApproval && this.fieldName &&
@@ -320,7 +317,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
    * Resets the approval edit form.
    */
   reset() {
-    const form = this.shadowRoot.querySelector('mr-edit-metadata');
+    const form = this.querySelector('mr-edit-metadata');
     if (!form) return;
     form.reset();
   }
@@ -329,7 +326,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
    * Saves the user's changes in the approval update form.
    */
   async save() {
-    const form = this.shadowRoot.querySelector('mr-edit-metadata');
+    const form = this.querySelector('mr-edit-metadata');
     const delta = form.delta;
 
     if (delta.status) {

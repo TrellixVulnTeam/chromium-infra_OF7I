@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import 'elements/chops/chops-dialog/chops-dialog.js';
 import {store, connectStore} from 'reducers/base.js';
@@ -12,7 +12,6 @@ import '../mr-approval-card/mr-approval-card.js';
 import {valueForField, valuesForField} from 'shared/metadata-helpers.js';
 import 'elements/issue-detail/metadata/mr-edit-metadata/mr-edit-metadata.js';
 import 'elements/issue-detail/metadata/mr-metadata/mr-field-values.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 const TARGET_PHASE_MILESTONE_MAP = {
   'Beta': 'feature_freeze',
@@ -45,20 +44,23 @@ const PHASES_WITH_MILESTONES = ['Beta', 'Stable', 'Stable-Exp', 'Stable-Full'];
  */
 export class MrPhase extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return [
-      SHARED_STYLES,
-      css`
-        :host {
+  render() {
+    const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(
+        this.phaseName);
+    const noApprovals = !this.approvals || !this.approvals.length;
+    return html`
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <style>
+        mr-phase {
           display: block;
         }
-        chops-dialog {
+        mr-phase chops-dialog {
           --chops-dialog-theme: {
             width: 500px;
             max-width: 100%;
           };
         }
-        h2 {
+        mr-phase h2 {
           margin: 0;
           font-size: var(--chops-large-font-size);
           font-weight: normal;
@@ -69,11 +71,11 @@ export class MrPhase extends connectStore(LitElement) {
           flex-direction: row;
           justify-content: space-between;
         }
-        h2 em {
+        mr-phase h2 em {
           margin-left: 16px;
           font-size: var(--chops-main-font-size);
         }
-        .chip {
+        mr-phase .chip {
           display: inline-block;
           font-size: var(--chops-main-font-size);
           padding: 0.25em 8px;
@@ -84,17 +86,7 @@ export class MrPhase extends connectStore(LitElement) {
         .phase-edit {
           padding: 0.1em 8px;
         }
-      `,
-    ];
-  }
-
-  /** @override */
-  render() {
-    const isPhaseWithMilestone = PHASES_WITH_MILESTONES.includes(
-        this.phaseName);
-    const noApprovals = !this.approvals || !this.approvals.length;
-    return html`
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      </style>
       <h2>
         <div>
           Approvals<span ?hidden=${!this.phaseName || !this.phaseName.length}>:
@@ -198,6 +190,11 @@ export class MrPhase extends connectStore(LitElement) {
   }
 
   /** @override */
+  createRenderRoot() {
+    return this;
+  }
+
+  /** @override */
   constructor() {
     super();
 
@@ -279,14 +276,14 @@ export class MrPhase extends connectStore(LitElement) {
    */
   edit() {
     this.reset();
-    this.shadowRoot.querySelector('#editPhase').open();
+    this.querySelector('#editPhase').open();
   }
 
   /**
    * Stops editing the phase.
    */
   cancel() {
-    this.shadowRoot.querySelector('#editPhase').close();
+    this.querySelector('#editPhase').close();
     this.reset();
   }
 
@@ -294,7 +291,7 @@ export class MrPhase extends connectStore(LitElement) {
    * Resets the edit form to its default values.
    */
   reset() {
-    const form = this.shadowRoot.querySelector('#metadataForm');
+    const form = this.querySelector('#metadataForm');
     form.reset();
   }
 
@@ -302,7 +299,7 @@ export class MrPhase extends connectStore(LitElement) {
    * Saves the changes the user has made.
    */
   save() {
-    const form = this.shadowRoot.querySelector('#metadataForm');
+    const form = this.querySelector('#metadataForm');
     const delta = form.delta;
 
     if (delta.fieldValsAdd) {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {LitElement, html} from 'lit-element';
 
 import {connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
@@ -16,29 +16,25 @@ import './mr-phase.js';
  */
 export class MrLaunchOverview extends connectStore(LitElement) {
   /** @override */
-  static get styles() {
-    return css`
-      :host {
-        width: 100%;
-        display: flex;
-        flex-flow: column;
-        justify-content: flex-start;
-        align-items: stretch;
-      }
-      :host([hidden]) {
-        display: none;
-      }
-      mr-phase {
-        margin-bottom: 0.75em;
-      }
-    `;
-  }
-
-  /** @override */
   render() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet">
+      <style>
+        mr-launch-overview {
+          max-width: 100%;
+          display: flex;
+          flex-flow: column;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+        mr-launch-overview[hidden] {
+          display: none;
+        }
+        mr-phase {
+          margin-bottom: 0.75em;
+        }
+      </style>
       ${this.phases.map((phase) => html`
         <mr-phase
           .phaseName=${phase.phaseRef.phaseName}
@@ -61,6 +57,11 @@ export class MrLaunchOverview extends connectStore(LitElement) {
         reflect: true,
       },
     };
+  }
+
+  /** @override */
+  createRenderRoot() {
+    return this;
   }
 
   /** @override */

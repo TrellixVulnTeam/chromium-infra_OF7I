@@ -75,7 +75,7 @@ describe('mr-approval-card', () => {
   it('site admins have approver privileges', async () => {
     await element.updateComplete;
 
-    const notice = element.shadowRoot.querySelector('.approver-notice');
+    const notice = element.querySelector('.approver-notice');
     assert.equal(notice.textContent.trim(), '');
 
     element.user = {isSiteAdmin: true};
@@ -207,7 +207,7 @@ describe('mr-approval-card', () => {
 
     await element.updateComplete;
 
-    assert.isNotNull(element.shadowRoot.querySelector('mr-edit-metadata'));
+    assert.isNotNull(element.querySelector('mr-edit-metadata'));
   });
 
   it('mr-edit-metadata is hidden if user has no addissuecomment', async () => {
@@ -215,6 +215,6 @@ describe('mr-approval-card', () => {
 
     await element.updateComplete;
 
-    assert.isNull(element.shadowRoot.querySelector('mr-edit-metadata'));
+    assert.isNull(element.querySelector('mr-edit-metadata'));
   });
 });

@@ -29,10 +29,10 @@ describe('mr-phase', () => {
 
     await element.updateComplete;
 
-    const editDialog = element.shadowRoot.querySelector('#editPhase');
+    const editDialog = element.querySelector('#editPhase');
     assert.isFalse(editDialog.opened);
 
-    element.shadowRoot.querySelector('.phase-edit').click();
+    element.querySelector('.phase-edit').click();
 
     await element.updateComplete;
 
@@ -44,8 +44,8 @@ describe('mr-phase', () => {
 
     // Open the edit dialog.
     element.edit();
-    const editDialog = element.shadowRoot.querySelector('#editPhase');
-    const editForm = element.shadowRoot.querySelector('#metadataForm');
+    const editDialog = element.querySelector('#editPhase');
+    const editForm = element.querySelector('#metadataForm');
 
     await element.updateComplete;
 
