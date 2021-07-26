@@ -37,49 +37,12 @@ Infrastructure. Once run, look in `cr-infra-go-area/infra/go/src` for the
 editable source code.
 
 
-## Structure
-
-This directory contains a set of scripts to setup and manage a hermetic Go
-building environment. We pin versions of the Go toolset and all third party
-dependencies that the infra code is using. It is important for getting
-non-flaky, reproducible builds of Go code on a CI and on developers' machines.
-
-Structurally `infra/go` represents two workspaces (two directories in
-`$GOPATH`):
-
-   * `infra/go` itself is a GOPATH with Chrome Infra go code and a bunch of
-     Chrome Infra owned projects
-     (e.g. [luci-go](https://chromium.googlesource.com/infra/luci/luci-go)),
-     that are DEPSed in into `infra/go/src/`. Such structure allows us to run CI
-     for these projects in a hermetic environment on Chrome Infra waterfalls.
-   * `infra/go/.vendor` is a GOPATH with locked versions of all third party code
-     that `infra/go/src/*` depends on (including code needed by luci-go repo and
-     other such DEPSed in dependencies). This directory is managed by `deps.py`
-     script, based on configuration specified in `deps.yaml` and `deps.lock`.
-     See "Dependency management" section below.
-
-Note that `infra/go` is not "go get"-able, since it's not a go package. It's
-GOPATH workspace.
-
-The majority of active development is happening in
-[luci-go](https://chromium.googlesource.com/infra/luci/luci-go) project that
-**is** a proper Go package and can be fetched with `go get`.
-
-luci-go doesn't pin any dependencies, assuming the end users (whoever links to
-it) will do it themselves. `infra/go` workspace is one such end user. This
-approach allows projects that use multiple big libraries (like luci-go) to
-manage all dependencies centrally in a single place, thus avoiding issues of
-version conflicts and binary bloat due to inclusion of a same third party code
-via multiple import paths.
-
-
 ## Bootstrap
 
 `infra/go` knows how to bootstrap itself from scratch (i.e. from a fresh
 checkout) by downloading pinned version of Go toolset, and installing pinned
-versions of third party packages it needs into `infra/go/.vendor` directory, and
-adding a bunch of third party tools (like `goconvey` and `protoc-gen-go`) to
-`$PATH`.
+versions of third party packages and adding a bunch of third party tools (like
+`goconvey` and `protoc-gen-go`) to `$PATH`.
 
 The bootstrap (and self-update) procedure is invoked whenever `go/bootstrap.py`
 or `go/env.py` run. There's **no** DEPS hook for this. We only want the Go
@@ -98,9 +61,10 @@ For example:
 ```shell
 cd infra/go
 eval `./env.py`
-go install go.chromium.org/luci/tools/cmd/...
-./bin/cproto --help  # infra/go/bin is where executables are installed
-cproto --help        # infra/go/bin is also in $PATH
+cd src/infra
+go install ./cmd/bqupload
+../../bin/bqupload --help  # infra/go/bin is where executables are installed
+bqupload --help            # infra/go/bin is also in $PATH
 ```
 
 Alternatively `go/env.py` can be used as a wrapping command that sets up an
@@ -113,86 +77,72 @@ the `INFRA_PROMPT_TAG` value to indicate that the modified environment is being
 used. By default, this value is "[cr go] ", but it can be changed by exporting
 a different value or disabled by exporting an empty value.
 
+
 ## Dependency management
 
-All third party code needed to build `infra/go` is installed into
-`infra/go/.vendor` via `deps.py` script that is invoked as part of the bootstrap
-process.
+Infra Go code uses a mix of [gclient DEPS] and [Go Modules] to manage
+dependencies.
 
-There are two files that control what code to fetch:
+There are two kinds of dependencies: dependencies between first-party code
+(like `infra.git` code depending on `luci-go.git` code) and dependencies between
+first-party and third-party code (like `infra.git` code depending on Google
+Cloud libraries).
 
-   * `deps.yaml` specifies what packages `infra/go` code depends on directly and
-     where to get them (i.e. what git mirror repos to use). It **does not**
-     specify package revisions in general, though some packages may optionally
-     be pinned here too (too avoid being updated during `deps.py update` run,
-     see below).
-   * `deps.lock` is produced by `deps.py update` command and it specifies
-     **the exact revisions** of all the packages in `deps.yaml` and all their
-     transitive dependencies. This is a list of what is getting installed into
-     `infra/go/.vendor`.
+Dependencies between first-party code are managed in the [DEPS] file, which is
+usually updated automatically by autoroller bots (e.g. [luci-go => infra]
+autoroller). This ensures changes to first-party code propagate quickly
+through the dependency tree.
 
-It is totally OK to modify `deps.yaml` or `deps.lock` by hand if you know what
-you are doing. These files are actually consumed by [glide](http://glide.sh/).
-See [glide.yaml file format](https://glide.readthedocs.org/en/latest/glide.yaml/)
-for some details.
+Dependencies on third-party code are managed in `go.mod` and `go.sum` files.
+Each Chrome infra repository has them (for `infra.git` they are
+[go/src/infra/go.mod] and [go/src/infra/go.sum]), which turns these repositories
+into Go modules. Thus an infra gclient checkout is a checkout of a bunch of
+Go modules on disk side-by-side (according to the [DEPS] file). `go build` is
+made aware of this structure via `replace` directives in the `go.mod` file,
+which tells it to use locally checked out modules (at revisions precisely
+controlled by the [DEPS]), instead of trying to figure out their intended
+versions using some version selection algorithm. This structure also allows to
+make changes to one locally checked out module (like `go.chromium.org/luci` from
+`luci-go.git`), and verifying they don't break another module (like `infra` from
+`infra.git`, which depends on `go.chromium.org/luci`).
+
+Note that when building a specific Go target using Infra builders, only `go.mod`
+of its enclosing module is considered when fetching dependencies. For example,
+if you setup a CIPD package builder (or a Docker image builder, or GAE tarball
+builder) that builds `go.chromium.org/luci/some/package/...`, the builder will use
+dependencies specified in the `go.mod` in `luci-go.git` repository (using the
+luci-go's revision currently checked out on disk according to the [DEPS] in
+`infra.git`). If the same builder then tries to build e.g. `infra/something`, it
+will use the `go.mod` from the `infra.git` repository. And it even may end up
+using a different version of some third party dependency.
+
+[gclient DEPS]: https://www.chromium.org/developers/how-tos/depottools#TOC-DEPS-file
+[Go Modules]: https://golang.org/ref/mod
+[DEPS]: ../DEPS
+[luci-go => infra]: https://autoroll.skia.org/r/luci-go-infra-autoroll
+[go/src/infra/go.mod]: ./src/infra/go.mod
+[go/src/infra/go.sum]: ./src/infra/go.sum
 
 
-## Updating dependencies
+### Adding or updating a dependency
 
-`deps.lock` file should be periodically updated by running `deps.py update`.
-Running this command bumps all revisions specified in `deps.lock` to the most
-recent ones.
+Navigate to the directory with `go.mod` file (`go/src/infra`) and use regular
+Go modules commands to update `go.mod` and `go.sum` files. See
+[Managing dependencies](https://golang.org/doc/modules/managing-dependencies).
 
-Here's the suggested workflow for updating all deps at once:
+
+### Making a DEPS roll that picks up go.mod changes
+
+If a DEPS roll picks up a change to a `go.mod` file in a first party dependency,
+infra's `go.sum` (and sometimes `go.mod`) need to be modified too to pick up
+updated version pins and module checksums.
+
+Ensure your local checkout matches `DEPS` and run `go mod tidy` in the infra
+module directory:
 
 ```shell
-cd infra/go
-eval `./env.py`
-./deps.py update                    # bump revisions
-./deps.py install                   # install new versions into .vendor/*
-go test go.chromium.org/luci/...    # make sure everything works
-git add deps.lock                   # commit new versions into the repo
-git commit ...
+cd go/src/infra
+go mod tidy
 ```
 
-
-## Adding a dependency
-
-When `infra/go` code grows a dependency on some new third party library, this
-library has to be added to `deps.yaml` and `deps.lock` files, or the code won't
-build on a CI.
-
-Here's the suggested workflow for doing this:
-
-```shell
-cd infra/go
-eval `./env.py`
-./deps.py add github.com/steveyen/go-slab
-
-# deps.py will ask you to modify deps.yaml to specify location of a git
-# mirror. Do that.
-vi deps.yaml
-
-./deps.py update
-./deps.py install
-
-git add deps.yaml
-git add deps.lock
-git commit ...
-```
-
-
-## Git mirrors for dependencies
-
-All dependencies should be fetched from a `*.googlesource.com` host.
-
-Some Golang related packages are already on `*.googlesource.com` (though it may
-be non obvious at the first glance). For example all `golang.org/x/*` ones are
-actually served from `https://go.googlesource.com/`.
-
-`deps.py` will warn you if it sees a package being referenced from
-a source-of-truth repo, and not a mirror.
-
-If you are positive that a mirror is needed, file
-[Infra-Git](https://bugs.chromium.org/p/chromium/issues/entry?template=Infra-Git)
-ticket specifying what repository you need to be mirrored.
+Add the resulting `go.mod` and `go.sum` changes to the CL.

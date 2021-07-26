@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
 # If this env var is set to '1', bootstrap.py will not "go install ..." tools.
 INFRA_GO_SKIP_TOOLS_INSTALL = 'INFRA_GO_SKIP_TOOLS_INSTALL'
 
-# If this env var is set to '1', use Go Modules instead of deps.py.
+# If this env var is explicitly set to '0', use deps.py instead of Go Modules.
 INFRA_GO_USE_MODULES = 'INFRA_GO_USE_MODULES'
 
 # This env var defines what version variant of the toolset to install.
@@ -143,7 +143,7 @@ _EMPTY_LAYOUT = Layout(
 LAYOUT = Layout(
     toolset_root=TOOLSET_ROOT,
     workspace=WORKSPACE,
-    use_modules=os.getenv(INFRA_GO_USE_MODULES) == '1',
+    use_modules=os.getenv(INFRA_GO_USE_MODULES, '1') == '1',
     vendor_paths=[WORKSPACE],
     go_paths=[],
     go_deps_paths=[
@@ -557,6 +557,7 @@ def get_go_environ_diff(layout):
         'GOMODCACHE': os.path.join(GCLIENT_ROOT, '.modcache'),
         'GOPRIVATE': '*.googlesource.com,*.google.com',
         'GAE_PY_USE_CLOUDBUILDHELPER': '1',
+        'INFRA_GO_USE_MODULES': '1',
     })
   else:
     env.update({
@@ -566,6 +567,7 @@ def get_go_environ_diff(layout):
         'GOMODCACHE': None,
         'GOPRIVATE': None,
         'GAE_PY_USE_CLOUDBUILDHELPER': None,
+        'INFRA_GO_USE_MODULES': '0',
     })
 
   if sys.platform == 'win32':
