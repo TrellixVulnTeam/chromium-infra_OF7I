@@ -44,5 +44,5 @@ regenerate: $(PROTOC) $(TOOLS)/protoc-gen-prpc-python
 	python3 _fill_init_py.py go/
 	@git -C $(LUCI_GO) rev-parse HEAD > luci-go.revision
 	@git -C $(LUCI_GO) diff --quiet || echo 'DIRTY: please clean luci-go checkout' >> luci-go.revision
-	@git -C $(LUCI_GO) merge-base --is-ancestor HEAD origin/master || echo "NOT-LANDED: please checkout revision from luci-go's origin/master" >> luci-go.revision
+	@git -C $(LUCI_GO) merge-base --is-ancestor HEAD origin/main || echo "NOT-LANDED: please checkout revision from luci-go's origin/main" >> luci-go.revision
 	git commit ./ -m "Update Python proto bindings."
