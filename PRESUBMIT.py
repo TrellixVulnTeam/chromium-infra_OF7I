@@ -112,9 +112,6 @@ def GoCheckers(input_api, output_api):
 
 
 def GoCheckGoModTidy(input_api, output_api):
-  if os.environ.get('INFRA_GO_USE_MODULES') != '1':
-    return []
-
   def is_interesting(p):
     return p == 'DEPS' or p.endswith(('.go', 'go.mod', 'go.sum'))
 
