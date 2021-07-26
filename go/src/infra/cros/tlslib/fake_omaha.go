@@ -95,7 +95,7 @@ func (s *Server) DeleteFakeOmaha(ctx context.Context, req *tls.DeleteFakeOmahaRe
 	if err := r.Close(); err != nil {
 		return nil, status.Errorf(codes.Internal, "close fake Omaha: %s", err)
 	}
-	return nil, nil
+	return new(empty.Empty), nil
 }
 
 func (s *Server) exposePort(ctx context.Context, dutName string, localPort int, requireProxy bool) (string, error) {
