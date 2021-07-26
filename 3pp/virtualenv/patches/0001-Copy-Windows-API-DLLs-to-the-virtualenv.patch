@@ -1,0 +1,32 @@
+From 40bd63026a71cb1d9b05bd23c2e18725d05060ea Mon Sep 17 00:00:00 2001
+From: Brian Ryner <bryner@google.com>
+Date: Mon, 26 Jul 2021 21:35:17 +0000
+Subject: [PATCH] Copy Windows API DLLs to the virtualenv.
+
+---
+ virtualenv.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/virtualenv.py b/virtualenv.py
+index c7f71e6..c70dd97 100755
+--- a/virtualenv.py
++++ b/virtualenv.py
+@@ -1570,6 +1570,15 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
+                 elif os.path.exists(python_dll_d_dest):
+                     logger.info("Removed %s as the source does not exist", python_dll_d_dest)
+                     os.unlink(python_dll_d_dest)
++
++            # Copy the api-ms-win-*.dll files as well, as they won't be found in sys.path
++            # otherwise.
++            for api_dll in glob.iglob(
++                os.path.join(os.path.dirname(sys.executable), "api-ms-win*.dll")):
++                api_dll_dest = os.path.join(
++                    os.path.dirname(py_executable), os.path.basename(api_dll))
++                logger.info("Copying API dll to %s", api_dll_dest)
++                shutil.copyfile(api_dll, api_dll_dest)
+         if IS_PYPY:
+             # make a symlink python --> pypy-c
+             python_executable = os.path.join(os.path.dirname(py_executable), "python")
+-- 
+2.32.0.432.gabb21c7263-goog
+

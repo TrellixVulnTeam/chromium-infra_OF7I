@@ -7,7 +7,8 @@ create {
         val: "16.7.10"
       }
     }
-    patch_version: "chromium.1"
+    patch_dir: "patches"
+    patch_version: "chromium.2"
   }
   build {
     dep: "build_support/pip_bootstrap"
