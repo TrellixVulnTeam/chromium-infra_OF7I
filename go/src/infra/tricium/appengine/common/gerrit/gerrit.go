@@ -144,6 +144,7 @@ func (gerritServer) QueryChanges(c context.Context, host, project string, lastTi
 
 func (g gerritServer) PostRobotComments(c context.Context, host, change, revision string, runID int64, storedComments []*track.Comment) error {
 	robos := map[string][]*robotCommentInput{} // Map of path to comments for that path.
+	cnt := 0
 	for _, storedComment := range storedComments {
 		var comment tricium.Data_Comment
 		if err := jsonpb.UnmarshalString(string(storedComment.Comment), &comment); err != nil {
@@ -151,14 +152,13 @@ func (g gerritServer) PostRobotComments(c context.Context, host, change, revisio
 			break
 		}
 		path := pathForGerrit(comment.Path)
-		if _, ok := robos[path]; !ok {
-			robos[path] = []*robotCommentInput{}
-		}
 		if path == commitMessagePath {
 			adjustCommitMessageComment(&comment)
 		}
 		robos[path] = append(robos[path], createRobotComment(c, runID, comment))
+		cnt++
 	}
+	c = logging.SetField(c, "comments", cnt)
 	return g.setReview(c, host, change, revision, &reviewInput{
 		RobotComments: robos,
 		Notify:        "OWNER",
