@@ -22,6 +22,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/python',
     'recipe_engine/raw_io',
+    'recipe_engine/step',
 ]
 
 PROPERTIES = {
@@ -87,9 +88,10 @@ def RunSteps(api, platforms, dry_run, rebuild):
       # Avoid rebuilding everything if only the wheel specs have changed.
       if all(api.path.basename(p) in {'wheels.py', 'wheels.md'} for p in files):
         run_wheel_json = lambda step_name: \
-          api.python(step_name, solution_path.join('infra', 'run.py'),
-                     ['infra.tools.dockerbuild', 'wheel-json'],
-                     stdout=api.json.output()).stdout
+          api.step(step_name,
+                   ['vpython', '-vpython-spec', '.vpython',
+                    '-m', 'infra.tools.dockerbuild', 'wheel-json'],
+                   stdout=api.json.output()).stdout
 
         new_wheels = run_wheel_json('compute new wheels.json')
 
@@ -116,7 +118,6 @@ def RunSteps(api, platforms, dry_run, rebuild):
 
     temp_path = api.path.mkdtemp('.dockerbuild')
     args = [
-        'infra.tools.dockerbuild',
         '--root',
         temp_path,
     ]
@@ -142,7 +143,9 @@ def RunSteps(api, platforms, dry_run, rebuild):
       for wheel in wheels:
         args.extend(['--wheel', wheel])
 
-    api.python('dockerbuild', solution_path.join('infra', 'run.py'), args)
+    api.step('dockerbuild', [
+        'vpython', '-vpython-spec', '.vpython', '-m', 'infra.tools.dockerbuild'
+    ] + args)
 
 
 @contextmanager

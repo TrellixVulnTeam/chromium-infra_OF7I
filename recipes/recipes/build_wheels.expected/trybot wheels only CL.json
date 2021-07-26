@@ -209,9 +209,10 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/builder/build_wheels/infra/run.py",
+      "vpython",
+      "-vpython-spec",
+      ".vpython",
+      "-m",
       "infra.tools.dockerbuild",
       "wheel-json"
     ],
@@ -267,9 +268,10 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/builder/build_wheels/infra/run.py",
+      "vpython",
+      "-vpython-spec",
+      ".vpython",
+      "-m",
       "infra.tools.dockerbuild",
       "wheel-json"
     ],
@@ -311,9 +313,10 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "[CACHE]/builder/build_wheels/infra/run.py",
+      "vpython",
+      "-vpython-spec",
+      ".vpython",
+      "-m",
       "infra.tools.dockerbuild",
       "--root",
       "[CLEANUP]/.dockerbuild_tmp_1",
