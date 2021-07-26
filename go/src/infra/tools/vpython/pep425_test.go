@@ -81,6 +81,8 @@ func TestPEP425TagSelector(t *testing.T) {
 				{Python: "cp27", Abi: "none", Platform: "macosx_10_2_fat32"},
 				{Python: "py2", Abi: "none", Platform: "macosx_10_4_intel"},
 				{Python: "cp27", Abi: "none", Platform: "any"},
+				{Python: "cp27", Abi: "cp27m", Platform: "macosx_11_0_intel"},
+				{Python: "py2", Abi: "none", Platform: "macosx_10_3_intel"},
 			},
 			map[string]string{
 				"platform":         "mac-amd64",

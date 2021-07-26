@@ -61,7 +61,7 @@ func (ma *pep425MacPlatform) less(other *pep425MacPlatform) bool {
 	switch {
 	case ma.major < other.major:
 		return true
-	case other.major > ma.major:
+	case ma.major > other.major:
 		return false
 	case ma.minor < other.minor:
 		return true
@@ -174,6 +174,11 @@ func isNewerPy3Abi(cur, candidate string) bool {
 	return (cur == "abi3" || cur == "none") && strings.HasPrefix(candidate, "cp3")
 }
 
+// Prefer specific Python (e.g., cp27) over generic (e.g., py27).
+func isSpecificImplAbi(python string) bool {
+	return !strings.HasPrefix(python, "py")
+}
+
 // pep425TagSelector chooses the "best" PEP425 tag from a set of potential tags.
 // This "best" tag will be used to resolve our CIPD templates and allow for
 // Python implementation-specific CIPD template parameters.
@@ -203,10 +208,11 @@ func pep425TagSelector(tags []*vpython.PEP425Tag) *vpython.PEP425Tag {
 			// ABI. But in practice that doesn't happen, as dockerbuild
 			// produces packages tagged with the unstable ABIs.
 			return true
-		case isPreferredOSPlatform(best.Platform, t.Platform):
+		case isPreferredOSPlatform(best.Platform, t.Platform) && (isSpecificImplAbi(t.Python) || !isSpecificImplAbi(best.Python)):
+			// Prefer a better platform, but not if it means moving
+			// to a less-specific ABI.
 			return true
-		case strings.HasPrefix(best.Python, "py") && !strings.HasPrefix(t.Python, "py"):
-			// Prefer specific Python (e.g., cp27) over generic (e.g., py27).
+		case isSpecificImplAbi(t.Python) && !isSpecificImplAbi(best.Python):
 			return true
 
 		default:
