@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import StringIO
+import io
 import unittest
 
 from services import ml_helpers
@@ -89,7 +89,8 @@ class MLHelpersTest(unittest.TestCase):
     self.assertEqual([1.0, 0.0, 0.0, 0.0, 0.0], features['word_hashes'])
 
   def test_from_file(self):
-    csv_file = StringIO.StringIO('''
+    csv_file = io.StringIO(
+        u'''
       "spam","the subject 1","the contents 1","spammer@gmail.com"
       "ham","the subject 2"
       "spam","the subject 3","the contents 2","spammer2@gmail.com"

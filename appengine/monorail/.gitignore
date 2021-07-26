@@ -33,6 +33,7 @@ full_results.json
 
 # Python 3 virtual environment. Created with `python3 -m venv venv`.
 venv/
+venv3/
 
 # Python third-party libraries.
 # https://cloud.google.com/appengine/docs/standard/python3/specifying-dependencies

@@ -67,8 +67,12 @@ def _SpamHashFeatures(content, num_features):
   for blob in content:
     words = re.split('|'.join(DELIMITERS), blob)
     for word in words:
-      feature_index = int(int(hashlib.sha1(word).hexdigest(), 16)
-                          % num_features)
+      encoded_word = word
+      # If we've been passed real unicode strings, convert them to bytestrings.
+      if isinstance(word, text_type):
+        encoded_word = word.encode('utf-8')
+      feature_index = int(
+          int(hashlib.sha1(encoded_word).hexdigest(), 16) % num_features)
       features[feature_index] += 1.0
       total += 1.0
 
@@ -85,11 +89,6 @@ def GenerateFeaturesRaw(content, num_features, top_words=None):
     content: The content of the issue's description and comments.
     num_features: The number of features to generate.
   """
-  # If we've been passed real unicode strings, convert them to just bytestrings.
-  for idx, value in enumerate(content):
-    if isinstance(value, text_type):
-      content[idx] = value.encode('utf-8')
-
   if top_words:
     return { 'word_features': _ComponentFeatures(content,
                                                    num_features,
