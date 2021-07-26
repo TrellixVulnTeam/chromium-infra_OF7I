@@ -9,6 +9,7 @@ set -o pipefail
 
 PREFIX="$1"
 
+export CXXFLAGS+=" -fPIC"
 ./autogen.sh
 
 ./configure --enable-static --disable-shared \

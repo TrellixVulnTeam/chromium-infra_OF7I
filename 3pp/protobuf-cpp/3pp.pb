@@ -3,6 +3,7 @@ create {
   source {
     script { name: "fetch.py" }
     unpack_archive: true
+    patch_version: "chromium.1"
   }
 
   build {}
