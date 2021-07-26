@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 import axe from 'axe-core';
+import userEvent from '@testing-library/user-event';
+import {fireEvent} from '@testing-library/react';
 
 // TODO(seanmccullough): Move this into crdx/chopsui-npm if we decide this
 // is worth using in other projects.
@@ -39,3 +41,15 @@ export async function auditA11y(element) {
 
   throw new Error(msgs.join('\n'));
 }
+
+/**
+ * Types text into an input field and presses Enter.
+ * @param {HTMLInputElement} input The input field to enter text in.
+ * @param {string} value The text to enter in the input field.
+ */
+export function enterInput(input, value) {
+  userEvent.clear(input);
+  userEvent.type(input, value);
+  fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+}
+

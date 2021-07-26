@@ -3,19 +3,31 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import userEvent from '@testing-library/user-event';
+
 import {MrEditField} from './mr-edit-field.js';
 import {fieldTypes} from 'shared/issue-fields.js';
 
+import {enterInput} from 'shared/test/helpers.js';
+
 
 let element;
+let input;
 
 describe('mr-edit-field', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     element = document.createElement('mr-edit-field');
     document.body.appendChild(element);
+
+    element.label = 'testInput';
+    await element.updateComplete;
+
+    input = element.querySelector('#testInput');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    userEvent.clear(input);
+
     document.body.removeChild(element);
   });
 
@@ -24,11 +36,11 @@ describe('mr-edit-field', () => {
   });
 
   it('reset input value', async () => {
-    // Simulate user input.
     element.initialValues = [];
     await element.updateComplete;
 
-    element.setValue('jackalope');
+    enterInput(input, 'jackalope');
+    await element.updateComplete;
 
     assert.equal(element.value, 'jackalope');
 
@@ -46,23 +58,25 @@ describe('mr-edit-field', () => {
     assert.equal(element.value, 'hello');
   });
 
-  it('initial value does not change after setValue', async () => {
+  it('initial value does not change after value set', async () => {
     element.initialValues = ['hello'];
+    element.label = 'testInput';
     await element.updateComplete;
 
-    element.setValue('world');
+    input = element.querySelector('#testInput');
 
+    enterInput(input, 'world');
     await element.updateComplete;
 
     assert.deepEqual(element.initialValues, ['hello']);
     assert.equal(element.value, 'world');
   });
 
-  it('input updates when setValue is called', async () => {
+  it('value updates when input is updated', async () => {
     element.initialValues = ['hello'];
     await element.updateComplete;
 
-    element.setValue('world');
+    enterInput(input, 'world');
     await element.updateComplete;
 
     assert.equal(element.value, 'world');
@@ -72,8 +86,7 @@ describe('mr-edit-field', () => {
     element.initialValues = ['hello'];
     await element.updateComplete;
 
-    // Simulate user input.
-    element.setValue('jackalope');
+    enterInput(input, 'jackalope');
     await element.updateComplete;
 
     assert.deepEqual(element.initialValues, ['hello']);
@@ -84,8 +97,7 @@ describe('mr-edit-field', () => {
     element.initialValues = ['hello'];
     await element.updateComplete;
 
-    // Simulate user input.
-    element.setValue('jackalope');
+    enterInput(input, 'jackalope');
     await element.updateComplete;
 
     assert.equal(element.value, 'jackalope');
@@ -95,7 +107,7 @@ describe('mr-edit-field', () => {
     // Simulate user input.
     await element.updateComplete;
 
-    element.setValue('jackalope');
+    enterInput(input, 'jackalope');
     await element.updateComplete;
 
     assert.deepEqual(element.getValuesAdded(), ['jackalope']);
@@ -108,8 +120,7 @@ describe('mr-edit-field', () => {
     element.initialValues = ['hello'];
     await element.updateComplete;
 
-    // Simulate user input.
-    element.setValue('');
+    enterInput(input, '');
     await element.updateComplete;
 
     assert.deepEqual(element.getValuesAdded(), []);
@@ -120,8 +131,7 @@ describe('mr-edit-field', () => {
     element.initialValues = ['hello'];
     await element.updateComplete;
 
-    // Simulate user input.
-    element.setValue('world');
+    enterInput(input, 'world');
     await element.updateComplete;
 
     assert.deepEqual(element.getValuesAdded(), ['world']);
@@ -137,16 +147,14 @@ describe('mr-edit-field', () => {
       {optionName: 'text'},
     ];
 
-    await element.updateComplete;
-
     element.initialValues = ['hello'];
+
     await element.updateComplete;
 
     assert.equal(element.value, 'hello');
 
-    // Simulate user input.
-    element.setValue('jackalope');
-    await element.updateComplete;
+    const select = element.querySelector('select');
+    userEvent.selectOptions(select, 'jackalope');
 
     // User input should not be overridden by the initialValue variable.
     assert.equal(element.value, 'jackalope');
@@ -164,7 +172,7 @@ describe('mr-edit-field', () => {
     assert.deepEqual(element.value, '');
   });
 
-  it('edit enum updates value on reset', async () => {
+  it('multi enum updates value on reset', async () => {
     element.multi = true;
     element.type = fieldTypes.ENUM_TYPE;
     element.options = [
@@ -181,13 +189,16 @@ describe('mr-edit-field', () => {
 
     assert.deepEqual(element.values, ['hello']);
 
+    const checkboxes = element.querySelector('mr-multi-checkbox');
+
     // User checks all boxes.
-    element._checkboxRef._inputRefs.forEach(
+    checkboxes._inputRefs.forEach(
         (checkbox) => {
           checkbox.checked = true;
         },
     );
-    element._checkboxRef._changeHandler();
+    checkboxes._changeHandler();
+
     await element.updateComplete;
 
     // User input should not be overridden by the initialValues variable.

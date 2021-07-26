@@ -436,9 +436,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
    */
   _renderApprovers() {
     return this.hasApproverPrivileges && this.isApproval ? html`
-      <label for="approversInput" @click=${this._clickLabelForCustomInput}>Approvers:</label>
+      <label for="approversInput_react">Approvers:</label>
       <mr-edit-field
         id="approversInput"
+        label="approversInput_react"
         .type=${'USER_TYPE'}
         .initialValues=${filteredUserDisplayNames(this.approvers)}
         .name=${'approver'}
@@ -549,8 +550,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     return html`
       <label
         ?hidden=${isHidden}
-        for=${this._idForField(fieldRef.fieldName)}
-        @click=${this._clickLabelForCustomInput}
+        for=${this._idForField(fieldRef.fieldName) + '_react'}
         title=${docstring}
       >
         ${fieldRef.fieldName}:
@@ -558,6 +558,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
       <mr-edit-field
         ?hidden=${isHidden}
         id=${this._idForField(fieldRef.fieldName)}
+        .label=${this._idForField(fieldRef.fieldName) + '_react'}
         .name=${fieldRef.fieldName}
         .type=${fieldRef.type}
         .options=${this._optionsForField(this.optionsPerEnumField, this.fieldValueMap, fieldRef.fieldName, this.phaseName)}
@@ -1084,7 +1085,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * @return {Object} delta fragment for added and removed values.
    */
   _changedValuesDom(fieldName, responseKey, addFn, removeFn) {
-    const input = this.querySelector(`#${fieldName}Input`);
+    const input = this.querySelector(`#${this._idForField(fieldName)}`);
     if (!input) return;
 
     const valuesAdd = input.getValuesAdded();
@@ -1126,7 +1127,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
    * @param {string} key Unique name for the form field we're binding this
    *   handler to. For example, 'owner', 'cc', or the name of a custom field.
    * @param {Event} event
-   * @param {string} value The new form value.
+   * @param {string|Array<string>} value The new form value.
    * @param {*} _reason
    */
   _onChange(key, event, value, _reason) {
@@ -1152,19 +1153,6 @@ export class MrEditMetadata extends connectStore(LitElement) {
         commentContent: this.getCommentContent(),
       },
     }));
-  }
-
-  // This function exists because <label for="inputId"> doesn't work for custom
-  // input elements.
-  _clickLabelForCustomInput(e) {
-    const target = e.target;
-    const forValue = target.getAttribute('for');
-    if (forValue) {
-      const customInput = this.querySelector('#' + forValue);
-      if (customInput && customInput.focus) {
-        customInput.focus();
-      }
-    }
   }
 
   _idForField(name) {

@@ -13,6 +13,7 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_EDIT_SUMMARY_PERMISSION,
 } from 'shared/consts/permissions.js';
 import {FIELD_DEF_VALUE_EDIT} from 'reducers/permissions.js';
 import {store, resetState} from 'reducers/base.js';
+import {enterInput} from 'shared/test/helpers.js';
 
 let element;
 
@@ -305,7 +306,8 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const input = element.querySelector('#ownerInput');
-    await enterInput(element, input, 'new-owner@bird.org');
+    enterInput(input, 'new-owner@bird.org');
+    await element.updateComplete;
 
     const expected = {ownerRef: {displayName: 'new-owner@bird.org'}};
     assert.deepEqual(element.delta, expected);
@@ -319,8 +321,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const input = element.querySelector('#ccInput');
-    await enterInput(element, input, 'another@bird.org');
-
+    enterInput(input, 'another@bird.org');
     await element.updateComplete;
 
     const expected = {
@@ -357,7 +358,9 @@ describe('mr-edit-metadata', () => {
     for (const fieldName of ['blockedOn', 'blocking']) {
       const input =
         element.querySelector(`#${fieldName}Input`);
-      await enterInput(element, input, '123');
+      enterInput(input, '123');
+      await element.updateComplete;
+
       assert.deepEqual(element.delta, {});
       assert.equal(
           element.error,
@@ -365,7 +368,9 @@ describe('mr-edit-metadata', () => {
       fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
       await element.updateComplete;
 
-      await enterInput(element, input, 'proj:123');
+      enterInput(input, 'proj:123');
+      await element.updateComplete;
+
       assert.deepEqual(element.delta, {});
       assert.equal(
           element.error,
@@ -374,9 +379,12 @@ describe('mr-edit-metadata', () => {
       fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
       await element.updateComplete;
 
-      await enterInput(element, input, 'proj2:123');
+      enterInput(input, 'proj2:123');
+      await element.updateComplete;
+
       assert.notDeepEqual(element.delta, {});
       assert.equal(element.error, '');
+
       fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
       await element.updateComplete;
     }
@@ -422,7 +430,8 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     const ccInput = element.querySelector('#ccInput');
-    await enterInput(element, ccInput, 'invalid!email');
+    enterInput(ccInput, 'invalid!email');
+    await element.updateComplete;
 
     assert.deepEqual(element.delta, {});
     assert.equal(
@@ -430,7 +439,8 @@ describe('mr-edit-metadata', () => {
         `Invalid email address: invalid!email`);
 
     const input = element.querySelector('#ownerInput');
-    await enterInput(element, input, 'invalid!email2');
+    enterInput(input, 'invalid!email2');
+    await element.updateComplete;
 
     assert.deepEqual(element.delta, {});
     assert.equal(
@@ -567,7 +577,7 @@ describe('mr-edit-metadata', () => {
     assert.isTrue(element.querySelector('#cantEditFdInput').hidden);
   });
 
-  it('changing custom fields produces delta', async () => {
+  it('changing enum custom fields produces delta', async () => {
     element.fieldValueMap = new Map([['fakefield', ['prev value']]]);
     element.fieldDefs = [
       {
@@ -588,8 +598,14 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    element.querySelector('#testFieldInput').setValue('test value');
-    element.querySelector('#fakeFieldInput').setValue('');
+    const input1 = element.querySelector('#testFieldInput');
+    const input2 = element.querySelector('#fakeFieldInput');
+
+    input1.values = ['test value'];
+    input2.values = [];
+
+    await element.updateComplete;
+
     assert.deepEqual(element.delta, {
       fieldValsAdd: [
         {
@@ -626,8 +642,8 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
     await element.updateComplete;
 
-    element.querySelector('#approversInput').setValue(
-        ['chicken@example.com', 'foo@example.com', 'dog@example.com']);
+    element.querySelector('#approversInput').values =
+        ['chicken@example.com', 'foo@example.com', 'dog@example.com'];
 
     await element.updateComplete;
 
@@ -658,7 +674,8 @@ describe('mr-edit-metadata', () => {
     fireEvent.keyDown(input, {key: 'Backspace', code: 'Backspace'});
     await element.updateComplete;
 
-    await enterInput(element, input, 'v8:5678');
+    enterInput(input, 'v8:5678');
+    await element.updateComplete;
 
     assert.deepEqual(element.delta, {
       blockedOnRefsAdd: [{
@@ -707,7 +724,7 @@ describe('mr-edit-metadata', () => {
     await element.updateComplete;
 
     element.querySelector(
-        '#enumFieldInput').setValue(['one', 'two']);
+        '#enumFieldInput').values = ['one', 'two'];
 
     await element.updateComplete;
 
@@ -758,8 +775,8 @@ describe('mr-edit-metadata', () => {
 
     await element.updateComplete;
 
-    element.querySelector('#enumFieldInput').setValue(['two']);
-    element.querySelector('#enumField2Input').setValue(['three']);
+    element.querySelector('#enumFieldInput').values = ['two'];
+    element.querySelector('#enumField2Input').values = ['three'];
 
     await element.updateComplete;
 
@@ -917,8 +934,8 @@ describe('mr-edit-metadata', () => {
       {name: 'rutabaga.png'},
     ];
 
-    element.querySelector('#testFieldInput').setValue('testy test');
-    element.querySelector('#fakeFieldInput').setValue('hello world');
+    element.querySelector('#testFieldInput').values = 'testy test';
+    element.querySelector('#fakeFieldInput').values = 'hello world';
 
     await element.reset();
 
@@ -1062,14 +1079,3 @@ describe('mr-edit-metadata', () => {
   });
 });
 
-/**
- * Types text into an input field and presses Enter.
- * @param {MrEditMetadata} element The component that controls the input field.
- * @param {HTMLInputElement} input The input field to enter text in.
- * @param {string} value The text to enter in the input field.
- */
-async function enterInput(element, input, value) {
-  fireEvent.change(input, {target: {value}});
-  fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
-  await element.updateComplete;
-}
