@@ -235,7 +235,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Failed to build: target.yaml"
+      "humanReason": "Failed to build:\n  * target.yaml"
     },
     "name": "$result"
   }

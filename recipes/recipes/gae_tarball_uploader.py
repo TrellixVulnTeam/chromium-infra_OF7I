@@ -5,6 +5,9 @@
 from collections import namedtuple
 from recipe_engine import recipe_api
 
+from PB.go.chromium.org.luci.buildbucket.proto.common import FAILURE, SUCCESS
+from PB.recipe_engine.result import RawResult
+
 from PB.recipes.infra import gae_tarball_uploader as pb
 
 DEPS = [
@@ -76,6 +79,7 @@ def RunSteps(api, properties):
     except api.step.StepFailure:
       fails.append(api.path.basename(futures[fut]))
 
+  summary_lines = []
   # Try to roll even if something failed. One broken tarball should not block
   # the rest of them.
   if built and properties.HasField('roll_into'):
@@ -83,9 +87,17 @@ def RunSteps(api, properties):
       num, url = _roll_built_tarballs(api, properties.roll_into, built, meta)
       if num is not None:
         roll.presentation.links['Issue %s' % num] = url
+        summary_lines.extend([
+          'Created roll CL ' + url,
+          ''
+        ])
 
+  status = SUCCESS
   if fails:
-    raise recipe_api.StepFailure('Failed to build: %s' % ', '.join(fails))
+    status = FAILURE
+    summary_lines.append('Failed to build:')
+    summary_lines.extend('  * %s' % f for f in fails)
+  return RawResult(status=status, summary_markdown='\n'.join(summary_lines))
 
 
 def _validate_props(p):  # pragma: no cover
