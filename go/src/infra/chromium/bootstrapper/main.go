@@ -50,8 +50,8 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 		return nil, err
 	}
 
-	logging.Infof(ctx, "creating bootstrapper")
-	bootstrapper, err := bootstrap.NewBootstrapper(build)
+	logging.Infof(ctx, "creating bootstrap input")
+	bootstrapInput, err := bootstrap.NewInput(build)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,10 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 				return err
 			}
 
+			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient)
+
 			logging.Infof(ctx, "setting up bootstrapped executable")
-			cmd, err = bootstrapper.SetupExe(ctx, cipdClient)
+			cmd, err = bootstrapper.DeployExe(ctx, bootstrapInput)
 			if err != nil {
 				return err
 			}
@@ -87,8 +89,10 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 		// Get the input for the command
 		group.Go(func() error {
+			bootstrapper := bootstrap.NewPropertyBootstrapper(gitiles.NewClient(ctx))
+
 			logging.Infof(ctx, "computing bootstrapped properties")
-			properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, gitiles.NewClient(ctx))
+			properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, bootstrapInput)
 			if err != nil {
 				return err
 			}
