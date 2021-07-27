@@ -17,6 +17,20 @@ import metrics
 import swarming
 
 
+def disable_memcache(app):  # pragma: no cover
+  """Overrides the dispatcher to disable memcache."""
+  # Because Buildbucket Go service cannot invalidate Python's memcache,
+  # it must be disabled once the Go service performs any writes.
+  # ndb.Key (unused) -> bool indicating whether to use memcache or not.
+  old_dispatcher = app.router.dispatch
+
+  def dispatch(_, req, res):
+    ndb.get_context().set_memcache_policy(lambda _: False)
+    old_dispatcher(req, res)
+
+  app.router.set_dispatcher(dispatch)
+
+
 def create_frontend_app():  # pragma: no cover
   """Returns WSGI app for frontend."""
   app = webapp2.WSGIApplication(
@@ -41,4 +55,8 @@ def create_backend_app():  # pragma: no cover
 def initialize():  # pragma: no cover
   """Bootstraps the global state and creates WSGI applications."""
   ereporter2.register_formatter()
-  return create_frontend_app(), create_backend_app()
+  fe, be = create_frontend_app(), create_backend_app()
+  logging.info('disabling memcache')
+  disable_memcache(fe)
+  disable_memcache(be)
+  return fe, be
