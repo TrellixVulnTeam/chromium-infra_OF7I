@@ -176,7 +176,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
     },
     "infra_step": true,
@@ -226,7 +226,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
     "env": {
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
       "PRESUBMIT_BUILDER": "1"

@@ -115,7 +115,7 @@
     "cwd": "[CACHE]\\infra_gclient_with_go",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/ci/luci-gae-trusty-64/8945511751514863184",
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
     },
     "env_suffixes": {
@@ -134,7 +134,7 @@
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
     "env": {
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
     },
     "infra_step": true,
@@ -168,7 +168,7 @@
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go\\infra\\go\\src\\go.chromium.org\\luci",
     "env": {
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "GOROOT": "[CACHE]\\infra_gclient_with_go\\golang\\go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
     },
@@ -192,7 +192,7 @@
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go\\infra\\go\\src\\go.chromium.org\\luci",
     "env": {
-      "GOFLAGS": "-mod-readonly",
+      "GOFLAGS": "-mod=readonly",
       "GOROOT": "[CACHE]\\infra_gclient_with_go\\golang\\go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
     },
