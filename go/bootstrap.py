@@ -3,12 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Prepares a local hermetic Go installation.
-
-- Downloads and unpacks the Go toolset in ../../golang.
-- Downloads and installs Glide (used by deps.py).
-- Fetches code dependencies via deps.py.
-"""
+"""Prepares a local Go installation."""
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -31,9 +26,6 @@ LOGGER = logging.getLogger(__name__)
 
 # If this env var is set to '1', bootstrap.py will not "go install ..." tools.
 INFRA_GO_SKIP_TOOLS_INSTALL = 'INFRA_GO_SKIP_TOOLS_INSTALL'
-
-# If this env var is explicitly set to '0', use deps.py instead of Go Modules.
-INFRA_GO_USE_MODULES = 'INFRA_GO_USE_MODULES'
 
 # This env var defines what version variant of the toolset to install.
 INFRA_GO_VERSION_VARIANT = 'INFRA_GO_VERSION_VARIANT'
@@ -70,21 +62,6 @@ TOOLSET_VERSIONS = {
     'bleeding_edge': '1.16.6',  # used on most CI and prod and some try builders
 }
 
-# Describes how to fetch 'glide'.
-GLIDE_SOURCE = {
-  'src/github.com/Masterminds/glide': {
-    'url': (
-        'https://chromium.googlesource.com/external/github.com/'
-        'Masterminds/glide.git'),
-    'rev': 'refs/tags/v0.13.3',
-    'patches': [
-        '0001-Fix-edge-case-related-to-git-submodules-on-Windows.patch',
-        '0002-Support-major-version-suffix-in-Go-modules.patch',
-        '0003-Recognize-sigs.k8s.io-domains.patch',
-    ],
-  },
-}
-
 # Layout is the layout of the bootstrap installation.
 Layout = collections.namedtuple(
     'Layout',
@@ -95,34 +72,8 @@ Layout = collections.namedtuple(
         # The workspace path.
         'workspace',
 
-        # True to run in "go modules" mode instead of GOPATH mode.
-        'use_modules',
-
-        # The list of vendor directories. Each will have a Glide "deps.yaml".
-        #
-        # Ignored in modules mode.
-        'vendor_paths',
-
-        # List of paths to append to GOPATH (in additional to `workspace`).
-        #
-        # Ignored in modules mode.
-        'go_paths',
-
-        # The list of DEPS'd in paths that contain Go sources. This is used to
-        # determine when our vendored tools need to be re-installed.
-        #
-        # Ignored in modules mode.
-        'go_deps_paths',
-
-        # Go package paths of tools to install into the bootstrap environment.
-        #
-        # Ignored in modules mode.
-        'go_install_tools',
-
         # The list of paths to tools.go files which are parsed to figure out
         # what binaries to "go install ..." into the GOBIN.
-        #
-        # Ignored in GOPATH mode.
         'go_tools_specs',
     ))
 
@@ -131,11 +82,6 @@ Layout = collections.namedtuple(
 _EMPTY_LAYOUT = Layout(
     toolset_root=None,
     workspace=None,
-    use_modules=False,
-    vendor_paths=None,
-    go_paths=None,
-    go_deps_paths=None,
-    go_install_tools=None,
     go_tools_specs=None)
 
 
@@ -143,23 +89,6 @@ _EMPTY_LAYOUT = Layout(
 LAYOUT = Layout(
     toolset_root=TOOLSET_ROOT,
     workspace=WORKSPACE,
-    use_modules=os.getenv(INFRA_GO_USE_MODULES, '1') == '1',
-    vendor_paths=[WORKSPACE],
-    go_paths=[],
-    go_deps_paths=[
-        os.path.join(WORKSPACE, _p) for _p in ('src/go.chromium.org/luci',)
-    ],
-    go_install_tools=[
-        # Note: please add only tools that really should be in PATH in default
-        # dev environment.
-        'github.com/golang/mock/mockgen',
-        'go.chromium.org/luci/gae/tools/proto-gae',
-        'go.chromium.org/luci/grpc/cmd/...',
-        'go.chromium.org/luci/luci_notify/cmd/...',
-        'go.chromium.org/luci/tools/cmd/...',
-        'infra/cmd/bqexport',
-        'infra/cmd/cloudsqlhelper',
-    ],
     # Note: order is important, a tool is installed only the first time it is
     # mentioned, using go.mod matching the corresponding tools.go for
     # dependencies.
@@ -280,7 +209,7 @@ def call_bare_go(toolset_root, workspace, args):
 
   Args:
     toolset_root: where Go is installed at.
-    workspace: value for GOPATH, all other Go-specific env vars are scrubbed.
+    workspace: the working directory.
     args: command line arguments for 'go' tool.
 
   Returns:
@@ -345,103 +274,10 @@ def ensure_toolset_installed(toolset_root, version):
   return True
 
 
-def ensure_glide_installed(toolset_root):
-  """Installs or updates 'glide' tool."""
-  installed_tools = read_file([toolset_root, 'INSTALLED_TOOLS'])
-  available_tools = json.dumps(GLIDE_SOURCE, sort_keys=True)
-  if installed_tools == available_tools:
-    LOGGER.debug('Glide is up-to-date')
-    return
-
-  def install(workspace, pkg):
-    call_bare_go(toolset_root, workspace, ['install', pkg])
-    # Windows os.rename doesn't support overwrites.
-    name = pkg[pkg.rfind('/')+1:]
-    dest = os.path.join(toolset_root, 'go', 'bin', name + EXE_SFX)
-    if os.path.exists(dest):
-      os.remove(dest)
-    os.rename(os.path.join(workspace, 'bin', name + EXE_SFX), dest)
-    LOGGER.info('Installed %s', dest)
-
-  LOGGER.info('Installing Glide...')
-  with temp_dir(toolset_root) as tmp:
-    fetch_glide_code(tmp, GLIDE_SOURCE)
-    install(tmp, 'github.com/Masterminds/glide')
-
-  LOGGER.info('Glide is installed')
-  write_file([toolset_root, 'INSTALLED_TOOLS'], available_tools)
-
-
-def fetch_glide_code(workspace, spec):
-  """Fetches glide source code."""
-  def git(cmd, cwd):
-    subprocess.check_call([GIT_EXE] + cmd, cwd=cwd, stdout=sys.stderr)
-
-  for path, repo in sorted(spec.items()):
-    path = os.path.join(workspace, path.replace('/', os.sep))
-    os.makedirs(path)
-    git(['clone', repo['url'], '.'], cwd=path)
-    git(['checkout', repo['rev']], cwd=path)
-    for patch in repo.get('patches', []):
-      LOGGER.info('Applying %s', patch)
-      git(['apply', os.path.join(WORKSPACE, 'patches', patch)], cwd=path)
-
-
 def get_git_repository_head(path):
   head = subprocess.check_output([GIT_EXE, '-C', path, 'rev-parse', 'HEAD'],
                                  universal_newlines=True)
   return head.strip()
-
-
-def install_deps_tools(layout, force):
-  if not layout.go_install_tools:
-    return False
-
-  # Load the current HEAD for our Go dependency paths.
-  current_versions = {}
-  for path in (layout.go_deps_paths or ()):
-    current_versions[path] = get_git_repository_head(path)
-
-  # Only install the tools if our checkout versions have changed.
-  versions_path = [layout.workspace, '.deps_repo_versions.json']
-  if not force and read_json(versions_path) == current_versions:
-    return False
-
-  # (Re)install all of our Go packages.
-  LOGGER.info('Installing Go tools: %s', layout.go_install_tools)
-  env = get_go_environ(layout)
-  subprocess.check_call([get_go_exe(layout.toolset_root), 'install'] +
-                        list(layout.go_install_tools),
-                        stdout=sys.stderr, stderr=sys.stderr, env=env)
-  write_json(versions_path, current_versions)
-  return True
-
-
-def update_vendor_packages(layout, workspace, force=False):
-  """Runs deps.py to fetch and install pinned packages.
-
-  Returns (bool): True if the dependencies were actually updated, False if they
-      were already at the correct version.
-  """
-  if not os.path.isfile(os.path.join(workspace, 'deps.lock')):
-    return False
-
-  # We will pass "deps.py" the "--update-out" argument, which will create a
-  # file at a temporary path if the deps were actually updated. We use this to
-  # derive our return value.
-  with temp_dir(workspace) as tdir:
-    update_out_path = os.path.join(tdir, 'deps_updated.json')
-    cmd = [
-      sys.executable, '-u', os.path.join(ROOT, 'go', 'deps.py'),
-      '--workspace', workspace,
-      '--goroot', os.path.join(layout.toolset_root, 'go'),
-      'install',
-      '--update-out', update_out_path,
-    ]
-    if force:
-      cmd.append('--force')
-    subprocess.check_call(cmd, stdout=sys.stderr, env=get_go_environ(layout))
-    return os.path.isfile(update_out_path)
 
 
 def install_go_tools(layout, force):
@@ -513,15 +349,7 @@ def get_go_environ_diff(layout):
   Returns:
     EnvironDiff.
   """
-  # GOPATH to search Go code for. Order is important.
-  gopath = []
-  if not layout.use_modules:
-    gopath.extend(os.path.join(p, '.vendor') for p in layout.vendor_paths or ())
-    gopath.extend(layout.go_paths or ())
-    gopath.append(layout.workspace)
-
-  # Need to make sure we pick up our `go` and .vendor/bin tools before the
-  # system ones.
+  # Need to make sure we pick up our `go` and tools before the system ones.
   path_prefixes = [
       os.path.join(layout.toolset_root, 'go', 'bin'),
       os.path.join(ROOT, 'cipd'),
@@ -529,9 +357,6 @@ def get_go_environ_diff(layout):
       os.path.join(ROOT, 'luci', 'appengine', 'components', 'tools'),
       os.path.join(GCLIENT_ROOT, 'gcloud', 'bin'),
   ]
-  if not layout.use_modules:
-    path_prefixes.extend(
-        os.path.join(p, '.vendor', 'bin') for p in layout.vendor_paths or ())
 
   # GOBIN often contain "WIP" variant of system binaries, pick them up last.
   path_suffixes = [os.path.join(layout.workspace, 'bin')]
@@ -540,35 +365,25 @@ def get_go_environ_diff(layout):
       'GOROOT': os.path.join(layout.toolset_root, 'go'),
       'GOBIN': os.path.join(layout.workspace, 'bin'),
 
+      # Run in modules mode.
+      'GO111MODULE': 'on',
+      'GOPROXY': None,
+      'GOPATH': None,
+      'GOPRIVATE': '*.googlesource.com,*.google.com',
+
       # Don't use default cache in '~'.
       'GOCACHE': os.path.join(GCLIENT_ROOT, '.gocache'),
+      'GOMODCACHE': os.path.join(GCLIENT_ROOT, '.modcache'),
 
       # Infra Go workspace doesn't use advanced build systems,
       # which inject custom `gopackagesdriver` binary. See also
       # https://github.com/golang/tools/blob/54c614fe050cac95ace393a63f164149942ecbde/go/packages/external.go#L49
       'GOPACKAGESDRIVER': 'off',
-  }
 
-  if layout.use_modules:
-    env.update({
-        'GO111MODULE': 'on',
-        'GOPROXY': None,
-        'GOPATH': None,
-        'GOMODCACHE': os.path.join(GCLIENT_ROOT, '.modcache'),
-        'GOPRIVATE': '*.googlesource.com,*.google.com',
-        'GAE_PY_USE_CLOUDBUILDHELPER': '1',
-        'INFRA_GO_USE_MODULES': '1',
-    })
-  else:
-    env.update({
-        'GO111MODULE': 'off',
-        'GOPROXY': 'off',
-        'GOPATH': os.pathsep.join(gopath),
-        'GOMODCACHE': None,
-        'GOPRIVATE': None,
-        'GAE_PY_USE_CLOUDBUILDHELPER': None,
-        'INFRA_GO_USE_MODULES': '0',
-    })
+      # Instruct `gae.py deploy` to use modules-aware cloudbuildhelper to
+      # stage *.go files before deployment.
+      'GAE_PY_USE_CLOUDBUILDHELPER': '1',
+  }
 
   if sys.platform == 'win32':
     # Windows doesn't have gcc.
@@ -604,10 +419,9 @@ def get_go_environ(layout):
   path_prefixes = diff.env_prefixes['PATH']
   path_suffixes = diff.env_suffixes['PATH']
 
-  # Remove preexisting bin/ paths (including .vendor/bin) pointing to infra
-  # or infra_internal Go workspaces. It's important when switching from
-  # infra_internal to infra environments: infra_internal bin paths should
-  # be removed.
+  # Remove preexisting bin/ paths pointing to infra or infra_internal Go
+  # workspaces. It's important when switching from infra_internal to infra
+  # environments: infra_internal bin paths should be removed.
   def should_keep(p):
     if p in path_prefixes or p in path_suffixes:
       return False  # we'll insert this entry in the correct position below
@@ -672,9 +486,8 @@ def bootstrap(layout, logging_level, args=None):
   if not toolset_version:
     raise Failure('Unrecognized INFRA_GO_VERSION_VARIANT %r' % variant)
 
-  # We may need to build and run some Go binaries during bootstrap (e.g. glide),
-  # so make sure cross-compilation mode is disabled during bootstrap. Restore it
-  # back once bootstrap is finished.
+  # We may need to build Go binaries during bootstrap, so make sure
+  # cross-compilation mode is disabled . Restore it back once done.
   prev_environ = {}
   for k in ('GOOS', 'GOARCH', 'GOARM'):
     prev_environ[k] = os.environ.pop(k, None)
@@ -682,22 +495,8 @@ def bootstrap(layout, logging_level, args=None):
   try:
     toolset_updated = ensure_toolset_installed(
         layout.toolset_root, toolset_version)
-    if layout.use_modules:
-      if os.environ.get(INFRA_GO_SKIP_TOOLS_INSTALL) != '1':
-        install_go_tools(layout, toolset_updated)
-    else:
-      ensure_glide_installed(layout.toolset_root)
-      vendor_updated = toolset_updated
-      for p in layout.vendor_paths:
-        vendor_updated |= update_vendor_packages(
-            layout, p, force=toolset_updated)
-      if toolset_updated:
-        # GOPATH/pkg may have binaries generated with previous version of
-        # toolset, they may not be compatible and "go build" isn't smart enough
-        # to rebuild them.
-        for p in layout.vendor_paths:
-          remove_directory([p, 'pkg'])
-      install_deps_tools(layout, vendor_updated)
+    if os.environ.get(INFRA_GO_SKIP_TOOLS_INSTALL) != '1':
+      install_go_tools(layout, toolset_updated)
   finally:
     # Restore os.environ back. Have to do it key-by-key to actually modify the
     # process environment (replacing os.environ object as a whole does nothing).
@@ -724,7 +523,7 @@ def bootstrap(layout, logging_level, args=None):
 def prepare_go_environ():
   """Returns dict with environment variables to set to use Go toolset.
 
-  Installs or updates the toolset and vendored dependencies if necessary.
+  Installs or updates the toolset if necessary.
   """
   bootstrap(LAYOUT, logging.INFO)
   return get_go_environ(LAYOUT)
@@ -737,10 +536,7 @@ def find_executable(name, workspaces):
     basename = basename[:-len(EXE_SFX)]
   roots = [os.path.join(LAYOUT.toolset_root, 'go', 'bin')]
   for path in workspaces:
-    roots.extend([
-      os.path.join(path, '.vendor', 'bin'),
-      os.path.join(path, 'bin'),
-    ])
+    roots.append(os.path.join(path, 'bin'))
   for root in roots:
     full_path = os.path.join(root, basename + EXE_SFX)
     if os.path.exists(full_path):
