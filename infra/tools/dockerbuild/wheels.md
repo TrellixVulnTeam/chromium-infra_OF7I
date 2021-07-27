@@ -3633,7 +3633,6 @@ wheel: <
 * *linux-mips*
 * *linux-mips64*
 * *linux-mipsel*
-* *mac-arm64*
 * *mac-x64*
 * *manylinux-x64*
 * *manylinux-x64-ucs2*
@@ -3651,7 +3650,6 @@ wheel: <
 
 
 * *linux-arm64-py3*
-* *mac-arm64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 
@@ -3665,7 +3663,6 @@ wheel: <
 ```
 
 
-* *mac-arm64-cp38*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*

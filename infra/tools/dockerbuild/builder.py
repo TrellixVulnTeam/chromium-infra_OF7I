@@ -382,7 +382,7 @@ def SetupPythonPackages(system, wheel, base_dir):
 
   _, interpreter = _InstallCipdPythonPackage(system, host_platform, wheel,
                                              base_dir)
-  env = dict()
+  env = wheel.plat.env.copy()
 
   # If we are cross-compiling, also install the target-platform python and set
   # PYTHONHOME to point to it. This will ensure that we use the correct
