@@ -327,12 +327,17 @@ type setupProjectApplication struct {
 }
 
 func main() {
-	opts := chromeinfra.DefaultAuthOptions()
+	opts := auth.Options{
+		TokenServerHost: chromeinfra.TokenServerHost,
+		ClientID:        "300815340602-o77gh6n19i8796dqc9dsu99vcj23jf3o.apps.googleusercontent.com",
+		ClientSecret:    "QshHhnal9bMGsLFcIENHz-QG",
+		SecretsDir:      chromeinfra.SecretsDir(),
+	}
 	opts.Scopes = []string{
 		gerrit.OAuthScope,
 		auth.OAuthScopeEmail,
 	}
-	opts.Scopes = append(opts.Scopes, lgs.ReadWriteScopes...)
+	opts.Scopes = append(opts.Scopes, lgs.ReadOnlyScopes...)
 	s := &setupProjectApplication{
 		GetApplication(opts),
 		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
