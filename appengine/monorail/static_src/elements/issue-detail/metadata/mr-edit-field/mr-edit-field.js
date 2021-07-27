@@ -40,9 +40,6 @@ export class MrEditField extends LitElement {
         mr-edit-field[hidden] {
           display: none;
         }
-        mr-multi-input {
-          width: var(--mr-edit-field-width);
-        }
         mr-edit-field input,
         mr-edit-field select {
           width: var(--mr-edit-field-width);
