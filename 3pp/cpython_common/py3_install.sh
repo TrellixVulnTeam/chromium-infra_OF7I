@@ -85,6 +85,7 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   if [[ $_3PP_VERSION = 3.8.* ]]; then
     export ac_cv_func_futimens=no
     export ac_cv_func_utimensat=no
+    export ac_cv_func_clock_gettime=no
   fi
 else
   PYTHONEXE=python
