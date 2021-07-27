@@ -95,25 +95,6 @@ try_builder(name = "luci-go-try-mac", os = "Mac-10.15", properties = {
 try_builder(name = "luci-go-try-win", os = "Windows-10")
 
 try_builder(
-    name = "luci-go-try-modules-bionic-64",
-    os = "Ubuntu-18.04",
-    experiment_percentage = 100,
-    properties = {"go_modules": True},
-)
-try_builder(
-    name = "luci-go-try-modules-mac",
-    os = "Mac-10.15",
-    experiment_percentage = 100,
-    properties = {"go_modules": True},
-)
-try_builder(
-    name = "luci-go-try-modules-win",
-    os = "Windows-10",
-    experiment_percentage = 100,
-    properties = {"go_modules": True},
-)
-
-try_builder(
     name = "luci-go-try-presubmit",
     os = "Ubuntu",
     properties = {"presubmit": True},
