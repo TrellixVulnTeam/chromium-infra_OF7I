@@ -3113,6 +3113,20 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+## **libcst-py3**
+
+### 0.3.19
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/libcst-py3"
+  version: "version:0.3.19"
+>
+```
+
+
+* *universal*
+
 ## **libusb1**
 
 ### 1.5.3
@@ -3457,6 +3471,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/multiprocessing-logging-py2_py3"
   version: "version:0.3.1"
+>
+```
+
+
+* *universal*
+
+## **mypy-extensions-py3**
+
+### 0.4.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mypy-extensions-py3"
+  version: "version:0.4.3"
 >
 ```
 
@@ -6141,6 +6169,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/typing-extensions-py3"
   version: "version:3.7.4.3"
+>
+```
+
+
+* *universal*
+
+## **typing-inspect-py3**
+
+### 0.7.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/typing-inspect-py3"
+  version: "version:0.7.1"
 >
 ```
 
