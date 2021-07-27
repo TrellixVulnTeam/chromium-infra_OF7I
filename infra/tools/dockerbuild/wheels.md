@@ -2194,6 +2194,20 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-datastore-py3**
+
+### 2.1.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-datastore-py3"
+  version: "version:2.1.6"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-dns**
 
 ### 0.28.0

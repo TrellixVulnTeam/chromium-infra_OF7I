@@ -986,6 +986,7 @@ SPECS.update({
         Universal('google-cloud-core', '0.28.0'),
         Universal('google-cloud-core', '1.5.0'),
         Universal('google-cloud-datastore', '1.6.0'),
+        Universal('google-cloud-datastore', '2.1.6', pyversions=['py3']),
         Universal('google-cloud-dns', '0.28.0'),
         Universal('google-cloud-firestore', '0.28.0'),
         Universal('google-cloud-language', '1.0.0'),
