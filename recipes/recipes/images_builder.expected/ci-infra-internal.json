@@ -95,9 +95,8 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
     "env": {
-      "GOFLAGS": "-mod=readonly",
+      "GOFLAGS": "-mod-readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_suffixes": {
@@ -134,9 +133,8 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
     "env": {
-      "GOFLAGS": "-mod=readonly",
+      "GOFLAGS": "-mod-readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "infra_step": true,
@@ -169,10 +167,9 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
-      "GOFLAGS": "-mod=readonly",
+      "GOFLAGS": "-mod-readonly",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_prefixes": {
@@ -212,10 +209,9 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/src/infra_internal",
     "env": {
-      "GOFLAGS": "-mod=readonly",
+      "GOFLAGS": "-mod-readonly",
       "GOROOT": "[CACHE]/infra_internal_gclient_with_go/golang/go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
-      "INFRA_GO_USE_MODULES": "1",
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "env_prefixes": {

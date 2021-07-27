@@ -19,11 +19,9 @@ def RunSteps(api):
       gclient_config_name='infra',
       patch_root='infra',
       generate_env_with_system_python=api.properties.get('sys_env', False),
-      go_version_variant=api.properties.get('go_version_variant'),
-      go_modules=api.properties.get('go_modules'))
+      go_version_variant=api.properties.get('go_version_variant'))
   co.gclient_runhooks()
   _ = co.bot_update_step  # coverage...
-  _ = co.go_modules
   with co.go_env():
     api.step('go test', ['go', 'test', 'infra/...'])
   with co.go_env():  # for coverage
@@ -84,26 +82,6 @@ def GenTests(api):
   yield api.test(
       'override go version',
       api.properties(go_version_variant='bleeding_edge'),
-      api.buildbucket.ci_build(
-          project='infra',
-          bucket='ci',
-          git_repo='https://chromium.googlesource.com/infra/infra',
-      )
-  )
-
-  yield api.test(
-      'no go modules',
-      api.properties(go_modules=False),
-      api.buildbucket.ci_build(
-          project='infra',
-          bucket='ci',
-          git_repo='https://chromium.googlesource.com/infra/infra',
-      )
-  )
-
-  yield api.test(
-      'go modules',
-      api.properties(go_modules=True),
       api.buildbucket.ci_build(
           project='infra',
           bucket='ci',

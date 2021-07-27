@@ -21,7 +21,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                named_cache=None,
                generate_env_with_system_python=False,
                go_version_variant=None,
-               go_modules=True,
                **kwargs):
     """Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -55,7 +54,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         the builder to use a non-default Go version. What exact Go versions
         correspond to "legacy" and "bleeding_edge" and default is defined in
         bootstrap.py in infra.git.
-      * go_modules - if True, bootstrap Go in Modules mode.
       * kwargs - passed as is to bot_update.ensure_checkout.
 
     Returns:
@@ -84,13 +82,12 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       bot_update_step = self.m.bot_update.ensure_checkout(
           patch_root=patch_root, **kwargs)
 
-    env_with_override = {}
+    env_with_override = {
+        'INFRA_GO_SKIP_TOOLS_INSTALL': '1',
+        'GOFLAGS': '-mod-readonly',
+    }
     if go_version_variant:
       env_with_override['INFRA_GO_VERSION_VARIANT'] = go_version_variant
-    if go_modules:
-      env_with_override['INFRA_GO_USE_MODULES'] = '1'
-      env_with_override['INFRA_GO_SKIP_TOOLS_INSTALL'] = '1'
-      env_with_override['GOFLAGS'] = '-mod=readonly'
 
     class Checkout(object):
       def __init__(self, m):
@@ -112,10 +109,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       def patch_root_path(self):
         assert patch_root
         return path.join(patch_root)
-
-      @property
-      def go_modules(self):
-        return go_modules
 
       def commit_change(self):
         assert patch_root
@@ -206,9 +199,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         with self.m.context(cwd=self.path, env=env_with_override):
           where = 'infra_internal' if internal else 'infra'
           bootstrap = 'bootstrap_internal.py' if internal else 'bootstrap.py'
-          test_env = {'GOROOT': str(path.join('golang', 'go'))}
-          if not go_modules:
-            test_env['GOPATH'] = str(path.join(where, 'go'))
           step = self.m.python(
               'init infra go env',
               path.join(where, 'go', bootstrap),
@@ -217,7 +207,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
               infra_step=True,
               step_test_data=lambda: self.m.json.test_api.output({
                   'go_version': '1.66.6',
-                  'env': test_env,
+                  'env': {'GOROOT': str(path.join('golang', 'go'))},
                   'env_prefixes': {
                       'PATH': [str(path.join('golang', 'go'))],
                   },

@@ -152,11 +152,6 @@ CIPD_PACKAGE_BUILDERS = {
 }
 
 
-# A builder responsible for calling "deps.py bundle" to generate cipd bundles
-# with vendored go code. We need only one.
-GO_DEPS_BUNDLING_BUILDER = 'infra-packager-mac-64'
-
-
 INTERNAL_REPO = 'https://chrome-internal.googlesource.com/infra/infra_internal'
 PUBLIC_REPO = 'https://chromium.googlesource.com/infra/infra'
 
@@ -210,22 +205,6 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
   with api.osx_sdk('mac'), checkout.go_env():
-    # Call 'deps.py bundle' to package dependencies specified in deps.lock into
-    # a CIPD package. This is not strictly necessary, but it significantly
-    # reduces time it takes to run 'env.py'. Note that 'deps.py' requires
-    # environment produced by 'env.py' (for things like glide and go itself).
-    # When the recipe runs with outdated deps bundle, go_env() call above falls
-    # back to fetching dependencies from git directly. When the bundle is
-    # up-to-date, 'deps.py bundle' finishes right away not doing anything.
-    if (buildername == GO_DEPS_BUNDLING_BUILDER and
-        not api.runtime.is_experimental and
-        not checkout.go_modules):  # pragma: no cover
-      api.python(
-          'bundle go deps',
-          api.path['checkout'].join('go', 'deps.py'),
-          ['bundle'],
-          venv=True)
-
     if not is_packager:
       api.python(
           'infra go tests',

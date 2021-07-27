@@ -328,7 +328,7 @@ Args:
 
 Stateless API for using public infra gclient checkout.
 
-&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#17)(self, gclient_config_name, patch_root=None, path=None, internal=False, named_cache=None, generate_env_with_system_python=False, go_version_variant=None, go_modules=True, \*\*kwargs):**
+&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#17)(self, gclient_config_name, patch_root=None, path=None, internal=False, named_cache=None, generate_env_with_system_python=False, go_version_variant=None, \*\*kwargs):**
 
 Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -362,7 +362,6 @@ Arguments:
     the builder to use a non-default Go version. What exact Go versions
     correspond to "legacy" and "bleeding_edge" and default is defined in
     bootstrap.py in infra.git.
-  * go_modules - if True, bootstrap Go in Modules mode.
   * kwargs - passed as is to bot_update.ensure_checkout.
 
 Returns:
@@ -1215,11 +1214,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 [DEPS](/recipes/recipes/infra_continuous.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#164)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#159)(api):**
 
-&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#200)(api, checkout, buildername, project_name, repo_url, rev):**
+&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#195)(api, checkout, buildername, project_name, repo_url, rev):**
 
-&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#255)(api, project_name):**
+&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#234)(api, project_name):**
 ### *recipes* / [infra\_frontend\_tester](/recipes/recipes/infra_frontend_tester.py)
 
 [DEPS](/recipes/recipes/infra_frontend_tester.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
