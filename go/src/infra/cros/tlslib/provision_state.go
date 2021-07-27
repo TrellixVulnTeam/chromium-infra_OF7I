@@ -144,9 +144,20 @@ func (p *provisionState) verifyOSProvision() error {
 
 const (
 	fetchUngzipConvertCmd = `if type wget >/dev/null 2>&1; then
-wget --progress=dot:giga -S --tries=1 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
+  wget --progress=dot:giga -S --tries=1 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
 else
-curl %[1]s | gzip -d | dd of=%[2]s obs=2M
+  curl %[1]s | gzip -d | dd of=%[2]s obs=2M
+fi
+pipestatus=("${PIPESTATUS[@]}")
+if [[ "${pipestatus[0]}" -ne 0 ]]; then
+  echo "$(date --rfc-3339=seconds) ERROR: Fetching %[1]s failed." >&2
+  exit 1
+elif [[ "${pipestatus[1]}" -ne 0 ]]; then
+  echo "$(date --rfc-3339=seconds) ERROR: Decompressing %[1]s failed." >&2
+  exit 1
+elif [[ "${pipestatus[2]}" -ne 0 ]]; then
+  echo "$(date --rfc-3339=seconds) ERROR: Writing to %[2]s failed." >&2
+  exit 1
 fi`
 )
 
