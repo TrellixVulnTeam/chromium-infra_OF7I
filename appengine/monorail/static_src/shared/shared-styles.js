@@ -118,13 +118,13 @@ export const SHARED_STYLES = css`
  * @type {CSSResult}
  */
 export const MD_STYLES = css`
-  .annotated-link {
+  .markdown .annotated-link {
     position: relative;
   }
-  .annotated-link:hover .tooltip {
+  .markdown .annotated-link:hover .tooltip {
     display: block
   }
-  .tooltip {
+  .markdown .tooltip {
     display: none;
     position: absolute;
     width: auto;
@@ -138,15 +138,48 @@ export const MD_STYLES = css`
     border: 1px solid #dadce0;
     padding: 6px 10px;
   }
-  .material-icons {
+  .markdown .material-icons {
     font-size: 18px;
     vertical-align: middle;
   }
-  .material-icons.link {
+  .markdown .material-icons.link {
     color: var(--chops-link-color);
   }
-  .material-icons.link_off {
+  .markdown .material-icons.link_off {
     color: var(--chops-field-error-color);
+  }
+  .markdown table {
+    -webkit-font-smoothing: antialiased;
+    box-sizing: inherit;
+    border-collapse: collapse;
+    margin: 8px 0 8px 0;
+    box-shadow: 0 2px 2px 0 hsla(315, 3%, 26%, 0.30);
+    border: 1px solid var(--chops-gray-300);
+    line-height: 1.4;
+  }
+  .markdown th {
+      border-bottom: 1px solid var(--chops-gray-300);
+      border-right: 1px solid var(--chops-gray-300);
+      padding: 1px;
+      text-align: left;
+      font-weight: 500;
+      color: var(--chops-gray-900);
+      background-color: var(--chops-gray-50);
+  }
+  .markdown td {
+      border-bottom: 1px solid var(--chops-gray-300);
+      border-right: 1px solid var(--chops-gray-300);
+      padding: 1px;
+  }
+  .markdown pre {
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    box-sizing: inherit;
+    background-color: hsla(0, 0%, 0%, 0.05);
+    border: 2px solid hsla(0, 0%, 0%, 0.10);
+    border-radius: 2px;
+    overflow-x: auto;
+    padding: 4px;
   }
 `;
 

@@ -13,7 +13,7 @@ import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-dialog/chops-dialog.js';
-import {SHARED_STYLES, MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
+import {SHARED_STYLES, MD_PREVIEW_STYLES, MD_STYLES} from 'shared/shared-styles.js';
 import {commentListToDescriptionList} from 'shared/convertersV0.js';
 import {renderMarkdown, shouldRenderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
@@ -37,6 +37,7 @@ export class MrEditDescription extends connectStore(LitElement) {
     return [
       SHARED_STYLES,
       MD_PREVIEW_STYLES,
+      MD_STYLES,
       css`
         chops-dialog {
           --chops-dialog-width: 800px;
@@ -84,7 +85,9 @@ export class MrEditDescription extends connectStore(LitElement) {
         ></textarea>
         ${this._renderMarkdown ? html`
           <div class="markdown-preview preview-height-description">
-            ${unsafeHTML(renderMarkdown(this._editedDescription))}
+            <div class="markdown">
+              ${unsafeHTML(renderMarkdown(this._editedDescription))}
+            </div>
           </div>`: ''}
         <h3 class="medium-heading">
           Add attachments

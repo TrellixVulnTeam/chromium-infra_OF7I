@@ -80,7 +80,9 @@ export class MrCommentContent extends connectStore(LitElement) {
           enabled: this._renderMarkdown})) {
       return html`
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-        ${unsafeHTML(renderMarkdown(this.content))}
+        <div class="markdown">
+          ${unsafeHTML(renderMarkdown(this.content))}
+        </div>
         `;
     }
     const runs = autolink.markupAutolinks(

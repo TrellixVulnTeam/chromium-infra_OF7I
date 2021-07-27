@@ -39,7 +39,7 @@ import {fieldDefsWithGroup, fieldDefsWithoutGroup, valuesForField,
   HARDCODED_FIELD_GROUPS} from 'shared/metadata-helpers.js';
 import {renderMarkdown, shouldRenderMarkdown} from 'shared/md-helper.js';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
-import {MD_PREVIEW_STYLES} from 'shared/shared-styles.js';
+import {MD_PREVIEW_STYLES, MD_STYLES} from 'shared/shared-styles.js';
 
 
 
@@ -55,6 +55,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
     return html`
       <style>
         ${MD_PREVIEW_STYLES}
+        ${MD_STYLES}
         mr-edit-metadata {
           display: block;
           font-size: var(--chops-main-font-size);
@@ -183,7 +184,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
         ${(this._renderMarkdown)
            ? html`
           <div class="markdown-preview preview-height-comment">
-            ${unsafeHTML(renderMarkdown(this.getCommentContent()))}
+            <div class="markdown">
+              ${unsafeHTML(renderMarkdown(this.getCommentContent()))}
+            </div>
           </div>`: ''}
         <mr-upload
           ?hidden=${this.disableAttachments}
