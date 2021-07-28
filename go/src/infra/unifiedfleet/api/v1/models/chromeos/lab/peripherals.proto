@@ -37,9 +37,11 @@ message Peripherals {
   // Indicate if device is connected to a smart usb hub, detected in AdminRepair task.
   bool smart_usbhub = 13;
   // Indicate if the DUT's back camera supports region of interest
-  bool camera_roi_back = 14;
+  // Deprecated.
+  bool camera_roi_back = 14 [deprecated=true];
   // Indicate if the DUT's front camera supports region of interest
-  bool camera_roi_front = 15;
+  // Deprecated.
+  bool camera_roi_front = 15 [deprecated=true];
 }
 
 // NOTE: RPM cannot be used as there's a same message in api/v1/models/peripherals.proto
