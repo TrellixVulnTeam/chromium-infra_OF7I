@@ -1327,12 +1327,12 @@ wheel: <
 
 ## **crcmod**
 
-### 1.7
+### 1.7.chromium.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/crcmod/${vpython_platform}"
-  version: "version:1.7"
+  version: "version:1.7.chromium.1"
 >
 ```
 

@@ -108,10 +108,10 @@ def RunSteps(api, platforms, dry_run, rebuild):
           if wheel not in old_wheels:
             spec = wheel['spec']
 
-            # Compute the tag in the same way as in dockerbuild's Spec.tag
+            # Compute the tag in the same way as in dockerbuild's Spec.tag,
+            # except that the patch version has already been incorporated
+            # into the version tag by Builder.version_fn.
             tag = '%s-%s' % (spec['name'], spec['version'])
-            if spec['patch_version']:
-              tag += '.' + spec['patch_version']
             if spec['pyversions']:
               tag += '-' + '.'.join(sorted(spec['pyversions']))
             wheels.append(tag)
@@ -219,17 +219,17 @@ def GenTests(api):
                   "pyversions": ["py3"],
                   "version": "3.2.0"
               }
-          }])) +
-      api.override_step_data(
-          'compute new wheels.json',
-          stdout=api.json.output([{
-              "spec": {
-                  "name": "entirely-new",
-                  "patch_version": 'chromium.1',
-                  "pyversions": ["py3"],
-                  "version": "3.3.0"
-              }
-          }])))
+          }])) + api.override_step_data(
+              'compute new wheels.json',
+              stdout=api.json.output([{
+                  "spec": {
+                      "name": "entirely-new",
+                      "patch_version": 'chromium.1',
+                      "pyversions": ["py3"],
+                      "version":
+                          "3.3.0.chromium.1"  # Patch version already included.
+                  }
+              }])))
 
   yield api.test(
       'trybot wheel removed CL',

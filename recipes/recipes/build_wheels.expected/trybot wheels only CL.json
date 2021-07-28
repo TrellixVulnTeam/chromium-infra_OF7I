@@ -231,7 +231,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"pyversions\": [@@@",
       "@@@STEP_LOG_LINE@json.output@        \"py3\"@@@",
       "@@@STEP_LOG_LINE@json.output@      ], @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"version\": \"3.3.0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"version\": \"3.3.0.chromium.1\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",

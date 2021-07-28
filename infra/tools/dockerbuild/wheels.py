@@ -238,6 +238,7 @@ SPECS.update({
             '1.7',
             packaged=(),
             pyversions=['py2', 'py3'],
+            patch_version='chromium.1',  # Rebuild for https://crbug.com/1233745
         ),
         SourceOrPrebuilt(
             'gevent',
