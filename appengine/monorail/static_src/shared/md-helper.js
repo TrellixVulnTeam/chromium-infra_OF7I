@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail']);
 
 /** @type {Set} Projects that allow users to opt into Markdown rendering. */
-export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS]);
+export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS, 'fuchsia']);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
 const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
