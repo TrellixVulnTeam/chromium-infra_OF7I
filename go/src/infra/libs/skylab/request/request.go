@@ -48,10 +48,13 @@ type Args struct {
 	// SchedulableLabels specifies schedulable label requirements that will
 	// be translated to dimensions.
 	SchedulableLabels *inventory.SchedulableLabels
-	Timeout           time.Duration
-	Priority          int64
-	ParentTaskID      string
-	ParentRequestUID  string
+	// Contain a slice of SchedulableLabels instance, which each of them
+	// represents scheduleable label requirements of a secondary devices.
+	SecondaryDevicesLabels []*inventory.SchedulableLabels
+	Timeout                time.Duration
+	Priority               int64
+	ParentTaskID           string
+	ParentRequestUID       string
 	// Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
 	// Test describes the test to be run.
@@ -109,7 +112,7 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 // getBBDimensions returns both required and optional dimensions that will be
 // used to match this request with a Swarming bot.
 func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
-	ret := schedulableLabelsToBBDimensions(a.SchedulableLabels)
+	ret := inventoryDimensionsToBBDimensions(a.getInventoryDimensions())
 
 	pd, err := dims(a.ProvisionableDimensions).BBDimensions()
 	if err != nil {
@@ -130,9 +133,55 @@ func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
 	return ret, nil
 }
 
-func schedulableLabelsToBBDimensions(inv *inventory.SchedulableLabels) []*buildbucket_pb.RequestedDimension {
+// getInventoryDimensions converts SchedulableLabels to inventory dimensions.
+// If secondary devices exist, it will also convert SchedulableLabels of secondary
+// devices to inventory dimensions, and then join them into one.
+func (a *Args) getInventoryDimensions() swarming_inventory.Dimensions {
+	dims := swarming_inventory.Convert(a.SchedulableLabels)
+	if len(a.SecondaryDevicesLabels) == 0 {
+		return dims
+	}
+	var secondaryDims []swarming_inventory.Dimensions
+	for _, sl := range a.SecondaryDevicesLabels {
+		secondaryDims = append(secondaryDims, swarming_inventory.Convert(sl))
+	}
+	for _, sd := range secondaryDims {
+		for key, values := range sd {
+			if _, ok := dims[key]; ok {
+				dims[key] = append(dims[key], values...)
+			} else {
+				dims[key] = values
+			}
+		}
+	}
+	return trimJoinedDimensions(dims)
+}
+
+// trimJoinedDimensions remove duplicate values from dimensions, for special dimensions
+// ("label-board" and "label-model") it adding an numeric suffix to make it unique.
+func trimJoinedDimensions(dims swarming_inventory.Dimensions) swarming_inventory.Dimensions {
+	trimmedDims := make(swarming_inventory.Dimensions)
+	for key, values := range dims {
+		counter := make(map[string]int)
+		for _, value := range values {
+			if counter[value] == 0 {
+				trimmedDims[key] = append(trimmedDims[key], value)
+				counter[value]++
+			} else if key == "label-board" || key == "label-model" {
+				// If a test want more than one DUTs in a same boards or model, we need to add
+				// a suffix to make all of them unique, otherwise it will be treated as a single
+				// dimension match from swarming.
+				suffix := counter[value] + 1
+				trimmedDims[key] = append(trimmedDims[key], fmt.Sprintf("%s%d", value, suffix))
+				counter[value]++
+			}
+		}
+	}
+	return trimmedDims
+}
+
+func inventoryDimensionsToBBDimensions(id swarming_inventory.Dimensions) []*buildbucket_pb.RequestedDimension {
 	var ret []*buildbucket_pb.RequestedDimension
-	id := swarming_inventory.Convert(inv)
 	for key, values := range id {
 		for _, value := range values {
 			ret = append(ret, &buildbucket_pb.RequestedDimension{
@@ -258,7 +307,7 @@ func (a *Args) SwarmingNewTaskRequest() (*swarming.SwarmingRpcsNewTaskRequest, e
 // StaticDimensions() do not include dimensions used to optimize task
 // scheduling.
 func (a *Args) StaticDimensions() ([]*swarming.SwarmingRpcsStringPair, error) {
-	ret := schedulableLabelsToPairs(a.SchedulableLabels)
+	ret := inventoryDimensionsToPairs(a.getInventoryDimensions())
 	d, err := stringToPairs(a.Dimensions...)
 	if err != nil {
 		return nil, errors.Annotate(err, "get static dimensions").Err()
@@ -335,8 +384,7 @@ func stringToPairs(dimensions ...string) ([]*swarming.SwarmingRpcsStringPair, er
 	return pairs, nil
 }
 
-func schedulableLabelsToPairs(inv *inventory.SchedulableLabels) []*swarming.SwarmingRpcsStringPair {
-	dimensions := swarming_inventory.Convert(inv)
+func inventoryDimensionsToPairs(dimensions swarming_inventory.Dimensions) []*swarming.SwarmingRpcsStringPair {
 	pairs := make([]*swarming.SwarmingRpcsStringPair, 0, len(dimensions))
 	for key, values := range dimensions {
 		for _, value := range values {

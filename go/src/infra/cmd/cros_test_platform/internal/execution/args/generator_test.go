@@ -42,3 +42,59 @@ func TestDisplayNameTagsForUnamedRequest(t *testing.T) {
 		})
 	})
 }
+
+func TestInventoryLabels(t *testing.T) {
+	Convey("Given a request with board and model info", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		setTestName(inv, "foo-name")
+		var params test_platform.Request_Params
+		var dummyWorkerConfig = &config.Config_SkylabWorker{}
+		setRequestMaximumDuration(&params, 1000)
+		setPrimayDeviceBoard(&params, "coral")
+		setPrimayDeviceModel(&params, "babytiger")
+		Convey("when generating a test runner request's args", func() {
+			g := Generator{
+				Invocation:   inv,
+				Params:       &params,
+				WorkerConfig: dummyWorkerConfig,
+			}
+			got, err := g.GenerateArgs(ctx)
+			So(err, ShouldBeNil)
+			Convey("the SchedulableLabels is generated correctly", func() {
+				So(*got.SchedulableLabels.Board, ShouldEqual, "coral")
+				So(*got.SchedulableLabels.Model, ShouldEqual, "babytiger")
+				So(len(got.SecondaryDevicesLabels), ShouldEqual, 0)
+			})
+		})
+	})
+}
+
+func TestSecondaryDevicesLabels(t *testing.T) {
+	Convey("Given a request with secondary devices", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		setTestName(inv, "foo-name")
+		var params test_platform.Request_Params
+		var dummyWorkerConfig = &config.Config_SkylabWorker{}
+		setRequestMaximumDuration(&params, 1000)
+		setSecondaryDevice(&params, "nami", "", "")
+		setSecondaryDevice(&params, "coral", "babytiger", "")
+		Convey("when generating a test runner request's args", func() {
+			g := Generator{
+				Invocation:   inv,
+				Params:       &params,
+				WorkerConfig: dummyWorkerConfig,
+			}
+			got, err := g.GenerateArgs(ctx)
+			So(err, ShouldBeNil)
+			Convey("the SecondaryDevicesLabels is generated correctly", func() {
+				So(len(got.SecondaryDevicesLabels), ShouldEqual, 2)
+				So(*got.SecondaryDevicesLabels[0].Board, ShouldEqual, "nami")
+				So(*got.SecondaryDevicesLabels[0].Model, ShouldEqual, "")
+				So(*got.SecondaryDevicesLabels[1].Board, ShouldEqual, "coral")
+				So(*got.SecondaryDevicesLabels[1].Model, ShouldEqual, "babytiger")
+			})
+		})
+	})
+}

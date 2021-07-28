@@ -158,6 +158,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 	return request.Args{
 		Cmd:                              *cmd,
 		SchedulableLabels:                labels,
+		SecondaryDevicesLabels:           g.secondaryDevicesInventoryLabels(),
 		Dimensions:                       g.Params.GetFreeformAttributes().GetSwarmingDimensions(),
 		ParentTaskID:                     g.ParentTaskID,
 		ParentRequestUID:                 g.ParentRequestUID,
@@ -233,6 +234,24 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 		}
 	}
 	return inv, nil
+}
+
+// secondaryDevicesInventoryLabels construct SchedulableLabels for secondary devices
+// based on test_platform.Request_Params.SecondaryDevices
+func (g *Generator) secondaryDevicesInventoryLabels() []*inventory.SchedulableLabels {
+	sds := g.Params.GetSecondaryDevices()
+	var sInvLabels []*inventory.SchedulableLabels
+	for _, sd := range sds {
+		il := inventory.NewSchedulableLabels()
+		if sd.GetSoftwareAttributes().GetBuildTarget() != nil {
+			*il.Board = sd.SoftwareAttributes.BuildTarget.Name
+		}
+		if sd.GetHardwareAttributes().GetModel() != "" {
+			*il.Model = sd.HardwareAttributes.Model
+		}
+		sInvLabels = append(sInvLabels, il)
+	}
+	return sInvLabels
 }
 
 const (

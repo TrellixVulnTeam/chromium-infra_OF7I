@@ -60,14 +60,17 @@ func TestDimensionsBB(t *testing.T) {
 			ProvisionableDimensions:          []string{"provisionable-k2:v2", "provisionable-k3:v3"},
 			ProvisionableDimensionExpiration: 30 * time.Second,
 			SchedulableLabels:                &inventory.SchedulableLabels{Model: &model},
-			TestRunnerRequest:                &skylab_test_runner.Request{},
+			SecondaryDevicesLabels: []*inventory.SchedulableLabels{
+				{Model: &model},
+			},
+			TestRunnerRequest: &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.NewBBRequest(nil)
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have correct dimensions.", func() {
-				So(req.Dimensions, ShouldHaveLength, 4)
+				So(req.Dimensions, ShouldHaveLength, 5)
 
 				want := []*buildbucket_pb.RequestedDimension{
 					{
@@ -87,6 +90,10 @@ func TestDimensionsBB(t *testing.T) {
 					{
 						Key:   "label-model",
 						Value: "foo-model",
+					},
+					{
+						Key:   "label-model",
+						Value: "foo-model2",
 					},
 				}
 
@@ -371,6 +378,42 @@ func TestStaticDimensions(t *testing.T) {
 				ProvisionableDimensions: []string{"cros-version:value"},
 			},
 			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "label-model:some_model", "some:value"}),
+		},
+		{
+			Tag: "Multi-DUTs without duplicate board/model",
+			Args: &request.Args{
+				SchedulableLabels: &inventory.SchedulableLabels{
+					Board: stringPtr("coral"),
+					Model: stringPtr("babytiger"),
+				},
+				Dimensions:              []string{"some:value"},
+				ProvisionableDimensions: []string{"cros-version:value", "cros-version:value2"},
+				SecondaryDevicesLabels: []*inventory.SchedulableLabels{
+					{
+						Board: stringPtr("eve"),
+						Model: stringPtr("eve"),
+					},
+				},
+			},
+			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "label-board:coral", "label-model:babytiger", "some:value", "label-board:eve", "label-model:eve"}),
+		},
+		{
+			Tag: "Multi-DUTs with duplicate board/model",
+			Args: &request.Args{
+				SchedulableLabels: &inventory.SchedulableLabels{
+					Board: stringPtr("coral"),
+					Model: stringPtr("babytiger"),
+				},
+				Dimensions:              []string{"some:value"},
+				ProvisionableDimensions: []string{"cros-version:value", "cros-version:value2"},
+				SecondaryDevicesLabels: []*inventory.SchedulableLabels{
+					{
+						Board: stringPtr("coral"),
+						Model: stringPtr("babytiger"),
+					},
+				},
+			},
+			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "label-board:coral", "label-model:babytiger", "some:value", "label-board:coral2", "label-model:babytiger2"}),
 		},
 	}
 
