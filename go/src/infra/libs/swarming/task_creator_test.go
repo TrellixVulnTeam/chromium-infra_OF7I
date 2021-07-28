@@ -35,7 +35,7 @@ func TestChangeDUTStateCommand(t *testing.T) {
 	}
 }
 
-func TestReserveDUTRequest(t *testing.T) {
+func TestSetDUTStateRequest(t *testing.T) {
 	t.Parallel()
 	Convey("Verify deploy task request is correct formated", t, func() {
 		tc := &TaskCreator{
@@ -43,12 +43,13 @@ func TestReserveDUTRequest(t *testing.T) {
 			swarmingService: "https://chromium-swarm-dev.appspot.com/",
 			session:         "session0",
 		}
-		r := tc.reserveDUTRequest("fake_service_account", "fake_dut_host", "fake_user")
-		So(r.Name, ShouldEqual, "Reserve by fake_user")
+		testPriority := int64(13)
+		r := tc.setDUTStateRequest("fake_service_account", "fake_dut_host", "fake_user", "My Task", "set_my_command", testPriority)
+		So(r.Name, ShouldEqual, "My Task by fake_user")
 		So(r.TaskSlices, ShouldHaveLength, 1)
 		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
 		So(command, ShouldContainSubstring, "/bin/sh -c /opt/infra-tools/skylab_swarming_worker")
-		So(command, ShouldContainSubstring, "-task-name set_reserved")
+		So(command, ShouldContainSubstring, "-task-name set_my_command")
 		for _, d := range r.TaskSlices[0].Properties.Dimensions {
 			switch d.Key {
 			case "pool":
@@ -57,12 +58,12 @@ func TestReserveDUTRequest(t *testing.T) {
 				So(d.Value, ShouldEqual, "crossk-fake_dut_host")
 			}
 		}
-		So("skylab-tool:Reserve", ShouldBeIn, r.Tags)
+		So("skylab-tool:My Task", ShouldBeIn, r.Tags)
 		So("admin_session:session0", ShouldBeIn, r.Tags)
 		So("dut-name:fake_dut_host", ShouldBeIn, r.Tags)
 		So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
 		So(r.ServiceAccount, ShouldEqual, "fake_service_account")
-		So(r.Priority, ShouldEqual, 25)
+		So(r.Priority, ShouldEqual, testPriority)
 	})
 }
 

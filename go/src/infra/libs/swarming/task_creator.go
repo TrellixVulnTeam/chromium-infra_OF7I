@@ -25,11 +25,9 @@ const (
 	// LuciProject is used to tag the chromeos tasks.
 	LuciProject = "chromeos"
 
-	// ReserveDUTTaskPriority is the priority used for ReserveDUT task.
-	ReserveDUTTaskPriority = 25
-
-	// RepairDUTTaskPriority Priority is the priority used for ReserveDUT task.
-	RepairDUTTaskPriority = 25
+	// DefaultAdminTaskPriority is the priority used as default for the admin tasks
+	// if other was not specified.
+	DefaultAdminTaskPriority = 25
 
 	// DUTIDDimensionKey is the dimension key for dut ID.
 	DUTIDDimensionKey = "dut_id"
@@ -125,17 +123,22 @@ func MapToSwarmingDimensions(dims map[string]string) []*swarming.SwarmingRpcsStr
 	return dimensions
 }
 
-// ReserveDUT schedule task to change DUT state to reserved
+// ReserveDUT schedule task to change DUT state to reserved.
 func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host, user string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.reserveDUTRequest(serviceAccount, host, user))
+	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "Reserve", "set_reserved", DefaultAdminTaskPriority))
 }
 
-// reserveDUTRequest creates task request to change DUT state to reserved
-func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swarming.SwarmingRpcsNewTaskRequest {
+// SetManualRepair schedule task to change DUT state to manual_repair.
+func (tc *TaskCreator) SetManualRepair(ctx context.Context, serviceAccount, host, user string) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "ManualRepair", "set_manual_repair", DefaultAdminTaskPriority))
+}
+
+// setDUTStateRequest creates task request to change DUT state.
+func (tc *TaskCreator) setDUTStateRequest(serviceAccount, host, user, taskName, changeStateCommand string, priority int64) *swarming.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 2 * 60 * 60,
 		Properties: &swarming.SwarmingRpcsTaskProperties{
-			Command: changeDUTStateCommand("set_reserved"),
+			Command: changeDUTStateCommand(changeStateCommand),
 			Dimensions: []*swarming.SwarmingRpcsStringPair{
 				{Key: PoolDimensionKey, Value: sw.SkylabPool},
 				{Key: IDDimensionKey, Value: dutNameToBotID(host)},
@@ -144,13 +147,13 @@ func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host, user string) *swa
 		},
 	}}
 	return &swarming.SwarmingRpcsNewTaskRequest{
-		Name: fmt.Sprintf("Reserve by %s", user),
-		Tags: tc.combineTags("Reserve", "",
+		Name: fmt.Sprintf("%s by %s", taskName, user),
+		Tags: tc.combineTags(taskName, "",
 			[]string{
 				fmt.Sprintf("dut-name:%s", host),
 			}),
 		TaskSlices:     slices,
-		Priority:       ReserveDUTTaskPriority,
+		Priority:       priority,
 		ServiceAccount: serviceAccount,
 	}
 }
@@ -188,7 +191,7 @@ func (tc *TaskCreator) repairVerifyTaskRequest(taskName, toolName, serviceAccoun
 		Name:           taskName,
 		Tags:           tc.combineTags(toolName, logDogURL, nil),
 		TaskSlices:     slices,
-		Priority:       RepairDUTTaskPriority,
+		Priority:       DefaultAdminTaskPriority,
 		ServiceAccount: serviceAccount,
 	}
 }
@@ -225,6 +228,8 @@ func (tc *TaskCreator) SessionTasksURL() string {
 	return sw.TaskListURLForTags(tc.swarmingService, tags)
 }
 
+// changeDUTStateCommand creates command to initiate state change.
+// After set state we wait 180 seconds to apply state changes to the dut.
 func changeDUTStateCommand(task string) []string {
 	return []string{
 		"/bin/sh",
