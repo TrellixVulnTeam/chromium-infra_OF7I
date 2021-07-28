@@ -125,6 +125,20 @@ module.exports = function(config) {
             exclude: [/\.test.(js|ts|tsx)$/],
             query: {esModules: true},
           },
+          {
+            test: /\.css$/i,
+            use: [
+              {loader: 'style-loader', options: {injectType: 'styleTag'}},
+              {
+                loader: 'css-loader',
+                options: {
+                  modules: true,
+                  importLoaders: 1,
+                },
+              },
+              'postcss-loader',
+            ],
+          },
         ],
       },
     },
