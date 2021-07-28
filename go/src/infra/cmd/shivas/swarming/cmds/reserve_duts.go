@@ -22,6 +22,8 @@ type reserveDuts struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
+
+	manualRepair bool
 }
 
 // ReserveDutsCmd contains reserve-dut command specification
@@ -36,6 +38,7 @@ var ReserveDutsCmd = &subcommands.Command{
 		c := &reserveDuts{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.Flags.BoolVar(&c.manualRepair, "manual-repair", false, "Reserve the dut for manual repair.")
 		return c
 	},
 }
@@ -68,7 +71,12 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 	errorMap := make(map[string]error)
 	for _, host := range args {
 		// TODO(crbug/1128496): update state directly in the UFS without creating the swarming task
-		task, err := creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host, user.Username)
+		var task *swarming.TaskInfo
+		if c.manualRepair {
+			task, err = creator.SetManualRepair(ctx, e.SwarmingServiceAccount, host, user.Username)
+		} else {
+			task, err = creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host, user.Username)
+		}
 		if err != nil {
 			errorMap[host] = err
 		} else {
