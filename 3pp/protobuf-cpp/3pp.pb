@@ -1,4 +1,9 @@
 create {
+  platform_re: "linux-armv6l"
+  unsupported: true
+}
+
+create {
   platform_re: "linux-.*"
   source {
     script { name: "fetch.py" }

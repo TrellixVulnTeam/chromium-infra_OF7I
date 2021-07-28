@@ -1,4 +1,9 @@
 create {
+  platform_re: "linux-arm.*"
+  unsupported: true
+}
+
+create {
   # We are currently building this package only for linux platform.
   platform_re: "linux-.*"
 
