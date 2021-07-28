@@ -32,7 +32,6 @@ const (
 //      rrd:present      - rrd metric is present on device
 //      disk_usage:35    - 35% internal storage used
 //
-// Next Tag: 6
 type Observation struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

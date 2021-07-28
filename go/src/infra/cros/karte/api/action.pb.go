@@ -27,7 +27,6 @@ const (
 )
 
 // The status of an action is whether the action succeeded or failed.
-// Next Tag: 3
 type Action_Status int32
 
 const (
@@ -81,7 +80,6 @@ func (Action_Status) EnumDescriptor() ([]byte, []int) {
 // Examples include running a command on a DUT or resetting the servo
 // attached to a DUT.
 //
-// Next Tag: 11
 type Action struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -16,7 +16,6 @@ option go_package = "infra/cros/karte/api;kartepb";
 // Examples include running a command on a DUT or resetting the servo
 // attached to a DUT.
 //
-// Next Tag: 11
 message Action {
   option (google.api.resource) = {
     type: "karte.appspot.com/Action"
@@ -59,7 +58,6 @@ message Action {
   google.protobuf.Timestamp create_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The status of an action is whether the action succeeded or failed.
-  // Next Tag: 3
   enum Status {
     STATUS_UNSPECIFIED = 0;
     SUCCESS = 1;
