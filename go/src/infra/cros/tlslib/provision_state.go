@@ -144,9 +144,9 @@ func (p *provisionState) verifyOSProvision() error {
 
 const (
 	fetchUngzipConvertCmd = `if type wget >/dev/null 2>&1; then
-  wget --progress=dot:giga -S --tries=1 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
+  wget --progress=dot:giga -S --tries=3 -w 60 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
 else
-  curl %[1]s | gzip -d | dd of=%[2]s obs=2M
+  curl -v %[1]s | gzip -d | dd of=%[2]s obs=2M
 fi
 pipestatus=("${PIPESTATUS[@]}")
 if [[ "${pipestatus[0]}" -ne 0 ]]; then
@@ -193,7 +193,7 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 	// wget isn't available after stateful is wiped, so use curl.
 	return runCmd(p.c, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
-		fmt.Sprintf("curl %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
+		fmt.Sprintf("curl -v %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
 		fmt.Sprintf("echo -n clobber > %s", updateStatefulFilePath),
 	}, " && "))
 }
@@ -309,7 +309,7 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 	dlcCmd := fmt.Sprintf(`if type wget >/dev/null 2>&1; then
 mkdir -p %[1]s && wget --progress=dot:giga -S --tries=1 -O %[2]s %[3]s
 else
-mkdir -p %[1]s && curl --output %[2]s %[3]s
+mkdir -p %[1]s && curl -v --output %[2]s %[3]s
 fi`,
 		dlcOutputSlotDir, dlcOutputImage, url)
 	if err := runCmd(p.c, dlcCmd); err != nil {
