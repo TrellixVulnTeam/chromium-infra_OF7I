@@ -925,29 +925,36 @@ Downloads & Installs the Windows ADK.
 Ensures that the WinPE add-on is available.
 ### *recipe_modules* / [windows\_scripts\_executor](/recipes/recipe_modules/windows_scripts_executor)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [powershell](#recipe_modules-powershell), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 #### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#29)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#86)(self, save=True):**
+&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#69)(self, f):**
+
+&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#83)(self, package, refs, platform, name=''):**
+
+Downloads the given package and returns path to the file
+contained within.
+
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#93)(self, name, command, logs=None, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#119)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#39)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#40)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#71)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#97)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#98)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
+&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#124)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
 
 Mount the wim to a dir for modification
 
@@ -955,7 +962,7 @@ Mount the wim to a dir for modification
 
 Performs the given action
 
-&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
+&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#138)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
 
 Unmount the winpe wim from the given directory
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)

@@ -89,6 +89,33 @@ def GenTests(api):
           }
       }))
 
+  ADD_FILE_CIPD_PASS = api.step_data(
+      'execute config win10_2013_x64.offline ' +
+      'winpe customization offline_winpe_2013_x64.PowerShell> ' +
+      'Add file [CACHE]/CIPDPkgs/infra_internal/labs/drivers/microsoft/' +
+      'windows_adk/winpe/winpe-dot3svc/windows-amd64',
+      stdout=api.json.output({'results': {
+          'Success': True,
+      }}))
+
+  # actions for adding files
+  ACTION_ADD_STARTNET = wib.AddFile(
+      name='add_startnet_file',
+      local_src='cipd_startnet_path>',
+      dst='C:\\Windows\\System32\\startnet.cmd',
+  )
+
+  ACTION_ADD_DOT3SVC = wib.AddFile(
+      name='add winpe-dot3svc',
+      cipd_src=wib.CIPDSrc(
+          package='infra_internal/labs/drivers/' +
+          'microsoft/windows_adk/winpe/' + 'winpe-dot3svc',
+          refs='latest',
+          platform='windows-amd64',
+      ),
+      dst='Windows\\System32\\',
+  )
+
   # Post process check for save and discard options during unmount
   UMOUNT_PP_DISCARD = api.post_process(
       StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
@@ -116,22 +143,25 @@ def GenTests(api):
           '-LogLevel WarningsInfo', '-Save'
       ])
 
+  CIPD_PP_DOT3SVC = api.post_process(
+      StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
+      'customization offline_winpe_2013_x64.Downloading infra_internal/' +
+      'labs/drivers/microsoft/windows_adk/winpe/winpe-dot3svc:latest', [
+          'cipd', 'ensure', '-root', '\[CACHE\]/CIPDPkgs', '-ensure-file',
+          'infra_internal/labs/drivers/microsoft/windows_adk/winpe/' +
+          'winpe-dot3svc/windows-amd64 latest', '-max-threads', '0',
+          '-json-output', '/path/to/tmp/json'
+      ])
+
   yield (api.test('Fail win image folder creation') + api.properties(
       wib.Image(
           name='win10_2013_x64',
+          arch=wib.ARCH_X86,
           offline_winpe_customization=wib.OfflineCustomization(
               name='offline_winpe_2013_x64',
-              winpe_arch=wib.ARCH_X86,
               offline_customization=[
                   wib.OfflineAction(
-                      name='network_setup',
-                      files=[
-                          wib.AddFile(
-                              name='add_startnet_file',
-                              src='cipd_startnet_path>',
-                              dst='C:\\Windows\\System32\\startnet.cmd',
-                          )
-                      ])
+                      name='network_setup', files=[ACTION_ADD_STARTNET])
               ]))) + GEN_WPE_MEDIA_FAIL +  # Fail to create a winpe media folder
          api.post_process(StatusFailure) +  # recipe should fail
          api.post_process(DropExpectation))
@@ -147,19 +177,12 @@ def GenTests(api):
   yield (api.test('Fail add file step') + api.properties(
       wib.Image(
           name='win10_2013_x64',
+          arch=wib.ARCH_X86,
           offline_winpe_customization=wib.OfflineCustomization(
               name='offline_winpe_2013_x64',
-              winpe_arch=wib.ARCH_X86,
               offline_customization=[
                   wib.OfflineAction(
-                      name='network_setup',
-                      files=[
-                          wib.AddFile(
-                              name='add_startnet_file',
-                              src='cipd_startnet_path>',
-                              dst='C:\\Windows\\System32\\startnet.cmd',
-                          )
-                      ])
+                      name='network_setup', files=[ACTION_ADD_STARTNET])
               ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
          ADD_FILE_STARTNET_FAIL +  # Fail to add file
          UMOUNT_WIM_PASS +  # Unmount the wim
@@ -167,21 +190,35 @@ def GenTests(api):
          api.post_process(StatusFailure) +  # recipe fails
          api.post_process(DropExpectation))
 
-  yield (api.test('Happy path') + api.properties(
+  yield (api.test('Add file from cipd') + api.properties(
       wib.Image(
           name='win10_2013_x64',
+          arch=wib.ARCH_X86,
           offline_winpe_customization=wib.OfflineCustomization(
               name='offline_winpe_2013_x64',
-              winpe_arch=wib.ARCH_X86,
               offline_customization=[
                   wib.OfflineAction(
                       name='network_setup',
                       files=[
-                          wib.AddFile(
-                              name='add_startnet_file',
-                              src='cipd_startnet_path>',
-                              dst='C:\\Windows\\System32\\startnet.cmd',
-                          )
+                          ACTION_ADD_STARTNET,
+                          ACTION_ADD_DOT3SVC,
+                      ])
+              ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
+         ADD_FILE_STARTNET_PASS + ADD_FILE_CIPD_PASS +
+         UMOUNT_WIM_PASS +  # Unmount the wim
+         CIPD_PP_DOT3SVC + UMOUNT_PP_SAVE + api.post_process(StatusSuccess) +
+         api.post_process(DropExpectation))
+
+  yield (api.test('Happy path') + api.properties(
+      wib.Image(
+          name='win10_2013_x64',
+          arch=wib.ARCH_X86,
+          offline_winpe_customization=wib.OfflineCustomization(
+              name='offline_winpe_2013_x64',
+              offline_customization=[
+                  wib.OfflineAction(
+                      name='network_setup', files=[
+                          ACTION_ADD_STARTNET,
                       ])
               ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
          ADD_FILE_STARTNET_PASS + UMOUNT_WIM_PASS +

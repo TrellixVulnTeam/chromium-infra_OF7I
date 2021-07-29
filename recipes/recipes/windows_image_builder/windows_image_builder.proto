@@ -13,11 +13,14 @@ message Image {
   // E.g. basic_win10_image
   string name = 1;
 
+  // The architecture to build for..
+  Arch arch = 2;
+
   // The offline winpe customization user requirements.
-  OfflineCustomization offline_winpe_customization = 2;
+  OfflineCustomization offline_winpe_customization = 3;
 
   // The offline windows OS customization user requirements.
-  OfflineCustomization offline_os_customization = 3;
+  OfflineCustomization offline_os_customization = 4;
 }
 
 message OfflineCustomization {
@@ -25,9 +28,6 @@ message OfflineCustomization {
   //
   // E.g. basic_offline_winpe, basic_offline_windowsOS
   string name = 1;
-
-  // The architecture to build. If it's empty, the builder will pull the arch from the source iso.
-  Arch winpe_arch = 2;
 
   // The name of OfflineCustomizations you want to take precident. The last
   // entry specified takes precident when multiple actions of the same name are
@@ -40,7 +40,7 @@ message OfflineAction {
   // The name for a given offline customization, e.g. basic_network_setup.
   string name = 1;
 
-  // A lisf ot files to be added/updated to generate a customized image offline.
+  // A list of files to be added/updated to generate a customized image offline.
   repeated AddFile files = 2;
 }
 
@@ -48,11 +48,14 @@ message AddFile {
   // The AddFile action's name, e.g. add_startnet
   string name = 1;
 
-  // Full path on host to File or folder of files, e.g. C:\\win10\Startnet.cmd
-  string src = 2;
-
   // relative to root of mounted image, e.g. Windows\System32\startnet.cmd
   string dst = 3;
+
+  // Full path on host to File or folder of files, e.g. C:\\win10\Startnet.cmd
+  oneof src {
+    string local_src = 2;
+    CIPDSrc cipd_src = 4;
+  }
 }
 
 enum Arch {
@@ -60,4 +63,14 @@ enum Arch {
   ARCH_AMD64 = 1;
   ARCH_X86 = 2;
   ARCH_ARM64 = 3;
+}
+
+// Ref to cipd file to be used as a source
+message CIPDSrc {
+  // Name/Path of the cipd package
+  string package = 1;
+  // Refs can be a instance or 'latest'
+  string refs = 2;
+  // Platform support for the package
+  string platform = 3;
 }

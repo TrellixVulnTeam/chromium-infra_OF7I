@@ -35,21 +35,21 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._copype = self._scripts.join(COPYPE)
     self._addfile = self._scripts.join(ADDFILE)
     self._workdir = ''
+    self._cipd_packages = ''
 
   def execute_wib_config(self, config):
     """Executes the windows image builder user config."""
     # Using a directory in cache for working
     self._workdir = self.m.path['cache'].join('WinPEImage')
+    self._cipd_packages = self.m.path['cache'].join('CIPDPkgs')
+    if config.arch == wib.Arch.ARCH_UNSPECIFIED:
+      raise self.m.step.StepFailure('Missing arch in config')
     with self.m.step.nest('execute config ' + config.name):
       wpec = config.offline_winpe_customization
       if wpec:
-        # Check if arch is not specified
-        if wpec.winpe_arch == wib.Arch.ARCH_UNSPECIFIED:
-          raise self.m.step.StepFailure('Missing arch in config')
         with self.m.step.nest('offline winpe customization ' + wpec.name):
           self.init_win_pe_image(
-              #'amd64',
-              wib.Arch.Name(wpec.winpe_arch).replace('ARCH_', '').lower(),
+              wib.Arch.Name(config.arch).replace('ARCH_', '').lower(),
               self._workdir)
           try:
             for action in wpec.offline_customization:
@@ -64,9 +64,35 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
   def perform_winpe_action(self, action):
     """Performs the given action"""
     for f in action.files:
-      self.execute_script('Add file {}'.format(f.src), self._addfile, None,
-                          '-DiskImage', str(self._workdir), '-SourceFile',
-                          f.src, '-ImageDestinationPath', f.dst)
+      self.add_file(f)
+
+  def add_file(self, f):
+    src = ''
+    #TODO(anushruth): Replace cipd_src with local_src for all actions
+    # after downloading the files.
+    if f.WhichOneof('src') == 'cipd_src':
+      res = self.cipd_ensure(f.cipd_src.package, f.cipd_src.refs,
+                             f.cipd_src.platform)
+      src = res['path']
+    elif f.WhichOneof('src') == 'local_src':
+      src = f.local_src
+    self.execute_script('Add file {}'.format(src), self._addfile, None,
+                        '-DiskImage', str(self._workdir), '-SourceFile', src,
+                        '-ImageDestinationPath', f.dst)
+
+  def cipd_ensure(self, package, refs, platform, name=''):
+    """ Downloads the given package and returns path to the file
+        contained within."""
+    ensure_file = self.m.cipd.EnsureFile()
+    ensure_file.add_package(str(package) + '/' + str(platform), str(refs))
+    if name == '':
+      name = 'Downloading {}:{}'.format(package, refs)
+    # Download the installer using cipd and store it in package ref?
+    res = self.m.cipd.ensure(self._cipd_packages, ensure_file, name=name)
+    # Append abs file path to res before returning
+    res['path'] = self._cipd_packages.join(package, platform)
+    # Return the path to where the file currently exists
+    return res
 
   def init_win_pe_image(self, arch, dest, index=1):
     """Calls Copy-PE to create WinPE media folder for arch"""

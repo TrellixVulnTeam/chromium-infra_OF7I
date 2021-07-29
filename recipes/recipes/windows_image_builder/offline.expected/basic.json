@@ -249,13 +249,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "execute config ",
-    "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
-    ]
-  },
-  {
     "failure": {
       "failure": {},
       "humanReason": "Missing arch in config"
