@@ -82,11 +82,11 @@ func TestTypeFromExt(t *testing.T) {
 		},
 		{
 			step: ninjalog.Step{Out: "headless_browsertests.exe.pdb"},
-			want: "PEFile (linking)",
+			want: ".exe.pdb",
 		},
 		{
 			step: ninjalog.Step{Out: "headless_browsertests.exe"},
-			want: "PEFile (linking)",
+			want: ".exe",
 		},
 		{
 			step: ninjalog.Step{Out: "headless_browsertests"},
@@ -95,6 +95,10 @@ func TestTypeFromExt(t *testing.T) {
 		{
 			step: ninjalog.Step{Out: "gen/services/identity/public/mojom/identity_manager.mojom-shared-message-ids.h"},
 			want: ".mojom-shared-message-ids.h",
+		},
+		{
+			step: ninjalog.Step{Out: "a.h", Outs: []string{"a.cc"}},
+			want: ".cc,.h",
 		},
 	}
 

@@ -469,21 +469,24 @@ func (t tableData) StepsPerSec() float64 {
 }
 
 func typeFromExt(s ninjalog.Step) string {
-	target := s.Out
-	target = filepath.Base(target)
-
-	ext := filepath.Ext(target)
-	switch ext {
-	case ".pdb", ".dll", ".exe":
-		return "PEFile (linking)"
+	targets := append([]string{s.Out}, s.Outs...)
+	exts := make(map[string]struct{})
+	for _, target := range targets {
+		target = filepath.Base(target)
+		pos := strings.IndexByte(target, '.')
+		if pos == -1 {
+			exts["(no extension found)"] = struct{}{}
+			continue
+		}
+		exts[target[pos:]] = struct{}{}
 	}
 
-	pos := strings.IndexByte(target, '.')
-	if pos == -1 {
-		return "(no extension found)"
+	res := make([]string, 0, len(exts))
+	for ext := range exts {
+		res = append(res, ext)
 	}
-
-	return target[pos:]
+	sort.Strings(res)
+	return strings.Join(res, ",")
 }
 
 func table(ctx context.Context, w http.ResponseWriter, logPath string, njl *ninjalog.NinjaLog) error {
