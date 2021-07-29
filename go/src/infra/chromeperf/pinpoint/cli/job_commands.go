@@ -17,6 +17,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/render"
@@ -26,9 +27,12 @@ import (
 	"strings"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/sync/parallel"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
 	"google.golang.org/protobuf/encoding/prototext"
 )
 
@@ -106,17 +110,61 @@ func (lj *listJobs) RegisterFlags(p Param) {
 	lj.baseCommandRun.RegisterFlags(p)
 	// TODO(dberris): Link to documentation about supported fields in the filter.
 	lj.Flags.StringVar(&lj.filter, "filter", "", text.Doc(`
-		Optional filter to apply to restrict the set of jobs listed. Jobs can be filtered by user, configuration, or batch_id. Example: --filter='user=your-email'
+		Optional filter to apply to restrict the set of jobs listed. Jobs can be filtered by user, configuration, or batch_id. Example: --filter='user=your-email'. If not specified, will filter by user email.
 	`))
+}
+
+func getEmail(ctx context.Context) (string, error) {
+	flags := authcli.Flags{}
+	flags.Register(flag.CommandLine, chromeinfra.DefaultAuthOptions())
+
+	opts, err := flags.Options()
+
+	if err != nil {
+		return "", err
+	}
+
+	authenticator := auth.NewAuthenticator(ctx, auth.SilentLogin, opts)
+	email, err := authenticator.GetEmail()
+	if err != nil {
+		return "", err
+	}
+
+	return email, nil
+}
+
+func filter(ctx context.Context, lj *listJobs, eg func(context.Context) (string, error)) (string, error) {
+	filter := lj.filter
+
+	// If a filter is specified, use it. No need to authenticate.
+	if len(filter) != 0 {
+		return filter, nil
+	}
+
+	email, err := eg(ctx)
+
+	if err != nil {
+		fmt.Printf("WARNING: Failed to authenticate user. All jobs will be listed.")
+		return "", nil
+	}
+
+	return fmt.Sprintf("user=%s", email), nil
 }
 
 func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	c, err := lj.pinpointClient(ctx)
+
 	if err != nil {
 		return err
 	}
 
-	req := &proto.ListJobsRequest{Filter: lj.filter}
+	filter, err := filter(ctx, lj, getEmail)
+
+	if err != nil {
+		return errors.Annotate(err, "failed getting filter").Err()
+	}
+
+	req := &proto.ListJobsRequest{Filter: filter}
 	resp, err := c.ListJobs(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "failed during ListJobs").Err()
