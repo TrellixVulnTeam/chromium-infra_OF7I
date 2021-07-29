@@ -18,7 +18,7 @@ import logging
 import re
 import urllib
 
-from third_party import ezt
+import ezt
 import six
 
 from google.appengine.api import app_identity

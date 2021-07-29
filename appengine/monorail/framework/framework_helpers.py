@@ -22,7 +22,7 @@ import urlparse
 
 from google.appengine.api import app_identity
 
-from third_party import ezt
+import ezt
 import six
 
 import settings

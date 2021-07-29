@@ -8,7 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from third_party import ezt
+import ezt
 
 from features import features_bizobj
 from features import hotlist_views

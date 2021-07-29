@@ -26,7 +26,7 @@ from framework import permissions
 from framework import servlet
 from framework import template_helpers
 from framework import urls
-from third_party import ezt
+import ezt
 from tracker import field_helpers
 from tracker import template_helpers as issue_tmpl_helpers
 from tracker import tracker_bizobj

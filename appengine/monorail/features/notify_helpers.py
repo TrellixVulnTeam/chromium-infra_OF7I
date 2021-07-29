@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import json
 import logging
 
-from third_party import ezt
+import ezt
 import six
 
 from features import autolink

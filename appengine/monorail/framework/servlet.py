@@ -29,7 +29,7 @@ import random
 import time
 import urllib
 
-from third_party import ezt
+import ezt
 from third_party import httpagentparser
 
 from google.appengine.api import app_identity

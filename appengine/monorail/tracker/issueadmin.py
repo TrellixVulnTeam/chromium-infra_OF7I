@@ -18,7 +18,7 @@ import itertools
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 from features import filterrules_helpers
 from features import filterrules_views

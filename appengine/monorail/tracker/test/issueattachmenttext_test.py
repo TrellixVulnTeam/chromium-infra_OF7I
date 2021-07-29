@@ -15,7 +15,7 @@ from mock import patch
 from google.appengine.ext import testbed
 
 from third_party import cloudstorage
-from third_party import ezt
+import ezt
 
 import webapp2
 

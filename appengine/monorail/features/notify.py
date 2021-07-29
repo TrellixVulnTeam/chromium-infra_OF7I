@@ -20,7 +20,7 @@ import json
 import logging
 import os
 
-from third_party import ezt
+import ezt
 
 from google.appengine.api import mail
 from google.appengine.runtime import apiproxy_errors

@@ -27,7 +27,7 @@ import collections
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 import settings
 from framework import framework_bizobj

@@ -12,7 +12,7 @@ import mock
 import unittest
 import logging
 import webapp2
-from third_party import ezt
+import ezt
 
 from framework import framework_helpers
 from framework import framework_views

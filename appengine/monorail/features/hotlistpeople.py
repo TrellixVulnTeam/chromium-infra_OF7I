@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 from features import hotlist_helpers
 from features import hotlist_views

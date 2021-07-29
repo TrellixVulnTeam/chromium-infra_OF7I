@@ -12,7 +12,7 @@ import collections
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 from framework import authdata
 from framework import framework_bizobj

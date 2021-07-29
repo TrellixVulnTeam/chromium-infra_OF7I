@@ -13,7 +13,7 @@ import mox
 import unittest
 import mock
 
-from third_party import ezt
+import ezt
 
 from framework import permissions
 from features import features_constants

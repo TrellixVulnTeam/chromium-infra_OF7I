@@ -12,7 +12,7 @@ import logging
 import time
 import json
 
-from third_party import ezt
+import ezt
 
 import settings
 from businesslogic import work_env

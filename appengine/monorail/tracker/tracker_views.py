@@ -15,7 +15,7 @@ import time
 import urllib
 
 from google.appengine.api import app_identity
-from third_party import ezt
+import ezt
 
 from features import federated
 from framework import exceptions

@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 import time
 
-from third_party import ezt
+import ezt
 
 from features import hotlist_helpers
 from framework import framework_bizobj

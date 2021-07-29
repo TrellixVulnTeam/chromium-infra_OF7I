@@ -13,7 +13,7 @@ import time
 
 from six import string_types
 from third_party import cloudstorage
-from third_party import ezt
+import ezt
 
 from businesslogic import work_env
 from framework import emailfmt

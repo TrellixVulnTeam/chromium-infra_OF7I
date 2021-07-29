@@ -15,7 +15,7 @@ import re
 import time
 import urllib
 
-from third_party import ezt
+import ezt
 
 from google.appengine.api import mail
 from google.appengine.ext.webapp.mail_handlers import BounceNotificationHandler

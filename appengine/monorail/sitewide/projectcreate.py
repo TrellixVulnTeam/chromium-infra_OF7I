@@ -11,7 +11,7 @@ from __future__ import absolute_import
 
 import logging
 from six import string_types
-from third_party import ezt
+import ezt
 
 import settings
 from businesslogic import work_env

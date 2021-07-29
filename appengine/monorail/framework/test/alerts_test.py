@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import time
 import unittest
 
-from third_party import ezt
+import ezt
 
 from framework import alerts
 from testing import fake

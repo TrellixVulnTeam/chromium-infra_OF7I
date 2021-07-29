@@ -15,7 +15,7 @@ import settings
 
 from mock import Mock
 
-from third_party import ezt
+import ezt
 
 from framework import permissions
 from services import service_manager

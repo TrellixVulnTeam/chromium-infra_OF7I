@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import time
 import urllib
 
-from third_party import ezt
+import ezt
 
 from businesslogic import work_env
 from framework import framework_helpers

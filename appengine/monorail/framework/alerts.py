@@ -13,7 +13,7 @@ from __future__ import absolute_import
 
 import time
 
-from third_party import ezt
+import ezt
 
 # Expiration time for special features of timestamped links.
 # This is not for security, just for informational messages that

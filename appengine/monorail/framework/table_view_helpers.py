@@ -19,7 +19,7 @@ import logging
 
 from functools import total_ordering
 
-from third_party import ezt
+import ezt
 
 from framework import framework_constants
 from framework import template_helpers

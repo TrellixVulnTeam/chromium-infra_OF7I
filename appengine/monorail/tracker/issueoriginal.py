@@ -14,7 +14,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-from third_party import ezt
+import ezt
 
 from businesslogic import work_env
 from framework import filecontent

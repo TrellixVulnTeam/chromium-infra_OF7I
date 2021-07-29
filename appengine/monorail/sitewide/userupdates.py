@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import logging
 
-from third_party import ezt
+import ezt
 
 from businesslogic import work_env
 from features import activities

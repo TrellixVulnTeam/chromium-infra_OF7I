@@ -12,7 +12,7 @@ import base64
 import logging
 import hmac
 
-from third_party import ezt
+import ezt
 from google.protobuf import message
 
 import settings

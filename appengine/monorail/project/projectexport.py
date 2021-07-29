@@ -12,7 +12,7 @@ from __future__ import absolute_import
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 from framework import permissions
 from framework import jsonfeed

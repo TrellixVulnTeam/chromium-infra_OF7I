@@ -13,7 +13,7 @@ import mock
 import unittest
 import logging
 
-from third_party import ezt
+import ezt
 
 from framework import permissions
 from proto import tracker_pb2

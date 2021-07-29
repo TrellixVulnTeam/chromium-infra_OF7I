@@ -14,7 +14,7 @@ import unittest
 import mox
 
 from google.appengine.api import app_identity
-from third_party import ezt
+import ezt
 
 from framework import framework_views
 from framework import gcs_helpers

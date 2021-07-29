@@ -10,7 +10,7 @@ from __future__ import absolute_import
 import mock
 import unittest
 
-from third_party import ezt
+import ezt
 
 import settings
 from framework import permissions

@@ -12,7 +12,7 @@ import mox
 import time
 import unittest
 
-from third_party import ezt
+import ezt
 
 from google.appengine.ext import testbed
 from mock import Mock, patch

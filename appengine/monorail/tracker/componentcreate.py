@@ -22,7 +22,7 @@ from tracker import tracker_bizobj
 from tracker import tracker_constants
 from tracker import tracker_views
 
-from third_party import ezt
+import ezt
 
 
 class ComponentCreate(servlet.Servlet):

@@ -14,7 +14,7 @@ import logging
 
 import webapp2
 
-from third_party import ezt
+import ezt
 
 from framework import permissions
 from proto import project_pb2

@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 import logging
 
-from third_party import ezt
+import ezt
 
 from features import activities
 from framework import servlet

@@ -14,7 +14,7 @@ import unittest
 import time
 
 from google.appengine.ext import testbed
-from third_party import ezt
+import ezt
 
 from features import hotlistissues
 from features import hotlist_helpers

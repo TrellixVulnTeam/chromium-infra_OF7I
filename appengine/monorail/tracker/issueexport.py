@@ -12,7 +12,7 @@ from __future__ import absolute_import
 import logging
 import time
 
-from third_party import ezt
+import ezt
 
 from businesslogic import work_env
 from features import savedqueries_helpers

@@ -19,7 +19,7 @@ import webapp2
 from google.appengine.api import app_identity
 
 from third_party import cloudstorage
-from third_party import ezt
+import ezt
 
 from features import prettify
 from framework import exceptions

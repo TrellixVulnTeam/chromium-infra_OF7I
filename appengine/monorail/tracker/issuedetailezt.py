@@ -18,7 +18,7 @@ import httplib
 import json
 import logging
 import time
-from third_party import ezt
+import ezt
 
 import settings
 from api import converters
