@@ -1,0 +1,10 @@
+package: chromiumos/infra/labservice/${platform}
+description: Chrome OS Lab Service
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/labservice
+root: ../../go/bin
+data:
+  - file: labservice${exe_suffix}
+  - version_file: .versions/labservice{exe_suffix}.cipd_version
