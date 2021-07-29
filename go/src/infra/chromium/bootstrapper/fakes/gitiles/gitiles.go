@@ -15,34 +15,39 @@ import (
 	"google.golang.org/grpc"
 )
 
-// FileRevId is an identifier for a file at a given git revision.
-type FileRevId struct {
-	// Revision is the git revision.
-	Revision string
-	// Path is the path to the file.
-	Path string
+type Revision struct {
+	// Parent is the commit ID of the parent revision.
+	Parent string
+
+	// Files maps file paths to their new contents at the revision.
+	//
+	// Missing keys will have the same contents as in the parent revision,
+	// if there is one, otherwise the file does not exist at the revision. A
+	// nil value indicates the file does not exist at the revision.
+	Files map[string]*string
 }
 
 // Project is the fake data for a gitiles project.
 type Project struct {
 	// Refs maps refs to their revision.
 	//
-	// Missing keys will have a default revision computed. An empty string value
-	// indicates that the ref does not exist.
+	// Missing keys will have a default revision computed. An empty string
+	// value indicates that the ref does not exist.
 	Refs map[string]string
 
-	// Files maps file revision IDs to the contents.
+	// Revisions maps commit IDs to the revision of the repo.
 	//
-	// Missing keys indicate the file does not exist at the revision.
-	Files map[FileRevId]*string
+	// Missing keys will have a default fake revision. A nil value indicates
+	// no revision with the commit ID exists.
+	Revisions map[string]*Revision
 }
 
 // Host is the fake data for a gitiles host.
 type Host struct {
 	// Projects maps project names to their details.
 	//
-	// Missing keys will have a default fake project. A nil value indicates the
-	// the project does not exist.
+	// Missing keys will have a default fake project. A nil value indicates
+	// the the project does not exist.
 	Projects map[string]*Project
 }
 
@@ -73,7 +78,9 @@ func Factory(fakes map[string]*Host) gitiles.GitilesClientFactory {
 
 func (c *Client) getProject(projectName string) (*Project, error) {
 	project, ok := c.gitiles.Projects[projectName]
-	if ok && project == nil {
+	if !ok {
+		return &Project{}, nil
+	} else if project == nil {
 		return nil, errors.Reason("unknown project %#v on host %#v", projectName, c.hostname).Err()
 	}
 	return project, nil
@@ -83,49 +90,44 @@ func (c *Client) Log(ctx context.Context, request *gitilespb.LogRequest, options
 	if request.PageSize != 1 {
 		panic(errors.Reason("unexpected page_size in LogRequest: %d", request.PageSize))
 	}
-	var revision string
-	if project, err := c.getProject(request.Project); err != nil {
+	project, err := c.getProject(request.Project)
+	if err != nil {
 		return nil, err
-	} else if project != nil {
-		var ok bool
-		revision, ok = project.Refs[request.Committish]
-		if ok && revision == "" {
-			return nil, errors.Reason("unknown ref %#v for project %#v on host %#v", request.Committish, request.Project, c.hostname).Err()
-		}
 	}
-	if revision == "" {
-		revision = fmt.Sprintf("fake-revision|%s|%s|%s", c.hostname, request.Project, request.Committish)
+	commitId, ok := project.Refs[request.Committish]
+	if !ok {
+		commitId = fmt.Sprintf("fake-revision|%s|%s|%s", c.hostname, request.Project, request.Committish)
+	} else if commitId == "" {
+		return nil, errors.Reason("unknown ref %#v for project %#v on host %#v", request.Committish, request.Project, c.hostname).Err()
 	}
 	return &gitilespb.LogResponse{
 		Log: []*git.Commit{
 			{
-				Id: revision,
+				Id: commitId,
 			},
 		},
 	}, nil
 }
 
 func (c *Client) DownloadFile(ctx context.Context, request *gitilespb.DownloadFileRequest, options ...grpc.CallOption) (*gitilespb.DownloadFileResponse, error) {
-	var contents *string
-	if project, err := c.getProject(request.Project); err != nil {
+	project, err := c.getProject(request.Project)
+	if err != nil {
 		return nil, err
-	} else if project != nil {
-		var ok bool
-		contents, ok = project.Files[FileRevId{request.Committish, request.Path}]
-		if ok && contents == nil {
-			return nil, errors.Reason("unknown file %#v at revision %#v of project %#v on host %#v", request.Path, request.Committish, request.Project, c.hostname).Err()
-		}
 	}
+	var revision *Revision
+	for commitId := request.Committish; commitId != ""; {
+		var ok bool
+		revision, ok = project.Revisions[commitId]
+		if !ok {
+			revision = &Revision{}
+		} else if revision == nil {
+			return nil, errors.Reason("unknown revision %#v of project %#v on host %#v", request.Committish, request.Project, c.hostname).Err()
+		}
+		commitId = revision.Parent
+	}
+	contents := revision.Files[request.Path]
 	if contents == nil {
-		s := fmt.Sprintf(`{
-			"$fake-contents": {
-				"host": %#v,
-				"project": %#v,
-				"revision": %#v,
-				"path": %#v
-			}
-		}`, c.hostname, request.Project, request.Committish, request.Path)
-		contents = &s
+		return nil, errors.Reason("unknown file %#v at revision %#v of project %#v on host %#v", request.Path, request.Committish, request.Project, c.hostname).Err()
 	}
 	return &gitilespb.DownloadFileResponse{
 		Contents: *contents,

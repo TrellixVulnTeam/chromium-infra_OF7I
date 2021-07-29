@@ -53,8 +53,8 @@ func TestPerformBootstrap(t *testing.T) {
 	t.Parallel()
 
 	project := &fakegitiles.Project{
-		Refs:  map[string]string{},
-		Files: map[fakegitiles.FileRevId]*string{},
+		Refs:      map[string]string{},
+		Revisions: map[string]*fakegitiles.Revision{},
 	}
 
 	pkg := &fakecipd.Package{
@@ -132,12 +132,13 @@ func TestPerformBootstrap(t *testing.T) {
 				}
 			}`)
 			project.Refs["fake-ref"] = "fake-revision"
-			project.Files[fakegitiles.FileRevId{
-				Revision: "fake-revision",
-				Path:     "fake-properties-file",
-			}] = strPtr(`{
-				"foo": "bar"
-			}`)
+			project.Revisions["fake-revision"] = &fakegitiles.Revision{
+				Files: map[string]*string{
+					"fake-properties-file": strPtr(`{
+						"foo": "bar"
+					}`),
+				},
+			}
 
 			cmd, err := performBootstrap(ctx, input, cipdRoot, "fake-output-path")
 

@@ -29,8 +29,8 @@ func TestPropertyBootstrapper(t *testing.T) {
 		}
 
 		topLevelProject := &fakegitiles.Project{
-			Refs:  map[string]string{},
-			Files: map[fakegitiles.FileRevId]*string{},
+			Refs:      map[string]string{},
+			Revisions: map[string]*fakegitiles.Revision{},
 		}
 
 		ctx = gitiles.UseGitilesClientFactory(ctx, fakegitiles.Factory(map[string]*fakegitiles.Host{
@@ -75,11 +75,6 @@ func TestPropertyBootstrapper(t *testing.T) {
 
 				Convey("if unable to get file", func() {
 					input := getInput(build)
-					topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelProject.Files[fakegitiles.FileRevId{
-						Revision: "top-level-top-level-head",
-						Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-					}] = nil
 
 					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
 
@@ -90,10 +85,11 @@ func TestPropertyBootstrapper(t *testing.T) {
 				Convey("if the properties file is invalid", func() {
 					input := getInput(build)
 					topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelProject.Files[fakegitiles.FileRevId{
-						Revision: "top-level-top-level-head",
-						Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-					}] = strPtr("")
+					topLevelProject.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+						Files: map[string]*string{
+							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(""),
+						},
+					}
 
 					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
 
@@ -107,15 +103,16 @@ func TestPropertyBootstrapper(t *testing.T) {
 
 				Convey("with properties from the properties file", func() {
 					topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelProject.Files[fakegitiles.FileRevId{
-						Revision: "top-level-top-level-head",
-						Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-					}] = strPtr(`{
-						"$build/baz": {
-							"quux": "quuz"
+					topLevelProject.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+						Files: map[string]*string{
+							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
+								"$build/baz": {
+									"quux": "quuz"
+								},
+								"foo": "bar"
+							}`),
 						},
-						"foo": "bar"
-					}`)
+					}
 					input := getInput(build)
 
 					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
@@ -128,15 +125,16 @@ func TestPropertyBootstrapper(t *testing.T) {
 
 				Convey("with build properties merged with properties from the properties file", func() {
 					topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelProject.Files[fakegitiles.FileRevId{
-						Revision: "top-level-top-level-head",
-						Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-					}] = strPtr(`{
-						"$build/baz": {
-							"quux": "quuz"
+					topLevelProject.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+						Files: map[string]*string{
+							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
+								"$build/baz": {
+									"quux": "quuz"
+								},
+								"foo": "bar"
+							}`),
 						},
-						"foo": "bar"
-					}`)
+					}
 					setPropertiesFromJson(build, map[string]string{
 						"$build/baz": `{
 							"quuy": "quuw"
@@ -163,10 +161,11 @@ func TestPropertyBootstrapper(t *testing.T) {
 							Ref:     "refs/heads/some-branch",
 						}
 						topLevelProject.Refs["refs/heads/some-branch"] = "top-level-some-branch-head"
-						topLevelProject.Files[fakegitiles.FileRevId{
-							Revision: "top-level-some-branch-head",
-							Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-						}] = strPtr(`{"test_property": "some-branch-head-value"}`)
+						topLevelProject.Revisions["top-level-some-branch-head"] = &fakegitiles.Revision{
+							Files: map[string]*string{
+								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "some-branch-head-value"}`),
+							},
+						}
 						input := getInput(build)
 
 						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
@@ -190,10 +189,11 @@ func TestPropertyBootstrapper(t *testing.T) {
 							Ref:     "refs/heads/some-branch",
 							Id:      "some-branch-revision",
 						}
-						topLevelProject.Files[fakegitiles.FileRevId{
-							Revision: "some-branch-revision",
-							Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-						}] = strPtr(`{"test_property": "some-branch-revision-value"}`)
+						topLevelProject.Revisions["some-branch-revision"] = &fakegitiles.Revision{
+							Files: map[string]*string{
+								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "some-branch-revision-value"}`),
+							},
+						}
 						input := getInput(build)
 
 						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
@@ -218,10 +218,11 @@ func TestPropertyBootstrapper(t *testing.T) {
 						}
 						input := getInput(build)
 						topLevelProject.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-						topLevelProject.Files[fakegitiles.FileRevId{
-							Revision: "top-level-top-level-head",
-							Path:     "infra/config/fake-bucket/fake-builder/properties.textpb",
-						}] = strPtr(`{"test_property": "top-level-head-value"}`)
+						topLevelProject.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+							Files: map[string]*string{
+								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "top-level-head-value"}`),
+							},
+						}
 
 						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
 

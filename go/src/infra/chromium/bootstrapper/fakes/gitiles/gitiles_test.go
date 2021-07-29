@@ -70,6 +70,82 @@ func logRequest(project, ref string) *gitilespb.LogRequest {
 	}
 }
 
+func TestLog(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	Convey("gitilesClient.Log", t, func() {
+
+		Convey("returns a revision by default", func() {
+			client, _ := Factory(nil)(ctx, "fake-host")
+
+			response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Log, ShouldHaveLength, 1)
+			So(response.Log[0].Id, ShouldNotBeEmpty)
+		})
+
+		Convey("fails for a nil project", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": nil,
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+
+			So(err, ShouldErrLike, `unknown project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
+		})
+
+		Convey("fails for an empty ref revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Refs: map[string]string{
+								"refs/heads/fake-branch": "",
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+
+			So(err, ShouldErrLike, `unknown ref "refs/heads/fake-branch" for project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
+		})
+
+		Convey("returns log for provided revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Refs: map[string]string{
+								"refs/heads/fake-branch": "fake-revision",
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Log, ShouldHaveLength, 1)
+			So(response.Log[0].Id, ShouldEqual, "fake-revision")
+		})
+
+	})
+}
+
 func downloadFileRequest(project, revision, path string) *gitilespb.DownloadFileRequest {
 	return &gitilespb.DownloadFileRequest{
 		Project:    project,
@@ -78,146 +154,128 @@ func downloadFileRequest(project, revision, path string) *gitilespb.DownloadFile
 	}
 }
 
-func TestGitilesClient(t *testing.T) {
+func TestDownloadFile(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
-	Convey("gitilesClient", t, func() {
+	Convey("gitilesClient.DownloadFile", t, func() {
 
-		Convey("Log", func() {
+		Convey("fails by default", func() {
+			client, _ := Factory(nil)(ctx, "fake-host")
 
-			Convey("returns a revision by default", func() {
-				client, _ := Factory(nil)(ctx, "fake-host")
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
 
-				response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+			So(err, ShouldErrLike, `unknown file "fake/file"`)
+			So(response, ShouldBeNil)
+		})
 
-				So(err, ShouldBeNil)
-				So(response, ShouldNotBeNil)
-				So(response.Log, ShouldHaveLength, 1)
-				So(response.Log[0].Id, ShouldNotBeEmpty)
-			})
-
-			Convey("fails for a nil project", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": nil,
-						},
+		Convey("fails for a nil project", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": nil,
 					},
-				})(ctx, "fake-host")
+				},
+			})(ctx, "fake-host")
 
-				response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
 
-				So(err, ShouldErrLike, `unknown project "fake/project" on host "fake-host"`)
-				So(response, ShouldBeNil)
-			})
+			So(err, ShouldErrLike, `unknown project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
+		})
 
-			Convey("fails for an empty ref revision", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": {
-								Refs: map[string]string{
-									"refs/heads/fake-branch": "",
-								},
+		Convey("fails for a nil revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision": nil,
 							},
 						},
 					},
-				})(ctx, "fake-host")
+				},
+			})(ctx, "fake-host")
 
-				response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
 
-				So(err, ShouldErrLike, `unknown ref "refs/heads/fake-branch" for project "fake/project" on host "fake-host"`)
-				So(response, ShouldBeNil)
-			})
-
-			Convey("returns log for provided revision", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": {
-								Refs: map[string]string{
-									"refs/heads/fake-branch": "fake-revision",
-								},
-							},
-						},
-					},
-				})(ctx, "fake-host")
-
-				response, err := client.Log(ctx, logRequest("fake/project", "refs/heads/fake-branch"))
-
-				So(err, ShouldBeNil)
-				So(response, ShouldNotBeNil)
-				So(response.Log, ShouldHaveLength, 1)
-				So(response.Log[0].Id, ShouldEqual, "fake-revision")
-			})
+			So(err, ShouldErrLike, `unknown revision "fake-revision" of project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
 
 		})
 
-		Convey("DownloadFile", func() {
-
-			Convey("returns contents by default", func() {
-				client, _ := Factory(nil)(ctx, "fake-host")
-
-				response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
-				So(err, ShouldBeNil)
-				So(response, ShouldNotBeEmpty)
-			})
-
-			Convey("fails for a nil project", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": nil,
-						},
-					},
-				})(ctx, "fake-host")
-
-				response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
-
-				So(err, ShouldErrLike, `unknown project "fake/project" on host "fake-host"`)
-				So(response, ShouldBeNil)
-			})
-
-			Convey("fails for nil contents", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": {
-								Files: map[FileRevId]*string{
-									{"fake-revision", "fake/file"}: nil,
+		Convey("returns contents for provided file at revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision": {
+									Files: map[string]*string{
+										"fake/file": strPtr("fake-contents"),
+									},
 								},
 							},
 						},
 					},
-				})(ctx, "fake-host")
+				},
+			})(ctx, "fake-host")
 
-				response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
-				So(err, ShouldErrLike, `unknown file "fake/file" at revision "fake-revision" of project "fake/project" on host "fake-host"`)
-				So(response, ShouldBeNil)
-			})
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
 
-			Convey("returns contents for provided file rev ID", func() {
-				client, _ := Factory(map[string]*Host{
-					"fake-host": {
-						Projects: map[string]*Project{
-							"fake/project": {
-								Files: map[FileRevId]*string{
-									{"fake-revision", "fake/file"}: strPtr("fake-contents"),
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Contents, ShouldEqual, "fake-contents")
+		})
+
+		Convey("returns contents for provided file at revision where file is not affected", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision-1": {
+									Files: map[string]*string{
+										"fake/file": strPtr("fake-contents"),
+									},
+								},
+								"fake-revision-2": {
+									Parent: "fake-revision-1",
 								},
 							},
 						},
 					},
-				})(ctx, "fake-host")
+				},
+			})(ctx, "fake-host")
 
-				response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision-2", "fake/file"))
 
-				So(err, ShouldBeNil)
-				So(response, ShouldNotBeNil)
-				So(response.Contents, ShouldEqual, "fake-contents")
-			})
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Contents, ShouldEqual, "fake-contents")
+		})
 
+		Convey("fails for nil contents", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision": {
+									Files: map[string]*string{
+										"fake/file": nil,
+									},
+								},
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.DownloadFile(ctx, downloadFileRequest("fake/project", "fake-revision", "fake/file"))
+			So(err, ShouldErrLike, `unknown file "fake/file" at revision "fake-revision" of project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
 		})
 
 	})
@@ -245,8 +303,12 @@ func TestIntegration(t *testing.T) {
 				"fake-host": {
 					Projects: map[string]*Project{
 						"fake/project": {
-							Files: map[FileRevId]*string{
-								{"fake-revision", "fake/file"}: strPtr("fake-contents"),
+							Revisions: map[string]*Revision{
+								"fake-revision": {
+									Files: map[string]*string{
+										"fake/file": strPtr("fake-contents"),
+									},
+								},
 							},
 						},
 					},
