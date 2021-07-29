@@ -60,6 +60,13 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       a Checkout object with commands for common actions on infra checkout.
     """
     assert gclient_config_name, gclient_config_name
+
+    with self.m.context(cwd=self.m.path['start_dir']):
+      if self.m.platform.is_win:
+        # Need to enable support for symlinks on Windows for unittest in luci-py
+        self.m.git(
+            'config', '--global', 'core.symlinks', 'true', name='set symlinks')
+
     if named_cache is None:
       named_cache = (self.INTERNAL_NAMED_CACHE if internal else
                      self.PUBLIC_NAMED_CACHE)
