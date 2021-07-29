@@ -9,12 +9,14 @@ set -o pipefail
 
 PREFIX="$1"
 
-export CXXFLAGS+=" -fPIC"
+export CXXFLAGS+=" -fPIC -std=c++11"
 ./autogen.sh
 
 ./configure --enable-static --disable-shared \
   --prefix="$PREFIX" \
   --host="$CROSS_TRIPLE"
 make
-make check
+if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then
+  make check
+fi
 make install -j $(nproc)
