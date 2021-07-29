@@ -24,6 +24,7 @@ type Client struct {
 type GitilesClient interface {
 	Log(context.Context, *gitilespb.LogRequest, ...grpc.CallOption) (*gitilespb.LogResponse, error)
 	DownloadFile(context.Context, *gitilespb.DownloadFileRequest, ...grpc.CallOption) (*gitilespb.DownloadFileResponse, error)
+	DownloadDiff(context.Context, *gitilespb.DownloadDiffRequest, ...grpc.CallOption) (*gitilespb.DownloadDiffResponse, error)
 }
 
 // Enforce that the GitilesClient interface is a subset of the generated client
@@ -109,6 +110,23 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 		Path:       path,
 	}
 	response, err := gitilesClient.DownloadFile(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return response.Contents, nil
+}
+
+// DownloadDiff returns the diff between a given revision and its parent.
+func (c *Client) DownloadDiff(ctx context.Context, host, project, revision string) (string, error) {
+	gitilesClient, err := c.gitilesClientForHost(ctx, host)
+	if err != nil {
+		return "", err
+	}
+	request := &gitilespb.DownloadDiffRequest{
+		Project:    project,
+		Committish: revision,
+	}
+	response, err := gitilesClient.DownloadDiff(ctx, request)
 	if err != nil {
 		return "", err
 	}

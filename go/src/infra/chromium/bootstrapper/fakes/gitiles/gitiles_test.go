@@ -7,6 +7,7 @@ package gitiles
 import (
 	"context"
 	"infra/chromium/bootstrapper/gitiles"
+	"regexp"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -281,6 +282,155 @@ func TestDownloadFile(t *testing.T) {
 	})
 }
 
+func downloadDiffRequest(project, revision string) *gitilespb.DownloadDiffRequest {
+	return &gitilespb.DownloadDiffRequest{
+		Project:    project,
+		Committish: revision,
+	}
+}
+
+func TestDownloadDiff(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	Convey("gitilesClient.DownloadFile", t, func() {
+
+		Convey("returns an empty diff by default", func() {
+			client, _ := Factory(nil)(ctx, "fake-host")
+
+			response, err := client.DownloadDiff(ctx, downloadDiffRequest("fake/project", "fake-revision"))
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			So(response.Contents, ShouldBeEmpty)
+		})
+
+		Convey("fails for a nil project", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": nil,
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.DownloadDiff(ctx, downloadDiffRequest("fake/project", "fake-revision"))
+
+			So(err, ShouldErrLike, `unknown project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
+		})
+
+		Convey("fails for a nil revision", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision": nil,
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.DownloadDiff(ctx, downloadDiffRequest("fake/project", "fake-revision"))
+
+			So(err, ShouldErrLike, `unknown revision "fake-revision" of project "fake/project" on host "fake-host"`)
+			So(response, ShouldBeNil)
+		})
+
+		Convey("returns difference between revision and parent", func() {
+			client, _ := Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision-1": {
+									Files: map[string]*string{
+										"to-re-add": strPtr("fake-contents-to-be-re-added\n"),
+									},
+								},
+								"fake-revision-2": {
+									Files: map[string]*string{
+										"to-modify":         strPtr("fake-contents-1\n"),
+										"to-make-non-empty": strPtr(""),
+										"to-clear":          strPtr("fake-contents-to-be-removed\n"),
+										"to-delete":         strPtr("fake-contents-for-file-to-be-deleted\n"),
+										"to-re-add":         nil,
+									},
+									Parent: "fake-revision-1",
+								},
+								"fake-revision-3": {
+									Files: map[string]*string{
+										"to-modify":         strPtr("fake-contents-2\n"),
+										"to-make-non-empty": strPtr("fake-contents-added\n"),
+										"to-add":            strPtr("fake-contents-for-new-file\n"),
+										"to-clear":          strPtr(""),
+										"to-delete":         nil,
+										"to-re-add":         strPtr("fake-contents-to-be-re-added\n"),
+									},
+									Parent: "fake-revision-2",
+								},
+							},
+						},
+					},
+				},
+			})(ctx, "fake-host")
+
+			response, err := client.DownloadDiff(ctx, downloadDiffRequest("fake/project", "fake-revision-3"))
+
+			So(err, ShouldBeNil)
+			So(response, ShouldNotBeNil)
+			// (?m) - multiline regex mode: ^ matches line start
+			contents := regexp.MustCompile(`(?m)^index [0-9a-f]+\.\.[0-9a-f]+`).ReplaceAllLiteralString(response.Contents, "index A..B")
+			So(contents, ShouldEqual,
+				`diff --git a/to-add b/to-add
+new file mode 100644
+index A..B
+--- /dev/null
++++ b/to-add
+@@ -0,0 +1 @@
++fake-contents-for-new-file
+diff --git a/to-clear b/to-clear
+index A..B 100644
+--- a/to-clear
++++ b/to-clear
+@@ -1 +0,0 @@
+-fake-contents-to-be-removed
+diff --git a/to-delete b/to-delete
+deleted file mode 100644
+index A..B
+--- a/to-delete
++++ /dev/null
+@@ -1 +0,0 @@
+-fake-contents-for-file-to-be-deleted
+diff --git a/to-make-non-empty b/to-make-non-empty
+index A..B 100644
+--- a/to-make-non-empty
++++ b/to-make-non-empty
+@@ -0,0 +1 @@
++fake-contents-added
+diff --git a/to-modify b/to-modify
+index A..B 100644
+--- a/to-modify
++++ b/to-modify
+@@ -1 +1 @@
+-fake-contents-1
++fake-contents-2
+diff --git a/to-re-add b/to-re-add
+new file mode 100644
+index A..B
+--- /dev/null
++++ b/to-re-add
+@@ -0,0 +1 @@
++fake-contents-to-be-re-added
+`)
+		})
+	})
+
+}
+
 func TestIntegration(t *testing.T) {
 	t.Parallel()
 
@@ -320,6 +470,36 @@ func TestIntegration(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(contents, ShouldEqual, "fake-contents")
+		})
+
+		Convey("succeeds when calling DownloadDiff", func() {
+			ctx := gitiles.UseGitilesClientFactory(ctx, Factory(map[string]*Host{
+				"fake-host": {
+					Projects: map[string]*Project{
+						"fake/project": {
+							Revisions: map[string]*Revision{
+								"fake-revision-1": {
+									Files: map[string]*string{
+										"fake/file": strPtr("fake-contents-1"),
+									},
+								},
+								"fake-revision-2": {
+									Files: map[string]*string{
+										"fake/file": strPtr("fake-contents-2"),
+									},
+									Parent: "fake-revision-1",
+								},
+							},
+						},
+					},
+				},
+			}))
+			client := gitiles.NewClient(ctx)
+
+			contents, err := client.DownloadDiff(ctx, "fake-host", "fake/project", "fake-revision-2")
+
+			So(err, ShouldBeNil)
+			So(contents, ShouldNotBeEmpty)
 		})
 
 	})

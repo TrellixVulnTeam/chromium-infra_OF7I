@@ -8,10 +8,17 @@ import (
 	"context"
 	"fmt"
 	"infra/chromium/bootstrapper/gitiles"
+	"infra/chromium/bootstrapper/util"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/system/filesystem"
+	"go.chromium.org/luci/common/testing/testfs"
 	"google.golang.org/grpc"
 )
 
@@ -109,27 +116,106 @@ func (c *Client) Log(ctx context.Context, request *gitilespb.LogRequest, options
 	}, nil
 }
 
-func (c *Client) DownloadFile(ctx context.Context, request *gitilespb.DownloadFileRequest, options ...grpc.CallOption) (*gitilespb.DownloadFileResponse, error) {
-	project, err := c.getProject(request.Project)
+type commit struct {
+	id       string
+	revision *Revision
+}
+
+func (c *Client) getRevisionHistory(projectName, commitId string) ([]*commit, error) {
+	project, err := c.getProject(projectName)
 	if err != nil {
 		return nil, err
 	}
-	var revision *Revision
-	for commitId := request.Committish; commitId != ""; {
-		var ok bool
-		revision, ok = project.Revisions[commitId]
+	var history []*commit
+	for commitId != "" {
+		revision, ok := project.Revisions[commitId]
 		if !ok {
 			revision = &Revision{}
 		} else if revision == nil {
-			return nil, errors.Reason("unknown revision %#v of project %#v on host %#v", request.Committish, request.Project, c.hostname).Err()
+			return nil, errors.Reason("unknown revision %#v of project %#v on host %#v", commitId, projectName, c.hostname).Err()
 		}
+		history = append(history, &commit{commitId, revision})
 		commitId = revision.Parent
 	}
-	contents := revision.Files[request.Path]
+	return history, nil
+}
+
+func (c *Client) DownloadFile(ctx context.Context, request *gitilespb.DownloadFileRequest, options ...grpc.CallOption) (*gitilespb.DownloadFileResponse, error) {
+	history, err := c.getRevisionHistory(request.Project, request.Committish)
+	if err != nil {
+		return nil, err
+	}
+	var contents *string
+	var ok bool
+	for _, commit := range history {
+		contents, ok = commit.revision.Files[request.Path]
+		if ok {
+			break
+		}
+	}
 	if contents == nil {
 		return nil, errors.Reason("unknown file %#v at revision %#v of project %#v on host %#v", request.Path, request.Committish, request.Project, c.hostname).Err()
 	}
 	return &gitilespb.DownloadFileResponse{
 		Contents: *contents,
 	}, nil
+}
+
+// DownloadDiff downloads the diff between a revision and its parent.
+//
+// To ensure that the diffs created are accurate and match the behavior of git
+// (which implements its own diffing with rename/copy detection), a local git
+// instance is created and commits populated with the fake data. This git
+// instance then produces the diff.
+func (c *Client) DownloadDiff(ctx context.Context, request *gitilespb.DownloadDiffRequest, options ...grpc.CallOption) (*gitilespb.DownloadDiffResponse, error) {
+	history, err := c.getRevisionHistory(request.Project, request.Committish)
+	if err != nil {
+		return nil, err
+	}
+
+	tmp, err := ioutil.TempDir("", "")
+	util.PanicOnError(err)
+
+	git := func(args ...string) string {
+		cmd := exec.CommandContext(ctx, "git", args...)
+		cmd.Dir = tmp
+		output, err := cmd.Output()
+		util.PanicOnError(err)
+		return string(output)
+	}
+	git("init")
+
+	commit := func(message string) {
+		git("add", ".")
+		git("commit", "--allow-empty", "-m", message)
+	}
+
+	files := map[string]string{}
+	for i := len(history) - 1; i > 0; i -= 1 {
+		for path, contents := range history[i].revision.Files {
+			if contents == nil {
+				delete(files, path)
+			} else {
+				files[path] = *contents
+			}
+		}
+	}
+	util.PanicOnError(testfs.Build(tmp, files))
+	commit("parent commit")
+
+	for path, contents := range history[0].revision.Files {
+		f := filepath.Join(tmp, filepath.FromSlash(path))
+		if contents != nil {
+			util.PanicOnError(filesystem.MakeDirs(filepath.Dir(f)))
+			util.PanicOnError(ioutil.WriteFile(f, []byte(*contents), 0644))
+		} else {
+			if _, ok := files[path]; ok {
+				util.PanicOnError(os.Remove(f))
+			}
+		}
+	}
+	commit("target commit")
+
+	diff := git("diff", "HEAD^", "HEAD")
+	return &gitilespb.DownloadDiffResponse{Contents: string(diff)}, nil
 }
