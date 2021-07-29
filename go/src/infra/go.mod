@@ -15,7 +15,7 @@ require (
 	github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794
 	github.com/andygrunwald/go-gerrit v0.0.0-20210709065208-9d38b0be0268
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210716071054-a231a1a7f1cc // indirect
-	github.com/bazelbuild/remote-apis-sdks v0.0.0-20210726115642-e96eb06339fb
+	github.com/bazelbuild/remote-apis-sdks v0.0.0-20210729102220-7ce38e08f10d
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/danjacques/gofslock v0.0.0-20200623023034-5d0bd0fa6ef0
