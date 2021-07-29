@@ -11,6 +11,7 @@
   * [infra_cipd](#recipe_modules-infra_cipd)
   * [infra_system](#recipe_modules-infra_system)
   * [omahaproxy](#recipe_modules-omahaproxy)
+  * [powershell](#recipe_modules-powershell)
   * [provenance](#recipe_modules-provenance)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
@@ -53,6 +54,7 @@
   * [infra_system:examples/full](#recipes-infra_system_examples_full)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
+  * [powershell:examples/test](#recipes-powershell_examples_test)
   * [provenance:examples/usage](#recipes-provenance_examples_usage)
   * [recipe_autoroller](#recipes-recipe_autoroller) &mdash; Rolls recipes.
   * [recipe_bundler](#recipes-recipe_bundler)
@@ -426,6 +428,27 @@ APIs for interacting with omahaproxy.
 &mdash; **def [history](/recipes/recipe_modules/omahaproxy/api.py#20)(self, min_major_version=None, exclude_platforms=None):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [split\_version](/recipes/recipe_modules/omahaproxy/api.py#14)(text):**
+### *recipe_modules* / [powershell](/recipes/recipe_modules/powershell)
+
+[DEPS](/recipes/recipe_modules/powershell/__init__.py#5): [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+#### **class [PowershellAPI](/recipes/recipe_modules/powershell/api.py#9)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+
+API to execute powershell scripts 
+
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/powershell/api.py#12)(self, name, command, logs=None, args=None):**
+
+Execute a command through powershell.
+Args:
+  * name (str) - name of the step being run
+  * command (str|path) - powershell command or windows script/exe to run
+  * logs ([]str) - List of logs to read on completion. Specifying dir reads
+      all logs in dir
+  * args ([]str) - List of args supplied to the command
+Returns:
+  Dict containing 'results' as a key
+Raises:
+  StepFailure if the failure is detected. See resources/psinvoke.py
 ### *recipe_modules* / [provenance](/recipes/recipe_modules/provenance)
 
 [DEPS](/recipes/recipe_modules/provenance/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -871,21 +894,21 @@ Args:
   disable_path_prefix: disable filtering out DEPS by path prefix.
 ### *recipe_modules* / [windows\_adk](/recipes/recipe_modules/windows_adk)
 
-[DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 #### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows ADK distributed via CIPD.
 
-&mdash; **def [cleanup](/recipes/recipe_modules/windows_adk/api.py#136)(self):**
+&mdash; **def [cleanup](/recipes/recipe_modules/windows_adk/api.py#115)(self):**
 
 Remove the ADK and WinPE.
 
-&mdash; **def [cleanup\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#102)(self):**
+&mdash; **def [cleanup\_win\_adk](/recipes/recipe_modules/windows_adk/api.py#83)(self):**
 
 Cleanup the Windows ADK.
 
-&mdash; **def [cleanup\_winpe](/recipes/recipe_modules/windows_adk/api.py#119)(self):**
+&mdash; **def [cleanup\_winpe](/recipes/recipe_modules/windows_adk/api.py#99)(self):**
 
 Cleanup WinPE.
 
@@ -897,48 +920,44 @@ Ensure the presence of the Windows ADK.
 
 Downloads & Installs the Windows ADK.
 
-&mdash; **def [ensure\_win\_adk\_winpe](/recipes/recipe_modules/windows_adk/api.py#72)(self, refs):**
+&mdash; **def [ensure\_win\_adk\_winpe](/recipes/recipe_modules/windows_adk/api.py#63)(self, refs):**
 
 Ensures that the WinPE add-on is available.
 ### *recipe_modules* / [windows\_scripts\_executor](/recipes/recipe_modules/windows_scripts_executor)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [powershell](#recipe_modules-powershell), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#36)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#29)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#87)(self, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#86)(self, save=True):**
 
-Unmounts the wim pe image and saves changes to it
+Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#94)(self, command, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#93)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#46)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#39)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [gen\_ps\_script\_cmd](/recipes/recipe_modules/windows_scripts_executor/api.py#107)(self, command, \*args):**
-
-Generate the powershell command.
-
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#75)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#71)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#116)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
+&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#98)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
 
 Mount the wim to a dir for modification
 
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#69)(self, action):**
+&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#64)(self, action):**
 
 Performs the given action
 
-&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#150)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
+&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
 
-Unmount the win pe wim from the given directory
+Unmount the winpe wim from the given directory
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1240,6 +1259,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 [DEPS](/recipes/recipes/luci_py.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/luci_py.py#24)(api):**
+### *recipes* / [powershell:examples/test](/recipes/recipe_modules/powershell/examples/test.py)
+
+[DEPS](/recipes/recipe_modules/powershell/examples/test.py#8): [powershell](#recipe_modules-powershell), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/powershell/examples/test.py#17)(api):**
 ### *recipes* / [provenance:examples/usage](/recipes/recipe_modules/provenance/examples/usage.py)
 
 [DEPS](/recipes/recipe_modules/provenance/examples/usage.py#5): [provenance](#recipe_modules-provenance), [recipe\_engine/path][recipe_engine/recipe_modules/path]
@@ -1328,21 +1352,21 @@ This recipe runs legacy analyzers for the infra repo.
 &mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#54)(api, source_repo, target_repo, extra_submodules, refs, overlays):**
 ### *recipes* / [windows\_adk:examples/ensure](/recipes/recipe_modules/windows_adk/examples/ensure.py)
 
-[DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#15)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#16)(api):**
 ### *recipes* / [windows\_image\_builder/offline](/recipes/recipes/windows_image_builder/offline.py)
 
-[DEPS](/recipes/recipes/windows_image_builder/offline.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/windows_image_builder/offline.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#25)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#26)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_scripts\_executor:examples/test](/recipes/recipe_modules/windows_scripts_executor/examples/test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#9): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#18)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#19)(api, image):**
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

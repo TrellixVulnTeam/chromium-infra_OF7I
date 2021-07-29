@@ -8,6 +8,7 @@ DEPS = [
     'windows_adk',
     'recipe_engine/properties',
     'recipe_engine/file',
+    'recipe_engine/json',
     'recipe_engine/path',
 ]
 
@@ -18,14 +19,43 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  STEP_INSTALL_ADK_PASS = api.step_data(
+      'ensure windows adk present.PowerShell> Install ADK',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]/logs/adk/adk.log': 'i007: Exit code: 0x0',
+      }))
+  STEP_INSTALL_WINPE_PASS = api.step_data(
+      'ensure win-pe add-on present.PowerShell> Install WinPE',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]/logs/winpe/winpe.log': 'i007: Exit code: 0x0',
+      }))
+  STEP_UNINSTALL_ADK_PASS = api.step_data(
+      'PowerShell> Uninstall ADK',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]/logs/adk-uninstall/adk.log': 'i007: Exit code: 0x0',
+      }))
+  STEP_UNINSTALL_WINPE_PASS = api.step_data(
+      'PowerShell> Uninstall WinPE',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]/logs/winpe-uninstall/winpe.log': 'i007: Exit code: 0x0',
+      }))
+
   yield (api.test('basic') +
          api.properties(win_adk_refs='canary', win_adk_winpe_refs='canary') +
          api.post_process(StepCommandRE, 'ensure windows adk present', []) +
          api.post_process(StepCommandRE, 'ensure win-pe add-on present', []) +
-         api.post_process(StepCommandRE, 'Uninstall ADK', [
-             '\[START_DIR\]/cipd/3pp/adk/raw_source_0.exe', '/q', '/uninstall',
-             '/l', '\[CLEANUP\]/logs/adk-uninstall/adk.log'
-         ]) + api.post_process(StepCommandRE, 'Uninstall WinPE', [
-             '\[START_DIR\]/cipd/3pp/winpe/raw_source_0.exe', '/q',
-             '/uninstall', '/l', '\[CLEANUP\]/logs/winpe-uninstall/winpe.log'
-         ]) + api.post_process(DropExpectation))
+         STEP_INSTALL_ADK_PASS + STEP_INSTALL_WINPE_PASS +
+         STEP_UNINSTALL_ADK_PASS + STEP_UNINSTALL_WINPE_PASS +
+         api.post_process(DropExpectation))

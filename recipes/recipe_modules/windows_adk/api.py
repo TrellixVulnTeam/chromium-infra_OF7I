@@ -47,26 +47,17 @@ class WindowsADKApi(recipe_api.RecipeApi):
     # Download the installer using cipd
     self.m.cipd.ensure(cipd_dir, ensure_file)
     logs_dir = self._logs.join('adk')
+    log_file = logs_dir.join('adk.log')
     # Run the installer and install ADK. If ADK is already installed this
     # does nothing. q: quiet, l: logs, features +: all features
-    self.m.step('Install ADK', [
-        cipd_dir.join('raw_source_0.exe'), '/q', '/l',
-        logs_dir.join('adk.log'), '/features', '+'
-    ])
-    with self.m.step.nest('Read install logs') as r:
-      ins_logs = self.m.file.listdir(
-          'Listing all logs', logs_dir, test_data=['adk.log'])
-      main_log = ''
-      for l in ins_logs:
-        c = self.m.file.read_raw(
-            'Reading ' + str(l), l, test_data='i007: Exit code: 0x0')
-        r.presentation.logs[str(l)] = c
-        if l == logs_dir.join('adk.log'):
-          main_log = c
-      # Raise error after checking the result
-      if 'i007: Exit code: 0x0' not in main_log:
-        raise self.m.step.InfraFailure(
-            'ADK installation failed')  # pragma: no cover
+    results = self.m.powershell(
+        'Install ADK',
+        cipd_dir.join('raw_source_0.exe'),
+        logs=[logs_dir],
+        args=['/q', '/l', log_file, '/features', '+'])
+    if results and 'i007: Exit code: 0x0' not in results[str(log_file)]:
+      raise self.m.step.InfraFailure(
+          'ADK installation failed')  # pragma: no cover
 
   # TODO(actodd): reconfigure 3pp builder to preserve the software name
   def ensure_win_adk_winpe(self, refs):
@@ -77,27 +68,17 @@ class WindowsADKApi(recipe_api.RecipeApi):
     # Download the installer using cipd
     self.m.cipd.ensure(cipd_dir, ensure_file)
     logs_dir = self._logs.join('winpe')
+    log_file = logs_dir.join('winpe.log')
     # Run the installer and install WinPE. If WinPE is already installed this
     # does nothing. q: quiet, l: logs, features +: all features
-    self.m.step('Install WinPE', [
-        cipd_dir.join('raw_source_0.exe'), '/q', '/l',
-        logs_dir.join('winpe.log'), '/features', '+'
-    ])
-    with self.m.step.nest('Read install logs') as r:
-      ins_logs = self.m.file.listdir(
-          'Listing all logs', logs_dir, test_data=['winpe.log'])
-      main_log = ''
-      for l in ins_logs:
-        # Read all the installation logs for display on milo
-        c = self.m.file.read_raw(
-            'Reading ' + str(l), l, test_data='i007: Exit code: 0x0')
-        r.presentation.logs[str(l)] = c
-        if l == logs_dir.join('winpe.log'):
-          main_log = c
-      # Raise error after checking the result
-      if 'i007: Exit code: 0x0' not in main_log:
-        raise self.m.step.InfraFailure(
-            'WinPE installation failed')  # pragma: no cover
+    results = self.m.powershell(
+        'Install WinPE',
+        cipd_dir.join('raw_source_0.exe'),
+        logs=[logs_dir],
+        args=['/q', '/l', log_file, '/features', '+'])
+    if results and 'i007: Exit code: 0x0' not in results[str(log_file)]:
+      raise self.m.step.InfraFailure(
+          'WinPE installation failed')  # pragma: no cover
 
   def cleanup_win_adk(self):
     """Cleanup the Windows ADK."""
@@ -106,15 +87,14 @@ class WindowsADKApi(recipe_api.RecipeApi):
     log_file = logs_dir.join('adk.log')
     # Run the installer and uninstall ADK. q: quiet, l: logs,
     # uninstall: remove all
-    self.m.step(
+    results = self.m.powershell(
         'Uninstall ADK',
-        [cipd_dir.join('raw_source_0.exe'), '/q', '/uninstall', '/l', log_file])
-    with self.m.step.nest('Read uninstall logs') as r:
-      ins_logs = self.m.file.listdir(
-          'Listing all logs', logs_dir, test_data=[log_file])
-      for l in ins_logs:
-        c = self.m.file.read_raw('Reading ' + str(l), l)
-        r.presentation.logs[str(l)] = c
+        cipd_dir.join('raw_source_0.exe'),
+        logs=[logs_dir],
+        args=['/q', '/l', log_file, '/uninstall'])
+    if results and 'i007: Exit code: 0x0' not in results[str(log_file)]:
+      raise self.m.step.InfraFailure(
+          'ADK uninstallation failed')  # pragma: no cover
 
   def cleanup_winpe(self):
     """Cleanup WinPE."""
@@ -123,15 +103,14 @@ class WindowsADKApi(recipe_api.RecipeApi):
     log_file = logs_dir.join('winpe.log')
     # Run the installer and uninstall WinPE. q: quiet, l: logs, uninstall:
     # remove all
-    self.m.step(
+    results = self.m.powershell(
         'Uninstall WinPE',
-        [cipd_dir.join('raw_source_0.exe'), '/q', '/uninstall', '/l', log_file])
-    with self.m.step.nest('Read uninstall logs') as r:
-      ins_logs = self.m.file.listdir(
-          'Listing all logs', logs_dir, test_data=[log_file])
-      for l in ins_logs:
-        c = self.m.file.read_raw('Reading ' + str(l), l)
-        r.presentation.logs[str(l)] = c
+        cipd_dir.join('raw_source_0.exe'),
+        logs=[logs_dir],
+        args=['/q', '/l', log_file, '/uninstall'])
+    if results and 'i007: Exit code: 0x0' not in results[str(log_file)]:
+      raise self.m.step.InfraFailure(
+          'WinPE uninstallation failed')  # pragma: no cover
 
   def cleanup(self):
     """Remove the ADK and WinPE."""

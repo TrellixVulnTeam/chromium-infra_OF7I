@@ -8,6 +8,7 @@ DEPS = [
     'recipe_engine/step',
     'recipe_engine/path',
     'recipe_engine/file',
+    'powershell'
 ]
 
 from recipe_engine.recipe_api import Property

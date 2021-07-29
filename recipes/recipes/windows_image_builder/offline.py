@@ -12,6 +12,7 @@ DEPS = [
     'depot_tools/gclient',
     'recipe_engine/context',
     'recipe_engine/file',
+    'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
@@ -29,9 +30,6 @@ def RunSteps(api, inputs):
 
   if not inputs.config_path:
     raise api.step.StepFailure("`config_path` is a required property")
-
-  # Ensure windows adk is installed
-  api.windows_adk.ensure()
 
   builder_named_cache = api.path['cache'].join('builder')
   config = None
@@ -52,15 +50,36 @@ def RunSteps(api, inputs):
           msg_class=wib.Image,
           codec='TEXTPB')
 
-  with api.step.nest('performing configuration'):
-    api.windows_scripts_executor.execute_wib_config(config)
+  # Ensure windows adk is installed
+  api.windows_adk.ensure()
+  api.windows_scripts_executor.execute_wib_config(config)
 
 
 def GenTests(api):
+  # Step data for use in tests
+  STEP_INSTALL_ADK_PASS = api.step_data(
+      'ensure windows adk present.PowerShell> Install ADK',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]\\logs\\adk\\adk.log': 'i007: Exit code: 0x0',
+      }))
 
-  yield api.test('basic', api.platform('win', 64)) + api.properties(
-      input_pb.Inputs(
-          config_path="test_config"))
+  STEP_INSTALL_WINPE_PASS = api.step_data(
+      'ensure win-pe add-on present.PowerShell> Install WinPE',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+          '[CLEANUP]\\logs\\winpe\\winpe.log': 'i007: Exit code: 0x0',
+      }))
+
+  yield (api.test('basic', api.platform('win', 64)) +
+         api.properties(input_pb.Inputs(config_path="test_config")) +
+         STEP_INSTALL_ADK_PASS + STEP_INSTALL_WINPE_PASS +
+         api.post_process(post_process.StatusFailure)
+        )  # fails as config is empty
 
   yield (
       api.test('not_run_on_windows', api.platform('linux', 64)) +
