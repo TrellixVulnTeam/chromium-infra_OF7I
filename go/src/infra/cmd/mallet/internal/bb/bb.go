@@ -67,28 +67,18 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 	return c, nil
 }
 
-func (c *Client) ScheduleRepair(ctx context.Context, unit string) (int64, error) {
+// ScheduleLabpackTask creates new task in build bucket with labpack.
+func (c *Client) ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error) {
 	dims := make(map[string]string)
 	dims["id"] = "crossk-" + unit
 
-	var tags []string
-	tags = append(tags, fmt.Sprintf("dut-name:%s", unit))
-
-	propsMap := map[string]interface{}{
-		"unit_name": unit,
-		"task_name": "admin_repair",
+	tags := []string{
+		fmt.Sprintf("dut-name:%s", unit),
 	}
-	props, err := structbuilder.NewStruct(propsMap)
-	if err != nil {
-		return -1, err
-	}
-
 	tagPairs, err := splitTagPairs(tags)
 	if err != nil {
 		return -1, err
 	}
-
-	bbDims := bbDimensions(dims)
 
 	bbReq := &buildbucket_pb.ScheduleBuildRequest{
 		Builder: &buildbucket_pb.BuilderID{
@@ -98,7 +88,7 @@ func (c *Client) ScheduleRepair(ctx context.Context, unit string) (int64, error)
 		},
 		Properties: props,
 		Tags:       tagPairs,
-		Dimensions: bbDims,
+		Dimensions: bbDimensions(dims),
 		Priority:   defaultTaskPriority,
 	}
 

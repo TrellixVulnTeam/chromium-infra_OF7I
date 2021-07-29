@@ -12,9 +12,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
+	"infra/cros/recovery"
 )
 
 // Recovery subcommand: Recovering the devices.
@@ -25,6 +27,8 @@ var Recovery = &subcommands.Command{
 	CommandRun: func() subcommands.CommandRun {
 		c := &recoveryRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
+		c.envFlags.Register(&c.Flags)
+		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		return c
 	},
 }
@@ -32,7 +36,13 @@ var Recovery = &subcommands.Command{
 type recoveryRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
+	envFlags  site.EnvFlags
+
+	onlyVerify bool
 }
+
+// Flag to manage if a task is allowed to update inventory after running a task.
+const enableUpdateInventory = false
 
 func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
@@ -49,17 +59,27 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 	if err != nil {
 		return err
 	}
-	var unit string
 	if len(args) == 0 {
-		return errors.New("Repair target is not specified")
-	} else {
-		unit = args[0]
+		return errors.Reason("create recovery task: unit is not specified").Err()
+	}
+	unit := args[0]
+	e := c.envFlags.Env()
+	props, err := structbuilder.NewStruct(map[string]interface{}{
+		"unit_name":         unit,
+		"task_name":         string(recovery.TaskNameRecovery),
+		"enable_recovery":   !c.onlyVerify,
+		"admin_service":     e.AdminService,
+		"inventory_service": e.UFSService,
+		"update_inventory":  enableUpdateInventory,
+	})
+	if err != nil {
+		return errors.Annotate(err, "create recovery task").Err()
 	}
 
-	taskID, err := bc.ScheduleRepair(ctx, unit)
+	taskID, err := bc.ScheduleLabpackTask(ctx, unit, props)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "create recovery task").Err()
 	}
-	fmt.Fprintf(a.GetOut(), "Created repair task for %s: %s\n", unit, bc.BuildURL(taskID))
+	fmt.Fprintf(a.GetOut(), "Created recovery task for %s: %s\n", unit, bc.BuildURL(taskID))
 	return nil
 }
