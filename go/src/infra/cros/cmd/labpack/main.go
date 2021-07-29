@@ -27,16 +27,9 @@ import (
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Starting with args: %s", os.Args)
-	localRun := false
-	for _, arg := range os.Args {
-		if arg == "-local" {
-			localRun = true
-			break
-		}
-	}
 
 	input := &steps.LabpackInput{}
-	if localRun {
+	if isLocalRun() {
 		log.Printf("Running in local mode")
 		ctx := context.Background()
 		state, ctx, err := build.Start(ctx, nil)
@@ -137,4 +130,13 @@ func internalRun(ctx context.Context, input *steps.LabpackInput, state *build.St
 		runVerifierStep(ctx, i, input, state)
 	}
 	return nil
+}
+
+func isLocalRun() bool {
+	for _, arg := range os.Args {
+		if arg == "-local" {
+			return true
+		}
+	}
+	return false
 }

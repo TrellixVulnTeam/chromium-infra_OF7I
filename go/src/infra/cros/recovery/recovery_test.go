@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/tlw"
@@ -139,7 +140,7 @@ func TestDUTPlans(t *testing.T) {
 	}
 }
 
-func TestRunDUTPlans(t *testing.T) {
+func TestRunDUTPlan(t *testing.T) {
 	t.Parallel()
 	Convey("bad cases", t, func() {
 		ctx := context.Background()
@@ -148,6 +149,10 @@ func TestRunDUTPlans(t *testing.T) {
 		}
 		args := &RunArgs{
 			Logger: logger.NewLogger(),
+		}
+		execArgs := &execs.RunArgs{
+			DUT:    dut,
+			Logger: args.Logger,
 		}
 		config := &planpb.Configuration{}
 		Convey("fail when no plans in config", func() {
@@ -173,7 +178,7 @@ func TestRunDUTPlans(t *testing.T) {
 					},
 				},
 			}
-			err := runDUTPlans(ctx, dut, config, args)
+			err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -186,8 +191,8 @@ func TestRunDUTPlans(t *testing.T) {
 		dut := &tlw.Dut{
 			Name: "test_dut",
 		}
-		args := &RunArgs{
-			Logger: logger.NewLogger(),
+		execArgs := &execs.RunArgs{
+			DUT: dut,
 		}
 		config := &planpb.Configuration{
 			Plans: map[string]*planpb.Plan{
@@ -201,7 +206,7 @@ func TestRunDUTPlans(t *testing.T) {
 				},
 			},
 		}
-		if err := runDUTPlans(ctx, dut, config, args); err != nil {
+		if err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
 			t.Errorf("Expected pass but failed: %s", err)
 		}
 	})
