@@ -1,4 +1,4 @@
-// Copyright 2032 The Chromium Authors. All rights reserved.
+// Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -17,9 +17,9 @@ const progName = "karte"
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
 // defaults.
 var DefaultAuthOptions = auth.Options{
-	// TODO(gregorynisbet): replace with real credential
-	ClientID:     "",
-	ClientSecret: "",
+	// TODO(gregorynisbet): replace with something unique to Karte.
+	ClientID:     "446450136466-2hr92jrq8e6i4tnsa56b52vacp7t3936.apps.googleusercontent.com",
+	ClientSecret: "uBfbay2KCy9t4QveJ-dOqHtp",
 	SecretsDir:   SecretsDir(),
 	Scopes:       []string{auth.OAuthScopeEmail, gitiles.OAuthScope},
 }

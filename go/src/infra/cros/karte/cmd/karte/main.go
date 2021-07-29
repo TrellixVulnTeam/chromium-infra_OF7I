@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
 
-	"infra/cros/karte/client"
+	kartecli "infra/cros/karte/cli"
 )
 
 // newApplication returns an application object for the karte command line client.
@@ -27,8 +27,8 @@ func newApplication() *cli.Application {
 			return gologger.StdConfig.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
-			client.ListActions,
-			client.CheckServer,
+			kartecli.ListActions,
+			kartecli.CheckServer,
 		},
 	}
 }
