@@ -256,7 +256,7 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_CaseInsensitiveBearer(
       self, mock_verifier):
     """We are case-insensitive when looking for the 'bearer' string."""
@@ -276,7 +276,7 @@ class MonorailServicerTest(unittest.TestCase):
     self.assertEqual(user_auth.email, some_other_site_user.email)
     mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_AutoCreateUser(self, mock_verifier):
     """We can auto-create Monorail users for the requester."""
     metadata = {'authorization': 'beaReR allowlisted-user-id-token'}
@@ -299,7 +299,7 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_ServiceAccountAllowed(
       self, mock_verifier):
     """We allow requests from allowlisted service accounts with correct aud."""
@@ -321,7 +321,7 @@ class MonorailServicerTest(unittest.TestCase):
     self.assertEqual(user_auth.email, allowlisted_service_account_email.email)
     mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_ServiceAccountNotAllowed(
       self, mock_verifier):
     """We raise an exception if the service account is not allowlisted"""
@@ -338,7 +338,7 @@ class MonorailServicerTest(unittest.TestCase):
         permissions.PermissionException, r'Account .+ is not allowlisted'):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_ServiceAccountBadAud(
       self, mock_verifier):
     """We raise an exception when a service account token['aud'] is invalid."""
@@ -357,7 +357,7 @@ class MonorailServicerTest(unittest.TestCase):
         permissions.PermissionException, r'Invalid token audience: .+'):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_ClientNotAllowed(
       self, mock_verifier):
     """We raise an exception if the client ID is not allowlisted."""
@@ -380,7 +380,7 @@ class MonorailServicerTest(unittest.TestCase):
       self.services.user.LookupUserID(
           self.cnxn, 'some-other-site-user@test.com')
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_NoEmail(self, mock_verifier):
     """We raise an exception if ID token has no email information."""
     metadata = {'authorization': 'Bearer allowlisted-user-id-token'}
@@ -391,7 +391,7 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  @mock.patch('google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_InvalidIDToken(self, mock_verifier):
     """We raise an exception if the ID token is invalid."""
     metadata = {'authorization': 'Bearer bad-token'}

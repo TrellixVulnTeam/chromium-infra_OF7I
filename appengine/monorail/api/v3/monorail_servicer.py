@@ -13,8 +13,8 @@ import logging
 import time
 import sys
 
-from third_party.google.oauth2 import id_token
-from third_party.google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from google.appengine.api import oauth
 from google.appengine.api import users

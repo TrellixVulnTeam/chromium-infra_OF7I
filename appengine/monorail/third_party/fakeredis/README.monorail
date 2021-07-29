@@ -1,9 +1,0 @@
-Name: fakeredis
-Short Name: fakeredis
-URL: https://github.com/jamesls/fakeredis
-Version: 1.1.1
-License: BSD License
-License File: https://github.com/jamesls/fakeredis/blob/master/COPYING
-
-Description:
-fakeredis provides testing stubs for redis-py.
