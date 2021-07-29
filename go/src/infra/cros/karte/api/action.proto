@@ -6,8 +6,8 @@ syntax = "proto3";
 
 package chromeos.karte;
 
-import "google/api/resource.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "infra/cros/karte/api;kartepb";
@@ -55,7 +55,8 @@ message Action {
   // This is the time that the event was first received, since events are
   // immutable outside of rare cases.
   // This field is managed by Karte itself.
-  google.protobuf.Timestamp create_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 8
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The status of an action is whether the action succeeded or failed.
   enum Status {

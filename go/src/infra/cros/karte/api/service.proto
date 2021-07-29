@@ -60,8 +60,7 @@ message CreateActionRequest {
 // CreateObservationRequest creates a single action.
 message CreateObservationRequest {
   // An observation is the observation record being created.
-  Observation observation = 1
-      [(google.api.field_behavior) = REQUIRED];
+  Observation observation = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // ListActionsRequest takes a page size and a token indicating where to start.
@@ -78,6 +77,13 @@ message ListActionsRequest {
   // When paginating, all other parameters provided to `ListActions` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // Filter is a query using an expression syntax described in
+  // filter_syntax.md.
+  //
+  // Currently supported filterable fields for actions are:
+  // - kind
+  string filter = 3;
 }
 
 // ListActionsResponse returns the actions in question and returns a page token
@@ -108,6 +114,13 @@ message ListObservationsRequest {
   // When paginating, all other parameters provided to `ListObservations` must
   // match the call that provided the page token.
   string page_token = 2;
+
+  // Filter is a query using an expression syntax described in
+  // filter_syntax.md.
+  //
+  // Currently supported filterable values for actions are:
+  // - metric_kind
+  string filter = 3;
 }
 
 // ListObservationsResponse returns the observations in quetoin and returns a
