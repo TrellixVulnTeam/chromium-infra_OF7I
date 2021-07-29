@@ -12,6 +12,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"infra/cros/recovery/internal/planpb"
+	"infra/cros/recovery/logger"
 	"infra/cros/recovery/tlw"
 )
 
@@ -145,7 +146,9 @@ func TestRunDUTPlans(t *testing.T) {
 		dut := &tlw.Dut{
 			Name: "test_dut",
 		}
-		args := &RunArgs{}
+		args := &RunArgs{
+			Logger: logger.NewLogger(),
+		}
 		config := &planpb.Configuration{}
 		Convey("fail when no plans in config", func() {
 			config.Plans = map[string]*planpb.Plan{
@@ -183,7 +186,9 @@ func TestRunDUTPlans(t *testing.T) {
 		dut := &tlw.Dut{
 			Name: "test_dut",
 		}
-		args := &RunArgs{}
+		args := &RunArgs{
+			Logger: logger.NewLogger(),
+		}
 		config := &planpb.Configuration{
 			Plans: map[string]*planpb.Plan{
 				PlanCrOSRepair: {

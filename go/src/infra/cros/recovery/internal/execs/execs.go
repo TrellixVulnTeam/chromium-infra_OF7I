@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/logger"
 	"infra/cros/recovery/tlw"
 )
 
@@ -27,6 +28,8 @@ type RunArgs struct {
 	ResourceName string
 	DUT          *tlw.Dut
 	Access       tlw.Access
+	// Logger prints message to the logs.
+	Logger logger.Logger
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
 }

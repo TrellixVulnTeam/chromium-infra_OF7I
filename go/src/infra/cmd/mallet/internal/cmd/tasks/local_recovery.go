@@ -20,6 +20,7 @@ import (
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
+	rlogger "infra/cros/recovery/logger"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 
@@ -79,13 +80,9 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.New("unit is not specified")
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = gologger.StdConfig.Use(ctx)
+	ctx, logger := createLogger(ctx)
 	if c.Verbose() {
 		ctx = logging.SetLevel(ctx, logging.Debug)
-	}
-	logger := &recoveryLogger{
-		log:       logging.Get(ctx),
-		callDepth: 2,
 	}
 	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -137,29 +134,67 @@ func setupContextNamespace(ctx context.Context, namespace string) context.Contex
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
+// StdFormat is formatting for logger.
+const StdFormat = `[%{level:.1s}%{time:2006-01-02T15:04:05:00} ` +
+	` %{shortfile:20s}] %{message}`
+
+// Create custom logger config with custom formatter.
+func createLogger(ctx context.Context) (context.Context, *recoveryLogger) {
+	// Creating cutsom logger config to
+	logconfig := &gologger.LoggerConfig{
+		Out:    os.Stderr,
+		Format: StdFormat,
+	}
+	ctx = logconfig.Use(ctx)
+	return ctx, &recoveryLogger{
+		log:       logging.Get(ctx),
+		callDepth: 2,
+	}
+}
+
 // recoveryLogger represents local recovery logger implementation.
 type recoveryLogger struct {
 	log logging.Logger
+	// Logger indentation for messages.
+	indentation int
 	// callDepth sets desired stack depth (code line at which logging message is reported).
 	callDepth int
 }
 
 // Debug log message at Debug level.
 func (l *recoveryLogger) Debug(format string, args ...interface{}) {
-	l.log.LogCall(logging.Debug, l.callDepth, format, args)
+	l.log.LogCall(logging.Debug, l.callDepth, l.indentString(format), args)
 }
 
 // Info is like Debug, but logs at Info level.
 func (l *recoveryLogger) Info(format string, args ...interface{}) {
-	l.log.LogCall(logging.Info, l.callDepth, format, args)
+	l.log.LogCall(logging.Info, l.callDepth, l.indentString(format), args)
 }
 
 // Warning is like Debug, but logs at Warning level.
 func (l *recoveryLogger) Warning(format string, args ...interface{}) {
-	l.log.LogCall(logging.Warning, l.callDepth, format, args)
+	l.log.LogCall(logging.Warning, l.callDepth, l.indentString(format), args)
 }
 
 // Error is like Debug, but logs at Error level.
 func (l *recoveryLogger) Error(format string, args ...interface{}) {
-	l.log.LogCall(logging.Error, l.callDepth, format, args)
+	l.log.LogCall(logging.Error, l.callDepth, l.indentString(format), args)
+}
+
+// IndentLogging increment indentation for logger.
+func (l *recoveryLogger) IndentLogging() {
+	l.indentation += 1
+}
+
+// DedentLogging decrement indentation for logger.
+func (l *recoveryLogger) DedentLogging() {
+	if l.indentation > 0 {
+		l.indentation -= 1
+	}
+}
+
+// Apply indent to the string.
+func (l *recoveryLogger) indentString(v string) string {
+	indent := rlogger.GetIndent(l.indentation, "  ")
+	return indent + v
 }

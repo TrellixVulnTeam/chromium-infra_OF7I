@@ -9,7 +9,6 @@ package log
 
 import (
 	"context"
-	"log"
 
 	"infra/cros/recovery/logger"
 )
@@ -40,8 +39,6 @@ func get(ctx context.Context) logger.Logger {
 func Debug(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
 		l.Debug(format, args...)
-	} else {
-		log.Printf(format, args...)
 	}
 }
 
@@ -49,8 +46,6 @@ func Debug(ctx context.Context, format string, args ...interface{}) {
 func Info(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
 		l.Info(format, args...)
-	} else {
-		log.Printf(format, args...)
 	}
 }
 
@@ -58,8 +53,6 @@ func Info(ctx context.Context, format string, args ...interface{}) {
 func Warning(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
 		l.Warning(format, args...)
-	} else {
-		log.Printf(format, args...)
 	}
 }
 
@@ -67,7 +60,5 @@ func Warning(ctx context.Context, format string, args ...interface{}) {
 func Error(ctx context.Context, format string, args ...interface{}) {
 	if l := get(ctx); l != nil {
 		l.Error(format, args...)
-	} else {
-		log.Printf(format, args...)
 	}
 }

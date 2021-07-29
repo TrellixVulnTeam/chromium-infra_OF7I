@@ -173,6 +173,13 @@ func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb
 // isActionApplicable checks if action is applicable based on condition actions.
 func (r *recoveryEngine) isActionApplicable(ctx context.Context, actionName string) bool {
 	a := r.getAction(actionName)
+	if len(a.GetConditions()) == 0 {
+		return true
+	}
+	if r.args != nil && r.args.Logger != nil {
+		r.args.Logger.IndentLogging()
+		defer r.args.Logger.DedentLogging()
+	}
 	if err := r.runActions(ctx, a.GetConditions(), false); err != nil {
 		log.Debug(ctx, "Action %q: conditions fails. Error: %s", actionName, err)
 		return false
@@ -183,6 +190,13 @@ func (r *recoveryEngine) isActionApplicable(ctx context.Context, actionName stri
 // runDependencies runs action's dependencies.
 func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) error {
 	a := r.getAction(actionName)
+	if len(a.GetDependencies()) == 0 {
+		return nil
+	}
+	if r.args != nil && r.args.Logger != nil {
+		r.args.Logger.IndentLogging()
+		defer r.args.Logger.DedentLogging()
+	}
 	err := r.runActions(ctx, a.GetDependencies(), enableRecovery)
 	return errors.Annotate(err, "run dependencies").Err()
 }
@@ -194,6 +208,13 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 // Recovery action will skip if used before.
 func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) error {
 	a := r.getAction(actionName)
+	if len(a.GetRecoveryActions()) == 0 {
+		return nil
+	}
+	if r.args != nil && r.args.Logger != nil {
+		r.args.Logger.IndentLogging()
+		defer r.args.Logger.DedentLogging()
+	}
 	for _, recoveryName := range a.GetRecoveryActions() {
 		if r.isRecoveryUsed(actionName, recoveryName) {
 			// Engine allows to use each recovery action only once in scope of the action.

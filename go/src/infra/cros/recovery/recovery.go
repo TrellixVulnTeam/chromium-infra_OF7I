@@ -32,9 +32,10 @@ func Run(ctx context.Context, args *RunArgs) error {
 	if err := args.verify(); err != nil {
 		return errors.Annotate(err, "run recovery: verify input").Err()
 	}
-	if args.Logger != nil {
-		ctx = log.WithLogger(ctx, args.Logger)
+	if args.Logger == nil {
+		args.Logger = logger.NewLogger()
 	}
+	ctx = log.WithLogger(ctx, args.Logger)
 	if !args.EnableRecovery {
 		log.Info(ctx, "Recovery actions is blocker by run arguments.")
 	}
@@ -61,6 +62,7 @@ func Run(ctx context.Context, args *RunArgs) error {
 			return errors.Annotate(err, "run recovery %q", resource).Err()
 		}
 		logDUTInfo(ctx, resource, dut, "DUT info from inventory")
+		args.Logger.IndentLogging()
 		if err := runDUTPlans(ctx, dut, config, args); err != nil {
 			errs = append(errs, err)
 			log.Debug(ctx, "Resource %q: finished with error: %s.", resource, err)
@@ -77,6 +79,7 @@ func Run(ctx context.Context, args *RunArgs) error {
 		} else {
 			log.Info(ctx, "Resource %q: update inventory is disabled.", resource)
 		}
+		args.Logger.DedentLogging()
 		if ir != lastResourceIndex {
 			log.Debug(ctx, "Continue to the next resource.")
 		}
@@ -110,6 +113,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		DUT:            dut,
 		Access:         args.Access,
 		EnableRecovery: args.EnableRecovery,
+		Logger:         args.Logger,
 	}
 	// TODO(otabek@): Add closing plan logic.
 	for _, planName := range planNames {
@@ -121,7 +125,10 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		for _, resource := range resources {
 			execArgs.ResourceName = resource
 			log.Info(ctx, "Run plan %q for %q: started", planName, resource)
-			if err := engine.Run(ctx, planName, plan, execArgs); err != nil {
+			execArgs.Logger.IndentLogging()
+			err := engine.Run(ctx, planName, plan, execArgs)
+			execArgs.Logger.DedentLogging()
+			if err != nil {
 				log.Error(ctx, "Run plan %q for %q: fail. Error: %s", resource, planName, err)
 				if plan.GetAllowFail() {
 					log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
