@@ -40,8 +40,15 @@ message OfflineAction {
   // The name for a given offline customization, e.g. basic_network_setup.
   string name = 1;
 
-  // A list of files to be added/updated to generate a customized image offline.
-  repeated AddFile files = 2;
+  // List of actions to be performed for the customization.
+  repeated Action actions = 2;
+}
+
+message Action {
+  oneof action{
+    AddFile add_file = 1;
+    InstallFile install_file = 2;
+  }
 }
 
 message AddFile {
@@ -55,6 +62,20 @@ message AddFile {
   oneof src {
     string local_src = 2;
     CIPDSrc cipd_src = 4;
+  }
+}
+
+message InstallFile {
+  // The AddFile action's name, e.g. add_startnet
+  string name = 1;
+  // The install command to be run
+  string init = 2;
+  // Args for the install command
+  repeated string args = 3;
+  // Src of the install file
+  oneof src {
+    string local_src = 4;
+    CIPDSrc cipd_src = 5;
   }
 }
 

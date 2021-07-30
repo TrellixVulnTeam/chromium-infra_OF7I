@@ -63,8 +63,11 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
 
   def perform_winpe_action(self, action):
     """Performs the given action"""
-    for f in action.files:
-      self.add_file(f)
+    for a in action.actions:
+      if a.WhichOneof('action') == 'add_file':
+        self.add_file(a.add_file)
+      elif a.WhichOneof('action') == 'install_file':  # pragma: no cover
+        raise self.m.step.InfraFailure('Pending Implementation')
 
   def add_file(self, f):
     src = ''
@@ -81,7 +84,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                         '-ImageDestinationPath', f.dst)
 
   def cipd_ensure(self, package, refs, platform, name=''):
-    """ Downloads the given package and returns path to the file
+    """ Downloads the given package and returns path to the files
         contained within."""
     ensure_file = self.m.cipd.EnsureFile()
     ensure_file.add_package(str(package) + '/' + str(platform), str(refs))

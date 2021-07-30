@@ -931,18 +931,18 @@ Ensures that the WinPE add-on is available.
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#69)(self, f):**
+&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#72)(self, f):**
 
-&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#83)(self, package, refs, platform, name=''):**
+&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#86)(self, package, refs, platform, name=''):**
 
-Downloads the given package and returns path to the file
+Downloads the given package and returns path to the files
 contained within.
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#115)(self, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#119)(self, name, command, logs=None, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#122)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
@@ -950,11 +950,11 @@ Executes the windows powershell script
 
 Executes the windows image builder user config.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#97)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#100)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#124)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
+&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#127)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
 
 Mount the wim to a dir for modification
 
@@ -962,7 +962,7 @@ Mount the wim to a dir for modification
 
 Performs the given action
 
-&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#138)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
+&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#141)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
 
 Unmount the winpe wim from the given directory
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
@@ -1371,9 +1371,9 @@ This recipe runs legacy analyzers for the infra repo.
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_scripts\_executor:examples/test](/recipes/recipe_modules/windows_scripts_executor/examples/test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#19)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#20)(api, image):**
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
