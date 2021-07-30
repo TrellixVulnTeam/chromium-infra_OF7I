@@ -276,7 +276,7 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/roll/0941bf89",
@@ -351,7 +351,7 @@
       "git",
       "checkout",
       "-t",
-      "origin/master",
+      "origin/main",
       "-b",
       "roll-attempt"
     ],

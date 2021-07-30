@@ -80,7 +80,7 @@
 
 API for calling 'cloudbuildhelper' tool.
 
-See https://chromium.googlesource.com/infra/infra/+/master/build/images/.
+See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
 #### **class [CloudBuildHelperApi](/recipes/recipe_modules/cloudbuildhelper/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -121,7 +121,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#358)(self, repo_url, root, callback, ref='master'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#358)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 

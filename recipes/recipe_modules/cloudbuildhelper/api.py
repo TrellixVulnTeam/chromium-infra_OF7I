@@ -4,7 +4,7 @@
 
 """API for calling 'cloudbuildhelper' tool.
 
-See https://chromium.googlesource.com/infra/infra/+/master/build/images/.
+See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 """
 
 from collections import namedtuple
@@ -355,7 +355,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           test_data=test_data if test_data is not None else ['target.yaml']))
     return paths
 
-  def do_roll(self, repo_url, root, callback, ref='master'):
+  def do_roll(self, repo_url, root, callback, ref='main'):
     """Checks out a repo, calls the callback to modify it, uploads the result.
 
     Args:
