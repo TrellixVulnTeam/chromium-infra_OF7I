@@ -7,6 +7,7 @@ package dirmd
 import (
 	"context"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	dirmdpb "infra/tools/dirmd/proto"
@@ -204,6 +205,45 @@ func TestRead(t *testing.T) {
 								"feature:read-later",
 								"feature:another-one",
 							},
+						},
+					},
+				},
+				Repos: dummyRepos,
+			})
+		})
+
+		Convey(`Computed, from a symlink`, func() {
+			if runtime.GOOS == "windows" {
+				return
+			}
+			m, err := ReadMapping(ctx, dirmdpb.MappingForm_COMPUTED, "testdata/sym_root")
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
+					rootKey: {
+						TeamEmail: "chromium-review@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+					},
+					rootKey + "/subdir": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
+						},
+						Resultdb: &dirmdpb.ResultDB{
+							Tags: []string{
+								"feature:read-later",
+								"feature:another-one",
+							},
+						},
+					},
+					rootKey + "/subdir_with_owners": {
+						TeamEmail: "team-email@chromium.org",
+						Os:        dirmdpb.OS_LINUX,
+						Monorail: &dirmdpb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
 						},
 					},
 				},

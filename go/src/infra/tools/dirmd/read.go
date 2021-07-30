@@ -247,6 +247,14 @@ func dirsByRepoRoot(ctx context.Context, dirs []string) (map[string]*repoInfo, e
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, dir := range dirs {
 		dir := dir
+
+		// Check if dir is a symlink.
+		p, err := filepath.EvalSymlinks(dir)
+		if err != nil {
+			return nil, err
+		}
+		dir = p
+
 		eg.Go(func() error {
 			cmd := exec.CommandContext(ctx, gitBinary, "-C", dir, "rev-parse", "--show-toplevel")
 			stdout, err := cmd.Output()
