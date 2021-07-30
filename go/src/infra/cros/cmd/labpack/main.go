@@ -76,9 +76,7 @@ func main() {
 			err := internalRun(ctx, input, state)
 			// actual build code here, build is already Start'd
 			// input was parsed from build.Input.Properties
-			writeOutputProps(&steps.LabpackResponse{
-				State: "Ready",
-			})
+			writeOutputProps(&steps.LabpackResponse{})
 			return err // if err is nil then will mark the Build as SUCCESS
 		},
 	)

@@ -8,16 +8,23 @@ package steps;
 
 option go_package = "infra/cros/cmd/labpack/steps;stepspb";
 
-// LabpackInput represent list of input parameters receiving by CLI.
-//
-// Next Tag: 5
+// LabpackInput represents list of input parameters.
 message LabpackInput {
-    string unit_name = 1;
-    string task_name = 2;
-    string actions = 3;
-    string exclude_actions = 4;
+  // Unit name represents some device setup against which running the task.
+  string unit_name = 1;
+  // Task name running against unit.
+  string task_name = 2;
+  // Enable recovery tells if recovery actions are enabled.
+  bool enable_recovery = 3;
+  // Update inventory tells if process ellow update inventory during execution.
+  bool update_inventory = 4;
+  // Admin service path to initialie local TLW.
+  string admin_service = 5;
+  // Inventory service path to initialie local TLW.
+  string inventory_service = 6;
 };
 
+// LabpackResponse represents result of execution the task on unit.
 message LabpackResponse {
-    string state = 1;
+  bool Success = 1;
 }
