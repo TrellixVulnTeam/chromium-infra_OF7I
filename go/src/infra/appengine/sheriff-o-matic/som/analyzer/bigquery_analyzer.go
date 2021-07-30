@@ -181,8 +181,7 @@ var iosFilterFunc = func(r failureRow) bool {
 }
 
 var chromeBrowserReleaseFilterFunc = func(r failureRow) bool {
-	// TODO (nqmtuan): Remove the first part of the OR condition when we are post m85
-	return (r.Project == "chromium" && strings.HasPrefix(r.Bucket, "ci-m")) || (strings.HasPrefix(r.Project, "chromium-m") && r.Bucket == "ci")
+	return strings.HasPrefix(r.Project, "chromium-m") && r.Project != "chromium-m90" && r.Bucket == "ci"
 }
 
 var chromiumClangFilterFunc = func(r failureRow) bool {
