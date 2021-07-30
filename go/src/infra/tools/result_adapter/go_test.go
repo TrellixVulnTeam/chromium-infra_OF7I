@@ -27,20 +27,20 @@ func TestEnsureArgsValid(t *testing.T) {
 	t.Parallel()
 
 	r := &goRun{}
-	Convey(`Does not alter correct invocation`, t, func() {
-		args := strings.Split("go test -json infra/tools/result_adapter -args -convey-silent", " ")
+	Convey(`Does not alter correct command`, t, func() {
+		args := strings.Split("go test -json infra/tools/result_adapter", " ")
 		validArgs, err := r.ensureArgsValid(args)
 		So(err, ShouldBeNil)
 		So(validArgs, ShouldResemble, args)
 	})
-	Convey(`Adds all flags`, t, func() {
+	Convey(`Adds json flag`, t, func() {
 		args := strings.Split("go test infra/tools/result_adapter", " ")
 		validArgs, err := r.ensureArgsValid(args)
 		So(err, ShouldBeNil)
-		So(validArgs, ShouldResemble, strings.Split("go test -json infra/tools/result_adapter -args -convey-silent", " "))
+		So(validArgs, ShouldResemble, strings.Split("go test -json infra/tools/result_adapter", " "))
 	})
 	Convey(`detects bad command`, t, func() {
-		args := strings.Split("result_adapter.test -convey-silent -v", " ")
+		args := strings.Split("result_adapter.test -json -v", " ")
 		_, err := r.ensureArgsValid(args)
 		So(err, ShouldErrLike, "Expected command to be an invocation of `go test`")
 	})

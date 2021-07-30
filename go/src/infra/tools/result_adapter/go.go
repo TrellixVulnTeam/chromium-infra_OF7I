@@ -23,26 +23,17 @@ import (
 )
 
 // ensureArgsValid checks the payload to ensure it looks like a `go test`
-// invocation, that it has the `-json` flag, and that goconvey output is
-// supressed (as it makes test2json mix-up tests' outputs).
-// This is called recursively every time that the args are modified to avoid
-// complicated logic with altering the indices detected after every change.
+// invocation and that it has the `-json` flag.
 func (r *goRun) ensureArgsValid(args []string) ([]string, error) {
 	// Scan the arguments.
 	jsonFlagIndex := -1
 	testFlagIndex := -1
-	conveySilentFlagIndex := -1
-	argsFlagIndex := -1
 	for i, t := range args {
 		switch t {
 		case "-json":
 			jsonFlagIndex = i
 		case "test":
 			testFlagIndex = i
-		case "-convey-silent":
-			conveySilentFlagIndex = i
-		case "-args":
-			argsFlagIndex = i
 		}
 	}
 	if testFlagIndex == -1 {
@@ -50,14 +41,6 @@ func (r *goRun) ensureArgsValid(args []string) ([]string, error) {
 	}
 	if jsonFlagIndex == -1 {
 		args = append(args[:testFlagIndex+1], append([]string{"-json"}, args[testFlagIndex+1:]...)...)
-		return r.ensureArgsValid(args)
-	}
-	if conveySilentFlagIndex == -1 {
-		if argsFlagIndex == -1 {
-			args = append(args, "-args", "-convey-silent")
-			return r.ensureArgsValid(args)
-		}
-		args = append(args[:argsFlagIndex+1], append([]string{"-convey-silent"}, args[argsFlagIndex+1:]...)...)
 		return r.ensureArgsValid(args)
 	}
 	return args, nil
