@@ -56,6 +56,7 @@ const (
 )
 
 func TestPublicBuildspec(t *testing.T) {
+	t.Parallel()
 	expectedLists := map[string]map[string][]string{
 		"buildspecs-internal": {
 			"test/": {"test/foo.xml"},
@@ -84,6 +85,7 @@ func TestPublicBuildspec(t *testing.T) {
 }
 
 func TestPublicBuildspecDryRun(t *testing.T) {
+	t.Parallel()
 	expectedLists := map[string]map[string][]string{
 		"buildspecs-internal": {
 			"test/": {"test/foo.xml"},
@@ -109,6 +111,7 @@ func TestPublicBuildspecDryRun(t *testing.T) {
 }
 
 func TestPublicBuildspecNoAnnotations(t *testing.T) {
+	t.Parallel()
 	expectedLists := map[string]map[string][]string{
 		"buildspecs-internal": {
 			"test/": {"test/foo.xml"},
@@ -160,6 +163,7 @@ func TestPublicBuildspecNoAnnotations(t *testing.T) {
 }
 
 func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
+	t.Parallel()
 	expectedLists := map[string]map[string][]string{
 		"buildspecs-internal": {
 			"test/": {"test/foo.xml"},

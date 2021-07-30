@@ -62,6 +62,7 @@ var (
 )
 
 func TestCreateProjectBuildspec(t *testing.T) {
+	t.Parallel()
 	program := "galaxy"
 	project := "milkyway"
 	buildspec := "90/13811.0.0.xml"

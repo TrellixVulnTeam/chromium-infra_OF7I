@@ -44,6 +44,7 @@ type localManifestBrancher struct {
 	authFlags            authcli.Flags
 	chromeosCheckoutPath string
 	minMilestone         int
+	specificBranches     []string
 	projectList          string
 	projects             []string
 	push                 bool
@@ -67,6 +68,10 @@ func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
 				"Comma-separated list of project paths to consider. "+
 					"At least one project is required.")
+			b.Flags.Var(luciflag.CommaList(&b.specificBranches), "branches",
+				"Comma-separated list of branches to process. "+
+					"If set, minMilestone will be ignored and only these "+
+					"branches will be processed.")
 			b.Flags.BoolVar(&b.push, "push", false,
 				"Whether or not to push changes to the remote.")
 			b.Flags.IntVar(&b.workerCount, "j", 1, "Number of jobs to run for parallel operations.")
@@ -75,8 +80,8 @@ func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
 }
 
 func (b *localManifestBrancher) validate() error {
-	if b.minMilestone == -1 {
-		return fmt.Errorf("--min_milestone required")
+	if b.minMilestone == -1 && len(b.specificBranches) == 0 {
+		return fmt.Errorf("--min_milestone or --branches required")
 	}
 
 	if b.chromeosCheckoutPath == "" {
@@ -271,9 +276,15 @@ func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, dsClie
 	minMilestone := b.minMilestone
 	dryRun := !b.push
 
-	branches, err := branch.BranchesFromMilestone(checkout, minMilestone)
-	if err != nil {
-		return errors.Annotate(err, "BranchesFromMilestone failure").Err()
+	var branches []string
+	if len(b.specificBranches) != 0 {
+		branches = b.specificBranches
+	} else {
+		var err error
+		branches, err = branch.BranchesFromMilestone(checkout, minMilestone)
+		if err != nil {
+			return errors.Annotate(err, "BranchesFromMilestone failure").Err()
+		}
 	}
 
 	manifestInternalPath := filepath.Join(checkout, manifestInternalProjectPath)
