@@ -8,6 +8,7 @@ import datetime
 from components import auth
 from components import utils
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb import msgprop
 from testing_utils import testing
 import mock
 
@@ -240,6 +241,47 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     builds, _ = service.peek(['chromium/try'])
     self.assertFalse(builds)
 
+  def test_peek_stale_and_lease(self):
+    # This is a regression test for crbug.com/1191014
+    #
+    # The Go version of buildbucket didn't update the legacy status field, which
+    # resulted in peek returning builds which weren't actually eligible for
+    # leasing.
+    build = self.classic_build(status=common_pb2.CANCELED)
+    build.put()
+    build_id = build.key.id()
+
+    # start with a fresh Build
+    build = model.Build.get_by_id(build_id)
+
+    # apply ndb black magicks
+    build._clone_properties()  # decouples Build instance from Build._properties
+    build._properties['status'] = msgprop.EnumProperty(
+        model.BuildStatus, 'status'
+    )
+    build._properties['status']._code_name = 'status'
+    build._properties['status']._set_value(build, model.BuildStatus.SCHEDULED)
+
+    # disable pre_put_hook for this put()
+    normalPrePut = model.Build._pre_put_hook
+    try:
+      model.Build._pre_put_hook = lambda self: None
+      build.put()
+    finally:
+      model.Build._pre_put_hook = normalPrePut
+
+    # Now the build should show up in peek, even though it's canceled.
+    builds, _ = service.peek(bucket_ids=[build.bucket_id])
+    self.assertEqual(builds, [build])
+
+    # Lease will fix the build status as a side effect
+    success, build = service.lease(build_id)
+    self.assertFalse(success)
+
+    # So it no longer shows up in peek.
+    builds, _ = service.peek(bucket_ids=[build.bucket_id])
+    self.assertEqual(builds, [])
+
   #################################### LEASE ###################################
 
   def lease(self, build_id, lease_expiration_date=None, expect_success=True):
@@ -271,7 +313,11 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
   def test_cannot_lease_a_leased_build(self):
     self.new_leased_build(id=1)
+    build = ndb.Key('Build', 1).get()
     self.lease(1, expect_success=False)
+    after_build = ndb.Key('Build', 1).get()
+    # make sure the NACK lease didn't change the build.
+    self.assertEqual(build, after_build)
 
   def test_cannot_lease_a_nonexistent_build(self):
     with self.assertRaises(errors.BuildNotFoundError):

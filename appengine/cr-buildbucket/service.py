@@ -179,15 +179,18 @@ def lease(build_id, lease_expiration_date=None):
   def try_lease():
     build = _get_leasable_build(build_id, user.PERM_BUILDS_LEASE)
 
-    if build.proto.status != common_pb2.SCHEDULED or build.is_leased:
-      return False, build
+    ok = False
+    if not (build.proto.status != common_pb2.SCHEDULED or build.is_leased):
+      ok = True
+      build.lease_expiration_date = lease_expiration_date
+      build.regenerate_lease_key()
+      build.leasee = auth.get_current_identity()
+      build.never_leased = False
 
-    build.lease_expiration_date = lease_expiration_date
-    build.regenerate_lease_key()
-    build.leasee = auth.get_current_identity()
-    build.never_leased = False
+    # we do a put() unconditionally so that the legacy status fields can
+    # be updated in the pre-put hooks.
     build.put()
-    return True, build
+    return ok, build
 
   updated, build = try_lease()
   if updated:
