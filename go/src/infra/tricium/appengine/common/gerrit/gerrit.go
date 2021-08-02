@@ -369,7 +369,7 @@ func (gerritServer) setReview(c context.Context, host, change, revision string, 
 		default:
 			msg = string(out)
 		}
-		return errors.Annotate(err, "failed to connect to Gerrit: code %d, msg %q", resp.StatusCode, msg).Err()
+		return errors.Reason("failed to connect to Gerrit: code %d, msg %q", resp.StatusCode, msg).Err()
 	}
 	return nil
 }
