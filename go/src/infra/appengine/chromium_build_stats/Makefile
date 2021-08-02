@@ -19,10 +19,10 @@ update-prod: ninjaproto/ninjalog.proto
 
 
 deploy-staging:
-	gcloud --project=chromium-build-stats-staging app deploy --promote app/app.yaml
+	gae.py upload -x -f -A chromium-build-stats-staging --app-dir app
 
 deploy-prod:
-	gcloud --project=chromium-build-stats app deploy --promote app/app.yaml
+	gae.py upload -x -f -A chromium-build-stats --app-dir app
 
 test:
 	go test ./...
