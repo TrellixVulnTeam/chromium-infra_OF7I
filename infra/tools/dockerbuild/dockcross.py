@@ -78,17 +78,7 @@ class Builder(object):
   @classmethod
   def _docker_base_image(cls, plat):
     assert plat.dockcross_base_image
-    return DockerImage(
-        plat.dockcross_base_image,
-        cls._dockcross_upstream_tag(plat),
-    )
-
-  @staticmethod
-  def _dockcross_upstream_tag(plat):
-    # Pinned non-manylinux images to Debian Stretch
-    if not plat.dockcross_base_image.startswith('dockcross/manylinux'):
-      return '20210624-de7b1b0'
-    return 'latest'
+    return DockerImage(plat.dockcross_base_image, plat.dockcross_tag)
 
   def _generic_template(self, dx, root):
     """Unpack our sources in the expected Docker system layout. Populate our
@@ -396,8 +386,9 @@ SOURCES = {
     ),
     'libffi': source.remote_archive(
         name='libffi',
-        version='3.2.1',
-        url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
+        version='3.4.2',
+        url='https://github.com/libffi/libffi/releases/download/v3.4.2/'
+        'libffi-3.4.2.tar.gz',
     ),
     'mysql': source.remote_archive(
         name='mysql',

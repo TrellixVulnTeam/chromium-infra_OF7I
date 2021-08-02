@@ -17,6 +17,21 @@ if [ -z "${LOCAL_PREFIX}" -o -z "${CROSS_TRIPLE}" ]; then
   exit 1
 fi
 
+# Dockcross doesn't set OBJCOPY, so set it here to an appropriate binary.
+# Unfortunately, the location is not the same across all of our images.
+_OBJCOPY_LOCATIONS=(
+  ${CROSS_ROOT}/bin/${CROSS_TRIPLE}-objcopy
+  ${CROSS_ROOT}/bin/objcopy
+  ${CROSS_ROOT}/objcopy
+)
+for location in ${_OBJCOPY_LOCATIONS[@]}; do
+  if [ -x ${location} ]; then
+    OBJCOPY=${location}
+    break
+  fi
+done
+export OBJCOPY
+
 # Augment our PATH to include our local prefix's "bin" directory.
 export PATH=${LOCAL_PREFIX}/bin:${PATH}
 
@@ -27,6 +42,7 @@ CROSS_CC=$CC
 CROSS_CPP=$CPP
 CROSS_CXX=$CXX
 CROSS_LD=$LD
+CROSS_OBJCOPY=$OBJCOPY
 
 # Create and augment our CFLAGS and LDFLAGS.
 CROSS_CFLAGS="$CFLAGS"
@@ -47,6 +63,7 @@ toggle_host() {
   CPP=
   CXX=
   LD=
+  OBJCOPY=
 
   CFLAGS=
   # Some tools ignore pkg-config flags, so set this explicitly to make sure
@@ -69,6 +86,7 @@ toggle_cross() {
   CPP=${CROSS_CPP}
   CXX=${CROSS_CXX}
   LD=${CROSS_LD}
+  OBJCOPY=${CROSS_OBJCOPY}
 
   CFLAGS="${CROSS_CFLAGS}"
   LDFLAGS="${CROSS_LDFLAGS}"
