@@ -181,6 +181,42 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 			return
 		}
 		log.Printf("provision: time to verify provision took %v", time.Since(t))
+	} else if isStatefulCorrupt(p.c) {
+		log.Printf("provision: Stateful is marked corrupt, provisioning stateful partition.")
+		t := time.Now()
+		if !req.GetPreserveStateful() {
+			if err := p.wipeStateful(ctx); err != nil {
+				setError(newOperationError(
+					codes.Aborted,
+					fmt.Sprintf("provision: failed to wipe stateful, %s", err),
+					tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+				return
+			}
+			// After a reboot, need a new client connection.
+			sshCtx, cancel := context.WithTimeout(ctx, 300*time.Second)
+			defer cancel()
+
+			disconnect, err := p.connect(sshCtx, addr)
+			if err != nil {
+				setError(newOperationError(
+					codes.Aborted,
+					fmt.Sprintf("provision: failed to connect to DUT after wipe reboot, %s", err),
+					tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+				return
+			}
+			defer disconnect()
+		}
+		log.Printf("provision: time to wipe stateful took %v", time.Since(t))
+
+		t = time.Now()
+		if err := p.provisionStateful(ctx); err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to provision stateful, %s", err),
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+			return
+		}
+		log.Printf("provision: time to provision stateful took %v", time.Since(t))
 	} else {
 		log.Printf("provision: Operation=%s skipped as DUT is already on builder path %s", opName, builderPath)
 	}
@@ -398,4 +434,10 @@ func getBuilderPath(c *ssh.Client) (string, error) {
 		return "", errors.New("get builder path: no builder path found in lsb-release")
 	}
 	return match[1], nil
+}
+
+func isStatefulCorrupt(c *ssh.Client) bool {
+	exists, err := runCmdOutput(c, "if [ -f /mnt/stateful_partition/.corrupt_stateful ]; then echo found; fi")
+	// Treat failure as stateful being corrupt for sanity.
+	return err != nil || exists != ""
 }
