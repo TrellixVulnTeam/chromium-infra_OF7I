@@ -230,6 +230,7 @@ message LabMeta {
     chromeos.lab.ServoTopology servo_topology = 5;
 }
 
+// NEXT TAG: 9
 message ChromeOSDeviceData {
   models.MachineLSE lab_config = 1;
   models.Machine machine = 2;
@@ -238,6 +239,10 @@ message ChromeOSDeviceData {
   HwidData hwid_data = 5;
   models.chromeos.lab.DutState dut_state = 6;
   chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest dutV1 = 7;
+
+  // Schedulable configs parsed from design-project configs (Boxster
+  // ConfigBundle).
+  repeated string schedulable_labels = 8;
 }
 
 message HwidData {
