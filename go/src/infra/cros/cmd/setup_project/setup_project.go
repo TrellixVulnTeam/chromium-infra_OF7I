@@ -15,6 +15,7 @@ import (
 	gitiles "infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
 
+	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -212,8 +213,9 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 	if b.buildspec != "" {
 		gspath = gsProgramPath(b.program, b.buildspec)
 	}
+	programProject := fmt.Sprintf("chromeos/program/%s", b.program)
 	files = append(files, localManifest{
-		project:    fmt.Sprintf("chromeos/program/%s", b.program),
+		project:    programProject,
 		branch:     b.localManifestBranch,
 		path:       "local_manifest.xml",
 		gsPath:     gspath,
@@ -273,6 +275,18 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		var errmsg string
 		if string(file.gsPath) != "" {
 			err = gsClient.Download(file.gsPath, downloadPath)
+			if err != nil && file.project == programProject {
+				// If the program-level buildspec doesn't exist, don't
+				// immediately fail. Unless something is very wrong, the project
+				// and program buildspecs will be generated together. If the
+				// project buildspec doesn't exist, this run will still fail.
+				// If the project buildspec doesn't exist, it must just be that
+				// this particular program doesn't have a local_manifest.xml.
+				if gerrs.Is(err, storage.ErrObjectNotExist) {
+					LogOut("program-level manifest doesn't exist, but this is sometimes expected behavior. continuing...")
+					continue
+				}
+			}
 			errmsg = fmt.Sprintf("error downloading %s", file.gsPath)
 		} else {
 			host := chromeInternalHost

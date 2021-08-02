@@ -11,6 +11,8 @@ import (
 
 	"infra/cros/internal/assert"
 
+	"cloud.google.com/go/storage"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
 )
 
@@ -39,6 +41,9 @@ func (f *FakeClient) Download(gsPath gs.Path, localPath string) error {
 	data, ok := f.ExpectedDownloads[string(gsPath)]
 	if !ok {
 		f.T.Fatalf("unexpected download of file %s", gsPath)
+	}
+	if data == nil {
+		return errors.Annotate(storage.ErrObjectNotExist, "download").Err()
 	}
 	assert.NilError(f.T, ioutil.WriteFile(localPath, data, 0644))
 	return nil

@@ -205,3 +205,37 @@ func TestSetupProject_buildspecs(t *testing.T) {
 	}
 	checkFiles(t, localManifestDir, expectedFiles)
 }
+
+func TestSetupProject_buildspecs_missingProgram(t *testing.T) {
+	buildspec := "90/13811.0.0.xml"
+
+	gsSuffix := "/buildspecs/" + buildspec
+	expectedDownloads := map[string][]byte{
+		"gs://chromeos-foo" + gsSuffix:     nil,
+		"gs://chromeos-foo-bar" + gsSuffix: []byte("chromeos/project/foo/bar"),
+	}
+
+	f := &gs.FakeClient{
+		T:                 t,
+		ExpectedDownloads: expectedDownloads,
+	}
+
+	dir, err := ioutil.TempDir("", "setup_project")
+	defer os.RemoveAll(dir)
+	assert.NilError(t, err)
+	localManifestDir := filepath.Join(dir, ".repo/local_manifests/")
+	assert.NilError(t, os.MkdirAll(localManifestDir, os.ModePerm))
+
+	b := setupProject{
+		chromeosCheckoutPath: dir,
+		program:              "foo",
+		project:              "bar",
+		buildspec:            buildspec,
+	}
+	ctx := context.Background()
+	assert.NilError(t, b.setupProject(ctx, f, nil))
+	expectedFiles := map[string]string{
+		"bar_project.xml": "chromeos/project/foo/bar",
+	}
+	checkFiles(t, localManifestDir, expectedFiles)
+}

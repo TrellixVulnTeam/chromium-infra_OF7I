@@ -1,0 +1,3 @@
+# setup-project has its own OAuth id in code, but ChOps security confirmed that
+# this is a public secret -- see crbug/1232478 and crrev.com/c/3056152.
+300815340602-o77gh6n19i8796dqc9dsu99vcj23jf3o.apps.googleusercontent.com

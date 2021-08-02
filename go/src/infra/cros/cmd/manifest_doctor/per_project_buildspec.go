@@ -185,6 +185,10 @@ func (b *projectBuildspec) CreateProjectBuildspec(gsClient gs.Client, gerritClie
 		localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 			project, releaseBranch, "local_manifest.xml")
 		if err != nil {
+			if project == programProject {
+				LogErr("couldn't load local_manifest.xml for %s, it may not exist for the program so skipping...", project)
+				continue
+			}
 			return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
 		}
 		// Create the project/program-specific buildspec.
