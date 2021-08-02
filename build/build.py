@@ -412,7 +412,7 @@ def print_title(title):
 def print_go_step_title(title):
   """Same as 'print_title', but also appends values of GOOS, GOARCH, etc."""
   go_mod = None
-  if os.environ['GO111MODULE'] != 'off' and os.path.exists('go.mod'):
+  if os.environ.get('GO111MODULE') != 'off' and os.path.exists('go.mod'):
     go_mod = os.path.abspath('go.mod')
   go_vars = [
     (k, os.environ[k])
