@@ -1,0 +1,18 @@
+package: infra/cros/cmd/satlab/${platform}
+description: ChromeOS command line tool for Satlab box.
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+  - windows-amd64
+go_build_environ:
+  CGO_ENABLED:
+    darwin:  1  # Inherited from main/build/packages/cipd_client.yaml
+    linux:   0  # satlab, specifically, needs to build inside an alpine linux container.
+    windows: 0  # Inherited from main/build/packages/cipd_client.yaml
+go_packages:
+  - infra/cros/cmd/satlab
+root: ../../go/bin
+data:
+  - file: satlab${exe_suffix}
+  - version_file: .versions/satlab${exe_suffix}.cipd_version
