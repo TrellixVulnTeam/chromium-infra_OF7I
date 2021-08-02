@@ -13,6 +13,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 // DutAttributeKind is the datastore entity kind DutAttribute.
@@ -84,4 +86,28 @@ func GetDutAttribute(ctx context.Context, id string) (rsp *api.DutAttribute, err
 		return nil, errors.Reason("Failed to create DutAttributeEntity: %s", pm).Err()
 	}
 	return p, nil
+}
+
+// ListDutAttributes lists the DutAttributes from datastore.
+func ListDutAttributes(ctx context.Context, keysOnly bool) (rsp []*api.DutAttribute, err error) {
+	q := datastore.NewQuery(DutAttributeKind).KeysOnly(keysOnly).FirestoreMode(true)
+	err = datastore.Run(ctx, q, func(ent *DutAttributeEntity) error {
+		if keysOnly {
+			da := &api.DutAttribute{
+				Id: &api.DutAttribute_Id{
+					Value: ent.ID,
+				},
+			}
+			rsp = append(rsp, da)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to unmarshal: %s", err)
+				return nil
+			}
+			rsp = append(rsp, pm.(*api.DutAttribute))
+		}
+		return nil
+	})
+	return rsp, err
 }
