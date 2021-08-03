@@ -21,9 +21,16 @@ By default runs all tests for infra/*.
 from __future__ import absolute_import
 from __future__ import print_function
 import errno
+import json
 import os
 import subprocess
 import sys
+
+# /path/to/infra
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Result adapter is deployed here by bootstrap.py.
+ADAPTER_DIR = os.path.join(ROOT, "cipd", "result_adapter")
 
 
 def check_go_available():
@@ -51,6 +58,30 @@ def clean_go_bin():
     os.remove(os.path.join(gobin, p))
 
 
+def use_resultdb():
+  """Checks the luci context to determine if resultdb is configured."""
+  ctx_filename = os.environ.get("LUCI_CONTEXT")
+  if ctx_filename:
+    try:
+      with open(ctx_filename) as ctx_file:
+        ctx = json.load(ctx_file)
+        rdb = ctx.get('resultdb', {})
+        return rdb.get('hostname') and rdb.get('current_invocation')
+    except (OSError, ValueError):
+      print(
+          "Failed to open LUCI_CONTEXT; skip enabling resultdb integration",
+          file=sys.stderr)
+      return False
+  return False
+
+
+def get_adapter_path():
+  adapter_fname = "result_adapter"
+  if sys.platform == "win32":
+    adapter_fname += ".exe"
+  return os.path.join(ADAPTER_DIR, adapter_fname)
+
+
 def run_tests(package_root):
   """Runs 'go test <package_root>/...'.
 
@@ -62,7 +93,10 @@ def run_tests(package_root):
     print('Use ./env.py python test.py')
     return 1
   clean_go_bin()
-  proc = subprocess.Popen(['go', 'test', '%s/...' % package_root])
+  command = ['go', 'test', '%s/...' % package_root]
+  if use_resultdb():
+    command = [get_adapter_path(), 'go', '--'] + command
+  proc = subprocess.Popen(command)
   proc.wait()
   return proc.returncode
 
