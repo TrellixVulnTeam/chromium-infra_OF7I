@@ -15,7 +15,7 @@ export CXXFLAGS+=" -fPIC -std=c++11"
 ./configure --enable-static --disable-shared \
   --prefix="$PREFIX" \
   --host="$CROSS_TRIPLE"
-make
+make -j $(nproc)
 if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then
   make check
 fi
