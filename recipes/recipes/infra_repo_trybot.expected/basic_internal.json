@@ -235,6 +235,9 @@
   },
   {
     "cmd": [
+      "rdb",
+      "stream",
+      "--",
       "vpython",
       "-u",
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"

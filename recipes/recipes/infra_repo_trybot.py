@@ -16,6 +16,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/python',
     'recipe_engine/raw_io',
+    'recipe_engine/resultdb',
     'recipe_engine/runtime',
     'recipe_engine/step',
 ]
@@ -92,7 +93,12 @@ def RunSteps(api, go_version_variant):
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
   with api.osx_sdk('mac'), co.go_env():
-    api.python('go tests', co.path.join(patch_root, 'go', 'test.py'), venv=True)
+    api.step(
+        'go tests',
+        api.resultdb.wrap(
+            ['vpython', '-u',
+             co.path.join(patch_root, 'go', 'test.py')]))
+
 
     # Do slow *.cipd packaging tests only when touching build/* or DEPS. This
     # will build all registered packages (without uploading them), and run

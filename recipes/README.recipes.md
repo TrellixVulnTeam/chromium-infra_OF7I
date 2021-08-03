@@ -1246,9 +1246,9 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 &mdash; **def [RunSteps](/recipes/recipes/infra_frontend_tester.py#18)(api):**
 ### *recipes* / [infra\_repo\_trybot](/recipes/recipes/infra_repo_trybot.py)
 
-[DEPS](/recipes/recipes/infra_repo_trybot.py#7): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/infra_repo_trybot.py#7): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_repo_trybot.py#32)(api, go_version_variant):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_repo_trybot.py#33)(api, go_version_variant):**
 ### *recipes* / [infra\_system:examples/full](/recipes/recipe_modules/infra_system/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/infra_system/examples/full.py#5): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1414,6 +1414,7 @@ This recipe runs windows offline builder for a given user config.
 [recipe_engine/recipe_modules/python]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-python
 [recipe_engine/recipe_modules/random]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-random
 [recipe_engine/recipe_modules/raw_io]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-raw_io
+[recipe_engine/recipe_modules/resultdb]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-resultdb
 [recipe_engine/recipe_modules/runtime]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-runtime
 [recipe_engine/recipe_modules/service_account]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-service_account
 [recipe_engine/recipe_modules/step]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/6adf69fe80f4a8a0e3b847ebcafbfaad81cf89a0/README.recipes.md#recipe_modules-step
