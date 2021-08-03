@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/waigani/diffparser"
 	"go.chromium.org/luci/common/data/stringset"
@@ -62,10 +63,11 @@ func main() {
 		inputPath := filepath.Join(*inputDir, filePath)
 		f := openFileOrDie(inputPath)
 		defer closeFileOrDie(f)
-		if filepath.Ext(filePath) == ".xml" {
-			if filepath.Base(filePath) == "histograms" {
+		if ext := filepath.Ext(filePath); ext == ".xml" {
+			switch strings.TrimSuffix(filepath.Base(filePath), ext) {
+			case "histograms":
 				results.Comments = append(results.Comments, analyzeHistogramFile(f, filePath, *prevDir, filesChanged, singletonEnums)...)
-			} else if filepath.Base(filePath) == "histograms_suffixes_list" {
+			case "histogram_suffixes_list":
 				results.Comments = append(results.Comments, analyzeHistogramSuffixesFile(f, filePath, filesChanged)...)
 			}
 		} else if filepath.Ext(filePath) == ".json" {

@@ -6,7 +6,7 @@
 # Usage.
 if [ "$#" != 2 ] || [ "$1" == "--help" ] ; then
   echo "Usage: ./create_diff.sh [file_path] [patch_name]"
-  echo "Ex: ./creatediff.sh rm/remove_histogram.xml test_diff.patch"
+  echo "Ex: ./creatediff.sh test/histograms.xml tricium_test_diff.patch"
   echo "[file_path] should be relative to prevdata/src and testdata/src."
   echo "The patch will be generated in prevdata/[patch_name]."
   exit 1

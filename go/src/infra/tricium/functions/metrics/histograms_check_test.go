@@ -513,15 +513,16 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
+	// HISTOGRAM_SUFFIXES_LIST tests
 	Convey("Analyze histogram suffixes file, update an existing <histogram_suffixes>", t, func() {
-		results := analyzeHistogramSuffixesTestFile(t, "suffixes/update_suffixes.xml", "prevdata/add_new_suffix_diff.patch")
+		results := analyzeHistogramSuffixesTestFile(t, "suffixes/histogram_suffixes_list.xml", "prevdata/add_new_suffix_diff.patch")
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:             category + "/Suffixes",
 				Message:              SuffixesDeprecationWarning,
 				StartLine:            6,
 				EndLine:              6,
-				Path:                 "suffixes/update_suffixes.xml",
+				Path:                 "suffixes/histogram_suffixes_list.xml",
 				ShowOnUnchangedLines: true,
 			},
 		})

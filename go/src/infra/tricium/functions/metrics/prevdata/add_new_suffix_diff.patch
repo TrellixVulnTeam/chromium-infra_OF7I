@@ -1,7 +1,7 @@
-diff --git a/suffixes/update_suffixes.xml b/suffixes/update_suffixes.xml
+diff --git a/suffixes/histogram_suffixes_list.xml b/suffixes/histogram_suffixes_list.xml
 index 83ab469..192b9bc 100644
---- a/suffixes/update_suffixes.xml
-+++ b/suffixes/update_suffixes.xml
+--- a/suffixes/histogram_suffixes_list.xml
++++ b/suffixes/histogram_suffixes_list.xml
 @@ -3,6 +3,7 @@
  
  <histogram_suffixes name="Suffixes1" separator=".">
