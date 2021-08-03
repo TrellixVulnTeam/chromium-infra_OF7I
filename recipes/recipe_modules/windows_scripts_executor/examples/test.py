@@ -93,8 +93,8 @@ def GenTests(api):
   ADD_FILE_CIPD_PASS = api.step_data(
       'execute config win10_2013_x64.offline ' +
       'winpe customization offline_winpe_2013_x64.PowerShell> ' +
-      'Add file [CACHE]\\CIPDPkgs\\infra_internal/labs/drivers/microsoft/' +
-      'windows_adk/winpe/winpe-dot3svc\\windows-amd64',
+      'Add file [CACHE]\\CIPDPkgs\\latest\\infra_internal\\labs\\drivers' +
+      '\\microsoft\\windows_adk\\winpe\\winpe-dot3svc\\windows-amd64\\*',
       stdout=api.json.output({'results': {
           'Success': True,
       }}))
@@ -150,8 +150,9 @@ def GenTests(api):
       StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
       'customization offline_winpe_2013_x64.Downloading infra_internal/' +
       'labs/drivers/microsoft/windows_adk/winpe/winpe-dot3svc:latest', [
-          'cipd.bat', 'ensure', '-root', '\[CACHE\]\\\\CIPDPkgs',
-          '-ensure-file',
+          'cipd.bat', 'ensure', '-root', '\[CACHE\]\\\\CIPDPkgs\\\\latest' +
+          '\\\\infra_internal\\\\labs\\\\drivers\\\\microsoft\\\\windows_adk' +
+          '\\\\winpe\\\\winpe-dot3svc\\\\windows-amd64', '-ensure-file',
           'infra_internal/labs/drivers/microsoft/windows_adk/winpe/' +
           'winpe-dot3svc/windows-amd64 latest', '-max-threads', '0',
           '-json-output', '/path/to/tmp/json'

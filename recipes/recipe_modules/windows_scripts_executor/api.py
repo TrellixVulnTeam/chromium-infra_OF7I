@@ -8,7 +8,7 @@ from recipe_engine.recipe_api import Property
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
 COPYPE = 'Copy-PE.ps1'
-ADDFILE = 'Add-FileToDiskImage.ps1'
+ADDFILE = 'Copy-Item'
 
 # Format strings for use in mount cmdline options
 MOUNT_CMD = 'Mount-WindowsImage'
@@ -33,7 +33,6 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     super(WindowsPSExecutorAPI, self).__init__(*args, **kwargs)
     self._scripts = self.resource('WindowsPowerShell\Scripts')
     self._copype = self._scripts.join(COPYPE)
-    self._addfile = self._scripts.join(ADDFILE)
     self._workdir = ''
     self._cipd_packages = ''
 
@@ -79,9 +78,9 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
       src = res['path']
     elif f.WhichOneof('src') == 'local_src':
       src = f.local_src
-    self.execute_script('Add file {}'.format(src), self._addfile, None,
-                        '-DiskImage', str(self._workdir), '-SourceFile', src,
-                        '-ImageDestinationPath', f.dst)
+    self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
+                        '-Recurse', '-Force', '-Destination',
+                        self._workdir.join('mount', f.dst))
 
   def cipd_ensure(self, package, refs, platform, name=''):
     """ Downloads the given package and returns path to the files
@@ -90,12 +89,16 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     ensure_file.add_package(str(package) + '/' + str(platform), str(refs))
     if name == '':
       name = 'Downloading {}:{}'.format(package, refs)
-    # Download the installer using cipd and store it in package ref?
-    res = self.m.cipd.ensure(self._cipd_packages, ensure_file, name=name)
+    # download the package to dir indexed by refs
+    dwload_loc = self._cipd_packages.join(refs, conv_to_win_path(package),
+                                          platform)
+    # Download the installer using cipd
+    res = self.m.cipd.ensure(dwload_loc, ensure_file, name=name)
     # Append abs file path to res before returning
-    res['path'] = self._cipd_packages.join(package, platform)
+    res['path'] = dwload_loc.join('*')
     # Return the path to where the file currently exists
     return res
+
 
   def init_win_pe_image(self, arch, dest, index=1):
     """Calls Copy-PE to create WinPE media folder for arch"""
@@ -156,3 +159,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
         UNMOUNT_CMD,
         logs=[logs],
         args=args)
+
+
+def conv_to_win_path(path):
+  """ Converts unix paths to windows ones."""
+  return '\\'.join(path.split('/'))

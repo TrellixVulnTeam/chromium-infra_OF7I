@@ -931,38 +931,38 @@ Ensures that the WinPE add-on is available.
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#72)(self, f):**
+&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#71)(self, f):**
 
-&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#86)(self, package, refs, platform, name=''):**
+&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#85)(self, package, refs, platform, name=''):**
 
 Downloads the given package and returns path to the files
 contained within.
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#115)(self, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#118)(self, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#122)(self, name, command, logs=None, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#125)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#40)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#39)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#100)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#103)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#127)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
+&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#130)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
 
 Mount the wim to a dir for modification
 
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#64)(self, action):**
+&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#63)(self, action):**
 
 Performs the given action
 
-&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#141)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
+&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#144)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
 
 Unmount the winpe wim from the given directory
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
