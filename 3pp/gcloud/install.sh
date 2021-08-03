@@ -27,6 +27,8 @@ if [ "$(uname -s)" == "Linux" ]; then
       LINUX_EXTRAS=cloud-spanner-emulator
 fi
 ./google-cloud-sdk/bin/gcloud components install -q \
+    alpha \
+    beta \
     app-engine-go \
     app-engine-python \
     app-engine-python-extras \
