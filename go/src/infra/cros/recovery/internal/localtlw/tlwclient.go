@@ -32,6 +32,14 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+const (
+	// gsCrosImageBucket is the base URL for the Google Storage bucket for
+	// ChromeOS image archives.
+	gsCrosImageBucket = "gs://chromeos-image-archive"
+	// tlwPort is default port used to run TLW on the drones.
+	tlwPort = 7151
+)
+
 // UFSClient is a client that knows how to work with UFS RPC methods.
 type UFSClient interface {
 	// GetSchedulingUnit retrieves the details of the SchedulingUnit.
@@ -212,6 +220,19 @@ func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyR
 		Status: tlw.PowerSupplyResponseStatusError,
 		Reason: "not implemented",
 	}
+}
+
+// GetImageUrl provides URL to the image requested to load.
+// URL will use to download image to USB-drive and provisioning.
+func (c *tlwClient) GetImageUrl(ctx context.Context, resourceName, imageName string) (string, error) {
+	addr := fmt.Sprintf("0.0.0.0:%d", tlwPort)
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		return "", errors.Annotate(err, "connect to background TLS").Err()
+	}
+	defer conn.Close()
+	gsImagePath := fmt.Sprintf("%s/%s", gsCrosImageBucket, imageName)
+	return CacheForDut(ctx, conn, gsImagePath, resourceName)
 }
 
 // ListResourcesForUnit provides list of resources names related to target unit.

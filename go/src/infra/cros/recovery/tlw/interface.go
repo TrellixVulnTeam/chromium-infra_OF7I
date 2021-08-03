@@ -46,6 +46,9 @@ type Access interface {
 	GetDut(ctx context.Context, resourceName string) (*Dut, error)
 	// UpdateDut updates DUT info into inventory.
 	UpdateDut(ctx context.Context, dut *Dut) error
+	// GetImageUrl provides URL to the image requested to load.
+	// URL will use to download image to USB-drive and provisioning.
+	GetImageUrl(ctx context.Context, resourceName, imageName string) (string, error)
 	// Close closes all used resources.
 	Close() error
 }
