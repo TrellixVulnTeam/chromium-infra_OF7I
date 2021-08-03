@@ -1,0 +1,107 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+import "google/api/field_behavior.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+
+option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
+
+// Status of a test variant.
+enum AnalyzedTestVariantStatus {
+
+  // Status was not specified.
+  // Not to be used in actual test variants; serves as a default value for an unset field.
+  STATUS_UNSPECIFIED = 0;
+
+  // The test variant is currently flaky.
+  FLAKY = 1;
+
+  // Results of the test variant have been consistently expected for
+  // a period of time.
+  // TODO(chanli@): mention the configuration that specifies the time range.
+  CONSISTENTLY_EXPECTED = 2;
+
+  // Results of the test variant have been consistently unexpected for
+  // a period of time.
+  CONSISTENTLY_UNEXPECTED = 3;
+
+  // There are no new results of the test variant for a period of time.
+  // It's likely that this test variant has been disabled or removed.
+  NO_NEW_RESULTS = 4;
+
+  // The test variant may be a flake but with current data it cannot be decided.
+  // This status can be used when
+  // * in in-build flakiness cases, a test variant with flaky results in a build
+  //   is newly detected but the service has not been notified if the build
+  //   contributes to a CL's submission or not.
+  // * in cross-build flakiness cases, a test variant is newly detected in a build
+  //   where all of its results are unexpected.
+  FLAKY_SUSPECT = 5;
+}
+
+// Flake statistics of a test variant.
+message FlakeStatistics {
+  // Flake verdict rate calculated by the verdicts within the time range.
+  float flaky_verdict_rate = 1;
+  // Count of verdicts with flaky status.
+  int32 flaky_verdict_count = 2;
+  // Count of total verdicts.
+  int32 total_verdict_count = 3;
+
+  // Unexpected result rate calculated by the test results within the time range.
+  float unexpected_result_rate = 4;
+  // Count of unexpected results.
+  int32 unexpected_result_count = 5;
+  // Count of total results.
+  int32 total_result_count = 6;
+}
+
+message AnalyzedTestVariant {
+  // Can be used to refer to this test variant.
+  // Format:
+  // "realms/{REALM}/tests/{URL_ESCAPED_TEST_ID}/variants/{VARIANT_HASH}"
+  string name = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Realm that the test variant exists under.
+  // See https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/common/proto/realms/realms_config.proto
+  string realm = 2;
+
+  // Test id, identifier of the test. Unique in a LUCI realm.
+  string test_id = 3;
+
+  // Hash of the variant.
+  string variant_hash = 4;
+
+  // Description of one specific way of running the test,
+  // e.g. a specific bucket, builder and a test suite.
+  luci.resultdb.v1.Variant variant = 5;
+
+  // Information about the test at the time of its execution.
+  luci.resultdb.v1.TestMetadata test_metadata = 6;
+
+  // Metadata for the test variant.
+  // See luci.resultdb.v1.Tags for details.
+  repeated StringPair tags = 7;
+
+  // A range of time. Flake statistics are calculated using test results
+  // within that range.
+  TimeRange time_range = 8;
+
+  // Status of the test valiant.
+  AnalyzedTestVariantStatus status = 9;
+
+  // Flakiness statistics of the test variant.
+  FlakeStatistics flake_statistics = 10;
+
+  // TODO(chanli@): Add Cluster and Bug information to the proto.
+}

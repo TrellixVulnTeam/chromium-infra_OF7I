@@ -1,0 +1,30 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
+
+// A string key-value pair.
+message StringPair {
+  // Regex: ^[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)*$
+  // Max length: 64.
+  string key = 1;
+
+  // Max length: 256.
+  string value = 2;
+}
+
+// A range of timestamps.
+message TimeRange {
+  // The oldest timestamp to include in the range.
+  google.protobuf.Timestamp earliest = 1;
+
+  // Include only timestamps that are strictly older than this.
+  google.protobuf.Timestamp latest = 2;
+}
