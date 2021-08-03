@@ -24,6 +24,7 @@ import (
 	steps "infra/cros/cmd/labpack/steps"
 	"infra/cros/cmd/labpack/tlw"
 	"infra/cros/recovery"
+	"infra/cros/recovery/logger"
 )
 
 func main() {
@@ -64,11 +65,14 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		task = t
 	}
 	// TODO(otabek@): Add custom logger.
-	// TODO(otabek@): Add custom stepper.
+	logger := logger.NewLogger()
+	sh := tlw.NewStepHandler(logger)
 	runArgs := &recovery.RunArgs{
 		UnitName:              in.UnitName,
 		TaskName:              task,
 		Access:                access,
+		Logger:                logger,
+		StepHandler:           sh,
 		EnableRecovery:        in.EnableRecovery,
 		EnableUpdateInventory: in.UpdateInventory,
 	}
