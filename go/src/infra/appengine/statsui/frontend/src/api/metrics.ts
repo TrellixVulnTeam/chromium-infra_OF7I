@@ -5,16 +5,16 @@
 import { Period } from '../utils/dateUtils';
 import { PrpcClient } from '@chopsui/prpc-client';
 
-export type DataSet = { [date: string]: number };
+export type FetchDataSet = { [date: string]: number };
 
-export interface Metric {
+export interface FetchMetric {
   name: string;
-  data?: DataSet;
-  sections?: { [section: string]: DataSet };
+  data?: FetchDataSet;
+  sections?: { [section: string]: FetchDataSet };
 }
 
 export interface FetchMetricsResponse {
-  sections: { [section: string]: Metric[] };
+  sections: { [section: string]: FetchMetric[] };
 }
 
 interface pbFetchMetricsRequest {
@@ -41,7 +41,7 @@ interface pbFetchMetricsMetric {
 }
 
 interface pbFetchMetricsDataSet {
-  data: DataSet;
+  data: FetchDataSet;
 }
 
 function pbPeriod(p: Period): number {
@@ -86,7 +86,7 @@ export async function fetchMetrics(
   const ret: FetchMetricsResponse = { sections: {} };
   resp.sections.forEach((section) => {
     ret.sections[section.name] = section.metrics.map((metric) => {
-      const m: Metric = { name: metric.name };
+      const m: FetchMetric = { name: metric.name };
       if (metric.data != undefined) {
         m.data = metric.data.data;
       }

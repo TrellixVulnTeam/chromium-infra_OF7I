@@ -1,0 +1,8 @@
+:root {
+  --grey-300: #e0e0e0;
+
+  --google-grey-300: #dadce0;
+
+  --table-odd-row-color: #494949;
+  --table-data-cell-color: var(--google-grey-300);
+}

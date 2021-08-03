@@ -6,14 +6,28 @@
 * Various resize issues
   * Table container should not be able to be smaller than table
   * Sometimes period selector gets wrapped or as strange spacing issues
+
+### Features to add (Prioritized)
+
+* Show deltas vs previous period
+* Make CQ builders links
+* Add Google Analytics
+* External linking for metrics
+* Add day of week to day aggregation display
+* Add support for percentile metrics
+* Charting
+  * Show trends
+  * Show distributions
+* Move catalog to backend
+* Table row virtualization
 * Add retry and no patch phases into phase metric
 
-### Milestone 4
+### &#x2705; Milestone 4
 
 Productionization
 * Frontend tests
 * Backend tests
-* &#x2705; Move repo
+* Move repo
 
 ### &#x2705; Milestone 3
 
@@ -40,15 +54,3 @@ Functioning UI to show builders & their runtimes on a weekly basis
 * Free-text search
 * Save preferences
 
-### Feature ideas
-
-List of feature ideas
-* Add day of week to day aggregation display
-* Show deltas
-  * vs target
-  * vs previous period
-  * YoY
-* External linking for metrics
-* Move catalog to backend
-* Charting
-* Table row virtualization

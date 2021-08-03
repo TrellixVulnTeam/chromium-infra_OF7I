@@ -18,6 +18,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import {
   decrementDates,
   incrementDates,
+  DataSet,
   MetricsData,
   selectMaxDate,
   selectShowLoading,
@@ -32,7 +33,6 @@ import {
   selectCurrentSource,
 } from '../dataSources/dataSourcesSlice';
 import { format, Unit } from '../../utils/formatUtils';
-import { DataSet } from '../../api/metrics';
 
 import styles from './MetricsTable.module.css';
 import { search } from '../../utils/searchUtils';
@@ -154,7 +154,9 @@ function compareSections(
       }
       if (orderBy in a.metrics[0].data && orderBy in b.metrics[0].data) {
         return (
-          (a.metrics[0].data[orderBy] - b.metrics[0].data[orderBy]) * invert
+          (a.metrics[0].data[orderBy].value -
+            b.metrics[0].data[orderBy].value) *
+          invert
         );
       }
       if (orderBy in a.metrics[0].data) {

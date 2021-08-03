@@ -45,7 +45,7 @@ describe('when rendering MetricsTable with data', () => {
             M1: {
               name: 'M1',
               data: {
-                '2021-01-02': 112,
+                '2021-01-02': { value: 112 },
               },
             },
           },
@@ -75,10 +75,10 @@ describe('when rendering MetricsTable with data', () => {
               name: 'M1',
               sections: {
                 S2: {
-                  '2021-01-02': 1212,
+                  '2021-01-02': { value: 1212 },
                 },
                 S1: {
-                  '2021-01-02': 1112,
+                  '2021-01-02': { value: 1112 },
                 },
               },
             },
@@ -119,7 +119,7 @@ describe('when sorting MetricsTable data', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 1,
+              '2021-01-02': { value: 1 },
             },
           },
         },
@@ -127,7 +127,7 @@ describe('when sorting MetricsTable data', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 3,
+              '2021-01-02': { value: 3 },
             },
           },
         },
@@ -135,7 +135,7 @@ describe('when sorting MetricsTable data', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 2,
+              '2021-01-02': { value: 2 },
             },
           },
         },
@@ -188,7 +188,7 @@ describe('when filtering MetricsTable data', () => {
             M1: {
               name: 'M1',
               data: {
-                '2021-01-02': 2,
+                '2021-01-02': { value: 2 },
               },
             },
           },
@@ -196,7 +196,7 @@ describe('when filtering MetricsTable data', () => {
             M1: {
               name: 'M1',
               data: {
-                '2021-01-02': 1,
+                '2021-01-02': { value: 1 },
               },
             },
           },
@@ -224,7 +224,7 @@ describe('when filtering MetricsTable data', () => {
               name: 'M1',
               sections: {
                 S1: {
-                  '2021-01-02': 1,
+                  '2021-01-02': { value: 1 },
                 },
               },
             },
@@ -234,7 +234,7 @@ describe('when filtering MetricsTable data', () => {
               name: 'M1',
               sections: {
                 S2: {
-                  '2021-01-02': 2,
+                  '2021-01-02': { value: 2 },
                 },
               },
             },

@@ -1,5 +1,5 @@
 tr.odd {
-  background: #f1f3f4;
+  background: var(--table-odd-row-color);
 }
 
 .section .rank {
@@ -9,7 +9,7 @@ tr.odd {
 
 .section .name {
   vertical-align: top;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--grey-300);
 }
 
 .indent .name {

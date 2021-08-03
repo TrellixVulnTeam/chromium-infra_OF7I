@@ -5,10 +5,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import {
-  DataSet,
+  FetchDataSet,
   fetchMetrics,
   FetchMetricsResponse,
-  Metric,
 } from '../../api/metrics';
 import { AppDispatch, AppState, AppThunk } from '../../app/store';
 import { merge, removeFrom } from '../../utils/arrayUtils';
@@ -28,6 +27,28 @@ import { calculateValidDates, Period } from '../../utils/dateUtils';
  * The slice is organized using Redux Toolkit (https://redux-toolkit.js.org/)
  * conventions.
  */
+
+/*
+ Data for a single metric. A metric may have subsections.
+ */
+export interface Metric {
+  name: string;
+  data?: DataSet;
+  sections?: { [section: string]: DataSet };
+}
+
+/*
+ A DataSet contains the values for a single metric for a set of dates.
+ */
+export type DataSet = { [date: string]: DataPoint };
+
+/*
+ A DataPoint contains the value for a single metric for a single date.
+ */
+export type DataPoint = {
+  value: number;
+  previous?: DataPoint;
+};
 
 /*
  The section keys are arbitrary strings that name the section.
@@ -167,6 +188,50 @@ function createVisibleDataSet(data: DataSet, dates: string[]): DataSet {
   return ret;
 }
 
+// Goes through the cache for the given dates and makes sure that previous
+// is properly set for each data point.
+function updateDataPointsPrevious(
+  cache: MetricsData,
+  dates: string[],
+  period: Period
+) {
+  if (period === Period.Undefined) {
+    return;
+  }
+  dates.forEach((date) => {
+    const nextDate = calculateValidDates(date, period, 0, 1, false)[0];
+    if (nextDate !== undefined && !dates.includes(nextDate)) {
+      dates.push(nextDate);
+    }
+  });
+  dates.forEach((date) => {
+    const prevDate = calculateValidDates(date, period, 1, 0, false)[0];
+    Object.values(cache).forEach((section) => {
+      Object.values(section).forEach((metric) => {
+        if (
+          metric.data !== undefined &&
+          metric.data[date] !== undefined &&
+          metric.data[date].previous === undefined &&
+          metric.data[prevDate] !== undefined
+        ) {
+          metric.data[date].previous = metric.data[prevDate];
+        }
+        if (metric.sections !== undefined) {
+          Object.values(metric.sections).forEach((subSection) => {
+            if (
+              subSection[date] !== undefined &&
+              subSection[date].previous === undefined &&
+              subSection[prevDate] !== undefined
+            ) {
+              subSection[date].previous = subSection[prevDate];
+            }
+          });
+        }
+      });
+    });
+  });
+}
+
 interface FetchMetricsStart {
   dates: string[];
   metrics: string[];
@@ -240,7 +305,7 @@ const metricsSlice = createSlice({
               cacheMetric.data = {};
             }
             // Merge dates from metric into cache
-            Object.assign(cacheMetric.data, metric.data);
+            copyDataSet(cacheMetric.data, metric.data);
           } else if (metric.sections != undefined) {
             Object.keys(metric.sections).forEach((subSectionName) => {
               if (metric.sections == undefined) return;
@@ -250,8 +315,8 @@ const metricsSlice = createSlice({
               if (!(subSectionName in cacheMetric.sections)) {
                 cacheMetric.sections[subSectionName] = {};
               }
-              // Merge dates from metric sections into cache
-              Object.assign(
+              // Merge dates from subsections into cache
+              copyDataSet(
                 cacheMetric.sections[subSectionName],
                 metric.sections[subSectionName]
               );
@@ -259,10 +324,17 @@ const metricsSlice = createSlice({
           }
         }
       });
+      updateDataPointsPrevious(state.cache, action.payload.dates, state.period);
       state.visibleData = calculateVisibleData(state);
     },
   },
 });
+
+function copyDataSet(to: DataSet, from: FetchDataSet) {
+  Object.keys(from).forEach((date) => {
+    to[date] = { value: from[date] };
+  });
+}
 
 const {
   updateDataSource,

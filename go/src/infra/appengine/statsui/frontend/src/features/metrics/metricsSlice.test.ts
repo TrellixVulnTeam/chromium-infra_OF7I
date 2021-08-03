@@ -17,9 +17,9 @@ const emptyState: MetricsState = {
   visibleData: {},
 
   dataSource: '',
-  period: Period.Undefined,
+  period: Period.Day,
   numPeriods: 1,
-  maxDate: '2021-01-02',
+  maxDate: '2021-01-06',
 
   precachePeriods: 0,
   cachedDates: [],
@@ -45,13 +45,13 @@ describe('updatePeriod', () => {
     MockDate.reset();
   });
   it('updates state', () => {
-    MockDate.set(toTzDate('2021-01-02'));
+    MockDate.set(toTzDate('2021-01-03'));
 
     const action = actions.updatePeriod(Period.Day);
     const state = metricsReducer(undefined, action);
 
     expect(state.period).toEqual(action.payload);
-    expect(state.maxDate).toEqual('2021-01-02');
+    expect(state.maxDate).toEqual('2021-01-03');
   });
 });
 
@@ -95,22 +95,22 @@ describe('calculateVisibleData', () => {
       M1: {
         name: 'M1',
         data: {
-          '2021-01-01': 111,
-          '2021-01-03': 113,
+          '2021-01-01': { value: 111 },
+          '2021-01-03': { value: 113 },
         },
       },
       M2: {
         name: 'M2',
         data: {
-          '2021-01-01': 211,
-          '2021-01-02': 212,
+          '2021-01-01': { value: 211 },
+          '2021-01-02': { value: 212 },
         },
       },
       M3: {
         name: 'M3',
         data: {
-          '2021-01-02': 312,
-          '2021-01-03': 313,
+          '2021-01-02': { value: 312 },
+          '2021-01-03': { value: 313 },
         },
       },
     },
@@ -120,13 +120,13 @@ describe('calculateVisibleData', () => {
       M1: {
         name: 'M1',
         data: {
-          '2021-01-03': 113,
+          '2021-01-03': { value: 113 },
         },
       },
       M2: {
         name: 'M2',
         data: {
-          '2021-01-02': 212,
+          '2021-01-02': { value: 212 },
         },
       },
     },
@@ -257,7 +257,7 @@ describe('fetchMetricsSuccess', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 112,
+              '2021-01-02': { value: 112 },
             },
           },
         },
@@ -282,7 +282,7 @@ describe('fetchMetricsSuccess', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 112,
+              '2021-01-02': { value: 112 },
             },
           },
         },
@@ -304,7 +304,7 @@ describe('fetchMetricsSuccess', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-03': 113,
+              '2021-01-03': { value: 113 },
             },
           },
         },
@@ -316,8 +316,42 @@ describe('fetchMetricsSuccess', () => {
           M1: {
             name: 'M1',
             data: {
-              '2021-01-02': 112,
-              '2021-01-03': 113,
+              '2021-01-02': { value: 112 },
+              '2021-01-03': { value: 113, previous: { value: 112 } },
+            },
+          },
+        },
+      };
+      expect(state.cache).toEqual(expected);
+    });
+
+    // Tests that data from a response properly updates previous
+    it('adds pointer to previous value', () => {
+      const action = actions.fetchMetricsSuccess({
+        dates: ['2021-01-02'],
+        metrics: ['M1'],
+        response: response,
+      });
+      const oldState = Object.assign({}, emptyState);
+      oldState.cache = {
+        A: {
+          M1: {
+            name: 'M1',
+            data: {
+              '2021-01-01': { value: 111 },
+            },
+          },
+        },
+      };
+      const state = metricsReducer(oldState, action);
+
+      const expected: MetricsData = {
+        A: {
+          M1: {
+            name: 'M1',
+            data: {
+              '2021-01-01': { value: 111 },
+              '2021-01-02': { value: 112, previous: { value: 111 } },
             },
           },
         },
@@ -358,7 +392,7 @@ describe('fetchMetricsSuccess', () => {
             name: 'M1',
             sections: {
               A1: {
-                '2021-01-02': 1112,
+                '2021-01-02': { value: 1112 },
               },
             },
           },
@@ -385,7 +419,7 @@ describe('fetchMetricsSuccess', () => {
             name: 'M1',
             sections: {
               A1: {
-                '2021-01-02': 1112,
+                '2021-01-02': { value: 1112 },
               },
             },
           },
@@ -409,7 +443,7 @@ describe('fetchMetricsSuccess', () => {
             name: 'M1',
             sections: {
               A1: {
-                '2021-01-03': 1113,
+                '2021-01-03': { value: 1113 },
               },
             },
           },
@@ -423,8 +457,8 @@ describe('fetchMetricsSuccess', () => {
             name: 'M1',
             sections: {
               A1: {
-                '2021-01-02': 1112,
-                '2021-01-03': 1113,
+                '2021-01-02': { value: 1112 },
+                '2021-01-03': { value: 1113, previous: { value: 1112 } },
               },
             },
           },
