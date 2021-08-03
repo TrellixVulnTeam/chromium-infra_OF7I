@@ -56,19 +56,19 @@ export class MrApprovalCard extends connectStore(LitElement) {
           --approval-bg-color: var(--chops-purple-50);
           --approval-accent-color: var(--chops-purple-700);
         }
-        mr-approval-card .status-na {
+        mr-approval-card.status-na {
           --approval-bg-color: hsl(227, 20%, 92%);
           --approval-accent-color: hsl(227, 80%, 40%);
         }
-        mr-approval-card .status-approved {
+        mr-approval-card.status-approved {
           --approval-bg-color: hsl(78, 55%, 90%);
           --approval-accent-color: hsl(78, 100%, 30%);
         }
-        mr-approval-card .status-pending {
+        mr-approval-card.status-pending {
           --approval-bg-color: hsl(40, 75%, 90%);
           --approval-accent-color: hsl(33, 100%, 39%);
         }
-        mr-approval-card .status-rejected {
+        mr-approval-card.status-rejected {
           --approval-bg-color: hsl(5, 60%, 92%);
           --approval-accent-color: hsl(357, 100%, 39%);
         }

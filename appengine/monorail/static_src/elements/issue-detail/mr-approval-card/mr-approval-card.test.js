@@ -72,6 +72,31 @@ describe('mr-approval-card', () => {
     assert.isTrue(element._isApprover);
   });
 
+  it('approvals change color based on status', async () => {
+    // Initialize dependent CSS property from a stylesheet not included in
+    // our testing environment.
+    element.style.setProperty('--chops-purple-50', '#f3e5f5');
+
+    element.statusEnum = 'NEEDS_REVIEW';
+    await element.updateComplete;
+
+    const header = element.querySelector('button.header');
+
+    // Purple. Note that Chrome uses RGB for computed styles regardless of
+    // underlying CSS.
+    assert.equal(
+      window.getComputedStyle(header).getPropertyValue('background-color'),
+      'rgb(243, 229, 245)');
+
+    element.statusEnum = 'APPROVED';
+    await element.updateComplete;
+
+    // Green.
+    assert.equal(
+      window.getComputedStyle(header).getPropertyValue('background-color'),
+      'rgb(235, 244, 215)');
+  });
+
   it('site admins have approver privileges', async () => {
     await element.updateComplete;
 
