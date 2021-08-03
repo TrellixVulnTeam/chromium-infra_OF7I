@@ -95,7 +95,7 @@ func Entrypoint(args []string) error {
 		if strings.ToLower(parsed.Commands[1]) != "dut" {
 			return errors.New("only add dut supported")
 		}
-		return errors.New("command not yet implemented")
+		return tasks.DeleteDUT(serviceAccountJson, satlab, parsed)
 	}
 
 	return errors.Annotate(
