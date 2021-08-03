@@ -9,10 +9,14 @@ package main
 import (
 	"fmt"
 	"os"
+
+	satlab "infra/cros/cmd/satlab/internal"
 )
 
 // Main runs the satlab command and exits abnormally if ./satlab finished with an error.
 func main() {
-	fmt.Fprintf(os.Stderr, "not implemented\n")
-	os.Exit(1)
+	if err := satlab.Entrypoint(os.Args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		os.Exit(1)
+	}
 }
