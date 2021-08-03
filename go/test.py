@@ -94,11 +94,18 @@ def run_tests(package_root):
     return 1
   clean_go_bin()
   command = ['go', 'test', '%s/...' % package_root]
+
+  prev_env = os.environ.copy()
   if use_resultdb():
+    # Silence goconvey reporter to avoid interference with result_adapter.
+    # https://github.com/smartystreets/goconvey/blob/0fc5ef5371303f55e76d89a57286fb7076777e5b/convey/init.go#L37
+    os.environ['GOCONVEY_REPORTER'] = 'silent'
     command = [get_adapter_path(), 'go', '--'] + command
-  proc = subprocess.Popen(command)
-  proc.wait()
-  return proc.returncode
+  try:
+    return subprocess.Popen(command).wait()
+  finally:
+    os.environ.clear()
+    os.environ.update(prev_env)
 
 
 def main(args):
