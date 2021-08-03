@@ -42,7 +42,7 @@ def _docker_image_exists(system, identifier):
 class Builder(object):
 
   # Tag used for pushed Docker images.
-  DOCKER_IMAGE_TAG = 'v1.4.13'
+  DOCKER_IMAGE_TAG = 'v1.4.14'
 
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
