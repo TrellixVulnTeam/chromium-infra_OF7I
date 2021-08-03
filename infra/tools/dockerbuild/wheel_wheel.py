@@ -47,8 +47,6 @@ class SourceOrPrebuilt(Builder):
           source.
       kwargs: Keyword arguments forwarded to Builder.
     """
-    if patches and patch_version:
-      raise ValueError('patches and patch_version may not be used together.')
     self._pypi_src = source.pypi_sdist(
         name, version, patches=patches, patch_base=patch_base)
     self._packaged = set(
