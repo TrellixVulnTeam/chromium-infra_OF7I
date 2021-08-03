@@ -58,7 +58,7 @@ func TestExcluder(t *testing.T) {
 
 	Convey("scanUp works", t, func(c C) {
 		tmp := newTempDir(c)
-		So(scanUp(tmp.join("a/b/c"), tmp.join(".")), ShouldResemble, []string{
+		So(scanUp(tmp.join("a/b/c"), tmp.join("."), ".gitignore"), ShouldResemble, []string{
 			tmp.join(".gitignore"),
 			tmp.join("a/.gitignore"),
 			tmp.join("a/b/.gitignore"),
@@ -73,7 +73,7 @@ func TestExcluder(t *testing.T) {
 		tmp.touch("a/d/.gitignore")
 		tmp.touch("a/d/stuff")
 
-		paths, err := scanDown(nil, tmp.join("."))
+		paths, err := scanDown(nil, tmp.join("."), ".gitignore")
 		So(err, ShouldBeNil)
 		So(paths, ShouldResemble, []string{
 			tmp.join(".gitignore"),
@@ -87,7 +87,7 @@ func TestExcluder(t *testing.T) {
 		tmp.mkdir(".git") // pretend to be the repo root
 
 		excluder := func(p string) fileset.Excluder {
-			cb, err := NewExcluder(tmp.join(p))
+			cb, err := NewExcluder(tmp.join(p), ".gitignore")
 			So(err, ShouldBeNil)
 			return func(rel string, isDir bool) bool {
 				return cb(tmp.join(rel), isDir)
@@ -145,6 +145,16 @@ func TestExcluder(t *testing.T) {
 			So(cb("hidden", true), ShouldBeFalse)
 			So(cb("a/hidden", true), ShouldBeTrue)
 			So(cb("a/z/hidden", true), ShouldBeFalse)
+		})
+
+		Convey("#include support", func() {
+			tmp.put(".gitignore", "root-hidden\n#comment\n#!include:included")
+			tmp.put("included", "include-hidden")
+
+			cb := excluder(".")
+			So(cb("visible", false), ShouldBeFalse)
+			So(cb("root-hidden", false), ShouldBeTrue)
+			So(cb("include-hidden", false), ShouldBeTrue)
 		})
 	})
 }

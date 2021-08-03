@@ -68,7 +68,7 @@ func (b *Builder) Build(ctx context.Context, m *manifest.Manifest) (*fileset.Set
 
 	if m.ContextDir != "" {
 		logging.Debugf(ctx, "Adding %q to the output set...", m.ContextDir)
-		excluder, err := gitignore.NewExcluder(m.ContextDir)
+		excluder, err := gitignore.NewExcluder(m.ContextDir, ".gitignore")
 		if err != nil {
 			return nil, errors.Annotate(err, "when loading .gitignore files").Err()
 		}

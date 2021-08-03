@@ -20,15 +20,12 @@ import (
 	"infra/cmd/cloudbuildhelper/fileset"
 )
 
-const (
-	gitDir     = ".git"
-	ignoreFile = ".gitignore"
-)
+const gitDir = ".git"
 
 // NewExcluder returns a predicate that checks whether the given absolute path
-// under given `dir` is excluded by some .gitignore file which is active in
-// that directory.
-func NewExcluder(dir string) (fileset.Excluder, error) {
+// under given `dir` is excluded by some `ignoreFile` (usually ".gitignore")
+// file which is active in that directory.
+func NewExcluder(dir, ignoreFile string) (fileset.Excluder, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -42,8 +39,8 @@ func NewExcluder(dir string) (fileset.Excluder, error) {
 
 	// Find possible ".gitignore" files in parent directories and *all*
 	// ".gitignore" files recursively under `dir`.
-	paths := scanUp(dir, repoRoot)
-	if paths, err = scanDown(paths, dir); err != nil {
+	paths := scanUp(dir, repoRoot, ignoreFile)
+	if paths, err = scanDown(paths, dir, ignoreFile); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +86,7 @@ func findRepoRoot(start string) (string, error) {
 //
 // It is purely lexicographical computation, the file system is not touched.
 // Files closer to `root` come first.
-func scanUp(start, root string) (paths []string) {
+func scanUp(start, root, ignoreFile string) (paths []string) {
 	cur := start
 	for {
 		par := filepath.Dir(cur)
@@ -109,7 +106,7 @@ func scanUp(start, root string) (paths []string) {
 // scanDown recursively searches for ".gitignore" files under `start`.
 //
 // Adds them to `paths` slice, returning it in the end.
-func scanDown(paths []string, start string) ([]string, error) {
+func scanDown(paths []string, start, ignoreFile string) ([]string, error) {
 	err := filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() && filepath.Base(path) == ignoreFile {
 			paths = append(paths, path)
@@ -145,8 +142,16 @@ func readIgnoreFile(path string) (pat []gitignore.Pattern, err error) {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if len(line) > 0 && !strings.HasPrefix(line, "#") {
+		switch line := strings.TrimSpace(scanner.Text()); {
+		case strings.HasPrefix(line, "#!include:"):
+			// "#!include:<path>" is a syntax used by .gcloudignore files.
+			inc := filepath.Join(filepath.Dir(path), strings.TrimPrefix(line, "#!include:"))
+			included, err := readIgnoreFile(inc)
+			if err != nil {
+				return nil, err
+			}
+			pat = append(pat, included...)
+		case len(line) > 0 && !strings.HasPrefix(line, "#"):
 			pat = append(pat, gitignore.ParsePattern(line, domain))
 		}
 	}

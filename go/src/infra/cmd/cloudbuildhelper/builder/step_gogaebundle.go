@@ -81,10 +81,10 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 		return errors.Annotate(err, "failed to setup a symlink to location in _gopath").Err()
 	}
 
-	// Respect .gitignore files.
-	excludedByGitIgnore, err := gitignore.NewExcluder(mainDir)
+	// Respect .gcloudignore files.
+	excludedByIgnoreFile, err := gitignore.NewExcluder(mainDir, ".gcloudignore")
 	if err != nil {
-		return errors.Annotate(err, "when loading .gitignore files").Err()
+		return errors.Annotate(err, "when loading .gcloudignore files").Err()
 	}
 
 	// Copy all files that make up "main" package (they can be only at the root
@@ -93,8 +93,8 @@ func runGoGAEBundleBuildStep(ctx context.Context, inv *stepRunnerInv) error {
 	// separately.
 	err = inv.addFilesToOutput(ctx, mainDir, goPathDest, func(absPath string, isDir bool) bool {
 		switch {
-		case excludedByGitIgnore(absPath, isDir):
-			return true // respect .gitignore exclusions
+		case excludedByIgnoreFile(absPath, isDir):
+			return true // respect .gcloudignore exclusions
 		case isDir:
 			return false // do not exclude directories, may have contain static files
 		}
