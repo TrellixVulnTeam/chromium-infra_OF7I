@@ -13,3 +13,7 @@ infra/tools/luci/logdog/logdog/windows-amd64  git_revision:5cf65fdf804a9b3f3023f
 
 # Crimson tool.
 infra/machine-db/crimson/windows-amd64 stable
+
+# Result adapter can wrap some test frameworks for `rdb stream` compatibility.
+@Subdir result_adapter
+infra/tools/result_adapter/windows-amd64 git_revision:18eac35dc014899a0836db0570740f3706d8621d

@@ -22,3 +22,7 @@ infra/machine-db/crimson/mac-amd64 stable
 
 # Helper for building Docker images and GAE tarballs.
 infra/tools/cloudbuildhelper/mac-amd64 git_revision:011824f1ac5399ae42979f8c24c6f6a9ddb060af
+
+# Result adapter can wrap some test frameworks for `rdb stream` compatibility.
+@Subdir result_adapter
+infra/tools/result_adapter/mac-amd64 git_revision:18eac35dc014899a0836db0570740f3706d8621d
