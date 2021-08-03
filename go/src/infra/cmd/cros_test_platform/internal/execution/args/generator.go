@@ -477,6 +477,9 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		Deadline: deadline,
 		Prejob: &skylab_test_runner.Request_Prejob{
 			SoftwareDependencies: g.Params.SoftwareDependencies,
+			SoftwareAttributes:   g.Params.SoftwareAttributes,
+			HardwareAttributes:   g.Params.HardwareAttributes,
+			SecondaryDevices:     g.Params.SecondaryDevices,
 		},
 		// The hard coded "original_test" key is ignored in test_runner builds.
 		// All behavior will remain the same, until we start running multiple tests per test_runner build.
