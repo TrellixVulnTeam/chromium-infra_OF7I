@@ -339,6 +339,19 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 			} else {
 				oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion().Value = machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetValue()
 			}
+		case "osImage":
+			if oldMachinelse.GetChromeBrowserMachineLse() == nil {
+				oldMachinelse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				}
+			}
+			if oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion() == nil {
+				oldMachinelse.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
+					Image: machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetImage(),
+				}
+			} else {
+				oldMachinelse.GetChromeBrowserMachineLse().GetOsVersion().Image = machinelse.GetChromeBrowserMachineLse().GetOsVersion().GetImage()
+			}
 		case "vmCapacity":
 			if oldMachinelse.GetChromeBrowserMachineLse() == nil {
 				oldMachinelse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
@@ -1395,6 +1408,8 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 					return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
 				}
 			case "mlseprototype":
+			case "osImage":
+				fallthrough
 			case "osVersion":
 				if machinelse.GetChromeBrowserMachineLse() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser machine lse cannot be empty/nil.")

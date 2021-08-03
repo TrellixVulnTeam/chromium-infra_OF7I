@@ -64,8 +64,8 @@ var (
 	VlanTitle                 = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
 	VMTitle                   = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                 = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
-	MachineLSEFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	MachineLSETitle           = []string{"Host", "OS Version", "OS Image", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
+	MachineLSEFullTitle       = []string{"Host", "OS Version", "OS Image", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 	MachineLSEDeploymentTitle = []string{"Serial Number", "Hostname", "Deployment Identifier", "Deployment Env", "UpdateTime"}
 	VMFreeSlotTitle           = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "Free slots", "DeploymentTicket", "Description", "UpdateTime"}
 	VMFreeSlotFullTitle       = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "Free slots", "Description", "UpdateTime"}
@@ -1380,6 +1380,7 @@ func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) []s
 	return []string{
 		ufsUtil.RemovePrefix(lse.GetName()),
 		lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+		lse.GetChromeBrowserMachineLse().GetOsVersion().GetImage(),
 		lse.GetManufacturer(),
 		strSlicesToStr(lse.GetMachines()),
 		lse.GetZone(),
@@ -1437,6 +1438,7 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+		m.GetChromeBrowserMachineLse().GetOsVersion().GetImage(),
 		m.GetZone(),
 		m.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		m.GetRack(),
