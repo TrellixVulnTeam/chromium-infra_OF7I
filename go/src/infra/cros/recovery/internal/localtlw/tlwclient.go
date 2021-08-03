@@ -19,6 +19,8 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cros/recovery/internal/localtlw/dutinfo"
+
+	tlwio "infra/cros/recovery/internal/localtlw/io"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/log"
@@ -189,9 +191,9 @@ func (c *tlwClient) CopyFileTo(ctx context.Context, req *tlw.CopyRequest) error 
 	return status.Errorf(codes.Unimplemented, "not implemented")
 }
 
-// CopyFileFrom copies file from destination device to local.
+// CopyFileFrom copies file from remote device to local.
 func (c *tlwClient) CopyFileFrom(ctx context.Context, req *tlw.CopyRequest) error {
-	return status.Errorf(codes.Unimplemented, "not implemented")
+	return tlwio.CopyFileFrom(ctx, c.sshPool, req)
 }
 
 // CopyDirectoryTo copies directory to destination device from local, recursively.
