@@ -20,6 +20,7 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/cros/recovery/internal/localtlw/dutinfo"
 
+	"infra/cros/dutstate"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
@@ -353,5 +354,12 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}
 	delete(c.devices, dut.Name)
+	if ufs, ok := c.ufsClient.(dutstate.UFSClient); ok {
+		if err := dutstate.Update(ctx, ufs, dut.Name, dut.State); err != nil {
+			return errors.Annotate(err, "update DUT %q", dut.Name).Err()
+		}
+	} else {
+		return errors.Reason("update DUT %q: dutstate.UFSClient interface is not implemented by client", dut.Name).Err()
+	}
 	return nil
 }
