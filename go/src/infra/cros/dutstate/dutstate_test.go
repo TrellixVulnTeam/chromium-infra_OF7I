@@ -109,7 +109,7 @@ func TestConvertToUFSState(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.in), func(t *testing.T) {
 			t.Parallel()
-			got := convertToUFSState(tc.in)
+			got := ConvertToUFSState(tc.in)
 			if diff := cmp.Diff(tc.out, got); diff != "" {
 				t.Errorf("output mismatch (-want +got): %s\n", diff)
 			}
@@ -140,7 +140,7 @@ func TestConvertFromUFSState(t *testing.T) {
 		tc := tc
 		t.Run(tc.in.String(), func(t *testing.T) {
 			t.Parallel()
-			got := convertFromUFSState(tc.in)
+			got := ConvertFromUFSState(tc.in)
 			if diff := cmp.Diff(tc.out, got); diff != "" {
 				t.Errorf("output mismatch (-want +got): %s\n", diff)
 			}

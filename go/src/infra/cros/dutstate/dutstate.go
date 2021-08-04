@@ -89,7 +89,7 @@ func Read(ctx context.Context, c UFSClient, host string) Info {
 		}
 	}
 	return Info{
-		State: convertFromUFSState(res.GetResourceState()),
+		State: ConvertFromUFSState(res.GetResourceState()),
 		Time:  res.GetUpdateTime().Seconds,
 	}
 }
@@ -97,7 +97,7 @@ func Read(ctx context.Context, c UFSClient, host string) Info {
 // Update push new DUT/Labstation state to UFS.
 func Update(ctx context.Context, c UFSClient, host string, state State) error {
 	ctx = setupContext(ctx, ufsUtil.OSNamespace)
-	ufsState := convertToUFSState(state)
+	ufsState := ConvertToUFSState(state)
 
 	// Get the MachineLSE to determine if its a DUT or a Labstation.
 	log.Printf("dutstate: Try to get MachineLSE for %s", host)
@@ -122,14 +122,16 @@ func Update(ctx context.Context, c UFSClient, host string, state State) error {
 	return nil
 }
 
-func convertToUFSState(state State) ufsProto.State {
+// ConvertToUFSState converts local state to the UFS representation.
+func ConvertToUFSState(state State) ufsProto.State {
 	if ufsState, ok := stateToUFS[state]; ok {
 		return ufsState
 	}
 	return ufsProto.State_STATE_UNSPECIFIED
 }
 
-func convertFromUFSState(state ufsProto.State) State {
+// ConvertFromUFSState converts UFS state to local representation.
+func ConvertFromUFSState(state ufsProto.State) State {
 	if s, ok := stateFromUFS[state]; ok {
 		return s
 	}
