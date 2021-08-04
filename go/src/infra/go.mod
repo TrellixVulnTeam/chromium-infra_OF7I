@@ -3,8 +3,8 @@ module infra
 go 1.16
 
 require (
-	cloud.google.com/go v0.87.0
-	cloud.google.com/go/bigquery v1.19.0
+	cloud.google.com/go v0.90.0
+	cloud.google.com/go/bigquery v1.20.0
 	cloud.google.com/go/datastore v1.5.0
 	cloud.google.com/go/firestore v1.5.0
 	cloud.google.com/go/pubsub v1.13.0
@@ -34,7 +34,7 @@ require (
 	github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/kr/pretty v0.2.1
+	github.com/kr/pretty v0.3.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/maruel/subcommands v1.1.0
 	github.com/mattes/migrate v3.0.1+incompatible
@@ -59,12 +59,12 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
-	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.org/x/tools v0.1.5
 	gonum.org/v1/gonum v0.9.3
-	google.golang.org/api v0.50.0
+	google.golang.org/api v0.52.0
 	google.golang.org/appengine v1.6.7
-	google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a
+	google.golang.org/genproto v0.0.0-20210803142424-70bd63adacf2
 	google.golang.org/grpc v1.39.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
