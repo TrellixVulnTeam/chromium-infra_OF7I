@@ -3,12 +3,13 @@
 This page can be found at: [g.co/bugatrooper](https://g.co/bugatrooper)
 
 Have an issue with a piece of build infrastructure?
-Our troopers are here to help.
+Our troopers are here to help. Learn more about Troopering at:
+[go/trooper](https://goto/trooper)
 
 Oncall hours: we cover working hours in the Pacific timezone:
 + 1600 - 0000 UTC (900 - 1700 MTV)
 
-There is no designated oncall coverage for EMEA or APAC hours. Volunteers in
+There is no designated oncall coverage for EMEA hours and APAC coverage is limited to some services owned by the Task Distribution team. Volunteers in
 those regions may provide assistance on mailing lists for urgent issues, but
 there's no guarantee.
 
@@ -91,8 +92,7 @@ triage the request and to indicate that this is user-filed.
 
 ## Service Hours
 
-Troopers provide full time coverage with the expected response times outlined
-above during the Pacific work day. Other times support is provided best-effort.
+Troopers provide full time coverage during local business hours and the expected response times outlined above during the work day. Other times support is provided best-effort.
 
 ## More Information
 
@@ -100,8 +100,11 @@ View the [current trooper queue].
 
 Other available team trooper queues within Chrome Operations.
 
-* [DevX trooper queue]
 * [Foundation trooper queue]
+* [LUCI Tests trooper queue]
+* [Source trooper queue]
+* [Workflow trooper queue]
+* [Task Distribution trooper queue]
 
 Common Non-Trooper Requests:
 
@@ -117,7 +120,10 @@ Common Non-Trooper Requests:
 [Google Storage, CIPD, other]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google&components=Infra%3ESecurity&summary=%5BBrief%20description%20of%20problem%5D&comment=Please%20provide%20the%20details%20for%20your%20request%20here.%0A%0ASet%20Pri-0%20iff%20it%20requires%20immediate%20attention,%20Pri-1%20if%20resolution%20within%20a%20few%20hours%20is%20acceptable,%20and%20Pri-2%20if%20it%20just%20needs%20to%20be%20handled%20today.
 [General requests]: https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure&labels=Restrict-View-Google,Infra-Troopers&summary=%5BBrief%20description%20of%20problem%5D&comment=Please%20provide%20the%20details%20for%20your%20request%20here.%0A%0ASet%20Pri-0%20iff%20it%20requires%20immediate%20attention,%20Pri-1%20if%20resolution%20within%20a%20few%20hours%20is%20acceptable,%20and%20Pri-2%20if%20it%20just%20needs%20to%20be%20handled%20today.
 [current trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=Infra%3DTroopers+-has%3Aowner+OR+owner%3Ame+Infra%3DTroopers+OR+Infra%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
-[DevX trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=DevX%3DTroopers+-has%3Aowner+OR+owner%3Ame+DevX%3DTroopers+OR+DevX%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
+[LUCI Tests trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?q=TFS%3DTroopers+OR+Ops-Alerts%3DTFS+OR+TFS%3DTroopers+Pri%3D0+OR+Ops-Alerts%3DTFS+Pri%3D0&can=2
 [Foundation trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?can=2&q=Foundation%3DTroopers+-has%3Aowner+OR+owner%3Ame+Foundation%3DTroopers+OR+Foundation%3DTroopers+Pri%3D0&sort=-modified&groupby=pri&colspec=ID+Component+Status+Owner+Summary+Blocking+BlockedOn+Opened+Modified&x=m&y=releaseblock&cells=ids
+[Source trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?q=Source%3DTroopers+OR+Ops-Alerts%3DSource+OR+Source%3DTroopers+Pri%3D0+OR+Ops-Alerts%3DSource+Pri%3D0&can=2
+[Workflow trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?q=Workflow%3DTroopers+OR+Ops-Alerts%3DWorkflow+OR+Workflow%3DTroopers+Pri%3D0+OR+Ops-Alerts%3DWorkflow+Pri%3D0&can=2
+[Task Distrbution trooper queue]: https://bugs.chromium.org/p/chromium/issues/list?q=TD%3DTroopers+OR+Ops-Alerts%3DTD+OR+TD%3DTroopers+Pri%3D0+OR+Ops-Alerts%3DTD+Pri%3D0&can=2
 [go/bug-a-trooper]: http://go/bug-a-trooper
 [go/fix-chrome-git]: http://go/fix-chrome-git
