@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
@@ -224,6 +225,18 @@ var getBuildFieldMask = []string{
 	"status",
 }
 
+// GetBuild from BuildBucket with Retries.
+func (c *clientImpl) GetBuildWithRetry(ctx context.Context, req *buildbucketpb.GetBuildRequest) (*buildbucketpb.Build, error) {
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(i) * time.Second)
+		b, err := c.bbClient.GetBuild(ctx, req)
+		if err == nil {
+			return b, err
+		}
+	}
+	return nil, errors.Reason("Failed all tries to fetch build").Err()
+}
+
 // FetchResults fetches the latest state and results of the given task.
 func (c *clientImpl) FetchResults(ctx context.Context, t TaskReference) (*FetchResultsResponse, error) {
 	task, ok := c.knownTasks[t]
@@ -234,7 +247,7 @@ func (c *clientImpl) FetchResults(ctx context.Context, t TaskReference) (*FetchR
 		Id:     task.bbID,
 		Fields: &field_mask.FieldMask{Paths: getBuildFieldMask},
 	}
-	b, err := c.bbClient.GetBuild(ctx, req)
+	b, err := c.GetBuildWithRetry(ctx, req)
 	if err != nil {
 		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
 	}
