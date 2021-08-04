@@ -85,9 +85,11 @@ class TestAndroidDockerClient(unittest.TestCase):
   @mock.patch.object(swarm_containers, '_DOCKER_VOLUMES', {})
   def test_get_volumes(self):
     client = containers.AndroidDockerClient()
-    volumes = client._get_volumes('/b/android_serial3')
-    self.assertEquals(volumes.get('/opt/infra-android'),
-                      {'bind': '/opt/infra-android', 'mode': 'ro'})
+    self.assertEquals(
+        client.volumes.get('/opt/infra-android'), {
+            'bind': '/opt/infra-android',
+            'mode': 'ro'
+        })
 
   def test_get_env_no_cache(self):
     env = containers.AndroidDockerClient()._get_env('')

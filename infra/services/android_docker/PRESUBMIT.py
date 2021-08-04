@@ -12,6 +12,7 @@ wheels (that only a custom vpython spec can provide).
 """
 
 import os
+import sys
 
 USE_PYTHON3 = True
 
@@ -20,6 +21,11 @@ def CommonChecks(input_api, output_api):
   results = []
   root_infra_path = os.path.join(input_api.PresubmitLocalPath(), '..', '..',
                                  '..')
+
+  # Given the use of USB subsystems, the code here has a hard-dependency on
+  # linux.
+  if not sys.platform.startswith('linux'):
+    return []
 
   test_env = dict(input_api.environ)
   test_env.update({
@@ -36,9 +42,7 @@ def CommonChecks(input_api, output_api):
       # TODO(crbug.com/1236129): Enable py3.
       run_on_python3=False)
 
-  # TODO(crbug.com/1236129): Actually run these tests after fixing them.
-  #results += input_api.RunTests(tests)
-
+  results += input_api.RunTests(tests)
   return results
 
 

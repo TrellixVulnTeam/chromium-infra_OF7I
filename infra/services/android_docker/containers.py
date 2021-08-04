@@ -62,14 +62,16 @@ class AndroidDockerClient(containers.DockerClient):
     super(AndroidDockerClient, self).__init__()
     self.cache_size = None
 
-  def _get_volumes(self, container_workdir):
-    volumes = super(AndroidDockerClient, self)._get_volumes(container_workdir)
-    volumes = volumes.copy()
     # Needed for access to device watchdog.
-    volumes['/opt/infra-android'] = {'bind': '/opt/infra-android', 'mode': 'ro'}
+    self.volumes.setdefault('/opt/infra-android', {
+        'bind': '/opt/infra-android',
+        'mode': 'ro'
+    })
     # Needed by wifi_manager to connect to wifi.
-    volumes['/creds/passwords'] = {'bind': '/creds/passwords', 'mode': 'ro'}
-    return volumes
+    self.volumes.setdefault('/creds/passwords', {
+        'bind': '/creds/passwords',
+        'mode': 'ro'
+    })
 
   def _get_env(self, swarming_url):
     env = super(AndroidDockerClient, self)._get_env(swarming_url)

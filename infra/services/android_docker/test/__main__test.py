@@ -28,9 +28,9 @@ class MainTests(unittest.TestCase):
 
     cache_size = main.get_disk_partition_size('some_path', devices, .8)
 
-    # 114 GB < (1000 GB * 0.8) / 7 < 115 GB
-    self.assertGreater(cache_size, 114 * 1024 * 1024 * 1024)
-    self.assertLess(cache_size, 115 * 1024 * 1024 * 1024)
+    # 57 GB < (1000 GB * 0.8) / 14 < 58 GB
+    self.assertGreater(cache_size, 57 * 1024 * 1024 * 1024)
+    self.assertLess(cache_size, 58 * 1024 * 1024 * 1024)
     self.assertEqual(cache_size % self.disk.f_bsize, 0)
 
   @mock.patch('os.statvfs')
@@ -40,9 +40,9 @@ class MainTests(unittest.TestCase):
 
     cache_size = main.get_disk_partition_size('some_path', devices, .8)
 
-    # 47 GB < (1000 GB * 0.8) / 17 < 48 GB
-    self.assertGreater(cache_size, 47 * 1024 * 1024 * 1024)
-    self.assertLess(cache_size, 48 * 1024 * 1024 * 1024)
+    # 23 GB < (1000 GB * 0.8) / (17*2) < 24 GB
+    self.assertGreater(cache_size, 23 * 1024 * 1024 * 1024)
+    self.assertLess(cache_size, 24 * 1024 * 1024 * 1024)
     self.assertEqual(cache_size % self.disk.f_bsize, 0)
 
   @mock.patch('os.statvfs')
@@ -52,9 +52,9 @@ class MainTests(unittest.TestCase):
 
     cache_size = main.get_disk_partition_size('some_path', devices, .8)
 
-    # 14 TB < (123.25 TB * 0.8) / 7 < 15 TB
-    self.assertGreater(cache_size, 14 * 1024 * 1024 * 1024 * 1024)
-    self.assertLess(cache_size, 15 * 1024 * 1024 * 1024 * 1024)
+    # 7 TB < (123.25 TB * 0.8) / 14 < 8 TB
+    self.assertGreater(cache_size, 7 * 1024 * 1024 * 1024 * 1024)
+    self.assertLess(cache_size, 8 * 1024 * 1024 * 1024 * 1024)
     self.assertEqual(cache_size % self.disk.f_bsize, 0)
 
   @mock.patch('os.statvfs')
