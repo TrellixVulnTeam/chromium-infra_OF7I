@@ -22,6 +22,7 @@ from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
+from services.code_coverage import feature_coverage
 from services.code_coverage import files_absolute_coverage
 from services.code_coverage import per_cl_metrics
 from waterfall.test.wf_testcase import WaterfallTestCase
@@ -1565,6 +1566,41 @@ class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
   def testAbsoluteCoverageFilesExported(self, mock_detect, _):
     response = self.test_app.get(
         '/coverage/task/files-absolute-coverage', status=200)
+    self.assertEqual(1, mock_detect.call_count)
+    self.assertEqual(200, response.status_int)
+
+
+class ExportFeatureCoverageMetricsCronTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/cron/feature-coverage',
+       code_coverage.ExportFeatureCoverageMetricsCron),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testTaskAddedToQueue(self, mocked_is_request_from_appself):
+    response = self.test_app.get('/coverage/cron/feature-coverage')
+    self.assertEqual(200, response.status_int)
+    response = self.test_app.get('/coverage/cron/feature-coverage')
+    self.assertEqual(200, response.status_int)
+
+    tasks = self.taskqueue_stub.get_filtered_tasks(
+        queue_names='feature-coverage-metrics-queue')
+    self.assertEqual(2, len(tasks))
+    self.assertTrue(mocked_is_request_from_appself.called)
+
+
+class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/task/feature-coverage',
+       code_coverage.ExportFeatureCoverageMetrics),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  @mock.patch.object(feature_coverage, 'ExportFeatureCoverage')
+  def testFeatureCoverageFilesExported(self, mock_detect, _):
+    response = self.test_app.get('/coverage/task/feature-coverage', status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
 

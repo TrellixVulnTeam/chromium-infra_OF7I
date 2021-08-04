@@ -43,6 +43,7 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
+from services.code_coverage import feature_coverage
 from services.code_coverage import files_absolute_coverage
 from services.code_coverage import per_cl_metrics
 from services import bigquery_helper as bq
@@ -1679,6 +1680,32 @@ class ExportFilesAbsoluteCoverageMetrics(BaseHandler):
 
   def HandleGet(self):
     files_absolute_coverage.ExportFilesAbsoluteCoverage()
+    return {'return_code': 200}
+
+
+class ExportFeatureCoverageMetricsCron(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    # Cron jobs run independently of each other. Therefore, there is no
+    # guarantee that they will run either sequentially or simultaneously.
+    #
+    # Executing per CL metrics concurrently doesn't bring much
+    # benefits, so use task queue to enforce that at most one task
+    # can be executed at any time.
+    taskqueue.add(
+        method='GET',
+        queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
+        target=constants.CODE_COVERAGE_BACKEND,
+        url='/coverage/task/feature-coverage')
+    return {'return_code': 200}
+
+
+class ExportFeatureCoverageMetrics(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    feature_coverage.ExportFeatureCoverage()
     return {'return_code': 200}
 
 

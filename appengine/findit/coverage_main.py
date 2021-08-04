@@ -22,6 +22,10 @@ code_coverage_backend_handler_mappings = [
      code_coverage.ExportFilesAbsoluteCoverageMetricsCron),
     ('.*/coverage/task/files-absolute-coverage',
      code_coverage.ExportFilesAbsoluteCoverageMetrics),
+    ('.*/coverage/cron/feature-coverage',
+     code_coverage.ExportFeatureCoverageMetricsCron),
+    ('.*/coverage/task/feature-coverage',
+     code_coverage.ExportFeatureCoverageMetrics),
     ('.*/coverage/task/postsubmit-report/update',
      code_coverage.UpdatePostsubmitReport),
 ]
