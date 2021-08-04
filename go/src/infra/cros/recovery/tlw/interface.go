@@ -9,6 +9,8 @@ import (
 	"context"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
+
+	"infra/cros/dutstate"
 )
 
 // Access represent TLW level to access to the devices and inventory.
@@ -225,6 +227,8 @@ type Dut struct {
 	Cr50Phase Cr50Phase
 	// Key env for RW Cr50 firmware version.
 	Cr50KeyEnv Cr50KeyEnv
+	// State of the DUT.
+	State dutstate.State
 
 	// Physical parts of DUT.
 	// Internal storage info.

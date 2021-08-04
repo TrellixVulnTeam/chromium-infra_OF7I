@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/dutstate"
 	"infra/cros/recovery/tlw"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsdevice "infra/unifiedfleet/api/v1/models/chromeos/device"
@@ -150,6 +151,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		Hwid:               machine.GetChromeosMachine().GetHwid(),
 		SerialNumber:       machine.GetSerialNumber(),
 		SetupType:          setup,
+		State:              dutstate.ConvertFromUFSState(lc.GetResourceState()),
 		PowerSupplyType:    supplyType,
 		Storage:            createDUTStorage(dc, ds),
 		Wifi:               createDUTWifi(data.GetManufacturingConfig(), ds),
