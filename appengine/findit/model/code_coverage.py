@@ -128,6 +128,30 @@ class PostsubmitReport(ndb.Model):
     return legacy_key.get()
 
 
+class CoverageReportModifier(ndb.Model):
+  """Represents a filter setting  used to generate custom coverage reports."""
+
+  # The Gitiles hostname, e.g. "chromium.googlesource.com".
+  server_host = ndb.StringProperty(
+      indexed=True, default='chromium.googlesource.com', required=True)
+
+  # The Gitiles project name, e.g. "chromium/src.git".
+  project = ndb.StringProperty(
+      indexed=True, default='chromium/src', required=True)
+
+  # Controls whether custom reports are to be generated for this modifier or not
+  is_active = ndb.BooleanProperty(indexed=True, default=True, required=True)
+
+  # Gerrit hashtag to uniquely identify a feature.
+  gerrit_hashtag = ndb.StringProperty(indexed=True)
+
+  # Timestamp this modifier got created.
+  insert_timestamp = ndb.DateTimeProperty(auto_now_add=True)
+
+  # Timestamp this modifier was last updated.
+  update_timestamp = ndb.DateTimeProperty(auto_now=True)
+
+
 class CLPatchset(ndb.Model):
   """Represents a CL patchset."""
 

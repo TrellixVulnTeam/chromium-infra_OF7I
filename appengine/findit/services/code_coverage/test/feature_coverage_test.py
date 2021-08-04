@@ -10,6 +10,7 @@ from google.appengine.ext import ndb
 from libs import time_util
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
 from waterfall.test.wf_testcase import WaterfallTestCase
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from services.code_coverage import code_coverage_util
@@ -49,10 +50,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
@@ -60,7 +57,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testSingleCommit_AddsNewFile_FileStaysIntact(self, mock_merged_changes,
                                                    mock_file_content,
                                                    mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -100,7 +97,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
             ]
         })
     file_coverage_data.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
@@ -113,6 +109,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
     feature_coverage.ExportFeatureCoverage()
 
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'rev',
@@ -136,17 +134,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_FileStaysIntact(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -174,7 +168,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
             'last': 2
         }]})
     file_coverage_data.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
@@ -187,6 +180,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
     feature_coverage.ExportFeatureCoverage()
 
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'rev',
@@ -210,17 +205,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_FileGetsModfiedOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -248,7 +239,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
             'last': 3
         }]})
     file_coverage_data.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
@@ -258,9 +248,10 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
-
     feature_coverage.ExportFeatureCoverage()
 
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'rev',
@@ -283,10 +274,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
@@ -294,7 +281,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testSingleCommit_FileGotDeleted(self, mock_merged_changes,
                                       mock_file_content, mocked_report_rows,
                                       *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -308,7 +295,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         build_id=2000,
         visible=True)
     postsubmit_report.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
@@ -320,6 +306,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     ]
 
     feature_coverage.ExportFeatureCoverage()
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the overlap between two feature commits i.e.
@@ -330,17 +319,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testMultipleCommits_ModifiesExistingFile_SecondCommitPartiallyOverlaps(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -368,7 +353,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
             'last': 3
         }]})
     file_coverage_data.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
         _CreateMockMergedChange('c2', 'c1', 'myfile.cc'),
@@ -377,7 +361,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     content_at_feature_commit1 = 'line1\nline2\nline3'
     content_at_feature_commit2 = 'line1\nline2\nline3 modified'
     latest_content = 'line1\nline2\nline3 modified'
-
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit1, content_at_parent_commit1,
         latest_content, content_at_feature_commit2, content_at_feature_commit1
@@ -385,6 +368,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
     feature_coverage.ExportFeatureCoverage()
 
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'rev',
@@ -408,10 +393,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       feature_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
@@ -419,7 +400,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testMultipleCommits_FileGotDeleted(self, mock_merged_changes,
                                          mock_file_content, mocked_report_rows,
                                          *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -450,6 +431,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     ]
 
     feature_coverage.ExportFeatureCoverage()
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where the file under consideration is not supported
@@ -458,16 +442,12 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       feature_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testUnsupportedFileType_NoRowsCreated(self, mock_merged_changes,
                                             mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -481,12 +461,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         build_id=2000,
         visible=True)
     postsubmit_report.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.xml'),
     ]
 
     feature_coverage.ExportFeatureCoverage()
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where the file under consideration is not present
@@ -496,10 +478,6 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
-  @mock.patch.object(
-      feature_coverage,
-      '_GetWatchedFeatureHashtags',
-      return_value=['my_feature'])
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
@@ -507,7 +485,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testMissinCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
                                                   mock_file_content,
                                                   mocked_report_rows, *_):
-
+    CoverageReportModifier(gerrit_hashtag='my_feature').put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -533,6 +511,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
     feature_coverage.ExportFeatureCoverage()
 
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'rev',

@@ -11,6 +11,7 @@ from google.appengine.ext import ndb
 from common.findit_http_client import FinditHttpClient
 from libs import time_util
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from services import bigquery_helper
@@ -39,7 +40,6 @@ _SOURCE_BUILDERS = {
     'ios-simulator-code-coverage_unit': _CLANG_SUPPORTED_EXTENSIONS,
     'linux-chromeos-code-coverage_unit': _CLANG_SUPPORTED_EXTENSIONS,
 }
-_FEATURE_HASHTAGS = ['paint-preview']
 _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
 _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
@@ -222,8 +222,12 @@ def _CreateBigqueryRows(postsubmit_report, hashtag, coverage_per_file,
 
 def _GetWatchedFeatureHashtags():
   """Return a list of hashtags for which coverage is to be generated."""
-  # TODO(pasthana) : Fetch list of watched hashtags from datastore
-  return _FEATURE_HASHTAGS
+  query = CoverageReportModifier.query(
+      CoverageReportModifier.server_host == _CHROMIUM_SERVER_HOST,
+      CoverageReportModifier.project == _CHROMIUM_PROJECT,
+      CoverageReportModifier.is_active == True)
+  hashtags = [x.gerrit_hashtag for x in query.fetch()]
+  return hashtags
 
 
 def _GetFileContentAtCommit(file_path, revision):
