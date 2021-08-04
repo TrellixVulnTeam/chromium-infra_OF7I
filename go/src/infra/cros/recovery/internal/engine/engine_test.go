@@ -159,7 +159,10 @@ func TestRun(t *testing.T) {
 			args := &execs.RunArgs{
 				EnableRecovery: true,
 			}
-			err := Run(ctx, c.name, c.got, args)
+			newCtx, err := Run(ctx, c.name, c.got, args)
+			if newCtx == nil {
+				t.Errorf("Case %q fail to receive new context", c.name)
+			}
 			if c.expSuccess {
 				if err != nil {
 					t.Errorf("Case %q fail but expected to pass. Received error: %s", c.name, err)
@@ -187,7 +190,10 @@ func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
 	}
 	r.initCache()
 	r.cacheActionResult("a", nil)
-	err := r.runPlan(ctx)
+	newCtx, err := r.runPlan(ctx)
+	if newCtx == nil {
+		t.Errorf("Fail to receive new context")
+	}
 	if err != nil {
 		t.Errorf("Expected plan pass as single action cached with result=nil. Received error: %s", err)
 	}
@@ -255,7 +261,10 @@ func TestRunRecovery(t *testing.T) {
 				},
 			}
 			r.initCache()
-			err := r.runRecoveries(ctx, "a")
+			newCtx, err := r.runRecoveries(ctx, "a")
+			if newCtx == nil {
+				t.Errorf("Case %q fail to receive new context", c.name)
+			}
 			if c.expStartOver {
 				if !startOverTag.In(err) {
 					t.Errorf("Case %q expected to get request to start over. Received: %s", c.name, err)
@@ -346,7 +355,10 @@ func TestActionExec(t *testing.T) {
 				},
 			}
 			r.initCache()
-			err := r.runActionExec(ctx, "a", c.enableRecovery)
+			newCtx, err := r.runActionExec(ctx, "a", c.enableRecovery)
+			if newCtx == nil {
+				t.Errorf("Case %q fail to receive new context", c.name)
+			}
 			if c.expError && c.expStartOver {
 				if !startOverTag.In(err) {
 					t.Errorf("Case %q expected to get request to start over. Received error: %s", c.name, err)

@@ -159,7 +159,10 @@ func TestRunDUTPlan(t *testing.T) {
 			config.Plans = map[string]*planpb.Plan{
 				"something": nil,
 			}
-			err := runDUTPlans(ctx, dut, config, args)
+			newCtx, err := runDUTPlans(ctx, dut, config, args)
+			if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -178,7 +181,10 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
+			newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
+			if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -206,8 +212,10 @@ func TestRunDUTPlan(t *testing.T) {
 				},
 			},
 		}
-		if err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
+		if newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
 			t.Errorf("Expected pass but failed: %s", err)
+		} else if newCtx == nil {
+			t.Errorf("Fail to receive new context")
 		}
 	})
 }
