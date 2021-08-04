@@ -2655,6 +2655,21 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+### 1.39.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpcio-tools/${vpython_platform}"
+  version: "version:1.39.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **gym-py3**
 
 ### 0.18.0
