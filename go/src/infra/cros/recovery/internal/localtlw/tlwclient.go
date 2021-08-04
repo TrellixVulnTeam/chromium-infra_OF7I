@@ -22,6 +22,7 @@ import (
 
 	"infra/cros/dutstate"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
+	"infra/cros/recovery/internal/localtlw/rpm"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/log"
@@ -217,9 +218,56 @@ func (c *tlwClient) CopyDirectoryFrom(ctx context.Context, req *tlw.CopyRequest)
 
 // SetPowerSupply manages power supply for requested.
 func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyRequest) *tlw.SetPowerSupplyResponse {
+	if req == nil || req.Resource == "" {
+		return &tlw.SetPowerSupplyResponse{
+			Status: tlw.PowerSupplyResponseStatusError,
+			Reason: "resource is not specified",
+		}
+	}
+	dd, err := c.getDevice(ctx, req.Resource)
+	if err != nil {
+		return &tlw.SetPowerSupplyResponse{
+			Status: tlw.PowerSupplyResponseStatusError,
+			Reason: err.Error(),
+		}
+	}
+	hostname, outlet := dutinfo.GetRpmInfo(dd)
+	log.Debug(ctx, "Set power supply %s: has rpm info %s:%s.", req.Resource, hostname, outlet)
+	if hostname == "" || outlet == "" {
+		return &tlw.SetPowerSupplyResponse{
+			Status: tlw.PowerSupplyResponseStatusNoConfig,
+			Reason: err.Error(),
+		}
+	}
+	var s rpm.PowerState
+	switch req.State {
+	case tlw.PowerSupplyActionOn:
+		s = rpm.PowerStateOn
+	case tlw.PowerSupplyActionOff:
+		s = rpm.PowerStateOff
+	case tlw.PowerSupplyActionCycle:
+		s = rpm.PowerStateCycle
+	default:
+		return &tlw.SetPowerSupplyResponse{
+			Status: tlw.PowerSupplyResponseStatusError,
+			Reason: fmt.Sprintf("unknown rpm state: %s", string(req.State)),
+		}
+	}
+	log.Debug(ctx, "Set power supply %s: state: %q for %s:%s.", req.Resource, s, hostname, outlet)
+	rpmReq := &rpm.RPMPowerRequest{
+		Hostname:          dd.GetLabConfig().GetName(),
+		PowerUnitHostname: hostname,
+		PowerunitOutlet:   outlet,
+		State:             s,
+	}
+	if err := rpm.SetPowerState(ctx, rpmReq); err != nil {
+		return &tlw.SetPowerSupplyResponse{
+			Status: tlw.PowerSupplyResponseStatusError,
+			Reason: err.Error(),
+		}
+	}
 	return &tlw.SetPowerSupplyResponse{
-		Status: tlw.PowerSupplyResponseStatusError,
-		Reason: "not implemented",
+		Status: tlw.PowerSupplyResponseStatusOK,
 	}
 }
 

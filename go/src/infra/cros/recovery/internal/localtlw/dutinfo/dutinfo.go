@@ -100,6 +100,21 @@ func GenerateServodParams(data *ufspb.ChromeOSDeviceData, o *tlw.ServodOptions) 
 	return parts, nil
 }
 
+// GetRpmInfo provides hostname and outlet of the device.
+func GetRpmInfo(data *ufspb.ChromeOSDeviceData) (hostname, outlet string) {
+	dle := data.GetLabConfig().GetChromeosMachineLse().GetDeviceLse()
+	var rpm *ufslab.OSRPM
+	if dut := dle.GetDut(); dut != nil {
+		rpm = dle.GetDut().GetPeripherals().GetRpm()
+	} else if l := dle.GetLabstation(); l != nil {
+		rpm = l.GetRpm()
+	}
+	if rpm != nil {
+		return rpm.GetPowerunitName(), rpm.GetPowerunitOutlet()
+	}
+	return "", ""
+}
+
 func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	lc := data.GetLabConfig()
 	p := lc.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()

@@ -81,16 +81,16 @@ type CopyRequest struct {
 }
 
 // PowerSupplyState represents action expecting to perform on power supplier.
-type PowerSupplyAction int
+type PowerSupplyAction string
 
 const (
-	PowerSupplyActionUnspecified PowerSupplyAction = iota
+	PowerSupplyActionUnspecified PowerSupplyAction = "UNSPECIFIED"
 	// Switch state to ON.
-	PowerSupplyActionOn
+	PowerSupplyActionOn PowerSupplyAction = "ON"
 	// Switch state to OFF.
-	PowerSupplyActionOff
+	PowerSupplyActionOff PowerSupplyAction = "OFF"
 	// Switch state to OFF and then ON with delay 5 seconds.
-	PowerSupplyActionCycle
+	PowerSupplyActionCycle PowerSupplyAction = "CYCLE"
 )
 
 // SetPowerSupplyRequest represents data to perform state change for power supplier.
@@ -102,17 +102,17 @@ type SetPowerSupplyRequest struct {
 }
 
 // PowerSupplyStatus represents response status from attempt to changes state of power supplier.
-type PowerSupplyResponseStatus int
+type PowerSupplyResponseStatus string
 
 const (
-	PowerSupplyResponseStatusUnspecified PowerSupplyResponseStatus = iota
-	PowerSupplyResponseStatusOK
+	PowerSupplyResponseStatusUnspecified PowerSupplyResponseStatus = "UNSPECIFIED"
+	PowerSupplyResponseStatusOK          PowerSupplyResponseStatus = "OK"
 	// RPM config is not present of incorrect.
-	PowerSupplyResponseStatusNoConfig
+	PowerSupplyResponseStatusNoConfig PowerSupplyResponseStatus = "NO_CONFIG"
 	// Request data incorrect or in unexpected state.
-	PowerSupplyResponseStatusBadRequest
+	PowerSupplyResponseStatusBadRequest PowerSupplyResponseStatus = "BAD REQUEST"
 	// Fail to switch to required state.
-	PowerSupplyResponseStatusError
+	PowerSupplyResponseStatusError PowerSupplyResponseStatus = "ERROR"
 )
 
 // SetPowerSupplyResponse represents data result from performing state change for power supplier.
