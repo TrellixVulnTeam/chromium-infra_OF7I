@@ -120,3 +120,7 @@ class LaunchTests(unittest.TestCase):
     # A reboot should be called instead of main_helpers.launch_containers().
     self.assertEqual(mock_launch_containers.call_count, 0)
     self.assertEqual(mock_reboot.call_count, 1)
+
+
+if __name__ == '__main__':
+  unittest.main()

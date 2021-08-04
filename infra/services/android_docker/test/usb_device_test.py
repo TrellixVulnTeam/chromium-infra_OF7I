@@ -226,3 +226,7 @@ class TestGetPhysicalPorts(TestDevice):
     usb_device.assign_physical_ports(devices)
     for d in devices:
       self.assertEquals(d.physical_port, None)
+
+
+if __name__ == '__main__':
+  unittest.main()

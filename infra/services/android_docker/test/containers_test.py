@@ -201,3 +201,7 @@ class TestAddDevice(unittest.TestCase):
     self.container_backend.attrs['State']['Status'] = 'paused'
     self.client.add_device(self.desc)
     self.assertFalse(self.mock_sleep.called)
+
+
+if __name__ == '__main__':
+  unittest.main()
