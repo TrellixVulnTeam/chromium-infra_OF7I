@@ -81,7 +81,6 @@ class AppengineTestCase(auto_stub.TestCase, MockPatchMixin):  # pragma: no cover
     self.testbed.init_app_identity_stub()
     self.testbed.init_blobstore_stub()
     self.testbed.init_capability_stub()
-    self.testbed.init_channel_stub()
     self.testbed.init_datastore_v3_stub(
         consistency_policy=self.datastore_stub_consistency_policy)
     self.testbed.init_files_stub()

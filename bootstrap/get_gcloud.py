@@ -29,7 +29,7 @@ def main():
       os.path.join(os.path.abspath(options.dest), 'gcloud'), [
           (
               'infra/3pp/tools/gcloud/${os=mac,linux}-${arch=amd64}',
-              'version:331.0.0.chromium1',
+              'version:2@351.0.0.chromium1',
           ),
       ])
   return 0
