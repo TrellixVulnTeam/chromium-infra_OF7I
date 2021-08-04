@@ -9,23 +9,20 @@ import (
 	"sort"
 )
 
-// An FlagEntry is a flag value. It can be nil, indicating a flag with no argument, or
-// it can contain a string, which indicates a flag with a value associated with it.
-type FlagEntry struct {
-	Content string
-}
-
 // CommandWithFlags is a representation of a command with subcommands that takes a combination
 // of flags, some of which have arguments and some of which don't. It also takes positional
 // parameters, which are inserted after the subcommands and flags when serialized.
 type CommandWithFlags struct {
 	Commands       []string
-	Flags          map[string]*FlagEntry
+	Flags          map[string][]string
 	PositionalArgs []string
 }
 
 // ToCommand produces a list of arguments given a representation of a command with flags.
 func (c *CommandWithFlags) ToCommand() []string {
+	if c == nil {
+		return nil
+	}
 	var out []string
 	for _, s := range c.Commands {
 		out = append(out, s)
@@ -39,9 +36,7 @@ func (c *CommandWithFlags) ToCommand() []string {
 	for _, k := range keys {
 		v := c.Flags[k]
 		out = append(out, fmt.Sprintf("-%s", k))
-		if v != nil {
-			out = append(out, v.Content)
-		}
+		out = append(out, v...)
 	}
 	for _, s := range c.PositionalArgs {
 		out = append(out, s)
@@ -53,6 +48,9 @@ func (c *CommandWithFlags) ToCommand() []string {
 // for individual flags. It then applies the filter to either remove unknown flags or restrict the flags
 // to a known subset of the flags.
 func (c *CommandWithFlags) ApplyFlagFilter(keepByDefault bool, flags map[string]bool) *CommandWithFlags {
+	if c == nil {
+		return nil
+	}
 	for flag := range c.Flags {
 		keep := keepByDefault
 		if decision, ok := flags[flag]; ok {

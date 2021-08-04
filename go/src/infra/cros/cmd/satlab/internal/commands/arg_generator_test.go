@@ -18,10 +18,55 @@ func TestToCommand(t *testing.T) {
 		output []string
 	}{
 		{
+			"no arguments (nil)",
+			nil,
+			nil,
+		},
+		{
+			"no arguments",
+			&CommandWithFlags{},
+			nil,
+		},
+		{
+			"single command",
+			&CommandWithFlags{
+				Commands: []string{"ls"},
+			},
+			[]string{"ls"},
+		},
+		{
+			"command with flag",
+			&CommandWithFlags{
+				Commands: []string{"ls"},
+				Flags: map[string][]string{
+					"color": {"auto"},
+				},
+			},
+			[]string{"ls", "-color", "auto"},
+		},
+		{
+			"command with multi-flag",
+			&CommandWithFlags{
+				Commands: []string{"a"},
+				Flags: map[string][]string{
+					"b": {"c", "d", "e", "f"},
+				},
+			},
+			[]string{"a", "-b", "c", "d", "e", "f"},
+		},
+		{
+			"command with positional arg",
+			&CommandWithFlags{
+				Commands:       []string{"a"},
+				PositionalArgs: []string{"b", "c"},
+			},
+			[]string{"a", "b", "c"},
+		},
+		{
 			"full example",
 			&CommandWithFlags{
 				Commands: []string{"a", "b", "c"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"d": {"e"},
 					"f": nil,
 					"g": {"h"},
@@ -34,7 +79,7 @@ func TestToCommand(t *testing.T) {
 			"single positional param",
 			&CommandWithFlags{
 				Commands: []string{"a"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"b": nil,
 				},
 			},
@@ -62,10 +107,24 @@ func TestApplyFlagFilter(t *testing.T) {
 		output          []string
 	}{
 		{
+			"no arguments",
+			&CommandWithFlags{},
+			false,
+			nil,
+			nil,
+		},
+		{
+			"no arguments (nil)",
+			nil,
+			false,
+			nil,
+			nil,
+		},
+		{
 			"full example",
 			&CommandWithFlags{
 				Commands: []string{"a", "b", "c"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"d": {"e"},
 					"f": nil,
 					"g": {"h"},
@@ -82,7 +141,7 @@ func TestApplyFlagFilter(t *testing.T) {
 			"exclude all flags",
 			&CommandWithFlags{
 				Commands: []string{"a", "b", "c"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"d": {"e"},
 					"f": nil,
 					"g": {"h"},
@@ -97,7 +156,7 @@ func TestApplyFlagFilter(t *testing.T) {
 			"include all flags",
 			&CommandWithFlags{
 				Commands: []string{"a", "b", "c"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"d": {"e"},
 					"f": nil,
 					"g": {"h"},
@@ -112,7 +171,7 @@ func TestApplyFlagFilter(t *testing.T) {
 			"exclude one flag",
 			&CommandWithFlags{
 				Commands: []string{"a"},
-				Flags: map[string]*FlagEntry{
+				Flags: map[string][]string{
 					"d": {"e"},
 					"f": nil,
 					"g": {"h"},

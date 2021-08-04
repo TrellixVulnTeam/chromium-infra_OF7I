@@ -57,10 +57,10 @@ func Entrypoint(args []string) error {
 
 	// Check for the presence of the --use-drone-credential flag.
 	// If the flag is present, get the drone credential and do stuff.
-	serviceAccountJson := ""
+	serviceAccountJSON := ""
 	if _, ok := parsed.Flags["use-drone-credential"]; ok {
 		var err error
-		serviceAccountJson, err = getServiceAccountJSONPath()
+		serviceAccountJSON, err = getServiceAccountJSONPath()
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func Entrypoint(args []string) error {
 	if err != nil {
 		return err
 	}
-	satlab := fmt.Sprintf("satlab-%s", dockerHostBoxIdentifier)
+	satlabPrefix := fmt.Sprintf("satlab-%s", dockerHostBoxIdentifier)
 
 	switch strings.ToLower(parsed.Commands[0]) {
 	case "add":
@@ -79,13 +79,13 @@ func Entrypoint(args []string) error {
 		if strings.ToLower(parsed.Commands[1]) != "dut" {
 			return errors.New("only add dut supported")
 		}
-		return errors.New("command not yet implemented")
+		return tasks.AddDUT(serviceAccountJSON, satlabPrefix, parsed)
 	case "get":
 		// TODO(gregorynisbet): support more command than just "DUT".
 		if strings.ToLower(parsed.Commands[1]) != "dut" {
 			return errors.New("only add dut supported")
 		}
-		out, err := tasks.GetDUT(serviceAccountJson, satlab, parsed)
+		out, err := tasks.GetDUT(serviceAccountJSON, satlabPrefix, parsed)
 		if out != "" {
 			fmt.Printf("%s\n", out)
 		}
@@ -95,7 +95,7 @@ func Entrypoint(args []string) error {
 		if strings.ToLower(parsed.Commands[1]) != "dut" {
 			return errors.New("only add dut supported")
 		}
-		return tasks.DeleteDUT(serviceAccountJson, satlab, parsed)
+		return tasks.DeleteDUT(serviceAccountJSON, satlabPrefix, parsed)
 	}
 
 	return errors.Annotate(

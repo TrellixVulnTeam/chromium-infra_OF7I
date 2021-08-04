@@ -4,6 +4,8 @@
 
 package tasks
 
+// TODO(gregorynisbet): Validate existence of required flags.
+
 import (
 	"fmt"
 	"os"

@@ -34,8 +34,7 @@ func GetDockerHostBoxIdentifier() (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "get host identifier").Err()
 	}
-	s := string(out)
-	return strings.TrimRight(s, "\n\t"), nil
+	return strings.TrimRight(string(out), "\n\t"), nil
 }
 
 // GetServiceAccountContent gets the content of the service account.
