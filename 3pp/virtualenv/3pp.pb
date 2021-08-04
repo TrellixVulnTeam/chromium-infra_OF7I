@@ -8,11 +8,9 @@ create {
       }
     }
     patch_dir: "patches"
-    patch_version: "chromium.2"
+    patch_version: "chromium.3"
   }
-  build {
-    dep: "build_support/pip_bootstrap"
-  }
+  build {}
 }
 
 upload {

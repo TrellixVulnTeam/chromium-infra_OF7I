@@ -8,12 +8,7 @@ set -x
 set -o pipefail
 
 PREFIX="$1"
-DEPS_PREFIX="$2"
 
 DEST=$PREFIX/virtualenv-$_3PP_VERSION
 mkdir $DEST
 cp -R * $DEST  # Excludes ".git"
-
-# Install our newer wheels.
-rm -f $DEST/virtualenv_support/*.whl
-cp -f $DEPS_PREFIX/*.whl $DEST/virtualenv_support/
