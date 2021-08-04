@@ -1401,6 +1401,8 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('revision=%s', revision)
     logging.info('path=%s', path)
     logging.info('platform=%s', platform)
+    logging.info('test_suite_type=%s' % test_suite_type)
+    logging.info('reference_mode=%s' % str(reference_mode))
 
     configs = _GetAllowedGitilesConfigs()
     if ref not in configs.get(host, {}).get(project, []):

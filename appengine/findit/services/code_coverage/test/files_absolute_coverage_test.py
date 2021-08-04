@@ -4,8 +4,6 @@
 
 import mock
 from datetime import datetime
-from datetime import timedelta
-from libs import time_util
 
 from google.appengine.ext import ndb
 from libs import time_util

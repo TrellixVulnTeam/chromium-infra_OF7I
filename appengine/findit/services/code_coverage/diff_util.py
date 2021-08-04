@@ -122,9 +122,6 @@ def generate_line_number_mapping(diff_lines, from_file_lines, to_file_lines):
   Returns:
     A dict that maps line numbers of unchanged lines from one file to the other.
   """
-  logging.info('The diff content:\n%s', '\n'.join(diff_lines))
-  logging.info('-' * 80)
-
   # In the diff output, line number starts from 1, so manually inserts a line
   # to the beginging to simply later index related computations.
   from_file_lines = from_file_lines[:]
@@ -138,8 +135,8 @@ def generate_line_number_mapping(diff_lines, from_file_lines, to_file_lines):
     from_file_line = from_file_lines[from_file_line_num]
     to_file_line = to_file_lines[to_file_line_num]
     assert from_file_line == to_file_line, (
-        'Unexpected line difference between %s and %s' % (from_file_line,
-                                                          to_file_line))
+        'Unexpected line difference between %s and %s.' %
+        (from_file_line, to_file_line))
     line_num_mapping[from_file_line_num] = (to_file_line_num, to_file_line)
 
   line_num_mapping = {}

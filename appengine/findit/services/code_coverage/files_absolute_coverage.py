@@ -89,11 +89,10 @@ def _ExportAbsoluteCoverageForBuilder(builder):
 
 
 def _CreateBigqueryRows(file_coverage_results, commit_timestamp):
-  """Create bigquery rows for files with low coverage.
+  """Create bigquery rows containing absolute coverage info per file.
 
   Returns a list of dict objects whose keys are column names and
   values are column values corresponding to the schema of the bigquery table.
-  Each dict object corresponds to exactly one file below the coverage bar.
 
   Args:
     file_coverage_results (list): List of FileCoverageData for the latest
@@ -103,24 +102,20 @@ def _CreateBigqueryRows(file_coverage_results, commit_timestamp):
   """
   bq_rows = []
   for file_coverage_result in file_coverage_results:
-    try:
-      data = file_coverage_result.data
-      for metric in data['summaries']:
-        if metric['name'] == 'line':
-          total_lines = metric['total']
-          covered_lines = metric['covered']
-          break
-      bq_rows.append({
-          'project': file_coverage_result.gitiles_commit.project,
-          'revision': file_coverage_result.gitiles_commit.revision,
-          'path': data['path'][2:],
-          'total_lines': total_lines,
-          'covered_lines': covered_lines,
-          'commit_timestamp': commit_timestamp.isoformat(),
-          'insert_timestamp': time_util.GetUTCNow().isoformat(),
-          'builder': file_coverage_result.builder
-      })
-    except ZeroDivisionError:
-      logging.warning("Encounted total_lines = 0 for file coverage %s",
-                      file_coverage_result)
+    data = file_coverage_result.data
+    for metric in data['summaries']:
+      if metric['name'] == 'line':
+        total_lines = metric['total']
+        covered_lines = metric['covered']
+        break
+    bq_rows.append({
+        'project': file_coverage_result.gitiles_commit.project,
+        'revision': file_coverage_result.gitiles_commit.revision,
+        'path': data['path'][2:],
+        'total_lines': total_lines,
+        'covered_lines': covered_lines,
+        'commit_timestamp': commit_timestamp.isoformat(),
+        'insert_timestamp': time_util.GetUTCNow().isoformat(),
+        'builder': file_coverage_result.builder
+    })
   return bq_rows
