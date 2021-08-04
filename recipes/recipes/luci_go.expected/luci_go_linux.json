@@ -186,6 +186,12 @@
   },
   {
     "cmd": [
+      "rdb",
+      "stream",
+      "--",
+      "[CACHE]/infra_gclient_with_go/infra/cipd/result_adapter/result_adapter",
+      "go",
+      "--",
       "go",
       "test",
       "./..."

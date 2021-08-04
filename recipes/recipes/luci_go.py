@@ -17,6 +17,7 @@ DEPS = [
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/raw_io',
+    'recipe_engine/resultdb',
     'recipe_engine/step',
     'recipe_engine/tricium',
 ]
@@ -118,12 +119,19 @@ def RunSteps(
       co.run_presubmit()
     else:
       luci_go = co.path.join('infra', 'go', 'src', 'go.chromium.org', 'luci')
+      adapter = co.path.join('infra', 'cipd', 'result_adapter',
+                             'result_adapter')
+      if api.platform.is_win:
+        adapter = co.path.join('infra', 'cipd', 'result_adapter',
+                               'result_adapter.exe')
       with api.context(cwd=luci_go):
         if run_lint:
           apply_golangci_lint(api, co)
         else:
           api.step('go build', ['go', 'build', './...'])
-          api.step('go test', ['go', 'test', './...'])
+          api.step(
+              'go test',
+              api.resultdb.wrap([adapter, 'go', '--', 'go', 'test', './...']))
           if not api.platform.is_win:
             # Windows bots do not have gcc installed at the moment.
             api.step('go test -race', ['go', 'test', '-race', './...'])
