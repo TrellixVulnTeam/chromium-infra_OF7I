@@ -28,7 +28,7 @@ func writeTestFiles(ctx context.Context, bqClient *bigquery.Client, w io.Writer)
 			# - "ninja://chrome/test:browser_tests/foo/bar" -> "browser_tests"
 			# - "ninja://:blink_web_tests/foo/bar" -> "blink_web_tests"
 			ARRAY_AGG(DISTINCT REGEXP_EXTRACT(test_id, "ninja://[^:]*:([^/]+)/") IGNORE NULLS) TestTargets,
-		FROM luci-resultdb.chromium.ci_test_results tr
+		FROM chrome-luci-data.chromium.ci_test_results tr
 		WHERE partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
 			AND tr.test_metadata.location.file_name != ''
 			AND tr.test_metadata.name != ''

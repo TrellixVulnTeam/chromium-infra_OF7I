@@ -169,7 +169,7 @@ WITH
 			exonerated,
 			status,
 			duration,
-		FROM luci-resultdb.chromium.try_test_results tr
+		FROM chrome-luci-data.chromium.try_test_results tr
 		-- Read prev-day and next-day results too to ensure that we have ALL
 		-- results of a given CQ attempt.
 		WHERE partition_time BETWEEN TIMESTAMP_SUB(@startTime, INTERVAL 1 DAY) and TIMESTAMP_ADD(@endTime, INTERVAL 1 DAY)
