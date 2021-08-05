@@ -350,6 +350,9 @@
       "@@@STEP_LOG_LINE@commit_message@This is an automated CL created by the recipe roller. This CL rolls@@@",
       "@@@STEP_LOG_LINE@commit_message@recipe changes from upstream projects (recipe_engine) into this repository.@@@",
       "@@@STEP_LOG_LINE@commit_message@@@@",
+      "@@@STEP_LOG_LINE@commit_message@The build that created this CL was@@@",
+      "@@@STEP_LOG_LINE@commit_message@https://ci.chromium.org/b/8945511751514863184@@@",
+      "@@@STEP_LOG_LINE@commit_message@@@@",
       "@@@STEP_LOG_LINE@commit_message@recipe_engine:@@@",
       "@@@STEP_LOG_LINE@commit_message@https://chromium.googlesource.com/infra/luci/recipes-py/+/123abc@@@",
       "@@@STEP_LOG_LINE@commit_message@  123abc (foo@chromium.org)@@@",
@@ -412,7 +415,7 @@
       "-f",
       "--cc=foo@chromium.org",
       "--message-file",
-      "Roll recipe dependencies (trivial).\n\nThis is an automated CL created by the recipe roller. This CL rolls\nrecipe changes from upstream projects (recipe_engine) into this repository.\n\nrecipe_engine:\nhttps://chromium.googlesource.com/infra/luci/recipes-py/+/123abc\n  123abc (foo@chromium.org)\n      some commit summary that is too long to fit in a single line in...\n\nMore info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.\n\nRecipe-Tryjob-Bypass-Reason: Autoroller\nBugdroid-Send-Email: False\n"
+      "Roll recipe dependencies (trivial).\n\nThis is an automated CL created by the recipe roller. This CL rolls\nrecipe changes from upstream projects (recipe_engine) into this repository.\n\nThe build that created this CL was\nhttps://ci.chromium.org/b/8945511751514863184\n\nrecipe_engine:\nhttps://chromium.googlesource.com/infra/luci/recipes-py/+/123abc\n  123abc (foo@chromium.org)\n      some commit summary that is too long to fit in a single line in...\n\nMore info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.\n\nRecipe-Tryjob-Bypass-Reason: Autoroller\nBugdroid-Send-Email: False\n"
     ],
     "cwd": "[CACHE]/builder/recipe_autoroller/build",
     "name": "build.git cl upload",

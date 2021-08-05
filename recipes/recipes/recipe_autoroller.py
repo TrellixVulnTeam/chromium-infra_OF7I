@@ -6,6 +6,7 @@
 
 DEPS = [
     'recipe_autoroller',
+    'recipe_engine/buildbucket',
     'recipe_engine/json',
     'recipe_engine/properties',
     'recipe_engine/proto',
@@ -41,6 +42,8 @@ def GenTests(api):
   def test(name, *test_data):
     return api.test(
         name,
+        api.buildbucket.generic_build(
+            project='infra', bucket='cron', builder='recipe-autoroller'),
         api.properties(projects=[
             ('build', 'https://example.com/build.git'),
         ]), *test_data)

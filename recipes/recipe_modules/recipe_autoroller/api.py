@@ -46,7 +46,10 @@ class RepoData(object):
 
 COMMIT_MESSAGE_HEADER = ("""
 This is an automated CL created by the recipe roller. This CL rolls
-recipe changes from upstream projects (%s) into this repository.
+recipe changes from upstream projects (%(roll_projects)s) into this repository.
+
+The build that created this CL was
+https://ci.chromium.org/b/%(build_id)s
 """)
 
 NON_TRIVIAL_MESSAGE = ("""
@@ -80,7 +83,7 @@ def _gs_path(project_url):
   return 'repo_metadata/%s' % base64.urlsafe_b64encode(project_url)
 
 
-def get_commit_message(roll_result):
+def get_commit_message(roll_result, build_id):
   """Construct a roll commit message from 'recipes.py autoroll' result.
   """
   picked = roll_result['picked_roll_details']
@@ -92,7 +95,8 @@ def get_commit_message(roll_result):
   message = 'Roll recipe dependencies (%s).\n' % (
       'trivial' if trivial else 'nontrivial')
 
-  message += COMMIT_MESSAGE_HEADER % (', '.join(roll_projects))
+  message += COMMIT_MESSAGE_HEADER % dict(
+      roll_projects=', '.join(roll_projects), build_id=build_id)
 
   if not trivial:
     message += NON_TRIVIAL_MESSAGE
@@ -337,7 +341,8 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     upload_args.extend(['--bypass-hooks', '-f'])
 
-    commit_message = get_commit_message(roll_result)
+    commit_message = get_commit_message(roll_result,
+                                        self.m.buildbucket.build.id)
 
     roll_step.presentation.logs['commit_message'] = commit_message.splitlines()
     if roll_result['trivial']:
