@@ -73,17 +73,26 @@ func Entrypoint(args []string) error {
 	}
 	satlabPrefix := fmt.Sprintf("satlab-%s", dockerHostBoxIdentifier)
 
-	switch strings.ToLower(parsed.Commands[0]) {
+	mainCmd := ""
+	if len(parsed.Commands) >= 1 {
+		mainCmd = strings.ToLower(parsed.Commands[0])
+	}
+	subCmd := ""
+	if len(parsed.Commands) >= 2 {
+		subCmd = strings.ToLower(parsed.Commands[1])
+	}
+
+	switch mainCmd {
 	case "add":
 		// TODO(gregorynisbet): support more command than just "DUT".
-		if strings.ToLower(parsed.Commands[1]) != "dut" {
-			return errors.New("only add dut supported")
+		if subCmd != "dut" {
+			return errors.New(fmt.Sprintf("only add dut supported not %q", subCmd))
 		}
 		return tasks.AddDUT(serviceAccountJSON, satlabPrefix, parsed)
 	case "get":
 		// TODO(gregorynisbet): support more command than just "DUT".
-		if strings.ToLower(parsed.Commands[1]) != "dut" {
-			return errors.New("only add dut supported")
+		if subCmd != "dut" {
+			return errors.New(fmt.Sprintf("only get dut supported not %q", subCmd))
 		}
 		out, err := tasks.GetDUT(serviceAccountJSON, satlabPrefix, parsed)
 		if out != "" {
@@ -92,8 +101,8 @@ func Entrypoint(args []string) error {
 		return err
 	case "delete":
 		// TODO(gregorynisbet): support more command than just "DUT".
-		if strings.ToLower(parsed.Commands[1]) != "dut" {
-			return errors.New("only add dut supported")
+		if mainCmd != "dut" {
+			return errors.New(fmt.Sprintf("only delete dut supported not %q", subCmd))
 		}
 		return tasks.DeleteDUT(serviceAccountJSON, satlabPrefix, parsed)
 	}
