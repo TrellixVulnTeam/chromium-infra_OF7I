@@ -38,156 +38,184 @@ def GenTests(api):
   # For conciseness.
   repo_spec = api.recipe_autoroller.repo_spec
 
-  def test(name):
-    return (
-        api.test(name) +
+  def test(name, *test_data):
+    return api.test(
+        name,
         api.properties(projects=[
-          ('build', 'https://example.com/build.git'),
-        ])
-    )
+            ('build', 'https://example.com/build.git'),
+        ]), *test_data)
 
-  yield (test('basic') + api.properties(db_gcs_bucket='somebucket') +
-         api.recipe_autoroller.roll_data('build'))
-
-  yield (test('multiple_commits') + api.properties(db_gcs_bucket='somebucket') +
-         api.recipe_autoroller.roll_data('build', num_commits=3))
-
-  yield (
-      test('nontrivial') +
-      api.recipe_autoroller.roll_data('build', trivial=False)
+  yield test(
+      'basic',
+      api.properties(db_gcs_bucket='somebucket'),
+      api.recipe_autoroller.roll_data('build'),
   )
 
-  yield (
-      test('empty') +
-      api.recipe_autoroller.roll_data('build', empty=True)
+  yield test(
+      'multiple_commits',
+      api.properties(db_gcs_bucket='somebucket'),
+      api.recipe_autoroller.roll_data('build', num_commits=3),
   )
 
-  yield (
-      test('failure') +
-      api.recipe_autoroller.roll_data('build', success=False)
+  yield test(
+      'nontrivial',
+      api.recipe_autoroller.roll_data('build', trivial=False),
   )
 
-  yield (
-      test('failed_upload') +
-      api.recipe_autoroller.roll_data('build') +
+  yield test(
+      'empty',
+      api.recipe_autoroller.roll_data('build', empty=True),
+  )
+
+  yield test(
+      'failure',
+      api.recipe_autoroller.roll_data('build', success=False),
+  )
+
+  yield test(
+      'failed_upload',
+      api.recipe_autoroller.roll_data('build'),
       api.override_step_data(
           'build.git cl issue',
-          api.json.output({'issue': None, 'issue_url': None}))
+          api.json.output({
+              'issue': None,
+              'issue_url': None
+          })),
   )
 
-  yield (test('multiple_failures') + api.properties(projects=[
-      ('build', 'https://example.com/build.git'),
-      ('depot_tools', 'https://example.com/depot_tools.git'),
-  ]) + api.recipe_autoroller.roll_data('build') +
-         api.recipe_autoroller.roll_data('depot_tools') +
-         api.override_step_data(
-             'build.git cl issue',
-             api.json.output({
-                 'issue': None,
-                 'issue_url': None
-             })) + api.override_step_data(
-                 'depot_tools.git cl issue',
-                 api.json.output({
-                     'issue': None,
-                     'issue_url': None
-                 })))
+  yield test(
+      'multiple_failures',
+      api.properties(projects=[
+          ('build', 'https://example.com/build.git'),
+          ('depot_tools', 'https://example.com/depot_tools.git'),
+      ]),
+      api.recipe_autoroller.roll_data('build'),
+      api.recipe_autoroller.roll_data('depot_tools'),
+      api.override_step_data(
+          'build.git cl issue',
+          api.json.output({
+              'issue': None,
+              'issue_url': None
+          })),
+      api.override_step_data(
+          'depot_tools.git cl issue',
+          api.json.output({
+              'issue': None,
+              'issue_url': None
+          })),
+  )
 
-  yield (
-      test('repo_data_trivial_cq') +
-      api.recipe_autoroller.recipe_cfg('build') +
+  yield test(
+      'repo_data_trivial_cq',
+      api.recipe_autoroller.recipe_cfg('build'),
       api.recipe_autoroller.repo_data(
-          'build', trivial=True, status='commit',
-          timestamp='2016-02-01T01:23:45') +
-      api.time.seed(1451606400)
+          'build',
+          trivial=True,
+          status='commit',
+          timestamp='2016-02-01T01:23:45'),
+      api.time.seed(1451606400),
   )
 
-  yield (
-      test('repo_data_trivial_cq_stale') +
-      api.recipe_autoroller.recipe_cfg('build') +
+  yield test(
+      'repo_data_trivial_cq_stale',
+      api.recipe_autoroller.recipe_cfg('build'),
       api.recipe_autoroller.repo_data(
-          'build', trivial=True, status='commit',
-          timestamp='2016-02-01T01:23:45') +
-      api.time.seed(1454371200)
+          'build',
+          trivial=True,
+          status='commit',
+          timestamp='2016-02-01T01:23:45'),
+      api.time.seed(1454371200),
   )
 
-  yield (
-      test('repo_data_trivial_open') +
+  yield test(
+      'repo_data_trivial_open',
       api.recipe_autoroller.repo_data(
           'build', trivial=True, status='open',
-          timestamp='2016-02-01T01:23:45') +
-      api.recipe_autoroller.roll_data('build') +
-      api.time.seed(1451606400) +
-      api.post_process(MustRun, 'build.git cl set-close')
+          timestamp='2016-02-01T01:23:45'),
+      api.recipe_autoroller.roll_data('build'),
+      api.time.seed(1451606400),
+      api.post_process(MustRun, 'build.git cl set-close'),
   )
 
-  yield (
-      test('repo_data_trivial_closed') +
+  yield test(
+      'repo_data_trivial_closed',
       api.recipe_autoroller.repo_data(
-          'build', trivial=True, status='closed',
-          timestamp='2016-02-01T01:23:45') +
-      api.recipe_autoroller.roll_data('build') +
-      api.time.seed(1451606400)
+          'build',
+          trivial=True,
+          status='closed',
+          timestamp='2016-02-01T01:23:45'),
+      api.recipe_autoroller.roll_data('build'),
+      api.time.seed(1451606400),
   )
 
-  yield (
-      test('repo_data_nontrivial_open') +
-      api.recipe_autoroller.recipe_cfg('build') +
+  yield test(
+      'repo_data_nontrivial_open',
+      api.recipe_autoroller.recipe_cfg('build'),
       api.recipe_autoroller.repo_data(
-          'build', trivial=False, status='waiting',
-          timestamp='2016-02-01T01:23:45') +
-      api.time.seed(1451606400)
+          'build',
+          trivial=False,
+          status='waiting',
+          timestamp='2016-02-01T01:23:45'),
+      api.time.seed(1451606400),
   )
 
-  yield (
-      test('repo_data_nontrivial_open_stale') +
-      api.recipe_autoroller.recipe_cfg('build') +
+  yield test(
+      'repo_data_nontrivial_open_stale',
+      api.recipe_autoroller.recipe_cfg('build'),
       api.recipe_autoroller.repo_data(
-          'build', trivial=False, status='waiting',
-          timestamp='2016-02-01T01:23:45') +
-      api.time.seed(1454371200)
+          'build',
+          trivial=False,
+          status='waiting',
+          timestamp='2016-02-01T01:23:45'),
+      api.time.seed(1454371200),
   )
 
-  yield (
-      test('trivial_custom_tbr_no_dryrun') +
-      api.recipe_autoroller.roll_data('build', repo_spec(trivial_commit=False))
+  yield test(
+      'trivial_custom_tbr_no_dryrun',
+      api.recipe_autoroller.roll_data('build', repo_spec(trivial_commit=False)),
   )
 
-  yield (
-      test('trivial_custom_tbr_dryrun') +
+  yield test(
+      'trivial_custom_tbr_dryrun',
       api.recipe_autoroller.roll_data(
-          'build', repo_spec(trivial_commit=False, trivial_dryrun=True))
+          'build', repo_spec(trivial_commit=False, trivial_dryrun=True)),
   )
 
-  yield (
-      test('repo_disabled') +
+  yield test(
+      'repo_disabled',
       api.recipe_autoroller.roll_data(
-          'build', repo_spec(disable_reason='I am a water buffalo.'))
+          'build', repo_spec(disable_reason='I am a water buffalo.')),
   )
 
   # The recipe shouldn't crash if the autoroller options are not specified.
-  yield (
-      test('trivial_no_autoroll_options') +
+  yield test(
+      'trivial_no_autoroll_options',
       api.recipe_autoroller.roll_data(
-          'build', repo_spec(include_autoroll_options=False), trivial=True)
+          'build', repo_spec(include_autoroll_options=False), trivial=True),
   )
 
-  yield (
-      test('nontrivial_no_autoroll_options') +
+  yield test(
+      'nontrivial_no_autoroll_options',
       api.recipe_autoroller.roll_data(
-          'build', repo_spec(include_autoroll_options=False), trivial=False)
+          'build', repo_spec(include_autoroll_options=False), trivial=False),
   )
 
   no_cc_authors_spec = RepoSpec()
   no_cc_authors_spec.autoroll_recipe_options.no_cc_authors = True
 
-  yield (
-      test('no_cc_authors') + api.recipe_autoroller.roll_data('build') +
+  yield test(
+      'no_cc_authors',
+      api.recipe_autoroller.roll_data('build'),
       api.override_step_data(
           'build.get deps',
           api.proto.output_stream(
-              DepRepoSpecs(repo_specs={'recipe_engine': no_cc_authors_spec}))))
+              DepRepoSpecs(repo_specs={'recipe_engine': no_cc_authors_spec}))),
+  )
 
   # TODO(fxbug.dev/54380): delete this testcase after crrev.com/c/2252547 has
   # rolled into all downstream repos that are rolled by an autoroller.
-  yield (test('failed_get_deps') + api.recipe_autoroller.roll_data('build') +
-         api.override_step_data('build.get deps', retcode=1))
+  yield test(
+      'failed_get_deps',
+      api.recipe_autoroller.roll_data('build'),
+      api.override_step_data('build.get deps', retcode=1),
+  )
