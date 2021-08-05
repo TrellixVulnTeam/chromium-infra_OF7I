@@ -27,7 +27,7 @@
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"main\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"owner\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"name\": \"John Doe\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
@@ -60,7 +60,7 @@
       "--output_json",
       "/path/to/tmp/json",
       "--patch_ref",
-      "https://chromium.googlesource.com/infra/gerrit-plugins/git-numberer@refs/heads/master:refs/changes/56/123456/7",
+      "https://chromium.googlesource.com/infra/gerrit-plugins/git-numberer@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
       "gerrit_plugins_git_numberer@HEAD"
     ],
@@ -96,7 +96,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra/gerrit-plugins/git-numberer\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"a3249690d4dfb1acf9528df1ab239b041e9dd1dd\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#184048}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/main@{#184048}\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"root\": \"gerrit_plugins_git_numberer\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
@@ -114,7 +114,7 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@SET_BUILD_PROPERTY@got_revision@\"a3249690d4dfb1acf9528df1ab239b041e9dd1dd\"@@@",
-      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#184048}\"@@@"
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/main@{#184048}\"@@@"
     ]
   },
   {

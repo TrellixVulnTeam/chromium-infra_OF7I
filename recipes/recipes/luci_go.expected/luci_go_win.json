@@ -43,13 +43,13 @@
       "--output_json",
       "/path/to/tmp/json",
       "--revision",
-      "infra@refs/heads/master",
+      "infra@refs/heads/main",
       "--revision",
       "infra/go/src/go.chromium.org/luci@1111111111111111111111111111111111111111",
       "--refs",
       "refs/heads/main",
       "--refs",
-      "refs/heads/master"
+      "refs/heads/main"
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go",
     "env": {
@@ -72,13 +72,13 @@
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"refs/heads/master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra\": \"refs/heads/main\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": \"1111111111111111111111111111111111111111\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra.git\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"d902a4fdd0bda35a65868a3d7364307081869b87\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"c3d8da6028062211eb2a7b92e26f8183ca94b4a1\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"infra/go/src/go.chromium.org/luci\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra/go/src/go.chromium.org/luci.git\", @@@",
@@ -89,7 +89,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra/go/src/go.chromium.org/luci\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"1111111111111111111111111111111111111111\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#37652}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/main@{#37652}\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"root\": \"infra\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
@@ -97,7 +97,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"infra\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/infra.git\", @@@",
-      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"d902a4fdd0bda35a65868a3d7364307081869b87\"@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"c3d8da6028062211eb2a7b92e26f8183ca94b4a1\"@@@",
       "@@@STEP_LOG_LINE@json.output@        }@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"infra/go/src/go.chromium.org/luci\": {@@@",
@@ -113,7 +113,7 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@SET_BUILD_PROPERTY@got_revision@\"1111111111111111111111111111111111111111\"@@@",
-      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#37652}\"@@@"
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/main@{#37652}\"@@@"
     ]
   },
   {

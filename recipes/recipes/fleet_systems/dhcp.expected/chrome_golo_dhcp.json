@@ -34,7 +34,7 @@
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"master\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"branch\": \"main\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"owner\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"name\": \"John Doe\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
@@ -67,7 +67,7 @@
       "--output_json",
       "/path/to/tmp/json",
       "--patch_ref",
-      "https://chromium.googlesource.com/project@refs/heads/master:refs/changes/56/123456/7",
+      "https://chromium.googlesource.com/project@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
       "chrome_golo@HEAD"
     ],
@@ -103,7 +103,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"chrome_golo\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"d2571c8b2d27c5e5a14fd061581e46e802f1566a\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/master@{#24299}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/main@{#24299}\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"root\": \"chrome_golo\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
@@ -121,7 +121,7 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@SET_BUILD_PROPERTY@got_revision@\"d2571c8b2d27c5e5a14fd061581e46e802f1566a\"@@@",
-      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/master@{#24299}\"@@@"
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/main@{#24299}\"@@@"
     ]
   },
   {
