@@ -38,18 +38,18 @@ class TestAndroidContainerDescriptor(unittest.TestCase):
         FakeDevice('serial123', 1))
 
   def test_name(self):
-    self.assertEquals(self.desc.name, 'android_serial123')
+    self.assertEqual(self.desc.name, 'android_serial123')
 
   @mock.patch('socket.gethostname')
   def test_hostname_with_port(self, mock_gethostname):
     mock_gethostname.return_value = 'build123-a4'
-    self.assertEquals(self.desc.hostname, 'build123-a4--device1')
+    self.assertEqual(self.desc.hostname, 'build123-a4--device1')
 
   @mock.patch('socket.gethostname')
   def test_hostname_with_serial(self, mock_gethostname):
     mock_gethostname.return_value = 'build123-a4'
     self.desc.device.physical_port = None
-    self.assertEquals(self.desc.hostname, 'build123-a4--serial123')
+    self.assertEqual(self.desc.hostname, 'build123-a4--serial123')
 
   def test_log_started_smoke(self):
     containers.AndroidContainerDescriptor(
@@ -85,7 +85,7 @@ class TestAndroidDockerClient(unittest.TestCase):
   @mock.patch.object(swarm_containers, '_DOCKER_VOLUMES', {})
   def test_get_volumes(self):
     client = containers.AndroidDockerClient()
-    self.assertEquals(
+    self.assertEqual(
         client.volumes.get('/opt/infra-android'), {
             'bind': '/opt/infra-android',
             'mode': 'ro'
@@ -93,22 +93,22 @@ class TestAndroidDockerClient(unittest.TestCase):
 
   def test_get_env_no_cache(self):
     env = containers.AndroidDockerClient()._get_env('')
-    self.assertEquals(env.get('ADB_LIBUSB'), '0')
+    self.assertEqual(env.get('ADB_LIBUSB'), '0')
     self.assertFalse('ISOLATED_CACHE_SIZE' in env)
 
   def test_get_env_with_cache(self):
     client = containers.AndroidDockerClient()
     client.cache_size = '1234567890'
     env = client._get_env('')
-    self.assertEquals(env.get('ADB_LIBUSB'), '0')
-    self.assertEquals(env.get('ISOLATED_CACHE_SIZE'), '1234567890')
+    self.assertEqual(env.get('ADB_LIBUSB'), '0')
+    self.assertEqual(env.get('ISOLATED_CACHE_SIZE'), '1234567890')
 
   @mock.patch('glob.glob')
   def test_get_env_with_adb_keys(self, mock_glob):
     mock_glob.return_value = ['adb_key_1', 'adb_key_2']
     client = containers.AndroidDockerClient()
     env = client._get_env('')
-    self.assertEquals(env.get('ADB_VENDOR_KEYS'), 'adb_key_1:adb_key_2')
+    self.assertEqual(env.get('ADB_VENDOR_KEYS'), 'adb_key_1:adb_key_2')
 
   @mock.patch('glob.glob')
   def test_get_env_with_no_adb_keys(self, mock_glob):
@@ -163,7 +163,7 @@ class TestAddDevice(unittest.TestCase):
     self.client.add_device(self.desc)
 
     self.assertFalse(mock_open.called)
-    self.assertEquals(len(self.container_backend.exec_inputs), 1)
+    self.assertEqual(len(self.container_backend.exec_inputs), 1)
     self.assertFalse(self.container_backend.is_paused)
 
   @mock.patch('os.open')
@@ -179,7 +179,7 @@ class TestAddDevice(unittest.TestCase):
     self.assertTrue('abc123' in mock_open.call_args[0][0])
     self.assertFalse(mock_write.called)
     self.assertFalse(mock_close.called)
-    self.assertEquals(len(self.container_backend.exec_inputs), 1)
+    self.assertEqual(len(self.container_backend.exec_inputs), 1)
     self.assertFalse(self.container_backend.is_paused)
 
   @mock.patch('os.open')
@@ -194,9 +194,9 @@ class TestAddDevice(unittest.TestCase):
     self.client.add_device(self.desc)
 
     self.assertTrue('abc123' in mock_open.call_args[0][0])
-    self.assertEquals(mock_write.call_args[0][1], 'c 111:9 rwm')
+    self.assertEqual(mock_write.call_args[0][1], 'c 111:9 rwm')
     self.assertTrue(mock_close.called)
-    self.assertEquals(len(self.container_backend.exec_inputs), 1)
+    self.assertEqual(len(self.container_backend.exec_inputs), 1)
     self.assertFalse(self.container_backend.is_paused)
 
   def test_container_not_running(self):

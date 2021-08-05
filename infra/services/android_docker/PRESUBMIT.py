@@ -31,16 +31,14 @@ def CommonChecks(input_api, output_api):
   test_env.update({
       'PYTHONPATH': root_infra_path,
   })
-  # pylint: disable=unused-variable
   tests = input_api.canned_checks.GetUnitTestsInDirectory(
       input_api,
       output_api,
-      'test/',
-      [r'^.+_test\.py$'],
+      'test/', [r'^.+_test\.py$'],
       env=test_env,
-      run_on_python2=True,
-      # TODO(crbug.com/1236129): Enable py3.
-      run_on_python3=False)
+      skip_shebang_check=True,
+      run_on_python2=False,
+      run_on_python3=True)
 
   results += input_api.RunTests(tests)
   return results

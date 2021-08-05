@@ -386,7 +386,7 @@ def configure_logging(log_filename, log_prefix, verbose):  # pragma: no cover
 
 @contextlib.contextmanager
 def main_wrapper():  # pragma: no cover
-  if sys.platform != 'linux2':
+  if not sys.platform.startswith('linux'):
     print('Only supported on linux.', file=sys.stderr)
     sys.exit(1)
   try:

@@ -95,25 +95,25 @@ class TestDevice(unittest.TestCase):
     mock_major.return_value = 123
     mock_minor.return_value = 987
     device = usb_device.USBDevice(self.libusb_device)
-    self.assertEquals(str(device), 'serial1')
-    self.assertEquals(device.minor, 987)
-    self.assertEquals(device.major, 123)
+    self.assertEqual(str(device), 'serial1')
+    self.assertEqual(device.minor, 987)
+    self.assertEqual(device.major, 123)
 
   def test_dev_faulty_serial(self):
     self.libusb_device.serial = None
     device = usb_device.USBDevice(self.libusb_device)
-    self.assertEquals(device.serial, None)
+    self.assertEqual(device.serial, None)
 
   def test_dev_faulty_port_list(self):
     self.libusb_device.port_list = None
     device = usb_device.USBDevice(self.libusb_device)
-    self.assertEquals(device.port_list, None)
+    self.assertEqual(device.port_list, None)
 
   def test_get_port_list(self):
     self.libusb_device.port_list = [1, 2, 3]
     device = usb_device.USBDevice(self.libusb_device)
-    self.assertEquals(device.port_list, [1, 2, 3])
-    self.assertEquals(device.port_list, [1, 2, 3])
+    self.assertEqual(device.port_list, [1, 2, 3])
+    self.assertEqual(device.port_list, [1, 2, 3])
 
 
 class TestGetDevices(TestDevice):
@@ -139,17 +139,17 @@ class TestGetDevices(TestDevice):
   def test_get_android_devices(self, mock_usb_context):
     mock_usb_context.return_value = self.usb_context
     devices = usb_device.get_android_devices(None)
-    self.assertEquals(len(devices), 2)
-    self.assertEquals(devices[0].serial, self.libusb_device.serial)
-    self.assertEquals(
-        devices[1].serial, self.libusb_device_long_port_list.serial)
+    self.assertEqual(len(devices), 2)
+    self.assertEqual(devices[0].serial, self.libusb_device.serial)
+    self.assertEqual(devices[1].serial,
+                     self.libusb_device_long_port_list.serial)
 
   @mock.patch('usb1.USBContext')
   def test_no_android_devices(self, mock_usb_context):
     self.usb_context = FakeUSBContext([])
     mock_usb_context.return_value = self.usb_context
     devices = usb_device.get_android_devices(None)
-    self.assertEquals(len(devices), 0)
+    self.assertEqual(len(devices), 0)
 
   @mock.patch('os.stat')
   @mock.patch('usb1.USBContext')
@@ -158,10 +158,10 @@ class TestGetDevices(TestDevice):
     mock_usb_context.return_value = self.usb_context
     mock_os_stat.side_effect = OSError('omg can\'t stat')
     devices = usb_device.get_android_devices(None)
-    self.assertEquals(len(devices), 1)
-    self.assertEquals(devices[0].serial, self.libusb_device.serial)
-    self.assertEquals(devices[0].major, None)
-    self.assertEquals(devices[0].minor, None)
+    self.assertEqual(len(devices), 1)
+    self.assertEqual(devices[0].serial, self.libusb_device.serial)
+    self.assertEqual(devices[0].major, None)
+    self.assertEqual(devices[0].minor, None)
 
   @mock.patch('usb1.USBContext')
   def test_filter_devices(self, mock_usb_context):
@@ -173,9 +173,9 @@ class TestGetDevices(TestDevice):
     self.usb_context = FakeUSBContext([d1, d2, d3])
     mock_usb_context.return_value = self.usb_context
     devices = usb_device.get_android_devices(['serial2', 'serial3'])
-    self.assertEquals(len(devices), 2)
-    self.assertEquals(devices[0].serial, 'serial2')
-    self.assertEquals(devices[1].serial, 'serial3')
+    self.assertEqual(len(devices), 2)
+    self.assertEqual(devices[0].serial, 'serial2')
+    self.assertEqual(devices[1].serial, 'serial3')
 
   @mock.patch('usb1.USBContext')
   def test_get_devices_repeated_serials(self, mock_usb_context):
@@ -189,9 +189,9 @@ class TestGetDevices(TestDevice):
     self.usb_context = FakeUSBContext([d1_copy1, d1_copy2, d1_copy3, d2, d3])
     mock_usb_context.return_value = self.usb_context
     devices = usb_device.get_android_devices(None)
-    self.assertEquals(len(devices), 2)
-    self.assertEquals(devices[0].serial, 'serial2')
-    self.assertEquals(devices[1].serial, 'serial3')
+    self.assertEqual(len(devices), 2)
+    self.assertEqual(devices[0].serial, 'serial2')
+    self.assertEqual(devices[1].serial, 'serial3')
 
 
 class TestGetPhysicalPorts(TestDevice):
@@ -199,7 +199,7 @@ class TestGetPhysicalPorts(TestDevice):
     super(TestGetPhysicalPorts, self).setUp()
     self.libusb_devices = []
     self.port_mappings = {}
-    for i in xrange(1, 8):
+    for i in range(1, 8):
       libusb_device = FakeLibusbDevice(
           serial='serial%d' % i, settings=[self.supported_setting])
       self.port_mappings[i] = 'serial%d' % i
@@ -211,13 +211,13 @@ class TestGetPhysicalPorts(TestDevice):
     devices = [usb_device.USBDevice(d) for d in self.libusb_devices]
     usb_device.assign_physical_ports(devices)
 
-    self.assertEquals(devices[0].physical_port, 1)
-    self.assertEquals(devices[1].physical_port, 2)
-    self.assertEquals(devices[2].physical_port, 3)
-    self.assertEquals(devices[3].physical_port, 4)
-    self.assertEquals(devices[4].physical_port, 5)
-    self.assertEquals(devices[5].physical_port, 6)
-    self.assertEquals(devices[6].physical_port, 7)
+    self.assertEqual(devices[0].physical_port, 1)
+    self.assertEqual(devices[1].physical_port, 2)
+    self.assertEqual(devices[2].physical_port, 3)
+    self.assertEqual(devices[3].physical_port, 4)
+    self.assertEqual(devices[4].physical_port, 5)
+    self.assertEqual(devices[5].physical_port, 6)
+    self.assertEqual(devices[6].physical_port, 7)
 
   @mock.patch('devil.utils.find_usb_devices.GetAllPhysicalPortToSerialMaps')
   def test_many_unknown_hubs(self, mock_physical_ports):
@@ -225,7 +225,7 @@ class TestGetPhysicalPorts(TestDevice):
     devices = [usb_device.USBDevice(d) for d in self.libusb_devices]
     usb_device.assign_physical_ports(devices)
     for d in devices:
-      self.assertEquals(d.physical_port, None)
+      self.assertEqual(d.physical_port, None)
 
 
 if __name__ == '__main__':

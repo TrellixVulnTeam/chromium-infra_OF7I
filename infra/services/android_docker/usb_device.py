@@ -21,7 +21,7 @@ from devil.utils import find_usb_devices
 from devil.utils import usb_hubs
 
 
-if sys.platform != 'linux2':
+if not sys.platform.startswith('linux'):
   raise NotImplementedError('This library only supported on linux systems.')
 
 
@@ -59,7 +59,7 @@ def get_android_devices(filter_devices):
   device_count = collections.defaultdict(int)
   for d in android_devices:
     device_count[d.serial] += 1
-  for serial, count in device_count.iteritems():
+  for serial, count in device_count.items():
     if count > 1:
       logging.error(
           'Ignoring device %s due to it appearing %d times.', serial, count)
@@ -85,7 +85,7 @@ def assign_physical_ports(devices):
   for hub in find_usb_devices.GetAllPhysicalPortToSerialMaps(
       usb_hubs.ALL_HUBS, fast=True):
     # Reverse the mapping.
-    port_mapping.update({device: port for port, device in hub.iteritems()})
+    port_mapping.update({device: port for port, device in hub.items()})
   for d in devices:
     d.physical_port = port_mapping.get(d.serial)
 
