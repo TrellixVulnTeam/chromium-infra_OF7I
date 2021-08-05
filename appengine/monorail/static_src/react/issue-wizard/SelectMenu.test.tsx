@@ -4,23 +4,26 @@
 
 import React from 'react';
 import {render} from '@testing-library/react';
-import userEvent from '@testing-library/user-event'
+import userEvent from '@testing-library/user-event';
+import {screen} from '@testing-library/dom';
 import {assert} from 'chai';
 
 import SelectMenu from './SelectMenu.tsx';
 
-describe.only('SelectMenu', () => {
-  it('renders', async () => {
-    const {container} = render(<SelectMenu />);
+describe('SelectMenu', () => {
+  let container: React.RenderResult;
 
+  beforeEach(() => {
+    container = render(<SelectMenu />).container;
+  });
+
+  it('renders', () => {
     const form = container.querySelector('form');
     assert.isNotNull(form)
   });
 
-  it('renders options on click', async () => {
-    const {container} = render(<SelectMenu />);
-
-    const input = document.getElementById("outlined-select-category")
+  it('renders options on click', () => {
+    const input = document.getElementById('outlined-select-category');
     if (!input) {
       throw new Error('Input is undefined');
     }
@@ -28,7 +31,8 @@ describe.only('SelectMenu', () => {
     userEvent.click(input)
 
     // 14 is the current number of options in the select menu
-    const count = document.querySelectorAll('li').length;
-    assert.equal(count, 14)
+    const count = screen.getAllByTestId('select-menu-item').length;
+
+    assert.equal(count, 14);
   });
 });

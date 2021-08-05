@@ -49,7 +49,9 @@ export async function auditA11y(element) {
  */
 export function enterInput(input, value) {
   userEvent.clear(input);
+
   userEvent.type(input, value);
+
   fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 }
 

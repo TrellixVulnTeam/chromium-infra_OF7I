@@ -9,8 +9,7 @@ import deepEqual from 'deep-equal';
 
 import {AutocompleteChangeDetails, AutocompleteChangeReason}
   from '@material-ui/core/Autocomplete';
-import {createMuiTheme} from '@material-ui/core/styles';
-import ThemeProvider from '@material-ui/core/styles/ThemeProvider';
+import {ThemeProvider, createTheme} from '@material-ui/core/styles';
 
 import {connectStore} from 'reducers/base.js';
 import * as projectV0 from 'reducers/projectV0.js';
@@ -78,7 +77,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   updated(changedProperties: Map<string | number | symbol, unknown>): void {
     super.updated(changedProperties);
 
-    const theme = createMuiTheme({
+    const theme = createTheme({
       components: {
         MuiChip: {
           styleOverrides: {

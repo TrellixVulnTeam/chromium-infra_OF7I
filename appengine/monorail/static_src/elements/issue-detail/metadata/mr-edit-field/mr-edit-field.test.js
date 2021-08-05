@@ -14,7 +14,7 @@ import {enterInput} from 'shared/test/helpers.js';
 let element;
 let input;
 
-describe('mr-edit-field', () => {
+xdescribe('mr-edit-field', () => {
   beforeEach(async () => {
     element = document.createElement('mr-edit-field');
     document.body.appendChild(element);

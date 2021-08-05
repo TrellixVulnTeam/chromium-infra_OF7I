@@ -10,8 +10,14 @@ import {assert} from 'chai';
 import DotMobileStepper from './DotMobileStepper.tsx';
 
 describe('DotMobileStepper', () => {
+  let container: HTMLElement;
+
   beforeEach(() => {
-    render(<DotMobileStepper />);
+    container = render(<DotMobileStepper />).container;
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
   });
 
   it('renders', () => {

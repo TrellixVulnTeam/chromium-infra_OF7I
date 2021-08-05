@@ -1,17 +1,13 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import React from 'react';
-import {makeStyles, Theme} from '@material-ui/core/styles';
+import {createTheme, Theme} from '@material-ui/core/styles';
+import {makeStyles} from '@material-ui/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
-/**
- * Select menu component that is located on the landing step if the
- * Issue Wizard. The menu is used for the user to indicate the category
- * of their bug when filing an issue.
- */
 
 const CATEGORIES = [
   {
@@ -72,7 +68,9 @@ const CATEGORIES = [
   },
 ];
 
-const useStyles = makeStyles((theme : Theme) => ({
+const theme: Theme = createTheme();
+
+const useStyles = makeStyles((theme: Theme) => ({
   container: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -83,12 +81,19 @@ const useStyles = makeStyles((theme : Theme) => ({
     marginRight: theme.spacing(1),
   },
   menu: {
-    width: 100,
+    width: '100%',
     minWidth: '300px',
   },
-}));
+}), {defaultTheme: theme});
 
-export default function SelectMenu() {
+/**
+ * Select menu component that is located on the landing step if the
+ * Issue Wizard. The menu is used for the user to indicate the category
+ * of their bug when filing an issue.
+ *
+ * @return ReactElement.
+ */
+export default function SelectMenu(): React.ReactElement {
   const classes = useStyles();
   const [option, setOption] = React.useState('');
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -115,7 +120,12 @@ export default function SelectMenu() {
         fullWidth={true}
       >
       {CATEGORIES.map(option => (
-        <MenuItem className={classes.menu} key={option.value} value={option.value}>
+        <MenuItem
+          className={classes.menu}
+          key={option.value}
+          value={option.value}
+          data-testid="select-menu-item"
+        >
            {option.label}
         </MenuItem>
        ))}
