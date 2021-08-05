@@ -196,7 +196,7 @@ SPECS.update({
             '1.14.5',
             packaged=(),
             pyversions=['py2', 'py3'],
-            patch_version='chromium.2',  # Rebuild for crbug/1210346 and 1233745
+            patch_version='chromium.3',  # Rebuild for crbug/1210346 and 1233745
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -233,14 +233,14 @@ SPECS.update({
             '5.5',
             packaged=(),
             pyversions=['py2', 'py3'],
-            patch_version='chromium.1',  # Rebuild for crbug/1233745
+            patch_version='chromium.2',  # Rebuild for crbug/1233745
         ),
         SourceOrPrebuilt(
             'crcmod',
             '1.7',
             packaged=(),
             pyversions=['py2', 'py3'],
-            patch_version='chromium.1',  # Rebuild for https://crbug.com/1233745
+            patch_version='chromium.2',  # Rebuild for https://crbug.com/1233745
         ),
         SourceOrPrebuilt(
             'gevent',
@@ -505,7 +505,7 @@ SPECS.update({
             '5.8.0',
             packaged=[],
             patches=('cpu-affinity',),
-            patch_version='chromium.1',  # Rebuild for crbug/1233745
+            patch_version='chromium.2',  # Rebuild for crbug/1233745
             skip_plat=[
                 'linux-mips64',
                 'linux-mipsel',
@@ -522,7 +522,7 @@ SPECS.update({
             '1.4.1',
             packaged=(),
             pyversions=['py3'],
-            patch_version='chromium.1',  # Rebuild for crbug/1233745
+            patch_version='chromium.2',  # Rebuild for crbug/1233745
         ),
         SourceOrPrebuilt(
             'pyasn',
