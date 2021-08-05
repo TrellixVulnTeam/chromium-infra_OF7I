@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import { Period } from '../utils/dateUtils';
-import { PrpcClient } from '@chopsui/prpc-client';
 
 export type FetchDataSet = { [date: string]: number };
 
@@ -56,11 +55,34 @@ function pbPeriod(p: Period): number {
   return 0;
 }
 
-// Exporting this for testing.  Tests can then replace prpcClient with a mock
-// implementation.
-export const prpcClient = new PrpcClient({
-  insecure: location.protocol === 'http:',
-});
+// Exporting this for testing.  Tests can then replace prpcClient.call with a
+// mock implementation.
+// prpcClient sets credentials: omit, which breaks internal local prpc calls.
+// See: https://source.chromium.org/chromium/infra/infra/+/main:crdx/packages/prpc-client/src/prpc-client.ts;l=172;
+// Switching back to using fetch until prpc-client is updated.
+export const prpcClient = {
+  call: async function <Type>(
+    service: string,
+    method: string,
+    message: unknown
+  ): Promise<Type> {
+    const url = `/prpc/${service}/${method}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+    const text = await response.text();
+    if (text.startsWith(")]}'")) {
+      return JSON.parse(text.substr(4));
+    } else {
+      return JSON.parse(text);
+    }
+  },
+};
 
 export async function fetchMetrics(
   dataSource: string,

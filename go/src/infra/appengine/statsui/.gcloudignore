@@ -14,7 +14,9 @@
 .gitignore
 
 # Source for the frontend
-/frontend/
+/frontend
+# Source for SQL
+/sql
 
 # Binaries for programs and plugins
 *.exe

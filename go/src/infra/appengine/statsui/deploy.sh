@@ -3,4 +3,4 @@
 cd frontend &&
   npm run build &&
   cd .. &&
-  gcloud app deploy --project google.com:chrome-infra-stats
+  gae.py upload --switch --app-id=google.com:chrome-infra-stats
