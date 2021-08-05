@@ -108,10 +108,10 @@ def RunSteps(api, platforms, dry_run, rebuild):
           if wheel not in old_wheels:
             spec = wheel['spec']
 
-            # Compute the tag in the same way as in dockerbuild's Spec.tag,
-            # except that the patch version has already been incorporated
-            # into the version tag by Builder.version_fn.
+            # Compute the tag in the same way as in dockerbuild's Spec.tag.
             tag = '%s-%s' % (spec['name'], spec['version'])
+            if spec['version_suffix']:
+              tag += spec['version_suffix']
             if spec['pyversions']:
               tag += '-' + '.'.join(sorted(spec['pyversions']))
             wheels.append(tag)
@@ -217,7 +217,8 @@ def GenTests(api):
                   "name": "old-wheel",
                   "patch_version": None,
                   "pyversions": ["py3"],
-                  "version": "3.2.0"
+                  "version": "3.2.0",
+                  "version_suffix": None,
               }
           }])) + api.override_step_data(
               'compute new wheels.json',
@@ -226,8 +227,8 @@ def GenTests(api):
                       "name": "entirely-new",
                       "patch_version": 'chromium.1',
                       "pyversions": ["py3"],
-                      "version":
-                          "3.3.0.chromium.1"  # Patch version already included.
+                      "version": "3.3.0",
+                      "version_suffix": ".chromium.1",
                   }
               }])))
 
@@ -246,8 +247,8 @@ def GenTests(api):
                   "name": "old-wheel",
                   "patch_version": None,
                   "pyversions": ["py3"],
-                  "version": "3.2.0"
+                  "version": "3.2.0",
+                  "version_suffix": None,
               }
-          }])) +
-      api.override_step_data(
+          }])) + api.override_step_data(
               'compute new wheels.json', stdout=api.json.output([])))
