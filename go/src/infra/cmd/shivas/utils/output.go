@@ -62,7 +62,7 @@ var (
 	RacklseprototypeTitle     = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
 	ChromePlatformTitle       = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
 	VlanTitle                 = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
-	VMTitle                   = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
+	VMTitle                   = []string{"VM Name", "OS Version", "OS Image", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                 = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle           = []string{"Host", "OS Version", "OS Image", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSEFullTitle       = []string{"Host", "OS Version", "OS Image", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
@@ -1487,6 +1487,7 @@ func vmOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetOsVersion().GetValue(),
+		m.GetOsVersion().GetImage(),
 		m.GetMacAddress(),
 		m.GetZone(),
 		m.GetMachineLseId(),

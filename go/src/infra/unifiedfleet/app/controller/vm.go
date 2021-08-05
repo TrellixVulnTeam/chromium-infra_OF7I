@@ -271,6 +271,14 @@ func processVMUpdateMask(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mas
 			} else {
 				oldVM.GetOsVersion().Value = vm.GetOsVersion().GetValue()
 			}
+		case "osImage":
+			if oldVM.GetOsVersion() == nil {
+				oldVM.OsVersion = &ufspb.OSVersion{
+					Image: vm.GetOsVersion().GetImage(),
+				}
+			} else {
+				oldVM.GetOsVersion().Image = vm.GetOsVersion().GetImage()
+			}
 		case "tags":
 			oldVM.Tags = mergeTags(oldVM.GetTags(), vm.GetTags())
 		case "description":
@@ -422,6 +430,8 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 					return status.Error(codes.InvalidArgument, "validateVMUpdateMask - machineLseId cannot be empty/nil.")
 				}
 			case "macAddress":
+			case "osImage":
+				fallthrough
 			case "osVersion":
 				if vm.GetOsVersion() == nil {
 					return status.Error(codes.InvalidArgument, "validateUpdateVM - Osversion cannot be empty/nil.")
