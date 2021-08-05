@@ -483,6 +483,13 @@ indexes:
   - name: cl_patchset.change
   - name: based_on
 
+- kind: CoverageReportModifier
+  properties:
+  - name: server_host
+  - name: project
+  - name: is_active
+  - name: gerrit_hashtag
+
 # For Flake report
 - kind: ComponentFlakinessReport
   properties:
