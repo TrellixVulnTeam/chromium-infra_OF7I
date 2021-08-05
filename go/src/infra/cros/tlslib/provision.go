@@ -319,11 +319,13 @@ func runCmd(c *ssh.Client, cmd string) error {
 	}
 	defer s.Close()
 
+	s.Stdin = strings.NewReader(cmd)
 	s.Stdout = os.Stdout
 	s.Stderr = os.Stderr
 
 	log.Printf("Running command: %s", cmd)
-	err = s.Run(cmd)
+	// Always run commands under /bin/bash.
+	err = s.Run("/bin/bash -")
 
 	if err != nil {
 		return fmt.Errorf("runCmd: failed to run command, %v", err)
@@ -342,15 +344,16 @@ func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 
 	stdoutBuf := new(strings.Builder)
 
+	s.Stdin = strings.NewReader(cmd)
 	s.Stdout = io.MultiWriter(os.Stdout, stdoutBuf)
 	s.Stderr = os.Stderr
 
-	log.Printf("Running command: %s", cmd)
-	err = s.Run(cmd)
+	log.Printf("Running command with output: %s", cmd)
+	err = s.Run("/bin/bash -")
 
 	stdoutStr := stdoutBuf.String()
 	if err != nil {
-		return "", fmt.Errorf("runCmd: failed to run command, %v", err)
+		return "", fmt.Errorf("runCmdOutput: failed to run command, %v", err)
 	}
 
 	return stdoutStr, err
