@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"runtime/debug"
 
 	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cipd"
@@ -154,16 +153,6 @@ func reportBootstrapFailure(ctx context.Context, summary string) error {
 func main() {
 	ctx := context.Background()
 	ctx = gologger.StdConfig.Use(ctx)
-
-	defer func() {
-		if r := recover(); r != nil {
-			err := reportBootstrapFailure(ctx, fmt.Sprintf("encountered panic: %s: %s", r, debug.Stack()))
-			if err != nil {
-				logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap panic").Err().Error())
-			}
-			os.Exit(1)
-		}
-	}()
 
 	if err := execute(ctx); err != nil {
 		logging.Errorf(ctx, err.Error())

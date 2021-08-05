@@ -69,7 +69,7 @@ func NewClient(ctx context.Context, cipdRoot string) (*Client, error) {
 		return nil, errors.Annotate(err, "failed to get recipe client for CIPD root: <%s>", cipdRoot).Err()
 	}
 	if cipdClient == nil {
-		panic("nil CIPD client returned from factory")
+		return nil, errors.New("nil CIPD client returned from factory")
 	}
 	return &Client{cipdRoot, cipdClient}, nil
 }

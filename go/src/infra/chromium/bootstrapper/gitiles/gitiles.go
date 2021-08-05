@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gitiles"
+	"go.chromium.org/luci/common/errors"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"google.golang.org/grpc"
 )
@@ -72,7 +73,7 @@ func (c *Client) gitilesClientForHost(ctx context.Context, host string) (Gitiles
 		return nil, err
 	}
 	if client == nil {
-		panic(fmt.Sprintf("returned client for %s is nil", host))
+		return nil, errors.Reason("returned client for %s is nil", host).Err()
 	}
 	c.clients[host] = client
 	return client, nil

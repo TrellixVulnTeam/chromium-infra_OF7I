@@ -6,7 +6,6 @@ package bootstrap
 
 import (
 	"context"
-	"fmt"
 	"infra/chromium/bootstrapper/gitiles"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -59,7 +58,7 @@ func (b *PropertyBootstrapper) ComputeBootstrappedProperties(ctx context.Context
 		}
 
 	default:
-		panic(fmt.Sprintf("config_project handling for type %T is not implemented", config))
+		return nil, errors.Reason("config_project handling for type %T is not implemented", config).Err()
 	}
 
 	if err := b.populateCommitId(ctx, configCommit); err != nil {
