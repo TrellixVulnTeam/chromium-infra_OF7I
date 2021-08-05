@@ -341,7 +341,7 @@ func addManifestFiles(t *testing.T,
 	assert.NilError(t, err)
 }
 
-func setUp(t *testing.T) *test.CrosRepoHarness {
+func setUp(t *testing.T, vinfo *mv.VersionInfo) *test.CrosRepoHarness {
 	config := getDefaultConfig()
 	var r test.CrosRepoHarness
 	assert.NilError(t, r.Initialize(&config))
@@ -352,6 +352,9 @@ func setUp(t *testing.T) *test.CrosRepoHarness {
 		BuildNumber:       3,
 		BranchBuildNumber: 0,
 		PatchNumber:       0,
+	}
+	if vinfo != nil {
+		version = *vinfo
 	}
 	assert.NilError(t, r.SetVersion("", version))
 
@@ -481,7 +484,7 @@ func (f *fakeCreateRemoteBranchesAPI) CreateRemoteBranchesAPI(
 
 // setUpCreate creates the necessary mocks we need to test the create function
 func setUpCreate(t *testing.T, dryRun, force, useBranch bool) (*test.CrosRepoHarness, *branch.Client, *gerrit.Client, error) {
-	r := setUp(t)
+	r := setUp(t, nil)
 
 	// Get manifest contents for return
 	manifestPath := fullManifestPath(r)
@@ -789,9 +792,117 @@ func TestCreatExistingVersion(t *testing.T) {
 	assertNoRemoteDiff(t, r)
 }
 
+// Test that when 94 is cut, ToT goes to 96 instead of 95 (b/184153693).
+func TestCreate9496(t *testing.T) {
+	t.Parallel()
+	r := setUp(t, &mv.VersionInfo{
+		ChromeBranch:      94,
+		BuildNumber:       3,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
+	})
+
+	// Get manifest contents for return
+	manifestPath := fullManifestPath(r)
+	buildspecName := "94/3.0.0.xml"
+	manifestFile, err := ioutil.ReadFile(manifestPath)
+	assert.NilError(t, err)
+
+	// Get version file contents for return
+	versionProject := rh.GetRemoteProject(test.DefaultVersionProject)
+	crosVersionFile, err := r.Harness.ReadFile(versionProject, "main", mv.VersionFileProjectPath)
+	assert.NilError(t, err)
+
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	t.Cleanup(ctl.Finish)
+
+	// Mock manifest request
+	reqManifest := &gitilespb.DownloadFileRequest{
+		Project:    "chromeos/manifest-versions",
+		Path:       "buildspecs/" + buildspecName,
+		Committish: "HEAD",
+	}
+
+	// Mock version file request
+	reqVersionFile := &gitilespb.DownloadFileRequest{
+		Project:    "chromiumos/overlays/chromiumos-overlay",
+		Path:       "chromeos/config/chromeos_version.sh",
+		Committish: "refs/heads/main",
+	}
+
+	// Mock out calls to gerrit.DownloadFileFromGitiles.
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqManifest)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: string(manifestFile),
+		},
+		nil,
+	)
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqVersionFile)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: string(crosVersionFile),
+		},
+		nil,
+	)
+	mockClientMap := map[string]gitilespb.GitilesClient{
+		internalGerritURL: gitilesMock,
+		externalGerritURL: gitilesMock,
+	}
+
+	// Mock out call to CreateRemoteBranchesAPI.
+	f := &fakeCreateRemoteBranchesAPI{t: t, r: r, dryRun: false, force: false}
+	bc := &branch.Client{
+		FakeCreateRemoteBranchesAPI: f.CreateRemoteBranchesAPI,
+	}
+
+	gc := gerrit.NewTestClient(mockClientMap)
+	defer r.Teardown()
+
+	branch := "release-R94-3.B"
+	c := createBranch{
+		CommonFlags: CommonFlags{
+			Push: true,
+			// We don't really care about this check as ACLs are still enforced
+			// (just a less elegant failure), and it's one less thing to mock.
+			SkipGroupCheck: true,
+		},
+		release:           true,
+		buildSpecManifest: buildspecName,
+	}
+	ret := c.innerRun(context.Background(), bc, nil, gc)
+	assert.Assert(t, ret == 0)
+
+	manifest := r.Harness.Manifest()
+	assert.NilError(t, r.AssertCrosBranches([]string{branch}))
+	assert.NilError(t, r.AssertCrosBranchFromManifest(manifest, branch, ""))
+	assertManifestsRepaired(t, r, branch)
+	newBranchVersion := mv.VersionInfo{
+		ChromeBranch:      94,
+		BuildNumber:       3,
+		BranchBuildNumber: 1,
+		PatchNumber:       0,
+	}
+	assert.NilError(t, r.AssertCrosVersion(branch, newBranchVersion))
+	mainVersion := mv.VersionInfo{
+		ChromeBranch:      96,
+		BuildNumber:       4,
+		BranchBuildNumber: 0,
+		PatchNumber:       0,
+	}
+	assert.NilError(t, r.AssertCrosVersion("main", mainVersion))
+
+	assertCommentsPersist(t, r, getManifestFiles, branch)
+	// Check that manifests were minmally changed (e.g. element ordering preserved).
+	// This check is meaningful because the manifests are created using the branch_util
+	// tool which reads in, unmarshals, and modifies the manifests from getManifestFiles.
+	// The expected manifests (which the branched manifests are being compared to)
+	// are simply strings produced by getBranchedManifestFiles.
+	assertMinimalManifestChanges(t, r, branch)
+}
 func TestRename(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_rename")
@@ -842,7 +953,7 @@ func TestRename(t *testing.T) {
 
 func TestRenameDryRun(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_rename")
@@ -870,7 +981,7 @@ func TestRenameDryRun(t *testing.T) {
 // Test rename successfully force overwrites.
 func TestRenameOverwrite(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_rename")
@@ -935,7 +1046,7 @@ func TestRenameOverwrite(t *testing.T) {
 // Test rename dies if it tries to overwrite without --force.
 func TestRenameOverwriteMissingForce(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_rename")
@@ -966,7 +1077,7 @@ func TestRenameOverwriteMissingForce(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_delete")
@@ -995,7 +1106,7 @@ func TestDelete(t *testing.T) {
 // Test delete does not modify remote repositories without --push.
 func TestDeleteDryRun(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_delete")
@@ -1029,7 +1140,7 @@ func TestDeleteDryRun(t *testing.T) {
 // Test delete does not modify remote when --push set without --force.
 func TestDeleteMissingForce(t *testing.T) {
 	t.Parallel()
-	r := setUp(t)
+	r := setUp(t, nil)
 	defer r.Teardown()
 
 	localRoot, err := ioutil.TempDir("", "test_delete")

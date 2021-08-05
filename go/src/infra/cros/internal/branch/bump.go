@@ -43,6 +43,11 @@ func (c *Client) bumpVersion(
 	}
 
 	version.IncrementVersion(component)
+	// If the version is 95, skip ahead to 96. b/184153693 for context.
+	if component == mv.ChromeBranch && version.ChromeBranch == 95 {
+		version.IncrementVersion(component)
+	}
+
 	// We are cloning from a remote, so the remote name will be origin.
 	remoteRef := git.RemoteRef{
 		Remote: "origin",
