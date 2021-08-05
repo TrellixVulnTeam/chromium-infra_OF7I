@@ -74,13 +74,10 @@ class Builder(object):
     """Optionally overridden by the subclass.
 
     Returns:
-      str - The version of the wheel to upload. By default this is
+      str - The version of the wheel to build.  By default this is
       `spec.version`.
     """
-    version = self._spec.version
-    if self._spec.patch_version:
-      version += '.%s' % self._spec.patch_version
-    return version
+    return self._spec.version
 
   def md_data_fn(self):
     """Optionally overridden by the subclass.
@@ -143,11 +140,10 @@ class Builder(object):
     # valid and built for multiple platforms, which seems to happen on Mac a
     # lot.
     plat_wheel = wheel._replace(
-      plat=wheel.plat._replace(
-        wheel_abi=self._abi_map.get(plat.name, plat.wheel_abi),
-        wheel_plat=self._arch_map.get(plat.name, plat.wheel_plat),
-      ),
-    )
+        plat=wheel.plat._replace(
+            wheel_abi=self._abi_map.get(plat.name, plat.wheel_abi),
+            wheel_plat=self._arch_map.get(plat.name, plat.wheel_plat),
+        ),)
     return wheel._replace(
         filename=plat_wheel.default_filename(),
     )

@@ -76,7 +76,7 @@ contact Chrome Operations:
 
   def add_package(self, whl, plat):
     pyversions = tuple(whl.spec.pyversions or () if whl.spec.universal else ())
-    key = (whl.spec.name, whl.spec.version, pyversions)
+    key = (whl.spec.name, whl.build_id, pyversions)
     _, v = self._packages.setdefault(key, (whl, set()))
     if plat:
       v.add(plat.name)

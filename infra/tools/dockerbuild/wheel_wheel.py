@@ -52,6 +52,7 @@ class SourceOrPrebuilt(Builder):
     self._packaged = set(
         kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
     self._env = kwargs.pop('env', None)
+    version_suffix = '.' + patch_version if patch_version else None
 
     super(SourceOrPrebuilt, self).__init__(
         Spec(
@@ -60,7 +61,7 @@ class SourceOrPrebuilt(Builder):
             universal=False,
             pyversions=pyversions,
             default=default,
-            patch_version=patch_version), **kwargs)
+            version_suffix=version_suffix), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
@@ -102,7 +103,7 @@ class MultiWheel(Builder):
             universal=False,
             pyversions=pyversions,
             default=default,
-            patch_version=None),
+            version_suffix=None),
         only_plat=only_plat,
         skip_plat=skip_plat)
 
@@ -141,7 +142,7 @@ class Prebuilt(Builder):
             universal=False,
             pyversions=pyversions,
             default=True,
-            patch_version=None), **kwargs)
+            version_suffix=None), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromPyPiWheel(system, wheel)
@@ -166,7 +167,7 @@ class Universal(Builder):
             universal=True,
             pyversions=pyversions,
             default=True,
-            patch_version=None,
+            version_suffix=None,
         ), **kwargs)
 
   def build_fn(self, system, wheel):
@@ -207,13 +208,20 @@ class UniversalSource(Builder):
 
     Returns (Builder): A configured Builder for the specified wheel.
     """
-    if patches and patch_version:
-      raise ValueError('patches and patch_version may not be used together.')
     self._pypi_src = source.pypi_sdist(
         name=pypi_name or name,
         version=pypi_version,
         patches=patches,
         patch_base=patch_base)
+    if patches:
+      if patch_version:
+        raise ValueError('patches and patch_version may not be used together.')
+      # For backward compatibility.
+      version_suffix = '-' + self._pypi_src.patches_hash
+    elif patch_version:
+      version_suffix = '.' + patch_version
+    else:
+      version_suffix = None
     super(UniversalSource, self).__init__(
         Spec(
             name,
@@ -221,16 +229,11 @@ class UniversalSource(Builder):
             universal=True,
             pyversions=pyversions,
             default=True,
-            patch_version=patch_version,
+            version_suffix=version_suffix,
         ), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromSource(system, wheel, self._pypi_src)
-
-  def version_fn(self, _system):
-    if self._spec.patch_version:
-      return super(UniversalSource, self).version_fn(_system)
-    return self._pypi_src.buildid
 
   def md_data_fn(self):
     if not self._pypi_src.patches:

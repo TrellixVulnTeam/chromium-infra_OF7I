@@ -43,6 +43,7 @@ class OpenCV(Builder):
     """
     self._packaged = packaged or ()
     self._numpy_version = numpy_version
+    version_suffix = '.' + patch_version if patch_version else None
 
     super(OpenCV, self).__init__(
         Spec(
@@ -51,7 +52,7 @@ class OpenCV(Builder):
             universal=False,
             pyversions=None,
             default=default,
-            patch_version=patch_version),
+            version_suffix=version_suffix),
         arch_map=arch_map,
         only_plat=only_plat,
         skip_plat=skip_plat)

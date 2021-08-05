@@ -25,7 +25,7 @@ class InfraPackage(Builder):
             universal=True,
             pyversions=['py2'],
             default=True,
-            patch_version=None,
+            version_suffix=None,
         ))
 
   def version_fn(self, system):

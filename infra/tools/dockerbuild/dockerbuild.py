@@ -133,7 +133,7 @@ def _main_wheel_build(args, system):
       seen.add(package)
 
       if package.name in updated_packages:
-        buildid = build.version_fn(system)
+        buildid = w.build_id
         package_map.setdefault(package.name, []).append((package, buildid))
 
   # Now walk the cipd packages to figure refs<->version bindings.
@@ -195,7 +195,7 @@ def _build_one_wheel(system, args, git_revision, updated_packages, spec_name,
   package = w.cipd_package(git_revision)
 
   # Figure out the unique version id for this wheel build.
-  buildid = build.version_fn(system)
+  buildid = w.build_id
   version_tag = 'version:%s' % (buildid,)
   if not args.rebuild and system.cipd.exists(package.name, version_tag):
     util.LOGGER.info('Package [%s] with buildid [%s] already exists.', package,

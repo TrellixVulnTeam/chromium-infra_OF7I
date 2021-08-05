@@ -41,6 +41,7 @@ class Cryptography(Builder):
     self._packaged = packaged or ()
     self._crypt_src = crypt_src
     self._openssl_src = openssl_src
+    version_suffix = '.' + patch_version if patch_version else None
     super(Cryptography, self).__init__(
         Spec(
             name,
@@ -48,7 +49,7 @@ class Cryptography(Builder):
             universal=False,
             pyversions=pyversions,
             default=default,
-            patch_version=patch_version), **kwargs)
+            version_suffix=version_suffix), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:

@@ -31,7 +31,7 @@ class MySQLPython(Builder):
             universal=False,
             pyversions=None,
             default=True,
-            patch_version=None), **kwargs)
+            version_suffix=None), **kwargs)
 
   def build_fn(self, system, wheel):
     dx = system.dockcross_image(wheel.plat)

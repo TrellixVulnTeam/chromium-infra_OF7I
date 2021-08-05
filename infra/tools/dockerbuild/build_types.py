@@ -29,8 +29,9 @@ _Spec = collections.namedtuple(
         # default is true if this Spec should be built by default (i.e., when a
         # user doesn't manually specify Specs to build).
         'default',
-        # If set, the patch version to append to the CIPD version tag.
-        'patch_version'))
+        # If set, this is appended to the CIPD version tag. It must include any
+        # separator.
+        'version_suffix'))
 
 
 class Spec(_Spec):
@@ -45,8 +46,8 @@ class Spec(_Spec):
       ret = '%s-%s' % (self.name, self.version)
     else:
       ret = self.name
-    if self.patch_version:
-      ret += '.%s' % self.patch_version
+    if self.version_suffix:
+      ret += self.version_suffix
     if self.pyversions:
       ret += '-%s' % '.'.join(sorted(self.pyversions))
     return ret
@@ -108,6 +109,14 @@ class Wheel(_Wheel):
     """
     return self.platform[0]
 
+  @property
+  def build_id(self):
+    """Returns a unique identifier for this build of the wheel."""
+    build_id = self.spec.version
+    if self.spec.version_suffix:
+      build_id += self.spec.version_suffix
+    return build_id
+
   def default_filename(self):
     return '%(name)s-%(version)s-%(pyversion)s-%(abi)s-%(platform)s.whl' % {
         'name': self.spec.name.replace('-', '_'),
@@ -141,7 +150,7 @@ class Wheel(_Wheel):
       else:
         base_path += ['${vpython_platform}']
 
-    version_tag = 'version:%s' % (self.spec.version,)
+    version_tag = 'version:%s' % (self.build_id,)
     if not self.spec.universal and BINARY_VERSION_SUFFIX:
       version_tag += BINARY_VERSION_SUFFIX
     tags = [version_tag]
