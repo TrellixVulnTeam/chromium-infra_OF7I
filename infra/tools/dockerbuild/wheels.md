@@ -1575,6 +1575,18 @@ wheel: <
 
 * *universal*
 
+### 5.0.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/docker-py2_py3"
+  version: "version:5.0.0"
+>
+```
+
+
+* *universal*
+
 ## **docker-pycreds**
 
 ### 0.2.1
