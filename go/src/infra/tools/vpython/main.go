@@ -67,7 +67,7 @@ var defaultConfig = application.Config{
 	},
 	VENVPackage: vpython.Spec_Package{
 		Name:    "infra/3pp/tools/virtualenv",
-		Version: "version:2@16.7.10.chromium.2",
+		Version: "version:2@16.7.10.chromium.3",
 	},
 	VENVOmitUseWheel:        true,
 	PruneThreshold:          7 * 24 * time.Hour, // One week.
