@@ -272,3 +272,34 @@ luci.realm(
         ),
     ],
 )
+
+################################################################################
+## Realms used for Swarming client integration tests.
+
+luci.realm(
+    name = "pools/tests",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.poolOwner",
+            groups = ["mdb/chrome-troopers"],
+        ),
+        luci.binding(
+            roles = "role/swarming.poolViewer",
+            groups = "chromium-swarm-dev-view-all-bots",
+        ),
+        luci.binding(
+            roles = "role/swarming.poolUser",
+            groups = "project-infra-tests-submitters",
+        ),
+    ],
+)
+
+luci.realm(
+    name = "tests",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.taskTriggerer",
+            groups = "project-infra-tests-submitters",
+        ),
+    ],
+)
