@@ -428,6 +428,14 @@ def _cli_encode_proto(message):
 
 def _compute_bbagent(build, settings):
   """Returns the command for bbagent."""
+  if build.bbagent_getbuild:
+    return [
+        u'bbagent${EXECUTABLE_SUFFIX}',
+        u'-host',
+        build.proto.infra.buildbucket.hostname,
+        u'-build-id',
+        str(build.proto.id),
+    ]
   proto = copy.deepcopy(build.proto)
   build.tags_to_protos(proto.tags)
   return [

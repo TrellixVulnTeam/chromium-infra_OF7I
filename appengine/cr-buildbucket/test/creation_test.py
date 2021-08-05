@@ -405,6 +405,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(
         build.experiments, [
             '-chromium.exp_foo',
+            '-' + experiments.BBAGENT_GET_BUILD,
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
             '-' + experiments.RECIPE_PY3,
@@ -430,6 +431,7 @@ class CreationTest(testing.AppengineTestCase):
         build.experiments, [
             '+chromium.exp_foo',
             '-chromium.exp_bar',
+            '-' + experiments.BBAGENT_GET_BUILD,
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
             '-' + experiments.RECIPE_PY3,

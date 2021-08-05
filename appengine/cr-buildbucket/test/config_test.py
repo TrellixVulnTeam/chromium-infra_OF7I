@@ -63,6 +63,10 @@ LUCI_CHROMIUM_TRY = test_util.parse_bucket_cfg(
         swarming_host: "swarming.example.com"
         task_template_canary_percentage { value: 10 }
         experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
+        experiments {
           key: "luci.buildbucket.canary_software"
           value: 10
         }
@@ -97,6 +101,10 @@ LUCI_DART_TRY = test_util.parse_bucket_cfg(
       builders {
         name: "linux"
         dimensions: "pool:Dart.LUCI"
+        experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
         experiments {
           key: "luci.buildbucket.canary_software"
           value: 10
@@ -744,6 +752,10 @@ class ConfigTest(testing.AppengineTestCase):
         dimensions: "a:b8"
         dimensions: "pool:luci.proj.bucket"
         experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
+        experiments {
           key: "luci.buildbucket.canary_software"
           value: 10
         }
@@ -798,6 +810,10 @@ class ConfigTest(testing.AppengineTestCase):
           }
         }
         experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
+        experiments {
           key: "luci.buildbucket.canary_software"
           value: 10
         }
@@ -835,6 +851,10 @@ class ConfigTest(testing.AppengineTestCase):
             }
             builders {
               name: "all-well-known"
+              experiments {
+                key: "luci.buildbucket.bbagent_getbuild"
+                value: 0
+              }
               experiments {
                 key: "luci.buildbucket.canary_software"
                 value: 1
@@ -885,6 +905,10 @@ class ConfigTest(testing.AppengineTestCase):
         dimensions: "pool:luci.infra-exp.try"
         swarming_host: "swarming.example.com"
         experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
+        experiments {
           key: "luci.buildbucket.canary_software"
           value: 10
         }
@@ -910,6 +934,10 @@ class ConfigTest(testing.AppengineTestCase):
         experimental: YES
         task_template_canary_percentage { value: 30 }
         experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
+        experiments {
           key: "luci.buildbucket.canary_software"
           value: 30
         }
@@ -932,6 +960,10 @@ class ConfigTest(testing.AppengineTestCase):
         name: "all-well-known"
         dimensions: "pool:luci.infra-exp.try"
         swarming_host: "swarming.example.com"
+        experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
         experiments {
           key: "luci.buildbucket.canary_software"
           value: 1
@@ -957,6 +989,10 @@ class ConfigTest(testing.AppengineTestCase):
         swarming_host: "swarming.example.com"
         experimental: YES
         task_template_canary_percentage { value: 30 }
+        experiments {
+          key: "luci.buildbucket.bbagent_getbuild"
+          value: 0
+        }
         experiments {
           key: "luci.buildbucket.canary_software"
           value: 50
