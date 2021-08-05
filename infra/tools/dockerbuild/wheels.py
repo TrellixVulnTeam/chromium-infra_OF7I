@@ -506,15 +506,6 @@ SPECS.update({
             packaged=[],
             patches=('cpu-affinity',),
             patch_version='chromium.2',  # Rebuild for crbug/1233745
-            skip_plat=[
-                'linux-mips64',
-                'linux-mipsel',
-                'linux-mips',
-                'windows-x86',
-                'windows-x64',
-                'windows-x86-py3',
-                'windows-x64-py3',
-            ],
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
