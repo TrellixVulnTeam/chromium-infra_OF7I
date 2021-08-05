@@ -10,8 +10,6 @@ set -o pipefail
 PREFIX="$1"
 DEPS_PREFIX="$2"
 
-PATH=$DEPS_PREFIX/bin:$PATH
-
 make PROTOBUF_CXXFLAGS="-I$DEPS_PREFIX/include" \
   PROTOBUF_LDFLAGS="-L$DEPS_PREFIX/lib -lprotobuf" \
   LIBNL_CXXFLAGS="-I$DEPS_PREFIX/include/libnl3" \

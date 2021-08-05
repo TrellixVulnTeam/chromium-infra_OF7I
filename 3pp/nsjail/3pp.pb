@@ -1,11 +1,6 @@
 create {
-  platform_re: "linux-arm.*"
-  unsupported: true
-}
-
-create {
   # We are currently building this package only for linux platform.
-  platform_re: "linux-.*"
+  platform_re: "linux-amd64|linux-arm64"
 
   source {
     git {
@@ -22,6 +17,7 @@ create {
 
   build {
     tool: "tools/flex"
+    tool: "tools/protoc"
     dep: "tools/protobuf-cpp"
     dep: "tools/libnl"
   }
