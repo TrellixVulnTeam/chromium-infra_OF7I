@@ -7,6 +7,7 @@ package tasks
 // TODO(gregorynisbet): Validate existence of required flags.
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -23,7 +24,7 @@ import (
 const allFlagMessage = `to get all DUTs, please use "satlab get dut -all"`
 
 // GetDUT gets information about a DUT.
-func GetDUT(serviceAccountJSONPath string, satlab string, p *parse.CommandParseResult) (string, error) {
+func GetDUT(serviceAccountJSONPath string, satlabPrefix string, p *parse.CommandParseResult) (string, error) {
 	if p == nil {
 		return "", errors.New("command parse cannot be nil")
 	}
@@ -35,9 +36,14 @@ func GetDUT(serviceAccountJSONPath string, satlab string, p *parse.CommandParseR
 		return "", errors.New(`default "get dut" functionality not implemented`)
 	}
 
+	positionalArgs := []string{}
+	for _, item := range p.PositionalArgs {
+		positionalArgs = append(positionalArgs, fmt.Sprintf("%s-%s", satlabPrefix, item))
+	}
+
 	args := (&commands.CommandWithFlags{
 		Commands:       []string{paths.ShivasPath, "get", "dut"},
-		PositionalArgs: p.PositionalArgs,
+		PositionalArgs: positionalArgs,
 	}).ToCommand()
 	command := exec.Command(args[0], args[1:]...)
 	command.Stderr = os.Stderr
