@@ -277,7 +277,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       roll_step = self.m.python(
           'roll',
           recipes_dir.join('recipes.py'), [
-              '--package', recipes_cfg_path, 'autoroll', '--output-json',
+              '--package', recipes_cfg_path, '-vv', 'autoroll', '--output-json',
               self.m.json.output()
           ],
           venv=True)

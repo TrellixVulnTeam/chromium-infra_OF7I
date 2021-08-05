@@ -258,6 +258,7 @@
       "[CACHE]/builder/recipe_engine/recipes.py",
       "--package",
       "[CACHE]/builder/recipe_autoroller/build/infra/config/recipes.cfg",
+      "-vv",
       "autoroll",
       "--output-json",
       "/path/to/tmp/json"
