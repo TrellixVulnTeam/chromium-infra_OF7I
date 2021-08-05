@@ -89,8 +89,8 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 	}
 
 	pi := getPartitionInfo(r)
-	if errs := p.installPartitions(ctx, pi); len(errs) > 0 {
-		return fmt.Errorf("provisionOS: failed to provision the OS, %s", errs)
+	if err := p.installPartitions(ctx, pi); err != nil {
+		return fmt.Errorf("provisionOS: failed to provision the OS, %s", err)
 	}
 	if err := p.postInstall(pi); err != nil {
 		p.revertProvisionOS(pi)
@@ -143,11 +143,7 @@ func (p *provisionState) verifyOSProvision() error {
 }
 
 const (
-	fetchUngzipConvertCmd = `if type wget >/dev/null 2>&1; then
-  wget --progress=dot:giga -S --tries=3 -w 60 -O - %[1]s | gzip -d | dd of=%[2]s obs=2M
-else
-  curl -v %[1]s | gzip -d | dd of=%[2]s obs=2M
-fi
+	fetchUngzipConvertCmd = `curl -v -# -C - --retry 3 --retry-delay 60 %[1]s | gzip -d | dd of=%[2]s obs=2M
 pipestatus=("${PIPESTATUS[@]}")
 if [[ "${pipestatus[0]}" -ne 0 ]]; then
   echo "$(date --rfc-3339=seconds) ERROR: Fetching %[1]s failed." >&2
@@ -190,32 +186,23 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("install stateful: failed to get GS Cache URL, %s", err)
 	}
-	// wget isn't available after stateful is wiped, so use curl.
 	return runCmd(p.c, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
-		fmt.Sprintf("curl -v %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
+		fmt.Sprintf("curl -v -# -C - --retry 3 --retry-delay 60 %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
 		fmt.Sprintf("echo -n clobber > %s", updateStatefulFilePath),
 	}, " && "))
 }
 
-func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo) []error {
-	kernelErr := make(chan error)
-	rootErr := make(chan error)
-	go func() {
-		kernelErr <- p.installKernel(ctx, pi)
-	}()
-	go func() {
-		rootErr <- p.installRoot(ctx, pi)
-	}()
-
-	var provisionErrs []error
-	if err := <-kernelErr; err != nil {
-		provisionErrs = append(provisionErrs, err)
+func (p *provisionState) installPartitions(ctx context.Context, pi partitionInfo) error {
+	if err := p.installKernel(ctx, pi); err != nil {
+		log.Printf("installPartitions: failed to install kernel.")
+		return err
 	}
-	if err := <-rootErr; err != nil {
-		provisionErrs = append(provisionErrs, err)
+	if err := p.installRoot(ctx, pi); err != nil {
+		log.Printf("installPartitions: failed to install rootfs.")
+		return err
 	}
-	return provisionErrs
+	return nil
 }
 
 func (p *provisionState) postInstall(pi partitionInfo) error {
@@ -306,11 +293,7 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 
 	dlcOutputSlotDir := path.Join(dlcOutputDir, string(slot))
 	dlcOutputImage := path.Join(dlcOutputSlotDir, dlcImage)
-	dlcCmd := fmt.Sprintf(`if type wget >/dev/null 2>&1; then
-mkdir -p %[1]s && wget --progress=dot:giga -S --tries=1 -O %[2]s %[3]s
-else
-mkdir -p %[1]s && curl -v --output %[2]s %[3]s
-fi`,
+	dlcCmd := fmt.Sprintf(`mkdir -p %[1]s && curl -v -# -C - --retry 3 --retry-delay 60 --output %[2]s %[3]s`,
 		dlcOutputSlotDir, dlcOutputImage, url)
 	if err := runCmd(p.c, dlcCmd); err != nil {
 		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
