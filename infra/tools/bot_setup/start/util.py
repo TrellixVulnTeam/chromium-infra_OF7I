@@ -10,7 +10,6 @@ import sys
 # Path to root of the "infra" repository.
 INFRA_ROOT = os.path.abspath(os.path.join(
     os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir))
-RUN_PY = os.path.join(INFRA_ROOT, 'run.py')
 
 
 def call(args, **kwargs):
@@ -30,12 +29,20 @@ def call(args, **kwargs):
 
 def rmtree(target, ignore_errors=False):
   """Recursively deletes a target using "infra.tools.rmtree"."""
-  rc = call([
-    sys.executable, RUN_PY, 'infra.tools.rmtree',
-    '--logs-verbose',
-    '--logs-directory', '', # Don't output logs to a directory.
-    '--try-as-root',
-    target])
+  rc = call(
+      [
+          'vpython',
+          '-vpython-spec',
+          '.vpython',
+          '-m',
+          'infra.tools.rmtree',
+          '--logs-verbose',
+          '--logs-directory',
+          '',  # Don't output logs to a directory.
+          '--try-as-root',
+          target
+      ],
+      cwd=INFRA_ROOT)
   if rc == 0 or ignore_errors:
     return rc
   raise Exception('Failed to delete directory %r (rc=%d)' % (target, rc))
