@@ -7,6 +7,7 @@ package cipd
 import (
 	"context"
 	bscipd "infra/chromium/bootstrapper/cipd"
+	"infra/chromium/bootstrapper/util"
 	"path/filepath"
 	"testing"
 
@@ -19,9 +20,7 @@ import (
 
 func collect(cipdRoot, subdir string) map[string]string {
 	layout, err := testfs.Collect(filepath.Join(cipdRoot, subdir))
-	if err != nil {
-		panic(err)
-	}
+	util.PanicOnError(err)
 	return layout
 }
 
@@ -172,9 +171,7 @@ func TestIntegration(t *testing.T) {
 
 		Convey("succeeds when calling SetupRecipe", func() {
 			client, err := bscipd.NewClient(ctx, cipdRoot)
-			if err != nil {
-				panic(err)
-			}
+			util.PanicOnError(err)
 
 			recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
 

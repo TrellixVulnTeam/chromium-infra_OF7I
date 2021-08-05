@@ -7,8 +7,10 @@ package cipd
 import (
 	"context"
 	"fmt"
-	bscipd "infra/chromium/bootstrapper/cipd"
 	"path/filepath"
+
+	bscipd "infra/chromium/bootstrapper/cipd"
+	"infra/chromium/bootstrapper/util"
 
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
@@ -86,16 +88,10 @@ func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceByS
 		return nil, err
 	}
 
-	if paranoia != cipd.CheckIntegrity {
-		panic(fmt.Sprintf("unexpected paranoia: %s", paranoia))
-	}
-	if dryRun {
-		panic("dryRun is not supported")
-	}
+	util.PanicIf(paranoia != cipd.CheckIntegrity, "unexpected paranoia: %s", paranoia)
+	util.PanicIf(dryRun, "dryRun is not supported")
 	for subdir, pins := range packages {
-		if len(pins) != 1 {
-			panic(fmt.Sprintf("multiple pins for a subdirectory are not supported: subdirectory: %#v, pins: %#v", subdir, pins))
-		}
+		util.PanicIf(len(pins) != 1, "multiple pins for a subdirectory are not supported: subdirectory: %#v, pins: %#v", subdir, pins)
 		pin := pins[0]
 		pkg, err := c.packageForName(pin.PackageName)
 		if err != nil {
@@ -112,9 +108,7 @@ func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceByS
 		if contents == nil {
 			contents = map[string]string{}
 		}
-		if err := testfs.Build(recipeRoot, contents); err != nil {
-			panic(err)
-		}
+		util.PanicOnError(testfs.Build(recipeRoot, contents))
 	}
 	return nil, nil
 }

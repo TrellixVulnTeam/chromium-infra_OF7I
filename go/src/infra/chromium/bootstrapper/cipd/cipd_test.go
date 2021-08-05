@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	. "infra/chromium/bootstrapper/util"
+
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
@@ -50,9 +52,7 @@ func factoryForRecipesCfg(contents string) CipdClientFactory {
 				for subdir := range packages {
 					layout[strings.Join([]string{subdir, "infra", "config", "recipes.cfg"}, "/")] = contents
 				}
-				if err := testfs.Build(cipdRoot, layout); err != nil {
-					panic(err)
-				}
+				PanicOnError(testfs.Build(cipdRoot, layout))
 				return nil, nil
 			},
 		}, nil

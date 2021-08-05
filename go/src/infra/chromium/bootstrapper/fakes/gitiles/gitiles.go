@@ -7,12 +7,13 @@ package gitiles
 import (
 	"context"
 	"fmt"
-	"infra/chromium/bootstrapper/gitiles"
-	"infra/chromium/bootstrapper/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"infra/chromium/bootstrapper/gitiles"
+	"infra/chromium/bootstrapper/util"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/git"
@@ -94,9 +95,7 @@ func (c *Client) getProject(projectName string) (*Project, error) {
 }
 
 func (c *Client) Log(ctx context.Context, request *gitilespb.LogRequest, options ...grpc.CallOption) (*gitilespb.LogResponse, error) {
-	if request.PageSize != 1 {
-		panic(errors.Reason("unexpected page_size in LogRequest: %d", request.PageSize))
-	}
+	util.PanicIf(request.PageSize != 1, "unexpected page_size in LogRequest: %d", request.PageSize)
 	project, err := c.getProject(request.Project)
 	if err != nil {
 		return nil, err

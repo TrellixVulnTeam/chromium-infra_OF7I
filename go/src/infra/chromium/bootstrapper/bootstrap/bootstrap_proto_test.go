@@ -8,6 +8,8 @@ import (
 	"errors"
 	"testing"
 
+	. "infra/chromium/bootstrapper/util"
+
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -115,9 +117,7 @@ func TestValidate(t *testing.T) {
 
 func createBootstrapProperties(propsJson []byte) *BootstrapProperties {
 	props := &BootstrapProperties{}
-	if err := protojson.Unmarshal(propsJson, props); err != nil {
-		panic(err)
-	}
+	PanicOnError(protojson.Unmarshal(propsJson, props))
 	return props
 }
 

@@ -5,7 +5,7 @@
 package bootstrap
 
 import (
-	"fmt"
+	"infra/chromium/bootstrapper/util"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/luciexe/exe"
@@ -17,14 +17,10 @@ func setPropertiesFromJson(build *buildbucketpb.Build, propsJson map[string]stri
 	props := make(map[string]interface{}, len(propsJson))
 	for key, p := range propsJson {
 		s := &structpb.Value{}
-		if err := protojson.Unmarshal([]byte(p), s); err != nil {
-			panic(err)
-		}
+		util.PanicOnError(protojson.Unmarshal([]byte(p), s))
 		props[key] = s
 	}
-	if err := exe.WriteProperties(build.Input.Properties, props); err != nil {
-		panic(err)
-	}
+	util.PanicOnError(exe.WriteProperties(build.Input.Properties, props))
 }
 
 func setBootstrapProperties(build *buildbucketpb.Build, propsJson string) {
@@ -39,30 +35,20 @@ func strPtr(s string) *string {
 
 func getInput(build *buildbucketpb.Build) *Input {
 	input, err := NewInput(build)
-	if err != nil {
-		panic(err)
-	}
+	util.PanicOnError(err)
 	return input
 }
 
 func getValueAtPath(s *structpb.Struct, path ...string) *structpb.Value {
-	if len(path) < 1 {
-		panic("at least one path element must be provided")
-	}
+	util.PanicIf(len(path) < 1, "at least one path element must be provided")
 	original := s
 	for i, p := range path[:len(path)-1] {
 		value, ok := s.Fields[p]
-		if !ok {
-			panic(fmt.Sprintf("path %s is not present in struct %v", path[:i+1], original))
-		}
+		util.PanicIf(!ok, "path %s is not present in struct %v", path[:i+1], original)
 		s = value.GetStructValue()
-		if s == nil {
-			panic(fmt.Sprintf("path %s is not present in struct %v", path[:i+2], original))
-		}
+		util.PanicIf(s == nil, "path %s is not present in struct %v", path[:i+2], original)
 	}
 	value, ok := s.Fields[path[len(path)-1]]
-	if !ok {
-		panic(fmt.Sprintf("path %s is not present in struct %v", path, original))
-	}
+	util.PanicIf(!ok, "path %s is not present in struct %v", path, original)
 	return value
 }

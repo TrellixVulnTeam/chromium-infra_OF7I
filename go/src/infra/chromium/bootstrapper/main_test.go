@@ -8,15 +8,17 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"infra/chromium/bootstrapper/cipd"
-	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
-	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
-	"infra/chromium/bootstrapper/gitiles"
 	"io"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"infra/chromium/bootstrapper/cipd"
+	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
+	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
+	"infra/chromium/bootstrapper/gitiles"
+	. "infra/chromium/bootstrapper/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -31,13 +33,9 @@ func strPtr(s string) *string {
 
 func createInput(buildJson string) io.Reader {
 	build := &buildbucketpb.Build{}
-	if err := protojson.Unmarshal([]byte(buildJson), build); err != nil {
-		panic(err)
-	}
+	PanicOnError(protojson.Unmarshal([]byte(buildJson), build))
 	buildProtoBytes, err := proto.Marshal(build)
-	if err != nil {
-		panic(err)
-	}
+	PanicOnError(err)
 	return bytes.NewReader(buildProtoBytes)
 }
 

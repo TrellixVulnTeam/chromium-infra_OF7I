@@ -6,10 +6,12 @@ package bootstrap
 
 import (
 	"context"
-	"infra/chromium/bootstrapper/cipd"
-	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
 	"path/filepath"
 	"testing"
+
+	"infra/chromium/bootstrapper/cipd"
+	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
+	. "infra/chromium/bootstrapper/util"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
@@ -38,9 +40,7 @@ func TestExeBootstrapper(t *testing.T) {
 
 		cipdRoot := t.TempDir()
 		cipdClient, err := cipd.NewClient(ctx, cipdRoot)
-		if err != nil {
-			panic(err)
-		}
+		PanicOnError(err)
 
 		bootstrapper := NewExeBootstrapper(cipdClient)
 

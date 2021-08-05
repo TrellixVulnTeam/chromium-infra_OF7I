@@ -9,6 +9,21 @@ import (
 	"os/exec"
 )
 
+// PanicIf will panic with a custom error if a condition is true.
+//
+// In fakes and tests, it is often desirable to panic when some precondition is
+// violated to provide a loud indication that something wasn't set correctly.
+// PanicIf allows for panicking in those situations without having to introduce
+// uncovered conditional code and/or adding tests to cover those situations.
+//
+// This should be limited to test code and fakes. The code for the actual binary
+// should use proper error handling.
+func PanicIf(condition bool, message string, args ...interface{}) {
+	if condition {
+		panic(fmt.Errorf(message, args...))
+	}
+}
+
 // PanicOnError will panic if err is not nil.
 //
 // Specific error types will have additional information added to the panic e.g.
@@ -22,7 +37,8 @@ import (
 // to introduce uncovered conditional code and/or adding tests to cover those
 // situations.
 //
-// Please avoid using this in the actual binary code.
+// This should be limited to test code and fakes. The code for the actual binary
+// should use proper error handling.
 func PanicOnError(err error) {
 	if err != nil {
 		if err, ok := err.(*exec.ExitError); ok {

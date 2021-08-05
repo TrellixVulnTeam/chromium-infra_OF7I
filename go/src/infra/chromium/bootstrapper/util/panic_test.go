@@ -13,6 +13,26 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
+func TestPanicIf(t *testing.T) {
+	t.Parallel()
+
+	Convey("PanicIf", t, func() {
+
+		Convey("does not panic on false", func() {
+			f := func() { PanicIf(false, "test message") }
+
+			So(f, ShouldNotPanic)
+		})
+
+		Convey("panics on true", func() {
+			f := func() { PanicIf(true, "test message: %s", "foo") }
+
+			So(f, ShouldPanicLike, "test message: foo")
+		})
+
+	})
+}
+
 func TestPanicOnError(t *testing.T) {
 	t.Parallel()
 
@@ -41,5 +61,6 @@ func TestPanicOnError(t *testing.T) {
 
 			So(f, ShouldPanicLike, "test stderr")
 		})
+
 	})
 }
