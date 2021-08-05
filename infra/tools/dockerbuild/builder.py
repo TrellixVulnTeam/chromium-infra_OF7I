@@ -423,7 +423,7 @@ def BuildPackageFromSource(system, wheel, src, env=None):
 
     for patch in src.get_patches():
       util.LOGGER.info('Applying patch %s', os.path.basename(patch))
-      cmd = ['patch', '-p1', '--quiet', '-i', patch]
+      cmd = ['git', 'apply', '-p1', patch]
       subprocess.check_call(cmd, cwd=build_dir)
 
     interpreter, extra_env = SetupPythonPackages(system, wheel, build_dir)
