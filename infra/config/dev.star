@@ -9,7 +9,6 @@ After modifying this file execute it ('./dev.star') to regenerate the configs.
 This is also enforced by PRESUBMIT.py script.
 """
 
-load("//lib/build.star", "build")
 load("//lib/infra.star", "infra")
 
 lucicfg.check_version("1.27.0", "Please update depot_tools")
@@ -88,7 +87,10 @@ luci.logdog(
 
 luci.bucket(name = "ci")
 
-luci.builder.defaults.experiments.set({"luci.buildbucket.use_bbagent": 50})
+luci.builder.defaults.experiments.set({
+    "luci.buildbucket.use_bbagent": 50,
+    "luci.use_realms": 100,
+})
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
 def ci_builder(
@@ -157,7 +159,6 @@ adhoc_builder(
     name = "gsutil-hello-world-bionic-64",
     os = "Ubuntu-18.04",
     executable = infra.recipe("gsutil_hello_world"),
-    experiments = {"luci.use_realms": 100},
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
@@ -165,18 +166,6 @@ adhoc_builder(
     os = "Windows-10",
     executable = infra.recipe("gsutil_hello_world"),
     schedule = "triggered",  # triggered manually via Scheduler UI
-)
-adhoc_builder(
-    name = "infra-continuous-pack-apps",
-    os = "Ubuntu",
-    executable = build.recipe("run_docker"),
-    extra_dims = {"docker_installed": "true"},
-    properties = {
-        "cmd_args": ["apack", "pack", "source/infra/appengine/cr-buildbucket/default.apack"],
-        "image": "infra_dev_env",
-        "inherit_luci_context": True,
-    },
-    triggered_by = [infra.poller()],
 )
 adhoc_builder(
     name = "build-proto-linux",
