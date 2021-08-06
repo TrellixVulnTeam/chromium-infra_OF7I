@@ -9,7 +9,7 @@ project_names_without_test_results=("chromeos" "fuchsia")
 
 resultdb_dataset="chrome-luci-data.chromium_staging"
 if [ "$APP_ID" == "sheriff-o-matic" ]; then
-  resultdb_dataset="luci-resultdb.chromium"
+  resultdb_dataset="chrome-luci-data.chromium"
 fi
 
 project_name="chrome"
