@@ -109,8 +109,8 @@ def launch(docker_client, android_devices, args):
           uptime)
       main_helpers.reboot_host(args.canary)
       return
-  container_descriptors = map(
-      containers.AndroidContainerDescriptor, android_devices)
+  container_descriptors = list(
+      map(containers.AndroidContainerDescriptor, android_devices))
   main_helpers.launch_containers(docker_client, container_descriptors, args)
 
 

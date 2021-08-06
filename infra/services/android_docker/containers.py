@@ -143,7 +143,7 @@ class AndroidDockerClient(containers.DockerClient):
             path_to_cgroup, device)
         return
       try:
-        os.write(cgroup_fd, 'c %d:%d rwm' % (device.major, device.minor))
+        os.write(cgroup_fd, b'c %d:%d rwm' % (device.major, device.minor))
       except OSError:
         logging.exception(
             'Unable to write to cgroup %s of %s\'s container.',

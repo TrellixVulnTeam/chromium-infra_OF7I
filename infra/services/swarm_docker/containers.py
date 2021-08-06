@@ -12,6 +12,7 @@ import socket
 import sys
 import time
 
+import six
 
 _DOCKER_VOLUMES = {
     # The following four mounts are needed to add the host's chrome-bot user in
@@ -270,7 +271,7 @@ class DockerClient(object):
                        additional_env=None, **kwargs):
     container_workdir = '/b/%s' % container_desc.name
     container_volumes = self.volumes.copy()
-    container_volumes[container_workdir] = '/b/'
+    container_volumes[container_workdir] = {'bind': '/b/', 'mode': 'rw'}
     pw = pwd.getpwnam('chrome-bot')
     uid, gid = pw.pw_uid, pw.pw_gid
     if not os.path.exists(container_workdir):
@@ -329,7 +330,8 @@ class Container(object):
     return self._container.image
 
   def exec_run(self, cmd):
-    return self._container.exec_run(cmd)
+    res = self._container.exec_run(cmd)
+    return six.ensure_text(res.output)
 
   def get_container_uptime(self, now):
     """Returns the containers uptime in minutes."""
@@ -341,7 +343,7 @@ class Container(object):
 
   def get_swarming_bot_pid(self):
     try:
-      output = self._container.exec_run(
+      output = self.exec_run(
           'su chrome-bot -c "lsof -t /b/swarming/swarming.lck"').strip()
     except docker.errors.NotFound:
       logging.error('Docker engine returned 404 for container %s', self.name)
@@ -374,7 +376,7 @@ class Container(object):
       # down at the next opportunity. Once the process exits, its container
       # will exit as well.
       try:
-        self._container.exec_run('kill -15 %d' % pid)
+        self.exec_run('kill -15 %d' % pid)
       except docker.errors.APIError:  # pragma: no cover
         logging.exception('Unable to send SIGTERM to swarming bot.')
       else:

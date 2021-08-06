@@ -18,7 +18,7 @@ VENV support if things work well.
 # [VPYTHON:BEGIN]
 # wheel: <
 #   name: "infra/python/wheels/docker-py2_py3"
-#   version: "version:2.7.0"
+#   version: "version:5.0.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/docker-pycreds-py2_py3"
@@ -27,10 +27,6 @@ VENV support if things work well.
 # wheel: <
 #   name: "infra/python/wheels/backports_ssl_match_hostname-py2_py3"
 #   version: "version:3.5.0.1"
-# >
-# wheel: <
-#   name: "infra/python/wheels/ipaddress-py2"
-#   version: "version:1.0.18"
 # >
 # wheel: <
 #   name: "infra/python/wheels/six-py2_py3"

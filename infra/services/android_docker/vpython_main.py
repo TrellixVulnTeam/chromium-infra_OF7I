@@ -19,7 +19,7 @@ VENV support if things work well.
 # python_version: "3.8"
 # wheel: <
 #   name: "infra/python/wheels/docker-py2_py3"
-#   version: "version:2.7.0"
+#   version: "version:5.0.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/docker-pycreds-py2_py3"

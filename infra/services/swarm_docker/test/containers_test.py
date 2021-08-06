@@ -86,6 +86,8 @@ class FakeContainerBackend(object):
   behaves correctly.
   """
 
+  ExecResult = collections.namedtuple('ExecResult', 'exit_code,output')
+
   def __init__(self, name, devices='not set'):
     self.name = name
     self.was_deleted = False
@@ -117,7 +119,7 @@ class FakeContainerBackend(object):
 
   def exec_run(self, cmd, **_kwargs):
     self.exec_inputs.append(cmd)
-    return self.exec_outputs.pop(0)
+    return self.ExecResult(0, self.exec_outputs.pop(0))
 
 
 class FakeContainerList(object):

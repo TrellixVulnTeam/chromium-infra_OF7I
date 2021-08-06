@@ -9,7 +9,7 @@ import unittest
 from infra.services.android_docker import containers
 from infra.services.swarm_docker import containers as swarm_containers
 from infra.services.swarm_docker.test.containers_test import (
-    FakeContainer, FakeContainerBackend)
+    FakeClient, FakeContainer, FakeContainerBackend)
 
 
 class FakeDevice(object):
@@ -69,6 +69,10 @@ class TestAndroidContainerDescriptor(unittest.TestCase):
 
 
 class TestAndroidDockerClient(unittest.TestCase):
+
+  def setUp(self):
+    mock.patch('docker.from_env', return_value=FakeClient()).start()
+
   @mock.patch.object(swarm_containers.DockerClient, 'create_container')
   @mock.patch.object(containers.AndroidDockerClient, 'add_device')
   def test_create_container(self, mock_add_device, mock_create_container):
@@ -121,6 +125,7 @@ class TestAndroidDockerClient(unittest.TestCase):
 class TestAddDevice(unittest.TestCase):
   def setUp(self):
     self.container_backend = FakeContainerBackend('container1')
+    mock.patch('docker.from_env', return_value=FakeClient()).start()
     self.container_backend.attrs = {
       'Id': 'abc123',
       'State': {'Status': 'running'},
@@ -152,7 +157,7 @@ class TestAddDevice(unittest.TestCase):
     self.assertTrue('abc123' in mock_open.call_args[0][0])
     # Ensure the device's major and minor numbers were written to the
     # cgroup file.
-    self.assertEqual(mock_write.call_args[0][1], 'c 111:9 rwm')
+    self.assertEqual(mock_write.call_args[0][1], b'c 111:9 rwm')
     self.assertTrue(mock_close.called)
     self.assertFalse(self.container_backend.is_paused)
 
@@ -194,7 +199,7 @@ class TestAddDevice(unittest.TestCase):
     self.client.add_device(self.desc)
 
     self.assertTrue('abc123' in mock_open.call_args[0][0])
-    self.assertEqual(mock_write.call_args[0][1], 'c 111:9 rwm')
+    self.assertEqual(mock_write.call_args[0][1], b'c 111:9 rwm')
     self.assertTrue(mock_close.called)
     self.assertEqual(len(self.container_backend.exec_inputs), 1)
     self.assertFalse(self.container_backend.is_paused)
