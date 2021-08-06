@@ -41,6 +41,8 @@ class TestAndroidContainerDescriptor(unittest.TestCase):
 class TestCrosDockerClient(unittest.TestCase):
 
   def setUp(self):
+    mock.patch(
+        'docker.from_env', return_value=containers_test.FakeClient()).start()
     self.exected_sysctls = {'net.ipv6.conf.lo.disable_ipv6': 0}
 
   @mock.patch.object(swarm_containers.DockerClient, 'create_container')

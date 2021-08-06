@@ -44,8 +44,8 @@ def CommonChecks(input_api, output_api):
               env=test_env,
               skip_shebang_check=True,
               # TODO(crbug.com/1236129): Disable py2 and enable py3 for all.
-              run_on_python2=service in ['cros_docker', 'swarm_docker'],
-              run_on_python3=service in ['android_docker']))
+              run_on_python2=service in ['swarm_docker'],
+              run_on_python3=service in ['cros_docker', 'android_docker']))
 
   results += input_api.RunTests(tests)
   return results
