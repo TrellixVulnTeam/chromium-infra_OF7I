@@ -73,6 +73,10 @@ _NUMPY_MAC_x64 = [
     'macosx_10_10_x86_64',
 ]
 
+_NUMPY_MAC_ARM = [
+    'macosx_11_0_arm64',
+]
+
 
 def assert_sorted(section_type, *builders):
   name_vers = []
@@ -430,6 +434,19 @@ SPECS.update({
                 'mac-x64-cp38',
                 'windows-x86-py3',
                 'windows-x64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
+            'numpy',
+            '1.21.1',
+            packaged=[
+              'mac-arm64-cp38',
+            ],
+            arch_map={'mac-arm64-cp38': _NUMPY_MAC_ARM},
+            only_plat=[
+                'mac-x64-cp38',
+                'mac-arm64-cp38',
             ],
             pyversions=['py3'],
         ),
@@ -1224,6 +1241,16 @@ SPECS.update({
             ],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             only_plat=['mac-64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
+        ),
+        OpenCV(
+            'opencv_python',
+            '4.5.3.56',
+            '1.21.1',
+            packaged=[
+                'mac-arm64-cp38',
+            ],
+            arch_map={'mac-arm64-cp38': _NUMPY_MAC_ARM},
+            only_plat=['mac-arm64-cp38'],
         ),
     )
 })
