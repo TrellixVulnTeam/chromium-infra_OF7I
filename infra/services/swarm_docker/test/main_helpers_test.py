@@ -28,7 +28,7 @@ class TestMainHelpers(unittest.TestCase):
 
   def testGetUptime(self):
     uptime = '1440.75 103734.55'
-    with mock.patch("__builtin__.open", mock.mock_open(read_data=uptime)) as _:
+    with mock.patch("builtins.open", mock.mock_open(read_data=uptime)) as _:
       self.assertEqual(main_helpers.get_host_uptime(), 24.0125)
 
   @mock.patch(MAIN_HELPERS + 'fuzz_max_uptime', return_value=60)
@@ -75,8 +75,9 @@ class TestMainHelpers(unittest.TestCase):
   @mock.patch('socket.getfqdn')
   def test_fuzz_range(self, mock_gethostname):
     # Test a bunch of random hostnames.
-    for n in xrange(1, 101):
-      hostname = ''.join([random.choice(string.lowercase) for _ in xrange(n)])
+    for n in range(1, 101):
+      hostname = ''.join(
+          [random.choice(string.ascii_lowercase) for _ in range(n)])
       mock_gethostname.return_value = hostname
       fuzzed_amount = main_helpers.fuzz_max_uptime(1200) - 1200
       self.assertGreaterEqual(fuzzed_amount, 0)

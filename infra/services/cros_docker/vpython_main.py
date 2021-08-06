@@ -33,7 +33,7 @@ VENV support if things work well.
 # >
 # wheel: <
 #   name: "infra/python/wheels/six-py2_py3"
-#   version: "version:1.10.0"
+#   version: "version:1.15.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/requests-py2_py3"

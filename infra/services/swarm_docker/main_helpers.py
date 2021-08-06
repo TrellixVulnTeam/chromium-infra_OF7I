@@ -18,6 +18,8 @@ import sys
 import threading
 import time
 
+import six
+
 from infra.libs.service_utils import daemon
 from infra.services.swarm_docker import containers
 
@@ -58,7 +60,7 @@ def get_cipd_version():  # pragma: no cover
 
 def fuzz_max_uptime(max_uptime):
   """Returns max_uptime fuzzed by up to 20% of the original value."""
-  fqdn = socket.getfqdn()
+  fqdn = six.ensure_binary(socket.getfqdn())
   # Don't use the built-in hash function since that's not deterministic across
   # different processes.
   fqdn_hash = hashlib.md5(fqdn).hexdigest()

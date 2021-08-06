@@ -85,6 +85,7 @@ class FakeContainerBackend(object):
   containers.Container wraps each one. Mocked here to verify the wrapper class
   behaves correctly.
   """
+
   def __init__(self, name, devices='not set'):
     self.name = name
     self.was_deleted = False
@@ -177,25 +178,22 @@ class TestContainerDescriptor(unittest.TestCase):
 class TestDockerClient(unittest.TestCase):
   def setUp(self):
     self.fake_client = FakeClient()
+    mock.patch('docker.from_env', return_value=self.fake_client).start()
     self.container_names = ['5', '6']
     self.fake_client.containers = FakeContainerList(
         [FakeContainerBackend(name) for name in self.container_names])
 
-  @mock.patch('docker.from_env')
   @mock.patch('time.sleep')
-  def test_ping_success(self, mock_sleep, mock_from_env):
+  def test_ping_success(self, mock_sleep):
     self.fake_client.responsive = True
-    mock_from_env.return_value = self.fake_client
     mock_sleep.return_value = None
 
     client = containers.DockerClient()
     self.assertTrue(client.ping())
 
-  @mock.patch('docker.from_env')
   @mock.patch('time.sleep')
-  def test_ping_fail(self, mock_sleep, mock_from_env):
+  def test_ping_fail(self, mock_sleep):
     self.fake_client.responsive = False
-    mock_from_env.return_value = self.fake_client
     mock_sleep.return_value = None
 
     client = containers.DockerClient()
@@ -203,164 +201,127 @@ class TestDockerClient(unittest.TestCase):
     mock_sleep.assert_has_calls(
         [mock.call(1), mock.call(2), mock.call(4), mock.call(8)])
 
-  @mock.patch('docker.from_env')
   @mock.patch('os.path.exists')
-  def test_login_no_creds(self, mock_path_exists, mock_from_env):
-    mock_from_env.return_value = self.fake_client
+  def test_login_no_creds(self, mock_path_exists):
     mock_path_exists.return_value = False
 
     client = containers.DockerClient()
     self.assertRaises(
         OSError, client.login, 'registry_url.com', '/path/to/creds')
 
-  @mock.patch('docker.from_env')
   @mock.patch('os.path.exists')
-  def test_login(self, mock_path_exists, mock_from_env):
-    mock_from_env.return_value = self.fake_client
+  def test_login(self, mock_path_exists):
     mock_path_exists.return_value = True
 
     client = containers.DockerClient()
-    with mock.patch('__builtin__.open', mock.mock_open(read_data='omg creds')):
+    with mock.patch('builtins.open', mock.mock_open(read_data='omg creds')):
       client.login('registry_url.com', '/path/to/creds')
 
     self.assertTrue(client.logged_in, True)
     self.assertEquals(self.fake_client.creds[1], 'omg creds')
 
-  @mock.patch('docker.from_env')
-  def test_images(self, mock_from_env):
+  def test_images(self):
     img1 = FakeImage('image1-id', 'image1-url')
     self.fake_client.images.images.append(img1)
-    mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
     self.assertEqual(client.images(), [img1])
 
-  @mock.patch('docker.from_env')
-  def test_has_image(self, mock_from_env):
+  def test_has_image(self):
     self.fake_client.images.images.append(FakeImage('image1-id', 'image1-url'))
-    mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
     self.assertTrue(client.has_image('image1-url'))
     self.assertFalse(client.has_image('image99-url'))
 
-  @mock.patch('docker.from_env')
-  def test_remove_image(self, mock_from_env):
+  def test_remove_image(self):
     self.fake_client.images.images.append(FakeImage('image1-id', 'image1-url'))
-    mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
     client.remove_image('image1-id')
     self.assertEqual(client.images(), [])
 
-  @mock.patch('docker.from_env')
-  def test_remove_outdated_images(self, mock_from_env):
+  def test_remove_outdated_images(self):
     old_img = FakeImage('old-image-id', 'old-image-url')
     new_img = FakeImage('new-image-id', 'new-image-url')
     self.fake_client.images.images = [old_img, new_img]
-    mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
     client.remove_outdated_images('new-image-url')
     self.assertEqual(client.images(), [new_img])
 
-  @mock.patch('docker.from_env')
-  def test_remove_outdated_images_no_op(self, mock_from_env):
+  def test_remove_outdated_images_no_op(self):
     """remove_outdated_images() is a no-op. Needed for 100% coverage."""
     new_img = FakeImage('new-image-id', 'new-image-url')
     self.fake_client.images.images = [new_img]
-    mock_from_env.return_value = self.fake_client
 
     client = containers.DockerClient()
     client.remove_outdated_images('new-image-url')
     self.assertEqual(client.images(), [new_img])
 
-  @mock.patch('docker.from_env')
-  def test_pull(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
-
+  def test_pull(self):
     client = containers.DockerClient()
     client.logged_in = True
     client.pull('image1')
     self.assertTrue('image1' in self.fake_client.images.images)
 
-  @mock.patch('docker.from_env')
-  def test_pull_not_logged_in(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
-
+  def test_pull_not_logged_in(self):
     client = containers.DockerClient()
     client.logged_in = False
     self.assertRaises(Exception, client.pull, 'image1')
 
-  @mock.patch('docker.from_env')
-  def test_get_running_containers(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
-
+  def test_get_running_containers(self):
     running_containers = containers.DockerClient().get_running_containers()
     self.assertEqual(
         set(c.name for c in running_containers), set(self.container_names))
 
-  @mock.patch('docker.from_env')
-  def test_get_paused_containers(self, mock_from_env):
+  def test_get_paused_containers(self):
     self.fake_client.containers.get('5').pause()
-    mock_from_env.return_value = self.fake_client
 
     paused_containers = containers.DockerClient().get_paused_containers()
     self.assertEqual(len(paused_containers), 1)
     self.assertEqual(paused_containers[0].name, '5')
 
-  @mock.patch('docker.from_env')
-  def test_get_created_containers(self, mock_from_env):
+  def test_get_created_containers(self):
     self.fake_client.containers.get('5').attrs['State'] = {'Status': 'created'}
-    mock_from_env.return_value = self.fake_client
 
     created_containers = containers.DockerClient().get_created_containers()
     self.assertEqual(len(created_containers), 1)
     self.assertEqual(created_containers[0].name, '5')
 
-  @mock.patch('docker.from_env')
-  def test_get_container(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
+  def test_get_container(self):
     container = containers.DockerClient().get_container(
         containers.ContainerDescriptor('5'))
     self.assertEqual(container.name, '5')
 
-  @mock.patch('docker.from_env')
-  def test_get_missing_container(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
+  def test_get_missing_container(self):
     container = containers.DockerClient().get_container(
         containers.ContainerDescriptor('1'))
     self.assertEqual(container, None)
 
-  @mock.patch('docker.from_env')
-  def test_stop_old_containers(self, mock_from_env):
+  def test_stop_old_containers(self):
     young_container = FakeContainer('young_container', uptime=10)
     old_container = FakeContainer('old_container', uptime=999)
-    mock_from_env.return_value = self.fake_client
 
     containers.DockerClient().stop_old_containers(
         [young_container, old_container], 100)
     self.assertFalse(young_container.swarming_bot_killed)
     self.assertTrue(old_container.swarming_bot_killed)
 
-  @mock.patch('docker.from_env')
-  def test_stop_frozen_containers(self, mock_from_env):
+  def test_stop_frozen_containers(self):
+
     def _raise_frozen_container(*_args, **_kwargs):
       raise containers.FrozenContainerError()
     frozen_container1 = FakeContainer('frozen_container1', uptime=999)
     frozen_container1.kill_swarming_bot = _raise_frozen_container
     frozen_container2 = FakeContainer('frozen_container2', uptime=999)
     frozen_container2.kill_swarming_bot = _raise_frozen_container
-    mock_from_env.return_value = self.fake_client
 
     with self.assertRaises(containers.FrozenEngineError):
       containers.DockerClient().stop_old_containers(
           [frozen_container1, frozen_container2], 100)
 
-  @mock.patch('docker.from_env')
-  def test_delete_stopped_containers(self, mock_from_env):
-    mock_from_env.return_value = self.fake_client
-
+  def test_delete_stopped_containers(self):
     created_c = FakeContainerBackend('11')
     created_c.attrs['State'] = {'Status': 'created'}
     self.fake_client.containers._list.append(created_c)
@@ -373,15 +334,13 @@ class TestDockerClient(unittest.TestCase):
   @mock.patch('os.mkdir')
   @mock.patch('os.path.exists')
   @mock.patch('pwd.getpwnam')
-  @mock.patch('docker.from_env')
-  def test_create_container(self, mock_from_env, mock_getpwnam, mock_exists,
-                            mock_mkdir, mock_chown):
+  def test_create_container(self, mock_getpwnam, mock_exists, mock_mkdir,
+                            mock_chown):
     mock_getpwnam.return_value = collections.namedtuple(
         'pwnam', 'pw_uid, pw_gid')(1,2)
     mock_exists.return_value = False
     running_containers = [FakeContainer('1'), FakeContainer('2')]
     self.fake_client.containers = FakeContainerList(running_containers)
-    mock_from_env.return_value = self.fake_client
 
     container = containers.DockerClient().create_container(
         containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
@@ -392,15 +351,13 @@ class TestDockerClient(unittest.TestCase):
   @mock.patch('os.mkdir')
   @mock.patch('os.path.exists')
   @mock.patch('pwd.getpwnam')
-  @mock.patch('docker.from_env')
-  def test_create_container_with_env(self, mock_from_env, mock_getpwnam,
-                                     mock_exists, mock_mkdir, mock_chown):
+  def test_create_container_with_env(self, mock_getpwnam, mock_exists,
+                                     mock_mkdir, mock_chown):
     mock_getpwnam.return_value = collections.namedtuple(
         'pwnam', 'pw_uid, pw_gid')(1,2)
     mock_exists.return_value = False
     running_containers = [FakeContainer('1'), FakeContainer('2')]
     self.fake_client.containers = FakeContainerList(running_containers)
-    mock_from_env.return_value = self.fake_client
     additional_env = {'SOME_ENV': 'SOME_VAL'}
 
     container = containers.DockerClient().create_container(
@@ -414,13 +371,11 @@ class TestDockerClient(unittest.TestCase):
   @mock.patch('os.path.exists')
   @mock.patch('pwd.getpwnam')
   @mock.patch('sys.platform', 'darwin')
-  @mock.patch('docker.from_env')
-  def test_create_container_darwin(self, mock_from_env, mock_getpwnam,
-                                   mock_exists, mock_mkdir, mock_chown):
+  def test_create_container_darwin(self, mock_getpwnam, mock_exists, mock_mkdir,
+                                   mock_chown):
     mock_getpwnam.return_value = collections.namedtuple(
         'pwnam', 'pw_uid, pw_gid')(1,2)
     mock_exists.side_effect = lambda d: d == containers._KVM_DEVICE
-    mock_from_env.return_value = self.fake_client
 
     container = containers.DockerClient().create_container(
         containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
@@ -433,13 +388,11 @@ class TestDockerClient(unittest.TestCase):
   @mock.patch('os.path.exists')
   @mock.patch('pwd.getpwnam')
   @mock.patch('sys.platform', 'linux2')
-  @mock.patch('docker.from_env')
-  def test_create_container_linux_no_kvm(self, mock_from_env, mock_getpwnam,
-                                         mock_exists, mock_mkdir, mock_chown):
+  def test_create_container_linux_no_kvm(self, mock_getpwnam, mock_exists,
+                                         mock_mkdir, mock_chown):
     mock_getpwnam.return_value = collections.namedtuple(
         'pwnam', 'pw_uid, pw_gid')(1,2)
     mock_exists.return_value = False
-    mock_from_env.return_value = self.fake_client
 
     container = containers.DockerClient().create_container(
         containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})
@@ -452,13 +405,11 @@ class TestDockerClient(unittest.TestCase):
   @mock.patch('os.path.exists')
   @mock.patch('pwd.getpwnam')
   @mock.patch('sys.platform', 'linux2')
-  @mock.patch('docker.from_env')
-  def test_create_container_linux_kvm(self, mock_from_env, mock_getpwnam,
-                                      mock_exists, mock_mkdir, mock_chown):
+  def test_create_container_linux_kvm(self, mock_getpwnam, mock_exists,
+                                      mock_mkdir, mock_chown):
     mock_getpwnam.return_value = collections.namedtuple(
         'pwnam', 'pw_uid, pw_gid')(1,2)
     mock_exists.side_effect = lambda d: d == containers._KVM_DEVICE
-    mock_from_env.return_value = self.fake_client
 
     container = containers.DockerClient().create_container(
         containers.ContainerDescriptor('1'), 'image', 'swarm-url.com', {})

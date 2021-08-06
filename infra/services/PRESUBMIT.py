@@ -39,13 +39,11 @@ def CommonChecks(input_api, output_api):
           input_api.canned_checks.GetUnitTestsInDirectory(
               input_api,
               output_api,
-              os.path.join(service, 'test'),
-              [r'^.+_test\.py$'],
+              os.path.join(service, 'test'), [r'^.+_test\.py$'],
               env=test_env,
               skip_shebang_check=True,
-              # TODO(crbug.com/1236129): Disable py2 and enable py3 for all.
-              run_on_python2=service in ['swarm_docker'],
-              run_on_python3=service in ['cros_docker', 'android_docker']))
+              run_on_python2=False,
+              run_on_python3=True))
 
   results += input_api.RunTests(tests)
   return results

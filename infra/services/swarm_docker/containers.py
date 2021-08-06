@@ -132,7 +132,7 @@ class DockerClient(object):
     Returns True if engine is responding, else False.
     """
     sleep_time = 1
-    for i in xrange(retries):
+    for i in range(retries):
       try:
         self._client.ping()
         return True
