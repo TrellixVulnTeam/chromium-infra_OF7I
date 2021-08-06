@@ -636,3 +636,7 @@ class TestContainer(unittest.TestCase):
   def test_attrs(self):
     self.container_backend.attrs = {'Id': '123'}
     self.assertEquals(self.container.attrs['Id'], '123')
+
+
+if __name__ == '__main__':
+  unittest.main()

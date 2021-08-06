@@ -145,3 +145,7 @@ class TestRebootHost(unittest.TestCase):
         1, [], 'omg error')
     main_helpers.reboot_host()
     mock_subprocess.assert_called()
+
+
+if __name__ == '__main__':
+  unittest.main()

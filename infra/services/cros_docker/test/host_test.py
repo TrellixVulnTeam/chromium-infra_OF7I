@@ -56,3 +56,7 @@ class HostTests(unittest.TestCase):
   def test_write_config(self):
     with mock.patch('__builtin__.open', mock.mock_open()):
       host.write_ssh_config()
+
+
+if __name__ == '__main__':
+  unittest.main()

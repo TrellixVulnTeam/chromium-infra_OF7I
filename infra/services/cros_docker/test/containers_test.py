@@ -84,3 +84,7 @@ class TestCrosDockerClient(unittest.TestCase):
         desc, 'image', 'swarm-url.com', {}, additional_env=expected_env,
         privileged=True, sysctls=self.exected_sysctls)
     self.assertEquals(len(fake_container_backend.exec_inputs), 0)
+
+
+if __name__ == '__main__':
+  unittest.main()
