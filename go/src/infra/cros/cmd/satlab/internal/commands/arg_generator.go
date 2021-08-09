@@ -34,31 +34,18 @@ func (c *CommandWithFlags) ToCommand() []string {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		v := c.Flags[k]
-		out = append(out, fmt.Sprintf("-%s", k))
-		out = append(out, v...)
+		items := c.Flags[k]
+		if len(items) == 0 {
+			out = append(out, fmt.Sprintf("-%s", k))
+			continue
+		}
+		for _, item := range items {
+			out = append(out, fmt.Sprintf("-%s", k))
+			out = append(out, item)
+		}
 	}
 	for _, s := range c.PositionalArgs {
 		out = append(out, s)
 	}
 	return out
-}
-
-// ApplyFlagFilter takes a default decision (false for reject, true for keep) and a list of decisions
-// for individual flags. It then applies the filter to either remove unknown flags or restrict the flags
-// to a known subset of the flags.
-func (c *CommandWithFlags) ApplyFlagFilter(keepByDefault bool, flags map[string]bool) *CommandWithFlags {
-	if c == nil {
-		return nil
-	}
-	for flag := range c.Flags {
-		keep := keepByDefault
-		if decision, ok := flags[flag]; ok {
-			keep = decision
-		}
-		if !keep {
-			delete(c.Flags, flag)
-		}
-	}
-	return c
 }

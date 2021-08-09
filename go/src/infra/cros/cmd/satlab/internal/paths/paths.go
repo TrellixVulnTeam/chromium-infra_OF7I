@@ -5,11 +5,11 @@
 package paths
 
 const (
-	// ShivasPath is the path to the shivas tool.
-	ShivasPath = "/usr/local/bin/shivas"
+	// ShivasCLI is the path to the shivas tool.
+	ShivasCLI = "/usr/local/bin/shivas"
 
-	// GetHostIdentifierPath is the path to the get_host_identifier script.
-	GetHostIdentifierPath = "/usr/local/bin/get_host_identifier"
+	// GetHostIdentifierScript is the path to the get_host_identifier script.
+	GetHostIdentifierScript = "/usr/local/bin/get_host_identifier"
 
 	// DockerPath is the path to the wrapper around docker.
 	DockerPath = "/usr/local/bin/docker"

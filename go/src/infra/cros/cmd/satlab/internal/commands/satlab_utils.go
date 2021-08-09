@@ -6,11 +6,13 @@ package commands
 
 import (
 	"io/ioutil"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 )
 
 // MakeTempFile makes a temporary file.
+// TODO(gregorynisbet): Move to separate package.
 func MakeTempFile(content string) (string, error) {
 	f, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -24,4 +26,13 @@ func MakeTempFile(content string) (string, error) {
 		return "", errors.Annotate(err, "makeTempFile").Err()
 	}
 	return name, nil
+}
+
+// TrimOutput trims trailing whitespace from command output.
+// TODO(gregorynisbet): Move to separate package.
+func TrimOutput(output []byte) string {
+	if len(output) == 0 {
+		return ""
+	}
+	return strings.TrimRight(string(output), "\n\t")
 }

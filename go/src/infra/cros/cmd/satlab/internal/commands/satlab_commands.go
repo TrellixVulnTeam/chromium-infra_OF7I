@@ -5,6 +5,8 @@
 package commands
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -30,25 +32,23 @@ const (
 
 // GetHostIdentifier gets the host identifier value.
 func GetDockerHostBoxIdentifier() (string, error) {
-	out, err := exec.Command(paths.GetHostIdentifierPath).Output()
-	if err != nil {
-		return "", errors.Annotate(err, "get host identifier").Err()
-	}
-	return strings.TrimRight(string(out), "\n\t"), nil
+	fmt.Fprintf(os.Stderr, "Get host identifier: run %s\n", paths.GetHostIdentifierScript)
+	out, err := exec.Command(paths.GetHostIdentifierScript).Output()
+	// Immediately normalize the satlab prefix to lowercase. It will save a lot of
+	// trouble later.
+	return strings.ToLower(TrimOutput(out)), errors.Annotate(err, "get host identifier").Err()
 }
 
 // GetServiceAccountContent gets the content of the service account.
 func GetServiceAccountContent() (string, error) {
-	out, err := exec.Command(
+	args := []string{
 		paths.DockerPath,
 		"exec",
 		"drone",
 		"/bin/cat",
 		"/creds/service_accounts/skylab-drone.json",
-	).Output()
-	if err != nil {
-		return "", errors.Annotate(err, "get service account content").Err()
 	}
-	s := string(out)
-	return strings.TrimRight(s, "\n\t"), nil
+	fmt.Fprintf(os.Stderr, "Get drone credential: run %s\n", args)
+	out, err := exec.Command(args[0], args...).Output()
+	return TrimOutput(out), errors.Annotate(err, "get service account content").Err()
 }

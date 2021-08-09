@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// TestToCommand tests lowering a command with flags to a []string.
 func TestToCommand(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -52,7 +53,7 @@ func TestToCommand(t *testing.T) {
 					"b": {"c", "d", "e", "f"},
 				},
 			},
-			[]string{"a", "-b", "c", "d", "e", "f"},
+			[]string{"a", "-b", "c", "-b", "d", "-b", "e", "-b", "f"},
 		},
 		{
 			"command with positional arg",
@@ -91,108 +92,6 @@ func TestToCommand(t *testing.T) {
 		name := tt.name
 		expected := tt.output
 		actual := tt.input.ToCommand()
-		if diff := cmp.Diff(expected, actual); diff != "" {
-			t.Errorf("subtest %s: unexpected diff: %s", name, diff)
-		}
-	}
-}
-
-func TestApplyFlagFilter(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		name            string
-		input           *CommandWithFlags
-		defaultDecision bool
-		overrideMap     map[string]bool
-		output          []string
-	}{
-		{
-			"no arguments",
-			&CommandWithFlags{},
-			false,
-			nil,
-			nil,
-		},
-		{
-			"no arguments (nil)",
-			nil,
-			false,
-			nil,
-			nil,
-		},
-		{
-			"full example",
-			&CommandWithFlags{
-				Commands: []string{"a", "b", "c"},
-				Flags: map[string][]string{
-					"d": {"e"},
-					"f": nil,
-					"g": {"h"},
-				},
-				PositionalArgs: []string{"i", "j", "k"},
-			},
-			false,
-			map[string]bool{
-				"f": true,
-			},
-			[]string{"a", "b", "c", "-f", "i", "j", "k"},
-		},
-		{
-			"exclude all flags",
-			&CommandWithFlags{
-				Commands: []string{"a", "b", "c"},
-				Flags: map[string][]string{
-					"d": {"e"},
-					"f": nil,
-					"g": {"h"},
-				},
-				PositionalArgs: []string{"i", "j", "k"},
-			},
-			false,
-			nil,
-			[]string{"a", "b", "c", "i", "j", "k"},
-		},
-		{
-			"include all flags",
-			&CommandWithFlags{
-				Commands: []string{"a", "b", "c"},
-				Flags: map[string][]string{
-					"d": {"e"},
-					"f": nil,
-					"g": {"h"},
-				},
-				PositionalArgs: []string{"i", "j", "k"},
-			},
-			true,
-			nil,
-			[]string{"a", "b", "c", "-d", "e", "-f", "-g", "h", "i", "j", "k"},
-		},
-		{
-			"exclude one flag",
-			&CommandWithFlags{
-				Commands: []string{"a"},
-				Flags: map[string][]string{
-					"d": {"e"},
-					"f": nil,
-					"g": {"h"},
-				},
-				PositionalArgs: []string{"i", "j", "k"},
-			},
-			true,
-			map[string]bool{
-				"d": true,
-				"g": false,
-			},
-			[]string{"a", "-d", "e", "-f", "i", "j", "k"},
-		},
-	}
-	for _, tt := range cases {
-		name := tt.name
-		expected := tt.output
-		actual := tt.input.ApplyFlagFilter(
-			tt.defaultDecision,
-			tt.overrideMap,
-		).ToCommand()
 		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("subtest %s: unexpected diff: %s", name, diff)
 		}
