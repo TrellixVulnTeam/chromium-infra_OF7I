@@ -38,9 +38,6 @@ func gerritChangeToURL(c *proto.GerritChange) (string, error) {
 	if c.Host == "" {
 		notFound = append(notFound, "host")
 	}
-	if c.Project == "" {
-		notFound = append(notFound, "project")
-	}
 	if c.Change == 0 {
 		notFound = append(notFound, "change")
 	}
@@ -49,9 +46,9 @@ func gerritChangeToURL(c *proto.GerritChange) (string, error) {
 	}
 	// Patchset is optional, in which case we'll omit it.
 	if c.Patchset == 0 {
-		return fmt.Sprintf("https://%s/c/%s/+/%d", c.Host, c.Project, c.Change), nil
+		return fmt.Sprintf("https://%s/c/%d", c.Host, c.Change), nil
 	}
-	return fmt.Sprintf("https://%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset), nil
+	return fmt.Sprintf("https://%s/c/%d/%d", c.Host, c.Change, c.Patchset), nil
 }
 
 // JobToValues turns a proto.JobSpec into a url.Values which can then be

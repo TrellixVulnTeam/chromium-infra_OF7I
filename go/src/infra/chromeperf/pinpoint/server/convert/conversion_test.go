@@ -386,7 +386,7 @@ func TestSimpleConversions(t *testing.T) {
 					"end_git_hash":   "f00dc0de",
 					// Here we're hard-coding the expected URL, as it's required by the legacy
 					// Pinpoint API.
-					"patch": "https://some-gerrit-host/c/some-project/+/12345/1"})
+					"patch": "https://some-gerrit-host/c/12345/1"})
 			})
 
 			Convey("We support Telemetry specifying story tags", func() {
@@ -433,7 +433,7 @@ func TestSimpleConversions(t *testing.T) {
 					"end_git_hash":   "f00dc0de",
 					// Here we're hard-coding the expected URL, as it's required by the legacy
 					// Pinpoint API.
-					"patch": "https://some-gerrit-host/c/some-project/+/12345/1"})
+					"patch": "https://some-gerrit-host/c/12345/1"})
 
 			})
 			Convey("We support GTest", func() {
@@ -473,7 +473,7 @@ func TestSimpleConversions(t *testing.T) {
 					"end_git_hash":   "f00dc0de",
 					// Here we're hard-coding the expected URL, as it's required by the legacy
 					// Pinpoint API.
-					"patch": "https://some-gerrit-host/c/some-project/+/12345/1"})
+					"patch": "https://some-gerrit-host/c/12345/1"})
 			})
 
 		})
@@ -523,7 +523,7 @@ func TestSimpleConversions(t *testing.T) {
 					"end_git_hash":   "f00dc0de",
 					// Here we're hard-coding the expected URL, as it's required by the legacy
 					// Pinpoint API.
-					"patch": "https://some-gerrit-host/c/some-project/+/12345/1"})
+					"patch": "https://some-gerrit-host/c/12345/1"})
 
 			})
 
@@ -572,7 +572,7 @@ func TestSimpleConversions(t *testing.T) {
 					"end_git_hash":   "f00dc0de",
 					// Here we're hard-coding the expected URL, as it's required by the legacy
 					// Pinpoint API.
-					"patch": "https://some-gerrit-host/c/some-project/+/12345/1"})
+					"patch": "https://some-gerrit-host/c/12345/1"})
 
 			})
 
@@ -725,7 +725,7 @@ func TestSimpleConversions(t *testing.T) {
 
 				So(v, shouldContainMap, map[string]interface{}{
 					"base_git_hash":    "c0dec0de",
-					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"experiment_patch": "https://some-gerrit-host/c/23456/1"})
 
 			})
 
@@ -792,7 +792,7 @@ func TestSimpleConversions(t *testing.T) {
 
 				So(v, shouldContainMap, map[string]interface{}{
 					"base_git_hash":    "c0dec0de",
-					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"experiment_patch": "https://some-gerrit-host/c/23456/1"})
 
 			})
 
@@ -837,7 +837,7 @@ func TestSimpleConversions(t *testing.T) {
 
 				So(v, shouldContainMap, map[string]interface{}{
 					"base_git_hash":    "c0dec0de",
-					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1",
+					"experiment_patch": "https://some-gerrit-host/c/23456/1",
 					"extra_test_args":  `["--browser","some-browser"]`,
 				})
 
@@ -886,7 +886,7 @@ func TestSimpleConversions(t *testing.T) {
 
 				So(v, shouldContainMap, map[string]interface{}{
 					"base_git_hash":    "c0dec0de",
-					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1",
+					"experiment_patch": "https://some-gerrit-host/c/23456/1",
 					"extra_test_args":  `["--browser","some-browser"]`,
 				})
 
@@ -923,7 +923,7 @@ func TestSimpleConversions(t *testing.T) {
 
 				So(v, shouldContainMap, map[string]interface{}{
 					"base_git_hash":    "c0dec0de",
-					"experiment_patch": "https://some-gerrit-host/c/some-gerrit-project/+/23456/1"})
+					"experiment_patch": "https://some-gerrit-host/c/23456/1"})
 			})
 
 		})
@@ -979,7 +979,7 @@ func TestGerritChangeToURL(t *testing.T) {
 			Convey("Then we see the patchset in the URL", func() {
 				u, err := gerritChangeToURL(c)
 				So(err, ShouldBeNil)
-				So(u, ShouldEqual, "https://host/c/project/+/123456/1")
+				So(u, ShouldEqual, "https://host/c/123456/1")
 			})
 		})
 		Convey("When the patset is not provided", func() {
@@ -987,7 +987,7 @@ func TestGerritChangeToURL(t *testing.T) {
 				u, err := gerritChangeToURL(c)
 				So(err, ShouldBeNil)
 				So(u, ShouldNotEndWith, "/1")
-				So(u, ShouldEqual, "https://host/c/project/+/123456")
+				So(u, ShouldEqual, "https://host/c/123456")
 			})
 		})
 	})
@@ -1005,14 +1005,6 @@ func TestGerritChangeToURL(t *testing.T) {
 				_, err := gerritChangeToURL(c)
 				So(err, ShouldBeError)
 				So(err.Error(), ShouldContainSubstring, "host")
-			})
-		})
-		Convey("When it is missing a project", func() {
-			c.Project = ""
-			Convey("Then conversion fails", func() {
-				_, err := gerritChangeToURL(c)
-				So(err, ShouldBeError)
-				So(err.Error(), ShouldContainSubstring, "project")
 			})
 		})
 		Convey("When it is missing a change", func() {
