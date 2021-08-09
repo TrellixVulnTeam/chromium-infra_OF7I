@@ -16,7 +16,7 @@ import (
 
 	"github.com/maruel/subcommands"
 	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
-	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
+	"go.chromium.org/chromiumos/config/go/longrunning"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"

@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"time"
 
-	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
+	"go.chromium.org/chromiumos/config/go/longrunning"
 	"go.chromium.org/luci/common/clock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
