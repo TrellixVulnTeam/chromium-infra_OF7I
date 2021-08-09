@@ -16,6 +16,7 @@ VENV support if things work well.
 """
 
 # [VPYTHON:BEGIN]
+# python_version: "3.8"
 # wheel: <
 #   name: "infra/python/wheels/docker-py2_py3"
 #   version: "version:5.0.0"

@@ -34,7 +34,7 @@ def main():
     return 1
 
   container_descriptors = []
-  for i in xrange(args.num_containers):
+  for i in range(args.num_containers):
     container_descriptors.append(containers.ContainerDescriptor('%03d' % i))
 
   main_helpers.launch_containers(docker_client, container_descriptors, args)
