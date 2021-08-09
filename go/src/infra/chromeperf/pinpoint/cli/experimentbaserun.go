@@ -86,19 +86,36 @@ func (c *clValue) String() string {
 	return fmt.Sprintf("%d/%d", c.clNum, c.patchSet)
 }
 
-var clRe = regexp.MustCompile(`^([1-9][\d]*)(/([1-9][\d]*))?$`)
+var (
+	CLPattern        = `([1-9][\d]*)(?:/([1-9][\d]*))?`
+	simpleURLPattern = fmt.Sprintf(
+		`^https://%s/c/%s$`,
+		defaultGerritHost,
+		CLPattern)
+	URLPattern = fmt.Sprintf(
+		`^https://%s/c/[^+]+/\+/%s$`,
+		defaultGerritHost,
+		CLPattern)
+	simpleURLRe = regexp.MustCompile(simpleURLPattern)
+	URLRe       = regexp.MustCompile(URLPattern)
+)
 
 func (c *clValue) Set(i string) error {
-	p := clRe.FindStringSubmatch(i)
+
+	p := URLRe.FindStringSubmatch(i)
 	if p == nil {
-		return fmt.Errorf("cl must match %s", clRe.String())
+		p = simpleURLRe.FindStringSubmatch(i)
 	}
+	if p == nil {
+		return fmt.Errorf("cl must match either %s or %s", simpleURLRe.String(), URLRe.String())
+	}
+
 	clNum, err := strconv.ParseInt(p[1], 10, 64)
 	if err != nil {
 		return fmt.Errorf("cl number must fit in 64 bits")
 	}
-	if len(p[3]) > 0 {
-		patchSet, err := strconv.ParseInt(p[3], 10, 64)
+	if len(p[2]) > 0 {
+		patchSet, err := strconv.ParseInt(p[2], 10, 64)
 		if err != nil {
 			return fmt.Errorf("patchset must fit in 64 bits")
 		}
@@ -130,22 +147,24 @@ func (e *experimentBaseRun) RegisterFlags(p Param) {
 		git commit hash (symbolic like HEAD, short-form, or long-form)
 		for the base build.
 	`))
-	e.Flags.Var(&e.baseCL, "base-cl", text.Doc(`
+	e.Flags.Var(&e.baseCL, "base-patch-url", text.Doc(`
 		Gerrit CL to apply to base-commit (optional).
-		This must be of the form <cl number>/<patchset number> or just <cl
-		number>. When <patchset number> is not provided, we'll use the latest
-		patchset of the CL.
+		The input must be a valid Gerrit URL such as
+		https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>/<patchset number>
+		or just https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>.
+		When <patchset number> is not provided, we'll use the latest patchset of the CL.
 	`))
 	e.Flags.StringVar(&e.expCommit, "exp-commit", "HEAD", text.Doc(`
 		git commit hash (symbolic like HEAD, short-form, or long-form)
 		for the experiment build. This may be different from -base-commit
 		and defaults to what -base-commit is set to.
 	`))
-	e.Flags.Var(&e.expCL, "exp-cl", text.Doc(`
+	e.Flags.Var(&e.expCL, "exp-patch-url", text.Doc(`
 		Gerrit CL to apply to exp-commit.
-		This must be of the form <cl number>/<patchset number> or just <cl
-		number>. When <patchset number> is not provided, we'll use the latest
-		patchset of the CL.
+                The input must be a valid Gerrit URL such as
+                https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>/<patchset number>
+                or just https://chromium-review.googlesource.com/c/<repo name>/+/<cl number>.
+                When <patchset number> is not provided, we'll use the latest patchset of the CL.
 	`))
 
 	// We drop the error because we don't want to spam the user if they are

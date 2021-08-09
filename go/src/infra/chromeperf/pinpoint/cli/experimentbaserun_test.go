@@ -29,37 +29,60 @@ func TestCLFlagParsing(t *testing.T) {
 		fs := flag.NewFlagSet("cl-flag-parsing", flag.PanicOnError)
 		clFlag := clValue{}
 		fs.Var(&clFlag, "cl", "a gerrit CL")
-		So(fs.Parse([]string{"-cl", "1234/12"}), ShouldBeNil)
-		So(clFlag.clNum, ShouldEqual, 1234)
-		So(clFlag.patchSet, ShouldEqual, 12)
+		Convey("/c/<repo>/+/<CL>", func() {
+			s := "https://chromium-review.googlesource.com/c/d/d/+/1234"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 0)
+		})
+		Convey("/c/<repo>/+/<CL>/<patch>", func() {
+			s := "https://chromium-review.googlesource.com/c/d/d/+/1234/12"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 12)
+		})
+		Convey("/c/<repo>/+/<CL>/<patch> short repo", func() {
+			s := "https://chromium-review.googlesource.com/c/d/+/1234/12"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 12)
+		})
+		Convey("/c/<CL>", func() {
+			s := "https://chromium-review.googlesource.com/c/1234"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 0)
+		})
+		Convey("/c/<CL>/<patch>", func() {
+			s := "https://chromium-review.googlesource.com/c/1234/12"
+			So(fs.Parse([]string{"-cl", s}), ShouldBeNil)
+			So(clFlag.clNum, ShouldEqual, 1234)
+			So(clFlag.patchSet, ShouldEqual, 12)
+		})
 	})
 	Convey("When provided some invalid cases", t, func() {
 		fs := flag.NewFlagSet("cl-error-flag-parsing", flag.ContinueOnError)
 		clFlag := clValue{}
 		fs.Var(&clFlag, "cl", "a gerrit CL")
-		Convey("CL/0", func() {
-			err := fs.Parse([]string{"-cl", "1234/0"})
-			So(err, ShouldNotBeNil)
+		Convey("<CL>/<patch> without host", func() {
+			s := "1234/12"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
-		Convey("CL/01", func() {
-			err := fs.Parse([]string{"-cl", "1234/01"})
-			So(err, ShouldNotBeNil)
+		Convey("/c/<repo>/+/", func() {
+			s := "https://chromium-review.googlesource.com/c/d/d/+"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
-		Convey("CL/", func() {
-			err := fs.Parse([]string{"-cl", "1234/"})
-			So(err, ShouldNotBeNil)
+		Convey("/c/<repo>/+/0/<patch>", func() {
+			s := "https://chromium-review.googlesource.com/c/d/d/+/0/01"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
-		Convey("0/0", func() {
-			err := fs.Parse([]string{"-cl", "0/0"})
-			So(err, ShouldNotBeNil)
+		Convey("/c/<repo>/+/<CL>/", func() {
+			s := "https://chromium-review.googlesource.com/c/d/d/+/1234/"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
-		Convey("0/", func() {
-			err := fs.Parse([]string{"-cl", "0/"})
-			So(err, ShouldNotBeNil)
-		})
-		Convey("0", func() {
-			err := fs.Parse([]string{"-cl", "0"})
-			So(err, ShouldNotBeNil)
+		Convey("/c/+/<CL>", func() {
+			s := "https://chromium-review.googlesource.com/c/+/1234"
+			So(fs.Parse([]string{"-cl", s}), ShouldNotBeNil)
 		})
 	})
 }
