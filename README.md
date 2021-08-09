@@ -1,6 +1,5 @@
 # infra.git repository
 
-Testing
 Welcome to the Chrome Infra repository!
 
 Wondering where to start? Check out [General Chrome Infrastructure
