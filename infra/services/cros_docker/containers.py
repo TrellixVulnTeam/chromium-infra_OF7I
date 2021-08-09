@@ -59,7 +59,7 @@ class CrosDockerClient(containers.DockerClient):
     # Due to a bug, Docker is unable to create new loop devices in /dev/ within
     # a container. So mount the host's /dev/ within each container as a
     # workaround. See https://github.com/moby/moby/issues/27886 for more info.
-    self.volumes['/dev/'] = '/dev/'
+    self.volumes['/dev/'] = {'bind': '/dev/', 'mode': 'rw'}
 
   def create_container(self, container_desc, image_name, swarming_url, labels,
                        additional_env=None):
