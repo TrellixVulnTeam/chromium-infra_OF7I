@@ -1395,6 +1395,7 @@ class ServeCodeCoverageData(BaseHandler):
     test_suite_type = self.request.get('test_suite_type', 'any')
     reference_mode = self.request.get('reference_mode',
                                       'False').lower() == 'true'
+    modifier_id = int(self.request.get('modifier_id', '0'))
 
     logging.info('host=%s', host)
     logging.info('project=%s', project)
@@ -1404,6 +1405,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('platform=%s', platform)
     logging.info('test_suite_type=%s' % test_suite_type)
     logging.info('reference_mode=%s' % str(reference_mode))
+    logging.info('modifier_id=%d' % modifier_id)
 
     configs = _GetAllowedGitilesConfigs()
     if ref not in configs.get(host, {}).get(project, []):
@@ -1479,7 +1481,8 @@ class ServeCodeCoverageData(BaseHandler):
           revision=revision,
           path=path,
           bucket=bucket,
-          builder=builder)
+          builder=builder,
+          modifier_id=modifier_id)
       if not entity:
         warning = (
             'File "%s" does not exist in this report, defaulting to root' %

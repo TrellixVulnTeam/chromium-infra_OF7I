@@ -159,7 +159,7 @@ def _CreateSampleRootComponentCoverageData(builder='linux-code-coverage'):
       })
 
 
-def _CreateSampleFileCoverageData(builder='linux-code-coverage'):
+def _CreateSampleFileCoverageData(builder='linux-code-coverage', modifier_id=0):
   """Returns a sample FileCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -172,6 +172,7 @@ def _CreateSampleFileCoverageData(builder='linux-code-coverage'):
       path='//dir/test.cc',
       bucket='coverage',
       builder=builder,
+      modifier_id=modifier_id,
       data={
           'path': '//dir/test.cc',
           'revision': 'bbbbb',
@@ -1407,6 +1408,33 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s') % (
                        host, project, ref, revision, path, platform)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+    mock_get_file_from_gs.assert_called_with(
+        '/source-files-for-coverage/chromium.googlesource.com/chromium/'
+        'src.git/dir/test.cc/bbbbb')
+
+  @mock.patch.object(code_coverage, '_GetFileContentFromGs')
+  def testServeFullRepoFileView_WithModifier(self, mock_get_file_from_gs):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+    mock_get_file_from_gs.return_value = 'line one/nline two'
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = 'aaaaa'
+    path = '//dir/test.cc'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport()
+    report.put()
+
+    file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)
+    file_coverage_data.put()
+
+    request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
+                   '&revision=%s&path=%s&platform=%s&modifier_id=%d') % (
+                       host, project, ref, revision, path, platform, 123)
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
     mock_get_file_from_gs.assert_called_with(
