@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import React from 'react';
-import {createTheme, useTheme} from '@material-ui/core/styles';
+import {createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import MobileStepper from '@material-ui/core/MobileStepper';
 import Button from '@material-ui/core/Button';
@@ -28,7 +28,6 @@ const useStyles = makeStyles({
  */
 export default function DotsMobileStepper(): React.ReactElement {
   const classes = useStyles();
-  const theme = useTheme();
   const [activeStep, setActiveStep] = React.useState(0);
 
   const handleNext = () => {
