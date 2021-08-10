@@ -88,23 +88,31 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 		return err
 	}
 
-	bcs := botcache.Store{
-		CacheDir: request.Config.AutotestDir,
-		Name:     request.DutName,
-	}
-	s, err := bcs.Load()
-	if err != nil {
-		return err
-	}
+	// Ensure save applies to all DUTs in a multi-DUTs task.
+	targets := append(request.PeerDuts, request.DutName)
 
-	i, err := getHostInfo(request.ResultsDir, request.DutName)
-	if err != nil {
-		return err
-	}
-	s = updateDutStateFromHostInfo(s, i)
+	ctx := cli.GetContext(a, c, env)
 
-	if err := bcs.Save(s); err != nil {
-		return err
+	for _, hostname := range targets {
+		bcs := botcache.Store{
+			CacheDir: request.Config.AutotestDir,
+			Name:     hostname,
+		}
+		s, err := bcs.Load()
+		if err != nil {
+			return err
+		}
+		i, err := getHostInfo(request.ResultsDir, hostname)
+		if err != nil {
+			return err
+		}
+		s = updateDutStateFromHostInfo(s, i)
+		if err := bcs.Save(s); err != nil {
+			return err
+		}
+
+		// Update the DUT state in UFS (if the current state is safe to update).
+		ufs.SafeUpdateUFSDUTState(ctx, &c.authFlags, hostname, request.DutState, request.Config.CrosUfsService)
 	}
 
 	if request.GetSealResultsDir() {
@@ -113,9 +121,6 @@ func (c *saveRun) innerRun(a subcommands.Application, env subcommands.Env) error
 		}
 	}
 
-	// Update the DUT state in UFS (if the current state is safe to update).
-	ctx := cli.GetContext(a, c, env)
-	ufs.SafeUpdateUFSDUTState(ctx, &c.authFlags, request.DutName, request.DutState, request.Config.CrosUfsService)
 	return nil
 }
 
@@ -159,7 +164,7 @@ func getHostInfo(resultsDir string, dutName string) (*skylab_local_state.Autotes
 	i := skylab_local_state.AutotestHostInfo{}
 
 	if err := readJSONPb(p, &i); err != nil {
-		return nil, errors.Annotate(err, "get host info").Err()
+		return nil, errors.Annotate(err, "get host info for %s", dutName).Err()
 	}
 
 	return &i, nil

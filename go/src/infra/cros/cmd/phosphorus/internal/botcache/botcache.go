@@ -30,8 +30,14 @@ type Store struct {
 // Load reads the contents of the bot cache.
 func (s *Store) Load() (*lab_platform.DutState, error) {
 	ds := lab_platform.DutState{}
+	if _, err := os.Stat(s.path()); os.IsNotExist(err) {
+		// DUTs managed by a scheduling unit may not have their local state
+		// file created until first test/admin task run, so we can just return
+		// an empty DutState here.
+		return &ds, nil
+	}
 	if err := readJSONPb(s.path(), &ds); err != nil {
-		return nil, errors.Annotate(err, "load botcache").Err()
+		return nil, errors.Annotate(err, "load botcache for %s", s.Name).Err()
 	}
 	return &ds, nil
 }
@@ -39,7 +45,7 @@ func (s *Store) Load() (*lab_platform.DutState, error) {
 // Save overwrites the contents of the bot cache with provided DutState.
 func (s *Store) Save(ds *lab_platform.DutState) error {
 	if err := writeJSONPb(s.path(), ds); err != nil {
-		return errors.Annotate(err, "save botcache").Err()
+		return errors.Annotate(err, "save botcache for %s", s.Name).Err()
 	}
 	return nil
 }
