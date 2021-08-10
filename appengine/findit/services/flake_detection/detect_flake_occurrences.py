@@ -292,7 +292,8 @@ def _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
     flake.last_test_location_based_tag_update_time = time_util.GetUTCNow()
     updated = True
 
-  elif flake.normalized_step_name == 'telemetry_gpu_integration_test':
+  elif flake.normalized_step_name and flake.normalized_step_name.startswith(
+      'telemetry_gpu_integration_test'):
     components = []
     for occurrence in occurrences:
       components.extend(

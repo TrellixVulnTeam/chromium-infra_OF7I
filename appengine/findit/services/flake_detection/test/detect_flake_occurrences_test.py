@@ -336,7 +336,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
   def testUpdateTestLocationAndTagsGPUTest(self, *_):
     flake = Flake(
         normalized_test_name='suite.test',
-        normalized_step_name='telemetry_gpu_integration_test',
+        normalized_step_name='telemetry_gpu_integration_test_android_chrome',
         tags=['gerrit_project::chromium/src'],
     )
     occurrences = [
