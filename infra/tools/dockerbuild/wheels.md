@@ -2629,6 +2629,22 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+### 1.39.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpcio/${vpython_platform}"
+  version: "version:1.39.0"
+>
+```
+
+
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ### 1.4.0
 
 ```protobuf
@@ -2677,6 +2693,7 @@ wheel: <
 ```
 
 
+* *mac-arm64-cp38*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *windows-x64-py3*
@@ -3696,6 +3713,19 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+### 1.21.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/numpy/${vpython_platform}"
+  version: "version:1.21.1"
+>
+```
+
+
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+
 ## **oauth2client**
 
 ### 3.0.0
@@ -3813,6 +3843,18 @@ wheel: <
 * *manylinux-x64*
 * *windows-x64*
 * *windows-x86*
+
+### 4.5.3.56
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/opencv_python/${vpython_platform}"
+  version: "version:4.5.3.56"
+>
+```
+
+
+* *mac-arm64-cp38*
 
 ## **opt-einsum-py3**
 
@@ -4801,12 +4843,12 @@ wheel: <
 
 ## **pylint-py2**
 
-### 1.5.6-551505593fa0d9c5372b79c95e3dfe9a
+### 1.5.6-54804455f2f2c7725985ed423989f768
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pylint-py2"
-  version: "version:1.5.6-551505593fa0d9c5372b79c95e3dfe9a"
+  version: "version:1.5.6-54804455f2f2c7725985ed423989f768"
 >
 ```
 

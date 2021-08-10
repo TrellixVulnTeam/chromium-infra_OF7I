@@ -330,6 +330,14 @@ SPECS.update({
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
+            'grpcio',
+            '1.39.0',
+            skip_plat=[
+                'manylinux-x64-py3.9',
+                'linux-arm64-py3',
+            ],
+            pyversions=['py3']),
+        SourceOrPrebuilt(
             'grpcio-tools',
             '1.32.0',
             skip_plat=[
@@ -344,7 +352,6 @@ SPECS.update({
             skip_plat=[
                 'manylinux-x64-py3.9',
                 'linux-arm64-py3',
-                'mac-arm64-cp38',
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
@@ -441,7 +448,7 @@ SPECS.update({
             'numpy',
             '1.21.1',
             packaged=[
-              'mac-arm64-cp38',
+                'mac-arm64-cp38',
             ],
             arch_map={'mac-arm64-cp38': _NUMPY_MAC_ARM},
             only_plat=[
