@@ -103,18 +103,22 @@ def GenTests(api):
   ACTION_ADD_STARTNET = wib.Action(
       add_file=wib.AddFile(
           name='add_startnet_file',
-          local_src='cipd_startnet_path>',
+          src=wib.Src(
+              local_src='cipd_startnet_path>',
+          ),
           dst='C:\\Windows\\System32\\startnet.cmd',
       ))
 
   ACTION_ADD_DOT3SVC = wib.Action(
       add_file=wib.AddFile(
           name='add winpe-dot3svc',
-          cipd_src=wib.CIPDSrc(
+          src = wib.Src(
+              cipd_src=wib.CIPDSrc(
               package='infra_internal/labs/drivers/' +
               'microsoft/windows_adk/winpe/' + 'winpe-dot3svc',
               refs='latest',
               platform='windows-amd64',
+              ),
           ),
           dst='Windows\\System32\\',
       ))

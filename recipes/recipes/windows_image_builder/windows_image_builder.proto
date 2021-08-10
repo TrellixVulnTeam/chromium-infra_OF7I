@@ -46,7 +46,9 @@ message OfflineAction {
 
 message Action {
   oneof action{
+    // Adds the given file to the image
     AddFile add_file = 1;
+    // Installs a given file on the device
     InstallFile install_file = 2;
     EditOfflineRegistry edit_offline_registry = 3;
   }
@@ -56,14 +58,11 @@ message AddFile {
   // The AddFile action's name, e.g. add_startnet
   string name = 1;
 
+  // Src of the file to add
+  Src src = 2;
+
   // relative to root of mounted image, e.g. Windows\System32\startnet.cmd
   string dst = 3;
-
-  // Full path on host to File or folder of files, e.g. C:\\win10\Startnet.cmd
-  oneof src {
-    string local_src = 2;
-    CIPDSrc cipd_src = 4;
-  }
 }
 
 message InstallFile {
@@ -74,10 +73,7 @@ message InstallFile {
   // Args for the install command
   repeated string args = 3;
   // Src of the install file
-  oneof src {
-    string local_src = 4;
-    CIPDSrc cipd_src = 5;
-  }
+  Src src = 4;
 }
 
 
@@ -120,6 +116,17 @@ enum Arch {
   ARCH_ARM64 = 3;
 }
 
+message Src {
+  oneof src {
+    // local_src refers to the local file on the bot
+    string local_src = 1 [deprecated=true];
+    // CIPD src refers to a cipd instance
+    CIPDSrc cipd_src = 2;
+    // git src refers to a file in a git repo
+    GITSrc git_src = 3;
+  }
+}
+
 // Ref to cipd file to be used as a source
 message CIPDSrc {
   // Name/Path of the cipd package
@@ -128,4 +135,14 @@ message CIPDSrc {
   string refs = 2;
   // Platform support for the package
   string platform = 3;
+}
+
+// Ref to git file to be used as source
+message GITSrc {
+  // Name of the GIT repo to pull from
+  string repo = 1;
+  // refs/commit to pull
+  string ref = 2;
+  // The file we need in the repo
+  string src = 3;
 }

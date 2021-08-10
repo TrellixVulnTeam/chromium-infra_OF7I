@@ -87,12 +87,12 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     src = ''
     #TODO(anushruth): Replace cipd_src with local_src for all actions
     # after downloading the files.
-    if f.WhichOneof('src') == 'cipd_src':
-      res = self.cipd_ensure(f.cipd_src.package, f.cipd_src.refs,
-                             f.cipd_src.platform)
+    if f.src.WhichOneof('src') == 'cipd_src':
+      res = self.cipd_ensure(f.src.cipd_src.package, f.src.cipd_src.refs,
+                             f.src.cipd_src.platform)
       src = res['path']
-    elif f.WhichOneof('src') == 'local_src':
-      src = f.local_src
+    elif f.src.WhichOneof('src') == 'local_src':
+      src = f.src.local_src
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', f.dst))
