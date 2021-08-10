@@ -293,20 +293,34 @@ class FileCoverageData(ndb.Model):
   # https://chromium.googlesource.com/infra/infra/+/refs/heads/main/appengine/findit/model/proto/code_coverage.proto
   data = ndb.JsonProperty(indexed=False, compressed=True, required=True)
 
-  @classmethod
-  def _CreateKey(cls, server_host, project, ref, revision, path, bucket,
-                 builder):
-    return ndb.Key(
-        cls, '%s$%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
-                                       path, bucket, builder))
+  # TODO(crbug.com/1237114): Mark as required once data are backfilled.
+  # Id of the associated coverage report modifier, 0 otherwise
+  # For e.g. FileCoverageData corresponding to default PostSubmitReport would
+  # have modifier_id as 0.
+  modifier_id = ndb.IntegerProperty(indexed=True, required=False)
 
   @classmethod
-  def Create(cls, server_host, project, ref, revision, path, bucket, builder,
-             data):
+  def _CreateKey(cls, server_host, project, ref, revision, path, bucket,
+                 builder, modifier_id):
+    return ndb.Key(
+        cls, '%s$%s$%s$%s$%s$%s$%s$%d' % (server_host, project, ref, revision,
+                                          path, bucket, builder, modifier_id))
+
+  @classmethod
+  def Create(cls,
+             server_host,
+             project,
+             ref,
+             revision,
+             path,
+             bucket,
+             builder,
+             data,
+             modifier_id=0):
     assert path.startswith('//'), 'File path must start with "//"'
 
     key = cls._CreateKey(server_host, project, ref, revision, path, bucket,
-                         builder)
+                         builder, modifier_id)
     gitiles_commit = GitilesCommit(
         server_host=server_host, project=project, ref=ref, revision=revision)
     return cls(
@@ -315,19 +329,35 @@ class FileCoverageData(ndb.Model):
         path=path,
         bucket=bucket,
         builder=builder,
+        modifier_id=modifier_id,
         data=data)
 
   @classmethod
-  def Get(cls, server_host, project, ref, revision, path, bucket, builder):
-    entity = cls._CreateKey(server_host, project, ref, revision, path, bucket,
-                            builder).get()
-    if entity:
-      return entity
+  def Get(cls,
+          server_host,
+          project,
+          ref,
+          revision,
+          path,
+          bucket,
+          builder,
+          modifier_id=0):
+    entity_v3 = cls._CreateKey(server_host, project, ref, revision, path,
+                               bucket, builder, modifier_id).get()
+    if entity_v3:
+      return entity_v3
+
+    # TODO(crbug.com/1237114): Remove following code once data are backfilled.
+    entity_v2 = ndb.Key(
+        cls, '%s$%s$%s$%s$%s$%s$%s' %
+        (server_host, project, ref, revision, path, bucket, builder)).get()
+    if entity_v2:
+      return entity_v2
 
     # TODO(crbug.com/939443): Remove following code once data are backfilled.
-    legacy_key = ndb.Key(
+    legacy_key_v1 = ndb.Key(
         cls, '%s$%s$%s$%s$%s' % (server_host, project, ref, revision, path))
-    return legacy_key.get()
+    return legacy_key_v1.get()
 
 
 class SummaryCoverageData(ndb.Model):

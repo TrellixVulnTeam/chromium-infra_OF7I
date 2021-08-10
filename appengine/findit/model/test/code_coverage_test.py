@@ -20,7 +20,7 @@ class CodeCoverageTest(WaterfallTestCase):
   def testCreateAndGetPostsubmitReport(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = '99999'
     bucket = 'coverage'
     builder = 'linux-code-coverage'
@@ -69,7 +69,7 @@ class CodeCoverageTest(WaterfallTestCase):
 
     # Test key.
     self.assertEqual(
-        'chromium.googlesource.com$chromium/src$refs/heads/master$99999$'
+        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
         'coverage$linux-code-coverage', report.key.id())
 
     # Test Create.
@@ -163,11 +163,12 @@ class CodeCoverageTest(WaterfallTestCase):
   def testCreateAndGetFileCoverageData(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = '99999'
     path = '//dir/test.cc'
     bucket = 'coverage'
     builder = 'linux-code-coverage'
+    modifier_id = 123
     data = {
         'path': '//dir/test.cc',
         'lines': [{
@@ -187,13 +188,14 @@ class CodeCoverageTest(WaterfallTestCase):
         path=path,
         bucket=bucket,
         builder=builder,
+        modifier_id=modifier_id,
         data=data)
     file_coverage_data.put()
 
     # Test key.
     self.assertEqual(
-        ('chromium.googlesource.com$chromium/src$refs/heads/master$99999$'
-         '//dir/test.cc$coverage$linux-code-coverage'),
+        ('chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
+         '//dir/test.cc$coverage$linux-code-coverage$123'),
         file_coverage_data.key.id())
 
     # Test Create.
@@ -211,12 +213,13 @@ class CodeCoverageTest(WaterfallTestCase):
             revision=revision,
             path=path,
             bucket=bucket,
-            builder=builder))
+            builder=builder,
+            modifier_id=modifier_id))
 
   def testAndCreateAndGetDirectoryCoverageData(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = '99999'
     data_type = 'dirs'
     path = '//dir/'
@@ -256,7 +259,7 @@ class CodeCoverageTest(WaterfallTestCase):
 
     # Test key.
     self.assertEqual(
-        'chromium.googlesource.com$chromium/src$refs/heads/master$99999$'
+        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
         'dirs$//dir/$coverage$linux-code-coverage', dir_coverage_data.key.id())
 
     # Test Create.
@@ -280,7 +283,7 @@ class CodeCoverageTest(WaterfallTestCase):
   def testAndCreateAndGetComponentCoverageData(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
-    ref = 'refs/heads/master'
+    ref = 'refs/heads/main'
     revision = '99999'
     data_type = 'components'
     path = 'Test>Component'
@@ -320,7 +323,7 @@ class CodeCoverageTest(WaterfallTestCase):
 
     # Test key.
     self.assertEqual(
-        'chromium.googlesource.com$chromium/src$refs/heads/master$99999$'
+        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
         'components$Test>Component$coverage$linux-code-coverage',
         component_coverage_data.key.id())
 

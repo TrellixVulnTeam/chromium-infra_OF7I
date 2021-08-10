@@ -43,6 +43,108 @@ def _CreateMockMergedChange(commit, parent_commit, filepath):
 
 class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
+  # This test tests whether modified coverage entities get created in datastore,
+  # with coverage data compressed in the right format. The subsequent tests do
+  # not test this scenario and only test the export to bigquery.
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={'linux-code-coverage': ['.cc']})
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testParityBetweenBqAndDatastoreExport(self, mock_merged_changes,
+                                            mock_file_content,
+                                            mocked_report_rows, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    postsubmit_report = PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='rev',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True)
+    postsubmit_report.put()
+    file_coverage_data = FileCoverageData.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='rev',
+        path='//myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        data={'lines': [{
+            'count': 10,
+            'first': 1,
+            'last': 5
+        }]})
+    file_coverage_data.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
+    ]
+    content_at_parent_commit = 'line3'
+    content_at_feature_commit = 'line1\nline2\nline3\nline4\nline5'
+    latest_content = 'line1\nline2\nline3\nline4\nline5'
+    mock_file_content.side_effect = [
+        latest_content, content_at_feature_commit, content_at_parent_commit
+    ]
+
+    feature_coverage.ExportFeatureCoverage()
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
+    expected_bq_rows = [{
+        'project': 'chromium/src',
+        'revision': 'rev',
+        'builder': 'linux-code-coverage',
+        'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
+        'path': 'myfile.cc',
+        'total_lines':
+            4,  # Four interesting lines are instrumented(line1-2, line4-5)
+        'covered_lines':
+            4,  # Two interesting lines are covered(line1-2, line4-5)
+        'commit_timestamp': '2020-01-07T00:00:00',
+        'insert_timestamp': '2020-09-21T00:00:00',
+    }]
+    mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
+                                          'code_coverage_summaries',
+                                          'feature_coverage')
+    entity = FileCoverageData.Get(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='rev',
+        path='//myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        modifier_id=123)
+    self.assertEqual(
+        entity.data, {
+            'path': '//myfile.cc',
+            'lines': [{
+                'first': 1,
+                'last': 2,
+                'count': 10
+            }, {
+                'first': 4,
+                'last': 5,
+                'count': 10
+            }],
+            'summaries': [{
+                'name': 'line',
+                'total': 4,
+                'covered': 4
+            }]
+        })
+
   # This test tests the case where feature commits adds a new file and the file
   # has not changed after that.
   @mock.patch.object(
@@ -57,7 +159,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testSingleCommit_AddsNewFile_FileStaysIntact(self, mock_merged_changes,
                                                    mock_file_content,
                                                    mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -116,6 +218,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'revision': 'rev',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines':
             2,  # Two interesting lines are instrumented(line2, line3)
@@ -140,7 +243,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_FileStaysIntact(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -187,6 +290,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'revision': 'rev',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
         'covered_lines': 1,  # One interesting line is covered(line2)
@@ -211,7 +315,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_FileGetsModfiedOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -257,6 +361,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'revision': 'rev',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
         'covered_lines': 1,  # One interesting line is covered(line2)
@@ -325,7 +430,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testMultipleCommits_ModifiesExistingFile_SecondCommitPartiallyOverlaps(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -375,6 +480,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'revision': 'rev',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 2,  # Two interesting lines are instrumented
         # (line2 and line3 modified)
@@ -485,7 +591,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testMissinCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
                                                   mock_file_content,
                                                   mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -518,6 +624,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'revision': 'rev',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': None,
         'covered_lines': None,

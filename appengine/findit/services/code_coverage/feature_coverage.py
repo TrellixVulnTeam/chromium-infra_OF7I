@@ -140,15 +140,9 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
     interesting lines.
 
   Returns:
-    A tuple of dict and a set. The dict has filepath as key and value with
-    structure
-      {
-        'total': T,
-        'covered': C
-      }
-    where T = total number of interesting lines and C = number of interesting
-      lines with non zero coverage count.
-
+    A tuple of dict and a set. The dict has filepath as key and value
+    representing File proto at https://bit.ly/3yry0KR, which contains line
+    coverage metric limited to only interesting lines.
     The set contains file names for which no coverage was found.
   """
   coverage_per_file = {}
@@ -165,24 +159,84 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
       continue
     total = 0
     covered = 0
+    # add a dummy range to simplify logic
+    interesting_line_ranges = [{'first': -1, 'last': -1}]
     for line_range in file_coverage.data['lines']:
       for line_num in range(line_range['first'], line_range['last'] + 1):
         if line_num in interesting_lines_per_file[file_path]:
           total += 1
+          if line_num == interesting_line_ranges[-1]['last'] + 1:
+            interesting_line_ranges[-1]['last'] += 1
+          else:
+            # Line range gets broken by an uninteresting line
+            interesting_line_ranges.append({
+                'first': line_num,
+                'last': line_num,
+                'count': line_range['count']
+            })
           if line_range['count'] != 0:
             covered += 1
-    coverage_per_file[file_path] = {'total': total, 'covered': covered}
+    coverage_per_file[file_path] = {
+        'path': file_path,
+        'lines': interesting_line_ranges[1:],
+        'summaries': [{
+            'name': 'line',
+            'total': total,
+            'covered': covered
+        }]
+    }
   return coverage_per_file, files_with_missing_coverage
 
 
-def _CreateBigqueryRows(postsubmit_report, hashtag, coverage_per_file,
+def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report, feature):
+  """Creates file coverage entities corresponding to a modifier.
+  
+  Args:
+    coverage_per_file (dict): The dict has filepath as key and value
+          representing File proto at https://bit.ly/3yry0KR.
+    postsubmit_report (PostsubmitReport): Full codebase coverage report from
+          which modified reports are derived.
+    feature (dict): Map containing feature hashtag and 
+                      corresponding CoverageReportModifier id.
+  """
+
+  def FlushEntities(entries, total, last=False):
+    # Flush the data in a batch and release memory.
+    if len(entries) < 100 and not (last and entries):
+      return entries, total
+    ndb.put_multi(entries)
+    total += len(entries)
+    logging.info('Dumped %d coverage data entries for feature %s', total,
+                 feature['gerrit_hashtag'])
+    return [], total
+
+  entities = []
+  total = 0
+  for file_path in coverage_per_file:
+    entities.append(
+        FileCoverageData.Create(
+            server_host=postsubmit_report.gitiles_commit.server_host,
+            project=postsubmit_report.gitiles_commit.project,
+            ref=postsubmit_report.gitiles_commit.ref,
+            revision=postsubmit_report.gitiles_commit.revision,
+            path=file_path,
+            bucket=postsubmit_report.bucket,
+            builder=postsubmit_report.builder,
+            data=coverage_per_file[file_path],
+            modifier_id=feature['modifier_id']))
+    entities, total = FlushEntities(entities, total, last=False)
+  FlushEntities(entities, total, last=True)
+
+
+def _CreateBigqueryRows(postsubmit_report, feature, coverage_per_file,
                         files_with_missing_coverage):
   """Create bigquery rows for files modified as part of a feature.
 
   Args:
     postsubmit_report (PostsubmitReport): Full codebase report object containing
       metadata corresponding to the report e.g. builder, revision etc.
-      hashtag (string): Unique gerrit hashtag corresponding to the feature.
+      feature (dict): Map containing feature hashtag and 
+                      corresponding CoverageReportModifier id.
       coverage_per_file (dict): Mapping from file_path to the coverage data
                               corresponding to interesting lines in the file.
       files_with_missing_coverage(set): A set of files for which coverage info
@@ -195,22 +249,34 @@ def _CreateBigqueryRows(postsubmit_report, hashtag, coverage_per_file,
   bq_rows = []
   for file_path in coverage_per_file.keys():
     bq_rows.append({
-        'project': postsubmit_report.gitiles_commit.project,
-        'revision': postsubmit_report.gitiles_commit.revision,
-        'builder': postsubmit_report.builder,
-        'gerrit_hashtag': hashtag,
-        'path': file_path[2:],
-        'total_lines': coverage_per_file[file_path]['total'],
-        'covered_lines': coverage_per_file[file_path]['covered'],
-        'commit_timestamp': postsubmit_report.commit_timestamp.isoformat(),
-        'insert_timestamp': time_util.GetUTCNow().isoformat()
+        'project':
+            postsubmit_report.gitiles_commit.project,
+        'revision':
+            postsubmit_report.gitiles_commit.revision,
+        'builder':
+            postsubmit_report.builder,
+        'gerrit_hashtag':
+            feature['gerrit_hashtag'],
+        'modifier_id':
+            feature['modifier_id'],
+        'path':
+            file_path[2:],
+        'total_lines':
+            coverage_per_file[file_path]['summaries'][0]['total'],
+        'covered_lines':
+            coverage_per_file[file_path]['summaries'][0]['covered'],
+        'commit_timestamp':
+            postsubmit_report.commit_timestamp.isoformat(),
+        'insert_timestamp':
+            time_util.GetUTCNow().isoformat()
     })
   for file_path in files_with_missing_coverage:
     bq_rows.append({
         'project': postsubmit_report.gitiles_commit.project,
         'revision': postsubmit_report.gitiles_commit.revision,
         'builder': postsubmit_report.builder,
-        'gerrit_hashtag': hashtag,
+        'gerrit_hashtag': feature['gerrit_hashtag'],
+        'modifier_id': feature['modifier_id'],
         'path': file_path[2:],
         'total_lines': None,
         'covered_lines': None,
@@ -220,14 +286,19 @@ def _CreateBigqueryRows(postsubmit_report, hashtag, coverage_per_file,
   return bq_rows
 
 
-def _GetWatchedFeatureHashtags():
+def _GetActiveFeatureModifers():
   """Return a list of hashtags for which coverage is to be generated."""
   query = CoverageReportModifier.query(
       CoverageReportModifier.server_host == _CHROMIUM_SERVER_HOST,
       CoverageReportModifier.project == _CHROMIUM_PROJECT,
       CoverageReportModifier.is_active == True)
-  hashtags = [x.gerrit_hashtag for x in query.fetch()]
-  return hashtags
+  features = []
+  for x in query.fetch():
+    features.append({
+        'gerrit_hashtag': x.gerrit_hashtag,
+        'modifier_id': x.key.id()
+    })
+  return features
 
 
 def _GetFileContentAtCommit(file_path, revision):
@@ -256,9 +327,9 @@ def _ExportFeatureCoverage(postsubmit_report):
   """
   files_deleted_at_latest = set()
 
-  for hashtag in _GetWatchedFeatureHashtags():
+  for feature in _GetActiveFeatureModifers():
     interesting_lines_per_file = {}
-    commits = _GetFeatureCommits(hashtag)
+    commits = _GetFeatureCommits(feature['gerrit_hashtag'])
     for commit in commits:
       for file_path in commit['files']:
         if not any([
@@ -290,13 +361,15 @@ def _ExportFeatureCoverage(postsubmit_report):
 
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
         postsubmit_report, interesting_lines_per_file)
-    bq_rows = _CreateBigqueryRows(postsubmit_report, hashtag, coverage_per_file,
+    _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report, feature)
+    bq_rows = _CreateBigqueryRows(postsubmit_report, feature, coverage_per_file,
                                   files_with_missing_coverage)
     if bq_rows:
       bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
                                            'code_coverage_summaries',
                                            'feature_coverage')
-      logging.info('Rows added for feature %s = %d', hashtag, len(bq_rows))
+      logging.info('Rows added for feature %s = %d', feature['gerrit_hashtag'],
+                   len(bq_rows))
 
 
 def _GetAllowedBuilders():

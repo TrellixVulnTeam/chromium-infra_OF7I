@@ -476,6 +476,7 @@ indexes:
   - name: gitiles_commit.ref
   - name: bucket
   - name: builder
+  - name: modifier_id
 
 - kind: PresubmitCoverageData
   properties:
