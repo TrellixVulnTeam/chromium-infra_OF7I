@@ -48,6 +48,7 @@ message Action {
   oneof action{
     AddFile add_file = 1;
     InstallFile install_file = 2;
+    EditOfflineRegistry edit_offline_registry = 3;
   }
 }
 
@@ -77,6 +78,39 @@ message InstallFile {
     string local_src = 4;
     CIPDSrc cipd_src = 5;
   }
+}
+
+
+message EditOfflineRegistry {
+  // The EditOfflineRegistry action's name, e.g. add_startnet
+  string name = 1;
+
+  // relative to root of mounted image, e.g. Windows\System32\Config\software
+  string reg_hive_file = 2;
+
+  // relative to root of the mounted registry file, e.g. Microsoft\Windows Defender\Features
+  string reg_key_path = 3;
+
+  // The name of the registry key property you want to create\edit e.g. TamperProtection
+  string property_name = 4;
+
+  // The value of the registry key property you want to create\edit e.g. 0
+  string property_value = 5;
+
+  // The property_type of the registry property you want to create\edit e.g. DWord
+  RegPropertyType property_type = 6;
+}
+
+// referenced from https://docs.microsoft.com/en-us/dotnet/api/microsoft.win32.registryvaluekind?view=net-5.0
+enum RegPropertyType {
+  Binary = 0;
+  DWord = 1;
+  ExpandString = 2;
+  MultiString = 3;
+  None = 4;
+  QWord = 5;
+  String = 6;
+  Unknown =7;
 }
 
 enum Arch {

@@ -26,6 +26,16 @@ UNMOUNT_LOG_LEVEL = '-LogLevel {}'
 UNMOUNT_SAVE = '-Save'  # Save changes to the wim
 UNMOUNT_DISCARD = '-Discard'  # Discard changes to the wim
 
+# Format strings for use in mount cmdline options
+EDIT_OFFLINE_REG_CMD = 'Edit-OfflineRegistry'
+EDIT_OFFLINE_REG_IMG_PATH = '-OfflineImagePath "{}"'
+EDIT_OFFLINE_REG_HIVE_FILE = '-OfflineRegHiveFile "{}"'
+EDIT_OFFLINE_REG_KEY_PATH = '-RegistryKeyPath "{}"'
+EDIT_OFFLINE_REG_PROPERTY_NAME = '-PropertyName "{}"'
+EDIT_OFFLINE_REG_PROPERTY_VALUE = '-PropertyValue "{}"'
+EDIT_OFFLINE_REG_PROPERTY_TYPE = '-PropertyType "{}"'
+
+
 class WindowsPSExecutorAPI(recipe_api.RecipeApi):
   """API for using Windows PowerShell scripts."""
 
@@ -63,10 +73,15 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
   def perform_winpe_action(self, action):
     """Performs the given action"""
     for a in action.actions:
-      if a.WhichOneof('action') == 'add_file':
+      action = a.WhichOneof('action')
+      if action == 'add_file':
         self.add_file(a.add_file)
-      elif a.WhichOneof('action') == 'install_file':  # pragma: no cover
+      elif action == 'install_file':  # pragma: no cover
         raise self.m.step.InfraFailure('Pending Implementation')
+
+      #TODO(actodd): Add tests and remove "no cover" tag
+      elif action == 'edit_offline_registry':  # pragma: no cover
+        self.edit_offline_registry(a.edit_offline_registry)
 
   def add_file(self, f):
     src = ''
@@ -81,6 +96,24 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', f.dst))
+
+  def edit_offline_registry(self, edit_offline_registry_action):
+    action = edit_offline_registry_action
+
+    args = [
+      EDIT_OFFLINE_REG_IMG_PATH.format(self._workdir),
+      EDIT_OFFLINE_REG_HIVE_FILE.format(action.reg_hive_file),
+      EDIT_OFFLINE_REG_KEY_PATH.format(action.reg_key_path),
+      EDIT_OFFLINE_REG_PROPERTY_NAME.format(action.property_name),
+      EDIT_OFFLINE_REG_PROPERTY_VALUE.format(action.property_value),
+      EDIT_OFFLINE_REG_PROPERTY_TYPE.format(action.property_type)
+    ]
+
+    reg_key_leaf = action.reg_key_path.split('\\')[-1]
+    name = 'Edit Offline Registry Key {} and Property {}'.format(
+      reg_key_leaf, action.property_name)
+
+    self.m.powershell(name, EDIT_OFFLINE_REG_CMD, args=args)
 
   def cipd_ensure(self, package, refs, platform, name=''):
     """ Downloads the given package and returns path to the files

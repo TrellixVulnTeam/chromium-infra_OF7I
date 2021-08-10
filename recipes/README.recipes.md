@@ -69,6 +69,7 @@
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline)
+  * [windows_scripts_executor:examples/edit_offline_registry_test](#recipes-windows_scripts_executor_examples_edit_offline_registry_test)
   * [windows_scripts_executor:examples/test](#recipes-windows_scripts_executor_examples_test)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
   * [zip:examples/full](#recipes-zip_examples_full)
@@ -927,42 +928,44 @@ Ensures that the WinPE add-on is available.
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#29)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#39)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#71)(self, f):**
+&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#86)(self, f):**
 
-&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#85)(self, package, refs, platform, name=''):**
+&mdash; **def [cipd\_ensure](/recipes/recipe_modules/windows_scripts_executor/api.py#118)(self, package, refs, platform, name=''):**
 
 Downloads the given package and returns path to the files
 contained within.
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#118)(self, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#151)(self, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#125)(self, name, command, logs=None, \*args):**
+&mdash; **def [edit\_offline\_registry](/recipes/recipe_modules/windows_scripts_executor/api.py#100)(self, edit_offline_registry_action):**
+
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#158)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#39)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#49)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#103)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#136)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#130)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
+&mdash; **def [mount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#163)(self, mnt_dir, image, index, logs, log_level='WarningsInfo'):**
 
 Mount the wim to a dir for modification
 
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#63)(self, action):**
+&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#73)(self, action):**
 
 Performs the given action
 
-&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#144)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
+&mdash; **def [unmount\_win\_wim](/recipes/recipe_modules/windows_scripts_executor/api.py#177)(self, mnt_dir, logs, log_level='WarningsInfo', save=True):**
 
 Unmount the winpe wim from the given directory
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
@@ -1369,6 +1372,11 @@ This recipe runs legacy analyzers for the infra repo.
 &mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#26)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
+### *recipes* / [windows\_scripts\_executor:examples/edit\_offline\_registry\_test](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py)
+
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#20)(api, edit_offline_registry_action):**
 ### *recipes* / [windows\_scripts\_executor:examples/test](/recipes/recipe_modules/windows_scripts_executor/examples/test.py)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
