@@ -5,6 +5,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -41,8 +42,9 @@ func PanicIf(condition bool, message string, args ...interface{}) {
 // should use proper error handling.
 func PanicOnError(err error) {
 	if err != nil {
-		if err, ok := err.(*exec.ExitError); ok {
-			panic(fmt.Errorf("%w\nstderr:\n%s", err, string(err.Stderr)))
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			panic(fmt.Errorf("%w\nstderr:\n%s", err, string(exitErr.Stderr)))
 		}
 		panic(err)
 	}

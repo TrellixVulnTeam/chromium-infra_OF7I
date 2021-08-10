@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"context"
+	stderrors "errors"
 	"flag"
 	"fmt"
 	"io"
@@ -159,7 +160,8 @@ func main() {
 		// An ExitError indicates that we were able to bootstrap the
 		// executable and that it failed, so it should have populated
 		// the build proto with steps and a result
-		if _, ok := err.(*exec.ExitError); !ok {
+		var exitErr *exec.ExitError
+		if !stderrors.As(err, &exitErr) {
 			err := reportBootstrapFailure(ctx, err.Error())
 			if err != nil {
 				logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
