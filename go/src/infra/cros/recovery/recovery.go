@@ -40,19 +40,25 @@ func Run(ctx context.Context, args *RunArgs) error {
 	if !args.EnableRecovery {
 		log.Info(newCtx, "Recovery actions is blocker by run arguments.")
 	}
+	args.TaskName = getTaskName(args.TaskName)
 	log.Info(newCtx, "Run recovery for %q", args.UnitName)
-	newCtx, resources, err := retrieveResources(newCtx, args)
+	resources, err := retrieveResources(newCtx, args)
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
 	// Load Configuration.
-	newCtx, config, err := loadConfiguration(newCtx, args)
+	config, err := loadConfiguration(newCtx, args)
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
 	// Keep track of fail to run resources.
 	var errs []error
 	lastResourceIndex := len(resources) - 1
+	if args.StepHandler != nil {
+		var step logger.Step
+		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Start %s for %s", args.TaskName, args.UnitName))
+		defer step.Close(newCtx, err)
+	}
 	for ir, resource := range resources {
 		log.Info(newCtx, "Resource %q: started", resource)
 		var dut *tlw.Dut
@@ -80,8 +86,8 @@ func Run(ctx context.Context, args *RunArgs) error {
 }
 
 // retrieveResources retrieves a list of target resources.
-func retrieveResources(ctx context.Context, args *RunArgs) (newCtx context.Context, resources []string, err error) {
-	newCtx = ctx
+func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, err error) {
+	newCtx := ctx
 	if args.StepHandler != nil {
 		var step logger.Step
 		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
@@ -92,13 +98,13 @@ func retrieveResources(ctx context.Context, args *RunArgs) (newCtx context.Conte
 		defer args.Logger.DedentLogging()
 	}
 	resources, err = args.Access.ListResourcesForUnit(newCtx, args.UnitName)
-	return newCtx, resources, errors.Annotate(err, "retrieve resources").Err()
+	return resources, errors.Annotate(err, "retrieve resources").Err()
 }
 
 // loadConfiguration loads and verifies a configuration.
 // If configuration is not provided by args then default is used.
-func loadConfiguration(ctx context.Context, args *RunArgs) (newCtx context.Context, config *planpb.Configuration, err error) {
-	newCtx = ctx
+func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Configuration, err error) {
+	newCtx := ctx
 	if args.StepHandler != nil {
 		var step logger.Step
 		step, newCtx = args.StepHandler.StartStep(newCtx, "Load Configuration")
@@ -114,12 +120,12 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (newCtx context.Conte
 		cr = DefaultConfig()
 	}
 	if config, err = loader.LoadConfiguration(newCtx, cr); err != nil {
-		return newCtx, nil, errors.Annotate(err, "load configuration").Err()
+		return nil, errors.Annotate(err, "load configuration").Err()
 	}
 	if len(config.GetPlans()) == 0 {
-		return newCtx, nil, errors.Reason("load configuration: no plans provided by configuration").Err()
+		return nil, errors.Reason("load configuration: no plans provided by configuration").Err()
 	}
-	return newCtx, config, nil
+	return config, nil
 }
 
 // readResource reads single DUT info from inventory.
@@ -289,6 +295,17 @@ const (
 	// Task used to prepare device to be used in the lab.
 	TaskNameDeploy TaskName = "deploy"
 )
+
+// getTaskName always returns task name.
+// If task name is not provided then returns TaskNameRecovery as default.
+func getTaskName(t TaskName) TaskName {
+	switch t {
+	case TaskNameRecovery, TaskNameDeploy:
+		return t
+	default:
+		return TaskNameRecovery
+	}
+}
 
 // RunArgs holds input arguments for recovery process.
 type RunArgs struct {
