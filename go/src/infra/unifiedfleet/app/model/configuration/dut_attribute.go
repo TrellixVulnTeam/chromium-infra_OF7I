@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -15,6 +16,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // DutAttributeKind is the datastore entity kind DutAttribute.
@@ -27,6 +30,8 @@ type DutAttributeEntity struct {
 	AttributeData []byte `gae:",noindex"`
 	Updated       time.Time
 }
+
+var DutAttributeRegex = regexp.MustCompile(`^[a-z0-9]+(?:_[a-z0-9]+)*$`)
 
 // GetProto returns the unmarshaled DutAttribute.
 func (e *DutAttributeEntity) GetProto() (proto.Message, error) {
@@ -51,6 +56,10 @@ func newDutAttributeEntity(ctx context.Context, pm proto.Message) (attrEntity uf
 	id := p.GetId().GetValue()
 	if id == "" {
 		return nil, errors.Reason("Empty DutAttribute ID").Err()
+	}
+
+	if err := validateDutAttributeId(id); err != nil {
+		return nil, err
 	}
 
 	return &DutAttributeEntity{
@@ -110,4 +119,12 @@ func ListDutAttributes(ctx context.Context, keysOnly bool) (rsp []*api.DutAttrib
 		return nil
 	})
 	return rsp, err
+}
+
+// validateDutAttributeId checks whether DutAttribute is a snake case string.
+func validateDutAttributeId(id string) error {
+	if !DutAttributeRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, "Invalid input - ID must be snake case.")
+	}
+	return nil
 }

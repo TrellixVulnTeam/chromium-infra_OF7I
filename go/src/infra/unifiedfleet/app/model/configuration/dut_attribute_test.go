@@ -43,8 +43,8 @@ func TestUpdateDutAttribute(t *testing.T) {
 	})
 
 	t.Run("update existent DutAttribute", func(t *testing.T) {
-		attr2 := mockDutAttribute("attr2", "test.path.2")
-		attr2update := mockDutAttribute("attr2", "test.path.2.update")
+		attr2 := mockDutAttribute("attr_2", "test.path.2")
+		attr2update := mockDutAttribute("attr_2", "test.path.2.update")
 
 		// Insert attr2 into datastore
 		_, _ = UpdateDutAttribute(ctx, attr2)
@@ -59,11 +59,27 @@ func TestUpdateDutAttribute(t *testing.T) {
 		}
 	})
 
-	t.Run("update DutAttribute with invalid IDs", func(t *testing.T) {
+	t.Run("update DutAttribute with empty IDs", func(t *testing.T) {
 		attr3 := mockDutAttribute("", "")
 		got, err := UpdateDutAttribute(ctx, attr3)
 		if err == nil {
 			t.Errorf("UpdateDutAttribute succeeded with empty IDs")
+		}
+		if c := status.Code(err); c != codes.Internal {
+			t.Errorf("Unexpected error when calling UpdateDutAttribute: %s", err)
+		}
+
+		var attrNil *api.DutAttribute = nil
+		if diff := cmp.Diff(attrNil, got); diff != "" {
+			t.Errorf("UpdateDutAttribute returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("update DutAttribute with invalid IDs", func(t *testing.T) {
+		attr4 := mockDutAttribute("attr-4", "test.path.4")
+		got, err := UpdateDutAttribute(ctx, attr4)
+		if err == nil {
+			t.Errorf("UpdateDutAttribute succeeded with invalid ID")
 		}
 		if c := status.Code(err); c != codes.Internal {
 			t.Errorf("Unexpected error when calling UpdateDutAttribute: %s", err)
