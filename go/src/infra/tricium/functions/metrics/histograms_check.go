@@ -170,6 +170,7 @@ func analyzeHistogramSuffixesFile(f io.Reader, filePath string, filesChanged *di
 	var comments []*tricium.Data_Comment
 	// Warn on the first changed line whenever users add / update histogram_suffixes_list.
 	if linesChanged := filesChanged.addedLines[filePath]; len(linesChanged) > 0 {
+		log.Printf("ADDING Comment for histogram_suffixes_list at line %d: %s", linesChanged[0], "[WARNING]: Deprecated suffixes")
 		comments = append(comments, createHistogramSuffixesComment(filePath, linesChanged[0]))
 	}
 	return showAllComments(comments)
