@@ -25,6 +25,67 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Status of a Verdict.
+// It is determined by all the test results of the verdict, and exonerations are
+// ignored(i.e. failure is treated as a failure, even if it is exonerated).
+type VerdictStatus int32
+
+const (
+	// A verdict must not have this status.
+	// This is only used when filtering verdicts.
+	VerdictStatus_VERDICT_STATUS_UNSPECIFIED VerdictStatus = 0
+	// All results of the verdict are unexpected.
+	VerdictStatus_UNEXPECTED VerdictStatus = 10
+	// The verdict has both expected and unexpected results.
+	// To be differentiated with AnalyzedTestVariantStatus.FLAKY.
+	VerdictStatus_VERDICT_FLAKY VerdictStatus = 30
+	// All results of the verdict are expected.
+	VerdictStatus_EXPECTED VerdictStatus = 50
+)
+
+// Enum value maps for VerdictStatus.
+var (
+	VerdictStatus_name = map[int32]string{
+		0:  "VERDICT_STATUS_UNSPECIFIED",
+		10: "UNEXPECTED",
+		30: "VERDICT_FLAKY",
+		50: "EXPECTED",
+	}
+	VerdictStatus_value = map[string]int32{
+		"VERDICT_STATUS_UNSPECIFIED": 0,
+		"UNEXPECTED":                 10,
+		"VERDICT_FLAKY":              30,
+		"EXPECTED":                   50,
+	}
+)
+
+func (x VerdictStatus) Enum() *VerdictStatus {
+	p := new(VerdictStatus)
+	*p = x
+	return p
+}
+
+func (x VerdictStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (VerdictStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes[0].Descriptor()
+}
+
+func (VerdictStatus) Type() protoreflect.EnumType {
+	return &file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes[0]
+}
+
+func (x VerdictStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use VerdictStatus.Descriptor instead.
+func (VerdictStatus) EnumDescriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{0}
+}
+
 // A string key-value pair.
 type StringPair struct {
 	state         protoimpl.MessageState
@@ -161,11 +222,17 @@ var file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc = []byte{
 	0x61, 0x72, 0x6c, 0x69, 0x65, 0x73, 0x74, 0x12, 0x32, 0x0a, 0x06, 0x6c, 0x61, 0x74, 0x65, 0x73,
 	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74,
-	0x61, 0x6d, 0x70, 0x52, 0x06, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x42, 0x2c, 0x5a, 0x2a, 0x69,
-	0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77,
-	0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76, 0x31, 0x3b,
-	0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x61, 0x6d, 0x70, 0x52, 0x06, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x2a, 0x60, 0x0a, 0x0d, 0x56,
+	0x65, 0x72, 0x64, 0x69, 0x63, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1e, 0x0a, 0x1a,
+	0x56, 0x45, 0x52, 0x44, 0x49, 0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55,
+	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a,
+	0x55, 0x4e, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x0a, 0x12, 0x11, 0x0a, 0x0d,
+	0x56, 0x45, 0x52, 0x44, 0x49, 0x43, 0x54, 0x5f, 0x46, 0x4c, 0x41, 0x4b, 0x59, 0x10, 0x1e, 0x12,
+	0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x32, 0x42, 0x2c, 0x5a,
+	0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65,
+	0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76,
+	0x31, 0x3b, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -180,15 +247,17 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP() []byte {
 	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescData
 }
 
+var file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_infra_appengine_weetbix_proto_v1_common_proto_goTypes = []interface{}{
-	(*StringPair)(nil),            // 0: weetbix.v1.StringPair
-	(*TimeRange)(nil),             // 1: weetbix.v1.TimeRange
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(VerdictStatus)(0),            // 0: weetbix.v1.VerdictStatus
+	(*StringPair)(nil),            // 1: weetbix.v1.StringPair
+	(*TimeRange)(nil),             // 2: weetbix.v1.TimeRange
+	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_infra_appengine_weetbix_proto_v1_common_proto_depIdxs = []int32{
-	2, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
-	2, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
+	3, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
+	3, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -232,13 +301,14 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_infra_appengine_weetbix_proto_v1_common_proto_goTypes,
 		DependencyIndexes: file_infra_appengine_weetbix_proto_v1_common_proto_depIdxs,
+		EnumInfos:         file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes,
 		MessageInfos:      file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes,
 	}.Build()
 	File_infra_appengine_weetbix_proto_v1_common_proto = out.File
