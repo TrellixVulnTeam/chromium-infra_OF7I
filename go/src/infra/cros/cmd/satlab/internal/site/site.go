@@ -145,7 +145,8 @@ const Patch = 0
 var DefaultPRPCOptions = prpcOptionWithUserAgent(fmt.Sprintf("satlab/%s", VersionNumber))
 
 // CipdInstalledPath is the installed path for satlab package.
-var CipdInstalledPath = "infra/satlab/"
+// This is the path to the directory containing main.go relative to the repo root.
+var CipdInstalledPath = "infra/cros/cmd/satlab/"
 
 // prpcOptionWithUserAgent create prpc option with custom UserAgent.
 //
