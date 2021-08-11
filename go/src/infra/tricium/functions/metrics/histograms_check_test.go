@@ -502,12 +502,74 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:             category + "/Units",
-				Message:              unitsMicrosecondsWarning,
+				Message:              unitsHighResolutionWarning,
 				StartLine:            3,
 				EndLine:              3,
 				StartChar:            42,
 				EndChar:              62,
 				Path:                 "units/microseconds_bad_summary.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
+	})
+
+	Convey("Analyze XML file no errors, units of us, all users", t, func() {
+		results := analyzeHistogramTestFile(t, "units/us_all_users.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file no errors, units of us, high-resolution", t, func() {
+		results := analyzeHistogramTestFile(t, "units/us_high_res.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file no errors, units of us, low-resolution", t, func() {
+		results := analyzeHistogramTestFile(t, "units/us_low_res.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file with error: units of us, bad summary", t, func() {
+		results := analyzeHistogramTestFile(t, "units/us_bad_summary.xml", patchPath, inputDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Units",
+				Message:              unitsHighResolutionWarning,
+				StartLine:            3,
+				EndLine:              3,
+				StartChar:            42,
+				EndChar:              52,
+				Path:                 "units/us_bad_summary.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
+	})
+
+	Convey("Analyze XML file no errors, units of usec, all users", t, func() {
+		results := analyzeHistogramTestFile(t, "units/usec_all_users.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file no errors, units of usec, high-resolution", t, func() {
+		results := analyzeHistogramTestFile(t, "units/usec_high_res.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file no errors, units of usec, low-resolution", t, func() {
+		results := analyzeHistogramTestFile(t, "units/usec_low_res.xml", patchPath, inputDir)
+		So(results, ShouldBeNil)
+	})
+
+	Convey("Analyze XML file with error: units of usec, bad summary", t, func() {
+		results := analyzeHistogramTestFile(t, "units/usec_bad_summary.xml", patchPath, inputDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Units",
+				Message:              unitsHighResolutionWarning,
+				StartLine:            3,
+				EndLine:              3,
+				StartChar:            42,
+				EndChar:              54,
+				Path:                 "units/usec_bad_summary.xml",
 				ShowOnUnchangedLines: true,
 			},
 		})

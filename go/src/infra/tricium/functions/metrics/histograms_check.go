@@ -47,7 +47,7 @@ const (
 	neverExpiryError           = `[ERROR] The expiry should only be set to "never" in rare cases. If you believe this use of "never" is appropriate, you must include an XML comment describing why, such as <!-- expires-never: "heartbeat" metric (internal: go/uma-heartbeats) -->: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	milestoneFailure           = `[WARNING] Tricium failed to fetch milestone branch date. Please double-check that this milestone is correct, because the tool is currently not able to check for you.`
 	obsoleteDateError          = `[WARNING] When marking a histogram as <obsolete>, please document when the histogram was removed, either as a date including a 2-digit month and 4-digit year, or a milestone in MXX format.`
-	unitsMicrosecondsWarning   = `[WARNING] Histograms with units="microseconds" should document whether the metrics is reported for all users or only users with high-resolution clocks. Note that reports from clients with low-resolution clocks (i.e. on Windows, ref. TimeTicks::IsHighResolution()) may cause the metric to have an abnormal distribution.`
+	unitsHighResolutionWarning = `[WARNING] Histograms with high resolution units (eg. "microseconds", "us" or "usec") should document whether the metrics are reported for all users or only users with high-resolution clocks. Note that this histogram reports from all clients but reports from clients with low-resolution clocks (i.e. on Windows, ref. TimeTicks::IsHighResolution()) may cause the metric resolution to be as coarse as ~15.6 _milli_seconds.`
 	removedHistogramError      = `[ERROR] Do not delete metadata from histograms.xml. Instead, mark unused histograms as <obsolete>, and include the date or milestone when they were removed. (It's ok to delete metadata for histograms that were never recorded, e.g., to fix a typo in the name.) https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries. (You don't need to move newly marked obsolete histograms to obsolete_histograms.xml. However, if you *have* moved histograms across files or converted existing histograms to variants of a patterned one, you'll see this message as a false-positive; feel free to ignore it in that case.)`
 	addedNamespaceWarning      = `[WARNING] Are you sure you want to add the namespace %s to histograms.xml? For most new histograms, it's appropriate to re-use one of the existing top-level histogram namespaces. For histogram names, the namespace is defined as everything preceding the first dot '.' in the name.`
 	singleElementEnumWarning   = `[WARNING] It looks like this is an enumerated histogram that contains only a single bucket. UMA metrics are difficult to interpret in isolation, so please either add one or more additional buckets that can serve as a baseline for comparison, or document what other metric should be used as a baseline during analysis. https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
@@ -67,11 +67,12 @@ var (
 	// Match double-digit or spelled-out months.
 	obsoleteMonthPattern     = regexp.MustCompile(`([^0-9](0[1-9]|10|11|12)[^0-9])|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec`)
 	obsoleteMilestonePattern = regexp.MustCompile(`M([0-9]{2,3})`)
-	// Match valid summaries for histograms with units=microseconds.
-	microsecondsSummary = regexp.MustCompile(`all\suser|(high|low)(\s|-)resolution`)
-	expiryAttribute     = regexp.MustCompile(`expires_after="[^"]+"`)
-	enumAttribute       = regexp.MustCompile(`enum="[^"]+"`)
-	unitsAttribute      = regexp.MustCompile(`units="[^"]+"`)
+	// Match valid summaries for histograms with units=("microseconds", "us", "usec").
+	highResolutionUnits        = regexp.MustCompile(`^microsec(onds)?|^us$|^usec.*$`)
+	highResolutionUnitsSummary = regexp.MustCompile(`all\suser|(high|low)(\s|-)resolution`)
+	expiryAttribute            = regexp.MustCompile(`expires_after="[^"]+"`)
+	enumAttribute              = regexp.MustCompile(`enum="[^"]+"`)
+	unitsAttribute             = regexp.MustCompile(`units="[^"]+"`)
 
 	// Now is an alias for time.Now, can be overwritten by tests.
 	now                 = time.Now
@@ -328,11 +329,11 @@ func createHistogramSuffixesComment(path string, lineNum int) *tricium.Data_Comm
 }
 
 func checkUnits(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
-	if strings.Contains(hist.Units, "microseconds") && !microsecondsSummary.MatchString(hist.Summary) {
+	if highResolutionUnits.MatchString(hist.Units) && !highResolutionUnitsSummary.MatchString(hist.Summary) {
 		unitsLine := meta.attributeMap[unitsAttribute]
 		comment := &tricium.Data_Comment{
 			Category:  category + "/Units",
-			Message:   unitsMicrosecondsWarning,
+			Message:   unitsHighResolutionWarning,
 			Path:      path,
 			StartLine: int32(unitsLine.LineNum),
 			EndLine:   int32(unitsLine.LineNum),
