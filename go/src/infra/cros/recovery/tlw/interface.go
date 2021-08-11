@@ -31,7 +31,7 @@ type Access interface {
 	// CallServod executes a command on servod related to resource name.
 	// Commands will be run against servod on servo-host.
 	CallServod(ctx context.Context, req *CallServodRequest) *CallServodResponse
-	// CopyFileTo copies file to destination device from local.
+	// CopyFileTo copies file to remote device from local.
 	CopyFileTo(ctx context.Context, req *CopyRequest) error
 	// CopyFileFrom copies file from remote device to local.
 	CopyFileFrom(ctx context.Context, req *CopyRequest) error

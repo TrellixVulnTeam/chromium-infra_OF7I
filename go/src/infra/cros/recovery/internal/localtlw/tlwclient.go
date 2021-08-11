@@ -196,9 +196,12 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	return res
 }
 
-// CopyFileTo copies file to destination device from local.
+// CopyFileTo copies file to remote device from local.
 func (c *tlwClient) CopyFileTo(ctx context.Context, req *tlw.CopyRequest) error {
-	return status.Errorf(codes.Unimplemented, "not implemented")
+	if err := tlwio.CopyFileTo(ctx, c.sshPool, req); err != nil {
+		return errors.Annotate(err, "copy file to").Err()
+	}
+	return nil
 }
 
 // CopyFileFrom copies file from remote device to local.
