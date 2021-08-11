@@ -23,6 +23,7 @@ type Asset struct {
 	Model     string
 	Board     string
 	Namespace string
+	Type      string
 }
 
 // CheckAndUpdate adds the asset if it does not already exist.
@@ -50,6 +51,7 @@ func (a *Asset) check() (string, error) {
 			"model":     {a.Model},
 			"board":     {a.Board},
 			"namespace": {a.Namespace},
+			// Type cannot be provided when getting a DUT.
 		},
 	}).ToCommand()
 	fmt.Fprintf(os.Stderr, "Add asset: run %s\n", args)
@@ -76,6 +78,7 @@ func (a *Asset) update() error {
 			"zone":      {a.Zone},
 			"name":      {a.Asset},
 			"namespace": {a.Namespace},
+			"type":      {a.Type},
 		},
 	}).ToCommand()
 	fmt.Fprintf(os.Stderr, "Add asset: run %s\n", args)

@@ -23,6 +23,7 @@ type DUT struct {
 	Zone       string
 	Name       string
 	Servo      string
+	Rack       string
 	ShivasArgs map[string][]string
 }
 
@@ -42,12 +43,14 @@ func (d *DUT) CheckAndUpdate() error {
 
 // Check checks for the existnce of a UFS DUT.
 func (d *DUT) check() (string, error) {
+	flags := map[string][]string{
+		"namespace": {d.Namespace},
+		"zone":      {d.Zone},
+	}
+
 	args := (&commands.CommandWithFlags{
-		Commands: []string{paths.ShivasCLI, "get", "dut"},
-		Flags: map[string][]string{
-			"namespace": {d.Namespace},
-			"zone":      {d.Zone},
-		},
+		Commands:       []string{paths.ShivasCLI, "get", "dut"},
+		Flags:          flags,
 		PositionalArgs: []string{d.Name},
 	}).ToCommand()
 	fmt.Fprintf(os.Stderr, "Add dut: run %s\n", args)

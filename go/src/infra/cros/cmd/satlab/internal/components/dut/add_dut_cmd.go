@@ -32,10 +32,11 @@ var AddDUTCmd = &subcommands.Command{
 		c.chameleons = []string{}
 		c.cameras = []string{}
 		c.cables = []string{}
-		// TODO(gregorynisbet): Add more info here.
-		c.deployTags = []string{"satlab"}
+		// Manual_tags must be key:value form.
+		c.deployTags = []string{"satlab:true"}
 		// TODO(gregorynisbet): Consider skipping actions for satlab by default.
 		c.deployActions = defaultDeployTaskActions
+		c.assetType = "dut"
 
 		c.Flags.StringVar(&c.address, "address", "", "IP address of host")
 		c.Flags.BoolVar(&c.skipDNS, "skip-dns", false, "whether to skip updating the DNS")
@@ -48,6 +49,8 @@ var AddDUTCmd = &subcommands.Command{
 // qualified arguments that are the result of adding the satlab prefix to "raw" arguments.
 type addDUT struct {
 	shivasAddDUT
+	// AssetType is the type of the asset, it always has a value of "dut".
+	assetType string
 	// Satlab-specific fields, if any exist, go here.
 	// Address is the IP adderss of the DUT.
 	address string
@@ -126,6 +129,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		Model:     c.model,
 		Board:     c.board,
 		Namespace: c.envFlags.Namespace,
+		Type:      c.assetType,
 	}).CheckAndUpdate(); err != nil {
 		return errors.Annotate(err, "add dut").Err()
 	}
@@ -134,6 +138,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		Namespace:  c.envFlags.Namespace,
 		Zone:       c.zone,
 		Name:       c.qualifiedHostname,
+		Rack:       c.qualifiedRack,
 		Servo:      c.qualifiedServo,
 		ShivasArgs: makeAddShivasFlags(c),
 	}).CheckAndUpdate(); err != nil {

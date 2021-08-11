@@ -33,19 +33,22 @@ func makeAddShivasFlags(c *addDUT) flagmap {
 		// using a spec file.
 	}
 	if c.zone != "" {
-		out["zone"] = []string{c.zone}
+		// Do not pass the zone.
 	}
 	if c.rack != "" {
-		out["rack"] = []string{c.rack}
+		// Do nothing.
+		// The rack must be qualified when passed to shivas.
 	}
 	if c.hostname != "" {
-		out["name"] = []string{c.hostname}
+		// Do nothing. The hostname must be qualified when passed to
+		// shivas.
 	}
 	if c.asset != "" {
 		out["asset"] = []string{c.asset}
 	}
 	if c.servo != "" {
-		out["servo"] = []string{c.servo}
+		// Do nothing.
+		// The servo must be qualified when passed to shivas.
 	}
 	if c.servoSerial != "" {
 		out["servo-serial"] = []string{c.servoSerial}
@@ -144,10 +147,10 @@ func makeAddShivasFlags(c *addDUT) flagmap {
 		out["smartusbhub"] = []string{}
 	}
 	if c.model != "" {
-		out["model"] = []string{}
+		out["model"] = []string{c.model}
 	}
 	if c.board != "" {
-		out["board"] = []string{}
+		out["board"] = []string{c.board}
 	}
 	if c.envFlags.Namespace != "" {
 		out["namespace"] = []string{c.envFlags.Namespace}
