@@ -218,41 +218,28 @@ func TestBranchLocalManifests_specificBranches(t *testing.T) {
 	harness, remoteManifestProject := setUp(t)
 	defer harness.Teardown()
 
-	checkout, err := harness.Checkout(remoteManifestProject, "main", "default.xml")
+	branch := "stabilize-13851.B"
+	checkout, err := harness.Checkout(remoteManifestProject, branch, "default.xml")
 	assert.NilError(t, err)
 
 	ctx := context.Background()
 	b := localManifestBrancher{
 		chromeosCheckoutPath: checkout,
 		projects:             []string{"foo/", "bar/"},
-		specificBranches:     []string{"stabilize-13851.B"},
+		specificBranches:     []string{branch},
 		push:                 true,
 		workerCount:          2,
 	}
 	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
-	checkBranches := map[string]bool{
-		"stabilize-13851.B": true,
-	}
 	manifest := harness.Manifest()
-	for _, branch := range branches {
-		if branch == "stabilize-13852.B" {
-			continue
-		}
+	project, err := manifest.GetProjectByName("foo")
+	assert.NilError(t, err)
 
-		project, err := manifest.GetProjectByName("foo")
-		assert.NilError(t, err)
+	localManifest, err := harness.ReadFile(
+		rh.GetRemoteProject(*project), branch, "local_manifest.xml")
 
-		localManifest, err := harness.ReadFile(
-			rh.GetRemoteProject(*project), branch, "local_manifest.xml")
-
-		var expected string
-		if branched, ok := checkBranches[branch]; branched && ok {
-			expected = fmt.Sprintf(localManifestXML, branch)
-		} else {
-			expected = fmt.Sprintf(localManifestXML, "main")
-		}
-		assert.StringsEqual(t, string(localManifest), expected)
-	}
+	expected := fmt.Sprintf(localManifestXML, branch)
+	assert.StringsEqual(t, string(localManifest), expected)
 }

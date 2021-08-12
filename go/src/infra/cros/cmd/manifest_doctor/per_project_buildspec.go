@@ -40,7 +40,7 @@ type projectBuildspec struct {
 
 func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "project-buildspec --buildspec=85/13277.0.0.xml --program=galaxy --project=milkyway",
+		UsageLine: "project-buildspec --buildspec=full/buildspecs/94/14144.0.0-rc2.xml --program=galaxy --project=milkyway",
 		ShortDesc: "Create a project-specific buildspec for a specific project/program and version",
 		CommandRun: func() subcommands.CommandRun {
 			b := &projectBuildspec{}
@@ -48,9 +48,8 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 			b.authFlags.Register(b.GetFlags(), authOpts)
 			b.Flags.StringVar(&b.buildspec, "buildspec", "",
 				text.Doc(`
-				Path to manifest within manifest-versions repo, relative to
-				https://chrome-internal.googlesource.com/chromeos/manifest-versions/+/HEAD/buildspecs/
-				e.g. 85/13277.0.0.xml`))
+				Path to manifest within manifest-versions repo, e.g.
+				full/buildspecs/94/14144.0.0-rc2.xml`))
 			b.Flags.StringVar(&b.program, "program", "",
 				text.Doc(`
 				Name of the program to create the program-specific buildspec for.
@@ -132,7 +131,10 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
 func (b *projectBuildspec) CreateProjectBuildspec(gsClient gs.Client, gerritClient *gerrit.Client) error {
-	buildspecInfo, err := branch.ParseBuildspec(b.buildspec)
+	toks := strings.Split(b.buildspec, "/")
+	baseBuildspec := toks[len(toks)-2] + "/" + toks[len(toks)-1]
+
+	buildspecInfo, err := branch.ParseBuildspec(baseBuildspec)
 	if err != nil {
 		return err
 	}
@@ -143,17 +145,26 @@ func (b *projectBuildspec) CreateProjectBuildspec(gsClient gs.Client, gerritClie
 	}
 
 	var releaseBranch string
+	hasPreviousMilestone := false
 	for branch := range branches {
 		if strings.HasPrefix(branch, fmt.Sprintf("refs/heads/release-R%d-", buildspecInfo.ChromeBranch)) {
 			releaseBranch = branch
 			break
 		}
+		if strings.HasPrefix(branch, fmt.Sprintf("refs/heads/release-R%d-", buildspecInfo.ChromeBranch-1)) {
+			hasPreviousMilestone = true
+		}
 	}
 	if releaseBranch == "" {
-		return fmt.Errorf("release branch for R%d was not found", buildspecInfo.ChromeBranch)
+		if !hasPreviousMilestone {
+			return fmt.Errorf("release branch for R%d was not found", buildspecInfo.ChromeBranch)
+		}
+		// If the release branch for the previous milestone is present but this
+		// one isn't, we can assume it hasn't been cut yet and select ToT.
+		releaseBranch = "refs/heads/main"
 	}
 
-	publicBuildspecPath := "buildspecs/" + b.buildspec
+	publicBuildspecPath := b.buildspec
 	_, err = gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
 		"chromiumos/manifest-versions", "HEAD", publicBuildspecPath)
 	if err != nil {
@@ -169,7 +180,7 @@ func (b *projectBuildspec) CreateProjectBuildspec(gsClient gs.Client, gerritClie
 
 	// Load the internal buildspec.
 	buildspecManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
-		"chromeos/manifest-versions", "HEAD", "buildspecs/"+b.buildspec)
+		"chromeos/manifest-versions", "HEAD", b.buildspec)
 	if err != nil {
 		return errors.Annotate(err, "error loading buildspec manifest").Err()
 	}

@@ -29,7 +29,7 @@ var (
 	milestoneRegexp = regexp.MustCompile(`release-R(\d+)-.*`)
 	// Regex for extracting version information from a buildspec path, e.g.
 	// 85/13277.0.0.xml.
-	buildspecRegexp = regexp.MustCompile(`^(?P<milestone>\d+)\/(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.xml$`)
+	buildspecRegexp = regexp.MustCompile(`^(?P<milestone>\d+)\/(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(-rc\d+)?\.xml$`)
 )
 
 // ExtractBuildNum extracts the build number from the branch name, e.g. 13729

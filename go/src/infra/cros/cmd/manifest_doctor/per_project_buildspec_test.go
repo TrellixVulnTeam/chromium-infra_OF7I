@@ -61,13 +61,7 @@ var (
 	application = GetApplication(chromeinfra.DefaultAuthOptions())
 )
 
-func TestCreateProjectBuildspec(t *testing.T) {
-	t.Parallel()
-	program := "galaxy"
-	project := "milkyway"
-	buildspec := "90/13811.0.0.xml"
-	releaseBranch := "refs/heads/release-R90-13816.B"
-
+func setUpPPBTest(t *testing.T, program, project, buildspec, branch string) (*gs.FakeClient, *gerrit.Client) {
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
 	t.Cleanup(ctl.Finish)
@@ -89,7 +83,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		nil,
 	)
 
-	// Mock tip-of-branch (releaseBranch) manifest file request.
+	// Mock tip-of-branch (branch) manifest file request.
 	projects := []string{
 		"chromeos/program/" + program,
 		"chromeos/project/" + program + "/" + project,
@@ -98,7 +92,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		reqLocalManifest := &gitilespb.DownloadFileRequest{
 			Project:    project,
 			Path:       "local_manifest.xml",
-			Committish: releaseBranch,
+			Committish: branch,
 		}
 		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
 			&gitilespb.DownloadFileResponse{
@@ -111,7 +105,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	// Mock external buildspec file request.
 	reqExternalBuildspec := &gitilespb.DownloadFileRequest{
 		Project:    "chromiumos/manifest-versions",
-		Path:       "buildspecs/" + buildspec,
+		Path:       buildspec,
 		Committish: "HEAD",
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
@@ -124,7 +118,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	// Mock buildspec file request.
 	reqBuildspecs := &gitilespb.DownloadFileRequest{
 		Project:    "chromeos/manifest-versions",
-		Path:       "buildspecs/" + buildspec,
+		Path:       buildspec,
 		Committish: "HEAD",
 	}
 	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqBuildspecs)).Return(
@@ -147,6 +141,32 @@ func TestCreateProjectBuildspec(t *testing.T) {
 		T:              t,
 		ExpectedWrites: expectedWrites,
 	}
+	return f, gc
+}
+
+func TestCreateProjectBuildspec(t *testing.T) {
+	t.Parallel()
+	program := "galaxy"
+	project := "milkyway"
+	buildspec := "full/buildspecs/90/13811.0.0.xml"
+	releaseBranch := "refs/heads/release-R90-13816.B"
+	f, gc := setUpPPBTest(t, program, project, buildspec, releaseBranch)
+
+	b := projectBuildspec{
+		buildspec: buildspec,
+		program:   program,
+		project:   project,
+	}
+	assert.NilError(t, b.CreateProjectBuildspec(f, gc))
+}
+
+func TestCreateProjectBuildspecToT(t *testing.T) {
+	t.Parallel()
+	program := "galaxy"
+	project := "milkyway"
+	buildspec := "full/buildspecs/92/13811.0.0-rc2.xml"
+	releaseBranch := "refs/heads/main"
+	f, gc := setUpPPBTest(t, program, project, buildspec, releaseBranch)
 
 	b := projectBuildspec{
 		buildspec: buildspec,

@@ -88,7 +88,8 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 			b.Flags.StringVar(&b.localManifestBranch, "branch", "main",
 				"Sync the project from the local manifest at the given branch.")
 			b.Flags.StringVar(&b.buildspec, "buildspec", "",
-				text.Doc(`Specific version to sync to, e.g. 85/13277.0.0.xml. Requires
+				text.Doc(`Specific buildspec to sync to, e.g.
+				full/buildspecs/94/14144.0.0-rc2.xml. Requires
 				per-project buildspecs to have been created for the appropriate
 				projects for the appropriate version, see go/per-project-buildspecs.
 				If set, takes priority over --branch.`))
@@ -209,19 +210,6 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 
 	files := []localManifest{}
 
-	var gspath lgs.Path
-	if b.buildspec != "" {
-		gspath = gsProgramPath(b.program, b.buildspec)
-	}
-	programProject := fmt.Sprintf("chromeos/program/%s", b.program)
-	files = append(files, localManifest{
-		project:    programProject,
-		branch:     b.localManifestBranch,
-		path:       "local_manifest.xml",
-		gsPath:     gspath,
-		downloadTo: fmt.Sprintf("%s_program.xml", b.program),
-	})
-
 	var projects []string
 	if b.allProjects {
 		var err error
@@ -250,6 +238,19 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		})
 	}
 
+	var gspath lgs.Path
+	if b.buildspec != "" {
+		gspath = gsProgramPath(b.program, b.buildspec)
+	}
+	programProject := fmt.Sprintf("chromeos/program/%s", b.program)
+	files = append(files, localManifest{
+		project:    programProject,
+		branch:     b.localManifestBranch,
+		path:       "local_manifest.xml",
+		gsPath:     gspath,
+		downloadTo: fmt.Sprintf("%s_program.xml", b.program),
+	})
+
 	if b.chipset != "" && b.buildspec == "" {
 		files = append(files,
 			localManifest{
@@ -276,10 +277,10 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		if string(file.gsPath) != "" {
 			err = gsClient.Download(file.gsPath, downloadPath)
 			if err != nil && file.project == programProject {
-				// If the program-level buildspec doesn't exist, don't
-				// immediately fail. Unless something is very wrong, the project
-				// and program buildspecs will be generated together. If the
-				// project buildspec doesn't exist, this run will still fail.
+				// If the program-level buildspec doesn't exist, don't fail.
+				// Unless something is very wrong, the project and program
+				// buildspecs will be generated together.
+				// If the project buildspec doesn't exist, this run will still fail.
 				// If the project buildspec doesn't exist, it must just be that
 				// this particular program doesn't have a local_manifest.xml.
 				if gerrs.Is(err, storage.ErrObjectNotExist) {
@@ -310,7 +311,7 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		LogOut("You are syncing to a per-project/program buildspec, make sure " +
 			"that you've run the equivalent of:" +
 			"\n\nrepo init -u https://chromium.googlesource.com/chromiumos/manifest-versions -b main" +
-			fmt.Sprintf(" -m buildspecs/%s", b.buildspec) + "\n\n")
+			fmt.Sprintf(" -m %s", b.buildspec) + "\n\n")
 		LogOut("Local manifest setup complete, sync new projects with:" +
 			"\n\nrepo sync --force-sync -j48")
 	} else {
