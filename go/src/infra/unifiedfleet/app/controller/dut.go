@@ -70,7 +70,7 @@ func CreateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		// Check if the DUT has Servo information.
 		// Update Labstation MachineLSE with new Servo info unless it's ServoV3. ServoV3 devices don't have labstation info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-		if newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+		if newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) && newServo.GetDockerContainerName() == "" {
 			// Check if the Labstation MachineLSE exists in the system.
 			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {

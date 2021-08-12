@@ -21,7 +21,7 @@ import (
 	"infra/unifiedfleet/app/model/state"
 )
 
-func mockDUT(hostname, machine, servoHost, servoSerial, rpm, rpmOutlet string, servoPort int32, pools []string) *ufspb.MachineLSE {
+func mockDUT(hostname, machine, servoHost, servoSerial, rpm, rpmOutlet string, servoPort int32, pools []string, dockerContainer string) *ufspb.MachineLSE {
 	return &ufspb.MachineLSE{
 		Name:     hostname,
 		Hostname: hostname,
@@ -35,9 +35,10 @@ func mockDUT(hostname, machine, servoHost, servoSerial, rpm, rpmOutlet string, s
 								Hostname: hostname,
 								Peripherals: &chromeosLab.Peripherals{
 									Servo: &chromeosLab.Servo{
-										ServoHostname: servoHost,
-										ServoPort:     servoPort,
-										ServoSerial:   servoSerial,
+										ServoHostname:       servoHost,
+										ServoPort:           servoPort,
+										ServoSerial:         servoSerial,
+										DockerContainerName: dockerContainer,
 									},
 									Rpm: &chromeosLab.OSRPM{
 										PowerunitName:   rpm,
@@ -116,7 +117,7 @@ func createValidDUTWithLabstation(ctx context.Context, dutName, dutMachine, labs
 	labstation1 := mockLabstation(labstationName, labstationMachine)
 	_, err = CreateLabstation(ctx, labstation1)
 	So(err, ShouldBeNil)
-	dut1 := mockDUT(dutName, dutMachine, labstationName, "serial-1", dutName+"-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+	dut1 := mockDUT(dutName, dutMachine, labstationName, "serial-1", dutName+"-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 	_, err = CreateDUT(ctx, dut1)
 	So(err, ShouldBeNil)
 	changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/"+dutName)
@@ -145,7 +146,7 @@ func TestCreateDUT(t *testing.T) {
 			}
 			_, err := registration.CreateMachine(ctx, machine1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-1", "machine-10", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-1", "machine-10", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "labstation-1 not found in the system")
@@ -182,7 +183,7 @@ func TestCreateDUT(t *testing.T) {
 			labstation1 := mockLabstation("labstation-1", "machine-20")
 			_, err = CreateLabstation(ctx, labstation1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-2", "machine-21", "labstation-1", "serial-1", "dut-2-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-2", "machine-21", "labstation-1", "serial-1", "dut-2-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Device config doesn't exist")
@@ -230,7 +231,7 @@ func TestCreateDUT(t *testing.T) {
 			labstation1 := mockLabstation("labstation-3", "machine-30")
 			_, err = CreateLabstation(ctx, labstation1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-3", "machine-40", "labstation-3", "serial-2", "dut-3-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3", "machine-40", "labstation-3", "serial-2", "dut-3-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-3")
@@ -243,7 +244,7 @@ func TestCreateDUT(t *testing.T) {
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "hosts/labstation-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
-			dut2 := mockDUT("dut-4", "machine-50", "labstation-3", "serial-3", "dut-4-power-1", ".A2", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut2 := mockDUT("dut-4", "machine-50", "labstation-3", "serial-3", "dut-4-power-1", ".A2", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut2)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Port: 9999 in labstation-3 is already in use by dut-3")
@@ -283,7 +284,7 @@ func TestCreateDUT(t *testing.T) {
 			labstation1 := mockLabstation("labstation-5", "machine-90")
 			_, err := CreateLabstation(ctx, labstation1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-7", "machine-00", "labstation-5", "serial-1", "dut-7-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-7", "machine-00", "labstation-5", "serial-1", "dut-7-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-7")
@@ -323,7 +324,7 @@ func TestCreateDUT(t *testing.T) {
 			labstation1 := mockLabstation("labstation-6", "machine-01")
 			_, err := CreateLabstation(ctx, labstation1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-8", "machine-02", "labstation-6", "serial-1", "dut-8-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-8", "machine-02", "labstation-6", "serial-1", "dut-8-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-8")
@@ -362,7 +363,7 @@ func TestCreateDUT(t *testing.T) {
 			labstation1 := mockLabstation("labstation-7", "machine-03")
 			_, err := CreateLabstation(ctx, labstation1)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-9", "machine-03", "labstation-7", "serial-1", "dut-9-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-9", "machine-03", "labstation-7", "serial-1", "dut-9-power-3", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Host dut-9 cannot be created because there are other hosts which are referring this machine machine-03")
@@ -399,13 +400,29 @@ func TestCreateDUT(t *testing.T) {
 			}
 			_, err = registration.CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-16", "machine-101", "", "", "dut-16-power-1", ".A1", 0, nil)
+			dut1 := mockDUT("dut-16", "machine-101", "", "", "dut-16-power-1", ".A1", 0, nil, "")
 			_, err = inventory.CreateMachineLSE(ctx, dut1)
 			So(err, ShouldBeNil)
-			dut2 := mockDUT("dut-17", "machine-102", "", "", "dut-16-power-1", ".A1", 0, nil)
+			dut2 := mockDUT("dut-17", "machine-102", "", "", "dut-16-power-1", ".A1", 0, nil, "")
 			_, err = CreateDUT(ctx, dut2)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-16")
+		})
+		Convey("CreateDUT - Skip labstation check if docker container is given", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-103",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-18", "machine-103", "labstation-x", "serial-x", "dut-16-power-1", ".A1", 9988, nil, "docker-1")
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
 		})
 	})
 }
@@ -418,7 +435,7 @@ func TestUpdateDUT(t *testing.T) {
 
 		Convey("UpdateDUT - With non-existent dut", func() {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
-			dut1 := mockDUT("dut-1", "machine-10", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-1", "machine-10", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			// dut-1 doesn't exist. Should fail.
 			_, err := UpdateDUT(ctx, dut1, nil)
 			So(err, ShouldNotBeNil)
@@ -435,7 +452,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-1", "machine-20", "labstation-1", "machine-10")
 			// Update DUT machine to a non existent one. This should fail.
-			dut1 := mockDUT("dut-1", "machine-20-fake", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-1", "machine-20-fake", "labstation-1", "serial-1", "dut-1-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-20-fake in the system")
@@ -455,7 +472,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-2", "machine-40", "labstation-2", "machine-30")
 			// Update DUT machine to labstations machine (machine-30). Should fail.
-			dut1 := mockDUT("dut-2", "machine-30", "labstation-2", "serial-1", "dut-2-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-2", "machine-30", "labstation-2", "serial-1", "dut-2-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Host dut-2 cannot be updated because there is another host labstation-2 which is referring this machine machine-30")
@@ -474,7 +491,7 @@ func TestUpdateDUT(t *testing.T) {
 		Convey("UpdateDUT - With invalid name mask", func() {
 			createValidDUTWithLabstation(ctx, "dut-3-name", "machine-60-name", "labstation-3-name", "machine-50-name")
 			// Update with name mask.
-			dut1 := mockDUT("dut-3-name", "", "", "", "", "", int32(0), nil)
+			dut1 := mockDUT("dut-3-name", "", "", "", "", "", int32(0), nil, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("name"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "name cannot be updated")
@@ -494,7 +511,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-time", "machine-60-time", "labstation-3-time", "machine-50-time")
 			// Update with update_time mask.
-			dut1 := mockDUT("dut-3-time", "machine-60-time", "labstation-3-time", "serial-1", "dut-3-time-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-time", "machine-60-time", "labstation-3-time", "serial-1", "dut-3-time-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("update-time"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "unsupported update mask path")
@@ -514,7 +531,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-machine", "machine-60-machine", "labstation-3-machine", "machine-50-machine")
 			// Update with machine mask and no machines.
-			dut1 := mockDUT("dut-3-machine", "", "labstation-3-machine", "serial-1", "dut-3-machine-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-machine", "", "labstation-3-machine", "serial-1", "dut-3-machine-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("machines"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "machines field cannot be empty/nil")
@@ -534,7 +551,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-hostname", "machine-60-hostname", "labstation-3-hostname", "machine-50-hostname")
 			// Update with dut hostname mask.
-			dut1 := mockDUT("dut-3-hostname", "machine-60-hostname", "labstation-3-hostname", "dut-3-hostname-serial-1", "power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-hostname", "machine-60-hostname", "labstation-3-hostname", "dut-3-hostname-serial-1", "power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.hostname"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "hostname cannot be updated")
@@ -554,7 +571,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-pools", "machine-60-pools", "labstation-3-pools", "machine-50-pools")
 			// Update with dut pools mask and valid pools.
-			dut1 := mockDUT("dut-3-pools", "machine-60-pools", "labstation-3-pools", "serial-1", "dut-3-pools-power-1", ".A1", int32(9999), []string{"DUT_POOL_CQ", "DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-pools", "machine-60-pools", "labstation-3-pools", "serial-1", "dut-3-pools-power-1", ".A1", int32(9999), []string{"DUT_POOL_CQ", "DUT_POOL_QUOTA"}, "")
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.pools"))
 			So(err, ShouldBeNil)
 			// Clear update time to compare the protos
@@ -585,7 +602,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-non-v3-host", "machine-60-non-v3-host", "labstation-3-non-v3-host", "machine-50-non-v3-host")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-non-v3-host", "machine-60-non-v3-host", "", "", "", "", int32(9999), nil)
+			dut1 := mockDUT("dut-3-non-v3-host", "machine-60-non-v3-host", "", "", "", "", int32(9999), nil, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.hostname", "dut.servo.port"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot update servo port. Servo host is being reset.")
@@ -617,7 +634,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-non-v3-serial", "machine-60-non-v3-serial", "labstation-3-non-v3-serial", "machine-50-non-v3-serial")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-non-v3-serial", "machine-60-non-v3-serial", "", "dut-3-non-v3-serial-serial-2", "", "", int32(0), nil)
+			dut1 := mockDUT("dut-3-non-v3-serial", "machine-60-non-v3-serial", "", "dut-3-non-v3-serial-serial-2", "", "", int32(0), nil, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.hostname", "dut.servo.serial"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot update servo serial. Servo host is being reset")
@@ -649,7 +666,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-serial", "machine-60-serial", "labstation-3-serial", "machine-50-serial")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-serial", "machine-60-serial", "labstation-3-serial", "serial-2", "dut-3-serial-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-serial", "machine-60-serial", "labstation-3-serial", "serial-2", "dut-3-serial-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.serial"))
 			So(err, ShouldBeNil)
 			// Clear update time to compare the protos
@@ -694,7 +711,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-port", "machine-60-port", "labstation-3-port", "machine-50-port")
 			// Update with servo port mask to port 9988.
-			dut1 := mockDUT("dut-3-port", "machine-60-port", "labstation-3-port", "serial-1", "dut-3-port-power-1", ".A1", int32(9988), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-port", "machine-60-port", "labstation-3-port", "serial-1", "dut-3-port-power-1", ".A1", int32(9988), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.port"))
 			So(err, ShouldBeNil)
 			dut2, err := GetMachineLSE(ctx, "dut-3-port")
@@ -737,7 +754,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-out-of-range-port", "machine-60-out-of-range-port", "labstation-3-out-of-range-port", "machine-50-out-of-range-port")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-out-of-range-port", "", "", "", "", "", int32(1111), nil)
+			dut1 := mockDUT("dut-3-out-of-range-port", "", "", "", "", "", int32(1111), nil, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.port"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servo port 1111 is invalid")
@@ -762,7 +779,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-port-auto-assign", "machine-60-port-auto-assign", "labstation-3-port-auto-assign", "machine-50-port-auto-assign")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-port-auto-assign", "machine-60-port-auto-assign", "labstation-3-port-auto-assign", "serial-1", "dut-3-port-auto-assign-power-1", ".A1", int32(9001), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-port-auto-assign", "machine-60-port-auto-assign", "labstation-3-port-auto-assign", "serial-1", "dut-3-port-auto-assign-power-1", ".A1", int32(9001), []string{"DUT_POOL_QUOTA"}, "")
 			// Change servo port to 9001.
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.port"))
 			So(err, ShouldBeNil)
@@ -832,7 +849,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-del", "machine-60-del", "labstation-3-del", "machine-50-del")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-del", "machine-60-del", "", "", "dut-3-del-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-del", "machine-60-del", "", "", "dut-3-del-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"}, "")
 			// Remove servo from DUT.
 			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = nil
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.hostname"))
@@ -872,7 +889,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-del-servo", "machine-60-del-servo", "labstation-3-del-serv", "machine-50-del-servo")
 			// Update with servo host mask and no servo host.
-			dut1 := mockDUT("dut-3-del-servo", "machine-60-del-servo", "", "", "dut-3-del-servo-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-del-servo", "machine-60-del-servo", "", "", "dut-3-del-servo-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"}, "")
 			// Remove servo from DUT.
 			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = nil
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.hostname"))
@@ -906,7 +923,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-rpm-host", "machine-60-rpm-host", "labstation-3-rpm-host", "machine-50-rpm-host")
 			// Update with rpm host mask and no rpm host.
-			dut1 := mockDUT("dut-3-rpm-host", "machine-60-rpm-host", "labstation-3-rpm-host", "dut-3-rpm-host-serial-1", "", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-rpm-host", "machine-60-rpm-host", "labstation-3-rpm-host", "dut-3-rpm-host-serial-1", "", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.rpm.host", "dut.rpm.outlet"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Deleting rpm host deletes everything. Cannot update outlet.")
@@ -926,7 +943,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-rpm-outlet", "machine-60-rpm-outlet", "labstation-3-rpm-outlet", "machine-50-rpm-outlet")
 			// Update with rpm outlet mask and no rpm outlet.
-			dut1 := mockDUT("dut-3-rpm-outlet", "", "", "", "", "", int32(0), nil)
+			dut1 := mockDUT("dut-3-rpm-outlet", "", "", "", "", "", int32(0), nil, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.rpm.outlet"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot remove rpm outlet. Please delete rpm")
@@ -945,7 +962,7 @@ func TestUpdateDUT(t *testing.T) {
 		Convey("UpdateDUT - With valid rpm mask", func() {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-rpm", "machine-60-rpm", "labstation-3-rpm", "machine-50-rpm")
-			dut1 := mockDUT("dut-3-rpm", "machine-60-rpm", "labstation-3-rpm", "serial-1", "dut-3-rpm-power-2", ".A2", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-rpm", "machine-60-rpm", "labstation-3-rpm", "serial-1", "dut-3-rpm-power-2", ".A2", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.rpm.outlet", "dut.rpm.host"))
 			So(err, ShouldBeNil)
 			// Remove update time to compare proto
@@ -975,7 +992,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3-rpm-del", "machine-60-rpm-del", "labstation-3-rpm-del", "machine-50-rpm-del")
 			// Update with rpm host mask and no rpm.
-			dut1 := mockDUT("dut-3-rpm-del", "machine-60-rpm-del", "labstation-3-rpm-del", "serial-1", "", "", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3-rpm-del", "machine-60-rpm-del", "labstation-3-rpm-del", "serial-1", "", "", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Rpm = nil
 			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.rpm.host"))
 			So(err, ShouldBeNil)
@@ -1005,7 +1022,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-3", "machine-60", "labstation-3", "machine-50")
 			// Update with invalid masks.
-			dut1 := mockDUT("dut-3", "machine-60", "labstation-3", "serial-1", "dut-3-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-3", "machine-60", "labstation-3", "serial-1", "dut-3-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			_, err := UpdateDUT(ctx, dut1, mockFieldMask("invalid-mask-1", "invalid-mask-2"))
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "unsupported update mask path")
@@ -1035,7 +1052,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1.
 			createValidDUTWithLabstation(ctx, "dut-6", "machine-00", "labstation-5", "machine-02")
-			dut1 := mockDUT("dut-7", "machine-01", "labstation-5", "serial-2", "dut-7-power-1", ".A1", int32(9998), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-7", "machine-01", "labstation-5", "serial-2", "dut-7-power-1", ".A1", int32(9998), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-7")
@@ -1046,7 +1063,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
 			// Update port to 9999 creating conflict with dut-6 servo.
-			dut2 := mockDUT("dut-7", "machine-01", "labstation-5", "serial-2", "dut-7-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"})
+			dut2 := mockDUT("dut-7", "machine-01", "labstation-5", "serial-2", "dut-7-power-1", ".A1", int32(9999), []string{"DUT_POOL_QUOTA"}, "")
 			// Maskless update.
 			_, err = UpdateDUT(ctx, dut2, nil)
 			So(err, ShouldNotBeNil)
@@ -1098,7 +1115,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-8", "machine-04", "labstation-6", "machine-05")
-			dut1 := mockDUT("dut-9", "machine-03", "labstation-6", "serial-2", "dut-9-power-1", ".A1", int32(9998), []string{"DUT_POOL_QUOTA"})
+			dut1 := mockDUT("dut-9", "machine-03", "labstation-6", "serial-2", "dut-9-power-1", ".A1", int32(9998), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = CreateDUT(ctx, dut1)
 			So(err, ShouldBeNil)
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-9")
@@ -1109,7 +1126,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
 			// Update dut-9 servo with servo serial of dut-8 (serial-1 created by createValidDUTWithLabstation).
-			dut2 := mockDUT("dut-9", "machine-03", "labstation-6", "serial-1", "dut-9-power-1", ".A1", int32(9997), []string{"DUT_POOL_QUOTA"})
+			dut2 := mockDUT("dut-9", "machine-03", "labstation-6", "serial-1", "dut-9-power-1", ".A1", int32(9997), []string{"DUT_POOL_QUOTA"}, "")
 			// Maskless update.
 			_, err = UpdateDUT(ctx, dut2, nil)
 			So(err, ShouldNotBeNil)
@@ -1154,10 +1171,10 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-11", "machine-08", "labstation-8", "machine-09")
 			// Update the servo serial of the dut to avoid conflict with labstation-7.
-			dut2 := mockDUT("dut-11", "", "", "serial-2", "", "", int32(0), nil)
+			dut2 := mockDUT("dut-11", "", "", "serial-2", "", "", int32(0), nil, "")
 			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.serial"))
 			So(err, ShouldBeNil)
-			dut2 = mockDUT("dut-11", "", "labstation-7", "", "", "", int32(9998), nil)
+			dut2 = mockDUT("dut-11", "", "labstation-7", "", "", "", int32(9998), nil, "")
 			resp, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname", "dut.servo.port"))
 			So(err, ShouldBeNil)
 			// Verify that labstation-8 has no servos left on it.
@@ -1198,7 +1215,7 @@ func TestUpdateDUT(t *testing.T) {
 			// Create a DUT with labstation. Also creates servo with port: 9999 and serial: serial-1
 			createValidDUTWithLabstation(ctx, "dut-12", "machine-11", "labstation-9", "machine-12")
 			// Update the servo serial of the dut to avoid conflict with labstation-7.
-			dut2 := mockDUT("dut-12", "", "", "", "", "", int32(0), nil)
+			dut2 := mockDUT("dut-12", "", "", "", "", "", int32(0), nil, "")
 			_, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname"))
 			So(err, ShouldBeNil)
 			// Verify that labstation-9 has no servos left on it.
@@ -1206,7 +1223,7 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ls9.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldHaveLength, 0)
 			// Add the servo back.
-			dut2 = mockDUT("dut-12", "", "labstation-9", "serial-2", "", "", int32(9901), nil)
+			dut2 = mockDUT("dut-12", "", "labstation-9", "serial-2", "", "", int32(9901), nil, "")
 			_, err = UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname", "dut.servo.serial", "dut.servo.port"))
 			So(err, ShouldBeNil)
 			// Verify that labstation-9 has servo
@@ -1268,14 +1285,14 @@ func TestUpdateDUT(t *testing.T) {
 			}
 			_, err = registration.CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-16", "machine-101", "", "", "dut-16-power-1", ".A1", 0, nil)
+			dut1 := mockDUT("dut-16", "machine-101", "", "", "dut-16-power-1", ".A1", 0, nil, "")
 			_, err = inventory.CreateMachineLSE(ctx, dut1)
 			So(err, ShouldBeNil)
-			dut2 := mockDUT("dut-17", "machine-102", "", "", "dut-17-power-1", ".A1", 0, nil)
+			dut2 := mockDUT("dut-17", "machine-102", "", "", "dut-17-power-1", ".A1", 0, nil, "")
 			_, err = inventory.CreateMachineLSE(ctx, dut2)
 			So(err, ShouldBeNil)
 			// Update rpm powerunit_name to to dut-16-power-1 creating conflict with dut-16 rpm powerunit_name.
-			dut3 := mockDUT("dut-17", "machine-102", "", "", "dut-16-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			dut3 := mockDUT("dut-17", "machine-102", "", "", "dut-16-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = UpdateDUT(ctx, dut3, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-16")
@@ -1304,20 +1321,20 @@ func TestUpdateDUT(t *testing.T) {
 			}
 			_, err = registration.CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
-			dut1 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", 0, nil)
+			dut1 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", 0, nil, "")
 			_, err = inventory.CreateMachineLSE(ctx, dut1)
 			So(err, ShouldBeNil)
-			dut2 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", 0, nil)
+			dut2 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", 0, nil, "")
 			_, err = inventory.CreateMachineLSE(ctx, dut2)
 			So(err, ShouldBeNil)
 			// Both dut-216 and dut-217 have same RPM info.
 			// Update to dut-216 or dut-217 without change in rpm info will fail.
-			dut3 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			dut3 := mockDUT("dut-216", "machine-201", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = UpdateDUT(ctx, dut3, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-217")
 
-			dut4 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"})
+			dut4 := mockDUT("dut-217", "machine-202", "", "", "dut-216-power-1", ".A1", int32(0), []string{"DUT_POOL_QUOTA"}, "")
 			_, err = UpdateDUT(ctx, dut4, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "The rpm powerunit_name and powerunit_outlet is already in use by dut-216")
