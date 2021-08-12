@@ -153,12 +153,16 @@ func filter(ctx context.Context, lj *listJobs, eg func(context.Context) (string,
 
 func (lj *listJobs) Run(ctx context.Context, a subcommands.Application, args []string) error {
 	c, err := lj.pinpointClient(ctx)
-
 	if err != nil {
 		return err
 	}
 
 	filter, err := filter(ctx, lj, getEmail)
+	if strings.Contains(filter, "batch_id") {
+		fmt.Println("WARNING: Large batch_id queries may fail due to crbug/1215327. " +
+			"As a workaround, jobs that are a part of a batch are saved to a .txt, " +
+			"which is reflected in stdout when starting a job.")
+	}
 
 	if err != nil {
 		return errors.Annotate(err, "failed getting filter").Err()

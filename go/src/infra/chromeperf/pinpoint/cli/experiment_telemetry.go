@@ -261,7 +261,8 @@ func runBatchJob(e *experimentTelemetryRun,
 	batch_experiments []telemetryBatchExperiment,
 	experiment *proto.Experiment) ([]*proto.Job, error) {
 
-	outfile, err := os.Create(path.Join(e.baseCommandRun.workDir, batch_id+".txt"))
+	outpath := path.Join(e.baseCommandRun.workDir, batch_id+".txt")
+	outfile, err := os.Create(outpath)
 	if err != nil {
 		return nil, err
 	}
@@ -320,6 +321,7 @@ func runBatchJob(e *experimentTelemetryRun,
 			outfile.WriteString(jobID + "\n")
 		}
 	}
+	fmt.Fprintln(o, "Also wrote new jobs to "+outpath)
 	return jobs, err
 }
 
