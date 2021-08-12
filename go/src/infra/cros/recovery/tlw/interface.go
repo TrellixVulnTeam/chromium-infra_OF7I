@@ -37,7 +37,7 @@ type Access interface {
 	CopyFileFrom(ctx context.Context, req *CopyRequest) error
 	// CopyDirectoryTo copies directory to destination device from local, recursively.
 	CopyDirectoryTo(ctx context.Context, req *CopyRequest) error
-	// CopyDirectoryFrom copies directory from destination device to local, recursively.
+	// CopyDirectoryFrom copies directory from remote device to local, recursively.
 	CopyDirectoryFrom(ctx context.Context, req *CopyRequest) error
 	// SetPowerSupply manages power supply for requested.
 	SetPowerSupply(ctx context.Context, req *SetPowerSupplyRequest) *SetPowerSupplyResponse

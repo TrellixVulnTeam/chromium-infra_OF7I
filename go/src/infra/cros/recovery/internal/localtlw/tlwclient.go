@@ -214,9 +214,12 @@ func (c *tlwClient) CopyDirectoryTo(ctx context.Context, req *tlw.CopyRequest) e
 	return status.Errorf(codes.Unimplemented, "not implemented")
 }
 
-// CopyDirectoryFrom copies directory from destination device to local, recursively.
+// CopyDirectoryFrom copies directory from remote device to local, recursively.
 func (c *tlwClient) CopyDirectoryFrom(ctx context.Context, req *tlw.CopyRequest) error {
-	return status.Errorf(codes.Unimplemented, "not implemented")
+	if err := tlwio.CopyDirectoryFrom(ctx, c.sshPool, req); err != nil {
+		return errors.Annotate(err, "copy directory from").Err()
+	}
+	return nil
 }
 
 // SetPowerSupply manages power supply for requested.
