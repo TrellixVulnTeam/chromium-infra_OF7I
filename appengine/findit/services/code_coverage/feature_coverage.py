@@ -176,16 +176,17 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
             })
           if line_range['count'] != 0:
             covered += 1
-    coverage_per_file[file_path] = {
-        'path': file_path,
-        'lines': interesting_line_ranges[1:],
-        'summaries': [{
-            'name': 'line',
-            'total': total,
-            'covered': covered
-        }],
-        'revision': postsubmit_report.gitiles_commit.revision
-    }
+    if total > 0:
+      coverage_per_file[file_path] = {
+          'path': file_path,
+          'lines': interesting_line_ranges[1:],
+          'summaries': [{
+              'name': 'line',
+              'total': total,
+              'covered': covered
+          }],
+          'revision': postsubmit_report.gitiles_commit.revision
+      }
   return coverage_per_file, files_with_missing_coverage
 
 

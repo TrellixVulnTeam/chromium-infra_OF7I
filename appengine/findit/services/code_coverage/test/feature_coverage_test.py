@@ -314,7 +314,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
-  def testSingleCommit_ModifiesExistingFile_FileGetsModfiedOutsideFeature(
+  def testSingleCommit_ModifiesExistingFile_GetsPartiallyModifiedOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
@@ -372,6 +372,63 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
                                           'feature_coverage')
+
+  # This test tests the case where feature commit adds new lines to an existing
+  # file, but ALL those modifications got overwritten by a commit outside
+  # feature boundaries, thus leaving no interesting lines.
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={'linux-code-coverage': ['.cc']})
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testSingleCommit_ModifiesExistingFile_GetsOverwrittenOutsideFeature(
+      self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    postsubmit_report = PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='rev',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True)
+    postsubmit_report.put()
+    file_coverage_data = FileCoverageData.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='rev',
+        path='//myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        data={'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 3
+        }]})
+    file_coverage_data.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
+    ]
+    content_at_parent_commit = 'line1'
+    content_at_feature_commit = 'line1\nline2\nline3'
+    latest_content = 'line1\nline2 modified\nline3 modified'
+    mock_file_content.side_effect = [
+        latest_content, content_at_feature_commit, content_at_parent_commit
+    ]
+    feature_coverage.ExportFeatureCoverage()
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
+    self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where a file is modified by a feature commit, but
   # later got deleted/moved outside feature boundaries
@@ -589,9 +646,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(CachedGitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
-  def testMissinCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
-                                                  mock_file_content,
-                                                  mocked_report_rows, *_):
+  def testMissingCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
+                                                   mock_file_content,
+                                                   mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',

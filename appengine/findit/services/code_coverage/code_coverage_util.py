@@ -65,7 +65,7 @@ class MissingChangeDataException(Exception):
   pass
 
 
-def GetMetricsBasedOnCoverageTool(coverage_tool):
+def GetMetricsBasedOnCoverageTool(coverage_tool):  # pragma: no cover
   """Gets a list of metrics for the given coverage tool.
 
   Args:
