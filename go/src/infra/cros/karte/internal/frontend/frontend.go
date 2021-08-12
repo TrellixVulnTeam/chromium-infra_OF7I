@@ -25,17 +25,17 @@ func NewKarteFrontend() kartepb.KarteServer {
 // CreateAction creates an action, stores it in datastore, and then returns the just-created action.
 func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateActionRequest) (*kartepb.Action, error) {
 	if req == nil {
-		return nil, errors.New("request cannot be nil")
+		return nil, errors.New("create action: request is nil")
 	}
 	if req.GetAction() == nil {
-		return nil, errors.New("cannot create nil action")
+		return nil, errors.New("create action: action is nil")
 	}
 	actionEntity, err := ConvertActionToActionEntity(req.GetAction())
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "create action").Err()
 	}
 	if err := PutActionEntities(ctx, actionEntity); err != nil {
-		return nil, errors.Annotate(err, "writing ation to datastore").Err()
+		return nil, errors.Annotate(err, "writing action to datastore").Err()
 	}
 	return req.GetAction(), nil
 }
@@ -43,14 +43,14 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 // CreateObservation creates an observation and then returns the just-created observation.
 func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.CreateObservationRequest) (*kartepb.Observation, error) {
 	if req == nil {
-		return nil, errors.New("request cannot be nil")
+		return nil, errors.New("create observation: request is nil")
 	}
 	if req.GetObservation() == nil {
-		return nil, errors.New("cannot create nil observation")
+		return nil, errors.New("create observation: observation is nil")
 	}
 	observationEntity, err := ConvertObservationToObservationEntity(req.GetObservation())
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "create observation").Err()
 	}
 	if err := PutObservationEntities(ctx, observationEntity); err != nil {
 		return nil, errors.Annotate(err, "writing action to datastore").Err()
@@ -63,7 +63,7 @@ func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListAction
 	q := MakeAllActionEntitiesQuery(req.GetPageToken())
 	es, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "list actions (page size: %d)", req.GetPageSize()).Err()
 	}
 	var actions []*kartepb.Action
 	for _, e := range es {
@@ -80,7 +80,7 @@ func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListO
 	q := MakeAllObservationEntitiesQuery(req.GetPageToken())
 	es, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "list observations (page size: %d)", req.GetPageSize()).Err()
 	}
 	var observations []*kartepb.Observation
 	for _, e := range es {

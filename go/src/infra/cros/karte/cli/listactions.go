@@ -11,6 +11,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/karte/client"
 	"infra/cros/karte/site"
@@ -47,10 +48,10 @@ func (c *listActionsRun) Run(a subcommands.Application, args []string, env subco
 func (c *listActionsRun) innerRun(ctx context.Context, args []string, env subcommands.Env) error {
 	authOptions, err := c.authFlags.Options()
 	if err != nil {
-		return err
+		return errors.Annotate(err, "inner run").Err()
 	}
 	_, err = client.NewClient(ctx, client.LocalConfig(authOptions))
 	// TODO(gregorynisbet): Expand innerRun so it that lists the actions instead
 	// of checking whether it was able to instantiate the client or not.
-	return err
+	return errors.Annotate(err, "inner run").Err()
 }

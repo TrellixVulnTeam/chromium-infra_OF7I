@@ -6,9 +6,9 @@ package client
 
 import (
 	"context"
-	"errors"
 
 	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/common/errors"
 	prpc "go.chromium.org/luci/grpc/prpc"
 
 	kartepb "infra/cros/karte/api"
@@ -58,7 +58,7 @@ func NewClient(ctx context.Context, c *config, o ...Option) (kartepb.KarteClient
 	a := auth.NewAuthenticator(ctx, c.loginMode, c.authOption)
 	hc, err := a.Client()
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "create karte client").Err()
 	}
 	return kartepb.NewKartePRPCClient(&prpc.Client{
 		C:    hc,

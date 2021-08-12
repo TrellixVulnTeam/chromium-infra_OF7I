@@ -151,7 +151,7 @@ func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*Act
 	if q.Token != "" {
 		cursor, err := datastore.DecodeCursor(ctx, q.Token)
 		if err != nil {
-			return nil, err
+			return nil, errors.Annotate(err, "next action entity").Err()
 		}
 		rootedQuery = q.Query.Start(cursor)
 	}
@@ -166,14 +166,14 @@ func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*Act
 		if len(entities) >= int(batchSize) {
 			tok, err := cb()
 			if err != nil {
-				return err
+				return errors.Annotate(err, "next action entity (entities: %d)", len(entities)).Err()
 			}
 			nextToken = tok.String()
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "next action entity").Err()
 	}
 	q.Token = nextToken
 	return entities, nil
@@ -210,7 +210,7 @@ func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([
 	if q.Token != "" {
 		cursor, err := datastore.DecodeCursor(ctx, q.Token)
 		if err != nil {
-			return nil, err
+			return nil, errors.Annotate(err, "next observation entity").Err()
 		}
 		rootedQuery = q.Query.Start(cursor)
 	}
@@ -225,14 +225,14 @@ func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([
 		if len(entities) >= int(batchSize) {
 			tok, err := cb()
 			if err != nil {
-				return err
+				return errors.Annotate(err, "next observation entity").Err()
 			}
 			nextToken = tok.String()
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "next observation entity").Err()
 	}
 	q.Token = nextToken
 	return entities, nil
@@ -250,7 +250,7 @@ func MakeAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
 // ConvertActionToActionEntity takes an action and converts it to an action entity.
 func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
 	if action == nil {
-		return nil, errors.New("action cannot be nil")
+		return nil, errors.New("convert action to action entity: action is nil")
 	}
 	return &ActionEntity{
 		ID:             action.GetName(),
@@ -272,7 +272,7 @@ func PutActionEntities(ctx context.Context, entities ...*ActionEntity) error {
 // ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
 func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
 	if observation == nil {
-		return nil, errors.New("action cannot be nil")
+		return nil, errors.New("convert observation to observation entity: action is nil")
 	}
 	return &ObservationEntity{
 		ID:          observation.GetName(),
