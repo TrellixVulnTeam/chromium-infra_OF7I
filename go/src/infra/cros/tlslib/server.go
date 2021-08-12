@@ -23,7 +23,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
-	"go.chromium.org/chromiumos/config/go/longrunning"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"go.chromium.org/luci/common/tsmon"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"

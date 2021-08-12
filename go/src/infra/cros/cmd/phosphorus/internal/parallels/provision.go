@@ -17,7 +17,7 @@ import (
 
 	"github.com/maruel/subcommands"
 	tlsapi "go.chromium.org/chromiumos/config/go/api/test/tls"
-	"go.chromium.org/chromiumos/config/go/longrunning"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	bpipb "go.chromium.org/chromiumos/infra/proto/go/uprev/build_parallels_image"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"

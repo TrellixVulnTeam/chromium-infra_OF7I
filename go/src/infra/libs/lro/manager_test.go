@@ -7,7 +7,7 @@ import (
 	"infra/libs/lro"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
-	"go.chromium.org/chromiumos/config/go/longrunning"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
