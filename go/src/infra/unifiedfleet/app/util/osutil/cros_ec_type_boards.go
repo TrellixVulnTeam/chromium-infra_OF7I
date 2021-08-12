@@ -39,6 +39,7 @@ var crosEcTypeBoards = []string{
 	"poppy",
 	"pyro",
 	"rambi",
+	"rammus",
 	"reef",
 	"samus",
 	"sarien",
