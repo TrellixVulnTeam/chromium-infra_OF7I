@@ -183,14 +183,15 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
             'name': 'line',
             'total': total,
             'covered': covered
-        }]
+        }],
+        'revision': postsubmit_report.gitiles_commit.revision
     }
   return coverage_per_file, files_with_missing_coverage
 
 
 def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report, feature):
   """Creates file coverage entities corresponding to a modifier.
-  
+
   Args:
     coverage_per_file (dict): The dict has filepath as key and value
           representing File proto at https://bit.ly/3yry0KR.

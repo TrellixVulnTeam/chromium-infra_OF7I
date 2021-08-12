@@ -142,7 +142,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                 'name': 'line',
                 'total': 4,
                 'covered': 4
-            }]
+            }],
+            'revision': 'rev'
         })
 
   # This test tests the case where feature commits adds a new file and the file
