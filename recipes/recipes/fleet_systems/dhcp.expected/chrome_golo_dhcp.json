@@ -69,7 +69,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/project@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "chrome_golo@HEAD"
+      "chrome_golo@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "project/try/builder/8945511751514863184",

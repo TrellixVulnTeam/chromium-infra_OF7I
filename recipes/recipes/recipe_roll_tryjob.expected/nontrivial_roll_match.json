@@ -143,7 +143,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/infra/luci/recipes-py@refs/heads/main:refs/changes/89/456789/12",
       "--revision",
-      "recipe_engine@HEAD"
+      "recipe_engine@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "cwd": "[CACHE]/builder/recipe_engine",
     "env": {

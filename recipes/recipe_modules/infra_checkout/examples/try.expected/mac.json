@@ -78,7 +78,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/infra/infra@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "infra@HEAD"
+      "infra@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {

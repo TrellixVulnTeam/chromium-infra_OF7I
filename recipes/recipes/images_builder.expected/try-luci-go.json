@@ -80,7 +80,7 @@
       "--revision",
       "infra@HEAD",
       "--revision",
-      "infra/go/src/go.chromium.org/luci@HEAD"
+      "infra/go/src/go.chromium.org/luci@refs/heads/main"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {

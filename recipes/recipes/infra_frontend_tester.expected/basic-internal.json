@@ -62,7 +62,9 @@
       "--patch_ref",
       "https://chrome-internal.googlesource.com/infra/infra_internal@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "infra_internal@HEAD"
+      "infra_internal@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/infra_internal/try/builder/8945511751514863184",

@@ -62,7 +62,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/infra/gerrit-plugins/code-coverage@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "gerrit_plugins_code_coverage@HEAD"
+      "gerrit_plugins_code_coverage@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/gerrit-plugins/code-coverage/try/builder/8945511751514863184",

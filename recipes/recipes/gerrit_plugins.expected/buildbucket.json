@@ -62,7 +62,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/infra/gerrit-plugins/buildbucket@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "gerrit_plugins_buildbucket@HEAD"
+      "gerrit_plugins_buildbucket@refs/heads/main",
+      "--refs",
+      "refs/heads/main"
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/gerrit-plugins/buildbucket/try/builder/8945511751514863184",
