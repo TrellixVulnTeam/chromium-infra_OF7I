@@ -22,6 +22,8 @@ message Servo {
   // Based on http://go/fleet-servo-topology
   ServoTopology servo_topology = 8;
   ServoFwChannel servo_fw_channel = 9;
+  // b/190538710 optional docker container name if servod is running in docker
+  string docker_container_name = 10;
 }
 
 // Servo Setup Type describes the capabilities of servos.
