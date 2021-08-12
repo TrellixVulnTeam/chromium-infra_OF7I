@@ -15,7 +15,7 @@ This might look something like
 
 ```json
 {
-  "chromiumos_checkout_root": "/home/sean/chromiumos",
+  "gitiles_commit": "SomeBase64EncodedGitilesCommit",
   "buildbucket_protos": [
     {
       "serialized_proto": "SomeBase64EncodedBuildBucketBuildProto"
@@ -32,13 +32,13 @@ Alright, now you'll need to get OAuth credentials to run the program:
 ```shell
 # Get to this folder in the repo
 # cd test_planner/src/testplans/
-go run cmd/test_plan_generator/main.go auth-login
+go run cmd/test_plan_generator/test_plan_generator.go auth-login
 ```
 
 And now you can actually run it:
 
 ```shell
-go run cmd/test_plan_generator/main.go gen-test-plan \
-    --input_json=$PWD/cmd/test_plan_generator/sample/input.json \
-    --output_json=$PWD/cmd/test_plan_generator/sample/output.json
+go run cmd/test_plan_generator/test_plan_generator.go gen-test-plan \
+    --input_json=$PWD/cmd/test_plan_generator/sample/gen_test_plan_input.json \
+    --output_json=$PWD/cmd/test_plan_generator/sample/gen_test_plan_output.json
 ```
