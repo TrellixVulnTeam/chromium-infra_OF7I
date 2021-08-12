@@ -37,6 +37,7 @@ type AutoservArgs struct {
 	Lab                bool
 	NoTee              bool
 	ParentJobID        int
+	PeerDuts           []string
 	Provision          bool
 	Repair             bool
 	RequireSSP         bool
@@ -101,6 +102,9 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if cmd.ParentJobID != 0 {
 		args = append(args, fmt.Sprintf("--parent_job_id=%d", cmd.ParentJobID))
+	}
+	if len(cmd.PeerDuts) != 0 {
+		args = append(args, "-ch", strings.Join(cmd.PeerDuts, ","))
 	}
 	if cmd.Provision {
 		args = append(args, "--provision")

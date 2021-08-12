@@ -149,7 +149,7 @@ func prepareHostInfo(resultsDir string, j AutoservJob) error {
 	if err := os.MkdirAll(dstdir, 0777); err != nil {
 		return err
 	}
-	for _, h := range ja.Hosts {
+	for _, h := range append(ja.Hosts, ja.PeerDuts...) {
 		f := fmt.Sprintf("%s.store", h)
 		src := filepath.Join(resultsDir, hostInfoSubDir, f)
 		dst := filepath.Join(dstdir, f)
@@ -164,7 +164,7 @@ func prepareHostInfo(resultsDir string, j AutoservJob) error {
 // back to the master host info store in the results directory.
 func retrieveHostInfo(resultsDir string, j AutoservJob) error {
 	ja := j.AutoservArgs()
-	for _, h := range ja.Hosts {
+	for _, h := range append(ja.Hosts, ja.PeerDuts...) {
 		f := fmt.Sprintf("%s.store", h)
 		src := filepath.Join(ja.ResultsDir, hostInfoSubDir, f)
 		dst := filepath.Join(resultsDir, hostInfoSubDir, f)

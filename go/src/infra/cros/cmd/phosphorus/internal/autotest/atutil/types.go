@@ -116,6 +116,7 @@ type Test struct {
 	Name             string
 	Owner            string
 	ParentJobID      int
+	PeerDuts         []string
 	RequireSSP       bool
 	ResultsDir       string
 	SSPBaseImageName string
@@ -137,6 +138,7 @@ func (t *Test) AutoservArgs() *autotest.AutoservArgs {
 		Lab:              true,
 		NoTee:            true,
 		ParentJobID:      t.ParentJobID,
+		PeerDuts:         t.PeerDuts,
 		RequireSSP:       t.RequireSSP,
 		ResultsDir:       t.ResultsDir,
 		SSPBaseImageName: t.SSPBaseImageName,
