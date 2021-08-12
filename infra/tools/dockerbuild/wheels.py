@@ -133,7 +133,7 @@ SPECS.update({
                 'windows-x86',
                 'windows-x64',
             ),
-            pyversions=['py2'],
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'PyYAML',
