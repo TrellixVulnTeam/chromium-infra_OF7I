@@ -74,7 +74,13 @@ func (c *addDUT) Run(a subcommands.Application, args []string, env subcommands.E
 }
 
 // InnerRun is the implementation of run.
-func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) (err error) {
+	// This function has a single defer block that inspects the return value err to see if it
+	// is nil. This defer block does *not* set the err back to nil if it succeeds in cleaning up
+	// the dut_hosts file. Instead, it creates a multierror with whatever errors it encountered.
+	//
+	// If we're going to add multiple defer blocks, a different strategy is needed to make sure that
+	// they compose in the correct way.
 	dockerHostBoxIdentifier := strings.ToLower(c.commonFlags.SatlabID)
 	if dockerHostBoxIdentifier == "" {
 		var err error
@@ -114,6 +120,45 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		c.zone = site.DefaultZone
 	}
 
+	// Update the DNS entry first. This step must run before we deploy the DUT.
+	// This step can occur in any order with respect to ensuring the existence of the rack or
+	// the asset.
+	if !c.skipDNS {
+		content, updateErr := dns.UpdateRecord(
+			c.qualifiedHostname,
+			c.address,
+		)
+		if updateErr != nil {
+			return errors.Annotate(updateErr, "add dut").Err()
+		}
+		// Write the content back if we fail at a later step for any reason.
+		defer (func() {
+			// Err refers to the error for the function as a whole.
+			// If it's non-nil, then a later step has failed and we need
+			// to clean up after ourselves.
+			if content == "" {
+				// If the content is empty, do nothing because we either failed to
+				// copy the contents of the file, or the file was empty originally.
+				//
+				// In either case, restoring the old contents could potentially lose
+				// information.
+				//
+				// Do not modify the error value.
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "original DNS entry was empty.\n")
+				} else {
+					fmt.Fprintf(os.Stderr, "original DNS entry was empty. Skipping restoration\n")
+				}
+			} else if err != nil {
+				fmt.Fprintf(os.Stderr, "Restoring DNS content after failed step\n")
+				dnsErr := dns.SetDNSFileContent(content)
+				fmt.Fprintf(os.Stderr, "Restarting DNSMasq after failed step\n")
+				reloadErr := dns.ForceReloadDNSMasqProcess()
+				err = errors.NewMultiError(err, dnsErr, reloadErr)
+			}
+		})()
+	}
+
 	if err := (&shivas.Rack{
 		Name:      c.qualifiedRack,
 		Namespace: c.envFlags.Namespace,
@@ -143,15 +188,6 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		ShivasArgs: makeAddShivasFlags(c),
 	}).CheckAndUpdate(); err != nil {
 		return errors.Annotate(err, "add dut").Err()
-	}
-
-	if !c.skipDNS {
-		if err := dns.UpdateRecord(
-			c.qualifiedHostname,
-			c.address,
-		); err != nil {
-			return errors.Annotate(err, "add dut").Err()
-		}
 	}
 
 	return nil

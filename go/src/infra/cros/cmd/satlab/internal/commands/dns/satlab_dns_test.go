@@ -42,6 +42,7 @@ func TestReplaceLineContents(t *testing.T) {
 		tabify("addr3 host3"),
 	}
 	actual, err := replaceLineContents(
+		make(map[string]bool),
 		input,
 		classifier,
 		replacer,

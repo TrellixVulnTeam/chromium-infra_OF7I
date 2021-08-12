@@ -6,6 +6,7 @@ package dns
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -16,7 +17,7 @@ import (
 )
 
 // A classifier takes a line and determines whether to keep, remove, or modify it.
-type classifier func(string) commands.Decision
+type classifier func(map[string]bool, string) commands.Decision
 
 // A replacer takes a line that is selected to be modified and modifies it.
 type replacer func(string) string
@@ -52,7 +53,7 @@ func writeBackup(content string) error {
 }
 
 // SetDNSFileContent set the content of the DNS file.
-func setDNSFileContent(content string) error {
+func SetDNSFileContent(content string) error {
 	name, err := commands.MakeTempFile(content)
 	if err != nil {
 		return errors.Annotate(err, "set dns file content").Err()
@@ -67,9 +68,9 @@ func setDNSFileContent(content string) error {
 	return errors.Annotate(err, fmt.Sprintf("set backup dns file content: running %s", strings.Join(args, " "))).Err()
 }
 
-// forceReloadDNSMasqProcess sends the hangup signal to the dnsmasq process inside the dns container
+// ForceReloadDNSMasqProcess sends the hangup signal to the dnsmasq process inside the dns container
 // and forces it to reload its config.
-func forceReloadDNSMasqProcess() error {
+func ForceReloadDNSMasqProcess() error {
 	args := []string{
 		paths.DockerPath,
 		"exec",
@@ -84,15 +85,13 @@ func forceReloadDNSMasqProcess() error {
 
 // EnsureRecords ensures that the given DNS records in question are up to date with respect to
 // a map mapping hostnames to addresses.
-func ensureRecords(newRecords map[string]string) error {
-	content, err := readContents()
-	if err != nil {
-		return errors.Annotate(err, "ensure dns records").Err()
-	}
+func ensureRecords(content string, newRecords map[string]string) error {
 	// Set the backup DNS file so that the user can see the previous state.
 	if err := writeBackup(content); err != nil {
 		return errors.Annotate(err, "ensure dns records").Err()
 	}
+
+	seen := make(map[string]bool)
 
 	classifier := makeClassifier(newRecords)
 	replacer := func(line string) string {
@@ -104,28 +103,37 @@ func ensureRecords(newRecords map[string]string) error {
 	}
 
 	newContent, err := replaceLineContents(
+		seen,
 		strings.Split(content, "\n"),
 		classifier,
 		replacer,
 	)
 
+	for host, addr := range newRecords {
+		if seen[host] {
+			// Do nothing, line already added.
+		} else {
+			fmt.Fprintf(os.Stderr, "Adding new DNS entry for %s", host)
+			newContent = append(newContent, fmt.Sprintf("%s\t%s\n", addr, host))
+		}
+	}
+
 	if err != nil {
 		return errors.Annotate(err, "ensure dns records").Err()
 	}
-	if err := setDNSFileContent(strings.Join(newContent, "\n")); err != nil {
+	if err := SetDNSFileContent(strings.Join(newContent, "\n")); err != nil {
 		return errors.Annotate(err, "ensure dns records").Err()
 	}
-	if err := forceReloadDNSMasqProcess(); err != nil {
+	if err := ForceReloadDNSMasqProcess(); err != nil {
 		return errors.Annotate(err, "ensure dns records").Err()
 	}
 	return nil
 }
 
 // MakeClassifier makes a classifier that determines whether to modify a given addr, host line or not.
-// MakeClassifier modifies its argument seen.
 func makeClassifier(newRecords map[string]string) classifier {
-	seen := make(map[string]bool)
-
+	// Nth takes the elements and the given index and safely accesses the string
+	// at that index or returns "" if no such string exists.
 	nth := func(els []string, idx int) string {
 		if idx >= len(els) {
 			return ""
@@ -133,7 +141,9 @@ func makeClassifier(newRecords map[string]string) classifier {
 		return els[idx]
 	}
 
-	classifier := func(line string) commands.Decision {
+	// Classifier takes a map of hostnames that have seen before and the current line
+	// and determines how to transform it.
+	classifier := func(seen map[string]bool, line string) commands.Decision {
 		words := strings.Fields(line)
 		// Keep blank lines.
 		if len(words) == 0 {
@@ -161,13 +171,16 @@ func makeClassifier(newRecords map[string]string) classifier {
 
 // ReplaceLineContents walks a sequence of lines and keeps, modifies, or removes each line
 // according to the classifier and replacer.
-func replaceLineContents(lines []string, classifier classifier, replacer replacer) ([]string, error) {
+func replaceLineContents(seen map[string]bool, lines []string, classifier classifier, replacer replacer) ([]string, error) {
+	if seen == nil {
+		return nil, errors.New("replace line contents: map cannot be nil")
+	}
 	var out []string
 	for _, line := range lines {
-		decision := classifier(line)
+		decision := classifier(seen, line)
 		switch decision {
 		case commands.Unknown:
-			return nil, errors.New("unexpected decision")
+			return nil, errors.New("replace line contents: unexpected decision")
 		case commands.Keep:
 			out = append(out, line)
 		case commands.Modify:
@@ -175,7 +188,7 @@ func replaceLineContents(lines []string, classifier classifier, replacer replace
 		case commands.Reject:
 			continue
 		default:
-			return nil, errors.New("unrecongized decision")
+			return nil, errors.New("replace line contents: unrecognized decision")
 		}
 	}
 	return out, nil
@@ -183,14 +196,20 @@ func replaceLineContents(lines []string, classifier classifier, replacer replace
 
 // UpdateRecord ensures that the contents of the /etc/hosts file in the dns container are up to date
 // with a given host and address.
-func UpdateRecord(host string, addr string) error {
+// UpdateRecord returns the original contents before modification, to allow its caller to undo the modification.
+func UpdateRecord(host string, addr string) (string, error) {
 	if host == "" {
-		return errors.New("no hostname")
+		return "", errors.New("update record: no hostname")
 	}
 	if addr == "" {
-		return errors.New("no address")
+		return "", errors.New("update record: no address")
 	}
-	return ensureRecords(map[string]string{
-		host: addr,
-	})
+	content, err := readContents()
+	if err != nil {
+		return "", errors.Annotate(err, "update record").Err()
+	}
+	if err := ensureRecords(content, map[string]string{host: addr}); err != nil {
+		return "", errors.Annotate(err, "update record").Err()
+	}
+	return content, nil
 }
