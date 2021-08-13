@@ -65,6 +65,28 @@ var (
 		Key: errors.NewTagKey("synthetic test"),
 	}
 
+	// fatalMessageRE extracts fatal log lines, and is used as a fallback to
+	// extract failure reasons where result parts are not available (such as
+	// when the test crashes.)
+	// The first capture group captures the name of the file which generated
+	// the fatal message, the second captures the message itself. Derived with
+	// the help of experiments to properly extract the message and file from
+	// log lines which contained the word "FATAL" or "Check failed:" in ~99%
+	// of cases.
+	// The main known category of crash this regexp does not cater for is when
+	// the Chrome crashes due to signals received by the OS (e.g. SEGV_MAPERR,
+	// EXCEPTION_ACCESS_VIOLATION). No attempt is made to extract these are
+	// the messages do not appear to be specific enough to be useful for
+	// clustering. Further work may improve failure reason extraction for
+	// these types of errors.
+	fatalMessageRE = regexp.MustCompile(`.*FATAL.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (.*)`)
+
+	// checkFailedRE extracts fatal log lines and is used in addition to
+	// fatalMessageRE. This results in an additional ~1% of fatal failure
+	// messages being extracted. Both regular expressions overlap
+	// significantly.
+	checkFailedRE = regexp.MustCompile(`.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (Check failed:.*)`)
+
 	// ResultSink limits the failure reason primary error message to 1024 bytes in UTF-8.
 	maxPrimaryErrorBytes = 1024
 )
@@ -339,7 +361,7 @@ func extractPrimaryFailure(ctx context.Context, parts []*GTestRunResultPart) *GT
 	return primaryFailure
 }
 
-func extractFailureReason(ctx context.Context, parts []*GTestRunResultPart) *pb.FailureReason {
+func extractFailureReasonFromResultParts(ctx context.Context, parts []*GTestRunResultPart) *pb.FailureReason {
 	f := extractPrimaryFailure(ctx, parts)
 	if f == nil {
 		// No failure part.
@@ -365,6 +387,27 @@ func extractFailureReason(ctx context.Context, parts []*GTestRunResultPart) *pb.
 	}
 }
 
+func extractFailureReasonFromSnippet(ctx context.Context, snippet string) *pb.FailureReason {
+	match := fatalMessageRE.FindStringSubmatchIndex(snippet)
+	checkFailedMatch := checkFailedRE.FindStringSubmatchIndex(snippet)
+	if match == nil || (checkFailedMatch != nil && checkFailedMatch[0] < match[0]) {
+		match = checkFailedMatch
+	}
+	if match == nil {
+		return nil
+	}
+	// File name and line, e.g. "tls_handshaker.cc(123)".
+	fileName := snippet[match[2]:match[3]]
+	// The failure message, e.g. "Check failed: !condition. "
+	message := strings.TrimSpace(snippet[match[4]:match[5]])
+	// Include the location of the fatal error as sometimes "Check failed: "
+	// errors are non specific. E.g. "Check failed: false".
+	primaryError := fmt.Sprintf("%v: %v", fileName, message)
+	return &pb.FailureReason{
+		PrimaryErrorMessage: truncateString(primaryError, maxPrimaryErrorBytes),
+	}
+}
+
 func (r *GTestResults) convertTestResult(ctx context.Context, buf *bytes.Buffer, testID, name string, result *GTestRunResult) (*sinkpb.TestResult, error) {
 	status, expected, err := fromGTestStatus(result.Status)
 	if err != nil {
@@ -384,7 +427,7 @@ func (r *GTestResults) convertTestResult(ctx context.Context, buf *bytes.Buffer,
 			"lossless_snippet", strconv.FormatBool(result.LosslessSnippet),
 		),
 		TestMetadata:  &pb.TestMetadata{Name: name},
-		FailureReason: extractFailureReason(ctx, result.ResultParts),
+		FailureReason: extractFailureReasonFromResultParts(ctx, result.ResultParts),
 	}
 
 	// Do not set duration if it is unknown.
@@ -402,6 +445,9 @@ func (r *GTestResults) convertTestResult(ctx context.Context, buf *bytes.Buffer,
 			// convert a summary.
 			logging.Warningf(ctx, "Failed to convert OutputSnippetBase64 %q", result.OutputSnippetBase64)
 		} else {
+			if tr.FailureReason == nil {
+				tr.FailureReason = extractFailureReasonFromSnippet(ctx, string(outputBytes))
+			}
 			tr.Artifacts = map[string]*sinkpb.Artifact{"snippet": {
 				Body:        &sinkpb.Artifact_Contents{Contents: outputBytes},
 				ContentType: "text/plain",

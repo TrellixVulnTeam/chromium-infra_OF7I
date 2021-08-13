@@ -305,7 +305,7 @@ func TestGTestConversions(t *testing.T) {
 			So(tr.SummaryHtml, ShouldEqual, `<ul><li><a href="https://luci-logdog.appspot.com/v/?s=logcat">logcat</a></li></ul>`)
 		})
 
-		Convey("result_parts", func() {
+		Convey("failure reason", func() {
 			Convey("first failure takes precedence", func() {
 				tr := convert(&GTestRunResult{
 					Status: "FAILURE",
@@ -346,6 +346,21 @@ func TestGTestConversions(t *testing.T) {
 					},
 				})
 				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `This is a fatal failure message.`)
+			})
+			Convey("failure result parts take precedence over snippet", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							// "This is a failure message."
+							SummaryBase64: "VGhpcyBpcyBhIGZhaWx1cmUgbWVzc2FnZS4=",
+							Type:          "failure",
+						},
+					},
+					// [FATAL:file_name.cc(123)] Error message.
+					OutputSnippetBase64: "W0ZBVEFMOmZpbGVfbmFtZS5jYygxMjMpXSBFcnJvciBtZXNzYWdlLg==",
+				})
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `This is a failure message.`)
 			})
 			Convey("empty", func() {
 				tr := convert(&GTestRunResult{
@@ -419,6 +434,73 @@ func TestGTestConversions(t *testing.T) {
 				})
 				So(tr.FailureReason, ShouldEqual, nil)
 			})
+			Convey("extracted from snippet", func() {
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					// [FATAL:file_name.cc(123)] Error message.
+					OutputSnippetBase64: "W0ZBVEFMOmZpbGVfbmFtZS5jYygxMjMpXSBFcnJvciBtZXNzYWdlLg==",
+				})
+				So(tr.FailureReason, ShouldNotEqual, nil)
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `file_name.cc(123): Error message.`)
+			})
+		})
+	})
+
+	Convey("extractFailureReasonFromSnippet", t, func() {
+		test := func(input string, expected string) {
+			result := extractFailureReasonFromSnippet(ctx, input)
+			if expected != "" {
+				So(result, ShouldNotEqual, nil)
+				So(result.PrimaryErrorMessage, ShouldEqual, expected)
+			} else {
+				So(result, ShouldEqual, nil)
+			}
+		}
+		Convey("fatal example without DCheck", func() {
+			// This example does has in the message and and does not have "Check failed:".
+			example := "[70297:775:0716/090328.691561:FATAL:sync_test.cc(928)] AwaitQuiescence() failed."
+			test(example, "sync_test.cc(928): AwaitQuiescence() failed.")
+		})
+		Convey("fatal DCheck example #1", func() {
+			example := "[722:259:FATAL:multiplex_router.cc(181)] Check failed: !client_. "
+			test(example, "multiplex_router.cc(181): Check failed: !client_.")
+		})
+		Convey("fatal DCheck example #2", func() {
+			example := "[27483:27483:0807/204616.124527:FATAL:video_source.mojom.cc(555)] Check failed: !connected. PushVideoStreamSubscription::GetPhotoStateCallback was destroyed"
+			test(example, "video_source.mojom.cc(555): Check failed: !connected. PushVideoStreamSubscription::GetPhotoStateCallback was destroyed")
+		})
+		Convey("fatal DCheck example #3", func() {
+			example := "FATAL ash_unittests[6813:6813]: [display_manager_test_api.cc(160)] Check failed: display_manager_->GetNumDisplays() >= 2U (1 vs. 2)"
+			test(example, "display_manager_test_api.cc(160): Check failed: display_manager_->GetNumDisplays() >= 2U (1 vs. 2)")
+		})
+		Convey("fatal DCheck example #4", func() {
+			example := "[FATAL:gl_context.cc(203)] Check failed: false. "
+			test(example, "gl_context.cc(203): Check failed: false.")
+		})
+		Convey("non-fatal DCheck example", func() {
+			// This example does not have FATAL in the message and relies upon matching "Check failed:".
+			example := "../../base/allocator/partition_allocator/partition_root.h(998) Check failed: !slot_span->bucket->is_direct_mapped()"
+			test(example, "partition_root.h(998): Check failed: !slot_span->bucket->is_direct_mapped()")
+		})
+		Convey("unix line endings", func() {
+			example := "blah\n../../base/allocator/partition_allocator/partition_root.h(998) Check failed: !slot_span->bucket->is_direct_mapped()\nblah"
+			test(example, "partition_root.h(998): Check failed: !slot_span->bucket->is_direct_mapped()")
+		})
+		Convey("windows line endings", func() {
+			example := "blah\r\n../../base/allocator/partition_allocator/partition_root.h(998) Check failed: !slot_span->bucket->is_direct_mapped()\r\nblah"
+			test(example, "partition_root.h(998): Check failed: !slot_span->bucket->is_direct_mapped()")
+		})
+		Convey("empty snippet", func() {
+			example := ""
+			test(example, "")
+		})
+		Convey("non-matching snippet", func() {
+			example := "blah\nblah\n"
+			test(example, "")
+		})
+		Convey("first fatal error extracted", func() {
+			example := "blah\npath/to/file.cc(123) Check failed: bool_expression\n[FATAL:file2.cc(456)] Check failed: second_bool_expression\nblah"
+			test(example, "file.cc(123): Check failed: bool_expression")
 		})
 	})
 
