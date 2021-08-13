@@ -178,13 +178,10 @@ func getPrejobs(parentDir string) ([]prejobInfo, error) {
 		if err != nil {
 			return nil, fmt.Errorf("bad regex: %s", regex)
 		}
-		if len(prejobDirList) > 1 {
-			return nil, errors.New("more than one directory for the same prejob type")
-		}
-		if len(prejobDirList) == 1 {
+		for _, dir := range prejobDirList {
 			prejobs = append(prejobs, prejobInfo{
 				Name: prefix,
-				Dir:  prejobDirList[0],
+				Dir:  dir,
 			})
 		}
 	}

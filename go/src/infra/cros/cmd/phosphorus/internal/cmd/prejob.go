@@ -84,11 +84,29 @@ func (c *prejobRun) innerRun(ctx context.Context, args []string, env subcommands
 		defer c()
 	}
 
-	resp, err := runProvisionSteps(ctx, &r)
-	if err != nil {
-		return err
+	var rl []*phosphorus.PrejobRequest
+	rl = append(rl, &r)
+	// Mimic a PrejobRequest for each additional provision targets.
+	for _, provisionTarget := range r.GetAddtionalTargets() {
+		peerRequest := phosphorus.PrejobRequest{
+			Deadline:             r.GetDeadline(),
+			SoftwareDependencies: provisionTarget.GetSoftwareDependencies(),
+			DutHostname:          provisionTarget.GetDutHostname(),
+			UseTls:               r.GetUseTls(),
+			Config:               r.GetConfig(),
+		}
+		rl = append(rl, &peerRequest)
 	}
-	return WriteJSONPB(c.OutputPath, resp)
+	// Run provision for every targets.
+	var respList []*phosphorus.PrejobResponse
+	for _, req := range rl {
+		resp, err := runProvisionSteps(ctx, req)
+		if err != nil {
+			return err
+		}
+		respList = append(respList, resp)
+	}
+	return WriteJSONPB(c.OutputPath, aggregatePrejobResponse(respList))
 }
 
 func runProvisionSteps(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
@@ -492,4 +510,28 @@ func botCache(r *phosphorus.PrejobRequest) *botcache.Store {
 		CacheDir: r.GetConfig().GetBot().GetAutotestDir(),
 		Name:     r.GetDutHostname(),
 	}
+}
+
+func aggregatePrejobResponse(respList []*phosphorus.PrejobResponse) *phosphorus.PrejobResponse {
+	// The State in aggregated response should be set to highest severity level.
+	// We consider Severity level as: UNSPECIFIED > FAILED > ABORTED > SUCCEEDED.
+	severityMap := map[phosphorus.PrejobResponse_State]int{
+		phosphorus.PrejobResponse_STATE_UNSPECIFIED: 4,
+		phosphorus.PrejobResponse_FAILED:            3,
+		phosphorus.PrejobResponse_ABORTED:           2,
+		phosphorus.PrejobResponse_SUCCEEDED:         1,
+	}
+	state := phosphorus.PrejobResponse_SUCCEEDED
+	for _, resp := range respList {
+		if s, ok := severityMap[resp.State]; ok {
+			if s > severityMap[state] {
+				state = resp.State
+			}
+		} else {
+			// We don't expected to hit this point, but if we do we set state to UNSPECIFIED
+			// which is the highest severity.
+			state = phosphorus.PrejobResponse_STATE_UNSPECIFIED
+		}
+	}
+	return &phosphorus.PrejobResponse{State: state}
 }
