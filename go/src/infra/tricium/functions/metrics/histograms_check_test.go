@@ -634,6 +634,41 @@ func TestHistogramsCheck(t *testing.T) {
 			},
 		})
 	})
+
+	// DEPRECATED NAMESPACE tests
+
+	Convey("Analyze XML file with added histogram with a deprecated namespace>", t, func() {
+		results := analyzeHistogramTestFile(t, "namespace/add_deprecated_namespace.xml", patchPath, inputDir)
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Namespace",
+				Message:              osxNamespaceDeprecationError,
+				StartLine:            3,
+				EndLine:              4,
+				Path:                 "namespace/add_deprecated_namespace.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
+	})
+
+	Convey("Analyze XML file with a change in a histogram with a deprecated namespace>", t, func() {
+		results := analyzeHistogramTestFile(t, "namespace/change_deprecated_namespace.xml", "prevdata/change_deprecated_namespace.patch", "prevdata/src")
+		So(results, ShouldResemble, []*tricium.Data_Comment{
+			{
+				Category:             category + "/Namespace",
+				Message:              osxNamespaceDeprecationError,
+				StartLine:            3,
+				EndLine:              4,
+				Path:                 "namespace/change_deprecated_namespace.xml",
+				ShowOnUnchangedLines: true,
+			},
+		})
+	})
+
+	Convey("Analyze XML file with no errors: made histogram obsolete>", t, func() {
+		results := analyzeHistogramTestFile(t, "namespace/delete_deprecated_namespace.xml", "prevdata/delete_deprecated_namespace.patch", "prevdata/src")
+		So(results, ShouldBeNil)
+	})
 }
 
 func makeObsoleteDateError(path string, startLine int, endLine int) *tricium.Data_Comment {

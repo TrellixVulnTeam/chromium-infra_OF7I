@@ -1,0 +1,14 @@
+diff --git a/namespace/delete_deprecated_namespace.xml b/namespace/delete_deprecated_namespace.xml
+index 10d6e30..d6e4c6e 100644
+--- a/namespace/delete_deprecated_namespace.xml
++++ b/namespace/delete_deprecated_namespace.xml
+@@ -1,6 +1,9 @@
+ <histogram-configuration>
+     <histograms>
+         <histogram name="OSX.Histogram1" units="units" expires_after="2019-07-30">
++            <obsolete>
++                Deprecated as of 07/2019. Now using Mac.Histogram1.
++            </obsolete>
+             <owner>test@google.com</owner>
+             <owner>chrome-metrics-team@google.com</owner>
+             <summary> This is a summary </summary>
