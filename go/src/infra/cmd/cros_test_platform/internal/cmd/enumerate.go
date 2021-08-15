@@ -95,7 +95,7 @@ func (c *enumerateRun) innerRun(ctx context.Context, args []string) error {
 		c.debugLogger.LogRequest(ctx, t, r)
 		resp, err := c.enumerateOne(ctx, workspace, t, r)
 		if err != nil {
-			return nil
+			return err
 		}
 		resps[t] = resp
 		c.debugLogger.LogResponse(ctx, t, resp)
