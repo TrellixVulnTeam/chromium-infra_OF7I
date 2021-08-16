@@ -111,6 +111,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			defer r.args.Logger.DedentLogging()
 		}
 	}
+	log.Info(newCtx, "Action %q: started.", actionName)
 	if err, ok := r.actionResultFromCache(actionName); ok {
 		if err == nil {
 			log.Info(newCtx, "Action %q: pass (cached).", actionName)
@@ -161,18 +162,20 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, enableRecovery bool) (context.Context, error) {
 	a := r.getAction(actionName)
 	if err := r.runActionExecWithTimeout(ctx, a); err != nil {
-		newCtx := ctx
 		if enableRecovery && len(a.GetRecoveryActions()) > 0 {
-			newCtx, rErr := r.runRecoveries(newCtx, actionName)
+			log.Info(ctx, "Action %q: starting recovery actions.", actionName)
+			log.Debug(ctx, "Action %q: fail. Error: %s", actionName, err)
+			var rErr error
+			ctx, rErr = r.runRecoveries(ctx, actionName)
 			if rErr != nil {
-				return newCtx, errors.Annotate(rErr, "run action %q exec", actionName).Err()
+				return ctx, errors.Annotate(rErr, "run action %q exec", actionName).Err()
 			}
 			log.Info(ctx, "Run action %q exec: no recoveries left to try", actionName)
 		}
 		// Cache the action error only after running recoveries.
 		// If no recoveries were run, we still cache the action.
 		r.cacheActionResult(actionName, err)
-		return newCtx, errors.Annotate(err, "run action %q exec", actionName).Err()
+		return ctx, errors.Annotate(err, "run action %q exec", actionName).Err()
 	}
 	r.cacheActionResult(actionName, nil)
 	return ctx, nil
@@ -214,24 +217,25 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 	if len(a.GetConditions()) == 0 {
 		return ctx, nil
 	}
-	newCtx = ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
 			var step logger.Step
-			step, newCtx = r.args.StepHandler.StartStep(newCtx, "Run continions")
-			defer step.Close(newCtx, err)
+			step, ctx = r.args.StepHandler.StartStep(ctx, fmt.Sprintf("Run %s continions", actionName))
+			defer step.Close(ctx, err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
 			defer r.args.Logger.DedentLogging()
 		}
 	}
-	newCtx, err = r.runActions(newCtx, a.GetConditions(), false)
+	log.Debug(ctx, "Action %q: running conditions...", actionName)
+	ctx, err = r.runActions(ctx, a.GetConditions(), false)
 	if err != nil {
 		log.Debug(ctx, "Action %q: conditions fails. Error: %s", actionName, err)
-		return newCtx, errors.Annotate(err, "run conditions").Err()
+		return ctx, errors.Annotate(err, "run conditions").Err()
 	}
-	return newCtx, nil
+	log.Debug(ctx, "Action %q: all conditions passed.", actionName)
+	return ctx, nil
 }
 
 // runDependencies runs action's dependencies.
