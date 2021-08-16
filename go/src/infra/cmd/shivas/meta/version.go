@@ -24,6 +24,8 @@ var Version = &subcommands.Command{
 	CommandRun: func() subcommands.CommandRun {
 		c := &versionRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
+
+		c.Flags.BoolVar(&c.short, "short", false, "if printing a short version of shivas")
 		return c
 	},
 }
@@ -31,6 +33,8 @@ var Version = &subcommands.Command{
 type versionRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
+
+	short bool
 }
 
 func (c *versionRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -42,6 +46,11 @@ func (c *versionRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *versionRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	if c.short {
+		fmt.Printf("shivas %s\n", site.VersionNumber)
+		return nil
+	}
+
 	p, err := cipd.FindPackage("shivas", site.CipdInstalledPath)
 	if err != nil {
 		return err
