@@ -8,23 +8,23 @@ import json
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'depot_tools/bot_update',
-  'depot_tools/depot_tools',
-  'depot_tools/gclient',
-  'depot_tools/osx_sdk',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/runtime',
-  'recipe_engine/step',
-
-  'infra_checkout',
-  'infra_cipd',
+    'depot_tools/bot_update',
+    'depot_tools/depot_tools',
+    'depot_tools/gclient',
+    'depot_tools/osx_sdk',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/resultdb',
+    'recipe_engine/runtime',
+    'recipe_engine/step',
+    'infra_checkout',
+    'infra_cipd',
 ]
 
 
@@ -206,10 +206,10 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
   # clang toolchain.
   with api.osx_sdk('mac'), checkout.go_env():
     if not is_packager:
-      api.python(
+      api.step(
           'infra go tests',
-          api.path['checkout'].join('go', 'test.py'),
-          venv=True)
+          api.resultdb.wrap(
+              ['vpython', '-u', api.path['checkout'].join('go', 'test.py')]))
 
     for plat in CIPD_PACKAGE_BUILDERS.get(buildername, []):
       options = plat.split(':')
