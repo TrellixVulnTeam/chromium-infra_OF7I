@@ -32,7 +32,9 @@ def RunSteps(api, inputs):
     raise api.step.StepFailure("`config_path` is a required property")
 
   builder_named_cache = api.path['cache'].join('builder')
+
   config = None
+
   with api.step.nest('read user config'):
     # download the configs repo
     api.gclient.set_config('infradata_config')
@@ -48,10 +50,32 @@ def RunSteps(api, inputs):
           name='Reading ' + inputs.config_path,
           source=cfg_path,
           msg_class=wib.Image,
-          codec='TEXTPB')
+          codec='TEXTPB',
+          test_proto=wib.Image(
+              name='test_config',
+              arch=wib.ARCH_X86,
+          ))
+
+  # Pin the configs to current refs
+  api.windows_scripts_executor.pin_wib_config(config)
+
+  # Write back the config to generate this image deterministically.
+  api.file.write_proto(
+      'Write wim config {}.cfg'.format(config.name),
+      api.path['cache'].join('{}.cfg'.format(config.name)),
+      config,
+      codec='TEXTPB')
+  # Calculate the checksum for the config for use as unique id for the image.
+  api.file.compute_hash('Gen checksum for wim {}.cfg'.format(config.name),
+                        [api.path['cache'].join('{}.cfg'.format(config.name))],
+                        api.path['cache'])
+
+  #TODO(anushruth): Check if the build can be skipped
 
   # Ensure windows adk is installed
   api.windows_adk.ensure()
+
+  api.windows_scripts_executor.download_wib_artifacts(config)
   api.windows_scripts_executor.execute_wib_config(config)
 
 
@@ -75,11 +99,11 @@ def GenTests(api):
           '[CLEANUP]\\logs\\winpe\\winpe.log': 'i007: Exit code: 0x0',
       }))
 
+
   yield (api.test('basic', api.platform('win', 64)) +
          api.properties(input_pb.Inputs(config_path="test_config")) +
          STEP_INSTALL_ADK_PASS + STEP_INSTALL_WINPE_PASS +
-         api.post_process(post_process.StatusFailure)
-        )  # fails as config is empty
+         api.post_process(post_process.StatusSuccess))
 
   yield (
       api.test('not_run_on_windows', api.platform('linux', 64)) +

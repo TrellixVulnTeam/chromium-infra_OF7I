@@ -4,6 +4,7 @@
 
 from recipe_engine import recipe_api
 from recipe_engine.recipe_api import Property
+from . import cipd_manager
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
@@ -44,18 +45,31 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._scripts = self.resource('WindowsPowerShell\Scripts')
     self._copype = self._scripts.join(COPYPE)
     self._workdir = ''
-    self._cipd_packages = ''
+    self._cipd = None
+
+  def pin_wib_config(self, config):
+    """ pin_wib_config pins the given config to current refs."""
+    if config.arch == wib.Arch.ARCH_UNSPECIFIED:
+      raise self.m.step.StepFailure('Missing arch in config')
+
+    # Using a dir in cache to download all cipd artifacts
+    cipd_packages = self.m.path['cache'].join('CIPDPkgs')
+
+    # Initialize cipd downloader
+    self._cipd = cipd_manager.CIPDManager(self.m.step, self.m.cipd,
+                                          cipd_packages)
+
+    # Pin all the cipd instance
+    self._cipd.pin_packages('Pin all the cipd packages', config)
 
   def execute_wib_config(self, config):
     """Executes the windows image builder user config."""
     # Using a directory in cache for working
     self._workdir = self.m.path['cache'].join('WinPEImage')
-    self._cipd_packages = self.m.path['cache'].join('CIPDPkgs')
-    if config.arch == wib.Arch.ARCH_UNSPECIFIED:
-      raise self.m.step.StepFailure('Missing arch in config')
+
     with self.m.step.nest('execute config ' + config.name):
       wpec = config.offline_winpe_customization
-      if wpec:
+      if wpec and len(wpec.offline_customization) > 0:
         with self.m.step.nest('offline winpe customization ' + wpec.name):
           self.init_win_pe_image(
               wib.Arch.Name(config.arch).replace('ARCH_', '').lower(),
@@ -69,6 +83,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
             raise
           else:
             self.deinit_win_pe_image()
+
+  def download_wib_artifacts(self, config):
+    # Download all the windows artifacts from cipd
+    self._cipd.download_packages('Get all cipd artifacts', config)
 
   def perform_winpe_action(self, action):
     """Performs the given action"""
@@ -88,9 +106,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     #TODO(anushruth): Replace cipd_src with local_src for all actions
     # after downloading the files.
     if f.src.WhichOneof('src') == 'cipd_src':
-      res = self.cipd_ensure(f.src.cipd_src.package, f.src.cipd_src.refs,
-                             f.src.cipd_src.platform)
-      src = res['path']
+      # Deref the cipd src and copy it to f
+      src = self._cipd.get_local_src(f.src.cipd_src)
+      # Include everything in the subdir
+      src = src.join('*')
     elif f.src.WhichOneof('src') == 'local_src':
       src = f.src.local_src
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
@@ -114,24 +133,6 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
       reg_key_leaf, action.property_name)
 
     self.m.powershell(name, EDIT_OFFLINE_REG_CMD, args=args)
-
-  def cipd_ensure(self, package, refs, platform, name=''):
-    """ Downloads the given package and returns path to the files
-        contained within."""
-    ensure_file = self.m.cipd.EnsureFile()
-    ensure_file.add_package(str(package) + '/' + str(platform), str(refs))
-    if name == '':
-      name = 'Downloading {}:{}'.format(package, refs)
-    # download the package to dir indexed by refs
-    dwload_loc = self._cipd_packages.join(refs, conv_to_win_path(package),
-                                          platform)
-    # Download the installer using cipd
-    res = self.m.cipd.ensure(dwload_loc, ensure_file, name=name)
-    # Append abs file path to res before returning
-    res['path'] = dwload_loc.join('*')
-    # Return the path to where the file currently exists
-    return res
-
 
   def init_win_pe_image(self, arch, dest, index=1):
     """Calls Copy-PE to create WinPE media folder for arch"""
@@ -192,8 +193,3 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
         UNMOUNT_CMD,
         logs=[logs],
         args=args)
-
-
-def conv_to_win_path(path):
-  """ Converts unix paths to windows ones."""
-  return '\\'.join(path.split('/'))

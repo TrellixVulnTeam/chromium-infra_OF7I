@@ -18,6 +18,8 @@ PROPERTIES = wib.Image
 
 
 def RunSteps(api, image):
+  api.windows_scripts_executor.pin_wib_config(image)
+  api.windows_scripts_executor.download_wib_artifacts(image)
   api.windows_scripts_executor.execute_wib_config(image)
 
 
@@ -93,8 +95,9 @@ def GenTests(api):
   ADD_FILE_CIPD_PASS = api.step_data(
       'execute config win10_2013_x64.offline ' +
       'winpe customization offline_winpe_2013_x64.PowerShell> ' +
-      'Add file [CACHE]\\CIPDPkgs\\latest\\infra_internal\\labs\\drivers' +
-      '\\microsoft\\windows_adk\\winpe\\winpe-dot3svc\\windows-amd64\\*',
+      'Add file [CACHE]\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
+      '\\infra_internal\\labs\\drivers\\microsoft\\windows_adk\\winpe' +
+      '\\winpe-dot3svc\\windows-amd64\\*',
       stdout=api.json.output({'results': {
           'Success': True,
       }}))
@@ -148,18 +151,6 @@ def GenTests(api):
           '-Path "\[CACHE\]\\\\WinPEImage\\\\mount"',
           '-LogPath "\[CLEANUP\]\\\\Mount-WindowsImage\\\\unmount.log"',
           '-LogLevel WarningsInfo', '-Save'
-      ])
-
-  CIPD_PP_DOT3SVC = api.post_process(
-      StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.Downloading infra_internal/' +
-      'labs/drivers/microsoft/windows_adk/winpe/winpe-dot3svc:latest', [
-          'cipd.bat', 'ensure', '-root', '\[CACHE\]\\\\CIPDPkgs\\\\latest' +
-          '\\\\infra_internal\\\\labs\\\\drivers\\\\microsoft\\\\windows_adk' +
-          '\\\\winpe\\\\winpe-dot3svc\\\\windows-amd64', '-ensure-file',
-          'infra_internal/labs/drivers/microsoft/windows_adk/winpe/' +
-          'winpe-dot3svc/windows-amd64 latest', '-max-threads', '0',
-          '-json-output', '/path/to/tmp/json'
       ])
 
   yield (
@@ -221,7 +212,7 @@ def GenTests(api):
                      ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
          ADD_FILE_STARTNET_PASS + ADD_FILE_CIPD_PASS +
          UMOUNT_WIM_PASS +  # Unmount the wim
-         CIPD_PP_DOT3SVC + UMOUNT_PP_SAVE + api.post_process(StatusSuccess) +
+         UMOUNT_PP_SAVE + api.post_process(StatusSuccess) +
          api.post_process(DropExpectation))
 
   yield (api.test('Happy path', api.platform('win', 64)) + api.properties(
