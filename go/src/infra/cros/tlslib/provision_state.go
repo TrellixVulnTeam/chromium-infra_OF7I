@@ -67,6 +67,33 @@ func (p *provisionState) connect(ctx context.Context, addr string) (func(), erro
 	return disconnect, nil
 }
 
+func (p *provisionState) shouldProvisionOS() bool {
+	// Get the current builder path.
+	// If the builder path is missing or fails to be retrieved, continue to provision.
+	builderPath, err := getBuilderPath(p.c)
+	if err != nil {
+		log.Printf("provision: failed to get pre-provision builder path, %s", err)
+		return true
+	}
+	// Only provision the OS if any of the following are true:
+	//  - the DUT is not on the requested OS.
+	//  - the force marker exists on the DUT.
+	shouldProvision := false
+	if builderPath != p.targetBuilderPath {
+		log.Printf("Going to provision DUT from %s to %s", builderPath, p.targetBuilderPath)
+		shouldProvision = true
+	}
+	if shouldForceProvision(p.c) {
+		if !shouldProvision {
+			log.Printf("Going to force provision to %s", p.targetBuilderPath)
+			shouldProvision = true
+		} else {
+			log.Printf("Ignoring force provision as already provisioning")
+		}
+	}
+	return shouldProvision
+}
+
 // provisionOS will provision the OS, but on failure it will set op.Result to longrunning.Operation_Error
 // and return the same error message
 func (p *provisionState) provisionOS(ctx context.Context) error {

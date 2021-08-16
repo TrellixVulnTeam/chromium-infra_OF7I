@@ -105,14 +105,8 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		return
 	default:
 	}
-	// Get the current builder path.
-	// If the builder path is missing or fails to be retrieved, continue to provision.
-	builderPath, err := getBuilderPath(p.c)
-	if err != nil {
-		log.Printf("provision: failed to get pre-provision builder path, %s", err)
-	}
-	// Only provision the OS if the DUT is not on the requested OS.
-	if builderPath != p.targetBuilderPath {
+
+	if p.shouldProvisionOS() {
 		t := time.Now()
 		if err := p.provisionOS(ctx); err != nil {
 			setError(newOperationError(
@@ -218,7 +212,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		}
 		log.Printf("provision: time to provision stateful took %v", time.Since(t))
 	} else {
-		log.Printf("provision: Operation=%s skipped as DUT is already on builder path %s", opName, builderPath)
+		log.Printf("provision: Operation=%s skipped as DUT is already on builder path %s", opName, p.targetBuilderPath)
 	}
 
 	// Provision DLCs.
@@ -440,7 +434,18 @@ func getBuilderPath(c *ssh.Client) (string, error) {
 }
 
 func isStatefulCorrupt(c *ssh.Client) bool {
-	exists, err := runCmdOutput(c, "if [ -f /mnt/stateful_partition/.corrupt_stateful ]; then echo found; fi")
-	// Treat failure as stateful being corrupt for sanity.
+	return fileExists(c, "/mnt/stateful_partition/.corrupt_stateful")
+}
+
+func shouldForceProvision(c *ssh.Client) bool {
+	return fileExists(c, "/mnt/stateful_partition/.force_provision")
+}
+
+// fileExists finds the file on the DUT, failures are treated as the file missing.
+// Note: path must be escaped.
+func fileExists(c *ssh.Client, path string) bool {
+	exists, err := runCmdOutput(c,
+		fmt.Sprintf("if [ -f %s ]; then echo found; fi", path))
+	// Treat failure as file missing.
 	return err != nil || exists != ""
 }
