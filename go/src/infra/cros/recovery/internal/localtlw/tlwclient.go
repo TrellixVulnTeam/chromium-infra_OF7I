@@ -248,7 +248,7 @@ func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyR
 	if hostname == "" || outlet == "" {
 		return &tlw.SetPowerSupplyResponse{
 			Status: tlw.PowerSupplyResponseStatusNoConfig,
-			Reason: err.Error(),
+			Reason: "power supply config missing or incorrect",
 		}
 	}
 	var s rpm.PowerState
