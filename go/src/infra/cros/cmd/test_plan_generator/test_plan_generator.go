@@ -30,14 +30,32 @@ import (
 )
 
 const (
-	boardPriorityConfigPath    = "testingconfig/generated/board_priority.binaryproto"
-	sourceTreeTestConfigPath   = "testingconfig/generated/source_tree_test_config.binaryproto"
-	targetTestRequirementsPath = "testingconfig/generated/target_test_requirements.binaryproto"
+	boardPriorityConfigPathDefault    = "testingconfig/generated/board_priority.binaryproto"
+	sourceTreeTestConfigPathDefault   = "testingconfig/generated/source_tree_test_config.binaryproto"
+	targetTestRequirementsPathDefault = "testingconfig/generated/target_test_requirements.binaryproto"
+	sourceGitilesRepoDefault          = "chromeos/infra/config"
+	sourceGitilesBranchDefault        = "main"
 )
 
 var (
 	unmarshaler = jsonpb.Unmarshaler{AllowUnknownFields: true}
 )
+
+type getTestPlanRun struct {
+	subcommands.CommandRunBase
+	authFlags                  authcli.Flags
+	inputJSON                  string
+	outputJSON                 string
+	inputBinaryPb              string
+	outputBinaryPb             string
+	sourceGitilesRepo          string
+	sourceGitilesBranch        string
+	boardPriorityConfigPath    string
+	sourceTreeTestConfigPath   string
+	targetTestRequirementsPath string
+	manifestFile               string
+	localConfigDir             string
+}
 
 func cmdGenTestPlan(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
@@ -52,8 +70,14 @@ func cmdGenTestPlan(authOpts auth.Options) *subcommands.Command {
 			c.Flags.StringVar(&c.outputJSON, "output_json", "", "Path to file to write output GenerateTestPlanResponse JSON proto")
 			c.Flags.StringVar(&c.inputBinaryPb, "input_binary_pb", "", "Path to binaryproto file representing a GenerateTestPlanRequest")
 			c.Flags.StringVar(&c.outputBinaryPb, "output_binary_pb", "", "Path to file to write output GenerateTestPlanResponse binaryproto")
-			c.Flags.StringVar(&c.localConfigDir, "local_config_dir", "", "Path to an infra/config checkout, to be used rather than origin HEAD")
+			c.Flags.StringVar(&c.sourceGitilesRepo, "gitiles_repo", sourceGitilesRepoDefault, "The gitiles repo to fetch test requirements from")
+			c.Flags.StringVar(&c.sourceGitilesBranch, "gitiles_branch", sourceGitilesBranchDefault, "The gitiles branch to fetch test requirements from")
+			c.Flags.StringVar(&c.boardPriorityConfigPath, "board_priority_config", boardPriorityConfigPathDefault, "Path to board priority input proto")
+			c.Flags.StringVar(&c.sourceTreeTestConfigPath, "source_tree_test_config", sourceTreeTestConfigPathDefault, "Path to the source tree test config input proto")
+			c.Flags.StringVar(&c.targetTestRequirementsPath, "target_test_requirements",
+				targetTestRequirementsPathDefault, "Path to the target test requirements input proto")
 			c.Flags.StringVar(&c.manifestFile, "manifest_file", "", "Path to local manifest file. If given, will be used instead of default snapshot.xml")
+			c.Flags.StringVar(&c.localConfigDir, "local_config_dir", "", "Path to a config checkout, to be used rather than gitiles")
 			return c
 		}}
 }
@@ -134,18 +158,6 @@ func (c *getTestPlanRun) Run(a subcommands.Application, args []string, env subco
 	}
 	return 0
 }
-
-type getTestPlanRun struct {
-	subcommands.CommandRunBase
-	authFlags      authcli.Flags
-	inputJSON      string
-	outputJSON     string
-	inputBinaryPb  string
-	outputBinaryPb string
-	localConfigDir string
-	manifestFile   string
-}
-
 func (c *getTestPlanRun) readInput() (*testplans.GenerateTestPlanRequest, error) {
 	// use input_binary_pb if it's specified
 	if len(c.inputBinaryPb) > 0 {
@@ -189,24 +201,24 @@ func (c *getTestPlanRun) fetchConfigFromGitiles() (*testplans.BoardPriorityList,
 	}
 	m, err := gerritClient.FetchFilesFromGitiles(ctx,
 		"chrome-internal.googlesource.com",
-		"chromeos/infra/config",
-		"main",
-		[]string{boardPriorityConfigPath, sourceTreeTestConfigPath, targetTestRequirementsPath})
+		c.sourceGitilesRepo,
+		c.sourceGitilesBranch,
+		[]string{c.boardPriorityConfigPath, c.sourceTreeTestConfigPath, c.targetTestRequirementsPath})
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	boardPriorityList := &testplans.BoardPriorityList{}
-	if err := proto.Unmarshal([]byte((*m)[boardPriorityConfigPath]), boardPriorityList); err != nil {
-		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a BoardPriorityList\n%v", (*m)[boardPriorityConfigPath], err)
+	if err := proto.Unmarshal([]byte((*m)[c.boardPriorityConfigPath]), boardPriorityList); err != nil {
+		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a BoardPriorityList\n%v", (*m)[c.boardPriorityConfigPath], err)
 	}
 	sourceTreeConfig := &testplans.SourceTreeTestCfg{}
-	if err := proto.Unmarshal([]byte((*m)[sourceTreeTestConfigPath]), sourceTreeConfig); err != nil {
-		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a SourceTreeTestCfg\n%v", (*m)[sourceTreeTestConfigPath], err)
+	if err := proto.Unmarshal([]byte((*m)[c.sourceTreeTestConfigPath]), sourceTreeConfig); err != nil {
+		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a SourceTreeTestCfg\n%v", (*m)[c.sourceTreeTestConfigPath], err)
 	}
 	testReqsConfig := &testplans.TargetTestRequirementsCfg{}
-	if err := proto.Unmarshal([]byte((*m)[targetTestRequirementsPath]), testReqsConfig); err != nil {
-		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a TargetTestRequirementsCfg\n%v", (*m)[targetTestRequirementsPath], err)
+	if err := proto.Unmarshal([]byte((*m)[c.targetTestRequirementsPath]), testReqsConfig); err != nil {
+		return nil, nil, nil, fmt.Errorf("Couldn't decode %s as a TargetTestRequirementsCfg\n%v", (*m)[c.targetTestRequirementsPath], err)
 	}
 	log.Printf("Fetched config from Gitiles:\n%s\n\n%s\n\n%s", proto.MarshalTextString(boardPriorityList),
 		proto.MarshalTextString(sourceTreeConfig), proto.MarshalTextString(testReqsConfig))
@@ -219,7 +231,7 @@ func (c *getTestPlanRun) readLocalConfigFiles() (*testplans.BoardPriorityList, *
 	log.Print("Be sure that you've run `./regenerate_configs.sh -b` first to generate binaryproto files")
 	log.Print("--------------------------------------------")
 
-	bplBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, boardPriorityConfigPath))
+	bplBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, c.boardPriorityConfigPath))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("couldn't read BoardPriorityList file: %v", err)
 	}
@@ -228,7 +240,7 @@ func (c *getTestPlanRun) readLocalConfigFiles() (*testplans.BoardPriorityList, *
 		return nil, nil, nil, fmt.Errorf("couldn't decode file as BoardPriorityList: %v", err)
 	}
 
-	stcBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, sourceTreeTestConfigPath))
+	stcBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, c.sourceTreeTestConfigPath))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("couldn't read SourceTreeTestCfg file: %v", err)
 	}
@@ -237,7 +249,7 @@ func (c *getTestPlanRun) readLocalConfigFiles() (*testplans.BoardPriorityList, *
 		return nil, nil, nil, fmt.Errorf("couldn't decode file as SourceTreeTestCfg: %v", err)
 	}
 
-	ttrBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, targetTestRequirementsPath))
+	ttrBytes, err := ioutil.ReadFile(path.Join(c.localConfigDir, c.targetTestRequirementsPath))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("couldn't read TargetTestRequirementsCfg file: %v", err)
 	}
