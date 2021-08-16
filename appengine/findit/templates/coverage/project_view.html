@@ -117,7 +117,7 @@
           {% if show_invisible_report or datum.visible %}
             <tr>
               <td>
-                <a href="/p/chromium/coverage/dir?host={{datum.gitiles_commit.server_host}}&project={{datum.gitiles_commit.project}}&ref={{datum.gitiles_commit.ref}}&revision={{datum.gitiles_commit.revision}}&path=//&platform={{platform}}">Link</a>
+                <a href="/p/chromium/coverage/dir?host={{datum.gitiles_commit.server_host}}&project={{datum.gitiles_commit.project}}&ref={{datum.gitiles_commit.ref}}&revision={{datum.gitiles_commit.revision}}&path=//&platform={{platform}}&test_suite_type={{test_suite_type}}">Link</a>
               </td>
               <td>
                 {{datum.commit_timestamp}}
@@ -165,12 +165,12 @@
         </tbody>
       </table>
       {% if prev_cursor != '' %}
-        <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&direction=previous&cursor={{prev_cursor}}">Previous</a>
+        <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&direction=previous&cursor={{prev_cursor}}&test_suite_type={{test_suite_type}}">Previous</a>
       {% else %}
         <span class="disabled-link">Previous</span>
       {% endif %}
       {% if next_cursor != '' %}
-        <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&direction=next&cursor={{next_cursor}}">Next</a>
+        <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&direction=next&cursor={{next_cursor}}&test_suite_type={{test_suite_type}}">Next</a>
       {% else %}
         <span class="disabled-link">Next</span>
       {% endif %}
