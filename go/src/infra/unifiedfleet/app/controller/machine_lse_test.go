@@ -1618,6 +1618,33 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "DUT is associated with SchedulingUnit.")
 		})
+
+		Convey("Delete machineLSE DUT with servod on docker", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-8",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			servo := &chromeosLab.Servo{
+				ServoHostname:       "LocalServodHost",
+				ServoPort:           9996,
+				ServoSerial:         "Servo-serial",
+				DockerContainerName: "docker-2",
+			}
+
+			peripherals := &chromeosLab.Peripherals{
+				Servo: servo,
+			}
+			dutMachinelse := mockDutMachineLSE("DUTMachineLse-98")
+			dutMachinelse.Machines = []string{"machine-8"}
+			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
+			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
+			So(err, ShouldBeNil)
+			// Delete should not throw any error wven though the labstation doesn't exist
+			err = DeleteMachineLSE(ctx, "DUTMachineLse-98")
+			So(err, ShouldBeNil)
+		})
 	})
 }
 

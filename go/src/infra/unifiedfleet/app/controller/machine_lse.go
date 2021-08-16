@@ -481,8 +481,8 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		// Update corresponding Labstation MachineLSE.
 		if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 			existingServo := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
-			// If its a ServoV3 device ignore labstation as it doesn't get created
-			if existingServo != nil && existingServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(existingServo.GetServoHostname()) {
+			// Labstation update is not required if the device is a ServoV3 or servod is running inside a docker container
+			if existingServo != nil && existingServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(existingServo.GetServoHostname()) && existingServo.GetDockerContainerName() == "" {
 				// remove the existingServo entry of DUT form existingLabstationMachinelse
 				existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, existingServo.GetServoHostname())
 				if err != nil {
