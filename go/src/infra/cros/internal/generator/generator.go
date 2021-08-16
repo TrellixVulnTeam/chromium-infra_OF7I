@@ -210,7 +210,11 @@ func hasTestArtifacts(b *bbproto.Build) bool {
 
 // getBuildTarget returns the build target from the given build, or empty string if none is found.
 func getBuildTarget(bb *bbproto.Build) string {
-	btStruct, ok := bb.Input.Properties.Fields["build_target"]
+	bmStruct, ok := bb.Input.Properties.Fields["$chromeos/build_menu"]
+	if !ok {
+		return ""
+	}
+	btStruct, ok := bmStruct.GetStructValue().Fields["build_target"]
 	if !ok {
 		return ""
 	}

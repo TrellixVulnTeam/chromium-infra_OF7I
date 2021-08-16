@@ -52,10 +52,16 @@ func makeBuildbucketBuild(buildTarget string, builderName string, status bbproto
 		Input: &bbproto.Build_Input{
 			Properties: &_struct.Struct{
 				Fields: map[string]*_struct.Value{
-					"build_target": {
+					"$chromeos/build_menu": {
 						Kind: &_struct.Value_StructValue{StructValue: &_struct.Struct{
 							Fields: map[string]*_struct.Value{
-								"name": {Kind: &_struct.Value_StringValue{StringValue: buildTarget}},
+								"build_target": {
+									Kind: &_struct.Value_StructValue{StructValue: &_struct.Struct{
+										Fields: map[string]*_struct.Value{
+											"name": {Kind: &_struct.Value_StringValue{StringValue: buildTarget}},
+										},
+									}},
+								},
 							},
 						}},
 					},
