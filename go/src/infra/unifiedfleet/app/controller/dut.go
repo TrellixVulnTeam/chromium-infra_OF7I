@@ -205,7 +205,9 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 				"dut.servo.serial",
 				"dut.servo.type",
 				"dut.servo.topology",
-				"dut.servo.fwchannel")
+				"dut.servo.fwchannel",
+				"dut.servo.docker_container",
+			)
 		} else {
 			// Update servo on full update
 			servoUpdated = true
@@ -215,8 +217,8 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 		var newLabstationMachinelse *ufspb.MachineLSE
 		var hcNewLabstation *HistoryClient
 
-		// Remove the old Servo info from labstation record. Unless it's servo V3 device
-		if servoUpdated && oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) {
+		// Remove the old Servo info from labstation record. Unless it's servo V3 device or servod is running in docker instance
+		if servoUpdated && oldServo != nil && oldServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(oldServo.GetServoHostname()) && oldServo.GetDockerContainerName() == "" {
 			// Remove the servo from the labstation
 			oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
 			if err != nil && !util.IsNotFoundError(err) {
@@ -251,8 +253,8 @@ func UpdateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_ma
 			}
 		}
 
-		// Process newServo and getNewLabstationMachinelse if available. Don't care about labstation if it's a ServoV3 device
-		if servoUpdated && newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) {
+		// Process newServo and getNewLabstationMachinelse if available. Don't care about labstation if it's a ServoV3 device or servod is running on docker
+		if servoUpdated && newServo != nil && newServo.GetServoHostname() != "" && !util.ServoV3HostnameRegex.MatchString(newServo.GetServoHostname()) && newServo.GetDockerContainerName() == "" {
 			if newLabstationMachinelse == nil {
 				// Check if the Labstation MachineLSE exists in the system first. No use doing anything if it doesn't exist.
 				newLabstationMachinelse, err = getLabstationMachineLSE(ctx, newServo.GetServoHostname())
@@ -484,6 +486,7 @@ func validateUpdateMachineLSEDUTMask(mask *field_mask.FieldMask, machinelse *ufs
 		case "dut.servo.fwchannel":
 		case "dut.servo.type":
 		case "dut.servo.topology":
+		case "dut.servo.docker_container":
 		case "dut.chameleon.type":
 		case "dut.chameleon.audioboard":
 		case "dut.camera.type":
@@ -762,6 +765,8 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *chromeosLab.Servo, pat
 		oldServo.ServoTopology = newServo.GetServoTopology()
 	case "dut.servo.fwchannel":
 		oldServo.ServoFwChannel = newServo.GetServoFwChannel()
+	case "dut.servo.docker_container":
+		oldServo.DockerContainerName = newServo.GetDockerContainerName()
 	}
 }
 

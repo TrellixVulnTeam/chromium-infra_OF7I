@@ -805,6 +805,7 @@ func logServo(resourceName, labelPrefix string, oldServo, newServo *chromeosLab.
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.serial", labelPrefix), oldServo.GetServoSerial(), newServo.GetServoSerial())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.setup", labelPrefix), oldServo.GetServoSetup(), newServo.GetServoSetup())...)
 	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.type", labelPrefix), oldServo.GetServoType(), newServo.GetServoType())...)
+	changes = append(changes, logCommon(resourceName, fmt.Sprintf("%s.doccker_container", labelPrefix), oldServo.GetDockerContainerName(), newServo.GetDockerContainerName())...)
 	return changes
 }
 

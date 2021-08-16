@@ -2423,6 +2423,149 @@ func TestUpdateDUT(t *testing.T) {
 			// State should be unchanged.
 			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
 		})
+		Convey("UpdateDUT - Replace Labstation with docker container", func() {
+			// Create a DUT with labstation.
+			createValidDUTWithLabstation(ctx, "dut-38", "machine-82", "labstation-35", "machine83")
+			dut2, err := GetMachineLSE(ctx, "dut-38")
+			So(err, ShouldBeNil)
+			servo := dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+			servo.ServoHostname = "local_labstation"
+			servo.DockerContainerName = "docker-1"
+			dut2.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().Servo = servo
+			resp, err := UpdateDUT(ctx, dut2, mockFieldMask("dut.servo.hostname", "dut.servo.docker_container"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			dut2.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut2)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-38")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 3)
+			// Verify that the changes were recorded by the history.
+			So(changes[1].OldValue, ShouldEqual, "labstation-35")
+			So(changes[1].NewValue, ShouldEqual, "local_labstation")
+			So(changes[2].NewValue, ShouldEqual, "docker-1")
+			So(changes[2].OldValue, ShouldEqual, "")
+			// Two snapshots, one at registration another at update
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-38")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-38")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut2.GetResourceState())
+			lab2, err := GetMachineLSE(ctx, "labstation-35")
+			servos := lab2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+			So(servos, ShouldHaveLength, 0)
+		})
+		Convey("UpdateDUT - Replace docker container with non-existent labstation", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-104",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-39", "machine-104", "labstation-x", "serial-x", "dut-39-power-1", ".A1", 9988, nil, "docker-1")
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
+			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().DockerContainerName = ""
+			_, err = UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.docker_container"))
+			So(err, ShouldNotBeNil)
+		})
+		Convey("UpdateDUT - Replace docker container with existing labstation", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-105",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			machine1 = &ufspb.Machine{
+				Name: "machine-106",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-40", "machine-105", "labstation-x", "serial-x", "dut-40-power-1", ".A1", 9988, nil, "docker-1")
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
+			// Create a labstation
+			lab1 := mockLabstation("labstation-y", "machine-106")
+			_, err = inventory.CreateMachineLSE(ctx, lab1)
+			// Update the dut to use labstation instead of servod on docker
+			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().DockerContainerName = ""
+			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoHostname = "labstation-y"
+			resp, err := UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.hostname", "dut.servo.docker_container"))
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			dut1.UpdateTime = nil
+			So(resp, ShouldResembleProto, dut1)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-40")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			// Verify that the changes were recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "labstation-x")
+			So(changes[0].NewValue, ShouldEqual, "labstation-y")
+			So(changes[1].OldValue, ShouldEqual, "docker-1")
+			So(changes[1].NewValue, ShouldEqual, "")
+			// One snapshot at registration
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-40")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			s, err := state.GetStateRecord(ctx, "hosts/dut-40")
+			So(err, ShouldBeNil)
+			// State should be unchanged.
+			So(s.GetState(), ShouldEqual, dut1.GetResourceState())
+			lab2, err := GetMachineLSE(ctx, "labstation-y")
+			servos := lab2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+			So(servos, ShouldHaveLength, 1)
+		})
+		Convey("UpdateDUT - Change servo docker container", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-107",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-41", "machine-107", "host-x", "serial-x", "dut-41-power-1", ".A1", 9988, nil, "docker-1")
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
+			// Update the docker container name
+			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().DockerContainerName = "docker-2"
+			_, err = UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.docker_container"))
+			So(err, ShouldBeNil)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-41")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			// Verify that the changes were recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "docker-1")
+			So(changes[0].NewValue, ShouldEqual, "docker-2")
+			// One snapshot at registration
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-41")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+		})
 	})
 }
 
