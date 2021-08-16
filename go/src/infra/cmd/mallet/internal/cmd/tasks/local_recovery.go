@@ -80,10 +80,11 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.New("unit is not specified")
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx, logger := createLogger(ctx)
 	if c.Verbose() {
+		// The logger level before create gologger.
 		ctx = logging.SetLevel(ctx, logging.Debug)
 	}
+	ctx, logger := createLogger(ctx)
 	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -112,7 +113,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		UnitName:              unit,
 		Access:                access,
 		Logger:                logger,
-		EnableRecovery:        c.onlyVerify,
+		EnableRecovery:        !c.onlyVerify,
 		EnableUpdateInventory: c.updateInventory,
 	}
 	if c.configFile != "" {
