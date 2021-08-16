@@ -151,7 +151,7 @@
           {% for name, value in platform_select.params.iteritems() %}
             <input type="hidden" name="{{name}}" value="{{value}}"/>
           {% endfor %}
-          See <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&test_suite_type={{test_suite_type}}Previous Reports</a>
+          See <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&test_suite_type={{test_suite_type}}">Previous Reports</a>
         </form>
         <br>
         <br>
