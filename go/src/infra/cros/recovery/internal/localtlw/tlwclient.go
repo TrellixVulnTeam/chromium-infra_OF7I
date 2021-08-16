@@ -206,12 +206,18 @@ func (c *tlwClient) CopyFileTo(ctx context.Context, req *tlw.CopyRequest) error 
 
 // CopyFileFrom copies file from remote device to local.
 func (c *tlwClient) CopyFileFrom(ctx context.Context, req *tlw.CopyRequest) error {
-	return tlwio.CopyFileFrom(ctx, c.sshPool, req)
+	if err := tlwio.CopyFileFrom(ctx, c.sshPool, req); err != nil {
+		return errors.Annotate(err, "copy file from").Err()
+	}
+	return nil
 }
 
-// CopyDirectoryTo copies directory to destination device from local, recursively.
+// CopyDirectoryTo copies directory to remote device from local, recursively.
 func (c *tlwClient) CopyDirectoryTo(ctx context.Context, req *tlw.CopyRequest) error {
-	return status.Errorf(codes.Unimplemented, "not implemented")
+	if err := tlwio.CopyDirectoryTo(ctx, c.sshPool, req); err != nil {
+		return errors.Annotate(err, "copy directory to").Err()
+	}
+	return nil
 }
 
 // CopyDirectoryFrom copies directory from remote device to local, recursively.

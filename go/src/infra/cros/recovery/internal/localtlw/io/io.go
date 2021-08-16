@@ -67,6 +67,24 @@ func CopyFileFrom(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	return nil
 }
 
+// CopyDirectoryTo copies a single directory from local machine to
+// remote device. req contains the complete path of the source
+// directory on the local machine, and the complete path of the
+// destination directory on the remote device where the source
+// directory will be copied.
+func CopyDirectoryTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) error {
+	if err := validateInputParams(ctx, pool, req); err != nil {
+		return errors.Annotate(err, "copy directory to").Err()
+	}
+	if err := ensureDirExists(ctx, req.PathSource, false); err != nil {
+		return errors.Annotate(err, "copy directory to: error while checking whether the source directory exists").Err()
+	}
+	if err := copyToHelper(ctx, pool, req); err != nil {
+		return errors.Annotate(err, "copy directory to").Err()
+	}
+	return nil
+}
+
 // CopyFileTo copies a single file from local machine to remote
 // device. req contains the complete path of the source file on the
 // local machine, and the complete path of the destination directory
@@ -78,16 +96,27 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 	if err := checkFileExists(ctx, req.PathSource); err != nil {
 		return errors.Annotate(err, "copy file to: error while checking whether the source file exists").Err()
 	}
+	if err := copyToHelper(ctx, pool, req); err != nil {
+		return errors.Annotate(err, "copy file to").Err()
+	}
+	return nil
+}
 
+// copyToHelper copies contents of the local path to a remote
+// destination path. req contains the complete path of the source on
+// the local machine that needs to be copied to destination on the
+// remote machine. This function can handle both, a single file, as
+// well as a single directory, as the source.
+func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) error {
 	addr := net.JoinHostPort(req.Resource, strconv.Itoa(defaultSSHPort))
 	client, err := pool.Get(addr)
 	if err != nil {
-		return errors.Annotate(err, "copy file to: failed to get client %q from pool", addr).Err()
+		return errors.Annotate(err, "copy to helper: failed to get client %q from pool", addr).Err()
 	}
 	defer pool.Put(addr, client)
 	session, err := client.NewSession()
 	if err != nil {
-		return errors.Annotate(err, "copy file to: failed to create SSH session").Err()
+		return errors.Annotate(err, "copy to helper: failed to create SSH session").Err()
 	}
 	defer session.Close()
 
@@ -99,15 +128,15 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 	createTarCmd := exec.CommandContext(ctx, tarCmd, "-c", "--gzip", "-C", filepath.Dir(req.PathSource), filepath.Base(req.PathSource))
 	createTarPipe, err := createTarCmd.StdoutPipe()
 	if err != nil {
-		return errors.Annotate(err, "copy file to: could not obtain the stdout pipe").Err()
+		return errors.Annotate(err, "copy to helper: could not obtain the stdout pipe").Err()
 	}
 	if err := createTarCmd.Start(); err != nil {
-		return errors.Annotate(err, "copy file to: could not execute local command %q", createTarCmd).Err()
+		return errors.Annotate(err, "copy to helper: could not execute local command %q", createTarCmd).Err()
 	}
 	defer createTarCmd.Wait()
 	remotePipe, err2 := session.StdinPipe()
 	if err2 != nil {
-		return errors.Annotate(err, "copy file to: error with obtaining stdin pipe for the SSH Session").Err()
+		return errors.Annotate(err, "copy to helper: error with obtaining stdin pipe for the SSH Session").Err()
 	}
 	uploadErrors := make(chan error)
 	var wg sync.WaitGroup
@@ -121,7 +150,7 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 		defer wg.Done()
 		defer remotePipe.Close()
 		if _, err := io.Copy(remotePipe, createTarPipe); err != nil {
-			uploadErrors <- errors.Annotate(err, "copy file to: error with copying contents from local stdout to remote stdin").Err()
+			uploadErrors <- errors.Annotate(err, "copy to helper: error with copying contents from local stdout to remote stdin").Err()
 		}
 	}()
 
@@ -134,9 +163,9 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 	go func() {
 		defer wg.Done()
 		if err := session.Start(remoteTarReadCmd); err != nil {
-			uploadErrors <- errors.Annotate(err, "copy file to: remote device could not read the uploaded contents").Err()
+			uploadErrors <- errors.Annotate(err, "copy to helper: remote device could not read the uploaded contents").Err()
 		} else if err := session.Wait(); err != nil {
-			uploadErrors <- errors.Annotate(err, "copy file to: remote command did not exit cleanly").Err()
+			uploadErrors <- errors.Annotate(err, "copy to helper: remote command did not exit cleanly").Err()
 		}
 	}()
 
@@ -155,7 +184,7 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 	case e, ok := <-uploadErrors:
 		if ok {
 			// goroutines encountered an error.
-			return errors.Annotate(e, "copy file to").Err()
+			return errors.Annotate(e, "copy to helper").Err()
 		} else {
 			// Errors channels is closed without any incidents of
 			// error. This implies successful copy operation.
@@ -299,7 +328,7 @@ func ensureDirExists(ctx context.Context, dirPath string, createDir bool) error 
 		log.Debug(ctx, "Ensure directory %q exists: confirmed.", dirPath)
 		return nil
 	}
-	return errors.Reason("ensure directory exists: cannot create directory %q, it is a pre-existing file", dirPath).Err()
+	return errors.Reason("ensure directory exists: %q, is a pre-existing file instead of a directory", dirPath).Err()
 }
 
 // ensureFileExists checks whether the file 'filePath' exists, or
