@@ -111,6 +111,8 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 			for _, botID := range botIDs {
 				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s", qPath, botID))
 			}
+			sort.Strings(repairPaths)
+			sort.Strings(expectedPaths)
 			So(repairPaths, ShouldResemble, expectedPaths)
 		}
 		tf, validate := newTestFixture(t)
