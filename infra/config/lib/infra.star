@@ -109,7 +109,6 @@ def builder(
       triggered_by: builders that trigger this one.
       notifies: what luci.notifier(...) to notify when its done.
     """
-    resultdb_settings = None
     if bucket == "ci":
         pool = pool or "luci.flex.ci"
         service_account = service_account or infra.SERVICE_ACCOUNT_CI
@@ -118,9 +117,6 @@ def builder(
         pool = pool or "luci.flex.try"
         service_account = service_account or infra.SERVICE_ACCOUNT_TRY
         build_numbers = None  # leave it unset in the generated file
-        resultdb_settings = resultdb.settings(
-            enable = True,
-        )
     else:
         fail("unknown bucket")
 
@@ -153,7 +149,9 @@ def builder(
         task_template_canary_percentage = 30,
         triggered_by = triggered_by,
         notifies = notifies,
-        resultdb_settings = resultdb_settings,
+        resultdb_settings = resultdb.settings(
+            enable = True,
+        ),
     )
 
 def _tree_closing_notifiers():
