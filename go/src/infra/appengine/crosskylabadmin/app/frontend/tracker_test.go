@@ -95,6 +95,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 		bot4 := test.BotForDUT("dut_4", "needs_manual_repair", "label-os_type:OS_TYPE_JETSTREAM;id:id4")
 		bot5 := test.BotForDUT("dut_5", "needs_replacement", "label-os_type:OS_TYPE_JETSTREAM;id:id5")
 		bot1LabStation := test.BotForDUT("dut_1l", "needs_repair", "label-os_type:OS_TYPE_LABSTATION;id:lab_id1")
+		bot1SchedulingUnit := test.BotForDUT("dut1su", "needs_repair", "id:su_id1")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
 			for _, v := range paths {
 				arr = append(arr, v.Path)
@@ -122,7 +123,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_repair"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot1, bot3, bot1LabStation}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot1, bot3, bot1LabStation, bot1SchedulingUnit}, nil)
 			expectDefaultPerBotRefresh(tf)
 
 			request := fleet.PushBotsForAdminTasksRequest{
@@ -133,7 +134,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 			So(res, ShouldNotBeNil)
 
 			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id1"})
+			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id1", "su_id1"})
 		})
 		Convey("run only for repair_failed status", func() {
 			tqt.ResetTasks()
@@ -201,6 +202,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		bot6.State = "{\"storage_state\":[\"NEED_REPLACEMENT\"],\"servo_usb_state\":[\"NEED_REPLACEMENT\"], \"rpm_state\": [\"UNKNOWN\"]}"
 		bot7 := test.BotForDUT("dut_7", "needs_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id7")
 		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
+		bot1SchedulingUnit := test.BotForDUT("dut1su", "ready", "id:su_id1")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
 			for _, v := range paths {
 				arr = append(arr, v.Path)
@@ -237,7 +239,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
 				gomock.Eq(strpair.Map{}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot5, bot6, bot7, bot2LabStation}, nil)
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot5, bot6, bot7, bot2LabStation, bot1SchedulingUnit}, nil)
 			expectDefaultPerBotRefresh(tf)
 
 			actions := []string{"verify-servo-usb-drive"}
@@ -249,7 +251,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 			So(res, ShouldNotBeNil)
 
 			tasks := tqt.GetScheduledTasks()
-			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4"}, actions)
+			validateTasksInQueue(tasks, auditQ, "audit", []string{"id3", "id4", "su_id1"}, actions)
 		})
 	})
 }

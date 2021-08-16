@@ -294,7 +294,8 @@ func identifyBotsForRepair(ctx context.Context, bots []*swarming.SwarmingRpcsBot
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
-		if err != nil || os == "OS_TYPE_LABSTATION" {
+		// Some bot may not have os dimension(e.g. scheduling unit), so we ignore the error here.
+		if err == nil && os == "OS_TYPE_LABSTATION" {
 			continue
 		}
 		id, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.BotIDDimensionKey)
@@ -319,7 +320,8 @@ func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotI
 	for _, b := range bots {
 		dims := swarming_utils.DimensionsMap(b.Dimensions)
 		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
-		if err != nil || os == "OS_TYPE_LABSTATION" {
+		// Some bot may not have os dimension(e.g. scheduling unit), so we ignore the error here.
+		if err == nil && os == "OS_TYPE_LABSTATION" {
 			continue
 		}
 
