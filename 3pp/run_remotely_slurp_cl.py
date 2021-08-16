@@ -19,4 +19,4 @@ if not d['issue_url']:
   sys.exit(1)
 
 # Print the final URL
-print(six.moves.urllib.requests.urlopen(d['issue_url']).geturl())
+print(six.moves.urllib.request.urlopen(d['issue_url']).geturl())
