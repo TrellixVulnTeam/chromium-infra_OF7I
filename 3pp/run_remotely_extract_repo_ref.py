@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import json
 import sys
 
@@ -12,8 +14,8 @@ d = json.load(sys.stdin)  # swarming task def
 build_input = d['buildbucket']['bbagent_args']['build']['input']
 cl_info = build_input['gerrit_changes'][0]
 if mode == 'ref':
-  print 'refs/changes/%d/%s/%s' % (int(cl_info['change']) % 100,
-                                   cl_info['change'], cl_info['patchset'])
+  print('refs/changes/%d/%s/%s' %
+        (int(cl_info['change']) % 100, cl_info['change'], cl_info['patchset']))
 elif mode == 'repo':
   # Get the git host url from the code review url
   gerrit_host = cl_info['host']
@@ -22,8 +24,8 @@ elif mode == 'repo':
   elif gerrit_host == 'chrome-internal-review.googlesource.com':
     git_host = 'chrome-internal.googlesource.com'
   else:
-    print >> sys.stderr, 'Unknown gerrit host: %s' % gerrit_host
+    print('Unknown gerrit host: %s' % gerrit_host, file=sys.stderr)
     sys.exit(1)
 
   git_repo = cl_info['project']
-  print 'https://%s/%s' % (git_host, git_repo)
+  print('https://%s/%s' % (git_host, git_repo))

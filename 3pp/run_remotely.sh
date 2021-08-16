@@ -101,7 +101,7 @@ for arg in "$@"; do
   fi
 done
 
-CL_URL=$(git cl issue --json >(python ./run_remotely_slurp_cl.py) > /dev/null)
+CL_URL=$(git cl issue --json >(python3 ./run_remotely_slurp_cl.py) > /dev/null)
 if [[ -z "$CL_URL" ]]; then
   exit 1
 fi
@@ -146,8 +146,8 @@ set +x
 # These can be extracted from the output of `led edit-cr-cl`
 RAW_TMP=$TMPFILE.raw
 led edit-cr-cl $CL_URL < $TMPFILE > $RAW_TMP 2> /dev/null
-REPO=$(python ./run_remotely_extract_repo_ref.py repo < $RAW_TMP)
-REF=$(python ./run_remotely_extract_repo_ref.py ref < $RAW_TMP)
+REPO=$(python3 ./run_remotely_extract_repo_ref.py repo < $RAW_TMP)
+REF=$(python3 ./run_remotely_extract_repo_ref.py ref < $RAW_TMP)
 rm $RAW_TMP
 
 set -x

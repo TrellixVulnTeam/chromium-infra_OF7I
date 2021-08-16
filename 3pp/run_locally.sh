@@ -68,7 +68,7 @@ esac
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 REPO=$(dirname $SCRIPT_DIR)
-WORKDIR="$( python -c "import os,sys; print os.path.realpath(sys.argv[1])" "${WORKDIR:-$REPO/../.3pp_wd}" )"
+WORKDIR="$( python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "${WORKDIR:-$REPO/../.3pp_wd}" )"
 
 LOGIN_EMAIL=$(luci-auth info | awk '/Logged in/{gsub("\.$", "", $4); print $4}')
 CIPD_EMAIL=$(sed 's/@/_at_/' <<<"$LOGIN_EMAIL")
