@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import cStringIO
+from six.moves import cStringIO as StringIO
 import csv
 
 from recipe_engine import recipe_api
@@ -28,7 +28,7 @@ class OmahaproxyApi(recipe_api.RecipeApi):
     raw_history = self.m.url.get_text(
         'https://omahaproxy.appspot.com/history',
         default_test_data=TEST_DATA).output
-    csv_reader = csv.reader(cStringIO.StringIO(raw_history))
+    csv_reader = csv.reader(StringIO(raw_history))
     data = list(csv_reader)
     header = data[0]
     for row in data[1:]:
