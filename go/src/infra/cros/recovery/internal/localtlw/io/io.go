@@ -96,62 +96,71 @@ func CopyFileTo(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest) e
 	// flag changes the working directory to the location where the
 	// input exists. This ensures that the archive includes paths only
 	// relative to this directory.
-	lCmd := exec.CommandContext(ctx, tarCmd, "-c", "--gzip", "-C", filepath.Dir(req.PathSource), filepath.Base(req.PathSource))
-	p, err := lCmd.StdoutPipe()
+	createTarCmd := exec.CommandContext(ctx, tarCmd, "-c", "--gzip", "-C", filepath.Dir(req.PathSource), filepath.Base(req.PathSource))
+	createTarPipe, err := createTarCmd.StdoutPipe()
 	if err != nil {
 		return errors.Annotate(err, "copy file to: could not obtain the stdout pipe").Err()
 	}
-	if err := lCmd.Start(); err != nil {
-		return errors.Annotate(err, "copy file to: could not execute local command %q", lCmd).Err()
+	if err := createTarCmd.Start(); err != nil {
+		return errors.Annotate(err, "copy file to: could not execute local command %q", createTarCmd).Err()
 	}
-	defer lCmd.Wait()
-	p2, err2 := session.StdinPipe()
+	defer createTarCmd.Wait()
+	remotePipe, err2 := session.StdinPipe()
 	if err2 != nil {
 		return errors.Annotate(err, "copy file to: error with obtaining stdin pipe for the SSH Session").Err()
 	}
 	uploadErrors := make(chan error)
 	var wg sync.WaitGroup
-	wg.Add(1)
 	// the tar-archive that was created above has been written to the
 	// stdout of the process on local machine. Now, we copy this to
 	// the stdin of the ssh session so that the tar extraction process
 	// on the remote machine can read the archive off its stdin and
 	// extract it to the file system on the remote machine.
-	go func(wg1 *sync.WaitGroup) {
-		defer wg1.Done()
-		if _, err := io.Copy(p2, p); err != nil {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer remotePipe.Close()
+		if _, err := io.Copy(remotePipe, createTarPipe); err != nil {
 			uploadErrors <- errors.Annotate(err, "copy file to: error with copying contents from local stdout to remote stdin").Err()
 		}
-		defer p2.Close()
-	}(&wg)
+	}()
 
 	// Read the stdin on the remote device and extract to the
 	// destination path. The '-C' flag changes the current directory
 	// to the destination path, and ensures that the output is placed
 	// there.
-	rCmd := fmt.Sprintf("%s -x --gzip -C %s", tarCmd, req.PathDestination)
+	remoteTarReadCmd := fmt.Sprintf("%s -x --gzip -C %s", tarCmd, req.PathDestination)
 	wg.Add(1)
-	go func(wg2 *sync.WaitGroup) {
-		defer wg2.Done()
-		if err := session.Start(rCmd); err != nil {
+	go func() {
+		defer wg.Done()
+		if err := session.Start(remoteTarReadCmd); err != nil {
 			uploadErrors <- errors.Annotate(err, "copy file to: remote device could not read the uploaded contents").Err()
 		} else if err := session.Wait(); err != nil {
 			uploadErrors <- errors.Annotate(err, "copy file to: remote command did not exit cleanly").Err()
 		}
-	}(&wg)
-	wg.Wait()
+	}()
 
+	// It is better to wait for remote goroutines to complete before
+	// closing the channel, This cleanly handles the situations where
+	// one goroutine errors out while the other is still executing.
+	go func() {
+		wg.Wait()
+		close(uploadErrors)
+	}()
+
+	// If either the upload of data to SSH session, or extracting the
+	// archive on the remote side run into errors, we will return an
+	// error.
 	select {
 	case e, ok := <-uploadErrors:
 		if ok {
+			// goroutines encountered an error.
 			return errors.Annotate(e, "copy file to").Err()
 		} else {
-			// No one is closing the channel, but we want
-			// to defensively handle this case.
+			// Errors channels is closed without any incidents of
+			// error. This implies successful copy operation.
 			return nil
 		}
-	default:
-		return nil
 	}
 }
 
