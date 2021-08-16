@@ -28,6 +28,7 @@ func ConvertDut(data *ufspb.ChromeOSDeviceData) (dut *tlw.Dut, err error) {
 			err = errors.Reason("convert dut: %v\n%s", r, debug.Stack()).Err()
 		}
 	}()
+	// TODO(otabek@): Add logic to read and update state file on the drones. (ProvisionedInfo)
 	if data.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		return adaptUfsDutToTLWDut(data)
 	} else if data.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
