@@ -259,10 +259,10 @@ type Dut struct {
 // DUTProvisionedInfo holds info about provisioned info for the DUT.
 type DUTProvisionedInfo struct {
 	// CrosVersion tells which ChromeOS version is on the DUT.
-	// E.g.:board-release/R90-13816.47.0
+	// Example: board-release/R90-13816.47.0
 	CrosVersion string
 	// JobRepoURL provide path to download client code to the DUT.
-	// E.g.: http://{cache_server}:8082/download/{gs_path}"
+	// Example: http://{cache_server}:8082/download/{gs_path}
 	JobRepoURL string
 }
 
