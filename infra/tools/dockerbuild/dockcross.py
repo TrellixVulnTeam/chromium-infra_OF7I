@@ -392,8 +392,8 @@ def NativeImage(system, plat):
 SOURCES = {
     'perl': source.remote_archive(
         name='perl',
-        version='5.24.1',
-        url='http://www.cpan.org/src/5.0/perl-5.24.1.tar.gz',
+        version='5.34.0',
+        url='https://www.cpan.org/src/5.0/perl-5.34.0.tar.gz',
     ),
     'zlib': source.remote_file(
         name='zlib',
