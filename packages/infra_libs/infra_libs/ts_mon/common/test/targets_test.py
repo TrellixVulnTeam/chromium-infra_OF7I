@@ -50,12 +50,16 @@ class DeviceTargetTest(unittest.TestCase):
     pb = metrics_pb2.MetricsCollection()
     target = targets.DeviceTarget('reg', 'role', 'net', 'host')
     target.populate_target_pb(pb)
-    self.assertEqual(pb.network_device.metro, 'reg')
-    self.assertEqual(pb.network_device.role, 'role')
-    self.assertEqual(pb.network_device.hostgroup, 'net')
-    self.assertEqual(pb.network_device.hostname, 'host')
-    self.assertEqual(pb.network_device.realm, 'ACQ_CHROME')
-    self.assertEqual(pb.network_device.alertable, True)
+
+    expected = metrics_pb2.MetricsCollection()
+    expected.root_labels.add(key='metro', string_value='reg')
+    expected.root_labels.add(key='role', string_value='role')
+    expected.root_labels.add(key='hostgroup', string_value='net')
+    expected.root_labels.add(key='hostname', string_value='host')
+    expected.root_labels.add(key='realm', string_value='ACQ_CHROME')
+    expected.root_labels.add(key='alertable', bool_value=True)
+
+    self.assertEqual(pb, expected)
 
   def test_update_to_dict(self):
     target = targets.DeviceTarget('reg', 'role', 'net', 'host')
@@ -90,11 +94,15 @@ class TaskTargetTest(unittest.TestCase):
     pb = metrics_pb2.MetricsCollection()
     target = targets.TaskTarget('serv', 'job', 'reg', 'host')
     target.populate_target_pb(pb)
-    self.assertEqual(pb.task.service_name, 'serv')
-    self.assertEqual(pb.task.job_name, 'job')
-    self.assertEqual(pb.task.data_center, 'reg')
-    self.assertEqual(pb.task.host_name, 'host')
-    self.assertEqual(pb.task.task_num, 0)
+
+    expected = metrics_pb2.MetricsCollection()
+    expected.root_labels.add(key='service_name', string_value='serv')
+    expected.root_labels.add(key='job_name', string_value='job')
+    expected.root_labels.add(key='data_center', string_value='reg')
+    expected.root_labels.add(key='host_name', string_value='host')
+    expected.root_labels.add(key='task_num', int64_value=0)
+
+    self.assertEqual(pb, expected)
 
   def test_update_to_dict(self):
     target = targets.TaskTarget('serv', 'job', 'reg', 'host', 5)

@@ -277,8 +277,16 @@ class GlobalsTest(unittest.TestCase):
         proto.metrics_collection[0].metrics_data_set[0].data[0].int64_value)
     self.assertEqual(456,
         proto.metrics_collection[1].metrics_data_set[0].data[0].int64_value)
-    self.assertEqual('s', proto.metrics_collection[0].task.service_name)
-    self.assertEqual('foo', proto.metrics_collection[1].task.service_name)
+
+    self.assertEqual('service_name',
+      proto.metrics_collection[0].root_labels[0].key)
+    self.assertEqual('s',
+      proto.metrics_collection[0].root_labels[0].string_value)
+
+    self.assertEqual('service_name',
+      proto.metrics_collection[1].root_labels[0].key)
+    self.assertEqual('foo',
+      proto.metrics_collection[1].root_labels[0].string_value)
 
   def test_flush_different_target_fields_new(self):
     interface.state.metric_name_prefix = '/infra/test/'
@@ -296,8 +304,11 @@ class GlobalsTest(unittest.TestCase):
     self.assertEqual(2, len(col))
     self.assertEqual(123, col[0].metrics_data_set[0].data[0].int64_value)
     self.assertEqual(456, col[1].metrics_data_set[0].data[0].int64_value)
-    self.assertEqual('s', col[0].task.service_name)
-    self.assertEqual('foo', col[1].task.service_name)
+
+    self.assertEqual('service_name', col[0].root_labels[0].key)
+    self.assertEqual('s', col[0].root_labels[0].string_value)
+    self.assertEqual('service_name', col[1].root_labels[0].key)
+    self.assertEqual('foo', col[1].root_labels[0].string_value)
 
   def test_send_modifies_metric_values(self):
     interface.state.global_monitor = mock.create_autospec(monitors.Monitor)
@@ -558,16 +569,23 @@ class GenerateNewProtoTest(unittest.TestCase):
     self.assertEqual(2, len(proto.metrics_collection))
 
     for coll in proto.metrics_collection:
-      self.assertEqual('service', coll.task.service_name)
-      self.assertEqual('job', coll.task.job_name)
-      self.assertEqual('region', coll.task.data_center)
-      self.assertEqual('hostname', coll.task.host_name)
+      self.assertEqual('service_name', coll.root_labels[0].key)
+      self.assertEqual('service', coll.root_labels[0].string_value)
+      self.assertEqual('job_name', coll.root_labels[1].key)
+      self.assertEqual('job', coll.root_labels[1].string_value)
+      self.assertEqual('data_center', coll.root_labels[2].key)
+      self.assertEqual('region', coll.root_labels[2].string_value)
+      self.assertEqual('host_name', coll.root_labels[3].key)
+      self.assertEqual('hostname', coll.root_labels[3].string_value)
 
     first_coll = proto.metrics_collection[0]
     second_coll = proto.metrics_collection[1]
 
-    self.assertEqual(0, first_coll.task.task_num)
-    self.assertEqual(1, second_coll.task.task_num)
+    self.assertEqual("task_num", first_coll.root_labels[4].key)
+    self.assertEqual(0, first_coll.root_labels[4].int64_value)
+    
+    self.assertEqual("task_num", second_coll.root_labels[4].key)
+    self.assertEqual(1, second_coll.root_labels[4].int64_value)
 
     self.assertEqual(2, len(first_coll.metrics_data_set))
     self.assertEqual(1, len(second_coll.metrics_data_set))
