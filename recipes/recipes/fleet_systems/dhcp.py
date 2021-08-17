@@ -28,7 +28,7 @@ _IMAGE_TEMPLATE = 'fleet_systems/dhcp/%s:latest'
 # https://console.cloud.google.com/gcr/images/chops-public-images-prod/GLOBAL/fleet_systems/dhcp
 #
 # The images are generated from configs here:
-# https://chromium.googlesource.com/infra/infra/+/master/build/images/daily/fleet_systems/dhcp
+# https://chromium.googlesource.com/infra/infra/+/main/build/images/daily/fleet_systems/dhcp
 #
 # UFS reports these versions for the DHCP servers (Ubuntu LTS only).
 _IMAGE_VERSIONS = [14.04, 16.04, 18.04, 20.04]

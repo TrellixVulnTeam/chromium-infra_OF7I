@@ -129,7 +129,7 @@
       "rev-parse",
       "-q",
       "--verify",
-      "master"
+      "main"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/v8/v8",
     "env": {

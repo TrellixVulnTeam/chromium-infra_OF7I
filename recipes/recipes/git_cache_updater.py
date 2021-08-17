@@ -32,7 +32,7 @@ DEPS = [
 
 PROPERTIES = git_cache_updater_pb.Inputs
 
-OK, EMPTY, NO_MASTER = range(3)
+OK, EMPTY, NO_MAIN = range(3)
 
 
 def _list_host_repos(api, host_url):
@@ -130,11 +130,11 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
         summary.status = api.step.FAILURE  # TODO(iannucci): warning
         return EMPTY
 
-      if api.git('rev-parse', '-q', '--verify', 'master', ok_ret='any').retcode:
-        api.step('repo has no master ref; skipping update', cmd=None)
-        summary.step_text = "[no master ref]"
+      if api.git('rev-parse', '-q', '--verify', 'main', ok_ret='any').retcode:
+        api.step('repo has no main ref; skipping update', cmd=None)
+        summary.step_text = "[no main ref]"
         summary.status = api.step.FAILURE  # TODO(iannucci): warning
-        return NO_MASTER
+        return NO_MAIN
 
     gc_aggressive_opt = []
     if gc_aggressive:
@@ -189,7 +189,7 @@ def RunSteps(api, inputs):
   total = len(work)
   success = warning = 0
   failed_repos = []
-  empties = masterless = 0
+  empties = mainless = 0
   for future in api.futures.iwait(work):
     try:
       status = future.result()
@@ -202,8 +202,8 @@ def RunSteps(api, inputs):
     elif status == EMPTY:
       empties += 1
       warning += 1
-    elif status == NO_MASTER:
-      masterless += 1
+    elif status == NO_MAIN:
+      mainless += 1
       warning += 1
     else:
       assert False, 'unknown status %r' % (status,)  # pragma: no cover
@@ -214,8 +214,8 @@ def RunSteps(api, inputs):
     summary += '\n\nEncountered warnings for %d repos:\n' % (warning,)
     if empties:
       summary += '\n  * empty (repo has no objects): %d' % (empties,)
-    if masterless:
-      summary += '\n  * no master ref: %d' % (masterless,)
+    if mainless:
+      summary += '\n  * no main ref: %d' % (mainless,)
   if failed_repos:
     summary += '\n\nEncountered failures for %d repos:\n' % (len(failed_repos),)
     for repo_name in failed_repos:
@@ -270,7 +270,7 @@ def GenTests(api):
                  retcode=1,
              ))
 
-  yield (api.test('one-repo-no-master') + api.runtime(is_experimental=True) +
+  yield (api.test('one-repo-no-main') + api.runtime(is_experimental=True) +
          api.properties(
              git_cache_updater_pb.Inputs(
                  override_bucket='experimental-gs-bucket',

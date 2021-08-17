@@ -27,8 +27,8 @@ class SyncSubmodulesApi(recipe_api.RecipeApi):
                source,
                source_repo_checkout_name,
                dest,
-               source_ref='refs/heads/master',
-               dest_ref='refs/heads/master',
+               source_ref='refs/heads/main',
+               dest_ref='refs/heads/main',
                extra_submodules=None,
                deps_path_prefix=None,
                disable_path_prefix=False):
@@ -93,7 +93,7 @@ class SyncSubmodulesApi(recipe_api.RecipeApi):
     # Checkout the gitlink overlay repository.
     overlay_repo_dir = self.m.path['start_dir'].join('overlay')
     self.m.git.checkout(
-        dest, ref='master', dir_path=overlay_repo_dir, submodules=False)
+        dest, ref='main', dir_path=overlay_repo_dir, submodules=False)
 
     # Create submodule references.
     deps2submodules_cmd = [

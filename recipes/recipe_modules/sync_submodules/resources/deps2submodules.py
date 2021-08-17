@@ -81,7 +81,7 @@ def AddExtraSubmodules(deps, extra_submodules):
   for extra_submodule in extra_submodules:
     path, url = extra_submodule.split('=', 2)
 
-    sha1 = ResolveRef(url, 'refs/heads/master')
+    sha1 = ResolveRef(url, 'refs/heads/main')
     if sha1 is None:
       continue
 
@@ -127,7 +127,7 @@ def WriteGitmodules(submods):
       print('\turl = %s' % url, file=fh)
 
       if not sha1:
-        sha1 = 'master'
+        sha1 = 'main'
 
       # Resolve the ref to a sha1 hash.
       if not SHA1_RE.match(sha1):

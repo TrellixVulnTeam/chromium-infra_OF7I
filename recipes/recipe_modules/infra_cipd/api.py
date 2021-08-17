@@ -12,7 +12,7 @@ class InfraCIPDApi(recipe_api.RecipeApi):
   """API for building packages defined in infra's public and intenral repos.
 
   Essentially a shim around scripts in
-  https://chromium.googlesource.com/infra/infra.git/+/master/build/
+  https://chromium.googlesource.com/infra/infra.git/+/main/build/
   and its internal counterpart.
   """
 
@@ -120,4 +120,3 @@ class InfraCIPDApi(recipe_api.RecipeApi):
       'git_repository:%s' % git_repo_url,
       'git_revision:%s' % revision,
     ]
-

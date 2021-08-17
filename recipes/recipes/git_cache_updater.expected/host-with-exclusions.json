@@ -148,7 +148,7 @@
       "rev-parse",
       "-q",
       "--verify",
-      "master"
+      "main"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/a",
     "env": {
@@ -317,7 +317,7 @@
       "rev-parse",
       "-q",
       "--verify",
-      "master"
+      "main"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/chromium/src",
     "env": {

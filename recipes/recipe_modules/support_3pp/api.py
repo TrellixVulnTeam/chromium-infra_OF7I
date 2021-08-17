@@ -181,8 +181,8 @@ checkout in the .3pp directory, and the script will be invoked as
 `/path/to/checkout/.3pp/<cipd_pkg_name>/$script_name`. If the package has
 shared resources (like `.vpython` files or helper scripts) which are outside of
 the package directory, you would need to create a symbolic link for it. See
-chromium.googlesource.com/infra/infra/+/master/3pp/cpython/ssl_suffix.py as an
-example.
+chromium.googlesource.com/infra/infra/+/main/3pp/cpython_common/ssl_suffix.py as
+an example.
 
 ##### Package
 

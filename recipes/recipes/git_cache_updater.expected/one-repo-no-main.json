@@ -18,7 +18,7 @@
     "cmd": [],
     "name": "https://chromium.googlesource.com/bogus",
     "~followup_annotations": [
-      "@@@STEP_TEXT@[no master ref]@@@",
+      "@@@STEP_TEXT@[no main ref]@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
@@ -130,7 +130,7 @@
       "rev-parse",
       "-q",
       "--verify",
-      "master"
+      "main"
     ],
     "cwd": "[CACHE]/builder/w/chromium.googlesource.com/bogu",
     "env": {
@@ -155,7 +155,7 @@
   },
   {
     "cmd": [],
-    "name": "https://chromium.googlesource.com/bogus.repo has no master ref; skipping update",
+    "name": "https://chromium.googlesource.com/bogus.repo has no main ref; skipping update",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

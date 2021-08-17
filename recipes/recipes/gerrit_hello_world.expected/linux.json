@@ -98,7 +98,7 @@
       "git",
       "push",
       "origin",
-      "HEAD:refs/for/refs/heads/master"
+      "HEAD:refs/for/refs/heads/main"
     ],
     "cwd": "[TMP_BASE]/repo",
     "name": "push for review"

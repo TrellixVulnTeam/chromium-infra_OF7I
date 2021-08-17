@@ -379,7 +379,7 @@ Returns:
 API for building packages defined in infra's public and intenral repos.
 
 Essentially a shim around scripts in
-https://chromium.googlesource.com/infra/infra.git/+/master/build/
+https://chromium.googlesource.com/infra/infra.git/+/main/build/
 and its internal counterpart.
 
 &mdash; **def [build\_without\_env\_refresh](/recipes/recipe_modules/infra_cipd/api.py#63)(self):**
@@ -679,8 +679,8 @@ checkout in the .3pp directory, and the script will be invoked as
 `/path/to/checkout/.3pp/<cipd_pkg_name>/$script_name`. If the package has
 shared resources (like `.vpython` files or helper scripts) which are outside of
 the package directory, you would need to create a symbolic link for it. See
-chromium.googlesource.com/infra/infra/+/master/3pp/cpython/ssl_suffix.py as an
-example.
+chromium.googlesource.com/infra/infra/+/main/3pp/cpython_common/ssl_suffix.py as
+an example.
 
 ##### Package
 
@@ -881,7 +881,7 @@ Set the CIPD namespace (str) to store the source of the packages.
 
 #### **class [SyncSubmodulesApi](/recipes/recipe_modules/sync_submodules/api.py#24)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/sync_submodules/api.py#26)(self, source, source_repo_checkout_name, dest, source_ref='refs/heads/master', dest_ref='refs/heads/master', extra_submodules=None, deps_path_prefix=None, disable_path_prefix=False):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/sync_submodules/api.py#26)(self, source, source_repo_checkout_name, dest, source_ref='refs/heads/main', dest_ref='refs/heads/main', extra_submodules=None, deps_path_prefix=None, disable_path_prefix=False):**
 
 Args:
   source: URL of the git repository to mirror.

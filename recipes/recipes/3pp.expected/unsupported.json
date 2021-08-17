@@ -50,7 +50,7 @@
       "-u",
       "RECIPE_MODULE[depot_tools::git]/resources/git_setup.py",
       "--path",
-      "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+      "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088",
       "--url",
       "https://example.repo"
     ],
@@ -67,10 +67,10 @@
       "git",
       "fetch",
       "origin",
-      "master",
+      "main",
       "--progress"
     ],
-    "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "cwd": "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088",
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
@@ -88,7 +88,7 @@
       "-f",
       "FETCH_HEAD"
     ],
-    "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "cwd": "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088",
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
@@ -104,7 +104,7 @@
       "rev-parse",
       "HEAD"
     ],
-    "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "cwd": "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088",
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
@@ -123,7 +123,7 @@
       "-d",
       "-x"
     ],
-    "cwd": "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a",
+    "cwd": "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088",
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
@@ -141,7 +141,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "glob",
-      "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp",
+      "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp",
       "**/3pp.pb"
     ],
     "env": {
@@ -151,8 +151,8 @@
     "name": "load packages from desired repos.find package specs",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@glob@[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_a/3pp.pb@@@",
-      "@@@STEP_LOG_LINE@glob@[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_b/3pp.pb@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_a/3pp.pb@@@",
+      "@@@STEP_LOG_LINE@glob@[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_b/3pp.pb@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
   },
@@ -171,7 +171,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_a/3pp.pb",
+      "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_a/3pp.pb",
       "/path/to/tmp/"
     ],
     "env": {
@@ -197,7 +197,7 @@
       "/path/to/tmp/json",
       "compute_hash",
       "[START_DIR]",
-      "../[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_a"
+      "../[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_a"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
@@ -217,7 +217,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_b/3pp.pb",
+      "[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_b/3pp.pb",
       "/path/to/tmp/"
     ],
     "env": {
@@ -243,7 +243,7 @@
       "/path/to/tmp/json",
       "compute_hash",
       "[START_DIR]",
-      "../[CACHE]/builder/63dc52509fb3f064956e6d7c3a3446c6fe74309a/support_3pp/pkg_b"
+      "../[CACHE]/builder/4fe007e88bd1d4a88e88cc231ab4045dbeee1088/support_3pp/pkg_b"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"

@@ -106,7 +106,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
     with api.step.nest('load packages from desired repos'):
       for pl in package_locations:
         repo = pl['repo']
-        ref = pl.get('ref', 'refs/heads/master')
+        ref = pl.get('ref', 'refs/heads/main')
         subdir = pl.get('subdir', '')
 
         hash_name = hashlib.sha1("%s:%s" % (repo, ref)).hexdigest()

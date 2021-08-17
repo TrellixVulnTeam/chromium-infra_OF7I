@@ -37,9 +37,8 @@ def RunSteps(api):
         'drop file', root_dir.join('time.txt'), str(api.time.time()))
     api.step('git add', ['git', 'add', 'time.txt'])
     api.step('git commit', ['git', 'commit', '-m', 'Test commit'])
-    api.step(
-        'push for review',
-        ['git', 'push', 'origin', 'HEAD:refs/for/refs/heads/master'])
+    api.step('push for review',
+             ['git', 'push', 'origin', 'HEAD:refs/for/refs/heads/main'])
 
 
 def GenTests(api):
