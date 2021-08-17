@@ -6,7 +6,7 @@
 # under that package name.
 
 # Proto3 Protocol Buffers generator (protoc).
-infra/3pp/tools/protoc/${platform} version:2@3.17.0
+infra/3pp/tools/protoc/${platform} version:2@3.17.3
 
 # Node.js deployment.
 infra/nodejs/nodejs/mac-amd64   node_version:12.13.0
