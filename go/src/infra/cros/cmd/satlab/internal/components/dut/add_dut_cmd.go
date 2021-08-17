@@ -91,6 +91,12 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		}
 	}
 
+	// Set Satlab identifier as default pool if not  given".
+	if len(c.pools) == 0 {
+		defaultPool := fmt.Sprintf("%s-%s", site.Satlab, dockerHostBoxIdentifier)
+		c.pools = append(c.pools, defaultPool)
+	}
+
 	// The qualified name of a rack if no information is given is "satlab-...-rack".
 	if c.rack == "" {
 		c.rack = "rack"
