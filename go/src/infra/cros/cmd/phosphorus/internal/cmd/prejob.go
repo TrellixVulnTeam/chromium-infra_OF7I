@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/phosphorus/internal/gs"
 	"log"
 	"os"
 	"path/filepath"
@@ -30,6 +29,14 @@ import (
 	"infra/cros/cmd/phosphorus/internal/tls"
 	"infra/libs/lro"
 )
+
+// If not set in the prejob requests we default to this bucket.
+const ChromeOSImageBucketDefault = "gs://chromeos-image-archive"
+
+type ChromeOSBuildLocation struct {
+	ChromeOSBuild  string
+	ChromeOSBucket string
+}
 
 // Prejob subcommand: Run a prejob (e.g. provision) against a DUT.
 var Prejob = &subcommands.Command{
@@ -155,14 +162,14 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 	switch fs := e.GetCrosVersionSelector().(type) {
 	case *phosphorus.ProvisionDutExperiment_CrosVersionAllowList:
 		for _, p := range fs.CrosVersionAllowList.Prefixes {
-			if strings.HasPrefix(v, p) {
+			if strings.HasPrefix(v.ChromeOSBuild, p) {
 				return true
 			}
 		}
 		return false
 	case *phosphorus.ProvisionDutExperiment_CrosVersionDisallowList:
 		for _, p := range fs.CrosVersionDisallowList.Prefixes {
-			if strings.HasPrefix(v, p) {
+			if strings.HasPrefix(v.ChromeOSBuild, p) {
 				return false
 			}
 		}
@@ -177,7 +184,7 @@ func shouldProvisionChromeOSViaTLS(r *phosphorus.PrejobRequest) bool {
 func provisionChromeOSBuildLegacy(ctx context.Context, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
 
-	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
+	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies).ChromeOSBuild
 	found, err := bc.LoadProvisionableLabel(chromeOSBuildKey)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos legacy").Err()
@@ -346,14 +353,14 @@ func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil
 func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.PrejobRequest) (*phosphorus.PrejobResponse, error) {
 	bc := botCache(r)
 	desired := chromeOSBuildDependencyOrEmpty(r.SoftwareDependencies)
-	if desired == "" {
+	if desired.ChromeOSBuild == "" {
 		logging.Infof(ctx, "Skipping Chrome OS image provision because no specific version was requested.")
 		return &phosphorus.PrejobResponse{State: phosphorus.PrejobResponse_SUCCEEDED}, nil
 	}
 
 	logging.Infof(ctx, "Adding chromeos-version label to host file")
 	hostInfoFileDir := r.Config.GetTask().GetResultsDir()
-	err := atutil.AddProvisionDetailsToHostInfoFile(ctx, bt, hostInfoFileDir, r.DutHostname, desired)
+	err := atutil.AddProvisionDetailsToHostInfoFile(ctx, bt, hostInfoFileDir, r.DutHostname, desired.ChromeOSBucket, desired.ChromeOSBuild)
 	if err != nil {
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
@@ -377,7 +384,7 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 			Name: r.DutHostname,
 			TargetBuild: &tlsapi.ChromeOsImage{
 				PathOneof: &tlsapi.ChromeOsImage_GsPathPrefix{
-					GsPathPrefix: fmt.Sprintf("%s/%s", gs.ImageArchivePrefix, desired),
+					GsPathPrefix: fmt.Sprintf("%s/%s", desired.ChromeOSBucket, desired.ChromeOSBuild),
 				},
 			},
 		},
@@ -393,8 +400,8 @@ func provisionChromeOSBuildViaTLS(ctx context.Context, bt *tls.BackgroundTLS, r 
 		return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 	}
 
-	if desired != "" && prejobSucceeded(resp, err) {
-		if err := bc.SetNonEmptyProvisionableLabel(chromeOSBuildKey, desired); err != nil {
+	if desired.ChromeOSBuild != "" && prejobSucceeded(resp, err) {
+		if err := bc.SetNonEmptyProvisionableLabel(chromeOSBuildKey, desired.ChromeOSBuild); err != nil {
 			return nil, errors.Annotate(err, "provision chromeos via tls").Err()
 		}
 	}
@@ -469,13 +476,20 @@ func provisionLacros(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.P
 	return resp, nil
 }
 
-func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
+func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) *ChromeOSBuildLocation {
 	for _, d := range deps {
 		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuild); ok {
-			return b.ChromeosBuild
+			bucket := ChromeOSImageBucketDefault
+			if b_gcs, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket); ok {
+				bucket = b_gcs.ChromeosBuildGcsBucket
+			}
+			return &ChromeOSBuildLocation{
+				ChromeOSBuild:  b.ChromeosBuild,
+				ChromeOSBucket: bucket,
+			}
 		}
 	}
-	return ""
+	return &ChromeOSBuildLocation{}
 }
 
 func roFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {

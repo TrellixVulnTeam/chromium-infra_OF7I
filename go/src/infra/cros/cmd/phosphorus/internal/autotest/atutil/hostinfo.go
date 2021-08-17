@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"infra/cros/cmd/phosphorus/internal/gs"
 	"infra/cros/cmd/phosphorus/internal/tls"
 	"io/ioutil"
 	"net/url"
@@ -40,7 +39,7 @@ func HostInfoFilePath(rootDir, host string) string {
 	return filepath.Join(rootDir, hostInfoSubDir, f)
 }
 
-func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTLS, infoFileDir, dutName, crosVersion string) error {
+func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTLS, infoFileDir, dutName, bucketPrefix string, crosVersion string) error {
 	errWrap := fmt.Sprintf("add %s and %s labels to host info file", jobRepoURLLabel, crosVersionLabel)
 	infoFilePath := HostInfoFilePath(infoFileDir, dutName)
 	hostInfo, err := readHostInfoFile(infoFilePath)
@@ -51,7 +50,7 @@ func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTL
 	if hostInfo.StableVersions == nil {
 		hostInfo.StableVersions = make(map[string]string)
 	}
-	if err := hostInfo.setPackageStagingCacheURL(ctx, bt, dutName, crosVersion); err != nil {
+	if err := hostInfo.setPackageStagingCacheURL(ctx, bt, dutName, bucketPrefix, crosVersion); err != nil {
 		return errors.Wrap(err, errWrap)
 	}
 	hostInfo.setCrosVersion(crosVersion)
@@ -62,8 +61,8 @@ func AddProvisionDetailsToHostInfoFile(ctx context.Context, bt *tls.BackgroundTL
 	return nil
 }
 
-func (hi *HostInfo) setPackageStagingCacheURL(ctx context.Context, bt *tls.BackgroundTLS, dutName, crosVersion string) error {
-	gsImagePath := fmt.Sprintf("%s/%s", gs.ImageArchivePrefix, crosVersion)
+func (hi *HostInfo) setPackageStagingCacheURL(ctx context.Context, bt *tls.BackgroundTLS, dutName, bucketPrefix string, crosVersion string) error {
+	gsImagePath := fmt.Sprintf("%s/%s", bucketPrefix, crosVersion)
 	rawProvisioningURL, err := bt.CacheForDut(ctx, gsImagePath, dutName)
 	if err != nil {
 		return err
