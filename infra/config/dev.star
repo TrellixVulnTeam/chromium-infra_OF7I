@@ -273,6 +273,25 @@ luci.realm(
     ],
 )
 
+# TODO(crbug.com/1238772): remove after dev configs get prepared in "chromeos"
+# project.
+luci.realm(
+    name = "pools/chromeos",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.poolOwner",
+            groups = "administrators",
+        ),
+        luci.binding(
+            roles = "role/swarming.poolUser",
+            groups = "chromium-swarm-dev-privileged-users",
+        ),
+        luci.binding(
+            roles = "role/swarming.poolViewer",
+            groups = "chromium-swarm-dev-view-all-bots",
+        ),
+    ],
+)
 ################################################################################
 ## Realms used for Swarming client integration tests.
 
