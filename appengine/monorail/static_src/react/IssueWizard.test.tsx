@@ -10,10 +10,10 @@ import {IssueWizard} from './IssueWizard.tsx';
 
 describe('IssueWizard', () => {
   it('renders', async () => {
-    const {container} = render(<IssueWizard />);
+    render(<IssueWizard />);
 
-    const paragraph = container.querySelector('p');
+    const stepper = document.getElementById("mobile-stepper")
 
-    assert.include(paragraph?.innerText, 'Welcome to the new issue wizard');
+    assert.isNotNull(stepper);
   });
 });

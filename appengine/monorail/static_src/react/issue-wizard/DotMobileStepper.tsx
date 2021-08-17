@@ -26,9 +26,8 @@ const useStyles = makeStyles({
  *
  *  @return ReactElement.
  */
-export default function DotsMobileStepper(): React.ReactElement {
+export default function DotsMobileStepper({nextEnabled, activeStep, setActiveStep} : {nextEnabled: boolean, activeStep: number, setActiveStep: Function}) : React.ReactElement {
   const classes = useStyles();
-  const [activeStep, setActiveStep] = React.useState(0);
 
   const handleNext = () => {
     setActiveStep((prevActiveStep: number) => prevActiveStep + 1);
@@ -37,17 +36,29 @@ export default function DotsMobileStepper(): React.ReactElement {
   const handleBack = () => {
     setActiveStep((prevActiveStep: number) => prevActiveStep - 1);
   };
+
+  let label;
+  let icon;
+
+  if (activeStep === 2){
+    label = 'Submit';
+    icon = '';
+  } else {
+    label = 'Next';
+    icon = <KeyboardArrowRight />;
+  }
   return (
     <MobileStepper
+      id="mobile-stepper"
       variant="dots"
-      steps={2}
+      steps={3}
       position="static"
       activeStep={activeStep}
       className={classes.root}
       nextButton={
-        <Button aria-label="nextButton" size="medium" onClick={handleNext} disabled={activeStep === 1}>
-          Next
-          <KeyboardArrowRight />
+        <Button aria-label="nextButton" size="medium" onClick={handleNext} disabled={activeStep === 2 || !nextEnabled}>
+          {label}
+          {icon}
         </Button>
       }
       backButton={

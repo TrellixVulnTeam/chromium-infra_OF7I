@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {render, screen, cleanup} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {assert} from 'chai';
 
@@ -12,47 +12,49 @@ import DotMobileStepper from './DotMobileStepper.tsx';
 describe('DotMobileStepper', () => {
   let container: HTMLElement;
 
-  beforeEach(() => {
-    container = render(<DotMobileStepper />).container;
-  });
-
-  afterEach(() => {
-    document.body.removeChild(container);
-  });
+  afterEach(cleanup);
 
   it('renders', () => {
+    container = render(<DotMobileStepper activeStep={0} nextEnabled={true}/>).container;
+
     // this is checking the buttons for the stepper rendered
       const count = document.querySelectorAll('button').length;
       assert.equal(count, 2)
   });
 
   it('back button disabled on first step', () => {
+    render(<DotMobileStepper activeStep={0} nextEnabled={true}/>).container;
+
     // Finds a button on the page with "back" as text using React testing library.
-    const backButton = screen.getByRole('button', {name: /backButton/i});
+    const backButton = screen.getByRole('button', {name: /backButton/i}) as HTMLButtonElement;
 
     // Back button is disabled on the first step.
-    assert.isNotNull(backButton.getAttribute('disabled'));
+    assert.isTrue(backButton.disabled);
+  });
 
-    // Click the next button to move to the second step.
-    const nextButton = screen.getByRole('button', {name: /nextButton/i});
+  it('both buttons enabled on second step', () => {
+    render(<DotMobileStepper activeStep={1} nextEnabled={true}/>).container;
 
-    userEvent.click(nextButton);
+    // Finds a button on the page with "back" as text using React testing library.
+    const backButton = screen.getByRole('button', {name: /backButton/i}) as HTMLButtonElement;
+
+    // Finds a button on the page with "next" as text using React testing library.
+    const nextButton = screen.getByRole('button', {name: /nextButton/i}) as HTMLButtonElement;
 
     // Back button is not disabled on the second step.
-    assert.isNull(backButton.getAttribute('disabled'));
+    assert.isFalse(backButton.disabled);
+
+    // Next button is not disabled on the second step.
+    assert.isFalse(nextButton.disabled);
   });
 
   it('next button disabled on last step', () => {
+    render(<DotMobileStepper activeStep={2}/>).container;
+
     // Finds a button on the page with "next" as text using React testing library.
-    const nextButton = screen.getByRole('button', {name: /next/i});
+    const nextButton = screen.getByRole('button', {name: /nextButton/i}) as HTMLButtonElement;
 
-    // Next button is available on the first step.
-    assert.isNull(nextButton.getAttribute('disabled'));
-
-    // Click the next button twice to go to the third step.
-    userEvent.click(nextButton);
-
-    // Now the next button should be disabled.
-    assert.isNotNull(nextButton.getAttribute('disabled'));
+    // Next button is disabled on the second step.
+    assert.isTrue(nextButton.disabled);
   });
 });

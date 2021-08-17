@@ -8,7 +8,6 @@ import {makeStyles} from '@material-ui/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
-
 const CATEGORIES = [
   {
     value: 'UI',
@@ -93,9 +92,8 @@ const useStyles = makeStyles((theme: Theme) => ({
  *
  * @return ReactElement.
  */
-export default function SelectMenu(): React.ReactElement {
+export default function SelectMenu({option, setOption}: {option: string, setOption: Function}) {
   const classes = useStyles();
-  const [option, setOption] = React.useState('');
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setOption(event.target.value as string);
   };

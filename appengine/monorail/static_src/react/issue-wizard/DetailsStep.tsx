@@ -35,24 +35,30 @@ const useStyles = makeStyles((theme: Theme) =>
   }), {defaultTheme: theme}
 );
 
-export default function DetailsStep(): React.ReactElement {
+export default function DetailsStep({textValues, setTextValues}:
+  {textValues: Object, setTextValues: Function}): React.ReactElement {
   const classes = useStyles();
+
+  const handleChange = (valueName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textInput = e.target.value;
+    setTextValues({...textValues, [valueName]: textInput});
+  };
 
   return (
     <>
         <h2 className={classes.grey}>Details for problems with</h2>
         <form className={classes.root} noValidate autoComplete="off">
             <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
-            <TextField id="outlined-basic-1" variant="outlined" />
+            <TextField id="outlined-basic-1" variant="outlined" onChange={handleChange('oneLineSummary')}/>
 
             <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
-            <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" />
+            <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')}/>
 
             <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
-            <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" />
+            <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
 
             <h3 className={classes.head}>Additional Comments</h3>
-            <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" />
+            <TextField multiline rows={3} id="outlined-basic-4" variant="outlined" onChange={handleChange('additionalComments')}/>
         </form>
     </>
   );
