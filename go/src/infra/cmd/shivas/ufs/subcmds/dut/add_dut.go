@@ -71,6 +71,7 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo. Can skip for Servo V3.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns REGULAR if unassigned.")
+		c.Flags.StringVar(&c.servoDockerContainerName, "servod-docker", "", "servod docker container name. Required if serovd is running on docker")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma separated pools assigned to the DUT. 'DUT_POOL_QUOTA' is used if nothing is specified")
 		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
 		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values.")
@@ -120,17 +121,18 @@ type addDUT struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 
-	newSpecsFile   string
-	hostname       string
-	asset          string
-	servo          string
-	servoSerial    string
-	servoSetupType string
-	licenseTypes   []string
-	licenseIds     []string
-	pools          []string
-	rpm            string
-	rpmOutlet      string
+	newSpecsFile             string
+	hostname                 string
+	asset                    string
+	servo                    string
+	servoSerial              string
+	servoSetupType           string
+	servoDockerContainerName string
+	licenseTypes             []string
+	licenseIds               []string
+	pools                    []string
+	rpm                      string
+	rpmOutlet                string
 
 	ignoreUFS                 bool
 	deployTaskTimeout         int64
@@ -525,6 +527,7 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 	peripherals.GetServo().ServoPort = servoPort
 	peripherals.GetServo().ServoSerial = servoSerial
 	peripherals.GetServo().ServoSetup = servoSetup
+	peripherals.GetServo().DockerContainerName = c.servoDockerContainerName
 	peripherals.GetRpm().PowerunitName = rpmHost
 	peripherals.GetRpm().PowerunitOutlet = rpmOutlet
 	if len(pools) > 0 && pools[0] != "" {
