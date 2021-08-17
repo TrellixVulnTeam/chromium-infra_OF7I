@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import base64
 import collections
 import contextlib
 import itertools
@@ -320,10 +321,26 @@ class Image(collections.namedtuple('_Image', (
         # Change working directory that the image uses.
         run_args.append('-w=%s' % (self.workrel(work_dir, cwd),))
 
-      for k, v in env.items():
-        v = v.replace(work_dir, '/work/')
-        assert ' ' not in v, 'BUG: spaces in env vars not supported correctly'
-        run_args.extend(['-e', '%s=%s' % (k, v)])
+      new_env = dict()  # key -> [val1, val2, ...]
+
+      def encode_env_item(key, mode, value):
+        key = 'DOCKERBUILD_%s_%s' % (mode, key)
+        new_env.setdefault(key, []).append(
+            value.replace(work_dir.rstrip('/'), '/work'))
+
+      def encode_env_affix(affix_list, mode):
+        if not affix_list:
+          return
+        for k, v in affix_list:
+          encode_env_item(k, mode, v)
+
+      for k, v in env.iteritems():
+        encode_env_item(k, 'SET', v)
+      encode_env_affix(kwargs.pop('env_prefix', None), 'PREPEND')
+      encode_env_affix(kwargs.pop('env_suffix', None), 'APPEND')
+
+      for k, vals in new_env.iteritems():
+        run_args.extend(['-e', '%s=%s' % (k, base64.b64encode(':'.join(vals)))])
 
       # The dockcross script uses bash $RANDOM to generate container names. This
       # is insufficiently random, and produces collisions fairly often when

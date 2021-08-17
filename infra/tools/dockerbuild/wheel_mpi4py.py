@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import base64
 import itertools
 import os
 
@@ -50,18 +49,7 @@ class Mpi4py(SourceOrPrebuilt):
       ldflags = '-L' + os.path.join(pkg_dir, 'lib')
       if wheel.plat.name.startswith('mac'):
         ldflags += ' -framework OpenCL'
-
-      # TODO: This should be refactored to avoid duplication with
-      # dockerbuild.py.
-      env = {}
-      if wheel.plat.dockcross_base:
-        cflags = cflags.replace(tdir, '/work')
-        ldflags = ldflags.replace(tdir, '/work')
-        env['DOCKERBUILD_SET_CFLAGS'] = base64.b64encode(cflags)
-        env['DOCKERBUILD_SET_LDFLAGS'] = base64.b64encode(ldflags)
-      else:
-        env['CFLAGS'] = cflags
-        env['LDFLAGS'] = ldflags
+      env = {'CFLAGS': cflags, 'LDFLAGS': ldflags}
 
       for patch in self._pypi_src.get_patches():
         util.LOGGER.info('Applying patch %s', os.path.basename(patch))
