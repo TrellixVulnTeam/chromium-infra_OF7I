@@ -18,7 +18,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/shivas/site"
+	"infra/cmd/mallet/internal/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/autotest/hostinfo"

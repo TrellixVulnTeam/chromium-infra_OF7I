@@ -10,7 +10,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 
-	"infra/cmd/shivas/site"
+	"infra/cmd/mallet/internal/site"
 )
 
 type run struct {
