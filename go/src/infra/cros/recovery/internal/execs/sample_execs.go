@@ -21,6 +21,6 @@ func sampleFailActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["sample_pass"] = samplePassActionExec
-	execMap["sample_fail"] = sampleFailActionExec
+	Register("sample_pass", samplePassActionExec)
+	Register("sample_fail", sampleFailActionExec)
 }

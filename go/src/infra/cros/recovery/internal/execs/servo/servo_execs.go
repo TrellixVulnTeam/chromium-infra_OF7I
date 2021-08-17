@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package servo
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
 	"infra/cros/recovery/tlw"
@@ -18,13 +19,13 @@ import (
 // NOTE: That is just fake execs for local testing during developing.
 // TODO(otabek@): Replace with real execs.
 
-func pingServoHostActionExec(ctx context.Context, args *RunArgs) error {
+func pingServoHostActionExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.LimitCount(ctx, 3, time.Second, func() error {
 		return args.Access.Ping(ctx, args.DUT.ServoHost.Name, 2)
 	}, "ping servo-host")
 }
 
-func sshServoHostActionExec(ctx context.Context, args *RunArgs) error {
+func sshServoHostActionExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.LimitCount(ctx, 3, time.Second, func() error {
 		if r := args.Access.Run(ctx, args.DUT.ServoHost.Name, "true"); r.ExitCode != 0 {
 			return errors.Reason("check ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
@@ -33,7 +34,7 @@ func sshServoHostActionExec(ctx context.Context, args *RunArgs) error {
 	}, "check ssh access")
 }
 
-func servodInitActionExec(ctx context.Context, args *RunArgs) error {
+func servodInitActionExec(ctx context.Context, args *execs.RunArgs) error {
 	req := &tlw.InitServodRequest{
 		Resource: args.DUT.Name,
 		Options:  defaultServodOptions,
@@ -44,14 +45,14 @@ func servodInitActionExec(ctx context.Context, args *RunArgs) error {
 	return nil
 }
 
-func servodStopActionExec(ctx context.Context, args *RunArgs) error {
+func servodStopActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if err := args.Access.StopServod(ctx, args.DUT.Name); err != nil {
 		return errors.Annotate(err, "stop servod").Err()
 	}
 	return nil
 }
 
-func servodRestartActionExec(ctx context.Context, args *RunArgs) error {
+func servodRestartActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if err := servodStopActionExec(ctx, args); err != nil {
 		log.Debug(ctx, "Servod restart: fail stop servod. Error: %s", err)
 	}
@@ -62,9 +63,9 @@ func servodRestartActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["servo_host_ping"] = pingServoHostActionExec
-	execMap["servo_host_ssh"] = sshServoHostActionExec
-	execMap["servo_host_servod_init"] = servodInitActionExec
-	execMap["servo_host_servod_stop"] = servodStopActionExec
-	execMap["servo_host_servod_restart"] = servodRestartActionExec
+	execs.Register("servo_host_ping", pingServoHostActionExec)
+	execs.Register("servo_host_ssh", sshServoHostActionExec)
+	execs.Register("servo_host_servod_init", servodInitActionExec)
+	execs.Register("servo_host_servod_stop", servodStopActionExec)
+	execs.Register("servo_host_servod_restart", servodRestartActionExec)
 }

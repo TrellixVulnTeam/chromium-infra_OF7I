@@ -2,18 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package dut
 
 import (
 	"context"
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 )
 
 // hasDutNameActionExec verifies that DUT provides name.
-func hasDutNameActionExec(ctx context.Context, args *RunArgs) error {
+func hasDutNameActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if args.DUT != nil && args.DUT.Name != "" {
 		log.Debug(ctx, "DUT name: %q", args.DUT.Name)
 		return nil
@@ -22,7 +23,7 @@ func hasDutNameActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 // hasDutBoardActionExec verifies that DUT provides board name.
-func hasDutBoardActionExec(ctx context.Context, args *RunArgs) error {
+func hasDutBoardActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if args.DUT != nil && args.DUT.Board != "" {
 		log.Debug(ctx, "DUT board name: %q", args.DUT.Board)
 		return nil
@@ -31,7 +32,7 @@ func hasDutBoardActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 // hasDutModelActionExec verifies that DUT provides model name.
-func hasDutModelActionExec(ctx context.Context, args *RunArgs) error {
+func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if args.DUT != nil && args.DUT.Model != "" {
 		log.Debug(ctx, "DUT model name: %q", args.DUT.Model)
 		return nil
@@ -40,7 +41,7 @@ func hasDutModelActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["has_dut_name"] = hasDutNameActionExec
-	execMap["has_dut_board_name"] = hasDutBoardActionExec
-	execMap["has_dut_model_name"] = hasDutModelActionExec
+	execs.Register("has_dut_name", hasDutNameActionExec)
+	execs.Register("has_dut_board_name", hasDutBoardActionExec)
+	execs.Register("has_dut_model_name", hasDutModelActionExec)
 }

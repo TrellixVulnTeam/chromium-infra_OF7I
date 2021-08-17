@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package servo
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 )
@@ -21,7 +22,7 @@ import (
 var defaultServodOptions = &tlw.ServodOptions{RecoveryMode: true}
 
 // ServodCallSet calls servod with set method. Set method used to update the values or call functions with arguments.
-func ServodCallSet(ctx context.Context, in *RunArgs, command string, value interface{}) (*tlw.CallServodResponse, error) {
+func ServodCallSet(ctx context.Context, in *execs.RunArgs, command string, value interface{}) (*tlw.CallServodResponse, error) {
 	if command == "" {
 		return nil, errors.Reason("servod call set: command is empty").Err()
 	}
@@ -42,7 +43,7 @@ func ServodCallSet(ctx context.Context, in *RunArgs, command string, value inter
 }
 
 // ServodCallGet calls servod with get method. Get method used to read values.
-func ServodCallGet(ctx context.Context, in *RunArgs, command string) (*tlw.CallServodResponse, error) {
+func ServodCallGet(ctx context.Context, in *execs.RunArgs, command string) (*tlw.CallServodResponse, error) {
 	if command == "" {
 		return nil, errors.Reason("servod call get: command is empty").Err()
 	}
@@ -60,7 +61,7 @@ func ServodCallGet(ctx context.Context, in *RunArgs, command string) (*tlw.CallS
 }
 
 // ServodCallHas calls servod with doc method and verify if command is known by servod.
-func ServodCallHas(ctx context.Context, in *RunArgs, command string) (*tlw.CallServodResponse, error) {
+func ServodCallHas(ctx context.Context, in *execs.RunArgs, command string) (*tlw.CallServodResponse, error) {
 	if command == "" {
 		return nil, errors.Reason("servod call has: command is empty").Err()
 	}

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package servo
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
 )
@@ -17,7 +18,7 @@ import (
 // TODO(otabek@): Extract all commands to constants.
 // NOTE: That is just fake execs for local testing during developing phase. The correct/final execs will be introduced later.
 
-func servodEchoActionExec(ctx context.Context, args *RunArgs) error {
+func servodEchoActionExec(ctx context.Context, args *execs.RunArgs) error {
 	res, err := ServodCallGet(ctx, args, "serialname")
 	if err != nil {
 		return errors.Annotate(err, "servod echo exec").Err()
@@ -27,7 +28,7 @@ func servodEchoActionExec(ctx context.Context, args *RunArgs) error {
 	return nil
 }
 
-func servodLidopenActionExec(ctx context.Context, args *RunArgs) error {
+func servodLidopenActionExec(ctx context.Context, args *execs.RunArgs) error {
 	res, err := ServodCallGet(ctx, args, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
@@ -39,7 +40,7 @@ func servodLidopenActionExec(ctx context.Context, args *RunArgs) error {
 	return nil
 }
 
-func servodLidopenRecoveryActionExec(ctx context.Context, args *RunArgs) error {
+func servodLidopenRecoveryActionExec(ctx context.Context, args *execs.RunArgs) error {
 	res, err := ServodCallGet(ctx, args, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
@@ -78,7 +79,7 @@ const (
 	usbkeyBootTimeout = 300 * time.Second
 )
 
-func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *RunArgs) error {
+func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if _, err := ServodCallSet(ctx, args, "power_state", "rec"); err != nil {
 		return errors.Annotate(err, "servod boot in recovery-mode").Err()
 	}
@@ -90,7 +91,7 @@ func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *RunArgs) err
 	}, "servod boot in recovery-mode: check ssh access")
 }
 
-func servodDUTColdResetActionExec(ctx context.Context, args *RunArgs) error {
+func servodDUTColdResetActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if _, err := ServodCallSet(ctx, args, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servod cold_reset dut").Err()
 	}
@@ -100,9 +101,9 @@ func servodDUTColdResetActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["servod_echo"] = servodEchoActionExec
-	execMap["servod_lidopen"] = servodLidopenActionExec
-	execMap["servod_lidopen_recover"] = servodLidopenRecoveryActionExec
-	execMap["servod_dut_rec_mode"] = servodDUTBootRecoveryModeActionExec
-	execMap["servod_dut_cold_reset"] = servodDUTColdResetActionExec
+	execs.Register("servod_echo", servodEchoActionExec)
+	execs.Register("servod_lidopen", servodLidopenActionExec)
+	execs.Register("servod_lidopen_recover", servodLidopenRecoveryActionExec)
+	execs.Register("servod_dut_rec_mode", servodDUTBootRecoveryModeActionExec)
+	execs.Register("servod_dut_cold_reset", servodDUTColdResetActionExec)
 }

@@ -7,6 +7,7 @@ package execs
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -16,11 +17,25 @@ import (
 
 // exec represents an execution function of the action.
 // The single exec can be associated with one or more actions.
-type exec func(ctx context.Context, args *RunArgs) error
+type ExecFunction func(ctx context.Context, args *RunArgs) error
 
 var (
-	execMap = make(map[string]exec)
+	// Map of known exec functions used by recovery engine.
+	// Use Register() function to add to this map.
+	knownExecMap = make(map[string]ExecFunction)
 )
+
+// Register registers new exec function to be used with recovery engine.
+// We panic if a name is reused.
+func Register(name string, f ExecFunction) {
+	if _, ok := knownExecMap[name]; ok {
+		panic(fmt.Sprintf("Register exec %q: already registered", name))
+	}
+	if f == nil {
+		panic(fmt.Sprintf("register exec %q: exec function is not provided", name))
+	}
+	knownExecMap[name] = f
+}
 
 // RunArgs holds input arguments for an exec function.
 type RunArgs struct {
@@ -38,7 +53,7 @@ type RunArgs struct {
 
 // Run runs exec function provided by this package by name.
 func Run(ctx context.Context, name string, args *RunArgs) error {
-	e, ok := execMap[name]
+	e, ok := knownExecMap[name]
 	if !ok {
 		return errors.Reason("exec %q: not found", name).Err()
 	}
@@ -47,6 +62,6 @@ func Run(ctx context.Context, name string, args *RunArgs) error {
 
 // Exist check if exec function with name is present.
 func Exist(name string) bool {
-	_, ok := execMap[name]
+	_, ok := knownExecMap[name]
 	return ok
 }

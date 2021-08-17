@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package cros
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/retry"
 )
 
@@ -19,14 +20,14 @@ const (
 )
 
 // pingCrosDUTActionExec performs ping action to the ChromeOS DUT.
-func pingCrosDUTActionExec(ctx context.Context, args *RunArgs) error {
+func pingCrosDUTActionExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.LimitCount(ctx, defaultAttemptCount, time.Second, func() error {
 		return args.Access.Ping(ctx, args.DUT.Name, 2)
 	}, "cros dut ping")
 }
 
 // sshCrosDUTActionExec performs ssh present verification for ChromeOS DUT.
-func sshCrosDUTActionExec(ctx context.Context, args *RunArgs) error {
+func sshCrosDUTActionExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.LimitCount(ctx, defaultAttemptCount, time.Second, func() error {
 		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
 			return errors.Reason("cros dut ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
@@ -36,6 +37,6 @@ func sshCrosDUTActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["cros_ping"] = pingCrosDUTActionExec
-	execMap["cros_ssh"] = sshCrosDUTActionExec
+	execs.Register("cros_ping", pingCrosDUTActionExec)
+	execs.Register("cros_ssh", sshCrosDUTActionExec)
 }

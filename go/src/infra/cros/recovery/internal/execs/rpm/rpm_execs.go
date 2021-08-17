@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execs
+package rpm
 
 import (
 	"context"
@@ -10,11 +10,12 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/tlw"
 )
 
 // hasRpmInfoActionExec verifies if rpm info is present for DUT.
-func hasRpmInfoActionExec(ctx context.Context, args *RunArgs) error {
+func hasRpmInfoActionExec(ctx context.Context, args *execs.RunArgs) error {
 	if args.DUT.RPMOutlet != nil {
 		name := args.DUT.RPMOutlet.Name
 		// TODO(otabek@): set fixed number to check and add accept argument value.
@@ -26,7 +27,7 @@ func hasRpmInfoActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 // rpmPowerCycleActionExec performs power cycle the device by RPM.
-func rpmPowerCycleActionExec(ctx context.Context, args *RunArgs) error {
+func rpmPowerCycleActionExec(ctx context.Context, args *execs.RunArgs) error {
 	req := &tlw.SetPowerSupplyRequest{
 		Resource: args.DUT.Name,
 		State:    tlw.PowerSupplyActionCycle,
@@ -50,6 +51,6 @@ func rpmPowerCycleActionExec(ctx context.Context, args *RunArgs) error {
 }
 
 func init() {
-	execMap["has_rpm_info"] = hasRpmInfoActionExec
-	execMap["rpm_power_cycle"] = rpmPowerCycleActionExec
+	execs.Register("has_rpm_info", hasRpmInfoActionExec)
+	execs.Register("rpm_power_cycle", rpmPowerCycleActionExec)
 }
