@@ -8,6 +8,7 @@ from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
 
 DEPS = [
+    'depot_tools/gitiles',
     'windows_scripts_executor',
     'recipe_engine/properties',
     'recipe_engine/platform',
@@ -70,18 +71,32 @@ def GenTests(api):
           },
       }))
 
+  PIN_FILE_STARTNET_PASS = api.step_data(
+      'Pin git artifacts to refs.gitiles log: ' +
+      'HEAD/windows/artifacts/startnet.cmd',
+      api.gitiles.make_log_test_data('HEAD'),
+  )
+
+  FETCH_FILE_STARTNET_PASS = api.step_data(
+      'Get all git artifacts.fetch ' +
+      'ef70cb069518e6dc3ff24bfae7f195de5099c377:' +
+      'windows/artifacts/startnet.cmd',
+      api.gitiles.make_encoded_file('Wpeinit'))
+
   ADD_FILE_STARTNET_PASS = api.step_data(
-      'execute config win10_2013_x64.offline ' +
-      'winpe customization offline_winpe_2013_x64.PowerShell> ' +
-      'Add file cipd_startnet_path>',
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.PowerShell> Add file ' +
+      '[CACHE]\\GITPkgs\\ef70cb069518e6dc3ff24bfae7f195de5099c377\\' +
+      'windows\\artifacts\\startnet.cmd',
       stdout=api.json.output({'results': {
           'Success': True,
       }}))
 
   ADD_FILE_STARTNET_FAIL = api.step_data(
-      'execute config win10_2013_x64.offline ' +
-      'winpe customization offline_winpe_2013_x64.PowerShell> ' +
-      'Add file cipd_startnet_path>',
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.PowerShell> Add file ' +
+      '[CACHE]\\GITPkgs\\ef70cb069518e6dc3ff24bfae7f195de5099c377\\' +
+      'windows\\artifacts\\startnet.cmd',
       stdout=api.json.output({
           'results': {
               'Success': False,
@@ -107,9 +122,11 @@ def GenTests(api):
       add_file=wib.AddFile(
           name='add_startnet_file',
           src=wib.Src(
-              local_src='cipd_startnet_path>',
-          ),
-          dst='C:\\Windows\\System32\\startnet.cmd',
+              git_src=wib.GITSrc(
+                  repo='chromium.dev',
+                  ref='HEAD',
+                  src='windows/artifacts/startnet.cmd'),),
+          dst='Windows\\System32',
       ))
 
   ACTION_ADD_DOT3SVC = wib.Action(
@@ -165,6 +182,8 @@ def GenTests(api):
                       wib.OfflineAction(
                           name='network_setup', actions=[ACTION_ADD_STARTNET])
                   ]))) +
+      PIN_FILE_STARTNET_PASS +  # pin the startnet file to current refs
+      FETCH_FILE_STARTNET_PASS +  # fetch the startnet file from gitiles
       GEN_WPE_MEDIA_FAIL +  # Fail to create a winpe media folder
       api.post_process(StatusFailure) +  # recipe should fail
       api.post_process(DropExpectation))
@@ -189,31 +208,53 @@ def GenTests(api):
                       wib.OfflineAction(
                           name='network_setup', actions=[ACTION_ADD_STARTNET])
                   ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
+      PIN_FILE_STARTNET_PASS +  # pin the git file to current refs
+      FETCH_FILE_STARTNET_PASS +  # fetch the file from gitiles
       ADD_FILE_STARTNET_FAIL +  # Fail to add file
       UMOUNT_WIM_PASS +  # Unmount the wim
       UMOUNT_PP_DISCARD +  # Discard the changes made to wim
       api.post_process(StatusFailure) +  # recipe fails
       api.post_process(DropExpectation))
 
-  yield (api.test('Add file from cipd', api.platform('win', 64)) +
-         api.properties(
-             wib.Image(
-                 name='win10_2013_x64',
-                 arch=wib.ARCH_X86,
-                 offline_winpe_customization=wib.OfflineCustomization(
-                     name='offline_winpe_2013_x64',
-                     offline_customization=[
-                         wib.OfflineAction(
-                             name='network_setup',
-                             actions=[
-                                 ACTION_ADD_STARTNET,
-                                 ACTION_ADD_DOT3SVC,
-                             ])
-                     ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
-         ADD_FILE_STARTNET_PASS + ADD_FILE_CIPD_PASS +
-         UMOUNT_WIM_PASS +  # Unmount the wim
-         UMOUNT_PP_SAVE + api.post_process(StatusSuccess) +
-         api.post_process(DropExpectation))
+  yield (
+      api.test('Add file from cipd', api.platform('win', 64)) + api.properties(
+          wib.Image(
+              name='win10_2013_x64',
+              arch=wib.ARCH_X86,
+              offline_winpe_customization=wib.OfflineCustomization(
+                  name='offline_winpe_2013_x64',
+                  offline_customization=[
+                      wib.OfflineAction(
+                          name='network_setup', actions=[
+                              ACTION_ADD_DOT3SVC,
+                          ])
+                  ]))) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
+      MOUNT_WIM_PASS +  # mount the generated wim
+      ADD_FILE_CIPD_PASS +  # add the file from cipd
+      UMOUNT_WIM_PASS +  # Unmount the wim
+      UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
+      api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  yield (
+      api.test('Add file from git', api.platform('win', 64)) + api.properties(
+          wib.Image(
+              name='win10_2013_x64',
+              arch=wib.ARCH_X86,
+              offline_winpe_customization=wib.OfflineCustomization(
+                  name='offline_winpe_2013_x64',
+                  offline_customization=[
+                      wib.OfflineAction(
+                          name='network_setup', actions=[
+                              ACTION_ADD_STARTNET,
+                          ])
+                  ]))) + PIN_FILE_STARTNET_PASS +  # pin the startnet refs
+      FETCH_FILE_STARTNET_PASS +  # fetch the startnet file
+      GEN_WPE_MEDIA_PASS +  # successfully gen winpe media
+      MOUNT_WIM_PASS +  # mount the wim
+      ADD_FILE_STARTNET_PASS +  # Add the downloaded file
+      UMOUNT_WIM_PASS +  # Unmount the wim
+      UMOUNT_PP_SAVE +  # Check unmount didn't discard the changes
+      api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
   yield (api.test('Happy path', api.platform('win', 64)) + api.properties(
       wib.Image(
@@ -223,10 +264,17 @@ def GenTests(api):
               name='offline_winpe_2013_x64',
               offline_customization=[
                   wib.OfflineAction(
-                      name='network_setup', actions=[
+                      name='network_setup',
+                      actions=[
                           ACTION_ADD_STARTNET,
+                          ACTION_ADD_DOT3SVC,
                       ])
-              ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
-         ADD_FILE_STARTNET_PASS + UMOUNT_WIM_PASS +
+              ]))) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
+         MOUNT_WIM_PASS +  # mount the generated wim
+         PIN_FILE_STARTNET_PASS +  # pin the startnet file to current refs
+         FETCH_FILE_STARTNET_PASS +  # fetch the startnet file
+         ADD_FILE_STARTNET_PASS +  # add file from git to wim
+         ADD_FILE_CIPD_PASS +  # add the file from cipd to wim
+         UMOUNT_WIM_PASS +  # unmount the wim
          UMOUNT_PP_SAVE +  # Save the changes made to the wim
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

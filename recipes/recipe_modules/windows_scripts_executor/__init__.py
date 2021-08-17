@@ -5,6 +5,7 @@
 DEPS = [
     'depot_tools/gclient',
     'depot_tools/bot_update',
+    'depot_tools/gitiles',
     'recipe_engine/context',
     'recipe_engine/cipd',
     'recipe_engine/step',

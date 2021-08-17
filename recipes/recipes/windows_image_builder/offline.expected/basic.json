@@ -120,6 +120,10 @@
     "name": "Pin all the cipd packages"
   },
   {
+    "cmd": [],
+    "name": "Pin git artifacts to refs"
+  },
+  {
     "cmd": [
       "vpython",
       "-u",
@@ -288,6 +292,10 @@
       "@@@STEP_LOG_LINE@results@Success@@@",
       "@@@STEP_LOG_END@results@@@"
     ]
+  },
+  {
+    "cmd": [],
+    "name": "Get all git artifacts"
   },
   {
     "cmd": [],
