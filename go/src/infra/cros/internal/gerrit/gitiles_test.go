@@ -14,6 +14,7 @@ import (
 	"infra/cros/internal/assert"
 
 	"github.com/golang/mock/gomock"
+	gitpb "go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
@@ -223,4 +224,35 @@ func TestProjects(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Assert(t, reflect.DeepEqual(got, projects))
+}
+
+func TestList(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	files := []string{"foo", "bar"}
+
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+	gitilesMock.EXPECT().ListFiles(gomock.Any(), gomock.Any()).Return(
+		&gitilespb.ListFilesResponse{
+			Files: []*gitpb.File{
+				{
+					Path: "foo",
+				},
+				{
+					Path: "bar",
+				},
+			},
+		},
+		nil,
+	)
+	host := "limited-review.googlesource.com"
+	mockMap := map[string]gitilespb.GitilesClient{
+		host: gitilesMock,
+	}
+	gc := NewTestClient(mockMap)
+	got, err := gc.ListFiles(context.Background(), host, "project", "main", "path/to/files")
+
+	assert.NilError(t, err)
+	assert.Assert(t, reflect.DeepEqual(got, files))
 }

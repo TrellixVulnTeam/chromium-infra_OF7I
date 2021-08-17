@@ -256,3 +256,26 @@ func (c *Client) Projects(ctx context.Context, host string) ([]string, error) {
 	}
 	return resp.GetProjects(), err
 }
+
+// ListFiles returns a list of files/directories for a given host/project/ref/path.
+func (c *Client) ListFiles(ctx context.Context, host, project, ref, path string) ([]string, error) {
+	gc, err := c.getHostClient(host)
+	if err != nil {
+		return nil, err
+	}
+	req := &gitilespb.ListFilesRequest{
+		Project:    project,
+		Committish: ref,
+		Path:       path,
+	}
+	resp, err := gc.ListFiles(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	files := resp.GetFiles()
+	names := make([]string, len(files))
+	for i, file := range files {
+		names[i] = file.GetPath()
+	}
+	return names, err
+}

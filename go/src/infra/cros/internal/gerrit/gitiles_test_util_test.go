@@ -49,3 +49,24 @@ func TestRefsRequestMatcher(t *testing.T) {
 	assert.Assert(t, matcher.Matches(a))
 	assert.Assert(t, !matcher.Matches(b))
 }
+
+func TestListFilesRequestMatcher(t *testing.T) {
+	req := &gitilespb.ListFilesRequest{
+		Project:    "chromeos/manifest-versions",
+		Committish: "refs/heads",
+		Path:       "foo/",
+	}
+	matcher := ListFilesRequestEq(req)
+
+	a := &gitilespb.ListFilesRequest{
+		Project:    "chromeos/manifest-versions",
+		Committish: "refs/heads",
+		Path:       "foo/",
+	}
+	b := &gitilespb.ListFilesRequest{
+		Project:    "chromeos/manifest-versions",
+		Committish: "refs/heads",
+	}
+	assert.Assert(t, matcher.Matches(a))
+	assert.Assert(t, !matcher.Matches(b))
+}

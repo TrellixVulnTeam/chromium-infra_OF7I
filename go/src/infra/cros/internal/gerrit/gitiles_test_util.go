@@ -55,3 +55,26 @@ func (m RefsRequestMatcher) String() string {
 func RefsRequestEq(req *gitilespb.RefsRequest) gomock.Matcher {
 	return RefsRequestMatcher{req}
 }
+
+type ListFilesRequestMatcher struct {
+	req *gitilespb.ListFilesRequest
+}
+
+func (m ListFilesRequestMatcher) Matches(x interface{}) bool {
+	req, ok := x.(*gitilespb.ListFilesRequest)
+	if !ok {
+		return false
+	}
+	return m.req.GetProject() == req.GetProject() &&
+		m.req.GetPath() == req.GetPath() &&
+		m.req.GetCommittish() == req.GetCommittish()
+}
+
+func (m ListFilesRequestMatcher) String() string {
+	return fmt.Sprintf("project: %s, path: %s, committish: %s",
+		m.req.GetProject(), m.req.GetPath(), m.req.GetCommittish())
+}
+
+func ListFilesRequestEq(req *gitilespb.ListFilesRequest) gomock.Matcher {
+	return ListFilesRequestMatcher{req}
+}
