@@ -16,6 +16,25 @@
   },
   {
     "cmd": [
+      "python",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "verify"
+    ],
+    "cwd": "[CACHE]/builder/build_wheels",
+    "env": {
+      "DEPOT_TOOLS_REPORT_BUILD": "infra/try/builder/8945511751514863184"
+    },
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "gclient verify"
+  },
+  {
+    "cmd": [
       "vpython",
       "-u",
       "RECIPE_REPO[depot_tools]/gerrit_client.py",

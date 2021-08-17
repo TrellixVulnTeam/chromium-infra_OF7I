@@ -19,6 +19,22 @@
       "python",
       "-u",
       "RECIPE_REPO[depot_tools]\\gclient.py",
+      "verify"
+    ],
+    "cwd": "[CACHE]\\builder\\build_wheels",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "gclient verify"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_REPO[depot_tools]\\gclient.py",
       "config",
       "--spec",
       "cache_dir = '[CACHE]\\\\git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]"
@@ -140,11 +156,11 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 71, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 78, in RunSteps",
       "    with PlatformSdk(api, platforms), api.context(",
       "  File \"PYTHON/lib/python2.7/contextlib.py\", in __enter__",
       "    return self.gen.next()",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 159, in PlatformSdk",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_wheels.py\", line 166, in PlatformSdk",
       "    'Must specify either 32-bit or 64-bit windows platforms.')",
       "ValueError: Must specify either 32-bit or 64-bit windows platforms."
     ]

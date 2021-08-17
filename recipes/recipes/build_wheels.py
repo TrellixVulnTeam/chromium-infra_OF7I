@@ -4,6 +4,7 @@
 
 from contextlib import contextmanager
 
+from recipe_engine.recipe_api import InfraFailure
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import List
 
@@ -54,6 +55,12 @@ PROPERTIES = {
 def RunSteps(api, platforms, dry_run, rebuild):
   solution_path = api.path['cache'].join('builder', 'build_wheels')
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
+  try:
+    with api.context(cwd=solution_path):
+      api.gclient('verify', ['verify'])
+  except InfraFailure:
+    api.file.rmtree('cleanup cache', solution_path)
+    api.file.ensure_directory("recreate cache", solution_path)
 
   ref = 'origin/main'
   if api.tryserver.is_tryserver:
@@ -171,6 +178,8 @@ def PlatformSdk(api, platforms):
 
 def GenTests(api):
   yield api.test('success')
+  yield api.test('invalid cache',
+                 api.override_step_data('gclient verify', retcode=1))
   yield api.test(
       'win',
       api.platform('win', 64) +
