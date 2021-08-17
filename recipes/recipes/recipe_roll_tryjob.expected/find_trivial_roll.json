@@ -319,11 +319,11 @@
       "git",
       "checkout",
       "-f",
-      "refs/remotes/origin/master"
+      "refs/remotes/origin/main"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "sync recipe_engine to master"
+    "name": "sync recipe_engine to refs/remotes/origin/main"
   },
   {
     "cmd": [],
@@ -361,14 +361,14 @@
       "train",
       "--no-docs"
     ],
-    "name": "find last non-crashing upstream revision.train recipes at upstream master",
+    "name": "find last non-crashing upstream revision.train recipes at upstream main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision.using upstream master as base",
+    "name": "find last non-crashing upstream revision.using upstream main as base",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

@@ -319,11 +319,11 @@
       "git",
       "checkout",
       "-f",
-      "refs/remotes/origin/master"
+      "refs/remotes/origin/main"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "sync recipe_engine to master"
+    "name": "sync recipe_engine to refs/remotes/origin/main"
   },
   {
     "cmd": [],
@@ -364,7 +364,7 @@
       "train",
       "--no-docs"
     ],
-    "name": "find last non-crashing upstream revision.train recipes at upstream master",
+    "name": "find last non-crashing upstream revision.train recipes at upstream main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
@@ -379,7 +379,7 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "find last non-crashing upstream revision.clear diffs from upstream master",
+    "name": "find last non-crashing upstream revision.clear diffs from upstream main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -406,7 +406,7 @@
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "find last non-crashing upstream revision.checkout upstream at master~1",
+    "name": "find last non-crashing upstream revision.checkout upstream at main~1",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -422,14 +422,14 @@
       "train",
       "--no-docs"
     ],
-    "name": "find last non-crashing upstream revision.train recipes at upstream master~1",
+    "name": "find last non-crashing upstream revision.train recipes at upstream main~1",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision.using upstream master~1 as base",
+    "name": "find last non-crashing upstream revision.using upstream main~1 as base",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

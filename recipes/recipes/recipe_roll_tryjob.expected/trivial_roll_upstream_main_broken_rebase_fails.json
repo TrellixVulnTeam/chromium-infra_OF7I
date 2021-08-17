@@ -319,17 +319,17 @@
       "git",
       "checkout",
       "-f",
-      "refs/remotes/origin/master"
+      "refs/remotes/origin/main"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "sync recipe_engine to master"
+    "name": "sync recipe_engine to refs/remotes/origin/main"
   },
   {
     "cmd": [],
     "name": "find last non-crashing upstream revision",
     "~followup_annotations": [
-      "@@@STEP_EXCEPTION@@@"
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
@@ -364,7 +364,7 @@
       "train",
       "--no-docs"
     ],
-    "name": "find last non-crashing upstream revision.train recipes at upstream master",
+    "name": "find last non-crashing upstream revision.train recipes at upstream main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
@@ -379,7 +379,7 @@
     ],
     "cwd": "[CACHE]/builder/depot_tools/depot_tools",
     "infra_step": true,
-    "name": "find last non-crashing upstream revision.clear diffs from upstream master",
+    "name": "find last non-crashing upstream revision.clear diffs from upstream main",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -406,16 +406,167 @@
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "find last non-crashing upstream revision.checkout upstream at master~1",
+    "name": "find last non-crashing upstream revision.checkout upstream at main~1",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "find last non-crashing upstream revision.train recipes at upstream main~1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "find last non-crashing upstream revision.using upstream main~1 as base",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.get upstream base revision",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "add",
+      "--all"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "save post-train downstream diff"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "checkout base for cherry-pick"
+  },
+  {
+    "cmd": [
+      "git",
+      "cherry-pick",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "cherry-pick CL onto deadbeef",
+    "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
-    "failure": {
-      "humanReason": "no non-crashing revision in upstream git history"
-    },
+    "cmd": [
+      "git",
+      "cherry-pick",
+      "--abort"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git cherry-pick"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (3)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "refs/remotes/origin/main"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "checkout base for cherry-pick (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "cherry-pick",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "cherry-pick CL onto refs/remotes/origin/main"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "train recipes at upstream CL"
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "post-train diff at upstream CL"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "import sys; sys.exit(0)"
+    ],
+    "name": "Roll OK",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@CL is trivial and message contains no footers for this repo.@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

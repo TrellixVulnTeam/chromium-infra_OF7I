@@ -96,7 +96,7 @@ EXTRA_MSG = {
   MANUAL_CHANGE_FOOTER: MANUAL_CHANGE_MSG,
 }
 
-MASTER_REF = 'refs/remotes/origin/master'
+MAIN_REF = 'refs/remotes/origin/main'
 
 
 class RecipeTrainingFailure(Exception):
@@ -167,9 +167,9 @@ class RecipesRepo(object):
         self._api.git('cherry-pick', '--abort')
         raise
 
-  def checkout_master(self):
-    """Sync the repo to master."""
-    self.checkout(MASTER_REF, 'sync %s to master' % self.name)
+  def checkout_default_ref(self):
+    """Sync the repo to default ref (main)."""
+    self.checkout(MAIN_REF, 'sync %s to %s' % (self.name, MAIN_REF))
 
   def checkout(self, checkout_ref, step_name):
     """Check out the specified ref."""
@@ -297,7 +297,7 @@ def _get_upstream_change(api, upstream_url):
 
 def _get_expected_footer(api, upstream_repo, downstream_repo):
   # Run a 'train' on the downstream repo, first using the upstream repo at
-  # master (more accurately, the latest non-crashing ancestor of master) and
+  # main (more accurately, the latest non-crashing ancestor of main) and
   # then at the CL revision. We compare these two runs to avoid taking unrolled
   # CLs into account in the resulting diff.
   #
@@ -310,11 +310,11 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
     upstream_repo.clone()
     downstream_repo.clone()
 
-  upstream_repo.checkout_master()
+  upstream_repo.checkout_default_ref()
 
   last_non_crashing_revision = None
 
-  # Starting from the tip of the upstream master branch, go back in history
+  # Starting from the tip of the upstream main branch, go back in history
   # until we find a commit that we can train the downstream repo against
   # without a crash. We'll use the downstream diff caused by this commit to the
   # diff caused by the current CL to determine whether the CL is trivial.
@@ -324,7 +324,7 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
     # arbitrary number of commits. This should always be a valid git revision,
     # so we can also get rid of the "checkout HEAD~" error handling.
     for ancestor_index in xrange(10):
-      ref = 'master~%d' % ancestor_index if ancestor_index else 'master'
+      ref = 'main~%d' % ancestor_index if ancestor_index else 'main'
       # Check out the parent commit to train against (except for the first
       # iteration of the for loop).
       if ancestor_index:
@@ -356,16 +356,16 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
   with api.context(cwd=downstream_repo.root):
     api.git('add', '--all', name='save post-train downstream diff')
 
-  # If we failed to find a non-crashing revision, just cherry-pick onto master.
-  base = last_non_crashing_revision or MASTER_REF
+  # If we failed to find a non-crashing revision, just cherry-pick onto main.
+  base = last_non_crashing_revision or MAIN_REF
 
   try:
     upstream_repo.checkout_cl(base=base)
   except api.step.StepFailure:
     # If this CL doesn't cherry-pick cleanly on top of the last non-crashing
-    # revision, we'll fall back to cherry-picking on top of master. Training
+    # revision, we'll fall back to cherry-picking on top of main. Training
     # after this will probably fail unless the CL actually fixes the crash.
-    upstream_repo.checkout_cl(base=MASTER_REF)
+    upstream_repo.checkout_cl(base=MAIN_REF)
 
   try:
     downstream_repo.train(upstream_repo, 'train recipes at upstream CL')
@@ -583,44 +583,37 @@ def GenTests(api):
     + api.step_data('post-train diff at upstream CL', retcode=1)
   )
 
-  # The current upstream master causes a crash in the downstream repo, but the
+  # The current upstream main causes a crash in the downstream repo, but the
   # trivial CL fixes that.
-  yield (
-    test('trivial_roll_upstream_master_broken')
-    + api.step_data(
-        'find last non-crashing upstream revision'
-        '.train recipes at upstream master',
-        retcode=1)
-  )
+  yield (test('trivial_roll_upstream_main_broken') + api.step_data(
+      'find last non-crashing upstream revision'
+      '.train recipes at upstream main',
+      retcode=1))
 
-  # The current upstream master causes a crash in the downstream repo, but the
+  # The current upstream main causes a crash in the downstream repo, but the
   # trivial CL fixes that.
-  yield (test('trivial_roll_upstream_master_broken_rebase_fails') +
-         api.step_data(
-             'find last non-crashing upstream revision'
-             '.train recipes at upstream master',
-             retcode=1) + api.step_data(
-                 'find last non-crashing upstream revision'
-                 '.get upstream base revision',
-                 stdout=api.raw_io.output('deadbeef')) +
+  yield (test('trivial_roll_upstream_main_broken_rebase_fails') + api.step_data(
+      'find last non-crashing upstream revision'
+      '.train recipes at upstream main',
+      retcode=1) + api.step_data(
+          'find last non-crashing upstream revision'
+          '.get upstream base revision',
+          stdout=api.raw_io.output('deadbeef')) +
          api.step_data('cherry-pick CL onto deadbeef', retcode=1))
 
-  # None of the ancestor commits of the upstream repo's master branch are
+  # None of the ancestor commits of the upstream repo's main branch are
   # compatible with the downstream repo (they all cause crashes).
   yield (
-    test('no_good_upstream_master_commits')
-    + api.step_data(
-        'find last non-crashing upstream revision'
-        '.train recipes at upstream master',
-        retcode=1)
-    # Checkout fails -> we've hit the beginning of the upstream repo's git
-    # history without finding a working commit.
-    + api.step_data(
-        'find last non-crashing upstream revision.'
-        'checkout upstream at master~1',
-        retcode=1)
-    + api.post_process(post_process.StatusException)
-  )
+      test('no_good_upstream_main_commits') + api.step_data(
+          'find last non-crashing upstream revision'
+          '.train recipes at upstream main',
+          retcode=1)
+      # Checkout fails -> we've hit the beginning of the upstream repo's git
+      # history without finding a working commit.
+      + api.step_data(
+          'find last non-crashing upstream revision.'
+          'checkout upstream at main~1',
+          retcode=1) + api.post_process(post_process.StatusException))
 
   yield (test_with_changes('multiple_patchsets', 'recipe_engine', 'depot_tools',
                            [CL_TANGENTIAL, CL_CHANGE_ACTUAL], BYPASS_FOOTER) +
