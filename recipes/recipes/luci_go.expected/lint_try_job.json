@@ -392,7 +392,7 @@
     "cmd": [],
     "name": "write results",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@tricium@\"{\\n\\\"comments\\\": [\\n{\\n\\\"category\\\": \\\"golangci-lint (deadcode)\\\", \\n\\\"startChar\\\": 5, \\n\\\"startLine\\\": 250, \\n\\\"path\\\": \\\"client/cmd/isolate/lib/batch_archive.go\\\", \\n\\\"message\\\": \\\"`foo` is unused\\\", \\n\\\"endLine\\\": 251\\n}\\n]\\n}\"@@@"
+      "@@@SET_BUILD_PROPERTY@tricium@\"{\\n\\\"comments\\\": [\\n{\\n\\\"category\\\": \\\"golangci-lint (deadcode)\\\", \\n\\\"startChar\\\": 5, \\n\\\"startLine\\\": 250, \\n\\\"path\\\": \\\"client/cmd/isolate/lib/batch_archive.go\\\", \\n\\\"message\\\": \\\"`foo` is unused\\\", \\n\\\"endLine\\\": 250\\n}\\n]\\n}\"@@@"
     ]
   },
   {

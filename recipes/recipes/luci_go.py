@@ -87,7 +87,8 @@ def apply_golangci_lint(api, co):
     pos = issue["Pos"]
     line = pos["Line"]
     api.tricium.add_comment("golangci-lint (%s)" % issue["FromLinter"],
-                            issue["Text"], pos["Filename"], line, line + 1,
+                            issue["Text"], pos["Filename"],
+                            line, line,
                             max(0, pos["Column"] - 1), 0)
 
   api.tricium.write_comments()
