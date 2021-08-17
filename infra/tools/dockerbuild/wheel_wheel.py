@@ -149,7 +149,8 @@ class Prebuilt(Builder):
 
 
 class Universal(Builder):
-  def __init__(self, name, version, pyversions=None, **kwargs):
+
+  def __init__(self, name, version, pyversions=None, default=True, **kwargs):
     """Universal wheel version of SourceOrPrebuilt.
 
     Args:
@@ -166,7 +167,7 @@ class Universal(Builder):
             version,
             universal=True,
             pyversions=pyversions,
-            default=True,
+            default=default,
             version_suffix=None,
         ), **kwargs)
 

@@ -1342,7 +1342,7 @@ SPECS.update({
             '0.2.7.chromium.3',
             ([
                 Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0'),
+                Universal('klepto', '0.2.0', default=False),
                 Mpi4py(
                     'mpi4py',
                     '3.0.3',
@@ -1381,7 +1381,7 @@ SPECS.update({
             '0.2.7.chromium.3',
             ([
                 Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0'),
+                Universal('klepto', '0.2.0', default=False),
                 Mpi4py(
                     'mpi4py',
                     '3.0.3',
@@ -1420,7 +1420,7 @@ SPECS.update({
             '0.2.7.chromium.4',
             ([
                 Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0'),
+                Universal('klepto', '0.2.0', default=False),
                 Mpi4py(
                     'mpi4py',
                     '3.0.3',
@@ -1459,7 +1459,7 @@ SPECS.update({
             '0.2.7.chromium.4',
             ([
                 Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0'),
+                Universal('klepto', '0.2.0', default=False),
                 Mpi4py(
                     'mpi4py',
                     '3.0.3',
