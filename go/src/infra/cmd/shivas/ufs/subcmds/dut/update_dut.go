@@ -33,13 +33,14 @@ import (
 
 const (
 	// Servo related UpdateMask paths.
-	servoHostPath      = "dut.servo.hostname"
-	servoPortPath      = "dut.servo.port"
-	servoSerialPath    = "dut.servo.serial"
-	servoSetupPath     = "dut.servo.setup"
-	servoFwChannelPath = "dut.servo.fwchannel"
-	servoTypePath      = "dut.servo.type"
-	servoTopologyPath  = "dut.servo.topology"
+	servoHostPath            = "dut.servo.hostname"
+	servoPortPath            = "dut.servo.port"
+	servoSerialPath          = "dut.servo.serial"
+	servoSetupPath           = "dut.servo.setup"
+	servoFwChannelPath       = "dut.servo.fwchannel"
+	servoTypePath            = "dut.servo.type"
+	servoTopologyPath        = "dut.servo.topology"
+	servoDockerContainerPath = "dut.servo.docker_container"
 
 	// LSE related UpdateMask paths.
 	machinesPath    = "machines"
@@ -121,6 +122,7 @@ var UpdateDUTCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo.")
 		c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+".")
 		c.Flags.StringVar(&c.servoFwChannel, "servo-fw-channel", "", "servo firmware channel. Allowed values are "+cmdhelp.ServoFwChannelAllowedValuesString()+".")
+		c.Flags.StringVar(&c.servoDockerContainerName, "servod-docker", "", "servo docker container name. Required if servod is running in docker.")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma seperated pools. These will be appended to existing pools. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
 		c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values. "+cmdhelp.ClearFieldHelpText)
@@ -167,21 +169,22 @@ type updateDUT struct {
 	commonFlags site.CommonFlags
 
 	// DUT specification inputs.
-	newSpecsFile     string
-	hostname         string
-	machine          string
-	servo            string
-	servoSerial      string
-	servoSetupType   string
-	servoFwChannel   string
-	pools            []string
-	licenseTypes     []string
-	licenseIds       []string
-	rpm              string
-	rpmOutlet        string
-	deploymentTicket string
-	tags             []string
-	description      string
+	newSpecsFile             string
+	hostname                 string
+	machine                  string
+	servo                    string
+	servoSerial              string
+	servoSetupType           string
+	servoFwChannel           string
+	servoDockerContainerName string
+	pools                    []string
+	licenseTypes             []string
+	licenseIds               []string
+	rpm                      string
+	rpmOutlet                string
+	deploymentTicket         string
+	tags                     []string
+	description              string
 
 	// Deploy task inputs.
 	forceDeploy          bool
@@ -635,7 +638,7 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 	}
 
 	// Create and assign servo and corresponding masks.
-	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial, c.servoFwChannel)
+	newServo, paths, err := generateServoWithMask(servo, servoSetup, servoSerial, c.servoFwChannel, c.servoDockerContainerName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -832,8 +835,8 @@ func (c *updateDUT) initializeLSEAndMask(recMap map[string]string) (*ufspb.Machi
 }
 
 // generateServoWithMask generates a servo object from the given inputs and corresponding mask.
-func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string) (*chromeosLab.Servo, []string, error) {
-	if servo == "" && servoSetup == "" && servoSerial == "" && servoFwChannel == "" {
+func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel, servoDocker string) (*chromeosLab.Servo, []string, error) {
+	if servo == "" && servoSetup == "" && servoSerial == "" && servoFwChannel == "" && servoDocker == "" {
 		return nil, nil, nil
 	}
 	// Attempt to parse servo hostname and port.
@@ -875,7 +878,11 @@ func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel string
 		paths = append(paths, servoHostPath)
 		newServo.ServoHostname = servoHost
 	}
-	if servoHost != "" || servoSerial != "" || servoSetup != "" || servoPort != int32(0) {
+	if servoDocker != "" {
+		paths = append(paths, servoDockerContainerPath)
+		newServo.DockerContainerName = servoDocker
+	}
+	if servoHost != "" || servoSerial != "" || servoSetup != "" || servoPort != int32(0) || servoDocker != "" {
 		// Clear servo_type and servo_topology before deploying. Specifying path only assigns default empty values.
 		paths = append(paths, servoTypePath, servoTopologyPath)
 	}
