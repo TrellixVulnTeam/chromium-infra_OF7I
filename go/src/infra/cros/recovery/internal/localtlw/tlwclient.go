@@ -283,17 +283,17 @@ func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyR
 	}
 }
 
-// GetImageUrl provides URL to the image requested to load.
+// GetCacheUrl provides URL to download requested path to file.
 // URL will use to download image to USB-drive and provisioning.
-func (c *tlwClient) GetImageUrl(ctx context.Context, resourceName, imageName string) (string, error) {
+func (c *tlwClient) GetCacheUrl(ctx context.Context, resourceName, filePath string) (string, error) {
+	// TODO(otabek@): Add logic to understand local file and just return it back.
 	addr := fmt.Sprintf("0.0.0.0:%d", tlwPort)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
-		return "", errors.Annotate(err, "connect to background TLS").Err()
+		return "", errors.Annotate(err, "connect to background TLW").Err()
 	}
 	defer conn.Close()
-	gsImagePath := fmt.Sprintf("%s/%s", gsCrosImageBucket, imageName)
-	return CacheForDut(ctx, conn, gsImagePath, resourceName)
+	return CacheForDut(ctx, conn, filePath, resourceName)
 }
 
 // ListResourcesForUnit provides list of resources names related to target unit.

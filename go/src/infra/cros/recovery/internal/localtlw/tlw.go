@@ -15,13 +15,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-// CacheForDut queries the underlying TLW server to find a healthy devserver
-// with a cached version of the given chromeOS image, and returns the URL
-// of the cached image on the devserver.
-func CacheForDut(ctx context.Context, conn *grpc.ClientConn, imageURL, dutName string) (string, error) {
+// CacheForDut queries the underlying TLW server to find assigned cache service
+// for the DUT to download files, and returns the URL of the cached file.
+func CacheForDut(ctx context.Context, conn *grpc.ClientConn, filePath, dutName string) (string, error) {
 	c := tls.NewWiringClient(conn)
 	resOperation, err := c.CacheForDut(ctx, &tls.CacheForDutRequest{
-		Url:     imageURL,
+		Url:     filePath,
 		DutName: dutName,
 	})
 	if err != nil {
@@ -36,7 +35,7 @@ func CacheForDut(ctx context.Context, conn *grpc.ClientConn, imageURL, dutName s
 	}
 	opRes := operation.GetResponse()
 	if opRes == nil {
-		return "", errors.Reason("cacheForDut: failed to get CacheForDut response for URL=%s and Name=%s", imageURL, dutName).Err()
+		return "", errors.Reason("cacheForDut: failed to get CacheForDut response for URL=%s and Name=%s", filePath, dutName).Err()
 	}
 	resp := &tls.CacheForDutResponse{}
 	if err := ptypes.UnmarshalAny(opRes, resp); err != nil {
