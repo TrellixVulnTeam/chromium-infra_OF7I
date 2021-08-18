@@ -146,6 +146,9 @@ func TestRunDUTPlan(t *testing.T) {
 		ctx := context.Background()
 		dut := &tlw.Dut{
 			Name: "test_dut",
+			ServoHost: &tlw.ServoHost{
+				Name: "servo_host",
+			},
 		}
 		args := &RunArgs{
 			Logger: logger.NewLogger(),
@@ -168,7 +171,35 @@ func TestRunDUTPlan(t *testing.T) {
 			}
 			So(err.Error(), ShouldContainSubstring, "run dut \"test_dut\" plans:")
 			So(err.Error(), ShouldContainSubstring, "not found in configuration")
-			// So("jk", ShouldContainSubstring, "j")
+		})
+		Convey("fail when one plan fail of plans fail", func() {
+			config.Plans = map[string]*planpb.Plan{
+				PlanServoRepair: {
+					CriticalActions: []string{"sample_fail"},
+					Actions: map[string]*planpb.Action{
+						"sample_fail": {
+							ExecName: "sample_fail",
+						},
+					},
+				},
+				PlanCrOSRepair: {
+					CriticalActions: []string{"sample_pass"},
+					Actions: map[string]*planpb.Action{
+						"sample_pass": {
+							ExecName: "sample_pass",
+						},
+					},
+				},
+			}
+			newCtx, err := runDUTPlans(ctx, dut, config, args)
+			if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
+			if err == nil {
+				t.Errorf("Expected fail but passed")
+			}
+			So(err.Error(), ShouldContainSubstring, "run plan \"servo_repair\" for \"servo_host\":")
+			So(err.Error(), ShouldContainSubstring, "failed")
 		})
 		Convey("fail when bad action in the plan", func() {
 			config.Plans = map[string]*planpb.Plan{
@@ -196,26 +227,89 @@ func TestRunDUTPlan(t *testing.T) {
 		ctx := context.Background()
 		dut := &tlw.Dut{
 			Name: "test_dut",
+			ServoHost: &tlw.ServoHost{
+				Name: "servo_host",
+			},
+		}
+		args := &RunArgs{
+			Logger: logger.NewLogger(),
 		}
 		execArgs := &execs.RunArgs{
 			DUT: dut,
 		}
-		config := &planpb.Configuration{
-			Plans: map[string]*planpb.Plan{
-				PlanCrOSRepair: {
-					CriticalActions: []string{"sample_pass"},
-					Actions: map[string]*planpb.Action{
-						"sample_pass": {
-							ExecName: "sample_pass",
+		Convey("Run good plan", func() {
+			config := &planpb.Configuration{
+				Plans: map[string]*planpb.Plan{
+					PlanCrOSRepair: {
+						CriticalActions: []string{"sample_pass"},
+						Actions: map[string]*planpb.Action{
+							"sample_pass": {
+								ExecName: "sample_pass",
+							},
 						},
 					},
 				},
-			},
-		}
-		if newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
-			t.Errorf("Expected pass but failed: %s", err)
-		} else if newCtx == nil {
-			t.Errorf("Fail to receive new context")
-		}
+			}
+			if newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
+				t.Errorf("Expected pass but failed: %s", err)
+			} else if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
+		})
+		Convey("Run all good plans", func() {
+			config := &planpb.Configuration{
+				Plans: map[string]*planpb.Plan{
+					PlanCrOSRepair: {
+						CriticalActions: []string{"sample_pass"},
+						Actions: map[string]*planpb.Action{
+							"sample_pass": {
+								ExecName: "sample_pass",
+							},
+						},
+					},
+					PlanServoRepair: {
+						CriticalActions: []string{"sample_pass"},
+						Actions: map[string]*planpb.Action{
+							"sample_pass": {
+								ExecName: "sample_pass",
+							},
+						},
+					},
+				},
+			}
+			if newCtx, err := runDUTPlans(ctx, dut, config, args); err != nil {
+				t.Errorf("Expected pass but failed: %s", err)
+			} else if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
+		})
+		Convey("Run all plans even one allow to fail", func() {
+			config := &planpb.Configuration{
+				Plans: map[string]*planpb.Plan{
+					PlanCrOSRepair: {
+						CriticalActions: []string{"sample_fail"},
+						Actions: map[string]*planpb.Action{
+							"sample_fail": {
+								ExecName: "sample_fail",
+							},
+						},
+						AllowFail: true,
+					},
+					PlanServoRepair: {
+						CriticalActions: []string{"sample_pass"},
+						Actions: map[string]*planpb.Action{
+							"sample_pass": {
+								ExecName: "sample_pass",
+							},
+						},
+					},
+				},
+			}
+			if newCtx, err := runDUTPlans(ctx, dut, config, args); err != nil {
+				t.Errorf("Expected pass but failed: %s", err)
+			} else if newCtx == nil {
+				t.Errorf("Fail to receive new context")
+			}
+		})
 	})
 }

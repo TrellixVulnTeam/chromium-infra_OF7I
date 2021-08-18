@@ -212,15 +212,20 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Logger:         args.Logger,
 		StepHandler:    args.StepHandler,
 	}
+	var errs []error
 	// TODO(otabek@): Add closing plan logic.
 	for _, planName := range planNames {
 		newCtx, err = runDUTPlan(newCtx, planName, dut, config, execArgs)
 		if err != nil {
 			log.Debug(newCtx, "Run DUT %q plans: finished with error: %s.", dut.Name, err)
+			errs = append(errs, err)
 		}
 	}
-	log.Info(newCtx, "Run DUT %q plans: finished successfully.", dut.Name)
-	return newCtx, nil
+	if len(errs) == 0 {
+		log.Info(newCtx, "Run DUT %q plans: finished successfully.", dut.Name)
+		return newCtx, nil
+	}
+	return newCtx, errors.Annotate(errors.MultiError(errs), "run plans").Err()
 }
 
 // runDUTPlan runs simple plan against the DUT.
