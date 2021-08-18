@@ -79,6 +79,13 @@ func internalRunSSH(cmd string, client *ssh.Client) (result *tlw.RunResult) {
 		result.ExitCode = 0
 	} else if exitErr, ok := err.(*ssh.ExitError); ok {
 		result.ExitCode = exitErr.ExitStatus()
+	} else if _, ok := err.(*ssh.ExitMissingError); ok {
+		result.ExitCode = -2
+		result.Stderr = err.Error()
+	} else {
+		// Set error 1 as not expected exit.
+		result.ExitCode = -3
+		result.Stderr = err.Error()
 	}
 	return
 }

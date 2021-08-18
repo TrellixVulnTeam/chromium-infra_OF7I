@@ -11,12 +11,23 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
 )
 
 const (
 	// defaultAttemptCount tells default count of retries.
 	defaultAttemptCount = 3
+	// Default reboot command for ChromeOS devices.
+	// Each command set sleep 1 second to wait for reaction of the command from left part.
+	rebootCommand = "(echo begin 1; sync; echo end 1 \"$?\")& sleep 1;" +
+		"(echo begin 2; reboot; echo end 2 \"$?\")& sleep 1;" +
+		// Force reboot is not calling shutdown.
+		"(echo begin 3; reboot -f; echo end 3 \"$?\")& sleep 1;" +
+		// Force reboot without sync.
+		"(echo begin 4; reboot -nf; echo end 4 \"$?\")& sleep 1;" +
+		// telinit 6 sets run level for process initialized, which is equivalent to reboot.
+		"(echo begin 5; telinit 6; echo end 5 \"$?\")"
 )
 
 // pingCrosDUTActionExec performs ping action to the ChromeOS DUT.
@@ -36,7 +47,22 @@ func sshCrosDUTActionExec(ctx context.Context, args *execs.RunArgs) error {
 	}, "cros dut ssh access")
 }
 
+// rebootExec reboots the cros DUT.
+func rebootExec(ctx context.Context, args *execs.RunArgs) error {
+	log.Debug(ctx, "Run: %s", rebootCommand)
+	r := args.Access.Run(ctx, args.DUT.Name, rebootCommand)
+	if r.ExitCode == -2 {
+		// Client closed connected as rebooting.
+		log.Debug(ctx, "Client exit as device rebooted: %s", r.Stderr)
+	} else if r.ExitCode != 0 {
+		return errors.Reason("cros reboot: failed, code: %d, %s", r.ExitCode, r.Stderr).Err()
+	}
+	log.Debug(ctx, "Stdout: %s", r.Stdout)
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingCrosDUTActionExec)
 	execs.Register("cros_ssh", sshCrosDUTActionExec)
+	execs.Register("cros_reboot", rebootExec)
 }
