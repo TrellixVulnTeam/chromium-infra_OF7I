@@ -22,6 +22,10 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
 
+	// Help gae.py to discover this <go1.13 dependency.
+	// TODO(gregorynisbet): fix this. See b/197140325 for details.
+	_ "golang.org/x/xerrors"
+
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/cron"
 	"infra/appengine/crosskylabadmin/app/frontend"
