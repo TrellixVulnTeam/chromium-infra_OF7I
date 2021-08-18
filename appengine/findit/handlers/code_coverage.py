@@ -45,7 +45,6 @@ from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services.code_coverage import feature_coverage
 from services.code_coverage import files_absolute_coverage
-from services.code_coverage import per_cl_metrics
 from services import bigquery_helper as bq
 from services import test_tag_util
 from waterfall import waterfall_config
@@ -1632,32 +1631,6 @@ class ServeCodeCoverageData(BaseHandler):
         },
         'template': template,
     }
-
-
-class ExportPerClCoverageMetricsCron(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def HandleGet(self):
-    # Cron jobs run independently of each other. Therefore, there is no
-    # guarantee that they will run either sequentially or simultaneously.
-    #
-    # Executing per CL metrics concurrently doesn't bring much
-    # benefits, so use task queue to enforce that at most one  task
-    # can be executed at any time.
-    taskqueue.add(
-        method='GET',
-        queue_name=constants.PER_CL_COVERAGE_METRICS_QUEUE,
-        target=constants.CODE_COVERAGE_BACKEND,
-        url='/coverage/task/per-cl-coverage')
-    return {'return_code': 200}
-
-
-class ExportPerClCoverageMetrics(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def HandleGet(self):
-    per_cl_metrics.ExportPerClCoverage()
-    return {'return_code': 200}
 
 
 class ExportFilesAbsoluteCoverageMetricsCron(BaseHandler):

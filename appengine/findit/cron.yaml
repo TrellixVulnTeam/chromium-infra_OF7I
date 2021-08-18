@@ -65,12 +65,6 @@ cron:
   retry_parameters:
     job_retry_limit: 0
 
-- description: Query and export per cl coverage metrics to bigquery.
-  url: /coverage/cron/per-cl-coverage
-  schedule: every 24 hours
-  retry_parameters:
-    job_retry_limit: 0
-
 - description: Query and export file coverage metrics to bigquery.
   url: /coverage/cron/files-absolute-coverage
   schedule: every sunday 01:00

@@ -24,7 +24,6 @@ from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services.code_coverage import feature_coverage
 from services.code_coverage import files_absolute_coverage
-from services.code_coverage import per_cl_metrics
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 
@@ -1525,41 +1524,6 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
     self.assertEqual('NOCOV', regions[1]['text'])
     self.assertTrue(regions[0]['is_covered'])
     self.assertFalse(regions[1]['is_covered'])
-
-
-class ExportPerClCoverageMetricsCronTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/cron/per-cl-coverage',
-       code_coverage.ExportPerClCoverageMetricsCron),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testTaskAddedToQueue(self, mocked_is_request_from_appself):
-    response = self.test_app.get('/coverage/cron/per-cl-coverage')
-    self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/coverage/cron/per-cl-coverage')
-    self.assertEqual(200, response.status_int)
-
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='per-cl-coverage-metrics-queue')
-    self.assertEqual(2, len(tasks))
-    self.assertTrue(mocked_is_request_from_appself.called)
-
-
-class ExportPerClCoverageMetricsTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/per-cl-coverage',
-       code_coverage.ExportPerClCoverageMetrics),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  @mock.patch.object(per_cl_metrics, 'ExportPerClCoverage')
-  def testPerClCoverageMetricsExported(self, mock_detect, _):
-    response = self.test_app.get('/coverage/task/per-cl-coverage', status=200)
-    self.assertEqual(1, mock_detect.call_count)
-    self.assertEqual(200, response.status_int)
 
 
 class ExportFilesAbsoluteCoverageMetricsCronTest(WaterfallTestCase):

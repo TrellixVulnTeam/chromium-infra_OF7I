@@ -27,7 +27,6 @@ AUTO_ACTION_QUEUE = 'auto-action-queue'
 FLAKE_DETECTION_MULTITASK_QUEUE = 'flake-detection-multitask-queue'
 DISABLED_TEST_DETECTION_QUEUE = 'disabled-test-detection-queue'
 DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
-PER_CL_COVERAGE_METRICS_QUEUE = 'per-cl-coverage-metrics-queue'
 FILES_ABSOLUTE_COVERAGE_METRICS_QUEUE = 'files-absolute-coverage-metrics-queue'
 FEATURE_COVERAGE_METRICS_QUEUE = 'feature-coverage-metrics-queue'
 # Waterfall-related.
