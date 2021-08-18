@@ -42,6 +42,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/otiai10/copy v1.6.0
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/profile v1.2.1
 	github.com/sergi/go-diff v1.2.0
 	github.com/shirou/gopsutil v2.20.10-0.20201018091616-3202231bcdbd+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect

@@ -23,6 +23,7 @@ import (
 	"go.chromium.org/luci/lucictx"
 
 	"infra/cros/cmd/phosphorus/internal/gs"
+	"infra/cros/cmd/phosphorus/internal/profile"
 )
 
 // UploadToGS subcommand: Upload selected directory to Google Storage.
@@ -46,6 +47,7 @@ type uploadToGSRun struct {
 }
 
 func (c *uploadToGSRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	profile.Register()
 	ctx := cli.GetContext(a, c, env)
 	if err := c.innerRun(ctx, args, env); err != nil {
 		logApplicationError(ctx, a, err)
