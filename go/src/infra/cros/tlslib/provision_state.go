@@ -170,7 +170,7 @@ func (p *provisionState) verifyOSProvision() error {
 }
 
 const (
-	fetchUngzipConvertCmd = `curl -v -# -C - --retry 3 --retry-delay 60 %[1]s | gzip -d | dd of=%[2]s obs=2M
+	fetchUngzipConvertCmd = `curl -S -s -v -# -C - --retry 3 --retry-delay 60 %[1]s | gzip -d | dd of=%[2]s obs=2M
 pipestatus=("${PIPESTATUS[@]}")
 if [[ "${pipestatus[0]}" -ne 0 ]]; then
   echo "$(date --rfc-3339=seconds) ERROR: Fetching %[1]s failed." >&2
