@@ -51,8 +51,7 @@ func main() {
 
 // internalRun main entry point to execution received request.
 func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State) (err error) {
-	ctx, err = printInputs(ctx, in)
-	if err != nil {
+	if err = printInputs(ctx, in); err != nil {
 		log.Printf("Internal run: failed to marshal proto. Error: %s", err)
 	}
 	access, err := tlw.NewAccess(ctx, in)
@@ -90,13 +89,13 @@ var supportedTasks = map[string]recovery.TaskName{
 }
 
 // printInputs prints input params.
-func printInputs(ctx context.Context, input *steps.LabpackInput) (newCtx context.Context, err error) {
+func printInputs(ctx context.Context, input *steps.LabpackInput) (err error) {
 	step, ctx := build.StartStep(ctx, "Input params")
 	defer func() { step.End(err) }()
 	req := step.Log("input proto")
 	marsh := jsonpb.Marshaler{Indent: "  "}
 	if err = marsh.Marshal(req, input); err != nil {
-		return ctx, errors.Annotate(err, "failed to marshal proto").Err()
+		return errors.Annotate(err, "failed to marshal proto").Err()
 	}
-	return ctx, nil
+	return nil
 }
