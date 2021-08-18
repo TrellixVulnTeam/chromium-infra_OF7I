@@ -6,6 +6,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 
 	"infra/cros/internal/assert"
@@ -13,6 +14,7 @@ import (
 	"infra/cros/internal/gs"
 
 	"github.com/golang/mock/gomock"
+	gitpb "go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
@@ -61,7 +63,29 @@ var (
 	application = GetApplication(chromeinfra.DefaultAuthOptions())
 )
 
-func setUpPPBTest(t *testing.T, program, project, buildspec, branch string) (*gs.FakeClient, *gerrit.Client) {
+type testConfig struct {
+	program string
+	project string
+	// Map between buildspec name and whether or not to expect a GS write.
+	buildspecs       map[string]bool
+	branches         []string
+	buildspecsExists bool
+	expectedForce    bool
+	watchPaths       map[string]map[string][]string
+}
+
+func namesToFiles(files []string) []*gitpb.File {
+	res := make([]*gitpb.File, len(files))
+	for i, file := range files {
+		res[i] = &gitpb.File{
+			Path: file,
+		}
+	}
+	return res
+}
+
+func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client) {
+	t.Helper()
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
 	t.Cleanup(ctl.Finish)
@@ -74,8 +98,8 @@ func setUpPPBTest(t *testing.T, program, project, buildspec, branch string) (*gs
 	}
 	response := make(map[string]string)
 	response["refs/heads/main"] = "deadcafe"
-	response["refs/heads/release-R90-13816.B"] = "deadbeef"
-	response["refs/heads/release-R91-13904.B"] = "beefcafe"
+	response["refs/heads/release-R93-13816.B"] = "deadbeef"
+	response["refs/heads/release-R94-13904.B"] = "beefcafe"
 	gitilesMock.EXPECT().Refs(gomock.Any(), gerrit.RefsRequestEq(request)).Return(
 		&gitilespb.RefsResponse{
 			Revisions: response,
@@ -83,95 +107,243 @@ func setUpPPBTest(t *testing.T, program, project, buildspec, branch string) (*gs
 		nil,
 	)
 
-	// Mock tip-of-branch (branch) manifest file request.
+	// Mock tip-of-branch (branch) manifest file requests.
 	projects := []string{
-		"chromeos/program/" + program,
-		"chromeos/project/" + program + "/" + project,
+		"chromeos/program/" + tc.program,
+		"chromeos/project/" + tc.program + "/" + tc.project,
 	}
 	for _, project := range projects {
-		reqLocalManifest := &gitilespb.DownloadFileRequest{
-			Project:    project,
-			Path:       "local_manifest.xml",
-			Committish: branch,
+		for _, branch := range tc.branches {
+			reqLocalManifest := &gitilespb.DownloadFileRequest{
+				Project:    project,
+				Path:       "local_manifest.xml",
+				Committish: branch,
+			}
+			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+				&gitilespb.DownloadFileResponse{
+					Contents: unpinnedLocalManifestXML,
+				},
+				nil,
+			)
 		}
-		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+	}
+
+	// Mock external buildspec file request.
+	for buildspec := range tc.buildspecs {
+		reqExternalBuildspec := &gitilespb.DownloadFileRequest{
+			Project:    "chromiumos/manifest-versions",
+			Path:       buildspec,
+			Committish: "HEAD",
+		}
+		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
 			&gitilespb.DownloadFileResponse{
-				Contents: unpinnedLocalManifestXML,
+				Contents: "",
+			},
+			nil,
+		)
+
+		// Mock buildspec file requests.
+		reqBuildspecs := &gitilespb.DownloadFileRequest{
+			Project:    "chromeos/manifest-versions",
+			Path:       buildspec,
+			Committish: "HEAD",
+		}
+		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqBuildspecs)).Return(
+			&gitilespb.DownloadFileResponse{
+				Contents: buildspecXML,
 			},
 			nil,
 		)
 	}
 
-	// Mock external buildspec file request.
-	reqExternalBuildspec := &gitilespb.DownloadFileRequest{
-		Project:    "chromiumos/manifest-versions",
-		Path:       buildspec,
-		Committish: "HEAD",
+	// Set up gerrit.List expectations.
+	if tc.watchPaths != nil {
+		for watchPath, subpaths := range tc.watchPaths {
+			subdirs := []string{}
+			for subpath, files := range subpaths {
+				subdirs = append(subdirs, subpath)
+				if files == nil {
+					continue
+				}
+				reqList := &gitilespb.ListFilesRequest{
+					Project:    "chromiumos/manifest-versions",
+					Path:       filepath.Join(watchPath, subpath),
+					Committish: "HEAD",
+				}
+				gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
+					&gitilespb.ListFilesResponse{
+						Files: namesToFiles(files),
+					},
+					nil,
+				)
+			}
+			reqList := &gitilespb.ListFilesRequest{
+				Project:    "chromiumos/manifest-versions",
+				Path:       watchPath,
+				Committish: "HEAD",
+			}
+			gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
+				&gitilespb.ListFilesResponse{
+					Files: namesToFiles(subdirs),
+				},
+				nil,
+			)
+		}
 	}
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: "",
-		},
-		nil,
-	)
 
-	// Mock buildspec file request.
-	reqBuildspecs := &gitilespb.DownloadFileRequest{
-		Project:    "chromeos/manifest-versions",
-		Path:       buildspec,
-		Committish: "HEAD",
-	}
-	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqBuildspecs)).Return(
-		&gitilespb.DownloadFileResponse{
-			Contents: buildspecXML,
-		},
-		nil,
-	)
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
 		chromeExternalHost: gitilesMock,
 	}
 	gc := gerrit.NewTestClient(mockMap)
 
-	expectedWrites := map[string][]byte{
-		"gs://chromeos-galaxy/buildspecs/" + buildspec:          []byte(pinnedLocalManifestXML),
-		"gs://chromeos-galaxy-milkyway/buildspecs/" + buildspec: []byte(pinnedLocalManifestXML),
+	expectedLists := make(map[string][]string)
+	expectedWrites := make(map[string][]byte)
+
+	for buildspec, expectWrite := range tc.buildspecs {
+		if expectWrite {
+			expectedWrites["gs://chromeos-galaxy/buildspecs/"+buildspec] = []byte(pinnedLocalManifestXML)
+			expectedWrites["gs://chromeos-galaxy-milkyway/buildspecs/"+buildspec] = []byte(pinnedLocalManifestXML)
+		}
+		list := []string{}
+		if tc.buildspecsExists {
+			list = []string{"buildspecs/" + buildspec}
+		}
+		expectedLists["buildspecs/"+buildspec] = list
+		expectedLists["buildspecs/"+buildspec] = list
 	}
+
 	f := &gs.FakeClient{
 		T:              t,
 		ExpectedWrites: expectedWrites,
+		ExpectedLists: map[string]map[string][]string{
+			"chromeos-galaxy":          expectedLists,
+			"chromeos-galaxy-milkyway": expectedLists,
+		},
 	}
 	return f, gc
 }
 
 func TestCreateProjectBuildspec(t *testing.T) {
 	t.Parallel()
-	program := "galaxy"
-	project := "milkyway"
-	buildspec := "full/buildspecs/90/13811.0.0.xml"
-	releaseBranch := "refs/heads/release-R90-13816.B"
-	f, gc := setUpPPBTest(t, program, project, buildspec, releaseBranch)
+	tc := testConfig{
+		program: "galaxy",
+		project: "milkyway",
+		buildspecs: map[string]bool{
+			"full/buildspecs/93/13811.0.0.xml": true,
+		},
+		branches: []string{"refs/heads/release-R93-13816.B"},
+	}
+	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: buildspec,
-		program:   program,
-		project:   project,
+		buildspec: "full/buildspecs/93/13811.0.0.xml",
+		projects:  []string{tc.program + "/" + tc.project},
 	}
-	assert.NilError(t, b.CreateProjectBuildspec(f, gc))
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
 
+// Specifically test 96 to check that the tool properly accounts for the
+// missing 95.
 func TestCreateProjectBuildspecToT(t *testing.T) {
 	t.Parallel()
-	program := "galaxy"
-	project := "milkyway"
-	buildspec := "full/buildspecs/92/13811.0.0-rc2.xml"
-	releaseBranch := "refs/heads/main"
-	f, gc := setUpPPBTest(t, program, project, buildspec, releaseBranch)
+	tc := testConfig{
+		program: "galaxy",
+		buildspecs: map[string]bool{
+			"full/buildspecs/96/13811.0.0-rc2.xml": true,
+		},
+		project:  "milkyway",
+		branches: []string{"refs/heads/main"},
+	}
+	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: buildspec,
-		program:   program,
-		project:   project,
+		buildspec: "full/buildspecs/96/13811.0.0-rc2.xml",
+		projects:  []string{tc.program + "/" + tc.project},
 	}
-	assert.NilError(t, b.CreateProjectBuildspec(f, gc))
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
+
+func TestCreateProjectBuildspecForce(t *testing.T) {
+	t.Parallel()
+	tc := testConfig{
+		program: "galaxy",
+		project: "milkyway",
+		buildspecs: map[string]bool{
+			"full/buildspecs/93/13811.0.0.xml": true,
+		},
+		branches:         []string{"refs/heads/release-R93-13816.B"},
+		buildspecsExists: true,
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		buildspec: "full/buildspecs/93/13811.0.0.xml",
+		projects:  []string{tc.program + "/" + tc.project},
+		force:     true,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
+func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
+	t.Parallel()
+	// File shouldn't be written to GS if force is not set.
+	tc := testConfig{
+		program: "galaxy",
+		project: "milkyway",
+		buildspecs: map[string]bool{
+			"full/buildspecs/93/13811.0.0.xml": false,
+		},
+		branches:         []string{"refs/heads/release-R93-13816.B"},
+		buildspecsExists: true,
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		buildspec: "full/buildspecs/93/13811.0.0.xml",
+		projects:  []string{tc.program + "/" + tc.project},
+		force:     false,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
+
+func TestCreateProjectBuildspecMultiple(t *testing.T) {
+	t.Parallel()
+	watchPaths := map[string]map[string][]string{
+		"full/buildspecs/": {
+			"93": nil,
+			"94": {
+				"13010.0.0-rc1.xml",
+				"13011.0.0-rc1.xml",
+			},
+		},
+		"buildspecs/": {
+			"93": nil,
+			"94": {
+				"13010.0.0.xml",
+				"13011.0.0.xml",
+			},
+		},
+	}
+
+	tc := testConfig{
+		program: "galaxy",
+		project: "milkyway",
+		buildspecs: map[string]bool{
+			"full/buildspecs/94/13010.0.0-rc1.xml": true,
+			"full/buildspecs/94/13011.0.0-rc1.xml": true,
+			"buildspecs/94/13010.0.0.xml":          true,
+			"buildspecs/94/13011.0.0.xml":          true,
+		},
+		watchPaths: watchPaths,
+		branches:   []string{"refs/heads/release-R94-13904.B"},
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
+		minMilestone: 94,
+		projects:     []string{tc.program + "/" + tc.project},
+		force:        true,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
