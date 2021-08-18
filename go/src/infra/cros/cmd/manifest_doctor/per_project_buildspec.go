@@ -33,10 +33,12 @@ const (
 	chromeInternalHost              = "chrome-internal.googlesource.com"
 	manifestInternalProject         = "chromeos/manifest-internal"
 	externalManifestVersionsProject = "chromiumos/manifest-versions"
+	chromeosProgramPrefix           = "chromeos/program/"
+	chromeosProjectPrefix           = "chromeos/project/"
 )
 
 var (
-	projectRegexp = regexp.MustCompile(`(?P<program>[a-z0-9-]+)/(?P<project>[a-z0-9-]+)`)
+	projectRegexp = regexp.MustCompile(`(?P<program>[a-z0-9-]+)/(?P<project>[a-z0-9-]+)$`)
 )
 
 type projectBuildspec struct {
@@ -70,7 +72,8 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 			b.Flags.BoolVar(&b.force, "force", false,
 				"Existing buildspecs will not be regenerated unless --force is set")
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
-				"Name of the project(s) to create the project-specific buildspec for, e.g. galaxy/milkyway")
+				"Name of the project(s) (e.g. galaxy/milkyway) to create buildspecs for."+
+					" Supports wildcards, e.g. galaxy/* or galaxy/milk*")
 			return b
 		}}
 }
@@ -88,11 +91,6 @@ func (b *projectBuildspec) validate() error {
 
 	if len(b.projects) == 0 {
 		return fmt.Errorf("must specify at least one project with --projects")
-	}
-	for _, project := range b.projects {
-		if _, _, err := parseProject(project); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -158,57 +156,124 @@ func parseProject(project string) (string, string, error) {
 	return toks[1], toks[2], nil
 }
 
-func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *gerrit.Client) error {
-	ctx := context.Background()
-	// Find buildspecs.
-	var buildspecs []string
-	if len(b.watchPaths) > 0 {
-		for _, watchPath := range b.watchPaths {
-			dirs, err := gerritClient.ListFiles(ctx, chromeExternalHost,
-				externalManifestVersionsProject, "HEAD", watchPath)
-			if err != nil {
-				return err
+// getProjects filters allProjects for only the projects associated with the
+// specified program.
+func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatterns []string) ([]string, error) {
+	// Only fetch all projects if we need to, i.e. if one or more pattern
+	// contains a wildcard.
+	hasWildcard := false
+	for _, pattern := range projectPatterns {
+		if strings.Contains(pattern, "*") {
+			hasWildcard = true
+			break
+		}
+	}
+	if !hasWildcard {
+		return projectPatterns, nil
+	}
+
+	allProjects, err := gerritClient.Projects(ctx, chromeInternalHost)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to fetch all projects").Err()
+	}
+
+	patterns := []*regexp.Regexp{}
+	for _, pattern := range projectPatterns {
+		pattern = strings.ReplaceAll(pattern, "*", ".*") + "$"
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, errors.Annotate(err, "invalid pattern specified in --projects").Err()
+		}
+		patterns = append(patterns, re)
+	}
+
+	projects := []string{}
+	for _, project := range allProjects {
+		project = strings.TrimPrefix(project, chromeosProjectPrefix)
+		for _, pattern := range patterns {
+			if pattern.MatchString(project) {
+				projects = append(projects, project)
 			}
-			for _, dir := range dirs {
-				mstone, err := strconv.Atoi(dir)
+		}
+	}
+	return projects, nil
+}
+
+func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *gerrit.Client) ([]string, error) {
+	// Find buildspecs.
+	if len(b.watchPaths) == 0 {
+		return []string{b.buildspec}, nil
+	}
+	var buildspecs []string
+	for _, watchPath := range b.watchPaths {
+		dirs, err := gerritClient.ListFiles(ctx, chromeExternalHost,
+			externalManifestVersionsProject, "HEAD", watchPath)
+		if err != nil {
+			return nil, err
+		}
+		for _, dir := range dirs {
+			mstone, err := strconv.Atoi(dir)
+			if err != nil {
+				LogErr("dir %s in %s is not a mstone, skipping...", dir, watchPath)
+				continue
+			}
+			if mstone >= b.minMilestone {
+				mstoneDir := filepath.Join(watchPath, dir)
+				contents, err := gerritClient.ListFiles(ctx, chromeExternalHost,
+					externalManifestVersionsProject, "HEAD", mstoneDir)
 				if err != nil {
-					LogErr("dir %s in %s is not a milestone, skipping...", dir, watchPath)
-					continue
+					return nil, err
 				}
-				if mstone >= b.minMilestone {
-					mstoneDir := filepath.Join(watchPath, dir)
-					contents, err := gerritClient.ListFiles(ctx, chromeExternalHost,
-						externalManifestVersionsProject, "HEAD", mstoneDir)
-					if err != nil {
-						return err
-					}
-					for _, file := range contents {
-						buildspecs = append(buildspecs, filepath.Join(mstoneDir, file))
-					}
+				for _, file := range contents {
+					buildspecs = append(buildspecs, filepath.Join(mstoneDir, file))
 				}
 			}
 		}
-	} else {
-		buildspecs = []string{b.buildspec}
+	}
+	return buildspecs, nil
+}
+
+func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *gerrit.Client) error {
+	ctx := context.Background()
+	buildspecs, err := b.findBuildspecs(ctx, gerritClient)
+	if err != nil {
+		return err
 	}
 	if len(buildspecs) == 0 {
 		return fmt.Errorf("no buildspecs were found for watch paths %s", strings.Join(b.watchPaths, ","))
 	}
-	for _, proj := range b.projects {
+
+	// Resolve projects.
+	projects, err := getProjects(ctx, gerritClient, b.projects)
+	if err != nil {
+		return errors.Annotate(err, "failed to resolve projects").Err()
+	}
+	if len(projects) == 0 {
+		return fmt.Errorf("no projects were found for patterns %s", strings.Join(b.projects, ","))
+	}
+
+	// Iterate through all projects/programs and create buildspecs.
+	var errs []error
+	for _, proj := range projects {
 		program, project, err := parseProject(proj)
 		if err != nil {
-			return err
+			return errors.Annotate(err, "invalid project %s", proj).Err()
 		}
 		if err := CreateProjectBuildspecs(program, project, buildspecs, b.force, gsClient, gerritClient); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.NewMultiError(errs...)
 }
 
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
 func CreateProjectBuildspecs(program, project string, buildspecs []string, force bool, gsClient gs.Client, gerritClient *gerrit.Client) error {
+	logPrefix := fmt.Sprintf("%s/%s", program, project)
+
 	// Aggregate buildspecs by milestone.
 	buildspecsByMilestone := make(map[int][]string)
 	for _, buildspec := range buildspecs {
@@ -256,18 +321,18 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, force
 
 		localManifests := make(map[string]*repo.Manifest)
 
-		programProject := "chromeos/program/" + program
-		projectProject := "chromeos/project/" + program + "/" + project
+		programProject := chromeosProgramPrefix + program
+		projectProject := chromeosProjectPrefix + program + "/" + project
 		for _, project := range []string{projectProject, programProject} {
 			// Load the local manifest for the appropriate project/branch.
 			localManifests[project], err = manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 				project, releaseBranch, "local_manifest.xml")
 			if err != nil {
 				if project == programProject {
-					LogErr("couldn't load local_manifest.xml for %s, it may not exist for the program so skipping...", project)
+					LogErr("%s: couldn't load local_manifest.xml, it may not exist for the program so skipping...", logPrefix)
 					continue
 				}
-				return errors.Annotate(err, "error loading tip-of-branch manifest").Err()
+				return errors.Annotate(err, "%s: error loading tip-of-branch manifest", logPrefix).Err()
 			}
 		}
 
@@ -301,8 +366,8 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, force
 				files, err := gsClient.List(ctx, uploadPath.Bucket(), uploadPath.Filename())
 				if !force && err == nil && len(files) > 0 {
 					// This is an optimization check so don't really care if there's an error.
-					LogOut("%s already exists for %s/%s, will not regenerate unless --force is set",
-						buildspec, program, project)
+					LogOut("%s: %s already exists, will not regenerate unless --force is set",
+						logPrefix, buildspec)
 					continue
 				}
 
@@ -314,7 +379,8 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, force
 				if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 					switch err.(type) {
 					case manifestutil.MissingProjectsError:
-						LogOut("missing projects in reference manifest, leaving unpinned: %s", err.(manifestutil.MissingProjectsError).MissingProjects)
+						LogOut("%s: missing projects in reference manifest, leaving unpinned: %s", logPrefix,
+							err.(manifestutil.MissingProjectsError).MissingProjects)
 					default:
 						return err
 					}
@@ -329,7 +395,7 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, force
 				if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
 					return err
 				}
-				LogOut("wrote buildspec to %s\n", string(uploadPath))
+				LogOut("%s: wrote buildspec to %s\n", logPrefix, string(uploadPath))
 			}
 		}
 	}

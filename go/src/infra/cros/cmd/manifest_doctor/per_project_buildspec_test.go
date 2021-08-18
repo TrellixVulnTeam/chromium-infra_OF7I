@@ -6,6 +6,7 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -64,14 +65,14 @@ var (
 )
 
 type testConfig struct {
-	program string
-	project string
+	projects map[string][]string
 	// Map between buildspec name and whether or not to expect a GS write.
 	buildspecs       map[string]bool
 	branches         []string
 	buildspecsExists bool
 	expectedForce    bool
 	watchPaths       map[string]map[string][]string
+	allProjects      []string
 }
 
 func namesToFiles(files []string) []*gitpb.File {
@@ -91,6 +92,16 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 	t.Cleanup(ctl.Finish)
 	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
 
+	// Mock Projects request.
+	if tc.allProjects != nil {
+		gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
+			&gitilespb.ProjectsResponse{
+				Projects: tc.allProjects,
+			},
+			nil,
+		)
+	}
+
 	// Mock manifest-internal branches request.
 	request := &gitilespb.RefsRequest{
 		Project:  "chromeos/manifest-internal",
@@ -105,30 +116,34 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 			Revisions: response,
 		},
 		nil,
-	)
+	).AnyTimes()
 
 	// Mock tip-of-branch (branch) manifest file requests.
-	projects := []string{
-		"chromeos/program/" + tc.program,
-		"chromeos/project/" + tc.program + "/" + tc.project,
-	}
-	for _, project := range projects {
-		for _, branch := range tc.branches {
-			reqLocalManifest := &gitilespb.DownloadFileRequest{
-				Project:    project,
-				Path:       "local_manifest.xml",
-				Committish: branch,
+	for prog, projs := range tc.projects {
+		for _, proj := range projs {
+			projects := []string{
+				"chromeos/program/" + prog,
+				"chromeos/project/" + prog + "/" + proj,
 			}
-			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-				&gitilespb.DownloadFileResponse{
-					Contents: unpinnedLocalManifestXML,
-				},
-				nil,
-			)
+			for _, project := range projects {
+				for _, branch := range tc.branches {
+					reqLocalManifest := &gitilespb.DownloadFileRequest{
+						Project:    project,
+						Path:       "local_manifest.xml",
+						Committish: branch,
+					}
+					gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+						&gitilespb.DownloadFileResponse{
+							Contents: unpinnedLocalManifestXML,
+						},
+						nil,
+					)
+				}
+			}
 		}
 	}
 
-	// Mock external buildspec file request.
+	// Mock external and internal buildspec file requests.
 	for buildspec := range tc.buildspecs {
 		reqExternalBuildspec := &gitilespb.DownloadFileRequest{
 			Project:    "chromiumos/manifest-versions",
@@ -140,9 +155,8 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 				Contents: "",
 			},
 			nil,
-		)
+		).AnyTimes()
 
-		// Mock buildspec file requests.
 		reqBuildspecs := &gitilespb.DownloadFileRequest{
 			Project:    "chromeos/manifest-versions",
 			Path:       buildspec,
@@ -153,7 +167,7 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 				Contents: buildspecXML,
 			},
 			nil,
-		)
+		).AnyTimes()
 	}
 
 	// Set up gerrit.List expectations.
@@ -197,29 +211,40 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 	}
 	gc := gerrit.NewTestClient(mockMap)
 
-	expectedLists := make(map[string][]string)
 	expectedWrites := make(map[string][]byte)
+	expectedBucketLists := make(map[string][]string)
 
 	for buildspec, expectWrite := range tc.buildspecs {
+		relpath := fmt.Sprintf("buildspecs/%s", buildspec)
 		if expectWrite {
-			expectedWrites["gs://chromeos-galaxy/buildspecs/"+buildspec] = []byte(pinnedLocalManifestXML)
-			expectedWrites["gs://chromeos-galaxy-milkyway/buildspecs/"+buildspec] = []byte(pinnedLocalManifestXML)
+			for prog, projs := range tc.projects {
+				for _, proj := range projs {
+					program_bucket := fmt.Sprintf("gs://chromeos-%s/", prog)
+					project_bucket := fmt.Sprintf("gs://chromeos-%s-%s/", prog, proj)
+					expectedWrites[program_bucket+relpath] = []byte(pinnedLocalManifestXML)
+					expectedWrites[project_bucket+relpath] = []byte(pinnedLocalManifestXML)
+				}
+			}
 		}
 		list := []string{}
 		if tc.buildspecsExists {
 			list = []string{"buildspecs/" + buildspec}
 		}
-		expectedLists["buildspecs/"+buildspec] = list
-		expectedLists["buildspecs/"+buildspec] = list
+		expectedBucketLists[relpath] = list
+		expectedBucketLists[relpath] = list
+	}
+	expectedLists := make(map[string]map[string][]string)
+	for prog, projs := range tc.projects {
+		for _, proj := range projs {
+			expectedLists[fmt.Sprintf("chromeos-%s", prog)] = expectedBucketLists
+			expectedLists[fmt.Sprintf("chromeos-%s-%s", prog, proj)] = expectedBucketLists
+		}
 	}
 
 	f := &gs.FakeClient{
 		T:              t,
 		ExpectedWrites: expectedWrites,
-		ExpectedLists: map[string]map[string][]string{
-			"chromeos-galaxy":          expectedLists,
-			"chromeos-galaxy-milkyway": expectedLists,
-		},
+		ExpectedLists:  expectedLists,
 	}
 	return f, gc
 }
@@ -227,8 +252,9 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 func TestCreateProjectBuildspec(t *testing.T) {
 	t.Parallel()
 	tc := testConfig{
-		program: "galaxy",
-		project: "milkyway",
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
 		buildspecs: map[string]bool{
 			"full/buildspecs/93/13811.0.0.xml": true,
 		},
@@ -238,7 +264,7 @@ func TestCreateProjectBuildspec(t *testing.T) {
 
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{tc.program + "/" + tc.project},
+		projects:  []string{"galaxy/milkyway"},
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -248,18 +274,19 @@ func TestCreateProjectBuildspec(t *testing.T) {
 func TestCreateProjectBuildspecToT(t *testing.T) {
 	t.Parallel()
 	tc := testConfig{
-		program: "galaxy",
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
 		buildspecs: map[string]bool{
 			"full/buildspecs/96/13811.0.0-rc2.xml": true,
 		},
-		project:  "milkyway",
 		branches: []string{"refs/heads/main"},
 	}
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/96/13811.0.0-rc2.xml",
-		projects:  []string{tc.program + "/" + tc.project},
+		projects:  []string{"galaxy/milkyway"},
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -267,8 +294,9 @@ func TestCreateProjectBuildspecToT(t *testing.T) {
 func TestCreateProjectBuildspecForce(t *testing.T) {
 	t.Parallel()
 	tc := testConfig{
-		program: "galaxy",
-		project: "milkyway",
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
 		buildspecs: map[string]bool{
 			"full/buildspecs/93/13811.0.0.xml": true,
 		},
@@ -279,7 +307,7 @@ func TestCreateProjectBuildspecForce(t *testing.T) {
 
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{tc.program + "/" + tc.project},
+		projects:  []string{"galaxy/milkyway"},
 		force:     true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
@@ -288,8 +316,9 @@ func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
 	t.Parallel()
 	// File shouldn't be written to GS if force is not set.
 	tc := testConfig{
-		program: "galaxy",
-		project: "milkyway",
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
 		buildspecs: map[string]bool{
 			"full/buildspecs/93/13811.0.0.xml": false,
 		},
@@ -300,7 +329,7 @@ func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
 
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{tc.program + "/" + tc.project},
+		projects:  []string{"galaxy/milkyway"},
 		force:     false,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
@@ -326,8 +355,9 @@ func TestCreateProjectBuildspecMultiple(t *testing.T) {
 	}
 
 	tc := testConfig{
-		program: "galaxy",
-		project: "milkyway",
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
 		buildspecs: map[string]bool{
 			"full/buildspecs/94/13010.0.0-rc1.xml": true,
 			"full/buildspecs/94/13011.0.0-rc1.xml": true,
@@ -342,7 +372,55 @@ func TestCreateProjectBuildspecMultiple(t *testing.T) {
 	b := projectBuildspec{
 		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
 		minMilestone: 94,
-		projects:     []string{tc.program + "/" + tc.project},
+		projects:     []string{"galaxy/milkyway"},
+		force:        true,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
+
+func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
+	t.Parallel()
+	watchPaths := map[string]map[string][]string{
+		"full/buildspecs/": {
+			"93": nil,
+			"94": {
+				"13010.0.0-rc1.xml",
+				"13011.0.0-rc1.xml",
+			},
+		},
+		"buildspecs/": {
+			"93": nil,
+			"94": {
+				"13010.0.0.xml",
+				"13011.0.0.xml",
+			},
+		},
+	}
+
+	tc := testConfig{
+		projects: map[string][]string{
+			"galaxy": {"milkyway", "andromeda"},
+		},
+		buildspecs: map[string]bool{
+			"full/buildspecs/94/13010.0.0-rc1.xml": true,
+			"full/buildspecs/94/13011.0.0-rc1.xml": true,
+			"buildspecs/94/13010.0.0.xml":          true,
+			"buildspecs/94/13011.0.0.xml":          true,
+		},
+		watchPaths: watchPaths,
+		branches:   []string{"refs/heads/release-R94-13904.B"},
+		allProjects: []string{
+			"chromeos/project/galaxy/milkyway",
+			"chromeos/project/galaxy/andromeda",
+			"chromeos/foo",
+		},
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
+		minMilestone: 94,
+		projects:     []string{"galaxy/*"},
 		force:        true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
