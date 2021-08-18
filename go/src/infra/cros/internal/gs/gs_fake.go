@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
+	"time"
 
 	"infra/cros/internal/assert"
 
@@ -23,6 +24,7 @@ type FakeClient struct {
 	ExpectedWrites    map[string][]byte
 	ExpectedDownloads map[string][]byte
 	ExpectedReads     map[string][]byte
+	ExpectedSetTTL    map[string]time.Duration
 }
 
 // WriteFileToGS writes the specified data to the specified gs path.
@@ -67,4 +69,15 @@ func (f *FakeClient) List(_ context.Context, bucket string, prefix string) ([]st
 		f.T.Fatalf("unexpected list of bucket %s, prefix %s", bucket, prefix)
 	}
 	return data, nil
+}
+
+func (f *FakeClient) SetTTL(_ context.Context, gsPath gs.Path, ttl time.Duration) error {
+	expectedTTL, ok := f.ExpectedSetTTL[string(gsPath)]
+	if !ok {
+		f.T.Fatalf("unexpected call to SetTTL for object %s, ttl %v", gsPath, ttl)
+	}
+	if !reflect.DeepEqual(expectedTTL, ttl) {
+		f.T.Fatalf("mismatch on call SetTTL for %s: expected:\n%v\ngot:\n%v\n", string(gsPath), expectedTTL, ttl)
+	}
+	return nil
 }

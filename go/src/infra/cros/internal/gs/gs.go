@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
@@ -24,6 +26,7 @@ type Client interface {
 	WriteFileToGS(gsPath gs.Path, data []byte) error
 	Download(gsPath gs.Path, localPath string) error
 	Read(gsPath gs.Path) ([]byte, error)
+	SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error
 	List(ctx context.Context, bucket string, prefix string) ([]string, error)
 }
 
@@ -117,4 +120,16 @@ func (g *ProdClient) List(ctx context.Context, bucket string, prefix string) ([]
 		names = append(names, attrs.Name)
 	}
 	return names, nil
+}
+
+// Set TTL sets the object's time to live.
+func (g *ProdClient) SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error {
+	bucket := gsPath.Bucket()
+	path := gsPath.Filename()
+	_, err := g.plainClient.Bucket(bucket).Object(path).Update(ctx, storage.ObjectAttrsToUpdate{
+		Metadata: map[string]string{
+			"timetolive": strconv.Itoa(int(ttl.Seconds())),
+		},
+	})
+	return err
 }

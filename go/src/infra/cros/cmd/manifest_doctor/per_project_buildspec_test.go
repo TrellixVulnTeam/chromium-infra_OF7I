@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"infra/cros/internal/assert"
 	gerrit "infra/cros/internal/gerrit"
@@ -73,6 +74,7 @@ type testConfig struct {
 	expectedForce    bool
 	watchPaths       map[string]map[string][]string
 	allProjects      []string
+	expectedSetTTL   map[string]time.Duration
 }
 
 func namesToFiles(files []string) []*gitpb.File {
@@ -245,12 +247,14 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 		T:              t,
 		ExpectedWrites: expectedWrites,
 		ExpectedLists:  expectedLists,
+		ExpectedSetTTL: tc.expectedSetTTL,
 	}
 	return f, gc
 }
 
 func TestCreateProjectBuildspec(t *testing.T) {
 	t.Parallel()
+	ttl := 90
 	tc := testConfig{
 		projects: map[string][]string{
 			"galaxy": {"milkyway"},
@@ -259,12 +263,18 @@ func TestCreateProjectBuildspec(t *testing.T) {
 			"full/buildspecs/93/13811.0.0.xml": true,
 		},
 		branches: []string{"refs/heads/release-R93-13816.B"},
+		// Test --ttl feature.
+		expectedSetTTL: map[string]time.Duration{
+			"gs://chromeos-galaxy/buildspecs/full/buildspecs/93/13811.0.0.xml":          time.Duration(ttl * 24 * int(time.Hour)),
+			"gs://chromeos-galaxy-milkyway/buildspecs/full/buildspecs/93/13811.0.0.xml": time.Duration(ttl * 24 * int(time.Hour)),
+		},
 	}
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
 		projects:  []string{"galaxy/milkyway"},
+		ttl:       ttl,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
