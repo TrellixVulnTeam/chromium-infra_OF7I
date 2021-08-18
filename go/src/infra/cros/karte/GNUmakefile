@@ -9,6 +9,9 @@ default: build
 
 .PHONY:
 build:
+	@gofmt -s -w .
+	@go vet ./...
+	@go test ./...
 	go build -o ./cmd/karte/karte             ./cmd/karte
 	go build -o ./cmd/karteserver/karteserver ./cmd/karteserver
 
