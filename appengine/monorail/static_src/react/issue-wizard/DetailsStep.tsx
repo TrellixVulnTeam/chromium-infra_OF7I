@@ -35,8 +35,8 @@ const useStyles = makeStyles((theme: Theme) =>
   }), {defaultTheme: theme}
 );
 
-export default function DetailsStep({textValues, setTextValues}:
-  {textValues: Object, setTextValues: Function}): React.ReactElement {
+export default function DetailsStep({textValues, setTextValues, category}:
+  {textValues: Object, setTextValues: Function, category: string}): React.ReactElement {
   const classes = useStyles();
 
   const handleChange = (valueName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +46,7 @@ export default function DetailsStep({textValues, setTextValues}:
 
   return (
     <>
-        <h2 className={classes.grey}>Details for problems with</h2>
+        <h2 className={classes.grey}>Details for problems with {category}</h2>
         <form className={classes.root} noValidate autoComplete="off">
             <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
             <TextField id="outlined-basic-1" variant="outlined" onChange={handleChange('oneLineSummary')}/>

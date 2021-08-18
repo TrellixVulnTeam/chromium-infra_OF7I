@@ -3,12 +3,14 @@
 // found in the LICENSE file.
 
 import React from 'react';
-import {render} from '@testing-library/react';
+import {render, cleanup} from '@testing-library/react';
 import {assert} from 'chai';
 
 import DetailsStep from './DetailsStep.tsx';
 
 describe('DetailsStep', () => {
+  afterEach(cleanup);
+
   it('renders', async () => {
     const {container} = render(<DetailsStep />);
 
@@ -20,4 +22,13 @@ describe('DetailsStep', () => {
     const count = document.querySelectorAll('textarea').length;
     assert.equal(count, 3)
   });
+
+  it('renders category in title', async () => {
+    const {container} = render(<DetailsStep category='UI'/>);
+
+    // this is checking the title contains our category
+    const title = container.querySelector('h2');
+    assert.include(title?.innerText, 'Details for problems with UI');
+  });
+
 });

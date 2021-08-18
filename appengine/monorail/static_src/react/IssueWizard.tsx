@@ -40,7 +40,7 @@ export function IssueWizard(): ReactElement {
         />;
     nextEnabled = checkExisting && userType && (category != '');
   } else if (activeStep === 1){
-    page = <DetailsStep textValues={textValues} setTextValues={setTextValues}/>;
+    page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category}/>;
     nextEnabled = (textValues.oneLineSummary.trim() !== '') &&
                   (textValues.stepsToReproduce.trim() !== '') &&
                   (textValues.describeProblem.trim() !== '');
