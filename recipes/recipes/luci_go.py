@@ -46,7 +46,7 @@ LUCI_GO_PATH_IN_INFRA = 'infra/go/src/go.chromium.org/luci'
 def apply_golangci_lint(api, co):
   go_files = sorted(
       set([
-          api.path.dirname(f) + "/..."
+          api.path.dirname(f) + '/...'
           for f in co.get_changed_files()
           if f.endswith('.go')
       ]))
@@ -66,29 +66,38 @@ def apply_golangci_lint(api, co):
           '--timeout=5m',
       ] + go_files,
       step_test_data=lambda: api.json.test_api.output_stream({
-          "Issues": [{
-              "FromLinter": "deadcode",
-              "Text": "`foo` is unused",
-              "Severity": "",
-              "SourceLines": ["func foo() {}"],
-              "Pos": {
-                  "Filename": "client/cmd/isolate/lib/batch_archive.go",
-                  "Offset": 7960,
-                  "Line": 250,
-                  "Column": 6
+          'Issues': [{
+              'FromLinter': 'deadcode',
+              'Text': '`foo` is unused',
+              'Severity': '',
+              'SourceLines': ['func foo() {}'],
+              'Pos': {
+                  'Filename': 'client/cmd/isolate/lib/batch_archive.go',
+                  'Offset': 7960,
+                  'Line': 250,
+                  'Column': 6
               },
-              "HunkPos": 4,
-              "ExpectedNoLintLinter": ""
+              'HunkPos': 4,
+              'ExpectedNoLintLinter': ''
           }],
       }),
       stdout=api.json.output())
 
-  for issue in result.stdout.get("Issues") or ():
-    pos = issue["Pos"]
-    line = pos["Line"]
-    api.tricium.add_comment("golangci-lint (%s)" % issue["FromLinter"],
-                            issue["Text"], pos["Filename"], line, line + 1,
-                            max(0, pos["Column"] - 1), 0)
+  for issue in result.stdout.get('Issues') or ():
+    pos = issue['Pos']
+    line = pos['Line']
+    api.tricium.add_comment(
+        'golangci-lint (%s)' % issue['FromLinter'],
+        issue['Text'],
+        pos['Filename'],
+        start_line=line,
+        end_line=line,
+        # Gerrit (and Tricium, as a pass-through proxy) requires robot comments
+        # to have valid start/end position.
+        # TODO(crbug/1239584): provide accurate start/end position.
+        start_char=0,
+        end_char=0,
+    )
 
   api.tricium.write_comments()
 
