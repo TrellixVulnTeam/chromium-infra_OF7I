@@ -272,21 +272,20 @@ class GlobalsTest(unittest.TestCase):
 
     self.assertEqual(1, interface.state.global_monitor.send.call_count)
     proto = interface.state.global_monitor.send.call_args[0][0]
-    self.assertEqual(2, len(proto.metrics_collection))
-    self.assertEqual(123,
-        proto.metrics_collection[0].metrics_data_set[0].data[0].int64_value)
-    self.assertEqual(456,
-        proto.metrics_collection[1].metrics_data_set[0].data[0].int64_value)
+    col = proto.metrics_collection
+    self.assertEqual(2, len(col))
+    self.assertEqual(123,col[0].metrics_data_set[0].data[0].int64_value)
+    self.assertEqual(456, col[1].metrics_data_set[0].data[0].int64_value)
 
-    self.assertEqual('service_name',
-      proto.metrics_collection[0].root_labels[0].key)
-    self.assertEqual('s',
-      proto.metrics_collection[0].root_labels[0].string_value)
+    self.assertEqual('service_name', col[0].root_labels[0].key)
+    self.assertEqual('s', col[0].root_labels[0].string_value)
+    self.assertEqual('service_name', col[1].root_labels[0].key)
+    self.assertEqual('foo', col[1].root_labels[0].string_value)
 
-    self.assertEqual('service_name',
-      proto.metrics_collection[1].root_labels[0].key)
-    self.assertEqual('foo',
-      proto.metrics_collection[1].root_labels[0].string_value)
+    self.assertEqual('proxy_zone', col[0].root_labels[5].key)
+    self.assertEqual('atl', col[0].root_labels[5].string_value)
+    self.assertEqual('proxy_zone', col[1].root_labels[5].key)
+    self.assertEqual('atl', col[1].root_labels[5].string_value)
 
   def test_flush_different_target_fields_new(self):
     interface.state.metric_name_prefix = '/infra/test/'
@@ -309,6 +308,11 @@ class GlobalsTest(unittest.TestCase):
     self.assertEqual('s', col[0].root_labels[0].string_value)
     self.assertEqual('service_name', col[1].root_labels[0].key)
     self.assertEqual('foo', col[1].root_labels[0].string_value)
+
+    self.assertEqual('proxy_zone', col[0].root_labels[5].key)
+    self.assertEqual('atl', col[0].root_labels[5].string_value)
+    self.assertEqual('proxy_zone', col[1].root_labels[5].key)
+    self.assertEqual('atl', col[1].root_labels[5].string_value)
 
   def test_send_modifies_metric_values(self):
     interface.state.global_monitor = mock.create_autospec(monitors.Monitor)
