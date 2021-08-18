@@ -27,7 +27,7 @@ class FilesAbsCoverageTest(WaterfallTestCase):
     old_postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         revision='old_rev',
         bucket='ci',
         builder='linux-code-coverage',
@@ -40,7 +40,7 @@ class FilesAbsCoverageTest(WaterfallTestCase):
     new_postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         revision='new_rev',
         bucket='ci',
         builder='linux-code-coverage',
@@ -54,7 +54,7 @@ class FilesAbsCoverageTest(WaterfallTestCase):
     file_coverage_data = FileCoverageData.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         revision='new_rev',
         path='//path/to/file.cc',
         bucket='ci',

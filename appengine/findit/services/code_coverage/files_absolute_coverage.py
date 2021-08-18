@@ -58,11 +58,14 @@ def _ExportAbsoluteCoverageForBuilder(builder):
   commit_timestamp = report.commit_timestamp
   # Process File Coverage reports for the latest revision
   query = FileCoverageData.query(
-      FileCoverageData.gitiles_commit.server_host == server_host,
-      FileCoverageData.gitiles_commit.project == project,
-      FileCoverageData.gitiles_commit.ref == "refs/heads/master",
+      FileCoverageData.gitiles_commit.server_host ==
+      report.gitiles_commit.server_host,
+      FileCoverageData.gitiles_commit.project == report.gitiles_commit.project,
+      FileCoverageData.gitiles_commit.ref == report.gitiles_commit.ref,
       FileCoverageData.gitiles_commit.revision == latest_revision,
-      FileCoverageData.bucket == "ci", FileCoverageData.builder == builder)
+      FileCoverageData.bucket == report.bucket,
+      FileCoverageData.builder == report.builder,
+      FileCoverageData.modifier_id == 0)
   more = True
   cursor = None
   while more:
