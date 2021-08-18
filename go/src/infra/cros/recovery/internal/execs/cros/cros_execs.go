@@ -6,6 +6,7 @@ package cros
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -61,8 +62,25 @@ func rebootExec(ctx context.Context, args *execs.RunArgs) error {
 	return nil
 }
 
+// matchStableOSVersionToDeviceExec matches stable CrOS version to the device OS.
+func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs) error {
+	expected := args.DUT.StableVersion.CrosImage
+	log.Debug(ctx, "Expected version: %s", expected)
+	fromDevice, err := releaseBuildPath(ctx, args.DUT.Name, args)
+	if err != nil {
+		return errors.Annotate(err, "match os version").Err()
+	}
+	fromDevice = strings.TrimSuffix(fromDevice, "\n")
+	log.Debug(ctx, "Version on device: %s", fromDevice)
+	if fromDevice != expected {
+		return errors.Reason("match os version: mismatch, expected %q, found %q", expected, fromDevice).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
 	execs.Register("cros_reboot", rebootExec)
+	execs.Register("cros_match_stable_os_version_to_device", matchStableOSVersionToDeviceExec)
 }
