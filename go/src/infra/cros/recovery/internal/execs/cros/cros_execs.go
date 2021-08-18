@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	// defaultAttemptCount tells default count of retries.
-	defaultAttemptCount = 3
+	// Time to wait a rebooting ChromeOS, in seconds.
+	normalBootingTime = 150
 	// Default reboot command for ChromeOS devices.
 	// Each command set sleep 1 second to wait for reaction of the command from left part.
 	rebootCommand = "(echo begin 1; sync; echo end 1 \"$?\")& sleep 1;" +
@@ -30,16 +30,16 @@ const (
 		"(echo begin 5; telinit 6; echo end 5 \"$?\")"
 )
 
-// pingCrosDUTActionExec performs ping action to the ChromeOS DUT.
-func pingCrosDUTActionExec(ctx context.Context, args *execs.RunArgs) error {
-	return retry.LimitCount(ctx, defaultAttemptCount, time.Second, func() error {
+// pingExec verifies the DUT is pingable.
+func pingExec(ctx context.Context, args *execs.RunArgs) error {
+	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
 		return args.Access.Ping(ctx, args.DUT.Name, 2)
 	}, "cros dut ping")
 }
 
-// sshCrosDUTActionExec performs ssh present verification for ChromeOS DUT.
-func sshCrosDUTActionExec(ctx context.Context, args *execs.RunArgs) error {
-	return retry.LimitCount(ctx, defaultAttemptCount, time.Second, func() error {
+// sshExec verifies ssh access to the DUT.
+func sshExec(ctx context.Context, args *execs.RunArgs) error {
+	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
 		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
 			return errors.Reason("cros dut ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
 		}
@@ -62,7 +62,7 @@ func rebootExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 func init() {
-	execs.Register("cros_ping", pingCrosDUTActionExec)
-	execs.Register("cros_ssh", sshCrosDUTActionExec)
+	execs.Register("cros_ping", pingExec)
+	execs.Register("cros_ssh", sshExec)
 	execs.Register("cros_reboot", rebootExec)
 }
