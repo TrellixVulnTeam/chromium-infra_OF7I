@@ -141,7 +141,7 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	fullManifest := repo.Manifest{
 		Default: repo.Default{
 			RemoteName: "cros",
-			Revision:   "refs/heads/master",
+			Revision:   "refs/heads/main",
 		},
 		Projects: []repo.Project{
 			{Name: "chromiumos/foo", Path: "foo/"},
@@ -184,7 +184,7 @@ func TestRepairManifestsOnDisk(t *testing.T) {
 	}
 
 	git.CommandRunnerImpl = cmd.FakeCommandRunner{
-		Stdout: "123 refs/heads/master",
+		Stdout: "123 refs/heads/main",
 	}
 
 	// Set up
