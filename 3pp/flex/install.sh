@@ -11,8 +11,14 @@ PREFIX="$1"
 
 ./autogen.sh
 
+if [[ $_3PP_TOOL_PLATFORM != $_3PP_PLATFORM ]]; then
+  # Bootstrap doesn't work correctly for our cross-compiles, but it's
+  # not necessary.
+  EXTRA_OPTS="--disable-bootstrap"
+fi
+
 ./configure --enable-static --disable-shared \
   --prefix="$PREFIX" \
-  --host="$CROSS_TRIPLE"
-make
+  --host="$CROSS_TRIPLE" $EXTRA_OPTS
+make -j $(nproc)
 make install -j $(nproc)
