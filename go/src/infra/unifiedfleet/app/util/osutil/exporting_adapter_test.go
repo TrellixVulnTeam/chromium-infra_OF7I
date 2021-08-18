@@ -18,12 +18,13 @@ import (
 )
 
 var servoInV2 = chromeosLab.Servo{
-	ServoHostname:  "test_servo",
-	ServoPort:      int32(9999),
-	ServoSerial:    "test_servo_serial",
-	ServoType:      "v3",
-	ServoSetup:     chromeosLab.ServoSetupType_SERVO_SETUP_DUAL_V4,
-	ServoFwChannel: chromeosLab.ServoFwChannel_SERVO_FW_ALPHA,
+	ServoHostname:       "test_servo",
+	ServoPort:           int32(9999),
+	ServoSerial:         "test_servo_serial",
+	ServoType:           "v3",
+	ServoSetup:          chromeosLab.ServoSetupType_SERVO_SETUP_DUAL_V4,
+	ServoFwChannel:      chromeosLab.ServoFwChannel_SERVO_FW_ALPHA,
+	DockerContainerName: "test_servod_docker",
 	ServoTopology: &chromeosLab.ServoTopology{
 		Main: &chromeosLab.ServoTopologyItem{
 			Type:         "servo_v4",
@@ -291,6 +292,10 @@ common {
 	attributes {
 		key: "servo_host"
 		value: "test_servo"
+	}
+	attributes {
+		key: "servod_docker"
+		value: "test_servod_docker"
 	}
 	attributes {
 		key: "servo_port"

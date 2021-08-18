@@ -462,6 +462,7 @@ func adaptV2DutToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.DeviceUnd
 		append("powerunit_outlet", p.GetRpm().GetPowerunitOutlet()).
 		append("serial_number", sn).
 		append("servo_host", p.GetServo().GetServoHostname()).
+		append("servod_docker", p.GetServo().GetDockerContainerName()).
 		append("servo_port", fmt.Sprintf("%v", p.GetServo().GetServoPort())).
 		append("servo_serial", p.GetServo().GetServoSerial()).
 		append("servo_type", p.GetServo().GetServoType()).
