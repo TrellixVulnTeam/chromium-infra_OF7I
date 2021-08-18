@@ -24,7 +24,7 @@ func SSHConfig() *ssh.ClientConfig {
 	return &ssh.ClientConfig{
 		User:            defaultSSHUser,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         60 * time.Second,
+		Timeout:         time.Hour,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(SSHSigner)},
 	}
 }
@@ -45,7 +45,7 @@ func Run(ctx context.Context, pool *sshpool.Pool, addr string, cmd string) (resu
 		result.Stderr = fmt.Sprintf("run SSH %q: cmd is empty", addr)
 		return
 	}
-	sc, err := pool.Get(addr)
+	sc, err := pool.GetContext(ctx, addr)
 	if err != nil {
 		result.Stderr = fmt.Sprintf("run SSH %q: fail to get client from pool; %s", addr, err)
 		return
