@@ -350,7 +350,9 @@ def _ExportFeatureCoverage(postsubmit_report):
 
         feature_commit_lines = _GetFileContentAtCommit(file_path,
                                                        commit['feature_commit'])
-        assert feature_commit_lines
+        assert feature_commit_lines, (
+            "File Content not found for path %s at commit %s (CL: %s)" %
+            (file_path, commit['feature_commit'], commit['cl_number']))
 
         parent_commit_lines = _GetFileContentAtCommit(file_path,
                                                       commit['parent_commit'])
