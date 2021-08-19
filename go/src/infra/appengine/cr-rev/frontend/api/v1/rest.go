@@ -37,11 +37,25 @@ func (s *restAPIServer) handleNumbering(c *router.Context) {
 		http.Error(c.Writer, "Parameter number is not an integer", http.StatusBadRequest)
 		return
 	}
+	host := queryValues.Get("project")
+	repository := queryValues.Get("repo")
+	ref := queryValues.Get("numbering_identifier")
+	// Handle Cr-Commit-Position change in chromium/src
+	// See: https://crbug.com/1241484
+	// This should be removed after 2021-10-01
+	if host == "chromium" && repository == "chromium/src" {
+		// 913133 is the last known commit position with old reference
+		if ref == "refs/heads/master" && n > 913133 {
+			ref = "refs/heads/main"
+		} else if ref == "refs/heads/main" && n <= 913133 {
+			ref = "refs/heads/master"
+		}
+	}
 
 	req := &NumberingRequest{
-		Host:           queryValues.Get("project"),
-		Repository:     queryValues.Get("repo"),
-		PositionRef:    queryValues.Get("numbering_identifier"),
+		Host:           host,
+		Repository:     repository,
+		PositionRef:    ref,
 		PositionNumber: int64(n),
 	}
 	resp, err := s.grpcServer.Numbering(c.Context, req)

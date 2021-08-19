@@ -6,9 +6,10 @@ package repoimport
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
 	common "infra/appengine/cr-rev/common"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockController is a mock of Controller interface.
