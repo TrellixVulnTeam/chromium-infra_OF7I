@@ -34,7 +34,7 @@ func init() {
 	r := router.New()
 
 	baseMW := standard.Base()
-	frontendMW := baseMW.Extend(timeoutMiddleware(time.Minute))
+	frontendMW := baseMW.Extend(timeoutMiddleware(2 * time.Minute))
 	cronMW := baseMW.Extend(timeoutMiddleware(10 * time.Minute))
 	getMW := frontendMW.Extend(templatesMiddleware())
 	authMW := frontendMW.Extend(
