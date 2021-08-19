@@ -381,6 +381,16 @@ def _GetAllowedBuilders():
 
 
 def ExportFeatureCoverage():
+  # NDB caches each result in the in-context cache while accessing.
+  # This is problematic as due to the size of the result set,
+  # cache grows beyond the memory quota. Turn this off to prevent oom errors.
+  #
+  # Read more at:
+  # https://cloud.google.com/appengine/docs/standard/python/ndb/cache#incontext
+  # https://github.com/googlecloudplatform/datastore-ndb-python/issues/156#issuecomment-110869490
+  context = ndb.get_context()
+  context.set_cache_policy(False)
+
   for builder in _GetAllowedBuilders().keys():
     # Fetch latest full codebase coverage report for the builder
     query = PostsubmitReport.query(
