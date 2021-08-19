@@ -124,19 +124,19 @@ func MapToSwarmingDimensions(dims map[string]string) []*swarming.SwarmingRpcsStr
 }
 
 // ReserveDUT schedule task to change DUT state to reserved.
-func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host, user string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "Reserve", "set_reserved", DefaultAdminTaskPriority))
+func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host, user string, expirationSec int) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "Reserve", "set_reserved", DefaultAdminTaskPriority, expirationSec))
 }
 
 // SetManualRepair schedule task to change DUT state to manual_repair.
-func (tc *TaskCreator) SetManualRepair(ctx context.Context, serviceAccount, host, user string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "ManualRepair", "set_manual_repair", DefaultAdminTaskPriority))
+func (tc *TaskCreator) SetManualRepair(ctx context.Context, serviceAccount, host, user string, expirationSec int) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.setDUTStateRequest(serviceAccount, host, user, "ManualRepair", "set_manual_repair", DefaultAdminTaskPriority, expirationSec))
 }
 
 // setDUTStateRequest creates task request to change DUT state.
-func (tc *TaskCreator) setDUTStateRequest(serviceAccount, host, user, taskName, changeStateCommand string, priority int64) *swarming.SwarmingRpcsNewTaskRequest {
+func (tc *TaskCreator) setDUTStateRequest(serviceAccount, host, user, taskName, changeStateCommand string, priority int64, expirationSec int) *swarming.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming.SwarmingRpcsTaskSlice{{
-		ExpirationSecs: 2 * 60 * 60,
+		ExpirationSecs: int64(expirationSec),
 		Properties: &swarming.SwarmingRpcsTaskProperties{
 			Command: changeDUTStateCommand(changeStateCommand),
 			Dimensions: []*swarming.SwarmingRpcsStringPair{

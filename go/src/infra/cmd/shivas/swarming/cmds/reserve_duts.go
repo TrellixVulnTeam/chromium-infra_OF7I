@@ -23,7 +23,8 @@ type reserveDuts struct {
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 
-	manualRepair bool
+	manualRepair   bool
+	expirationMins int
 }
 
 // ReserveDutsCmd contains reserve-dut command specification
@@ -39,6 +40,7 @@ var ReserveDutsCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.manualRepair, "manual-repair", false, "Reserve the dut for manual repair.")
+		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 120, "The expiration minutes of the repair request.")
 		return c
 	},
 }
@@ -73,9 +75,9 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 		// TODO(crbug/1128496): update state directly in the UFS without creating the swarming task
 		var task *swarming.TaskInfo
 		if c.manualRepair {
-			task, err = creator.SetManualRepair(ctx, e.SwarmingServiceAccount, host, user.Username)
+			task, err = creator.SetManualRepair(ctx, e.SwarmingServiceAccount, host, user.Username, c.expirationMins*60)
 		} else {
-			task, err = creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host, user.Username)
+			task, err = creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host, user.Username, c.expirationMins*60)
 		}
 		if err != nil {
 			errorMap[host] = err

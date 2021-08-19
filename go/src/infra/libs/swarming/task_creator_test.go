@@ -44,7 +44,7 @@ func TestSetDUTStateRequest(t *testing.T) {
 			session:         "session0",
 		}
 		testPriority := int64(13)
-		r := tc.setDUTStateRequest("fake_service_account", "fake_dut_host", "fake_user", "My Task", "set_my_command", testPriority)
+		r := tc.setDUTStateRequest("fake_service_account", "fake_dut_host", "fake_user", "My Task", "set_my_command", testPriority, 87)
 		So(r.Name, ShouldEqual, "My Task by fake_user")
 		So(r.TaskSlices, ShouldHaveLength, 1)
 		command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
@@ -63,6 +63,7 @@ func TestSetDUTStateRequest(t *testing.T) {
 		So("dut-name:fake_dut_host", ShouldBeIn, r.Tags)
 		So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
 		So(r.ServiceAccount, ShouldEqual, "fake_service_account")
+		So(r.TaskSlices[0].ExpirationSecs, ShouldEqual, int64(87))
 		So(r.Priority, ShouldEqual, testPriority)
 	})
 }
