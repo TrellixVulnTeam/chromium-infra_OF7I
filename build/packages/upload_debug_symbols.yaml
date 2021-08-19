@@ -1,0 +1,10 @@
+package: chromiumos/infra/upload_debug_symbols/${platform}
+description: Builder for recipes debug symbols builder
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/upload_debug_symbols
+root: ../../go/bin
+data:
+  - file: upload_debug_symbols${exe_suffix}
+  - version_file: .versions/upload_debug_symbols${exe_suffix}.cipd_version
