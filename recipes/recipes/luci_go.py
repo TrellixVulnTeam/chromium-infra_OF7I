@@ -54,8 +54,9 @@ def apply_golangci_lint(api, co):
   if not go_files:
     return  # pragma: no cover
 
+  # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/golangci-lint
   linter = api.cipd.ensure_tool('infra/3pp/tools/golangci-lint/${platform}',
-                                'version:2@1.40.0')
+                                'version:2@1.42.0')
   result = api.step(
       'run golangci-lint',
       [
