@@ -311,7 +311,11 @@ func (e *generateBatchSummary) generateBenchmarkCSVs(resultsDir string, p preset
 			for _, m := range *metrics {
 				report, found := result.Report.Reports[metricNameKey(m.Name)]
 				if found {
-					line = append(line, fmt.Sprintf("%.6f", report.PValue))
+					if report.PValue != nil {
+						line = append(line, fmt.Sprintf("%.6f", *report.PValue))
+					} else {
+						line = append(line, nan)
+					}
 					line = append(line, fmt.Sprintf("%.5f", report.Measurements[baseLabel].Median))
 					line = append(line, fmt.Sprintf("%.5f", report.Measurements[expLabel].Median))
 				} else {

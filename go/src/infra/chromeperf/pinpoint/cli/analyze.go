@@ -21,7 +21,6 @@ import (
 	"infra/chromeperf/pinpoint"
 	"infra/chromeperf/pinpoint/cli/render"
 	"infra/chromeperf/pinpoint/proto"
-	"io"
 	"math"
 	"os"
 	"path"
@@ -88,8 +87,9 @@ type statTestSummary struct {
 
 type measurementReport struct {
 	StatTestSummary map[expNameKey]statTestSummary    `yaml:"stat-test-summary"` // map[base or exp]
-	PValue          float64                           `yaml:"p-value"`
+	PValue          *float64                          `yaml:"p-value"`
 	Measurements    map[expNameKey]measurementSummary `yaml:"measurements"` // map[base or exp]
+	ErrorMessage    string                            `yaml:"error-message" json:",omitempty"`
 }
 
 type experimentReport struct {
@@ -213,7 +213,6 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 	for m, v := range data {
 		mr := measurementReport{
 			StatTestSummary: make(map[expNameKey]statTestSummary),
-			PValue:          0,
 			Measurements:    make(map[expNameKey]measurementSummary),
 		}
 		as := []float64{}
@@ -255,9 +254,10 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 		// one-tail or two-tail test.
 		mwur, err := stats.MannWhitneyUTest(as, bs, stats.LocationDiffers)
 		if err != nil {
-			mr.PValue = math.NaN()
+			mr.ErrorMessage = err.Error()
 		} else {
-			mr.PValue = mwur.P
+			p := mwur.P
+			mr.PValue = &p
 			pvs = append(pvs, mwur.P)
 		}
 		r.Reports[m] = mr
@@ -276,7 +276,6 @@ func analyzeExperiment(manifest *telemetryExperimentArtifactsManifest, rootDir s
 
 type analyzeExperimentMixin struct {
 	analyzeExperiment, check bool
-	reportFormat             string
 }
 
 func (aem *analyzeExperimentMixin) RegisterFlags(flags *flag.FlagSet, userCfg userConfig) {
@@ -291,42 +290,38 @@ func (aem *analyzeExperimentMixin) RegisterFlags(flags *flag.FlagSet, userCfg us
 		significant difference). Override the default from the user
 		configuration file.
 	`))
+
 }
 
-func (aem *analyzeExperimentMixin) doAnalyzeExperiment(ctx context.Context, w io.Writer, workDir string, job *proto.Job) error {
+func (aem *analyzeExperimentMixin) doAnalyzeExperiment(ctx context.Context, workDir string, job *proto.Job) (*experimentReport, error) {
 	if !aem.analyzeExperiment || job.GetName() == "" {
-		return nil
+		return nil, nil
 	}
 	switch job.GetJobSpec().GetJobKind().(type) {
 	case *proto.JobSpec_Bisection:
-		return errors.Reason("not implemented").Err()
+		return nil, errors.Reason("not implemented").Err()
 	case *proto.JobSpec_Experiment:
-		return aem.analyzeTelemetryExperiment(ctx, w, workDir, job)
+		return aem.analyzeTelemetryExperiment(ctx, workDir, job)
 	default:
-		return errors.Reason("unsupported job kind").Err()
+		return nil, errors.Reason("unsupported job kind").Err()
 	}
 }
 
-func (aem *analyzeExperimentMixin) analyzeTelemetryExperiment(ctx context.Context, w io.Writer, workDir string, job *proto.Job) error {
+func (aem *analyzeExperimentMixin) analyzeTelemetryExperiment(ctx context.Context, workDir string, job *proto.Job) (*experimentReport, error) {
 	id, err := pinpoint.ExtractJobID(job.Name)
 	if err != nil {
-		return errors.Annotate(err, "invalid job id").Err()
+		return nil, errors.Annotate(err, "invalid job id").Err()
 	}
 	jp := filepath.Join(workDir, id)
 	jm, err := loadManifestFromPath(filepath.Join(jp, "manifest.yaml"))
 	if err != nil {
-		return errors.Annotate(err, "couldn't load manifest").Err()
+		return nil, errors.Annotate(err, "couldn't load manifest").Err()
 	}
 	r, err := analyzeExperiment(jm, jp)
 	if err != nil {
-		return errors.Annotate(err, "failed analysis").Err()
+		return nil, errors.Annotate(err, "failed analysis").Err()
 	}
-	d, err := yaml.Marshal(r)
-	if err != nil {
-		return errors.Annotate(err, "failed YAML export").Err()
-	}
-	w.Write(d)
-	return nil
+	return r, nil
 }
 
 type analyzeRun struct {

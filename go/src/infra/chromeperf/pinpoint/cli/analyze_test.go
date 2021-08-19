@@ -16,9 +16,7 @@ package cli
 import (
 	"context"
 	"infra/chromeperf/pinpoint/proto"
-	"math"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -44,7 +42,7 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 			Convey("And we see that some p-values are less than 0.05", func() {
 				less := 0
 				for _, s := range r.Reports {
-					if s.PValue < 0.05 {
+					if s.PValue != nil && *s.PValue < 0.05 {
 						less += 1
 					}
 				}
@@ -54,7 +52,7 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 				nan := 0
 				withStats := 0
 				for _, s := range r.Reports {
-					if math.IsNaN(s.PValue) {
+					if s.PValue == nil {
 						nan += 1
 						continue
 					}
@@ -85,12 +83,11 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 			}
 			wd, err := filepath.Abs("testdata")
 			So(err, ShouldBeNil)
-			var sw strings.Builder
-			err = m.doAnalyzeExperiment(ctx, &sw, wd, j)
+			r, err := m.doAnalyzeExperiment(ctx, wd, j)
 			So(err, ShouldBeNil)
-			Convey("Then we find the overall p-value", func() {
-				So(sw.String(), ShouldContainSubstring, "overall-p-value")
-			})
+			So(r, ShouldNotBeNil)
+			So(r.OverallPValue, ShouldNotEqual, 0)
+			So(r.Reports, ShouldNotBeNil)
 		})
 	})
 

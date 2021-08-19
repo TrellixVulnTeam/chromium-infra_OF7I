@@ -34,6 +34,7 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	"google.golang.org/protobuf/encoding/prototext"
+	"gopkg.in/yaml.v2"
 )
 
 const MaxConcurrency = 5
@@ -61,9 +62,19 @@ func waitAndDownloadJob(br *baseCommandRun,
 	if err := dam.doDownloadArtifacts(ctx, os.Stdout, httpClient, br.workDir, j); err != nil {
 		return err
 	}
-	if err := aem.doAnalyzeExperiment(ctx, os.Stdout, br.workDir, j); err != nil {
+	r, err := aem.doAnalyzeExperiment(ctx, br.workDir, j)
+	if err != nil {
 		return err
 	}
+	if br.json {
+		return br.writeJSON(o, r)
+	}
+	d, err := yaml.Marshal(r)
+	if err != nil {
+		return errors.Annotate(err, "failed YAML export").Err()
+	}
+	o.Write(d)
+
 	return nil
 }
 
