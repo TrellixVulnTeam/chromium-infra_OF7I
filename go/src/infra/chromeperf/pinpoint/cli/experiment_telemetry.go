@@ -30,7 +30,6 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/sync/parallel"
 )
 
@@ -249,7 +248,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	if err != nil {
 		return j, err
 	}
-	logging.Debugf(ctx, "Pinpoint job scheduled: %s\n", jobURL)
+	fmt.Printf("Pinpoint job scheduled: %s\n", jobURL)
 	return j, nil
 }
 
