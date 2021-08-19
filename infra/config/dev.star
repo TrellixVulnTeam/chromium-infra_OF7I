@@ -13,6 +13,10 @@ load("//lib/infra.star", "infra")
 
 lucicfg.check_version("1.27.0", "Please update depot_tools")
 
+# Global recipe defaults
+luci.recipe.defaults.cipd_version.set("refs/heads/main")
+luci.recipe.defaults.use_bbagent.set(True)
+
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
 
@@ -88,7 +92,6 @@ luci.logdog(
 luci.bucket(name = "ci")
 
 luci.builder.defaults.experiments.set({
-    "luci.buildbucket.use_bbagent": 50,
     "luci.use_realms": 100,
 })
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
@@ -173,7 +176,6 @@ adhoc_builder(
     executable = luci.recipe(
         name = "futures:examples/background_helper",
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
-        use_bbagent = True,
     ),
     schedule = "with 10m interval",
 )
@@ -183,7 +185,6 @@ adhoc_builder(
     executable = luci.recipe(
         name = "futures:examples/background_helper",
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
-        use_bbagent = True,
     ),
     schedule = "with 10m interval",
 )
