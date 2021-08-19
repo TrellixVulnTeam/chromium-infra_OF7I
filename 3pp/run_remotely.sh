@@ -20,7 +20,7 @@ By default this will:
     definitions. This means you need to `git cl upload` any changes to the 3pp
     directory in order to have this script pick them up.
   * Synthesize and launch a swarming task with led in the public
-    `luci.flex.try` swarming pool. This swarming task will isolate the
+    `luci.flex-internal.try` swarming pool. This swarming task will isolate the
     recipes.
 
 Options:
@@ -69,6 +69,7 @@ Notes:
     http://go/luci-cipd#deletepackage
     For non-googlers or you don't have permission to delete, please file crbug
     with component Infra>Platform>Admin.
+  * You will need to be a member of flex-internal-try-led-users.
 EOF
 
       exit 0
