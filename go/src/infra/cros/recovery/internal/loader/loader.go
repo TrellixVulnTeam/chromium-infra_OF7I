@@ -37,7 +37,7 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
-	for _, p := range config.GetPlans() {
+	for pName, p := range config.GetPlans() {
 		createMissingActions(p, p.GetCriticalActions())
 		for _, a := range p.GetActions() {
 			createMissingActions(p, a.GetConditions())
@@ -47,9 +47,55 @@ func LoadConfiguration(ctx context.Context, r io.Reader) (*planpb.Configuration,
 		if err := setAndVerifyExecs(p); err != nil {
 			return nil, errors.Annotate(err, "load configuration").Err()
 		}
+		// Check for cycle in dependency.
+		if err := verifyPlanAcyclic(p); err != nil {
+			return nil, errors.Annotate(err, "load configuration: of %q", pName).Err()
+		}
 	}
 	log.Debug(ctx, "Load configuration: finished successfully.")
 	return &config, nil
+}
+
+// Check the plans critical action for present of connection to avoid infinity loop running of recovery engine.
+func verifyPlanAcyclic(plan *planpb.Plan) error {
+	visited := map[string]bool{}
+	var verifyAction func(string) error
+	// ReferenceName stands for each action's type of dependency list.
+	// ReferenceName can be either one of the three: condition, dependency, recovery.
+	verifyDependActions := func(referenceName string, currentSetOfActions []string) error {
+		for _, actionName := range currentSetOfActions {
+			if _, ok := plan.Actions[actionName]; ok {
+				if err := verifyAction(actionName); err != nil {
+					return errors.Annotate(err, "check %q from %s", actionName, referenceName).Err()
+				}
+			}
+		}
+		return nil
+	}
+	// Verify the current Action in the current layer of the DFS.
+	verifyAction = func(actionName string) error {
+		if visited[actionName] {
+			return errors.Reason("found loop").Err()
+		}
+		visited[actionName] = true
+		if err := verifyDependActions("condition", plan.Actions[actionName].GetConditions()); err != nil {
+			return err
+		}
+		if err := verifyDependActions("dependency", plan.Actions[actionName].GetDependencies()); err != nil {
+			return err
+		}
+		if err := verifyDependActions("recovery", plan.Actions[actionName].GetRecoveryActions()); err != nil {
+			return err
+		}
+		visited[actionName] = false
+		return nil
+	}
+	for _, eachActionName := range plan.GetCriticalActions() {
+		if _, ok := visited[eachActionName]; !ok {
+			return verifyAction(eachActionName)
+		}
+	}
+	return nil
 }
 
 // createMissingActions creates missing actions to the plan.

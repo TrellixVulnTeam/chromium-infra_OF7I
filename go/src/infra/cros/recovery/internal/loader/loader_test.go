@@ -162,3 +162,144 @@ func TestLoadConfiguration(t *testing.T) {
 		})
 	}
 }
+
+var cycleTestCases = []struct {
+	testName     string
+	in           *planpb.Plan
+	errorActions []string
+}{
+	{
+		"A_dependency -> A",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"A"}},
+			},
+		},
+		[]string{"A"},
+	},
+	{
+		"A_dependency -> B_condition -> A",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Conditions: []string{"A"}},
+			},
+		},
+		[]string{"A", "B"},
+	},
+	{
+		"A_dependency -> B_condition -> C_recovery -> A",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Conditions: []string{"C"}},
+				"C": {RecoveryActions: []string{"A"}},
+			},
+		},
+		[]string{"A", "B", "C"},
+	},
+	{
+		"A_dependency -> B_dependency -> C_dependency -> A",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Dependencies: []string{"C"}},
+				"C": {Dependencies: []string{"A"}},
+			},
+		},
+		[]string{"A", "B", "C"},
+	},
+	{
+		"C_dependency -> B_condition -> A_recovery -> C",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {RecoveryActions: []string{"C"}},
+				"B": {Conditions: []string{"A"}},
+				"C": {Dependencies: []string{"B"}},
+			},
+		},
+		[]string{"A", "B", "C"},
+	},
+	{
+		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Conditions: []string{"C"}},
+				"C": {RecoveryActions: []string{"D"}},
+				"D": {RecoveryActions: []string{"E"}},
+				"E": {Dependencies: []string{"F"}},
+				"F": {Conditions: []string{"B"}},
+			},
+		},
+		[]string{"B", "C", "D", "E", "F"},
+	},
+	{
+		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F_condition -> B",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Conditions: []string{"C"}},
+				"C": {RecoveryActions: []string{"D"}},
+				"D": {RecoveryActions: []string{"E"}},
+				"E": {Dependencies: []string{"F"}},
+				"F": {Conditions: []string{"B"}},
+			},
+		},
+		[]string{},
+	},
+	{
+		"A_dependency -> B_condition -> C_recovery -> D_recovery -> E_dependency -> F; A_dependency -> E_dependency -> F; C_condition -> F",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B", "E"}},
+				"B": {Conditions: []string{"C"}},
+				"C": {RecoveryActions: []string{"D", "F"}},
+				"D": {RecoveryActions: []string{"E"}},
+				"E": {Dependencies: []string{"F"}},
+				"F": {},
+			},
+		},
+		[]string{},
+	},
+	// Test Case: Cycle in actions, but not reachable by critical actions.
+	{
+		"A_dependency -> B_condition -> C_recovery; D_recovery -> E_dependency -> F_recovery -> D",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"A": {Dependencies: []string{"B"}},
+				"B": {Conditions: []string{"C"}},
+				"C": {},
+				"D": {RecoveryActions: []string{"E"}},
+				"E": {Dependencies: []string{"F"}},
+				"F": {RecoveryActions: []string{"D"}},
+			},
+		},
+		[]string{},
+	},
+}
+
+func TestVerifyPlanAcyclic(t *testing.T) {
+	for _, tt := range cycleTestCases {
+		tt := tt
+		t.Run(tt.testName, func(t *testing.T) {
+			t.Parallel()
+			// Assume "A" as the critical action.
+			tt.in.CriticalActions = []string{"A"}
+			if err := verifyPlanAcyclic(tt.in); err != nil {
+				errMessage := err.Error()
+				raiseError := false
+				for _, eachAction := range tt.errorActions {
+					if !strings.Contains(errMessage, eachAction) {
+						raiseError = true
+					}
+				}
+				if raiseError {
+					t.Errorf("got %q, want %q", errMessage, tt.errorActions)
+				}
+			} else if len(tt.errorActions) != 0 {
+				t.Errorf("got nil, want %q", tt.errorActions)
+			}
+		})
+	}
+}
