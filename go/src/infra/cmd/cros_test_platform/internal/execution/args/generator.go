@@ -423,10 +423,11 @@ func removeReservedTags(tags []string) []string {
 // builds describes the build names that were requested by a test_platform
 // invocation.
 type builds struct {
-	ChromeOS      string
-	FirmwareRW    string
-	FirmwareRO    string
-	LacrosGCSPath string
+	ChromeOS       string
+	ChromeOSBucket string
+	FirmwareRW     string
+	FirmwareRO     string
+	LacrosGCSPath  string
 }
 
 // extractBuilds extracts builds that were requested by the test_platform invocation.
@@ -439,6 +440,11 @@ func extractBuilds(deps []*test_platform.Request_Params_SoftwareDependency) (*bu
 				return nil, errors.Reason("duplicate ChromeOS builds (%s, %s)", already, d.ChromeosBuild).Err()
 			}
 			b.ChromeOS = d.ChromeosBuild
+		case *test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket:
+			if already := b.ChromeOS; already != "" {
+				return nil, errors.Reason("duplicate ChromeOS buckets (%s, %s)", already, d.ChromeosBuildGcsBucket).Err()
+			}
+			b.ChromeOSBucket = d.ChromeosBuildGcsBucket
 		case *test_platform.Request_Params_SoftwareDependency_RoFirmwareBuild:
 			if already := b.FirmwareRO; already != "" {
 				return nil, errors.Reason("duplicate RO Firmware builds (%s, %s)", already, d.RoFirmwareBuild).Err()
