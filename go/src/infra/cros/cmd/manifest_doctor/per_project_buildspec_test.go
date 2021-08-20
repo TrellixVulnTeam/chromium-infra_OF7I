@@ -75,6 +75,7 @@ type testConfig struct {
 	watchPaths       map[string]map[string][]string
 	allProjects      []string
 	expectedSetTTL   map[string]time.Duration
+	dryRun           bool
 }
 
 func namesToFiles(files []string) []*gitpb.File {
@@ -242,6 +243,9 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 			expectedLists[fmt.Sprintf("chromeos-%s-%s", prog, proj)] = expectedBucketLists
 		}
 	}
+	if tc.dryRun {
+		expectedWrites = make(map[string][]byte)
+	}
 
 	f := &gs.FakeClient{
 		T:              t,
@@ -278,6 +282,27 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
+func TestCreateProjectBuildspecDryRun(t *testing.T) {
+	t.Parallel()
+	tc := testConfig{
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
+		buildspecs: map[string]bool{
+			"full/buildspecs/93/13811.0.0.xml": true,
+		},
+		branches: []string{"refs/heads/release-R93-13816.B"},
+		dryRun:   true,
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		buildspec: "full/buildspecs/93/13811.0.0.xml",
+		projects:  []string{"galaxy/milkyway"},
+		push:      false,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
 
 // Specifically test 96 to check that the tool properly accounts for the
 // missing 95.
@@ -297,6 +322,7 @@ func TestCreateProjectBuildspecToT(t *testing.T) {
 	b := projectBuildspec{
 		buildspec: "full/buildspecs/96/13811.0.0-rc2.xml",
 		projects:  []string{"galaxy/milkyway"},
+		push:      true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -319,6 +345,7 @@ func TestCreateProjectBuildspecForce(t *testing.T) {
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
 		projects:  []string{"galaxy/milkyway"},
 		force:     true,
+		push:      true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -341,6 +368,7 @@ func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
 		buildspec: "full/buildspecs/93/13811.0.0.xml",
 		projects:  []string{"galaxy/milkyway"},
 		force:     false,
+		push:      true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -383,7 +411,7 @@ func TestCreateProjectBuildspecMultiple(t *testing.T) {
 		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
 		minMilestone: 94,
 		projects:     []string{"galaxy/milkyway"},
-		force:        true,
+		push:         true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -431,7 +459,7 @@ func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
 		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
 		minMilestone: 94,
 		projects:     []string{"galaxy/*"},
-		force:        true,
+		push:         true,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }

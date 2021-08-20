@@ -51,6 +51,7 @@ type projectBuildspec struct {
 	projects     []string
 	force        bool
 	ttl          int
+	push         bool
 }
 
 func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
@@ -71,6 +72,8 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 					"them, e.g. 95/ and 96/.")
 			b.Flags.IntVar(&b.minMilestone, "min_milestone", -1,
 				"Minimum milestone of branches to consider within watch paths.")
+			b.Flags.BoolVar(&b.push, "push", false,
+				"Whether or not to push files to GS.")
 			b.Flags.BoolVar(&b.force, "force", false,
 				"Existing buildspecs will not be regenerated unless --force is set")
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
@@ -263,7 +266,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 		if err != nil {
 			return errors.Annotate(err, "invalid project %s", proj).Err()
 		}
-		if err := CreateProjectBuildspecs(program, project, buildspecs, b.force, b.ttl, gsClient, gerritClient); err != nil {
+		if err := CreateProjectBuildspecs(program, project, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -275,7 +278,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 
 // CreateProjectBuildspec creates a project/program-specific buildspec as
 // outlined in go/per-project-buildspecs.
-func CreateProjectBuildspecs(program, project string, buildspecs []string, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
+func CreateProjectBuildspecs(program, project string, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	logPrefix := fmt.Sprintf("%s/%s", program, project)
 
 	// Aggregate buildspecs by milestone.
@@ -396,15 +399,19 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, force
 				}
 
 				// Upload project buildspec to appropriate GS bucket.
-				if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
-					return err
-				}
-				LogOut("%s: wrote buildspec to %s\n", logPrefix, string(uploadPath))
-				// Set TTL if appropriate.
-				if ttl > 0 {
-					if err := gsClient.SetTTL(ctx, uploadPath, time.Duration(ttl*24*int(time.Hour))); err != nil {
-						return errors.Annotate(err, "error setting ttl").Err()
+				if push {
+					if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
+						return err
 					}
+					LogOut("%s: wrote buildspec to %s\n", logPrefix, string(uploadPath))
+					// Set TTL if appropriate.
+					if ttl > 0 {
+						if err := gsClient.SetTTL(ctx, uploadPath, time.Duration(ttl*24*int(time.Hour))); err != nil {
+							return errors.Annotate(err, "error setting ttl").Err()
+						}
+					}
+				} else {
+					LogOut("%s: dry run, would have written buildspec to %s\n", logPrefix, string(uploadPath))
 				}
 			}
 		}
