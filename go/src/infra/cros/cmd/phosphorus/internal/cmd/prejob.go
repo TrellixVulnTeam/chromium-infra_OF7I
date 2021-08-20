@@ -482,6 +482,9 @@ func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_Softwar
 			bucket := ChromeOSImageBucketDefault
 			if b_gcs, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket); ok {
 				bucket = b_gcs.ChromeosBuildGcsBucket
+				if !strings.HasPrefix(bucket, "gs://") {
+					bucket = "gs://" + bucket
+				}
 			}
 			return &ChromeOSBuildLocation{
 				ChromeOSBuild:  b.ChromeosBuild,
