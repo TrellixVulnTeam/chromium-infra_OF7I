@@ -2,10 +2,10 @@ import marked from 'marked';
 import DOMPurify from 'dompurify';
 
 /** @type {Set} Projects that default Markdown rendering to true. */
-export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail']);
+export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail', 'fuchsia']);
 
 /** @type {Set} Projects that allow users to opt into Markdown rendering. */
-export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS, 'fuchsia']);
+export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS]);
 
 /** @type {Set} Authors whose comments will not be rendered as Markdown. */
 const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
