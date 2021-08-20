@@ -126,3 +126,111 @@ func TestGetConfigBundle(t *testing.T) {
 		}
 	})
 }
+
+func mockFlatConfig(id string, programId string, name string) *payload.FlatConfig {
+	return &payload.FlatConfig{
+		HwDesign: &api.Design{
+			Id: &api.DesignId{
+				Value: id,
+			},
+			ProgramId: &api.ProgramId{
+				Value: programId,
+			},
+			Name: name,
+		},
+	}
+}
+
+func TestUpdateFlatConfig(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	t.Run("update non-existent FlatConfig", func(t *testing.T) {
+		want := mockFlatConfig("design1", "program1", "name1")
+		got, err := UpdateFlatConfig(ctx, want)
+		if err != nil {
+			t.Fatalf("UpdateFlatConfig failed: %s", err)
+		}
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Errorf("UpdateFlatConfig returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("update existent FlatConfig", func(t *testing.T) {
+		cb2 := mockFlatConfig("design2", "program2", "name2")
+		cb2update := mockFlatConfig("design2", "program2", "name2update")
+
+		// Insert cb2 into datastore
+		_, _ = UpdateFlatConfig(ctx, cb2)
+
+		// Update cb2
+		got, err := UpdateFlatConfig(ctx, cb2update)
+		if err != nil {
+			t.Fatalf("UpdateFlatConfig failed: %s", err)
+		}
+		if diff := cmp.Diff(cb2update, got); diff != "" {
+			t.Errorf("UpdateFlatConfig returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("update FlatConfig with invalid IDs", func(t *testing.T) {
+		cb3 := mockFlatConfig("", "", "")
+		got, err := UpdateFlatConfig(ctx, cb3)
+		if err == nil {
+			t.Errorf("UpdateFlatConfig succeeded with empty IDs")
+		}
+		if c := status.Code(err); c != codes.Internal {
+			t.Errorf("Unexpected error when calling UpdateFlatConfig: %s", err)
+		}
+
+		var cbNil *payload.FlatConfig = nil
+		if diff := cmp.Diff(cbNil, got); diff != "" {
+			t.Errorf("UpdateFlatConfig returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+}
+
+func TestGetFlatConfig(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	t.Run("get FlatConfig by existing ID", func(t *testing.T) {
+		want := mockFlatConfig("design1", "program1", "name1")
+		_, err := UpdateFlatConfig(ctx, want)
+		if err != nil {
+			t.Fatalf("UpdateFlatConfig failed: %s", err)
+		}
+
+		got, err := GetFlatConfig(ctx, "program1-design1")
+		if err != nil {
+			t.Fatalf("GetFlatConfig failed: %s", err)
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("GetFlatConfig returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("get FlatConfig by non-existent ID", func(t *testing.T) {
+		id := "program2-design2"
+		_, err := GetFlatConfig(ctx, id)
+		if err == nil {
+			t.Errorf("GetFlatConfig succeeded with non-existent ID: %s", id)
+		}
+		if c := status.Code(err); c != codes.NotFound {
+			t.Errorf("Unexpected error when calling GetFlatConfig: %s", err)
+		}
+	})
+
+	t.Run("get FlatConfig by invalid ID", func(t *testing.T) {
+		id := "program3-design3-extraid3"
+		_, err := GetFlatConfig(ctx, id)
+		if err == nil {
+			t.Errorf("GetFlatConfig succeeded with invalid ID: %s", id)
+		}
+		if c := status.Code(err); c != codes.InvalidArgument {
+			t.Errorf("Unexpected error when calling GetFlatConfig: %s", err)
+		}
+	})
+}
