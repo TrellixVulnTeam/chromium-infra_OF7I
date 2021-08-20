@@ -73,7 +73,12 @@ def _GetFeatureCommits(hashtag):
     commit = change['current_revision']
     parent_commit = change['revisions'][commit]['commit']['parents'][0][
         'commit']
-    files = change['revisions'][commit]['files'].keys()
+    files = []
+    for file_name, properties in change['revisions'][commit]['files'].items():
+      if properties.get('status', '') == 'D':
+        # file was deleted at the CL
+        continue
+      files.append(file_name)
     cl_number = change['_number']
     commits.append({
         'feature_commit': commit,
