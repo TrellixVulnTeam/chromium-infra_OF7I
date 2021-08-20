@@ -441,7 +441,7 @@ func extractBuilds(deps []*test_platform.Request_Params_SoftwareDependency) (*bu
 			}
 			b.ChromeOS = d.ChromeosBuild
 		case *test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket:
-			if already := b.ChromeOS; already != "" {
+			if already := b.ChromeOSBucket; already != "" {
 				return nil, errors.Reason("duplicate ChromeOS buckets (%s, %s)", already, d.ChromeosBuildGcsBucket).Err()
 			}
 			b.ChromeOSBucket = d.ChromeosBuildGcsBucket
