@@ -395,6 +395,7 @@ def ExportFeatureCoverage():
   # https://github.com/googlecloudplatform/datastore-ndb-python/issues/156#issuecomment-110869490
   context = ndb.get_context()
   context.set_cache_policy(False)
+  context.set_memcache_policy(False)
 
   for builder in _GetAllowedBuilders().keys():
     # Fetch latest full codebase coverage report for the builder
