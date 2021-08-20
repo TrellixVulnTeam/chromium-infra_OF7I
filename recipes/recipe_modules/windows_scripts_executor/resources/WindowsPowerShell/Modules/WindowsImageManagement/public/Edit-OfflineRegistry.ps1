@@ -25,10 +25,10 @@ function Edit-OfflineRegistry {
       modify
 
     .PARAMETER PropertyValue
-      The Value that you want to set the regitry property too
+      The Value that you want to set the registry property to
 
     .PARAMETER PropertyType
-      The type of value you are setting the registry key property too
+      The type of value you are setting the registry key property to
 
     .PARAMETER RetryHiveOps
       The number of times to individually retry loading and unloading the
@@ -57,7 +57,7 @@ function Edit-OfflineRegistry {
     [Parameter(Mandatory)]
     [String]$OfflineImagePath,
 
-    [String]$OfflineRegHiveFile = 'Windows\System32\Config\software',
+    [String]$OfflineRegHiveFile = 'Windows\System32\Config\SOFTWARE',
 
     [Parameter(Mandatory)]
     [ValidateScript({Test-Path -Path $_ -IsValid})]
@@ -77,7 +77,7 @@ function Edit-OfflineRegistry {
     [Switch]$SkipUnload
   )
 
-  $offline_hklm_software_file = Join-Path $OfflineImagePath $OfflineHklmSoftwareFile
+  $offline_hklm_software_file = Join-Path $OfflineImagePath $OfflineRegHiveFile
   $temp_hive = "hklm:\$(New-GUID)"
   $formatted_temp_hive = $temp_hive.replace(':','')
 

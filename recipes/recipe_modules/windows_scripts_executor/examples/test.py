@@ -151,9 +151,9 @@ def GenTests(api):
           'python', '-u',
           'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\psinvoke.py',
           '--command', 'Dismount-WindowsImage', '--logs',
-          '\[CLEANUP\]\\\\Mount-WindowsImage', '--',
+          '\[CLEANUP\]\\\\Dismount-WindowsImage', '--',
           '-Path "\[CACHE\]\\\\WinPEImage\\\\mount"',
-          '-LogPath "\[CLEANUP\]\\\\Mount-WindowsImage\\\\unmount.log"',
+          '-LogPath "\[CLEANUP\]\\\\Dismount-WindowsImage\\\\unmount.log"',
           '-LogLevel WarningsInfo', '-Discard'
       ])
 
@@ -164,9 +164,9 @@ def GenTests(api):
           'python', '-u',
           'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\\psinvoke.py',
           '--command', 'Dismount-WindowsImage', '--logs',
-          '\[CLEANUP\]\\\\Mount-WindowsImage', '--',
+          '\[CLEANUP\]\\\\Dismount-WindowsImage', '--',
           '-Path "\[CACHE\]\\\\WinPEImage\\\\mount"',
-          '-LogPath "\[CLEANUP\]\\\\Mount-WindowsImage\\\\unmount.log"',
+          '-LogPath "\[CLEANUP\]\\\\Dismount-WindowsImage\\\\unmount.log"',
           '-LogLevel WarningsInfo', '-Save'
       ])
 

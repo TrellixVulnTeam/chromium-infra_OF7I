@@ -24,7 +24,7 @@
     modify
 
   .PARAMETER PropertyValue
-    The Value that you want to set the regitry property too
+    The Value that you want to set the registry property too
 
   .PARAMETER PropertyType
     The type of value you are setting the registry key property too
@@ -77,12 +77,12 @@ $required_params = @(
   'RegistryKeyPath',
   'PropertyName',
   'PropertyValue',
-  'PropertyType',
+  'PropertyType'
 )
 
 try {
   #region Check for required params
-  for ($p in $required_params) {
+  foreach ($p in $required_params) {
     if ($p -notin $PSBoundParameters.keys) {
       throw "$p is a required Parameter"
     }
@@ -100,7 +100,7 @@ try {
     'PropertyValue' = $PropertyValue
     'PropertyType' = $PropertyType
     'RetryHiveOps' = $RetryHiveOps
-    'SkipUnload' = $RetryHiveOps
+    'SkipUnload' = $SkipUnload
     'InformationAction' = $InformationPreference
     'Verbose' = $VerbosePreference
     'ErrorAction' = 'Stop'

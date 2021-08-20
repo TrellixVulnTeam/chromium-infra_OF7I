@@ -6,37 +6,15 @@ from recipe_engine import recipe_api
 from recipe_engine.recipe_api import Property
 from . import cipd_manager
 from . import git_manager
+# Windows command helpers
+from . import mount_wim
+from . import unmount_wim
+from . import regedit
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
 COPYPE = 'Copy-PE.ps1'
 ADDFILE = 'Copy-Item'
-
-# Format strings for use in mount cmdline options
-MOUNT_CMD = 'Mount-WindowsImage'
-MOUNT_IMG_FILE = '-ImagePath "{}"'
-MOUNT_INDEX = '-Index {}'
-MOUNT_DIR = '-Path "{}"'
-MOUNT_LOG_PATH = '-LogPath "{}"'
-MOUNT_LOG_LEVEL = '-LogLevel {}'
-
-# Format strings for use in unmount cmdline options
-UNMOUNT_CMD = 'Dismount-WindowsImage'
-UNMOUNT_DIR = '-Path "{}"'
-UNMOUNT_LOG_PATH = '-LogPath "{}"'
-UNMOUNT_LOG_LEVEL = '-LogLevel {}'
-UNMOUNT_SAVE = '-Save'  # Save changes to the wim
-UNMOUNT_DISCARD = '-Discard'  # Discard changes to the wim
-
-# Format strings for use in mount cmdline options
-EDIT_OFFLINE_REG_CMD = 'Edit-OfflineRegistry'
-EDIT_OFFLINE_REG_IMG_PATH = '-OfflineImagePath "{}"'
-EDIT_OFFLINE_REG_HIVE_FILE = '-OfflineRegHiveFile "{}"'
-EDIT_OFFLINE_REG_KEY_PATH = '-RegistryKeyPath "{}"'
-EDIT_OFFLINE_REG_PROPERTY_NAME = '-PropertyName "{}"'
-EDIT_OFFLINE_REG_PROPERTY_VALUE = '-PropertyValue "{}"'
-EDIT_OFFLINE_REG_PROPERTY_TYPE = '-PropertyType "{}"'
-
 
 class WindowsPSExecutorAPI(recipe_api.RecipeApi):
   """API for using Windows PowerShell scripts."""
@@ -85,7 +63,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
               self._workdir)
           try:
             for action in wpec.offline_customization:
-              self.perform_winpe_action(action)
+              self.perform_winpe_actions(action)
           except Exception:
             # Unmount the image and discard changes on failure
             self.deinit_win_pe_image(save=False)
@@ -99,18 +77,25 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     # Download all the windows artifacts from git
     self._git.download_packages('Get all git artifacts', config)
 
+  def perform_winpe_actions(self, offline_action):
+    """Performs the given offline_action"""
+    for a in offline_action.actions:
+      self.perform_winpe_action(a)
+
   def perform_winpe_action(self, action):
     """Performs the given action"""
-    for a in action.actions:
-      action = a.WhichOneof('action')
-      if action == 'add_file':
-        self.add_file(a.add_file)
-      elif action == 'install_file':  # pragma: no cover
-        raise self.m.step.InfraFailure('Pending Implementation')
+    a = action.WhichOneof('action')
+    if a == 'add_file':
+      self.add_file(action.add_file)
+    elif a == 'install_file':  # pragma: no cover
+      raise self.m.step.InfraFailure('Pending Implementation')
 
-      #TODO(actodd): Add tests and remove "no cover" tag
-      elif action == 'edit_offline_registry':  # pragma: no cover
-        self.edit_offline_registry(a.edit_offline_registry)
+    #TODO(actodd): Add tests and remove "no cover" tag
+    elif a == 'edit_offline_registry':  # pragma: no cover
+      regedit.edit_offline_registry(self.m.powershell, self._scripts,
+                                    action.edit_offline_registry,
+                                    self._workdir.join('mount'))
+
 
   def add_file(self, f):
     src = ''
@@ -129,24 +114,6 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', f.dst))
 
-  def edit_offline_registry(self, edit_offline_registry_action):
-    action = edit_offline_registry_action
-
-    args = [
-      EDIT_OFFLINE_REG_IMG_PATH.format(self._workdir),
-      EDIT_OFFLINE_REG_HIVE_FILE.format(action.reg_hive_file),
-      EDIT_OFFLINE_REG_KEY_PATH.format(action.reg_key_path),
-      EDIT_OFFLINE_REG_PROPERTY_NAME.format(action.property_name),
-      EDIT_OFFLINE_REG_PROPERTY_VALUE.format(action.property_value),
-      EDIT_OFFLINE_REG_PROPERTY_TYPE.format(action.property_type)
-    ]
-
-    reg_key_leaf = action.reg_key_path.split('\\')[-1]
-    name = 'Edit Offline Registry Key {} and Property {}'.format(
-      reg_key_leaf, action.property_name)
-
-    self.m.powershell(name, EDIT_OFFLINE_REG_CMD, args=args)
-
   def init_win_pe_image(self, arch, dest, index=1):
     """Calls Copy-PE to create WinPE media folder for arch"""
     with self.m.step.nest('generate windows image folder for ' + arch + ' in ' +
@@ -158,51 +125,19 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
           args=['-WinPeArch', arch, '-Destination',
                 str(dest)])
       # Mount the boot.wim to mount dir for modification
-      self.mount_win_wim(
-          dest.join('mount'), dest.join('media', 'sources', 'boot.wim'), index,
-          self.m.path['cleanup'].join(MOUNT_CMD))
+      mount_wim.mount_win_wim(self.m.powershell, dest.join('mount'),
+                              dest.join('media', 'sources', 'boot.wim'), index,
+                              self.m.path['cleanup'])
 
   def deinit_win_pe_image(self, save=True):
     """Unmounts the winpe image and saves/discards changes to it"""
-    self.unmount_win_wim(
+    unmount_wim.unmount_win_wim(
+        self.m.powershell,
         self._workdir.join('mount'),
-        self.m.path['cleanup'].join(MOUNT_CMD),
+        self.m.path['cleanup'],
         save=save)
 
   def execute_script(self, name, command, logs=None, *args):
     """Executes the windows powershell script"""
     step_res = self.m.powershell(name, command, logs=logs, args=list(args))
     return step_res
-
-  def mount_win_wim(self, mnt_dir, image, index, logs,
-                    log_level='WarningsInfo'):
-    """Mount the wim to a dir for modification"""
-    # Args for the mount cmd
-    args = [
-        MOUNT_IMG_FILE.format(image),
-        MOUNT_INDEX.format(index),
-        MOUNT_DIR.format(mnt_dir),
-        MOUNT_LOG_PATH.format(logs.join('mount.log')),  # include logs
-        MOUNT_LOG_LEVEL.format(log_level)
-    ]
-    self.m.powershell(
-        'Mount wim to {}'.format(mnt_dir), MOUNT_CMD, logs=[logs], args=args)
-
-  def unmount_win_wim(self, mnt_dir, logs, log_level='WarningsInfo', save=True):
-    """Unmount the winpe wim from the given directory"""
-    # Args for the unmount cmd
-    args = [
-        UNMOUNT_DIR.format(mnt_dir),
-        UNMOUNT_LOG_PATH.format(logs.join('unmount.log')),
-        UNMOUNT_LOG_LEVEL.format(log_level)
-    ]
-    # Save/Discard the changes to the wim
-    if save:
-      args.append(UNMOUNT_SAVE)
-    else:
-      args.append(UNMOUNT_DISCARD)
-    self.m.powershell(
-        'Unmount wim at {}'.format(mnt_dir),
-        UNMOUNT_CMD,
-        logs=[logs],
-        args=args)

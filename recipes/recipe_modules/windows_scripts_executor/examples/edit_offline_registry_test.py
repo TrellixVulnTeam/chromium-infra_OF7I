@@ -14,24 +14,24 @@ DEPS = [
     'recipe_engine/json',
 ]
 
-PROPERTIES = wib.EditOfflineRegistry
+PROPERTIES = wib.Action
 
 
 def RunSteps(api, edit_offline_registry_action):
-  api.windows_scripts_executor.edit_offline_registry(
-    edit_offline_registry_action
-  )
+  api.windows_scripts_executor.perform_winpe_action(
+      edit_offline_registry_action)
 
 
 def GenTests(api):
-  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES = wib.EditOfflineRegistry(
-    name='edit tamper protection',
-    reg_hive_file='Windows\\System32\\Config\\software',
-    reg_key_path='Microsoft\\Windows Defender\\Features',
-    property_name='TamperProtection',
-    property_value='0',
-    property_type='DWord',
-  )
+  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES = wib.Action(
+      edit_offline_registry=wib.EditOfflineRegistry(
+          name='edit tamper protection',
+          reg_hive_file='Windows\\System32\\Config\\software',
+          reg_key_path='Microsoft\\Windows Defender\\Features',
+          property_name='TamperProtection',
+          property_value='0',
+          property_type='DWord',
+      ))
 
   EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PASS = api.step_data(
       'PowerShell> Edit Offline Registry Key Features and Property ' +
