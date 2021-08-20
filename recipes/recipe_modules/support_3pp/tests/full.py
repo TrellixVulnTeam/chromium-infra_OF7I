@@ -740,6 +740,32 @@ def GenTests(api):
                      "read 'dir_build_tools/self_dependency/3pp.pb'"),
              api.file.read_text(spec)))
 
+  spec = '''
+  create {
+    source { git {
+        repo: "https://chromium.googlesource.com/external/go.repo/dep"
+        tag_pattern: "v%s"
+        tag_filter_re: "^v[0-9.]*$"
+    } }
+  }
+  upload { pkg_prefix: "tools" }
+  '''
+  yield (api.test('git-tag-filter') + api.platform('linux', 64) +
+         api.properties(GOOS='linux', GOARCH='amd64')
+         + api.properties(key_path=KEY_PATH)
+         + api.step_data(
+             'find package specs',
+             api.file.glob_paths(['dir_tools/tool/3pp.pb']))
+         + api.step_data(
+             mk_name("load package specs",
+                     "read 'dir_tools/tool/3pp.pb'"),
+             api.file.read_text(spec))
+         + api.post_process(
+             post_process.StepCommandContains,
+             mk_name("building tools/tool",
+                     "cipd describe 3pp/tools/tool/linux-amd64"),
+             ['-version', 'version:%s@1.4.1' % PACKAGE_EPOCH]))
+
   def links_include(check, step_odict, step, link_name):
     check(
         'step result for %s contained link named %s' % (step, link_name),

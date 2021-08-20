@@ -16,7 +16,7 @@ from .run_script import run_script
 from PB.recipe_modules.infra.support_3pp.spec import LT, LE, GT, GE, EQ, NE
 
 
-def _to_versions(raw_ls_remote_lines, version_join, tag_re):
+def _to_versions(raw_ls_remote_lines, version_join, tag_re, tag_filter_re):
   """Converts raw ls-remote output lines to a sorted (descending)
   list of (Version, v_str, git_hash) objects.
 
@@ -27,6 +27,8 @@ def _to_versions(raw_ls_remote_lines, version_join, tag_re):
     git_hash, ref = line.split('\t')
     if ref.startswith('refs/tags/'):
       tag = ref[len('refs/tags/'):]
+      if tag_filter_re and not tag_filter_re.match(tag):
+        continue
       m = tag_re.match(tag)
       if not m:
         continue
@@ -120,10 +122,15 @@ def resolve_latest(api, spec):
                        'hash\trefs/tags/v1.5.0-rc1',
                      ])))
 
+    tag_filter_re = None
+    if source_method_pb.tag_filter_re:
+      tag_filter_re = re.compile(source_method_pb.tag_filter_re)
+
     versions = _to_versions(
         step.stdout.splitlines(),
         source_method_pb.version_join,
-        re.compile(tag_re))
+        re.compile(tag_re),
+        tag_filter_re)
 
     versions = _filter_versions(
         versions, source_method_pb.version_restriction)

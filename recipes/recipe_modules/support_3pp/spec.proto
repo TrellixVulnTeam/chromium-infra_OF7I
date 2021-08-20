@@ -397,6 +397,9 @@ message GitSource {
   // version `1.2.3` into `1-2-3` before expanding it into tag_pattern to find
   // the matching git tag.
   string version_join = 3;
+
+  // (optional) only consider tags that fully match this regular expression.
+  string tag_filter_re = 5;
 }
 
 // Pulls sources from a CIPD package.
