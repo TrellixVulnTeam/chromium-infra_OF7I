@@ -46,6 +46,7 @@ func getApplication() *cli.Application {
 			run.LabpackCmd,
 			f20.Tlw,
 			tasks.LocalRecovery,
+			tasks.RecoveryConfig,
 		},
 	}
 }
