@@ -56,6 +56,9 @@ func makeAddShivasFlags(c *addDUT) flagmap {
 	if c.servoSetupType != "" {
 		out["servo-setup"] = []string{c.servoSetupType}
 	}
+	if c.servoDockerContainerName != "" {
+		out["servod-docker"] = []string{c.servoDockerContainerName}
+	}
 	if len(c.pools) != 0 {
 		out["pools"] = []string{strings.Join(c.pools, ",")}
 	}
@@ -168,17 +171,18 @@ type shivasAddDUT struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 
-	newSpecsFile   string
-	hostname       string
-	asset          string
-	servo          string
-	servoSerial    string
-	servoSetupType string
-	licenseTypes   []string
-	licenseIds     []string
-	pools          []string
-	rpm            string
-	rpmOutlet      string
+	newSpecsFile             string
+	hostname                 string
+	asset                    string
+	servo                    string
+	servoSerial              string
+	servoSetupType           string
+	servoDockerContainerName string
+	licenseTypes             []string
+	licenseIds               []string
+	pools                    []string
+	rpm                      string
+	rpmOutlet                string
 
 	ignoreUFS                 bool
 	deployTaskTimeout         int64
@@ -243,6 +247,7 @@ func registerAddShivasFlags(c *addDUT) {
 	c.Flags.StringVar(&c.servo, "servo", "", "servo hostname and port as hostname:port. (port is assigned by UFS if missing)")
 	c.Flags.StringVar(&c.servoSerial, "servo-serial", "", "serial number for the servo. Can skip for Servo V3.")
 	c.Flags.StringVar(&c.servoSetupType, "servo-setup", "", "servo setup type. Allowed values are "+cmdhelp.ServoSetupTypeAllowedValuesString()+", UFS assigns REGULAR if unassigned.")
+	c.Flags.StringVar(&c.servoDockerContainerName, "servod-docker", "", "servod docker container name. Required if serovd is running on docker")
 	c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma separated pools assigned to the DUT. 'satlab-<identifier>' is used if nothing is specified")
 	c.Flags.Var(utils.CSVString(&c.licenseTypes), "licensetype", cmdhelp.LicenseTypeHelpText)
 	c.Flags.Var(utils.CSVString(&c.licenseIds), "licenseid", "the name of the license type. Can specify multiple comma separated values.")
