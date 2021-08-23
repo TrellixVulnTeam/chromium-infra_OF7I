@@ -29,3 +29,12 @@ vet:
 .PHONY: fmt
 fmt:
 	env CGO_ENABLED=0 go fmt ./...
+
+# This command works by marching forward the "prod" label to the version that the "latest" label
+# points to. The "latest" label is automatically marched forward as part of the build process that
+# happens post-submit.
+.PHONY: deploy-to-prod
+deploy-to-prod:
+	@echo 'WARNING: This deploys to prod. Deploying in ten seconds. Press Ctrl-C to Cancel'
+	@sleep 10.
+	cipd set-ref 'infra/cros/cmd/satlab/' -ref prod -version latest
