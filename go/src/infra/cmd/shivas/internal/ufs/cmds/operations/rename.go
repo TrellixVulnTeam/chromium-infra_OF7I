@@ -8,12 +8,12 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
-	"infra/cmd/shivas/ufs/subcmds/asset"
-	"infra/cmd/shivas/ufs/subcmds/dut"
-	"infra/cmd/shivas/ufs/subcmds/labstation"
-	"infra/cmd/shivas/ufs/subcmds/machine"
-	"infra/cmd/shivas/ufs/subcmds/nic"
-	"infra/cmd/shivas/ufs/subcmds/switches"
+	"infra/cmd/shivas/internal/ufs/subcmds/asset"
+	"infra/cmd/shivas/internal/ufs/subcmds/dut"
+	"infra/cmd/shivas/internal/ufs/subcmds/labstation"
+	"infra/cmd/shivas/internal/ufs/subcmds/machine"
+	"infra/cmd/shivas/internal/ufs/subcmds/nic"
+	"infra/cmd/shivas/internal/ufs/subcmds/switches"
 )
 
 type rename struct {

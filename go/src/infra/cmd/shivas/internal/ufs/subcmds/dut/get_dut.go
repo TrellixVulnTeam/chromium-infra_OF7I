@@ -21,8 +21,8 @@ import (
 	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
 
 	"infra/cmd/shivas/cmdhelp"
+	"infra/cmd/shivas/internal/ufs/subcmds/host"
 	"infra/cmd/shivas/site"
-	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/models"

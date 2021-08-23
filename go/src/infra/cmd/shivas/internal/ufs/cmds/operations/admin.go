@@ -8,7 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
-	"infra/cmd/shivas/ufs/subcmds/cron"
+	"infra/cmd/shivas/internal/ufs/subcmds/cron"
 )
 
 type admin struct {

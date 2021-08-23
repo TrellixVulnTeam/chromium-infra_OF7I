@@ -14,8 +14,8 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/appengine/drone-queen/api"
+	"infra/cmd/shivas/internal/ufs/subcmds/host"
 	"infra/cmd/shivas/site"
-	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/models"

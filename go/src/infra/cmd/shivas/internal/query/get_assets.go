@@ -12,13 +12,12 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-
 	"go.chromium.org/luci/grpc/prpc"
+
+	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-
-	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
 )
 
 // GetAssetsCmd query assets by given asset tags.
