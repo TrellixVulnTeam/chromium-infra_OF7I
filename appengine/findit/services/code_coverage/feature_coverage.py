@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import gc
 import json
 import logging
 import difflib
@@ -367,6 +368,12 @@ def _ExportFeatureCoverage(postsubmit_report):
                                                  parent_commit_lines)
         interesting_lines_per_file[file_path] = interesting_lines_per_file.get(
             file_path, set()) | interesting_lines
+        # explicitly release memory
+        del latest_lines
+        del feature_commit_lines
+        del parent_commit_lines
+        del interesting_lines
+        gc.collect()
 
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
         postsubmit_report, interesting_lines_per_file)
