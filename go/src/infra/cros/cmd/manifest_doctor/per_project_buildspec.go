@@ -77,7 +77,7 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 			b.Flags.BoolVar(&b.force, "force", false,
 				"Existing buildspecs will not be regenerated unless --force is set")
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
-				"Name of the project(s) (e.g. galaxy/milkyway) to create buildspecs for."+
+				"Comma-separated list of projects (e.g. galaxy/milkyway) to create buildspecs for."+
 					" Supports wildcards, e.g. galaxy/* or galaxy/milk*.")
 			b.Flags.IntVar(&b.ttl, "ttl", -1,
 				"TTL (in days) of newly generated buildspecs. If not set, no TTL will be set.")
