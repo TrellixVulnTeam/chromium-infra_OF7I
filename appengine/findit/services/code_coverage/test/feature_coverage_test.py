@@ -8,7 +8,7 @@ from datetime import datetime
 from google.appengine.ext import ndb
 
 from libs import time_util
-from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from libs.gitiles.gitiles_repository import GitilesRepository
 from waterfall.test.wf_testcase import WaterfallTestCase
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
@@ -53,7 +53,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testParityBetweenBqAndDatastoreExport(self, mock_merged_changes,
                                             mock_file_content,
@@ -155,7 +155,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_AddsNewFile_FileStaysIntact(self, mock_merged_changes,
                                                    mock_file_content,
@@ -240,7 +240,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_FileStaysIntact(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
@@ -312,7 +312,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_GetsPartiallyModifiedOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
@@ -383,7 +383,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_ModifiesExistingFile_GetsOverwrittenOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
@@ -439,7 +439,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testSingleCommit_FileGotDeleted(self, mock_merged_changes,
                                       mock_file_content, mocked_report_rows,
@@ -484,7 +484,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testMultipleCommits_ModifiesExistingFile_SecondCommitPartiallyOverlaps(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
@@ -559,7 +559,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testMultipleCommits_FileGotDeleted(self, mock_merged_changes,
                                          mock_file_content, mocked_report_rows,
@@ -644,7 +644,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(CachedGitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSource')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testMissingCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
                                                    mock_file_content,

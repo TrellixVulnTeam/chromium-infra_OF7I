@@ -10,7 +10,7 @@ from google.appengine.ext import ndb
 
 from common.findit_http_client import FinditHttpClient
 from libs import time_util
-from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
@@ -43,7 +43,7 @@ _SOURCE_BUILDERS = {
 _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
 _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
-_CHROMIUM_REPO = CachedGitilesRepository(
+_CHROMIUM_REPO = GitilesRepository(
     FinditHttpClient(),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
 
