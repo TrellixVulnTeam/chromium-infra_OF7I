@@ -145,6 +145,9 @@ class CoverageReportModifier(ndb.Model):
   # Gerrit hashtag to uniquely identify a feature.
   gerrit_hashtag = ndb.StringProperty(indexed=True)
 
+  # Reference commit to generate coverage reports past a checkpoint.
+  reference_commit = ndb.StringProperty(indexed=True)
+
   # Timestamp this modifier got created.
   insert_timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -303,8 +306,9 @@ class FileCoverageData(ndb.Model):
   def _CreateKey(cls, server_host, project, ref, revision, path, bucket,
                  builder, modifier_id):
     return ndb.Key(
-        cls, '%s$%s$%s$%s$%s$%s$%s$%d' % (server_host, project, ref, revision,
-                                          path, bucket, builder, modifier_id))
+        cls,
+        '%s$%s$%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision, path,
+                                     bucket, builder, str(modifier_id)))
 
   @classmethod
   def Create(cls,

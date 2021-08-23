@@ -13,9 +13,6 @@ from model.code_coverage import PostsubmitReport
 from services.code_coverage import files_absolute_coverage
 from services import bigquery_helper
 
-_DEFAULT_LUCI_PROJECT = 'chromium'
-
-
 class FilesAbsCoverageTest(WaterfallTestCase):
 
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
