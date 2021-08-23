@@ -8,6 +8,11 @@ import subprocess
 import sys
 
 
+_MANYLINUX_ENV = {
+    'LDSHARED': '/opt/rh/devtoolset-10/root/usr/bin/gcc -pthread -shared'
+}
+
+
 class Platform(
     collections.namedtuple(
         'Platform',
@@ -168,7 +173,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
-            env={},
+            env=_MANYLINUX_ENV,
         ),
         Platform(
             name='manylinux-x64-py3',
@@ -181,7 +186,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
-            env={},
+            env=_MANYLINUX_ENV,
         ),
         Platform(
             name='manylinux-x64-py3.9',
@@ -194,7 +199,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
-            env={},
+            env=_MANYLINUX_ENV,
         ),
 
         # Atypical but possible Python configuration using "2-byte UCS", with
@@ -210,7 +215,7 @@ ALL = {
             openssl_target='linux-x86_64',
             packaged=True,
             cipd_platform='linux-amd64',
-            env={},
+            env=_MANYLINUX_ENV,
         ),
         Platform(
             name='mac-x64',
