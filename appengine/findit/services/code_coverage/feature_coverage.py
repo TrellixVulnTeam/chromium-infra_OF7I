@@ -20,6 +20,8 @@ from services import bigquery_helper
 from services.code_coverage import code_coverage_util
 from services.code_coverage import diff_util
 
+_PAGE_SIZE = 100
+
 # This should be in sync with allowed file types during code generation
 # See https://bit.ly/37aP7Vg
 _CLANG_SUPPORTED_EXTENSIONS = [
@@ -300,19 +302,25 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
 
 def _GetActiveFeatureModifers():
   """Returns hashtags for which coverage is to be generated.
-  
-  Returns a dict where key is the gerrit hashtag and value is the 
+
+  Yields a tuple where first elem is the gerrit hashtag and second is the
   id of the corresponding CoverageReportModifier.
   """
   query = CoverageReportModifier.query(
       CoverageReportModifier.server_host == _CHROMIUM_SERVER_HOST,
       CoverageReportModifier.project == _CHROMIUM_PROJECT,
-      CoverageReportModifier.is_active == True,
-      CoverageReportModifier.gerrit_hashtag != None)
-  features = {}
-  for x in query.fetch():
-    features[x.gerrit_hashtag] = x.key.id()
-  return collections.OrderedDict(sorted(features.items()))
+      CoverageReportModifier.is_active == True).order(
+          CoverageReportModifier.gerrit_hashtag)
+  more = True
+  cursor = None
+  while more:
+    results, cursor, more = query.fetch_page(
+        _PAGE_SIZE,
+        start_cursor=cursor,
+        config=ndb.ContextOptions(use_cache=False))
+    for x in results:
+      if x.gerrit_hashtag:
+        yield x.gerrit_hashtag, x.key.id()
 
 
 def _GetFileContentAtCommit(file_path, revision):
@@ -341,7 +349,7 @@ def _ExportFeatureCoverage(postsubmit_report):
   """
   files_deleted_at_latest = set()
 
-  for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers().items():
+  for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers():
     interesting_lines_per_file = {}
     commits = _GetFeatureCommits(gerrit_hashtag)
     for commit in commits:
