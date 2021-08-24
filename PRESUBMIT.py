@@ -31,6 +31,7 @@ DISABLED_PROJECTS = [
     '\.git',
     '\.wheelcache',
     'bootstrap/virtualenv-ext',
+    'go/src/infra/tools/vpython/utils',
 ]
 
 # List of third_party direcories.
