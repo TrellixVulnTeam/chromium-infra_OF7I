@@ -6,7 +6,10 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
+	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/bootstrapper/gitiles"
+	"strings"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
@@ -20,10 +23,50 @@ import (
 // for the bootstrapped executable.
 type PropertyBootstrapper struct {
 	gitiles *gitiles.Client
+	gerrit  *gerrit.Client
 }
 
-func NewPropertyBootstrapper(gitiles *gitiles.Client) *PropertyBootstrapper {
-	return &PropertyBootstrapper{gitiles: gitiles}
+func NewPropertyBootstrapper(gitiles *gitiles.Client, gerrit *gerrit.Client) *PropertyBootstrapper {
+	return &PropertyBootstrapper{gitiles: gitiles, gerrit: gerrit}
+}
+
+// gitilesCommit is a simple wrapper around *buildbucketpb.GitilesCommit with
+// the gitiles URI as the string representation.
+type gitilesCommit struct {
+	*buildbucketpb.GitilesCommit
+}
+
+func (c *gitilesCommit) String() string {
+	revision := c.Ref
+	if c.Id != "" {
+		revision = c.Id
+	}
+	return fmt.Sprintf("%s/%s/+/%s", c.Host, c.Project, revision)
+}
+
+// gerritChange is a simple wrapper around *buildbucketpb.GerritChange with the
+// gerrit URI as the string representation.
+type gerritChange struct {
+	*buildbucketpb.GerritChange
+}
+
+func (c *gerritChange) String() string {
+	return fmt.Sprintf("%s/c/%s/+/%d/%d", c.Host, c.Project, c.Change, c.Patchset)
+}
+
+type bootstrapConfig struct {
+	// commit is the gitiles commit to read the properties file from.
+	commit *gitilesCommit
+	// change is gerrit change that may potentially modify the properties
+	// file.
+	//
+	// nil indicates that the build does not contain any gerrit changes that
+	// may modify the properties file.
+	change *gerritChange
+}
+
+type bootstrapState struct {
+	config *bootstrapConfig
 }
 
 // ComputeBootstrappedProperties gets the properties that should be set for the
@@ -42,41 +85,28 @@ func NewPropertyBootstrapper(gitiles *gitiles.Client) *PropertyBootstrapper {
 //     file.
 func (b *PropertyBootstrapper) ComputeBootstrappedProperties(ctx context.Context, input *Input) (*structpb.Struct, error) {
 	modProperties := &ChromiumBootstrapModuleProperties{}
-	var configCommit *buildbucketpb.GitilesCommit
 
-	switch config := input.properties.ConfigProject.(type) {
+	state := &bootstrapState{}
+	switch x := input.properties.ConfigProject.(type) {
 	case *BootstrapProperties_TopLevelProject_:
-		topLevel := config.TopLevelProject
-		if matchGitilesCommit(input.commit, topLevel.Repo) {
-			configCommit = input.commit
-		} else {
-			configCommit = &buildbucketpb.GitilesCommit{
-				Host:    topLevel.Repo.Host,
-				Project: topLevel.Repo.Project,
-				Ref:     topLevel.Ref,
-			}
+		if err := b.getTopLevelConfig(ctx, input, state, x.TopLevelProject); err != nil {
+			return nil, err
 		}
 
 	default:
-		return nil, errors.Reason("config_project handling for type %T is not implemented", config).Err()
+		return nil, errors.Reason("config_project handling for type %T is not implemented", x).Err()
 	}
 
-	if err := b.populateCommitId(ctx, configCommit); err != nil {
-		return nil, errors.Annotate(err, "failed to resolve ID for config commit: {%s}", configCommit).Err()
+	if err := b.populateCommitId(ctx, state.config.commit); err != nil {
+		return nil, errors.Annotate(err, "failed to resolve ID for config commit %s", state.config.commit).Err()
 	}
-	modProperties.Commits = append(modProperties.Commits, configCommit)
+	modProperties.Commits = append(modProperties.Commits, state.config.commit.GitilesCommit)
 
-	logging.Infof(ctx, "downloading %s/%s/+/%s", configCommit.Host, configCommit.Project, configCommit.Ref, configCommit.Id)
-	contents, err := b.gitiles.DownloadFile(ctx, configCommit.Host, configCommit.Project, configCommit.Id, input.properties.PropertiesFile)
+	properties, err := b.getPropertiesFromFile(ctx, input.properties.PropertiesFile, state)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to get %s/%s/+/%s/%s", configCommit.Host, configCommit.Project, configCommit.Id, input.properties.PropertiesFile).Err()
+		return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.properties.PropertiesFile).Err()
 	}
 
-	properties := &structpb.Struct{}
-	logging.Infof(ctx, "unmarshalling builder properties file")
-	if err := protojson.Unmarshal([]byte(contents), properties); err != nil {
-		return nil, errors.Annotate(err, "failed to unmarshall builder properties file: {%s}", contents).Err()
-	}
 	if err := exe.WriteProperties(properties, map[string]interface{}{
 		"$build/chromium_bootstrap": modProperties,
 	}); err != nil {
@@ -92,9 +122,91 @@ func (b *PropertyBootstrapper) ComputeBootstrappedProperties(ctx context.Context
 	return properties, nil
 }
 
-func (b *PropertyBootstrapper) populateCommitId(ctx context.Context, commit *buildbucketpb.GitilesCommit) error {
+func (b *PropertyBootstrapper) getTopLevelConfig(ctx context.Context, input *Input, state *bootstrapState, topLevel *BootstrapProperties_TopLevelProject) error {
+	ref := topLevel.Ref
+	config := &bootstrapConfig{}
+	change := findMatchingGerritChange(input.changes, topLevel.Repo)
+	if change != nil {
+		config.change = change
+		logging.Infof(ctx, "getting target ref for config change %s", change)
+		var err error
+		ref, err = b.gerrit.GetTargetRef(ctx, change.Host, change.Project, change.Change)
+		if err != nil {
+			return errors.Annotate(err, "failed to get target ref for config change %s", change).Err()
+		}
+	}
+	if matchGitilesCommit(input.commit, topLevel.Repo) {
+		config.commit = &gitilesCommit{input.commit}
+	}
+	if config.commit == nil {
+		config.commit = &gitilesCommit{&buildbucketpb.GitilesCommit{
+			Host:    topLevel.Repo.Host,
+			Project: topLevel.Repo.Project,
+			Ref:     ref,
+		}}
+	}
+	state.config = config
+	return nil
+}
+
+func (b *PropertyBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile string, state *bootstrapState) (*structpb.Struct, error) {
+	var diff string
+	if change := state.config.change; change != nil {
+		// check if it affects the builder properties file and apply change
+		logging.Infof(ctx, "determining if properties file %s was affected by %s", propsFile, change)
+		info, err := b.gerrit.GetAffectedFileInfo(ctx, change.Host, change.Project, change.Change, change.Patchset, propsFile)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to determine if properties file %s was affected by %s", propsFile, change).Err()
+		}
+		if info == nil {
+			logging.Infof(ctx, "properties file %s was not affected by %s", propsFile, change)
+		} else {
+			// TODO(gbeaty) Investigate which statuses actually make sense to handle
+			switch info.Status {
+			case gerrit.MODIFIED:
+				logging.Infof(ctx, "properties file %s was modified by %s", propsFile, change)
+			default:
+				return nil, errors.Reason("Unhandled status for properties file %s: %s", propsFile, gerrit.FileStatusName[info.Status]).Err()
+			}
+			logging.Infof(ctx, "getting revision for %s", change)
+			revision, err := b.gerrit.GetRevision(ctx, change.Host, change.Project, change.Change, int32(change.Patchset))
+			if err != nil {
+				return nil, errors.Annotate(err, "failed to get revision for %s", change).Err()
+			}
+			logging.Infof(ctx, "getting diff %s", change)
+			diff, err = b.gitiles.DownloadDiff(ctx, convertGerritHostToGitilesHost(change.Host), change.Project, revision)
+			if err != nil {
+				return nil, errors.Annotate(err, "failed to get diff for %s from %s", propsFile, change).Err()
+			}
+		}
+	}
+
+	logging.Infof(ctx, "downloading properties file %s/%s", state.config.commit, propsFile)
+	contents, err := b.gitiles.DownloadFile(ctx, state.config.commit.Host, state.config.commit.Project, state.config.commit.Id, propsFile)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to get %s/%s", state.config.commit, propsFile).Err()
+	}
+	if diff != "" {
+		logging.Infof(ctx, "patching properties file %s", propsFile)
+		contents, err = patchFile(ctx, propsFile, contents, diff)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to patch properties file %s", propsFile).Err()
+		}
+	}
+
+	properties := &structpb.Struct{}
+	logging.Infof(ctx, "unmarshalling builder properties file")
+	if err := protojson.Unmarshal([]byte(contents), properties); err != nil {
+		return nil, errors.Annotate(err, "failed to unmarshall builder properties file: {%s}", contents).Err()
+	}
+
+	return properties, nil
+
+}
+
+func (b *PropertyBootstrapper) populateCommitId(ctx context.Context, commit *gitilesCommit) error {
 	if commit.Id == "" {
-		logging.Infof(ctx, "getting revision for %s/%s/+/%s", commit.Host, commit.Project, commit.Ref)
+		logging.Infof(ctx, "getting revision for %s", commit)
 		revision, err := b.gitiles.FetchLatestRevision(ctx, commit.Host, commit.Project, commit.Ref)
 		if err != nil {
 			return err
@@ -106,4 +218,19 @@ func (b *PropertyBootstrapper) populateCommitId(ctx context.Context, commit *bui
 
 func matchGitilesCommit(commit *buildbucketpb.GitilesCommit, repo *GitilesRepo) bool {
 	return commit != nil && commit.Host == repo.Host && commit.Project == repo.Project
+}
+
+func findMatchingGerritChange(changes []*buildbucketpb.GerritChange, repo *GitilesRepo) *gerritChange {
+	for _, change := range changes {
+		if convertGerritHostToGitilesHost(change.Host) == repo.Host && change.Project == repo.Project {
+			return &gerritChange{change}
+		}
+	}
+	return nil
+}
+
+func convertGerritHostToGitilesHost(host string) string {
+	pieces := strings.SplitN(host, ".", 2)
+	pieces[0] = strings.TrimSuffix(pieces[0], "-review")
+	return strings.Join(pieces, ".")
 }

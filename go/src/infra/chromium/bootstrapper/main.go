@@ -17,6 +17,7 @@ import (
 
 	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cipd"
+	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/bootstrapper/gitiles"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -28,6 +29,7 @@ import (
 	"go.chromium.org/luci/luciexe"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error) {
@@ -89,7 +91,7 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 		// Get the input for the command
 		group.Go(func() error {
-			bootstrapper := bootstrap.NewPropertyBootstrapper(gitiles.NewClient(ctx))
+			bootstrapper := bootstrap.NewPropertyBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
 
 			logging.Infof(ctx, "computing bootstrapped properties")
 			properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, bootstrapInput)
@@ -125,15 +127,31 @@ func execute(ctx context.Context) error {
 	cmd.Stderr = os.Stderr
 
 	logging.Infof(ctx, "executing %s", cmd.Args)
-	return cmd.Run()
+	err = cmd.Run()
+	// An ExitError indicates that we were able to bootstrap the executable
+	// and that it failed, as opposed to being unable to launch the
+	// bootstrapped executable
+	var exitErr *exec.ExitError
+	if !stderrors.As(err, &exitErr) {
+		return bootstrap.ExeFailure.Apply(err)
+	}
+	return err
 }
 
-func reportBootstrapFailure(ctx context.Context, summary string) error {
-	bootstrap, err := logdogbootstrap.Get()
+func reportBootstrapFailure(ctx context.Context, bootstrapErr error) error {
+	// If the error has the ExeFailure tag, then that indicates that we were
+	// able to bootstrap the executable and that it failed. In that case, it
+	// should have populated the build proto with steps and a result, so we
+	// should not modify the build proto.
+	if !bootstrap.ExeFailure.In(bootstrapErr) {
+		return nil
+	}
+
+	logdog, err := logdogbootstrap.Get()
 	if err != nil {
 		return err
 	}
-	stream, err := bootstrap.Client.NewDatagramStream(
+	stream, err := logdog.Client.NewDatagramStream(
 		ctx,
 		luciexe.BuildProtoStreamSuffix,
 		streamclient.WithContentType(luciexe.BuildProtoContentType),
@@ -141,9 +159,14 @@ func reportBootstrapFailure(ctx context.Context, summary string) error {
 	if err != nil {
 		return err
 	}
+
 	build := &buildbucketpb.Build{}
-	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", summary)
+	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", bootstrapErr.Error())
 	build.Status = buildbucketpb.Status_INFRA_FAILURE
+	if bootstrap.PatchRejected.In(bootstrapErr) {
+		build.Output.Properties.Fields["failure_type"] = structpb.NewStringValue("PATCH_FAILURE")
+	}
+
 	outputData, err := proto.Marshal(build)
 	if err != nil {
 		return errors.Annotate(err, "failed to marshal output build.proto").Err()
@@ -157,15 +180,9 @@ func main() {
 
 	if err := execute(ctx); err != nil {
 		logging.Errorf(ctx, err.Error())
-		// An ExitError indicates that we were able to bootstrap the
-		// executable and that it failed, so it should have populated
-		// the build proto with steps and a result
-		var exitErr *exec.ExitError
-		if !stderrors.As(err, &exitErr) {
-			err := reportBootstrapFailure(ctx, err.Error())
-			if err != nil {
-				logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
-			}
+		reportErr := reportBootstrapFailure(ctx, err)
+		if reportErr != nil {
+			logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
 		}
 		os.Exit(1)
 	}

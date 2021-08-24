@@ -17,6 +17,7 @@ import (
 // instance between multiple operations that take Input.
 type Input struct {
 	commit          *buildbucketpb.GitilesCommit
+	changes         []*buildbucketpb.GerritChange
 	buildProperties *structpb.Struct
 	properties      *BootstrapProperties
 }
@@ -39,11 +40,19 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 		return nil, errors.Annotate(err, "failed to validate $bootstrap property").Err()
 	}
 
+	commit := proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit)
+
+	changes := make([]*buildbucketpb.GerritChange, len(build.Input.GerritChanges))
+	for i, change := range build.Input.GerritChanges {
+		changes[i] = proto.Clone(change).(*buildbucketpb.GerritChange)
+	}
+
 	properties = proto.Clone(properties).(*structpb.Struct)
 	delete(properties.Fields, "$bootstrap")
 
 	input := &Input{
-		commit:          proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit),
+		commit:          commit,
+		changes:         changes,
 		buildProperties: properties,
 		properties:      bootstrapProperties,
 	}
