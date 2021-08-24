@@ -28,7 +28,7 @@ REVERTED_REVISION_PATTERN = re.compile(
     '^> Committed: https://.+/([0-9a-fA-F]{40})$', re.IGNORECASE)
 TIMEZONE_PATTERN = re.compile('[-+]\d{4}$')
 CACHE_EXPIRE_TIME_SECONDS = 24 * 60 * 60
-_DEFAULT_REF = 'refs/heads/master'
+_DEFAULT_REF = 'refs/heads/main'
 
 
 def _GetAccessTokenHeader():
@@ -156,9 +156,9 @@ class GitilesRepository(GitRepository):
         'At least one of start_revision and end_revision should be non-empty.')
 
     if not end_revision:
-      # Set the end_revision to master to get all the changelogs after the
+      # Set the end_revision to main to get all the changelogs after the
       # start_revision.
-      end_revision = 'master'
+      end_revision = 'main'
 
     if not start_revision:
       # Url that contains all the changelogs before and including end_revision.

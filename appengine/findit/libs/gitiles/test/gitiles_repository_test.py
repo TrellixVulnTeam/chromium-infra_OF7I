@@ -17,7 +17,7 @@ from libs.http import retry_http_client
 COMMIT_MESSAGE = ('Add popover for snapshot canvas log.\n'
                   'Review URL: https://codereview.chromium.org/320423004\n'
                   'Review URL: https://codereview.chromium.org/328113005\n'
-                  'Cr-Commit-Position: refs/heads/master@{#175976}')
+                  'Cr-Commit-Position: refs/heads/main@{#175976}')
 
 COMMIT_LOG = """)]}'
 {
@@ -480,5 +480,4 @@ class GitRepositoryTest(TestCase):
     self.assertEqual(
         repo._GetChangeLogUrl(None, 'rev5'), 'http://repo_url/+log/rev5')
     self.assertEqual(
-        repo._GetChangeLogUrl('rev2', None),
-        'http://repo_url/+log/rev2..master')
+        repo._GetChangeLogUrl('rev2', None), 'http://repo_url/+log/rev2..main')
