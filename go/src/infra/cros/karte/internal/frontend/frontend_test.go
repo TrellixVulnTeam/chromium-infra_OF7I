@@ -37,7 +37,14 @@ func TestCreateAction(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	// Here we inspect the contents of datastore.
-	datastoreActionEntities, err := MakeAllActionEntitiesQuery("").Next(ctx, 0)
+	q, err := newActionEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	datastoreActionEntities, err := q.Next(ctx, 0)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 	if datastoreActionEntities == nil {
 		t.Errorf("action entities should not be nil")
 	}

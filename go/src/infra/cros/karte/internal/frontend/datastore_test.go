@@ -19,7 +19,10 @@ func TestReadActionEntityFromEmptyDatastore(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
-	q := MakeAllActionEntitiesQuery("")
+	q, err := newActionEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 	es, err := q.Next(ctx, 100)
 	token := q.Token
 	if err != nil {
@@ -39,7 +42,7 @@ func TestReadObservationEntityFromEmptyDatastore(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
-	q := MakeAllObservationEntitiesQuery("")
+	q := NewAllObservationEntitiesQuery("")
 	es, err := q.Next(ctx, 100)
 	token := q.Token
 	if err != nil {
@@ -64,7 +67,10 @@ func TestReadSingleActionEntityFromDatastore(t *testing.T) {
 	}); err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	q := MakeAllActionEntitiesQuery("")
+	q, err := newActionEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 	es, err := q.Next(ctx, 100)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -85,7 +91,7 @@ func TestReadSingleObservationEntityFromDatastore(t *testing.T) {
 	}); err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	q := MakeAllObservationEntitiesQuery("")
+	q := NewAllObservationEntitiesQuery("")
 	es, err := q.Next(ctx, 100)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -158,7 +164,7 @@ func TestWriteAndReadObservationEntitiesFromDatastore(t *testing.T) {
 			if err := PutObservationEntities(ctx, tt.entities...); err != nil {
 				t.Errorf("test case %s %s", tt.name, err)
 			}
-			q := MakeAllObservationEntitiesQuery("")
+			q := NewAllObservationEntitiesQuery("")
 			es, err := q.Next(ctx, 100)
 			if err != nil {
 				t.Errorf("test case %s %s", tt.name, err)
@@ -201,7 +207,10 @@ func TestReadActionEntitiesFromDatastoreOneAtAtime(t *testing.T) {
 	// Test that extracting the first ActionEntity produces some action entity.
 	var resultTok string
 	{
-		q := MakeAllActionEntitiesQuery("")
+		q, err := newActionEntitiesQuery("", "")
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
 		es, err := q.Next(ctx, 1)
 		resultTok = q.Token
 		if err != nil {
@@ -216,7 +225,13 @@ func TestReadActionEntitiesFromDatastoreOneAtAtime(t *testing.T) {
 	}
 	// Test that extracting the second ActionEntity produces some action entity.
 	{
-		q := MakeAllActionEntitiesQuery(resultTok)
+		q, err := newActionEntitiesQuery(resultTok, "")
+		if err != nil {
+			t.Errorf("token should not be empty!")
+		}
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
 		es, err := q.Next(ctx, 10)
 		if err != nil {
 			t.Errorf("unexpected error: %s", err)

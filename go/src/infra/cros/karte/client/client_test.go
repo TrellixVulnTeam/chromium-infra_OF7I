@@ -5,7 +5,7 @@
 package client
 
 import (
-	context "context"
+	"context"
 	"testing"
 )
 

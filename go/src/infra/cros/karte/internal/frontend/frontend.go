@@ -60,7 +60,11 @@ func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.Crea
 
 // ListActions lists the actions that Karte knows about.
 func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListActionsRequest) (*kartepb.ListActionsResponse, error) {
-	q := MakeAllActionEntitiesQuery(req.GetPageToken())
+	q, err := newActionEntitiesQuery(req.GetPageToken(), req.GetFilter())
+	if err != nil {
+		return nil, errors.Annotate(err, "list actions").Err()
+	}
+
 	es, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
 		return nil, errors.Annotate(err, "list actions (page size: %d)", req.GetPageSize()).Err()
@@ -77,7 +81,7 @@ func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListAction
 
 // ListObservations lists the observations that Karte knows about.
 func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListObservationsRequest) (*kartepb.ListObservationsResponse, error) {
-	q := MakeAllObservationEntitiesQuery(req.GetPageToken())
+	q := NewAllObservationEntitiesQuery(req.GetPageToken())
 	es, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
 		return nil, errors.Annotate(err, "list observations (page size: %d)", req.GetPageSize()).Err()

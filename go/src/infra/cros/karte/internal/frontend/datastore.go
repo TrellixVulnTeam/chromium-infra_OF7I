@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/filterexp"
 )
 
 // DefaultBatchSize is the default size of a batch for a datastore query.
@@ -179,13 +180,25 @@ func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*Act
 	return entities, nil
 }
 
-// MakeAllActionEntitiesQuery makes an action entities query that starts at the position
-// implied by the given token and lists all action entities.
-func MakeAllActionEntitiesQuery(token string) *ActionEntitiesQuery {
+// NewActionEntitiesQuery makes an action entities query that starts at the position implied
+// by the given token and lists all action entities matching the condition described in the
+// filter.
+func newActionEntitiesQuery(token string, filter string) (*ActionEntitiesQuery, error) {
+	expr, err := filterexp.Parse(filter)
+	if err != nil {
+		return nil, errors.Annotate(err, "make action entities query").Err()
+	}
+	q, err := filterexp.ApplyConditions(
+		datastore.NewQuery(ActionKind),
+		expr,
+	)
+	if err != nil {
+		return nil, errors.Annotate(err, "make action entities query").Err()
+	}
 	return &ActionEntitiesQuery{
 		Token: token,
-		Query: datastore.NewQuery(ActionKind),
-	}
+		Query: q,
+	}, nil
 }
 
 // ObservationEntitiesQuery is a wrapped query of action entities bearing a page token.
@@ -238,9 +251,9 @@ func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([
 	return entities, nil
 }
 
-// MakeAllObservationEntitiesQuery makes an action entities query that starts at the position
+// NewAllObservationEntitiesQuery makes an action entities query that starts at the position
 // implied by the page token and lists all action entities.
-func MakeAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
+func NewAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
 	return &ObservationEntitiesQuery{
 		Token: token,
 		Query: datastore.NewQuery(ObservationKind),
