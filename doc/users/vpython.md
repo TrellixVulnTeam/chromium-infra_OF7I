@@ -588,7 +588,7 @@ wheel: <
 >
 wheel: <
   name: "infra/python/wheels/cffi/${vpython_platform}"
-  version: "version:1.14.5"
+  version: "version:1.14.5.chromium.2"
 >
 wheel: <
   name: "infra/python/wheels/pycparser-py2_py3"
