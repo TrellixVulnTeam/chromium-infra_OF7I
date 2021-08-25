@@ -16,6 +16,17 @@ type restAPIServer struct {
 	grpcServer CrrevServer
 }
 
+// crCPOldReferences holds references to repositories that changed
+// Cr-Commit-Position reference. The number indicates the latest commit
+// position that uses old reference.
+var crCPOldReferences = map[string]map[string]int{
+	"chromium": {
+		"chromium/src": 913133,
+		"v8/v8":        76350,
+		"infra/infra":  42976,
+	},
+}
+
 func (s *restAPIServer) handleRedirect(c *router.Context) {
 	// gRPC expects a leading slash. However, router doesn't include it in
 	// named parameter.
@@ -40,14 +51,18 @@ func (s *restAPIServer) handleNumbering(c *router.Context) {
 	host := queryValues.Get("project")
 	repository := queryValues.Get("repo")
 	ref := queryValues.Get("numbering_identifier")
-	// Handle Cr-Commit-Position change in chromium/src
+	// Handle Cr-Commit-Position change in all repositories
 	// See: https://crbug.com/1241484
-	// This should be removed after 2021-10-01
-	if host == "chromium" && repository == "chromium/src" {
-		// 913133 is the last known commit position with old reference
-		if ref == "refs/heads/master" && n > 913133 {
+	var lastCommitOldReference int
+	if repoMapping, ok := crCPOldReferences[host]; ok {
+		if n, ok := repoMapping[repository]; ok {
+			lastCommitOldReference = n
+		}
+	}
+	if lastCommitOldReference > 0 {
+		if ref == "refs/heads/master" && n > lastCommitOldReference {
 			ref = "refs/heads/main"
-		} else if ref == "refs/heads/main" && n <= 913133 {
+		} else if ref == "refs/heads/main" && n <= lastCommitOldReference {
 			ref = "refs/heads/master"
 		}
 	}
