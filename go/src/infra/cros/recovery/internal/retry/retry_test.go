@@ -44,11 +44,11 @@ func TestLimitTime(t *testing.T) {
 	})
 	t.Run("Passed as not reached limit", func(t *testing.T) {
 		t.Parallel()
-		if err := WithTimeout(ctx, time.Millisecond, 50*time.Millisecond, createFunc(10), "Passed as not reached limit"); err != nil {
+		if err := WithTimeout(ctx, time.Millisecond, time.Second, createFunc(10), "Passed as not reached limit"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
 		}
 	})
-	t.Run("Passed with first attemp", func(t *testing.T) {
+	t.Run("Passed with first attempt", func(t *testing.T) {
 		t.Parallel()
 		if err := WithTimeout(ctx, time.Millisecond, 50*time.Millisecond, createFunc(0), "Passed with first attemp"); err != nil {
 			t.Errorf("Expected to pass: %s", err)
