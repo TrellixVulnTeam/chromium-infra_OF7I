@@ -3,11 +3,13 @@
 // found in the LICENSE file.
 
 import * as React from 'react';
+import { useSelector } from 'react-redux';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 
 import MetricsTableSection from './MetricsTableSection';
+import { selectCurrentSource } from '../dataSources/dataSourcesSlice';
 
 import styles from './MetricsTableBody.module.css';
 import { Section } from './MetricsTable';
@@ -24,6 +26,8 @@ interface Props {
   MetricsTableBody component, which renders the body of the metrics table.
 */
 const MetricsTableBody: React.FunctionComponent<Props> = (props: Props) => {
+  const dataSource = useSelector(selectCurrentSource);
+
   if (props.sections.length === 0) {
     return (
       <TableBody>
@@ -51,6 +55,7 @@ const MetricsTableBody: React.FunctionComponent<Props> = (props: Props) => {
           rank={section.rank}
           dates={props.dates}
           section={section}
+          sectionLinkTemplate={dataSource.sectionLinkTemplate}
         />
       ))}
     </TableBody>

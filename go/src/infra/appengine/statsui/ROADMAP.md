@@ -9,12 +9,14 @@
 
 ### Features to add (Prioritized)
 
-* Show deltas vs previous period
-* Make CQ builders links
+* Show deltas
+  * &#x2705; vs previous period
+  * vs baseline
+* &#x2705; Make CQ builders links (https://crbug.com/1226916)
 * Add Google Analytics
 * External linking for metrics
 * Add day of week to day aggregation display
-* Add support for percentile metrics
+* Add support for percentile (distribution) metrics
 * Charting
   * Show trends
   * Show distributions

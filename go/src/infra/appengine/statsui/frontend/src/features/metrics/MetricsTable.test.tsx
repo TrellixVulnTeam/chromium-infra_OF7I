@@ -12,7 +12,7 @@ import {
 } from '../../utils/testUtils';
 import { Unit } from '../../utils/formatUtils';
 
-describe('when rendering MetricsTable', () => {
+describe('when rendering MetricsTable empty state', () => {
   it('should render empty state if no data', () => {
     renderWithRedux(<MetricsTable />, {});
     expect(screen.getByText('No data selected')).toBeInTheDocument();
@@ -248,5 +248,38 @@ describe('when filtering MetricsTable data', () => {
     expect(getByTestId(rows[0], 'mt-row-section-name')).toHaveTextContent('B');
     // Second row should have the sub section
     expect(getByTestId(rows[1], 'mt-row-section-name')).toHaveTextContent('S2');
+  });
+});
+
+describe('when rendering MetricsTable links', () => {
+  it('should render sections properly', () => {
+    const dataSources = initDataSourceWithMetrics('test-ds', '', {
+      name: 'M1',
+      unit: Unit.Number,
+    });
+    dataSources.available[0].sectionLinkTemplate = 'http://test/SECTION_NAME';
+    renderWithRedux(<MetricsTable />, {
+      dataSources: dataSources,
+      metrics: initMetricsState({
+        visibleDates: ['2021-01-02'],
+        visibleMetrics: ['M1'],
+        visibleData: {
+          A: {
+            M1: {
+              name: 'M1',
+              data: {
+                '2021-01-02': { value: 112 },
+              },
+            },
+          },
+        },
+      }),
+    });
+    const rows = screen.getAllByTestId('mt-row');
+    expect(rows).toHaveLength(1);
+    expect(getByTestId(rows[0], 'mt-row-section-name-link')).toHaveAttribute(
+      'href',
+      'http://test/A'
+    );
   });
 });

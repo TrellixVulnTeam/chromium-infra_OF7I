@@ -12,6 +12,15 @@ tr.odd {
   border-right: 1px solid var(--grey-300);
 }
 
+.section .name .link {
+  padding-left: 4px;
+}
+
+.section .name .linkIcon {
+  font-size: 16px;
+  vertical-align: text-bottom;
+}
+
 .indent .name {
   padding-left: 32px;
 }

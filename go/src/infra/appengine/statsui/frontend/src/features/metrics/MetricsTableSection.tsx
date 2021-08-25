@@ -9,9 +9,11 @@ import TableRow from '@material-ui/core/TableRow';
 import classnames from 'classnames';
 
 import { selectCurrentSource } from '../dataSources/dataSourcesSlice';
+import Icon from '@material-ui/core/Icon';
 import { Section } from './MetricsTable';
 import MetricsTableDataCell from './MetricsTableDataCell';
 import styles from './MetricsTableSection.module.css';
+import { Link } from '@material-ui/core';
 
 interface Props {
   odd: boolean;
@@ -19,6 +21,7 @@ interface Props {
   indent?: boolean;
   dates: string[];
   section: Section;
+  sectionLinkTemplate?: string;
 }
 
 /*
@@ -31,8 +34,33 @@ const MetricsTableSection: React.FunctionComponent<Props> = ({
   indent,
   dates,
   section,
+  sectionLinkTemplate,
 }: Props) => {
   const dataSource = useSelector(selectCurrentSource);
+
+  let sectionName: React.ReactElement;
+  if (section.name === '') {
+    sectionName = <>-</>;
+  } else {
+    sectionName = (
+      <>
+        {section.name}
+        {sectionLinkTemplate && (
+          <Link
+            href={sectionLinkTemplate.replaceAll(
+              'SECTION_NAME',
+              encodeURI(section.name)
+            )}
+            className={styles.link}
+            data-testid="mt-row-section-name-link"
+            target="_blank"
+          >
+            <Icon className={styles.linkIcon}>launch</Icon>
+          </Link>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -52,7 +80,7 @@ const MetricsTableSection: React.FunctionComponent<Props> = ({
               className={styles.name}
               data-testid="mt-row-section-name"
             >
-              {section.name === '' ? '-' : section.name}
+              {sectionName}
             </TableCell>
             <TableCell data-testid="mt-row-metric-name"></TableCell>
             {dates.map((date, i) => (
@@ -93,7 +121,7 @@ const MetricsTableSection: React.FunctionComponent<Props> = ({
               rowSpan={section.metrics.length}
               data-testid="mt-row-section-name"
             >
-              {section.name === '' ? '-' : section.name}
+              {sectionName}
             </TableCell>
           )}
           <TableCell data-testid="mt-row-metric-name">{metric.name}</TableCell>

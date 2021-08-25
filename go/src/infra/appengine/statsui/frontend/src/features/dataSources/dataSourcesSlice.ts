@@ -54,6 +54,7 @@ export interface DataSource {
   prettyName: string;
   apiDataSource: string;
   sectionName: string;
+  sectionLinkTemplate?: string;
   metrics: MetricOption[];
   periods: PeriodOption[];
   // Key is the name of the metric.  This is automatically built by
@@ -144,6 +145,8 @@ const initialState: DataSourcesState = populateMaps({
       apiDataSource: 'cq_builders',
       prettyName: 'CQ Builders',
       sectionName: 'Builders',
+      sectionLinkTemplate:
+        'https://ci.chromium.org/p/chromium/builders/try/SECTION_NAME',
       metrics: [
         {
           name: 'P50',
