@@ -62,7 +62,10 @@ func (d *Dir) OpenSubDir(path string) (string, error) {
 	return subDir, nil
 }
 
-const gsOffloaderMarker = ".ready_for_offload"
+const (
+	gsOffloaderAdminTasksMarker = ".admin_task_marker"
+	gsOffloaderMarker           = ".ready_for_offload"
+)
 
 // sealResultsDir drops a special timestamp file in the results
 // directory notifying gs_offloader to offload the directory. The
@@ -70,6 +73,14 @@ const gsOffloaderMarker = ".ready_for_offload"
 // not be called on an already sealed results directory.
 func sealResultsDir(d string) error {
 	ts := []byte(fmt.Sprintf("%d", time.Now().Unix()))
+	// SSW is only used for admin tasks now, so all results handled here are for
+	// admin tasks.
+	marker := filepath.Join(d, gsOffloaderAdminTasksMarker)
+	if err := ioutil.WriteFile(marker, ts, 0666); err != nil {
+		return errors.Annotate(err, "seal results dir %q with marker for admin tasks", d).Err()
+	}
+	// TODO(b/192504102) Remove the old marker generation when the gs_offloader
+	// is migrated to use the marker for admin tasks.
 	tsfile := filepath.Join(d, gsOffloaderMarker)
 	if err := ioutil.WriteFile(tsfile, ts, 0666); err != nil {
 		return errors.Annotate(err, "seal results dir %s", d).Err()
