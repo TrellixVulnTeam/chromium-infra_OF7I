@@ -10,9 +10,7 @@
 ### Features to add (Prioritized)
 
 * Show deltas
-  * &#x2705; vs previous period
   * vs baseline
-* &#x2705; Make CQ builders links (https://crbug.com/1226916)
 * Add Google Analytics
 * External linking for metrics
 * Add day of week to day aggregation display
@@ -24,27 +22,27 @@
 * Table row virtualization
 * Add retry and no patch phases into phase metric
 
-### &#x2705; Milestone 4
+### Milestone 4 (Done)
 
 Productionization
 * Frontend tests
 * Backend tests
 * Move repo
 
-### &#x2705; Milestone 3
+### Milestone 3 (Done)
 
 Ability to show multiple datasets
 * Catalog to show multiple datasets
 * Router
 * URL updating for easy copy & paste
 
-### &#x2705; Milestone 2
+### Milestone 2 (Done)
 
 Show more detail
 * Drilldowns
 * Period selector
 
-### &#x2705; Milestone 1
+### Milestone 1 (Done)
 
 Functioning UI to show builders & their runtimes on a weekly basis
 * Display metrics
