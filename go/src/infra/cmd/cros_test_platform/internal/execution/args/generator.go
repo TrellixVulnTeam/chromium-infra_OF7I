@@ -404,6 +404,41 @@ func (g *Generator) swarmingTags(ctx context.Context, kv map[string]string, cmd 
 		tags = append(tags, "qs_account:"+qa)
 	}
 	tags = append(tags, removeReservedTags(g.Params.GetDecorations().GetTags())...)
+	// Add primary/secondary DUTs board/model info in swarming tags for
+	// multi-DUTs result reporting purpose.
+	tags = append(tags, g.multiDutsTags()...)
+	return tags
+}
+
+// multiDutsTags generate swarming tags based on primary/secondary DUTs
+// board/model info from request.
+func (g *Generator) multiDutsTags() []string {
+	var tags []string
+	if g.Params.GetSoftwareAttributes().GetBuildTarget() != nil {
+		tags = append(tags, fmt.Sprintf("primary_board:%s", g.Params.SoftwareAttributes.BuildTarget.Name))
+	}
+	if g.Params.GetHardwareAttributes().GetModel() != "" {
+		tags = append(tags, fmt.Sprintf("primary_model:%s", g.Params.HardwareAttributes.Model))
+	}
+	sds := g.Params.GetSecondaryDevices()
+	var secondary_boards []string
+	var secondary_models []string
+	for _, sd := range sds {
+		if sd.GetSoftwareAttributes().GetBuildTarget() != nil {
+			secondary_boards = append(secondary_boards, sd.SoftwareAttributes.BuildTarget.Name)
+		}
+		if sd.GetHardwareAttributes().GetModel() != "" {
+			secondary_models = append(secondary_models, sd.HardwareAttributes.Model)
+		}
+	}
+	if len(secondary_boards) > 0 {
+		boards := strings.Join(secondary_boards, ",")
+		tags = append(tags, fmt.Sprintf("secondary_boards:%s", boards))
+	}
+	if len(secondary_models) > 0 {
+		models := strings.Join(secondary_models, ",")
+		tags = append(tags, fmt.Sprintf("secondary_models:%s", models))
+	}
 	return tags
 }
 
