@@ -20,7 +20,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
-	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
 )
 
@@ -33,9 +32,9 @@ type DirWriter struct {
 
 // gsClient is a Google Storage client.
 //
-// This interface is a subset of the gcgs.Client interface.
+// This interface is a subset of the gs.Client interface.
 type gsClient interface {
-	NewWriter(p gcgs.Path) (gs.Writer, error)
+	NewWriter(p gs.Path) (gs.Writer, error)
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
@@ -74,7 +73,7 @@ func verifyPaths(localPath string, gsPath string) error {
 //
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
 // skipping remaining contents of the directory and returns ctx.Err().
-func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Path) error {
+func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gs.Path) error {
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
 	if err := verifyPaths(srcDir, string(dstDir)); err != nil {
 		return err
@@ -112,7 +111,7 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	return nil
 }
 
-func discoverFiles(srcDir string, dstDir gcgs.Path) ([]*file, errors.MultiError) {
+func discoverFiles(srcDir string, dstDir gs.Path) ([]*file, errors.MultiError) {
 	var merr errors.MultiError
 	files := []*file{}
 	if err := filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
@@ -163,7 +162,7 @@ func (w *DirWriter) writeOne(ctx context.Context, f *file) error {
 
 type file struct {
 	Src  string
-	Dest gcgs.Path
+	Dest gs.Path
 	Info os.FileInfo
 }
 
