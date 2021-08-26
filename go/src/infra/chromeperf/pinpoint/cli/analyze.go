@@ -16,6 +16,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"infra/chromeperf/histograms"
 	"infra/chromeperf/pinpoint"
@@ -85,17 +86,62 @@ type statTestSummary struct {
 	Stddev float64 `yaml:"stddev"`
 }
 
+type statTestMap map[expNameKey]statTestSummary
+type measurementMap map[expNameKey]measurementSummary
+
 type measurementReport struct {
-	StatTestSummary map[expNameKey]statTestSummary    `yaml:"stat-test-summary"` // map[base or exp]
-	PValue          *float64                          `yaml:"p-value"`
-	Measurements    map[expNameKey]measurementSummary `yaml:"measurements"` // map[base or exp]
-	ErrorMessage    string                            `yaml:"error-message" json:",omitempty"`
+	StatTestSummary statTestMap    `yaml:"stat-test-summary"` // map[base or exp]
+	PValue          *float64       `yaml:"p-value"`
+	Measurements    measurementMap `yaml:"measurements"` // map[base or exp]
+	ErrorMessage    string         `yaml:"error-message" json:",omitempty"`
 }
 
+type reportMap map[metricNameKey]measurementReport
+
 type experimentReport struct {
-	OverallPValue float64                             `yaml:"overall-p-value"`
-	Alpha         float64                             `yaml:"alpha"`
-	Reports       map[metricNameKey]measurementReport `yaml:"reports"` // map[metric_name]
+	OverallPValue float64   `yaml:"overall-p-value"`
+	Alpha         float64   `yaml:"alpha"`
+	Reports       reportMap `yaml:"reports"` // map[metric_name]
+}
+
+type reportMapKV struct {
+	Name   metricNameKey
+	Report measurementReport
+}
+
+type statTestMapKV struct {
+	Name    expNameKey
+	Summary statTestSummary
+}
+
+type measurmentMapKV struct {
+	Name    expNameKey
+	Summary measurementSummary
+}
+
+func (sm statTestMap) MarshalJSON() ([]byte, error) {
+	m := []statTestMapKV{}
+	for k, v := range sm {
+		m = append(m, statTestMapKV{k, v})
+	}
+
+	return json.Marshal(m)
+}
+
+func (mm measurementMap) MarshalJSON() ([]byte, error) {
+	m := []measurmentMapKV{}
+	for k, v := range mm {
+		m = append(m, measurmentMapKV{k, v})
+	}
+	return json.Marshal(m)
+}
+
+func (rm reportMap) MarshalJSON() ([]byte, error) {
+	m := []reportMapKV{}
+	for k, r := range rm {
+		m = append(m, reportMapKV{k, r})
+	}
+	return json.Marshal(m)
 }
 
 func loadAndMergeHistograms(config *changeConfig, rootDir string) ([]*histograms.Histogram, error) {

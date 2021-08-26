@@ -14,7 +14,9 @@
 package cli
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"infra/chromeperf/pinpoint/proto"
 	"path/filepath"
 	"testing"
@@ -83,12 +85,33 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 			}
 			wd, err := filepath.Abs("testdata")
 			So(err, ShouldBeNil)
+
 			r, err := m.doAnalyzeExperiment(ctx, wd, j)
 			So(err, ShouldBeNil)
 			So(r, ShouldNotBeNil)
 			So(r.OverallPValue, ShouldNotEqual, 0)
 			So(r.Reports, ShouldNotBeNil)
 		})
+	})
+
+	Convey("Report serializes to JSON", t, func() {
+		m, err := loadManifestFromPath("testdata/11ac8128320000/manifest.yaml")
+		So(err, ShouldBeNil)
+		Convey("When we analyze the artifacts", func() {
+			rootDir, err := filepath.Abs("testdata/11ac8128320000")
+			So(err, ShouldBeNil)
+			r, err := analyzeExperiment(m, rootDir)
+			So(err, ShouldBeNil)
+			So(r, ShouldNotBeNil)
+			Convey("The report struct should encode to JSON without errors", func() {
+				buf := &bytes.Buffer{}
+				enc := json.NewEncoder(buf)
+				err := enc.Encode(r)
+				So(err, ShouldBeNil)
+				So(len(buf.Bytes()), ShouldBeGreaterThan, 0)
+			})
+		})
+
 	})
 
 }
