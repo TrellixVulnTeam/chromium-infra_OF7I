@@ -27,8 +27,10 @@ import (
 )
 
 const (
-	chromeExternalHost = "chromium.googlesource.com"
-	chromeInternalHost = "chrome-internal.googlesource.com"
+	chromeExternalHost   = "chromium.googlesource.com"
+	chromeInternalHost   = "chrome-internal.googlesource.com"
+	googlePrivacyPolicy  = "https://policies.google.com/privacy"
+	googleTermsOfService = "https://policies.google.com/terms"
 )
 
 var (
@@ -70,7 +72,9 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "setup-project --checkout=/usr/.../chromiumos " +
 			"--program=galaxy {--project=milkyway|--all_projects}",
-		ShortDesc: "Syncs a ChromiumOS checkout using local_manifests from the specified project.",
+		ShortDesc: "Syncs a ChromiumOS checkout using local_manifests from the specified project.\n" +
+			"Google Privacy Policy: " + googlePrivacyPolicy +
+			"\nGoogle Terms of Service: " + googleTermsOfService,
 		CommandRun: func() subcommands.CommandRun {
 			b := &setupProject{}
 			b.authFlags = authcli.Flags{}
@@ -123,6 +127,9 @@ func (b *setupProject) validate() error {
 func (b *setupProject) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	StdoutLog = a.(*setupProjectApplication).stdoutLog
 	StderrLog = a.(*setupProjectApplication).stderrLog
+
+	LogOut("Google Privacy Policy: %s", googlePrivacyPolicy)
+	LogOut("Google Terms of Service: %s", googleTermsOfService)
 
 	if err := b.validate(); err != nil {
 		LogErr(err.Error())
