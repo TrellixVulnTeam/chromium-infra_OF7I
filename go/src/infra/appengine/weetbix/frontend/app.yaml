@@ -1,0 +1,8 @@
+runtime: go116
+instance_class: F4
+service: default
+
+handlers:
+# Handlers for static files can be added here later.
+- url: /.*
+  script: auto
