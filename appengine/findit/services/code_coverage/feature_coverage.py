@@ -2,11 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import gc
 import collections
 import json
 import logging
 import difflib
+import Queue
+from threading import Thread
 
 from google.appengine.ext import ndb
 
@@ -50,7 +51,6 @@ _CHROMIUM_PROJECT = 'chromium/src'
 _CHROMIUM_REPO = GitilesRepository(
     FinditHttpClient(),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
-
 
 def _GetFeatureCommits(hashtag):
   """Returns merged commits corresponding to a feature.
@@ -323,21 +323,18 @@ def _GetActiveFeatureModifers():
         yield x.gerrit_hashtag, x.key.id()
 
 
-def _GetFileContentAtCommit(file_path, revision):
-  """Returns lines in a file at the specified revision.
+def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
+  """Fetches lines in a file at the specified revision.
 
   Args:
     file_path (string): chromium/src relative path to file whose content is to
       be fetched. Must start with '//'.
     revision (string): commit hash of the revision.
-
-  Returns:
-    A list of strings representing the lines in the file. If file is not found
-    at the specified revision, an empty list is returned.
+    file_content_queue (Queue): Queue which holds the output.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
   content = _CHROMIUM_REPO.GetSource(file_path[2:], revision)
-  return content.split('\n') if content else []
+  file_content_queue.put((revision, content.split('\n') if content else []))
 
 
 def _ExportFeatureCoverage(postsubmit_report):
@@ -347,8 +344,8 @@ def _ExportFeatureCoverage(postsubmit_report):
     postsubmit_report(PostsubmitReport): Full codebase report which acts as
                         input to the algorithm for finding coverage per feature.
   """
+  file_content_queue = Queue.Queue()
   files_deleted_at_latest = set()
-
   for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers():
     interesting_lines_per_file = {}
     commits = _GetFeatureCommits(gerrit_hashtag)
@@ -362,32 +359,43 @@ def _ExportFeatureCoverage(postsubmit_report):
         file_path = '//' + file_path
         if file_path in files_deleted_at_latest:
           continue
-        latest_lines = _GetFileContentAtCommit(
-            file_path, postsubmit_report.gitiles_commit.revision)
-        if not latest_lines:
+        latest_commit_thread = Thread(
+            target=_FetchFileContentAtCommit,
+            args=(file_path, postsubmit_report.gitiles_commit.revision,
+                  file_content_queue))
+        feature_commit_thread = Thread(
+            target=_FetchFileContentAtCommit,
+            args=(file_path, commit['feature_commit'], file_content_queue))
+        parent_commit_thread = Thread(
+            target=_FetchFileContentAtCommit,
+            args=(file_path, commit['parent_commit'], file_content_queue))
+
+        latest_commit_thread.start()
+        feature_commit_thread.start()
+        parent_commit_thread.start()
+        latest_commit_thread.join()
+        feature_commit_thread.join()
+        parent_commit_thread.join()
+
+        contents = {}
+        while not file_content_queue.empty():
+          k, v = file_content_queue.get(block=False)
+          contents[k] = v
+
+        if not contents[postsubmit_report.gitiles_commit.revision]:
           files_deleted_at_latest.add(file_path)
           continue
 
-        feature_commit_lines = _GetFileContentAtCommit(file_path,
-                                                       commit['feature_commit'])
-        assert feature_commit_lines, (
+        assert contents[commit['feature_commit']], (
             "File Content not found for path %s at commit %s (CL: %s)" %
             (file_path, commit['feature_commit'], commit['cl_number']))
 
-        parent_commit_lines = _GetFileContentAtCommit(file_path,
-                                                      commit['parent_commit'])
-
-        interesting_lines = _GetInterestingLines(latest_lines,
-                                                 feature_commit_lines,
-                                                 parent_commit_lines)
+        interesting_lines = _GetInterestingLines(
+            contents[postsubmit_report.gitiles_commit.revision],
+            contents[commit['feature_commit']],
+            contents[commit['parent_commit']])
         interesting_lines_per_file[file_path] = interesting_lines_per_file.get(
             file_path, set()) | interesting_lines
-        # explicitly release memory
-        del latest_lines
-        del feature_commit_lines
-        del parent_commit_lines
-        del interesting_lines
-        gc.collect()
 
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
         postsubmit_report, interesting_lines_per_file)
