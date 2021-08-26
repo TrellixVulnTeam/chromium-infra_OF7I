@@ -47,7 +47,7 @@ func (c *checkServerRun) Run(a subcommands.Application, args []string, env subco
 // InnerRun runs the check-server command and returns a go-level error.
 func (c *checkServerRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	// TODO(gregorynisbet): Replace hardcoded Karte server with arguments.
-	resp, err := http.Get("http://localhost:8800/hello-world")
+	resp, err := http.Get(fmt.Sprintf("http://%s/hello-world", site.DefaultCLIKarteServer))
 	if err != nil {
 		return errors.Annotate(err, "get request").Err()
 	}

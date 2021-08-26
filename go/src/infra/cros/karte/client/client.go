@@ -12,6 +12,7 @@ import (
 	prpc "go.chromium.org/luci/grpc/prpc"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/site"
 )
 
 // Option is a configuration option. For example `UserAgent(...)` would be
@@ -34,6 +35,20 @@ type config struct {
 func LocalConfig(o auth.Options) *config {
 	return &config{
 		karteService: "127.0.0.1:8800",
+		loginMode:    auth.InteractiveLogin,
+		authOption:   o,
+		userAgent:    "local command line tool",
+	}
+}
+
+// DevConfig returns a configuration for the Karte client intended to talk to the dev
+// instance of Karte, which is a cloud project.
+//
+// The auth options are required and must be passed in explicitly. The hostname and
+// type of login are set to reasonable defaults for a local command line tool.
+func DevConfig(o auth.Options) *config {
+	return &config{
+		karteService: site.DevKarteServer,
 		loginMode:    auth.InteractiveLogin,
 		authOption:   o,
 		userAgent:    "local command line tool",

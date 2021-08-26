@@ -14,6 +14,17 @@ import (
 
 const progName = "karte"
 
+// DefaultCLIKarteServer is the default server that the karte command line tool talks to.
+// The Karte commands are *not* exclusively readonly, therefore we should default to talking
+// to the dev instance rather than the prod instance.
+//
+// TODO(gregorynisbet): Add non readonly commands to karte CLI.
+//
+const DefaultCLIKarteServer = DevKarteServer
+
+// DevKaretServer is the dev cloud project for Karte.
+const DevKarteServer = "chrome-fleet-karte-dev.appspot.com"
+
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
 // defaults.
 var DefaultAuthOptions = auth.Options{
