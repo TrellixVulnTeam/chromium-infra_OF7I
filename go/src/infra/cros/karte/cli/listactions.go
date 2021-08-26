@@ -14,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/karte/client"
-	"infra/cros/karte/site"
+	"infra/cros/karte/internal/site"
 )
 
 // ListActions command lists all actions in Karte.

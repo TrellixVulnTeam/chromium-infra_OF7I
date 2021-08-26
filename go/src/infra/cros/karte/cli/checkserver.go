@@ -12,7 +12,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cros/karte/site"
+	"infra/cros/karte/internal/site"
 )
 
 // CheckServer checks the status of the Karte server.
