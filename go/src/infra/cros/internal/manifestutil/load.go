@@ -123,7 +123,7 @@ func LoadManifestFromFileRaw(file string) ([]byte, error) {
 
 func loadFromGitilesInnerFunc(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (getFile func(file string) ([]byte, error)) {
 	return func(f string) ([]byte, error) {
-		path := filepath.Join(filepath.Dir(file), f)
+		path := filepath.Join(filepath.Dir(file), filepath.Base(f))
 		data, err := gerritClient.DownloadFileFromGitiles(ctx, host, project, branch, f)
 		if err != nil {
 			return nil, errors.Annotate(err, "failed to open and read %s", path).Err()

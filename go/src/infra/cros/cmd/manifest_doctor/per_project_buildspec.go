@@ -336,7 +336,7 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 				project, releaseBranch, "local_manifest.xml")
 			if err != nil {
 				if project == programProject {
-					LogErr("%s: couldn't load local_manifest.xml, it may not exist for the program so skipping...", logPrefix)
+					LogErr("%s: couldn't load local_manifest.xml for program %s, it may not exist for the program so skipping...", logPrefix, program)
 					continue
 				}
 				return errors.Annotate(err, "%s: error loading tip-of-branch manifest", logPrefix).Err()
