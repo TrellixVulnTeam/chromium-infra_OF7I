@@ -34,14 +34,14 @@ const (
 // pingExec verifies the DUT is pingable.
 func pingExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
-		return args.Access.Ping(ctx, args.DUT.Name, 2)
+		return args.Access.Ping(ctx, args.ResourceName, 2)
 	}, "cros dut ping")
 }
 
 // sshExec verifies ssh access to the DUT.
 func sshExec(ctx context.Context, args *execs.RunArgs) error {
 	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
-		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
+		if r := args.Access.Run(ctx, args.ResourceName, "true"); r.ExitCode != 0 {
 			return errors.Reason("cros dut ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
 		}
 		return nil

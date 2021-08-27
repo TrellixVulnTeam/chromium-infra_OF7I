@@ -6,33 +6,16 @@ package servo
 
 import (
 	"context"
-	"time"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/retry"
 	"infra/cros/recovery/tlw"
 )
 
 // NOTE: That is just fake execs for local testing during developing.
 // TODO(otabek@): Replace with real execs.
-
-func pingServoHostActionExec(ctx context.Context, args *execs.RunArgs) error {
-	return retry.LimitCount(ctx, 3, time.Second, func() error {
-		return args.Access.Ping(ctx, args.DUT.ServoHost.Name, 2)
-	}, "ping servo-host")
-}
-
-func sshServoHostActionExec(ctx context.Context, args *execs.RunArgs) error {
-	return retry.LimitCount(ctx, 3, time.Second, func() error {
-		if r := args.Access.Run(ctx, args.DUT.ServoHost.Name, "true"); r.ExitCode != 0 {
-			return errors.Reason("check ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
-		}
-		return nil
-	}, "check ssh access")
-}
 
 func servodInitActionExec(ctx context.Context, args *execs.RunArgs) error {
 	req := &tlw.InitServodRequest{
@@ -63,8 +46,6 @@ func servodRestartActionExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 func init() {
-	execs.Register("servo_host_ping", pingServoHostActionExec)
-	execs.Register("servo_host_ssh", sshServoHostActionExec)
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
 	execs.Register("servo_host_servod_restart", servodRestartActionExec)
