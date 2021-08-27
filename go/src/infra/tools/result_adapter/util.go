@@ -5,7 +5,9 @@
 package main
 
 import (
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -71,4 +73,29 @@ func ensureLeadingDoubleSlash(path string) string {
 // normalizePath converts the artifact path to the canonical form.
 func normalizePath(p string) string {
 	return path.Clean(strings.ReplaceAll(p, "\\", "/"))
+}
+
+// processArtifacts walks the files in artifactDir then returns a map from normalized relative path to full path.
+func processArtifacts(artifactDir string) (normPathToFullPath map[string]string, err error) {
+	normPathToFullPath = map[string]string{}
+	err = filepath.Walk(artifactDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Mode().IsRegular() {
+			// normPath is the normalized relative path to artifactDir.
+			relPath, err := filepath.Rel(artifactDir, path)
+			if err != nil {
+				return err
+			}
+			normPath := normalizePath(relPath)
+			normPathToFullPath[normPath] = path
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return normPathToFullPath, err
 }

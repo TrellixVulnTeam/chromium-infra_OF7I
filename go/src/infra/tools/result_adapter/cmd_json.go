@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"os"
-	"path/filepath"
 
 	"github.com/maruel/subcommands"
 
@@ -64,7 +63,7 @@ func (r *jsonRun) validate() (err error) {
 // generateTestResults converts test results from results file to sinkpb.TestResult.
 func (r *jsonRun) generateTestResults(ctx context.Context, _ []byte) ([]*sinkpb.TestResult, error) {
 	// Get artifacts.
-	normPathToFullPath, err := r.processArtifacts()
+	normPathToFullPath, err := processArtifacts(r.artifactDir)
 	if err != nil {
 		return nil, errors.Annotate(err, "open artifact directory").Err()
 	}
@@ -87,29 +86,4 @@ func (r *jsonRun) generateTestResults(ctx context.Context, _ []byte) ([]*sinkpb.
 		return nil, errors.Annotate(err, "converting as json results format").Err()
 	}
 	return trs, nil
-}
-
-// processArtifacts walks the files in r.artifactDir then returns a map from normalized relative path to full path.
-func (r *jsonRun) processArtifacts() (normPathToFullPath map[string]string, err error) {
-	normPathToFullPath = map[string]string{}
-	err = filepath.Walk(r.artifactDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.Mode().IsRegular() {
-			// normPath is the normalized relative path to r.artifactDir.
-			relPath, err := filepath.Rel(r.artifactDir, path)
-			if err != nil {
-				return err
-			}
-			normPath := normalizePath(relPath)
-			normPathToFullPath[normPath] = path
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return normPathToFullPath, err
 }

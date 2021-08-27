@@ -34,6 +34,7 @@ func main() {
 			cmdJSON(),
 			cmdSingle(),
 			cmdGo(),
+			cmdTast(),
 
 			{}, // a separator
 			subcommands.CmdHelp,
