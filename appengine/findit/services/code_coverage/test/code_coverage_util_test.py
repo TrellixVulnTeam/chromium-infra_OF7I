@@ -609,19 +609,47 @@ class CodeCoverageUtilTest(WaterfallTestCase):
     host = 'chromium-review.googlesource.com'
     project = 'chromium/src'
     hashtag = 'my_new_feature'
-    response = [{
+    first_response = []
+    for i in range(99):
+      first_response.append({
+          'project': project,
+          'hashtags': [hashtag],
+          'status': 'MERGED',
+          'current_revision': 'revision_hash',
+          '_cl_number': i
+      })
+    first_response.append({
         'project': project,
         'hashtags': [hashtag],
         'status': 'MERGED',
-        'current_revision': 'revision_hash'
+        'current_revision': 'revision_hash',
+        '_more_changes': True,
+        '_cl_number': 99
+    })
+    second_response = [{
+        'project': project,
+        'hashtags': [hashtag],
+        'status': 'MERGED',
+        'current_revision': 'revision_hash',
+        '_cl_number': 100
     }]
-    mock_http_client.return_value = (200, ')]}\'' + json.dumps(response), None)
+    mock_http_client.side_effect = [
+        (200, ')]}\'' + json.dumps(first_response), None),
+        (200, ')]}\'' + json.dumps(second_response), None),
+    ]
+    changes = [
+        x for x in code_coverage_util.FetchMergedChangesWithHashtag(
+            host, project, hashtag)
+    ]
 
-    changes = code_coverage_util.FetchMergedChangesWithHashtag(
-        host, project, hashtag)
-
-    mock_http_client.assert_called_with(
+    first_call = mock.call(
         ('https://chromium-review.googlesource.com/changes/'
-         '?q=chromium/src+is:merged+hashtag:my_new_feature'
+         '?q=chromium/src+is:merged+hashtag:my_new_feature&S=0&n=100'
          '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
-    self.assertEqual(changes, response)
+    second_call = mock.call(
+        ('https://chromium-review.googlesource.com/changes/'
+         '?q=chromium/src+is:merged+hashtag:my_new_feature&S=100&n=100'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
+    mock_http_client.assert_has_calls([first_call, second_call])
+    self.assertEqual(changes[:-1], first_response)
+    self.assertEqual(changes[-1:], second_response)

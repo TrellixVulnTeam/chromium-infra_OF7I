@@ -59,7 +59,7 @@ def _GetFeatureCommits(hashtag):
     hashtag (string): Gerrit hashtag corresponding to the feature.
 
   Returns:
-    A list of dict which looks like
+    Yields a dict which looks like
     {
       'feature_commit' : c1
       'parent_commit': c2
@@ -72,7 +72,6 @@ def _GetFeatureCommits(hashtag):
   """
   changes = code_coverage_util.FetchMergedChangesWithHashtag(
       _CHROMIUM_GERRIT_HOST, _CHROMIUM_PROJECT, hashtag)
-  commits = []
   for change in changes:
     commit = change['current_revision']
     parent_commit = change['revisions'][commit]['commit']['parents'][0][
@@ -84,13 +83,12 @@ def _GetFeatureCommits(hashtag):
         continue
       files.append(file_name)
     cl_number = change['_number']
-    commits.append({
+    yield {
         'feature_commit': commit,
         'parent_commit': parent_commit,
         'files': files,
         'cl_number': cl_number
-    })
-  return commits
+    }
 
 
 def _GetInterestingLines(latest_lines, feature_commit_lines,

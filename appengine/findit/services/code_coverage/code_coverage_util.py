@@ -171,19 +171,30 @@ def _FetchChangeDetails(host, project, change):
 
 
 def FetchMergedChangesWithHashtag(host, project, hashtag):
-  template = ('https://%s/changes/?q=%s+is:merged+hashtag:%s'
+  """Yields a generator object corresponding to changes with a given hashtag."""
+  num_results = 100
+  template = ('https://%s/changes/?q=%s+is:merged+hashtag:%s&S=%d&n=%d'
               '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES')
-  url = template % (host, project, hashtag)
-  status_code, response, _ = FinditHttpClient().Get(url)
-  if status_code != 200:
-    logging.info(
-        ('Failed to fetch changes with hashtag %s, status_code: %d response: %s'
-         % (hashtag, status_code, response)))
-    return []
-  # Remove XSSI magic prefix
-  if response.startswith(')]}\''):
-    response = response[4:]
-  return json.loads(response)
+  more = True
+  skip = 0
+  while more:
+    url = template % (host, project, hashtag, skip, num_results)
+    status_code, response, _ = FinditHttpClient().Get(url)
+    if status_code != 200:
+      logging.info((
+          'Failed to fetch changes with hashtag %s,status_code: %d response: %s'
+          % (hashtag, status_code, response)))
+      return
+    # Remove XSSI magic prefix
+    if response.startswith(')]}\''):
+      response = response[4:]
+    changes = json.loads(response)
+    for change in changes:
+      yield change
+
+    more = changes[-1]['_more_changes'] if len(
+        changes) > 0 and '_more_changes' in changes[-1].keys() else False
+    skip += num_results
 
 
 def _CheckChangeDetailsResponseCode(status_code, response):
