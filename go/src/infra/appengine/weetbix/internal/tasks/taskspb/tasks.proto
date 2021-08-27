@@ -1,0 +1,31 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.internal.tasks;
+
+import "go.chromium.org/luci/cv/api/common/v1/run.proto";
+
+option go_package = "infra/appengine/weetbix/internal/tasks/taskspb";
+
+// Build represents a buildbucket build.
+//
+// See also: Build in buildbucket/proto/build.proto.
+message Build {
+  // Buildbucket build ID, unique per Buildbucket instance.
+  int64 id = 1;
+  // Buildbucket host, e.g. "cr-buildbucket.appspot.com".
+  string host = 2;
+}
+
+// Payload of IngestTestResults task.
+message IngestTestResults {
+  // Information of a CV managed CQ run.
+  // If the task is not for a CQ run, this field will be empty.
+  cv.common.v1.Run cv_run = 1;
+
+  // Information of a Buildbucket build.
+  Build build = 2;
+}
