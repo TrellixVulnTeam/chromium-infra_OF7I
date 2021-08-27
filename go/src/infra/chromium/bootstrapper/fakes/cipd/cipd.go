@@ -83,13 +83,19 @@ func (c *Client) ResolveVersion(ctx context.Context, packageName, version string
 	return common.Pin{PackageName: packageName, InstanceID: instanceId}, nil
 }
 
-func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
-	if err := paranoia.Validate(); err != nil {
+func (c *Client) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, opts *cipd.EnsureOptions) (cipd.ActionMap, error) {
+	realOpts := cipd.EnsureOptions{}
+	if opts != nil {
+		realOpts = *opts
+	}
+
+	if err := realOpts.Paranoia.Validate(); err != nil {
 		return nil, err
 	}
 
-	util.PanicIf(paranoia != cipd.CheckIntegrity, "unexpected paranoia: %s", paranoia)
-	util.PanicIf(dryRun, "dryRun is not supported")
+	util.PanicIf(realOpts.Paranoia != cipd.CheckIntegrity, "unexpected Paranoia: %s", realOpts.Paranoia)
+	util.PanicIf(realOpts.DryRun, "DryRun is not supported")
+	util.PanicIf(realOpts.Silent, "Silent is not supported")
 	for subdir, pins := range packages {
 		util.PanicIf(len(pins) != 1, "multiple pins for a subdirectory are not supported: subdirectory: %#v, pins: %#v", subdir, pins)
 		pin := pins[0]

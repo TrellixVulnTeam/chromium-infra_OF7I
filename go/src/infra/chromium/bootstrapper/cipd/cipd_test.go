@@ -36,10 +36,10 @@ func (f *fakeCipdClient) ResolveVersion(ctx context.Context, packageName, versio
 	}, nil
 }
 
-func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
+func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.PinSliceBySubdir, opts *cipd.EnsureOptions) (cipd.ActionMap, error) {
 	ensurePackages := f.ensurePackages
 	if ensurePackages != nil {
-		return ensurePackages(ctx, packages, paranoia, dryRun)
+		return ensurePackages(ctx, packages, opts.Paranoia, opts.DryRun)
 	}
 	return nil, nil
 }
