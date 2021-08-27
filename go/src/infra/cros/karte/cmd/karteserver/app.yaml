@@ -1,6 +1,13 @@
-runtime: go113
+service: default
+runtime: go115
+
 luci_gae_vars:
   chrome-fleet-karte-dev:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
-entrypoint:
-  main -auth-service-host ${AUTH_SERVICE_HOST}
+entrypoint: >
+  karteserver -auth-service-host ${AUTH_SERVICE_HOST}
+
+handlers:
+- url: /.*
+  script: auto
+  secure:  always
