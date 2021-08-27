@@ -1,0 +1,4 @@
+cron:
+- description: "Read configs from LUCI-config"
+  url: /internal/cron/read-config
+  schedule: every 10 minutes
