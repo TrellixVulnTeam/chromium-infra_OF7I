@@ -584,14 +584,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         _CreateMockMergedChange('c2', 'c1', 'myfile.cc'),
     ]
 
-    latest_content = ''
-    content_at_feature_commit1 = 'line1\nline2'
     content_at_parent_commit1 = 'line1'
+    content_at_feature_commit1 = 'line1\nline2'
     content_at_feature_commit2 = 'line1modified\nline2modified'
-
+    latest_content = ''
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit1, content_at_parent_commit1,
-        latest_content, content_at_feature_commit2, content_at_feature_commit1
+        content_at_feature_commit2, content_at_feature_commit1
     ]
 
     feature_coverage.ExportFeatureCoverage()
@@ -666,9 +665,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
     ]
-    latest_content = 'line1'
-    content_at_feature_commit = 'line1'
     content_at_parent_commit = ''
+    content_at_feature_commit = 'line1'
+    latest_content = 'line1'
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]

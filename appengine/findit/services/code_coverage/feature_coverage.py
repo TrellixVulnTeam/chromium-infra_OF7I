@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import collections
+from collections import defaultdict
 import json
 import logging
 import difflib
@@ -335,79 +335,105 @@ def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
   file_content_queue.put((revision, content.split('\n') if content else []))
 
 
-def _ExportFeatureCoverage(postsubmit_report):
+def _ExportFeatureCoverage(builder_to_latest_report, gerrit_hashtag,
+                           modifier_id):
   """Exports coverage metrics to Bigquery for 'watched' features.
 
   Args:
-    postsubmit_report(PostsubmitReport): Full codebase report which acts as
-                        input to the algorithm for finding coverage per feature.
+    builder_to_latest_report(dict): Mapping from builder to latest full codebase
+                                    coverage report.
+    gerrit_hashtag(string): Unique gerrit_hashtag which identifies the feature.
+    modifier_id(int): Id of the CoverageReportModifier corresponding
+                      to the feature
   """
   file_content_queue = Queue.Queue()
-  files_deleted_at_latest = set()
-  for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers():
-    interesting_lines_per_file = {}
-    commits = _GetFeatureCommits(gerrit_hashtag)
-    for commit in commits:
-      for file_path in commit['files']:
+  files_deleted_at_latest = defaultdict(list)
+  interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
+  commits = _GetFeatureCommits(gerrit_hashtag)
+  for commit in commits:
+    for file_path in commit['files']:
+      file_path = '//' + file_path
+
+      # Fetch content at latest coverage report commits
+      builder_to_latest_content_thread = {}
+      file_type_supported_by_builders = False
+      for builder, report in builder_to_latest_report.items():
         if not any([
             file_path.endswith(extension)
-            for extension in _SOURCE_BUILDERS[postsubmit_report.builder]
+            for extension in _SOURCE_BUILDERS[builder]
         ]):
           continue
-        file_path = '//' + file_path
-        if file_path in files_deleted_at_latest:
+        file_type_supported_by_builders = True
+        if file_path in files_deleted_at_latest[builder]:
           continue
-        latest_commit_thread = Thread(
+        builder_to_latest_content_thread[builder] = Thread(
             target=_FetchFileContentAtCommit,
-            args=(file_path, postsubmit_report.gitiles_commit.revision,
+            args=(file_path, report.gitiles_commit.revision,
                   file_content_queue))
-        feature_commit_thread = Thread(
-            target=_FetchFileContentAtCommit,
-            args=(file_path, commit['feature_commit'], file_content_queue))
-        parent_commit_thread = Thread(
-            target=_FetchFileContentAtCommit,
-            args=(file_path, commit['parent_commit'], file_content_queue))
+        builder_to_latest_content_thread[builder].start()
 
-        latest_commit_thread.start()
-        feature_commit_thread.start()
-        parent_commit_thread.start()
-        latest_commit_thread.join()
-        feature_commit_thread.join()
-        parent_commit_thread.join()
+      # Skip processing if file type is not supported by any builder.
+      # This is done particulartly because there are large configuration files
+      # like .xml/.pyl etc, fetching whose content result in oom errors
+      if not file_type_supported_by_builders:
+        continue
 
-        contents = {}
-        while not file_content_queue.empty():
-          k, v = file_content_queue.get(block=False)
-          contents[k] = v
+      # Fetch content at feature and parent commit
+      feature_commit_thread = Thread(
+          target=_FetchFileContentAtCommit,
+          args=(file_path, commit['feature_commit'], file_content_queue))
+      parent_commit_thread = Thread(
+          target=_FetchFileContentAtCommit,
+          args=(file_path, commit['parent_commit'], file_content_queue))
+      feature_commit_thread.start()
+      parent_commit_thread.start()
 
-        if not contents[postsubmit_report.gitiles_commit.revision]:
-          files_deleted_at_latest.add(file_path)
-          continue
+      # Wait for all threads to finish
+      for thread in builder_to_latest_content_thread.values():
+        thread.join()
+      feature_commit_thread.join()
+      parent_commit_thread.join()
 
-        assert contents[commit['feature_commit']], (
-            "File Content not found for path %s at commit %s (CL: %s)" %
-            (file_path, commit['feature_commit'], commit['cl_number']))
+      # Consume content from all threads
+      contents = defaultdict(list)
+      while not file_content_queue.empty():
+        # It's correct to do block=False as all threads have been joined before.
+        k, v = file_content_queue.get(block=False)
+        contents[k] = v
 
-        interesting_lines = _GetInterestingLines(
-            contents[postsubmit_report.gitiles_commit.revision],
-            contents[commit['feature_commit']],
-            contents[commit['parent_commit']])
-        interesting_lines_per_file[file_path] = interesting_lines_per_file.get(
-            file_path, set()) | interesting_lines
+      # File content must be there at feature commit
+      assert contents[commit['feature_commit']], (
+          "File Content not found for path %s at commit %s (CL: %s)" %
+          (file_path, commit['feature_commit'], commit['cl_number']))
 
+      # Calculate interesting lines for file corresponding to each builder
+      for builder, report in builder_to_latest_report.items():
+        content_at_latest = contents[report.gitiles_commit.revision]
+        if content_at_latest:
+          interesting_lines = _GetInterestingLines(
+              content_at_latest, contents[commit['feature_commit']],
+              contents[commit['parent_commit']])
+          interesting_lines_per_builder_per_file[builder][file_path] = (
+              interesting_lines_per_builder_per_file[builder][file_path]
+              | interesting_lines)
+        else:
+          files_deleted_at_latest[builder].append(file_path)
+
+  # Export feature coverage data to Datastore and Bigquery
+  for builder, report in builder_to_latest_report.items():
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
-        postsubmit_report, interesting_lines_per_file)
-    _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
-                                gerrit_hashtag, modifier_id)
-    bq_rows = _CreateBigqueryRows(postsubmit_report, gerrit_hashtag,
-                                  modifier_id, coverage_per_file,
+        report, interesting_lines_per_builder_per_file[builder])
+    _CreateModifiedFileCoverage(coverage_per_file, report, gerrit_hashtag,
+                                modifier_id)
+    bq_rows = _CreateBigqueryRows(report, gerrit_hashtag, modifier_id,
+                                  coverage_per_file,
                                   files_with_missing_coverage)
     if bq_rows:
       bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
                                            'code_coverage_summaries',
                                            'feature_coverage')
-      logging.info('Rows added for feature %s = %d', gerrit_hashtag,
-                   len(bq_rows))
+      logging.info('Rows added for feature %s and builder %s = %d',
+                   gerrit_hashtag, builder, len(bq_rows))
 
 
 def _GetAllowedBuilders():
@@ -426,6 +452,7 @@ def ExportFeatureCoverage():
   context.set_cache_policy(False)
   context.set_memcache_policy(False)
 
+  builder_to_latest_report = {}
   for builder in _GetAllowedBuilders().keys():
     # Fetch latest full codebase coverage report for the builder
     query = PostsubmitReport.query(
@@ -435,4 +462,8 @@ def ExportFeatureCoverage():
         PostsubmitReport.visible == True).order(
             -PostsubmitReport.commit_timestamp)
     report = query.fetch(limit=1)[0]
-    _ExportFeatureCoverage(report)
+    builder_to_latest_report[builder] = report
+
+  for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers():
+    _ExportFeatureCoverage(builder_to_latest_report, gerrit_hashtag,
+                           modifier_id)
