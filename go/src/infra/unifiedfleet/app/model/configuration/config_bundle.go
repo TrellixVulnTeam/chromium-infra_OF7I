@@ -94,7 +94,7 @@ func UpdateConfigBundle(ctx context.Context, cb *payload.ConfigBundle) (*payload
 // GetConfigBundle returns ConfigBundle for the given id
 // (${programId}-${designId}) from datastore.
 func GetConfigBundle(ctx context.Context, id string) (rsp *payload.ConfigBundle, err error) {
-	ids, err := extractIds(ctx, id)
+	ids, err := extractCBIds(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +123,15 @@ func GetConfigBundle(ctx context.Context, id string) (rsp *payload.ConfigBundle,
 	return p, nil
 }
 
+func extractCBIds(ctx context.Context, id string) ([]string, error) {
+	ids := strings.Split(id, "-")
+	if len(ids) != 2 {
+		logging.Errorf(ctx, "Faulty id value; please make sure the format is ${programId}-${designId}")
+		return nil, status.Errorf(codes.InvalidArgument, ufsds.InvalidArgument)
+	}
+	return ids, nil
+}
+
 // FlatConfigKind is the datastore entity kind FlatConfig.
 const FlatConfigKind string = "FlatConfig"
 
@@ -146,6 +155,7 @@ func (e *FlatConfigEntity) GetProto() (proto.Message, error) {
 func GenerateFCEntityId(fc *payload.FlatConfig) (string, error) {
 	program := fc.GetHwDesign().GetProgramId().GetValue()
 	design := fc.GetHwDesign().GetId().GetValue()
+	designConfig := fc.GetHwDesignConfig().GetId().GetValue()
 
 	if program == "" {
 		return "", errors.Reason("Empty FlatConfig ProgramId").Err()
@@ -153,8 +163,11 @@ func GenerateFCEntityId(fc *payload.FlatConfig) (string, error) {
 	if design == "" {
 		return "", errors.Reason("Empty FlatConfig DesignId").Err()
 	}
+	if designConfig == "" {
+		return fmt.Sprintf("%s-%s", program, design), nil
+	}
 
-	return fmt.Sprintf("%s-%s", program, design), nil
+	return fmt.Sprintf("%s-%s-%s", program, design, designConfig), nil
 }
 
 func newFlatConfigEntity(ctx context.Context, pm proto.Message) (fcEntity ufsds.FleetEntity, err error) {
@@ -191,9 +204,9 @@ func UpdateFlatConfig(ctx context.Context, fc *payload.FlatConfig) (*payload.Fla
 }
 
 // GetFlatConfig returns FlatConfig for the given id
-// (${programId}-${designId}) from datastore.
+// (${programId}-${designId} or ${programId}-${designId}-${designConfigId}) from datastore.
 func GetFlatConfig(ctx context.Context, id string) (rsp *payload.FlatConfig, err error) {
-	ids, err := extractIds(ctx, id)
+	ids, err := extractFCIds(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -208,6 +221,15 @@ func GetFlatConfig(ctx context.Context, id string) (rsp *payload.FlatConfig, err
 			},
 		},
 	}
+
+	if len(ids) == 3 {
+		fc.HwDesignConfig = &api.Design_Config{
+			Id: &api.DesignConfigId{
+				Value: ids[2],
+			},
+		}
+	}
+
 	pm, err := ufsds.Get(ctx, fc, newFlatConfigEntity)
 	if err != nil {
 		return nil, err
@@ -220,10 +242,10 @@ func GetFlatConfig(ctx context.Context, id string) (rsp *payload.FlatConfig, err
 	return p, nil
 }
 
-func extractIds(ctx context.Context, id string) ([]string, error) {
+func extractFCIds(ctx context.Context, id string) ([]string, error) {
 	ids := strings.Split(id, "-")
-	if len(ids) != 2 {
-		logging.Errorf(ctx, "Faulty id value; please make sure the format is ${programId}-${designId}")
+	if len(ids) < 2 || len(ids) > 3 {
+		logging.Errorf(ctx, "Faulty id value; please make sure the format is ${programId}-${designId} or ${programId}-${designId}-${designConfigId}")
 		return nil, status.Errorf(codes.InvalidArgument, ufsds.InvalidArgument)
 	}
 	return ids, nil

@@ -138,6 +138,11 @@ func mockFlatConfig(id string, programId string, name string) *payload.FlatConfi
 			},
 			Name: name,
 		},
+		HwDesignConfig: &api.Design_Config{
+			Id: &api.DesignConfigId{
+				Value: name + ":100",
+			},
+		},
 	}
 }
 
@@ -203,7 +208,7 @@ func TestGetFlatConfig(t *testing.T) {
 			t.Fatalf("UpdateFlatConfig failed: %s", err)
 		}
 
-		got, err := GetFlatConfig(ctx, "program1-design1")
+		got, err := GetFlatConfig(ctx, "program1-design1-name1:100")
 		if err != nil {
 			t.Fatalf("GetFlatConfig failed: %s", err)
 		}
@@ -213,7 +218,7 @@ func TestGetFlatConfig(t *testing.T) {
 	})
 
 	t.Run("get FlatConfig by non-existent ID", func(t *testing.T) {
-		id := "program2-design2"
+		id := "program2-design2-name2:100"
 		_, err := GetFlatConfig(ctx, id)
 		if err == nil {
 			t.Errorf("GetFlatConfig succeeded with non-existent ID: %s", id)
@@ -224,7 +229,7 @@ func TestGetFlatConfig(t *testing.T) {
 	})
 
 	t.Run("get FlatConfig by invalid ID", func(t *testing.T) {
-		id := "program3-design3-extraid3"
+		id := "program3-design3-name3:100-extraid4"
 		_, err := GetFlatConfig(ctx, id)
 		if err == nil {
 			t.Errorf("GetFlatConfig succeeded with invalid ID: %s", id)
