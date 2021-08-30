@@ -373,7 +373,7 @@
     "name": "building tools/tool.fetch sources.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_TEXT@<br/>checked out 'deadbeef'<br/>@@@"
+      "@@@STEP_TEXT@<br/>checked out u'deadbeef'<br/>@@@"
     ]
   },
   {
