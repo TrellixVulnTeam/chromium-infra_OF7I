@@ -115,6 +115,15 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
 			return
 		}
+		disconnect, err = p.connect(ctx, addr)
+		if err != nil {
+			setError(newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to connect to DUT after OS provision, %s", err),
+				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+			return
+		}
+		defer disconnect()
 		log.Printf("provision: time to provision OS took %v", time.Since(t))
 
 		t = time.Now()

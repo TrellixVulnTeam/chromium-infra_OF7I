@@ -120,12 +120,15 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 		return fmt.Errorf("provisionOS: failed to provision the OS, %s", err)
 	}
 	if err := p.postInstall(pi); err != nil {
-		p.revertProvisionOS(pi)
+		p.revertPostInstall(pi)
 		return fmt.Errorf("provisionOS: failed to set next kernel, %s", err)
 	}
 	if err := clearTPM(p.c); err != nil {
-		p.revertProvisionOS(pi)
+		p.revertPostInstall(pi)
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
+	}
+	if err := rebootDUT(ctx, p.c); err != nil {
+		return fmt.Errorf("provisionOS: failed to reboot DUT, %s", err)
 	}
 	return nil
 }
@@ -240,11 +243,6 @@ func (p *provisionState) postInstall(pi partitionInfo) error {
 		"{ umount ${tmpmnt} || true; }",
 		"{ rmdir ${tmpmnt} || true; }",
 	}, " && "))
-}
-
-func (p *provisionState) revertProvisionOS(pi partitionInfo) {
-	p.revertStatefulInstall()
-	p.revertPostInstall(pi)
 }
 
 func (p *provisionState) revertStatefulInstall() {
