@@ -26,7 +26,7 @@ WITH
     `cr-buildbucket.raw.completed_builds_prod` AS b
   WHERE
     create_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
-    AND (b.builder.project = "chrome" or b.builder.project="chromium" or b.builder.project LIKE "chromium-m%")
+    AND REGEXP_CONTAINS(b.builder.project, "^((chrome|chromium)(-m[0-9]+(-.*)?)?)$")
   GROUP BY
     1,
     2,
@@ -58,6 +58,7 @@ SELECT
   b.latest.id build_id,
   JSON_EXTRACT_SCALAR(latest.input.properties, "$.builder_group") as buildergroup,
   s.name step,
+  ANY_VALUE(JSON_EXTRACT_STRING_ARRAY(b.latest.input.properties, "$.sheriff_rotations")) as sheriff_rotations,
   ANY_VALUE(b.latest.status) status,
   ANY_VALUE(b.latest.critical) critical,
   ANY_VALUE(b.latest.output.gitiles_commit) output_commit,

@@ -39,6 +39,7 @@ SELECT
   b.latest.id build_id,
   JSON_EXTRACT_SCALAR(latest.input.properties, "$.builder_group") as buildergroup,
   s.name step,
+  ANY_VALUE(JSON_EXTRACT_STRING_ARRAY(b.latest.input.properties, "$.sheriff_rotations")) as sheriff_rotations,
   ANY_VALUE(b.latest.status) status,
   ANY_VALUE(b.latest.critical) critical,
   ANY_VALUE(b.latest.output.gitiles_commit) output_commit,

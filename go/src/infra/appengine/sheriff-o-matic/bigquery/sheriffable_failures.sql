@@ -106,6 +106,7 @@ SELECT
   s.bucket AS Bucket,
   s.builder AS Builder,
   s.buildergroup AS BuilderGroup,
+  s.sheriff_rotations AS SheriffRotations,
   s.critical AS Critical,
   s.step AS StepName,
   s.test_names_fp as TestNamesFingerprint,
