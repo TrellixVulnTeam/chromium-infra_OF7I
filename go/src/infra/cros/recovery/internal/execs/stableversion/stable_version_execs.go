@@ -16,7 +16,7 @@ import (
 
 // hasCrosImageStableVersionActionExec verifies that DUT provides ChromeOS image name as part of stable version.
 // Example: board-release/R90-13816.47.0.
-func hasCrosImageStableVersionActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasCrosImageStableVersionActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.StableVersion != nil {
 		image := args.DUT.StableVersion.CrosImage
 		log.Debug(ctx, "Stable version for cros: %q", image)
@@ -29,7 +29,7 @@ func hasCrosImageStableVersionActionExec(ctx context.Context, args *execs.RunArg
 
 // hasFwVersionStableVersionActionExec verifies that DUT provides ChromeOS firmware version name as part of stable version.
 // Example: Google_Board.13434.261.0.
-func hasFwVersionStableVersionActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasFwVersionStableVersionActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.StableVersion != nil {
 		version := args.DUT.StableVersion.CrosFirmwareVersion
 		log.Debug(ctx, "Stable version for firmware version: %q", version)
@@ -42,7 +42,7 @@ func hasFwVersionStableVersionActionExec(ctx context.Context, args *execs.RunArg
 
 // hasFwImageStableVersionActionExec verifies that DUT provides ChromeOS firmware image name as part of stable version.
 // Example: board-firmware/R87-13434.261.0
-func hasFwImageStableVersionActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasFwImageStableVersionActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.StableVersion != nil {
 		image := args.DUT.StableVersion.CrosFirmwareImage
 		log.Debug(ctx, "Stable version for firmware image: %q", image)

@@ -17,7 +17,7 @@ import (
 // NOTE: That is just fake execs for local testing during developing.
 // TODO(otabek@): Replace with real execs.
 
-func servodInitActionExec(ctx context.Context, args *execs.RunArgs) error {
+func servodInitActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	req := &tlw.InitServodRequest{
 		Resource: args.DUT.Name,
 		Options:  defaultServodOptions,
@@ -28,18 +28,18 @@ func servodInitActionExec(ctx context.Context, args *execs.RunArgs) error {
 	return nil
 }
 
-func servodStopActionExec(ctx context.Context, args *execs.RunArgs) error {
+func servodStopActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if err := args.Access.StopServod(ctx, args.DUT.Name); err != nil {
 		return errors.Annotate(err, "stop servod").Err()
 	}
 	return nil
 }
 
-func servodRestartActionExec(ctx context.Context, args *execs.RunArgs) error {
-	if err := servodStopActionExec(ctx, args); err != nil {
+func servodRestartActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if err := servodStopActionExec(ctx, args, actionArgs); err != nil {
 		log.Debug(ctx, "Servod restart: fail stop servod. Error: %s", err)
 	}
-	if err := servodInitActionExec(ctx, args); err != nil {
+	if err := servodInitActionExec(ctx, args, actionArgs); err != nil {
 		return errors.Annotate(err, "restart servod").Err()
 	}
 	return nil

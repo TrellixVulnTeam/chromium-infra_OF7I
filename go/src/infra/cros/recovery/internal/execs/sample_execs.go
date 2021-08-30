@@ -11,12 +11,12 @@ import (
 )
 
 // samplePassActionExec provides example to run action which always pass.
-func samplePassActionExec(ctx context.Context, args *RunArgs) error {
+func samplePassActionExec(ctx context.Context, args *RunArgs, actionArgs []string) error {
 	return nil
 }
 
 // sampleFailActionExec provides example to run action which always fail.
-func sampleFailActionExec(ctx context.Context, args *RunArgs) error {
+func sampleFailActionExec(ctx context.Context, args *RunArgs, actionArgs []string) error {
 	return errors.Reason("failed").Err()
 }
 

@@ -22,7 +22,7 @@ const (
 )
 
 // readOsVersionExec reads OS version from the DUT for provisioned info.
-func readOSVersionExec(ctx context.Context, args *execs.RunArgs) error {
+func readOSVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	version, err := releaseBuildPath(ctx, args.DUT.Name, args)
 	if err != nil {
 		return errors.Annotate(err, "read os version").Err()
@@ -36,7 +36,7 @@ func readOSVersionExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // updateJobRepoURLExec updates job repo URL for the DUT for provisoned info.
-func updateJobRepoURLExec(ctx context.Context, args *execs.RunArgs) error {
+func updateJobRepoURLExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	version := args.DUT.ProvisionedInfo.CrosVersion
 	if version == "" {
 		return errors.Reason("update job repo url: provisioned version not found").Err()

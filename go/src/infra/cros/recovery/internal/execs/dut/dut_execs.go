@@ -14,7 +14,7 @@ import (
 )
 
 // hasDutNameActionExec verifies that DUT provides name.
-func hasDutNameActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasDutNameActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.Name != "" {
 		log.Debug(ctx, "DUT name: %q", args.DUT.Name)
 		return nil
@@ -23,7 +23,7 @@ func hasDutNameActionExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // hasDutBoardActionExec verifies that DUT provides board name.
-func hasDutBoardActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasDutBoardActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.Board != "" {
 		log.Debug(ctx, "DUT board name: %q", args.DUT.Board)
 		return nil
@@ -32,7 +32,7 @@ func hasDutBoardActionExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // hasDutModelActionExec verifies that DUT provides model name.
-func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT != nil && args.DUT.Model != "" {
 		log.Debug(ctx, "DUT model name: %q", args.DUT.Model)
 		return nil

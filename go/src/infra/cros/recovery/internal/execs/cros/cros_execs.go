@@ -32,14 +32,14 @@ const (
 )
 
 // pingExec verifies the DUT is pingable.
-func pingExec(ctx context.Context, args *execs.RunArgs) error {
+func pingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
 		return args.Access.Ping(ctx, args.ResourceName, 2)
 	}, "cros dut ping")
 }
 
 // sshExec verifies ssh access to the DUT.
-func sshExec(ctx context.Context, args *execs.RunArgs) error {
+func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
 		if r := args.Access.Run(ctx, args.ResourceName, "true"); r.ExitCode != 0 {
 			return errors.Reason("cros dut ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
@@ -49,7 +49,7 @@ func sshExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // rebootExec reboots the cros DUT.
-func rebootExec(ctx context.Context, args *execs.RunArgs) error {
+func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
 	r := args.Access.Run(ctx, args.DUT.Name, rebootCommand)
 	if r.ExitCode == -2 {
@@ -63,7 +63,7 @@ func rebootExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // matchStableOSVersionToDeviceExec matches stable CrOS version to the device OS.
-func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs) error {
+func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	expected := args.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, args.DUT.Name, args)

@@ -15,7 +15,7 @@ import (
 )
 
 // hasRpmInfoActionExec verifies if rpm info is present for DUT.
-func hasRpmInfoActionExec(ctx context.Context, args *execs.RunArgs) error {
+func hasRpmInfoActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if args.DUT.RPMOutlet != nil {
 		name := args.DUT.RPMOutlet.Name
 		// TODO(otabek@): set fixed number to check and add accept argument value.
@@ -27,7 +27,7 @@ func hasRpmInfoActionExec(ctx context.Context, args *execs.RunArgs) error {
 }
 
 // rpmPowerCycleActionExec performs power cycle the device by RPM.
-func rpmPowerCycleActionExec(ctx context.Context, args *execs.RunArgs) error {
+func rpmPowerCycleActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	req := &tlw.SetPowerSupplyRequest{
 		Resource: args.DUT.Name,
 		State:    tlw.PowerSupplyActionCycle,

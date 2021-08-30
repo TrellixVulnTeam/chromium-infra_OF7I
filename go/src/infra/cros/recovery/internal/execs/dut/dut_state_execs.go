@@ -12,19 +12,19 @@ import (
 )
 
 // dutStateReadyActionExec sets dut-state as ready.
-func dutStateReadyActionExec(ctx context.Context, args *execs.RunArgs) error {
+func dutStateReadyActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	args.DUT.State = dutstate.Ready
 	return nil
 }
 
 // dutStateRepairFailedActionExec sets dut-state as repair_failed.
-func dutStateRepairFailedActionExec(ctx context.Context, args *execs.RunArgs) error {
+func dutStateRepairFailedActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	args.DUT.State = dutstate.RepairFailed
 	return nil
 }
 
 // dutStateNeedsDeployActionExec sets dut-state as needs_deploy.
-func dutStateNeedsDeployActionExec(ctx context.Context, args *execs.RunArgs) error {
+func dutStateNeedsDeployActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	args.DUT.State = dutstate.NeedsDeploy
 	return nil
 }
