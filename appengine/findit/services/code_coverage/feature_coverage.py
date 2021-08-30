@@ -297,30 +297,6 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
     })
   return bq_rows
 
-
-def _GetActiveFeatureModifers():
-  """Returns hashtags for which coverage is to be generated.
-
-  Yields a tuple where first elem is the gerrit hashtag and second is the
-  id of the corresponding CoverageReportModifier.
-  """
-  query = CoverageReportModifier.query(
-      CoverageReportModifier.server_host == _CHROMIUM_SERVER_HOST,
-      CoverageReportModifier.project == _CHROMIUM_PROJECT,
-      CoverageReportModifier.is_active == True).order(
-          CoverageReportModifier.gerrit_hashtag)
-  more = True
-  cursor = None
-  while more:
-    results, cursor, more = query.fetch_page(
-        _PAGE_SIZE,
-        start_cursor=cursor,
-        config=ndb.ContextOptions(use_cache=False))
-    for x in results:
-      if x.gerrit_hashtag:
-        yield x.gerrit_hashtag, x.key.id()
-
-
 def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
   """Fetches lines in a file at the specified revision.
 
@@ -335,17 +311,42 @@ def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
   file_content_queue.put((revision, content.split('\n') if content else []))
 
 
-def _ExportFeatureCoverage(builder_to_latest_report, gerrit_hashtag,
-                           modifier_id):
-  """Exports coverage metrics to Bigquery for 'watched' features.
+def _GetAllowedBuilders():
+  return _SOURCE_BUILDERS
+
+
+def ExportFeatureCoverage(modifier_id):
+  """Exports coverage metrics to Datastore and Bigquery for input feature.
 
   Args:
-    builder_to_latest_report(dict): Mapping from builder to latest full codebase
-                                    coverage report.
-    gerrit_hashtag(string): Unique gerrit_hashtag which identifies the feature.
     modifier_id(int): Id of the CoverageReportModifier corresponding
                       to the feature
   """
+  # NDB caches each result in the in-context cache while accessing.
+  # This is problematic as due to the size of the result set,
+  # cache grows beyond the memory quota. Turn this off to prevent oom errors.
+  #
+  # Read more at:
+  # https://cloud.google.com/appengine/docs/standard/python/ndb/cache#incontext
+  # https://github.com/googlecloudplatform/datastore-ndb-python/issues/156#issuecomment-110869490
+  context = ndb.get_context()
+  context.set_cache_policy(False)
+  context.set_memcache_policy(False)
+
+  gerrit_hashtag = CoverageReportModifier.Get(modifier_id).gerrit_hashtag
+
+  builder_to_latest_report = {}
+  for builder in _GetAllowedBuilders().keys():
+    # Fetch latest full codebase coverage report for the builder
+    query = PostsubmitReport.query(
+        PostsubmitReport.gitiles_commit.server_host == _CHROMIUM_SERVER_HOST,
+        PostsubmitReport.gitiles_commit.project == _CHROMIUM_PROJECT,
+        PostsubmitReport.bucket == 'ci', PostsubmitReport.builder == builder,
+        PostsubmitReport.visible == True).order(
+            -PostsubmitReport.commit_timestamp)
+    report = query.fetch(limit=1)[0]
+    builder_to_latest_report[builder] = report
+
   file_content_queue = Queue.Queue()
   files_deleted_at_latest = defaultdict(list)
   interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
@@ -434,36 +435,3 @@ def _ExportFeatureCoverage(builder_to_latest_report, gerrit_hashtag,
                                            'feature_coverage')
       logging.info('Rows added for feature %s and builder %s = %d',
                    gerrit_hashtag, builder, len(bq_rows))
-
-
-def _GetAllowedBuilders():
-  return _SOURCE_BUILDERS
-
-
-def ExportFeatureCoverage():
-  # NDB caches each result in the in-context cache while accessing.
-  # This is problematic as due to the size of the result set,
-  # cache grows beyond the memory quota. Turn this off to prevent oom errors.
-  #
-  # Read more at:
-  # https://cloud.google.com/appengine/docs/standard/python/ndb/cache#incontext
-  # https://github.com/googlecloudplatform/datastore-ndb-python/issues/156#issuecomment-110869490
-  context = ndb.get_context()
-  context.set_cache_policy(False)
-  context.set_memcache_policy(False)
-
-  builder_to_latest_report = {}
-  for builder in _GetAllowedBuilders().keys():
-    # Fetch latest full codebase coverage report for the builder
-    query = PostsubmitReport.query(
-        PostsubmitReport.gitiles_commit.server_host == _CHROMIUM_SERVER_HOST,
-        PostsubmitReport.gitiles_commit.project == _CHROMIUM_PROJECT,
-        PostsubmitReport.bucket == 'ci', PostsubmitReport.builder == builder,
-        PostsubmitReport.visible == True).order(
-            -PostsubmitReport.commit_timestamp)
-    report = query.fetch(limit=1)[0]
-    builder_to_latest_report[builder] = report
-
-  for gerrit_hashtag, modifier_id in _GetActiveFeatureModifers():
-    _ExportFeatureCoverage(builder_to_latest_report, gerrit_hashtag,
-                           modifier_id)

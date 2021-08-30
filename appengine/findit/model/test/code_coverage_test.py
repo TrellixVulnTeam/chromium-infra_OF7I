@@ -7,6 +7,7 @@ import datetime
 from google.appengine.api import datastore_errors
 
 from model.code_coverage import CoveragePercentage
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
@@ -345,3 +346,8 @@ class CodeCoverageTest(WaterfallTestCase):
             path=path,
             bucket=bucket,
             builder=builder))
+
+  def testGetCoverageReportModifier(self):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    self.assertEqual(
+        CoverageReportModifier.Get(123).gerrit_hashtag, 'my_feature')

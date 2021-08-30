@@ -16,6 +16,7 @@ from gae_libs import token
 from handlers import code_coverage
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoveragePercentage
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
@@ -1562,18 +1563,39 @@ class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
     self.assertEqual(200, response.status_int)
 
 
-class ExportFeatureCoverageMetricsCronTest(WaterfallTestCase):
+class ExportAllFeatureCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/cron/feature-coverage',
-       code_coverage.ExportFeatureCoverageMetricsCron),
+      ('/coverage/cron/all-feature-coverage',
+       code_coverage.ExportAllFeatureCoverageMetricsCron),
   ],
                                        debug=True)
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testTaskAddedToQueue(self, mocked_is_request_from_appself):
-    response = self.test_app.get('/coverage/cron/feature-coverage')
+    response = self.test_app.get('/coverage/cron/all-feature-coverage')
     self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/coverage/cron/feature-coverage')
+    response = self.test_app.get('/coverage/cron/all-feature-coverage')
+    self.assertEqual(200, response.status_int)
+
+    tasks = self.taskqueue_stub.get_filtered_tasks(
+        queue_names='all-feature-coverage-metrics-queue')
+    self.assertEqual(2, len(tasks))
+    self.assertTrue(mocked_is_request_from_appself.called)
+
+
+class ExportAllFeatureCoverageMetricsTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/task/all-feature-coverage',
+       code_coverage.ExportAllFeatureCoverageMetrics),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testFeatureCoverageFilesExported(self, mocked_is_request_from_appself):
+    CoverageReportModifier(gerrit_hashtag='f1', id=123).put()
+    CoverageReportModifier(gerrit_hashtag='f2', id=456).put()
+
+    response = self.test_app.get('/coverage/task/all-feature-coverage')
     self.assertEqual(200, response.status_int)
 
     tasks = self.taskqueue_stub.get_filtered_tasks(
@@ -1584,7 +1606,7 @@ class ExportFeatureCoverageMetricsCronTest(WaterfallTestCase):
 
 class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/task/feature-coverage',
+      ('/coverage/task/feature-coverage.*',
        code_coverage.ExportFeatureCoverageMetrics),
   ],
                                        debug=True)
@@ -1592,9 +1614,11 @@ class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   @mock.patch.object(feature_coverage, 'ExportFeatureCoverage')
   def testFeatureCoverageFilesExported(self, mock_detect, _):
-    response = self.test_app.get('/coverage/task/feature-coverage', status=200)
+    response = self.test_app.get(
+        '/coverage/task/feature-coverage?modifier_id=123', status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
+
 
 
 class UpdatePostsubmitReportTest(WaterfallTestCase):

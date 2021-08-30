@@ -96,7 +96,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -210,7 +210,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -282,7 +282,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -353,7 +353,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -424,7 +424,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_file_content.side_effect = [
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -444,7 +444,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testSingleCommit_FileGotDeleted(self, mock_merged_changes,
                                       mock_file_content, mocked_report_rows,
                                       *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -468,7 +468,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -529,7 +529,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit2, content_at_feature_commit1
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -564,7 +564,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   def testMultipleCommits_FileGotDeleted(self, mock_merged_changes,
                                          mock_file_content, mocked_report_rows,
                                          *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -593,7 +593,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         content_at_feature_commit2, content_at_feature_commit1
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -610,7 +610,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
   def testUnsupportedFileType_NoRowsCreated(self, mock_merged_changes,
                                             mocked_report_rows, *_):
-    CoverageReportModifier(gerrit_hashtag='my_feature').put()
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -628,7 +628,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         _CreateMockMergedChange('c1', 'p1', 'myfile.xml'),
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -672,7 +672,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         latest_content, content_at_feature_commit, content_at_parent_commit
     ]
 
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')

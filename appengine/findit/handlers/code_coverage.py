@@ -37,6 +37,7 @@ from libs.deps import chrome_dependency_fetcher
 from libs.time_util import ConvertUTCToPST
 from model import entity_util
 from model.proto.gen.code_coverage_pb2 import CoverageReport
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import FileCoverageData
@@ -1659,21 +1660,59 @@ class ExportFilesAbsoluteCoverageMetrics(BaseHandler):
     return {'return_code': 200}
 
 
-class ExportFeatureCoverageMetricsCron(BaseHandler):
+class ExportAllFeatureCoverageMetricsCron(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
     # Cron jobs run independently of each other. Therefore, there is no
     # guarantee that they will run either sequentially or simultaneously.
     #
-    # Executing per CL metrics concurrently doesn't bring much
+    # Executing Feature Coverage metrics concurrently doesn't bring much
     # benefits, so use task queue to enforce that at most one task
     # can be executed at any time.
     taskqueue.add(
         method='GET',
-        queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
+        queue_name=constants.ALL_FEATURE_COVERAGE_METRICS_QUEUE,
         target=constants.CODE_COVERAGE_BACKEND,
-        url='/coverage/task/feature-coverage')
+        url='/coverage/task/all-feature-coverage')
+    return {'return_code': 200}
+
+
+class ExportAllFeatureCoverageMetrics(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def _GetActiveFeatureModifers(self):
+    """Returns hashtags for which coverage is to be generated.
+
+    Yields a tuple where first elem is the gerrit hashtag and second is the
+    id of the corresponding CoverageReportModifier.
+    """
+    query = CoverageReportModifier.query(
+        CoverageReportModifier.server_host == 'chromium.googlesource.com',
+        CoverageReportModifier.project == 'chromium/src',
+        CoverageReportModifier.is_active == True).order(
+            CoverageReportModifier.gerrit_hashtag)
+    more = True
+    cursor = None
+    page_size = 100
+    while more:
+      results, cursor, more = query.fetch_page(
+          page_size,
+          start_cursor=cursor,
+          config=ndb.ContextOptions(use_cache=False))
+      for x in results:
+        if x.gerrit_hashtag:
+          yield x.key.id()
+
+  def HandleGet(self):
+    # Spawn a sub task for each active feature
+    for modifier_id in self._GetActiveFeatureModifers():
+      url = '/coverage/task/feature-coverage?modifier_id=%d' % (modifier_id)
+      taskqueue.add(
+          method='GET',
+          queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
+          target=constants.CODE_COVERAGE_BACKEND,
+          url=url)
     return {'return_code': 200}
 
 
@@ -1681,7 +1720,7 @@ class ExportFeatureCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    feature_coverage.ExportFeatureCoverage()
+    feature_coverage.ExportFeatureCoverage(self.request.get('modifier_id'))
     return {'return_code': 200}
 
 

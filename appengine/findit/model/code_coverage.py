@@ -154,6 +154,10 @@ class CoverageReportModifier(ndb.Model):
   # Timestamp this modifier was last updated.
   update_timestamp = ndb.DateTimeProperty(auto_now=True)
 
+  @classmethod
+  def Get(cls, modifier_id):
+    return ndb.Key(cls, modifier_id).get()
+
 
 class CLPatchset(ndb.Model):
   """Represents a CL patchset."""
