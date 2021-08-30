@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/config"
 )
 
@@ -34,10 +35,23 @@ func main() {
 			logging.Debugf(c.Context, "Hello world")
 			cfg, err := config.Get(c.Context)
 			if err != nil {
-				http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
+				http.Error(c.Writer, "Internal server error.", http.StatusInternalServerError)
 				return
 			}
-			c.Writer.Write([]byte("Hello, world! This is Weetbix. Configured Monorail host: " + cfg.GetMonorailHostname()))
+			cl, err := bugs.NewMonorailClient(c.Context, cfg.GetMonorailHostname())
+			if err != nil {
+				logging.Errorf(c.Context, "Getting Monorail client: %v", err)
+				http.Error(c.Writer, "Internal server error.", http.StatusInternalServerError)
+				return
+			}
+			issue, err := cl.GetIssue(c.Context, "projects/chromium/issues/2")
+			if err != nil {
+				logging.Errorf(c.Context, "Getting Monorail issue: %v", err)
+				http.Error(c.Writer, "Internal server error.", http.StatusInternalServerError)
+				return
+			}
+			c.Writer.Write([]byte("Hello, world! This is Weetbix.\n"))
+			c.Writer.Write([]byte("Issue title: " + issue.GetSummary()))
 		})
 
 		// GAE crons.
