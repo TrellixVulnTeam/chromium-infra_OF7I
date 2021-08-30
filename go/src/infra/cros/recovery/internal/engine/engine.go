@@ -198,7 +198,7 @@ func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb
 	defer cancel()
 	cw := make(chan error, 1)
 	go func() {
-		err := execs.Run(newCtx, a.ExecName, r.args)
+		err := execs.Run(newCtx, a.ExecName, r.args, a.ExecExtraArgs)
 		cw <- err
 	}()
 	select {

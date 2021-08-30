@@ -52,13 +52,11 @@ type RunArgs struct {
 }
 
 // Run runs exec function provided by this package by name.
-func Run(ctx context.Context, name string, args *RunArgs) error {
+func Run(ctx context.Context, name string, args *RunArgs, actionArgs []string) error {
 	e, ok := knownExecMap[name]
 	if !ok {
 		return errors.Reason("exec %q: not found", name).Err()
 	}
-	// TODO(otabek@): Replace by received arguments from action.
-	var actionArgs []string
 	return e(ctx, args, actionArgs)
 }
 

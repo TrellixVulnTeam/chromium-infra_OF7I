@@ -14,9 +14,11 @@ func TestRunExec(t *testing.T) {
 	const actionExecWrong = "wrong_name"
 	const actionExecGood = "sample_pass"
 	const actionExecBad = "sample_fail"
+	args := &RunArgs{}
+	actionArgs := []string{"action", "args"}
 	t.Run("Incorrect name", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecWrong, nil)
+		err := Run(ctx, actionExecWrong, args, actionArgs)
 		if err == nil {
 			t.Errorf("Expected to fail")
 		}
@@ -26,14 +28,14 @@ func TestRunExec(t *testing.T) {
 	})
 	t.Run("Good sample", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecGood, nil)
+		err := Run(ctx, actionExecGood, args, actionArgs)
 		if err != nil {
 			t.Errorf("Expected to pass")
 		}
 	})
 	t.Run("Bad sample", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecBad, nil)
+		err := Run(ctx, actionExecBad, args, actionArgs)
 		if err == nil {
 			t.Errorf("Expected to have status Fail")
 		}
