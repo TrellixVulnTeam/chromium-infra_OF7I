@@ -156,7 +156,7 @@ class CoverageReportModifier(ndb.Model):
 
   @classmethod
   def Get(cls, modifier_id):
-    return ndb.Key(cls, modifier_id).get()
+    return ndb.Key(cls, int(modifier_id)).get()
 
 
 class CLPatchset(ndb.Model):
