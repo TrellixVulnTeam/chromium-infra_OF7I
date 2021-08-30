@@ -53,4 +53,6 @@ var crosEcTypeBoards = []string{
 	"veyron",
 	"volteer",
 	"zork",
+	"asurada",
+	"keeby",
 }
