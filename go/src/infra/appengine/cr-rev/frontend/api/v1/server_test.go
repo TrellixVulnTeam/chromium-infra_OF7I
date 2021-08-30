@@ -8,6 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 	"google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 )

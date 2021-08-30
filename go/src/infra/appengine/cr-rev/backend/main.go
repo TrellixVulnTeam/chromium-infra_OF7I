@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/config/server/cfgmodule"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
@@ -21,6 +22,8 @@ import (
 )
 
 func main() {
+	datastore.EnableSafeGet()
+
 	cron := router.NewMiddlewareChain(gaemiddleware.RequireCron)
 	modules := []module.Module{
 		cfgmodule.NewModuleFromFlags(),

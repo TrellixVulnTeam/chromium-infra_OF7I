@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/luci/common/proto/git"
 	gitilesProto "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 )
 
 func TestGitilesImporter(t *testing.T) {

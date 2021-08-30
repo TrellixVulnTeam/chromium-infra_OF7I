@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	"go.chromium.org/luci/config/server/cfgmodule"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
@@ -62,6 +63,8 @@ func handleRedirect(redirectRules *redirect.Rules, c *router.Context) {
 }
 
 func main() {
+	datastore.EnableSafeGet()
+
 	mw := router.MiddlewareChain{}
 	mw = mw.Extend(templates.WithTemplates(&templates.Bundle{
 		Loader:          templates.FileSystemLoader(templatePath),
