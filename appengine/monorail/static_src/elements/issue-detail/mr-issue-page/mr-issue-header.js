@@ -21,7 +21,7 @@ import {ISSUE_EDIT_PERMISSION, ISSUE_DELETE_PERMISSION,
   ISSUE_FLAGSPAM_PERMISSION} from 'shared/consts/permissions.js';
 import {issueToIssueRef} from 'shared/convertersV0.js';
 import {prpcClient} from 'prpc-client-instance.js';
-import {AVAILABLE_MD_PROJECTS} from 'shared/md-helper.js';
+import {AVAILABLE_MD_PROJECTS, DEFAULT_MD_PROJECTS} from 'shared/md-helper.js';
 
 const DELETE_ISSUE_CONFIRMATION_NOTICE = `\
 Normally, you would just close issues by setting their status to a closed value.
@@ -141,6 +141,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
     const reporterIsMember = userIsMember(
         this.issue.reporterRef, this.issue.projectName, this.usersProjects);
     const markdownEnabled = AVAILABLE_MD_PROJECTS.has(this.projectName);
+    const markdownDefaultOn = DEFAULT_MD_PROJECTS.has(this.projectName);
     return html`
       <div class="main-text-outer">
         <div class="main-text">
@@ -174,6 +175,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
           ${markdownEnabled ? html`
             <mr-pref-toggle
               .userDisplayName=${this.userDisplayName}
+              initialValue=${markdownDefaultOn}
               label="Markdown"
               title="Render in markdown"
               prefName="render_markdown"

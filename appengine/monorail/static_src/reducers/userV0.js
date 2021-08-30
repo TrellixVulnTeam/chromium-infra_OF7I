@@ -179,7 +179,7 @@ export const prefs = createSelector(
     currentUser, viewedProjectName, (user, projectName = '') => {
       const prefs = {
         // Make Markdown default to true for projects who have opted in.
-        render_markdown: DEFAULT_MD_PROJECTS.has(projectName),
+        render_markdown: String(DEFAULT_MD_PROJECTS.has(projectName)),
         ...user.prefs
       };
       for (let prefName of Object.keys(prefs)) {

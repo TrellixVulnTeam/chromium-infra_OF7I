@@ -179,6 +179,27 @@ describe('userV0', () => {
       ]));
     });
 
+    it('prefs is set with the correct type', async () =>{
+      // When setting prefs it's important that they are set as their
+      // String value.
+      const state = wrapCurrentUser({prefs: {
+        render_markdown : 'true',
+      }});
+      const markdownPref = userV0.prefs(state).get('render_markdown');
+      assert.isTrue(markdownPref);
+    });
+
+    it('prefs is NOT set with the correct type', async () =>{
+      // Here the value is a boolean so when it gets set it would
+      // appear as false because it's compared with a String.
+      const state = wrapCurrentUser({prefs: {
+        render_markdown : true,
+      }});
+      const markdownPref = userV0.prefs(state).get('render_markdown');
+      // Thus this is false when it was meant to be true.
+      assert.isFalse(markdownPref);
+    });
+
     it('projects', () => {
       assert.deepEqual(userV0.projects(wrapUser({})), {});
 

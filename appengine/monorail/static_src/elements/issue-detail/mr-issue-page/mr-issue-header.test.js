@@ -135,6 +135,8 @@ describe('mr-issue-header', () => {
 
     await element.updateComplete;
 
+    // This looks for how many mr-pref-toggle buttons there are,
+    // if there are two then this project also renders on markdown.
     const chopsToggles = element.shadowRoot.querySelectorAll('mr-pref-toggle');
     assert.equal(chopsToggles.length, 2);
 
@@ -147,6 +149,16 @@ describe('mr-issue-header', () => {
 
     const chopsToggles = element.shadowRoot.querySelectorAll('mr-pref-toggle');
     assert.equal(chopsToggles.length, 1);
+  });
+
+  it('markdown toggle is on by default on enabled projects', async () => {
+    element.projectName = 'monkeyrail';
+
+    await element.updateComplete;
+    
+    const chopsToggles = element.shadowRoot.querySelectorAll('mr-pref-toggle');
+    const markdownButton = chopsToggles[1];
+    assert.equal("true", markdownButton.getAttribute('initialvalue'));
   });
 });
 
