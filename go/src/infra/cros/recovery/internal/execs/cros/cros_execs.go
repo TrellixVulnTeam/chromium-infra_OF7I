@@ -51,7 +51,7 @@ func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) erro
 // rebootExec reboots the cros DUT.
 func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
-	r := args.Access.Run(ctx, args.DUT.Name, rebootCommand)
+	r := args.Access.Run(ctx, args.ResourceName, rebootCommand)
 	if r.ExitCode == -2 {
 		// Client closed connected as rebooting.
 		log.Debug(ctx, "Client exit as device rebooted: %s", r.Stderr)
@@ -66,7 +66,7 @@ func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) e
 func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	expected := args.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
-	fromDevice, err := releaseBuildPath(ctx, args.DUT.Name, args)
+	fromDevice, err := releaseBuildPath(ctx, args.ResourceName, args)
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
@@ -78,9 +78,67 @@ func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs, 
 	return nil
 }
 
+// isDefaultBootFromDiskExec confirms the resource is set to boot from disk by default.
+func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, "crossystem dev_default_boot")
+	if r.ExitCode != 0 {
+		return errors.Reason("default boot from disk: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+	}
+	defaultBoot := strings.TrimSpace(r.Stdout)
+	if defaultBoot != "disk" {
+		return errors.Reason("default boot from disk: failed, expected: disk, but got: %q", defaultBoot).Err()
+	}
+	return nil
+}
+
+// isNotInDevModeExec confirms that the host is not in dev mode.
+func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, "crossystem devsw_boot")
+	if r.ExitCode != 0 {
+		return errors.Reason("not in dev mode: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	}
+	devModeResult := strings.TrimSpace(r.Stdout)
+	if devModeResult != "0" {
+		return errors.Reason("not in dev mode: failed").Err()
+	}
+	return nil
+}
+
+// matchHWIDToInvExec matches HWID from the resource to value in the Inventory.
+func matchHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, "crossystem hwid")
+	if r.ExitCode != 0 {
+		return errors.Reason("match HWID to inventory: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	}
+	expectedHWID := args.DUT.Hwid
+	actualHWID := strings.TrimSpace(r.Stdout)
+	if actualHWID != expectedHWID {
+		return errors.Reason("match HWID to inventory: failed, expected: %q, but got %q", expectedHWID, actualHWID).Err()
+	}
+	return nil
+}
+
+// matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
+func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, "vpd -g serial_number")
+	if r.ExitCode != 0 {
+		return errors.Reason("match serial number to inventory: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+	}
+	expectedSerialNumber := args.DUT.SerialNumber
+	actualSerialNumber := strings.TrimSpace(r.Stdout)
+	if actualSerialNumber != expectedSerialNumber {
+		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, expectedSerialNumber).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
 	execs.Register("cros_reboot", rebootExec)
 	execs.Register("cros_match_stable_os_version_to_device", matchStableOSVersionToDeviceExec)
+	execs.Register("cros_is_default_boot_from_disk", isDefaultBootFromDiskExec)
+	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
+	execs.Register("cros_match_hwid_to_inventory", matchHWIDToInvExec)
+	execs.Register("cros_match_serial_number_inventory", matchSerialNumberToInvExec)
 }
