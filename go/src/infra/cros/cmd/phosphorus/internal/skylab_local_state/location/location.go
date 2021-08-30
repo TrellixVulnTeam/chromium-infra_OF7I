@@ -7,6 +7,7 @@
 package location
 
 import (
+	"fmt"
 	"path/filepath"
 )
 
@@ -17,12 +18,13 @@ import (
 // "123456789abcdef1".
 // All runs are nested under the same subdir.
 func ResultsDir(autotestDir string, runID string, testID string) string {
-	return filepath.Join(autotestDir, "results", resultsSubDir(runID), runID[len(runID)-1:], testID)
+	return filepath.Join(ResultsParentDir(autotestDir, runID), runID[len(runID)-1:], testID)
 }
 
-func resultsSubDir(runID string) string {
-	taskID := runID[:len(runID)-1] + "0"
-	return "swarming-" + taskID
+// ResultsParentDir constructs the parent dir for the task results dir.
+func ResultsParentDir(autotestDir, runID string) string {
+	taskID := fmt.Sprintf("swarming-%s0", runID[:len(runID)-1])
+	return filepath.Join(autotestDir, "results", taskID)
 }
 
 const (

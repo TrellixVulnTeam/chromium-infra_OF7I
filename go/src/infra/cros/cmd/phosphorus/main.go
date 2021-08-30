@@ -47,6 +47,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 			cmd.UploadToGS(authOpts),
 			cmd.FetchCrashes,
 			localstate.Load(authOpts),
+			localstate.Remove(authOpts),
 			localstate.Save(authOpts),
 			parser.Parse,
 
