@@ -73,7 +73,7 @@ cron:
     job_retry_limit: 0
 
 - description: Query and export feature coverage metrics to bigquery.
-  url: /coverage/cron/feature-coverage
+  url: /coverage/cron/all-feature-coverage
   schedule: every day 17:00
   timezone: America/Los_Angeles
   retry_parameters:
