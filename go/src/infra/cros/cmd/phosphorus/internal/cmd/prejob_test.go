@@ -11,6 +11,33 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 )
 
+func TestSoftwareDefaults(t *testing.T) {
+	swDeps := &test_platform.Request_Params{}
+	buildDep := &test_platform.Request_Params_SoftwareDependency{
+		Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+			ChromeosBuild: "eve-release",
+		},
+	}
+	swDeps.SoftwareDependencies = append(swDeps.SoftwareDependencies, buildDep)
+
+	res := chromeOSBuildDependencyOrEmpty(swDeps.SoftwareDependencies)
+	if res.ChromeOSBucket != "gs://chromeos-image-archive" {
+		t.Errorf("defaults not returned as expected, got %v", res.ChromeOSBucket)
+	}
+
+	bucketDep := &test_platform.Request_Params_SoftwareDependency{
+		Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket{
+			ChromeosBuildGcsBucket: "chromeos-release-test",
+		},
+	}
+
+	swDeps.SoftwareDependencies = append(swDeps.SoftwareDependencies, bucketDep)
+	res = chromeOSBuildDependencyOrEmpty(swDeps.SoftwareDependencies)
+	if res.ChromeOSBucket != "gs://chromeos-release-test" {
+		t.Errorf("defaults not returned as expected, got %v", res.ChromeOSBucket)
+	}
+}
+
 func TestShouldRunTLSProvision(t *testing.T) {
 	cases := []struct {
 		Tag                          string

@@ -477,22 +477,26 @@ func provisionLacros(ctx context.Context, bt *tls.BackgroundTLS, r *phosphorus.P
 }
 
 func chromeOSBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) *ChromeOSBuildLocation {
+	bLoc := &ChromeOSBuildLocation{}
+
 	for _, d := range deps {
-		if b, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuild); ok {
-			bucket := ChromeOSImageBucketDefault
-			if b_gcs, ok := d.Dep.(*test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket); ok {
-				bucket = b_gcs.ChromeosBuildGcsBucket
-				if !strings.HasPrefix(bucket, "gs://") {
-					bucket = "gs://" + bucket
-				}
+		switch b := d.Dep.(type) {
+		case *test_platform.Request_Params_SoftwareDependency_ChromeosBuild:
+			bLoc.ChromeOSBuild = b.ChromeosBuild
+		case *test_platform.Request_Params_SoftwareDependency_ChromeosBuildGcsBucket:
+			bucket := b.ChromeosBuildGcsBucket
+			if !strings.HasPrefix(bucket, "gs://") {
+				bucket = "gs://" + bucket
 			}
-			return &ChromeOSBuildLocation{
-				ChromeOSBuild:  b.ChromeosBuild,
-				ChromeOSBucket: bucket,
-			}
+			bLoc.ChromeOSBucket = bucket
 		}
 	}
-	return &ChromeOSBuildLocation{}
+
+	// If we haven't found a bucket, but have a build set the default.
+	if bLoc.ChromeOSBucket == "" && bLoc.ChromeOSBuild != "" {
+		bLoc.ChromeOSBucket = ChromeOSImageBucketDefault
+	}
+	return bLoc
 }
 
 func roFirmwareBuildDependencyOrEmpty(deps []*test_platform.Request_Params_SoftwareDependency) string {
