@@ -54,6 +54,7 @@ func (c *commonOpts) BqInserter() (*bigquery.Inserter, error) {
 func main() {
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&podStatCmd{}, "")
+	subcommands.Register(&podPerfCmd{}, "")
 
 	flag.Parse()
 	rc := int(subcommands.Execute(context.Background()))

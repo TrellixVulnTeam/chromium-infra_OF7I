@@ -79,6 +79,7 @@ require (
 	k8s.io/apimachinery v0.21.3
 	k8s.io/client-go v0.21.3
 	k8s.io/klog/v2 v2.10.0 // indirect
+	k8s.io/metrics v0.21.3
 	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477 // indirect
 )
 
