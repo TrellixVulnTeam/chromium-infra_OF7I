@@ -103,7 +103,7 @@ queue:
 
 - name: feature-coverage-metrics-queue
   rate: 1/s
-  max_concurrent_requests: 100
+  max_concurrent_requests: 50
   retry_parameters:
     task_retry_limit: 3
 
