@@ -1720,7 +1720,7 @@ class ExportFeatureCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    feature_coverage.ExportFeatureCoverage(self.request.get('modifier_id'))
+    feature_coverage.ExportFeatureCoverage(int(self.request.get('modifier_id')))
     return {'return_code': 200}
 
 
