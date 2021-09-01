@@ -28,7 +28,7 @@ type stepHandler struct {
 // The returned context is updated so that calling StartStep on it will create sub-steps.
 // https://pkg.go.dev/go.chromium.org/luci/luciexe/build#StartStep
 func (s *stepHandler) StartStep(ctx context.Context, name string) (logger.Step, context.Context) {
-	step, ctx := build.StartStep(ctx, "Input params")
+	step, ctx := build.StartStep(ctx, name)
 	s.logger.Debug("Step %q: started.", name)
 	return &simpleStep{
 		logger: s.logger,
