@@ -291,8 +291,6 @@ recipes/recipe_modules/infra_checkout/examples/try.expected 12 3
 recipes/recipe_modules/infra_cipd 1 1
 recipes/recipe_modules/support_3pp 1 1
 recipes/recipe_modules/support_3pp/tests/full.expected 1 1
-recipes/recipe_modules/sync_submodules 3 1
-recipes/recipe_modules/sync_submodules/resources 2 1
 recipes/recipes/3pp.expected 2 2
 recipes/recipes 47 10
 recipes/recipes/build_conda_cipd_pkg.expected 3 3
@@ -315,6 +313,5 @@ recipes/recipes/recipe_autoroller.expected 21 20
 recipes/recipes/recipe_roll_tryjob.expected 112 13
 recipes/recipes/recipe_simulation.expected 1 1
 recipes/recipes/recipes_py_continuous.expected 2 1
-recipes/recipes/sync_submodules.expected 11 9
 recipes/recipes/update_submodules_mirror.expected 103 9
 recipes/recipes/windows_image_builder/offline.expected 2 1
