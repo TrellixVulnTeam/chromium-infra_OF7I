@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>{{ title }}</title>
+    <link href="/stylesheets/style.css" type="text/css" rel="stylesheet"/>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <center>
+      <table width="100%%">
+        <tr>
+          <td align="left">
+            <a href="/">
+              <img border="0" height="75" src="/logo.png">
+            </a>
+          </td>
+          <td valign="middle" align="center" width="100%" style="font-size:smaller">
+            <a href="https://chromium.googlesource.com/infra/infra/+/master/appengine/chromium_status/">source</a> |
+            <a href="https://bugs.chromium.org/p/chromium/issues/entry?template=Build%20Infrastructure">bug</a> |
+            <a href="https://chrome.google.com/webstore/detail/chrome-os-tree-status/ebdinlbmpcdebianielhijhbalinlahg">extension</a> |
+            <a href="/allstatus">allstatus</a> |
+            <a href="/current?format=raw">current</a> |
+            <a href="/lkgr">lkgr</a> |
+            <a href="/commits">commits</a> |
+            <a href="/status_viewer">status_viewer</a>
+          </td>
+          <td valign="top" align="right">
+            <b> {{ username }} </b>
+            <br /><span name="date.datetz">{{current_UTC_time|date:"D, d M Y H:i:s T" }}</span>
+          </td>
+        </tr>
+      </table>
+    </center>
+    {% block content %}{% endblock %}
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-55762617-27', 'auto');
+    ga('send', 'pageview');
+  </script>
+  </body>
+</html>
