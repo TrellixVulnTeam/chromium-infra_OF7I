@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	gerrs "errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -41,6 +42,20 @@ const (
 var (
 	projectRegexp = regexp.MustCompile(`(?P<program>[a-z0-9-]+)/(?P<project>[a-z0-9-]+)$`)
 )
+
+type MissingLocalManifestError struct {
+	project string
+	err     error
+}
+
+func (e MissingLocalManifestError) Error() string {
+	return fmt.Sprintf("no local_manifest could be found for %s: %v", e.project, e.err)
+}
+
+func (e MissingLocalManifestError) Is(target error) bool {
+	_, ok := target.(*MissingLocalManifestError)
+	return ok
+}
 
 type projectBuildspec struct {
 	subcommands.CommandRunBase
@@ -164,8 +179,9 @@ func parseProject(project string) (string, string, error) {
 }
 
 // getProjects filters allProjects for only the projects associated with the
-// specified program.
-func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatterns []string) ([]string, error) {
+// specified program. It also returns a bool specifying whether or not any of
+// the patterns included a wildcard, which is used later on in handling errors.
+func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatterns []string) ([]string, bool, error) {
 	// Only fetch all projects if we need to, i.e. if one or more pattern
 	// contains a wildcard.
 	hasWildcard := false
@@ -176,12 +192,12 @@ func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatter
 		}
 	}
 	if !hasWildcard {
-		return projectPatterns, nil
+		return projectPatterns, hasWildcard, nil
 	}
 
 	allProjects, err := gerritClient.Projects(ctx, chromeInternalHost)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to fetch all projects").Err()
+		return nil, hasWildcard, errors.Annotate(err, "failed to fetch all projects").Err()
 	}
 
 	patterns := []*regexp.Regexp{}
@@ -189,7 +205,7 @@ func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatter
 		pattern = strings.ReplaceAll(pattern, "*", ".*") + "$"
 		re, err := regexp.Compile(pattern)
 		if err != nil {
-			return nil, errors.Annotate(err, "invalid pattern specified in --projects").Err()
+			return nil, hasWildcard, errors.Annotate(err, "invalid pattern specified in --projects").Err()
 		}
 		patterns = append(patterns, re)
 	}
@@ -203,7 +219,7 @@ func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatter
 			}
 		}
 	}
-	return projects, nil
+	return projects, hasWildcard, nil
 }
 
 func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *gerrit.Client) ([]string, error) {
@@ -251,7 +267,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 	}
 
 	// Resolve projects.
-	projects, err := getProjects(ctx, gerritClient, b.projects)
+	projects, hasWildcard, err := getProjects(ctx, gerritClient, b.projects)
 	if err != nil {
 		return errors.Annotate(err, "failed to resolve projects").Err()
 	}
@@ -267,6 +283,13 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 			return errors.Annotate(err, "invalid project %s", proj).Err()
 		}
 		if err := CreateProjectBuildspecs(program, project, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+			// If the projects were not all explicitly specified (i.e. some
+			// projects were selected with a wildcard) we shouldn't fail if
+			// some project does not have a local manifest.
+			if gerrs.Is(err, &MissingLocalManifestError{}) && hasWildcard {
+				LogErr(err.Error())
+				continue
+			}
 			errs = append(errs, err)
 		}
 	}
@@ -338,6 +361,10 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 				if project == programProject {
 					LogErr("%s: couldn't load local_manifest.xml for program %s, it may not exist for the program so skipping...", logPrefix, program)
 					continue
+				}
+				err = MissingLocalManifestError{
+					project: project,
+					err:     err,
 				}
 				return errors.Annotate(err, "%s: error loading tip-of-branch manifest", logPrefix).Err()
 			}
