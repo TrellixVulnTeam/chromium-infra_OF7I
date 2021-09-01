@@ -38,32 +38,14 @@ func TestAnalyzeTelemetryExperiment(t *testing.T) {
 			r, err := analyzeExperiment(m, rootDir)
 			So(err, ShouldBeNil)
 			So(r, ShouldNotBeNil)
-			Convey("Then we find the overall p-value", func() {
-				So(r.OverallPValue, ShouldAlmostEqual, 0.0)
-				Convey("And we see that some p-values are less than 0.05", func() {
-					less := 0
-					for _, s := range r.Reports {
-						if s.PValue != nil && *s.PValue < 0.05 {
-							less += 1
-						}
-					}
-					So(less, ShouldBeGreaterThan, 0)
-					Convey("And we see the stats for all metrics", func() {
-						nan := 0
-						withStats := 0
-						for _, s := range r.Reports {
-							if s.PValue == nil {
-								nan += 1
-								continue
-							}
-							if len(s.Measurements) > 1 {
-								withStats += 1
-							}
-						}
-						So(nan, ShouldNotEqual, 0)
-						So(withStats, ShouldNotEqual, 0)
-						So(nan+withStats, ShouldEqual, len(r.Reports))
-					})
+			So(len(r.Reports), ShouldEqual, 2)
+			Convey("Then we verify the overall p-value", func() {
+				So(r.OverallPValue, ShouldAlmostEqual, 0.0053, 0.0001)
+				Convey("And we verify the p-values of the individual metrics", func() {
+					opt_metric := r.Reports["Optimize-Background:count"]
+					So(*opt_metric.PValue, ShouldAlmostEqual, 0.0026, 0.0001)
+					parse_metric := r.Reports["Parse-Background:count"]
+					So(*parse_metric.PValue, ShouldAlmostEqual, 0.914, 0.001)
 				})
 			})
 		})
