@@ -53,6 +53,32 @@ missing suite arg`,
 		[]string{"sample-suite-name"},
 		"total number of CTP runs launched (# models specified * repeats) cannot exceed 12",
 	},
+	{ // One error raised
+		testCommonFlags{
+			board:            "sample-board",
+			models:           []string{},
+			repeats:          1,
+			pool:             "sample-pool",
+			image:            "sample-image",
+			secondary_boards: []string{"coral", "eve"},
+			priority:         255,
+		},
+		[]string{"sample-suite-name"},
+		"number of requested secondary_boards: 2 doesn not match with number of provided secondary_images: 0",
+	},
+	{ // One error raised
+		testCommonFlags{
+			board:            "sample-board",
+			models:           []string{},
+			repeats:          1,
+			pool:             "sample-pool",
+			image:            "sample-image",
+			secondary_models: []string{"babytiger", "eve"},
+			priority:         255,
+		},
+		[]string{"sample-suite-name"},
+		"number of requested secondary_boards: 0 doesn not match with number of requested secondary_models: 2",
+	},
 	{ // No errors raised
 		testCommonFlags{
 			board:    "sample-board",
@@ -402,5 +428,76 @@ func TestTestPlatformRequest(t *testing.T) {
 	}
 	if diff := cmp.Diff(wantRequest, gotRequest, common.CmpOpts); diff != "" {
 		t.Errorf("unexpected diff (%s)", diff)
+	}
+}
+
+var testSecondaryDevicesData = []struct {
+	testCommonFlags
+	wantDeps []*test_platform.Request_Params_SecondaryDevice
+}{
+	{ // Test board only request.
+		testCommonFlags{
+			secondary_boards: []string{"board1", "board2"},
+			secondary_images: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
+		},
+		[]*test_platform.Request_Params_SecondaryDevice{
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board1"},
+				},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board1-release/10000.0.0"}},
+				},
+			},
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board2"},
+				},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board2-release/9999.0.0"}},
+				},
+			},
+		},
+	},
+	{ // Test with model request.
+		testCommonFlags{
+			secondary_boards: []string{"board1", "board2"},
+			secondary_models: []string{"model1", "model2"},
+			secondary_images: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
+		},
+		[]*test_platform.Request_Params_SecondaryDevice{
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board1"},
+				},
+				HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{Model: "model1"},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board1-release/10000.0.0"}},
+				},
+			},
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board2"},
+				},
+				HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{Model: "model2"},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board2-release/9999.0.0"}},
+				},
+			},
+		},
+	},
+}
+
+func TestSecondaryDevices(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testSecondaryDevicesData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantDeps), func(t *testing.T) {
+			t.Parallel()
+			gotDeps := tt.testCommonFlags.secondaryDevices()
+			if diff := cmp.Diff(tt.wantDeps, gotDeps, common.CmpOpts); diff != "" {
+				t.Errorf("unexpected diff (%s)", diff)
+			}
+		})
 	}
 }

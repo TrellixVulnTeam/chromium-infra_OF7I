@@ -53,34 +53,40 @@ const (
 // testCommonFlags contains parameters common to the "run
 // test", "run suite", and "run testplan" subcommands.
 type testCommonFlags struct {
-	board           string
-	models          []string
-	pool            string
-	image           string
-	release         string
-	qsAccount       string
-	maxRetries      int
-	repeats         int
-	priority        int64
-	timeoutMins     int
-	addedDims       map[string]string
-	provisionLabels map[string]string
-	addedTags       map[string]string
-	keyvals         map[string]string
-	exitEarly       bool
-	lacrosPath      string
+	board            string
+	secondary_boards []string
+	models           []string
+	secondary_models []string
+	pool             string
+	image            string
+	secondary_images []string
+	release          string
+	qsAccount        string
+	maxRetries       int
+	repeats          int
+	priority         int64
+	timeoutMins      int
+	addedDims        map[string]string
+	provisionLabels  map[string]string
+	addedTags        map[string]string
+	keyvals          map[string]string
+	exitEarly        bool
+	lacrosPath       string
 }
 
 // Registers run command-specific flags
 func (c *testCommonFlags) register(f *flag.FlagSet) {
 	f.StringVar(&c.image, "image", "", `Optional fully specified image name to run test against, e.g. octopus-release/R89-13609.0.0.
 If no value for image or release is passed, test will run against the latest green postsubmit build for the given board.`)
+	f.Var(luciflag.CommaList(&c.secondary_images), "secondary_images", "Comma-separated list of image name for secondary DUTs to run tests against, it need to align with boards in secondary_boards args.")
 	f.StringVar(&c.release, "release", "", `Optional ChromeOS release branch to run test against, e.g. R89-13609.0.0.
 If no value for image or release is passed, test will run against the latest green postsubmit build for the given board.`)
 	f.StringVar(&c.board, "board", "", "Board to run tests on.")
+	f.Var(luciflag.CommaList(&c.secondary_boards), "secondary_boards", "Comma-separated list of boards for secondary DUTs to run tests on, a.k.a multi-DUTs testing.")
 	f.Var(luciflag.StringSlice(&c.models), "model", fmt.Sprintf(`Model to run tests on; may be specified multiple times.
 A maximum of %d tests may be launched per "crosfleet run" command.`, maxCTPRunsPerCmd))
 	f.Var(luciflag.CommaList(&c.models), "models", "Comma-separated list of models to run tests on in same format as -model.")
+	f.Var(luciflag.CommaList(&c.secondary_models), "secondary_models", "Comma-separated list of models for secondary DUTs to run tests on, if provided it need to align with boards in secondary_boards args.")
 	f.IntVar(&c.repeats, "repeats", 1, fmt.Sprintf(`Number of repeat tests to launch (per model specified).
 A maximum of %d tests may be launched per "crosfleet run" command.`, maxCTPRunsPerCmd))
 	f.StringVar(&c.pool, "pool", "", "Device pool to run tests on.")
@@ -149,6 +155,16 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 	}
 	if f.NArg() == 0 {
 		errors = append(errors, fmt.Sprintf("missing %v arg", mainArgType))
+	}
+	// For multi-DUTs result reporting purpose we need board info, so even if
+	// explicit secondary models request, we need to ensure board info is also
+	// provided and the count matches.
+	if len(c.secondary_models) > 0 && len(c.secondary_boards) != len(c.secondary_models) {
+		errors = append(errors, fmt.Sprintf("number of requested secondary_boards: %d doesn not match with number of requested secondary_models: %d", len(c.secondary_boards), len(c.secondary_models)))
+	}
+	// Check if image name provided for each secondary devices.
+	if len(c.secondary_boards) != len(c.secondary_images) {
+		errors = append(errors, fmt.Sprintf("number of requested secondary_boards: %d doesn not match with number of provided secondary_images: %d", len(c.secondary_boards), len(c.secondary_images)))
 	}
 
 	if len(errors) > 0 {
@@ -409,7 +425,7 @@ func (l *ctpRunLauncher) testPlatformRequest(model string, buildTags map[string]
 		return nil, err
 	}
 
-	return &test_platform.Request{
+	request := &test_platform.Request{
 		TestPlan: l.testPlan,
 		Params: &test_platform.Request_Params{
 			FreeformAttributes: &test_platform.Request_Params_FreeformAttributes{
@@ -437,7 +453,12 @@ func (l *ctpRunLauncher) testPlatformRequest(model string, buildTags map[string]
 					time.Duration(l.cliFlags.timeoutMins) * time.Minute),
 			},
 		},
-	}, nil
+	}
+	// Handling multi-DUTs use case if secondary_boards provided.
+	if len(l.cliFlags.secondary_boards) > 0 {
+		request.Params.SecondaryDevices = l.cliFlags.secondaryDevices()
+	}
+	return request, nil
 }
 
 // softwareDependencies constructs test platform software dependencies from
@@ -553,4 +574,31 @@ func testOrSuiteNamesTag(names []string) string {
 		return label[:maxSwarmingTagLength]
 	}
 	return label
+}
+
+// secondaryDevices constructs secondary devices data for a test platform
+// request from test run flags.
+func (c *testCommonFlags) secondaryDevices() []*test_platform.Request_Params_SecondaryDevice {
+	var secondary_devices []*test_platform.Request_Params_SecondaryDevice
+	for i, b := range c.secondary_boards {
+		sd := &test_platform.Request_Params_SecondaryDevice{
+			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+				BuildTarget: &chromiumos.BuildTarget{Name: b},
+			},
+			SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+				{
+					Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
+						ChromeosBuild: c.secondary_images[i],
+					},
+				},
+			},
+		}
+		if len(c.secondary_models) > 0 {
+			sd.HardwareAttributes = &test_platform.Request_Params_HardwareAttributes{
+				Model: c.secondary_models[i],
+			}
+		}
+		secondary_devices = append(secondary_devices, sd)
+	}
+	return secondary_devices
 }

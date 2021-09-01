@@ -20,6 +20,7 @@ var CmpOpts = cmpopts.IgnoreUnexported(
 	test_platform.Request_TestPlan{},
 	test_platform.Request_Params{},
 	test_platform.Request_Params_HardwareAttributes{},
+	test_platform.Request_Params_SecondaryDevice{},
 	test_platform.Request_Params_SoftwareAttributes{},
 	test_platform.Request_Params_SoftwareDependency{},
 	test_platform.Request_Params_FreeformAttributes{},
