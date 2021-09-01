@@ -35,5 +35,5 @@ def GenTests(api):
             git_repo='https://chromium.googlesource.com/infra/infra',
         ) +
         # Simulate too many files on Mac.
-        diff(*['file_%d' % i for i in xrange(1000 if plat == 'mac' else 2)])
+        diff(*['file_%d' % i for i in range(1000 if plat == 'mac' else 2)])
     )

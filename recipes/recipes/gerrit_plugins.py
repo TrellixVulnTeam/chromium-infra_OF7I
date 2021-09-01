@@ -16,6 +16,8 @@ DEPS = [
     'depot_tools/gsutil',
 ]
 
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
+
 
 def RunSteps(api):
   assert api.platform.is_linux, 'Unsupported platform, only Linux is supported.'
