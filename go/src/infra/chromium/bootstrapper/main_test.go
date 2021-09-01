@@ -107,28 +107,29 @@ func TestPerformBootstrap(t *testing.T) {
 			So(cmd, ShouldBeNil)
 		})
 
-		Convey("succeeds for valid input", func() {
-			input := createInput(`{
-				"input": {
-					"properties": {
-						"$bootstrap": {
-							"top_level_project": {
-								"repo": {
-									"host": "fake-host",
-									"project": "fake-project"
-								},
-								"ref": "fake-ref"
+		input := createInput(`{
+			"input": {
+				"properties": {
+					"$bootstrap": {
+						"top_level_project": {
+							"repo": {
+								"host": "fake-host",
+								"project": "fake-project"
 							},
-							"properties_file": "fake-properties-file",
-							"exe": {
-								"cipd_package": "fake-package",
-								"cipd_version": "fake-version",
-								"cmd": ["fake-exe"]
-							}
+							"ref": "fake-ref"
+						},
+						"properties_file": "fake-properties-file",
+						"exe": {
+							"cipd_package": "fake-package",
+							"cipd_version": "fake-version",
+							"cmd": ["fake-exe"]
 						}
 					}
 				}
-			}`)
+			}
+		}`)
+
+		Convey("fails if determining executable fails", func() {
 			project.Refs["fake-ref"] = "fake-revision"
 			project.Revisions["fake-revision"] = &fakegitiles.Revision{
 				Files: map[string]*string{
@@ -137,6 +138,24 @@ func TestPerformBootstrap(t *testing.T) {
 					}`),
 				},
 			}
+			pkg.Refs["fake-version"] = ""
+
+			cmd, err := performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+
+			So(err, ShouldNotBeNil)
+			So(cmd, ShouldBeNil)
+		})
+
+		Convey("succeeds for valid input", func() {
+			project.Refs["fake-ref"] = "fake-revision"
+			project.Revisions["fake-revision"] = &fakegitiles.Revision{
+				Files: map[string]*string{
+					"fake-properties-file": strPtr(`{
+						"foo": "bar"
+					}`),
+				},
+			}
+			pkg.Refs["fake-version"] = "fake-instance-id"
 
 			cmd, err := performBootstrap(ctx, input, cipdRoot, "fake-output-path")
 
@@ -161,7 +180,16 @@ func TestPerformBootstrap(t *testing.T) {
 									"ref": "fake-ref",
 									"id": "fake-revision"
 								}
-							]
+							],
+							"exe": {
+								"cipd": {
+									"server": "https://chrome-infra-packages.appspot.com",
+									"package": "fake-package",
+									"requested_version": "fake-version",
+									"actual_version": "fake-instance-id"
+								},
+								"cmd": ["fake-exe"]
+							}
 						},
 						"foo": "bar"
 					}

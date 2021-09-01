@@ -13,6 +13,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+func jsonToStruct(json string) *structpb.Struct {
+	s := &structpb.Struct{}
+	util.PanicOnError(protojson.Unmarshal([]byte(json), s))
+	return s
+}
+
 func setPropertiesFromJson(build *buildbucketpb.Build, propsJson map[string]string) {
 	props := make(map[string]interface{}, len(propsJson))
 	for key, p := range propsJson {

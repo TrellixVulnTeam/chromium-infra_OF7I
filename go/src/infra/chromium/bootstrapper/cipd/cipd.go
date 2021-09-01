@@ -74,12 +74,18 @@ func NewClient(ctx context.Context, cipdRoot string) (*Client, error) {
 	return &Client{cipdRoot, cipdClient}, nil
 }
 
+// ResolveVersion resolves the requested version of a package to an instance ID,
+// returning the pin for the instance.
+func (c *Client) ResolveVersion(ctx context.Context, name, version string) (common.Pin, error) {
+	return c.client.ResolveVersion(ctx, name, version)
+}
+
 // DownloadPackage downloads and installs the CIPD package with the given name
-// at the given version and returns the path to the deployed package.
-func (c *Client) DownloadPackage(ctx context.Context, name, version string) (string, error) {
-	pin, err := c.client.ResolveVersion(ctx, name, version)
-	if err != nil {
-		return "", err
+// and instance ID and returns the path to the deployed package.
+func (c *Client) DownloadPackage(ctx context.Context, name, instanceId string) (string, error) {
+	pin := common.Pin{
+		PackageName: name,
+		InstanceID:  instanceId,
 	}
 	packages := common.PinSliceBySubdir{name: common.PinSlice{pin}}
 	if _, err := c.client.EnsurePackages(ctx, packages, &cipd.EnsureOptions{

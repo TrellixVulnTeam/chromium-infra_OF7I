@@ -10,8 +10,28 @@ syntax = "proto3";
 package chromium.bootstrapper.chromium_bootstrap;
 
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
+import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
 
 option go_package = "infra/chromium/bootstrapper/bootstrap";
+
+// A CIPD location.
+message Cipd {
+  string server = 1;
+  string package = 2;
+  string requested_version = 3;
+  string actual_version = 4;
+}
+
+// Information about the executable being bootstrapped.
+message BootstrappedExe {
+  // The location that the bootstrapped executable is retrieved from.
+  oneof source {
+    Cipd cipd = 1;
+    swarming.v1.CASReference cas = 2;
+  }
+
+  repeated string cmd = 3;
+}
 
 // The input properties consumed by the chromium_bootstrap recipe module
 //
@@ -34,4 +54,9 @@ message ChromiumBootstrapModuleProperties {
   // builder should skip performing analysis and instead build all targets and
   // run all tests.
   repeated string skip_analysis_reasons = 2;
+
+  // The bootstrapped executable being executed.
+  //
+  // This will allow the builder to report the source of the executable.
+  BootstrappedExe exe = 3;
 }

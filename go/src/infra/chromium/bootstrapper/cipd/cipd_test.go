@@ -7,17 +7,14 @@ package cipd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
-	"strings"
 	"testing"
-
-	. "infra/chromium/bootstrapper/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
 	. "go.chromium.org/luci/common/testing/assertions"
-	"go.chromium.org/luci/common/testing/testfs"
 )
 
 type fakeCipdClient struct {
@@ -44,103 +41,127 @@ func (f *fakeCipdClient) EnsurePackages(ctx context.Context, packages common.Pin
 	return nil, nil
 }
 
-func factoryForRecipesCfg(contents string) CipdClientFactory {
-	return func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-		return &fakeCipdClient{
-			ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
-				layout := map[string]string{}
-				for subdir := range packages {
-					layout[strings.Join([]string{subdir, "infra", "config", "recipes.cfg"}, "/")] = contents
-				}
-				PanicOnError(testfs.Build(cipdRoot, layout))
-				return nil, nil
-			},
-		}, nil
-	}
-}
-
-func TestClient(t *testing.T) {
+func TestNewClient(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
-	Convey("Client", t, func() {
+	Convey("NewClient", t, func() {
 
-		Convey("NewClient", func() {
+		Convey("fails if client factory fails", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return &fakeCipdClient{}, nil
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
 
-			Convey("fails if client factory fails", func() {
-				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return &fakeCipdClient{}, nil
-				}
-				ctx := UseCipdClientFactory(ctx, factory)
+			client, err := NewClient(ctx, "fake-root")
 
-				client, err := NewClient(ctx, "fake-root")
-
-				So(err, ShouldBeNil)
-				So(client, ShouldNotBeNil)
-			})
-
-			Convey("succeeds if factory succeeds", func() {
-				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return nil, errors.New("test factory failure")
-				}
-				ctx := UseCipdClientFactory(ctx, factory)
-
-				client, err := NewClient(ctx, "fake-root")
-
-				So(err, ShouldErrLike, "test factory failure")
-				So(client, ShouldBeNil)
-			})
-
+			So(err, ShouldBeNil)
+			So(client, ShouldNotBeNil)
 		})
 
-		Convey("DownloadPackage", func() {
+		Convey("succeeds if factory succeeds", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return nil, errors.New("test factory failure")
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
 
-			cipdRoot := t.TempDir()
+			client, err := NewClient(ctx, "fake-root")
 
-			Convey("fails if resolving version fails", func() {
-				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return &fakeCipdClient{resolveVersion: func(ctx context.Context, packageName, version string) (common.Pin, error) {
-						return common.Pin{}, errors.New("test ResolveVersion failure")
-					}}, nil
-				}
-				ctx := UseCipdClientFactory(ctx, factory)
-				client, _ := NewClient(ctx, cipdRoot)
+			So(err, ShouldErrLike, "test factory failure")
+			So(client, ShouldBeNil)
+		})
 
-				recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
+	})
+}
 
-				So(err, ShouldErrLike, "test ResolveVersion failure")
-				So(recipesPyPath, ShouldBeEmpty)
+func TestResolveVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	Convey("Client.DownloadPackage", t, func() {
+
+		Convey("fails if resolving version fails", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return &fakeCipdClient{resolveVersion: func(ctx context.Context, pkg, version string) (common.Pin, error) {
+					return common.Pin{}, errors.New("test ResolveVersion failure")
+				}}, nil
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
+			client, _ := NewClient(ctx, "unneeded-cipd-root")
+
+			pin, err := client.ResolveVersion(ctx, "fake-package", "fake-version")
+
+			So(err, ShouldErrLike, "test ResolveVersion failure")
+			So(pin, ShouldResemble, common.Pin{})
+		})
+
+		Convey("returns resolved pin", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return &fakeCipdClient{resolveVersion: func(ctx context.Context, pkg, version string) (common.Pin, error) {
+					return common.Pin{
+						PackageName: pkg,
+						InstanceID:  fmt.Sprintf("%s-instance-id", pkg),
+					}, nil
+				}}, nil
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
+			client, _ := NewClient(ctx, "unneeded-cipd-root")
+
+			pin, err := client.ResolveVersion(ctx, "fake-package", "fake-version")
+
+			So(err, ShouldBeNil)
+			So(pin, ShouldResemble, common.Pin{
+				PackageName: "fake-package",
+				InstanceID:  "fake-package-instance-id",
 			})
+		})
 
-			Convey("fails if ensuring package fails", func() {
-				factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
-					return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
-						return nil, errors.New("test EnsurePackages failure")
-					}}, nil
-				}
-				ctx := UseCipdClientFactory(ctx, factory)
-				client, _ := NewClient(ctx, cipdRoot)
+	})
 
-				recipesPyPath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
+}
 
-				So(err, ShouldErrLike, "test EnsurePackages failure")
-				So(recipesPyPath, ShouldBeEmpty)
-			})
+func TestDownloadPackage(t *testing.T) {
+	t.Parallel()
 
-			Convey("returns path to deployed package", func() {
+	ctx := context.Background()
 
-				ctx := UseCipdClientFactory(ctx, factoryForRecipesCfg("{}"))
-				client, _ := NewClient(ctx, cipdRoot)
+	Convey("Client.DownloadPackage", t, func() {
 
-				packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-version")
+		cipdRoot := t.TempDir()
 
-				So(err, ShouldBeNil)
-				So(packagePath, ShouldEqual, filepath.Join(cipdRoot, "fake-package"))
+		Convey("fails if ensuring package fails", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
+					return nil, errors.New("test EnsurePackages failure")
+				}}, nil
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
+			client, _ := NewClient(ctx, cipdRoot)
 
-			})
+			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id")
+
+			So(err, ShouldErrLike, "test EnsurePackages failure")
+			So(packagePath, ShouldBeEmpty)
+		})
+
+		Convey("returns path to deployed package", func() {
+			factory := func(ctx context.Context, cipdRoot string) (CipdClient, error) {
+				return &fakeCipdClient{ensurePackages: func(ctx context.Context, packages common.PinSliceBySubdir, paranoia cipd.ParanoidMode, dryRun bool) (cipd.ActionMap, error) {
+					return nil, nil
+				}}, nil
+			}
+			ctx := UseCipdClientFactory(ctx, factory)
+			client, _ := NewClient(ctx, cipdRoot)
+
+			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id")
+
+			So(err, ShouldBeNil)
+			So(packagePath, ShouldEqual, filepath.Join(cipdRoot, "fake-package"))
 
 		})
 
 	})
+
 }

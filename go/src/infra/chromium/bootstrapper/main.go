@@ -66,6 +66,8 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 	{
 		group, ctx := errgroup.WithContext(ctx)
 
+		exeCh := make(chan *bootstrap.BootstrappedExe, 1)
+
 		// Get the arguments for the command
 		group.Go(func() error {
 			logging.Infof(ctx, "creating CIPD client")
@@ -76,8 +78,15 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 
 			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient)
 
+			logging.Infof(ctx, "determining bootstrapped executable")
+			exe, err := bootstrapper.GetBootstrappedExeInfo(ctx, bootstrapInput)
+			if err != nil {
+				return err
+			}
+			exeCh <- exe
+
 			logging.Infof(ctx, "setting up bootstrapped executable")
-			cmd, err = bootstrapper.DeployExe(ctx, bootstrapInput)
+			cmd, err = bootstrapper.DeployExe(ctx, exe)
 			if err != nil {
 				return err
 			}
@@ -93,8 +102,21 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 		group.Go(func() error {
 			bootstrapper := bootstrap.NewPropertyBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
 
-			logging.Infof(ctx, "computing bootstrapped properties")
-			properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, bootstrapInput)
+			logging.Infof(ctx, "getting bootstrapped config")
+			config, err := bootstrapper.GetBootstrapConfig(ctx, bootstrapInput)
+			if err != nil {
+				return err
+			}
+
+			var exe *bootstrap.BootstrappedExe
+			select {
+			case exe = <-exeCh:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+
+			logging.Infof(ctx, "getting bootstrapped properties")
+			properties, err := config.GetProperties(exe)
 			if err != nil {
 				return err
 			}

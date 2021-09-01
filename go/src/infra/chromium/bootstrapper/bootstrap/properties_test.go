@@ -12,17 +12,18 @@ import (
 	"infra/chromium/bootstrapper/gitiles"
 	"testing"
 
-	structpb "github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func TestPropertyBootstrapper(t *testing.T) {
+func TestGetBootstrapConfig(t *testing.T) {
 	t.Parallel()
 
-	Convey("PropertyBootstrapper", t, func() {
-		ctx := context.Background()
+	ctx := context.Background()
+
+	Convey("PropertyBootstrapper.GetBootstrapConfig", t, func() {
 
 		build := &buildbucketpb.Build{
 			Input: &buildbucketpb.Build_Input{
@@ -53,233 +54,319 @@ func TestPropertyBootstrapper(t *testing.T) {
 			},
 		}))
 
+		setBootstrapProperties(build, `{
+			"top_level_project": {
+				"repo": {
+					"host": "chromium.googlesource.com",
+					"project": "top/level"
+				},
+				"ref": "refs/heads/top-level"
+			},
+			"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+			"exe": {
+				"cipd_package": "fake-package",
+				"cipd_version": "fake-version",
+				"cmd": ["fake-exe"]
+			}
+		}`)
+
 		bootstrapper := NewPropertyBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
 
-		Convey("ComputeBootstrappedProperties", func() {
+		Convey("fails", func() {
 
-			setBootstrapProperties(build, `{
-				"top_level_project": {
-					"repo": {
-						"host": "chromium.googlesource.com",
-						"project": "top/level"
-					},
-					"ref": "refs/heads/top-level"
-				},
-				"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
-				"exe": {
-					"cipd_package": "fake-package",
-					"cipd_version": "fake-version",
-					"cmd": ["fake-exe"]
-				}
-			}`)
+			Convey("if unable to get revision", func() {
+				input := getInput(build)
+				topLevelGitiles.Refs["refs/heads/top-level"] = ""
 
-			Convey("fails", func() {
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
 
-				Convey("if unable to get revision", func() {
-					input := getInput(build)
-					topLevelGitiles.Refs["refs/heads/top-level"] = ""
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldNotBeNil)
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if unable to get file", func() {
-					input := getInput(build)
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldNotBeNil)
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if unable to get target ref of change", func() {
-					build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-						Host:     "chromium-review.googlesource.com",
-						Project:  "top/level",
-						Change:   2345,
-						Patchset: 1,
-					})
-					topLevelGerrit.Changes[2345] = nil
-					input := getInput(build)
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldErrLike, "failed to get target ref for config change")
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if unable to get files affected by patchset", func() {
-					build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-						Host:     "chromium-review.googlesource.com",
-						Project:  "top/level",
-						Change:   2345,
-						Patchset: 2, // non-existent patchset
-					})
-					input := getInput(build)
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldErrLike, "failed to determine if properties file infra/config/fake-bucket/fake-builder/properties.textpb was affected")
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if the properties file is invalid", func() {
-					input := getInput(build)
-					topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
-						Files: map[string]*string{
-							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(""),
-						},
-					}
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldNotBeNil)
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if unable to get diff for properties file", func() {
-					build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-						Host:     "chromium-review.googlesource.com",
-						Project:  "top/level",
-						Change:   2345,
-						Patchset: 1,
-					})
-					topLevelGerrit.Changes[2345] = &fakegerrit.Change{
-						Ref: "top-level-some-branch-head",
-						Patchsets: map[int32]*fakegerrit.Patchset{
-							1: {
-								Revision: "cl-revision",
-								AffectedFiles: map[string]*fakegerrit.AffectedFile{
-									"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
-								},
-							},
-						},
-					}
-					topLevelGitiles.Refs["top-level-some-branch-head"] = "top-level-some-branch-head-revision"
-					topLevelGitiles.Revisions["top-level-some-branch-head-revision"] = &fakegitiles.Revision{
-						Files: map[string]*string{
-							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr("{}"),
-						},
-					}
-					topLevelGitiles.Revisions["cl-revision"] = &fakegitiles.Revision{
-						Parent: "non-existent-base",
-					}
-					topLevelGitiles.Revisions["non-existent-base"] = nil
-					input := getInput(build)
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldErrLike, "failed to get diff for infra/config/fake-bucket/fake-builder/properties.textpb")
-					So(properties, ShouldBeNil)
-				})
-
-				Convey("if patch for properties file does not apply", func() {
-					build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-						Host:     "chromium-review.googlesource.com",
-						Project:  "top/level",
-						Change:   2345,
-						Patchset: 1,
-					})
-					topLevelGerrit.Changes[2345] = &fakegerrit.Change{
-						Ref: "top-level-some-branch-head",
-						Patchsets: map[int32]*fakegerrit.Patchset{
-							1: {
-								Revision: "cl-revision",
-								AffectedFiles: map[string]*fakegerrit.AffectedFile{
-									"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
-								},
-							},
-						},
-					}
-					topLevelGitiles.Refs["top-level-some-branch-head"] = "top-level-some-branch-head-revision"
-					topLevelGitiles.Revisions["top-level-some-branch-head-revision"] = &fakegitiles.Revision{
-						Files: map[string]*string{
-							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-								"test_property": "foo"
-							}`),
-						},
-					}
-					topLevelGitiles.Revisions["cl-revision"] = &fakegitiles.Revision{
-						Parent: "cl-base",
-						Files: map[string]*string{
-							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-								"test_property": "bar"
-							}`),
-						},
-					}
-					topLevelGitiles.Revisions["cl-base"] = &fakegitiles.Revision{
-						Files: map[string]*string{
-							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr("{}"),
-						},
-					}
-					input := getInput(build)
-
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-					So(err, ShouldNotBeNil)
-					So(PatchRejected.In(err), ShouldBeTrue)
-					So(properties, ShouldBeNil)
-				})
-
+				So(err, ShouldNotBeNil)
+				So(properties, ShouldBeNil)
 			})
 
-			Convey("returns properties", func() {
+			Convey("if unable to get file", func() {
+				input := getInput(build)
 
-				Convey("with properties from the properties file", func() {
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldNotBeNil)
+				So(properties, ShouldBeNil)
+			})
+
+			Convey("if unable to get target ref of change", func() {
+				build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
+					Host:     "chromium-review.googlesource.com",
+					Project:  "top/level",
+					Change:   2345,
+					Patchset: 1,
+				})
+				topLevelGerrit.Changes[2345] = nil
+				input := getInput(build)
+
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldErrLike, "failed to get target ref for config change")
+				So(properties, ShouldBeNil)
+			})
+
+			Convey("if unable to get files affected by patchset", func() {
+				build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
+					Host:     "chromium-review.googlesource.com",
+					Project:  "top/level",
+					Change:   2345,
+					Patchset: 2, // non-existent patchset
+				})
+				input := getInput(build)
+
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldErrLike, "failed to determine if properties file infra/config/fake-bucket/fake-builder/properties.textpb was affected")
+				So(properties, ShouldBeNil)
+			})
+
+			Convey("if the properties file is invalid", func() {
+				input := getInput(build)
+				topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
+				topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(""),
+					},
+				}
+
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldNotBeNil)
+				So(properties, ShouldBeNil)
+			})
+
+			Convey("if unable to get diff for properties file", func() {
+				build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
+					Host:     "chromium-review.googlesource.com",
+					Project:  "top/level",
+					Change:   2345,
+					Patchset: 1,
+				})
+				topLevelGerrit.Changes[2345] = &fakegerrit.Change{
+					Ref: "top-level-some-branch-head",
+					Patchsets: map[int32]*fakegerrit.Patchset{
+						1: {
+							Revision: "cl-revision",
+							AffectedFiles: map[string]*fakegerrit.AffectedFile{
+								"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
+							},
+						},
+					},
+				}
+				topLevelGitiles.Refs["top-level-some-branch-head"] = "top-level-some-branch-head-revision"
+				topLevelGitiles.Revisions["top-level-some-branch-head-revision"] = &fakegitiles.Revision{
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr("{}"),
+					},
+				}
+				topLevelGitiles.Revisions["cl-revision"] = &fakegitiles.Revision{
+					Parent: "non-existent-base",
+				}
+				topLevelGitiles.Revisions["non-existent-base"] = nil
+				input := getInput(build)
+
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldErrLike, "failed to get diff for infra/config/fake-bucket/fake-builder/properties.textpb")
+				So(properties, ShouldBeNil)
+			})
+
+			Convey("if patch for properties file does not apply", func() {
+				build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
+					Host:     "chromium-review.googlesource.com",
+					Project:  "top/level",
+					Change:   2345,
+					Patchset: 1,
+				})
+				topLevelGerrit.Changes[2345] = &fakegerrit.Change{
+					Ref: "top-level-some-branch-head",
+					Patchsets: map[int32]*fakegerrit.Patchset{
+						1: {
+							Revision: "cl-revision",
+							AffectedFiles: map[string]*fakegerrit.AffectedFile{
+								"infra/config/fake-bucket/fake-builder/properties.textpb": nil,
+							},
+						},
+					},
+				}
+				topLevelGitiles.Refs["top-level-some-branch-head"] = "top-level-some-branch-head-revision"
+				topLevelGitiles.Revisions["top-level-some-branch-head-revision"] = &fakegitiles.Revision{
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
+							"test_property": "foo"
+						}`),
+					},
+				}
+				topLevelGitiles.Revisions["cl-revision"] = &fakegitiles.Revision{
+					Parent: "cl-base",
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
+							"test_property": "bar"
+						}`),
+					},
+				}
+				topLevelGitiles.Revisions["cl-base"] = &fakegitiles.Revision{
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr("{}"),
+					},
+				}
+				input := getInput(build)
+
+				properties, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldNotBeNil)
+				So(PatchRejected.In(err), ShouldBeTrue)
+				So(properties, ShouldBeNil)
+			})
+
+		})
+
+		Convey("returns config", func() {
+
+			Convey("with buildProperties from input", func() {
+				topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
+				topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+					Files: map[string]*string{
+						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{}`),
+					},
+				}
+				setBootstrapProperties(build, `{
+					"top_level_project": {
+						"repo": {
+							"host": "chromium.googlesource.com",
+							"project": "top/level"
+						},
+						"ref": "refs/heads/top-level"
+					},
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+					"exe": {
+						"cipd_package": "fake-package",
+						"cipd_version": "fake-version",
+						"cmd": ["fake-exe"]
+					}
+				}`)
+				build.Input.Properties.Fields["test_property"] = structpb.NewStringValue("foo")
+				input := getInput(build)
+
+				config, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldBeNil)
+				So(config.buildProperties, ShouldResembleProtoJSON, `{
+					"test_property": "foo"
+				}`)
+			})
+
+			Convey("for top-level project", func() {
+
+				setBootstrapProperties(build, `{
+					"top_level_project": {
+						"repo": {
+							"host": "chromium.googlesource.com",
+							"project": "top/level"
+						},
+						"ref": "refs/heads/top-level"
+					},
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+					"exe": {
+						"cipd_package": "fake-package",
+						"cipd_version": "fake-version",
+						"cmd": ["fake-exe"]
+					}
+				}`)
+
+				Convey("returns config with properties from top level ref when no commit or change for project", func() {
 					topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
 					topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
 						Files: map[string]*string{
 							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-								"$build/baz": {
-									"quux": "quuz"
-								},
-								"foo": "bar"
+								"test_property": "top-level-head-value"
 							}`),
 						},
 					}
 					input := getInput(build)
 
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
+					config, err := bootstrapper.GetBootstrapConfig(ctx, input)
 
 					So(err, ShouldBeNil)
-					So(getValueAtPath(properties, "$build/baz"), ShouldResembleProtoJSON, `{"quux": "quuz"}`)
-					So(getValueAtPath(properties, "foo"), ShouldResembleProtoJSON, `"bar"`)
-					So(properties.Fields, ShouldNotContainKey, "$bootstrap")
+					So(config.commit.GitilesCommit, ShouldResembleProtoJSON, `{
+						"host": "chromium.googlesource.com",
+						"project": "top/level",
+						"ref": "refs/heads/top-level",
+						"id": "top-level-top-level-head"
+					}`)
+					So(config.change, ShouldBeNil)
+					So(config.builderProperties, ShouldResembleProtoJSON, `{
+						"test_property": "top-level-head-value"
+					}`)
 				})
 
-				Convey("with build properties merged with properties from the properties file", func() {
-					topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-					topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
+				Convey("returns config with properties from commit ref when commit for project without ID", func() {
+					build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
+						Host:    "chromium.googlesource.com",
+						Project: "top/level",
+						Ref:     "refs/heads/some-branch",
+					}
+					topLevelGitiles.Refs["refs/heads/some-branch"] = "top-level-some-branch-head"
+					topLevelGitiles.Revisions["top-level-some-branch-head"] = &fakegitiles.Revision{
 						Files: map[string]*string{
 							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-								"$build/baz": {
-									"quux": "quuz"
-								},
-								"foo": "bar"
+								"test_property": "some-branch-head-value"
 							}`),
 						},
 					}
-					setPropertiesFromJson(build, map[string]string{
-						"$build/baz": `{
-							"quuy": "quuw"
-						}`,
-						"shaz": `1337.0`,
-					})
 					input := getInput(build)
 
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
+					config, err := bootstrapper.GetBootstrapConfig(ctx, input)
 
 					So(err, ShouldBeNil)
-					So(getValueAtPath(properties, "$build/baz"), ShouldResembleProtoJSON, `{"quuy": "quuw"}`)
-					So(getValueAtPath(properties, "foo"), ShouldResembleProtoJSON, `"bar"`)
-					So(getValueAtPath(properties, "shaz"), ShouldResembleProtoJSON, `1337`)
-					So(properties.Fields, ShouldNotContainKey, "$bootstrap")
+					So(config.commit.GitilesCommit, ShouldResembleProtoJSON, `{
+						"host": "chromium.googlesource.com",
+						"project": "top/level",
+						"ref": "refs/heads/some-branch",
+						"id": "top-level-some-branch-head"
+					}`)
+					So(config.change, ShouldBeNil)
+					So(config.builderProperties, ShouldResembleProtoJSON, `{
+						"test_property": "some-branch-head-value"
+					}`)
 				})
 
-				Convey("with patch for modified properties file applied", func() {
+				Convey("returns config with properties from commit revision when commit for project with ID", func() {
+					build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
+						Host:    "chromium.googlesource.com",
+						Project: "top/level",
+						Ref:     "refs/heads/some-branch",
+						Id:      "some-branch-revision",
+					}
+					topLevelGitiles.Revisions["some-branch-revision"] = &fakegitiles.Revision{
+						Files: map[string]*string{
+							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
+								"test_property": "some-branch-revision-value"
+							}`),
+						},
+					}
+					input := getInput(build)
+
+					config, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+					So(err, ShouldBeNil)
+					So(config.commit.GitilesCommit, ShouldResembleProtoJSON, `{
+						"host": "chromium.googlesource.com",
+						"project": "top/level",
+						"ref": "refs/heads/some-branch",
+						"id": "some-branch-revision"
+					}`)
+					So(config.change, ShouldBeNil)
+					So(config.builderProperties, ShouldResembleProtoJSON, `{
+						"test_property": "some-branch-revision-value"
+					}`)
+				})
+
+				Convey("returns config with properties from target ref and patch applied when change for project", func() {
 					build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
 						Host:     "chromium-review.googlesource.com",
 						Project:  "top/level",
@@ -301,166 +388,132 @@ func TestPropertyBootstrapper(t *testing.T) {
 					topLevelGitiles.Revisions["top-level-some-branch-head"] = &fakegitiles.Revision{
 						Files: map[string]*string{
 							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-									"test_property": "some-branch-head-value"
-								}`),
+								"test_property": "some-branch-head-value",
+								"test_property2": "some-branch-head-value2",
+								"test_property3": "some-branch-head-value3",
+								"test_property4": "some-branch-head-value4",
+								"test_property5": "some-branch-head-value5"
+							}`),
 						},
 					}
 					topLevelGitiles.Revisions["cl-base"] = &fakegitiles.Revision{
 						Files: map[string]*string{
 							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-									"test_property": "some-branch-head-value"
-								}`),
+								"test_property": "some-branch-head-value",
+								"test_property2": "some-branch-head-value2",
+								"test_property3": "some-branch-head-value3",
+								"test_property4": "some-branch-head-value4",
+								"test_property5": "some-branch-head-old-value5"
+							}`),
 						},
 					}
 					topLevelGitiles.Revisions["cl-revision"] = &fakegitiles.Revision{
 						Parent: "cl-base",
 						Files: map[string]*string{
 							"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-									"test_property": "some-branch-head-value",
-									"test_property2": "some-branch-head-value2"
-								}`),
+								"test_property": "some-branch-head-new-value",
+								"test_property2": "some-branch-head-value2",
+								"test_property3": "some-branch-head-value3",
+								"test_property4": "some-branch-head-value4",
+								"test_property5": "some-branch-head-old-value5"
+							}`),
 						},
 					}
 					input := getInput(build)
 
-					properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
+					config, err := bootstrapper.GetBootstrapConfig(ctx, input)
 
 					So(err, ShouldBeNil)
-					So(getValueAtPath(properties, "test_property"), ShouldResembleProtoJSON, `"some-branch-head-value"`)
-					So(getValueAtPath(properties, "test_property2"), ShouldResembleProtoJSON, `"some-branch-head-value2"`)
-				})
-
-				Convey("for top level project with commits in $build/chromium_bootstrap property", func() {
-
-					Convey("for commit ref when build has gitiles commit without ID for top level project", func() {
-						build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
-							Host:    "chromium.googlesource.com",
-							Project: "top/level",
-							Ref:     "refs/heads/some-branch",
-						}
-						topLevelGitiles.Refs["refs/heads/some-branch"] = "top-level-some-branch-head"
-						topLevelGitiles.Revisions["top-level-some-branch-head"] = &fakegitiles.Revision{
-							Files: map[string]*string{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "some-branch-head-value"}`),
-							},
-						}
-						input := getInput(build)
-
-						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-						So(err, ShouldBeNil)
-						So(getValueAtPath(properties, "test_property"), ShouldResembleProtoJSON, `"some-branch-head-value"`)
-						So(getValueAtPath(properties, "$build/chromium_bootstrap", "commits"), ShouldResembleProtoJSON, `[
-							{
-								"host": "chromium.googlesource.com",
-								"project": "top/level",
-								"ref": "refs/heads/some-branch",
-								"id": "top-level-some-branch-head"
-							}
-						]`)
-					})
-
-					Convey("for commit revision when build has gitiles commit with ID for top level project", func() {
-						build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
-							Host:    "chromium.googlesource.com",
-							Project: "top/level",
-							Ref:     "refs/heads/some-branch",
-							Id:      "some-branch-revision",
-						}
-						topLevelGitiles.Revisions["some-branch-revision"] = &fakegitiles.Revision{
-							Files: map[string]*string{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "some-branch-revision-value"}`),
-							},
-						}
-						input := getInput(build)
-
-						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-						So(err, ShouldBeNil)
-						So(getValueAtPath(properties, "test_property"), ShouldResembleProtoJSON, `"some-branch-revision-value"`)
-						So(getValueAtPath(properties, "$build/chromium_bootstrap", "commits"), ShouldResembleProtoJSON, `[
-							{
-								"host": "chromium.googlesource.com",
-								"project": "top/level",
-								"ref": "refs/heads/some-branch",
-								"id": "some-branch-revision"
-							}
-						]`)
-					})
-
-					Convey("for target ref when build has gerrit change for top level project", func() {
-						build.Input.GerritChanges = append(build.Input.GerritChanges, &buildbucketpb.GerritChange{
-							Host:     "chromium-review.googlesource.com",
-							Project:  "top/level",
-							Change:   2345,
-							Patchset: 1,
-						})
-						topLevelGerrit.Changes[2345] = &fakegerrit.Change{
-							Ref: "refs/heads/some-branch",
-							Patchsets: map[int32]*fakegerrit.Patchset{
-								1: {
-									AffectedFiles: map[string]*fakegerrit.AffectedFile{
-										"foo/bar": nil,
-									},
-								},
-							},
-						}
-						topLevelGitiles.Refs["refs/heads/some-branch"] = "top-level-some-branch-head"
-						topLevelGitiles.Revisions["top-level-some-branch-head"] = &fakegitiles.Revision{
-							Files: map[string]*string{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{
-									"test_property": "some-branch-head-value"
-								}`),
-							},
-						}
-						input := getInput(build)
-
-						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-						So(err, ShouldBeNil)
-						So(getValueAtPath(properties, "test_property"), ShouldResembleProtoJSON, `"some-branch-head-value"`)
-						So(getValueAtPath(properties, "$build/chromium_bootstrap", "commits"), ShouldResembleProtoJSON, `[
-							{
-								"host": "chromium.googlesource.com",
-								"project": "top/level",
-								"ref": "refs/heads/some-branch",
-								"id": "top-level-some-branch-head"
-							}
-						]`)
-					})
-
-					Convey("for top level ref when build does not have gitiles commit or gerrit change for top level project", func() {
-						build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
-							Host:    "chromium.googlesource.com",
-							Project: "unrelated",
-							Ref:     "refs/heads/irrelevant",
-						}
-						input := getInput(build)
-						topLevelGitiles.Refs["refs/heads/top-level"] = "top-level-top-level-head"
-						topLevelGitiles.Revisions["top-level-top-level-head"] = &fakegitiles.Revision{
-							Files: map[string]*string{
-								"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{"test_property": "top-level-head-value"}`),
-							},
-						}
-
-						properties, err := bootstrapper.ComputeBootstrappedProperties(ctx, input)
-
-						So(err, ShouldBeNil)
-						So(getValueAtPath(properties, "test_property"), ShouldResembleProtoJSON, `"top-level-head-value"`)
-						So(getValueAtPath(properties, "$build/chromium_bootstrap", "commits"), ShouldResembleProtoJSON, `[
-							{
-								"host": "chromium.googlesource.com",
-								"project": "top/level",
-								"ref": "refs/heads/top-level",
-								"id": "top-level-top-level-head"
-							}
-						]`)
-					})
-
+					So(config.commit.GitilesCommit, ShouldResembleProtoJSON, `{
+						"host": "chromium.googlesource.com",
+						"project": "top/level",
+						"ref": "refs/heads/some-branch",
+						"id": "top-level-some-branch-head"
+					}`)
+					So(config.change.GerritChange, ShouldResembleProtoJSON, `{
+						"host": "chromium-review.googlesource.com",
+						"project": "top/level",
+						"change": 2345,
+						"patchset": 1
+					}`)
+					So(config.builderProperties, ShouldResembleProtoJSON, `{
+						"test_property": "some-branch-head-new-value",
+						"test_property2": "some-branch-head-value2",
+						"test_property3": "some-branch-head-value3",
+						"test_property4": "some-branch-head-value4",
+						"test_property5": "some-branch-head-value5"
+					}`)
 				})
 
 			})
+
 		})
 
+	})
+}
+
+func TestGetProperties(t *testing.T) {
+	t.Parallel()
+
+	Convey("BootstrapConfig.GetProperties", t, func() {
+
+		Convey("returns properties with builder properties, $build/chromium_bootstrap module properties and build properties", func() {
+			config := &BootstrapConfig{
+				commit: &gitilesCommit{&buildbucketpb.GitilesCommit{
+					Host:    "fake-host",
+					Project: "fake-project",
+					Ref:     "fake-ref",
+					Id:      "fake-revision",
+				}},
+				buildProperties: jsonToStruct(`{
+					"foo": "build-foo-value",
+					"bar": "build-bar-value"
+				}`),
+
+				builderProperties: jsonToStruct(`{
+					"foo": "builder-foo-value",
+					"baz": "builder-baz-value"
+				}`),
+			}
+			exe := &BootstrappedExe{
+				Source: &BootstrappedExe_Cipd{
+					Cipd: &Cipd{
+						Server:           "fake-cipd-server",
+						Package:          "fake-cipd-package",
+						RequestedVersion: "fake-cipd-ref",
+						ActualVersion:    "fake-cipd-instance-id",
+					},
+				},
+				Cmd: []string{"fake-exe"},
+			}
+
+			properties, err := config.GetProperties(exe)
+
+			So(err, ShouldBeNil)
+			So(properties, ShouldResembleProtoJSON, `{
+				"$build/chromium_bootstrap": {
+					"commits": [
+						{
+							"host": "fake-host",
+							"project": "fake-project",
+							"ref": "fake-ref",
+							"id": "fake-revision"
+						}
+					],
+					"exe": {
+						"cipd": {
+							"server": "fake-cipd-server",
+							"package": "fake-cipd-package",
+							"requested_version": "fake-cipd-ref",
+							"actual_version": "fake-cipd-instance-id"
+						},
+						"cmd": ["fake-exe"]
+					}
+				},
+				"foo": "build-foo-value",
+				"bar": "build-bar-value",
+				"baz": "builder-baz-value"
+			}`)
+		})
 	})
 }
