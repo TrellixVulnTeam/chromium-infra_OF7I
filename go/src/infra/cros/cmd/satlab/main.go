@@ -41,6 +41,7 @@ func getApplication() *cli.Application {
 			subcmds.AddCmd,
 			subcmds.DeleteCmd,
 			subcmds.GetCmd,
+			subcmds.UpdateCmd,
 		},
 	}
 }
