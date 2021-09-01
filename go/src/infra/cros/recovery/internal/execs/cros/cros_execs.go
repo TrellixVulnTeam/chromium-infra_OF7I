@@ -132,6 +132,18 @@ func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, action
 	return nil
 }
 
+// hasKernelBootPriorityChangeExec checks if kernel priority changed and waiting for reboot.
+func hasKernelBootPriorityChangeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	yes, err := IsKernelPriorityChanged(ctx, args.DUT.Name, args.Access)
+	if err != nil {
+		return errors.Annotate(err, "has kernel boot priority changed").Err()
+	}
+	if !yes {
+		return errors.Reason("has kernel boot priority changed: priority not changed").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -141,4 +153,5 @@ func init() {
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
 	execs.Register("cros_match_hwid_to_inventory", matchHWIDToInvExec)
 	execs.Register("cros_match_serial_number_inventory", matchSerialNumberToInvExec)
+	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
 }
