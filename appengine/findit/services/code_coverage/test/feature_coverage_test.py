@@ -63,7 +63,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -76,7 +76,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -89,12 +89,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = 'line3'
-    content_at_feature_commit = 'line1\nline2\nline3\nline4\nline5'
-    latest_content = 'line1\nline2\nline3\nline4\nline5'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {
+        'p1': 'line3',
+        'c1': 'line1\nline2\nline3\nline4\nline5',
+        'latest': 'line1\nline2\nline3\nline4\nline5'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -102,7 +103,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -121,7 +122,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -143,7 +144,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                 'total': 4,
                 'covered': 4
             }],
-            'revision': 'rev'
+            'revision': 'latest'
         })
 
   # This test tests the case where feature commits adds a new file and the file
@@ -165,7 +166,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -178,7 +179,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -203,12 +204,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = ''
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2\nline3'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {
+        'p1': '',
+        'c1': 'line1\nline2\nline3',
+        'latest': 'line1\nline2\nline3'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -216,7 +218,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -249,7 +251,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -262,7 +264,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -275,12 +277,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = 'line1'
-    content_at_feature_commit = 'line1\nline2'
-    latest_content = 'line1\nline2'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2',
+        'latest': 'line1\nline2'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -288,7 +291,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -321,7 +324,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -334,7 +337,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -347,19 +350,21 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = 'line1'
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2\nline3 modified'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2\nline3',
+        'latest': 'line1\nline2\nline3 modified'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
+
     feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -392,7 +397,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -405,7 +410,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -418,12 +423,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = 'line1'
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2 modified\nline3 modified'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2\nline3',
+        'latest': 'line1\nline2 modified\nline3 modified'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
+
     feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
@@ -449,7 +456,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -461,12 +468,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
-    content_at_parent_commit = 'line1'
-    content_at_feature_commit = 'line1\nline2'
-    latest_content = ''
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
+    commit_to_content = {'p1': 'line1', 'c1': 'line1\nline2', 'latest': ''}
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -493,7 +497,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -506,7 +510,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -520,14 +524,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
         _CreateMockMergedChange('c2', 'c1', 'myfile.cc'),
     ]
-    content_at_parent_commit1 = 'line1'
-    content_at_feature_commit1 = 'line1\nline2\nline3'
-    content_at_feature_commit2 = 'line1\nline2\nline3 modified'
-    latest_content = 'line1\nline2\nline3 modified'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit1, content_at_parent_commit1,
-        latest_content, content_at_feature_commit2, content_at_feature_commit1
-    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2\nline3',
+        'c2': 'line1\nline2\nline3 modified',
+        'latest': 'line1\nline2\nline3 modified'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -535,7 +539,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -569,7 +573,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -578,20 +582,18 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         build_id=2000,
         visible=True)
     postsubmit_report.put()
-
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
         _CreateMockMergedChange('c2', 'c1', 'myfile.cc'),
     ]
-
-    content_at_parent_commit1 = 'line1'
-    content_at_feature_commit1 = 'line1\nline2'
-    content_at_feature_commit2 = 'line1modified\nline2modified'
-    latest_content = ''
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit1, content_at_parent_commit1,
-        content_at_feature_commit2, content_at_feature_commit1
-    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2',
+        'c2': 'line1modified\nline2modified',
+        'latest': ''
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
 
     feature_coverage.ExportFeatureCoverage(123)
 
@@ -615,7 +617,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -653,7 +655,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -665,20 +667,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
     ]
-    content_at_parent_commit = ''
-    content_at_feature_commit = 'line1'
-    latest_content = 'line1'
-    mock_file_content.side_effect = [
-        latest_content, content_at_feature_commit, content_at_parent_commit
-    ]
-
+    commit_to_content = {'p1': '', 'c1': 'line1', 'latest': 'line1'}
+    mock_file_content.side_effect = (
+        lambda path, revision: commit_to_content[revision])
     feature_coverage.ExportFeatureCoverage(123)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
-        'revision': 'rev',
+        'revision': 'latest',
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
