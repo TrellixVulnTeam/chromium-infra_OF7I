@@ -11,9 +11,9 @@
   </tr>
   {% for commit in commits %}
     <tr>
-      <td><a href="https://chromium.googlesource.com/chromium/src/+log/{{ commit.git_hash }}">{{ commit.git_hash }}</a>
-        <td>{{ commit.position_ref }}@{#{{ commit.position_num }}}</td>
-      <td>{{ commit.date|date:"D M d, H:i T " }}</td>
+      <td><a href="https://chromium.googlesource.com/chromium/src/+log/{{ commit.git_hash }}">{{ commit.git_hash }}</a></td>
+      <td>{{ commit.position_ref }}@{{ '{#' }}{{ commit.position_num }}{{ '}' }}</td>
+      <td>{{ commit.date.strftime("%a %b %-d, %H:%M %Z") }} UTC</td>
     </tr>
   {% endfor %}
    </table>

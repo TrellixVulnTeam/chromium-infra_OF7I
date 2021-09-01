@@ -27,7 +27,7 @@
           </td>
           <td valign="top" align="right">
             <b> {{ username }} </b>
-            <br /><span name="date.datetz">{{current_UTC_time|date:"D, d M Y H:i:s T" }}</span>
+            <br /><span name="date.datetz">{{current_UTC_time.strftime("%a, %-d %b %Y %H:%M:%S %Z") }}</span>
           </td>
         </tr>
       </table>

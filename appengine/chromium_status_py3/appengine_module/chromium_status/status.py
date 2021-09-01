@@ -8,11 +8,13 @@ import datetime
 import json
 import re
 
-from google.appengine.api import memcache
-from google.appengine.ext import db
+from flask import abort, make_response, render_template, redirect, request
+from google.cloud import ndb
 
-from appengine_module.chromium_status.base_page import BasePage
 from appengine_module.chromium_status import utils
+from appengine_module.chromium_status.base_page import BasePage
+
+ndb_client = ndb.Client()
 
 ALLOWED_ORIGINS = [
     'https://gerrit-int.chromium.org',
@@ -199,14 +201,14 @@ class LinkableText(object):
     return self.raw_text
 
 
-class Status(db.Model):
+class Status(ndb.Model):
   """Description for the status table."""
   # The username who added this status.
-  username = db.StringProperty(required=True)
+  username = ndb.StringProperty(required=True)
   # The date when the status got added.
-  date = db.DateTimeProperty(auto_now_add=True)
+  date = ndb.DateTimeProperty(auto_now_add=True)
   # The message. It can contain html code.
-  message = db.StringProperty(required=True)
+  message = ndb.StringProperty(required=True)
 
   def __init__(self, *args, **kwargs):
     # Normalize newlines otherwise the DB store barfs.  We don't really want to
@@ -253,27 +255,21 @@ class Status(db.Model):
 
 def get_status():
   """Returns the current Status, e.g. the most recent one."""
-  status = memcache.get('last_status')
-  if status is None:
-    status = Status.all().order('-date').get()
-    # Use add instead of set(); must not change it if it was already set.
-    memcache.add('last_status', status)
+  # TODO (crbug.com/1121016): Implement caching
+  status = Status.query().order('-date').get()
   return status
 
 
 def put_status(status):
   """Sets the current Status, e.g. append a new one."""
+  # TODO (crbug.com/1121016): Set cache
   status.put()
-  memcache.set('last_status', status)
-  memcache.delete('last_statuses')
 
 
 def get_last_statuses(limit):
   """Returns the last |limit| statuses."""
-  statuses = memcache.get('last_statuses')
-  if not statuses or len(statuses) < limit:
-    statuses = Status.all().order('-date').fetch(limit)
-    memcache.add('last_statuses', statuses)
+  # TODO (crbug.com/1121016): Get from cache
+  statuses = Status.query().order('-date').fetch(limit)
   return statuses[:limit]
 
 
@@ -293,7 +289,7 @@ def limit_length(string, length):
 
   Inserts an ellipsis if it is cut.
   """
-  string = unicode(string.strip())
+  string = str(string.strip())
   if len(string) > length:
     string = string[:length - 1] + u'…'
   return string
@@ -301,50 +297,49 @@ def limit_length(string, length):
 
 class AllStatusPage(BasePage):
   """Displays a big chunk, 1500, status values."""
-
   @utils.requires_read_access
   def get(self):
-    query = db.Query(Status).order('-date')
-    start_date = self.request.get('startTime')
+    query = Status.query().order('-date')
+    start_date = request.args.get('startTime')
     if start_date:
-      query.filter('date <', parse_date(start_date))
-    try:
-      limit = int(self.request.get('limit'))
-    except ValueError:
-      limit = 1000
-    end_date = self.request.get('endTime')
+      query.filter(Status.date < parse_date(start_date))
+    limit = min(int(request.args.get('limit', '1000')), 5000)
+    end_date = request.args.get('endTime')
     beyond_end_of_range_status = None
     if end_date:
-      query.filter('date >=', parse_date(end_date))
+      query.filter(Status.date >= parse_date(end_date))
       # We also need to get the very next status in the range, otherwise
       # the caller can't tell what the effective tree status was at time
       # |end_date|.
-      beyond_end_of_range_status = Status.all().filter(
-          'date <', end_date).order('-date').get()
+      beyond_end_of_range_status = Status.query().filter(
+          Status.date < parse_date(end_date)).order('-date').get()
 
-    out_format = self.request.get('format', 'csv')
+    out_format = request.args.get('format', 'csv')
     if out_format == 'csv':
       # It's not really an html page.
-      self.response.headers['Content-Type'] = 'text/plain'
       template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
       template_values['status'] = query.fetch(limit)
       template_values['beyond_end_of_range_status'] = beyond_end_of_range_status
-      self.DisplayTemplate('allstatus.html', template_values)
+      r = self.DisplayTemplate('allstatus.html', template_values)
+      r.headers.set('Content-Type', 'text/plain')
+      return r
     elif out_format == 'json':
-      self.response.headers['Content-Type'] = 'application/json'
-      self.response.headers['Access-Control-Allow-Origin'] = '*'
       statuses = [s.AsDict() for s in query.fetch(limit)]
       if beyond_end_of_range_status:
         statuses.append(beyond_end_of_range_status.AsDict())
       data = json.dumps(statuses)
-      callback = self.request.get('callback')
+      callback = request.args.get('callback')
       if callback:
         if re.match(r'^[a-zA-Z$_][a-zA-Z$0-9._]*$', callback):
           data = '%s(%s);' % (callback, data)
-      self.response.out.write(data)
+      r = make_response(data)
+      r.headers['Content-Type'] = 'application/json'
+      r.headers['Access-Control-Allow-Origin'] = '*'
+      return r
     else:
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('Invalid format')
+      r = make_response('Invalid format')
+      r.headers['Content-Type'] = 'text/plain'
+      return r
 
 
 class CurrentPage(BasePage):
@@ -352,13 +347,14 @@ class CurrentPage(BasePage):
 
   def get(self):
     # Show login link on current status bar when login is required.
-    out_format = self.request.get('format', 'html')
+    out_format = request.args.get('format', 'html')
     if out_format == 'html' and not self.read_access and not self.user:
       template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
       template_values['show_login'] = True
-      self.DisplayTemplate('current.html', template_values, use_cache=True)
+      return self.DisplayTemplate(
+          'current.html', template_values, use_cache=True)
     else:
-      self._handle()
+      return self._handle()
 
   @utils.requires_bot_login
   def post(self):
@@ -371,34 +367,38 @@ class CurrentPage(BasePage):
   @utils.requires_read_access
   def _handle(self):
     """Displays the current message in various formats."""
-    out_format = self.request.get('format', 'html')
+    out_format = request.args.get('format', 'html')
     status = get_status()
     if out_format == 'raw':
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.headers['Access-Control-Allow-Origin'] = '*'
-      self.response.out.write(status.message)
+      r = make_response(status.message)
+      r.headers['Content-Type'] = 'text/plain'
+      r.headers['Access-Control-Allow-Origin'] = '*'
+      return r
     elif out_format == 'json':
-      self.response.headers['Content-Type'] = 'application/json'
-      origin = self.request.headers.get('Origin')
-      if self.request.get('with_credentials') and origin in ALLOWED_ORIGINS:
-        self.response.headers['Access-Control-Allow-Origin'] = origin
-        self.response.headers['Access-Control-Allow-Credentials'] = 'true'
+      r = make_response()
+      r.headers['Content-Type'] = 'application/json'
+      origin = request.headers.get('Origin')
+      if request.args.get('with_credentials') and origin in ALLOWED_ORIGINS:
+        r.headers['Access-Control-Allow-Origin'] = origin
+        r.headers['Access-Control-Allow-Credentials'] = 'true'
       else:
-        self.response.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Origin'] = '*'
       data = json.dumps(status.AsDict())
-      callback = self.request.get('callback')
+      callback = request.args.get('callback')
       if callback:
         if re.match(r'^[a-zA-Z$_][a-zA-Z$0-9._]*$', callback):
           data = '%s(%s);' % (callback, data)
-      self.response.out.write(data)
+      r.set_data(data)
+      return r
     elif out_format == 'html':
       template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
       template_values['show_login'] = False
       template_values['message'] = status.message
       template_values['state'] = status.general_state
-      self.DisplayTemplate('current.html', template_values, use_cache=True)
+      return self.DisplayTemplate(
+          'current.html', template_values, use_cache=True)
     else:
-      self.error(400)
+      abort(400)
 
 
 class StatusPage(BasePage):
@@ -407,10 +407,12 @@ class StatusPage(BasePage):
   def get(self):
     """Displays 1 if the tree is open, and 0 if the tree is closed."""
     # NOTE: This item is always public to allow waterfalls to check it.
+    r = make_response()
     status = get_status()
-    self.response.headers['Cache-Control'] = 'no-cache, private, max-age=0'
-    self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write(str(int(status.can_commit_freely)))
+    r.headers['Cache-Control'] = 'no-cache, private, max-age=0'
+    r.headers['Content-Type'] = 'text/plain'
+    r.set_data(str(int(status.can_commit_freely)))
+    return r
 
   @utils.requires_bot_login
   @utils.requires_write_access
@@ -421,12 +423,12 @@ class StatusPage(BasePage):
     conflicts and doesn't redirect to /.
     """
     # TODO(tandrii): switch to using service accounts.
-    message = self.request.get('message')
+    message = request.args.get('message')
     message = limit_length(message, 500)
-    username = self.request.get('username')
+    username = request.args.get('username')
     if message and username:
       put_status(Status(message=message, username=username))
-    self.response.out.write('OK')
+    return make_response('OK')
 
 
 class StatusViewerPage(BasePage):
@@ -436,7 +438,7 @@ class StatusViewerPage(BasePage):
   def get(self):
     """Displays status_viewer.html template."""
     template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
-    self.DisplayTemplate('status_viewer.html', template_values)
+    return self.DisplayTemplate('status_viewer.html', template_values)
 
 
 class MainPage(BasePage):
@@ -451,10 +453,8 @@ class MainPage(BasePage):
 
   def _handle(self, error_message='', last_message=''):
     """Sets the information to be displayed on the main page."""
-    try:
-      limit = min(max(int(self.request.get('limit')), 1), 1000)
-    except ValueError:
-      limit = 25
+    limit = int(request.args.get('limit', '25'))
+    limit = min(max(limit, 1), 1000)
     status = get_last_statuses(limit)
     current_status = get_status()
     if not last_message:
@@ -463,12 +463,12 @@ class MainPage(BasePage):
     template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
     template_values['status'] = status
     template_values['message'] = last_message
-    template_values['last_status_key'] = current_status.key().id()
+    template_values['last_status_key'] = current_status.key.id()
     template_values['error_message'] = error_message
     template_values['limit'] = limit
     template_values['preamble'] = self.PREAMBLE
     template_values['postamble'] = self.POSTAMBLE
-    self.DisplayTemplate('main.html', template_values)
+    return self.DisplayTemplate('main.html', template_values)
 
   @utils.requires_login
   @utils.requires_write_access
@@ -479,28 +479,29 @@ class MainPage(BasePage):
     error_message = ''
 
     # Get the posted information.
-    new_message = self.request.get('message')
+    new_message = request.args.get('message')
     new_message = limit_length(new_message, 500)
-    last_status_key = self.request.get('last_status_key')
+    last_status_key = request.args.get('last_status_key')
     if not new_message:
       # A submission contained no data. It's a better experience to redirect
       # in this case.
-      self.redirect("/")
-      return
+      return redirect("/")
 
     current_status = get_status()
-    if current_status and (last_status_key != str(current_status.key().id())):
+    if current_status and (last_status_key != str(
+        current_status.key.integer_id())):
       error_message = ('Message not saved, mid-air collision detected, '
                        'please resolve any conflicts and try again!')
       last_message = new_message
       return self._handle(error_message, last_message)
     else:
       put_status(Status(message=new_message, username=self.user.email()))
-      self.redirect("/")
+      return redirect("/")
 
 
 def bootstrap():
   # Guarantee that at least one instance exists.
-  if db.GqlQuery('SELECT __key__ FROM Status').get() is None:
-    Status(username='none', message='welcome to status').put()
+  with ndb_client.context():
+    if Status().query().get() is None:
+      Status(username='none', message='welcome to status').put()
   LinkableText.bootstrap(BasePage.IS_CHROMIUMOS)

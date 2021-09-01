@@ -1,0 +1,15 @@
+{
+  "name": "chromium_status_py3",
+  "version": "1.0.0",
+  "description": "Chromium status",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "nqmtuan@google.com",
+  "dependencies": {
+    "dygraphs": "2.1.0"
+  }
+}

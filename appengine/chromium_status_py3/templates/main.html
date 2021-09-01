@@ -68,7 +68,7 @@
           {% endif %}
         {% endfor %}
       </td>
-      <td class="date" name="date.date">{{ a_status.date|date:"D, d M H:i" }}</td>
+      <td class="date" name="date.date">{{ a_status.date.strftime("%a, %-d %b %H:%M") }}</td>
       <td class="message">
         {% for a_link in a_status.message_links.links %}
           {% if a_link.target %}

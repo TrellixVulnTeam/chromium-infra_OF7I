@@ -5,8 +5,7 @@
 
 import os
 
-from google.appengine.api import users
-from google.appengine.ext import db
+from google.cloud import ndb
 
 
 def is_dev_env():  # pragma: no cover
@@ -31,7 +30,9 @@ def requires_work_queue_login(func):  # pragma: no cover
         'X-AppEngine-TaskName' in self.request.headers or self.write_access):
       return func(self, *args, **kwargs)
     elif self.user is None:
-      self.redirect(users.create_login_url(self.request.url))
+      # TODO (crbug.com/1121016): redirect to login url
+      pass
+      # self.redirect(users.create_login_url(self.request.url))
     else:
       self.response.set_status(401)
       self.response.out.write('Handler only accessible for work queues')
@@ -74,7 +75,8 @@ def requires_login(func):  # pragma: no cover
     if self.user:
       return func(self, *args, **kwargs)
     elif not self.user:
-      self.redirect(users.create_login_url(self.request.url))
+      # TODO (crbug.com/1121016): redirect to login url
+      return func(self, *args, **kwargs)
     else:
       self.response.headers['Content-Type'] = 'text/plain'
       self.response.out.write('Forbidden')
@@ -90,7 +92,9 @@ def requires_read_access(func):  # pragma: no cover
     if self.read_access:
       return func(self, *args, **kwargs)
     elif not self.user:
-      self.redirect(users.create_login_url(self.request.url))
+      # TODO (crbug.com/1121016): redirect to login url
+      pass
+      # self.redirect(users.create_login_url(self.request.url))
     else:
       self.response.headers['Content-Type'] = 'text/plain'
       self.response.out.write('Forbidden')
@@ -100,23 +104,22 @@ def requires_read_access(func):  # pragma: no cover
 
 
 def AsDict(self):  # pragma: no cover
-  """Converts an object that implements .properties() to a dict."""
+  """Converts ndb Model to a dict."""
   ret = {}
-  for key in self.properties():
+  for key in self._properties:
     value = getattr(self, key)
-    if isinstance(value, (int, long, None.__class__, float)):
+    if isinstance(value, (int, None.__class__, float)):
       ret[key] = value
     else:
-      ret[key] = unicode(value)
-  key = self.key()
+      ret[key] = str(value)
+  key = self.key
   if key:
-    ret['key'] = key.name() or key.id()
-  parent_key = self.parent_key()
-  if parent_key:
-    ret['parent_key'] = parent_key.name() or parent_key.id()
+    ret['key'] = key.string_id() or key.integer_id()
+    if key.parent():
+      ret['parent_key'] = key.parent().string_id() or key.parent().integer_id()
   return ret
 
 
 def bootstrap():  # pragma: no cover
   """Monkey patch db.Model.AsDict()"""
-  db.Model.AsDict = AsDict
+  ndb.Model.AsDict = AsDict

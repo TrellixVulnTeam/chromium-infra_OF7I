@@ -1,13 +1,13 @@
-application: chromium-status-hr
-version: 1
-runtime: python27
-api_version: 1
-threadsafe: true
+runtime: python39
 
 inbound_services:
 - warmup
 
 handlers:
+- url: /node_modules/dygraphs/dist/dygraph.min.js
+  static_files: node_modules/dygraphs/dist/dygraph.min.js
+  upload: node_modules/dygraphs/dist/dygraph.min.js
+
 - url: /(.*\.(html|js|txt|ttf))
   static_files: static/\1
   upload: static/(.*\.(html|js|txt|ttf))
@@ -15,7 +15,7 @@ handlers:
 # main will look for a replacement in blobstore, if not, will redirect to
 # static/
 - url: /([^/]+\.(gif|png|jpg|ico))
-  script: appengine_module.chromium_status.main.APPLICATION
+  script: auto  
 
 - url: /static/([^/]+\.(gif|png|jpg|ico))
   static_files: static/\1
@@ -24,33 +24,5 @@ handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
-- url: /templates
-  script: appengine_module.chromium_status.templates
-
-- url: /restricted/.*
-  script: appengine_module.chromium_status.main.APPLICATION
-  login: admin
-
 - url: /.*
-  script: appengine_module.chromium_status.main.APPLICATION
-
-
-# Search DEFAULT_SKIP_FILES in google.appengine.api.appinfo plus a few others
-skip_files: |
-    ^(.*/)?(
-    (app\.yaml)|
-    (app\.yml)|
-    (index\.yaml)|
-    (index\.yml)|
-    (#.*#)|
-    (.*~)|
-    (.*\.py[co])|
-    (.*/RCS/.*)|
-    (\..*)|
-    (tests/.*)|
-    (tools/.*)|
-    ([A-Z]+(\.py)?)|
-    (Makefile)|
-    (.*\.rej)|
-    (.*\.orig)|
-    )$
+  script: auto
