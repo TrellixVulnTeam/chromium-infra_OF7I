@@ -10,10 +10,18 @@ luci_gae_vars:
     AUTH_SERVICE_HOST: chrome-infra-auth-dev.appspot.com
     CONFIG_SERVICE_HOST: luci-config.appspot.com
     TS_MON_ACCOUNT: app-engine-metric-publishers@prodx-mon-chrome-infra.google.com.iam.gserviceaccount.com
+    OAUTH_CLIENT_ID: 736503773201-aq5uttdlcibgrs26jrtd3r40ft2moc9i.apps.googleusercontent.com
+    OAUTH_CLIENT_SECRET: sm://oauth-client-secret
+    OAUTH_REDIRECT_URL: https://chops-weetbix-dev.appspot.com/auth/openid/callback
+    TINK_AEAD_KEY: sm://tink-aead-primary
   chops-weetbix:
     AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
     CONFIG_SERVICE_HOST: luci-config.appspot.com
     TS_MON_ACCOUNT: app-engine-metric-publishers@prodx-mon-chrome-infra.google.com.iam.gserviceaccount.com
+    OAUTH_CLIENT_ID: 239693986514-737e6i4gtc0892vau8o3pqq0u2l0csv9.apps.googleusercontent.com
+    OAUTH_CLIENT_SECRET: sm://oauth-client-secret
+    OAUTH_REDIRECT_URL: https://chops-weetbix.appspot.com/auth/openid/callback
+    TINK_AEAD_KEY: sm://tink-aead-primary
 
 handlers:
 # Handlers for static files can be added here later.
@@ -26,3 +34,7 @@ entrypoint: >
   -auth-service-host ${AUTH_SERVICE_HOST}
   -config-service-host ${CONFIG_SERVICE_HOST}
   -ts-mon-account ${TS_MON_ACCOUNT}
+  -encrypted-cookies-client-id ${OAUTH_CLIENT_ID}
+  -encrypted-cookies-client-secret ${OAUTH_CLIENT_SECRET}
+  -encrypted-cookies-redirect-url ${OAUTH_REDIRECT_URL}
+  -encrypted-cookies-tink-aead-key ${TINK_AEAD_KEY}
