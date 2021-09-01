@@ -26,14 +26,14 @@ type Asset struct {
 	Type      string
 }
 
-// CheckAndUpdate adds the asset if it does not already exist.
-func (a *Asset) CheckAndUpdate() error {
+// CheckAndAdd adds the asset if it does not already exist.
+func (a *Asset) CheckAndAdd() error {
 	assetMsg, err := a.check()
 	if err != nil {
 		return errors.Annotate(err, "check and update").Err()
 	}
 	if len(assetMsg) == 0 {
-		return a.update()
+		return a.add()
 	} else {
 		fmt.Fprintf(os.Stderr, "Asset already added\n")
 	}
@@ -65,8 +65,8 @@ func (a *Asset) check() (string, error) {
 	return assetMsg, nil
 }
 
-// Update adds an asset unconditionally to UFS.
-func (a *Asset) update() error {
+// Add adds an asset unconditionally to UFS.
+func (a *Asset) add() error {
 	// Add the asset.
 	fmt.Fprintf(os.Stderr, "Adding asset\n")
 	args := (&commands.CommandWithFlags{

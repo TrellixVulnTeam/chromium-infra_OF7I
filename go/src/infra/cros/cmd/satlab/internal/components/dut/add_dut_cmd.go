@@ -169,7 +169,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		Name:      c.qualifiedRack,
 		Namespace: c.envFlags.Namespace,
 		Zone:      c.zone,
-	}).CheckAndUpdate(); err != nil {
+	}).CheckAndAdd(); err != nil {
 		return errors.Annotate(err, "add dut").Err()
 	}
 
@@ -181,7 +181,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		Board:     c.board,
 		Namespace: c.envFlags.Namespace,
 		Type:      c.assetType,
-	}).CheckAndUpdate(); err != nil {
+	}).CheckAndAdd(); err != nil {
 		return errors.Annotate(err, "add dut").Err()
 	}
 
@@ -192,7 +192,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		Rack:       c.qualifiedRack,
 		Servo:      c.qualifiedServo,
 		ShivasArgs: makeAddShivasFlags(c),
-	}).CheckAndUpdate(); err != nil {
+	}).CheckAndAdd(); err != nil {
 		return errors.Annotate(err, "add dut").Err()
 	}
 

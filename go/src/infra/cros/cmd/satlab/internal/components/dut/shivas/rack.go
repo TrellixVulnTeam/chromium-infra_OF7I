@@ -22,14 +22,14 @@ type Rack struct {
 	Zone      string
 }
 
-// CheckAndUpdate runs check and then update if the item does not exist.
-func (r *Rack) CheckAndUpdate() error {
+// CheckAndAdd runs check and then update if the item does not exist.
+func (r *Rack) CheckAndAdd() error {
 	rackMsg, err := r.check()
 	if err != nil {
 		return errors.Annotate(err, "check and update").Err()
 	}
 	if len(rackMsg) == 0 {
-		return r.update()
+		return r.add()
 	} else {
 		fmt.Fprintf(os.Stderr, "Rack already added\n")
 	}
@@ -56,8 +56,8 @@ func (r *Rack) check() (string, error) {
 	return rackMsg, nil
 }
 
-// Update adds a rack unconditionally to UFS.
-func (r *Rack) update() error {
+// Add adds a rack unconditionally to UFS.
+func (r *Rack) add() error {
 	fmt.Fprintf(os.Stderr, "Adding rack\n")
 	args := (&commands.CommandWithFlags{
 		Commands: []string{paths.ShivasCLI, "add", "rack"},

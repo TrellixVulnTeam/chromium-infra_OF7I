@@ -28,13 +28,13 @@ type DUT struct {
 }
 
 // Run adds a DUT if it does not already exist.
-func (d *DUT) CheckAndUpdate() error {
+func (d *DUT) CheckAndAdd() error {
 	dutMsg, err := d.check()
 	if err != nil {
 		return errors.Annotate(err, "check and update").Err()
 	}
 	if len(dutMsg) == 0 {
-		return d.update()
+		return d.add()
 	} else {
 		fmt.Fprintf(os.Stderr, "DUT already added\n")
 	}
@@ -65,7 +65,7 @@ func (d *DUT) check() (string, error) {
 }
 
 // Add a DUT to UFS.
-func (d *DUT) update() error {
+func (d *DUT) add() error {
 	fmt.Fprintf(os.Stderr, "Adding DUT\n")
 
 	flags := make(map[string][]string)
