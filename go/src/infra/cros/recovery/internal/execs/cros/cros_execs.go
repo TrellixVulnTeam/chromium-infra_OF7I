@@ -144,6 +144,21 @@ func hasKernelBootPriorityChangeExec(ctx context.Context, args *execs.RunArgs, a
 	return nil
 }
 
+// runShellCommandExec runs a given action exec arguments in shell.
+func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if len(actionArgs) != 0 {
+		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
+		cmd := strings.Join(actionArgs, " ")
+		r := args.Access.Run(ctx, args.ResourceName, cmd)
+		if r.ExitCode != 0 {
+			return errors.Reason("run shell command: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+		}
+	} else {
+		log.Debug(ctx, "Run shell command: no arguments passed.")
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -154,4 +169,5 @@ func init() {
 	execs.Register("cros_match_hwid_to_inventory", matchHWIDToInvExec)
 	execs.Register("cros_match_serial_number_inventory", matchSerialNumberToInvExec)
 	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
+	execs.Register("cros_run_shell_command", runShellCommandExec)
 }
