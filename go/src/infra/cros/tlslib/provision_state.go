@@ -23,12 +23,14 @@ type provisionState struct {
 	dutName           string
 	imagePath         string
 	targetBuilderPath string
+	forceProvisionOs  bool
 }
 
 func newProvisionState(s *Server, req *tls.ProvisionDutRequest) (*provisionState, error) {
 	p := &provisionState{
-		s:       s,
-		dutName: req.Name,
+		s:                s,
+		dutName:          req.Name,
+		forceProvisionOs: req.ForceProvisionOs,
 	}
 
 	// Verify the incoming request path oneof is valid.
@@ -78,12 +80,13 @@ func (p *provisionState) shouldProvisionOS() bool {
 	// Only provision the OS if any of the following are true:
 	//  - the DUT is not on the requested OS.
 	//  - the force marker exists on the DUT.
+	//  - the force flag was used to provision.
 	shouldProvision := false
 	if builderPath != p.targetBuilderPath {
 		log.Printf("Going to provision DUT from %s to %s", builderPath, p.targetBuilderPath)
 		shouldProvision = true
 	}
-	if shouldForceProvision(p.c) {
+	if shouldForceProvision(p.c) || p.forceProvisionOs {
 		if !shouldProvision {
 			log.Printf("Going to force provision to %s", p.targetBuilderPath)
 			shouldProvision = true
