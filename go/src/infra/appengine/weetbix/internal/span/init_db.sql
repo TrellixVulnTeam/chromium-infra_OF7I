@@ -112,3 +112,19 @@ INTERLEAVE IN PARENT AnalyzedTestVariants ON DELETE CASCADE;
 -- Used by finding most recent verdicts to calculate flakiness statistics.
 CREATE NULL_FILTERED INDEX VerdictsByTInvocationCreationTime
  ON Verdicts (Realm, TestId, VariantHash, InvocationCreationTime DESC);
+
+-- BugClusters contains the bugs tracked by Weetbix, and the failure clusters
+-- they are associated with.
+CREATE TABLE BugClusters (
+  -- The LUCI Project this bug belongs to.
+  Project STRING(40) NOT NULL,
+  -- The bug. For monorail, the scheme is monorail/{project}/{numeric id}.
+  Bug STRING(255) NOT NULL,
+  -- The associated failure cluster. In future, the intent is to replace
+  -- this in favour of a failure association rule.
+  AssociatedClusterId STRING(MAX) NOT NULL,
+  -- Whether the bug must still be updated by Weetbix. Only if the bug has
+  -- been closed and no failures have been observed for a while will this
+  -- be false.
+  IsActive BOOL NOT NULL,
+) PRIMARY KEY (Project, Bug);
