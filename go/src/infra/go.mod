@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/datastore v1.5.0
 	cloud.google.com/go/firestore v1.5.0
 	cloud.google.com/go/pubsub v1.13.0
+	cloud.google.com/go/spanner v1.24.0
 	cloud.google.com/go/storage v1.16.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/StackExchange/wmi v1.2.0

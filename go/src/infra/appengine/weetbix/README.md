@@ -40,5 +40,35 @@ gae.py switch -A <appid>
 
 Currently, the appid is chops-weetbix-dev (for dev) or chops-weetbix (for prod).
 
+## Run Spanner integration tests using Cloud Spanner Emulator
+
+### Install Cloud Spanner Emulator
+
+#### Linux
+
+The Cloud Spanner Emulator is part of the bundled gcloud, to make sure it's installed:
+
+```
+cd infra
+gclient runhooks
+eval `./go/env.py`
+which gcloud # should show bundled gcloud
+gcloud components list # should see cloud-spanner-emulator is installed
+```
+
+### Run tests
+
+From command line, first set environment variables:
+
+```
+export INTEGRATION_TESTS=1
+```
+
+Then run go test as usual. For example
+
+```
+go test -v ./...
+```
+
 [Template for GAE Standard app]: https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/examples/appengine/helloworld_standard/README.md
 
