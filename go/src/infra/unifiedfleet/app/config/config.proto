@@ -34,6 +34,8 @@ message Config {
   // configs cached from HWID server instead. If true, GetChromeOSDeviceData
   // will return None for ManufacturingConfig.
   bool use_cached_hwid_manufacturing_config = 15;
+  // Enable generation of schedulable labels using Boxster configs.
+  bool enable_boxster_labels = 16;
 }
 
 message OSNetworkConfig {
