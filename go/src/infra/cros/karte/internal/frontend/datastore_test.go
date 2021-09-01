@@ -42,7 +42,10 @@ func TestReadObservationEntityFromEmptyDatastore(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
 	datastore.GetTestable(ctx).Consistent(true)
-	q := NewAllObservationEntitiesQuery("")
+	q, err := newObservationEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 	es, err := q.Next(ctx, 100)
 	token := q.Token
 	if err != nil {
@@ -91,7 +94,10 @@ func TestReadSingleObservationEntityFromDatastore(t *testing.T) {
 	}); err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	q := NewAllObservationEntitiesQuery("")
+	q, err := newObservationEntitiesQuery("", "")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 	es, err := q.Next(ctx, 100)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -164,7 +170,10 @@ func TestWriteAndReadObservationEntitiesFromDatastore(t *testing.T) {
 			if err := PutObservationEntities(ctx, tt.entities...); err != nil {
 				t.Errorf("test case %s %s", tt.name, err)
 			}
-			q := NewAllObservationEntitiesQuery("")
+			q, err := newObservationEntitiesQuery("", "")
+			if err != nil {
+				t.Errorf("test case %s %s", tt.name, err)
+			}
 			es, err := q.Next(ctx, 100)
 			if err != nil {
 				t.Errorf("test case %s %s", tt.name, err)

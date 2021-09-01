@@ -251,13 +251,24 @@ func (q *ObservationEntitiesQuery) Next(ctx context.Context, batchSize int32) ([
 	return entities, nil
 }
 
-// NewAllObservationEntitiesQuery makes an action entities query that starts at the position
+// newObservationEntitiesQuery makes an action entities query that starts at the position
 // implied by the page token and lists all action entities.
-func NewAllObservationEntitiesQuery(token string) *ObservationEntitiesQuery {
+func newObservationEntitiesQuery(token string, filter string) (*ObservationEntitiesQuery, error) {
+	expr, err := filterexp.Parse(filter)
+	if err != nil {
+		return nil, errors.Annotate(err, "make observation entities query").Err()
+	}
+	q, err := filterexp.ApplyConditions(
+		datastore.NewQuery(ObservationKind),
+		expr,
+	)
+	if err != nil {
+		return nil, errors.Annotate(err, "make observation entities query").Err()
+	}
 	return &ObservationEntitiesQuery{
 		Token: token,
-		Query: datastore.NewQuery(ObservationKind),
-	}
+		Query: q,
+	}, nil
 }
 
 // ConvertActionToActionEntity takes an action and converts it to an action entity.

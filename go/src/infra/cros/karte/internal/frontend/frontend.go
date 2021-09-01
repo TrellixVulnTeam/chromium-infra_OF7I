@@ -81,7 +81,11 @@ func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListAction
 
 // ListObservations lists the observations that Karte knows about.
 func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListObservationsRequest) (*kartepb.ListObservationsResponse, error) {
-	q := NewAllObservationEntitiesQuery(req.GetPageToken())
+	// TODO(gregorynisbet): Replace "" with actual filter.
+	q, err := newObservationEntitiesQuery(req.GetPageToken(), "")
+	if err != nil {
+		return nil, errors.Annotate(err, "list observations").Err()
+	}
 	es, err := q.Next(ctx, req.GetPageSize())
 	if err != nil {
 		return nil, errors.Annotate(err, "list observations (page size: %d)", req.GetPageSize()).Err()
