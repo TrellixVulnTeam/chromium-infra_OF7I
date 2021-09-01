@@ -21,8 +21,8 @@ const (
 	gsCrOSImageBucket = "gs://chromeos-image-archive"
 )
 
-// readOsVersionExec reads OS version from the DUT for provisioned info.
-func readOSVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+// updateProvisionedCrosVersionExec reads OS version from the DUT for provisioned info.
+func updateProvisionedCrosVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	version, err := releaseBuildPath(ctx, args.DUT.Name, args)
 	if err != nil {
 		return errors.Annotate(err, "read os version").Err()
@@ -52,6 +52,6 @@ func updateJobRepoURLExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 }
 
 func init() {
-	execs.Register("cros_read_os_version", readOSVersionExec)
+	execs.Register("cros_update_provision_os_version", updateProvisionedCrosVersionExec)
 	execs.Register("cros_update_job_repo_url", updateJobRepoURLExec)
 }
