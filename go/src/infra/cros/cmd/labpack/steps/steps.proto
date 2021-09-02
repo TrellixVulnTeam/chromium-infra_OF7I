@@ -22,6 +22,8 @@ message LabpackInput {
   string admin_service = 5;
   // Inventory service path to initialie local TLW.
   string inventory_service = 6;
+  // Do not use stepper during execution.
+  bool no_stepper = 7;
 };
 
 // LabpackResponse represents result of execution the task on unit.

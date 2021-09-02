@@ -72,16 +72,19 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		task = t
 	}
 	// TODO(otabek@): Add custom logger.
-	logger := logger.NewLogger()
-	sh := tlw.NewStepHandler(logger)
+	lg := logger.NewLogger()
+	var sh logger.StepHandler
+	if !in.GetNoStepper() {
+		sh = tlw.NewStepHandler(lg)
+	}
 	runArgs := &recovery.RunArgs{
-		UnitName:              in.UnitName,
+		UnitName:              in.GetUnitName(),
 		TaskName:              task,
 		Access:                access,
-		Logger:                logger,
+		Logger:                lg,
 		StepHandler:           sh,
-		EnableRecovery:        in.EnableRecovery,
-		EnableUpdateInventory: in.UpdateInventory,
+		EnableRecovery:        in.GetEnableRecovery(),
+		EnableUpdateInventory: in.GetUpdateInventory(),
 	}
 	if err := recovery.Run(ctx, runArgs); err != nil {
 		return errors.Annotate(err, "internal run").Err()
