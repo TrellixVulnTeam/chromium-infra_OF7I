@@ -220,10 +220,10 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@results@Success@@@",
-      "@@@STEP_LOG_END@results@@@",
       "@@@STEP_LOG_LINE@[CLEANUP]\\logs\\adk\\adk.log@i007: Exit code: 0x0@@@",
-      "@@@STEP_LOG_END@[CLEANUP]\\logs\\adk\\adk.log@@@"
+      "@@@STEP_LOG_END@[CLEANUP]\\logs\\adk\\adk.log@@@",
+      "@@@STEP_LOG_LINE@results@Success@@@",
+      "@@@STEP_LOG_END@results@@@"
     ]
   },
   {
