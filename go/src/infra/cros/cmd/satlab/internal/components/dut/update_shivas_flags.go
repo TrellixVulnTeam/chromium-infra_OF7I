@@ -5,10 +5,12 @@
 package dut
 
 import (
+	"fmt"
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/utils"
 	"infra/cros/cmd/satlab/internal/site"
 	"infra/libs/swarming"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -17,7 +19,110 @@ import (
 // MakeUpdateShivasFlags serializes the command line arguments of updateDUT into a flagmap
 // so that it can be used to call shivas directly.
 func makeUpdateShivasFlags(c *updateDUT) flagmap {
-	panic("not implemented")
+	out := make(flagmap)
+
+	if c.newSpecsFile != "" {
+		// do nothing
+	}
+	if c.hostname != "" {
+		// Do nothing. The hostname must be qualified when
+		// passed to shivas.
+	}
+	if c.machine != "" {
+		// Do nothing. The asset tag must be qualified when passed to shivas.
+	}
+	if c.servo != "" {
+		// Do nothing.
+		// The servo must be qualified when passed to shivas.
+	}
+	if c.servoSerial != "" {
+		out["servo-serial"] = []string{c.servoSerial}
+	}
+	if c.servoSetupType != "" {
+		out["servo-setup"] = []string{c.servoSetupType}
+	}
+	if c.servoDockerContainerName != "" {
+		out["servod-docker"] = []string{c.servoDockerContainerName}
+	}
+	if len(c.pools) != 0 {
+		out["pools"] = []string{strings.Join(c.pools, ",")}
+	}
+	if len(c.licenseTypes) != 0 {
+		out["licensetype"] = []string{strings.Join(c.licenseTypes, ",")}
+	}
+	if c.rpm != "" {
+		out["rpm"] = []string{c.rpm}
+	}
+	if c.rpmOutlet != "" {
+		out["rpm-outlet"] = []string{c.rpmOutlet}
+	}
+	if c.deployTaskTimeout != 0 {
+		out["deploy-timeout"] = []string{fmt.Sprintf("%d", c.deployTaskTimeout)}
+	}
+	if len(c.deployTags) != 0 {
+		out["deploy-tags"] = []string{strings.Join(c.deployTags, ",")}
+	}
+	if len(c.tags) != 0 {
+		out["tags"] = []string{strings.Join(c.tags, ",")}
+	}
+	if c.description != "" {
+		out["desc"] = []string{c.description}
+	}
+	if len(c.chameleons) != 0 {
+		out["chameleons"] = []string{strings.Join(c.chameleons, ",")}
+	}
+	if len(c.cameras) != 0 {
+		out["cameras"] = []string{strings.Join(c.cameras, ",")}
+	}
+	if len(c.cables) != 0 {
+		out["cables"] = []string{strings.Join(c.cables, ",")}
+	}
+	if c.antennaConnection != "" {
+		out["antennaconnection"] = []string{c.antennaConnection}
+	}
+	if c.router != "" {
+		out["router"] = []string{c.router}
+	}
+	if c.facing != "" {
+		out["facing"] = []string{c.facing}
+	}
+	if c.light != "" {
+		out["light"] = []string{c.light}
+	}
+	if c.carrier != "" {
+		out["carrier"] = []string{c.carrier}
+	}
+	if c.audioBoard {
+		out["audioboard"] = []string{}
+	}
+	if c.audioBox {
+		out["audiobox"] = []string{}
+	}
+	if c.atrus {
+		out["atrus"] = []string{}
+	}
+	if c.wifiCell {
+		out["wificell"] = []string{}
+	}
+	if c.touchMimo {
+		out["touchmimo"] = []string{}
+	}
+	if c.cameraBox {
+		out["camerabox"] = []string{}
+	}
+	if c.chaos {
+		out["chaos"] = []string{}
+	}
+	if c.audioCable {
+		out["audiocable"] = []string{}
+	}
+	if c.smartUSBHub {
+		out["smartusbhub"] = []string{}
+	}
+	if c.envFlags.Namespace != "" {
+		out["namespace"] = []string{c.envFlags.Namespace}
+	}
+	return out
 }
 
 // ShivasUpdateDUT is a command that contains the arguments that "shivas update" understands.
