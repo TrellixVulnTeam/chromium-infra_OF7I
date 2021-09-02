@@ -24,6 +24,8 @@ message LabpackInput {
   string inventory_service = 6;
   // Do not use stepper during execution.
   bool no_stepper = 7;
+  // Custom configuration.
+  string configuration = 8;
 };
 
 // LabpackResponse represents result of execution the task on unit.

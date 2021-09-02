@@ -10,8 +10,11 @@ Managed by Chrome Fleet Software (go/chrome-fleet-software).
 package main
 
 import (
+	"bytes"
 	"context"
+	b64 "encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -77,6 +80,10 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if !in.GetNoStepper() {
 		sh = tlw.NewStepHandler(lg)
 	}
+	cr, err := getConfiguration(in.GetConfiguration())
+	if err != nil {
+		return errors.Annotate(err, "internal run").Err()
+	}
 	runArgs := &recovery.RunArgs{
 		UnitName:              in.GetUnitName(),
 		TaskName:              task,
@@ -85,11 +92,26 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		StepHandler:           sh,
 		EnableRecovery:        in.GetEnableRecovery(),
 		EnableUpdateInventory: in.GetUpdateInventory(),
+		ConfigReader:          cr,
 	}
 	if err := recovery.Run(ctx, runArgs); err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
 	return nil
+}
+
+// getConfiguration read base64 configuration from input and create reader for recovery-engine.
+// If configuration is empty then we will pass nil so recovery-engine will use default configuration.
+func getConfiguration(config string) (io.Reader, error) {
+	if config == "" {
+		return nil, nil
+	}
+	dc, err := b64.StdEncoding.DecodeString(config)
+	if err != nil {
+		return nil, errors.Annotate(err, "get configuration: decode configuration").Err()
+	}
+	log.Printf("Received configuration: %s", string(dc))
+	return bytes.NewReader(dc), nil
 }
 
 // Mapping of all supported tasks.
