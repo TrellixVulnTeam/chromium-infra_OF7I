@@ -868,6 +868,7 @@ SPECS.update({
         UniversalSource('grpc-google-iam-admin-v1', '0.10.0'),
         UniversalSource('grpc-google-iam-v1', '0.11.4'),
         UniversalSource('gym', '0.18.0', pyversions=['py3']),
+        UniversalSource('gym', '0.19.0', pyversions=['py3']),
         UniversalSource('httplib2', '0.10.3'),
         UniversalSource('httplib2', '0.12.1'),
         UniversalSource('httplib2', '0.13.1'),

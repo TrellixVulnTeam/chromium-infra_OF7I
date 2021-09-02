@@ -2720,6 +2720,18 @@ wheel: <
 
 * *universal*
 
+### 0.19.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/gym-py3"
+  version: "version:0.19.0"
+>
+```
+
+
+* *universal*
+
 ## **h5py**
 
 ### 2.10.0
