@@ -29,7 +29,7 @@ import (
 //   - Collect DUTs info.
 //   - Load execution plan for required task with verification.
 //   - Send DUTs info to inventory.
-func Run(ctx context.Context, args *RunArgs) error {
+func Run(ctx context.Context, args *RunArgs) (err error) {
 	if err := args.verify(); err != nil {
 		return errors.Annotate(err, "run recovery: verify input").Err()
 	}
