@@ -18,7 +18,6 @@ from legacy import api as legacy_api
 from legacy import api_common
 from legacy import swarmbucket_api
 import access
-import api
 import bq
 import bulkproc
 import config
@@ -179,9 +178,7 @@ def get_frontend_routes():  # pragma: no cover
   if modules.get_current_module_name() == 'beefy':
     prpc_server.add_interceptor(_beefy_service_interceptor)
   prpc_server.add_service(access.AccessServicer())
-  prpc_server.add_service(api.BuildsApi())
   routes += prpc_server.get_routes()
-  routes += prpc_server.get_routes(prefix='/python')
 
   return routes
 
@@ -189,7 +186,6 @@ def get_frontend_routes():  # pragma: no cover
 def get_backend_routes():  # pragma: no cover
   prpc_server = prpc.Server()
   prpc_server.add_interceptor(auth.prpc_interceptor)
-  prpc_server.add_service(api.BuildsApi())
 
   return [  # pragma: no branch
       webapp2.Route(r'/internal/cron/buildbucket/expire_build_leases',
@@ -210,5 +206,4 @@ def get_backend_routes():  # pragma: no cover
                     bq.TaskExport),
       webapp2.Route(r'/internal/task/resultdb/finalize/<build_id:\d+>',
                     resultdb.FinalizeInvocation),
-  ] + (bulkproc.get_routes() + prpc_server.get_routes()
-       + prpc_server.get_routes(prefix='/python'))
+  ] + (bulkproc.get_routes() + prpc_server.get_routes())

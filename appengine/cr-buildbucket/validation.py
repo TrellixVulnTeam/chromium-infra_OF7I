@@ -34,70 +34,27 @@ PUBSUB_USER_DATA_MAX_LENGTH = 4096
 # Maximum size of Build.summary_markdown field. Defined in build.proto.
 MAX_BUILD_SUMMARY_MARKDOWN_SIZE = 4000  # 4 KB
 
-# swarming.py and api.py reserve these properties.
-RESERVED_PROPERTY_PATHS = [
-    # Reserved for buildbucket internals.
-    ['buildbucket'],
-    ['$recipe_engine/buildbucket'],
-
-    # Deprecated in favor of api.buildbucket.builder.builder,
-    # https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_modules/buildbucket/api.py
-    # Prohibited.
-    ['buildername'],
-
-    # Deprecated in favor of api.buildbucket.build_input.gitiles_commit,
-    # https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_modules/buildbucket/api.py
-    # Prohibited.
-    ['branch'],
-    ['repository'],
-
-    # Set to const true.
-    ['$recipe_engine/runtime', 'is_luci'],
-
-    # Populated from Build.input.experimental.
-    ['$recipe_engine/runtime', 'is_experimental'],
-]
-
-# Statuses with start time required.
-START_TIME_REQUIRED_STATUSES = (
-    common_pb2.STARTED,
-    common_pb2.SUCCESS,
-    common_pb2.FAILURE,
-)
-
-# Character separating parent from children steps.
-STEP_SEP = '|'
 
 ################################################################################
 # Validation of common.proto messages.
 # The order of functions must match the order of messages in common.proto.
 
 
-def validate_gerrit_change(change, require_project=False):
+def validate_gerrit_change(change):
   """Validates common_pb2.GerritChange."""
   # project is not required.
   _check_truth(change, 'host', 'change', 'patchset')
-  if require_project and not change.project:  # pragma: no branch
-    # TODO(nodir): escalate to an error.
-    logging.warning('gerrit_change.project is not specified')
 
 
-def validate_gitiles_commit(commit, require_ref=True):
+def validate_gitiles_commit(commit):
   """Validates common_pb2.GitilesCommit."""
   _check_truth(commit, 'host', 'project')
 
-  if require_ref:
-    _check_truth(commit, 'ref')
-  if commit.ref:
-    if not commit.ref.startswith('refs/'):
-      _enter_err('ref', 'must start with "refs/"')
-  else:
-    if not commit.id:
-      _err('id or ref is required')
-    if commit.position:
-      _enter_err('position', 'requires ref')
+  _check_truth(commit, 'ref')
+  if not commit.ref.startswith('refs/'):
+    _enter_err('ref', 'must start with "refs/"')
 
-  if commit.id:
+  if commit.id:  # pragma: no cover
     with _enter('id'):
       _validate_hex_sha1(commit.id)
 
@@ -121,45 +78,31 @@ def validate_tags(string_pairs, mode):
 # The order of functions must match the order of messages in common.proto.
 
 
-def validate_builder_id(builder_id, require_bucket=True, require_builder=True):
+def validate_builder_id(builder_id):
   """Validates builder_pb2.BuilderID."""
-  assert require_bucket or not require_builder
   _check_truth(builder_id, 'project')
-  if require_bucket:
-    _check_truth(builder_id, 'bucket')
-  if require_builder:
-    _check_truth(builder_id, 'builder')
+  _check_truth(builder_id, 'bucket')
 
   with _enter('project'), _handle_invalid_input_error():
     config.validate_project_id(builder_id.project)
 
   with _enter('bucket'), _handle_invalid_input_error():
-    if builder_id.bucket:
-      config.validate_bucket_name(builder_id.bucket)
-      parts = builder_id.bucket.split('.')
-      if len(parts) >= 3 and parts[0] == 'luci':
-        _err(
-            'invalid usage of v1 bucket format in v2 API; use %r instead',
-            parts[2]
-        )
-    elif builder_id.builder:
-      _err('required by .builder field')
+    config.validate_bucket_name(builder_id.bucket)
+    parts = builder_id.bucket.split('.')
+    if len(parts) >= 3 and parts[0] == 'luci':
+      _err(
+          'invalid usage of v1 bucket format in v2 API; use %r instead',
+          parts[2]
+      )
 
   with _enter('builder'), _handle_invalid_input_error():
-    if builder_id.builder:
+    if builder_id.builder:  # pragma: no cover
       errors.validate_builder_name(builder_id.builder)
 
 
 ################################################################################
 # Validation of rpc.proto messages.
 # The order of functions must match the order of messages in rpc.proto.
-
-
-def validate_search_builds_request(req):
-  """Validates rpc_pb2.SearchBuildRequest."""
-  with _enter('predicate'):
-    validate_build_predicate(req.predicate)
-  _validate_paged_request(req)
 
 
 def validate_requested_dimension(dim):
@@ -183,7 +126,7 @@ def validate_requested_dimension(dim):
       _enter_err('nanos', 'must be 0')
 
 
-def validate_schedule_build_request(req, legacy=False):
+def validate_schedule_build_request(req):
   if '/' in req.request_id:  # pragma: no cover
     _enter_err('request_id', 'must not contain /')
 
@@ -192,7 +135,7 @@ def validate_schedule_build_request(req, legacy=False):
 
   if req.HasField('builder'):
     with _enter('builder'):
-      validate_builder_id(req.builder, require_builder=not legacy)
+      validate_builder_id(req.builder)
 
   with _enter('exe'):
     _check_falsehood(req.exe, 'cipd_package')
@@ -202,10 +145,6 @@ def validate_schedule_build_request(req, legacy=False):
 
   with _enter('properties'):
     validate_struct(req.properties)
-    if not legacy:  # pragma: no branch
-      for path in RESERVED_PROPERTY_PATHS:
-        if _struct_has_path(req.properties, path):
-          _err('property path %r is reserved', path)
 
   if req.HasField('gitiles_commit'):
     with _enter('gitiles_commit'):
@@ -214,7 +153,7 @@ def validate_schedule_build_request(req, legacy=False):
   _check_repeated(
       req,
       'gerrit_changes',
-      lambda c: validate_gerrit_change(c, require_project=not legacy),
+      validate_gerrit_change,
   )
 
   with _enter('tags'):
@@ -246,154 +185,6 @@ def validate_notification_config(notify):
     _enter_err('user_data', 'must be <= %d bytes', PUBSUB_USER_DATA_MAX_LENGTH)
 
 
-# Set of UpdateBuildRequest field paths updatable via UpdateBuild RPC.
-UPDATE_BUILD_FIELD_PATHS = {
-    'build.status',
-    'build.status_details',
-    'build.summary_markdown',
-    'build.steps',
-    'build.output',
-    'build.output.properties',
-    'build.output.gitiles_commit',
-    'build.tags',
-}
-# Set of valid build statuses supported by UpdateBuild RPC.
-UPDATE_BUILD_STATUSES = {
-    common_pb2.STARTED,
-    # kitchen does not actually use SUCCESS. It relies on swarming pubsub
-    # handler in Buildbucket because a task may fail after recipe succeeded.
-    common_pb2.SUCCESS,
-    common_pb2.FAILURE,
-    common_pb2.INFRA_FAILURE,
-}
-
-
-def validate_steps(steps):
-  seen_steps = dict()
-  for i, s in enumerate(steps):
-    with _enter('step[%d]' % i):
-      validate_step(s, seen_steps)
-
-
-def validate_step(step, steps):
-  """Validates build's step, internally and relative to (previous) steps."""
-
-  _check_truth(step, 'name')
-  if step.name in steps:
-    _enter_err('name', 'duplicate: %r', step.name)
-
-  validate_internal_timing_consistency(step)
-
-  log_names = set()
-  _check_repeated(step, 'logs', lambda log: validate_log(log, log_names))
-
-  name_path = step.name.split(STEP_SEP)
-  parent_name = STEP_SEP.join(name_path[:-1])
-  if parent_name and parent_name not in steps:
-    _err('parent to %r must precede', step.name)
-
-  # NOTE: We used to validate consistency of timestamps and status between
-  # parent and child. However with client-side protocols such as luciexe, the
-  # parent and child steps may actually belong to separate processes on the
-  # machine, and can race each other in `bbagent`.
-  #
-  # Additionally, there's no way to guarantee that these two processes would
-  # have a consistent monotonic clock state that's shared between them (this is
-  # possible, but would take a fair amount of work) and events such as Daylight
-  # Savings Time shifts could lead to up to an hour of inconsistency between
-  # step timestamps.
-
-  steps[step.name] = step
-
-
-def validate_internal_timing_consistency(step):
-  """Validates internal timing consistency of a step."""
-
-  if (step.status not in common_pb2.Status.values() or
-      step.status == common_pb2.STATUS_UNSPECIFIED):
-    _err('must have buildbucket.v2.Status that is not STATUS_UNSPECIFIED')
-
-  if step.status in START_TIME_REQUIRED_STATUSES and not step.HasField(
-      'start_time'):
-    _enter_err(
-        'start_time', 'required by status %s',
-        common_pb2.Status.Name(step.status)
-    )
-  elif step.status < common_pb2.STARTED and step.HasField('start_time'):
-    _enter_err(
-        'start_time', 'invalid for status %s',
-        common_pb2.Status.Name(step.status)
-    )
-
-  if bool(step.status & common_pb2.ENDED_MASK) ^ step.HasField('end_time'):
-    _err('must have both or neither end_time and a terminal status')
-
-  if (step.HasField('end_time') and
-      step.start_time.ToDatetime() > step.end_time.ToDatetime()):
-    _err('start_time after end_time')
-
-
-def validate_log(log, names):
-  """Validates a log within a build step; checks uniqueness against names param.
-  """
-  _check_truth(log, 'name', 'url', 'view_url')
-
-  if log.name in names:
-    _enter_err('name', 'duplicate: %r', log.name)
-  names.add(log.name)
-
-
-def validate_build_predicate(predicate):
-  """Validates rpc_pb2.BuildPredicate."""
-  if predicate.HasField('builder'):
-    with _enter('builder'):
-      validate_builder_id(
-          predicate.builder, require_bucket=False, require_builder=False
-      )
-
-  _check_repeated(predicate, 'gerrit_changes', validate_gerrit_change)
-
-  if predicate.HasField('output_gitiles_commit'):
-    with _enter('output_gitiles_commit'):
-      _validate_predicate_output_gitiles_commit(predicate.output_gitiles_commit)
-
-  if predicate.HasField('create_time') and predicate.HasField('build'):
-    _err('create_time and build are mutually exclusive')
-
-  with _enter('tags'):
-    validate_tags(predicate.tags, 'search')
-
-
-# List of supported BuildPredicate.output_gitiles_commit field sets.
-# It is more restrictied than the generic validate_gitiles_commit because the
-# field sets by which builds are indexed are more restricted.
-SUPPORTED_PREDICATE_OUTPUT_GITILES_COMMIT_FIELD_SET = {
-    tuple(sorted(s)) for s in [
-        ('host', 'project', 'id'),
-        ('host', 'project', 'ref'),
-        ('host', 'project', 'ref', 'position'),
-    ]
-}
-
-
-def _validate_predicate_output_gitiles_commit(commit):
-  """Validates BuildsPredicate.output_gitiles_commit.
-
-  From rpc_pb2.SearchBuildsRequest.output_gitiles_commit comment:
-    One of the following subfield sets must specified:
-    - host, project, id
-    - host, project, ref
-    - host, project, ref, position
-  """
-  field_set = tuple(sorted(f.name for f, _ in commit.ListFields()))
-  if field_set not in SUPPORTED_PREDICATE_OUTPUT_GITILES_COMMIT_FIELD_SET:
-    _err(
-        'unsupported set of fields %r. Supported field sets: %r', field_set,
-        SUPPORTED_PREDICATE_OUTPUT_GITILES_COMMIT_FIELD_SET
-    )
-  validate_gitiles_commit(commit, require_ref=False)
-
-
 ################################################################################
 # Internals.
 
@@ -403,26 +194,10 @@ def _validate_cipd_version(version):
     _err('invalid version "%s"', version)
 
 
-def _struct_has_path(struct, path):
-  """Returns True if struct has a value at field path."""
-  for p in path:
-    f = struct.fields.get(p)
-    if f is None:
-      return False
-    struct = f.struct_value
-  return True
-
-
 def _validate_hex_sha1(sha1):
   pattern = r'[a-z0-9]{40}'
   if not re.match(pattern, sha1):
     _err('does not match r"%s"', pattern)
-
-
-def _validate_paged_request(req):
-  """Validates req.page_size."""
-  if req.page_size < 0:
-    _enter_err('page_size', 'must be not be negative')
 
 
 def _check_truth(msg, *field_names):

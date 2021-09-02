@@ -321,7 +321,7 @@ def put_request_message_to_build_request(put_request):
 
   # Validate the resulting v2 request before continuing.
   with _wrap_validation_error():
-    validation.validate_schedule_build_request(sbr, legacy=True)
+    validation.validate_schedule_build_request(sbr)
 
   return creation.BuildRequest(
       schedule_build_request=sbr,
