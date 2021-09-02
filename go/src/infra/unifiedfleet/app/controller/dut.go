@@ -833,13 +833,20 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		logging.Warningf(ctx, "Hwid data for %s not found. Error: %s", hwid, err)
 	}
+	enableBoxsterFlag := config.Get(ctx).GetEnableBoxsterLabels()
+	schedulableLabels, err := getSchedulableLabels(ctx, machine, enableBoxsterFlag)
+	if err != nil {
+		logging.Warningf(ctx, "SchedulableLabels not found. Error: %s", err)
+	}
 	data := &ufspb.ChromeOSDeviceData{
-		LabConfig:           lse,
-		Machine:             machine,
-		DeviceConfig:        devConfig,
-		ManufacturingConfig: mfgConfig,
-		HwidData:            hwidData,
-		DutState:            dutState,
+		LabConfig:                         lse,
+		Machine:                           machine,
+		DeviceConfig:                      devConfig,
+		ManufacturingConfig:               mfgConfig,
+		HwidData:                          hwidData,
+		DutState:                          dutState,
+		SchedulableLabels:                 schedulableLabels,
+		RespectAutomatedSchedulableLabels: enableBoxsterFlag,
 	}
 	dutV1, err := osutil.AdaptToV1DutSpec(data)
 	if err != nil {
@@ -896,6 +903,16 @@ func getHwidData(ctx context.Context, inv2Client external.CrosInventoryClient, i
 	proto.UnmarshalText(s, &hwidData)
 	logging.Debugf(ctx, "InvV2 hwid data:\n %+v\nUFS hwid data:\n %+v ", resp, &hwidData)
 	return &hwidData, err
+}
+
+// getSchedulableLabels gets Swarming schedulable labels based on DutAttributes
+// from UFS datastore. The feature will be turned off by default based on
+// the enable_boxster_label flag.
+func getSchedulableLabels(ctx context.Context, machine *ufspb.Machine, enableBoxsterFlag bool) ([]string, error) {
+	if !enableBoxsterFlag {
+		return nil, nil
+	}
+	return nil, status.Errorf(codes.Unimplemented, "getSchedulableLabels not yet implemented")
 }
 
 func getInventoryV2Client(ctx context.Context) (external.CrosInventoryClient, error) {

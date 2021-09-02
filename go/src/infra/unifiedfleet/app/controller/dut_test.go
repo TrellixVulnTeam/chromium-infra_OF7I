@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/chromiumos/config/go/api"
+	"go.chromium.org/chromiumos/config/go/payload"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/gologger"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
@@ -15,6 +20,7 @@ import (
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/external"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
@@ -2569,17 +2575,20 @@ func TestUpdateDUT(t *testing.T) {
 	})
 }
 
-func TestGetChromeOSDevicedata(t *testing.T) {
+func TestGetChromeOSDeviceData(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	ctx = external.WithTestingContext(ctx)
+	ctx = gologger.StdConfig.Use(ctx)
+	ctx = logging.SetLevel(ctx, logging.Debug)
 	machine := &ufspb.Machine{
 		Name: "machine-1",
 		Device: &ufspb.Machine_ChromeosMachine{
 			ChromeosMachine: &ufspb.ChromeOSMachine{
-				BuildTarget: "test",
-				Model:       "test",
-				Hwid:        "test",
+				ReferenceBoard: "test",
+				BuildTarget:    "test",
+				Model:          "test",
+				Hwid:           "test",
 			},
 		},
 	}
@@ -2605,6 +2614,26 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 
 	hwidData := &ufspb.HwidData{Sku: "test", Variant: "test"}
 
+	cfgBundle := &payload.ConfigBundle{
+		DesignList: []*api.Design{
+			{
+				Id: &api.DesignId{
+					Value: "test",
+				},
+				ProgramId: &api.ProgramId{
+					Value: "test",
+				},
+			},
+		},
+	}
+	cbBytes, _ := proto.Marshal(cfgBundle)
+	UpdateConfigBundle(ctx, cbBytes, nil, true)
+
+	attr1 := mockDutAttribute("attr_1", "design_list.id.value")
+	configuration.UpdateDutAttribute(ctx, attr1)
+	attr2 := mockDutAttribute("attr_2", "design_list.program_id.value")
+	configuration.UpdateDutAttribute(ctx, attr2)
+
 	Convey("TestGetChromeOSDevicedata", t, func() {
 		Convey("GetChromeOSDevicedata - id happy path", func() {
 			resp, err := GetChromeOSDeviceData(ctx, "machine-1", "")
@@ -2616,6 +2645,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
 			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
 			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - hostname happy path", func() {
@@ -2628,6 +2659,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
 			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
 			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - InvV2 errors", func() {
@@ -2659,6 +2692,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldBeNil)
 			So(resp.GetManufacturingConfig(), ShouldBeNil)
 			So(resp.GetHwidData(), ShouldBeNil)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - dutState not found", func() {
@@ -2687,6 +2722,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldBeNil)
 			So(resp.GetManufacturingConfig(), ShouldBeNil)
 			So(resp.GetHwidData(), ShouldBeNil)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - machine not found by hostname", func() {
@@ -2703,6 +2740,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldBeNil)
 			So(resp.GetManufacturingConfig(), ShouldBeNil)
 			So(resp.GetHwidData(), ShouldBeNil)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - machine not found by id", func() {
@@ -2719,6 +2758,8 @@ func TestGetChromeOSDevicedata(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldBeNil)
 			So(resp.GetManufacturingConfig(), ShouldBeNil)
 			So(resp.GetHwidData(), ShouldBeNil)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
 		Convey("GetChromeOSDevicedata - machinelse not found Error", func() {
