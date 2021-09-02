@@ -36,7 +36,7 @@ func (c *updateDUT) Run(a subcommands.Application, args []string, env subcommand
 	return 0
 }
 
-// InnerRun is the implementaiton of 'satlab update dut'.
+// InnerRun is the implementation of 'satlab update dut'.
 func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	return errors.New("not implemented")
 }
