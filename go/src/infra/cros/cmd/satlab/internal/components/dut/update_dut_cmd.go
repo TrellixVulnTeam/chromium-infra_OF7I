@@ -6,6 +6,8 @@ package dut
 
 import (
 	"infra/cmdsupport/cmdlib"
+	"infra/cros/cmd/satlab/internal/components/dut/shivas"
+	"infra/cros/cmd/satlab/internal/site"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
@@ -38,5 +40,16 @@ func (c *updateDUT) Run(a subcommands.Application, args []string, env subcommand
 
 // InnerRun is the implementation of 'satlab update dut'.
 func (c *updateDUT) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	return errors.New("not implemented")
+
+	dockerHostBoxIdentifier, err := getDockerHostBoxIdentifier(c.commonFlags)
+	if err != nil {
+		return errors.Annotate(err, "update dut").Err()
+	}
+
+	qualifiedHostname := site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.hostname)
+
+	return (&shivas.DUTUpdater{
+		Name:       qualifiedHostname,
+		ShivasArgs: makeUpdateShivasFlags(c),
+	}).Update()
 }

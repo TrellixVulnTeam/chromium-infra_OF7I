@@ -7,14 +7,12 @@ package dut
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmdsupport/cmdlib"
 
-	"infra/cros/cmd/satlab/internal/commands"
 	"infra/cros/cmd/satlab/internal/commands/dns"
 	"infra/cros/cmd/satlab/internal/components/dut/shivas"
 	"infra/cros/cmd/satlab/internal/site"
@@ -81,14 +79,9 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	//
 	// If we're going to add multiple defer blocks, a different strategy is needed to make sure that
 	// they compose in the correct way.
-	dockerHostBoxIdentifier := strings.ToLower(c.commonFlags.SatlabID)
-	if dockerHostBoxIdentifier == "" {
-		var err error
-		dockerHostBoxIdentifier, err = commands.GetDockerHostBoxIdentifier()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to determine -satlab prefix, use %s to pass explicitly\n", c.commonFlags.SatlabID)
-			return errors.Annotate(err, "add dut").Err()
-		}
+	dockerHostBoxIdentifier, err := getDockerHostBoxIdentifier(c.commonFlags)
+	if err != nil {
+		return errors.Annotate(err, "add dut").Err()
 	}
 
 	// Set Satlab identifier as default pool if not  given".

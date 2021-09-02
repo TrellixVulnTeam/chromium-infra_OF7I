@@ -5,7 +5,6 @@
 package dut
 
 import (
-	"fmt"
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/utils"
 	"infra/cros/cmd/satlab/internal/site"
@@ -57,7 +56,7 @@ func makeUpdateShivasFlags(c *updateDUT) flagmap {
 		out["rpm-outlet"] = []string{c.rpmOutlet}
 	}
 	if c.deployTaskTimeout != 0 {
-		out["deploy-timeout"] = []string{fmt.Sprintf("%d", c.deployTaskTimeout)}
+		// Do nothing.
 	}
 	if len(c.deployTags) != 0 {
 		out["deploy-tags"] = []string{strings.Join(c.deployTags, ",")}
@@ -120,7 +119,7 @@ func makeUpdateShivasFlags(c *updateDUT) flagmap {
 		out["smartusbhub"] = []string{}
 	}
 	if c.envFlags.Namespace != "" {
-		out["namespace"] = []string{c.envFlags.Namespace}
+		// Do nothing.
 	}
 	return out
 }
