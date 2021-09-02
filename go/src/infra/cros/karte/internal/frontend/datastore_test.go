@@ -11,6 +11,10 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
+
+	// See https://bugs.chromium.org/p/chromium/issues/detail?id=1242998 for details.
+	// TODO(gregorynisbet): Remove this once new behavior is default.
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 )
 
 // TestReadActionEntityFromEmptyDatastore check that a read from a consistent datastore with

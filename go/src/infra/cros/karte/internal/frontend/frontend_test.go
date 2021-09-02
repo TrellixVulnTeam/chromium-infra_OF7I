@@ -12,6 +12,10 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	// See https://bugs.chromium.org/p/chromium/issues/detail?id=1242998 for details.
+	// TODO(gregorynisbet): Remove this once new behavior is default.
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
+
 	kartepb "infra/cros/karte/api"
 )
 
