@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-GAE_PY := ../../../../../luci/appengine/components/tools/gae.py
-
 .PHONY: default
 default: build
 
@@ -45,6 +43,8 @@ realclean: clean
 run:
 	./karteserver -auth-service-host chrome-infra-auth-dev.appspot.com
 
+# Intentionally use the gae.py version that is present on the path. If no such
+# # command is available on the path, you are not in the correct environment.
 .PHONY: deploy
 deploy:
-	$(GAE_PY) upload --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
+	gae.py upload --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
