@@ -18,7 +18,7 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	serverauth "go.chromium.org/luci/server/auth"
 
-	"infra/cros/cmd/provisioning/internal/tasks"
+	"infra/cros/cmd/cros-provision/internal/tasks"
 )
 
 func main() {
@@ -30,8 +30,8 @@ func main() {
 
 func getApplication(authOpts auth.Options) *cli.Application {
 	return &cli.Application{
-		Name:  "provisioning",
-		Title: "A tool for running provisioning on the DUTs.",
+		Name:  "cros-provision",
+		Title: "A tool for running provisioning on the ChromeOS devices.",
 		Context: func(ctx context.Context) context.Context {
 			return gologger.StdConfig.Use(ctx)
 		},
