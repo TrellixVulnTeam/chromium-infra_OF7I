@@ -71,7 +71,7 @@ func (l *logger) DedentLogging() {
 
 // Default logging logic for all levels.
 func (l *logger) print(format string, args ...interface{}) {
-	i := GetIndent(l.indentation, "\t")
+	i := GetIndent(l.indentation, "  ")
 	log.Printf(i+format, args...)
 }
 
