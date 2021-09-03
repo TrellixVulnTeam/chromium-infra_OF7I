@@ -22,12 +22,14 @@ import (
 	"go.chromium.org/luci/server/secrets"
 	spanmodule "go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/templates"
+	"google.golang.org/appengine/log"
 
 	// Store auth sessions in the datastore.
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
 	"infra/appengine/weetbix/internal/bugclusters"
 	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 )
 
@@ -102,20 +104,24 @@ func pageBase(srv *server.Server) router.MiddlewareChain {
 	)
 }
 
-func indexPage(ctx *router.Context) {
+type handlers struct {
+	CloudProject string
+}
+
+func (hc *handlers) indexPage(ctx *router.Context) {
 	// TODO(crbug.com/1243174): Replace as part of MVP development.
 	cfg, err := config.Get(ctx.Context)
 	if err != nil {
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-	cl, err := bugs.NewMonorailClient(ctx.Context, cfg.GetMonorailHostname())
+	mc, err := bugs.NewMonorailClient(ctx.Context, cfg.GetMonorailHostname())
 	if err != nil {
 		logging.Errorf(ctx.Context, "Getting Monorail client: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-	issue, err := cl.GetIssue(ctx.Context, "projects/chromium/issues/2")
+	issue, err := mc.GetIssue(ctx.Context, "projects/chromium/issues/2")
 	if err != nil {
 		logging.Errorf(ctx.Context, "Getting Monorail issue: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
@@ -131,9 +137,33 @@ func indexPage(ctx *router.Context) {
 		return
 	}
 
+	cc, err := clustering.NewClient(ctx.Context, hc.CloudProject)
+	if err != nil {
+		log.Errorf(ctx.Context, "Creating new clustering client: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+	}
+	defer func() {
+		if err := cc.Close(); err != nil {
+			log.Warningf(ctx.Context, "Closing clustering client: %v", err)
+		}
+	}()
+
+	opts := clustering.ImpactfulClusterReadOptions{
+		UnexpectedFailures1dThreshold: 1000,
+		UnexpectedFailures3dThreshold: 3000,
+		UnexpectedFailures7dThreshold: 7000,
+	}
+	clusters, err := cc.ReadImpactfulClusters(ctx.Context, opts)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Reading Clusters from BigQuery: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+
 	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{
 		"IssueTitle":  issue.GetSummary(),
 		"BugClusters": bcs,
+		"Clusters":    clusters,
 	})
 }
 
@@ -148,7 +178,9 @@ func main() {
 	}
 	server.Main(nil, modules, func(srv *server.Server) error {
 		mw := pageBase(srv)
-		srv.Routes.GET("/", mw, indexPage)
+
+		handlers := &handlers{CloudProject: srv.Options.CloudProject}
+		srv.Routes.GET("/", mw, handlers.indexPage)
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
