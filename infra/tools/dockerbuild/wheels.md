@@ -3702,6 +3702,21 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.18.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/numpy/${vpython_platform}"
+  version: "version:1.18.5"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+
 ### 1.19.2
 
 ```protobuf
@@ -3732,6 +3747,21 @@ wheel: <
 * *manylinux-x64-py3.9*
 * *windows-x64-py3*
 * *windows-x86-py3*
+
+### 1.20.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/numpy/${vpython_platform}"
+  version: "version:1.20.3"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
 
 ### 1.21.1
 

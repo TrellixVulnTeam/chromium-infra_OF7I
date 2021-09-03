@@ -423,6 +423,17 @@ SPECS.update({
         ),
         SourceOrPrebuilt(
             'numpy',
+            '1.18.5',
+            skip_plat=[
+                'mac-arm64-cp38',
+                'windows-x86-py3',
+                'windows-x64-py3',
+            ],
+            packaged=[],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
+            'numpy',
             '1.19.2',
             skip_plat=[
                 'mac-arm64-cp38',
@@ -440,6 +451,20 @@ SPECS.update({
                 'manylinux-x64-py3',
                 'manylinux-x64-py3.9',
                 'mac-x64-cp38',
+                'windows-x86-py3',
+                'windows-x64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
+            'numpy',
+            '1.20.3',
+            packaged=[
+                'mac-x64-cp38',
+            ],
+            arch_map={'mac-x64-cp38': _NUMPY_MAC_x64},
+            skip_plat=[
+                'mac-arm64-cp38',
                 'windows-x86-py3',
                 'windows-x64-py3',
             ],
