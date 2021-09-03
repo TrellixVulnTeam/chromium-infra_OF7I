@@ -19,8 +19,8 @@ const (
 	// A normal RPM request would take no longer than 10 seconds,
 	// leave it at 60 seconds here for some buffer.
 	setPowerTimeout = 60 * time.Second
-	// The hostname of rpm frontend server.
-	rpmServiceHost = "chromeos-rpm-server.mtv.corp.google.com"
+	// The k8s cluster internal service name point to rpm frontend server.
+	rpmServiceHost = "rpm-service"
 	// The service port of rpm frontend server.
 	rpmServicePort = 9999
 )
