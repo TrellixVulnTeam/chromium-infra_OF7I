@@ -14,6 +14,7 @@ luci_gae_vars:
     OAUTH_CLIENT_SECRET: sm://oauth-client-secret
     OAUTH_REDIRECT_URL: https://chops-weetbix-dev.appspot.com/auth/openid/callback
     TINK_AEAD_KEY: sm://tink-aead-primary
+    SPANNER_DB: projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev
   chops-weetbix:
     AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
     CONFIG_SERVICE_HOST: luci-config.appspot.com
@@ -22,6 +23,7 @@ luci_gae_vars:
     OAUTH_CLIENT_SECRET: sm://oauth-client-secret
     OAUTH_REDIRECT_URL: https://chops-weetbix.appspot.com/auth/openid/callback
     TINK_AEAD_KEY: sm://tink-aead-primary
+    SPANNER_DB: projects/chops-weetbix/instances/prod/databases/chops-weetbix
 
 handlers:
 # Handlers for static files can be added here later.
@@ -38,3 +40,4 @@ entrypoint: >
   -encrypted-cookies-client-secret ${OAUTH_CLIENT_SECRET}
   -encrypted-cookies-redirect-url ${OAUTH_REDIRECT_URL}
   -encrypted-cookies-tink-aead-key ${TINK_AEAD_KEY}
+  -spanner-database ${SPANNER_DB}

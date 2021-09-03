@@ -18,6 +18,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/spantest"
 	"go.chromium.org/luci/server/span"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 const (
@@ -158,4 +160,13 @@ func spannerTestMain(m *testing.M) (exitCode int, err error) {
 	}
 
 	return m.Run(), nil
+}
+
+// MustApply applies the mutations to the spanner client in the context.
+// Asserts that application succeeds.
+// Returns the commit timestamp.
+func MustApply(ctx context.Context, ms ...*spanner.Mutation) time.Time {
+	ct, err := span.Apply(ctx, ms)
+	So(err, ShouldBeNil)
+	return ct
 }

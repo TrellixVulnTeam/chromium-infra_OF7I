@@ -10,7 +10,10 @@ This app follows the structure described in [Template for GAE Standard app].
 To run the server locally, use:
 ```
 cd frontend
-go run main.go -cloud-project chops-weetbix-dev -config-local-dir ../configs
+go run main.go \
+ -cloud-project chops-weetbix-dev \
+ -spanner-database projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev \
+ -config-local-dir ../configs
 ```
 
 Note that `-config-local-dir` is required only if you plan on modifying config

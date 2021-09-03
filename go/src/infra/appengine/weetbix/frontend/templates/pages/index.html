@@ -3,5 +3,19 @@
 <body>
   <p>Welcome to Weetbix.</p>
   <p>Issue title: {{.IssueTitle}}</p>
+  <table>
+    <tr>
+      <th>Project</th>
+      <th>Bug</th>
+      <th>Associated Cluster ID</th>
+    </tr>
+  {{range .BugClusters}}
+    <tr>
+      <td>{{.Project}}</td>
+      <td>{{.Bug}}</td>
+      <td>{{.AssociatedClusterID}}</td>
+    </tr>
+  {{end}}
+  </table>
   <p>Logged in as {{.User}}. <a href="{{.LogoutURL}}">Log Out</a></p>
 </body>

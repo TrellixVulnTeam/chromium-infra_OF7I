@@ -20,11 +20,13 @@ import (
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/secrets"
+	spanmodule "go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/templates"
 
 	// Store auth sessions in the datastore.
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
+	"infra/appengine/weetbix/internal/bugclusters"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/config"
 )
@@ -119,8 +121,19 @@ func indexPage(ctx *router.Context) {
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
+	transctx, cancel := spanmodule.ReadOnlyTransaction(ctx.Context)
+	defer cancel()
+
+	bcs, err := bugclusters.ReadActive(transctx)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Reading bugs: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+
 	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{
-		"IssueTitle": issue.GetSummary(),
+		"IssueTitle":  issue.GetSummary(),
+		"BugClusters": bcs,
 	})
 }
 
@@ -131,6 +144,7 @@ func main() {
 		encryptedcookies.NewModuleFromFlags(), // Required for auth sessions.
 		gaeemulation.NewModuleFromFlags(),     // Needed by cfgmodule.
 		secrets.NewModuleFromFlags(),          // Needed by encryptedcookies.
+		spanmodule.NewModuleFromFlags(),
 	}
 	server.Main(nil, modules, func(srv *server.Server) error {
 		mw := pageBase(srv)
