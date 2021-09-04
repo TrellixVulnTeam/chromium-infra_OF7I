@@ -205,6 +205,7 @@ func (tr *TestRecord) ingest(te *TestEvent, parent *TestRecord) {
 	case "run":
 		tr.Started = te.Time
 	case "output":
+		fmt.Print(te.Output)
 		if parent == nil {
 			tr.Output.WriteString(te.Output)
 		} else {
