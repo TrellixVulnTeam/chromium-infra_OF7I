@@ -3716,6 +3716,8 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
 
 ### 1.19.2
 
@@ -3762,6 +3764,8 @@ wheel: <
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
 
 ### 1.21.1
 

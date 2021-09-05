@@ -426,8 +426,6 @@ SPECS.update({
             '1.18.5',
             skip_plat=[
                 'mac-arm64-cp38',
-                'windows-x86-py3',
-                'windows-x64-py3',
             ],
             packaged=[],
             pyversions=['py3'],
@@ -465,8 +463,6 @@ SPECS.update({
             arch_map={'mac-x64-cp38': _NUMPY_MAC_x64},
             skip_plat=[
                 'mac-arm64-cp38',
-                'windows-x86-py3',
-                'windows-x64-py3',
             ],
             pyversions=['py3'],
         ),
