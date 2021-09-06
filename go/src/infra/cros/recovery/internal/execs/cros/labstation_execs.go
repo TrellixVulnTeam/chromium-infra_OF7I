@@ -23,19 +23,19 @@ const (
 	inUseFlagFileExpirationMins = 90
 )
 
-// hasServoInUseExec checks if any servo is in-use now.
-func hasServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+// hasNoServoInUseExec fails if any servo is in-use now.
+func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
 	cmd := fmt.Sprintf("find %s -mmin -%d", inUseFlagFileFilter, inUseFlagFileExpirationMins)
 	r := args.Access.Run(ctx, args.ResourceName, cmd)
 	// Ignore exit code as if it fail to execute that mean no flag files.
-	log.Debug(ctx, "Has servo is-use: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	log.Debug(ctx, "Has no servo is-use: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
 	v := strings.TrimSpace(r.Stdout)
 	if v == "" {
 		log.Debug(ctx, "Does not have any servo in-use.")
 		return nil
 	}
-	return errors.Reason("has servo is in-use: found flags\n%s", v).Err()
+	return errors.Reason("has no servo is in-use: found flags\n%s", v).Err()
 }
 
 const (
@@ -106,7 +106,7 @@ func hasNoRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs
 }
 
 func init() {
-	execs.Register("cros_has_servo_in_use", hasServoInUseExec)
+	execs.Register("cros_has_no_servo_in_use", hasNoServoInUseExec)
 	execs.Register("cros_remove_reboot_request", removeRebootRequestsExec)
 	execs.Register("cros_has_reboot_request", hasRebootRequestExec)
 	execs.Register("cros_clean_tmp_owner_request", cleanTmpOwnerRequestExec)

@@ -36,7 +36,7 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 	// the current inactive kernel has priority for the next boot.
 	runCmd := func(cmd string) (string, error) {
 		r := a.Run(ctx, resource, cmd)
-		if r.ExitCode == 0 {
+		if r.ExitCode != 0 {
 			return "", errors.Reason("fail. exit:%d, %s", r.ExitCode, r.Stderr).Err()
 		}
 		return strings.TrimRight(r.Stdout, "\n"), nil
@@ -46,11 +46,13 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}
+	log.Debug(ctx, "Booted disk block: %q.", diskBlockResult)
 	// Get the name of root partition on the resource.
 	diskRoot, err := runCmd("rootdev -s")
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}
+	log.Debug(ctx, "Booted root disk: %q.", diskRoot)
 	diskSuffix := strings.TrimPrefix(diskRoot, diskBlockResult)
 	// Find first number. We expected number 3 or 5.
 	p, err := regexp.Compile("(\\d)")
@@ -65,6 +67,7 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed: fail extract root partition number for %q", diskSuffix).Err()
 	}
+	log.Debug(ctx, "Booted root partion: %d.", activeRootPartition)
 	var activeKernel *kernelInfo
 	if kernelA.rootPartition == int(activeRootPartition) {
 		activeKernel = kernelA
@@ -89,11 +92,11 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}
+	log.Debug(ctx, "Kernel %q has priority %d.", kernelA.name, kap)
 	kbp, err := getKernelBootPriority(kernelB)
 	if err != nil {
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}
-	log.Debug(ctx, "Kernel %q has priority %d.", kernelA.name, kap)
 	log.Debug(ctx, "Kernel %q has priority %d.", kernelB.name, kbp)
 	if kap > kbp {
 		return activeKernel == kernelA, nil
