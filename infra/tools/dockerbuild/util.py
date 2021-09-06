@@ -16,6 +16,7 @@ from six.moves import urllib
 import requests
 import requests.exceptions
 
+from . import concurrency
 
 PKG_DIR = os.path.abspath(os.path.dirname(__file__))
 RESOURCES_DIR = os.path.join(PKG_DIR, 'resources')

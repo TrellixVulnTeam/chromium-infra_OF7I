@@ -34,6 +34,7 @@ class SourceOrPrebuilt(Builder):
       pyversions (iterable or None): The list of "python" wheel fields (see
           "Wheel.pyversion_str"). If None, a default Python version will be
           used.
+      default (bool): If true, the wheel will be built by default.
       patches (tuple): Short patch names to apply to the source tree.
       patch_base (str or None): Optionally override the base names for patches.
       patch_version (str or None): If set, this string is appended to the CIPD
@@ -92,6 +93,7 @@ class MultiWheel(Builder):
       pyversions (iterable or None): The list of "python" wheel fields (see
           "Wheel.pyversion_str"). If None, a default Python version will be
           used.
+      default (bool): If true, the wheel will be built by default.
       only_plat: (See Builder's "only_plat" argument.)
       skip_plat: (See Builder's "skip_plat" argument.)
     """
@@ -130,10 +132,17 @@ class Prebuilt(Builder):
     pyversions (iterable or None): The list of "python" wheel fields (see
         "Wheel.pyversion_str"). If None, a default Python version will be
         used.
+    default (bool): If true, the wheel will be built by default.
     kwargs: Keyword arguments forwarded to Builder.
   """
 
-  def __init__(self, name, version, only_plat, pyversions=None, **kwargs):
+  def __init__(self,
+               name,
+               version,
+               only_plat,
+               pyversions=None,
+               default=True,
+               **kwargs):
     kwargs['only_plat'] = only_plat
     super(Prebuilt, self).__init__(
         Spec(
@@ -141,7 +150,7 @@ class Prebuilt(Builder):
             version,
             universal=False,
             pyversions=pyversions,
-            default=True,
+            default=default,
             version_suffix=None), **kwargs)
 
   def build_fn(self, system, wheel):

@@ -353,7 +353,8 @@ SPECS.update({
                 'manylinux-x64-py3.9',
                 'linux-arm64-py3',
             ],
-            pyversions=['py3']),
+            pyversions=['py3'],
+            default=False),
         SourceOrPrebuilt(
             'lazy-object-proxy',
             '1.3.1',
@@ -725,6 +726,7 @@ SPECS.update({
                 'windows-x64-py3',
             ],
             pyversions=['py2', 'py3'],
+            default=False,
         ),
         # We can't build this ourselves as the build depends on libhdf5.
         Prebuilt(
@@ -1253,6 +1255,23 @@ SPECS.update({
 # The following packages all require specialized compilation, and so have their
 # own custom builder types.
 
+from .wheel_opencv_py3 import OpenCVPy3
+SPECS.update({
+    s.spec.tag: s for s in assert_sorted(
+        'OpenCVPy3',
+        OpenCVPy3(
+            'opencv_python',
+            '4.5.3.56',
+            '1.21.1',
+            packaged=[],
+            skip_plat=[
+                'linux-arm64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+    )
+})
+
 from .wheel_opencv import OpenCV
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
@@ -1279,16 +1298,6 @@ SPECS.update({
             ],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
             only_plat=['mac-64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
-        ),
-        OpenCV(
-            'opencv_python',
-            '4.5.3.56',
-            '1.21.1',
-            packaged=[
-                'mac-arm64-cp38',
-            ],
-            arch_map={'mac-arm64-cp38': _NUMPY_MAC_ARM},
-            only_plat=['mac-arm64-cp38'],
         ),
     )
 })

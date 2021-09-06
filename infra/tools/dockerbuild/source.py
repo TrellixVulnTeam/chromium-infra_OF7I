@@ -135,7 +135,7 @@ class Repository(object):
   def missing_sources(self):
     return self._missing_sources
 
-  def ensure(self, src, dest_dir, unpack=True):
+  def ensure(self, src, dest_dir, unpack=True, unpack_file_filter=None):
     util.LOGGER.debug('Ensuring source %r', src.tag)
 
     # Check if the CIPD package exists.
@@ -224,7 +224,14 @@ class Repository(object):
     if unpack:
       for suffix, unpack_func in self._archive_suffixes.items():
         if package_file.endswith(suffix):
-          return self._unpack_archive(package_file_path, dest_dir, unpack_func)
+          # unpack_file_filter is a workaround for python < 3.6 on Windows.
+          # Windows only allow path less than 260, which means we need to
+          # filter some files from the package if they are not required in the
+          # build to avoid triggering the limitation. This can be removed after
+          # we migrate to Python 3.6 or later.
+          # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+          return self._unpack_archive(package_file_path, dest_dir, unpack_func,
+                                      unpack_file_filter)
 
     # Single file.
     dest = os.path.join(dest_dir, os.path.basename(package_file))
@@ -241,18 +248,20 @@ class Repository(object):
 
       path = os.path.join(download_dir, 'file')
       util.LOGGER.debug('Downloading source to: [%s]', path)
-      with open(path, 'wb') as fd:
-        filename = self._DOWNLOAD_MAP[src.download_type](fd, src.download_meta)
+      with concurrency.PROCESS_SPAWN_LOCK.shared():
+        with open(path, 'wb') as fd:
+          filename = self._DOWNLOAD_MAP[src.download_type](fd,
+                                                           src.download_meta)
+        # Move the downloaded "file" into the package under its download name
+        # and package it.
+        os.rename(path, os.path.join(package_dir, filename))
 
-      # Move the downloaded "file" into the package under its download name and
-      # package it.
-      os.rename(path, os.path.join(package_dir, filename))
       self._system.cipd.create_package(package, package_dir, package_path)
 
-  def _unpack_archive(self, path, dest_dir, unpack_func):
+  def _unpack_archive(self, path, dest_dir, unpack_func, file_filter):
     with self._system.temp_subdir(os.path.basename(
         path)) as tdir, concurrency.PROCESS_SPAWN_LOCK.shared():
-      unpack_func(path, tdir)
+      unpack_func(path, tdir, file_filter)
 
       contents = os.listdir(tdir)
       if len(contents) != 1:
@@ -265,14 +274,19 @@ class Repository(object):
     return dest
 
   @staticmethod
-  def _unpack_tar_generic(path, dest_dir):
+  def _unpack_tar_generic(path, dest_dir, file_filter):
     with tarfile.open(path, 'r') as tf:
-      tf.extractall(dest_dir)
+      tf.extractall(
+          dest_dir,
+          members=filter(
+              (lambda m: file_filter(m.name)) if file_filter else None,
+              tf.getmembers(),
+          ))
 
   @staticmethod
-  def _unpack_zip_generic(path, dest_dir):
+  def _unpack_zip_generic(path, dest_dir, file_filter):
     with zipfile.ZipFile(path, 'r') as zf:
-      zf.extractall(dest_dir)
+      zf.extractall(dest_dir, members=filter(file_filter, zf.namelist()))
 
 
 def remote_file(name, version, url):

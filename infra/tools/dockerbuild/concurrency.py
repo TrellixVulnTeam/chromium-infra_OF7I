@@ -5,13 +5,14 @@
 
 from collections import deque
 import contextlib
+import logging
 import multiprocessing
 import sys
 import threading
 import time
 import traceback
 
-from . import util
+LOGGER = logging.getLogger('dockerbuild')
 
 
 class Pool():
@@ -84,7 +85,7 @@ class Pool():
     while True:
       if self.errors:
         error = self.errors[0]
-        util.LOGGER.error('Build task failed, exiting')
+        LOGGER.error('Build task failed, exiting')
 
         # We could consider waiting for all currently active threads to finish
         # before re-raising the error from the child, for a cleaner shutdown. In

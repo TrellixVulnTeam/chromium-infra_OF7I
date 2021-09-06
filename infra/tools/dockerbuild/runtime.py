@@ -175,7 +175,11 @@ class System(object):
         util.LOGGER.info('(--leak): Leaking temporary subdirectory: %s', tdir)
       else:
         util.LOGGER.debug('Removing temporary subdirectory: %s', tdir)
-        util.removeall(tdir)
+        try:
+          util.removeall(tdir)
+        except Exception as e:
+          util.LOGGER.info('Removing temporary subdirectory failed: %s: %s',
+                           tdir, repr(e))
 
   _devnull = open(os.devnull, 'w')
 
