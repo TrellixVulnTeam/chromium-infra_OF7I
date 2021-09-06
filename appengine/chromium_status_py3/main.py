@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 import datetime
+import google.cloud.logging
+
 from flask import Flask, make_response, render_template
 from google.cloud import ndb
 from werkzeug.routing import BaseConverter
@@ -88,6 +90,10 @@ def warmup():
   # Handle your warmup logic here, e.g. set up a database connection pool.
   return '', 200, {}
 
+# Set up cloud logging
+logging_client = google.cloud.logging.Client()
+logging_client.get_default_handler()
+logging_client.setup_logging()
 
 base_page.bootstrap()
 git_lkgr.bootstrap()
