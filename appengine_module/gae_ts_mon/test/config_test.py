@@ -43,6 +43,13 @@ class InitializeTest(test_case.TestCase):
     mock.patch.stopall()
     super(InitializeTest, self).tearDown()
 
+  # TODO(crbug.com/1246166): Remove this test after successful rollout
+  # of cr-buildbucket-* and monorail-*.
+  def test_infra_libs_version_check(self):
+    delattr(interface.state, "default_proxy_zone")
+    with self.assertRaises(Exception):
+      config.initialize(self.app, is_local_unittest=False)
+
   @mock.patch('gae_ts_mon.shared.is_python3_env', return_value=False)
   def test_sets_target(self, _mocked_py3_env):
     config.initialize(self.app, is_local_unittest=False)

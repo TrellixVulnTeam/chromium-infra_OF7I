@@ -84,6 +84,12 @@ def initialize(
     cron_module (str): DEPRECATED. This param is noop.
     is_local_unittest (bool or None): whether we are running in a unittest.
   """
+  # TODO(crbug.com/1246166): Remove this test after successful rollout
+  # of cr-buildbucket-* and monorail-*.
+  if not hasattr(interface.state, 'default_proxy_zone'):
+    raise Exception('gae_ts_mon requires infra_libs >= 2.2.1; '
+      'Did you forget to run gclient sync?')
+
   if is_local_unittest is None:  # pragma: no cover
     # Since gae_ts_mon.initialize is called at module-scope by appengine apps,
     # AppengineTestCase.setUp() won't have run yet and none of the appengine
