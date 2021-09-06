@@ -5,8 +5,9 @@
 package tasks
 
 import (
+	b64 "encoding/base64"
 	"fmt"
-	"infra/cmd/mallet/internal/bb"
+	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -14,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
+	"infra/cmd/mallet/internal/bb"
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
@@ -29,6 +31,8 @@ var Recovery = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
+		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
+		c.Flags.BoolVar(&c.noStepper, "no-stepper", false, "Block steper from using. This will prevent by using steps and you can only see logs.")
 		return c
 	},
 }
@@ -39,6 +43,8 @@ type recoveryRun struct {
 	envFlags  site.EnvFlags
 
 	onlyVerify bool
+	noStepper  bool
+	configFile string
 }
 
 // Flag to manage if a task is allowed to update inventory after running a task.
@@ -64,6 +70,14 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 	}
 	unit := args[0]
 	e := c.envFlags.Env()
+	var configuration string
+	if c.configFile != "" {
+		b, err := os.ReadFile(c.configFile)
+		if err != nil {
+			return errors.Annotate(err, "create recovery task: open configuration file").Err()
+		}
+		configuration = b64.StdEncoding.EncodeToString(b)
+	}
 	props, err := structbuilder.NewStruct(map[string]interface{}{
 		"unit_name":         unit,
 		"task_name":         string(recovery.TaskNameRecovery),
@@ -71,6 +85,8 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		"admin_service":     e.AdminService,
 		"inventory_service": e.UFSService,
 		"update_inventory":  enableUpdateInventory,
+		"no_stepper":        c.noStepper,
+		"configuration":     configuration,
 	})
 	if err != nil {
 		return errors.Annotate(err, "create recovery task").Err()
