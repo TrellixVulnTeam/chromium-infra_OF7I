@@ -150,9 +150,17 @@ const defaultConfig = `
 		},
 		"servo_repair":{
 			"critical_actions": [
-				"sample_pass"
+				"cros_ssh",
+				"servo_host_servod_restart",
+				"servod_echo"
 			],
-			"actions": {},
+			"actions": {
+				"servo_host_servod_restart":{
+					"exec_timeout": {
+						"seconds": 120
+					}
+				}
+			},
 			"allow_fail": true
 		},
 		"chameleon_repair":{
