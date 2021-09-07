@@ -9,7 +9,7 @@ import logging
 import os
 import re
 
-from flask import make_response, render_template, request
+from flask import make_response, render_template, request, session
 from google.cloud import ndb
 
 from appengine_module.chromium_status import utils
@@ -63,64 +63,59 @@ class BasePage:
     # Read and write access mean to the datastore.
     # Bot access is specifically required (in addition to write access) for
     # some queries that are allowed to specify a username synthetically.
-    # TODO (crbug.com/1121016): Implement user authentication and check for ACL
-    # For now, just set read_access = True for testing
     self._read_access = True
     self._write_access = False
     self._bot_login = False
-    self._user = None
+    self._user_email = None
 
   def _late_init(self):  # pragma: no cover
     """Initializes access control fields once the object is setup."""
-    # TODO (crbug.com/1121016): Implement user authentication and check for ACL
-    pass
-    # def look_for_password():
-    #   """Looks for password parameter. Not awesome."""
-    #   password = self.request.get('password')
-    #   if password:
-    #     sha1_pass = hashlib.sha1(password).hexdigest()
-    #     if Passwords.gql('WHERE password_sha1 = :1', sha1_pass).get():
-    #       # The password is valid, this is a super admin.
-    #       self._write_access = True
-    #       self._read_access = True
-    #       self._bot_login = True
-    #     else:
-    #       if utils.is_dev_env() and password == 'foobar':
-    #         # Dev server is unsecure.
-    #         self._read_access = True
-    #         self._write_access = True
-    #         self._bot_login = True
-    #       else:
-    #         logging.error('Password is invalid')
 
-    # self._user = users.get_current_user()
-    # if utils.is_dev_env():
-    #   look_for_password()
-    #   # Maybe the tests reloaded our public settings ...
-    #   self.PUBLIC_ACCESS = GlobalConfig.query().get().public_access
-    # elif not self._user:
-    #   try:
-    #     self._user = oauth.get_current_user()
-    #   except oauth.OAuthRequestError:
-    #     if self.request.scheme == 'https':
-    #       look_for_password()
+    def look_for_password():
+      """Looks for password parameter. Not awesome."""
+      password = self.request.get('password')
+      if password:
+        sha1_pass = hashlib.sha1(password).hexdigest()
+        if Passwords.gql('WHERE password_sha1 = :1', sha1_pass).get():
+          # The password is valid, this is a super admin.
+          self._write_access = True
+          self._read_access = True
+          self._bot_login = True
+        else:
+          if utils.is_dev_env() and password == 'foobar':
+            # Dev server is unsecure.
+            self._read_access = True
+            self._write_access = True
+            self._bot_login = True
+          else:
+            logging.error('Password is invalid')
 
-    # if not self._write_access and self._user:
-    #   if self.PUBLIC_ACCESS:
-    #     valid_email = self._VALID_PUBLIC_EMAIL
-    #   else:
-    #     valid_email = self._VALID_PRIVATE_EMAIL
-    #   self._write_access = bool(
-    #       users.is_current_user_admin() or
-    #       valid_email.match(self._user.email()))
-    # if self.PUBLIC_ACCESS:
-    #   self._read_access = True
-    # else:
-    #   self._read_access = self._write_access
+    if 'user_email' in session:
+      self._user_email = session['user_email']
+    if utils.is_dev_env():
+      look_for_password()
+      # Maybe the tests reloaded our public settings ...
+      self.PUBLIC_ACCESS = GlobalConfig.query().get().public_access
+    elif not self._user_email:
+      # TODO (crbug.com/1121016): Get user from OAuth
+      pass
 
-    # self._initialized = True
-    # logging.info('ReadAccess: %r, WriteAccess: %r, BotLogin: %r, User: %s' % (
-    #     self._read_access, self._write_access, self._bot_login, self._user))
+    if not self._write_access and self._user_email:
+      if self.PUBLIC_ACCESS:
+        valid_email = self._VALID_PUBLIC_EMAIL
+      else:
+        valid_email = self._VALID_PRIVATE_EMAIL
+      self._write_access = valid_email.match(self._user_email)
+    if self.PUBLIC_ACCESS:
+      self._read_access = True
+    else:
+      self._read_access = self._write_access
+
+    self._initialized = True
+    logging.info(
+        'ReadAccess: %r, WriteAccess: %r, BotLogin: %r, User Email: %s' %
+        (self._read_access, self._write_access, self._bot_login,
+         self._user_email))
 
   @property
   def write_access(self):  # pragma: no cover
@@ -135,10 +130,10 @@ class BasePage:
     return self._read_access
 
   @property
-  def user(self):  # pragma: no cover
+  def user_email(self):  # pragma: no cover
     if not self._initialized:
       self._late_init()
-    return self._user
+    return self._user_email
 
   @property
   def bot_login(self):  # pragma: no cover
@@ -148,8 +143,7 @@ class BasePage:
 
   def InitializeTemplate(self, title):  # pragma: no cover
     """Initializes the template values with information needed by all pages."""
-    # TODO (crbug.com/1121016): Implement user authentication and get user email
-    user_email = ''
+    user_email = self.user_email
     template_values = {
         'app_name': self.APP_NAME,
         'username': user_email,

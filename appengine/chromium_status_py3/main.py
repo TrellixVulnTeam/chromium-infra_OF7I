@@ -11,12 +11,17 @@ from werkzeug.routing import BaseConverter
 
 from appengine_module.chromium_status.static_blobs import ServeHandler
 from appengine_module.chromium_status.status import AllStatusPage, MainPage
+from appengine_module.chromium_status import auth
 from appengine_module.chromium_status import base_page
 from appengine_module.chromium_status import git_lkgr
 from appengine_module.chromium_status import status
 from appengine_module.chromium_status import utils
 
 client = ndb.Client()
+
+
+class FlaskApp(ndb.Model):  # pylint: disable=W0232
+  secret_key = ndb.StringProperty()
 
 
 # RegexConverter is to support regrex for app.route
@@ -43,10 +48,18 @@ app = Flask(__name__)
 app.wsgi_app = ndb_wsgi_middleware(app.wsgi_app)  # Wrap the app in middleware.
 app.url_map.converters['regex'] = RegexConverter
 
+with client.context():
+  app.secret_key = FlaskApp.query().get().secret_key
+
 
 @app.route('/')
 def main_page():
   return MainPage().get()
+
+
+@app.route('/code')
+def auth_code():
+  return auth.AuthHandler().handle_code()
 
 
 @app.route('/allstatus')
@@ -95,6 +108,7 @@ logging_client = google.cloud.logging.Client()
 logging_client.get_default_handler()
 logging_client.setup_logging()
 
+auth.AuthHandler.bootstrap()
 base_page.bootstrap()
 git_lkgr.bootstrap()
 utils.bootstrap()

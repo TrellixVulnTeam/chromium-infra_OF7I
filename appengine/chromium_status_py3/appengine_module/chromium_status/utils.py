@@ -3,9 +3,13 @@
 # found in the LICENSE file.
 """Utils."""
 
+import logging
 import os
+from flask import abort, redirect, Response
 
 from google.cloud import ndb
+
+from appengine_module.chromium_status import auth
 
 
 def is_dev_env():  # pragma: no cover
@@ -29,13 +33,10 @@ def requires_work_queue_login(func):  # pragma: no cover
     if ('X-AppEngine-Cron' in self.request.headers or
         'X-AppEngine-TaskName' in self.request.headers or self.write_access):
       return func(self, *args, **kwargs)
-    elif self.user is None:
-      # TODO (crbug.com/1121016): redirect to login url
-      pass
-      # self.redirect(users.create_login_url(self.request.url))
+    elif self.user_email is None:
+      return redirect(auth.AuthHandler.get_authorization_url())
     else:
-      self.response.set_status(401)
-      self.response.out.write('Handler only accessible for work queues')
+      abort(401, description='Handler only accessible for work queues')
 
   return decorated
 
@@ -47,9 +48,7 @@ def requires_bot_login(func):  # pragma: no cover
     if self.bot_login:
       return func(self, *args, **kwargs)
     else:
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('Forbidden')
-      self.error(403)
+      abort(403, description="Forbidden")
 
   return decorated
 
@@ -61,9 +60,7 @@ def requires_write_access(func):  # pragma: no cover
     if self.write_access:
       return func(self, *args, **kwargs)
     else:
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('Forbidden')
-      self.error(403)
+      abort(403, description="Forbidden")
 
   return decorated
 
@@ -72,15 +69,12 @@ def requires_login(func):  # pragma: no cover
   """Must be logged in for access. BasePage objects only."""
 
   def decorated(self, *args, **kwargs):
-    if self.user:
+    if self.user_email:
       return func(self, *args, **kwargs)
-    elif not self.user:
-      # TODO (crbug.com/1121016): redirect to login url
-      return func(self, *args, **kwargs)
+    elif not self.user_email:
+      return redirect(auth.AuthHandler.get_authorization_url())
     else:
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('Forbidden')
-      self.error(403)
+      abort(403, description="Forbidden")
 
   return decorated
 
@@ -91,14 +85,10 @@ def requires_read_access(func):  # pragma: no cover
   def decorated(self, *args, **kwargs):
     if self.read_access:
       return func(self, *args, **kwargs)
-    elif not self.user:
-      # TODO (crbug.com/1121016): redirect to login url
-      pass
-      # self.redirect(users.create_login_url(self.request.url))
+    elif not self.user_email:
+      return redirect(auth.AuthHandler.get_authorization_url())
     else:
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('Forbidden')
-      self.error(403)
+      abort(403, description="Forbidden")
 
   return decorated
 

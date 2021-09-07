@@ -495,7 +495,7 @@ class MainPage(BasePage):
       last_message = new_message
       return self._handle(error_message, last_message)
     else:
-      put_status(Status(message=new_message, username=self.user.email()))
+      put_status(Status(message=new_message, username=self.user_email))
       return redirect("/")
 
 
