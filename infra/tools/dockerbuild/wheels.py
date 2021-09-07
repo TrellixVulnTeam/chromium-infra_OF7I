@@ -1456,7 +1456,7 @@ SPECS.update({
                 Mpi4py(
                     'mpi4py',
                     '3.0.3',
-                    'version:3.4.1.chromium.4',
+                    'version:2@3.4.1.chromium.4',
                     packaged=[
                         'windows-x86',
                         'windows-x86-py3',
@@ -1482,8 +1482,6 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
-                'mac-arm64',
-                'mac-arm64-cp38',
             ],
         ),
         MultiWheel(
@@ -1521,7 +1519,6 @@ SPECS.update({
                 'linux-mipsel',
                 'linux-mips',
                 'linux-mips64',
-                'mac-arm64',
             ],
         ),
         # List cultivated from "pyobjc-7.3"'s "setup.py" as a superset of

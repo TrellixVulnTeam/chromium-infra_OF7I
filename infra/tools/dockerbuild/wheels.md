@@ -2910,12 +2910,12 @@ wheel: <
 
 ## **infra_libs-py2**
 
-### 2.2.0b1
+### 2.2.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/infra_libs-py2"
-  version: "version:2.2.0b1"
+  version: "version:2.2.1"
 >
 ```
 
@@ -3909,6 +3909,11 @@ wheel: <
 
 
 * *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **opt-einsum-py3**
 
@@ -4095,6 +4100,7 @@ wheel: <
 
 * *linux-arm64*
 * *linux-arm64-py3*
+* *mac-arm64*
 * *mac-arm64-cp38*
 * *mac-x64*
 * *mac-x64-cp38*
