@@ -79,7 +79,7 @@ func main() {
 	scopes := []string{
 		gerrit.OAuthScope,
 		auth.OAuthScopeEmail,
-		"https://www.googleapis.com/auth/devstorage.full_control",
+		"https://www.googleapis.com/auth/datastore",
 	}
 	scopes = append(scopes, gs.ReadWriteScopes...)
 	opts.Scopes = scopes
