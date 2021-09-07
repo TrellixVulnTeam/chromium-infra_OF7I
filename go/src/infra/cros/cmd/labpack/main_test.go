@@ -10,10 +10,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"infra/cros/recovery/logger"
 )
 
-// Test cases for TestDUTPlans
-var dutPlansCases = []struct {
+var getConfigurationCases = []struct {
 	name   string
 	in     string
 	isNull bool
@@ -41,12 +42,13 @@ var dutPlansCases = []struct {
 // Testing dutPlans method
 func TestGetConfiguration(t *testing.T) {
 	t.Parallel()
-	for _, c := range dutPlansCases {
+	for _, c := range getConfigurationCases {
 		cs := c
 		t.Run(cs.name, func(t *testing.T) {
 			t.Parallel()
+			lg := logger.NewLogger()
 			sEnc := b64.StdEncoding.EncodeToString([]byte(cs.in))
-			r, err := getConfiguration(sEnc)
+			r, err := getConfiguration(sEnc, lg)
 			if err != nil {
 				t.Errorf("Case %s: %s", cs.name, err)
 			}

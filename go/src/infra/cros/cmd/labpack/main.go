@@ -40,11 +40,16 @@ func main() {
 	var mergeOutputProps func(*steps.LabpackResponse)
 	build.Main(input, &writeOutputProps, &mergeOutputProps,
 		func(ctx context.Context, args []string, state *build.State) error {
+			// TODO(otabek@): Add custom logger.
+			lg := logger.NewLogger()
 			log.Printf("Input args: %v", input)
-			err := internalRun(ctx, input, state)
+			err := internalRun(ctx, input, state, lg)
 			writeOutputProps(&steps.LabpackResponse{
 				Success: err == nil,
 			})
+			if err != nil {
+				lg.Debug("Finished with err: %s", err)
+			}
 			// if err is nil then will mark the Build as SUCCESS
 			return err
 		},
@@ -53,15 +58,16 @@ func main() {
 }
 
 // internalRun main entry point to execution received request.
-func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State) (err error) {
+func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger) (err error) {
 	// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 	defer func() {
 		if r := recover(); r != nil {
+			lg.Debug("Received panic!")
 			err = errors.Reason("panic: %s", r).Err()
 		}
 	}()
 	if err = printInputs(ctx, in); err != nil {
-		log.Printf("Internal run: failed to marshal proto. Error: %s", err)
+		lg.Debug("Internal run: failed to marshal proto. Error: %s", err)
 		return err
 	}
 	access, err := tlw.NewAccess(ctx, in)
@@ -74,13 +80,11 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if t, ok := supportedTasks[in.TaskName]; ok {
 		task = t
 	}
-	// TODO(otabek@): Add custom logger.
-	lg := logger.NewLogger()
 	var sh logger.StepHandler
 	if !in.GetNoStepper() {
 		sh = tlw.NewStepHandler(lg)
 	}
-	cr, err := getConfiguration(in.GetConfiguration())
+	cr, err := getConfiguration(in.GetConfiguration(), lg)
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
@@ -94,6 +98,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		EnableUpdateInventory: in.GetUpdateInventory(),
 		ConfigReader:          cr,
 	}
+	lg.Debug("Labpack: started recovery engine.")
 	if err := recovery.Run(ctx, runArgs); err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
@@ -102,15 +107,16 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 
 // getConfiguration read base64 configuration from input and create reader for recovery-engine.
 // If configuration is empty then we will pass nil so recovery-engine will use default configuration.
-func getConfiguration(config string) (io.Reader, error) {
+func getConfiguration(config string, lg logger.Logger) (io.Reader, error) {
 	if config == "" {
+		lg.Debug("Labpack: received empty configuration.")
 		return nil, nil
 	}
 	dc, err := b64.StdEncoding.DecodeString(config)
 	if err != nil {
 		return nil, errors.Annotate(err, "get configuration: decode configuration").Err()
 	}
-	log.Printf("Received configuration: %s", string(dc))
+	lg.Debug("Received configuration:\n%s", string(dc))
 	return bytes.NewReader(dc), nil
 }
 
