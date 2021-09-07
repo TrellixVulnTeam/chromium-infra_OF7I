@@ -8,6 +8,7 @@ import (
 	"context"
 	"path/filepath"
 
+	"infra/chromium/bootstrapper/cas"
 	"infra/chromium/bootstrapper/cipd"
 
 	"go.chromium.org/luci/common/errors"
@@ -19,26 +20,33 @@ import (
 // executable and providing the information necessary to execute it.
 type ExeBootstrapper struct {
 	cipd *cipd.Client
+	cas  *cas.Client
 }
 
-func NewExeBootstrapper(cipd *cipd.Client) *ExeBootstrapper {
-	return &ExeBootstrapper{cipd: cipd}
+func NewExeBootstrapper(cipd *cipd.Client, cas *cas.Client) *ExeBootstrapper {
+	return &ExeBootstrapper{cipd: cipd, cas: cas}
 }
 
 func (b *ExeBootstrapper) GetBootstrappedExeInfo(ctx context.Context, input *Input) (*BootstrappedExe, error) {
-	// TODO(gbeaty) Add support for getting CAS digest from led_cas_recipe_bundle property
-	logging.Infof(ctx, "resolving CIPD package %s@%s", input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
-	pin, err := b.cipd.ResolveVersion(ctx, input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
-	if err != nil {
-		return nil, err
-	}
-	source := &BootstrappedExe_Cipd{
-		Cipd: &Cipd{
-			Server:           chromeinfra.CIPDServiceURL,
-			Package:          input.properties.Exe.CipdPackage,
-			RequestedVersion: input.properties.Exe.CipdVersion,
-			ActualVersion:    pin.InstanceID,
-		},
+	var source isBootstrappedExe_Source
+	if input.casRecipeBundle != nil {
+		source = &BootstrappedExe_Cas{
+			Cas: input.casRecipeBundle,
+		}
+	} else {
+		logging.Infof(ctx, "resolving CIPD package %s@%s", input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
+		pin, err := b.cipd.ResolveVersion(ctx, input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
+		if err != nil {
+			return nil, err
+		}
+		source = &BootstrappedExe_Cipd{
+			Cipd: &Cipd{
+				Server:           chromeinfra.CIPDServiceURL,
+				Package:          input.properties.Exe.CipdPackage,
+				RequestedVersion: input.properties.Exe.CipdVersion,
+				ActualVersion:    pin.InstanceID,
+			},
+		}
 	}
 	return &BootstrappedExe{
 		Source: source,
@@ -61,7 +69,13 @@ func (b *ExeBootstrapper) DeployExe(ctx context.Context, exe *BootstrappedExe) (
 		}
 
 	case *BootstrappedExe_Cas:
-		return nil, errors.New("CAS exes are not yet supported")
+		casSource := source.Cas
+		logging.Infof(ctx, "downloading CAS isolated %s/%d", casSource.Digest.Hash, casSource.Digest.SizeBytes)
+		var err error
+		packagePath, err = b.cas.Download(ctx, casSource.CasInstance, casSource.Digest)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, errors.Reason("unknown source %s", source).Err()

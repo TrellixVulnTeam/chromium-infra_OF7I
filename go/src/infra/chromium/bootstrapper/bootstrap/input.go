@@ -7,7 +7,9 @@ package bootstrap
 import (
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/led/ledcmd"
 	"go.chromium.org/luci/luciexe/exe"
+	apipb "go.chromium.org/luci/swarming/proto/api"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -20,24 +22,31 @@ type Input struct {
 	changes         []*buildbucketpb.GerritChange
 	buildProperties *structpb.Struct
 	properties      *BootstrapProperties
+	casRecipeBundle *apipb.CASReference
 }
 
 // NewInput creates a new Input, returning an error if the $bootstrap property
 // on the build is missing or invalid.
 func NewInput(build *buildbucketpb.Build) (*Input, error) {
 	bootstrapProperties := &BootstrapProperties{}
+	casRecipeBundle := &apipb.CASReference{}
 	properties := build.GetInput().GetProperties()
 	if properties == nil {
 		properties = &structpb.Struct{}
 	}
 	if err := exe.ParseProperties(properties, map[string]interface{}{
-		"$bootstrap": bootstrapProperties,
+		"$bootstrap":                   bootstrapProperties,
+		ledcmd.CASRecipeBundleProperty: casRecipeBundle,
 	}); err != nil {
-		return nil, errors.Annotate(err, "failed to parse $bootstrap property").Err()
+		return nil, errors.Annotate(err, "failed to parse properties").Err()
 	}
 
 	if err := validate(bootstrapProperties, "$bootstrap"); err != nil {
 		return nil, errors.Annotate(err, "failed to validate $bootstrap property").Err()
+	}
+
+	if casRecipeBundle.Digest == nil {
+		casRecipeBundle = nil
 	}
 
 	commit := proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit)
@@ -49,12 +58,14 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 
 	properties = proto.Clone(properties).(*structpb.Struct)
 	delete(properties.Fields, "$bootstrap")
+	delete(properties.Fields, "led_cas_recipe_bundle")
 
 	input := &Input{
 		commit:          commit,
 		changes:         changes,
 		buildProperties: properties,
 		properties:      bootstrapProperties,
+		casRecipeBundle: casRecipeBundle,
 	}
 	return input, nil
 }

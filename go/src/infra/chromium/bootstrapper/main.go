@@ -16,6 +16,7 @@ import (
 	"os/exec"
 
 	"infra/chromium/bootstrapper/bootstrap"
+	"infra/chromium/bootstrapper/cas"
 	"infra/chromium/bootstrapper/cipd"
 	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/bootstrapper/gitiles"
@@ -46,7 +47,7 @@ func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error
 	return build, nil
 }
 
-func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutputPath string) (*exec.Cmd, error) {
+func performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutputPath string) (*exec.Cmd, error) {
 	build, err := getBuild(ctx, input)
 	if err != nil {
 		return nil, err
@@ -71,12 +72,12 @@ func performBootstrap(ctx context.Context, input io.Reader, cipdRoot, buildOutpu
 		// Get the arguments for the command
 		group.Go(func() error {
 			logging.Infof(ctx, "creating CIPD client")
-			cipdClient, err := cipd.NewClient(ctx, cipdRoot)
+			cipdClient, err := cipd.NewClient(ctx, exeRoot)
 			if err != nil {
 				return err
 			}
 
-			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient)
+			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient, cas.NewClient(ctx, exeRoot))
 
 			logging.Infof(ctx, "determining bootstrapped executable")
 			exe, err := bootstrapper.GetBootstrappedExeInfo(ctx, bootstrapInput)
@@ -141,7 +142,7 @@ func execute(ctx context.Context) error {
 	outputPath := flag.String("output", "", "Path to write the final build.proto state to.")
 	flag.Parse()
 
-	cmd, err := performBootstrap(ctx, os.Stdin, "cipd", *outputPath)
+	cmd, err := performBootstrap(ctx, os.Stdin, "exe", *outputPath)
 	if err != nil {
 		return err
 	}
