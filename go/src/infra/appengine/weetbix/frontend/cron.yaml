@@ -2,3 +2,6 @@ cron:
 - description: "Read configs from LUCI-config"
   url: /internal/cron/read-config
   schedule: every 10 minutes
+- description: "Create and update bugs for high-impact clusters"
+  url: /internal/cron/update-bugs
+  schedule: every 60 minutes

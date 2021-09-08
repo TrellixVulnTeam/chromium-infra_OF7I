@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"go.chromium.org/luci/auth/identity"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/gae/service/datastore"
@@ -169,6 +170,25 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 	})
 }
 
+func (hc *handlers) updateBugs(ctx context.Context) error {
+	cfg, err := config.Get(ctx)
+	if err != nil {
+		return errors.Annotate(err, "get config").Err()
+	}
+	// TODO(crbug.com/1243174): Replace with (possibly project-specific) configuration.
+	reporter := "chops-weetbix-dev@appspot.gserviceaccount.com"
+	t := clustering.ImpactThresholds{
+		UnexpectedFailures1d: 1000,
+		UnexpectedFailures3d: 3000,
+		UnexpectedFailures7d: 7000,
+	}
+	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.CloudProject, reporter, t)
+	if err != nil {
+		return errors.Annotate(err, "update bugs").Err()
+	}
+	return nil
+}
+
 func main() {
 	modules := []module.Module{
 		cfgmodule.NewModuleFromFlags(),
@@ -186,6 +206,7 @@ func main() {
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
+		cron.RegisterHandler("update-bugs", handlers.updateBugs)
 		return nil
 	})
 }

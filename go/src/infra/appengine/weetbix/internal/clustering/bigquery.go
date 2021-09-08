@@ -26,8 +26,10 @@ type ImpactThresholds struct {
 
 // ImpactfulClusterReadOptions specifies options for ReadImpactfulClusters().
 type ImpactfulClusterReadOptions struct {
-	// The thresholds, which if any are met or exceeded, should result
-	// in the cluster being returned.
+	// Project is the LUCI Project for which analysis is being performed.
+	Project string
+	// Thresholds is the set of thresholds, which if any are met
+	// or exceeded, should result in the cluster being returned.
 	Thresholds ImpactThresholds
 	// AlwaysIncludeClusterIDs is the set of clusters for which analysis
 	// should always be read, if available. This is typically the set of
@@ -37,6 +39,7 @@ type ImpactfulClusterReadOptions struct {
 
 // Cluster represents a group of failures, with associated impact metrics.
 type Cluster struct {
+	Project                string
 	ClusterID              string
 	UnexpectedFailures1d   int
 	UnexpectedFailures3d   int
@@ -73,6 +76,10 @@ func (c *Client) Close() error {
 // ReadImpactfulClusters reads clusters exceeding specified impact metrics, or are otherwise
 // nominated to be read.
 func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulClusterReadOptions) ([]*Cluster, error) {
+	if opts.Project != "chromium" {
+		return nil, errors.New("chromium is the only project for which analysis is currently supported")
+	}
+
 	q := c.client.Query(`
 	SELECT cluster_id as ClusterID,
 		unexpected_failures_1d as UnexpectedFailures1d,
@@ -117,6 +124,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		if err != nil {
 			return nil, errors.Annotate(err, "obtain next cluster row").Err()
 		}
+		row.Project = opts.Project
 		clusters = append(clusters, row)
 	}
 	return clusters, nil
