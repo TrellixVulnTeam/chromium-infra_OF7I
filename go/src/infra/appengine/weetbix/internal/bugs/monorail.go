@@ -11,6 +11,8 @@ import (
 
 	mpb "infra/monorailv2/api/v3/api_proto"
 
+	"google.golang.org/protobuf/proto"
+
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
@@ -67,4 +69,47 @@ func (c *MonorailClient) GetIssue(ctx context.Context, name string) (*mpb.Issue,
 		return nil, errors.Annotate(err, "GetIssue %q", name).Err()
 	}
 	return resp, nil
+}
+
+// GetIssues gets the details of the specified monorail issues.
+// At most 100 issues can be queried at once. It is guaranteed
+// that the i_th issue in the result will match the i_th issue
+// requested. It is valid to request the same issue multiple
+// times in the same request.
+func (c *MonorailClient) GetIssues(ctx context.Context, names []string) ([]*mpb.Issue, error) {
+	var deduplicatedNames []string
+	requestedNames := make(map[string]bool)
+	for _, name := range names {
+		if !requestedNames[name] {
+			deduplicatedNames = append(deduplicatedNames, name)
+			requestedNames[name] = true
+		}
+	}
+	req := mpb.BatchGetIssuesRequest{Names: deduplicatedNames}
+	resp, err := c.client.BatchGetIssues(ctx, &req)
+	if err != nil {
+		return nil, errors.Annotate(err, "BatchGetIssues %v", deduplicatedNames).Err()
+	}
+	issuesByName := make(map[string]*mpb.Issue)
+	for _, issue := range resp.Issues {
+		issuesByName[issue.Name] = issue
+	}
+	var result []*mpb.Issue
+	for _, name := range names {
+		// Copy the proto to avoid an issue being aliased in
+		// the result if the same issue is requested multiple times.
+		// The caller should be able to assume each issue returned
+		// is a distinct object.
+		issue := &mpb.Issue{}
+		proto.Merge(issue, issuesByName[name])
+		result = append(result, issue)
+	}
+	return result, nil
+}
+
+// MakeIssue creates the given issue in monorail, adding the specified
+// description.
+func (c *MonorailClient) MakeIssue(ctx context.Context, req *mpb.MakeIssueRequest) (*mpb.Issue, error) {
+	issue, err := c.client.MakeIssue(ctx, req)
+	return issue, err
 }
