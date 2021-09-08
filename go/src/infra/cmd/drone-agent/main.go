@@ -60,12 +60,13 @@ func main() {
 
 func innerMain() error {
 	// TODO(ayatane): Add environment validation.
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	ctx = notifySIGTERM(ctx)
 	ctx = notifyDraining(ctx, filepath.Join(workingDirPath, drainingFile))
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
+	defer cancel()
 
 	authn := auth.NewAuthenticator(ctx, auth.SilentLogin, authOptions)
 
