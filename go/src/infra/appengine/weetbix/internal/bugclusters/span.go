@@ -23,6 +23,8 @@ type BugCluster struct {
 	// AssociatedClusterID is the identifier of the associated failure cluster,
 	// from which this bug cluster was created.
 	AssociatedClusterID string
+	// Whether the given bug is being actively monitored by Weetbix.
+	IsActive bool
 }
 
 // ReadActive reads all active Weetbix bug clusters.
@@ -44,6 +46,7 @@ func ReadActive(ctx context.Context) ([]*BugCluster, error) {
 			Project:             project,
 			Bug:                 bugName,
 			AssociatedClusterID: associatedClusterID,
+			IsActive:            true,
 		}
 		bcs = append(bcs, bc)
 		return nil
@@ -52,4 +55,24 @@ func ReadActive(ctx context.Context) ([]*BugCluster, error) {
 		return nil, errors.Annotate(err, "query active bug clusters").Err()
 	}
 	return bcs, nil
+}
+
+// Create inserts a new bug cluster with the specified details.
+func Create(ctx context.Context, bc *BugCluster) error {
+	switch {
+	case bc.Project == "":
+		return errors.New("project must be specified")
+	case bc.AssociatedClusterID == "":
+		return errors.New("associated cluster must be specified")
+	case bc.Bug == "":
+		return errors.New("bug must be specified")
+	}
+	ms := spanner.InsertMap("BugClusters", map[string]interface{}{
+		"Project":             bc.Project,
+		"Bug":                 bc.Bug,
+		"AssociatedClusterId": bc.AssociatedClusterID,
+		"IsActive":            bc.IsActive,
+	})
+	span.BufferWrite(ctx, ms)
+	return nil
 }

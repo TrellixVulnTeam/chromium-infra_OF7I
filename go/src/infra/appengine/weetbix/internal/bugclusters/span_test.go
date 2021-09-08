@@ -5,6 +5,8 @@
 package bugclusters
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"cloud.google.com/go/spanner"
@@ -13,58 +15,91 @@ import (
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestRead(t *testing.T) {
+	ctx := testutil.SpannerTestContext(t)
 	Convey(`Read`, t, func() {
-		ctx := testutil.SpannerTestContext(t)
-
-		testutil.MustApply(ctx,
-			spanner.Delete("BugClusters", spanner.AllKeys()))
-
 		Convey(`Empty`, func() {
+			setBugClusters(ctx, nil)
+
 			clusters, err := ReadActive(span.Single(ctx))
 			So(err, ShouldBeNil)
 			So(clusters, ShouldBeNil)
 		})
-
 		Convey(`Multiple`, func() {
-			// Insert some BugClusters.
-			testutil.MustApply(ctx,
-				spanner.InsertOrUpdateMap("BugClusters", map[string]interface{}{
-					"Project":             "project1",
-					"Bug":                 "monorail/project/1",
-					"AssociatedClusterId": "some-cluster-id1",
-					"IsActive":            true,
-				}),
-				spanner.InsertOrUpdateMap("BugClusters", map[string]interface{}{
-					"Project":             "project2",
-					"Bug":                 "monorail/project/2",
-					"AssociatedClusterId": "some-cluster-id2",
-					"IsActive":            false,
-				}),
-				spanner.InsertOrUpdateMap("BugClusters", map[string]interface{}{
-					"Project":             "project3",
-					"Bug":                 "monorail/project/3",
-					"AssociatedClusterId": "some-cluster-id3",
-					"IsActive":            true,
-				}),
-			)
+			clustersToCreate := []*BugCluster{
+				newBugCluster(0),
+				newBugCluster(1),
+				newBugCluster(2),
+			}
+			clustersToCreate[1].IsActive = false
+			setBugClusters(ctx, clustersToCreate)
 
 			clusters, err := ReadActive(span.Single(ctx))
 			So(err, ShouldBeNil)
 			So(clusters, ShouldResemble, []*BugCluster{
-				{
-					Project:             "project1",
-					Bug:                 "monorail/project/1",
-					AssociatedClusterID: "some-cluster-id1",
-				},
-				{
-					Project:             "project3",
-					Bug:                 "monorail/project/3",
-					AssociatedClusterID: "some-cluster-id3",
-				},
+				newBugCluster(0),
+				newBugCluster(2),
 			})
 		})
 	})
+	Convey(`Create`, t, func() {
+		testCreate := func(bc *BugCluster) error {
+			_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+				return Create(ctx, bc)
+			})
+			return err
+		}
+		Convey(`Valid`, func() {
+			bc := newBugCluster(103)
+			err := testCreate(bc)
+			So(err, ShouldBeNil)
+			// Create followed by read already tested as part of Read tests.
+		})
+		Convey(`With missing Project`, func() {
+			bc := newBugCluster(100)
+			bc.Project = ""
+			err := testCreate(bc)
+			So(err, ShouldErrLike, "project must be specified")
+		})
+		Convey(`With missing Bug`, func() {
+			bc := newBugCluster(101)
+			bc.Bug = ""
+			err := testCreate(bc)
+			So(err, ShouldErrLike, "bug must be specified")
+		})
+		Convey(`With missing Associated Cluster`, func() {
+			bc := newBugCluster(102)
+			bc.AssociatedClusterID = ""
+			err := testCreate(bc)
+			So(err, ShouldErrLike, "associated cluster must be specified")
+		})
+	})
+}
+
+func newBugCluster(uniqifier int) *BugCluster {
+	return &BugCluster{
+		Project:             fmt.Sprintf("project%v", uniqifier),
+		Bug:                 fmt.Sprintf("monorail/project/%v", uniqifier),
+		AssociatedClusterID: fmt.Sprintf("some-cluster-id%v", uniqifier),
+		IsActive:            true,
+	}
+}
+
+// setBugClusters replaces the set of stored bug clusters to match the given set.
+func setBugClusters(ctx context.Context, bcs []*BugCluster) {
+	testutil.MustApply(ctx,
+		spanner.Delete("BugClusters", spanner.AllKeys()))
+	// Insert some BugClusters.
+	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+		for _, bc := range bcs {
+			if err := Create(ctx, bc); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	So(err, ShouldBeNil)
 }
