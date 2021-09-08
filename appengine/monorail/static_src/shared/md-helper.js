@@ -27,7 +27,7 @@ const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
 export const shouldRenderMarkdown = ({
   project, author, enabled = true, availableProjects = AVAILABLE_MD_PROJECTS
 } = {}) => {
-  if (author in BLOCKLIST) {
+  if (BLOCKLIST.has(author)) {
     return false;
   } else if (!enabled) {
     return false;
