@@ -12,6 +12,7 @@ def poller():
         name = "build-gitiles-trigger",
         bucket = "ci",
         repo = "https://chromium.googlesource.com/chromium/tools/build",
+        refs = ["refs/heads/main"],
     )
 
 def recipe(name):

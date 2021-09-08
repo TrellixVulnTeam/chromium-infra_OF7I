@@ -50,6 +50,7 @@ recipes.simulation_tester(
         name = "recipe_engine-gitiles-trigger",
         bucket = "ci",
         repo = REPO_URL,
+        refs = ["refs/heads/main"],
     ),
     console_view = "recipes-py",
 )

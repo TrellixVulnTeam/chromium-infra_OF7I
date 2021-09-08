@@ -14,6 +14,7 @@ luci.gitiles_poller(
     name = "depot_tools-gitiles-trigger",
     bucket = "ci",
     repo = REPO_URL,
+    refs = ["refs/heads/main"],
 )
 
 infra.console_view(

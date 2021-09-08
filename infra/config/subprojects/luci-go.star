@@ -28,6 +28,7 @@ def ci_builder(name, os, tree_closing = False, properties = None):
                 name = "luci-go-gitiles-trigger",
                 bucket = "ci",
                 repo = REPO_URL,
+                refs = ["refs/heads/main"],
             ),
         ],
         notifies = infra.tree_closing_notifiers() if tree_closing else None,

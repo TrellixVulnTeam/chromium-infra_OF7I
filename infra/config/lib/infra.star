@@ -10,6 +10,7 @@ def poller():
         name = "infra-gitiles-trigger",
         bucket = "ci",
         repo = infra.REPO_URL,
+        refs = ["refs/heads/main"],
     )
 
 def recipe(name):
