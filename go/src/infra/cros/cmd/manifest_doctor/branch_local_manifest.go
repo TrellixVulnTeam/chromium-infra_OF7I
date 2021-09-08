@@ -215,6 +215,10 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 	}
 
 	if err := manifestutil.PinManifestFromManifest(localManifest, referenceManifest); err != nil {
+		if ferr, ok := err.(manifestutil.MissingProjectsError); ok {
+			return false, errors.Annotate(err, "%s: failed to pin local_manifest.xml from reference manifest (missing projects %s)",
+				logPrefix, ferr.MissingProjects).Err()
+		}
 		return false, errors.Annotate(err, "%s: failed to pin local_manifest.xml from reference manifest", logPrefix).Err()
 	}
 	hasChanges, err := manifestutil.UpdateManifestElementsInFile(localManifestPath, localManifest)
