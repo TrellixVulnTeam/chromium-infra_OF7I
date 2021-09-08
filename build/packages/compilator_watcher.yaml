@@ -1,0 +1,15 @@
+package: infra/chromium/compilator_watcher/${platform}
+description: The compilator_watcher displays steps from the compilator to the chromium orchestrator
+platforms:
+  - linux-amd64
+  - linux-arm64
+  - mac-amd64
+  - mac-arm64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - infra/chromium/compilator_watcher
+root: ../../go/bin
+data:
+  - file: compilator_watcher${exe_suffix}
+  - version_file: .versions/compilator_watcher${exe_suffix}.cipd_version
