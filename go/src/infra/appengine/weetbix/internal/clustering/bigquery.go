@@ -13,20 +13,25 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// ImpactThresholds captures impact thresholds at which an action should
+// be taken.
+type ImpactThresholds struct {
+	// The unexpected failure (1 day) threshold.
+	UnexpectedFailures1d int
+	// The unexpected failure (3 day) threshold.
+	UnexpectedFailures3d int
+	// The unexpected failure (7 day) threshold.
+	UnexpectedFailures7d int
+}
+
 // ImpactfulClusterReadOptions specifies options for ReadImpactfulClusters().
 type ImpactfulClusterReadOptions struct {
-	// The unexpected failure (1 day) threshold, which if met or exceeded,
-	// should result in the cluster being returned.
-	UnexpectedFailures1dThreshold int
-	// The unexpected failure (3 day) threshold, which if met or exceeded,
-	// should result in the cluster being read.
-	UnexpectedFailures3dThreshold int
-	// The unexpected failure (3 day) threshold, which if met or exceeded,
-	// should result in the cluster being read.
-	UnexpectedFailures7dThreshold int
-	// The set of clusters for which analysis should always be read.
-	// This is typically the set of clusters for which bugs have been
-	// filed.
+	// The thresholds, which if any are met or exceeded, should result
+	// in the cluster being returned.
+	Thresholds ImpactThresholds
+	// AlwaysIncludeClusterIDs is the set of clusters for which analysis
+	// should always be read, if available. This is typically the set of
+	// clusters for which bugs have been filed.
 	AlwaysIncludeClusterIDs []string
 }
 
@@ -89,9 +94,9 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 	// TODO(crbug.com/1243174): This will not scale if the set of
 	// cluster IDs to always select grows too large.
 	q.Parameters = []bigquery.QueryParameter{
-		{Name: "unexpFailThreshold1d", Value: opts.UnexpectedFailures1dThreshold},
-		{Name: "unexpFailThreshold3d", Value: opts.UnexpectedFailures3dThreshold},
-		{Name: "unexpFailThreshold7d", Value: opts.UnexpectedFailures7dThreshold},
+		{Name: "unexpFailThreshold1d", Value: opts.Thresholds.UnexpectedFailures1d},
+		{Name: "unexpFailThreshold3d", Value: opts.Thresholds.UnexpectedFailures3d},
+		{Name: "unexpFailThreshold7d", Value: opts.Thresholds.UnexpectedFailures7d},
 		{Name: "alwaysSelectClusters", Value: opts.AlwaysIncludeClusterIDs},
 	}
 	job, err := q.Run(ctx)

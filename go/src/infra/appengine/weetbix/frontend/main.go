@@ -149,9 +149,11 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 	}()
 
 	opts := clustering.ImpactfulClusterReadOptions{
-		UnexpectedFailures1dThreshold: 1000,
-		UnexpectedFailures3dThreshold: 3000,
-		UnexpectedFailures7dThreshold: 7000,
+		Thresholds: clustering.ImpactThresholds{
+			UnexpectedFailures1d: 1000,
+			UnexpectedFailures3d: 3000,
+			UnexpectedFailures7d: 7000,
+		},
 	}
 	clusters, err := cc.ReadImpactfulClusters(ctx.Context, opts)
 	if err != nil {
@@ -184,7 +186,6 @@ func main() {
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
-
 		return nil
 	})
 }
