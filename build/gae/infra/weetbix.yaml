@@ -1,0 +1,8 @@
+name: infra/weetbix
+extends: ../base.yaml
+
+inputsdir: ../../../go/src/infra/appengine/weetbix
+
+build:
+  - go_gae_bundle: ${inputsdir}/frontend/app.yaml
+    dest: ${contextdir}/frontend

@@ -28,7 +28,10 @@ configs.
 
 ## Deployment
 
-Weetbix uses `gae.py` for deployment.
+### Developer Testing {#test-deployment}
+
+Weetbix uses `gae.py` for deployment of the GAE instances for developer
+testing (e.g. of local changes).
 
 First, enter the infra env (via the infra.git checkout):
 ```
@@ -38,10 +41,15 @@ eval infra/go/env.py
 Then use the following commands to deploy:
 ```
 gae.py upload -A <appid>
-gae.py switch -A <appid>
 ```
 
-Currently, the appid is chops-weetbix-dev (for dev) or chops-weetbix (for prod).
+For testing, you can use the same Google Cloud instance as the dev instance,
+this is chops-weetbix-dev.
+
+### Dev and Prod Instances
+
+The dev and prod instances are managed via
+[LUCI GAE Automatic Deployment (Googlers-only)](http://go/luci/how_to_deploy.md).
 
 ## Run Spanner integration tests using Cloud Spanner Emulator
 
