@@ -14,6 +14,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -271,9 +272,21 @@ func (s *Server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 // getSSHAddr returns the SSH address to use for the DUT, through the wiring service.
 func (s *Server) getSSHAddr(ctx context.Context, name string) (string, error) {
 	c := s.wiringClient()
+
+	// Read a port if passed in from the name.
+	var port int32 = 22
+	if h, p, err := net.SplitHostPort(name); err == nil {
+		name = h
+		p64, err := strconv.ParseInt(p, 10, 32)
+		if err != nil {
+			return "", err
+		}
+		port = int32(p64)
+	}
+
 	resp, err := c.OpenDutPort(ctx, &tls.OpenDutPortRequest{
 		Name: name,
-		Port: 22,
+		Port: port,
 	})
 	if err != nil {
 		return "", err
