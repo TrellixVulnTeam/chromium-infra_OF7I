@@ -66,3 +66,11 @@ func uptime(ctx context.Context, resource string, args *execs.RunArgs) (*time.Du
 	dur, err := time.ParseDuration(fmt.Sprintf("%ss", parts[1]))
 	return &dur, errors.Annotate(err, "get uptime").Err()
 }
+
+// IsSSHable checks whether the resource is sshable
+func IsSSHable(ctx context.Context, args *execs.RunArgs, resourceName string) error {
+	if r := args.Access.Run(ctx, resourceName, "true"); r.ExitCode != 0 {
+		return errors.Reason("is sshable: code %d, %s", r.ExitCode, r.Stderr).Err()
+	}
+	return nil
+}
