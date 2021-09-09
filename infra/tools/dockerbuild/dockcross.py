@@ -401,11 +401,13 @@ SOURCES = {
         url='https://downloads.sourceforge.net/project/libpng/zlib/1.2.11/'
         'zlib-1.2.11.tar.gz',
     ),
+    # TODO(https://crbug.com/1247674): For compatibility, this version should
+    # not be updated until we have switched to bundling libffi in the cffi
+    # wheel.
     'libffi': source.remote_archive(
         name='libffi',
-        version='3.4.2',
-        url='https://github.com/libffi/libffi/releases/download/v3.4.2/'
-        'libffi-3.4.2.tar.gz',
+        version='3.2.1',
+        url='https://github.com/libffi/libffi/archive/refs/tags/v3.2.1.tar.gz',
     ),
     'mysql': source.remote_archive(
         name='mysql',

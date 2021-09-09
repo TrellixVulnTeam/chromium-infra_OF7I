@@ -9,8 +9,9 @@
 # which is generically useful for most libraries.
 #
 # This script consumes:
-# - ARCHIVE_PATH is the path to the Perl archive file.
+# - ARCHIVE_PATH is the path to the archive file to install.
 # - NO_HOST, if set, omits the "--host" argument from the configure script.
+# - PATCHES, if set, a comma-separated list of paths to patches to be applied.
 
 # Load our installation utility functions.
 . /install-util.sh
@@ -26,6 +27,11 @@ ROOT=${PWD}
 ARCHIVE_PATH=$(basename ${ARCHIVE_PATH})
 tar -xzf ${ARCHIVE_PATH}
 cd $(get_archive_dir ${ARCHIVE_PATH})
+
+patch_files=($(echo $PATCHES | tr ',' '\n'))
+for p in "${patch_files[@]}"; do
+  patch -p1 < $p
+done
 
 CONFIG_ARGS="--prefix=${CROSS_PREFIX}"
 

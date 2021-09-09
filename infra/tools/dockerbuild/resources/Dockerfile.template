@@ -82,7 +82,9 @@ COPY ${zlib_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${zlib_relpath}) NO_HOST=1 ./install-02-cross-lib.sh
 
 COPY ${libffi_relpath} ./
-RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) ./install-02-cross-lib.sh
+COPY ${resources_relpath}/libffi-3.2.1-mips.patch ./
+RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) \
+  PATCHES=$(realpath libffi-3.2.1-mips.patch) ./install-02-cross-lib.sh
 
 COPY ${resources_relpath}/install-02-ncurses.sh ${ncurses_relpath} ./
 RUN ARCHIVE_PATH=$$(basename ${ncurses_relpath}) ./install-02-ncurses.sh
