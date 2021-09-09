@@ -280,6 +280,7 @@ var cycleTestCases = []struct {
 }
 
 func TestVerifyPlanAcyclic(t *testing.T) {
+	t.Parallel()
 	for _, tt := range cycleTestCases {
 		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
