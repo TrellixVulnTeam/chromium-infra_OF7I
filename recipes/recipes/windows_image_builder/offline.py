@@ -17,6 +17,7 @@ DEPS = [
     'recipe_engine/platform',
     'recipe_engine/properties',
     'recipe_engine/step',
+    'recipe_engine/buildbucket',
     'windows_adk',
     'windows_scripts_executor',
 ]
@@ -46,6 +47,22 @@ def RunSteps(api, inputs):
       # recipe is expected to run on windows ('\')
       cfg_path = builder_named_cache.join('infra-data-config',
                                           *inputs.config_path.split('/'))
+
+      if api.path.isdir(cfg_path):  # pragma: nocover
+        # Recursively call the offline.py recipe with all configs
+        cfgs = api.file.listdir("Read all the configs", cfg_path)
+        reqs = []
+        for cfg in cfgs:
+          p = api.path.relpath(cfg,
+                               builder_named_cache.join('infra-data-config'))
+          reqs.append(
+              api.buildbucket.schedule_request(
+                  builder=api.buildbucket.build.builder.builder,
+                  properties={'config_path': p},
+              ))
+        api.buildbucket.schedule(reqs)
+        return
+
       config = api.file.read_proto(
           name='Reading ' + inputs.config_path,
           source=cfg_path,
