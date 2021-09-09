@@ -48,3 +48,7 @@ run:
 .PHONY: deploy
 deploy:
 	gae.py upload --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
+
+.PHONY: switch
+switch:
+	gae.py switch --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
