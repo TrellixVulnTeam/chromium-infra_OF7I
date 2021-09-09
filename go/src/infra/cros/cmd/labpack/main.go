@@ -33,9 +33,9 @@ import (
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
+	log.Printf("Running in build-bucket mode")
 
 	input := &steps.LabpackInput{}
-	log.Printf("Running in build-bucket mode")
 	var writeOutputProps func(*steps.LabpackResponse)
 	var mergeOutputProps func(*steps.LabpackResponse)
 	build.Main(input, &writeOutputProps, &mergeOutputProps,
@@ -43,14 +43,15 @@ func main() {
 			// TODO(otabek@): Add custom logger.
 			lg := logger.NewLogger()
 			log.Printf("Input args: %v", input)
+			res := &steps.LabpackResponse{Success: true}
 			err := internalRun(ctx, input, state, lg)
-			writeOutputProps(&steps.LabpackResponse{
-				Success: err == nil,
-			})
 			if err != nil {
+				res.Success = false
+				res.FailReason = err.Error()
 				lg.Debug("Finished with err: %s", err)
 			}
-			// if err is nil then will mark the Build as SUCCESS
+			writeOutputProps(res)
+			// if err is nil then will marked as SUCCESS
 			return err
 		},
 	)
