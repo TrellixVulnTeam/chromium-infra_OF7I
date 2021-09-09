@@ -5,7 +5,7 @@
 import datetime
 import google.cloud.logging
 
-from flask import Flask, make_response, render_template
+from flask import Flask, make_response, render_template, request
 from google.cloud import ndb
 from werkzeug.routing import BaseConverter
 
@@ -52,9 +52,11 @@ with client.context():
   app.secret_key = FlaskApp.query().get().secret_key
 
 
-@app.route('/')
+@app.route('/', methods=['POST', 'GET'])
 def main_page():
-  return MainPage().get()
+  if request.method == 'GET':
+    return MainPage().get()
+  return MainPage().post()
 
 
 @app.route('/code')
@@ -67,25 +69,32 @@ def all_status():
   return AllStatusPage().get()
 
 
-@app.route('/current')
+@app.route('/current', methods=['POST', 'GET'])
 def current():
-  return status.CurrentPage().get()
+  if request.method == 'GET':
+    return status.CurrentPage().get()
+  return status.CurrentPage().post()
 
 
-@app.route('/revisions')
-@app.route('/commits')
+@app.route('/revisions', methods=['POST', 'GET'])
+@app.route('/commits', methods=['POST', 'GET'])
 def commits():
-  return git_lkgr.Commits().get()
+  if request.method == 'GET':
+    return git_lkgr.Commits().get()
+  git_lkgr.Commits().post()
 
 
 @app.route('/lkgr')
+@app.route('/git-lkgr')
 def lkgr():
   return git_lkgr.LastKnownGoodRevisionGIT().get()
 
 
-@app.route('/status')
+@app.route('/status', methods=['POST', 'GET'])
 def status_page():
-  return status.StatusPage().get()
+  if request.method == 'GET':
+    return status.StatusPage().get()
+  return status.StatusPage().post()
 
 
 @app.route('/status_viewer')

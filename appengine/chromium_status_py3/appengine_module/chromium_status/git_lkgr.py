@@ -32,11 +32,11 @@ class Commits(BasePage):
   @utils.requires_read_access
   def get(self):
     """Returns information about the history of LKGR."""
-    limit = min(int(request.args.get('limit', '100')), 1000)
+    limit = min(int(request.values.get('limit', '100')), 1000)
     commits = Commit.query().order('-position_num').order('position_ref').fetch(
         limit)
 
-    if request.args.get('format') == 'json':
+    if request.values.get('format') == 'json':
       data = json.dumps([commit.AsDict() for commit in commits])
       r = make_response(data)
       r.headers['Content-Type'] = 'application/json'
@@ -51,9 +51,9 @@ class Commits(BasePage):
   @utils.requires_write_access
   def post(self):
     """Adds a new revision status."""
-    git_hash = request.args.get('hash')
-    position_ref = request.args.get('position_ref')
-    position_num = int(request.args.get('position_num'))
+    git_hash = request.values.get('hash')
+    position_ref = request.values.get('position_ref')
+    position_num = int(request.values.get('position_num'))
     if git_hash and position_ref and position_num:
       obj = Commit(
           git_hash=git_hash,

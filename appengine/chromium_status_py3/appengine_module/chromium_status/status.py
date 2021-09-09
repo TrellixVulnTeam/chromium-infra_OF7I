@@ -347,7 +347,7 @@ class CurrentPage(BasePage):
 
   def get(self):
     # Show login link on current status bar when login is required.
-    out_format = request.args.get('format', 'html')
+    out_format = request.values.get('format', 'html')
     if out_format == 'html' and not self.read_access and not self.user:
       template_values = self.InitializeTemplate(self.APP_NAME + ' Tree Status')
       template_values['show_login'] = True
@@ -367,7 +367,7 @@ class CurrentPage(BasePage):
   @utils.requires_read_access
   def _handle(self):
     """Displays the current message in various formats."""
-    out_format = request.args.get('format', 'html')
+    out_format = request.values.get('format', 'html')
     status = get_status()
     if out_format == 'raw':
       r = make_response(status.message)
@@ -378,13 +378,13 @@ class CurrentPage(BasePage):
       r = make_response()
       r.headers['Content-Type'] = 'application/json'
       origin = request.headers.get('Origin')
-      if request.args.get('with_credentials') and origin in ALLOWED_ORIGINS:
+      if request.values.get('with_credentials') and origin in ALLOWED_ORIGINS:
         r.headers['Access-Control-Allow-Origin'] = origin
         r.headers['Access-Control-Allow-Credentials'] = 'true'
       else:
         r.headers['Access-Control-Allow-Origin'] = '*'
       data = json.dumps(status.AsDict())
-      callback = request.args.get('callback')
+      callback = request.values.get('callback')
       if callback:
         if re.match(r'^[a-zA-Z$_][a-zA-Z$0-9._]*$', callback):
           data = '%s(%s);' % (callback, data)
@@ -423,9 +423,9 @@ class StatusPage(BasePage):
     conflicts and doesn't redirect to /.
     """
     # TODO(tandrii): switch to using service accounts.
-    message = request.args.get('message')
+    message = request.values.get('message')
     message = limit_length(message, 500)
-    username = request.args.get('username')
+    username = request.values.get('username')
     if message and username:
       put_status(Status(message=message, username=username))
     return make_response('OK')
@@ -453,7 +453,7 @@ class MainPage(BasePage):
 
   def _handle(self, error_message='', last_message=''):
     """Sets the information to be displayed on the main page."""
-    limit = int(request.args.get('limit', '25'))
+    limit = int(request.values.get('limit', '25'))
     limit = min(max(limit, 1), 1000)
     status = get_last_statuses(limit)
     current_status = get_status()
@@ -479,9 +479,9 @@ class MainPage(BasePage):
     error_message = ''
 
     # Get the posted information.
-    new_message = request.args.get('message')
+    new_message = request.values.get('message')
     new_message = limit_length(new_message, 500)
-    last_status_key = request.args.get('last_status_key')
+    last_status_key = request.values.get('last_status_key')
     if not new_message:
       # A submission contained no data. It's a better experience to redirect
       # in this case.
