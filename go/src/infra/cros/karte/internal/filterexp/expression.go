@@ -12,6 +12,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Comparisons are the valid comparisons.
@@ -162,7 +164,7 @@ func NewApplication(head string, tail ...Expression) Expression {
 func processConjunct(hopper []*exprpb.Expr, e *exprpb.Expr_Call) ([]*exprpb.Expr, error) {
 	for _, item := range e.Args {
 		if _, ok := item.ExprKind.(*exprpb.Expr_CallExpr); !ok {
-			return nil, errors.New("process conjunct: not a call expression")
+			return nil, status.Errorf(codes.Internal, "process conjunct: not a call expression")
 		}
 		hopper = append(hopper, item)
 	}

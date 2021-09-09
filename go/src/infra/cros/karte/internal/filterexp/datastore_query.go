@@ -9,6 +9,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ApplyConditions takes a datastore query and a list of conditions to impose
@@ -64,33 +66,33 @@ type comparisonParseResult struct {
 // a comparison, and extracts information from the expression AST.
 func validateComparison(e Expression) (*comparisonParseResult, error) {
 	if e == nil {
-		return nil, errors.New("validate comparison: expression is nil")
+		return nil, status.Errorf(codes.Internal, "validate comparison: expression is nil")
 	}
 
 	appl, ok := e.(*Application)
 	if !ok {
-		return nil, errors.New("validate comparison: expression is not application")
+		return nil, status.Errorf(codes.Internal, "validate comparison: expression is not application")
 	}
 
 	if len(appl.Tail) > 2 {
-		return nil, fmt.Errorf("validate comparison: arity %d is too small", len(appl.Tail))
+		return nil, status.Errorf(codes.Internal, "validate comparison: arity %d is too small", len(appl.Tail))
 	}
 
 	fieldExpr, ok := appl.Tail[0].(*Identifier)
 	if !ok {
-		return nil, errors.New("validate comparison: field is not identifier")
+		return nil, status.Errorf(codes.Internal, "validate comparison: field is not identifier")
 	}
 	field := fieldExpr.Value
 
 	valueExpr, ok := appl.Tail[1].(*Constant)
 	if !ok {
-		return nil, errors.New("validate comparison: value is not constant")
+		return nil, status.Errorf(codes.Internal, "validate comparison: value is not constant")
 	}
 	value := valueExpr.Value
 
 	v, ok := value.(string)
 	if !ok {
-		return nil, errors.New("validate comparison: constant type not yet implemented")
+		return nil, status.Errorf(codes.Internal, "validate comparison: constant type not yet implemented")
 	}
 
 	return &comparisonParseResult{

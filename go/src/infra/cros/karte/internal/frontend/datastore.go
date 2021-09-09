@@ -11,6 +11,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
 	"infra/cros/karte/internal/filterexp"
@@ -104,7 +106,7 @@ func (e *ObservationEntity) cmp(o *ObservationEntity) int {
 // It enforces the constraint that only one of ValueString or ValueNumber can have a non-zero value.
 func (e *ObservationEntity) Validate() error {
 	if e.ValueString == "" && e.ValueNumber == 0.0 {
-		return errors.New("datastore.go Validate: observation entity can have at most one value")
+		return status.Errorf(codes.Internal, "datastore.go Validate: observation entity can have at most one value")
 	}
 	return nil
 }
@@ -274,7 +276,7 @@ func newObservationEntitiesQuery(token string, filter string) (*ObservationEntit
 // ConvertActionToActionEntity takes an action and converts it to an action entity.
 func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
 	if action == nil {
-		return nil, errors.New("convert action to action entity: action is nil")
+		return nil, status.Errorf(codes.Internal, "convert action to action entity: action is nil")
 	}
 	return &ActionEntity{
 		ID:             action.GetName(),
@@ -296,7 +298,7 @@ func PutActionEntities(ctx context.Context, entities ...*ActionEntity) error {
 // ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
 func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
 	if observation == nil {
-		return nil, errors.New("convert observation to observation entity: action is nil")
+		return nil, status.Errorf(codes.Internal, "convert observation to observation entity: action is nil")
 	}
 	return &ObservationEntity{
 		ID:          observation.GetName(),

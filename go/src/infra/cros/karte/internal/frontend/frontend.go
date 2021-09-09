@@ -10,6 +10,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
 )
@@ -26,10 +28,10 @@ func NewKarteFrontend() kartepb.KarteServer {
 // CreateAction creates an action, stores it in datastore, and then returns the just-created action.
 func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateActionRequest) (*kartepb.Action, error) {
 	if req == nil {
-		return nil, errors.New("create action: request is nil")
+		return nil, status.Errorf(codes.InvalidArgument, "create action: request is nil")
 	}
 	if req.GetAction() == nil {
-		return nil, errors.New("create action: action is nil")
+		return nil, status.Errorf(codes.InvalidArgument, "create action: action is nil")
 	}
 	logging.Infof(ctx, "Creating action of kind %q", req.GetAction().GetKind())
 	actionEntity, err := ConvertActionToActionEntity(req.GetAction())
@@ -47,10 +49,10 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 // CreateObservation creates an observation and then returns the just-created observation.
 func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.CreateObservationRequest) (*kartepb.Observation, error) {
 	if req == nil {
-		return nil, errors.New("create observation: request is nil")
+		return nil, status.Errorf(codes.InvalidArgument, "create observation: request is nil")
 	}
 	if req.GetObservation() == nil {
-		return nil, errors.New("create observation: observation is nil")
+		return nil, status.Errorf(codes.InvalidArgument, "create observation: observation is nil")
 	}
 	observationEntity, err := ConvertObservationToObservationEntity(req.GetObservation())
 	if err != nil {
