@@ -17,10 +17,10 @@ import (
 
 // Option is a configuration option. For example `UserAgent(...)` would be
 // an option.
-type Option func(*config)
+type Option func(*Config)
 
 // Config stores options needed for the Karte service.
-type config struct {
+type Config struct {
 	karteService string
 	authOption   auth.Options
 	loginMode    auth.LoginMode
@@ -32,8 +32,8 @@ type config struct {
 //
 // The auth options are required and must be passed in explicitly. The hostname and
 // type of login are set to reasonable defaults for a local command line tool.
-func LocalConfig(o auth.Options) *config {
-	return &config{
+func LocalConfig(o auth.Options) *Config {
+	return &Config{
 		karteService: "127.0.0.1:8800",
 		loginMode:    auth.InteractiveLogin,
 		authOption:   o,
@@ -46,8 +46,8 @@ func LocalConfig(o auth.Options) *config {
 //
 // The auth options are required and must be passed in explicitly. The hostname and
 // type of login are set to reasonable defaults for a local command line tool.
-func DevConfig(o auth.Options) *config {
-	return &config{
+func DevConfig(o auth.Options) *Config {
+	return &Config{
 		karteService: site.DevKarteServer,
 		loginMode:    auth.InteractiveLogin,
 		authOption:   o,
@@ -57,12 +57,12 @@ func DevConfig(o auth.Options) *config {
 
 // EmptyConfig is a config with no content. It is expected to fail to construct a client if used as the
 // base config without the appropriate options being set.
-func EmptyConfig() *config {
-	return &config{}
+func EmptyConfig() *Config {
+	return &Config{}
 }
 
 // NewClient creates a new client for the Karte service.
-func NewClient(ctx context.Context, c *config, o ...Option) (kartepb.KarteClient, error) {
+func NewClient(ctx context.Context, c *Config, o ...Option) (kartepb.KarteClient, error) {
 	if c == nil {
 		return nil, errors.New("karte client: cannot create new client from empty base config")
 	}
