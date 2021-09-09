@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 
 	kartepb "infra/cros/karte/api"
@@ -30,11 +31,14 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 	if req.GetAction() == nil {
 		return nil, errors.New("create action: action is nil")
 	}
+	logging.Infof(ctx, "Creating action of kind %q", req.GetAction().GetKind())
 	actionEntity, err := ConvertActionToActionEntity(req.GetAction())
 	if err != nil {
+		logging.Errorf(ctx, "error converting action: %s", err)
 		return nil, errors.Annotate(err, "create action").Err()
 	}
 	if err := PutActionEntities(ctx, actionEntity); err != nil {
+		logging.Errorf(ctx, "error writing action: %s", err)
 		return nil, errors.Annotate(err, "writing action to datastore").Err()
 	}
 	return req.GetAction(), nil
