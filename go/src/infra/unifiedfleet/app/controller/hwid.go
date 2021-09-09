@@ -36,7 +36,7 @@ func InitHWIDClient(ctx context.Context) (*HWIDClient, error) {
 	}, nil
 }
 
-func (c *HWIDClient) QueryHWID(ctx context.Context, hwid string) (*map[string]string, error) {
+func (c *HWIDClient) QueryHWID(ctx context.Context, hwid string) (*ufspb.DutLabel, error) {
 	u := &url.URL{
 		Scheme: "https",
 		Host:   hwidEndpoint,
@@ -46,12 +46,12 @@ func (c *HWIDClient) QueryHWID(ctx context.Context, hwid string) (*map[string]st
 	if err != nil {
 		return nil, err
 	}
-	dutLabel := &ufspb.GetDutLabelResponse{}
-	if err := util.ExecuteRequest(ctx, c.hc, req, dutLabel); err != nil {
+	resp := &ufspb.GetDutLabelResponse{}
+	if err := util.ExecuteRequest(ctx, c.hc, req, resp); err != nil {
 		return nil, err
 	}
 
-	return parseGetDutLabelResponse(dutLabel), nil
+	return resp.GetDutLabel(), nil
 }
 
 func parseGetDutLabelResponse(resp *ufspb.GetDutLabelResponse) *map[string]string {
