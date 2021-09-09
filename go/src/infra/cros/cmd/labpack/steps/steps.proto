@@ -30,5 +30,7 @@ message LabpackInput {
 
 // LabpackResponse represents result of execution the task on unit.
 message LabpackResponse {
-  bool Success = 1;
+  bool success = 1;
+  // Tells what was the reason of failure.
+  string fail_reason = 2;
 }
