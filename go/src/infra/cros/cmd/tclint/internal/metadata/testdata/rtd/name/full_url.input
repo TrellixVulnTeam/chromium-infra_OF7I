@@ -1,7 +1,0 @@
-{
-    "remoteTestDrivers": [
-        {
-            "name": "https://user@host.org/remoteTestDriver/tauto"
-        }
-    ]
-}

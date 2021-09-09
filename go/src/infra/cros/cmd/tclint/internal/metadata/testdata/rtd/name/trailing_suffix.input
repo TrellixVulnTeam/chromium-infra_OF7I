@@ -1,7 +1,0 @@
-{
-    "remoteTestDrivers": [
-        {
-            "name": "remoteTestDrivers/foo/baz/brr"
-        }
-    ]
-}
