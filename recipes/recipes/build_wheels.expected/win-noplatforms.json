@@ -167,7 +167,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: ValueError('Must specify either 32-bit or 64-bit windows platforms.',)"
+      "humanReason": "Uncaught Exception: ValueError('Must specify either 32-bit or 64-bit windows platforms.')"
     },
     "name": "$result"
   }
