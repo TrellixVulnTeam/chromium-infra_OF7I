@@ -123,8 +123,10 @@ CREATE TABLE BugClusters (
   -- The associated failure cluster. In future, the intent is to replace
   -- this in favour of a failure association rule.
   AssociatedClusterId STRING(MAX) NOT NULL,
-  -- Whether the bug must still be updated by Weetbix. Only if the bug has
-  -- been closed and no failures have been observed for a while will this
-  -- be false.
-  IsActive BOOL NOT NULL,
+  -- Whether the bug must still be updated by Weetbix. The only allowed
+  -- values are true or NULL (to indicate false). Only if the bug has
+  -- been closed and no failures have been observed for a while should
+  -- this be NULL. This makes it easy to retrofit a NULL_FILTERED index
+  -- in future, if it is needed for performance.
+  IsActive BOOL,
 ) PRIMARY KEY (Project, Bug);

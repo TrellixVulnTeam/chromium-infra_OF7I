@@ -71,7 +71,8 @@ func Create(ctx context.Context, bc *BugCluster) error {
 		"Project":             bc.Project,
 		"Bug":                 bc.Bug,
 		"AssociatedClusterId": bc.AssociatedClusterID,
-		"IsActive":            bc.IsActive,
+		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
+		"IsActive": spanner.NullBool{Bool: bc.IsActive, Valid: bc.IsActive},
 	})
 	span.BufferWrite(ctx, ms)
 	return nil
