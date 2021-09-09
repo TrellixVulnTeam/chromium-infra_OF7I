@@ -152,13 +152,18 @@ const defaultConfig = `
 			"critical_actions": [
 				"cros_ssh",
 				"servo_host_servod_restart",
-				"servod_echo"
+				"servod_echo",
+				"servo_detect_usbkey"
 			],
 			"actions": {
 				"servo_host_servod_restart":{
 					"exec_timeout": {
 						"seconds": 120
 					}
+				},
+				"servo_detect_usbkey": {
+					"docs": ["Will detect the path to USB Drive on servo-host."],
+					"allow_fail_after_recovery": true
 				}
 			},
 			"allow_fail": true
