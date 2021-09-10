@@ -152,6 +152,9 @@ def builder(
         notifies = notifies,
         resultdb_settings = resultdb.settings(
             enable = True,
+            history_options = resultdb.history_options(
+                by_timestamp = True,
+            ),
         ),
     )
 
