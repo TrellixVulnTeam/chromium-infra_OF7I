@@ -32,13 +32,13 @@ func convertTimeToTimestampPtr(t time.Time) *timestamppb.Timestamp {
 }
 
 // ConvertActionStatusToInt32 takes an action status and converts it to an int32.
+// If this function is passed an invalid kartepb.Action_status, the results are undefined.
 func convertActionStatusToInt32(status kartepb.Action_Status) int32 {
-	// TODO(gregorynisbet): Add validation.
 	return int32(status)
 }
 
 // ConvertActionStatusToInt32 takes an int32 and converts it to an action status.
+// If this function is passed a integer that is out of range, the results are undefined.
 func convertInt32ToActionStatus(i int32) kartepb.Action_Status {
-	// TODO(gregorynisbet): Add validation.
 	return kartepb.Action_Status(i)
 }
