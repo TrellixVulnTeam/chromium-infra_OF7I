@@ -200,7 +200,9 @@ SPECS.update({
             '1.14.5',
             packaged=(),
             pyversions=['py2', 'py3'],
-            patch_version='chromium.3',  # Rebuild for crbug/1210346 and 1233745
+            # patch_version is incremented to force a rebuild when fixes are
+            # made to the build environment.
+            patch_version='chromium.4',
         ),
         SourceOrPrebuilt(
             'coverage',
