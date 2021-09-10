@@ -19,6 +19,9 @@ import (
 	"infra/cros/karte/internal/site"
 )
 
+// DefaultPageSize is the number of actions to request in each batch.
+const defaultPageSize = 100
+
 // ListActions command lists all actions in Karte.
 var ListActions = &subcommands.Command{
 	UsageLine: `list-actions`,
@@ -54,8 +57,7 @@ func (c *listActionsRun) innerRun(ctx context.Context, a subcommands.Application
 	}
 	kClient, err := client.NewClient(ctx, client.DevConfig(authOptions))
 	res, err := kClient.ListActions(ctx, &kartepb.ListActionsRequest{
-		// TODO(gregorynisbet): Pick a better page size.
-		PageSize: 10,
+		PageSize: defaultPageSize,
 	})
 	if err != nil {
 		return errors.Annotate(err, "inner run").Err()
