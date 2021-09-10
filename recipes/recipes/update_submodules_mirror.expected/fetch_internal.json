@@ -28,9 +28,19 @@
     "infra_step": true,
     "name": "Check for existing source checkout dir",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@glob@[CACHE]/codesearch_update_submodules_mirror/src@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
+  },
+  {
+    "cmd": [
+      "git",
+      "clone",
+      "https://chromium.googlesource.com/chromium/src",
+      "[CACHE]/codesearch_update_submodules_mirror/src/"
+    ],
+    "cwd": "[CACHE]/codesearch_update_submodules_mirror",
+    "infra_step": true,
+    "name": "git clone"
   },
   {
     "cmd": [
@@ -69,7 +79,7 @@
       "all",
       "--ignore-dep-type=cipd",
       "--spec",
-      "solutions=[{'url': 'https://chromium.googlesource.com/chromium/src', 'managed': False, 'name': 'src/', 'deps_file': 'DEPS'}]",
+      "solutions=[{'url': 'https://chromium.googlesource.com/chromium/src', 'managed': False, 'name': 'src/', 'deps_file': 'DEPS', 'custom_vars': {'checkout_src_internal': True}}]",
       "--output-json=-"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror",
@@ -92,8 +102,6 @@
       "--cacheinfo",
       "160000,4ad2459561d76217c9b7aff412c5c086b491078a,v8",
       "--cacheinfo",
-      "160000,0000000000000000000000000000000000000000,some_tooling_repo",
-      "--cacheinfo",
       "160000,13a00f110ef910a25763346d6538b60f12845656,buildtools"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror/src/",
@@ -111,7 +119,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"some_tooling_repo\"]\n\tpath = some_tooling_repo\n\turl = https://chrome-internal.googlesource.com/some_tooling_repo.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
+      "[submodule \"v8\"]\n\tpath = v8\n\turl = https://chromium.googlesource.com/v8/v8.git\n[submodule \"buildtools\"]\n\tpath = buildtools\n\turl = https://chromium.googlesource.com/chromium/buildtools.git",
       "[CACHE]/codesearch_update_submodules_mirror/src/.gitmodules"
     ],
     "infra_step": true,
@@ -121,9 +129,6 @@
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"v8\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = v8@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/v8/v8.git@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@[submodule \"some_tooling_repo\"]@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@\tpath = some_tooling_repo@@@",
-      "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chrome-internal.googlesource.com/some_tooling_repo.git@@@",
       "@@@STEP_LOG_LINE@.gitmodules@[submodule \"buildtools\"]@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\tpath = buildtools@@@",
       "@@@STEP_LOG_LINE@.gitmodules@\turl = https://chromium.googlesource.com/chromium/buildtools.git@@@",

@@ -42,6 +42,8 @@ PROPERTIES = {
             'mirror repo. Prefix is stripped from DEPS path. Example: '
             'if DEPS contains foo/bar=baz.git and overlay is foo, then the '
             'mirror repo will have submodule baz.git in path bar.'),
+    'internal':
+        Property(default="", help="If should fetch internal source"),
 }
 
 COMMIT_USERNAME = 'Submodules bot'
@@ -51,7 +53,8 @@ COMMIT_EMAIL_ADDRESS = \
 SHA1_RE = re.compile(r'[0-9a-fA-F]{40}')
 
 
-def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
+def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays,
+             internal):
   _, source_project = api.gitiles.parse_repo_url(source_repo)
 
   # NOTE: This name must match the definition in cr-buildbucket.cfg. Do not
@@ -102,18 +105,22 @@ def RunSteps(api, source_repo, target_repo, extra_submodules, refs, overlays):
     with api.step.nest('Process ' + ref):
       api.git('checkout', RefToRemoteRef(ref))
 
-      gclient_spec = ("solutions=[{"
-                      "'managed':False,"
-                      "'name':'%s',"
-                      "'url':'%s',"
-                      "'deps_file':'DEPS'}]"
-                      % (source_checkout_name, source_repo))
+      gclient_spec = [{
+          'managed': False,
+          'name': source_checkout_name,
+          'url': source_repo,
+          'deps_file': 'DEPS'
+      }]
+      if internal:
+        gclient_spec[0]['custom_vars'] = {'checkout_src_internal': True}
+      gclient_spec_repr = ("solutions=" + repr(gclient_spec))
       with api.context(cwd=checkout_dir):
         deps = json.loads(
             api.gclient(
-                'evaluate DEPS',
-                ['revinfo', '--deps', 'all', '--ignore-dep-type=cipd',
-                 '--spec', gclient_spec, '--output-json=-'],
+                'evaluate DEPS', [
+                    'revinfo', '--deps', 'all', '--ignore-dep-type=cipd',
+                    '--spec', gclient_spec_repr, '--output-json=-'
+                ],
                 stdout=api.raw_io.output_text()).stdout)
 
       for item in extra_submodules:
@@ -390,5 +397,16 @@ def GenTests(api):
           overlays=['tooling']) +
       api.step_data('Check for existing source checkout dir',
                     api.raw_io.stream_output('src', stream='stdout')) +
+      api.step_data('Process refs/heads/main.gclient evaluate DEPS',
+                    api.raw_io.stream_output(fake_src_deps, stream='stdout')))
+
+  yield (
+      api.test('fetch_internal') + api.properties(
+          source_repo='https://chromium.googlesource.com/chromium/src',
+          target_repo='https://chromium.googlesource.com/codesearch/src_mirror',
+          internal="true") + api.step_data(
+              'Check for existing source checkout dir',
+              # Checkout doesn't exist.
+              api.raw_io.stream_output('', stream='stdout')) +
       api.step_data('Process refs/heads/main.gclient evaluate DEPS',
                     api.raw_io.stream_output(fake_src_deps, stream='stdout')))
