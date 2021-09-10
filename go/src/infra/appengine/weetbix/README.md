@@ -7,7 +7,19 @@ This app follows the structure described in [Template for GAE Standard app].
 
 ## Local Development
 
-To run the server locally, use:
+To run the server locally, first authorize as the correct GCP project (you should only need to do this once):
+```
+gcloud config set project chops-weetbix-dev
+gcloud auth application-default login
+```
+
+Once the GCP project is authorized, in one terminal start webpack to rebuild the UI code after any changes:
+```
+cd frontend/ui
+npx webpack watch
+```
+
+To run the server, in another terminal use:
 ```
 cd frontend
 go run main.go \

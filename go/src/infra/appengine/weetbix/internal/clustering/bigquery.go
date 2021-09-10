@@ -39,18 +39,18 @@ type ImpactfulClusterReadOptions struct {
 
 // Cluster represents a group of failures, with associated impact metrics.
 type Cluster struct {
-	Project                string
-	ClusterID              string
-	UnexpectedFailures1d   int
-	UnexpectedFailures3d   int
-	UnexpectedFailures7d   int
-	UnexoneratedFailures1d int
-	UnexoneratedFailures3d int
-	UnexoneratedFailures7d int
-	AffectedRuns1d         int
-	AffectedRuns3d         int
-	AffectedRuns7d         int
-	ExampleFailureReason   bigquery.NullString
+	Project                string              `json:"project"`
+	ClusterID              string              `json:"clusterId"`
+	UnexpectedFailures1d   int                 `json:"unexpectedFailures1d"`
+	UnexpectedFailures3d   int                 `json:"unexpectedFailures3d"`
+	UnexpectedFailures7d   int                 `json:"unexpectedFailures7d"`
+	UnexoneratedFailures1d int                 `json:"unexoneratedFailures1d"`
+	UnexoneratedFailures3d int                 `json:"unexoneratedFailures3d"`
+	UnexoneratedFailures7d int                 `json:"unexoneratedFailures7d"`
+	AffectedRuns1d         int                 `json:"affectedRuns1d"`
+	AffectedRuns3d         int                 `json:"affectedRuns3d"`
+	AffectedRuns7d         int                 `json:"affectedRuns7d"`
+	ExampleFailureReason   bigquery.NullString `json:"exampleFailureReason"`
 }
 
 // NewClient creates a new client for reading clusters. Close() MUST
@@ -114,7 +114,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 	if err != nil {
 		return nil, errors.Annotate(err, "obtain cluster iterator").Err()
 	}
-	var clusters []*Cluster
+	clusters := []*Cluster{}
 	for {
 		row := &Cluster{}
 		err := it.Next(row)

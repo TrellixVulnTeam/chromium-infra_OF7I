@@ -16,15 +16,15 @@ import (
 // BugCluster represents a set of failure associated with a bug.
 type BugCluster struct {
 	// The LUCI Project for which this bug is being tracked.
-	Project string
+	Project string `json:"project"`
 	// Bug is the identifier of the bug. For monorail, the scheme is
 	// monorail/{monorail_project}/{numeric_id}.
-	Bug string
+	Bug string `json:"bug"`
 	// AssociatedClusterID is the identifier of the associated failure cluster,
 	// from which this bug cluster was created.
-	AssociatedClusterID string
+	AssociatedClusterID string `json:"associatedClusterId"`
 	// Whether the given bug is being actively monitored by Weetbix.
-	IsActive bool
+	IsActive bool `json:"isActive"`
 }
 
 // ReadActive reads all active Weetbix bug clusters.
@@ -36,7 +36,7 @@ func ReadActive(ctx context.Context) ([]*BugCluster, error) {
 		ORDER BY Project, Bug
 	`)
 	it := span.Query(ctx, stmt)
-	var bcs []*BugCluster
+	bcs := []*BugCluster{}
 	err := it.Do(func(r *spanner.Row) error {
 		var project, bugName, associatedClusterID string
 		if err := r.Columns(&project, &bugName, &associatedClusterID); err != nil {

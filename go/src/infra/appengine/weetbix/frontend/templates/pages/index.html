@@ -1,51 +1,12 @@
 <!DOCTYPE html>
 <title>Weetbix</title>
+
 <body>
+
   <p>Welcome to Weetbix.</p>
-  <p>Issue title: {{.IssueTitle}}</p>
-  <table>
-    <tr>
-      <th>Project</th>
-      <th>Bug</th>
-      <th>Associated Cluster ID</th>
-    </tr>
-  {{range .BugClusters}}
-    <tr>
-      <td>{{.Project}}</td>
-      <td>{{.Bug}}</td>
-      <td>{{.AssociatedClusterID}}</td>
-    </tr>
-  {{end}}
-  </table>
-  <table>
-    <tr>
-      <th>Cluster ID</th>
-      <th>Unexpected Failures (1d)</th>
-      <th>Unexpected Failures (3d)</th>
-      <th>Unexpected Failures (7d)</th>
-      <th>Unexonerated Failures (1d)</th>
-      <th>Unexonerated Failures (3d)</th>
-      <th>Unexonerated Failures (7d)</th>
-      <th>Affected Runs (1d)</th>
-      <th>Affected Runs (3d)</th>
-      <th>Affected Runs (7d)</th>
-      <th>Example Failure Reason</th>
-    </tr>
-  {{range .Clusters}}
-    <tr>
-      <td>{{.ClusterID}}</td>
-      <td>{{.UnexpectedFailures1d}}</td>
-      <td>{{.UnexpectedFailures3d}}</td>
-      <td>{{.UnexpectedFailures7d}}</td>
-      <td>{{.UnexoneratedFailures1d}}</td>
-      <td>{{.UnexoneratedFailures3d}}</td>
-      <td>{{.UnexoneratedFailures7d}}</td>
-      <td>{{.AffectedRuns1d}}</td>
-      <td>{{.AffectedRuns3d}}</td>
-      <td>{{.AffectedRuns7d}}</td>
-      <td>{{.ExampleFailureReason}}</td>
-    </tr>
-  {{end}}
-  </table>
+  <monorail-test></monorail-test>
+  <bug-cluster-table></bug-cluster-table>
+  <cluster-table></cluster-table>
   <p>Logged in as {{.User}}. <a href="{{.LogoutURL}}">Log Out</a></p>
+  <script src="/static/main.js"></script>
 </body>

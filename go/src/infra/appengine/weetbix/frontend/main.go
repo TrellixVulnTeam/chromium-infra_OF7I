@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"go.chromium.org/luci/auth/identity"
@@ -110,6 +111,10 @@ type handlers struct {
 }
 
 func (hc *handlers) indexPage(ctx *router.Context) {
+	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{})
+}
+
+func (hc *handlers) monorailTest(ctx *router.Context) {
 	// TODO(crbug.com/1243174): Replace as part of MVP development.
 	cfg, err := config.Get(ctx.Context)
 	if err != nil {
@@ -128,6 +133,10 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
+	respondWithJSON(ctx, issue)
+}
+
+func (hc *handlers) listBugClusters(ctx *router.Context) {
 	transctx, cancel := spanmodule.ReadOnlyTransaction(ctx.Context)
 	defer cancel()
 
@@ -138,6 +147,10 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 		return
 	}
 
+	respondWithJSON(ctx, bcs)
+}
+
+func (hc *handlers) listClusters(ctx *router.Context) {
 	cc, err := clustering.NewClient(ctx.Context, hc.CloudProject)
 	if err != nil {
 		log.Errorf(ctx.Context, "Creating new clustering client: %v", err)
@@ -150,6 +163,7 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 	}()
 
 	opts := clustering.ImpactfulClusterReadOptions{
+		Project: "chromium",
 		Thresholds: clustering.ImpactThresholds{
 			UnexpectedFailures1d: 1000,
 			UnexpectedFailures3d: 3000,
@@ -163,11 +177,7 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 		return
 	}
 
-	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{
-		"IssueTitle":  issue.GetSummary(),
-		"BugClusters": bcs,
-		"Clusters":    clusters,
-	})
+	respondWithJSON(ctx, clusters)
 }
 
 func (hc *handlers) updateBugs(ctx context.Context) error {
@@ -189,6 +199,18 @@ func (hc *handlers) updateBugs(ctx context.Context) error {
 	return nil
 }
 
+func respondWithJSON(ctx *router.Context, data interface{}) {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Marshalling JSON for response: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+	}
+	ctx.Writer.Header().Add("Content-Type", "application/json")
+	if _, err := ctx.Writer.Write(bytes); err != nil {
+		logging.Errorf(ctx.Context, "Writing JSON response: %s", err)
+	}
+}
+
 func main() {
 	modules := []module.Module{
 		cfgmodule.NewModuleFromFlags(),
@@ -203,6 +225,10 @@ func main() {
 
 		handlers := &handlers{CloudProject: srv.Options.CloudProject}
 		srv.Routes.GET("/", mw, handlers.indexPage)
+		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
+		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)
+		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)
+		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)

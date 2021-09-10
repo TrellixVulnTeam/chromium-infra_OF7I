@@ -22,7 +22,9 @@ luci_gae_vars:
     SPANNER_DB: projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev
 
 handlers:
-# Handlers for static files can be added here later.
+- url: /static
+  static_dir: ui/dist
+
 - url: /.*
   script: auto
   secure: always
