@@ -1,9 +1,12 @@
-# Copyright (c) 2020 The Chromium Authors. All rights reserved.
+# Copyright (c) 2021 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 """Handles authentication."""
 
+import binascii
+import json
 import logging
+import os
 import requests
 
 from google.auth.transport import requests as google_requests
@@ -53,11 +56,16 @@ class AuthHandler:
 
   @classmethod
   def get_authorization_url(cls):
+    # Creates a state token to prevent request forgery.
+    # Stores it in the session for later validation.
+    state = binascii.hexlify(os.urandom(32)).decode("utf-8")
+    session['state'] = state
     params = {
         "response_type": "code",
         "client_id": cls.client.client_id,
         "scope": "openid email",
         "redirect_uri": cls.get_redirect_uri(),
+        "state": state,
     }
     r = requests.Request(
         'GET', cls.authorization_endpoint, params=params).prepare()
@@ -72,6 +80,13 @@ class AuthHandler:
     if code == '':
       logging.error("No code found")
       abort(400)
+
+    # Ensures that the request is not a forgery and that the user sending
+    # this connect request is the expected user.
+    if request.args.get('state', '') != session['state']:
+      response = make_response(json.dumps('Invalid state parameter.'), 401)
+      response.headers['Content-Type'] = 'application/json'
+      return response
 
     # If there is code, exchange code for access token and ID token
     fields = {

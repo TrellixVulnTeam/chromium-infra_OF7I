@@ -73,6 +73,7 @@ class BasePage:
 
     def look_for_password():
       """Looks for password parameter. Not awesome."""
+      # TODO (nqmtuan): Check if this is in use. If not, delete it
       password = self.request.get('password')
       if password:
         sha1_pass = hashlib.sha1(password).hexdigest()
