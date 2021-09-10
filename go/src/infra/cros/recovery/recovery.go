@@ -36,18 +36,18 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	if args.Logger == nil {
 		args.Logger = logger.NewLogger()
 	}
-	newCtx := log.WithLogger(ctx, args.Logger)
+	ctx = log.WithLogger(ctx, args.Logger)
 	if !args.EnableRecovery {
-		log.Info(newCtx, "Recovery actions is blocker by run arguments.")
+		log.Info(ctx, "Recovery actions is blocker by run arguments.")
 	}
 	args.TaskName = getTaskName(args.TaskName)
-	log.Info(newCtx, "Run recovery for %q", args.UnitName)
-	resources, err := retrieveResources(newCtx, args)
+	log.Info(ctx, "Run recovery for %q", args.UnitName)
+	resources, err := retrieveResources(ctx, args)
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
 	// Load Configuration.
-	config, err := loadConfiguration(newCtx, args)
+	config, err := loadConfiguration(ctx, args)
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
@@ -56,27 +56,27 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	lastResourceIndex := len(resources) - 1
 	if args.StepHandler != nil {
 		var step logger.Step
-		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Start %s for %s", args.TaskName, args.UnitName))
-		defer step.Close(newCtx, err)
+		step, ctx = args.StepHandler.StartStep(ctx, fmt.Sprintf("Start %s for %s", args.TaskName, args.UnitName))
+		defer step.Close(ctx, err)
 	}
 	for ir, resource := range resources {
-		log.Info(newCtx, "Resource %q: started", resource)
+		log.Info(ctx, "Resource %q: started", resource)
 		var dut *tlw.Dut
 		var err error
-		newCtx, dut, err = readResource(newCtx, resource, args)
+		ctx, dut, err = readResource(ctx, resource, args)
 		if err != nil {
 			return errors.Annotate(err, "run resource %q", resource).Err()
 		}
-		newCtx, err = runDUTPlans(newCtx, dut, config, args)
+		ctx, err = runDUTPlans(ctx, dut, config, args)
 		if err != nil {
 			errs = append(errs, err)
 		}
-		newCtx, err = updateInventory(newCtx, dut, args)
+		ctx, err = updateInventory(ctx, dut, args)
 		if err != nil {
 			return errors.Annotate(err, "run resource %q", resource).Err()
 		}
 		if ir != lastResourceIndex {
-			log.Debug(newCtx, "Continue to the next resource.")
+			log.Debug(ctx, "Continue to the next resource.")
 		}
 	}
 	if len(errs) > 0 {
@@ -130,22 +130,27 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 
 // readResource reads single DUT info from inventory.
 func readResource(ctx context.Context, resource string, args *RunArgs) (newCtx context.Context, dut *tlw.Dut, err error) {
-	newCtx = ctx
 	if args.StepHandler != nil {
 		var step logger.Step
-		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Read %s from inventory", resource))
-		defer step.Close(newCtx, err)
+		step, ctx = args.StepHandler.StartStep(ctx, fmt.Sprintf("Read %s from inventory", resource))
+		defer step.Close(ctx, err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
 		defer args.Logger.DedentLogging()
 	}
-	dut, err = args.Access.GetDut(newCtx, resource)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debug(ctx, "Read resource received panic!")
+			err = errors.Reason("read resource panic: %v", r).Err()
+		}
+	}()
+	dut, err = args.Access.GetDut(ctx, resource)
 	if err != nil {
-		return newCtx, nil, errors.Annotate(err, "read resource %q", resource).Err()
+		return ctx, nil, errors.Annotate(err, "read resource %q", resource).Err()
 	}
-	logDUTInfo(newCtx, resource, dut, "DUT info from inventory")
-	return newCtx, dut, nil
+	logDUTInfo(ctx, resource, dut, "DUT info from inventory")
+	return ctx, dut, nil
 }
 
 // updateInventory updates updated DUT info back to inventory.
