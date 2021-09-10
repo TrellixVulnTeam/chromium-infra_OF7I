@@ -8,22 +8,31 @@ import (
 	"fmt"
 	"testing"
 
-	"infra/unifiedfleet/app/model/configuration"
-
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	"infra/unifiedfleet/app/model/configuration"
 )
 
-func mockDutAttribute(id string, fieldPath string) *api.DutAttribute {
+func mockDutAttribute(id string, field_path string) *api.DutAttribute {
 	return &api.DutAttribute{
 		Id: &api.DutAttribute_Id{
 			Value: id,
 		},
-		FieldPath: fieldPath,
+		Aliases: []string{},
+		DataSource: &api.DutAttribute_FlatConfigSource_{
+			FlatConfigSource: &api.DutAttribute_FlatConfigSource{
+				Fields: []*api.DutAttribute_FieldSpec{
+					{
+						Path: field_path,
+					},
+				},
+			},
+		},
 	}
 }
 

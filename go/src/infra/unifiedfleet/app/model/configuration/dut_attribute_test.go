@@ -22,7 +22,16 @@ func mockDutAttribute(id string, field_path string) *api.DutAttribute {
 		Id: &api.DutAttribute_Id{
 			Value: id,
 		},
-		FieldPath: field_path,
+		Aliases: []string{},
+		DataSource: &api.DutAttribute_FlatConfigSource_{
+			FlatConfigSource: &api.DutAttribute_FlatConfigSource{
+				Fields: []*api.DutAttribute_FieldSpec{
+					{
+						Path: field_path,
+					},
+				},
+			},
+		},
 	}
 }
 
