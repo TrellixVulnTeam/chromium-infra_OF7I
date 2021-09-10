@@ -183,7 +183,7 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      ".vpython",
+      ".vpython3",
       "-m",
       "infra.tools.dockerbuild",
       "--root",

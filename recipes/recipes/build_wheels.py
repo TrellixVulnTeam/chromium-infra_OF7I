@@ -151,7 +151,7 @@ def RunSteps(api, platforms, dry_run, rebuild):
         args.extend(['--wheel', wheel])
 
     api.step('dockerbuild', [
-        'vpython', '-vpython-spec', '.vpython', '-m', 'infra.tools.dockerbuild'
+        'vpython', '-vpython-spec', '.vpython3', '-m', 'infra.tools.dockerbuild'
     ] + args)
 
 
