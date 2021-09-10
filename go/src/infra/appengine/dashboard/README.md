@@ -1,7 +1,14 @@
 In infra/go run the following to activate the go environment:
+```
 eval `./env.py`
+```
 
-The following commands should be done while in the /dashboard/frontend directory:
+To run backend tests while in src/infra/appengine/dashboard/backend:
+```
+go test
+```
+
+The following commands should be done while in the src/infra/appengine/dashboard/frontend directory:
 
 To install JS dependencies:
 ```
@@ -22,9 +29,4 @@ gae.py switch -A chopsdash
 To run a local instance:
 ```
 go run ./
-```
-
-To run backend tests:
-```
-go test
 ```
