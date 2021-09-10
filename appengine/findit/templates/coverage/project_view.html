@@ -117,7 +117,7 @@
           {% if show_invisible_report or datum.visible %}
             <tr>
               <td>
-                <a href="/p/chromium/coverage/dir?host={{datum.gitiles_commit.server_host}}&project={{datum.gitiles_commit.project}}&ref={{datum.gitiles_commit.ref}}&revision={{datum.gitiles_commit.revision}}&path=//&platform={{platform}}&test_suite_type={{test_suite_type}}">Link</a>
+                <a href="/p/{{luci_project}}/coverage/dir?host={{datum.gitiles_commit.server_host}}&project={{datum.gitiles_commit.project}}&ref={{datum.gitiles_commit.ref}}&revision={{datum.gitiles_commit.revision}}&path=//&platform={{platform}}&test_suite_type={{test_suite_type}}">Link</a>
               </td>
               <td>
                 {{datum.commit_timestamp}}
