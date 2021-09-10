@@ -48,6 +48,11 @@ type simpleStep struct {
 
 // Close close the step and the step cannot be reused after that.
 func (s *simpleStep) Close(ctx context.Context, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Debug("Received step ending panic!\n%v", r)
+		}
+	}()
 	if s.closed {
 		s.logger.Warning("Step %q: the step already closed.", s.name)
 		return
