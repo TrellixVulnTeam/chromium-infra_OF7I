@@ -15,6 +15,8 @@ import tempfile
 import threading
 import uuid
 
+import six
+
 from . import concurrency
 from . import source
 from . import util
@@ -334,12 +336,12 @@ class Image(collections.namedtuple('_Image', (
         for k, v in affix_list:
           encode_env_item(k, mode, v)
 
-      for k, v in env.iteritems():
+      for k, v in six.iteritems(env):
         encode_env_item(k, 'SET', v)
       encode_env_affix(kwargs.pop('env_prefix', None), 'PREPEND')
       encode_env_affix(kwargs.pop('env_suffix', None), 'APPEND')
 
-      for k, vals in new_env.iteritems():
+      for k, vals in six.iteritems(new_env):
         run_args.extend(['-e', '%s=%s' % (k, base64.b64encode(':'.join(vals)))])
 
       # The dockcross script uses bash $RANDOM to generate container names. This
