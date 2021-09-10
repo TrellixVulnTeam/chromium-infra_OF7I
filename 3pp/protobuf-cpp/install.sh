@@ -17,6 +17,6 @@ export CXXFLAGS+=" -fPIC -std=c++11"
   --host="$CROSS_TRIPLE"
 make -j $(nproc)
 if [[ $_3PP_PLATFORM == $_3PP_TOOL_PLATFORM ]]; then
-  make check
+  make check -j $(nproc)
 fi
 make install -j $(nproc)
