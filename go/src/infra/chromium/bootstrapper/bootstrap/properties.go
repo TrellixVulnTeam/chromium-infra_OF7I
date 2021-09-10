@@ -70,6 +70,10 @@ type BootstrapConfig struct {
 	// builderProperties is the properties read from the builder's
 	// properties file.
 	builderProperties *structpb.Struct
+	// skipAnalysisReasons are reasons that the bootstrapped executable
+	// should skip performing analysis to reduce the targets and tests that
+	// are built and run.
+	skipAnalysisReasons []string
 }
 
 // GetBootstrapConfig does the necessary work to extract the properties from the
@@ -179,6 +183,7 @@ func (b *PropertyBootstrapper) getPropertiesFromFile(ctx context.Context, propsF
 		return errors.Annotate(err, "failed to get %s/%s", config.commit, propsFile).Err()
 	}
 	if diff != "" {
+		config.skipAnalysisReasons = append(config.skipAnalysisReasons, fmt.Sprintf("properties file %s is affected by CL", propsFile))
 		logging.Infof(ctx, "patching properties file %s", propsFile)
 		contents, err = patchFile(ctx, propsFile, contents, diff)
 		if err != nil {
@@ -245,8 +250,9 @@ func (c *BootstrapConfig) GetProperties(bootstrappedExe *BootstrappedExe) (*stru
 	properties := proto.Clone(c.builderProperties).(*structpb.Struct)
 
 	modProperties := &ChromiumBootstrapModuleProperties{
-		Commits: []*buildbucketpb.GitilesCommit{c.commit.GitilesCommit},
-		Exe:     bootstrappedExe,
+		Commits:             []*buildbucketpb.GitilesCommit{c.commit.GitilesCommit},
+		Exe:                 bootstrappedExe,
+		SkipAnalysisReasons: c.skipAnalysisReasons,
 	}
 	if err := exe.WriteProperties(properties, map[string]interface{}{
 		"$build/chromium_bootstrap": modProperties,

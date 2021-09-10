@@ -443,6 +443,9 @@ func TestGetBootstrapConfig(t *testing.T) {
 						"test_property4": "some-branch-head-value4",
 						"test_property5": "some-branch-head-value5"
 					}`)
+					So(config.skipAnalysisReasons, ShouldResemble, []string{
+						"properties file infra/config/fake-bucket/fake-builder/properties.textpb is affected by CL",
+					})
 				})
 
 			})
@@ -469,11 +472,14 @@ func TestGetProperties(t *testing.T) {
 					"foo": "build-foo-value",
 					"bar": "build-bar-value"
 				}`),
-
 				builderProperties: jsonToStruct(`{
 					"foo": "builder-foo-value",
 					"baz": "builder-baz-value"
 				}`),
+				skipAnalysisReasons: []string{
+					"skip-analysis-reason1",
+					"skip-analysis-reason2",
+				},
 			}
 			exe := &BootstrappedExe{
 				Source: &BootstrappedExe_Cipd{
@@ -508,7 +514,11 @@ func TestGetProperties(t *testing.T) {
 							"actual_version": "fake-cipd-instance-id"
 						},
 						"cmd": ["fake-exe"]
-					}
+					},
+					"skip_analysis_reasons": [
+						"skip-analysis-reason1",
+						"skip-analysis-reason2"
+					]
 				},
 				"foo": "build-foo-value",
 				"bar": "build-bar-value",
