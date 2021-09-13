@@ -5,7 +5,9 @@
 package main
 
 import (
+	"compress/gzip"
 	"infra/cros/internal/gs"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -59,13 +61,66 @@ func TestDownloadTgz(t *testing.T) {
 }
 
 // TestUnzipTgz confirms that we can properly unzip a given tgz file.
-// TODO(b/197010274): implement response checking.
 func TestUnzipTgz(t *testing.T) {
-	err := unzipTgz("./path", "./path")
+	targetString := "gzip test"
 
+	// Create temp dir to work in.
+	testDir, err := ioutil.TempDir("", "tarballTest")
 	if err != nil {
 		t.Error("error: " + err.Error())
 	}
+	defer os.RemoveAll(testDir)
+
+	// Generate file information.
+	outputFilePath := filepath.Join(testDir, "test.tar")
+	inputFilePath := filepath.Join(testDir, "test.tgz")
+	inputFile, err := os.Create(inputFilePath)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	defer inputFile.Close()
+
+	// Create a mock .tgz to test unzipping.
+	zipWriter := gzip.NewWriter(inputFile)
+	zipWriter.Name = "test.tgz"
+	zipWriter.Comment = "hello world"
+
+	_, err = zipWriter.Write([]byte(targetString))
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	err = zipWriter.Close()
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	err = unzipTgz(inputFilePath, outputFilePath)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	// Check if the output file was created.
+	if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
+		t.Error("error: " + err.Error())
+	}
+
+	outputFile, err := os.Open(outputFilePath)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	defer outputFile.Close()
+
+	output, err := io.ReadAll(outputFile)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	// Verify contents unzipped correctly.
+	if string(output) != targetString {
+		t.Errorf("error: expected %s got %s", targetString, string(output))
+	}
+
 }
 
 // TestUnpackTarball confirms that we can properly unpack a given tarball and

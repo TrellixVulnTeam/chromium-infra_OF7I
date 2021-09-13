@@ -8,9 +8,11 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"infra/cros/internal/gs"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -117,12 +119,31 @@ func uploadWorker(chans channels) error {
 	return nil
 }
 
-// unpackTarball will take the local path of the fetched tarball and then unpack
+// unzipTgz will take the local path of the fetched tarball and then unpack
 // it. It will then return a list of file paths pointing to the unpacked symbol
 // files.
 func unzipTgz(inputPath, outputPath string) error {
-	// TODO(b/197010274): remove skeleton code.
-	return nil
+	srcReader, err := os.Open(inputPath)
+	if err != nil {
+		return err
+	}
+	defer srcReader.Close()
+
+	destWriter, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	defer destWriter.Close()
+
+	gzipReader, err := gzip.NewReader(srcReader)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+
+	_, err = io.Copy(destWriter, gzipReader)
+
+	return err
 }
 
 // unpackTarball will take the local path of the fetched tarball and then unpack
@@ -197,7 +218,6 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 
 	tgzPath := filepath.Join(workDir, "debug.tgz")
 	tarbalPath := filepath.Join(workDir, "debug.tar")
-	fmt.Print(tgzPath + "\n")
 	defer os.RemoveAll(workDir)
 
 	err = downloadTgz(client, b.gsPath, tgzPath)
@@ -206,6 +226,10 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 	}
 
 	err = unzipTgz(tgzPath, tarbalPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	symbolFiles, err := unpackTarball(tarbalPath, workDir)
 
 	if err != nil {
