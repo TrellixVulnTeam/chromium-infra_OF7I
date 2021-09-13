@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import collections
 import glob
 import os
 import platform
@@ -407,19 +408,39 @@ def SetupPythonPackages(system, wheel, base_dir):
   return interpreter, env
 
 
-def BuildPackageFromSource(system, wheel, src, env=None):
+class BuildDependencies(
+    collections.namedtuple(
+        'BuildDependencies',
+        (
+            # remote (List[str]): Wheels fetched from pip repository
+            'remote',
+
+            # local (List[Builder]): Wheels installed from local path
+            'local',
+        ))):
+  pass
+
+
+def BuildPackageFromSource(system,
+                           wheel,
+                           src,
+                           src_filter=None,
+                           deps=None,
+                           env=None):
   """Creates Python wheel from src.
 
   Args:
     system (dockerbuild.runtime.System): Represents the local system.
     wheel (dockerbuild.wheel.Wheel): The wheel to build.
     src (dockerbuild.source.Source): The source to build the wheel from.
+    deps (dockerbuild.builder.BuildDependencies|None): Dependencies required
+      to build the wheel.
     env (Dict[str, str]|None): Additional envvars to set while building the
       wheel.
   """
   dx = system.dockcross_image(wheel.plat)
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
-    build_dir = system.repo.ensure(src, tdir)
+    build_dir = system.repo.ensure(src, tdir, unpack_file_filter=src_filter)
 
     for patch in src.get_patches():
       util.LOGGER.info('Applying patch %s', os.path.basename(patch))
@@ -427,20 +448,6 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       subprocess.check_call(cmd, cwd=build_dir)
 
     interpreter, extra_env = SetupPythonPackages(system, wheel, build_dir)
-    # TODO: Perhaps we should pass --build-option --universal for universal
-    # py2.py3 wheels, to ensure the filename is right even if the wheel
-    # setup.cfg isn't configured correctly.
-    cmd = [
-        interpreter,
-        '-m',
-        'pip',
-        'wheel',
-        '--no-deps',
-        '--only-binary=:all:',
-        '--wheel-dir',
-        tdir,
-        '.',
-    ]
 
     if dx.platform:
       extra_env.update({
@@ -449,12 +456,49 @@ def BuildPackageFromSource(system, wheel, src, env=None):
     if env:
       extra_env.update(env)
 
-    util.check_run(
-        system,
-        dx,
-        tdir,
-        cmd,
-        cwd=build_dir,
-        env=extra_env)
+    with util.tempdir(build_dir, 'deps') as tdeps:
+      if deps:
+        util.copy_to(util.resource_path('generate_pyproject.py'), build_dir)
+        cmd = PrepareBuildDependenciesCmd(system, wheel, build_dir, tdeps, deps)
+        util.check_run(
+            system, dx, tdir, [interpreter] + cmd, cwd=build_dir, env=extra_env)
+
+      # TODO: Perhaps we should pass --build-option --universal for universal
+      # py2.py3 wheels, to ensure the filename is right even if the wheel
+      # setup.cfg isn't configured correctly.
+      cmd = [
+          interpreter,
+          '-m',
+          'pip',
+          'wheel',
+          '--no-deps',
+          '--only-binary=:all:',
+          '--wheel-dir',
+          tdir,
+          '.',
+      ]
+
+      util.check_run(system, dx, tdir, cmd, cwd=build_dir, env=extra_env)
 
     StageWheelForPackage(system, tdir, wheel)
+
+
+def PrepareBuildDependenciesCmd(system, wheel, build_dir, deps_dir, deps):
+  local_wheels = []
+  for dep in deps.local:
+    dep_wheel = dep.wheel(system, wheel.plat)
+    dep.build(dep_wheel, system, rebuild=True)
+    dep_path = dep_wheel.path(system)
+    dep_path = util.copy_to(dep_path, deps_dir)
+    dep_rel = os.path.relpath(dep_path, build_dir)
+    local_wheels.append('{}@{}'.format(dep.spec.name, dep_rel))
+
+  # Generate pyproject.toml to control build dependencies
+  cmd = ['generate_pyproject.py']
+  if deps.remote:
+    cmd.append('--remotes')
+    cmd.extend(deps.remote)
+  if deps.local:
+    cmd.append('--locals')
+    cmd.extend(local_wheels)
+  return cmd

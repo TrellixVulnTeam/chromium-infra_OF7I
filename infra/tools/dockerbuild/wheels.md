@@ -1886,6 +1886,7 @@ wheel: <
 ```
 
 
+* *mac-arm64-cp38*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*

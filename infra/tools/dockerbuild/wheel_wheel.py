@@ -21,6 +21,8 @@ class SourceOrPrebuilt(Builder):
                patches=(),
                patch_base=None,
                patch_version=None,
+               build_deps=None,
+               src_filter=None,
                **kwargs):
     """General-purpose wheel builder.
 
@@ -40,6 +42,11 @@ class SourceOrPrebuilt(Builder):
       patch_version (str or None): If set, this string is appended to the CIPD
           version tag, for example if set to 'chromium.1', the version tag
           for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
+      build_deps (dockerbuild.builder.BuildDependencies|None): Dependencies
+          required to build the wheel.
+      src_filter (Callable[[str], bool]): Filtering files from the source. This
+          is a workaround for python < 3.6 on Windows to prevent failure caused
+          by 260 path length limit.
       packaged (iterable or None): The names of platforms that have this wheel
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
@@ -52,6 +59,8 @@ class SourceOrPrebuilt(Builder):
         name, version, patches=patches, patch_base=patch_base)
     self._packaged = set(
         kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
+    self._build_deps = build_deps
+    self._src_filter = src_filter
     self._env = kwargs.pop('env', None)
     version_suffix = '.' + patch_version if patch_version else None
 
@@ -67,7 +76,8 @@ class SourceOrPrebuilt(Builder):
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
       return BuildPackageFromPyPiWheel(system, wheel)
-    return BuildPackageFromSource(system, wheel, self._pypi_src, self._env)
+    return BuildPackageFromSource(system, wheel, self._pypi_src,
+                                  self._src_filter, self._build_deps, self._env)
 
 
 class MultiWheel(Builder):

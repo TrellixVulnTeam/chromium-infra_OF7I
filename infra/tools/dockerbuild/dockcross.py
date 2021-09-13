@@ -246,6 +246,7 @@ class Builder(object):
           script_tmp.seek(0)
           with open(dx.bin, 'w') as fd:
             for line in script_tmp:
+              line = line.decode()
               if line.startswith('CONTAINER_NAME='):
                 line = 'CONTAINER_NAME=${CONTAINER_NAME:-dockcross_$RANDOM}\n'
               fd.write(line)
@@ -342,7 +343,8 @@ class Image(collections.namedtuple('_Image', (
       encode_env_affix(kwargs.pop('env_suffix', None), 'APPEND')
 
       for k, vals in six.iteritems(new_env):
-        run_args.extend(['-e', '%s=%s' % (k, base64.b64encode(':'.join(vals)))])
+        v = base64.b64encode(':'.join(vals).encode()).decode()
+        run_args.extend(['-e', '%s=%s' % (k, v)])
 
       # The dockcross script uses bash $RANDOM to generate container names. This
       # is insufficiently random, and produces collisions fairly often when
