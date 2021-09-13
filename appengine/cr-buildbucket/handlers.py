@@ -30,7 +30,7 @@ import swarming
 import user
 
 README_MD = (
-    'https://chromium.googlesource.com/infra/infra/+/master/'
+    'https://chromium.googlesource.com/infra/infra/+/HEAD/'
     'appengine/cr-buildbucket/README.md'
 )
 
@@ -51,7 +51,16 @@ class MainHandler(webapp2.RequestHandler):  # pragma: no cover
   """Redirects to README.md."""
 
   def get(self):
-    return self.redirect(README_MD)
+    # `led` fetches the index page to see if Buildbucket is available. It
+    # follows HTTP-level redirects. We don't want it to test Gitiles available.
+    # Use Javascript-level redirect instead.
+    self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    self.response.write(
+        """
+      <p>Redirecting to the Buildbucket documentation...</p>
+      <script>window.location.replace(%r);</script>
+    """ % README_MD
+    )
 
 
 class CronUpdateBuckets(webapp2.RequestHandler):  # pragma: no cover
