@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
+	"infra/cros/hwid"
 	"infra/libs/git"
 	"infra/libs/sheet"
 	"infra/unifiedfleet/app/frontend/fake"
@@ -26,6 +27,7 @@ func WithTestingContext(ctx context.Context) context.Context {
 			crosInventoryInterfaceFactory: fakeCrosInventoryInterface,
 			sheetInterfaceFactory:         fakeSheetInterfaceFactory,
 			gitInterfaceFactory:           fakeGitInterfaceFactory,
+			hwidInterfaceFactory:          fakeHwidInterfaceFactory,
 		}
 		return context.WithValue(ctx, InterfaceFactoryKey, es)
 	}
@@ -160,4 +162,8 @@ func fakeSheetInterfaceFactory(ctx context.Context) (sheet.ClientInterface, erro
 
 func fakeGitInterfaceFactory(ctx context.Context, gitilesHost, project, branch string) (git.ClientInterface, error) {
 	return &fake.GitClient{}, nil
+}
+
+func fakeHwidInterfaceFactory(ctx context.Context) (hwid.ClientInterface, error) {
+	return &fake.HwidClient{}, nil
 }

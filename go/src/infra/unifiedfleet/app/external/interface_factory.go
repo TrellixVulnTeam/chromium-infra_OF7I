@@ -1,3 +1,7 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package external
 
 import (
@@ -19,13 +23,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
+	"infra/cros/hwid"
 	"infra/libs/git"
 	"infra/libs/sheet"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/util"
 )
 
-const defaultCfgService = "luci-config.appspot.com"
+const (
+	defaultCfgService = "luci-config.appspot.com"
+	hwidEndpointScope = "https://www.googleapis.com/auth/chromeoshwid"
+)
 
 var spreadSheetScope = []string{authclient.OAuthScopeEmail, "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"}
 
@@ -49,6 +57,9 @@ type SheetInterfaceFactory func(ctx context.Context) (sheet.ClientInterface, err
 // GitInterfaceFactory is a constructor for a git.ClientInterface
 type GitInterfaceFactory func(ctx context.Context, gitilesHost, project, branch string) (git.ClientInterface, error)
 
+// HwidInterfaceFactory is a constructor for a HWIDClient
+type HwidInterfaceFactory func(ctx context.Context) (hwid.ClientInterface, error)
+
 // InterfaceFactory provides a collection of interfaces to external clients.
 type InterfaceFactory struct {
 	cfgInterfaceFactory           CfgInterfaceFactory
@@ -56,6 +67,7 @@ type InterfaceFactory struct {
 	crosInventoryInterfaceFactory CrosInventoryInterfaceFactory
 	sheetInterfaceFactory         SheetInterfaceFactory
 	gitInterfaceFactory           GitInterfaceFactory
+	hwidInterfaceFactory          HwidInterfaceFactory
 }
 
 // CrosInventoryClient refers to the fake inventory v2 client
@@ -82,6 +94,7 @@ func WithServerInterface(ctx context.Context) context.Context {
 		crosInventoryInterfaceFactory: crosInventoryInterfaceFactoryImpl,
 		sheetInterfaceFactory:         sheetInterfaceFactoryImpl,
 		gitInterfaceFactory:           gitInterfaceFactoryImpl,
+		hwidInterfaceFactory:          hwidInterfaceFactoryImpl,
 	})
 }
 
@@ -181,4 +194,22 @@ func cfgInterfaceFactoryImpl(ctx context.Context) luciconfig.Interface {
 		}
 		return &http.Client{Transport: t}, nil
 	})
+}
+
+// NewHwidClientInterface creates a new Hwid server client interface.
+func (es *InterfaceFactory) NewHwidClientInterface(ctx context.Context) (hwid.ClientInterface, error) {
+	if es.hwidInterfaceFactory == nil {
+		es.hwidInterfaceFactory = hwidInterfaceFactoryImpl
+	}
+	return es.hwidInterfaceFactory(ctx)
+}
+
+func hwidInterfaceFactoryImpl(ctx context.Context) (hwid.ClientInterface, error) {
+	tr, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, hwidEndpointScope))
+	if err != nil {
+		return &hwid.Client{}, err
+	}
+	return &hwid.Client{
+		Hc: &http.Client{Transport: tr},
+	}, nil
 }
