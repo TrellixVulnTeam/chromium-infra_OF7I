@@ -47,16 +47,6 @@ func setTestArgs(inv *steps.EnumerationResponse_AutotestInvocation, testArgs str
 	inv.TestArgs = testArgs
 }
 
-func setParamsTestArgs(p *test_platform.Request_Params, key string, value string) {
-	if p.Decorations == nil {
-		p.Decorations = &test_platform.Request_Params_Decorations{}
-	}
-	if p.Decorations.TestArgs == nil {
-		p.Decorations.TestArgs = make(map[string]string)
-	}
-	p.Decorations.TestArgs[key] = value
-}
-
 func setDisplayName(inv *steps.EnumerationResponse_AutotestInvocation, name string) {
 	inv.DisplayName = name
 }

@@ -384,14 +384,6 @@ func (g *Generator) baseKeyvals() map[string]string {
 	return keyvals
 }
 
-func (g *Generator) testargs() string {
-	ta := g.Invocation.TestArgs
-	for k, v := range g.Params.GetDecorations().GetTestArgs() {
-		ta = fmt.Sprintf("%s %s=%s", ta, k, v)
-	}
-	return ta
-}
-
 var reservedTags = map[string]bool{
 	"qs_account":   true,
 	"luci_project": true,
@@ -516,7 +508,6 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 		return nil, errors.Annotate(err, "create test runner request").Err()
 	}
 	kv := g.keyvals(ctx)
-	ta := g.testargs()
 
 	var deadline *timestamppb.Timestamp
 	if !g.Deadline.IsZero() {
@@ -541,7 +532,7 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 						IsClientTest: isClient,
 						Name:         g.Invocation.Test.Name,
 						Keyvals:      kv,
-						TestArgs:     ta,
+						TestArgs:     g.Invocation.TestArgs,
 					},
 				},
 			},
