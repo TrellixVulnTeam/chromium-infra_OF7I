@@ -26,16 +26,17 @@ const VMKind string = "ChromeVM"
 
 // VMEntity is a datastore entity that tracks VM.
 type VMEntity struct {
-	_kind     string   `gae:"$kind,ChromeVM"`
-	ID        string   `gae:"$id"`
-	OSVersion string   `gae:"os_version"`
-	Vlan      string   `gae:"vlan_id"`
-	HostID    string   `gae:"host_id"`
-	State     string   `gae:"state"`
-	Lab       string   `gae:"lab"` // deprecated
-	Zone      string   `gae:"zone"`
-	Tags      []string `gae:"tags"`
-	OS        []string `gae:"os"`
+	_kind      string   `gae:"$kind,ChromeVM"`
+	ID         string   `gae:"$id"`
+	OSVersion  string   `gae:"os_version"`
+	Vlan       string   `gae:"vlan_id"`
+	HostID     string   `gae:"host_id"`
+	State      string   `gae:"state"`
+	Lab        string   `gae:"lab"` // deprecated
+	Zone       string   `gae:"zone"`
+	Tags       []string `gae:"tags"`
+	OS         []string `gae:"os"`
+	MacAddress string   `gae:"mac_address"`
 	// Follow others entities, store ufspb.VM bytes.
 	VM []byte `gae:",noindex"`
 }
@@ -59,15 +60,16 @@ func newVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 		return nil, errors.Annotate(err, "fail to marshal VM %s", p).Err()
 	}
 	return &VMEntity{
-		ID:        p.GetName(),
-		OSVersion: p.GetOsVersion().GetValue(),
-		Vlan:      p.GetVlan(),
-		HostID:    p.GetMachineLseId(),
-		State:     p.GetResourceState().String(),
-		Zone:      p.GetZone(),
-		Tags:      p.GetTags(),
-		OS:        ufsds.GetOSIndex(p.GetOsVersion().GetValue()),
-		VM:        vm,
+		ID:         p.GetName(),
+		OSVersion:  p.GetOsVersion().GetValue(),
+		Vlan:       p.GetVlan(),
+		HostID:     p.GetMachineLseId(),
+		State:      p.GetResourceState().String(),
+		Zone:       p.GetZone(),
+		Tags:       p.GetTags(),
+		OS:         ufsds.GetOSIndex(p.GetOsVersion().GetValue()),
+		MacAddress: p.GetMacAddress(),
+		VM:         vm,
 	}, nil
 }
 

@@ -138,3 +138,27 @@ func TestDeleteVMs(t *testing.T) {
 		})
 	})
 }
+
+func TestQueryVMByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryVMByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		vm1 := mockVM("vm-queryByProperty1")
+		vm1.MacAddress = "00:50:56:17:00:00"
+		_, err := BatchUpdateVMs(ctx, []*ufspb.VM{vm1})
+		So(err, ShouldBeNil)
+
+		Convey("Query By existing mac address", func() {
+			resp, err := QueryVMByPropertyName(ctx, "mac_address", "00:50:56:17:00:00", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 1)
+			So(resp[0], ShouldResembleProto, vm1)
+		})
+		Convey("Query By non-existing mac address", func() {
+			resp, err := QueryVMByPropertyName(ctx, "mac_address", "00:50:56:xx:yy:zz", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}
