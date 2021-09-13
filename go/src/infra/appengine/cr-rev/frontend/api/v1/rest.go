@@ -25,6 +25,9 @@ var crCPOldReferences = map[string]map[string]int{
 		"v8/v8":        76350,
 		"infra/infra":  42976,
 	},
+	"webrtc": {
+		"src": 34825,
+	},
 }
 
 func (s *restAPIServer) handleRedirect(c *router.Context) {
