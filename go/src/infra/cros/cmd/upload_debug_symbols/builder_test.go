@@ -5,6 +5,11 @@
 package main
 
 import (
+	"infra/cros/internal/gs"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -20,40 +25,46 @@ func TestUploadWorker(t *testing.T) {
 	}
 }
 
-// TestInitFlags verifies that the CLI flags are getting made, it
-// expects default values.
-func TestInitFlags(t *testing.T) {
-	initFlags()
-
-	if &gsPath == nil {
-		t.Error("error: gsPath not initialized")
-	}
-	if &workerCount == nil {
-		t.Error("error: workerCount not initialized")
-	}
-	if &retryCount == nil {
-		t.Error("error: retryCount not initialized")
-	}
-	if &isStaging == nil {
-		t.Error("error: isStaging not initialized")
-	}
-	if &dryRun == nil {
-		t.Error("error: dryRun not initialized")
-	}
-}
-
-// TestFetchTarball ensures that we are fetching from the correct service and
+// TestDownloadTgz ensures that we are fetching from the correct service and
 // handling the response appropriately.
-// TODO(b/197010274): implement mocks and response checking.
-func TestFetchTarball(t *testing.T) {
-	localPath, err := fetchTarball("./path")
+func TestDownloadTgz(t *testing.T) {
+	gsPath := "gs://some-debug-symbol/degbug.tgz"
+
+	expectedDownloads := map[string][]byte{
+		gsPath: []byte("hello world"),
+	}
+	fakeClient := &gs.FakeClient{
+		T:                 t,
+		ExpectedDownloads: expectedDownloads,
+	}
+
+	tarballDir, err := ioutil.TempDir("", "tarball")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tgzPath := filepath.Join(tarballDir, "debug.tgz")
+
+	defer os.RemoveAll(tarballDir)
+
+	err = downloadTgz(fakeClient, gsPath, tgzPath)
 
 	if err != nil {
 		t.Error("error: " + err.Error())
 	}
 
-	if localPath != "./path" {
-		t.Error("error: incorrect path returned")
+	if _, err := os.Stat(tgzPath); os.IsNotExist(err) {
+		t.Error("error: " + err.Error())
+	}
+}
+
+// TestUnzipTgz confirms that we can properly unzip a given tgz file.
+// TODO(b/197010274): implement response checking.
+func TestUnzipTgz(t *testing.T) {
+	err := unzipTgz("./path", "./path")
+
+	if err != nil {
+		t.Error("error: " + err.Error())
 	}
 }
 
@@ -61,7 +72,7 @@ func TestFetchTarball(t *testing.T) {
 // return filepaths to it's contents.
 // TODO(b/197010274): implement response checking.
 func TestUnpackTarball(t *testing.T) {
-	symbolPaths, err := unpackTarball("./path")
+	symbolPaths, err := unpackTarball("./path", "./path")
 
 	if err != nil {
 		t.Error("error: " + err.Error())
