@@ -296,13 +296,6 @@ SPECS.update({
                 ],
             ),
             packaged=[],
-            only_plat=[
-                'manylinux-x64-py3',
-                'manylinux-x64-py3.9',
-                'windows-x64-py3',
-                'mac-x64-cp38',
-                'mac-arm64-cp38',
-            ],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(

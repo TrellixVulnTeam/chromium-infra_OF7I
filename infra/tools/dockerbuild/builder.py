@@ -9,6 +9,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 
 import six
 
@@ -485,8 +486,18 @@ def BuildPackageFromSource(system,
 
 def PrepareBuildDependenciesCmd(system, wheel, build_dir, deps_dir, deps):
   local_wheels = []
+  # For build requirements, we should install wheels corresponding to the host
+  # environment. Currently this only matters on Linux, where we cross-compile.
+  if sys.platform.startswith('linux'):
+    host_plat = build_platform.ALL.get({
+        'cp27': 'manyinux-x64',
+        'cp38': 'manylinux-x64-py3',
+        'cp39': 'manylinux-x64-py3.9',
+    }[wheel.plat.wheel_abi[:4]])
+  else:
+    host_plat = wheel.plat
   for dep in deps.local:
-    dep_wheel = dep.wheel(system, wheel.plat)
+    dep_wheel = dep.wheel(system, host_plat)
     dep.build(dep_wheel, system, rebuild=True)
     dep_path = dep_wheel.path(system)
     dep_path = util.copy_to(dep_path, deps_dir)
