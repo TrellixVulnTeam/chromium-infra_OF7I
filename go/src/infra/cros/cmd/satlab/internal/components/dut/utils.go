@@ -15,6 +15,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+// Flagmap is a map from the name of a flag to its value(s).
+type flagmap = map[string][]string
+
 // GetDockerHostBoxIdentifier gets the identifier for the satlab DHB, either from the command line, or
 // by running a command inside the current container if no flag was given on the command line.
 func getDockerHostBoxIdentifier(common site.CommonFlags) (string, error) {

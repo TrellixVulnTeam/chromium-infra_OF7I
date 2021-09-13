@@ -17,9 +17,6 @@ import (
 	"infra/libs/swarming"
 )
 
-// Flagmap is a map from the name of a flag to its value(s).
-type flagmap = map[string][]string
-
 // MakeShivasFlags takes an add DUT command and serializes its flags in such
 // a way that they will parse to same values.
 func makeAddShivasFlags(c *addDUT) flagmap {
