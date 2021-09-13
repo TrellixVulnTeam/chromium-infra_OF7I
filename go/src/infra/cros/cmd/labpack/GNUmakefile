@@ -3,7 +3,7 @@ labpack:
 	go build -o labpack -- .
 
 .PHONY: test
-test: check-environment
+test:
 	go test ./...
 
 .PHONY: check
