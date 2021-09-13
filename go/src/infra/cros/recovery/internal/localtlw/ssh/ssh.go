@@ -17,14 +17,21 @@ import (
 	"infra/libs/sshpool"
 )
 
-const defaultSSHUser = "root"
+const (
+	defaultSSHUser = "root"
+
+	// Some tasks such as running badblocks for USB-Drive audit can
+	// take quite long (2-3 hours). We need to set timeout limit to
+	// accommodate such tasks.
+	defaultSSHTimeout = time.Hour * 3
+)
 
 // getSSHConfig provides default config for SSH.
 func SSHConfig() *ssh.ClientConfig {
 	return &ssh.ClientConfig{
 		User:            defaultSSHUser,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         time.Hour,
+		Timeout:         defaultSSHTimeout,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(SSHSigner)},
 	}
 }

@@ -153,7 +153,8 @@ const defaultConfig = `
 				"cros_ssh",
 				"servo_host_servod_restart",
 				"servod_echo",
-				"servo_detect_usbkey"
+				"servo_detect_usbkey",
+				"servo_audit_usbkey"
 			],
 			"actions": {
 				"servo_host_servod_restart":{
@@ -162,8 +163,15 @@ const defaultConfig = `
 					}
 				},
 				"servo_detect_usbkey": {
-					"docs": ["Will detect the path to USB Drive on servo-host."],
-					"allow_fail_after_recovery": true
+					"docs": ["Will detect the path to USB Drive on servo-host."]
+				},
+				"servo_audit_usbkey": {
+					"docs": ["This action will detect whether or not the USB drive is in working condition."],
+					"allow_fail_after_recovery": true,
+					"dependencies" : ["servo_detect_usbkey"],
+					"exec_timeout": {
+						"seconds":7300
+					}
 				}
 			},
 			"allow_fail": true

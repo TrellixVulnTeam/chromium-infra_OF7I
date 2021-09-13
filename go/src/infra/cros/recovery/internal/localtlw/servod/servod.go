@@ -28,6 +28,12 @@ const (
 	startServodTimeout = 60
 	// Waiting 3 seconds when stopping servod daemon.
 	stopServodTimeout = 3
+	// GPIO control for USB device on servo-host
+	ImageUsbkeyDev = "image_usbkey_dev"
+	// GPIO control for USB multiplexer
+	ImageUsbkeyDirection = "image_usbkey_direction"
+	// GPIO control value that causes USB drive to be attached to DUT.
+	ImageUsbkeyTowardsDUT = "dut_sees_usbkey"
 )
 
 // status of servod daemon on servo-host.

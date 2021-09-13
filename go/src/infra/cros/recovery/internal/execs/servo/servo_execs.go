@@ -7,12 +7,25 @@ package servo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/execs/cros"
+	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
+)
+
+const (
+	// Time between an usb disk plugged-in and detected in the system.
+	usbDetectionDelay = 5
+
+	// The prefix of the badblocks command for verifying USB
+	// drives. The USB-drive path will be attached to it when
+	// badblocks needs to be executed on a drive.
+	badBlocksCommandPrefix = "badblocks -w -e 100 -b 4096 -t random %s"
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -73,9 +86,85 @@ func servoDetectUSBKey(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	return nil
 }
 
+func runCheckOnHost(ctx context.Context, args *execs.RunArgs, resourceName string, usbPath string) (tlw.HardwareState, error) {
+	command := fmt.Sprintf(badBlocksCommandPrefix, usbPath)
+	log.Debug(ctx, "Run Check On Host: Executing %q", command)
+	// The execution timeout for this audit job is configured at the
+	// level of the action. So the execution of this command will be
+	// bound by that.
+	r := args.Access.Run(ctx, resourceName, command)
+	switch r.ExitCode {
+	case 0:
+		// TODO(vkjoshi@): recheck if this is required, or does stderr need to be examined.
+		if len(strings.TrimSpace(r.Stdout)) > 0 {
+			return tlw.HardwareStateNeedReplacement, nil
+		}
+		return tlw.HardwareStateNormal, nil
+	case 124: // timeout
+		return "", errors.Reason("run check on host: could not successfully complete check, error %q", r.Stderr).Err()
+	case 127: // badblocks
+		return "", errors.Reason("run check on host: could not successfully complete check, error %q", r.Stderr).Err()
+	default:
+		return tlw.HardwareStateNeedReplacement, nil
+	}
+}
+
+func servoAuditUSBKey(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	dutUsb := ""
+	if cros.IsSSHable(ctx, args, args.DUT.Name) == nil {
+		log.Debug(ctx, "Servo Audit USB Key: %q is reachable through SSH", args.DUT.Name)
+		var err error = nil
+		dutUsb, err = GetUSBDrivePathOnDut(ctx, args)
+		if err != nil {
+			log.Debug(ctx, "Servo Audit USB Key: could not determine USB-drive path on DUT: %q, error: %q. This is not critical. We will continue the audit by setting the path to empty string.", args.DUT.Name, err)
+		}
+	} else {
+		log.Debug(ctx, "Servo Audit USB Key: continue audit from servo-host because DUT %q is not reachable through SSH", args.DUT.Name)
+	}
+	if dutUsb != "" {
+		// DUT is reachable, and we found a USB drive on it.
+		state, err := runCheckOnHost(ctx, args, args.DUT.Name, dutUsb)
+		if err != nil {
+			return errors.Reason("servo audit usb key: could not check DUT usb path %q", dutUsb).Err()
+		}
+		args.DUT.ServoHost.UsbkeyState = state
+	} else {
+		// Either the DUT is not reachable, or it does not have a USB
+		// drive attached to it.
+
+		// This statement obtains the path of usb drive on
+		// servo-host. It also switches the USB drive on servo
+		// multiplexer to servo-host.
+		result, err := ServodCallGet(ctx, args, servod.ImageUsbkeyDev)
+		if err != nil {
+			// A dependency has already checked that the Servo USB is
+			// available. But here we again check that no errors
+			// occurred while determining USB path, in case something
+			// changed between execution of dependency, and this
+			// operation.
+			args.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
+			return errors.Annotate(err, "servo audit usb key: could not obtain usb path on servo: %q", err).Err()
+		}
+		servoUsbPath := strings.TrimSpace(result.Value.GetString_())
+		if servoUsbPath == "" {
+			args.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
+			log.Debug(ctx, "Servo Audit USB Key: cannot continue audit because the path to USB-Drive is empty")
+			return errors.Reason("servo audit usb key: the path to usb drive is empty").Err()
+		}
+		state, err := runCheckOnHost(ctx, args, args.DUT.ServoHost.Name, servoUsbPath)
+		if err != nil {
+			log.Debug(ctx, "Servo Audit USB Key: error %q during audit of USB-Drive", err)
+			return errors.Annotate(err, "servo audit usb key: could not check usb path %q on servo-host %q", servoUsbPath, args.DUT.ServoHost.Name).Err()
+		}
+		args.DUT.ServoHost.UsbkeyState = state
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
 	execs.Register("servo_host_servod_restart", servodRestartActionExec)
 	execs.Register("servo_detect_usbkey", servoDetectUSBKey)
+	execs.Register("servo_audit_usbkey", servoAuditUSBKey)
 }
