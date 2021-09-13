@@ -24,6 +24,8 @@ message LabpackInput {
   string inventory_service = 6;
   // Do not use stepper during execution.
   bool no_stepper = 7;
+  // Do not use metrics during execution.
+  bool no_metrics = 9;
   // Custom configuration.
   string configuration = 8;
 };
