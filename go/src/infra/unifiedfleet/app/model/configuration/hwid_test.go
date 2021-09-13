@@ -32,6 +32,14 @@ func mockHwidData() *ufspb.DutLabel {
 				Name:  "test-label-2",
 				Value: "test-value-2",
 			},
+			{
+				Name:  "Sku",
+				Value: "test-sku",
+			},
+			{
+				Name:  "variant",
+				Value: "test-variant",
+			},
 		},
 	}
 }
@@ -130,6 +138,36 @@ func TestGetHwidData(t *testing.T) {
 		}
 		if c := status.Code(err); c != codes.NotFound {
 			t.Errorf("Unexpected error when calling GetHwidData: %s", err)
+		}
+	})
+}
+
+func TestParseHwidDataV1(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	id := "test-hwid"
+	_, err := UpdateHwidData(ctx, mockHwidData(), id)
+	if err != nil {
+		t.Fatalf("UpdateHwidData failed: %s", err)
+	}
+
+	t.Run("parse hwid data from HwidEntity", func(t *testing.T) {
+		want := &ufspb.HwidData{
+			Sku:     "test-sku",
+			Variant: "test-variant",
+		}
+		ent, err := GetHwidData(ctx, id)
+		if err != nil {
+			t.Fatalf("GetHwidData failed: %s", err)
+		}
+		got, err := ParseHwidDataV1(ent)
+		if err != nil {
+			t.Fatalf("ParseHwidDataV1 failed: %s", err)
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("ParseHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)
 		}
 	})
 }

@@ -7,6 +7,7 @@ package configuration
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -74,4 +75,27 @@ func GetHwidData(ctx context.Context, hwid string) (*HwidDataEntity, error) {
 		return nil, err
 	}
 	return entity, nil
+}
+
+func ParseHwidDataV1(ent *HwidDataEntity) (*ufspb.HwidData, error) {
+	entData, err := ent.GetProto()
+	if err != nil {
+		return nil, err
+	}
+
+	hwidData, ok := entData.(*ufspb.DutLabel)
+	if !ok {
+		return nil, errors.Reason("Failed to cast data to DutLabel: %s", entData).Err()
+	}
+
+	var data ufspb.HwidData
+	for _, l := range hwidData.GetLabels() {
+		switch strings.ToLower(l.GetName()) {
+		case "sku":
+			data.Sku = l.GetValue()
+		case "variant":
+			data.Variant = l.GetValue()
+		}
+	}
+	return &data, nil
 }
