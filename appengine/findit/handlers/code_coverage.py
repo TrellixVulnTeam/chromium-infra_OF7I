@@ -8,6 +8,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/appengine/find
 """
 
 import collections
+import datetime
 import json
 import logging
 import re
@@ -20,6 +21,7 @@ import cloudstorage
 from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.runtime import apiproxy_errors
 from google.protobuf.field_mask_pb2 import FieldMask
 from google.protobuf import json_format
 
@@ -1702,17 +1704,20 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
           config=ndb.ContextOptions(use_cache=False))
       for x in results:
         if x.gerrit_hashtag:
-          yield x.key.id()
+          yield x.key.id(), x.gerrit_hashtag
 
   def HandleGet(self):
     # Spawn a sub task for each active feature
-    for modifier_id in self._GetActiveFeatureModifers():
-      url = '/coverage/task/feature-coverage?modifier_id=%d' % (modifier_id)
+    for modifier_id, gerrit_hashtag in self._GetActiveFeatureModifers():
+      logging.info('%d...%s' % (modifier_id, gerrit_hashtag))
+      payload = 'modifier_id=%d' % (modifier_id)
+      task_id = datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
       taskqueue.add(
-          method='GET',
+          method='PULL',
+          name='%s-%s' % (gerrit_hashtag, task_id),
           queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
-          target=constants.CODE_COVERAGE_BACKEND,
-          url=url)
+          payload=payload)
+      logging.info('task_added with payload %s' % payload)
     return {'return_code': 200}
 
 
@@ -1720,7 +1725,21 @@ class ExportFeatureCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    feature_coverage.ExportFeatureCoverage(int(self.request.get('modifier_id')))
+    queue = taskqueue.Queue(constants.FEATURE_COVERAGE_METRICS_QUEUE)
+    tasks = []
+    while True:
+      try:
+        # Wait for a minute to lease 3 tasks for an hour.
+        tasks = queue.lease_tasks_by_tag(3600, 3, deadline=60)
+      except (taskqueue.TransientError,
+              apiproxy_errors.DeadlineExceededError) as e:
+        logging.exception(e)
+      if not tasks:
+        break
+      for task in tasks:
+        feature_coverage.ExportFeatureCoverage(
+            int(task.extract_params()['modifier_id']))
+        queue.delete_tasks(task)
     return {'return_code': 200}
 
 

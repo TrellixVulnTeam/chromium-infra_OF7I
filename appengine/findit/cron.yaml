@@ -78,3 +78,8 @@ cron:
   timezone: America/Los_Angeles
   retry_parameters:
     job_retry_limit: 2
+
+- description: Query and export feature coverage metrics to bigquery.
+  url: /coverage/cron/feature-coverage
+  schedule: every 10 minutes
+  timezone: America/Los_Angeles 

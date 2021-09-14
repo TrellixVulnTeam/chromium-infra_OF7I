@@ -9,7 +9,7 @@ import mock
 import webapp2
 
 from google.appengine.ext import ndb
-
+from google.appengine.api import taskqueue
 
 from gae_libs.handlers.base_handler import BaseHandler
 from gae_libs import token
@@ -1606,7 +1606,7 @@ class ExportAllFeatureCoverageMetricsTest(WaterfallTestCase):
 
 class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/task/feature-coverage.*',
+      ('/coverage/cron/feature-coverage',
        code_coverage.ExportFeatureCoverageMetrics),
   ],
                                        debug=True)
@@ -1614,11 +1614,15 @@ class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   @mock.patch.object(feature_coverage, 'ExportFeatureCoverage')
   def testFeatureCoverageFilesExported(self, mock_detect, _):
-    response = self.test_app.get(
-        '/coverage/task/feature-coverage?modifier_id=123', status=200)
-    self.assertEqual(1, mock_detect.call_count)
+    taskqueue.Task(
+        method='PULL', name='test',
+        payload='modifier_id=123').add('feature-coverage-metrics-queue')
+    response = self.test_app.get('/coverage/cron/feature-coverage')
     self.assertEqual(200, response.status_int)
-
+    tasks = self.taskqueue_stub.get_filtered_tasks(
+        queue_names='feature-coverage-metrics-queue')
+    self.assertEqual(1, mock_detect.call_count)
+    self.assertEqual(0, len(tasks))
 
 
 class UpdatePostsubmitReportTest(WaterfallTestCase):
