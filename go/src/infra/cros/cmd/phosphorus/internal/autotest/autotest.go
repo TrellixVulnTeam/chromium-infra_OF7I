@@ -31,6 +31,7 @@ type AutoservArgs struct {
 	ExecutionTag       string
 	HostInfoSubDir     string
 	Hosts              []string
+	ImageStorageServer string
 	JobLabels          []string
 	JobName            string
 	JobOwner           string
@@ -84,6 +85,9 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if len(cmd.Hosts) != 0 {
 		args = append(args, "-m", strings.Join(cmd.Hosts, ","))
+	}
+	if cmd.ImageStorageServer != "" {
+		args = append(args, "--image-storage-server", cmd.ImageStorageServer)
 	}
 	if len(cmd.JobLabels) != 0 {
 		args = append(args, "--job-labels", strings.Join(cmd.JobLabels, ","))
