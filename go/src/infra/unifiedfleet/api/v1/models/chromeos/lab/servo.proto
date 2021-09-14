@@ -8,7 +8,7 @@ package unifiedfleet.api.v1.models.chromeos.lab;
 
 option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 
-// NEXT TAG: 10
+// NEXT TAG: 12
 message Servo {
   reserved 6;
   // Servo-specific configs
@@ -22,6 +22,7 @@ message Servo {
   // Based on http://go/fleet-servo-topology
   ServoTopology servo_topology = 8;
   ServoFwChannel servo_fw_channel = 9;
+  repeated string servo_component = 11;
   // b/190538710 optional docker container name if servod is running in docker
   string docker_container_name = 10;
 }
