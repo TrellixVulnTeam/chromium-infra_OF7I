@@ -11,6 +11,6 @@ regenerate the configs. Presubmit checks will also remind you to do so.
 Currently active version can be checked at
 https://luci-config.appspot.com/#/projects/infra .
 
-[lucicfg]: https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/master/lucicfg/doc/README.md
+[lucicfg]: https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/lucicfg/doc/README.md
 [main.star]: ./main.star
 [dev.star]: ./dev.star

@@ -37,6 +37,7 @@ luci.console_view(
     name = "codesearch",
     repo = "https://chromium.googlesource.com/chromium/src",
     include_experimental_builds = True,
+    refs = ["refs/heads/main"],
 )
 
 def builder(

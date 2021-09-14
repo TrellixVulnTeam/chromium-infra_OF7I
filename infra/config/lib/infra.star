@@ -35,6 +35,7 @@ def console_view(name, title, repo = None):
         title = title,
         repo = repo or infra.REPO_URL,
         header = "//data/infra_console_header.textpb",
+        refs = ["refs/heads/main"],
     )
 
 def cq_group(name, repo = None, tree_status_host = None):
