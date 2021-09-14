@@ -20,13 +20,16 @@ import (
 	"path/filepath"
 
 	"github.com/golang/protobuf/jsonpb"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/build"
 
 	"infra/cros/cmd/labpack/site"
 	steps "infra/cros/cmd/labpack/steps"
 	"infra/cros/cmd/labpack/tlw"
+	kclient "infra/cros/karte/client"
 	"infra/cros/recovery"
+	"infra/cros/recovery/karte"
 	"infra/cros/recovery/logger"
 )
 
@@ -85,6 +88,15 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if !in.GetNoStepper() {
 		sh = tlw.NewStepHandler(lg)
 	}
+	var metrics logger.Metrics
+	if !in.GetNoMetrics() {
+		var err error
+		metrics, err = karte.NewMetrics(ctx, kclient.DevConfig(auth.Options{}))
+		if err != nil {
+			// TODO(gregorynisbet): Make this error end the current function.
+			lg.Error("internal run: failed to instantiate karte client: %s", err)
+		}
+	}
 	cr, err := getConfiguration(in.GetConfiguration(), lg)
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
@@ -95,6 +107,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		Access:                access,
 		Logger:                lg,
 		StepHandler:           sh,
+		Metrics:               metrics,
 		EnableRecovery:        in.GetEnableRecovery(),
 		EnableUpdateInventory: in.GetUpdateInventory(),
 		ConfigReader:          cr,

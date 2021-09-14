@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -22,7 +23,7 @@ import (
 	"infra/cros/recovery/tlw"
 )
 
-// Run runs the recovery tasks against the provide unit.
+// Run runs the recovery tasks against the provided unit.
 // Process includes:
 //   - Verification of input data.
 //   - Set logger.
@@ -51,13 +52,32 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
-	// Keep track of fail to run resources.
+	// Keep track of failure to run resources.
 	var errs []error
 	lastResourceIndex := len(resources) - 1
 	if args.StepHandler != nil {
 		var step logger.Step
 		step, ctx = args.StepHandler.StartStep(ctx, fmt.Sprintf("Start %s for %s", args.TaskName, args.UnitName))
 		defer step.Close(ctx, err)
+	}
+	if args.Metrics != nil {
+		start := time.Now()
+		// TODO(gregorynisbet): Create a helper function to make this more compact.
+		defer (func() {
+			stop := time.Now()
+			_, err := args.Metrics.Create(
+				ctx,
+				&logger.Action{
+					ActionKind: "run_recovery",
+					StartTime:  start,
+					StopTime:   stop,
+					// TODO(gregorynisbet): add status and FailReason.
+				},
+			)
+			if err != nil {
+				args.Logger.Error("Metrics error during teardown: %s", err)
+			}
+		})()
 	}
 	for ir, resource := range resources {
 		log.Info(ctx, "Resource %q: started", resource)
@@ -330,6 +350,8 @@ type RunArgs struct {
 	Logger logger.Logger
 	// StepHandler provides option to report steps.
 	StepHandler logger.StepHandler
+	// Metrics is the metrics sink and event search API.
+	Metrics logger.Metrics
 	// TaskName used to drive the recovery process.
 	TaskName TaskName
 	// EnableRecovery tells if recovery actions are enabled.
