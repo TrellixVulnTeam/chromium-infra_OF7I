@@ -44,6 +44,7 @@ For now only running in testing mode.`,
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		c.Flags.BoolVar(&c.updateInventory, "update-inv", false, "Update UFS at the end execution.")
+		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Trigger deploy task.")
 		return c
 	},
 }
@@ -57,6 +58,7 @@ type localRecoveryRun struct {
 	configFile      string
 	onlyVerify      bool
 	updateInventory bool
+	deployTask      bool
 }
 
 // Run initiates execution of local recovery.
@@ -83,6 +85,11 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	if c.Verbose() {
 		// The logger level before create gologger.
 		ctx = logging.SetLevel(ctx, logging.Debug)
+	}
+
+	tn := recovery.TaskNameRecovery
+	if c.deployTask {
+		tn = recovery.TaskNameDeploy
 	}
 	ctx, logger := createLogger(ctx)
 	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)
@@ -115,6 +122,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		Logger:                logger,
 		EnableRecovery:        !c.onlyVerify,
 		EnableUpdateInventory: c.updateInventory,
+		TaskName:              tn,
 	}
 	if c.configFile != "" {
 		in.ConfigReader, err = os.Open(c.configFile)
