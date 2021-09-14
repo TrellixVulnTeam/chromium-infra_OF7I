@@ -38,6 +38,12 @@ You may also be able to use an arbitrary cloud project (e.g. 'dev') if you
 setup Cloud Datastore emulator and setup a config for that project under
 configs.
 
+You can run the UI tests by:
+```
+cd frontend/ui
+npx cypress run
+```
+
 ## Deployment
 
 ### Developer Testing {#test-deployment}
