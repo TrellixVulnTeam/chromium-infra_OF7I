@@ -104,20 +104,6 @@ func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	return nil
 }
 
-// matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
-func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "vpd -g serial_number")
-	if r.ExitCode != 0 {
-		return errors.Reason("match serial number to inventory: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
-	}
-	expectedSerialNumber := args.DUT.SerialNumber
-	actualSerialNumber := strings.TrimSpace(r.Stdout)
-	if actualSerialNumber != expectedSerialNumber {
-		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, expectedSerialNumber).Err()
-	}
-	return nil
-}
-
 // hasKernelBootPriorityChangeExec checks if kernel priority changed and waiting for reboot.
 func hasKernelBootPriorityChangeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	yes, err := IsKernelPriorityChanged(ctx, args.DUT.Name, args.Access)
@@ -152,7 +138,6 @@ func init() {
 	execs.Register("cros_match_stable_os_version_to_device", matchStableOSVersionToDeviceExec)
 	execs.Register("cros_is_default_boot_from_disk", isDefaultBootFromDiskExec)
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
-	execs.Register("cros_match_serial_number_inventory", matchSerialNumberToInvExec)
 	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
 	execs.Register("cros_run_shell_command", runShellCommandExec)
 }
