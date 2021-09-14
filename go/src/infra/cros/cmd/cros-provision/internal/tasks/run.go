@@ -165,7 +165,6 @@ func createDockerImage(name string) *api.DutInput_DockerImage {
 	parts := strings.Split(name, ":")
 	r := &api.DutInput_DockerImage{
 		RepositoryPath: parts[0],
-		Tag:            "latest",
 	}
 	if len(parts) > 1 {
 		r.Tag = parts[1]
