@@ -104,20 +104,6 @@ func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	return nil
 }
 
-// matchHWIDToInvExec matches HWID from the resource to value in the Inventory.
-func matchHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "crossystem hwid")
-	if r.ExitCode != 0 {
-		return errors.Reason("match HWID to inventory: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
-	}
-	expectedHWID := args.DUT.Hwid
-	actualHWID := strings.TrimSpace(r.Stdout)
-	if actualHWID != expectedHWID {
-		return errors.Reason("match HWID to inventory: failed, expected: %q, but got %q", expectedHWID, actualHWID).Err()
-	}
-	return nil
-}
-
 // matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
 func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.Access.Run(ctx, args.ResourceName, "vpd -g serial_number")
@@ -166,7 +152,6 @@ func init() {
 	execs.Register("cros_match_stable_os_version_to_device", matchStableOSVersionToDeviceExec)
 	execs.Register("cros_is_default_boot_from_disk", isDefaultBootFromDiskExec)
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
-	execs.Register("cros_match_hwid_to_inventory", matchHWIDToInvExec)
 	execs.Register("cros_match_serial_number_inventory", matchSerialNumberToInvExec)
 	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
 	execs.Register("cros_run_shell_command", runShellCommandExec)
