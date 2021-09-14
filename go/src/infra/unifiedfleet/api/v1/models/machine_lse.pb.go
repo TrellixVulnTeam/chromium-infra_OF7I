@@ -934,7 +934,7 @@ func (x *LabMeta) GetServoTopology() *lab.ServoTopology {
 	return nil
 }
 
-// NEXT TAG: 9
+// NEXT TAG: 10
 type ChromeOSDeviceData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
