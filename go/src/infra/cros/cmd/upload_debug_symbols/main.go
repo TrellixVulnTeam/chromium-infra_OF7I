@@ -75,10 +75,10 @@ func main() {
 	opts.Scopes = []string{
 		gerrit.OAuthScope,
 		auth.OAuthScopeEmail,
-		"https://www.googleapis.com/auth/datastore"}
+		"https://www.googleapis.com/auth/devstorage.full_control"}
 	s := &uploadDebugSymbolsApplication{
 		getApplication(opts),
-		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
-		log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)}
+		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile),
+		log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)}
 	os.Exit(subcommands.Run(s, nil))
 }

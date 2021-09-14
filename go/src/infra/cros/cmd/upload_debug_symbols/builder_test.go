@@ -1,15 +1,18 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build !windows
+// +build !windows
 
 package main
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"infra/cros/internal/gs"
 	"io"
+	"io/fs"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,7 +45,7 @@ func TestDownloadTgz(t *testing.T) {
 
 	tarballDir, err := ioutil.TempDir("", "tarball")
 	if err != nil {
-		log.Fatal(err)
+		t.Error("error: " + err.Error())
 	}
 
 	tgzPath := filepath.Join(tarballDir, "debug.tgz")
@@ -124,18 +127,92 @@ func TestUnzipTgz(t *testing.T) {
 }
 
 // TestUnpackTarball confirms that we can properly unpack a given tarball and
-// return filepaths to it's contents.
-// TODO(b/197010274): implement response checking.
+// return filepaths to it's contents. Basic testing pulled from https://pkg.go.dev/archive/tar#pkg-overview.
 func TestUnpackTarball(t *testing.T) {
-	symbolPaths, err := unpackTarball("./path", "./path")
+	// Create working directory and tarball.
+	testDir, err := ioutil.TempDir("", "tarballTest")
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	debugSymbolsDir, err := ioutil.TempDir(testDir, "symbols")
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	defer os.RemoveAll(testDir)
 
+	// Generate file information.
+	tarPath := filepath.Join(testDir, "test.tar")
+	inputFile, err := os.Create(tarPath)
 	if err != nil {
 		t.Error("error: " + err.Error())
 	}
 
-	if len(symbolPaths) <= 0 || symbolPaths == nil {
+	tarWriter := tar.NewWriter(inputFile)
+	// Struct for file info
+	type file struct {
+		name, body string
+		modeType   fs.FileMode
+	}
+
+	// Create an array holding some basic info to build headers. Contains regular files and directories.
+	files := []file{
+		{"test1.so.sym", "debug symbols", 0600},
+		{"test2.so.sym", "debug symbols", 0600},
+		{"b/c", "", fs.ModeDir},
+		{"test3.so.sym", "debug symbols", 0600},
+		{"a/b/c/d/", "", fs.ModeDir},
+		{"test4.so.sym", "debug symbols", 0600},
+	}
+
+	// List of files we expect to see return after the test call.
+	expectedSymbolFiles := map[string]bool{
+		debugSymbolsDir + "/test1.so.sym": false,
+		debugSymbolsDir + "/test2.so.sym": false,
+		debugSymbolsDir + "/test3.so.sym": false,
+		debugSymbolsDir + "/test4.so.sym": false,
+	}
+
+	// Write the mock files to the tarball.
+	for _, file := range files {
+		hdr := &tar.Header{
+			Name: file.name,
+			Mode: int64(file.modeType),
+			Size: int64(len(file.body)),
+		}
+		if err := tarWriter.WriteHeader(hdr); err != nil {
+			t.Error("error: " + err.Error())
+		}
+
+		if file.modeType == 0600 {
+			if _, err := tarWriter.Write([]byte(file.body)); err != nil {
+				t.Error("error: " + err.Error())
+			}
+		}
+	}
+	if err := tarWriter.Close(); err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	// Call the Function
+	symbolPaths, err := unpackTarball(tarPath, debugSymbolsDir)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	if symbolPaths == nil || len(symbolPaths) <= 0 {
 		t.Error("error: Empty list of paths returned")
 	}
+	// Verify that we received a list pointing to all the expected files and no others.
+	for _, path := range symbolPaths {
+		if val, ok := expectedSymbolFiles[path]; ok {
+			if val {
+				t.Error("error: symbol file appeared multiple times in function return.")
+			}
+			expectedSymbolFiles[path] = true
+		} else {
+			t.Error("error: unexpected symbol file returned.")
+		}
+	}
+
 }
 
 // TestGenerateConfigs validates that proper task configs are generated when
