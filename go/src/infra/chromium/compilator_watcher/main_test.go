@@ -220,6 +220,130 @@ func TestLuciEXEMain(t *testing.T) {
 			})
 		})
 
+		Convey("updates last step even if step name is the same", func() {
+			compBuilds := []*buildbucket_pb.Build{
+				getBuildsWithSteps([]stepNameStatusPair{
+					{
+						stepName: "lookup GN args",
+						status:   buildbucket_pb.Status_SUCCESS,
+					},
+					{
+						stepName: "analyze",
+						status:   buildbucket_pb.Status_STARTED,
+					},
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
+				getBuildsWithSteps([]stepNameStatusPair{
+					{
+						stepName: "lookup GN args",
+						status:   buildbucket_pb.Status_SUCCESS,
+					},
+					{
+						stepName: "analyze",
+						status:   buildbucket_pb.Status_SUCCESS,
+					},
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_SUCCESS),
+			}
+			ctx = context.WithValue(
+				ctx,
+				bb.FakeBuildsContextKey,
+				compBuilds)
+			userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
+			err := luciEXEMain(ctx, input, userArgs, sender)
+			So(err, ShouldBeNil)
+			expectedSteps := getSteps([]stepNameStatusPair{
+				{
+					stepName: "lookup GN args",
+					status:   buildbucket_pb.Status_SUCCESS,
+				},
+				{
+					stepName: "analyze",
+					status:   buildbucket_pb.Status_SUCCESS,
+				},
+			})
+			So(input.GetSteps(), ShouldResembleProto, expectedSteps)
+		})
+
+		Convey("updates last step even if step name is the same but is hidden failing step", func() {
+			Convey("and no steps have been copied yet", func() {
+				compBuilds := []*buildbucket_pb.Build{
+					getBuildsWithSteps([]stepNameStatusPair{
+						{
+							stepName: "report builders",
+							status:   buildbucket_pb.Status_STARTED,
+						},
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
+					getBuildsWithSteps([]stepNameStatusPair{
+						{
+							stepName: "report builders",
+							status:   buildbucket_pb.Status_FAILURE,
+						},
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE),
+				}
+				ctx = context.WithValue(
+					ctx,
+					bb.FakeBuildsContextKey,
+					compBuilds)
+				userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
+				err := luciEXEMain(ctx, input, userArgs, sender)
+				So(err, ShouldBeNil)
+				expectedSteps := getSteps([]stepNameStatusPair{
+					{
+						stepName: "report builders",
+						status:   buildbucket_pb.Status_FAILURE,
+					},
+				})
+				So(input.GetSteps(), ShouldResembleProto, expectedSteps)
+			})
+			Convey("and previous copied steps exist", func() {
+				compBuilds := []*buildbucket_pb.Build{
+					getBuildsWithSteps([]stepNameStatusPair{
+						{
+							stepName: "builder cache",
+							status:   buildbucket_pb.Status_SUCCESS,
+						},
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
+					getBuildsWithSteps([]stepNameStatusPair{
+						{
+							stepName: "builder cache",
+							status:   buildbucket_pb.Status_SUCCESS,
+						},
+						{
+							stepName: "gclient config",
+							status:   buildbucket_pb.Status_STARTED,
+						},
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
+					getBuildsWithSteps([]stepNameStatusPair{
+						{
+							stepName: "builder cache",
+							status:   buildbucket_pb.Status_SUCCESS,
+						},
+						{
+							stepName: "gclient config",
+							status:   buildbucket_pb.Status_FAILURE,
+						},
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE),
+				}
+				ctx = context.WithValue(
+					ctx,
+					bb.FakeBuildsContextKey,
+					compBuilds)
+				userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
+				err := luciEXEMain(ctx, input, userArgs, sender)
+				So(err, ShouldBeNil)
+				expectedSteps := getSteps([]stepNameStatusPair{
+					{
+						stepName: "builder cache",
+						status:   buildbucket_pb.Status_SUCCESS,
+					},
+					{
+						stepName: "gclient config",
+						status:   buildbucket_pb.Status_FAILURE,
+					},
+				})
+				So(input.GetSteps(), ShouldResembleProto, expectedSteps)
+			})
+		})
+
 		Convey("copies correct Steps according to phase", func() {
 			compBuilds := []*buildbucket_pb.Build{
 				getBuildsWithSteps([]stepNameStatusPair{

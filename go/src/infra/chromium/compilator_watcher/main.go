@@ -177,6 +177,29 @@ func getStepsUntilSwarmingTriggerProps(
 	return filteredSteps
 }
 
+func updateLastStep(luciBuild *buildbucket_pb.Build, compBuild *buildbucket_pb.Build) {
+	// This function is called when the latest compBuild step name has not
+	// changed but the copied step in luciBuild should still be updated in
+	// case the step's status has changed.
+	compBuildSteps := compBuild.GetSteps()
+	latestCompStep := compBuildSteps[len(compBuildSteps)-1]
+
+	luciBuildSteps := luciBuild.GetSteps()
+
+	if !hideCompSteps.Has(latestCompStep.GetName()) {
+		luciBuildSteps[len(luciBuildSteps)-1] = latestCompStep
+	} else {
+		// Only display hidden step if somethings wrong with it
+		if protoutil.IsEnded(latestCompStep.Status) && latestCompStep.Status != buildbucket_pb.Status_SUCCESS {
+			if len(luciBuildSteps) == 0 || luciBuildSteps[len(luciBuildSteps)-1].GetName() != latestCompStep.GetName() {
+				luciBuild.Steps = append(luciBuild.Steps, latestCompStep)
+			} else {
+				luciBuildSteps[len(luciBuildSteps)-1] = latestCompStep
+			}
+		}
+	}
+}
+
 func getStepsAfterSwarmingTriggerProps(
 	compBuild *buildbucket_pb.Build) []*buildbucket_pb.Step {
 
@@ -230,10 +253,13 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 			return err
 		}
 
-		maybeLatestCompStepName := getLatestBuildStepName(compBuild)
-		if maybeLatestCompStepName != latestCompBuildStepName {
+		switch maybeLatestCompStepName := getLatestBuildStepName(compBuild); {
+		case maybeLatestCompStepName != latestCompBuildStepName:
 			latestCompBuildStepName = maybeLatestCompStepName
 			updateFilteredSteps(luciBuild, compBuild, parsedArgs.phase)
+			send()
+		case maybeLatestCompStepName != "":
+			updateLastStep(luciBuild, compBuild)
 			send()
 		}
 
