@@ -1,5 +1,18 @@
-Integration tests found in tests/ use dev_appserver.py
-but aren't allowed to actually load/test python code directly.
+This is an effort to migrate chromium status to Python3 running on GAE v2. The
+old source code (Python 2) is at https://source.corp.google.com/chromium_infra/appengine/chromium_status/.
+The bug tracking the effort is https://crbug.com/1121016.
 
-We should generalize the mechanism for writing dev_appserver.py tests
-and share that with other appengine_apps.
+The effort was put on hold due to deprioritisation. So far the following
+components have been migrated:
+
+- Updated the runtime environment to py3
+- Updated app.yaml to be py3-compatibile
+- Created main.py as the entry point
+- Enabled Cloud Logging
+- Migrated google.appengine.api.db to Cloud NDB
+- Migrate users service to OAuth2 + OpenID Connect
+
+There are still items that need to be done:
+- Authorization for service accounts (e.g. luci-notify, gerrit)
+- Memcache -> Cloud Memory store (if it turns out that memcache is necessary)
+- Test and deploy
