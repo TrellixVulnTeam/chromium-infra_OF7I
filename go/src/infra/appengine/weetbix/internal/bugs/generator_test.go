@@ -42,12 +42,24 @@ func TestPrepareNew(t *testing.T) {
 			c.ExampleFailureReason = bigquery.NullString{StringVal: reason, Valid: true}
 
 			result := ig.PrepareNew(c)
-			So(result.Parent, ShouldEqual, "chromium")
+			So(result.Parent, ShouldEqual, "projects/chromium")
 			So(result.Issue, ShouldResembleProto, &mpb.Issue{
 				Summary:  "Tests are failing: Expected equality of these values: \"Expected_Value\" my_expr.evaluate(123) Which is: \"Unexpected_Value\"",
 				Reporter: "reporter@chromium.org",
 				State:    mpb.IssueContentState_ACTIVE,
 				Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
+				FieldValues: []*mpb.FieldValue{
+					{
+						// Type field.
+						Field: "projects/chromium/fieldDefs/10",
+						Value: "Bug",
+					},
+					{
+						// Priority field.
+						Field: "projects/chromium/fieldDefs/11",
+						Value: "Pri-0",
+					},
+				},
 				Labels: []*mpb.Issue_LabelValue{{
 					Label: "Restrict-View-Google",
 				}, {
@@ -63,12 +75,24 @@ func TestPrepareNew(t *testing.T) {
 			c.ExampleFailureReason = bigquery.NullString{Valid: false}
 
 			result := ig.PrepareNew(c)
-			So(result.Parent, ShouldEqual, "chromium")
+			So(result.Parent, ShouldEqual, "projects/chromium")
 			So(result.Issue, ShouldResembleProto, &mpb.Issue{
 				Summary:  "Tests are failing: ninja://:blink_web_tests/media/my-suite/my-test.html",
 				Reporter: "reporter@chromium.org",
 				State:    mpb.IssueContentState_ACTIVE,
 				Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
+				FieldValues: []*mpb.FieldValue{
+					{
+						// Type field.
+						Field: "projects/chromium/fieldDefs/10",
+						Value: "Bug",
+					},
+					{
+						// Priority field.
+						Field: "projects/chromium/fieldDefs/11",
+						Value: "Pri-0",
+					},
+				},
 				Labels: []*mpb.Issue_LabelValue{{
 					Label: "Restrict-View-Google",
 				}, {

@@ -61,7 +61,7 @@ func TestGetIssue(t *testing.T) {
 		issue := newIssue(4)
 		issue.Name = ""
 		req := &mpb.MakeIssueRequest{
-			Parent:      "monorailproject",
+			Parent:      "projects/monorailproject",
 			Issue:       issue,
 			Description: "Description",
 			NotifyType:  mpb.NotifyType_NO_NOTIFICATION,

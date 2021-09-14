@@ -8,12 +8,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	mpb "infra/monorailv2/api/v3/api_proto"
 )
+
+// projectsRE matches valid monorail project references.
+var projectsRE = regexp.MustCompile(`projects/[a-z0-9\-_]+`)
 
 // FakeIssuesClient provides a fake implementation of a monorail client, for testing. See:
 // https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/api/v3/api_proto/issues.proto
@@ -94,7 +98,11 @@ func (f *FakeIssuesClient) MakeIssue(ctx context.Context, in *mpb.MakeIssueReque
 	saved := &mpb.Issue{}
 	proto.Merge(saved, in.Issue)
 
-	saved.Name = fmt.Sprintf("projects/%s/issues/%v", in.Parent, f.NextID)
+	if !projectsRE.MatchString(in.Parent) {
+		return nil, errors.New("parent project must be specified and match the form 'projects/{project_id}'")
+	}
+
+	saved.Name = fmt.Sprintf("%s/issues/%v", in.Parent, f.NextID)
 	f.NextID++
 	f.Issues = append(f.Issues, saved)
 

@@ -24,6 +24,15 @@ This bug has been automatically filed by Weetbix in response to a cluster of tes
 This bug has been automatically filed by Weetbix in response to a cluster of test failures.`
 )
 
+const (
+	// typeFieldName is the name of the type field in the chromium project.
+	// For other projects, the definitions vary.
+	typeFieldName = "projects/chromium/fieldDefs/10"
+	// priorityFieldName is the name of the priority field in the chromium
+	// project. for other projects, the definitions vary.
+	priorityFieldName = "projects/chromium/fieldDefs/11"
+)
+
 // whitespaceRE matches blocks of whitespace, including new lines tabs and
 // spaces.
 var whitespaceRE = regexp.MustCompile(`[ \t\n]+`)
@@ -52,12 +61,22 @@ func (i *IssueGenerator) PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueR
 		// Analysis clusters are currently hardcoded to one project: chromium.
 		// We also have no configuration mapping LUCI projects to the monorail
 		// projects.
-		Parent: "chromium",
+		Parent: "projects/chromium",
 		Issue: &mpb.Issue{
 			Summary:  fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
 			Reporter: i.reporter,
 			State:    mpb.IssueContentState_ACTIVE,
 			Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
+			FieldValues: []*mpb.FieldValue{
+				{
+					Field: typeFieldName,
+					Value: "Bug",
+				},
+				{
+					Field: priorityFieldName,
+					Value: bugPriority(cluster),
+				},
+			},
 			Labels: []*mpb.Issue_LabelValue{{
 				Label: "Restrict-View-Google",
 			}, {
@@ -79,6 +98,20 @@ func bugDescription(cluster *clustering.Cluster) string {
 	} else {
 		return fmt.Sprintf(TestNameTemplate, cluster.ClusterID)
 	}
+}
+
+// bugPriority returns the priority of the bug that should be used when
+// creating a new bug.
+func bugPriority(cluster *clustering.Cluster) string {
+	switch {
+	case cluster.UnexpectedFailures1d > 1000:
+		return "Pri-0"
+	case cluster.UnexpectedFailures1d > 500:
+		return "Pri-1"
+	case cluster.UnexpectedFailures1d > 100:
+		return "Pri-2"
+	}
+	return "Pri-3"
 }
 
 // sanitiseTitle removes tabs and line breaks from input, replacing them with

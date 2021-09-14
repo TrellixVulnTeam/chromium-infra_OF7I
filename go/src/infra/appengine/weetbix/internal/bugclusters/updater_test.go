@@ -54,7 +54,7 @@ func TestRun(t *testing.T) {
 			// No bug clusters.
 			bugClusters, err := ReadActive(span.Single(ctx))
 			So(err, ShouldBeNil)
-			So(bugClusters, ShouldBeNil)
+			So(bugClusters, ShouldResemble, []*BugCluster{})
 
 			// No monorail issues.
 			So(f.Issues, ShouldBeNil)

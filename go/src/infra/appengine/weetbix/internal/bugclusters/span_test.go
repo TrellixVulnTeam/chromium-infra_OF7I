@@ -26,7 +26,7 @@ func TestRead(t *testing.T) {
 
 			clusters, err := ReadActive(span.Single(ctx))
 			So(err, ShouldBeNil)
-			So(clusters, ShouldBeNil)
+			So(clusters, ShouldResemble, []*BugCluster{})
 		})
 		Convey(`Multiple`, func() {
 			clustersToCreate := []*BugCluster{
