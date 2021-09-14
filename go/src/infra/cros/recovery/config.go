@@ -24,14 +24,14 @@ const defaultConfig = `
 				"has_dut_board_name",
 				"has_dut_model_name",
 				"cros_ssh",
-				"cros_match_stable_os_version_to_device",
+				"cros_is_on_stable_version",
 				"update_provision_info",
 				"booted_from_right_kernel",
 				"reboot_by_request",
 				"dut_state_ready"
 			],
 			"actions": {
-				"cros_match_stable_os_version_to_device":{
+				"cros_is_on_stable_version":{
 					"conditions": [
 						"has_stable_version_cros_image"
 					],
@@ -46,7 +46,10 @@ const defaultConfig = `
 					"conditions": [
 						"has_stable_version_cros_image"
 					],
-					"exec_name": "sample_fail"
+					"exec_name": "cros_provision",
+					"exec_extra_args":[
+						"no_reboot"
+					]
 				},
 				"update_provision_info":{
 					"exec_name": "cros_update_provision_os_version"
@@ -198,9 +201,48 @@ const defaultConfig = `
 		},
 		"labstation_deploy":{
 			"critical_actions": [
-				"sample_pass"
+				"dut_state_needs_deploy",
+				"check_deploy_info",
+				"cros_ssh",
+				"update_inv_info",
+				"install_stable_os",
+				"dut_state_ready"
 			],
-			"actions": {}
+			"actions": {
+				"check_deploy_info":{
+					"docs":[
+						"Check basic info for deployment."
+					],
+					"exec_name": "sample_pass",
+					"dependencies":[
+						"cros_ssh",
+						"has_dut_name",
+						"has_dut_board_name",
+						"has_dut_model_name"
+					]
+				},
+				"update_inv_info":{
+					"docs":[
+						"Updating device info in inventory."
+					],
+					"exec_name": "sample_pass",
+					"dependencies":[
+						"cros_ssh",
+						"cros_update_hwid_to_inventory",
+						"cros_update_serial_number_inventory"
+					]
+				},
+				"install_stable_os":{
+					"docs":[
+						"Install stable OS on the device."
+					],
+					"exec_name": "cros_provision",
+					"conditions": [
+						"has_stable_version_cros_image",
+						"cros_not_on_stable_version"
+					]
+				}
+			}
 		},
 		"cros_deploy":{
 			"critical_actions": [

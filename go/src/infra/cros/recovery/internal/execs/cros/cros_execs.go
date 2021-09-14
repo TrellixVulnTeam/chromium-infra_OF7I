@@ -62,8 +62,8 @@ func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) e
 	return nil
 }
 
-// matchStableOSVersionToDeviceExec matches stable CrOS version to the device OS.
-func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+// isOnStableVersionExec matches device OS version to stable CrOS version.
+func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	expected := args.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
 	fromDevice, err := releaseBuildPath(ctx, args.ResourceName, args)
@@ -74,6 +74,22 @@ func matchStableOSVersionToDeviceExec(ctx context.Context, args *execs.RunArgs, 
 	log.Debug(ctx, "Version on device: %s", fromDevice)
 	if fromDevice != expected {
 		return errors.Reason("match os version: mismatch, expected %q, found %q", expected, fromDevice).Err()
+	}
+	return nil
+}
+
+// notOnStableVersionExec verifies devices OS is not matches stable CrOS version.
+func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	expected := args.DUT.StableVersion.CrosImage
+	log.Debug(ctx, "Expected version: %s", expected)
+	fromDevice, err := releaseBuildPath(ctx, args.ResourceName, args)
+	if err != nil {
+		return errors.Annotate(err, "match os version").Err()
+	}
+	fromDevice = strings.TrimSuffix(fromDevice, "\n")
+	log.Debug(ctx, "Version on device: %s", fromDevice)
+	if fromDevice == expected {
+		return errors.Reason("match os version: matched, expected %q, found %q", expected, fromDevice).Err()
 	}
 	return nil
 }
@@ -135,7 +151,8 @@ func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
 	execs.Register("cros_reboot", rebootExec)
-	execs.Register("cros_match_stable_os_version_to_device", matchStableOSVersionToDeviceExec)
+	execs.Register("cros_is_on_stable_version", isOnStableVersionExec)
+	execs.Register("cros_not_on_stable_version", notOnStableVersionExec)
 	execs.Register("cros_is_default_boot_from_disk", isDefaultBootFromDiskExec)
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
 	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)

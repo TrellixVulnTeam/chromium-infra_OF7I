@@ -15,7 +15,7 @@ func TestDefaultConfig(t *testing.T) {
 	ctx := context.Background()
 	p, err := loader.LoadConfiguration(ctx, DefaultConfig())
 	if err != nil {
-		t.Errorf("default config is not working")
+		t.Errorf("expected to pass by failed with error: %s", err)
 	}
 	if p == nil {
 		t.Errorf("default config is empty")
