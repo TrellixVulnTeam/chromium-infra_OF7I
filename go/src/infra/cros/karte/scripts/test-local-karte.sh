@@ -20,9 +20,11 @@ prpc show localhost:8800 || die 'failed to discover services'
 msg 'END discover services'
 
 msg 'BEGIN describe karte'
+# Manually exercise the describe endpoint over HTTP.
 (curl -X POST 'http://localhost:8800/prpc/discovery.Discovery/Describe' --output - | cat -v)|| die 'failed to discover services'
 msg 'END describe karte'
 
+# Create the data associated with a CreateAction RPC call.
 cat 1>/tmp/karte.json <<EOF
 {
         "action": {
@@ -32,6 +34,7 @@ cat 1>/tmp/karte.json <<EOF
 EOF
 
 msg 'BEGIN create action'
+# Create an action using the CreateAction RPC endpoint.
 (curl -X POST \
         -H "Content-Type: application/json" \
         --data-binary @/tmp/karte.json \
