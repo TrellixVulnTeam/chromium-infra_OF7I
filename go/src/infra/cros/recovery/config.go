@@ -206,6 +206,9 @@ const defaultConfig = `
 				"cros_ssh",
 				"update_inv_info",
 				"install_stable_os",
+				"remove_reboot_requests",
+				"update_provisioned_info",
+				"validate_rpm",
 				"dut_state_ready"
 			],
 			"actions": {
@@ -240,6 +243,29 @@ const defaultConfig = `
 					"conditions": [
 						"has_stable_version_cros_image",
 						"cros_not_on_stable_version"
+					]
+				},
+				"remove_reboot_requests":{
+					"docs":[
+						"Remove reboot request flag files."
+					],
+					"exec_name":"cros_remove_reboot_request",
+					"allow_fail_after_recovery": true
+				},
+				"update_provisioned_info":{
+					"docs":[
+						"Read and update cros-provision label."
+					],
+					"exec_name": "cros_update_provision_os_version"
+				},
+				"validate_rpm":{
+					"docs":[
+						"Validate and update rpm_state.",
+						"The execs is not ready yet."
+					],
+					"exec_name": "sample_pass",
+					"conditions": [
+						"sample_pass"
 					]
 				}
 			}
