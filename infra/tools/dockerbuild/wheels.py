@@ -551,6 +551,36 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'pandas',
+            '1.3.2',
+            build_deps=BuildDependencies(
+                remote=[
+                    'setuptools>=51.0.0',
+                    'wheel',
+                    'Cython>=0.29.21,<3',
+                ],
+                local=[
+                    SourceOrPrebuilt(
+                        'numpy',
+                        '1.21.1',
+                        packaged=[
+                            'mac-arm64-cp38',
+                            'mac-x64-cp38',
+                        ],
+                        arch_map={
+                            'mac-arm64-cp38': _NUMPY_MAC_ARM,
+                            'mac-x64-cp38': _NUMPY_MAC_x64,
+                        },
+                    ),
+                ],
+            ),
+            packaged=[],
+            skip_plat=[
+                'linux-arm64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'psutil',
             '1.2.1',
             packaged=[],
