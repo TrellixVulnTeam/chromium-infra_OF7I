@@ -51,7 +51,7 @@ func TestGetBuild(t *testing.T) {
 		mockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(req),
 			gomock.Any()).DoAndReturn(resF)
 
-		bc, err := NewBuildbucketClient(ctx, "bbhost")
+		bc, err := NewClient(ctx, "bbhost")
 		So(err, ShouldBeNil)
 		b, err := bc.GetResultDBInfo(ctx, bId)
 		So(err, ShouldBeNil)

@@ -34,28 +34,28 @@ func newBuildsClient(ctx context.Context, host string) (bbpb.BuildsClient, error
 		}), nil
 }
 
-// BuildbucketClient is the client to communicate with Buildbucket.
+// Client is the client to communicate with Buildbucket.
 // It wraps a bbpb.BuildsClient.
-type BuildbucketClient struct {
+type Client struct {
 	client bbpb.BuildsClient
 }
 
-// NewBuildbucketClient creates a client to communicate with Buildbucket.
-func NewBuildbucketClient(ctx context.Context, host string) (*BuildbucketClient, error) {
+// NewClient creates a client to communicate with Buildbucket.
+func NewClient(ctx context.Context, host string) (*Client, error) {
 	client, err := newBuildsClient(ctx, host)
 	if err != nil {
 		return nil, err
 	}
 
-	return &BuildbucketClient{
+	return &Client{
 		client: client,
 	}, nil
 }
 
 // GetResultDBInfo returns bbpb.Build which contains information about the resultdb
 // invocation.
-func (b *BuildbucketClient) GetResultDBInfo(ctx context.Context, bId int64) (*bbpb.Build, error) {
-	return b.client.GetBuild(ctx, &bbpb.GetBuildRequest{
+func (c *Client) GetResultDBInfo(ctx context.Context, bId int64) (*bbpb.Build, error) {
+	return c.client.GetBuild(ctx, &bbpb.GetBuildRequest{
 		Id: bId,
 		Fields: &field_mask.FieldMask{
 			Paths: []string{"infra.resultdb"},
