@@ -197,6 +197,30 @@ func TestTestArgs(t *testing.T) {
 	})
 }
 
+func TestParamsTestArgs(t *testing.T) {
+	Convey("Given a request that specifies additional test args", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		setTestArgs(inv, "foo=bar baz=qux")
+		var params test_platform.Request_Params
+		setParamsTestArgs(&params, "waldo", "fred")
+		Convey("when generating a test runner request", func() {
+			g := Generator{
+				Invocation: inv,
+				Params:     &params,
+			}
+			got, err := g.testRunnerRequest(ctx)
+			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
+			Convey("the test args are propagated correctly.", func() {
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().TestArgs, ShouldEqual, "foo=bar baz=qux waldo=fred")
+			})
+		})
+	})
+}
+
 func TestTestLevelKeyval(t *testing.T) {
 	Convey("Given a keyval inside the test invocation", t, func() {
 		ctx := context.Background()
