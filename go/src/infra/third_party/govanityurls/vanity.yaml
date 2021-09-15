@@ -6,45 +6,45 @@ paths:
     vcs: git
     display: >
       https://chromium.googlesource.com/chromiumos/config
-      https://chromium.googlesource.com/chromiumos/config/+/master{/dir}
-      https://chromium.googlesource.com/chromiumos/config/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/chromiumos/config/+/main{/dir}
+      https://chromium.googlesource.com/chromiumos/config/+/main{/dir}/{file}#{line}
 
   /chromiumos/infra/go:
     repo: https://chromium.googlesource.com/chromiumos/infra/go
     vcs: git
     display: >
       https://chromium.googlesource.com/chromiumos/infra/go
-      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}
-      https://chromium.googlesource.com/chromiumos/infra/go/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/chromiumos/infra/go/+/main{/dir}
+      https://chromium.googlesource.com/chromiumos/infra/go/+/main{/dir}/{file}#{line}
 
   /chromiumos/infra/proto:
     repo: https://chromium.googlesource.com/chromiumos/infra/proto
     vcs: git
     display: >
       https://chromium.googlesource.com/chromiumos/infra/proto
-      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}
-      https://chromium.googlesource.com/chromiumos/infra/proto/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/chromiumos/infra/proto/+/main{/dir}
+      https://chromium.googlesource.com/chromiumos/infra/proto/+/main{/dir}/{file}#{line}
 
   /gae:
     repo: https://chromium.googlesource.com/infra/luci/gae
     vcs: git
     display: >
       https://chromium.googlesource.com/infra/luci/gae
-      https://chromium.googlesource.com/infra/luci/gae/+/master{/dir}
-      https://chromium.googlesource.com/infra/luci/gae/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/infra/luci/gae/+/main{/dir}
+      https://chromium.googlesource.com/infra/luci/gae/+/main{/dir}/{file}#{line}
 
   /goma/server:
     repo: https://chromium.googlesource.com/infra/goma/server
     vcs: git
     display: >
       https://chromium.googlesource.com/infra/goma/server
-      https://chromium.googlesource.com/infra/goma/server/+/master{/dir}
-      https://chromium.googlesource.com/infra/goma/server/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/infra/goma/server/+/main{/dir}
+      https://chromium.googlesource.com/infra/goma/server/+/main{/dir}/{file}#{line}
 
   /luci:
     repo: https://chromium.googlesource.com/infra/luci/luci-go
     vcs: git
     display: >
       https://chromium.googlesource.com/infra/luci/luci-go
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master{/dir}/{file}#{line}
+      https://chromium.googlesource.com/infra/luci/luci-go/+/main{/dir}
+      https://chromium.googlesource.com/infra/luci/luci-go/+/main{/dir}/{file}#{line}
