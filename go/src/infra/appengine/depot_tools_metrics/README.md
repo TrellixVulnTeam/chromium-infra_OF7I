@@ -23,10 +23,24 @@ This app exposes two endpoints:
   - 200 if the request succeeded.
 
 ## Deployment
-To deploy the app, run:
+### Updating the Schema
+To update the metrics table and schema, run:
 - `go generate schema/gen.go`
 - `bqschemaupdater -table cit-cli-metrics.metrics.depot_tools -message-dir
   schema -message schema.Metrics`
-- `gae.py upload`
 
+If these steps modified any files in the repo, add them to a change for review.
+By the end of this process, running these steps on a clean checkout of the main
+branch should not result in further updates to the schema.
 
+### Uploading a New Version
+Make sure you're on the main branch and that your working tree is clean. Run
+`gae.py upload`. If everything worked, you should see a new version with name
+`{ID}-{commit hash}` in the cit-cli-metrics dashboard.
+
+If `gae.py upload` doesn't work, try `gae.py upload --app-id cit-cli-metrics
+--app-dir .`
+
+### Migrating Traffic
+After uploading, navigate to the cit-cli-metrics dashboard and migrate traffic
+to your new version.
