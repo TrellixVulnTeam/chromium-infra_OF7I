@@ -22,7 +22,7 @@ import (
 // and that they are correctly handling the responses.
 // TODO(b/197010274): implement mocks and response checking.
 func TestUploadWorker(t *testing.T) {
-	mockChans := channels{make(chan taskConfig), make(chan taskConfig)}
+	mockChans := make(chan taskConfig)
 	err := uploadWorker(mockChans)
 
 	if err != nil {
@@ -217,27 +217,45 @@ func TestUnpackTarball(t *testing.T) {
 
 // TestGenerateConfigs validates that proper task configs are generated when
 // a list of filepaths are given.
-// TODO(b/197010274): implement response checking.
 func TestGenerateConfigs(t *testing.T) {
-	tasks, chans, err := generateConfigs([]string{"./path"})
-
-	if err != nil {
-		t.Error("error: " + err.Error())
+	// Create mocks and expected returns/d
+	mockPaths := []string{
+		"/test1.so.sym",
+		"/test2.so.sym",
+		"/test3.so.sym",
+		"/test4.so.sym",
+	}
+	expectedTasks := map[taskConfig]bool{
+		{"/test1.so.sym", 0, false, false}: false,
+		{"/test2.so.sym", 0, false, false}: false,
+		{"/test3.so.sym", 0, false, false}: false,
+		{"/test4.so.sym", 0, false, false}: false,
 	}
 
-	if tasks != nil {
+	tasks := generateConfigs(mockPaths, false, false)
+
+	// Check that returns aren't nil.
+	if tasks == nil {
 		t.Error("error: recieved tasks when nil was expected.")
 	}
 
-	if chans != nil {
-		t.Error("error: recieved pointer to a channels struct when nil was expected.")
+	// Verify that we received a list pointing to all the expected files and no others.
+	for _, task := range tasks {
+		if val, ok := expectedTasks[task]; ok {
+			if val {
+				t.Error("error: task appeared multiple times in function return.")
+			}
+			expectedTasks[task] = true
+		} else {
+			t.Error("error: unexpected task returned.")
+		}
 	}
 }
 
 // TestDoUpload affirms that the worker design and retry model are valid.
 // TODO(b/197010274): implement mocks and response checking.
 func TestDoUpload(t *testing.T) {
-	retcode, err := doUpload([]taskConfig{}, nil, 0, false, false)
+	retcode, err := doUpload([]taskConfig{}, 64, 0, false, false)
 
 	if err != nil {
 		t.Error("error: " + err.Error())

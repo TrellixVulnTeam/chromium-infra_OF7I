@@ -5,6 +5,7 @@
 // Package main implements a distributed worker model for uploading debug
 // symbols to the crash service. This package will be called by recipes through
 // CIPD and will perform the buisiness logic of the builder.
+// TODO(b/197010274): Add meaningful logging, with timing, to builder.
 package main
 
 import (
@@ -40,18 +41,9 @@ var fileRegex = regexp.MustCompile(`([\w-]+.so.sym)$`)
 // taskConfig will contain the information needed to complete the upload task.
 type taskConfig struct {
 	symbolPath string
-	retryCount string
+	retryCount int
 	dryRun     bool
 	isStaging  bool
-}
-
-// channels will contain the forward configChannel and backwards retryChannel
-// that the upload worker will use. The forward channel will have an information
-// flow going from the main loop(driver) to the worker. The backwards channel is
-// the opposite.
-type channels struct {
-	configChannel chan taskConfig
-	retryChannel  chan taskConfig
 }
 
 type uploadDebugSymbols struct {
@@ -60,6 +52,7 @@ type uploadDebugSymbols struct {
 	gsPath      string
 	workerCount int
 	retryCount  int
+	channelSize int
 	isStaging   bool
 	dryRun      bool
 }
@@ -74,10 +67,12 @@ func getCmdUploadDebugSymbols(authOpts auth.Options) *subcommands.Command {
 			b.authFlags.Register(b.GetFlags(), authOpts)
 			b.Flags.StringVar(&b.gsPath, "gs-path", "", ("[Required] Url pointing to the GS " +
 				"bucket storing the tarball."))
-			b.Flags.IntVar(&b.workerCount, "worker-count", 200, ("Number of worker threads" +
+			b.Flags.IntVar(&b.workerCount, "worker-count", 64, ("Number of worker threads" +
 				" to spawn."))
 			b.Flags.IntVar(&b.retryCount, "retry-count", 200, ("Number of total upload retries" +
 				" allowed."))
+			b.Flags.IntVar(&b.channelSize, "channel-size", 200, ("Number of task configs allowed" +
+				" in the channel buffer at once."))
 			b.Flags.BoolVar(&b.isStaging, "is-staging", false, ("Specifies if the builder" +
 				" should push to the staging crash service or prod."))
 			b.Flags.BoolVar(&b.dryRun, "dry-run", false, ("Specified whether network" +
@@ -109,7 +104,7 @@ func downloadTgz(client gs.Client, gsPath, tgzPath string) error {
 }
 
 // uploadWorker will perform the upload of the symbol file to the crash service.
-func uploadWorker(chans channels) error {
+func uploadWorker(configChannel chan taskConfig) error {
 	// Fetch the local file from the unpacked tarball.
 
 	// Open up an https request to the crash service.
@@ -206,15 +201,22 @@ func unpackTarball(inputPath, outputDir string) ([]string, error) {
 // generateConfigs will take a list of strings with containing the paths to the
 // unpacked symbol files. It will return a list of generated task configs
 // alongside the communication channels to be used.
-func generateConfigs(symbolFiles []string) ([]taskConfig, *channels, error) {
-	// TODO(b/197010274): remove skeleton code.
-	return nil, nil, nil
+func generateConfigs(symbolFiles []string, dryRun, isStaging bool) []taskConfig {
+
+	tasks := make([]taskConfig, len(symbolFiles))
+
+	// Generate task configurations.
+	for index, filepath := range symbolFiles {
+		tasks[index] = taskConfig{filepath, 0, dryRun, isStaging}
+	}
+
+	return tasks
 }
 
 // doUpload is the main loop that will spawn goroutines that will handle the
-// upload tasks. Should the worker fail it's upload and we have retries left,
+// upload tasks. Should its worker fail it's upload and we have retries left,
 // send the task to the end of the channel's buffer.
-func doUpload(tasks []taskConfig, chans *channels, retryCount int,
+func doUpload(tasks []taskConfig, channelSize int, retryCount int,
 	isStaging, dryRun bool) (int, error) {
 	// TODO(b/197010274): remove skeleton code.
 	return 0, nil
@@ -289,12 +291,12 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 		log.Fatal(err)
 	}
 
-	tasks, chans, err := generateConfigs(symbolFiles)
+	tasks := generateConfigs(symbolFiles, b.dryRun, b.isStaging)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	retcode, err := doUpload(tasks, chans, b.retryCount, b.isStaging, b.dryRun)
+	retcode, err := doUpload(tasks, b.channelSize, b.retryCount, b.isStaging, b.dryRun)
 
 	if err != nil {
 		log.Fatal(err)
