@@ -93,6 +93,15 @@ func (c *fakePinpointClient) CancelJob(ctx context.Context, in *proto.CancelJobR
 	return nil, nil
 }
 
+func TestGetTarget(t *testing.T) {
+	t.Parallel()
+	Convey("GetTarget should return different values for different bot cfgs", t, func() {
+		So(getTarget("somenewtarget"), ShouldEqual, "performance_test_suite")
+		So(getTarget("lacros-eve-perf"), ShouldEqual, "performance_test_suite_eve")
+		So(getTarget("android-pixel2_webview-perf"), ShouldEqual, "performance_webview_test_suite")
+	})
+}
+
 func TestBatchKickoff(t *testing.T) {
 	t.Parallel()
 	Convey("A batch config should kick off a set of jobs", t, func() {

@@ -210,6 +210,29 @@ func newTelemetryBenchmark(benchmark, measurement, story string, storyTags, extr
 	return tb
 }
 
+var (
+	botCfgs = map[string]string{
+		"Android Nexus5X WebView Perf": "performance_webview_test_suite",
+		"android-go_webview-perf":      "performance_webview_test_suite",
+		"android-pixel2_webview-perf":  "performance_webview_test_suite",
+		"android-pixel4_webview-perf":  "performance_webview_test_suite",
+		"Android Nexus5 Perf":          "performance_test_suite_android_chrome",
+		"android-pixel4a_power-perf":   "performance_test_suite_android_clank_chrome",
+		"android-pixel2-perf":          "performance_test_suite_android_clank_monochrome_64_32_bundle",
+		"android-pixel4-perf":          "performance_test_suite_android_clank_trichrome_bundle",
+		"android-pixel2_weblayer-perf": "performance_weblayer_test_suite",
+		"android-pixel4_weblayer-perf": "performance_weblayer_test_suite",
+		"lacros-eve-perf":              "performance_test_suite_eve",
+	}
+)
+
+func getTarget(cfg string) string {
+	if ret, ok := botCfgs[cfg]; ok {
+		return ret
+	}
+	return "performance_test_suite"
+}
+
 func scheduleTelemetryJob(e *experimentTelemetryRun,
 	ctx context.Context,
 	c proto.PinpointClient,
@@ -221,9 +244,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 		BatchId:        batch_id,
 		ComparisonMode: proto.JobSpec_PERFORMANCE,
 		Config:         bot_cfg,
-
-		// This is hard-coded for Chromium Telemetry.
-		Target: "performance_test_suite",
+		Target:         getTarget(bot_cfg),
 		JobKind: &proto.JobSpec_Experiment{
 			Experiment: experiment,
 		},
