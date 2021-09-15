@@ -3295,6 +3295,22 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+## **libclang**
+
+### 11.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/libclang/${vpython_platform}"
+  version: "version:11.1.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **libcst-py3**
 
 ### 0.3.19

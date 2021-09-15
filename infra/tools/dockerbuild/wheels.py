@@ -827,6 +827,12 @@ SPECS.update({
             ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
         ),
         Prebuilt(
+            'libclang',
+            '11.1.0',
+            ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
+            arch_map={'mac-x64': _NUMPY_MAC_x64},
+        ),
+        Prebuilt(
             'lxml',
             '4.2.5',
             ['mac-x64', 'manylinux-x64', 'windows-x86', 'windows-x64'],
