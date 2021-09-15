@@ -3879,6 +3879,7 @@ wheel: <
 ```
 
 
+* *linux-arm64-py3*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*

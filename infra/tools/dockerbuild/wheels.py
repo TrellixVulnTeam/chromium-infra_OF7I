@@ -475,6 +475,7 @@ SPECS.update({
             only_plat=[
                 'manylinux-x64-py3',
                 'manylinux-x64-py3.9',
+                'linux-arm64-py3',
                 'mac-x64-cp38',
                 'windows-x86-py3',
                 'windows-x64-py3',
