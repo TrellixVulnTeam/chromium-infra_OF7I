@@ -1,0 +1,5 @@
+# Documentation:
+# https://cloud.google.com/appengine/docs/standard/go111/config/queueref
+queue:
+- name: result-ingestion
+  rate: 500/s
