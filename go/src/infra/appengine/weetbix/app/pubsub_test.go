@@ -11,11 +11,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
-	"go.chromium.org/luci/server/router"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -48,13 +46,8 @@ func TestHandleBuild(t *testing.T) {
 			Id:      87654321,
 			Status:  bbv1.StatusCompleted,
 		}
-		h := httptest.NewRecorder()
 		r := &http.Request{Body: makeReq(buildExp)}
-		err := BuildbucketPubSubHandler(&router.Context{
-			Context: c,
-			Writer:  h,
-			Request: r,
-		})
+		err := pubSubHandlerImpl(c, r)
 		So(err, ShouldBeNil)
 	})
 }

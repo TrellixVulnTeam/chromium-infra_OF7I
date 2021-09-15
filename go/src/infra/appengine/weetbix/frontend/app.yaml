@@ -24,6 +24,12 @@ luci_gae_vars:
 handlers:
 - url: /static
   static_dir: ui/dist
+  secure: always
+
+- url: /_ah/push-handlers/.*
+  script: auto
+  login: admin
+  secure: always
 
 - url: /.*
   script: auto

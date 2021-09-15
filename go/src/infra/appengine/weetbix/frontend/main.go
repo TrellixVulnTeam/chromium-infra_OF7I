@@ -29,6 +29,7 @@ import (
 	// Store auth sessions in the datastore.
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
+	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/bugclusters"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
@@ -234,6 +235,10 @@ func main() {
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
 		cron.RegisterHandler("update-bugs", handlers.updateBugs)
+
+		// Pub/Sub subscription endpoints.
+		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
+
 		return nil
 	})
 }

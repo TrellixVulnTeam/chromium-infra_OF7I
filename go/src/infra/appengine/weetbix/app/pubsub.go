@@ -5,14 +5,27 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/retry/transient"
+	"go.chromium.org/luci/common/tsmon/field"
+	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/weetbix/internal/tasks/taskspb"
+)
+
+var (
+	buildCounter = metric.NewCounter(
+		"weetbix/buildbucket_pubsub/builds",
+		"The number of buildbucket builds received by Weetbix from PubSub",
+		nil,
+		// "success", "transient-failure" or "permanent-failure".
+		field.String("status"))
 )
 
 // chromiumCIBucket is the bucket for chromium ci builds in bb v1 format.
@@ -22,8 +35,34 @@ const chromiumCIBucket = "luci.chromium.ci"
 // As of Aug 2021, Weetbix subscribes to this Pub/Sub topic to get completed
 // Chromium CI builds.
 // For CQ builds, Weetbix uses CV Pub/Sub as the entrypoint.
-func BuildbucketPubSubHandler(ctx *router.Context) error {
-	build, err := extractBuild(ctx.Request)
+func BuildbucketPubSubHandler(ctx *router.Context) {
+	status := "unknown"
+	defer func() {
+		// Closure for late binding.
+		buildCounter.Add(ctx.Context, 1, status)
+	}()
+
+	err := pubSubHandlerImpl(ctx.Context, ctx.Request)
+	if err != nil {
+		errors.Log(ctx.Context, errors.Annotate(err, "handling buildbucket pubsub event").Err())
+		if transient.Tag.In(err) {
+			// Transient errors are 500 so that PubSub retries them.
+			status = "transient-failure"
+			ctx.Writer.WriteHeader(http.StatusInternalServerError)
+		} else {
+			// Permentant failures are 200s so that PubSub does not retry them.
+			status = "permanent-failure"
+			ctx.Writer.WriteHeader(http.StatusOK)
+		}
+		return
+	}
+	status = "success"
+	ctx.Writer.WriteHeader(http.StatusOK)
+}
+
+func pubSubHandlerImpl(ctx context.Context, request *http.Request) error {
+	build, err := extractBuild(request)
+
 	switch {
 	case err != nil:
 		return errors.Annotate(err, "failed to extract build").Err()
