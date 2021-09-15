@@ -395,6 +395,20 @@ wheel: <
 
 * *universal*
 
+## **Werkzeug-py3**
+
+### 2.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/werkzeug-py3"
+  version: "version:2.0.1"
+>
+```
+
+
+* *universal*
+
 ## **absl-py**
 
 ### 0.7.1
@@ -959,6 +973,18 @@ wheel: <
 
 * *universal*
 
+### 4.2.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/cachetools-py3"
+  version: "version:4.2.2"
+>
+```
+
+
+* *universal*
+
 ## **certifi**
 
 ### 2018.11.29
@@ -1015,6 +1041,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/certifi-py2_py3"
   version: "version:2020.4.5.1"
+>
+```
+
+
+* *universal*
+
+### 2021.5.30
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/certifi-py2_py3"
+  version: "version:2021.5.30"
 >
 ```
 
@@ -1159,6 +1197,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/chardet-py2_py3"
   version: "version:4.0.0"
+>
+```
+
+
+* *universal*
+
+## **charset_normalizer-py3**
+
+### 2.0.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/charset_normalizer-py3"
+  version: "version:2.0.4"
 >
 ```
 
@@ -1518,6 +1570,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/decorator-py3"
   version: "version:5.0.7"
+>
+```
+
+
+* *universal*
+
+### 5.0.9
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/decorator-py3"
+  version: "version:5.0.9"
 >
 ```
 
@@ -2080,6 +2144,18 @@ wheel: <
 
 * *universal*
 
+### 1.35.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-auth-py2_py3"
+  version: "version:1.35.0"
+>
+```
+
+
+* *universal*
+
 ## **google-auth-httplib2**
 
 ### 0.0.3
@@ -2128,6 +2204,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-auth-oauthlib-py3"
   version: "version:0.4.4"
+>
+```
+
+
+* *universal*
+
+### 0.4.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-auth-oauthlib-py3"
+  version: "version:0.4.5"
 >
 ```
 
@@ -2883,6 +2971,20 @@ wheel: <
 
 * *universal*
 
+## **idna-py3**
+
+### 3.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/idna-py3"
+  version: "version:3.2"
+>
+```
+
+
+* *universal*
+
 ## **importlab-py3**
 
 ### 0.6.1
@@ -3099,6 +3201,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/jsonschema-py2_py3"
   version: "version:3.2.0"
+>
+```
+
+
+* *universal*
+
+## **keras-py3**
+
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/keras-py3"
+  version: "version:2.6.0"
 >
 ```
 
@@ -3859,6 +3975,18 @@ wheel: <
 
 * *universal*
 
+### 3.1.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/oauthlib-py2_py3"
+  version: "version:3.1.1"
+>
+```
+
+
+* *universal*
+
 ## **odictliteral**
 
 ### 1.0.0
@@ -4473,6 +4601,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/protobuf-py2_py3"
   version: "version:3.15.8"
+>
+```
+
+
+* *universal*
+
+### 3.17.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/protobuf-py2_py3"
+  version: "version:3.17.3"
 >
 ```
 
@@ -5674,6 +5814,18 @@ wheel: <
 
 * *universal*
 
+### 2.26.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/requests-py2_py3"
+  version: "version:2.26.0"
+>
+```
+
+
+* *universal*
+
 ## **requests-oauthlib**
 
 ### 1.2.0
@@ -5878,6 +6030,21 @@ wheel: <
 * *manylinux-x64-py3.9*
 * *windows-x64-py3*
 
+### 1.7.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/scipy/${vpython_platform}"
+  version: "version:1.7.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+
 ## **selenium**
 
 ### 2.29.0
@@ -5950,6 +6117,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/setuptools-py3"
   version: "version:46.1.3"
+>
+```
+
+
+* *universal*
+
+### 57.4.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/setuptools-py3"
+  version: "version:57.4.0"
 >
 ```
 
@@ -6148,6 +6327,18 @@ wheel: <
 
 * *universal*
 
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorboard-py3"
+  version: "version:2.6.0"
+>
+```
+
+
+* *universal*
+
 ## **tensorboard-data-server-py3**
 
 ### 0.6.0
@@ -6156,6 +6347,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/tensorboard-data-server-py3"
   version: "version:0.6.0"
+>
+```
+
+
+* *universal*
+
+### 0.6.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorboard-data-server-py3"
+  version: "version:0.6.1"
 >
 ```
 
@@ -6206,6 +6409,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow/${vpython_platform}"
+  version: "version:2.6.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **tensorflow-estimator**
 
 ### 2.4.0
@@ -6232,6 +6449,18 @@ wheel: <
 
 * *universal*
 
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-estimator-py2_py3"
+  version: "version:2.6.0"
+>
+```
+
+
+* *universal*
+
 ## **tensorflow-probability**
 
 ### 0.12.2
@@ -6240,6 +6469,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/tensorflow-probability-py2_py3"
   version: "version:0.12.2"
+>
+```
+
+
+* *universal*
+
+### 0.13.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-probability-py2_py3"
+  version: "version:0.13.0"
 >
 ```
 
@@ -6423,6 +6664,18 @@ wheel: <
 
 * *universal*
 
+### 1.26.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/urllib3-py2_py3"
+  version: "version:1.26.6"
+>
+```
+
+
+* *universal*
+
 ## **virtualenv**
 
 ### 20.0.20
@@ -6567,6 +6820,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/wheel-py2_py3"
   version: "version:0.36.2"
+>
+```
+
+
+* *universal*
+
+### 0.37.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/wheel-py2_py3"
+  version: "version:0.37.0"
 >
 ```
 
