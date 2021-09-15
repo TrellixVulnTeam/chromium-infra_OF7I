@@ -7,6 +7,7 @@ import platform
 import subprocess
 import sys
 
+import six
 
 _MANYLINUX_ENV = {
     'LDSHARED': '/opt/rh/devtoolset-10/root/usr/bin/gcc -pthread -shared'
@@ -369,7 +370,7 @@ def _CheckTranslated():
   try:
     output = subprocess.check_output(
         ["/usr/sbin/sysctl", "-n", "sysctl.proc_translated"])
-    return output[0] == '1'
+    return six.ensure_str(output)[0] == '1'
   except subprocess.CalledProcessError:
     # The call will fail on x86_64 Macs.
     return False
