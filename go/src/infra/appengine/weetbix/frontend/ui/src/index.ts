@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { customElement, html, LitElement, property } from 'lit-element';
-import { Router } from '@vaadin/router';
+import { Context, Router } from '@vaadin/router';
 import './element/bug_cluster_table.ts';
 import './element/cluster_table.ts';
 import './element/not_found_page.ts';
@@ -39,7 +39,11 @@ interface Issue {
 
 const outlet = document.getElementById('outlet');
 const router = new Router(outlet);
+// serverRoute can be used as the action of routes that should be handled by the server
+// instead of in the client.
+const serverRoute = (ctx: Context) => { window.location.pathname = ctx.pathname; }
 router.setRoutes([
+    { path: '/auth/(.*)', action: serverRoute },  // For logout links.
     { path: '/', component: 'cluster-table' },
     { path: '/monorail-test', component: 'monorail-test' },
     { path: '/bugcluster', component: 'bug-cluster-table' },
