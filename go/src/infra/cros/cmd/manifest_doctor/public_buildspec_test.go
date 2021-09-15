@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build !windows
 // +build !windows
 
 package main
@@ -42,6 +43,20 @@ const (
   <project remote="cros-internal" name="foo" path="foo/" revision="123" />
   <project remote="cros" name="bar" path="bar/" revision="456" />
   <project name="baz" path="baz/" revision="789" />
+</manifest>`
+
+	internalManifestXMLDumped = `<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote fetch="https://chromium.googlesource.com" name="cros">
+    <annotation name="public" value="true"></annotation>
+  </remote>
+  <remote fetch="https://chrome-internal.googlesource.com" name="cros-internal">
+    <annotation name="public" value="false"></annotation>
+  </remote>
+  <default remote="cros" revision="refs/heads/main" sync-j="8"></default>
+  <project path="foo/" name="foo" revision="123" remote="cros-internal"></project>
+  <project path="bar/" name="bar" revision="456" remote="cros"></project>
+  <project path="baz/" name="baz" revision="789"></project>
 </manifest>`
 
 	externalManifestXML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -207,4 +222,63 @@ func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
 		watchPaths: []string{"test/"},
 	}
 	assert.ErrorContains(t, b.CreatePublicBuildspecs(context.Background(), f, gc), "could not get public status")
+}
+
+func TestPublicBuildspecManifestVersions(t *testing.T) {
+	t.Parallel()
+	// Mock Gitiles controller
+	ctl := gomock.NewController(t)
+	t.Cleanup(ctl.Finish)
+	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
+
+	reqList := &gitilespb.ListFilesRequest{
+		Project:    "chromeos/manifest-versions",
+		Path:       "test/",
+		Committish: "HEAD",
+	}
+	gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
+		&gitilespb.ListFilesResponse{
+			Files: namesToFiles([]string{"foo.xml"}),
+		},
+		nil,
+	)
+
+	reqLocalManifest := &gitilespb.DownloadFileRequest{
+		Project:    "chromeos/manifest-versions",
+		Path:       "test/foo.xml",
+		Committish: "HEAD",
+	}
+	gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+		&gitilespb.DownloadFileResponse{
+			Contents: internalManifestXML,
+		},
+		nil,
+	)
+
+	mockMap := map[string]gitilespb.GitilesClient{
+		chromeInternalHost: gitilesMock,
+		chromeExternalHost: gitilesMock,
+	}
+	gc := gerrit.NewTestClient(mockMap)
+
+	expectedLists := map[string]map[string][]string{
+		"buildspecs-external": {
+			"legacy/test/": {},
+		},
+	}
+	expectedWrites := map[string][]byte{
+		"gs://buildspecs-internal/legacy/test/foo.xml": []byte(internalManifestXMLDumped),
+		"gs://buildspecs-external/legacy/test/foo.xml": []byte(externalManifestXML),
+	}
+	f := &gs.FakeClient{
+		T:              t,
+		ExpectedLists:  expectedLists,
+		ExpectedWrites: expectedWrites,
+	}
+	b := publicBuildspec{
+		push:                     true,
+		watchPaths:               []string{"test/"},
+		readFromManifestVersions: true,
+	}
+	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
 }

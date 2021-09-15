@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"path/filepath"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -15,6 +17,7 @@ import (
 
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
+	"infra/cros/internal/manifestutil"
 	"infra/cros/internal/repo"
 )
 
@@ -25,9 +28,10 @@ const (
 
 type publicBuildspec struct {
 	subcommands.CommandRunBase
-	authFlags  authcli.Flags
-	push       bool
-	watchPaths []string
+	authFlags                authcli.Flags
+	push                     bool
+	watchPaths               []string
+	readFromManifestVersions bool
 }
 
 func cmdPublicBuildspec(authOpts auth.Options) *subcommands.Command {
@@ -44,6 +48,9 @@ func cmdPublicBuildspec(authOpts auth.Options) *subcommands.Command {
 			b.Flags.Var(luciflag.CommaList(&b.watchPaths), "paths",
 				"Comma-separated list of subdirs to watch within the internal "+
 					"buildspecs bucket.")
+			b.Flags.BoolVar(&b.readFromManifestVersions, "legacy", false,
+				"If set, will apply watch paths to the internal "+
+					"manifest-versions repository instead of GS.")
 			return b
 		}}
 }
@@ -91,22 +98,44 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
+// We don't want to clobber buildspecs sourced from the internal GS bucket,
+// so if we're using manifest-versions as our source we prefix the path with
+// legacy/.
+func (b *publicBuildspec) legacyPrefix(path string) string {
+	if b.readFromManifestVersions && !strings.HasPrefix(path, "legacy/") {
+		return "legacy/" + path
+	}
+	return path
+}
+
 // CreateProjectBuildspec creates a public buildspec as
 // outlined in go/per-project-buildspecs.
 func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	errs := []error{}
 	for _, watchPath := range b.watchPaths {
-		LogOut("Looking at gs://%s/%s...\n", internalBuildspecsGSBucket, watchPath)
-		internalBuildspecs, err := gsClient.List(ctx, internalBuildspecsGSBucket, watchPath)
+		var internalBuildspecs []string
+		var err error
+		if b.readFromManifestVersions {
+			LogOut("Looking at https://%s/%s/+/HEAD/%s", chromeInternalHost, internalManifestVersionsProject, watchPath)
+			internalBuildspecs, err = gerritClient.ListFiles(ctx, chromeInternalHost, internalManifestVersionsProject, "HEAD", watchPath)
+			// Unlike GS, Gerrit lists relative paths so we need to reconstruct them here.
+			for i := range internalBuildspecs {
+				internalBuildspecs[i] = filepath.Join(watchPath, internalBuildspecs[i])
+			}
+		} else {
+			LogOut("Looking at gs://%s/%s...\n", internalBuildspecsGSBucket, watchPath)
+			internalBuildspecs, err = gsClient.List(ctx, internalBuildspecsGSBucket, watchPath)
+		}
 		if err != nil {
 			LogErr(errors.Annotate(err, "failed to list internal buildspecs for dir %s, skipping...", watchPath).Err().Error())
 			errs = append(errs, err)
 			continue
 		}
 
-		externalBuildspecs, err := gsClient.List(ctx, externalBuildspecsGSBucket, watchPath)
+		externalPath := b.legacyPrefix(watchPath)
+		externalBuildspecs, err := gsClient.List(ctx, externalBuildspecsGSBucket, externalPath)
 		if err != nil {
-			LogErr(errors.Annotate(err, "failed to list external buildspecs for dir %s, skipping...", watchPath).Err().Error())
+			LogErr(errors.Annotate(err, "failed to list external buildspecs for dir %s, skipping...", externalPath).Err().Error())
 			errs = append(errs, err)
 		}
 		externalBuildspecMap := make(map[string]bool, len(externalBuildspecs))
@@ -115,31 +144,48 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 		}
 
 		for _, internalBuildspec := range internalBuildspecs {
+			externalBuildspec := b.legacyPrefix(internalBuildspec)
 			// Skip buildspecs that are already present.
-			if _, ok := externalBuildspecMap[internalBuildspec]; ok {
+			if _, ok := externalBuildspecMap[externalBuildspec]; ok {
 				continue
 			}
 
 			// Load internal buildspec.
-			internalPath := lgs.MakePath(internalBuildspecsGSBucket, internalBuildspec)
-			buildspecData, err := gsClient.Read(internalPath)
-			if err != nil {
-				LogErr(errors.Annotate(err, "failed to read internal buildspec %s", internalBuildspec).Err().Error())
-				errs = append(errs, err)
-				continue
+			var buildspec *repo.Manifest
+			if b.readFromManifestVersions {
+				buildspec, err = manifestutil.LoadManifestFromGitiles(ctx, gerritClient,
+					chromeInternalHost, internalManifestVersionsProject, "HEAD", internalBuildspec)
+			} else {
+				internalPath := lgs.MakePath(internalBuildspecsGSBucket, internalBuildspec)
+				buildspecData, err := gsClient.Read(internalPath)
+				if err != nil {
+					LogErr(errors.Annotate(err, "failed to read internal buildspec %s", internalBuildspec).Err().Error())
+					errs = append(errs, err)
+					continue
+				}
+				buildspec, err = repo.ParseManifest(buildspecData)
 			}
-			buildspec, err := repo.ParseManifest(buildspecData)
 			if err != nil {
 				LogErr(errors.Annotate(err, "failed to load internal buildspec %s", internalBuildspec).Err().Error())
 				errs = append(errs, err)
 				continue
 			}
 
+			// If legacy, upload the internal buildspec to the internal bucket for internal consistency.
+			if b.readFromManifestVersions {
+				uploadPath := lgs.MakePath(internalBuildspecsGSBucket, b.legacyPrefix(internalBuildspec))
+				if err := WriteManifestToGS(gsClient, uploadPath, buildspec); err != nil {
+					LogErr(errors.Annotate(err, "failed to write internal buildspec to %s", string(uploadPath)).Err().Error())
+					errs = append(errs, err)
+					continue
+				}
+			}
+
 			// Create and upload external buildspec.
-			LogOut("Attempting to create external buildspec for %s...", internalBuildspec)
-			uploadPath := lgs.MakePath(externalBuildspecsGSBucket, internalBuildspec)
+			LogOut("Attempting to create external buildspec %s for %s...", externalBuildspec, internalBuildspec)
+			uploadPath := lgs.MakePath(externalBuildspecsGSBucket, externalBuildspec)
 			if err := createPublicBuildspec(gsClient, gerritClient, buildspec, uploadPath, b.push); err != nil {
-				LogErr(errors.Annotate(err, "failed to create external buildspec %s", internalBuildspec).Err().Error())
+				LogErr(errors.Annotate(err, "failed to create external buildspec %s", externalBuildspec).Err().Error())
 				errs = append(errs, err)
 			}
 		}

@@ -14,6 +14,14 @@ import (
 	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
+const (
+	chromeExternalHost              = "chromium.googlesource.com"
+	chromeInternalHost              = "chrome-internal.googlesource.com"
+	manifestInternalProject         = "chromeos/manifest-internal"
+	internalManifestVersionsProject = "chromeos/manifest-versions"
+	externalManifestVersionsProject = "chromiumos/manifest-versions"
+)
+
 // CreateProjectBuildspec creates a public buildspec as outlined in go/per-project-buildspecs.
 func createPublicBuildspec(gsClient gs.Client, gerritClient *gerrit.Client, buildspec *repo.Manifest, uploadPath lgs.Path, push bool) error {
 	remoteReference := buildspec
@@ -74,19 +82,23 @@ func createPublicBuildspec(gsClient gs.Client, gerritClient *gerrit.Client, buil
 	}
 	buildspec.Remotes = publicRemotes
 	buildspec.Projects = publicProjects
-	externalBuildspecData, err := buildspec.WriteToBytes()
-	if err != nil {
-		return err
-	}
 
 	// Upload to external buildspec dir.
 	if !push {
 		LogOut("Dry run, not uploading buildspec to %s...", string(uploadPath))
 		return nil
 	}
-	if err := gsClient.WriteFileToGS(uploadPath, externalBuildspecData); err != nil {
+	if err := WriteManifestToGS(gsClient, uploadPath, buildspec); err != nil {
 		return err
 	}
 	LogOut("Uploaded buildspec to %s", string(uploadPath))
 	return nil
+}
+
+func WriteManifestToGS(gsClient gs.Client, uploadPath lgs.Path, manifest *repo.Manifest) error {
+	manifestData, err := manifest.WriteToBytes()
+	if err != nil {
+		return err
+	}
+	return gsClient.WriteFileToGS(uploadPath, manifestData)
 }

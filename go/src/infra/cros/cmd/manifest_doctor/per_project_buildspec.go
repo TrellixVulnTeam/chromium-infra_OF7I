@@ -31,12 +31,8 @@ import (
 )
 
 const (
-	chromeExternalHost              = "chromium.googlesource.com"
-	chromeInternalHost              = "chrome-internal.googlesource.com"
-	manifestInternalProject         = "chromeos/manifest-internal"
-	externalManifestVersionsProject = "chromiumos/manifest-versions"
-	chromeosProgramPrefix           = "chromeos/program/"
-	chromeosProjectPrefix           = "chromeos/project/"
+	chromeosProgramPrefix = "chromeos/program/"
+	chromeosProjectPrefix = "chromeos/project/"
 )
 
 var (
