@@ -17,8 +17,6 @@ import (
 )
 
 const (
-	// Time to wait a rebooting ChromeOS, in seconds.
-	normalBootingTime = 150
 	// Default reboot command for ChromeOS devices.
 	// Each command set sleep 1 second to wait for reaction of the command from left part.
 	rebootCommand = "(echo begin 1; sync; echo end 1 \"$?\")& sleep 1;" +
@@ -33,19 +31,14 @@ const (
 
 // pingExec verifies the DUT is pingable.
 func pingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
+	return retry.WithTimeout(ctx, 20*time.Second, NormalBootingTime, func() error {
 		return args.Access.Ping(ctx, args.ResourceName, 2)
 	}, "cros dut ping")
 }
 
 // sshExec verifies ssh access to the DUT.
 func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return retry.WithTimeout(ctx, 20*time.Second, normalBootingTime, func() error {
-		if r := args.Access.Run(ctx, args.ResourceName, "true"); r.ExitCode != 0 {
-			return errors.Reason("cros dut ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
-		}
-		return nil
-	}, "cros dut ssh access")
+	return WaitToSSHable(ctx, args, args.ResourceName, NormalBootingTime)
 }
 
 // rebootExec reboots the cros DUT.

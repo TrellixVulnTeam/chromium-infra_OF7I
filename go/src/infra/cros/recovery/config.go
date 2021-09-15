@@ -263,9 +263,12 @@ const defaultConfig = `
 						"Validate and update rpm_state.",
 						"The execs is not ready yet."
 					],
-					"exec_name": "sample_pass",
+					"exec_name": "rpm_audit",
+					"exec_timeout": {
+						"seconds": 600
+					},
 					"conditions": [
-						"sample_pass"
+						"has_rpm_info"
 					]
 				}
 			}

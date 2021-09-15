@@ -14,9 +14,12 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/internal/retry"
 )
 
 const (
+	// Time to wait a rebooting ChromeOS, in seconds.
+	NormalBootingTime = 150
 	// Command to extract release builder path from device.
 	extactReleaseBuilderPathCommand = "cat /etc/lsb-release | grep CHROMEOS_RELEASE_BUILDER_PATH"
 )
@@ -73,4 +76,11 @@ func IsSSHable(ctx context.Context, args *execs.RunArgs, resourceName string) er
 		return errors.Reason("is sshable: code %d, %s", r.ExitCode, r.Stderr).Err()
 	}
 	return nil
+}
+
+// WaitToSSHable waiting resource to be sshable.
+func WaitToSSHable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration) error {
+	return retry.WithTimeout(ctx, 10*time.Second, waitTime, func() error {
+		return IsSSHable(ctx, args, resourceName)
+	}, "wait to ssh access")
 }

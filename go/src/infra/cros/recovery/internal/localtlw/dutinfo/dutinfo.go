@@ -208,7 +208,9 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 
 func createRPMOutlet(rpm *ufslab.OSRPM, ds *ufslab.DutState) *tlw.RPMOutlet {
 	if rpm == nil || rpm.GetPowerunitName() == "" || rpm.GetPowerunitOutlet() == "" {
-		return nil
+		return &tlw.RPMOutlet{
+			State: convertRPMState(ds.GetRpmState()),
+		}
 	}
 	return &tlw.RPMOutlet{
 		Name:  fmt.Sprintf("%s|%s", rpm.GetPowerunitName(), rpm.GetPowerunitOutlet()),
