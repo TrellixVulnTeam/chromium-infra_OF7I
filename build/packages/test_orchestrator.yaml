@@ -1,0 +1,26 @@
+package: chromiumos/infra/test_orchestrator/${platform}
+description: >
+  The Test Orchestrator takes a request specifying criteria for tests to run,
+  computes an optimal set of tests / HW to run, schedules the tests, and
+  processes the results.
+
+  See design doc at go/ctp2-dd.
+
+  This program implements the luciexe protocol, and can be run locally or on
+  Buildbucket. See https://pkg.go.dev/go.chromium.org/luci/luciexe.
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - mac-arm64
+  - windows-amd64
+go_packages:
+  - infra/cros/luciexe/test_orchestrator
+root: ../../go/bin
+# Buildbucket expects luciexe executables to be named "luciexe". Create a copy
+# of the executable with this name and add it to the package.
+copies:
+  - src: test_orchestrator${exe_suffix}
+    dst: luciexe${exe_suffix}
+data:
+  - file: luciexe${exe_suffix}
+  - version_file: .versions/luciexe${exe_suffix}.cipd_version
