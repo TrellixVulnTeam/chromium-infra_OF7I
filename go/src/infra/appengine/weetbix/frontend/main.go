@@ -224,11 +224,12 @@ func main() {
 		mw := pageBase(srv)
 
 		handlers := &handlers{CloudProject: srv.Options.CloudProject}
-		srv.Routes.GET("/", mw, handlers.indexPage)
 		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
 		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)
 		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
+		// Anything that is not found, serve app html and let the client side router handle it.
+		srv.Routes.NotFound(mw, handlers.indexPage)
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)

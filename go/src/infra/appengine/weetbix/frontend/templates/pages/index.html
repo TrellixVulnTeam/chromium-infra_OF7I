@@ -2,11 +2,12 @@
 <title>Weetbix</title>
 
 <body>
-
-  <p>Welcome to Weetbix.</p>
-  <monorail-test></monorail-test>
-  <bug-cluster-table></bug-cluster-table>
-  <cluster-table></cluster-table>
+  <ul>
+    <li><a href="/">Clusters</a></li>
+    <li><a href="/bugcluster">Bug Clusters</a></li>
+    <li><a href="/monorail-test">Monorail Test</a></li>
+  </ul>
   <p>Logged in as {{.User}}. <a href="{{.LogoutURL}}">Log Out</a></p>
+  <div id="outlet"></div>
   <script src="/static/main.js"></script>
 </body>

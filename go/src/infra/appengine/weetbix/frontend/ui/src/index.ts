@@ -3,8 +3,10 @@
 // found in the LICENSE file.
 
 import { customElement, html, LitElement, property } from 'lit-element';
+import { Router } from '@vaadin/router';
 import './element/bug_cluster_table.ts';
 import './element/cluster_table.ts';
+import './element/not_found_page.ts';
 
 
 // MonorailTest excersises the monorail API in the server and displays an
@@ -33,3 +35,13 @@ export class MonorailTest extends LitElement {
 interface Issue {
     summary: string;
 }
+
+
+const outlet = document.getElementById('outlet');
+const router = new Router(outlet);
+router.setRoutes([
+    { path: '/', component: 'cluster-table' },
+    { path: '/monorail-test', component: 'monorail-test' },
+    { path: '/bugcluster', component: 'bug-cluster-table' },
+    { path: '(.*)', component: 'not-found-page' },
+]);

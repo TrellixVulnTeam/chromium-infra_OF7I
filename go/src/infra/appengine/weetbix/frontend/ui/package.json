@@ -17,6 +17,7 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "@vaadin/router": "^1.7.4",
     "lit-element": "^2.5.1"
   }
 }
