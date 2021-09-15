@@ -1716,7 +1716,8 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
           method='PULL',
           name='%s-%s' % (gerrit_hashtag, task_id),
           queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
-          payload=payload)
+          payload=payload,
+          tag=gerrit_hashtag)
       logging.info('task_added with payload %s' % payload)
     return {'return_code': 200}
 
@@ -1729,16 +1730,21 @@ class ExportFeatureCoverageMetrics(BaseHandler):
     tasks = []
     while True:
       try:
-        # Wait for a minute to lease 3 tasks for an hour.
-        tasks = queue.lease_tasks_by_tag(3600, 3, deadline=60)
+        # lease_tasks_by_tag() return tasks with tag = tag of oldest unleased
+        # task in the queue. We lease all tasks of same tag, and then execute
+        # only once, deleting the rest. This is to save duplicate work, which
+        # can arise if cron job which generates list of feature hashtags
+        # gets triggered multiple times by the time first invocation of feature
+        # coverage for all hashtags finishes.
+        tasks = queue.lease_tasks_by_tag(3600, 1000, deadline=60)
       except (taskqueue.TransientError,
               apiproxy_errors.DeadlineExceededError) as e:
         logging.exception(e)
       if not tasks:
         break
+      feature_coverage.ExportFeatureCoverage(
+          int(tasks[0].extract_params()['modifier_id']))
       for task in tasks:
-        feature_coverage.ExportFeatureCoverage(
-            int(task.extract_params()['modifier_id']))
         queue.delete_tasks(task)
     return {'return_code': 200}
 
