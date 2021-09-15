@@ -51,8 +51,20 @@ type Access interface {
 	// GetCacheUrl provides URL to download requested path to file.
 	// URL will use to download image to USB-drive and provisioning.
 	GetCacheUrl(ctx context.Context, resourceName, filePath string) (string, error)
+	// Provision triggers provisioning of the device.
+	Provision(ctx context.Context, req *ProvisionRequest) error
 	// Close closes all used resources.
 	Close() error
+}
+
+// ProvisionRequest provides data to perform provisioning of the device.
+type ProvisionRequest struct {
+	// Resource name
+	Resource string
+	// Path to system image.
+	// Path to the GS file.
+	// Example: gs://bucket/file_name
+	SystemImagePath string
 }
 
 // RunResult represents result of executed command.

@@ -423,3 +423,18 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 	}
 	return nil
 }
+
+// Provision triggers provisioning of the device.
+func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) error {
+	if req == nil {
+		return errors.Reason("provision: request is empty").Err()
+	}
+	if req.Resource == "" {
+		return errors.Reason("provision: resource is not specified").Err()
+	}
+	if req.SystemImagePath == "" {
+		return errors.Reason("provision: system image path is not specified").Err()
+	}
+	log.Debug(ctx, "Provisioning: %s", req)
+	return errors.Reason("not implemented").Err()
+}
