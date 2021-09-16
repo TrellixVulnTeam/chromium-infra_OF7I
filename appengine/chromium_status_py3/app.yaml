@@ -4,9 +4,9 @@ inbound_services:
 - warmup
 
 handlers:
-- url: /node_modules/dygraphs/dist/dygraph.min.js
-  static_files: node_modules/dygraphs/dist/dygraph.min.js
-  upload: node_modules/dygraphs/dist/dygraph.min.js
+- url: /node_modules/dygraphs/dist/dygraph.min.(js|css)
+  static_files: node_modules/dygraphs/dist/dygraph.min.\1
+  upload: node_modules/dygraphs/dist/dygraph.min.(js|css)
 
 - url: /(.*\.(html|js|txt|ttf))
   static_files: static/\1
@@ -15,7 +15,7 @@ handlers:
 # main will look for a replacement in blobstore, if not, will redirect to
 # static/
 - url: /([^/]+\.(gif|png|jpg|ico))
-  script: auto  
+  script: auto
 
 - url: /static/([^/]+\.(gif|png|jpg|ico))
   static_files: static/\1

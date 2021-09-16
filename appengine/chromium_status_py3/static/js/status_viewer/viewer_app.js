@@ -182,6 +182,8 @@ TreeStatusViewerApp.prototype.SwitchToView = function(viewName) {
 
   // Show the now active view.
   this.liveViews_[viewName].Show(true);
+  document.dispatchEvent(
+      new CustomEvent('switch_view', {detail: {view: viewName}}));
 };
 
 /**

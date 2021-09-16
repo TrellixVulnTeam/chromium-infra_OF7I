@@ -97,6 +97,11 @@ function Draw(entries, timeRange) {
                     labelsDiv: document.getElementById("peak_dygraph_legend"),
                     labelsSeparateLines: true,
                   });
+  document.addEventListener('switch_view', function (e) {
+    if (e.detail.view === 'peak') {
+      peakGraph.resize();
+    }
+  }, {once: true});
 }
 
 /**
