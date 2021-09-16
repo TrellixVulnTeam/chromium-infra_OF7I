@@ -223,12 +223,17 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *ger
 	if len(b.watchPaths) == 0 {
 		return []string{b.buildspec}, nil
 	}
+	var errs []error
 	var buildspecs []string
 	for _, watchPath := range b.watchPaths {
 		dirs, err := gerritClient.ListFiles(ctx, chromeExternalHost,
 			externalManifestVersionsProject, "HEAD", watchPath)
 		if err != nil {
-			return nil, err
+			fullPath := fmt.Sprintf("%s/%s/+/HEAD/%s", chromeExternalHost,
+				externalManifestVersionsProject, watchPath)
+			LogErr("failed to list %s, skipping...", fullPath)
+			errs = append(errs, errors.Annotate(err, "failed to list %s", fullPath).Err())
+			continue
 		}
 		for _, dir := range dirs {
 			mstone, err := strconv.Atoi(dir)
@@ -241,7 +246,11 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *ger
 				contents, err := gerritClient.ListFiles(ctx, chromeExternalHost,
 					externalManifestVersionsProject, "HEAD", mstoneDir)
 				if err != nil {
-					return nil, err
+					fullPath := fmt.Sprintf("%s/%s/+/HEAD/%s", chromeExternalHost,
+						externalManifestVersionsProject, watchPath)
+					LogErr("failed to list %s, skipping...", mstoneDir)
+					errs = append(errs, errors.Annotate(err, "failed to list %s", fullPath).Err())
+					continue
 				}
 				for _, file := range contents {
 					buildspecs = append(buildspecs, filepath.Join(mstoneDir, file))
@@ -249,7 +258,10 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *ger
 			}
 		}
 	}
-	return buildspecs, nil
+	if len(errs) == 0 {
+		return buildspecs, nil
+	}
+	return buildspecs, errors.NewMultiError(errs...)
 }
 
 func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *gerrit.Client) error {
