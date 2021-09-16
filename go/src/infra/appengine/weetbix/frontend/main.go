@@ -24,6 +24,7 @@ import (
 	"go.chromium.org/luci/server/secrets"
 	spanmodule "go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/templates"
+	"go.chromium.org/luci/server/tq"
 	"google.golang.org/appengine/log"
 
 	// Store auth sessions in the datastore.
@@ -34,6 +35,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/services/resultingester"
 )
 
 // authGroup is the name of the LUCI Auth group that controls whether the user
@@ -220,6 +222,7 @@ func main() {
 		gaeemulation.NewModuleFromFlags(),     // Needed by cfgmodule.
 		secrets.NewModuleFromFlags(),          // Needed by encryptedcookies.
 		spanmodule.NewModuleFromFlags(),
+		tq.NewModuleFromFlags(),
 	}
 	server.Main(nil, modules, func(srv *server.Server) error {
 		mw := pageBase(srv)
@@ -238,6 +241,7 @@ func main() {
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
+		resultingester.RegisterResultIngestionTasksClass()
 
 		return nil
 	})

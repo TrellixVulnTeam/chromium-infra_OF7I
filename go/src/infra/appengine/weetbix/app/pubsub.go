@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 )
 
@@ -72,8 +73,7 @@ func pubSubHandlerImpl(ctx context.Context, request *http.Request) error {
 		return nil
 
 	default:
-		//TODO(chanli) enqueue a test result ingestion task.
-		return nil
+		return resultingester.Schedule(ctx, nil, build)
 	}
 }
 
