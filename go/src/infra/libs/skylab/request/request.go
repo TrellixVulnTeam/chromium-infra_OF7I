@@ -59,6 +59,8 @@ type Args struct {
 	StatusTopic string
 	// Test describes the test to be run.
 	TestRunnerRequest *skylab_test_runner.Request
+	// Experiments to pass on to test_runner builders.
+	Experiments []string
 }
 
 // MessagePayload contains the information for Pubsub subscribers.
@@ -86,17 +88,23 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		},
 	}
 
+	exps := make(map[string]bool)
+	for _, k := range a.Experiments {
+		exps[k] = true
+	}
+
 	tags, err := parseBBStringPairs(a.SwarmingTags)
 	if err != nil {
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
 
 	br := &buildbucket_pb.ScheduleBuildRequest{
-		Builder:    b,
-		Properties: props,
-		Tags:       tags,
-		Dimensions: bbDims,
-		Priority:   int32(a.Priority),
+		Builder:     b,
+		Properties:  props,
+		Experiments: exps,
+		Tags:        tags,
+		Dimensions:  bbDims,
+		Priority:    int32(a.Priority),
 		Swarming: &buildbucket_pb.ScheduleBuildRequest_Swarming{
 			ParentRunId: a.ParentTaskID,
 		},

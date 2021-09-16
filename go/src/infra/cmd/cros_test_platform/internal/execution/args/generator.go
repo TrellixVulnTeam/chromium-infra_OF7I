@@ -50,6 +50,8 @@ type Generator struct {
 	Deadline         time.Time
 	// PubSub channel to send test_runner status updates.
 	StatusUpdateChannel *config.Config_PubSub
+	// Experiments to pass on to test_runner builders.
+	Experiments []string
 }
 
 // CheckConsistency checks the internal consistency of the various inputs to the
@@ -169,6 +171,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		SwarmingTags:                     g.swarmingTags(ctx, kv, cmd),
 		TestRunnerRequest:                trr,
 		Timeout:                          timeout,
+		Experiments:                      g.Experiments,
 	}, nil
 
 }

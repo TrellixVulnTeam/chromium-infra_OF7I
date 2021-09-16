@@ -160,6 +160,28 @@ func TestPropertiesBB(t *testing.T) {
 	})
 }
 
+func TestExperimentsBB(t *testing.T) {
+	Convey("Given request arguments that specify experiments", t, func() {
+		args := request.Args{
+			Experiments:       []string{"chromeos.a.b", "chromeos.c.d"},
+			TestRunnerRequest: &skylab_test_runner.Request{},
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest(nil)
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have correct experiments.", func() {
+				So(req.Experiments, ShouldHaveLength, 2)
+				want := map[string]bool{
+					"chromeos.a.b": true,
+					"chromeos.c.d": true,
+				}
+				So(req.Experiments, ShouldResemble, want)
+			})
+		})
+	})
+}
+
 func TestTagsBB(t *testing.T) {
 	Convey("Given request arguments that specify tags", t, func() {
 		args := request.Args{
