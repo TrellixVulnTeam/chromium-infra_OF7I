@@ -19,7 +19,7 @@ code_coverage_backend_handler_mappings = [
     # the total allotted memory. Spawning workers at startup time ensures that
     # the parallel processing factor is equal to the number of backend instances
     # thus ensuring that we do not have oom errors.
-    ('/_ah/start', ExportFeatureCoverageMetrics),
+    ('/_ah/start', code_coverage.ExportFeatureCoverageMetrics),
     ('.*/coverage/task/fetch-source-file', code_coverage.FetchSourceFile),
     ('.*/coverage/task/process-data/.*', code_coverage.ProcessCodeCoverageData),
     ('.*/coverage/cron/files-absolute-coverage',
