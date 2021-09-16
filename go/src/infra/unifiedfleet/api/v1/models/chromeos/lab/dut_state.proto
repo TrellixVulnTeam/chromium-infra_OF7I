@@ -66,7 +66,7 @@ message DutState {
   string hostname = 11;
 }
 
-// Next Tag: 22
+// Next Tag: 23
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -114,6 +114,8 @@ enum PeripheralState {
   SERVO_HOST_ISSUE = 20;
   // Issue related to servo_updater.
   SERVO_UPDATER_ISSUE = 21;
+  // Issue detected in servod and reported by dut_controller_missing_fault control.
+  SERVOD_DUT_CONTROLLER_MISSING = 22;
 }
 
 // The states are using for DUT storage and USB-drive on servo.
