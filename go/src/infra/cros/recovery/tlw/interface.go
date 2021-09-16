@@ -266,6 +266,11 @@ type Dut struct {
 	StableVersion *StableVersion
 	// ProvisionedInfo tells provisioned info for the DUT.
 	ProvisionedInfo *DUTProvisionedInfo
+	// Extra attrubes of the DUT.
+	// Used to provide any other mapping data which can be used for custom actions.
+	// All values has to be converted to string.
+	// Example: pools, force_flashing, restrictions and special abilities.
+	ExtraAttributes map[string][]string
 }
 
 // DUTProvisionedInfo holds info about provisioned info for the DUT.
