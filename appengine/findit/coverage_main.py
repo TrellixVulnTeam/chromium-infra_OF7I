@@ -12,6 +12,14 @@ from handlers import code_coverage
 
 # "code-coverage-backend" module.
 code_coverage_backend_handler_mappings = [
+    # Run feature coverage worker at startup time.
+    # This is because triggering worker via cron job results in the case where
+    # a cron job gets triggered before the previous job has finished. With time
+    # this results in a case, where memory required by coverage workers exceed
+    # the total allotted memory. Spawning workers at startup time ensures that
+    # the parallel processing factor is equal to the number of backend instances
+    # thus ensuring that we do not have oom errors.
+    ('/_ah/start', ExportFeatureCoverageMetrics),
     ('.*/coverage/task/fetch-source-file', code_coverage.FetchSourceFile),
     ('.*/coverage/task/process-data/.*', code_coverage.ProcessCodeCoverageData),
     ('.*/coverage/cron/files-absolute-coverage',
@@ -22,8 +30,6 @@ code_coverage_backend_handler_mappings = [
      code_coverage.ExportAllFeatureCoverageMetricsCron),
     ('.*/coverage/task/all-feature-coverage',
      code_coverage.ExportAllFeatureCoverageMetrics),
-    ('.*/coverage/cron/feature-coverage',
-     code_coverage.ExportFeatureCoverageMetrics),
     ('.*/coverage/task/postsubmit-report/update',
      code_coverage.UpdatePostsubmitReport),
 ]
