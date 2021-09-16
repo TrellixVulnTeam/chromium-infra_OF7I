@@ -8,6 +8,7 @@ package chromeos.karte;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/field_mask.proto";
 import "infra/cros/karte/api/action.proto";
 import "infra/cros/karte/api/observation.proto";
 
@@ -48,6 +49,15 @@ service Karte {
       returns (ListObservationsResponse) {
     option (google.api.http) = {
       get: "/v1/options"
+    };
+  }
+
+  // UpdateAction creates or updates an action in place.
+  // This API is based on https://google.aip.dev/134.
+  rpc UpdateAction(UpdateActionRequest) returns (Action) {
+    option (google.api.http) = {
+      patch: "/v1/actions"
+      body: "action"
     };
   }
 }
@@ -134,4 +144,15 @@ message ListObservationsResponse {
   // This is the page token that is needed for pagination. This token
   // must be supplied verbatim to subsequent calls to ListActions.
   string next_page_token = 2;
+}
+
+// UpdateActionRequest is a request to update an action in place or create a
+// new one.
+message UpdateActionRequest {
+  // Action is the action to update.
+  Action action = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Update mask is a list of fields that are allowed to be updated.
+  // If no update mask is provided, then all updateable fields are updated.
+  google.protobuf.FieldMask update_mask = 2;
 }

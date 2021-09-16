@@ -105,6 +105,11 @@ func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListO
 	}, nil
 }
 
+// UpdateAction is a stub that does nothing.
+func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateActionRequest) (*kartepb.Action, error) {
+	return nil, status.Errorf(codes.Unimplemented, "update action is not implemented")
+}
+
 // InstallServices takes a Karte frontend and exposes it to a LUCI prpc.Server.
 func InstallServices(srv *prpc.Server) {
 	kartepb.RegisterKarteServer(srv, NewKarteFrontend())
