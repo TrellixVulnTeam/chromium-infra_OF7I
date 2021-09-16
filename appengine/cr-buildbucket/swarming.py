@@ -429,6 +429,7 @@ def _cli_encode_proto(message):
 def _compute_bbagent(build, settings):
   """Returns the command for bbagent."""
   if build.bbagent_getbuild:
+    logging.info('using bbagent getbuild mode for %d', build.proto.id)
     return [
         u'bbagent${EXECUTABLE_SUFFIX}',
         u'-host',
