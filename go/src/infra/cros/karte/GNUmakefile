@@ -45,10 +45,14 @@ run:
 
 # Intentionally use the gae.py version that is present on the path. If no such
 # # command is available on the path, you are not in the correct environment.
-.PHONY: deploy
-deploy:
+.PHONY: upload
+upload:
+	@echo BEGIN UPLOAD DEV
 	gae.py upload --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
+	@echo END UPLOAD DEV
 
 .PHONY: switch
 switch:
+	@echo BEGIN SWITCH DEV
 	gae.py switch --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
+	@echo END SWITCH DEV
