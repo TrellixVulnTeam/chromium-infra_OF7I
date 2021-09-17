@@ -1725,33 +1725,28 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
 class ExportFeatureCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
-  @staticmethod
-  def _LeaseAndExecuteTask(queue):
-    tasks = []
-    try:
-      # lease_tasks_by_tag() return tasks with tag = tag of oldest unleased
-      # task in the queue. We lease all tasks of same tag, and then execute
-      # only once, deleting the rest. This is to avoid duplicate work, which
-      # can arise if cron job which generates list of feature hashtags
-      # gets triggered multiple times by the time first invocation of feature
-      # coverage for all hashtags finishes.
-      tasks = queue.lease_tasks_by_tag(3600, 1000, deadline=60)
-    except (taskqueue.TransientError, apiproxy_errors.DeadlineExceededError):
-      return
-    if tasks:
-      for i in range(1, len(tasks)):
-        queue.delete_tasks(tasks[i])
-      feature_coverage.ExportFeatureCoverage(
-          int(tasks[0].extract_params()['modifier_id']))
-      queue.delete_tasks(tasks[0])
-
   def HandleGet(self):
     queue = taskqueue.Queue(constants.FEATURE_COVERAGE_METRICS_QUEUE)
+    tasks = []
     while True:
-      _LeaseAndExecuteTask(queue)
-      # Sleep for 10 minutes if there are no tasks in queue
-      if not queue.fetch_statistics().getNumTasks():
-        time.sleep(600)
+      try:
+        # lease_tasks_by_tag() return tasks with tag = tag of oldest unleased
+        # task in the queue. We lease all tasks of same tag, and then execute
+        # only once, deleting the rest. This is to save duplicate work, which
+        # can arise if cron job which generates list of feature hashtags
+        # gets triggered multiple times by the time first invocation of feature
+        # coverage for all hashtags finishes.
+        tasks = queue.lease_tasks_by_tag(3600, 1000, deadline=60)
+      except (taskqueue.TransientError,
+              apiproxy_errors.DeadlineExceededError) as e:
+        logging.exception(e)
+      if not tasks:
+        break
+      feature_coverage.ExportFeatureCoverage(
+          int(tasks[0].extract_params()['modifier_id']))
+      for task in tasks:
+        queue.delete_tasks(task)
+    return {'return_code': 200}
 
 
 class UpdatePostsubmitReport(BaseHandler):
