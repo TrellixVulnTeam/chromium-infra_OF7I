@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -106,7 +105,7 @@ func (c *cmdBuildRun) init() {
 }
 
 func (c *cmdBuildRun) exec(ctx context.Context) error {
-	m, infra, err := c.loadManifest(c.targetManifest, true, true)
+	m, infra, output, err := c.loadManifest(c.targetManifest, true, true)
 	if err != nil {
 		return err
 	}
@@ -165,7 +164,7 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 		Store:        store,
 		Builder:      builder,
 		Registry:     registry,
-		Notify:       infra.Notify,
+		Output:       output,
 	})
 	return c.reportResult(ctx, res, err)
 }
@@ -211,49 +210,30 @@ type buildParams struct {
 	Stage stageCallback
 
 	// Infra.
-	Store    storageImpl             // where to upload the tarball, mocked in tests
-	Builder  builderImpl             // where to build images, mocked in tests
-	Registry registryImpl            // how to talk to docker registry, mocked in tests
-	Notify   []manifest.NotifyConfig // what downstream systems to notify, copied from the manifest
+	Store    storageImpl  // where to upload the tarball, mocked in tests
+	Builder  builderImpl  // where to build images, mocked in tests
+	Registry registryImpl // how to talk to docker registry, mocked in tests
+
+	// Prepopulated portion of -json-output.
+	Output *baseOutput
 }
 
 // buildResult is returned by runBuild and put into -json-output.
-//
-// Some fields are populated in reportResult right prior writing to the output.
 type buildResult struct {
-	Name         string                  `json:"name"`                     // artifacts name from the manifest YAML
-	ContextDir   string                  `json:"context_dir,omitempty"`    // absolute path to a context directory used to build the image
-	Error        string                  `json:"error,omitempty"`          // non-empty if the build failed
-	Image        *imageRef               `json:"image,omitempty"`          // built or reused image (if any)
-	Notify       []manifest.NotifyConfig `json:"notify,omitempty"`         // copied from the manifest YAML
-	ViewImageURL string                  `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
-	ViewBuildURL string                  `json:"view_build_url,omitempty"` // URL for humans to look at the Cloud Build log
-}
+	*baseOutput
 
-// prepBuildResult prepopulates some buildResult fields based on buildParams.
-func prepBuildResult(p *buildParams) (buildResult, error) {
-	contextDir := p.Manifest.ContextDir
-	if contextDir != "" {
-		var err error
-		if contextDir, err = filepath.Abs(contextDir); err != nil {
-			return buildResult{}, errors.Annotate(err, "bad context directory path").Err()
-		}
-	}
-	return buildResult{
-		Name:       p.Manifest.Name,
-		ContextDir: contextDir,
-		Notify:     p.Notify,
-	}, nil
+	Error        string    `json:"error,omitempty"`          // non-empty if the build failed
+	Image        *imageRef `json:"image,omitempty"`          // built or reused image (if any)
+	ViewImageURL string    `json:"view_image_url,omitempty"` // URL for humans to look at the image (if any)
+	ViewBuildURL string    `json:"view_build_url,omitempty"` // URL for humans to look at the Cloud Build log
 }
 
 // runBuild is top-level logic of "build" command.
 //
 // On errors may return partially populated buildResult.
 func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
-	res, err = prepBuildResult(&p)
-	if err != nil {
-		return
-	}
+	// Report data extracted from the manifest.
+	res.baseOutput = p.Output
 
 	// Skip the build completely if there's already an image with the requested
 	// canonical tag. This check is delayed until later if ":inputs-hash" is used
@@ -323,10 +303,8 @@ func maybeReuseExistingImage(ctx context.Context, p buildParams) (*imageRef, err
 //
 // On errors may return partially populated buildResult.
 func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buildResult, err error) {
-	res, err = prepBuildResult(&p)
-	if err != nil {
-		return
-	}
+	// Report data extracted from the manifest.
+	res.baseOutput = p.Output
 
 	f, digest, err := writeToTemp(ctx, out)
 	if err != nil {

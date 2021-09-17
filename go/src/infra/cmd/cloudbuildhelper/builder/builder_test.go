@@ -66,7 +66,7 @@ func TestBuilder(t *testing.T) {
 			So(ioutil.WriteFile(manifestPath, []byte(manifestBody), 0600), ShouldBeNil)
 			loaded, err := manifest.Load(manifestPath)
 			So(err, ShouldBeNil)
-			So(loaded.RenderSteps(), ShouldBeNil)
+			So(loaded.Finalize(), ShouldBeNil)
 			return b.Build(ctx, loaded)
 		}
 
@@ -144,7 +144,7 @@ func TestBuilder(t *testing.T) {
 			m, err := manifest.Load(filepath.FromSlash("testdata/src/testpkg/gaebundle.yaml"))
 			So(err, ShouldBeNil)
 			m.ContextDir = tmpDir
-			So(m.RenderSteps(), ShouldBeNil)
+			So(m.Finalize(), ShouldBeNil)
 
 			out, err := b.Build(ctx, m)
 			So(err, ShouldBeNil)

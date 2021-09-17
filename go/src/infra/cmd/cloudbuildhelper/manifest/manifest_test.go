@@ -25,7 +25,7 @@ func TestManifest(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		return m, m.RenderSteps()
+		return m, m.Finalize()
 	}
 
 	Convey("Minimal", t, func() {
@@ -35,6 +35,7 @@ func TestManifest(t *testing.T) {
 			Name:        "zzz",
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			ContextDir:  filepath.FromSlash("root/1/blarg"),
+			Sources:     []string{filepath.FromSlash("root/1/blarg")},
 		})
 	})
 
@@ -61,6 +62,7 @@ func TestManifest(t *testing.T) {
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			Dockerfile:  filepath.FromSlash("root/1/blarg/Dockerfile"),
 			ContextDir:  filepath.FromSlash("root/1/blarg"),
+			Sources:     []string{filepath.FromSlash("root/1/blarg")},
 		})
 	})
 
@@ -71,6 +73,7 @@ func TestManifest(t *testing.T) {
 			Name:        "zzz",
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			ContextDir:  filepath.FromSlash("root/1/2/3/4"),
+			Sources:     []string{filepath.FromSlash("root/1/2/3/4")},
 			ImagePins:   filepath.FromSlash("root/1/blarg/pins.yaml"),
 		})
 	})
@@ -196,6 +199,7 @@ func TestExtends(t *testing.T) {
 			write("base.yaml", Manifest{
 				Name:      "base",
 				ImagePins: "pins.yaml",
+				Sources:   []string{"base-1", "base-2"},
 				Infra: map[string]Infra{
 					"base": {
 						Storage:  "gs://base-storage",
@@ -213,6 +217,7 @@ func TestExtends(t *testing.T) {
 				Name:          "mid",
 				Extends:       "../base.yaml",
 				Deterministic: &falseVal,
+				Sources:       []string{"mid-1", "../mid-2", "../base-2"},
 				Infra: map[string]Infra{
 					"mid": {
 						Storage:  "gs://mid-storage",
@@ -252,18 +257,24 @@ func TestExtends(t *testing.T) {
 
 			m, err := Load(filepath.Join(dir, "deeper", "leaf.yaml"))
 			So(err, ShouldBeNil)
-			So(m.RenderSteps(), ShouldBeNil)
+			So(m.Finalize(), ShouldBeNil)
 
 			// We'll deal with them separately below.
 			steps := m.Build
 			m.Build = nil
 
 			So(m, ShouldResemble, &Manifest{
-				Name:          "leaf",
-				ManifestDir:   abs("deeper"),
-				Dockerfile:    abs("deeper/dockerfile"),
-				ContextDir:    abs("deeper/context-dir"),
-				InputsDir:     abs("deeper/inputs-dir"),
+				Name:        "leaf",
+				ManifestDir: abs("deeper"),
+				Dockerfile:  abs("deeper/dockerfile"),
+				ContextDir:  abs("deeper/context-dir"),
+				InputsDir:   abs("deeper/inputs-dir"),
+				Sources: []string{
+					abs("deeper/mid-1"),
+					abs("mid-2"),
+					abs("base-2"),
+					abs("base-1"),
+				},
 				ImagePins:     abs("pins.yaml"),
 				Deterministic: &falseVal,
 				Infra: map[string]Infra{

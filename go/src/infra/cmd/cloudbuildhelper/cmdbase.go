@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
@@ -61,6 +62,15 @@ type extraFlags struct {
 	labels       bool // -label flags
 	buildID      bool // -build-id flag
 	jsonOutput   bool // -json-output and -render-to-stdout
+}
+
+// baseOutput is a shared portion of -json-output for `upload` and `build`
+// commands.
+type baseOutput struct {
+	Name       string                  `json:"name"`                  // artifacts name from the manifest YAML
+	ContextDir string                  `json:"context_dir,omitempty"` // absolute path to a context directory used to build the artifact
+	Sources    []string                `json:"sources,omitempty"`     // absolute paths to directories declared as `sources` in the manifest YAML
+	Notify     []manifest.NotifyConfig `json:"notify,omitempty"`      // copied from the manifest YAML
 }
 
 // init register base flags. Must be called.
@@ -174,42 +184,71 @@ func (c *commandBase) newTempDir() (string, error) {
 // If the command requires `-infra` flag (as indicated by extraFlags in init),
 // checks it was passed and picks the corresponding infra section from the
 // manifest.
-func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, err error) {
+func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, output *baseOutput, err error) {
 	m, err = manifest.Load(path)
 	if err != nil {
-		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+		return nil, nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
 	}
 
 	// If contextdir isn't set, replace it with an empty temp directory.
 	if m.ContextDir == "" {
 		m.ContextDir, err = c.newTempDir()
 		if err != nil {
-			return nil, nil, errors.Annotate(err, "failed to create temp directory to act as a context dir").Err()
+			return nil, nil, nil, errors.Annotate(err, "failed to create temp directory to act as a context dir").Err()
 		}
 	}
 
 	// Now that all paths are initialized, render "${dir}/..." strings.
-	if err = m.RenderSteps(); err != nil {
-		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+	if err = m.Finalize(); err != nil {
+		return nil, nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
 	}
 
 	if c.extraFlags.infra {
 		if c.infra == "" {
-			return nil, nil, errBadFlag("-infra", "a value is required")
+			return nil, nil, nil, errBadFlag("-infra", "a value is required")
 		}
 		section, ok := m.Infra[c.infra]
 		switch {
 		case !ok:
-			return nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
+			return nil, nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
 		case needStorage && section.Storage == "":
-			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
+			return nil, nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
 		case needCloudBuild && section.CloudBuild.Project == "":
-			return nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
+			return nil, nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
 		}
 		infra = &section
 	}
 
+	// Prepare -json-output portion that depends on the manifest.
+	if output, err = prepBaseOutput(m, infra); err != nil {
+		return nil, nil, nil, errors.Annotate(err, "failed to prepare values for -json-output").Err()
+	}
+
 	return
+}
+
+// prepBaseOutput populates baseOutput based on the manifest and -infra flag.
+func prepBaseOutput(m *manifest.Manifest, infra *manifest.Infra) (*baseOutput, error) {
+	contextDir := m.ContextDir
+	if contextDir != "" {
+		var err error
+		if contextDir, err = filepath.Abs(contextDir); err != nil {
+			return nil, errors.Annotate(err, "bad context directory path").Err()
+		}
+	}
+	sources := make([]string, len(m.Sources))
+	for i, path := range m.Sources {
+		var err error
+		if sources[i], err = filepath.Abs(path); err != nil {
+			return nil, errors.Annotate(err, "bad path in `sources`").Err()
+		}
+	}
+	return &baseOutput{
+		Name:       m.Name,
+		ContextDir: contextDir,
+		Sources:    sources,
+		Notify:     infra.Notify,
+	}, nil
 }
 
 // tokenSource returns a source of OAuth2 tokens (based on CLI flags) or

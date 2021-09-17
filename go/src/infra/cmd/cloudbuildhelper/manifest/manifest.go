@@ -18,6 +18,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -134,6 +135,16 @@ type Manifest struct {
 	// Images marked as non-deterministic are always rebuilt and reuploaded, even
 	// if nothing in ContextDir has changed.
 	Deterministic *bool `yaml:"deterministic,omitempty"`
+
+	// Sources is unix-style paths to the directories that contain the source code
+	// used to build the artifact, for the express purpose of getting its revision
+	// and propagating as artifact's metadata.
+	//
+	// Values of this field are not involved in the build process itself at all.
+	// If omitted, defaults to ${inputsdir} or ${contextdir} whichever is set.
+	//
+	// The paths are relative to this YAML file.
+	Sources []string `yaml:"sources"`
 
 	// Infra is configuration of the build infrastructure to use: Google Storage
 	// bucket, Cloud Build project, etc.
@@ -429,7 +440,7 @@ func (s *GoGAEBundleBuildStep) initStep(bs *BuildStep, dirs map[string]string) (
 //
 // After the manifest is loaded, its fields (like ContextDir) can be manipulated
 // (e.g. to set defaults), after which all "${dir}/" references in build steps
-// must be resolved by a call to RenderSteps.
+// must be resolved by a call to Finalize.
 func Load(path string) (*Manifest, error) {
 	return loadRecursive(path, 0)
 }
@@ -484,7 +495,7 @@ func loadRecursive(path string, fileCount int) (*Manifest, error) {
 // initBase initializes pointers in steps and rebases paths.
 //
 // Doesn't yet touch actual bodies of steps, they will be initialized later
-// when the whole manifest tree is loaded, see RenderSteps.
+// when the whole manifest tree is loaded, see Finalize.
 func (m *Manifest) initBase(cwd string) error {
 	if err := validateName(m.Name); err != nil {
 		return errors.Annotate(err, `bad "name" field`).Err()
@@ -497,6 +508,9 @@ func (m *Manifest) initBase(cwd string) error {
 	normPath(&m.ImagePins, cwd)
 	if m.ContextDir == "" && m.Dockerfile != "" {
 		m.ContextDir = filepath.Dir(m.Dockerfile)
+	}
+	for i := range m.Sources {
+		normPath(&m.Sources[i], cwd)
 	}
 	for k, v := range m.Infra {
 		if err := validateInfra(v); err != nil {
@@ -511,8 +525,17 @@ func (m *Manifest) initBase(cwd string) error {
 	return nil
 }
 
-// RenderSteps replaces "${dir}/" in paths in steps with actual values.
-func (m *Manifest) RenderSteps() error {
+// Finalize replaces "${dir}/" in paths in steps with actual values and fills
+// in defaults.
+func (m *Manifest) Finalize() error {
+	if len(m.Sources) == 0 {
+		switch {
+		case m.InputsDir != "":
+			m.Sources = []string{m.InputsDir}
+		case m.ContextDir != "":
+			m.Sources = []string{m.ContextDir}
+		}
+	}
 	for _, b := range m.Build {
 		dirs := map[string]string{
 			"contextdir":  m.ContextDir,
@@ -539,6 +562,9 @@ func (m *Manifest) rebaseOnTop(b *Manifest) {
 		m.Deterministic = &cpy
 	}
 
+	// Sources are joined as sets, but preserving order.
+	m.Sources = joinStringSets(m.Sources, b.Sources)
+
 	// Rebase all entries already present in 'm' on top of entries in 'b'.
 	for k, v := range m.Infra {
 		if base, ok := b.Infra[k]; ok {
@@ -564,6 +590,17 @@ func setIfEmpty(a *string, b string) {
 	if *a == "" {
 		*a = b
 	}
+}
+
+func joinStringSets(a, b []string) []string {
+	out := append([]string(nil), a...)
+	seen := stringset.NewFromSlice(a...)
+	for _, s := range b {
+		if seen.Add(s) {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // validateName validates "name" field in the manifest.

@@ -78,7 +78,7 @@ func (c *cmdUploadRun) init() {
 }
 
 func (c *cmdUploadRun) exec(ctx context.Context) error {
-	m, infra, err := c.loadManifest(c.targetManifest, true, false)
+	m, infra, output, err := c.loadManifest(c.targetManifest, true, false)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (c *cmdUploadRun) exec(ctx context.Context) error {
 	})
 
 	// Return (GS path, SHA256 digest, canonical tag) or error as JSON output.
-	res := uploadResult{Name: m.Name}
+	res := uploadResult{baseOutput: output}
 	if err == nil {
 		res.GS.Bucket = obj.Bucket
 		res.GS.Name = obj.Name
@@ -124,7 +124,8 @@ func (c *cmdUploadRun) exec(ctx context.Context) error {
 
 // uploadResult is returned as JSON output by `upload` command.
 type uploadResult struct {
-	Name  string `json:"name"`            // artifacts name from the manifest YAML
+	*baseOutput
+
 	Error string `json:"error,omitempty"` // non-empty if the upload failed
 	GS    struct {
 		Bucket string `json:"bucket"` // GCS bucket with the file

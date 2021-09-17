@@ -36,10 +36,11 @@ const (
 
 var _true = true // for *bool
 
-var (
-	notifyCfg1 = manifest.NotifyConfig{"a": 1}
-	notifyCfg2 = manifest.NotifyConfig{"b": 1}
-)
+var testBaseOutput = &baseOutput{
+	Name:    testTargetName,
+	Sources: []string{"a", "b"},
+	Notify:  []manifest.NotifyConfig{{"a": 1}, {"b": 1}},
+}
 
 func TestBuild(t *testing.T) {
 	t.Parallel()
@@ -90,7 +91,7 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
-				Notify:       []manifest.NotifyConfig{notifyCfg1, notifyCfg2},
+				Output:       testBaseOutput,
 			})
 			So(err, ShouldBeNil)
 
@@ -101,7 +102,7 @@ func TestBuild(t *testing.T) {
 
 			// Used Cloud Build.
 			So(res, ShouldResemble, buildResult{
-				Name: testTargetName,
+				baseOutput: testBaseOutput,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -109,7 +110,6 @@ func TestBuild(t *testing.T) {
 					BuildID:      "b1",
 				},
 				ViewBuildURL: testLogURL,
-				Notify:       []manifest.NotifyConfig{notifyCfg1, notifyCfg2},
 			})
 
 			// Tagged it with canonical tag.
@@ -145,12 +145,13 @@ func TestBuild(t *testing.T) {
 					Store:        store,
 					Builder:      builder,
 					Registry:     registry,
+					Output:       testBaseOutput,
 				})
 				So(err, ShouldBeNil)
 
 				// Reused the existing image.
 				So(res, ShouldResemble, buildResult{
-					Name: testTargetName,
+					baseOutput: testBaseOutput,
 					Image: &imageRef{
 						Image:        testImageName,
 						Digest:       testDigest,
@@ -203,12 +204,13 @@ func TestBuild(t *testing.T) {
 					Store:        store,
 					Builder:      builder,
 					Registry:     registry,
+					Output:       testBaseOutput,
 				})
 				So(err, ShouldBeNil)
 
 				// Built the new image.
 				So(res, ShouldResemble, buildResult{
-					Name: testTargetName,
+					baseOutput: testBaseOutput,
 					Image: &imageRef{
 						Image:        testImageName,
 						Digest:       "sha256:new-totally-legit-hash",
@@ -242,12 +244,13 @@ func TestBuild(t *testing.T) {
 				CanonicalTag: testTagName,
 				Tags:         []string{"latest"},
 				Registry:     registry,
+				Output:       testBaseOutput,
 			})
 			So(err, ShouldBeNil)
 
 			// Reused the existing image.
 			So(res, ShouldResemble, buildResult{
-				Name: testTargetName,
+				baseOutput: testBaseOutput,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -282,6 +285,7 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
+				Output:       testBaseOutput,
 			}
 			res, err := runBuild(ctx, params)
 			So(err, ShouldBeNil)
@@ -293,7 +297,7 @@ func TestBuild(t *testing.T) {
 
 			// Used Cloud Build.
 			So(res, ShouldResemble, buildResult{
-				Name: testTargetName,
+				baseOutput: testBaseOutput,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -314,7 +318,7 @@ func TestBuild(t *testing.T) {
 			res, err = runBuild(ctx, params)
 			So(err, ShouldBeNil)
 			So(res, ShouldResemble, buildResult{
-				Name: testTargetName,
+				baseOutput: testBaseOutput,
 				Image: &imageRef{
 					Image:        testImageName,
 					Digest:       testDigest,
@@ -337,6 +341,7 @@ func TestBuild(t *testing.T) {
 				Store:        store,
 				Builder:      builder,
 				Registry:     registry,
+				Output:       testBaseOutput,
 			})
 			So(err, ShouldBeNil)
 
@@ -347,7 +352,7 @@ func TestBuild(t *testing.T) {
 
 			// Did NOT produce any image, but have a link to the build.
 			So(res, ShouldResemble, buildResult{
-				Name:         testTargetName,
+				baseOutput:   testBaseOutput,
 				ViewBuildURL: testLogURL,
 			})
 		})
