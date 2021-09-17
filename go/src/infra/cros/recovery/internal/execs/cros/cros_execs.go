@@ -6,6 +6,8 @@ package cros
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -27,6 +29,13 @@ const (
 		"(echo begin 4; reboot -nf; echo end 4 \"$?\")& sleep 1;" +
 		// telinit 6 sets run level for process initialized, which is equivalent to reboot.
 		"(echo begin 5; telinit 6; echo end 5 \"$?\")"
+	// PROVISION_FAILED - A flag file to indicate provision failures.  The
+	// file is created at the start of any AU procedure (see
+	// `ChromiumOSProvisioner._prepare_host()`).  The file's location in
+	// stateful means that on successful update it will be removed.  Thus, if
+	// this file exists, it indicates that we've tried and failed in a
+	// previous attempt to update.
+	provisionFailed = "/var/tmp/provision_failed"
 )
 
 // pingExec verifies the DUT is pingable.
@@ -140,6 +149,86 @@ func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// isFileSystemWritable confirms the stateful file systems are writable.
+//
+// The standard linux response to certain unexpected file system errors
+// (including hardware errors in block devices) is to change the file
+// system status to read-only.  This checks that that hasn't happened.
+// The test covers the two file systems that need to be writable for
+// critical operations like AU:
+//     * The (unencrypted) stateful system which includes /mnt/stateful_partition.
+//     * The encrypted stateful partition, which includes /var.
+// The test doesn't check various bind mounts; those are expected to
+// fail the same way as their underlying main mounts.  Whether the
+// Linux kernel can guarantee that is untested...
+func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	// N.B. Order matters here:  Encrypted stateful is loop-mounted from a file in unencrypted stateful,
+	// so we don't test for errors in encrypted stateful if unencrypted fails.
+	testDirs := []string{"/mnt/stateful_partition", "/var/tmp"}
+	for _, testDir := range testDirs {
+		filename := filepath.Join(testDir, "writable_my_test_file")
+		command := fmt.Sprintf("touch %s && rm %s", filename, filename)
+		r := args.Access.Run(ctx, args.ResourceName, command)
+		if r.ExitCode != 0 {
+			log.Debug(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
+			return errors.Reason("file system writtable: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+		}
+	}
+	return nil
+}
+
+// hasPythonInterpreterExec confirm the presence of a working Python interpreter.
+func hasPythonInterpreterExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, `python -c "import json"`)
+	switch {
+	case r.ExitCode == 0:
+		// Python detected and import is working. do nothing
+		return nil
+	case r.ExitCode == 127:
+		if args.Access.Run(ctx, args.ResourceName, "which python").Stdout == "" {
+			return errors.Reason("has python interpreter: python is missing; may be caused by powerwash").Err()
+		}
+		fallthrough
+	default:
+		return errors.Reason("has python interpreter: interpreter is broken").Err()
+	}
+}
+
+// hasCriticalKernelErrorExec confirms we have seen critical file system kernel errors
+func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	// grep for stateful FS errors of the type "EXT4-fs error (device sda1):"
+	command := `dmesg | grep -E "EXT4-fs error \(device $(cut -d ' ' -f 5,9 /proc/$$/mountinfo | grep -e '^/mnt/stateful_partition ' | cut -d ' ' -f 2 | cut -d '/' -f 3)\):"`
+	r := args.Access.Run(ctx, args.ResourceName, command)
+	if strings.TrimSpace(r.Stdout) != "" {
+		sample := strings.Split(r.Stdout, `\n`)[0]
+		// Log the first file system error.
+		log.Error(ctx, "first file system error: %q", sample)
+		return errors.Reason("has critical kernel error: saw file system error: %s", sample).Err()
+	}
+	// Check for other critical FS errors.
+	command = `dmesg | grep "This should not happen!!  Data will be lost"`
+	r = args.Access.Run(ctx, args.ResourceName, command)
+	if strings.TrimSpace(r.Stdout) != "" {
+		return errors.Reason("has critical kernel error: saw file system error: Data will be lost").Err()
+	}
+	log.Debug(ctx, "Could not determine stateful mount.")
+	return nil
+}
+
+// isLastProvisionSuccessfulExec confirms that the DUT successfully finished its last provision job.
+//
+// At the start of any update (e.g. for a Provision job), the code creates a marker file named `PROVISION_FAILED`.
+// The file is located in a part of the stateful partition that will be removed if an update finishes successfully.
+// Thus, the presence of the file indicates that a prior update failed.
+// The verifier tests for the existence of the marker file and fails if it still exists.
+func isLastProvisionSuccessfulExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf("test -f %s", provisionFailed))
+	if r.ExitCode == 0 {
+		return errors.Reason("last provision successful: last provision on this DUT failed").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -150,4 +239,8 @@ func init() {
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
 	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
 	execs.Register("cros_run_shell_command", runShellCommandExec)
+	execs.Register("cros_is_file_system_writable", isFileSystemWritableExec)
+	execs.Register("cros_has_python_interpreter_working", hasPythonInterpreterExec)
+	execs.Register("cros_has_critical_kernel_error", hasCriticalKernelErrorExec)
+	execs.Register("cros_is_last_provision_successful", isLastProvisionSuccessfulExec)
 }
