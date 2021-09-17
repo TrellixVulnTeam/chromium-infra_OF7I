@@ -41,6 +41,13 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*
 		if vm.ResourceState == ufspb.State_STATE_UNSPECIFIED {
 			vm.ResourceState = ufspb.State_STATE_REGISTERED
 		}
+		if vm.GetMacAddress() == "" {
+			if macAddr, err := genNewMacAddress(); err != nil {
+				return err
+			} else {
+				vm.MacAddress = macAddr
+			}
+		}
 
 		// Update ip configs
 		if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
@@ -477,4 +484,9 @@ func getMachineForHost(ctx context.Context, lseName string) (*ufspb.Machine, err
 		return nil, status.Errorf(codes.InvalidArgument, "machine %s not found", lse.GetMachines()[0])
 	}
 	return machine, nil
+}
+
+func genNewMacAddress() (string, error) {
+	// TODO(xixuan): To be implemented with configuration.GetLastCheckedVMMacAddress()
+	return "", nil
 }
