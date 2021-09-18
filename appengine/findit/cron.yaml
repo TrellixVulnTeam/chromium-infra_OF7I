@@ -81,5 +81,5 @@ cron:
 
 - description: Query and export feature coverage metrics to bigquery.
   url: /coverage/cron/feature-coverage
-  schedule: every 10 minutes
+  schedule: every 4 hours
   timezone: America/Los_Angeles 
