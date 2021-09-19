@@ -2,11 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import './styles/style.css';
+
 import { customElement, html, LitElement, property } from 'lit-element';
 import { Context, Router } from '@vaadin/router';
 import './element/bug_cluster_table.ts';
 import './element/cluster_table.ts';
 import './element/not_found_page.ts';
+import './element/title_bar.ts';
 
 
 // MonorailTest excersises the monorail API in the server and displays an

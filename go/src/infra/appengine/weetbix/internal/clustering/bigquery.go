@@ -97,6 +97,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		OR unexpected_failures_3d > @unexpFailThreshold3d
 		OR unexpected_failures_7d > @unexpFailThreshold7d)
 		OR cluster_id IN UNNEST(@alwaysSelectClusters)
+	ORDER BY unexpected_failures_1d DESC, unexpected_failures_3d DESC, unexpected_failures_7d DESC
 	`)
 	// TODO(crbug.com/1243174): This will not scale if the set of
 	// cluster IDs to always select grows too large.

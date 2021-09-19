@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<title>Weetbix</title>
+
+<head>
+  <title>Weetbix</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+</head>
 
 <body>
-  <ul>
-    <li><a href="/">Clusters</a></li>
-    <li><a href="/bugcluster">Bug Clusters</a></li>
-    <li><a href="/monorail-test">Monorail Test</a></li>
-  </ul>
-  <p>Logged in as {{.User}}. <a href="{{.LogoutURL}}">Log Out</a></p>
+  <title-bar email="{{.User}}" logouturl="{{.LogoutURL}}"></title-bar>
   <div id="outlet"></div>
   <script src="/static/main.js"></script>
 </body>

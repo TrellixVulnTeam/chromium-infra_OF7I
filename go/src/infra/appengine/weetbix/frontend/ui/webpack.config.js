@@ -7,7 +7,7 @@ module.exports = {
     mode: 'development',
     module: {
         rules: [
-            { test: /\.css$/, use: 'css-loader' },
+            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
             { test: /\.ts$/, use: 'ts-loader' },
         ],
     },

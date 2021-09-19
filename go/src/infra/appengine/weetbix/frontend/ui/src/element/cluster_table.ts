@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property } from 'lit-element';
+import { LitElement, html, customElement, property, css } from 'lit-element';
 
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
@@ -20,43 +20,63 @@ export class ClusterTable extends LitElement {
             return html`Loading...`;
         }
         return html`
-        <table>
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th>Cluster ID</th>
-                    <th>Unexpected Failures (1d)</th>
-                    <th>Unexpected Failures (3d)</th>
-                    <th>Unexpected Failures (7d)</th>
-                    <th>Unexonerated Failures (1d)</th>
-                    <th>Unexonerated Failures (3d)</th>
-                    <th>Unexonerated Failures (7d)</th>
-                    <th>Affected Runs (1d)</th>
-                    <th>Affected Runs (3d)</th>
-                    <th>Affected Runs (7d)</th>
-                    <th>Example Failure Reason</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${this.clusters.map(c => html`
-                <tr>
-                    <td>${c.project}</td>
-                    <td>${c.clusterId}</td>
-                    <td>${c.unexpectedFailures1d}</td>
-                    <td>${c.unexpectedFailures3d}</td>
-                    <td>${c.unexpectedFailures7d}</td>
-                    <td>${c.unexoneratedFailures1d}</td>
-                    <td>${c.unexoneratedFailures3d}</td>
-                    <td>${c.unexoneratedFailures7d}</td>
-                    <td>${c.affectedRuns1d}</td>
-                    <td>${c.affectedRuns3d}</td>
-                    <td>${c.affectedRuns7d}</td>
-                    <td>${c.exampleFailureReason}</td>
-                </tr>`)}
-            </tbody>
-        </table>
+        <div id="container">
+            <h1>${this.clusters[0].project}: Clusters</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cluster</th>
+                        <th>Unexpected Failures (1d)</th>
+                        <th>Unexpected Failures (3d)</th>
+                        <th>Unexpected Failures (7d)</th>
+                        <th>Unexonerated Failures (1d)</th>
+                        <th>Unexonerated Failures (3d)</th>
+                        <th>Unexonerated Failures (7d)</th>
+                        <th>Affected Runs (1d)</th>
+                        <th>Affected Runs (3d)</th>
+                        <th>Affected Runs (7d)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.clusters.map(c => html`
+                    <tr>
+                        <td>${c.exampleFailureReason || c.clusterId}</td>
+                        <td class="number">${c.unexpectedFailures1d}</td>
+                        <td class="number">${c.unexpectedFailures3d}</td>
+                        <td class="number">${c.unexpectedFailures7d}</td>
+                        <td class="number">${c.unexoneratedFailures1d}</td>
+                        <td class="number">${c.unexoneratedFailures3d}</td>
+                        <td class="number">${c.unexoneratedFailures7d}</td>
+                        <td class="number">${c.affectedRuns1d}</td>
+                        <td class="number">${c.affectedRuns3d}</td>
+                        <td class="number">${c.affectedRuns7d}</td>
+                    </tr>`)}
+                </tbody>
+            </table>
+        </div>
         `;
     }
+    static styles = [css`
+        #container {
+            margin: 20px 14px;
+        }
+        h1 {
+            font-size: 1em;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        th {
+            font-weight: normal;
+            color: var(--greyed-out-text-color);
+        }
+        td,th {
+            padding: 4px;
+        }
+        td.number {
+            text-align: right;
+        }
+    `];
 }
 
 // Cluster is the cluster information sent by the server.
