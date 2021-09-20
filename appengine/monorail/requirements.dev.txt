@@ -15,7 +15,7 @@ mysqlclient==1.4.6 --hash=sha256:f3fdaa9a38752a3b214a6fe79d7cae3653731a53e577821
 enum34==1.1.6 --hash=sha256:6bd0f6ad48ec2aa117d3d141940d484deccda84d4fcd884f5c3d93c23ecd8c79
 
 # Required by gae.py and by dev_appserver.py
-six==six==1.15.0 --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced
+six==1.15.0 --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced
 
 # Required by grpc-google-iam-v1 <-- google-cloud-tasks
 # first sha is for cp27m-macosx_10_9_x86
