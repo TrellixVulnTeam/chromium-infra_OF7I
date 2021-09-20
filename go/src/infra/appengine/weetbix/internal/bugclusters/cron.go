@@ -6,13 +6,13 @@ package bugclusters
 
 import (
 	"context"
-	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 )
 
 // UpdateBugs updates monorail bugs to reflect the latest analysis.
 func UpdateBugs(ctx context.Context, monorailHost, projectID, reporter string, thresholds clustering.ImpactThresholds) error {
-	mc, err := bugs.NewMonorailClient(ctx, monorailHost)
+	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID, reporter string, t
 	if err != nil {
 		return err
 	}
-	ig := bugs.NewIssueGenerator(reporter)
+	ig := monorail.NewIssueGenerator(reporter)
 	bu := NewBugUpdater(mc, cc, ig, thresholds)
 	if err := bu.Run(ctx); err != nil {
 		return err

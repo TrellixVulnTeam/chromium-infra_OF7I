@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"testing"
 
-	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -23,10 +23,10 @@ func TestRun(t *testing.T) {
 	Convey("Run bug updates", t, func() {
 		setBugClusters(ctx, nil)
 
-		f := &bugs.FakeIssuesClient{
+		f := &monorail.FakeIssuesClient{
 			NextID: 100,
 		}
-		mc, err := bugs.NewMonorailClient(bugs.UseFakeIssuesClient(ctx, f), "myhost")
+		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f), "myhost")
 		So(err, ShouldBeNil)
 
 		clusters := []*clustering.Cluster{
@@ -39,7 +39,7 @@ func TestRun(t *testing.T) {
 			clusters: clusters,
 		}
 
-		ig := bugs.NewIssueGenerator("reporter@google.com")
+		ig := monorail.NewIssueGenerator("reporter@google.com")
 		thres := clustering.ImpactThresholds{
 			UnexpectedFailures1d: 10,
 			UnexpectedFailures3d: 30,

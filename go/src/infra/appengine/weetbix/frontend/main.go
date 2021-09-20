@@ -32,7 +32,7 @@ import (
 
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/bugclusters"
-	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -124,7 +124,7 @@ func (hc *handlers) monorailTest(ctx *router.Context) {
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-	mc, err := bugs.NewMonorailClient(ctx.Context, cfg.GetMonorailHostname())
+	mc, err := monorail.NewClient(ctx.Context, cfg.GetMonorailHostname())
 	if err != nil {
 		logging.Errorf(ctx.Context, "Getting Monorail client: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)

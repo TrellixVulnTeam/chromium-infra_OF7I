@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package bugs
+package monorail
 
 import (
 	"context"
@@ -37,14 +37,14 @@ func TestGetIssue(t *testing.T) {
 
 	ctx := UseFakeIssuesClient(context.Background(), f)
 	Convey("Get issue", t, func() {
-		bc, err := NewMonorailClient(ctx, "monorailhost")
+		bc, err := NewClient(ctx, "monorailhost")
 		So(err, ShouldBeNil)
 		result, err := bc.GetIssue(ctx, "projects/monorailproject/issues/1")
 		So(err, ShouldBeNil)
 		So(result, ShouldResembleProto, issue1)
 	})
 	Convey("Get issues", t, func() {
-		bc, err := NewMonorailClient(ctx, "monorailhost")
+		bc, err := NewClient(ctx, "monorailhost")
 		So(err, ShouldBeNil)
 		names := []string{
 			"projects/monorailproject/issues/1",

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package bugs
+package monorail
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 
 var testMonorailClientKey = "used in tests only for setting the monorail client test double"
 
-func newIssueClient(ctx context.Context, host string) (mpb.IssuesClient, error) {
+func newClient(ctx context.Context, host string) (mpb.IssuesClient, error) {
 	if testClient, ok := ctx.Value(&testMonorailClientKey).(mpb.IssuesClient); ok {
 		return testClient, nil
 	}
@@ -44,25 +44,25 @@ func newIssueClient(ctx context.Context, host string) (mpb.IssuesClient, error) 
 
 // Creates a new Monorail client. Host is the monorail host to use,
 // e.g. monorail-prod.appspot.com.
-func NewMonorailClient(ctx context.Context, host string) (*MonorailClient, error) {
-	client, err := newIssueClient(ctx, host)
+func NewClient(ctx context.Context, host string) (*Client, error) {
+	client, err := newClient(ctx, host)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MonorailClient{
+	return &Client{
 		client: client,
 	}, nil
 }
 
-// MonorailClient is a client to communicate with the Monorail issue tracker.
-type MonorailClient struct {
+// Client is a client to communicate with the Monorail issue tracker.
+type Client struct {
 	client mpb.IssuesClient
 }
 
 // GetIssue retrieves the details of a monorail issue. Name should
 // follow the format "projects/<projectid>/issues/<issueid>".
-func (c *MonorailClient) GetIssue(ctx context.Context, name string) (*mpb.Issue, error) {
+func (c *Client) GetIssue(ctx context.Context, name string) (*mpb.Issue, error) {
 	req := mpb.GetIssueRequest{Name: name}
 	resp, err := c.client.GetIssue(ctx, &req)
 	if err != nil {
@@ -76,7 +76,7 @@ func (c *MonorailClient) GetIssue(ctx context.Context, name string) (*mpb.Issue,
 // that the i_th issue in the result will match the i_th issue
 // requested. It is valid to request the same issue multiple
 // times in the same request.
-func (c *MonorailClient) GetIssues(ctx context.Context, names []string) ([]*mpb.Issue, error) {
+func (c *Client) GetIssues(ctx context.Context, names []string) ([]*mpb.Issue, error) {
 	var deduplicatedNames []string
 	requestedNames := make(map[string]bool)
 	for _, name := range names {
@@ -109,7 +109,7 @@ func (c *MonorailClient) GetIssues(ctx context.Context, names []string) ([]*mpb.
 
 // MakeIssue creates the given issue in monorail, adding the specified
 // description.
-func (c *MonorailClient) MakeIssue(ctx context.Context, req *mpb.MakeIssueRequest) (*mpb.Issue, error) {
+func (c *Client) MakeIssue(ctx context.Context, req *mpb.MakeIssueRequest) (*mpb.Issue, error) {
 	issue, err := c.client.MakeIssue(ctx, req)
 	return issue, err
 }
