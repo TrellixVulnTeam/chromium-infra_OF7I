@@ -1,0 +1,73 @@
+id: 1234
+input {
+    properties {
+        fields {
+            key: "test_specs"
+            value: {
+                list_value {
+                    values {
+                        struct_value {
+                            fields {
+                                key: "hw_test_spec"
+                                value: {
+                                    struct_value {
+                                        fields {
+                                            key: "rules"
+                                            value: {
+                                                struct_value {
+                                                    fields {
+                                                        key: "name"
+                                                        value: {
+                                                            string_value: "test_rule1"
+                                                        }
+                                                    }
+                                                    fields {
+                                                        key: "dut_criteria"
+                                                        value: {
+                                                            list_value {
+                                                                values {
+                                                                    struct_value {
+                                                                        fields {
+                                                                            key: "attribute_id"
+                                                                            value: {
+                                                                                struct_value {
+                                                                                    fields {
+                                                                                        key: "value"
+                                                                                        value {
+                                                                                            string_value: "test_attr1"
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        fields {
+                                                                            key: "values"
+                                                                            value: {
+                                                                                list_value {
+                                                                                    values {
+                                                                                        string_value: "test_val1"
+                                                                                    }
+                                                                                    values {
+                                                                                        string_value: "test_val2"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

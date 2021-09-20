@@ -20,21 +20,21 @@ import (
 )
 
 func main() {
-	request := &tpv2.RequestBeta{}
+	request := &tpv2.Request{}
 	build.Main(request, nil, nil, func(ctx context.Context, userArgs []string, state *build.State) error {
 		return RunOrch(ctx, request)
 	})
 }
 
 // RunOrch runs tests based on request.
-func RunOrch(ctx context.Context, request *tpv2.RequestBeta) error {
-	testSpecs := request.GetHwTestRequest().GetTestSpecs()
+func RunOrch(ctx context.Context, request *tpv2.Request) error {
+	testSpecs := request.TestSpecs
 	if len(testSpecs) == 0 {
 		return fmt.Errorf("at least one TestSpec in request required")
 	}
 
 	for _, spec := range testSpecs {
-		swarmingDims, err := testorchestrator.GetRequestedDimensions(ctx, spec.GetRules().DutCriteria)
+		swarmingDims, err := testorchestrator.GetRequestedDimensions(ctx, spec.GetHwTestSpec().Rules.DutCriteria)
 		if err != nil {
 			return err
 		}

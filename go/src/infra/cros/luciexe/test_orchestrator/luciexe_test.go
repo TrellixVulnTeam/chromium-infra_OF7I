@@ -11,11 +11,11 @@ import (
 
 func TestRunOrch(t *testing.T) {
 	ctx := context.Background()
-	request := &tpv2.RequestBeta{
-		Request: &tpv2.RequestBeta_HwTestRequest{
-			HwTestRequest: &tpv2.HWTestRequestBeta{
-				TestSpecs: []*tpv2.HWTestRequestBeta_TestSpec{
-					{
+	request := &tpv2.Request{
+		TestSpecs: []*tpv2.TestSpec{
+			{
+				Spec: &tpv2.TestSpec_HwTestSpec{
+					HwTestSpec: &tpv2.HWTestSpec{
 						Rules: &testpb.CoverageRule{
 							Name: "test_rule1",
 							TestSuites: []*testpb.TestSuite{
@@ -64,21 +64,21 @@ func TestRunOrchErrors(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		request      *tpv2.RequestBeta
+		request      *tpv2.Request
 		errorMessage string
 	}{
 		{
 			"empty request",
-			&tpv2.RequestBeta{},
+			&tpv2.Request{},
 			"at least one TestSpec in request required",
 		},
 		{
 			"empty CoverageRule",
-			&tpv2.RequestBeta{
-				Request: &tpv2.RequestBeta_HwTestRequest{
-					HwTestRequest: &tpv2.HWTestRequestBeta{
-						TestSpecs: []*tpv2.HWTestRequestBeta_TestSpec{
-							{
+			&tpv2.Request{
+				TestSpecs: []*tpv2.TestSpec{
+					{
+						Spec: &tpv2.TestSpec_HwTestSpec{
+							HwTestSpec: &tpv2.HWTestSpec{
 								Rules: &testpb.CoverageRule{},
 							},
 						},
