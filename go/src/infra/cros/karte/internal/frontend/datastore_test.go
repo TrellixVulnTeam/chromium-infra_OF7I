@@ -260,3 +260,58 @@ func TestReadActionEntitiesFromDatastoreOneAtAtime(t *testing.T) {
 		}
 	}
 }
+
+// TestGetActionEntityByID test retrieving an entity from the fake datastore instance by its ID.
+func TestGetActionEntityByID(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	// Confirm that an item does not exist should produce an error.
+	t.Run("nonexistent entity", func(t *testing.T) {
+		_, err := GetActionEntityByID(ctx, "hi")
+		if err == nil {
+			t.Errorf("getting action when datastore is empty: %s", err)
+		}
+		// Insert an action.
+		if err := PutActionEntities(ctx, &ActionEntity{
+			ID:   "hi",
+			Kind: "step1",
+		}); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	})
+	// Confirm that we can successfully retrieve the action that we just put in.
+	t.Run("read back inserted entity", func(t *testing.T) {
+		expected := &ActionEntity{
+			ID:   "hi",
+			Kind: "step1",
+		}
+		actual, err := GetActionEntityByID(ctx, "hi")
+		if err != nil {
+			t.Errorf("getting action from non-empty datastore: %s", err)
+		}
+		if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(ActionEntity{})); diff != "" {
+			t.Errorf("unexpected diff: %s", diff)
+		}
+	})
+	// Confirm that we get back the most recent item when writing.
+	t.Run("overwrite entity", func(t *testing.T) {
+		if err := PutActionEntities(ctx, &ActionEntity{
+			ID:   "hi",
+			Kind: "step2",
+		}); err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+		expected := &ActionEntity{
+			ID:   "hi",
+			Kind: "step2",
+		}
+		actual, err := GetActionEntityByID(ctx, "hi")
+		if err != nil {
+			t.Errorf("getting action from non-empty datastore: %s", err)
+		}
+		if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(ActionEntity{})); diff != "" {
+			t.Errorf("unexpected diff: %s", diff)
+		}
+	})
+}

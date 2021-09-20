@@ -291,6 +291,15 @@ func PutActionEntities(ctx context.Context, entities ...*ActionEntity) error {
 	return datastore.Put(ctx, entities)
 }
 
+// GetActionEntityByID gets an action entity by its ID. If we confirm the absence of an entity successfully, no error is returned.
+func GetActionEntityByID(ctx context.Context, id string) (*ActionEntity, error) {
+	actionEntity := &ActionEntity{ID: id}
+	if err := datastore.Get(ctx, actionEntity); err != nil {
+		return nil, errors.Annotate(err, "get action entity by id").Err()
+	}
+	return actionEntity, nil
+}
+
 // ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
 func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
 	if observation == nil {
