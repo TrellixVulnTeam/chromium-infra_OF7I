@@ -64,7 +64,6 @@ func (d *Dir) OpenSubDir(path string) (string, error) {
 
 const (
 	gsOffloaderAdminTasksMarker = ".admin_task_marker"
-	gsOffloaderMarker           = ".ready_for_offload"
 )
 
 // sealResultsDir drops a special timestamp file in the results
@@ -78,12 +77,6 @@ func sealResultsDir(d string) error {
 	marker := filepath.Join(d, gsOffloaderAdminTasksMarker)
 	if err := ioutil.WriteFile(marker, ts, 0666); err != nil {
 		return errors.Annotate(err, "seal results dir %q with marker for admin tasks", d).Err()
-	}
-	// TODO(b/192504102) Remove the old marker generation when the gs_offloader
-	// is migrated to use the marker for admin tasks.
-	tsfile := filepath.Join(d, gsOffloaderMarker)
-	if err := ioutil.WriteFile(tsfile, ts, 0666); err != nil {
-		return errors.Annotate(err, "seal results dir %s", d).Err()
 	}
 	return nil
 }
