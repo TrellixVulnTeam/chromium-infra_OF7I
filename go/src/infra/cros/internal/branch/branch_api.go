@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -34,13 +35,13 @@ func qpsToPeriod(qps float64) time.Duration {
 	return time.Duration(int64(periodSec))
 }
 
-func createRemoteBranch(authedClient *http.Client, b GerritProjectBranch, dryRun bool) error {
+func (c *Client) createRemoteBranch(authedClient *http.Client, b GerritProjectBranch, dryRun bool) error {
+	if dryRun {
+		return nil
+	}
 	agClient, err := gerritapi.NewClient(b.GerritURL, authedClient)
 	if err != nil {
 		return fmt.Errorf("failed to create Gerrit client: %v", err)
-	}
-	if dryRun {
-		return nil
 	}
 	bi, resp, err := agClient.Projects.CreateBranch(b.Project, b.Branch, &gerritapi.BranchInput{Revision: b.SrcRef})
 	defer resp.Body.Close()
@@ -50,8 +51,9 @@ func createRemoteBranch(authedClient *http.Client, b GerritProjectBranch, dryRun
 			// shouldn't happen
 			return err2
 		}
-		if resp.StatusCode == http.StatusConflict {
+		if resp.StatusCode == http.StatusConflict && strings.Contains(string(body), "already exists") {
 			// Branch already exists, so there's nothing to do.
+			c.LogOut("branch %s already exists for %s/%s, nothing to do here", b.Branch, b.GerritURL, b.Project)
 			return nil
 		}
 		return errors.Annotate(err, "failed to create branch. Got response %v and branch info %v", string(body), bi).Err()
@@ -68,30 +70,35 @@ func (c *Client) CreateRemoteBranchesAPI(authedClient *http.Client, branches []G
 
 	if dryRun {
 		c.LogOut("Dry run (no --push): would create remote branches for %v Gerrit repos", len(branches))
-		return nil
+	} else {
+		c.LogOut("Creating remote branches for %v Gerrit repos. This will take a few minutes, since otherwise Gerrit would throttle us.", len(branches))
 	}
-	c.LogOut("Creating remote branches for %v Gerrit repos. This will take a few minutes, since otherwise Gerrit would throttle us.", len(branches))
 	var g errgroup.Group
 	throttle := time.Tick(qpsToPeriod(gerritQPS))
+
+	var logPrefix string
+	if dryRun {
+		logPrefix = "(Dry run) "
+	}
 
 	var createCount int64
 	for _, b := range branches {
 		<-throttle
 		b := b
 		g.Go(func() error {
-			err := createRemoteBranch(authedClient, b, dryRun)
+			err := c.createRemoteBranch(authedClient, b, dryRun)
 			if err != nil {
 				return err
 			}
 			count := atomic.AddInt64(&createCount, 1)
 			if count%10 == 0 {
-				c.LogOut("Created %v of %v remote branches", count, len(branches))
+				c.LogOut("%sCreated %v of %v remote branches", logPrefix, count, len(branches))
 			}
 			return nil
 		})
 	}
 	err := g.Wait()
-	c.LogOut("Successfully created %v of %v remote branches", atomic.LoadInt64(&createCount), len(branches))
+	c.LogOut("%sSuccessfully created %v of %v remote branches", logPrefix, atomic.LoadInt64(&createCount), len(branches))
 	return err
 }
 
