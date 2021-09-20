@@ -209,9 +209,6 @@ func (c *addVM) validateArgs() error {
 		if c.vmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if c.macAddress == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac' is required, no mode ('-f') is specified.")
-		}
 	}
 	return nil
 }

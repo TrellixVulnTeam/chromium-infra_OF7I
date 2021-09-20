@@ -13,7 +13,7 @@ import (
 
 func mockServiceConfig() *ServiceConfig {
 	return &ServiceConfig{
-		LastCheckedVMMacAddress: "0000ff",
+		LastCheckedVMMacAddress: "000000",
 	}
 }
 
@@ -24,8 +24,8 @@ func TestGetLastCheckedVMMacAddress(t *testing.T) {
 	Convey("GetLastCheckedVMMacAddress", t, func() {
 		err := UpdateServiceConfig(ctx, sc)
 		So(err, ShouldBeNil)
-		resp, err := GetLastCheckedVMMacAddress(ctx)
+		resp, err := GetServiceConfig(ctx)
 		So(err, ShouldBeNil)
-		So(resp, ShouldEqual, "0000ff")
+		So(resp.LastCheckedVMMacAddress, ShouldEqual, "000000")
 	})
 }

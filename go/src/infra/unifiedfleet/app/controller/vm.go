@@ -6,6 +6,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -18,9 +20,15 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
+)
+
+const (
+	oui      = "00:50:56"
+	upperHex = "3fffff"
 )
 
 // CreateVM creates a new vm in datastore.
@@ -42,7 +50,7 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*
 			vm.ResourceState = ufspb.State_STATE_REGISTERED
 		}
 		if vm.GetMacAddress() == "" {
-			if macAddr, err := genNewMacAddress(); err != nil {
+			if macAddr, err := genNewMacAddress(ctx); err != nil {
 				return err
 			} else {
 				vm.MacAddress = macAddr
@@ -486,7 +494,41 @@ func getMachineForHost(ctx context.Context, lseName string) (*ufspb.Machine, err
 	return machine, nil
 }
 
-func genNewMacAddress() (string, error) {
-	// TODO(xixuan): To be implemented with configuration.GetLastCheckedVMMacAddress()
-	return "", nil
+func genNewMacAddress(ctx context.Context) (string, error) {
+	lastSC, err := configuration.GetServiceConfig(ctx)
+	if util.IsNotFoundError(err) {
+		lastSC = configuration.InitEmptyServiceConfig()
+	}
+	var realMac string
+	lastMac := lastSC.LastCheckedVMMacAddress
+	for lastMac != upperHex {
+		curMac, err := hexPlusOne(lastMac)
+		if err != nil {
+			logging.Debugf(ctx, "fail to parse last checked mac address: %s, %s", lastMac, err)
+			return "", err
+		}
+		realMac = fmt.Sprintf("%s:%s:%s:%s", oui, curMac[0:2], curMac[2:4], curMac[4:6])
+		resp, err := inventory.QueryVMByPropertyName(ctx, "mac_address", realMac, true)
+		if resp == nil && err == nil {
+			lastSC.LastCheckedVMMacAddress = curMac
+			if err := configuration.UpdateServiceConfig(ctx, lastSC); err != nil {
+				return "", err
+			}
+			return realMac, nil
+		} else if err != nil {
+			return "", err
+		} else {
+			lastMac = curMac
+		}
+	}
+	return "", errors.Reason("all 4 million MAC addresses for vms are hit").Err()
+}
+
+func hexPlusOne(hex string) (string, error) {
+	value, err := strconv.ParseInt(hex, 16, 64)
+	if err != nil {
+		return "", err
+	}
+	value++
+	return fmt.Sprintf("%06x", value), nil
 }

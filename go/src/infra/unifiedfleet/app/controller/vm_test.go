@@ -892,6 +892,45 @@ func TestRealmPermissionForVM(t *testing.T) {
 	})
 }
 
+func TestGenNewMacAddress(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("genNewMacAddress", t, func() {
+		entities := make([]*ufspb.VM, 2)
+		entities[0] = &ufspb.VM{
+			Name:       "vm-genNewMac-0",
+			MacAddress: "00:50:56:3f:ff:fd",
+		}
+		entities[1] = &ufspb.VM{
+			Name:       "vm-genNewMac-1",
+			MacAddress: "00:50:56:3f:ff:ff",
+		}
+		_, err := inventory.BatchUpdateVMs(ctx, entities)
+		So(err, ShouldBeNil)
+		Convey("genNewMacAddress - happy path", func() {
+			mac, err := genNewMacAddress(ctx)
+			So(err, ShouldBeNil)
+			So(mac, ShouldEqual, "00:50:56:00:00:01")
+
+			sc, err := configuration.GetServiceConfig(ctx)
+			So(err, ShouldBeNil)
+			sc.LastCheckedVMMacAddress = "3ffffc"
+			err = configuration.UpdateServiceConfig(ctx, sc)
+			So(err, ShouldBeNil)
+			mac, err = genNewMacAddress(ctx)
+			So(err, ShouldBeNil)
+			So(mac, ShouldEqual, "00:50:56:3f:ff:fe")
+
+			sc.LastCheckedVMMacAddress = "3ffffe"
+			err = configuration.UpdateServiceConfig(ctx, sc)
+			So(err, ShouldBeNil)
+			mac, err = genNewMacAddress(ctx)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "4 million")
+		})
+	})
+}
+
 func setupTestVlan(ctx context.Context) {
 	vlan := &ufspb.Vlan{
 		Name:        "vlan-1",

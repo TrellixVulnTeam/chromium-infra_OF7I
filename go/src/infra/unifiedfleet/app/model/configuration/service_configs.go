@@ -17,7 +17,10 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
-const serviceConfigID string = "UFS"
+const (
+	serviceConfigID string = "UFS"
+	lowerHex               = "000000"
+)
 
 // ServiceConfig we stored for ufs.
 type ServiceConfig struct {
@@ -34,16 +37,16 @@ type ServiceConfigEntity struct {
 	UpdateTime time.Time
 }
 
-func GetLastCheckedVMMacAddress(ctx context.Context) (string, error) {
+func GetServiceConfig(ctx context.Context) (*ServiceConfig, error) {
 	e := ServiceConfigEntity{ID: serviceConfigID}
 	err := datastore.Get(ctx, &e)
 	if err == nil {
-		return e.Data.LastCheckedVMMacAddress, nil
+		return &e.Data, nil
 	}
 	if datastore.IsErrNoSuchEntity(err) {
-		return "", status.Errorf(codes.NotFound, fmt.Sprintf("Entity not found %s", serviceConfigID))
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Entity not found %s", serviceConfigID))
 	}
-	return "", status.Errorf(codes.Internal, ufsds.InternalError)
+	return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 }
 
 func UpdateServiceConfig(ctx context.Context, sc *ServiceConfig) error {
@@ -55,4 +58,10 @@ func UpdateServiceConfig(ctx context.Context, sc *ServiceConfig) error {
 		return status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	return nil
+}
+
+func InitEmptyServiceConfig() *ServiceConfig {
+	return &ServiceConfig{
+		LastCheckedVMMacAddress: lowerHex,
+	}
 }
