@@ -69,4 +69,7 @@ message Action {
   // The fail reason of an event is a diagnostic message that is emitted when
   // the action in question has failed.
   string fail_reason = 10;
+
+  // The seal time is when the particular Karte record is sealed and no further changes can be made.
+  google.protobuf.Timestamp seal_time = 11;
 }
