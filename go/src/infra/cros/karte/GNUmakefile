@@ -44,15 +44,30 @@ run:
 	./karteserver -auth-service-host chrome-infra-auth-dev.appspot.com
 
 # Intentionally use the gae.py version that is present on the path. If no such
-# # command is available on the path, you are not in the correct environment.
-.PHONY: upload
-upload:
+# command is available on the path, you are not in the correct environment.
+.PHONY: upload-dev
+upload-dev:
 	@echo BEGIN UPLOAD DEV
 	gae.py upload --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
 	@echo END UPLOAD DEV
 
-.PHONY: switch
-switch:
+.PHONY: switch-dev
+switch-dev:
 	@echo BEGIN SWITCH DEV
 	gae.py switch --app-id=chrome-fleet-karte-dev --app-dir=./cmd/karteserver
 	@echo END SWITCH DEV
+
+# Intentionally use the gae.py version that is present on the path. If no such
+# command is available on the path, you are not in the correct environment.
+.PHONY: upload-prod
+upload-prod:
+	@echo BEGIN UPLOAD PROD
+	gae.py upload --app-id=chrome-fleet-karte --app-dir=./cmd/karteserver
+	@echo END UPLOAD PROD
+	@echo "If you did NOT intend to push prod, do NOT call \"switch prod\""
+
+.PHONY: switch-prod
+switch-prod:
+	@echo BEGIN SWITCH PROD
+	gae.py switch --app-id=chrome-fleet-karte --app-dir=./cmd/karteserver
+	@echo END SWITCH PROD
