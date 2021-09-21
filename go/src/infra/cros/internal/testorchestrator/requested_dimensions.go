@@ -3,6 +3,7 @@ package testorchestrator
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	testpb "go.chromium.org/chromiumos/config/go/test/api"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
@@ -36,7 +37,7 @@ func GetRequestedDimensions(
 
 		dims = append(dims, &bbpb.RequestedDimension{
 			Key:   key,
-			Value: values[0],
+			Value: strings.Join(values, "|"),
 		})
 	}
 

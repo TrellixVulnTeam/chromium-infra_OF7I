@@ -2,6 +2,25 @@ id: 1234
 input {
     properties {
         fields {
+            key: "build_directory"
+            value {
+                struct_value {
+                    fields {
+                        key: "bucket"
+                        value {
+                            string_value: "chromeos-image-archive"
+                        }
+                    }
+                    fields {
+                        key: "path"
+                        value {
+                            string_value: "amd64-generic-cq/R86-13421.111.0-1-8854394820039722416"
+                        }
+                    }
+                }
+            }
+        }
+        fields {
             key: "test_specs"
             value: {
                 list_value {

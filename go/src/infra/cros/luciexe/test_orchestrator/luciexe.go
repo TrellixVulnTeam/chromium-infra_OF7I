@@ -14,6 +14,7 @@ import (
 
 	"infra/cros/internal/testorchestrator"
 
+	"cloud.google.com/go/storage"
 	tpv2 "go.chromium.org/chromiumos/infra/proto/go/test_platform/v2"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/luciexe/build"
@@ -40,6 +41,23 @@ func RunOrch(ctx context.Context, request *tpv2.Request) error {
 		}
 
 		logging.Infof(ctx, "Computed RequestedDimensions: %s", swarmingDims)
+	}
+
+	gsClient, err := storage.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	buildDirectory := request.BuildDirectory
+	if buildDirectory != nil {
+		buildObjects, err := testorchestrator.ListBuildDirectory(ctx, gsClient, request.BuildDirectory)
+		if err != nil {
+			return err
+		}
+
+		logging.Infof(ctx, "Found build objects: %s", buildObjects)
+	} else {
+		logging.Infof(ctx, "BuildDirectory not set in request")
 	}
 
 	return nil

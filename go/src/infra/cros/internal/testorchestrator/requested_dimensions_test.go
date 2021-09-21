@@ -33,7 +33,7 @@ func TestGetRequestedDimensions(t *testing.T) {
 	expectedDims := []*bbpb.RequestedDimension{
 		{
 			Key:   "dutattr1",
-			Value: "valA",
+			Value: "valA|valB",
 		},
 		{
 			Key:   "dutattr2",
@@ -58,6 +58,11 @@ func TestGetRequestedDimensionsErrors(t *testing.T) {
 		dutCriteria  []*testpb.DutCriterion
 		errorMessage string
 	}{
+		{
+			"no DutCriteria",
+			[]*testpb.DutCriterion{},
+			"at least one DutCriterion required in each CoverageRule",
+		},
 		{
 			"no id",
 			[]*testpb.DutCriterion{
