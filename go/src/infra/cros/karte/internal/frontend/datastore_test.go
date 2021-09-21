@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -314,4 +315,66 @@ func TestGetActionEntityByID(t *testing.T) {
 			t.Errorf("unexpected diff: %s", diff)
 		}
 	})
+}
+
+// TestSetActionEntityFields tests updating action fields.
+func TestSetActionEntityFields(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name     string
+		fields   []string
+		src      *ActionEntity
+		dst      *ActionEntity
+		expected *ActionEntity
+	}{
+		{
+			name:     "nil",
+			fields:   nil,
+			src:      nil,
+			dst:      nil,
+			expected: nil,
+		},
+		{
+			name:     "empty maps",
+			fields:   nil,
+			src:      &ActionEntity{},
+			dst:      &ActionEntity{},
+			expected: &ActionEntity{},
+		},
+		{
+			name:     "update time -- nil fields",
+			fields:   nil,
+			src:      &ActionEntity{StopTime: time.Unix(1, 2)},
+			dst:      &ActionEntity{StopTime: time.Unix(3, 4)},
+			expected: &ActionEntity{StopTime: time.Unix(1, 2)},
+		},
+		{
+			// Empty fields should be treated identically to nil fields.
+			name:     "update time -- empty fields",
+			fields:   []string{},
+			src:      &ActionEntity{StopTime: time.Unix(1, 2)},
+			dst:      &ActionEntity{StopTime: time.Unix(3, 4)},
+			expected: &ActionEntity{StopTime: time.Unix(1, 2)},
+		},
+		{
+			name:     "blocked update",
+			fields:   []string{"swarming_task_id"},
+			src:      &ActionEntity{CreateTime: time.Unix(1, 2)},
+			dst:      &ActionEntity{CreateTime: time.Unix(3, 4)},
+			expected: &ActionEntity{CreateTime: time.Unix(3, 4)},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tt := tt
+			setActionEntityFields(tt.fields, tt.src, tt.dst)
+			expected := tt.expected
+			actual := tt.dst
+			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(ActionEntity{})); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
 }

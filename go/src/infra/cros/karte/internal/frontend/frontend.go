@@ -105,9 +105,18 @@ func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListO
 	}, nil
 }
 
-// UpdateAction is a stub that does nothing.
+// UpdateAction updates an action in datastore and creates it if necessary when allow_missing is set.
 func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateActionRequest) (*kartepb.Action, error) {
-	return nil, status.Errorf(codes.Unimplemented, "update action is not implemented")
+	reqActionEntity, err := ConvertActionToActionEntity(req.GetAction())
+	if err != nil {
+		return nil, errors.Annotate(err, "update action").Err()
+	}
+	entity, err := UpdateActionEntity(
+		ctx,
+		reqActionEntity,
+		req.GetUpdateMask().GetPaths(),
+	)
+	return entity.ConvertToAction(), err
 }
 
 // InstallServices takes a Karte frontend and exposes it to a LUCI prpc.Server.

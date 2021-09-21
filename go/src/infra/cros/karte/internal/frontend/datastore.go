@@ -327,3 +327,60 @@ func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*O
 func PutObservationEntities(ctx context.Context, entities ...*ObservationEntity) error {
 	return datastore.Put(ctx, entities)
 }
+
+// Copy field values from the right to the left if the field is present in string.
+// If fields is empty, copy all fields that are eligible for copying.
+// Unrecognized fields are silently ignored.
+// Neither left nor right can be nil or else the behavior of this function is undefined.
+func setActionEntityFields(fields []string, src *ActionEntity, dst *ActionEntity) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	addAll := len(fields) == 0
+	m := make(map[string]bool)
+	for _, field := range fields {
+		m[field] = true
+	}
+
+	// Name cannot be copied.
+	if addAll || m["kind"] {
+		dst.Kind = src.Kind
+	}
+	if addAll || m["swarming_task_id"] {
+		dst.SwarmingTaskID = src.SwarmingTaskID
+	}
+	if addAll || m["asset_tag"] {
+		dst.AssetTag = src.AssetTag
+	}
+	if addAll || m["start_time"] {
+		dst.StartTime = src.StartTime
+	}
+	if addAll || m["stop_time"] {
+		dst.StopTime = src.StopTime
+	}
+	// CreateTime is managed by Karte internally and thus ineligible for copying.
+	if addAll || m["status"] {
+		dst.Status = src.Status
+	}
+}
+
+// UpdateActionEntity updates an entity according to the field mask.
+func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []string) (*ActionEntity, error) {
+	if entity == nil {
+		// TODO(gregorynisbet): Remove call to status.Errorf. See b/200578943 for details.
+		return nil, status.Errorf(codes.InvalidArgument, "entity cannot be nil")
+	}
+	// Read the current entity as fullEntity, modify the fields in it that are indicated by fieldMask, and
+	// then insert it back into datastore.
+	fullEntity, err := GetActionEntityByID(ctx, entity.ID)
+	if err != nil {
+		logging.Errorf(ctx, "update action entity: datastore error: %s", err)
+		return nil, errors.Annotate(err, "update action entity: datastore err").Err()
+	}
+	setActionEntityFields(fieldMask, entity /*src*/, fullEntity /*dst*/)
+	if err := PutActionEntities(ctx, fullEntity); err != nil {
+		return nil, errors.Annotate(err, "update action entity").Err()
+	}
+	return fullEntity, nil
+}
