@@ -76,12 +76,12 @@ func (c *Client) GetIssue(ctx context.Context, name string) (*mpb.Issue, error) 
 	return resp, nil
 }
 
-// GetIssues gets the details of the specified monorail issues.
+// BatchGetIssues gets the details of the specified monorail issues.
 // At most 100 issues can be queried at once. It is guaranteed
 // that the i_th issue in the result will match the i_th issue
 // requested. It is valid to request the same issue multiple
 // times in the same request.
-func (c *Client) GetIssues(ctx context.Context, names []string) ([]*mpb.Issue, error) {
+func (c *Client) BatchGetIssues(ctx context.Context, names []string) ([]*mpb.Issue, error) {
 	var deduplicatedNames []string
 	requestedNames := make(map[string]bool)
 	for _, name := range names {

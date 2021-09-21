@@ -6,6 +6,7 @@ package monorail
 
 import (
 	"context"
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	mpb "infra/monorailv2/api/v3/api_proto"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func NewCluster() *clustering.Cluster {
@@ -126,5 +128,125 @@ func TestManager(t *testing.T) {
 				So(issue.Comments[0].Content, ShouldContainSubstring, "ninja://:blink_web_tests/media/my-suite/my-test.html")
 			})
 		})
+		Convey("Update", func() {
+			c := NewCluster()
+			bug, err := bm.Create(ctx, c)
+			So(err, ShouldBeNil)
+			So(bug, ShouldEqual, "chromium/100")
+			So(len(f.Issues), ShouldEqual, 1)
+			So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
+
+			bugsToUpdate := []*bugs.BugToUpdate{
+				{
+					BugName: bug,
+					Cluster: c,
+				},
+			}
+			updateDoesNothing := func() {
+				originalIssues := CopyIssuesStore(f)
+				err := bm.Update(ctx, bugsToUpdate)
+				So(err, ShouldBeNil)
+				So(f, ShouldResembleIssuesStore, originalIssues)
+			}
+
+			Convey("If impact unchanged, does nothing", func() {
+				updateDoesNothing()
+			})
+			Convey("If impact changed", func() {
+				c.UnexpectedFailures1d = 1
+				bugsToUpdate := []*bugs.BugToUpdate{
+					{
+						BugName: bug,
+						Cluster: c,
+					},
+				}
+				Convey("Adjusts priority in response to changed impact", func() {
+					err := bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+					// Verify repeated update has no effect.
+					updateDoesNothing()
+				})
+				Convey("Does not adjust priority if priority manually set", func() {
+					// Create a monorail client that interacts with monorail
+					// as an end-user. This is needed as we distinguish user
+					// updates to the bug from system updates.
+					user := "users/100"
+					usercl, err := NewClient(UseFakeIssuesClient(ctx, f, user), "myhost")
+					So(err, ShouldBeNil)
+
+					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "1")
+					err = usercl.ModifyIssues(ctx, updateReq)
+					So(err, ShouldBeNil)
+					So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
+
+					// Check the update sets the label.
+					expectedIssue := CopyIssue(f.Issues[0].Issue)
+					expectedIssue.Labels = append(expectedIssue.Labels, &mpb.Issue_LabelValue{
+						Label: manualPriorityLabel,
+					})
+					SortLabels(expectedIssue.Labels)
+
+					err = bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(f.Issues[0].Issue, ShouldResembleProto, expectedIssue)
+
+					// Check repeated update does nothing more.
+					updateDoesNothing()
+
+					Convey("Unless manual priority cleared", func() {
+						updateReq := clearManualPriorityRequest(f.Issues[0].Issue.Name)
+						err = usercl.ModifyIssues(ctx, updateReq)
+						So(err, ShouldBeNil)
+						So(hasLabel(f.Issues[0].Issue, manualPriorityLabel), ShouldBeFalse)
+
+						err := bm.Update(ctx, bugsToUpdate)
+						So(err, ShouldBeNil)
+						So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+						// Verify repeated update has no effect.
+						updateDoesNothing()
+					})
+				})
+			})
+		})
 	})
+}
+
+func updateBugPriorityRequest(name string, priority string) *mpb.ModifyIssuesRequest {
+	return &mpb.ModifyIssuesRequest{
+		Deltas: []*mpb.IssueDelta{
+			{
+				Issue: &mpb.Issue{
+					Name: name,
+					FieldValues: []*mpb.FieldValue{
+						{
+							Field: priorityFieldName,
+							Value: priority,
+						},
+					},
+				},
+				UpdateMask: &field_mask.FieldMask{
+					Paths: []string{"field_values"},
+				},
+			},
+		},
+		CommentContent: "User comment.",
+	}
+}
+
+func clearManualPriorityRequest(name string) *mpb.ModifyIssuesRequest {
+	return &mpb.ModifyIssuesRequest{
+		Deltas: []*mpb.IssueDelta{
+			{
+				Issue: &mpb.Issue{
+					Name: name,
+				},
+				UpdateMask:   &field_mask.FieldMask{},
+				LabelsRemove: []string{manualPriorityLabel},
+			},
+		},
+		CommentContent: "User comment.",
+	}
 }

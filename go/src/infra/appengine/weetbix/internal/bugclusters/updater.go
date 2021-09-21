@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"regexp"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/span"
 )
 
@@ -40,6 +42,8 @@ type BugManager interface {
 	// Create creates a new bug for the given cluster, returning its name,
 	// or any encountered error.
 	Create(ctx context.Context, cluster *clustering.Cluster) (string, error)
+	// Update updates the specified list of bugs.
+	Update(ctx context.Context, bugs []*bugs.BugToUpdate) error
 }
 
 // BugUpdater performs updates to Monorail bugs and BugClusters to keep them
@@ -87,14 +91,15 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 	}
 
 	var toCreateBugsFor []*clustering.Cluster
+	clustersByKey := make(map[string]*clustering.Cluster)
 	for _, cluster := range clusters {
 		key := clusterKey(cluster.Project, cluster.ClusterID)
+		clustersByKey[key] = cluster
 
 		// Find new bugs to create.
 		_, ok := bcByAssociatedCluster[key]
 		if !ok {
 			toCreateBugsFor = append(toCreateBugsFor, cluster)
-			continue
 		}
 	}
 
@@ -108,6 +113,44 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 			return err
 		}
 		bugsFiled++
+	}
+
+	// Iterate over all active bug clusters (except those we just created).
+	bugUpdatesBySystem := make(map[string][]*bugs.BugToUpdate)
+	for key, bc := range bcByAssociatedCluster {
+		// Find corresponding cluster.
+		cluster, ok := clustersByKey[key]
+		if !ok {
+			// Cluster no longer exists, create an empty (imapctless)
+			// cluster instead.
+			cluster = &clustering.Cluster{
+				Project:   bc.Project,
+				ClusterID: bc.AssociatedClusterID,
+			}
+		}
+
+		system, bug, err := toSystemBugName(bc.Bug)
+		if err != nil {
+			logging.Warningf(ctx, "Encountered a bug cluster with an invalid bug: %q", bc.Bug)
+			continue
+		}
+		bugUpdates := bugUpdatesBySystem[system]
+		bugUpdates = append(bugUpdates, &bugs.BugToUpdate{
+			BugName: bug,
+			Cluster: cluster,
+		})
+		bugUpdatesBySystem[system] = bugUpdates
+	}
+
+	for system, bugsToUpdate := range bugUpdatesBySystem {
+		manager, ok := b.managers[system]
+		if !ok {
+			logging.Warningf(ctx, "Encountered bug(s) with an unrecognised manager: %q", manager)
+			continue
+		}
+		if err := manager.Update(ctx, bugsToUpdate); err != nil {
+			return err
+		}
 	}
 	return nil
 }

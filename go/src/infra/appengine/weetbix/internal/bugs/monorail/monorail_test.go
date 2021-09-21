@@ -35,7 +35,7 @@ func TestClient(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(result, ShouldResembleProto, issue1.Issue)
 		})
-		Convey("Get issues", func() {
+		Convey("Batch get issues", func() {
 			c, err := NewClient(ctx, "monorailhost")
 			So(err, ShouldBeNil)
 			names := []string{
@@ -45,7 +45,7 @@ func TestClient(t *testing.T) {
 				"projects/monorailproject/issues/2",
 				"projects/monorailproject/issues/3",
 			}
-			result, err := c.GetIssues(ctx, names)
+			result, err := c.BatchGetIssues(ctx, names)
 			So(err, ShouldBeNil)
 			So(result, ShouldResembleProto, []*mpb.Issue{issue1.Issue, issue2.Issue, issue1.Issue, issue2.Issue, issue3.Issue})
 		})

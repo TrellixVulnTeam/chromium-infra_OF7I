@@ -104,7 +104,7 @@ func TestRun(t *testing.T) {
 				So(len(bugClusters), ShouldEqual, count)
 				So(len(f.Issues), ShouldEqual, count)
 			}
-			clusters[1].UnexpectedFailures1d = 10
+			clusters[1].UnexpectedFailures1d = 200
 			clusters[2].UnexpectedFailures3d = 30
 			clusters[3].UnexpectedFailures7d = 70
 
@@ -153,9 +153,43 @@ func TestRun(t *testing.T) {
 			expectFinalBugClusters()
 
 			// Further updates do nothing.
+			originalIssues := monorail.CopyIssuesStore(f)
 			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
+			So(f, monorail.ShouldResembleIssuesStore, originalIssues)
 			expectFinalBugClusters()
+
+			Convey("Changing cluster priority updates issue priority", func() {
+				issue := f.Issues[2].Issue
+				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
+				So(monorail.IssuePriority(issue), ShouldEqual, "3")
+
+				clusters[3].UnexpectedFailures1d = 10000
+				err = bu.Run(ctx)
+				So(err, ShouldBeNil)
+
+				So(len(f.Issues), ShouldEqual, 3)
+				issue = f.Issues[2].Issue
+				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
+				So(monorail.IssuePriority(issue), ShouldEqual, "0")
+
+				expectFinalBugClusters()
+			})
+			Convey("Deleting cluster updates issue priority", func() {
+				issue := f.Issues[0].Issue
+				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+				So(monorail.IssuePriority(issue), ShouldEqual, "2")
+
+				// Drop the cluster at index 1.
+				cc.clusters = []*clustering.Cluster{cc.clusters[0], cc.clusters[2], cc.clusters[3]}
+				err = bu.Run(ctx)
+				So(err, ShouldBeNil)
+
+				So(len(f.Issues), ShouldEqual, 3)
+				issue = f.Issues[0].Issue
+				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+				So(monorail.IssuePriority(issue), ShouldEqual, "3")
+			})
 		})
 	})
 }

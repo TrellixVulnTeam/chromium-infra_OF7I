@@ -9,6 +9,9 @@ import (
 
 	mpb "infra/monorailv2/api/v3/api_proto"
 
+	"go.chromium.org/luci/common/testing/assertions"
+
+	"github.com/smartystreets/goconvey/convey"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -107,4 +110,38 @@ func CopyComments(comments []*mpb.Comment) []*mpb.Comment {
 		result = append(result, copy)
 	}
 	return result
+}
+
+// ShouldResembleProto asserts that given two FakeIssuesStores contain equivalent
+// issues (including comments) and NextID.
+func ShouldResembleIssuesStore(actual interface{}, expected ...interface{}) string {
+	if len(expected) != 1 {
+		return fmt.Sprintf("ShouldResembleIssuesStore expects 1 value, got %d", len(expected))
+	}
+	exp := expected[0]
+
+	as, ok := actual.(*FakeIssuesStore)
+	if !ok {
+		return "ShouldResembleIssuesStore is expecting both arguments to be a FakeIssuesStore"
+	}
+	es, ok := exp.(*FakeIssuesStore)
+	if !ok {
+		return "ShouldResembleIssuesStore is expecting both arguments to be a FakeIssuesStore"
+	}
+	if err := convey.ShouldHaveLength(as.Issues, len(es.Issues)); err != "" {
+		return fmt.Sprintf("issues: %s", err)
+	}
+	for i, aIssue := range as.Issues {
+		eIssue := es.Issues[i]
+		if err := assertions.ShouldResembleProto(aIssue.Issue, eIssue.Issue); err != "" {
+			return fmt.Sprintf("issue #%v: %s", i, err)
+		}
+		if err := assertions.ShouldResembleProto(aIssue.Comments, eIssue.Comments); err != "" {
+			return fmt.Sprintf("issue #%v: %s", i, err)
+		}
+	}
+	if err := convey.ShouldEqual(as.NextID, es.NextID); err != "" {
+		return fmt.Sprintf("nextID: %s", err)
+	}
+	return ""
 }

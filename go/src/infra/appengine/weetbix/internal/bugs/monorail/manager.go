@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"regexp"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
+	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // ManagerName is the name of the monorail bug manager. It is used to
@@ -25,6 +28,14 @@ var bugRe = regexp.MustCompile(`^([a-z0-9\-_]+)/([0-9]+)$`)
 // monorailRe matches monorail issue names, like
 // "monorail/{monorail_project}/{numeric_id}".
 var monorailRe = regexp.MustCompile(`^projects/([a-z0-9\-_]+)/issues/([0-9]+)$`)
+
+var textPBMultiline = prototext.MarshalOptions{
+	Multiline: true,
+}
+
+// monorailPageSize is the maximum number of issues that can be requested
+// through GetIssues at a time. This limit is set by monorail.
+const monorailPageSize = 100
 
 // BugManager controls the creation of, and updates to, monorail bugs
 // for clusters.
@@ -55,6 +66,70 @@ func (m *BugManager) Create(ctx context.Context, cluster *clustering.Cluster) (s
 		return "", errors.Annotate(err, "parsing monorail issue name").Err()
 	}
 	return bug, err
+}
+
+type clusterIssue struct {
+	cluster *clustering.Cluster
+	issue   *mpb.Issue
+}
+
+// Update updates the specified list of bugs.
+func (m *BugManager) Update(ctx context.Context, bugs []*bugs.BugToUpdate) error {
+	// Fetch issues for bugs to update.
+	cis, err := m.fetchIssues(ctx, bugs)
+	if err != nil {
+		return err
+	}
+	for _, ci := range cis {
+		if NeedsUpdate(ci.cluster, ci.issue) {
+			comments, err := m.client.ListComments(ctx, ci.issue.Name)
+			if err != nil {
+				return err
+			}
+			req := MakeUpdate(ci.cluster, ci.issue, comments)
+			if err := m.client.ModifyIssues(ctx, req); err != nil {
+				return errors.Annotate(err, "failed to update to issue %s", ci.issue.Name).Err()
+			}
+		}
+	}
+	return nil
+}
+
+func (m *BugManager) fetchIssues(ctx context.Context, updates []*bugs.BugToUpdate) ([]*clusterIssue, error) {
+	// Calculate the number of requests required, rounding up
+	// to the nearest page.
+	pages := (len(updates) + (monorailPageSize - 1)) / monorailPageSize
+
+	var clusterIssues []*clusterIssue
+	for i := 0; i < pages; i++ {
+		// Divide bug clusters into pages of monorailPageSize.
+		pageEnd := i*monorailPageSize + (monorailPageSize - 1)
+		if pageEnd > len(updates) {
+			pageEnd = len(updates)
+		}
+		updatesPage := updates[i*monorailPageSize : pageEnd]
+
+		var names []string
+		for _, upd := range updatesPage {
+			name, err := toMonorailIssueName(upd.BugName)
+			if err != nil {
+				return nil, err
+			}
+			names = append(names, name)
+		}
+		// Guarantees result array in 1:1 correspondence to requested names.
+		issues, err := m.client.BatchGetIssues(ctx, names)
+		if err != nil {
+			return nil, err
+		}
+		for i, upd := range updatesPage {
+			clusterIssues = append(clusterIssues, &clusterIssue{
+				cluster: upd.Cluster,
+				issue:   issues[i],
+			})
+		}
+	}
+	return clusterIssues, nil
 }
 
 // toMonorailIssueName converts an internal bug name like
