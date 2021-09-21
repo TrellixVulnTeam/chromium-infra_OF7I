@@ -102,21 +102,24 @@ func (m *Module) Process(appID string, vars map[string]string) (stringset.Set, e
 	definedVars := m.conf["luci_gae_vars"]
 	delete(m.conf, "luci_gae_vars")
 
-	// Don't mess any further with YAMLs that do not define any vars.
-	if definedVars == nil {
-		return stringset.New(0), nil
-	}
+	// This will be nil if `luci_gae_vars` is missing, i.e. we are processing
+	// some generic app.yaml, not meant specifically for LUCI. In this case
+	// renderVars is less strict with checking variables types (it has no type
+	// information essentially, since it is supplied via `luci_gae_vars`).
+	var varsPerAppID varsDecl
 
 	// Peel off few layers of interface{} ambiguity from definedVars.
-	asMap, ok := asStrMap(definedVars)
-	if !ok {
-		return nil, errors.Reason("`luci_gae_vars` section should be a dict or dicts").Err()
-	}
-	varsPerAppID := make(varsDecl, len(asMap))
-	for appID, appVars := range asMap {
-		var ok bool
-		if varsPerAppID[appID], ok = asStrMap(appVars); !ok {
+	if definedVars != nil {
+		asMap, ok := asStrMap(definedVars)
+		if !ok {
 			return nil, errors.Reason("`luci_gae_vars` section should be a dict or dicts").Err()
+		}
+		varsPerAppID = make(varsDecl, len(asMap))
+		for appID, appVars := range asMap {
+			var ok bool
+			if varsPerAppID[appID], ok = asStrMap(appVars); !ok {
+				return nil, errors.Reason("`luci_gae_vars` section should be a dict or dicts").Err()
+			}
 		}
 	}
 
@@ -160,6 +163,14 @@ func asStrMap(d interface{}) (map[string]interface{}, bool) {
 }
 
 // renderVars visits `m` and replaces ${VAR} with concrete values.
+//
+// If `decl` is not empty (i.e. the original YAML has `luci_gae_vars` section)
+// runs in the strict mode: checking types of variables and erroring on
+// undefined variables.
+//
+// If `decl` is empty (i.e. the original YAML doesn't have `luci_gae_vars`
+// section), runs in the lax mode: all variables are assumed to be strings and
+// unrecognized `${VAR}` references are left completely untouched.
 //
 // Returns a partially modified copy of `m` and a set of var names that were
 // substituted.
@@ -237,6 +248,13 @@ func renderVars(m map[string]interface{}, appID string, decl varsDecl, vals map[
 		// construction.
 		if val, ok := baseline[key]; ok {
 			return val, nil
+		}
+
+		// If running in the lax mode, just don't replace the value of the missing
+		// var at all. Maybe it is supposed to interpreted by something else, we
+		// don't know.
+		if len(decl) == 0 {
+			return fmt.Sprintf("${%s}", key), nil
 		}
 
 		return nil, errors.Reason("a value for variable %q is not provided", key).Err()

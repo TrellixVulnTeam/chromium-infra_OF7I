@@ -20,7 +20,7 @@ import (
 
 const (
 	// Version is the version of gaedeploy tool.
-	Version = "1.0.2"
+	Version = "1.0.3"
 	// UserAgent is used in HTTP headers of requests from cloudbuildhelper.
 	UserAgent = "gaedeploy v" + Version
 )

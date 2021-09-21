@@ -131,6 +131,29 @@ func TestModule(t *testing.T) {
 			})
 		})
 
+		Convey("Substitutes without declaration", func() {
+			v := map[string]interface{}{
+				"key1": "blah ${VAR1}",
+				"key2": "${VAR2}",
+				"key3": "zzz ${UNDEFINED}",
+			}
+			out, consumed, err := renderVars(v, "app-id", nil, map[string]string{
+				"VAR1": "zzz",
+				"VAR2": "42",
+			})
+			So(err, ShouldBeNil)
+			So(out, ShouldResemble, map[string]interface{}{
+				"key1": "blah zzz",
+				"key2": "42",               // undeclared variables are assumed to be strings
+				"key3": "zzz ${UNDEFINED}", // totally ignores undefined variables
+			})
+			So(consumed.ToSortedSlice(), ShouldResemble, []string{
+				"UNDEFINED",
+				"VAR1",
+				"VAR2",
+			})
+		})
+
 		Convey("Recurses", func() {
 			v := map[string]interface{}{
 				"top": "${VAR}",
@@ -164,9 +187,17 @@ func TestModule(t *testing.T) {
 			})
 		})
 
-		Convey("Undefined key", func() {
-			_, _, err := renderVars(map[string]interface{}{"top": "${VAR} ${ANOTHER}"}, "app-id", nil, nil)
-			So(err, ShouldErrLike, `a value for variable "VAR" is not provided`)
+		Convey("Undefined key in strict mode", func() {
+			decl := varsDecl{
+				"app-id": {
+					"VAR": "blah",
+				},
+			}
+			v := map[string]interface{}{
+				"top": "${VAR} ${ANOTHER} ${THIRD}",
+			}
+			_, _, err := renderVars(v, "app-id", decl, nil)
+			So(err, ShouldErrLike, `a value for variable "ANOTHER" is not provided`)
 		})
 	})
 }
