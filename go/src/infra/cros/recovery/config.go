@@ -33,23 +33,28 @@ const defaultConfig = `
 			"actions": {
 				"cros_is_on_stable_version":{
 					"conditions": [
-						"has_stable_version_cros_image"
+						"has_stable_version_cros_image",
+						"cros_kernel_priority_has_not_changed"
 					],
 					"recovery_actions":[
-						"cros_provision_no_reboot"
+						"install_stable_os"
 					]
 				},
-				"cros_provision_no_reboot":{
+				"install_stable_os":{
 					"docs":[
-						"This part is not ready and waiting to deliver cros-provision CLI"
+						"Install stable OS on the device."
 					],
 					"conditions": [
-						"has_stable_version_cros_image"
+						"has_stable_version_cros_image",
+						"cros_kernel_priority_has_not_changed"
 					],
 					"exec_name": "cros_provision",
 					"exec_extra_args":[
 						"no_reboot"
-					]
+					],
+					"exec_timeout": {
+						"seconds": 3600
+					}
 				},
 				"update_provision_info":{
 					"exec_name": "cros_update_provision_os_version"
@@ -109,7 +114,7 @@ const defaultConfig = `
 						"Verified if kernel has update and waiting for update.",
 						"Kernel can wait for reboot as provisioning is not doing reboot by default for labstations."
 					],
-					"exec_name": "cros_kernel_priority_has_changed",
+					"exec_name": "cros_kernel_priority_has_not_changed",
 					"conditions": [
 						"remove_reboot_requests",
 						"cros_has_no_servo_in_use"
@@ -243,7 +248,10 @@ const defaultConfig = `
 					"conditions": [
 						"has_stable_version_cros_image",
 						"cros_not_on_stable_version"
-					]
+					],
+					"exec_timeout": {
+						"seconds": 3600
+					}
 				},
 				"remove_reboot_requests":{
 					"docs":[
