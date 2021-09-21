@@ -22,13 +22,16 @@ var (
 
 // Manifest is a top-level Repo definition file.
 type Manifest struct {
-	XMLName   xml.Name    `xml:"manifest"`
-	Includes  []Include   `xml:"include"`
-	Remotes   []Remote    `xml:"remote"`
-	Default   Default     `xml:"default"`
-	Notice    string      `xml:"notice,omitempty"`
+	XMLName  xml.Name  `xml:"manifest"`
+	Includes []Include `xml:"include"`
+	Remotes  []Remote  `xml:"remote"`
+	Default  Default   `xml:"default"`
+	Notice   string    `xml:"notice,omitempty"`
+	Projects []Project `xml:"project"`
+	// The repo-hooks element references a project. The repo tool will fail if
+	// that project has not yet been defined, so we need to put repo-hooks
+	// after all projects.
 	RepoHooks []RepoHooks `xml:"repo-hooks"`
-	Projects  []Project   `xml:"project"`
 }
 
 // Project is an element of a manifest containing a Gerrit project to source path definition.
