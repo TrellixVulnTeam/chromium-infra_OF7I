@@ -66,7 +66,7 @@ func TestConvertActionEntityToAction(t *testing.T) {
 		{
 			name: "erorr reason",
 			in: &ActionEntity{
-				ErrorReason: "aaaa",
+				FailReason: "aaaa",
 			},
 			out: &kartepb.Action{
 				FailReason: "aaaa",

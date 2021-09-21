@@ -38,7 +38,7 @@ type ActionEntity struct {
 	StopTime       time.Time `gae:"stop_time"`
 	CreateTime     time.Time `gae:"receive_time"`
 	Status         int32     `gae:"status"`
-	ErrorReason    string    `gae:"error_reason"`
+	FailReason     string    `gae:"fail_reason"` // previously: gae:"error_reason"
 	// After the seal time has passed, no further modifications may be made.
 	SealTime time.Time `gae:"seal_time"`
 }
@@ -57,7 +57,7 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		StopTime:       convertTimeToTimestampPtr(e.StopTime),
 		CreateTime:     convertTimeToTimestampPtr(e.CreateTime),
 		Status:         convertInt32ToActionStatus(e.Status),
-		FailReason:     e.ErrorReason,
+		FailReason:     e.FailReason,
 		SealTime:       convertTimeToTimestampPtr(e.SealTime),
 	}
 }
@@ -290,7 +290,7 @@ func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		StopTime:       convertTimestampPtrToTime(action.StopTime),
 		CreateTime:     convertTimestampPtrToTime(action.CreateTime),
 		Status:         convertActionStatusToInt32(action.Status),
-		ErrorReason:    action.FailReason,
+		FailReason:     action.FailReason,
 		SealTime:       convertTimestampPtrToTime(action.SealTime),
 	}, nil
 }
