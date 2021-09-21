@@ -98,7 +98,7 @@ func TestRun(t *testing.T) {
 			})
 		})
 		Convey("With multiple clusters above impact thresold", func() {
-			expectBugs := func(count int) {
+			expectBugClusters := func(count int) {
 				bugClusters, err := ReadActive(span.Single(ctx))
 				So(err, ShouldBeNil)
 				So(len(bugClusters), ShouldEqual, count)
@@ -115,39 +115,47 @@ func TestRun(t *testing.T) {
 
 			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
-			expectBugs(1)
+			expectBugClusters(1)
 
 			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
-			expectBugs(2)
+			expectBugClusters(2)
 
 			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
 
-			// Check final set of bugs is as expected.
-			bugClusters, err := ReadActive(span.Single(ctx))
+			expectFinalBugClusters := func() {
+				// Check final set of bugs is as expected.
+				bugClusters, err := ReadActive(span.Single(ctx))
+				So(err, ShouldBeNil)
+				So(bugClusters, ShouldResemble, []*BugCluster{
+					{
+						Project:             "chromium",
+						Bug:                 "monorail/chromium/100",
+						AssociatedClusterID: clusterID(1),
+						IsActive:            true,
+					},
+					{
+						Project:             "chromium",
+						Bug:                 "monorail/chromium/101",
+						AssociatedClusterID: clusterID(2),
+						IsActive:            true,
+					},
+					{
+						Project:             "chromium",
+						Bug:                 "monorail/chromium/102",
+						AssociatedClusterID: clusterID(3),
+						IsActive:            true,
+					},
+				})
+				So(len(f.Issues), ShouldEqual, 3)
+			}
+			expectFinalBugClusters()
+
+			// Further updates do nothing.
+			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
-			So(bugClusters, ShouldResemble, []*BugCluster{
-				{
-					Project:             "chromium",
-					Bug:                 "monorail/chromium/100",
-					AssociatedClusterID: clusterID(1),
-					IsActive:            true,
-				},
-				{
-					Project:             "chromium",
-					Bug:                 "monorail/chromium/101",
-					AssociatedClusterID: clusterID(2),
-					IsActive:            true,
-				},
-				{
-					Project:             "chromium",
-					Bug:                 "monorail/chromium/102",
-					AssociatedClusterID: clusterID(3),
-					IsActive:            true,
-				},
-			})
-			So(len(f.Issues), ShouldEqual, 3)
+			expectFinalBugClusters()
 		})
 	})
 }
