@@ -109,7 +109,7 @@ const defaultConfig = `
 						"Verified if kernel has update and waiting for update.",
 						"Kernel can wait for reboot as provisioning is not doing reboot by default for labstations."
 					],
-					"exec_name": "cros_has_kernel_priority_change",
+					"exec_name": "cros_kernel_priority_has_changed",
 					"conditions": [
 						"remove_reboot_requests",
 						"cros_has_no_servo_in_use"

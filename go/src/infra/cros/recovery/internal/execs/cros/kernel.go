@@ -68,14 +68,16 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 		return false, errors.Annotate(err, "is kernel priority changed: fail extract root partition number for %q", diskSuffix).Err()
 	}
 	log.Debug(ctx, "Booted root partion: %d.", activeRootPartition)
-	var activeKernel *kernelInfo
+	var activeKernel, nextKernel *kernelInfo
 	if kernelA.rootPartition == int(activeRootPartition) {
-		activeKernel = kernelA
+		activeKernel, nextKernel = kernelA, kernelB
 	} else if kernelB.rootPartition == int(activeRootPartition) {
-		activeKernel = kernelB
+		activeKernel, nextKernel = kernelB, kernelA
 	} else {
 		return false, errors.Reason("is kernel priority changed: fail found kernel for root partition %q", diskRoot).Err()
 	}
+	log.Debug(ctx, "Active kernel:%s , partition %d.", activeKernel.name, activeKernel.kernelPartition)
+	log.Debug(ctx, "Next kernel:%s , partition %d.", nextKernel.name, nextKernel.kernelPartition)
 	// Help function to read boot priority for kernel.
 	getKernelBootPriority := func(k *kernelInfo) (int, error) {
 		v, err := runCmd(fmt.Sprintf("cgpt show -n -i %d -P %s", k.kernelPartition, diskBlockResult))
@@ -98,10 +100,13 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 		return false, errors.Annotate(err, "is kernel priority changed").Err()
 	}
 	log.Debug(ctx, "Kernel %q has priority %d.", kernelB.name, kbp)
+	// The kernel with higher priority is next kernel to boot.
+	// If kernel with higher priority is not equal active kernel then next boot
+	// kernel will be changed.
 	if kap > kbp {
-		return activeKernel == kernelA, nil
+		return activeKernel != kernelA, nil
 	}
-	return activeKernel == kernelB, nil
+	return activeKernel != kernelB, nil
 }
 
 const bootIDFile = "/proc/sys/kernel/random/boot_id"

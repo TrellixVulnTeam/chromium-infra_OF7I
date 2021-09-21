@@ -122,18 +122,6 @@ func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	return nil
 }
 
-// hasKernelBootPriorityChangeExec checks if kernel priority changed and waiting for reboot.
-func hasKernelBootPriorityChangeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	yes, err := IsKernelPriorityChanged(ctx, args.DUT.Name, args.Access)
-	if err != nil {
-		return errors.Annotate(err, "has kernel boot priority changed").Err()
-	}
-	if !yes {
-		return errors.Reason("has kernel boot priority changed: priority not changed").Err()
-	}
-	return nil
-}
-
 // runShellCommandExec runs a given action exec arguments in shell.
 func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	if len(actionArgs) != 0 {
@@ -237,7 +225,6 @@ func init() {
 	execs.Register("cros_not_on_stable_version", notOnStableVersionExec)
 	execs.Register("cros_is_default_boot_from_disk", isDefaultBootFromDiskExec)
 	execs.Register("cros_is_not_in_dev_mode", isNotInDevModeExec)
-	execs.Register("cros_has_kernel_priority_change", hasKernelBootPriorityChangeExec)
 	execs.Register("cros_run_shell_command", runShellCommandExec)
 	execs.Register("cros_is_file_system_writable", isFileSystemWritableExec)
 	execs.Register("cros_has_python_interpreter_working", hasPythonInterpreterExec)
