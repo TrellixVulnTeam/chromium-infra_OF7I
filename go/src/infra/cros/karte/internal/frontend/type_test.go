@@ -63,6 +63,15 @@ func TestConvertActionEntityToAction(t *testing.T) {
 				SealTime: timestamppb.New(time.Unix(1, 2)),
 			},
 		},
+		{
+			name: "erorr reason",
+			in: &ActionEntity{
+				ErrorReason: "aaaa",
+			},
+			out: &kartepb.Action{
+				FailReason: "aaaa",
+			},
+		},
 	}
 
 	for _, tt := range cases {

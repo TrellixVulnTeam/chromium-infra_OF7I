@@ -57,8 +57,8 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		StopTime:       convertTimeToTimestampPtr(e.StopTime),
 		CreateTime:     convertTimeToTimestampPtr(e.CreateTime),
 		Status:         convertInt32ToActionStatus(e.Status),
-		// TODO(gregorynisbet): Add conversion for ErrorReason
-		SealTime: convertTimeToTimestampPtr(e.SealTime),
+		FailReason:     e.ErrorReason,
+		SealTime:       convertTimeToTimestampPtr(e.SealTime),
 	}
 }
 
@@ -290,8 +290,8 @@ func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		StopTime:       convertTimestampPtrToTime(action.StopTime),
 		CreateTime:     convertTimestampPtrToTime(action.CreateTime),
 		Status:         convertActionStatusToInt32(action.Status),
-		// TODO(gregorynisbet): Add conversion for ErrorReason
-		SealTime: convertTimestampPtrToTime(action.SealTime),
+		ErrorReason:    action.FailReason,
+		SealTime:       convertTimestampPtrToTime(action.SealTime),
 	}, nil
 }
 
