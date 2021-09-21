@@ -131,7 +131,7 @@ const defaultConfig = `
 					"dependencies":[
 						"cros_stop_powerd",
 						"cros_clean_tmp_owner_request",
-						"cros_has_noreboot_request",
+						"cros_allowed_reboot",
 						"remove_reboot_requests"
 					],
 					"exec_name": "cros_reboot",

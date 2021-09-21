@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -21,6 +22,8 @@ const (
 	inUseFlagFileFilter = "/var/lib/servod/*_in_use"
 	// Threshold we decide to ignore a in_use file lock. In minutes.
 	inUseFlagFileExpirationMins = 90
+	// Default minimum labstation uptime.
+	minLabstationUptime = 6 * time.Hour
 )
 
 // hasNoServoInUseExec fails if any servo is in-use now.
@@ -77,14 +80,22 @@ func cleanTmpOwnerRequestExec(ctx context.Context, args *execs.RunArgs, actionAr
 
 // validateUptime validate that host is up for more than 6 hours.
 func validateUptime(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	maxUptime := minLabstationUptime
+	for _, arg := range actionArgs {
+		if strings.HasPrefix(arg, "min_duration:") {
+			d, err := time.ParseDuration(strings.Split(arg, ":")[1])
+			if err != nil {
+				return errors.Annotate(err, "validate uptime: parse action args").Err()
+			}
+			maxUptime = d
+		}
+	}
 	dur, err := uptime(ctx, args.ResourceName, args)
 	if err != nil {
-		return errors.Annotate(err, "is up more 6 hours").Err()
+		return errors.Annotate(err, "validate uptime").Err()
 	}
-	h := dur.Hours()
-	// TODO(otabek): Read expected hours limit from actionArgs and keep 6 as default.
-	if h < 6 {
-		return errors.Reason("is up more 6 hours: only %s is up", dur).Err()
+	if *dur < maxUptime {
+		return errors.Reason("validate uptime: only %s is up", dur).Err()
 	}
 	return nil
 }
@@ -94,12 +105,13 @@ const (
 	noRebootFlagFile = "/tmp/no_reboot"
 )
 
-// hasNoRebootRequestExec  checks presence of no-reboot request flag on the host.
-func hasNoRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	cmd := fmt.Sprintf("find %s", noRebootFlagFile)
+// allowedRebootExec checks if DUT is allowed to reboot.
+// If system has /tmp/no_reboot file then reboot is not allowed.
+func allowedRebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	cmd := fmt.Sprintf("test %s", noRebootFlagFile)
 	r := args.Access.Run(ctx, args.ResourceName, cmd)
 	if r.ExitCode != 0 {
-		return errors.Reason("has no-reboot request: finished with code: %d, error: %s", r.ExitCode, r.Stderr).Err()
+		return errors.Reason("has no-reboot request: failed with code: %d, error: %s", r.ExitCode, r.Stderr).Err()
 	}
 	log.Debug(ctx, "No-reboot request file found.")
 	return nil
@@ -111,5 +123,5 @@ func init() {
 	execs.Register("cros_has_reboot_request", hasRebootRequestExec)
 	execs.Register("cros_clean_tmp_owner_request", cleanTmpOwnerRequestExec)
 	execs.Register("cros_validate_uptime", validateUptime)
-	execs.Register("cros_has_noreboot_request", hasNoRebootRequestExec)
+	execs.Register("cros_allowed_reboot", allowedRebootExec)
 }
