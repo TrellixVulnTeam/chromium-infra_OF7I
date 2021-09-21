@@ -16,8 +16,6 @@ import (
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"golang.org/x/oauth2"
-
-	"infra/cmd/drone-agent/internal/draining"
 )
 
 const (
@@ -57,6 +55,7 @@ func (r Renewer) KeepNew(ctx context.Context) {
 		d.Reset()
 		sleep(ctx, sleepForToken(time.Now(), tok))
 	}
+	log.Printf("Tokman exited.")
 }
 
 // sleepForToken returns how much time to sleep for the given token
@@ -69,7 +68,6 @@ func sleepForToken(now time.Time, tok *oauth2.Token) time.Duration {
 func sleep(ctx context.Context, d time.Duration) {
 	select {
 	case <-ctx.Done():
-	case <-draining.C(ctx):
 	case <-time.After(d):
 	}
 }
@@ -83,6 +81,7 @@ func (r Renewer) RenewOnce(lifetime time.Duration) (*oauth2.Token, error) {
 	if err := writeToken(tok, r.path); err != nil {
 		return nil, errors.Annotate(err, "renew access token file").Err()
 	}
+	log.Printf("Access token renewed.")
 	return tok, nil
 }
 
