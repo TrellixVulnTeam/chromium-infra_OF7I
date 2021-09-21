@@ -463,7 +463,7 @@ def _backfill_experiments(builder_cfg):
     ] = (100 if builder_cfg.experimental == project_config_pb2.YES else 0)
 
   if experiments.BBAGENT_GET_BUILD not in builder_cfg.experiments:
-    builder_cfg.experiments[experiments.BBAGENT_GET_BUILD] = 10
+    builder_cfg.experiments[experiments.BBAGENT_GET_BUILD] = 25
 
   if experiments.USE_BBAGENT not in builder_cfg.experiments:
     builder_cfg.experiments[experiments.USE_BBAGENT] = 0
