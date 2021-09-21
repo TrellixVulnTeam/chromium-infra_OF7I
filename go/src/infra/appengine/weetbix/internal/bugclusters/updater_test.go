@@ -23,10 +23,11 @@ func TestRun(t *testing.T) {
 	Convey("Run bug updates", t, func() {
 		setBugClusters(ctx, nil)
 
-		f := &monorail.FakeIssuesClient{
+		f := &monorail.FakeIssuesStore{
 			NextID: 100,
 		}
-		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f), "myhost")
+		user := monorail.AutomationUsers[0]
+		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f, user), "myhost")
 		So(err, ShouldBeNil)
 
 		clusters := []*clustering.Cluster{
@@ -39,7 +40,9 @@ func TestRun(t *testing.T) {
 			clusters: clusters,
 		}
 
-		ig := monorail.NewIssueGenerator("reporter@google.com")
+		mgrs := make(map[string]BugManager)
+		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc)
+
 		thres := clustering.ImpactThresholds{
 			UnexpectedFailures1d: 10,
 			UnexpectedFailures3d: 30,
@@ -47,7 +50,7 @@ func TestRun(t *testing.T) {
 		}
 
 		Convey("With no impactful clusters", func() {
-			bu := NewBugUpdater(mc, cc, ig, thres)
+			bu := NewBugUpdater(mgrs, cc, thres)
 			err = bu.Run(ctx)
 			So(err, ShouldBeNil)
 
@@ -63,7 +66,7 @@ func TestRun(t *testing.T) {
 			clusters[1].ExampleFailureReason = bigquery.NullString{StringVal: "Test failure reason.", Valid: true}
 
 			test := func() {
-				bu := NewBugUpdater(mc, cc, ig, thres)
+				bu := NewBugUpdater(mgrs, cc, thres)
 				err = bu.Run(ctx)
 				So(err, ShouldBeNil)
 
@@ -78,9 +81,8 @@ func TestRun(t *testing.T) {
 					},
 				})
 				So(len(f.Issues), ShouldEqual, 1)
-				So(f.Issues[0].Name, ShouldEqual, "projects/chromium/issues/100")
-				So(f.Issues[0].Reporter, ShouldEqual, "reporter@google.com")
-				So(f.Issues[0].Summary, ShouldContainSubstring, "Test failure reason.")
+				So(f.Issues[0].Issue.Name, ShouldEqual, "projects/chromium/issues/100")
+				So(f.Issues[0].Issue.Summary, ShouldContainSubstring, "Test failure reason.")
 			}
 			Convey("1d unexpected failures", func() {
 				clusters[1].UnexpectedFailures1d = 10
@@ -106,7 +108,7 @@ func TestRun(t *testing.T) {
 			clusters[2].UnexpectedFailures3d = 30
 			clusters[3].UnexpectedFailures7d = 70
 
-			bu := NewBugUpdater(mc, cc, ig, thres)
+			bu := NewBugUpdater(mgrs, cc, thres)
 			// Limit to one bug filed each time, so that
 			// we test change throttling.
 			bu.MaxBugsFiledPerRun = 1

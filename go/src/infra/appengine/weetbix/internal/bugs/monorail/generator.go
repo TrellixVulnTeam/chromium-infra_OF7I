@@ -25,6 +25,11 @@ This bug has been automatically filed by Weetbix in response to a cluster of tes
 )
 
 const (
+	restrictViewLabel = "Restrict-View-Google"
+	managedLabel      = "Weetbix-Managed"
+)
+
+const (
 	// typeFieldName is the name of the type field in the chromium project.
 	// For other projects, the definitions vary.
 	typeFieldName = "projects/chromium/fieldDefs/10"
@@ -37,22 +42,13 @@ const (
 // spaces.
 var whitespaceRE = regexp.MustCompile(`[ \t\n]+`)
 
-// IssueGenerator generates bugs for failure clusters.
-type IssueGenerator struct {
-	// reporter is the email address of the user that will be listed as the
-	// issue reporter in monorail. This is usually the GAE service account.
-	reporter string
+// AutomationUsers are the identifiers of Weetbix automation users in monorail.
+var AutomationUsers = []string{
+	"users/4149141945", // chops-weetbix-dev@appspot.gserviceaccount.com
 }
 
-// NewIssueGenerator initialises a new IssueGenerator.
-func NewIssueGenerator(reporter string) *IssueGenerator {
-	return &IssueGenerator{
-		reporter: reporter,
-	}
-}
-
-// PrepareNew prepares a new bug based on the given cluster.
-func (i *IssueGenerator) PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
+// PrepareNew prepares a new bug from the given cluster.
+func PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
 	title := cluster.ClusterID
 	if cluster.ExampleFailureReason.Valid {
 		title = cluster.ExampleFailureReason.StringVal
@@ -63,10 +59,9 @@ func (i *IssueGenerator) PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueR
 		// projects.
 		Parent: "projects/chromium",
 		Issue: &mpb.Issue{
-			Summary:  fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
-			Reporter: i.reporter,
-			State:    mpb.IssueContentState_ACTIVE,
-			Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
+			Summary: fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
+			State:   mpb.IssueContentState_ACTIVE,
+			Status:  &mpb.Issue_StatusValue{Status: "Untriaged"},
 			FieldValues: []*mpb.FieldValue{
 				{
 					Field: typeFieldName,
@@ -74,13 +69,13 @@ func (i *IssueGenerator) PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueR
 				},
 				{
 					Field: priorityFieldName,
-					Value: bugPriority(cluster),
+					Value: clusterPriority(cluster),
 				},
 			},
 			Labels: []*mpb.Issue_LabelValue{{
-				Label: "Restrict-View-Google",
+				Label: restrictViewLabel,
 			}, {
-				Label: "Weetbix-Managed",
+				Label: managedLabel,
 			}},
 		},
 		Description: bugDescription(cluster),
@@ -100,18 +95,18 @@ func bugDescription(cluster *clustering.Cluster) string {
 	}
 }
 
-// bugPriority returns the priority of the bug that should be used when
-// creating a new bug.
-func bugPriority(cluster *clustering.Cluster) string {
+// clusterPriority returns the priority of the bug that should be created
+// for a given cluster.
+func clusterPriority(cluster *clustering.Cluster) string {
 	switch {
 	case cluster.UnexpectedFailures1d > 1000:
-		return "Pri-0"
+		return "0"
 	case cluster.UnexpectedFailures1d > 500:
-		return "Pri-1"
+		return "1"
 	case cluster.UnexpectedFailures1d > 100:
-		return "Pri-2"
+		return "2"
 	}
-	return "Pri-3"
+	return "3"
 }
 
 // sanitiseTitle removes tabs and line breaks from input, replacing them with

@@ -25,7 +25,6 @@ import (
 	spanmodule "go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/templates"
 	"go.chromium.org/luci/server/tq"
-	"google.golang.org/appengine/log"
 
 	// Store auth sessions in the datastore.
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
@@ -110,7 +109,7 @@ func pageBase(srv *server.Server) router.MiddlewareChain {
 }
 
 type handlers struct {
-	CloudProject string
+	cloudProject string
 }
 
 func (hc *handlers) indexPage(ctx *router.Context) {
@@ -154,14 +153,14 @@ func (hc *handlers) listBugClusters(ctx *router.Context) {
 }
 
 func (hc *handlers) listClusters(ctx *router.Context) {
-	cc, err := clustering.NewClient(ctx.Context, hc.CloudProject)
+	cc, err := clustering.NewClient(ctx.Context, hc.cloudProject)
 	if err != nil {
-		log.Errorf(ctx.Context, "Creating new clustering client: %v", err)
+		logging.Errorf(ctx.Context, "Creating new clustering client: %v", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 	}
 	defer func() {
 		if err := cc.Close(); err != nil {
-			log.Warningf(ctx.Context, "Closing clustering client: %v", err)
+			logging.Warningf(ctx.Context, "Closing clustering client: %v", err)
 		}
 	}()
 
@@ -189,13 +188,12 @@ func (hc *handlers) updateBugs(ctx context.Context) error {
 		return errors.Annotate(err, "get config").Err()
 	}
 	// TODO(crbug.com/1243174): Replace with (possibly project-specific) configuration.
-	reporter := "chops-weetbix-dev@appspot.gserviceaccount.com"
 	t := clustering.ImpactThresholds{
 		UnexpectedFailures1d: 1000,
 		UnexpectedFailures3d: 3000,
 		UnexpectedFailures7d: 7000,
 	}
-	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.CloudProject, reporter, t)
+	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, t)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}
@@ -227,7 +225,9 @@ func main() {
 	server.Main(nil, modules, func(srv *server.Server) error {
 		mw := pageBase(srv)
 
-		handlers := &handlers{CloudProject: srv.Options.CloudProject}
+		handlers := &handlers{
+			cloudProject: srv.Options.CloudProject,
+		}
 		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
 		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)
 		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)

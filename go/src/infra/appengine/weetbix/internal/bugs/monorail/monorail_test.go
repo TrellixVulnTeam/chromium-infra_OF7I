@@ -6,7 +6,6 @@ package monorail
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	mpb "infra/monorailv2/api/v3/api_proto"
@@ -15,36 +14,27 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-func newIssue(uniqifier int) *mpb.Issue {
-	return &mpb.Issue{
-		Name:     fmt.Sprintf("projects/monorailproject/issues/%v", uniqifier),
-		Summary:  fmt.Sprintf("This is the summary of bug %v.", uniqifier),
-		State:    mpb.IssueContentState_ACTIVE,
-		Reporter: "meiring@google.com",
-	}
-}
-
-func TestGetIssue(t *testing.T) {
+func TestClient(t *testing.T) {
 	t.Parallel()
 
-	issue1 := newIssue(1)
-	issue2 := newIssue(2)
-	issue3 := newIssue(3)
-	f := &FakeIssuesClient{
-		Issues: []*mpb.Issue{issue1, issue2, issue3},
+	issue1 := NewIssueData(1)
+	issue2 := NewIssueData(2)
+	issue3 := NewIssueData(3)
+	f := &FakeIssuesStore{
+		Issues: []*IssueData{issue1, issue2, issue3},
 		NextID: 4,
 	}
+	ctx := UseFakeIssuesClient(context.Background(), f, "user@chromium.org")
 
-	ctx := UseFakeIssuesClient(context.Background(), f)
 	Convey("Get issue", t, func() {
-		bc, err := NewClient(ctx, "monorailhost")
+		c, err := NewClient(ctx, "monorailhost")
 		So(err, ShouldBeNil)
-		result, err := bc.GetIssue(ctx, "projects/monorailproject/issues/1")
+		result, err := c.GetIssue(ctx, "projects/monorailproject/issues/1")
 		So(err, ShouldBeNil)
-		So(result, ShouldResembleProto, issue1)
+		So(result, ShouldResembleProto, issue1.Issue)
 	})
 	Convey("Get issues", t, func() {
-		bc, err := NewClient(ctx, "monorailhost")
+		c, err := NewClient(ctx, "monorailhost")
 		So(err, ShouldBeNil)
 		names := []string{
 			"projects/monorailproject/issues/1",
@@ -53,12 +43,12 @@ func TestGetIssue(t *testing.T) {
 			"projects/monorailproject/issues/2",
 			"projects/monorailproject/issues/3",
 		}
-		result, err := bc.GetIssues(ctx, names)
+		result, err := c.GetIssues(ctx, names)
 		So(err, ShouldBeNil)
-		So(result, ShouldResembleProto, []*mpb.Issue{issue1, issue2, issue1, issue2, issue3})
+		So(result, ShouldResembleProto, []*mpb.Issue{issue1.Issue, issue2.Issue, issue1.Issue, issue2.Issue, issue3.Issue})
 	})
 	Convey("Make issue", t, func() {
-		issue := newIssue(4)
+		issue := NewIssue(4)
 		issue.Name = ""
 		req := &mpb.MakeIssueRequest{
 			Parent:      "projects/monorailproject",
@@ -66,9 +56,11 @@ func TestGetIssue(t *testing.T) {
 			Description: "Description",
 			NotifyType:  mpb.NotifyType_NO_NOTIFICATION,
 		}
-		issue, err := f.MakeIssue(ctx, req)
+
+		c, err := NewClient(ctx, "monorailhost")
 		So(err, ShouldBeNil)
-		issue.Name = "project/monorailproject/issues/4"
-		So(issue, ShouldResembleProto, issue)
+		result, err := c.MakeIssue(ctx, req)
+		So(err, ShouldBeNil)
+		So(result, ShouldResembleProto, NewIssue(4))
 	})
 }

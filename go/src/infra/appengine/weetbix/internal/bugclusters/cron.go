@@ -11,7 +11,7 @@ import (
 )
 
 // UpdateBugs updates monorail bugs to reflect the latest analysis.
-func UpdateBugs(ctx context.Context, monorailHost, projectID, reporter string, thresholds clustering.ImpactThresholds) error {
+func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds clustering.ImpactThresholds) error {
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
@@ -20,8 +20,10 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID, reporter string, t
 	if err != nil {
 		return err
 	}
-	ig := monorail.NewIssueGenerator(reporter)
-	bu := NewBugUpdater(mc, cc, ig, thresholds)
+	mgrs := make(map[string]BugManager)
+	mgrs[monorail.ManagerName] = monorail.NewBugManager(mc)
+
+	bu := NewBugUpdater(mgrs, cc, thresholds)
 	if err := bu.Run(ctx); err != nil {
 		return err
 	}

@@ -28,6 +28,7 @@ func newClient(ctx context.Context, host string) (mpb.IssuesClient, error) {
 	// Reference: go/dogfood-monorail-v3-api
 	apiHost := fmt.Sprintf("api-dot-%v", host)
 	audience := fmt.Sprintf("https://%v", host)
+
 	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithIDTokenAudience(audience))
 	if err != nil {
 		return nil, err
@@ -111,5 +112,8 @@ func (c *Client) GetIssues(ctx context.Context, names []string) ([]*mpb.Issue, e
 // description.
 func (c *Client) MakeIssue(ctx context.Context, req *mpb.MakeIssueRequest) (*mpb.Issue, error) {
 	issue, err := c.client.MakeIssue(ctx, req)
+	if err != nil {
+		return nil, errors.Annotate(err, "MakeIssue").Err()
+	}
 	return issue, err
 }
