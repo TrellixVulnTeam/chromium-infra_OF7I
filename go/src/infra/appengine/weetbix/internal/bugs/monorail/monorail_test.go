@@ -12,6 +12,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func TestClient(t *testing.T) {
@@ -63,6 +64,79 @@ func TestClient(t *testing.T) {
 			result, err := c.MakeIssue(ctx, req)
 			So(err, ShouldBeNil)
 			So(result, ShouldResembleProto, NewIssue(4))
+
+			comments, err := c.ListComments(ctx, result.Name)
+			So(err, ShouldBeNil)
+			So(len(comments), ShouldEqual, 1)
+			So(comments[0].Content, ShouldEqual, "Description")
+		})
+		Convey("List comments", func() {
+			Convey("Single comment", func() {
+				c, err := NewClient(ctx, "monorailhost")
+				So(err, ShouldBeNil)
+				comments, err := c.ListComments(ctx, "projects/monorailproject/issues/1")
+				So(err, ShouldBeNil)
+				So(len(comments), ShouldEqual, 1)
+				So(comments, ShouldResembleProto, issue1.Comments)
+			})
+			Convey("Many comments", func() {
+				issue := NewIssueData(4)
+				for i := 2; i <= 3*maxCommentPageSize; i++ {
+					issue.Comments = append(issue.Comments, NewComment(issue.Issue.Name, i))
+				}
+				f.Issues = append(f.Issues, issue)
+
+				c, err := NewClient(ctx, "monorailhost")
+				So(err, ShouldBeNil)
+				comments, err := c.ListComments(ctx, issue.Issue.Name)
+				So(err, ShouldBeNil)
+				So(comments, ShouldResembleProto, issue.Comments)
+			})
+		})
+		Convey("Modify issue", func() {
+			issue1.Issue.Labels = []*mpb.Issue_LabelValue{
+				{Label: "Test-Label1"},
+			}
+
+			c, err := NewClient(ctx, "monorailhost")
+			So(err, ShouldBeNil)
+
+			req := &mpb.ModifyIssuesRequest{
+				Deltas: []*mpb.IssueDelta{
+					{
+						Issue: &mpb.Issue{
+							Name: issue1.Issue.Name,
+							Labels: []*mpb.Issue_LabelValue{
+								{
+									Label: "Test-Label2",
+								},
+							},
+						},
+						UpdateMask: &field_mask.FieldMask{
+							Paths: []string{"labels"},
+						},
+					},
+				},
+				CommentContent: "Changing priority.",
+			}
+			err = c.ModifyIssues(ctx, req)
+			So(err, ShouldBeNil)
+
+			expectedData := NewIssueData(1)
+			expectedData.Issue.Labels = []*mpb.Issue_LabelValue{
+				{Label: "Test-Label1"},
+				{Label: "Test-Label2"},
+			}
+
+			read, err := c.GetIssue(ctx, issue1.Issue.Name)
+			So(err, ShouldBeNil)
+			So(read, ShouldResembleProto, expectedData.Issue)
+
+			comments, err := c.ListComments(ctx, issue1.Issue.Name)
+			So(err, ShouldBeNil)
+			So(len(comments), ShouldEqual, 2)
+			So(comments[0], ShouldResembleProto, expectedData.Comments[0])
+			So(comments[1].Content, ShouldEqual, "Changing priority.")
 		})
 	})
 }

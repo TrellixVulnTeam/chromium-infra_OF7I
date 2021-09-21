@@ -20,6 +20,10 @@ import (
 
 var testMonorailClientKey = "used in tests only for setting the monorail client test double"
 
+// maxCommentPageSize is the maximum number of comments that can be returned
+// by Monorail in one go.
+const maxCommentPageSize = 100
+
 func newClient(ctx context.Context, host string) (mpb.IssuesClient, error) {
 	if testClient, ok := ctx.Value(&testMonorailClientKey).(mpb.IssuesClient); ok {
 		return testClient, nil
@@ -116,4 +120,41 @@ func (c *Client) MakeIssue(ctx context.Context, req *mpb.MakeIssueRequest) (*mpb
 		return nil, errors.Annotate(err, "MakeIssue").Err()
 	}
 	return issue, err
+}
+
+// ListComments lists comments present on the given issue. At most
+// 1000 comments are returned.
+func (c *Client) ListComments(ctx context.Context, name string) ([]*mpb.Comment, error) {
+	var result []*mpb.Comment
+
+	pageToken := ""
+
+	// Scan at most 10 pages.
+	for p := 0; p < 10; p++ {
+		req := mpb.ListCommentsRequest{
+			Parent:    name,
+			PageSize:  maxCommentPageSize,
+			PageToken: pageToken,
+		}
+		resp, err := c.client.ListComments(ctx, &req)
+		if err != nil {
+			return nil, errors.Annotate(err, "ListComments %q", name).Err()
+		}
+		result = append(result, resp.Comments...)
+		pageToken = resp.NextPageToken
+		if pageToken == "" {
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// ModifyIssues modifies the given issue.
+func (c *Client) ModifyIssues(ctx context.Context, req *mpb.ModifyIssuesRequest) error {
+	_, err := c.client.ModifyIssues(ctx, req)
+	if err != nil {
+		return errors.Annotate(err, "ModifyIssues").Err()
+	}
+	return nil
 }
