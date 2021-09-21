@@ -27,6 +27,7 @@ class PermissionLevelHandler(BaseHandler):
 class PermissionTest(testing.AppengineTestCase):
   app_module = webapp2.WSGIApplication([
       ('/permission', PermissionLevelHandler),
+      ('/_ah/start', PermissionLevelHandler),
   ],
                                        debug=True)
 
@@ -103,6 +104,9 @@ class PermissionTest(testing.AppengineTestCase):
         'X-AppEngine-Cron': 'cron_job'
     }]:
       self._VerifyAuthorizedAccess(None, False, headers)
+
+    response = self.test_app.get('/_ah/start')
+    self.assertEquals(200, response.status_int)
 
   def testUnknownPermissionLevel(self):
     PermissionLevelHandler.PERMISSION_LEVEL = 80000  # An unknown permission.

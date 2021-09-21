@@ -44,8 +44,12 @@ class BaseHandler(webapp2.RequestHandler):
   def IsRequestFromAppSelf(self):
     """Returns True if the request is from the app itself."""
     # Requests from task queues or cron jobs are from app itself.
-    return (self.request.headers.get('X-AppEngine-QueueName') or
-            self.request.headers.get('X-AppEngine-Cron'))
+    return (
+        self.request.headers.get('X-AppEngine-QueueName') or
+        self.request.headers.get('X-AppEngine-Cron') or
+        # /_ah/ requests are special request sent by app engine during
+        # instance start/end
+        self.request.path.startswith('/_ah/'))
 
   def IsCorpUserOrAdmin(self):
     """Returns True if the user logged in with corp account or as admin."""
