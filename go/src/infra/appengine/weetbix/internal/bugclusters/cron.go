@@ -11,7 +11,13 @@ import (
 )
 
 // UpdateBugs updates monorail bugs to reflect the latest analysis.
-func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds clustering.ImpactThresholds) error {
+// Simulate, if true, avoids any changes being applied to monorail and logs
+// the changes which would be made instead. This must be set when running
+// on developer computers as developer-initiated monorail changes appear
+// on monorail as the developer themselves rather than the Weetbix service.
+// This leads to bugs errounously being detected as having manual priority
+// changes.
+func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds clustering.ImpactThresholds, simulate bool) error {
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
@@ -21,7 +27,9 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds 
 		return err
 	}
 	mgrs := make(map[string]BugManager)
-	mgrs[monorail.ManagerName] = monorail.NewBugManager(mc)
+	mbm := monorail.NewBugManager(mc)
+	mbm.Simulate = simulate
+	mgrs[monorail.ManagerName] = mbm
 
 	bu := NewBugUpdater(mgrs, cc, thresholds)
 	if err := bu.Run(ctx); err != nil {

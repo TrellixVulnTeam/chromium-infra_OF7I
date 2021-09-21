@@ -127,6 +127,12 @@ func TestManager(t *testing.T) {
 				So(len(issue.Comments), ShouldEqual, 1)
 				So(issue.Comments[0].Content, ShouldContainSubstring, "ninja://:blink_web_tests/media/my-suite/my-test.html")
 			})
+			Convey("Does nothing if in simulation mode", func() {
+				bm.Simulate = true
+				_, err := bm.Create(ctx, c)
+				So(err, ShouldEqual, bugs.ErrCreateSimulated)
+				So(len(f.Issues), ShouldEqual, 0)
+			})
 		})
 		Convey("Update", func() {
 			c := NewCluster()
@@ -208,6 +214,10 @@ func TestManager(t *testing.T) {
 						// Verify repeated update has no effect.
 						updateDoesNothing()
 					})
+				})
+				Convey("Does nothing if in simulation mode", func() {
+					bm.Simulate = true
+					updateDoesNothing()
 				})
 			})
 		})

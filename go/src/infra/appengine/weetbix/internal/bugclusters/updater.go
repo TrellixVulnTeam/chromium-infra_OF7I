@@ -164,6 +164,11 @@ func (b *BugUpdater) createBugCluster(ctx context.Context, cluster *clustering.C
 	mgr := b.managers[system]
 	name, err := mgr.Create(ctx, cluster)
 
+	if err == bugs.ErrCreateSimulated {
+		// Create did not do anything because it is in simulation mode.
+		// This is expected.
+		return nil
+	}
 	if err != nil {
 		return errors.Annotate(err, "create issue in %v", mgr).Err()
 	}

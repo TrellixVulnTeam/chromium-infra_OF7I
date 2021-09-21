@@ -110,6 +110,8 @@ func pageBase(srv *server.Server) router.MiddlewareChain {
 
 type handlers struct {
 	cloudProject string
+	// prod is set when running in production (not a dev workstation).
+	prod bool
 }
 
 func (hc *handlers) indexPage(ctx *router.Context) {
@@ -193,7 +195,8 @@ func (hc *handlers) updateBugs(ctx context.Context) error {
 		UnexpectedFailures3d: 3000,
 		UnexpectedFailures7d: 7000,
 	}
-	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, t)
+	simulate := !hc.prod
+	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, t, simulate)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}
@@ -227,6 +230,7 @@ func main() {
 
 		handlers := &handlers{
 			cloudProject: srv.Options.CloudProject,
+			prod:         srv.Options.Prod,
 		}
 		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
 		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)

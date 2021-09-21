@@ -14,6 +14,7 @@ import (
 	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"google.golang.org/protobuf/encoding/prototext"
 )
 
@@ -41,13 +42,20 @@ const monorailPageSize = 100
 // for clusters.
 type BugManager struct {
 	client *Client
+	// Simulate, if set, tells BugManager not to make mutating changes
+	// to monorail but only log the changes it would make. Must be set
+	// when running locally as RPCs made from developer systems will
+	// appear as that user, which breaks the detection of user-made
+	// priority changes vs system-made priority changes.
+	Simulate bool
 }
 
 // NewBugManager initialises a new bug manager, using the specified
 // monorail client.
 func NewBugManager(client *Client) *BugManager {
 	return &BugManager{
-		client: client,
+		client:   client,
+		Simulate: false,
 	}
 }
 
@@ -55,7 +63,10 @@ func NewBugManager(client *Client) *BugManager {
 // any encountered error.
 func (m *BugManager) Create(ctx context.Context, cluster *clustering.Cluster) (string, error) {
 	req := PrepareNew(cluster)
-
+	if m.Simulate {
+		logging.Debugf(ctx, "Would create Monorail issue: %s", textPBMultiline.Format(req))
+		return "", bugs.ErrCreateSimulated
+	}
 	// Save the issue in Monorail.
 	issue, err := m.client.MakeIssue(ctx, req)
 	if err != nil {
@@ -87,8 +98,12 @@ func (m *BugManager) Update(ctx context.Context, bugs []*bugs.BugToUpdate) error
 				return err
 			}
 			req := MakeUpdate(ci.cluster, ci.issue, comments)
-			if err := m.client.ModifyIssues(ctx, req); err != nil {
-				return errors.Annotate(err, "failed to update to issue %s", ci.issue.Name).Err()
+			if m.Simulate {
+				logging.Debugf(ctx, "Would update Monorail issue: %s", textPBMultiline.Format(req))
+			} else {
+				if err := m.client.ModifyIssues(ctx, req); err != nil {
+					return errors.Annotate(err, "failed to update to issue %s", ci.issue.Name).Err()
+				}
 			}
 		}
 	}
