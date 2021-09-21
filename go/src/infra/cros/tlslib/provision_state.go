@@ -24,6 +24,7 @@ type provisionState struct {
 	imagePath         string
 	targetBuilderPath string
 	forceProvisionOs  bool
+	preventReboot     bool
 }
 
 func newProvisionState(s *Server, req *tls.ProvisionDutRequest) (*provisionState, error) {
@@ -31,6 +32,7 @@ func newProvisionState(s *Server, req *tls.ProvisionDutRequest) (*provisionState
 		s:                s,
 		dutName:          req.Name,
 		forceProvisionOs: req.ForceProvisionOs,
+		preventReboot:    req.PreventReboot,
 	}
 
 	// Verify the incoming request path oneof is valid.
@@ -130,13 +132,20 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 		p.revertPostInstall(pi)
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
-	if err := rebootDUT(ctx, p.c); err != nil {
+	if p.preventReboot {
+		log.Printf("provisionOS: reboot prevented by request")
+	} else if err := rebootDUT(ctx, p.c); err != nil {
 		return fmt.Errorf("provisionOS: failed to reboot DUT, %s", err)
 	}
 	return nil
 }
 
 func (p *provisionState) wipeStateful(ctx context.Context) error {
+	if p.preventReboot {
+		log.Printf("wipeStateful: wipe skipped as reboot will be prevented by request")
+		return nil
+	}
+
 	if err := runCmd(p.c, "echo 'fast keepimg' > /mnt/stateful_partition/factory_install_reset"); err != nil {
 		return fmt.Errorf("wipeStateful: Failed to to write to factory reset file, %s", err)
 	}
@@ -153,12 +162,15 @@ func (p *provisionState) provisionStateful(ctx context.Context) error {
 
 	if err := p.installStateful(ctx); err != nil {
 		p.revertStatefulInstall()
-		return fmt.Errorf("provisionStateful: falied to install stateful partition, %s", err)
+		return fmt.Errorf("provisionStateful: failed to install stateful partition, %s", err)
 	}
-
-	runLabMachineAutoReboot(p.c)
-	if err := rebootDUT(ctx, p.c); err != nil {
-		return fmt.Errorf("provisionStateful: failed to reboot DUT, %s", err)
+	if p.preventReboot {
+		log.Printf("provisionStateful: reboot prevented by request")
+	} else {
+		runLabMachineAutoReboot(p.c)
+		if err := rebootDUT(ctx, p.c); err != nil {
+			return fmt.Errorf("provisionStateful: failed to reboot DUT, %s", err)
+		}
 	}
 	return nil
 }

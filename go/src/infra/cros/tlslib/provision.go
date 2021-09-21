@@ -127,7 +127,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		log.Printf("provision: time to provision OS took %v", time.Since(t))
 
 		t = time.Now()
-		if !req.GetPreserveStateful() {
+		if !req.GetPreserveStateful() && !req.PreventReboot {
 			if err := p.wipeStateful(ctx); err != nil {
 				setError(newOperationError(
 					codes.Aborted,
@@ -175,19 +175,21 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		}
 		defer disconnect()
 
-		t = time.Now()
-		if err := p.verifyOSProvision(); err != nil {
-			setError(newOperationError(
-				codes.Aborted,
-				fmt.Sprintf("provision: failed to verify OS provision, %s", err),
-				tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
-			return
+		if !req.PreventReboot {
+			t = time.Now()
+			if err := p.verifyOSProvision(); err != nil {
+				setError(newOperationError(
+					codes.Aborted,
+					fmt.Sprintf("provision: failed to verify OS provision, %s", err),
+					tls.ProvisionDutResponse_REASON_PROVISIONING_FAILED.String()))
+				return
+			}
+			log.Printf("provision: time to verify provision took %v", time.Since(t))
 		}
-		log.Printf("provision: time to verify provision took %v", time.Since(t))
 	} else if isStatefulCorrupt(p.c) {
 		log.Printf("provision: Stateful is marked corrupt, provisioning stateful partition.")
 		t := time.Now()
-		if !req.GetPreserveStateful() {
+		if !req.GetPreserveStateful() && !req.PreventReboot {
 			if err := p.wipeStateful(ctx); err != nil {
 				setError(newOperationError(
 					codes.Aborted,
@@ -243,7 +245,7 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	}
 
 	if err := s.lroMgr.SetResult(opName, &tls.ProvisionDutResponse{}); err != nil {
-		log.Printf("provision: failed to set Opertion result, %s", err)
+		log.Printf("provision: failed to set Operation result, %s", err)
 	}
 
 	// Remove the provisionFailed marker as provisioning stateful is skipped if OS
