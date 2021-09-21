@@ -77,11 +77,16 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   updated(changedProperties: Map<string | number | symbol, unknown>): void {
     super.updated(changedProperties);
 
+    const maxChipLabelWidth = '290px';
     const theme = createTheme({
       components: {
         MuiChip: {
           styleOverrides: {
-            root: {fontSize: 13},
+            root: { fontSize: 13 },
+            label: {
+              textOverflow: 'ellipsis',
+              maxWidth: maxChipLabelWidth
+            }
           },
         },
       },
