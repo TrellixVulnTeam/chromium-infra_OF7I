@@ -4,7 +4,9 @@
 
 DEPS = [
   'cloudbuildhelper',
+  'infra_checkout',
   'recipe_engine/json',
+  'recipe_engine/path',
   'recipe_engine/step',
 ]
 
@@ -21,6 +23,22 @@ def RunSteps(api):
   api.cloudbuildhelper.command = 'custom_cloudbuildhelper'
   # Updating pins.
   assert api.cloudbuildhelper.update_pins('some/pins.yaml')
+
+
+def repo_checkout_metadata(api):
+    return api.infra_checkout.CheckoutMetadata(
+        root=api.path['start_dir'],
+        repos={
+            'a': {
+                'repository': 'https://a.example.com',
+                'revision': 'aaaa',
+            },
+            'a/b': {
+                'repository': 'https://b.example.com',
+                'revision': 'bbbb',
+            },
+       },
+    )
 
 
 def build(api):
@@ -41,7 +59,9 @@ def build(api):
       context_dir='/some/context/directory/for/target',
       view_image_url='https://example.com/image/target',
       view_build_url='https://example.com/build/target',
-      notify=[])
+      notify=[],
+      sources=[],
+  )
   assert img == expected, img
 
   # With minimal args and custom emulated output.
@@ -58,8 +78,30 @@ def build(api):
               repo='https://some.example.com/repo',
               script='scripts/another_roll.py',
           ),
-      ])
-  img = api.cloudbuildhelper.build('another.yaml', step_test_image=custom)
+      ],
+      sources=[
+          {
+              'repository': 'https://a.example.com',
+              'revision': 'aaaa',
+              'sources': [
+                  '.',
+                  'some/subdir',
+              ],
+          },
+          {
+              'repository': 'https://b.example.com',
+              'revision': 'bbbb',
+              'sources': [
+                  'b_dir1',
+                  'b_dir2',
+              ],
+          },
+      ],
+  )
+  img = api.cloudbuildhelper.build(
+      'another.yaml',
+      checkout_metadata=repo_checkout_metadata(api),
+      step_test_image=custom)
   assert img == custom, img
 
   # Using non-canonical tag.
@@ -94,6 +136,7 @@ def upload(api):
       path='tarballs/example/target/82ac16b294bc0f98....tar.gz',
       sha256='82ac16b294bc0f98...',
       version='123_456',
+      sources=[],
   )
   assert tarball == expected, tarball
 
@@ -104,9 +147,30 @@ def upload(api):
       path='some/path/file.tar.gz',
       sha256='111111...',
       version='4567-789',
+      sources=[
+          {
+              'repository': 'https://a.example.com',
+              'revision': 'aaaa',
+              'sources': [
+                  '.',
+                  'some/subdir',
+              ],
+          },
+          {
+              'repository': 'https://b.example.com',
+              'revision': 'bbbb',
+              'sources': [
+                  'b_dir1',
+                  'b_dir2',
+              ],
+          },
+      ],
   )
   tarball = api.cloudbuildhelper.upload(
-      'another.yaml', canonical_tag='ignored', step_test_tarball=custom)
+      'another.yaml',
+      canonical_tag='ignored',
+      checkout_metadata=repo_checkout_metadata(api),
+      step_test_tarball=custom)
   assert tarball == custom, tarball
 
   # Possibly failing upload.

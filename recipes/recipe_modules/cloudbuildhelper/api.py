@@ -24,6 +24,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'view_image_url', # link to GCR page, for humans, optional
       'view_build_url', # link to GCB page, for humans, optional
       'notify',         # a list of NotifyConfig tuples
+      'sources',        # a list of dicts, see _process_sources
   ])
 
   # NotifyConfig identifies a system to notify about the image.
@@ -40,6 +41,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'path',      # path within the bucket
       'sha256',    # hex digest
       'version',   # canonical tag
+      'sources',   # a list of dicts, see _process_sources
   ])
 
   # Returned by a callback passed to do_roll.
@@ -55,7 +57,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
   #
   # This happens if the target manifest doesn't specify a registry to upload
   # the image to. This is rare.
-  NotUploadedImage = Image(None, None, None, None, None, None, None)
+  NotUploadedImage = Image(None, None, None, None, None, None, None, None)
 
   def __init__(self, **kwargs):
     super(CloudBuildHelperApi, self).__init__(**kwargs)
@@ -108,6 +110,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
             infra=None,
             labels=None,
             tags=None,
+            checkout_metadata=None,
             step_test_image=None):
     """Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -118,6 +121,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * infra (str) - what section to pick from 'infra' field in the YAML.
       * labels ({str: str}) - labels to attach to the docker image.
       * tags ([str]) - tags to unconditionally push the image to.
+      * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
       * step_test_image (Image) - image to produce in training mode.
 
     Returns:
@@ -159,6 +163,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           cmd=cmd,
           step_test_data=lambda: self.test_api.build_success_output(
               step_test_image, name, canonical_tag,
+              checkout_metadata=checkout_metadata,
           ),
       )
       if not res.json.output:  # pragma: no cover
@@ -176,6 +181,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           view_image_url=out.get('view_image_url'),
           view_build_url=out.get('view_build_url'),
           notify=[self._parse_notify_config(n) for n in out.get('notify', [])],
+          sources=self._process_sources(out.get('sources'), checkout_metadata),
       )
     finally:
       self._make_build_step_pretty(self.m.step.active_result, tags)
@@ -190,6 +196,86 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
         repo=cfg['repo'],
         script=cfg['script'],
     )
+
+  def _process_sources(self, sources, checkout_metadata):
+    """Joins `sources` from -json-output with gclient checkout spec.
+
+    `sources` look like: ["/root/a/b/c/d", "/root/a/b/c/e", "/root/a"].
+
+    `checkout_metadata` looks like:
+       root: Path("/root")
+       repos:
+          {
+              "a": {
+                  "repository": "https://example.com/a",
+                  "revision": "aaaaa"
+              },
+              "a/b/c": {
+                  "repository": "https://example.com/b",
+                  "revision": "aaaaa"
+              }
+          }
+
+    Returns something like:
+       [
+          {
+              "repository": "https://example.com/b",
+              "revision": "aaaaa",
+              "sources": ["d", "e"]
+          },
+          {
+              "repository": "https://example.com/a",
+              "revision": "aaaaa",
+              "sources": ["."]
+          },
+       ]
+    """
+    if not sources or not checkout_metadata:
+      return []
+
+    # Build full paths to repos in the gclient checkout, ordering them by
+    # "most nested first".
+    checkout_paths = [
+        (str(checkout_metadata.root.join(p)), e['repository'], e['revision'])
+        for p, e in checkout_metadata.repos.items()
+    ]
+    checkout_paths.sort(key=lambda e: len(e[0]), reverse=True)
+
+    # Outputs are ordered based on `sources`.
+    output_entries = []
+
+    # For each emitted source path, find the corresponding gclient repo.
+    for source_path in sources:
+      for checkout_path, repository, revision in checkout_paths:
+        is_under = (
+            source_path == checkout_path or
+            source_path.startswith(checkout_path + self.m.path.sep))
+        if not is_under:
+          continue
+
+        # The path to `source_path` relative to the repository root.
+        rel = source_path[len(checkout_path):]
+        rel = rel.replace(self.m.path.sep, '/').strip('/')
+        if rel == "":
+          rel = "."
+
+        # Find the existing repo entry in `output_entries` or create a new one.
+        for entry in output_entries:
+          if entry['repository'] == repository:
+            entry['sources'].append(rel)
+            break
+        else:
+          output_entries.append({
+              'repository': repository,
+              'revision': revision,
+              'sources': [rel],
+          })
+
+        # Found the repo checkout, don't visit any parent directories which also
+        # may be repo checkouts.
+        break
+
+    return output_entries
 
   @staticmethod
   def _make_build_step_pretty(r, tags):
@@ -228,6 +314,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
              canonical_tag,
              build_id=None,
              infra=None,
+             checkout_metadata=None,
              step_test_tarball=None):
     """Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -236,6 +323,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * canonical_tag (str) - tag to apply to a tarball if we built a new one.
       * build_id (str) - identifier of the CI build to put into metadata.
       * infra (str) - what section to pick from 'infra' field in the YAML.
+      * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
       * step_test_tarball (Tarball) - tarball to produce in training mode.
 
     Returns:
@@ -271,6 +359,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           cmd=cmd,
           step_test_data=lambda: self.test_api.upload_success_output(
               step_test_tarball, name, canonical_tag,
+              checkout_metadata=checkout_metadata,
           ),
       )
       if not res.json.output:  # pragma: no cover
@@ -287,6 +376,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           path=out['gs']['name'],
           sha256=out['sha256'],
           version=out['canonical_tag'],
+          sources=self._process_sources(out.get('sources'), checkout_metadata),
       )
     finally:
       self._make_upload_step_pretty(self.m.step.active_result)

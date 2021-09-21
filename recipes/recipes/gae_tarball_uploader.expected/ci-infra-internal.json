@@ -228,7 +228,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"name\": \"tarballs/example/target/82ac16b294bc0f98....tar.gz\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": \"example/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sources\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]

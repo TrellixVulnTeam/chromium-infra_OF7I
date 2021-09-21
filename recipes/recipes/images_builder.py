@@ -82,7 +82,8 @@ def RunSteps(api, properties):
           build_id=api.buildbucket.build_url(),
           infra=properties.infra,
           labels=meta.labels,
-          tags=meta.tags)
+          tags=meta.tags,
+          checkout_metadata=co.metadata)
       futures[fut] = m
 
   # Wait until all builds complete.
@@ -314,6 +315,7 @@ def _mutate_repo(api, root, notify, images, meta):
                     'revision':
                         meta.labels['org.opencontainers.image.revision'],
                 },
+                'sources': img.sources,
                 'links': {
                     'buildbucket': api.buildbucket.build_url(),
                     'cloudbuild': img.view_build_url,
@@ -404,7 +406,7 @@ def GenTests(api):
   from RECIPE_MODULES.infra.cloudbuildhelper.api import CloudBuildHelperApi
 
   def build_success_with_notify():
-    return api.cloudbuildhelper.build_success_output(CloudBuildHelperApi.Image(
+    img = CloudBuildHelperApi.Image(
         image='example.com/fake-registry/target',
         digest='sha256:abcdef',
         tag='ci-2012.05.14-197293-5e03a58',
@@ -418,7 +420,11 @@ def GenTests(api):
                 script='scripts/roll.py',
             ),
         ],
-    ))
+        sources=[],
+    )
+    return api.cloudbuildhelper.build_success_output(img, mocked_sources=[
+        '[CACHE]/infra_gclient_with_go/infra/a/b/c',
+    ])
 
   yield (
       api.test('try-infra') +

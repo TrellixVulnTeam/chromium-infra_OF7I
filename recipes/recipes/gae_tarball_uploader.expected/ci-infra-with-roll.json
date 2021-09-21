@@ -228,7 +228,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"name\": \"tarballs/example/target/82ac16b294bc0f98....tar.gz\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"name\": \"example/target\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sha256\": \"82ac16b294bc0f98...\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sources\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
@@ -352,7 +353,7 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "name": "upload roll CL.roll_tarballs.py",
-    "stdin": "{\"tarballs\": [{\"tarball\": \"example/target\", \"version\": {\"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", \"metadata\": {\"date\": \"2012-05-14T12:53:21.500000Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}}, \"sha256\": \"82ac16b294bc0f98...\", \"version\": \"197293-5e03a58\"}}]}",
+    "stdin": "{\"tarballs\": [{\"tarball\": \"example/target\", \"version\": {\"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", \"metadata\": {\"date\": \"2012-05-14T12:53:21.500000Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}, \"sources\": []}, \"sha256\": \"82ac16b294bc0f98...\", \"version\": \"197293-5e03a58\"}}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -382,7 +383,8 @@
       "@@@STEP_LOG_LINE@json.output@          \"source\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"repo\": \"https://chromium.googlesource.com/infra/infra\", @@@",
       "@@@STEP_LOG_LINE@json.output@            \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"@@@",
-      "@@@STEP_LOG_LINE@json.output@          }@@@",
+      "@@@STEP_LOG_LINE@json.output@          }, @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"sources\": []@@@",
       "@@@STEP_LOG_LINE@json.output@        }, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"sha256\": \"82ac16b294bc0f98...\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"version\": \"197293-5e03a58\"@@@",

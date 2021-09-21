@@ -67,7 +67,8 @@ def RunSteps(api, properties):
           manifest=m,
           canonical_tag=meta.canonical_tag,
           build_id=api.buildbucket.build_url(),
-          infra=properties.infra)
+          infra=properties.infra,
+          checkout_metadata=co.metadata)
       futures[fut] = m
 
   # Wait until all uploads complete.
@@ -151,7 +152,7 @@ def _roll_built_tarballs(api, spec, tarballs, meta):
   Args:
     api: recipes API.
     spec: instance of pb.Inputs.RollInto proto with the config.
-    images: a list of CloudBuildHelperApi.Tarball with info about tarballs.
+    tarballs: a list of CloudBuildHelperApi.Tarball with info about tarballs.
     meta: Metadata struct, as returned by _checkout.
 
   Returns:
@@ -196,6 +197,7 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
                     'repo': meta.repo_url,
                     'revision': meta.revision,
                 },
+                'sources': tb.sources,
                 'links': {
                     'buildbucket': api.buildbucket.build_url(),
                 },

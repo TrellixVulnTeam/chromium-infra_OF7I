@@ -2,12 +2,19 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import collections
 import contextlib
 
 from recipe_engine import recipe_api
 
 class InfraCheckoutApi(recipe_api.RecipeApi):
   """Stateless API for using public infra gclient checkout."""
+
+  # Describes the gclient checkout on disk.
+  CheckoutMetadata = collections.namedtuple('CheckoutMetadata', [
+      'root',  # a Path to the gclient solution root
+      'repos', # a dict {"rel/path": {"repository": ..., "revision": ..."}}
+  ])
 
   # Named cache shared across builders using public infra gclient checkout.
   PUBLIC_NAMED_CACHE = 'infra_gclient_with_go'
@@ -89,6 +96,11 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       bot_update_step = self.m.bot_update.ensure_checkout(
           patch_root=patch_root, **kwargs)
 
+    # TODO(crbug.com/1250545): Calculate version labels if necessary.
+    metadata = self.CheckoutMetadata(
+        root=path,
+        repos=bot_update_step.json.output['manifest'])
+
     env_with_override = {
         'INFRA_GO_SKIP_TOOLS_INSTALL': '1',
         'GOFLAGS': '-mod=readonly',
@@ -116,6 +128,10 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
       def patch_root_path(self):
         assert patch_root
         return path.join(patch_root)
+
+      @property
+      def metadata(self):
+        return metadata
 
       def commit_change(self):
         assert patch_root

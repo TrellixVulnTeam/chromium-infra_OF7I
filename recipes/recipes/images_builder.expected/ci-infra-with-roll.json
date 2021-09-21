@@ -241,6 +241,9 @@
       "@@@STEP_LOG_LINE@json.output@      \"script\": \"scripts/roll.py\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ], @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"sources\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"[CACHE]/infra_gclient_with_go/infra/a/b/c\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  ], @@@",
       "@@@STEP_LOG_LINE@json.output@  \"view_build_url\": \"https://example.com/build/target\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"view_image_url\": \"https://example.com/image/target\"@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -368,7 +371,7 @@
     ],
     "cwd": "[CACHE]/builder/roll/0941bf89",
     "name": "upload roll CL.scripts/roll.py",
-    "stdin": "{\"tags\": [{\"image\": \"example.com/fake-registry/target\", \"tag\": {\"context_dir\": \"/some/context/directory/for/target\", \"digest\": \"sha256:abcdef\", \"metadata\": {\"date\": \"2012-05-14T12:53:23Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\", \"cloudbuild\": \"https://example.com/build/target\", \"gcr\": \"https://example.com/image/target\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}}, \"tag\": \"ci-2012.05.14-197293-5e03a58\"}}]}",
+    "stdin": "{\"tags\": [{\"image\": \"example.com/fake-registry/target\", \"tag\": {\"context_dir\": \"/some/context/directory/for/target\", \"digest\": \"sha256:abcdef\", \"metadata\": {\"date\": \"2012-05-14T12:53:23Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\", \"cloudbuild\": \"https://example.com/build/target\", \"gcr\": \"https://example.com/image/target\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}, \"sources\": [{\"repository\": \"https://fake.org/infra.git\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\", \"sources\": [\"a/b/c\"]}]}, \"tag\": \"ci-2012.05.14-197293-5e03a58\"}}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
