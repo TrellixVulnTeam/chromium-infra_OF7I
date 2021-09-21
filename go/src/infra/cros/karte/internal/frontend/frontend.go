@@ -34,7 +34,7 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 		return nil, status.Errorf(codes.InvalidArgument, "create action: action is nil")
 	}
 	logging.Infof(ctx, "Creating action of kind %q", req.GetAction().GetKind())
-	actionEntity, err := ConvertActionToActionEntity(req.GetAction())
+	actionEntity, err := convertActionToActionEntity(req.GetAction())
 	if err != nil {
 		logging.Errorf(ctx, "error converting action: %s", err)
 		return nil, errors.Annotate(err, "create action").Err()
@@ -54,7 +54,7 @@ func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.Crea
 	if req.GetObservation() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "create observation: observation is nil")
 	}
-	observationEntity, err := ConvertObservationToObservationEntity(req.GetObservation())
+	observationEntity, err := convertObservationToObservationEntity(req.GetObservation())
 	if err != nil {
 		return nil, errors.Annotate(err, "create observation").Err()
 	}
@@ -107,7 +107,7 @@ func (k *karteFrontend) ListObservations(ctx context.Context, req *kartepb.ListO
 
 // UpdateAction updates an action in datastore and creates it if necessary when allow_missing is set.
 func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateActionRequest) (*kartepb.Action, error) {
-	reqActionEntity, err := ConvertActionToActionEntity(req.GetAction())
+	reqActionEntity, err := convertActionToActionEntity(req.GetAction())
 	if err != nil {
 		return nil, errors.Annotate(err, "update action").Err()
 	}

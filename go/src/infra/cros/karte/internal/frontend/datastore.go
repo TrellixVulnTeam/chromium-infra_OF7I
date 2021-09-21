@@ -277,7 +277,7 @@ func newObservationEntitiesQuery(token string, filter string) (*ObservationEntit
 }
 
 // ConvertActionToActionEntity takes an action and converts it to an action entity.
-func ConvertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
+func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) {
 	if action == nil {
 		return nil, status.Errorf(codes.Internal, "convert action to action entity: action is nil")
 	}
@@ -310,7 +310,7 @@ func GetActionEntityByID(ctx context.Context, id string) (*ActionEntity, error) 
 }
 
 // ConvertObservationToObservationEntity takes an observation and converts it to an observation entity.
-func ConvertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
+func convertObservationToObservationEntity(observation *kartepb.Observation) (*ObservationEntity, error) {
 	if observation == nil {
 		return nil, status.Errorf(codes.Internal, "convert observation to observation entity: action is nil")
 	}

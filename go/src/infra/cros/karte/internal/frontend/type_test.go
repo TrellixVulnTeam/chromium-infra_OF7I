@@ -84,7 +84,7 @@ func TestConvertActionEntityToAction(t *testing.T) {
 				t.Errorf("unexpected error (-want +got): %s", diff)
 			}
 			expectedRoundTrip := tt.in
-			actualRoundTrip, err := ConvertActionToActionEntity(actual)
+			actualRoundTrip, err := convertActionToActionEntity(actual)
 			if err != nil {
 				t.Errorf("unexpected error during round trip conversion: %s", err)
 			}
