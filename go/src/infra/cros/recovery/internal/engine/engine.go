@@ -127,9 +127,9 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		}
 		return newCtx, errors.Annotate(err, "run action %q: (cached)", actionName).Err()
 	}
-	newCtx, err = r.runActionConditions(newCtx, actionName)
+	newCtx, conditionName, err := r.runActionConditions(newCtx, actionName)
 	if err != nil {
-		log.Info(newCtx, "Action %q: one of conditions failed, skipping...", actionName)
+		log.Info(newCtx, "Action %q: one of conditions %q failed, skipping...", actionName, conditionName)
 		log.Debug(newCtx, "Action %q: conditions fail with %s", actionName, err)
 		// Return nil error so we can continue execution of next actions...
 		return newCtx, nil
@@ -212,10 +212,10 @@ func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb
 
 // runActionConditions checks if action is applicable based on condition actions.
 // If return err then not applicable, if nil then applicable.
-func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName string) (newCtx context.Context, err error) {
+func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName string) (newCtx context.Context, conditionName string, err error) {
 	a := r.getAction(actionName)
 	if len(a.GetConditions()) == 0 {
-		return ctx, nil
+		return ctx, "", nil
 	}
 	if r.args != nil {
 		if r.args.StepHandler != nil {
@@ -229,13 +229,16 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 		}
 	}
 	log.Debug(ctx, "Action %q: running conditions...", actionName)
-	ctx, err = r.runActions(ctx, a.GetConditions(), false)
-	if err != nil {
-		log.Debug(ctx, "Action %q: conditions fails. Error: %s", actionName, err)
-		return ctx, errors.Annotate(err, "run conditions").Err()
+	enableRecovery := false
+	for _, condition := range a.GetConditions() {
+		ctx, err = r.runAction(ctx, condition, enableRecovery)
+		if err != nil {
+			log.Debug(ctx, "Action %q: condition %q fails. Error: %s", actionName, condition, err)
+			return ctx, condition, errors.Annotate(err, "run conditions").Err()
+		}
 	}
 	log.Debug(ctx, "Action %q: all conditions passed.", actionName)
-	return ctx, nil
+	return ctx, "", nil
 }
 
 // runDependencies runs action's dependencies.
