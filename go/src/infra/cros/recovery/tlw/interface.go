@@ -65,6 +65,8 @@ type ProvisionRequest struct {
 	// Path to the GS file.
 	// Example: gs://bucket/file_name
 	SystemImagePath string
+	// Prevent reboot during provision OS.
+	PreventReboot bool
 }
 
 // RunResult represents result of executed command.

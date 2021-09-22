@@ -40,6 +40,8 @@ const (
 	gsCrosImageBucket = "gs://chromeos-image-archive"
 	// tlwPort is default port used to run TLW on the drones.
 	tlwPort = 7151
+	// tlsPort is default port used to run TLS on the drones.
+	tlsPort = 7152
 )
 
 // UFSClient is a client that knows how to work with UFS RPC methods.
@@ -435,6 +437,13 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 	if req.SystemImagePath == "" {
 		return errors.Reason("provision: system image path is not specified").Err()
 	}
-	log.Debug(ctx, "Provisioning: %s", req)
-	return errors.Reason("not implemented").Err()
+	log.Debug(ctx, "Started provisioning by TLS: %s", req)
+	addr := fmt.Sprintf("0.0.0.0:%d", tlsPort)
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		return errors.Annotate(err, "provision: connect to TLS").Err()
+	}
+	defer conn.Close()
+	err = TLSProvision(ctx, conn, req)
+	return errors.Annotate(err, "provision").Err()
 }

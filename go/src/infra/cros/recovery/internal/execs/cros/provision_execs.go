@@ -12,24 +12,27 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
 // provisionExec performs provisioning of the device.
 //
 // To prevent reboot of device please provide action exec argument 'no_reboot'.
 func provisionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	preventReboot := false
+	req := &tlw.ProvisionRequest{
+		Resource:      args.ResourceName,
+		PreventReboot: false,
+	}
 	for _, arg := range actionArgs {
 		if arg == "no_reboot" {
-			preventReboot = true
+			req.PreventReboot = true
+			log.Debug(ctx, "Cros provision will be perform without reboot.")
 		}
 	}
-	if preventReboot {
-		log.Debug(ctx, "Provision will be perform without reboot.")
-	}
-	gsPath := fmt.Sprintf("%s/%s", gsCrOSImageBucket, args.DUT.StableVersion.CrosImage)
-	log.Debug(ctx, "Provision using image: %s", gsPath)
-	return errors.Reason("provision: not implemented").Err()
+	req.SystemImagePath = fmt.Sprintf("%s/%s", gsCrOSImageBucket, args.DUT.StableVersion.CrosImage)
+	log.Debug(ctx, "System image path: %s", req.SystemImagePath)
+	err := args.Access.Provision(ctx, req)
+	return errors.Annotate(err, "cros provision").Err()
 }
 
 func init() {
