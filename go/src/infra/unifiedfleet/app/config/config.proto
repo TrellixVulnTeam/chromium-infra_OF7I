@@ -8,6 +8,7 @@ package ufs.config;
 
 option go_package = "infra/unifiedfleet/app/config";
 
+// Next Tag: 18
 // Config is the configuration data served by luci-config for this app.
 message Config {
   string luci_config_service = 1;
@@ -36,6 +37,8 @@ message Config {
   bool use_cached_hwid_manufacturing_config = 15;
   // Enable generation of schedulable labels using Boxster configs.
   bool enable_boxster_labels = 16;
+  // Service account for accessing HWID server
+  string hwid_service_account = 17;
 }
 
 message OSNetworkConfig {

@@ -205,11 +205,15 @@ func (es *InterfaceFactory) NewHwidClientInterface(ctx context.Context) (hwid.Cl
 }
 
 func hwidInterfaceFactoryImpl(ctx context.Context) (hwid.ClientInterface, error) {
-	tr, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, hwidEndpointScope))
+	hwidSA := config.Get(ctx).GetHwidServiceAccount()
+	if hwidSA == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "hwid service account is not specified in config")
+	}
+	t, err := auth.GetRPCTransport(ctx, auth.AsActor, auth.WithServiceAccount(hwidSA), auth.WithScopes(authclient.OAuthScopeEmail, hwidEndpointScope))
 	if err != nil {
-		return &hwid.Client{}, err
+		return nil, err
 	}
 	return &hwid.Client{
-		Hc: &http.Client{Transport: tr},
+		Hc: &http.Client{Transport: t},
 	}, nil
 }
