@@ -26,6 +26,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  Make sure to authenticate with the App Engine SDK and configure Docker. This is needed to install Cloud Tasks Emulator.
         1.  `gcloud auth login`
         1.  `gcloud auth configure-docker`
+            1. If you get authentication errors here, run `setenv PATH = $PATH;/path/to/gcloud/bin`
     1. Run `docker-compose -f dev-services.yml up -d`. This should spin up:
         1. MySQL v5.6
         1. Redis
@@ -49,10 +50,17 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
         1.  Install build requirements:
             1.  `sudo apt-get install build-essential automake`
     1. On MacOS
+        1. [Install homebrew](https://brew.sh)
         1.  Install node and npm
             1.  Install node version manager `brew install nvm`
             1.  See the brew instructions on updating your shell's configuration
             1.  Install node and npm `nvm install 12.13.0`
+            1.  Add the following to the end of your `~/.zshrc` file: 
+
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+                    [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
 1.  Install Python and JS dependencies:
     1.  Install MySQL, needed for mysqlclient
         1. For mac: `brew install mysql@5.6`
@@ -60,7 +68,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  Optional: You may need to install `pip`. You can verify whether you have it installed with `which pip`.
         1. `curl -O https://bootstrap.pypa.io/2.7/get-pip.py`
         1. `sudo python get-pip.py`
-    1.  Optional: Use `virtualenv` to keep from modifying system dependencies.
+    1.  Use `virtualenv` to keep from modifying system dependencies.
         1. `sudo pip install virtualenv`
         1. `virtualenv venv` to set up virtualenv within your monorail directory.
         1. `source venv/bin/activate` to activate it, needed in each terminal instance of the directory.
@@ -71,9 +79,9 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 1.  Run the app:
     1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.
-1.  Optional: Create/modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
+1.  Create/modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
     1.  `docker exec mysql mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
-    1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver.
+    1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver. If you kill the dev server before running the docker command, the restart may not be necessary.
 
 Instructions for deploying Monorail to an existing instance or setting up a new instance are [here](doc/deployment.md).
 
@@ -145,6 +153,14 @@ Just remember to remove them before you upload your CL.
 This error occurs when port 8080 is already being used by an existing process. Oftentimes,
 this is a leftover Monorail devserver process from a past run. To quit whatever process is
 on port 8080, you can run `kill $(lsof -ti:8080)`.
+
+*   `RuntimeError: maximum recursion depth exceeded while calling a Python object`
+
+If running `make serve` gives an output similar to [this](https://paste.googleplex.com/4693398234595328), make sure you're using a virtual environment (see above for how to configure one). Then, make the changes outlined in [this CL](https://chromium-review.googlesource.com/c/infra/infra/+/3152656). 
+
+*   `gcloud: command not found`
+
+Add the following to your `~/.zshrc` file: `alias gcloud='/Users/username/google-cloud-sdk/bin/gcloud'`. Replace `username` with your Google username.
 
 *   `TypeError: connect() got an unexpected keyword argument 'charset'`
 
