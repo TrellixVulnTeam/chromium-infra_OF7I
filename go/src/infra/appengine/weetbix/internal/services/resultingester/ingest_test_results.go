@@ -31,7 +31,7 @@ func RegisterResultIngestionTasksClass() {
 		Kind:      tq.NonTransactional,
 		Handler: func(ctx context.Context, payload proto.Message) error {
 			task := payload.(*taskspb.IngestTestResults)
-			return ingestTestResults(context.Background(), task)
+			return ingestTestResults(ctx, task)
 		},
 	})
 }
