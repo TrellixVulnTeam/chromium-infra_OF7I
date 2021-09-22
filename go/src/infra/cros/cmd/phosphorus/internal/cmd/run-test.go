@@ -124,17 +124,16 @@ func runTestStep(ctx context.Context, r *phosphorus.RunTestRequest) (*autoservRe
 	dir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
 
 	t := &atutil.Test{
-		Args:               r.GetAutotest().GetTestArgs(),
-		ClientTest:         r.GetAutotest().GetIsClientTest(),
-		ControlName:        r.GetAutotest().GetName(),
-		ImageStorageServer: r.GetAutotest().GetImageStorageServer(),
-		Hosts:              r.DutHostnames,
-		Keyvals:            r.GetAutotest().GetKeyvals(),
-		Name:               r.GetAutotest().GetDisplayName(),
-		PeerDuts:           r.GetAutotest().GetPeerDuts(),
-		RequireSSP:         !r.GetAutotest().GetIsClientTest(),
-		ResultsDir:         dir,
-		SSPBaseImageName:   r.Config.GetTask().GetSspBaseImageName(),
+		Args:             r.GetAutotest().GetTestArgs(),
+		ClientTest:       r.GetAutotest().GetIsClientTest(),
+		ControlName:      r.GetAutotest().GetName(),
+		Hosts:            r.DutHostnames,
+		Keyvals:          r.GetAutotest().GetKeyvals(),
+		Name:             r.GetAutotest().GetDisplayName(),
+		PeerDuts:         r.GetAutotest().GetPeerDuts(),
+		RequireSSP:       !r.GetAutotest().GetIsClientTest(),
+		ResultsDir:       dir,
+		SSPBaseImageName: r.Config.GetTask().GetSspBaseImageName(),
 	}
 
 	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)

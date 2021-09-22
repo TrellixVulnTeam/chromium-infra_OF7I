@@ -106,22 +106,21 @@ var _ keyvalsJob = &Test{}
 
 // Test represents a test to run.  Test implements AutoservJob.
 type Test struct {
-	Args               string
-	ClientTest         bool
-	ControlFile        string
-	ControlName        string
-	ExecutionTag       string
-	ImageStorageServer string
-	Hosts              []string
-	Keyvals            map[string]string
-	Name               string
-	Owner              string
-	ParentJobID        int
-	PeerDuts           []string
-	RequireSSP         bool
-	ResultsDir         string
-	SSPBaseImageName   string
-	TestSourceBuild    string
+	Args             string
+	ClientTest       bool
+	ControlFile      string
+	ControlName      string
+	ExecutionTag     string
+	Hosts            []string
+	Keyvals          map[string]string
+	Name             string
+	Owner            string
+	ParentJobID      int
+	PeerDuts         []string
+	RequireSSP       bool
+	ResultsDir       string
+	SSPBaseImageName string
+	TestSourceBuild  string
 }
 
 // AutoservArgs represents the CLI args for `autoserv`.
