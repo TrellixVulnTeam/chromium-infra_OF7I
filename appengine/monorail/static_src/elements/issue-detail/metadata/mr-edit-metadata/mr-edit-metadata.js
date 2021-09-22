@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {LitElement, html} from 'lit-element';
+import deepEqual from 'deep-equal';
 
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/framework/mr-upload/mr-upload.js';
@@ -599,20 +600,20 @@ export class MrEditMetadata extends connectStore(LitElement) {
       approvers: {type: Array},
       setter: {type: Object},
       summary: {type: String},
-      cc: {type: Array},
-      components: {type: Array},
+      cc: {type: Array, hasChanged: _notDeepEqual},
+      components: {type: Array, hasChanged: _notDeepEqual},
       status: {type: String},
       statuses: {type: Array},
-      blockedOn: {type: Array},
-      blocking: {type: Array},
+      blockedOn: {type: Array, hasChanged: _notDeepEqual},
+      blocking: {type: Array, hasChanged: _notDeepEqual},
       mergedInto: {type: Object},
-      ownerName: {type: String},
-      labelNames: {type: Array},
+      ownerName: {type: String, hasChanged: _notDeepEqual},
+      labelNames: {type: Array, hasChanged: _notDeepEqual},
       derivedLabels: {type: Array},
       _permissions: {type: Array},
       phaseName: {type: String},
       projectConfig: {type: Object},
-      projectName: {type: String},
+      projectName: {type: String, hasChanged: _notDeepEqual},
       isApproval: {type: Boolean},
       isStarred: {type: Boolean},
       issuePermissions: {type: Object},
@@ -1183,6 +1184,10 @@ export class MrEditMetadata extends connectStore(LitElement) {
   _sendEmailChecked(evt) {
     this.sendEmail = evt.detail.checked;
   }
+}
+
+function _notDeepEqual(a, b) {
+  return !deepEqual(a, b);
 }
 
 customElements.define('mr-edit-metadata', MrEditMetadata);
