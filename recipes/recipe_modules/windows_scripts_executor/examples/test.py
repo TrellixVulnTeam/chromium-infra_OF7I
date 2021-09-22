@@ -117,6 +117,13 @@ def GenTests(api):
           'Success': True,
       }}))
 
+  INSTALL_FILE_WMI_PASS = api.step_data(
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.PowerShell> Install package install_winpe_wmi',
+      stdout=api.json.output({'results': {
+          'Success': True,
+      }}))
+
   # actions for adding files
   ACTION_ADD_STARTNET = wib.Action(
       add_file=wib.AddFile(
@@ -142,6 +149,21 @@ def GenTests(api):
           ),
           dst='Windows\\System32\\',
       ))
+
+  # actions for installing windows packages
+  ACTION_INSTALL_WMI = wib.Action(
+      add_windows_package=wib.AddWindowsPackage(
+          name='install_winpe_wmi',
+          src=wib.Src(
+              cipd_src=wib.CIPDSrc(
+                  package='infra_internal/labs/drivers/' +
+                  'microsoft/windows_adk/winpe/winpe-wmi',
+                  refs='latest',
+                  platform='windows-amd64',
+              ),),
+          args=['-IgnoreCheck'],
+      ))
+
 
   # Post process check for save and discard options during unmount
   UMOUNT_PP_DISCARD = api.post_process(
@@ -255,6 +277,25 @@ def GenTests(api):
       UMOUNT_WIM_PASS +  # Unmount the wim
       UMOUNT_PP_SAVE +  # Check unmount didn't discard the changes
       api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  yield (api.test('Install package from cipd', api.platform('win', 64)) +
+         api.properties(
+             wib.Image(
+                 name='win10_2013_x64',
+                 arch=wib.ARCH_X86,
+                 offline_winpe_customization=wib.OfflineCustomization(
+                     name='offline_winpe_2013_x64',
+                     offline_customization=[
+                         wib.OfflineAction(
+                             name='wmi_setup', actions=[
+                                 ACTION_INSTALL_WMI,
+                             ])
+                     ]))) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
+         MOUNT_WIM_PASS +  # mount the generated wim
+         INSTALL_FILE_WMI_PASS +  # install file from cipd
+         UMOUNT_WIM_PASS +  # Unmount the wim
+         UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
+         api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
   yield (api.test('Happy path', api.platform('win', 64)) + api.properties(
       wib.Image(

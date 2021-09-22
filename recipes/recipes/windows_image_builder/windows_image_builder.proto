@@ -49,7 +49,7 @@ message Action {
     // Adds the given file to the image
     AddFile add_file = 1;
     // Installs a given file on the device
-    InstallFile install_file = 2;
+    AddWindowsPackage add_windows_package = 2;
     EditOfflineRegistry edit_offline_registry = 3;
   }
 }
@@ -65,17 +65,17 @@ message AddFile {
   string dst = 3;
 }
 
-message InstallFile {
-  // The AddFile action's name, e.g. add_startnet
+// Add-WindowsPackage calls the command by the same name in powershell. It adds
+// the -PackagePath based on src, -Path based on context, -LogLevel and -LogPath
+// by default. Other arguments can be optionally given by args.
+message AddWindowsPackage {
+  // The name for the step, e.g. add WinPE-WMI.cab
   string name = 1;
-  // The install command to be run
-  string init = 2;
+  // Src of the install file
+  Src src = 2;
   // Args for the install command
   repeated string args = 3;
-  // Src of the install file
-  Src src = 4;
 }
-
 
 message EditOfflineRegistry {
   // The EditOfflineRegistry action's name, e.g. add_startnet

@@ -19,3 +19,5 @@ def iter_src(config, oper):
         #TODO(anushruth): Update to include other actions
         if action.WhichOneof('action') == 'add_file':
           oper(action.add_file.src)
+        if action.WhichOneof('action') == 'add_windows_package':
+          oper(action.add_windows_package.src)

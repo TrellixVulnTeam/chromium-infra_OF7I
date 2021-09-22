@@ -7,6 +7,7 @@ from recipe_engine.recipe_api import Property
 from . import cipd_manager
 from . import git_manager
 # Windows command helpers
+from . import add_windows_package
 from . import mount_wim
 from . import unmount_wim
 from . import regedit
@@ -87,8 +88,9 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     a = action.WhichOneof('action')
     if a == 'add_file':
       self.add_file(action.add_file)
-    elif a == 'install_file':  # pragma: no cover
-      raise self.m.step.InfraFailure('Pending Implementation')
+    elif a == 'add_windows_package':
+      src = self.get_local_src(action.add_windows_package.src)
+      self.add_windows_package(action.add_windows_package, src)
 
     #TODO(actodd): Add tests and remove "no cover" tag
     elif a == 'edit_offline_registry':  # pragma: no cover
@@ -96,20 +98,22 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                                     action.edit_offline_registry,
                                     self._workdir.join('mount'))
 
+  def get_local_src(self, src):
+    if src.WhichOneof('src') == 'cipd_src':
+      # Deref the cipd src and copy it to f
+      return self._cipd.get_local_src(src.cipd_src).join('*')
+    if src.WhichOneof('src') == 'git_src':
+      return self._git.get_local_src(src.git_src)
+    if src.WhichOneof('src') == 'local_src':  # pragma: no cover
+      return src.local_src
+
+  def add_windows_package(self, f, src):
+    add_windows_package.install_package(self.m.powershell, f, src,
+                                        self._workdir.join('mount'),
+                                        self.m.path['cleanup'])
 
   def add_file(self, f):
-    src = ''
-    #TODO(anushruth): Replace cipd_src with local_src for all actions
-    # after downloading the files.
-    if f.src.WhichOneof('src') == 'cipd_src':
-      # Deref the cipd src and copy it to f
-      src = self._cipd.get_local_src(f.src.cipd_src)
-      # Include everything in the subdir
-      src = src.join('*')
-    elif f.src.WhichOneof('src') == 'git_src':
-      src = self._git.get_local_src(f.src.git_src)
-    elif f.src.WhichOneof('src') == 'local_src':  # pragma: no cover
-      src = f.src.local_src
+    src = self.get_local_src(f.src)
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', f.dst))
