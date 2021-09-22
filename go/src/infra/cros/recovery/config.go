@@ -34,7 +34,8 @@ const defaultConfig = `
 				"cros_is_on_stable_version":{
 					"conditions": [
 						"has_stable_version_cros_image",
-						"cros_kernel_priority_has_not_changed"
+						"cros_kernel_priority_has_not_changed",
+						"not_exempted_pool"
 					],
 					"recovery_actions":[
 						"install_stable_os"
@@ -55,6 +56,17 @@ const defaultConfig = `
 					"exec_timeout": {
 						"seconds": 3600
 					}
+				},
+				"not_exempted_pool":{
+					"docs":[
+						"There are some labstations we don't want they receive auto-update, e.g. labstations that used for image qualification purpose"
+					],
+					"exec_name":"dut_not_in_pool",
+					"exec_extra_args":[
+						"servo_verification",
+						"labstation_tryjob",
+						"labstation_canary"
+					]
 				},
 				"update_provision_info":{
 					"exec_name": "cros_update_provision_os_version"

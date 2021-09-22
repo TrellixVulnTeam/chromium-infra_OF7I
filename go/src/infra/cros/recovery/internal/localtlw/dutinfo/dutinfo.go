@@ -118,7 +118,8 @@ func GetRpmInfo(data *ufspb.ChromeOSDeviceData) (hostname, outlet string) {
 
 func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	lc := data.GetLabConfig()
-	p := lc.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+	dut := lc.GetChromeosMachineLse().GetDeviceLse().GetDut()
+	p := dut.GetPeripherals()
 	ds := data.GetDutState()
 	dc := data.GetDeviceConfig()
 	machine := data.GetMachine()
@@ -179,6 +180,9 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		RPMOutlet:          createRPMOutlet(p.GetRpm(), ds),
 		Cr50Phase:          convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:         convertCr50KeyEnv(ds.GetCr50KeyEnv()),
+		ExtraAttributes: map[string][]string{
+			"pool": dut.GetPools(),
+		},
 	}
 	return d, nil
 }
@@ -202,6 +206,9 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 		RPMOutlet:       createRPMOutlet(l.GetRpm(), ds),
 		Cr50Phase:       convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:      convertCr50KeyEnv(ds.GetCr50KeyEnv()),
+		ExtraAttributes: map[string][]string{
+			"pool": l.GetPools(),
+		},
 	}
 	return d, nil
 }
