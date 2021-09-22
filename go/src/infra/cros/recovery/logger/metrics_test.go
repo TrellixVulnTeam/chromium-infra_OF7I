@@ -22,6 +22,7 @@ func TestNewMetrics(t *testing.T) {
 	expected := []string{
 		lines(
 			`Create action "b": {`,
+			`    "Name": "",`,
 			`    "ActionKind": "b",`,
 			`    "SwarmingTaskID": "a",`,
 			`    "AssetTag": "",`,

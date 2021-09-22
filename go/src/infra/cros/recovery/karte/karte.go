@@ -35,6 +35,11 @@ func (c *client) Create(ctx context.Context, action *logger.Action) (*logger.Act
 	panic("not implemented")
 }
 
+// Update is a stub that does nothing.
+func (c *client) Update(ctx context.Context, res *logger.Action) (*logger.Action, error) {
+	panic("not implemented")
+}
+
 // Search takes a query struct and produces a resultset.
 func (c *client) Search(ctx context.Context, q *logger.Query) (*logger.QueryResult, error) {
 	panic("not implemented")

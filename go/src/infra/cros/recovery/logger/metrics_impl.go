@@ -38,6 +38,11 @@ func (m *metrics) Create(ctx context.Context, action *Action) (*Action, error) {
 	return action, nil
 }
 
+// Update is a stub that does nothing.
+func (m *metrics) Update(ctx context.Context, action *Action) (*Action, error) {
+	return action, nil
+}
+
 // Search lists the actions matching a given criterion.
 func (m *metrics) Search(ctx context.Context, q *Query) (*QueryResult, error) {
 	return nil, errors.New("list actions matching: not yet implemented")

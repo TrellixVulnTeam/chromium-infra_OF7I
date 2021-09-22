@@ -39,6 +39,8 @@ const (
 
 // An action is an event performed on a DUT.
 type Action struct {
+	// Name is the identifier for an action. It is controlled by Karte.
+	Name string
 	// ActionKind is a coarse-grained type of observation e.g. "ssh".
 	ActionKind string
 	// SwarmingTaskID is the ID of the associated swarming task.
@@ -157,8 +159,12 @@ type QueryResult struct {
 // Metrics is a simple interface for logging
 // structured events and metrics.
 type Metrics interface {
-	// Create records an action with observations.
+	// Create records an action with observations. It returns the created observation
+	// and a token that can be used to modify future observations.
 	Create(ctx context.Context, action *Action) (*Action, error)
+
+	// Update an action with observations.
+	Update(ctx context.Context, action *Action) (*Action, error)
 
 	// Search lists all the actions matching a set of constraints, up to
 	// a limit on the number of returned actions.
