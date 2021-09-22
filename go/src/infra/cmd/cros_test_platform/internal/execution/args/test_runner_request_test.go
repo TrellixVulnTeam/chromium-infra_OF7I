@@ -221,6 +221,35 @@ func TestParamsTestArgs(t *testing.T) {
 	})
 }
 
+// TODO(b/200273237): Remove test case once experiment has concluded.
+func TestParamsTestArgsResultdbSettings(t *testing.T) {
+	Convey("Given a request that specifies resultdb_settings as an additional test arg", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		setTestArgs(inv, "foo=bar baz=qux")
+		var params test_platform.Request_Params
+		setParamsTestArgs(&params, "resultdb_settings", "abc")
+		Convey("when generating a test runner request", func() {
+			g := Generator{
+				Invocation: inv,
+				Params:     &params,
+			}
+			got, err := g.testRunnerRequest(ctx)
+			So(err, ShouldBeNil)
+			test := defaultTest(got.Tests)
+			Convey("the resultdb_settings are only propogated when the experiment is on.", func() {
+				So(test, ShouldNotBeNil)
+				So(test.GetAutotest(), ShouldNotBeNil)
+				So(test.GetAutotest().TestArgs, ShouldEqual, "foo=bar baz=qux")
+				g.Experiments = append(g.Experiments, "chromeos.cros_test_platform.add_resultdb_settings")
+				got, err = g.testRunnerRequest(ctx)
+				test = defaultTest(got.Tests)
+				So(test.GetAutotest().TestArgs, ShouldEqual, "foo=bar baz=qux resultdb_settings=abc")
+			})
+		})
+	})
+}
+
 func TestTestLevelKeyval(t *testing.T) {
 	Convey("Given a keyval inside the test invocation", t, func() {
 		ctx := context.Background()

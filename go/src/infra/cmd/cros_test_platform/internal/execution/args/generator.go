@@ -389,7 +389,18 @@ func (g *Generator) baseKeyvals() map[string]string {
 
 func (g *Generator) testargs() string {
 	ta := g.Invocation.TestArgs
+	// TODO(b/200273237): Remove check for experiment once uploading results to
+	// resultdb is stable.
+	addRdbSettings := false
+	for _, x := range g.Experiments {
+		if strings.EqualFold(x, "chromeos.cros_test_platform.add_resultdb_settings") {
+			addRdbSettings = true
+		}
+	}
 	for k, v := range g.Params.GetDecorations().GetTestArgs() {
+		if k == "resultdb_settings" && !addRdbSettings {
+			continue
+		}
 		ta += fmt.Sprintf(" %s=%s", k, v)
 	}
 	return ta
