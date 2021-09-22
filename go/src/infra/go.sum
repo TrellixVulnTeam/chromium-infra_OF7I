@@ -1008,8 +1008,9 @@ github.com/mailru/easyjson v0.7.6/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJ
 github.com/markbates/pkger v0.15.1/go.mod h1:0JoVlrol20BSywW79rN3kdFFsE5xYM+rSCQDXbLhiuI=
 github.com/markbates/pkger v0.17.1/go.mod h1:0JoVlrol20BSywW79rN3kdFFsE5xYM+rSCQDXbLhiuI=
 github.com/marstr/guid v1.1.0/go.mod h1:74gB1z2wpxxInTG6yaqA7KrtM0NZ+RbrcqDvYHefzho=
-github.com/maruel/subcommands v1.1.0 h1:5k7Y1KXDrI4U2Q7J6R7rbnpoNAiklUDTdaK2fFT998g=
 github.com/maruel/subcommands v1.1.0/go.mod h1:b25AG9Eho2Rs1NUPAPAYBFy1B5y63QMxw/2WmLGO8m8=
+github.com/maruel/subcommands v1.1.1 h1:+063/UDFVMvzZcyo8qlfpPhmjeLsT9yLUq+IKgqBWHI=
+github.com/maruel/subcommands v1.1.1/go.mod h1:b25AG9Eho2Rs1NUPAPAYBFy1B5y63QMxw/2WmLGO8m8=
 github.com/maruel/ut v1.0.2 h1:mQTlQk3jubTbdTcza+hwoZQWhzcvE4L6K6RTtAFlA1k=
 github.com/maruel/ut v1.0.2/go.mod h1:RV8PwPD9dd2KFlnlCc/DB2JVvkXmyaalfc5xvmSrRSs=
 github.com/mattes/migrate v3.0.1+incompatible h1:PhAZP82Vqejw8JZLF4U5UkLGzEVaCnbtJpB6DONcDow=

@@ -39,7 +39,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kr/pretty v0.3.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/maruel/subcommands v1.1.0
+	github.com/maruel/subcommands v1.1.1
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
