@@ -79,7 +79,12 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 1.  Run the app:
     1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.
-1.  Create/modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
+1. Set up your test user account (these steps are a little odd, but just roll with it):
+       1.  Sign in using `test@example.com`
+       1.  Log back out and log in again as `example@example.com`
+       1.  Log out and finally log in again as `test@example.com`.
+       1.  Everything should work fine now.
+1.  Modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
     1.  `docker exec mysql mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
     1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver. If you kill the dev server before running the docker command, the restart may not be necessary.
 
