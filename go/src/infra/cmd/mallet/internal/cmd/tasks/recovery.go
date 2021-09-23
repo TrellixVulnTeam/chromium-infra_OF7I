@@ -86,6 +86,7 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		"inventory_service": e.UFSService,
 		"update_inventory":  enableUpdateInventory,
 		"no_stepper":        c.noStepper,
+		"no_metrics":        true,
 		"configuration":     configuration,
 	})
 	if err != nil {
