@@ -128,7 +128,10 @@ func (b *localManifestBrancher) Run(a subcommands.Application, args []string, en
 	}
 	defer client.Close()
 
-	if err := b.BranchLocalManifests(ctx, client); err != nil {
+	fsClient := &prodFirestoreClient{
+		dsClient: client,
+	}
+	if err := b.BranchLocalManifests(ctx, fsClient); err != nil {
 		LogErr(err.Error())
 		return 4
 	}
@@ -141,12 +144,23 @@ type projectInfo struct {
 	path string
 }
 
-var readFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string) (localManifestBranchMetadata, bool) {
+type firestoreClient interface {
+	readFirestoreData(ctx context.Context, branch string) (localManifestBranchMetadata, bool)
+	writeFirestoreData(ctx context.Context, branch string, docExists bool, bm localManifestBranchMetadata)
+}
+
+type prodFirestoreClient struct {
+	dsClient *firestore.Client
+}
+
+// readFirestoreData returns metadata for the given branch, and a boolean indicating whether
+// or not the doc exists.
+func (p *prodFirestoreClient) readFirestoreData(ctx context.Context, branch string) (localManifestBranchMetadata, bool) {
 	bm := localManifestBranchMetadata{
 		PathToPrevSHA: make(map[string]string),
 	}
 	docExists := true
-	bmDoc := dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
+	bmDoc := p.dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
 	if docsnap, err := bmDoc.Get(ctx); err != nil {
 		// If we know the failure is because the data doesn't exist, we can
 		// still proceed.
@@ -164,8 +178,8 @@ var readFirestoreData = func(ctx context.Context, dsClient *firestore.Client, br
 	return bm, docExists
 }
 
-var writeFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string, docExists bool, bm localManifestBranchMetadata) {
-	bmDoc := dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
+func (p *prodFirestoreClient) writeFirestoreData(ctx context.Context, branch string, docExists bool, bm localManifestBranchMetadata) {
+	bmDoc := p.dsClient.Doc(fmt.Sprintf("%s/%s", firestoreCollection, branch))
 	if docExists {
 		if _, err := bmDoc.Set(ctx, bm); err != nil {
 			LogErr(errors.Annotate(err, "failed to store optimization data for branch %s", branch).Err().Error())
@@ -274,7 +288,7 @@ type localManifestBranchMetadata struct {
 }
 
 // BranchLocalManifests is responsible for doing the actual work of local manifest branching.
-func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, dsClient *firestore.Client) error {
+func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, fsClient firestoreClient) error {
 	checkout := b.chromeosCheckoutPath
 	projects := b.projects
 	minMilestone := b.minMilestone
@@ -327,8 +341,7 @@ func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, dsClie
 		currentSHA := strings.TrimSpace(output.Stdout)
 
 		// Read optimization data from Firestore.
-		bm, docExists := readFirestoreData(ctx, dsClient, branch)
-
+		bm, docExists := fsClient.readFirestoreData(ctx, branch)
 		var wg sync.WaitGroup
 		toProcess := make(chan string, len(projects))
 		for _, path := range projects {
@@ -375,7 +388,7 @@ func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, dsClie
 
 		// Write optimization data.
 		if !dryRun {
-			writeFirestoreData(ctx, dsClient, branch, docExists, bm)
+			fsClient.writeFirestoreData(ctx, branch, docExists, bm)
 		}
 	}
 	if len(errs) == 0 {

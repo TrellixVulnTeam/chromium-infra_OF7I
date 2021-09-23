@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build linux
 // +build linux
 
 package main
@@ -14,8 +15,6 @@ import (
 	"infra/cros/internal/assert"
 	"infra/cros/internal/repo"
 	rh "infra/cros/internal/repoharness"
-
-	"cloud.google.com/go/firestore"
 )
 
 const (
@@ -57,7 +56,35 @@ var (
 	}
 )
 
-func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
+type fakeFirestoreClient struct {
+	t *testing.T
+	// Data to return for readFirestoreData calls
+	readData localManifestBranchMetadata
+	// Data to return for writeFirestoreData calls for various branches
+	expectedWriteData map[string]localManifestBranchMetadata
+}
+
+func (f *fakeFirestoreClient) readFirestoreData(_ context.Context, _ string) (localManifestBranchMetadata, bool) {
+	// Deep copy!
+	mapCopy := map[string]string{}
+	for k, v := range f.readData.PathToPrevSHA {
+		mapCopy[k] = v
+	}
+	data := f.readData
+	f.readData.PathToPrevSHA = mapCopy
+	return data, true
+}
+
+func (f *fakeFirestoreClient) writeFirestoreData(_ context.Context, branch string, _ bool, bm localManifestBranchMetadata) {
+	f.t.Helper()
+	expected, ok := f.expectedWriteData[branch]
+	if !ok {
+		f.t.Fatalf("unexpected call to writeFirestoreData for branch %s", branch)
+	}
+	assert.Assert(f.t, reflect.DeepEqual(expected, bm))
+}
+
+func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject, *fakeFirestoreClient) {
 	config := &rh.Config{
 		Manifest: repo.Manifest{
 			Default: repo.Default{
@@ -121,35 +148,36 @@ func setUp(t *testing.T) (*rh.RepoHarness, rh.RemoteProject) {
 	}
 
 	// Mock readFirestoreData and writeFirestoreData
-	readFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string) (localManifestBranchMetadata, bool) {
-		// Set SHA to something out of bounds for our mocked gitiles call to force updates.
-		bm := localManifestBranchMetadata{
-			PathToPrevSHA: map[string]string{
-				projects[0].Path: "-1",
-				projects[1].Path: "-1",
-			},
-		}
-		return bm, true
-	}
-	writeFirestoreData = func(ctx context.Context, dsClient *firestore.Client, branch string, docExists bool, bm localManifestBranchMetadata) {
+	expectedWriteData := map[string]localManifestBranchMetadata{}
+	for _, branch := range branches {
 		expectedSHA := "-1"
 		if branch != ignoreBranch {
 			expectedSHA = branchSHAs[branch]
 		}
-		expected := localManifestBranchMetadata{
+		expectedWriteData[branch] = localManifestBranchMetadata{
 			PathToPrevSHA: map[string]string{
 				projects[0].Path: expectedSHA,
 				projects[1].Path: expectedSHA,
 			},
 		}
-		assert.Assert(t, reflect.DeepEqual(expected, bm))
+	}
+	firestoreClient := &fakeFirestoreClient{
+		t: t,
+		readData: localManifestBranchMetadata{
+			PathToPrevSHA: map[string]string{
+				projects[0].Path: "-1",
+				projects[1].Path: "-1",
+			},
+		},
+		expectedWriteData: expectedWriteData,
 	}
 
-	return harness, remoteManifestProject
+	return harness, remoteManifestProject, firestoreClient
 }
 
 func TestBranchLocalManifests(t *testing.T) {
-	harness, remoteManifestProject := setUp(t)
+	t.Parallel()
+	harness, remoteManifestProject, fsClient := setUp(t)
 	defer harness.Teardown()
 
 	checkout, err := harness.Checkout(remoteManifestProject, "main", "default.xml")
@@ -163,7 +191,7 @@ func TestBranchLocalManifests(t *testing.T) {
 		push:                 true,
 		workerCount:          2,
 	}
-	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
+	assert.NilError(t, b.BranchLocalManifests(ctx, fsClient))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
 	checkBranches := map[string]bool{
@@ -194,7 +222,8 @@ func TestBranchLocalManifests(t *testing.T) {
 }
 
 func TestBranchLocalManifestsDryRun(t *testing.T) {
-	r, remoteManifestProject := setUp(t)
+	t.Parallel()
+	r, remoteManifestProject, fsClient := setUp(t)
 	defer r.Teardown()
 
 	assert.NilError(t, r.SnapshotRemotes())
@@ -210,12 +239,13 @@ func TestBranchLocalManifestsDryRun(t *testing.T) {
 		push:                 false,
 		workerCount:          1,
 	}
-	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
+	assert.NilError(t, b.BranchLocalManifests(ctx, fsClient))
 	assert.NilError(t, r.AssertNoRemoteDiff())
 }
 
 func TestBranchLocalManifests_specificBranches(t *testing.T) {
-	harness, remoteManifestProject := setUp(t)
+	t.Parallel()
+	harness, remoteManifestProject, fsClient := setUp(t)
 	defer harness.Teardown()
 
 	branch := "stabilize-13851.B"
@@ -230,7 +260,7 @@ func TestBranchLocalManifests_specificBranches(t *testing.T) {
 		push:                 true,
 		workerCount:          2,
 	}
-	assert.NilError(t, b.BranchLocalManifests(ctx, nil))
+	assert.NilError(t, b.BranchLocalManifests(ctx, fsClient))
 	assert.NilError(t, harness.ProcessSubmitRefs())
 
 	manifest := harness.Manifest()
