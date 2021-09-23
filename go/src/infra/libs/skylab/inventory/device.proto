@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 35
+// NEXT TAG: 37
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -232,7 +232,13 @@ message SchedulableLabels {
 
   optional string model = 13;
 
+  // Modem Info
+  optional ModemInfo modeminfo = 35;
+
   optional string sku = 25;
+
+  // SIM information
+  repeated SIMInfo siminfo = 36;
 
   // NEXT TAG: 6
   enum OSType {
@@ -611,4 +617,59 @@ enum LicenseType {
   // Microsoft Office Standard.
   // Contact the Chrome OS Parallels team for license specifics.
   LICENSE_TYPE_MS_OFFICE_STANDARD = 2;
+}
+
+// ModemInfo
+// Next Tag: 5
+message ModemInfo {
+  optional ModemType type = 1;
+  // Equipment Identifier
+  optional string imei = 2;
+  // Comma separated band numbers
+  optional string supported_bands = 3;
+  // Number of SIM's present
+  optional int32 sim_count = 4;
+}
+
+// Next Tag: 7
+enum ModemType {
+  MODEM_TYPE_UNSPECIFIED = 0;
+  // Qualcomm modem
+  MODEM_TYPE_QUALCOMM_SC7180 = 1;
+  // Fibocomm modem
+  MODEM_TYPE_FIBOCOMM_L850GL = 2;
+  // NL668
+  MODEM_TYPE_NL668 = 3;
+}
+
+// Next Tag: 6
+message SIMInfo {
+  optional int32 slot_id = 1;
+  optional SIMType type = 2;
+  optional string eid = 3;
+  optional bool test_esim = 4;
+  repeated SIMProfileInfo profile_info = 5;
+}
+
+// Next Tag: 5
+message SIMProfileInfo {
+  optional string iccid = 1;
+  optional string sim_pin = 2;
+  optional string sim_puk = 3;
+  optional NetworkProvider carrier_name = 4;
+}
+// Next Tag: 5
+enum NetworkProvider {
+  NETWORK_OTHER = 0;
+  NETWORK_TEST = 1;
+  NETWORK_ATT = 2;
+  NETWORK_TMOBILE = 3;
+  NETWORK_VERIZON = 4;
+}
+
+// Next Tag: 3
+enum SIMType {
+  SIM_UNKNOWN = 0;
+  SIM_PHYSICAL = 1;
+  SIM_DIGITAL = 2;
 }

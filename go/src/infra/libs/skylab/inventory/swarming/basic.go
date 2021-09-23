@@ -6,6 +6,7 @@ package swarming
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"infra/libs/skylab/inventory"
@@ -132,4 +133,39 @@ func getLastBoolValue(d Dimensions, key string) (bool, bool) {
 		return strings.ToLower(s) == "true", true
 	}
 	return false, false
+}
+
+func assignLastInt32ValueAndDropKey(d Dimensions, to *int32, key string) Dimensions {
+	if v, ok := getLastInt32Value(d, key); ok {
+		*to = v
+	}
+	delete(d, key)
+	return d
+}
+
+func getLastInt32Value(d Dimensions, key string) (int32, bool) {
+	if s, ok := getLastStringValue(d, key); ok {
+		if c, err := strconv.ParseInt(s, 10, 32); err == nil {
+			return int32(c), true
+		}
+		return int32(-1), false
+	}
+	return int32(-1), false
+}
+
+func assignLastIntValueAndDropKey(d Dimensions, to *int, key string) Dimensions {
+	if v, ok := getLastIntValue(d, key); ok {
+		*to = v
+	}
+	delete(d, key)
+	return d
+}
+
+func getLastIntValue(d Dimensions, key string) (int, bool) {
+	if s, ok := getLastStringValue(d, key); ok {
+		if c, err := strconv.Atoi(s); err == nil {
+			return c, true
+		}
+	}
+	return -1, false
 }

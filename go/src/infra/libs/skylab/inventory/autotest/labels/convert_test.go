@@ -135,6 +135,12 @@ licenses: {
   type: 1
   identifier: ""
 }
+modeminfo: {
+  type: 1
+  imei: "imei"
+  supported_bands: "bands"
+	sim_count: 1
+}
 `
 
 var fullLabels = []string{
@@ -190,6 +196,10 @@ var fullLabels = []string{
 	"mimo",
 	"model:modelval",
 	"modem:modemval",
+	"modem_imei:imei",
+	"modem_sim_count:1",
+	"modem_supported_bands:bands",
+	"modem_type:qualcomm_sc7180",
 	"os:cros",
 	"phase:DVT2",
 	"platform:platformval",
@@ -576,6 +586,12 @@ licenses: {
   type : 1
   identifier: ""
 }
+modeminfo: {
+  type: 1
+  imei: "imei"
+  supported_bands: "bands"
+	sim_count: 1
+}
 `
 
 var fullLabelsSpecial = []string{
@@ -631,6 +647,10 @@ var fullLabelsSpecial = []string{
 	"mimo",
 	"model:modelval",
 	"modem:modemval",
+	"modem_imei:imei",
+	"modem_sim_count:1",
+	"modem_supported_bands:bands",
+	"modem_type:qualcomm_sc7180",
 	"os:cros",
 	"phase:DVT2",
 	"platform:platformval",
