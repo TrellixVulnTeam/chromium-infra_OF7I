@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/luciexe/build"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/planpb"
-	"infra/cros/recovery/logger"
 )
 
 // recoveryEngine holds info required for running a recovery plan.
@@ -97,9 +97,9 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
-			var step logger.Step
-			step, newCtx = r.args.StepHandler.StartStep(newCtx, fmt.Sprintf("Run %s", actionName))
-			defer step.Close(newCtx, err)
+			var step *build.Step
+			step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Run %s", actionName))
+			defer step.End(err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -211,9 +211,9 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
-			var step logger.Step
-			step, newCtx = r.args.StepHandler.StartStep(newCtx, fmt.Sprintf("Run %s continions", actionName))
-			defer step.Close(newCtx, err)
+			var step *build.Step
+			step, newCtx = build.StartStep(newCtx, "Run continions")
+			defer step.End(err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -241,9 +241,9 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
-			var step logger.Step
-			step, newCtx = r.args.StepHandler.StartStep(newCtx, "Run dependencies")
-			defer step.Close(newCtx, err)
+			var step *build.Step
+			step, newCtx = build.StartStep(newCtx, "Run dependencies")
+			defer step.End(err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -267,9 +267,9 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
-			var step logger.Step
-			step, newCtx = r.args.StepHandler.StartStep(newCtx, "Run recoveries")
-			defer step.Close(newCtx, err)
+			var step *build.Step
+			step, newCtx = build.StartStep(newCtx, "Run recoveries")
+			defer step.End(err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()

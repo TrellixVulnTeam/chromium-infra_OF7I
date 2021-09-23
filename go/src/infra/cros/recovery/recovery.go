@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/luciexe/build"
 
 	"infra/cros/recovery/internal/engine"
 	"infra/cros/recovery/internal/execs"
@@ -56,9 +57,9 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	var errs []error
 	lastResourceIndex := len(resources) - 1
 	if args.StepHandler != nil {
-		var step logger.Step
-		step, ctx = args.StepHandler.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
-		defer step.Close(ctx, err)
+		var step *build.Step
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
+		defer step.End(err)
 	}
 	if args.Metrics != nil {
 		start := time.Now()
@@ -98,9 +99,9 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 	newCtx := ctx
 	log.Info(newCtx, "Resource %q: started", resource)
 	if args.StepHandler != nil {
-		var step logger.Step
-		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Resource %q", resource))
-		defer step.Close(newCtx, err)
+		var step *build.Step
+		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Resource %q", resource))
+		defer step.End(err)
 	}
 	dut, err := readInventory(newCtx, resource, args)
 	if err != nil {
@@ -119,9 +120,9 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, err error) {
 	newCtx := ctx
 	if args.StepHandler != nil {
-		var step logger.Step
-		step, newCtx = args.StepHandler.StartStep(newCtx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
-		defer step.Close(newCtx, err)
+		var step *build.Step
+		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
+		defer step.End(err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -136,9 +137,9 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Configuration, err error) {
 	newCtx := ctx
 	if args.StepHandler != nil {
-		var step logger.Step
-		step, newCtx = args.StepHandler.StartStep(newCtx, "Load configuration")
-		defer step.Close(newCtx, err)
+		var step *build.Step
+		step, newCtx = build.StartStep(newCtx, "Load configuration")
+		defer step.End(err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -161,8 +162,8 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 // readInventory reads single resource info from inventory.
 func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tlw.Dut, err error) {
 	if args.StepHandler != nil {
-		step, newCtx := args.StepHandler.StartStep(ctx, "Read inventory")
-		defer step.Close(newCtx, err)
+		step, _ := build.StartStep(ctx, "Read inventory")
+		defer step.End(err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -187,8 +188,8 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 // Skip update if not enabled.
 func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (err error) {
 	if args.StepHandler != nil {
-		step, newCtx := args.StepHandler.StartStep(ctx, "Update inventory")
-		defer step.Close(newCtx, err)
+		step, _ := build.StartStep(ctx, "Update inventory")
+		defer step.End(err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -257,9 +258,9 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *planpb.Configuration, execArgs *execs.RunArgs) (err error) {
 	newCtx := ctx
 	if execArgs.StepHandler != nil {
-		var step logger.Step
-		step, newCtx = execArgs.StepHandler.StartStep(newCtx, fmt.Sprintf("Run plan %q", planName))
-		defer step.Close(newCtx, err)
+		var step *build.Step
+		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Run plan %q", planName))
+		defer step.End(err)
 	}
 	if execArgs.Logger != nil {
 		execArgs.Logger.IndentLogging()
