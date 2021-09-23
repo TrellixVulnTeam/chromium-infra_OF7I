@@ -465,6 +465,26 @@ wheel: <
 
 * *universal*
 
+## **aioquic**
+
+### 0.9.15
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/aioquic/${vpython_platform}"
+  version: "version:0.9.15"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **altgraph**
 
 ### 0.16.1

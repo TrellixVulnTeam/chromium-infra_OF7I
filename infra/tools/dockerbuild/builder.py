@@ -427,6 +427,7 @@ def BuildPackageFromSource(system,
                            src,
                            src_filter=None,
                            deps=None,
+                           tpp_libs=None,
                            env=None):
   """Creates Python wheel from src.
 
@@ -436,6 +437,8 @@ def BuildPackageFromSource(system,
     src (dockerbuild.source.Source): The source to build the wheel from.
     deps (dockerbuild.builder.BuildDependencies|None): Dependencies required
       to build the wheel.
+    tpp_libs (List[(str, str)]|None): 3pp static libraries to install in the
+      build environment. The list items are (package name, version).
     env (Dict[str, str]|None): Additional envvars to set while building the
       wheel.
   """
@@ -458,6 +461,20 @@ def BuildPackageFromSource(system,
       extra_env.update(env)
 
     with util.tempdir(build_dir, 'deps') as tdeps:
+      if tpp_libs:
+        cflags = extra_env.get('CFLAGS', '')
+        ldflags = extra_env.get('LDFLAGS', '')
+        for pkg, version in tpp_libs:
+          pkg_name = '%s/%s' % (pkg, wheel.plat.cipd_platform)
+          pkg_dir = os.path.join(build_dir, pkg_name + '_cipd')
+          system.cipd.init(pkg_dir)
+          system.cipd.install(pkg_name, version, pkg_dir)
+          cflags += ' -I' + os.path.join(pkg_dir, 'include')
+          ldflags += ' -L' + os.path.join(pkg_dir, 'lib')
+
+        extra_env['CFLAGS'] = cflags.lstrip()
+        extra_env['LDFLAGS'] = ldflags.lstrip()
+
       if deps:
         util.copy_to(util.resource_path('generate_pyproject.py'), build_dir)
         cmd = PrepareBuildDependenciesCmd(system, wheel, build_dir, tdeps, deps)

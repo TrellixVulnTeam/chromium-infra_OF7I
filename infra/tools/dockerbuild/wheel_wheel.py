@@ -22,6 +22,7 @@ class SourceOrPrebuilt(Builder):
                patch_base=None,
                patch_version=None,
                build_deps=None,
+               tpp_libs=None,
                src_filter=None,
                **kwargs):
     """General-purpose wheel builder.
@@ -44,6 +45,8 @@ class SourceOrPrebuilt(Builder):
           for version 1.2.3 of the wheel would be 'version:1.2.3.chromium.1'.
       build_deps (dockerbuild.builder.BuildDependencies|None): Dependencies
           required to build the wheel.
+      tpp_libs (List[(str, str)]|None): 3pp static libraries to install in the
+          build environment. The list items are (package name, version).
       src_filter (Callable[[str], bool]): Filtering files from the source. This
           is a workaround for python < 3.6 on Windows to prevent failure caused
           by 260 path length limit.
@@ -60,6 +63,7 @@ class SourceOrPrebuilt(Builder):
     self._packaged = set(
         kwargs.pop('packaged', (p.name for p in build_platform.PACKAGED)))
     self._build_deps = build_deps
+    self._tpp_libs = tpp_libs
     self._src_filter = src_filter
     self._env = kwargs.pop('env', None)
     version_suffix = '.' + patch_version if patch_version else None
@@ -77,7 +81,8 @@ class SourceOrPrebuilt(Builder):
     if wheel.plat.name in self._packaged:
       return BuildPackageFromPyPiWheel(system, wheel)
     return BuildPackageFromSource(system, wheel, self._pypi_src,
-                                  self._src_filter, self._build_deps, self._env)
+                                  self._src_filter, self._build_deps,
+                                  self._tpp_libs, self._env)
 
 
 class MultiWheel(Builder):

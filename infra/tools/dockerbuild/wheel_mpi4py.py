@@ -37,6 +37,7 @@ class Mpi4py(SourceOrPrebuilt):
     with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
       build_dir = system.repo.ensure(self._pypi_src, tdir)
 
+      # TODO: Refactor this to use BuildPackageFromSource with tpp_libs.
       mpich_pkg = ('infra/3pp/static_libs/mpich/%s' % wheel.plat.cipd_platform)
       pkg_dir = os.path.join(build_dir, mpich_pkg + '_cipd')
       system.cipd.init(pkg_dir)

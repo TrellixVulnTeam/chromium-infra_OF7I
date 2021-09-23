@@ -166,6 +166,18 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'aioquic',
+            '0.9.15',
+            # TODO(crbug/1252073): We don't yet build OpenSSL for Windows.
+            packaged=[
+                'windows-x86', 'windows-x86-py3', 'windows-x64',
+                'windows-x64-py3'
+            ],
+            pyversions=['py3'],
+            tpp_libs=[('infra/3pp/static_libs/openssl',
+                       'version:2@1.1.1j.chromium.1')],
+        ),
+        SourceOrPrebuilt(
             'bcrypt',
             '3.1.4',
             packaged=[
