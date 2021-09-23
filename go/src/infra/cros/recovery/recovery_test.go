@@ -162,10 +162,7 @@ func TestRunDUTPlan(t *testing.T) {
 			config.Plans = map[string]*planpb.Plan{
 				"something": nil,
 			}
-			newCtx, err := runDUTPlans(ctx, dut, config, args)
-			if newCtx == nil {
-				t.Errorf("Fail to receive new context")
-			}
+			err := runDUTPlans(ctx, dut, config, args)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -191,10 +188,7 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			newCtx, err := runDUTPlans(ctx, dut, config, args)
-			if newCtx == nil {
-				t.Errorf("Fail to receive new context")
-			}
+			err := runDUTPlans(ctx, dut, config, args)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -212,10 +206,7 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
-			if newCtx == nil {
-				t.Errorf("Fail to receive new context")
-			}
+			err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -250,10 +241,8 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			if newCtx, err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
+			if err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
-			} else if newCtx == nil {
-				t.Errorf("Fail to receive new context")
 			}
 		})
 		Convey("Run all good plans", func() {
@@ -277,10 +266,8 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			if newCtx, err := runDUTPlans(ctx, dut, config, args); err != nil {
+			if err := runDUTPlans(ctx, dut, config, args); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
-			} else if newCtx == nil {
-				t.Errorf("Fail to receive new context")
 			}
 		})
 		Convey("Run all plans even one allow to fail", func() {
@@ -305,10 +292,8 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			if newCtx, err := runDUTPlans(ctx, dut, config, args); err != nil {
+			if err := runDUTPlans(ctx, dut, config, args); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
-			} else if newCtx == nil {
-				t.Errorf("Fail to receive new context")
 			}
 		})
 	})

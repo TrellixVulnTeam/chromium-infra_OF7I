@@ -261,10 +261,7 @@ func TestRunRecovery(t *testing.T) {
 				},
 			}
 			r.initCache()
-			newCtx, err := r.runRecoveries(ctx, "a")
-			if newCtx == nil {
-				t.Errorf("Case %q fail to receive new context", c.name)
-			}
+			err := r.runRecoveries(ctx, "a")
 			if c.expStartOver {
 				if !startOverTag.In(err) {
 					t.Errorf("Case %q expected to get request to start over. Received: %s", c.name, err)
@@ -355,10 +352,7 @@ func TestActionExec(t *testing.T) {
 				},
 			}
 			r.initCache()
-			newCtx, err := r.runActionExec(ctx, "a", c.enableRecovery)
-			if newCtx == nil {
-				t.Errorf("Case %q fail to receive new context", c.name)
-			}
+			err := r.runActionExec(ctx, "a", c.enableRecovery)
 			if c.expError && c.expStartOver {
 				if !startOverTag.In(err) {
 					t.Errorf("Case %q expected to get request to start over. Received error: %s", c.name, err)

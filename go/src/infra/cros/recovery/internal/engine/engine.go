@@ -58,9 +58,7 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (context.Context, error) {
 	newCtx := ctx
 	log.Info(newCtx, "Plan %q: started", r.planName)
 	for {
-		var err error
-		newCtx, err = r.runActions(newCtx, r.plan.GetCriticalActions(), r.args.EnableRecovery)
-		if err != nil {
+		if err := r.runActions(newCtx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
 				log.Info(newCtx, "Plan %q: received request to start over.", r.planName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
@@ -80,16 +78,13 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (context.Context, error) {
 }
 
 // runActions runs actions in order.
-func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enableRecovery bool) (context.Context, error) {
-	newCtx := ctx
+func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enableRecovery bool) error {
 	for _, actionName := range actions {
-		var err error
-		newCtx, err = r.runAction(newCtx, actionName, enableRecovery)
-		if err != nil {
-			return newCtx, errors.Annotate(err, "run actions").Err()
+		if err := r.runAction(ctx, actionName, enableRecovery); err != nil {
+			return errors.Annotate(err, "run actions").Err()
 		}
 	}
-	return newCtx, nil
+	return nil
 }
 
 // runAction runs single action.
@@ -98,8 +93,8 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 2) Check if the action is applicable based on conditions. Skip if any fail.
 // 3) Run dependencies of the action. Fail if any fails.
 // 4) Run action exec function. Fail if any fail.
-func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (newCtx context.Context, err error) {
-	newCtx = ctx
+func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
+	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
 			var step logger.Step
@@ -116,69 +111,65 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		if err == nil {
 			log.Info(newCtx, "Action %q: pass (cached).", actionName)
 			// Return nil error so we can continue execution of next actions...
-			return newCtx, nil
+			return nil
 		}
 		a := r.getAction(actionName)
 		if a.GetAllowFailAfterRecovery() {
 			log.Info(newCtx, "Action %q: fail (cached). Error: %s", actionName, err)
 			log.Debug(newCtx, "Action %q: error ignored as action is allowed to fail.", actionName)
 			// Return nil error so we can continue execution of next actions...
-			return newCtx, nil
+			return nil
 		}
-		return newCtx, errors.Annotate(err, "run action %q: (cached)", actionName).Err()
+		return errors.Annotate(err, "run action %q: (cached)", actionName).Err()
 	}
-	newCtx, conditionName, err := r.runActionConditions(newCtx, actionName)
+	conditionName, err := r.runActionConditions(newCtx, actionName)
 	if err != nil {
 		log.Info(newCtx, "Action %q: one of conditions %q failed, skipping...", actionName, conditionName)
 		log.Debug(newCtx, "Action %q: conditions fail with %s", actionName, err)
 		// Return nil error so we can continue execution of next actions...
-		return newCtx, nil
+		return nil
 	}
-	newCtx, err = r.runDependencies(newCtx, actionName, enableRecovery)
-	if err != nil {
-		return newCtx, errors.Annotate(err, "run action %q", actionName).Err()
+	if err := r.runDependencies(newCtx, actionName, enableRecovery); err != nil {
+		return errors.Annotate(err, "run action %q", actionName).Err()
 	}
-	newCtx, err = r.runActionExec(newCtx, actionName, enableRecovery)
-	if err != nil {
+	if err := r.runActionExec(newCtx, actionName, enableRecovery); err != nil {
 		if startOverTag.In(err) {
-			return newCtx, errors.Annotate(err, "run action %q", actionName).Err()
+			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
 		a := r.getAction(actionName)
 		if a.GetAllowFailAfterRecovery() {
 			log.Info(newCtx, "Action %q: fail. Error: %s", actionName, err)
 			log.Debug(newCtx, "Action %q: error ignored as action is allowed to fail.", actionName)
 		} else {
-			return newCtx, errors.Annotate(err, "run action %q", actionName).Err()
+			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
 	} else {
 		log.Info(newCtx, "Action %q: finished successfully.", actionName)
 	}
 	// Return nil error so we can continue execution of next actions...
-	return newCtx, nil
+	return nil
 }
 
 // runActionExec runs action's exec function and initiates recovery flow if exec fails.
 // The recover flow start only recoveries is enabled.
-func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, enableRecovery bool) (context.Context, error) {
+func (r *recoveryEngine) runActionExec(ctx context.Context, actionName string, enableRecovery bool) error {
 	a := r.getAction(actionName)
 	if err := r.runActionExecWithTimeout(ctx, a); err != nil {
 		if enableRecovery && len(a.GetRecoveryActions()) > 0 {
 			log.Info(ctx, "Action %q: starting recovery actions.", actionName)
 			log.Debug(ctx, "Action %q: fail. Error: %s", actionName, err)
-			var rErr error
-			ctx, rErr = r.runRecoveries(ctx, actionName)
-			if rErr != nil {
-				return ctx, errors.Annotate(rErr, "run action %q exec", actionName).Err()
+			if rErr := r.runRecoveries(ctx, actionName); rErr != nil {
+				return errors.Annotate(rErr, "run action %q exec", actionName).Err()
 			}
 			log.Info(ctx, "Run action %q exec: no recoveries left to try", actionName)
 		}
 		// Cache the action error only after running recoveries.
 		// If no recoveries were run, we still cache the action.
 		r.cacheActionResult(actionName, err)
-		return ctx, errors.Annotate(err, "run action %q exec", actionName).Err()
+		return errors.Annotate(err, "run action %q exec", actionName).Err()
 	}
 	r.cacheActionResult(actionName, nil)
-	return ctx, nil
+	return nil
 }
 
 // Default time limit per action exec function.
@@ -212,42 +203,42 @@ func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb
 
 // runActionConditions checks if action is applicable based on condition actions.
 // If return err then not applicable, if nil then applicable.
-func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName string) (newCtx context.Context, conditionName string, err error) {
+func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName string) (conditionName string, err error) {
 	a := r.getAction(actionName)
 	if len(a.GetConditions()) == 0 {
-		return ctx, "", nil
+		return "", nil
 	}
+	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
 			var step logger.Step
-			step, ctx = r.args.StepHandler.StartStep(ctx, fmt.Sprintf("Run %s continions", actionName))
-			defer step.Close(ctx, err)
+			step, newCtx = r.args.StepHandler.StartStep(newCtx, fmt.Sprintf("Run %s continions", actionName))
+			defer step.Close(newCtx, err)
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
 			defer r.args.Logger.DedentLogging()
 		}
 	}
-	log.Debug(ctx, "Action %q: running conditions...", actionName)
+	log.Debug(newCtx, "Action %q: running conditions...", actionName)
 	enableRecovery := false
 	for _, condition := range a.GetConditions() {
-		ctx, err = r.runAction(ctx, condition, enableRecovery)
-		if err != nil {
-			log.Debug(ctx, "Action %q: condition %q fails. Error: %s", actionName, condition, err)
-			return ctx, condition, errors.Annotate(err, "run conditions").Err()
+		if err := r.runAction(newCtx, condition, enableRecovery); err != nil {
+			log.Debug(newCtx, "Action %q: condition %q fails. Error: %s", actionName, condition, err)
+			return condition, errors.Annotate(err, "run conditions").Err()
 		}
 	}
-	log.Debug(ctx, "Action %q: all conditions passed.", actionName)
-	return ctx, "", nil
+	log.Debug(newCtx, "Action %q: all conditions passed.", actionName)
+	return "", nil
 }
 
 // runDependencies runs action's dependencies.
-func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) (newCtx context.Context, err error) {
+func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) (err error) {
 	a := r.getAction(actionName)
 	if len(a.GetDependencies()) == 0 {
-		return ctx, nil
+		return nil
 	}
-	newCtx = ctx
+	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
 			var step logger.Step
@@ -259,8 +250,8 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 			defer r.args.Logger.DedentLogging()
 		}
 	}
-	newCtx, err = r.runActions(newCtx, a.GetDependencies(), enableRecovery)
-	return newCtx, errors.Annotate(err, "run dependencies").Err()
+	err = r.runActions(newCtx, a.GetDependencies(), enableRecovery)
+	return errors.Annotate(err, "run dependencies").Err()
 }
 
 // runRecoveries runs action's recoveries.
@@ -268,12 +259,12 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 // Finishes with nil if no recovery action provided or nether succeeded.
 // Finishes with start-over request if any recovery succeeded.
 // Recovery action will skip if used before.
-func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (newCtx context.Context, err error) {
+func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (err error) {
 	a := r.getAction(actionName)
 	if len(a.GetRecoveryActions()) == 0 {
-		return ctx, nil
+		return nil
 	}
-	newCtx = ctx
+	newCtx := ctx
 	if r.args != nil {
 		if r.args.StepHandler != nil {
 			var step logger.Step
@@ -290,17 +281,16 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 			// Engine allows to use each recovery action only once in scope of the action.
 			continue
 		}
-		newCtx, err = r.runActions(newCtx, []string{recoveryName}, false)
-		if err != nil {
+		if err := r.runActions(newCtx, []string{recoveryName}, false); err != nil {
 			log.Debug(newCtx, "Recovery action %q: fail. Error: %s ", recoveryName, err)
 			r.registerRecoveryUsage(actionName, recoveryName, err)
 			continue
 		}
 		r.registerRecoveryUsage(actionName, recoveryName, nil)
 		log.Info(newCtx, "Recovery action %q: request to start-over.", recoveryName)
-		return newCtx, errors.Reason("recovery action %q: request to start over", recoveryName).Tag(startOverTag).Err()
+		return errors.Reason("recovery action %q: request to start over", recoveryName).Tag(startOverTag).Err()
 	}
-	return newCtx, nil
+	return nil
 }
 
 // getAction finds and provides action from the plan collection.
