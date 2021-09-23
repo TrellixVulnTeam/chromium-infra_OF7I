@@ -12,6 +12,18 @@
       "[CACHE]/infra_internal_gclient_with_go"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure builder dir"
   },
   {
@@ -49,6 +61,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -107,6 +131,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -117,6 +153,18 @@
       "test"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "infra python tests"
   },
   {
@@ -127,6 +175,18 @@
       "test"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ccompute config test"
   },
   {
@@ -143,6 +203,18 @@
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "init infra go env",
     "~followup_annotations": [
       "@@@STEP_TEXT@Using go 1.66.6@@@",
@@ -191,6 +263,18 @@
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "infra go tests"
   },
   {
@@ -219,6 +303,18 @@
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cipd - build packages"
   },
   {
@@ -243,6 +339,18 @@
       "PATH": [
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "cipd - test packages integrity"
   },
@@ -273,6 +381,18 @@
       "PATH": [
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "[GOOS:linux GOARCH:arm]cipd - build packages"
   },

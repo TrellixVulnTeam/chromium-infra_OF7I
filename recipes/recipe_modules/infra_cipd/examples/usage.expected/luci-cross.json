@@ -12,6 +12,18 @@
       "GOARCH": "arm64",
       "GOOS": "linux"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "[GOOS:linux GOARCH:arm64]cipd - build packages"
   },
   {
@@ -23,6 +35,18 @@
     "env": {
       "GOARCH": "arm64",
       "GOOS": "linux"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "[GOOS:linux GOARCH:arm64]cipd - test packages integrity"
   },
@@ -45,6 +69,18 @@
     "env": {
       "GOARCH": "arm64",
       "GOOS": "linux"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "[GOOS:linux GOARCH:arm64]cipd - upload packages",
     "~followup_annotations": [

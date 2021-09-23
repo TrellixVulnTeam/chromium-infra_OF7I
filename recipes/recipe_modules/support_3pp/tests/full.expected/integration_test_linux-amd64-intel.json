@@ -13,6 +13,18 @@
       "infra/tools/dockerbuild"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "compute recipe file hash",
     "~followup_annotations": [
       "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
@@ -25,6 +37,18 @@
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "echo package_prefix"
   },
@@ -43,6 +67,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "find package specs",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/package_repo/dir_build_tools/git_tool/3pp.pb@@@",
@@ -82,6 +118,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_build_tools/git_tool/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -178,6 +226,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'build_tools/git_tool'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -199,6 +259,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_build_tools/tool/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -295,6 +367,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'build_tools/tool'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -316,6 +400,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_deps/bottom_dep_git/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -347,6 +443,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'deps/bottom_dep_git'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -368,6 +476,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_deps/bottom_dep_url/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -399,6 +519,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'deps/bottom_dep_url'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -420,6 +552,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_deps/deep_dep/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -454,6 +598,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'deps/deep_dep'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -475,6 +631,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_deps/dep/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -510,6 +678,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'deps/dep'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -531,6 +711,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_fetch/fetch_and_package/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -559,6 +751,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/fetch_and_package'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -580,6 +784,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/already_uploaded/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -611,6 +827,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/already_uploaded'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -632,6 +860,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/pkg/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -663,6 +903,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/pkg'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -684,6 +936,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/pkg_checkout/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -718,6 +982,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/pkg_checkout'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -739,6 +1015,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/pkg_override_and_no_latest/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -774,6 +1062,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/pkg_override_and_no_latest'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -795,6 +1095,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/posix_tool/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -831,6 +1143,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/posix_tool'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -852,6 +1176,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'dir_tools/windows_experiment/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -895,6 +1231,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'tools/windows_experiment'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -916,6 +1264,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'unsupported/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -940,6 +1300,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'unsupported'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -961,6 +1333,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.read 'unsupported_no_method/3pp.pb'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -985,6 +1369,18 @@
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "load package specs.Compute hash for 'unsupported_no_method'",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -1012,6 +1408,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.git ls-remote",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -1035,6 +1443,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.cipd describe 3pp/deps/bottom_dep_git/linux-amd64",
     "~followup_annotations": [
@@ -1069,6 +1489,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -1099,6 +1531,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.fetch sources.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
@@ -1132,6 +1576,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1155,6 +1611,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.fetch sources.cipd describe 3pp/sources/git/go.repo/dep (2)",
     "~followup_annotations": [
@@ -1186,6 +1654,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1211,6 +1691,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.git fetch",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1234,6 +1726,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1256,6 +1760,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -1281,6 +1797,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.git clean",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1303,6 +1831,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.submodule sync",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1327,6 +1867,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.submodule update",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1353,6 +1905,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.fetch sources.build 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
@@ -1388,6 +1952,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1414,6 +1990,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1444,6 +2032,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
@@ -1479,6 +2079,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -1513,6 +2125,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1547,6 +2171,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1613,6 +2249,18 @@
         "[START_DIR]/3pp/wd/deps/bottom_dep_git/linux-amd64/1.5.0-rc1/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.run installation.install.sh [START_DIR]/3pp/wd/deps/bottom_dep_git/linux-amd64/1.5.0-rc1/out [START_DIR]/3pp/wd/deps/bottom_dep_git/linux-amd64/1.5.0-rc1/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1639,6 +2287,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.build 3pp/deps/bottom_dep_git/linux-amd64",
     "~followup_annotations": [
@@ -1674,6 +2334,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -1700,6 +2372,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -1732,6 +2416,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -1759,6 +2455,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -1787,6 +2495,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.attach provenance.ensure_installed",
     "~followup_annotations": [
@@ -1823,6 +2543,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.attach provenance.generate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -1854,6 +2586,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_git.do upload.cipd describe 3pp/deps/bottom_dep_git/linux-amd64",
     "~followup_annotations": [
@@ -1893,6 +2637,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_git.do upload.register 3pp/deps/bottom_dep_git/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -1928,6 +2684,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.cipd describe 3pp/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -1961,6 +2729,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -1995,6 +2775,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2018,6 +2810,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.fetch sources.cipd describe 3pp/sources/url/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2051,6 +2855,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.fetch sources.GET https://some.internet.example.com",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2077,6 +2893,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.fetch sources.build 3pp/sources/url/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2112,6 +2940,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2138,6 +2978,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2168,6 +3020,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2200,6 +3064,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.fetch sources.upload source to cipd.register 3pp/sources/url/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2235,6 +3111,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2269,6 +3157,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2335,6 +3235,18 @@
         "[START_DIR]/3pp/wd/deps/bottom_dep_url/linux-amd64/1.2.3/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.run installation.install.sh [START_DIR]/3pp/wd/deps/bottom_dep_url/linux-amd64/1.2.3/out [START_DIR]/3pp/wd/deps/bottom_dep_url/linux-amd64/1.2.3/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2361,6 +3273,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.build 3pp/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2396,6 +3320,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -2422,6 +3358,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -2454,6 +3402,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -2481,6 +3441,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -2506,6 +3478,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.attach provenance.generate",
     "~followup_annotations": [
@@ -2538,6 +3522,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/bottom_dep_url.do upload.cipd describe 3pp/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
@@ -2577,6 +3573,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/bottom_dep_url.do upload.register 3pp/deps/bottom_dep_url/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -2612,6 +3620,18 @@
       "_3PP_PATCH_VERSION": "cr0",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/deep_dep.cipd describe source/deep_dep",
     "~followup_annotations": [
@@ -2663,6 +3683,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.cipd describe 3pp/deps/deep_dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -2697,6 +3729,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -2732,6 +3776,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2758,6 +3814,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/deep_dep.fetch sources.cipd pkg-fetch source/deep_dep",
     "~followup_annotations": [
@@ -2795,6 +3863,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.fetch sources.ensure cipd package cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2822,6 +3902,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.fetch sources.move fetched cipd package to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -2846,6 +3938,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/deep_dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/deep_dep/resolved-instance_id-of-version:1.2.3---",
     "~followup_annotations": [
@@ -2882,6 +3986,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.build 3pp/deps/deep_dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -2917,6 +4033,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -2944,6 +4072,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -2977,6 +4117,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3005,6 +4157,18 @@
       "_3PP_VERSION": "1.2.3"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3031,6 +4195,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/deep_dep.attach provenance.generate",
     "~followup_annotations": [
@@ -3064,6 +4240,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/deep_dep.do upload.cipd describe 3pp/deps/deep_dep/linux-amd64",
     "~followup_annotations": [
@@ -3104,6 +4292,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.3"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/deep_dep.do upload.register 3pp/deps/deep_dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3138,6 +4338,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "tools/already_uploaded",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/already_uploaded.cipd describe 3pp/tools/already_uploaded/linux-amd64",
     "~followup_annotations": [
@@ -3190,6 +4402,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.fetch.py latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -3213,6 +4437,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "tools/fetch_and_package",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.cipd describe 3pp/tools/fetch_and_package",
     "~followup_annotations": [
@@ -3247,6 +4483,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -3281,6 +4529,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3304,6 +4564,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.fetch sources.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
@@ -3331,6 +4603,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.fetch sources.fetch.py get_url",
     "~followup_annotations": [
@@ -3368,6 +4652,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.fetch sources.GET https://some.internet.example.com/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3394,6 +4690,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.fetch sources.build 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
@@ -3429,6 +4737,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3455,6 +4775,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3485,6 +4817,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
@@ -3517,6 +4861,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.fetch sources.upload source to cipd.register 3pp/sources/script/tools/fetch_and_package/linux-amd64",
     "~followup_annotations": [
@@ -3553,6 +4909,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.build 3pp/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -3587,6 +4955,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -3613,6 +4993,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -3645,6 +5037,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3672,6 +5076,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3697,6 +5113,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.attach provenance.generate",
     "~followup_annotations": [
@@ -3729,6 +5157,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/fetch_and_package.do upload.cipd describe 3pp/tools/fetch_and_package",
     "~followup_annotations": [
@@ -3768,6 +5208,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/fetch_and_package.do upload.register 3pp/tools/fetch_and_package",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -3803,6 +5255,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.cipd describe 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -3836,6 +5300,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -3870,6 +5346,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3893,6 +5381,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.cipd describe 3pp/sources/url/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -3926,6 +5426,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.GET https://some.internet.example.com",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -3952,6 +5464,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.build 3pp/sources/url/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -3987,6 +5511,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4013,6 +5549,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4043,6 +5591,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.upload source to cipd.cipd describe 3pp/sources/url/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -4075,6 +5635,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.upload source to cipd.register 3pp/sources/url/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -4110,6 +5682,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.fetch sources.copy package definition tools/pkg_override_and_no_latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4144,6 +5728,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4210,6 +5806,18 @@
         "[START_DIR]/3pp/wd/tools/pkg_override_and_no_latest/linux-amd64/1.1.2/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.run installation.install.sh [START_DIR]/3pp/wd/tools/pkg_override_and_no_latest/linux-amd64/1.1.2/out [START_DIR]/3pp/wd/tools/pkg_override_and_no_latest/linux-amd64/1.1.2/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4236,6 +5844,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.build 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -4271,6 +5891,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -4297,6 +5929,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -4329,6 +5973,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -4356,6 +6012,18 @@
       "_3PP_VERSION": "1.1.2"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -4381,6 +6049,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.attach provenance.generate",
     "~followup_annotations": [
@@ -4413,6 +6093,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_override_and_no_latest.do upload.cipd describe 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -4450,6 +6142,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.1.2"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_override_and_no_latest.do upload.register 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -4485,6 +6189,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.cipd describe 3pp/tools/posix_tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -4518,6 +6234,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -4552,6 +6280,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4577,6 +6317,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.fetch sources.cipd pkg-fetch source/posix_tool",
     "~followup_annotations": [
@@ -4613,6 +6365,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.ensure cipd package cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4639,6 +6403,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.move fetched cipd package to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4662,6 +6438,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/posix_tool/resolved-instance_id-of-version:1.2.0---",
     "~followup_annotations": [
@@ -4703,6 +6491,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.unpack_archive.find archive to unpack",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -4732,6 +6532,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.unpack_archive.cp 'archive.tgz' [tmpdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@"
@@ -4757,6 +6569,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.unpack_archive.rm -rf [checkout_dir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@"
@@ -4780,6 +6604,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.fetch sources.unpack_archive.extracting [tmpdir]/archive.tgz",
     "~followup_annotations": [
@@ -4814,6 +6650,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.unpack_archive.prune archive subdirs",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@"
@@ -4840,6 +6688,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.fetch sources.copy package definition tools/posix_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4874,6 +6734,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4940,6 +6812,18 @@
         "[START_DIR]/3pp/wd/tools/posix_tool/linux-amd64/1.2.0/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.run installation.install.sh [START_DIR]/3pp/wd/tools/posix_tool/linux-amd64/1.2.0/out [START_DIR]/3pp/wd/tools/posix_tool/linux-amd64/1.2.0/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -4966,6 +6850,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.build 3pp/tools/posix_tool/linux-amd64",
     "~followup_annotations": [
@@ -5001,6 +6897,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -5027,6 +6935,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -5059,6 +6979,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5086,6 +7018,18 @@
       "_3PP_VERSION": "1.2.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5111,6 +7055,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.attach provenance.generate",
     "~followup_annotations": [
@@ -5143,6 +7099,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/posix_tool.do upload.cipd describe 3pp/tools/posix_tool/linux-amd64",
     "~followup_annotations": [
@@ -5182,6 +7150,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.2.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/posix_tool.do upload.register 3pp/tools/posix_tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5214,6 +7194,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch.py latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -5237,6 +7229,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.cipd describe 3pp/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5271,6 +7275,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -5305,6 +7321,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5328,6 +7356,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.fetch sources.cipd describe 3pp/sources/script/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5355,6 +7395,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.fetch sources.fetch.py get_url",
     "~followup_annotations": [
@@ -5392,6 +7444,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch sources.GET https://some.internet.example.com/tools/windows_experiment",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5418,6 +7482,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.fetch sources.build 3pp/sources/script/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5453,6 +7529,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5479,6 +7567,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5509,6 +7609,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5541,6 +7653,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.fetch sources.upload source to cipd.register 3pp/sources/script/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5576,6 +7700,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.fetch sources.copy package definition tools/windows_experiment",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5610,6 +7746,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5676,6 +7824,18 @@
         "[START_DIR]/3pp/wd/tools/windows_experiment/linux-amd64/2.0.0/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.run installation.install.sh [START_DIR]/3pp/wd/tools/windows_experiment/linux-amd64/2.0.0/out [START_DIR]/3pp/wd/tools/windows_experiment/linux-amd64/2.0.0/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -5702,6 +7862,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.build 3pp/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5737,6 +7909,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -5763,6 +7947,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -5795,6 +7991,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5822,6 +8030,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5847,6 +8067,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.attach provenance.generate",
     "~followup_annotations": [
@@ -5879,6 +8111,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/windows_experiment.do upload.cipd describe 3pp/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
@@ -5918,6 +8162,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/windows_experiment.do upload.register 3pp/tools/windows_experiment/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -5953,6 +8209,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.git ls-remote",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -5977,6 +8245,18 @@
       "_3PP_PATCH_VERSION": "chops.1",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.cipd describe 3pp/build_tools/git_tool/linux-amd64",
     "~followup_annotations": [
@@ -6012,6 +8292,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -6051,6 +8343,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/bottom_dep_url/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -6083,6 +8387,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/bottom_dep_git/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -6114,6 +8430,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.fetch sources.cipd describe 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
@@ -6148,6 +8476,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.mkdir -p [workdir]/checkout/src/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6172,6 +8512,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.fetch sources.cipd describe 3pp/sources/git/go.repo/git_tool (2)",
     "~followup_annotations": [
@@ -6204,6 +8556,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6230,6 +8594,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.git fetch",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6254,6 +8630,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6277,6 +8665,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -6303,6 +8703,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.git clean",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6326,6 +8738,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.submodule sync",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6351,6 +8775,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.submodule update",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6378,6 +8814,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.fetch sources.build 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
@@ -6414,6 +8862,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6441,6 +8901,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6472,6 +8944,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
@@ -6508,6 +8992,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/git_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -6543,6 +9039,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.find patches in patches",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -6567,6 +9075,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.git apply",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6594,6 +9114,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6621,6 +9153,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6648,6 +9192,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.fetch sources.copy package definition build_tools/git_tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6683,6 +9239,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6753,6 +9321,18 @@
         "[START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run installation.install_bootstrap.sh [START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/out [START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6780,6 +9360,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.build 3pp/build_tools/git_tool/linux-amd64",
     "~followup_annotations": [
@@ -6816,6 +9408,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -6843,6 +9447,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -6878,6 +9494,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run test.mkdir [verify]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6905,6 +9533,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run test.cp cipd.pkg [verify]/cipd.pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6933,6 +9573,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run test.mkdir [bin_tools]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -6960,6 +9612,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.run test.ensure_installed",
     "~followup_annotations": [
@@ -7042,6 +9706,18 @@
         "[START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/bin_tools"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.run test.test.py linux [START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/verify/cipd.pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7075,6 +9751,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -7103,6 +9791,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -7129,6 +9829,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.attach provenance.generate",
     "~followup_annotations": [
@@ -7162,6 +9874,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/git_tool.do upload.cipd describe 3pp/build_tools/git_tool/linux-amd64",
     "~followup_annotations": [
@@ -7202,6 +9926,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/git_tool.do upload.register 3pp/build_tools/git_tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -7238,6 +9974,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -7272,6 +10020,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -7311,6 +10071,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/bottom_dep_url/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -7342,6 +10114,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/bottom_dep_git/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -7378,6 +10162,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.mkdir -p [workdir]/checkout/src/go.repo/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7402,6 +10198,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.fetch sources.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
@@ -7434,6 +10242,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7460,6 +10280,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.git fetch",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7484,6 +10316,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7507,6 +10351,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -7533,6 +10389,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.git clean",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7556,6 +10424,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.submodule sync",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7581,6 +10461,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.submodule update",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7608,6 +10500,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.fetch sources.build 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
@@ -7644,6 +10548,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7671,6 +10587,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7702,6 +10630,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
@@ -7735,6 +10675,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.fetch sources.upload source to cipd.register 3pp/sources/git/go.repo/tool",
     "~followup_annotations": [
@@ -7771,6 +10723,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.find patches in patches",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -7795,6 +10759,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.git apply",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7822,6 +10798,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7849,6 +10837,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7876,6 +10876,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.fetch sources.copy package definition build_tools/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7911,6 +10923,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -7981,6 +11005,18 @@
         "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run installation.install_bootstrap.sh [START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/out [START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8008,6 +11044,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.build 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
@@ -8044,6 +11092,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -8071,6 +11131,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -8106,6 +11178,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run test.mkdir [verify]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8133,6 +11217,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run test.cp cipd.pkg [verify]/cipd.pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8161,6 +11257,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run test.mkdir [bin_tools]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8188,6 +11296,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.run test.ensure_installed",
     "~followup_annotations": [
@@ -8270,6 +11390,18 @@
         "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/bin_tools"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.run test.test.py linux [START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/verify/cipd.pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8303,6 +11435,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -8331,6 +11475,18 @@
       "_3PP_VERSION": "1.5.0-rc1"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -8357,6 +11513,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.attach provenance.generate",
     "~followup_annotations": [
@@ -8390,6 +11558,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building build_tools/tool.do upload.cipd describe 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
@@ -8428,6 +11608,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool.do upload.register 3pp/build_tools/tool/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -8463,6 +11655,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building build_tools/tool (2).git ls-remote",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -8490,6 +11694,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.cipd describe 3pp/deps/dep/linux-amd64",
     "~followup_annotations": [
@@ -8524,6 +11740,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -8561,6 +11789,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -8600,6 +11840,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -8634,6 +11886,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8659,6 +11923,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.fetch sources.cipd pkg-fetch source/dep",
     "~followup_annotations": [
@@ -8695,6 +11971,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.ensure cipd package cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8721,6 +12009,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.move fetched cipd package to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8744,6 +12044,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.fetch sources.cipd pkg-deploy [CACHE]/3pp_cipd/source/dep/resolved-instance_id-of-version:1.0.0---",
     "~followup_annotations": [
@@ -8778,6 +12090,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8804,6 +12128,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8830,6 +12166,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.copy package definition deps/deep_dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8856,6 +12204,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.copy package definition build_tools/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8882,6 +12242,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.fetch sources.copy package definition deps/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8916,6 +12288,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -8982,6 +12366,18 @@
         "[START_DIR]/3pp/wd/deps/dep/linux-amd64/1.0.0/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.run installation.install.sh [START_DIR]/3pp/wd/deps/dep/linux-amd64/1.0.0/out [START_DIR]/3pp/wd/deps/dep/linux-amd64/1.0.0/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9008,6 +12404,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.build 3pp/deps/dep/linux-amd64",
     "~followup_annotations": [
@@ -9043,6 +12451,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -9069,6 +12489,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -9101,6 +12533,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -9128,6 +12572,18 @@
       "_3PP_VERSION": "1.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -9153,6 +12609,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.attach provenance.generate",
     "~followup_annotations": [
@@ -9185,6 +12653,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building deps/dep.do upload.cipd describe 3pp/deps/dep/linux-amd64",
     "~followup_annotations": [
@@ -9224,6 +12704,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building deps/dep.do upload.register 3pp/deps/dep/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -9256,6 +12748,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch.py latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -9279,6 +12783,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.cipd describe 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -9313,6 +12829,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -9350,6 +12878,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -9389,6 +12929,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -9419,6 +12971,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -9454,6 +13018,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9477,6 +13053,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.cipd describe 3pp/sources/script/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -9504,6 +13092,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.fetch.py get_url",
     "~followup_annotations": [
@@ -9541,6 +13141,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.GET https://some.internet.example.com/tools/pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9567,6 +13179,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.build 3pp/sources/script/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -9602,6 +13226,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9628,6 +13264,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9658,6 +13306,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -9690,6 +13350,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.fetch sources.upload source to cipd.register 3pp/sources/script/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -9725,6 +13397,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9751,6 +13435,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9777,6 +13473,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition deps/deep_dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9803,6 +13511,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition build_tools/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9829,6 +13549,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition deps/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9855,6 +13587,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.fetch sources.copy package definition tools/pkg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9889,6 +13633,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9955,6 +13711,18 @@
         "[START_DIR]/3pp/wd/tools/pkg/linux-amd64/2.0.0/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.run installation.install.sh [START_DIR]/3pp/wd/tools/pkg/linux-amd64/2.0.0/out [START_DIR]/3pp/wd/tools/pkg/linux-amd64/2.0.0/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -9981,6 +13749,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.build 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -10016,6 +13796,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -10042,6 +13834,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -10074,6 +13878,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -10101,6 +13917,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -10126,6 +13954,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.attach provenance.generate",
     "~followup_annotations": [
@@ -10158,6 +13998,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg.do upload.cipd describe 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
@@ -10197,6 +14049,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg.do upload.register 3pp/tools/pkg/linux-amd64",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -10229,6 +14093,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch.py latest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -10252,6 +14128,18 @@
       "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.cipd describe 3pp/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10286,6 +14174,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.mkdir -p [workdir]",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -10323,6 +14223,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/build_tools/tool/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -10362,6 +14274,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/deep_dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
@@ -10392,6 +14316,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.installing deps.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/deps/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
@@ -10427,6 +14363,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.mkdir -p [workdir]/checkout/",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10450,6 +14398,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.cipd describe 3pp/sources/script/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10479,6 +14439,18 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.fetch.py checkout [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10505,6 +14477,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.build 3pp/sources/script/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10540,6 +14524,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10566,6 +14562,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10596,6 +14604,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.upload source to cipd.cipd describe 3pp/sources/script/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10628,6 +14648,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.fetch sources.upload source to cipd.register 3pp/sources/script/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10663,6 +14695,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/bottom_dep_git",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10689,6 +14733,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/bottom_dep_url",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10715,6 +14771,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/deep_dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10741,6 +14809,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition build_tools/tool",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10767,6 +14847,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition deps/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10793,6 +14885,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.fetch sources.copy package definition tools/pkg_checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10827,6 +14931,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.run installation.make output dir",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10893,6 +15009,18 @@
         "[START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/tools_prefix/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.run installation.install.sh [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/out [START_DIR]/3pp/wd/tools/pkg_checkout/linux-amd64/2.0.0/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -10919,6 +15047,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.build 3pp/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -10954,6 +15094,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.ensure cipd pkg cache exists",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -10980,6 +15132,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.mv built cipd pkg to cache",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -11012,6 +15176,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.attach provenance.Compute file hash",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -11039,6 +15215,18 @@
       "_3PP_VERSION": "2.0.0"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "building tools/pkg_checkout.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -11064,6 +15252,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.attach provenance.generate",
     "~followup_annotations": [
@@ -11096,6 +15296,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.do upload.cipd describe 3pp/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [
@@ -11134,6 +15346,18 @@
       "_3PP_PLATFORM": "linux-amd64",
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "2.0.0"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "building tools/pkg_checkout.do upload.register 3pp/tools/pkg_checkout/linux-amd64",
     "~followup_annotations": [

@@ -12,6 +12,18 @@
       "[CACHE]/infra_gclient_with_go"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure builder dir"
   },
   {
@@ -38,6 +50,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit fetch current CL info",
     "timeout": 60,
     "~followup_annotations": [
@@ -99,6 +123,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -167,6 +203,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -197,6 +245,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on DEPS",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -213,6 +273,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on .vpython",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -229,6 +301,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on .vpython3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -245,6 +329,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on client",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -262,6 +358,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/auth_service",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -278,6 +386,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/config_service",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -294,6 +414,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/components",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -310,6 +442,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/isolate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -326,6 +470,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/swarming",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -342,6 +498,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/swarming/ui2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -358,6 +526,18 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "check changes.get change list on appengine/third_party",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -380,6 +560,18 @@
       "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "client.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -397,6 +589,18 @@
       "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "client.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -418,6 +622,18 @@
       "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "swarming bot.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -435,6 +651,18 @@
       "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "swarming bot.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"

@@ -22,6 +22,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit fetch current CL info",
     "timeout": 60,
     "~followup_annotations": [
@@ -80,6 +92,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -132,6 +156,18 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure_installed",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -160,6 +196,18 @@
       "[CLEANUP]/gs_dir_tmp_1"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gsutil download"
   },
   {
@@ -174,6 +222,18 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "read latest chrome version",
     "~followup_annotations": [
       "@@@STEP_LOG_END@LAST_CHANGE@@@"
@@ -192,6 +252,18 @@
       "[CLEANUP]/gs_dir_tmp_1"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gsutil download (2)"
   },
   {
@@ -200,6 +272,18 @@
       "-u",
       "RECIPE_MODULE[infra::zip]/resources/unzip.py"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "unzip chrome",
     "stdin": "{\"output\": \"[CLEANUP]/gs_dir_tmp_1/zip\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/gs_dir_tmp_1/chrome-linux.zip\"}"
   },
@@ -213,6 +297,18 @@
       "LAUNCHPAD_CHROME": "[CLEANUP]/gs_dir_tmp_1/zip/chrome-linux/chrome",
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "npm install"
   },
   {
@@ -225,6 +321,18 @@
     "env": {
       "LAUNCHPAD_CHROME": "[CLEANUP]/gs_dir_tmp_1/zip/chrome-linux/chrome",
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/gerrit-plugins/git-numberer:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "run wct tests"
   },

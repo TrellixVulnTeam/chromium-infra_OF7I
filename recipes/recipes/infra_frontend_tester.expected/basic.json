@@ -22,6 +22,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit fetch current CL info",
     "timeout": 60,
     "~followup_annotations": [
@@ -80,6 +92,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -135,6 +159,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -150,6 +186,18 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure_installed",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -174,6 +222,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "findit npm install"
   },
   {
@@ -189,6 +249,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "findit run-wct"
   },
   {
@@ -201,6 +273,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "findit generate js coverage report"
   },
   {
@@ -211,6 +295,18 @@
     "cwd": "[START_DIR]/infra/crdx/chopsui",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "chopsui npm install"
   },
@@ -223,6 +319,18 @@
     "cwd": "[START_DIR]/infra/crdx/chopsui",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "chopsui bower install"
   },
@@ -239,6 +347,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "chopsui run-wct"
   },
   {
@@ -251,6 +371,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "chopsui generate js coverage report"
   },
   {
@@ -261,6 +393,18 @@
     "cwd": "[START_DIR]/infra/appengine/monorail",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "monorail npm install"
   },
@@ -274,6 +418,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "monorail test"
   },
   {
@@ -284,6 +440,18 @@
     "cwd": "[START_DIR]/infra/go/src/infra/appengine/dashboard/frontend",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "chopsdash npm install"
   },
@@ -297,6 +465,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "chopsdash test"
   },
   {
@@ -307,6 +487,18 @@
     "cwd": "[START_DIR]/infra/go/src/infra/appengine/sheriff-o-matic/frontend",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "sheriff-o-matic npm install"
   },
@@ -320,6 +512,18 @@
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "sheriff-o-matic bower install"
   },
   {
@@ -330,6 +534,18 @@
     "cwd": "[START_DIR]/infra/go/src/infra/appengine/sheriff-o-matic/frontend",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "sheriff-o-matic run-wct"
   },
@@ -342,6 +558,18 @@
     "cwd": "[START_DIR]/infra/go/src/infra/appengine/sheriff-o-matic/frontend",
     "env": {
       "PATH": "[START_DIR]/packages/bin:<PATH>"
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "sheriff-o-matic generate js coverage report"
   },

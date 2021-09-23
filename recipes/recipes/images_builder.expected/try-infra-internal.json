@@ -12,6 +12,18 @@
       "[CACHE]/infra_internal_gclient_with_go"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure builder dir"
   },
   {
@@ -38,6 +50,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit fetch current CL info",
     "timeout": 60,
     "~followup_annotations": [
@@ -97,6 +121,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -150,6 +186,18 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "commit git patch"
   },
   {
@@ -175,6 +223,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit changes",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
@@ -217,6 +277,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -231,6 +303,18 @@
       "**/*.yaml"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "list infra_internal/build/images/deterministic",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[CACHE]/infra_internal_gclient_with_go/infra_internal/build/images/deterministic/target.yaml@@@",
@@ -251,6 +335,18 @@
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "init infra go env",
     "~followup_annotations": [
       "@@@STEP_TEXT@Using go 1.66.6@@@",
@@ -295,6 +391,18 @@
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cloudbuildhelper version",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>cloudbuildhelper v6.6.6<br/><br/>CIPD package name: infra/tools/cloudbuildhelper/...<br/>CIPD instance ID:  lTJD7x...@@@"
@@ -336,6 +444,18 @@
       "PATH": [
         "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/bin"
       ]
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra/infra_internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
     },
     "name": "cloudbuildhelper build target",
     "~followup_annotations": [

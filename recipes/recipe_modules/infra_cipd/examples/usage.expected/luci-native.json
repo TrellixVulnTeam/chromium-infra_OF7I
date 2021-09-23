@@ -8,6 +8,18 @@
       "--builder",
       "native"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cipd - build packages"
   },
   {
@@ -16,6 +28,18 @@
       "-u",
       "[CACHE]/builder/assume/infra/build/test_packages.py"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cipd - test packages integrity"
   },
   {
@@ -34,6 +58,18 @@
       "git_repository:https://chromium.googlesource.com/infra/infra",
       "git_revision:deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cipd - upload packages",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",

@@ -12,6 +12,18 @@
       "[CACHE]/infra_internal_gclient_with_go"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure builder dir"
   },
   {
@@ -38,6 +50,18 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gerrit fetch current CL info",
     "timeout": 60,
     "~followup_annotations": [
@@ -97,6 +121,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -150,6 +186,18 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "commit git patch"
   },
   {
@@ -170,6 +218,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -182,6 +242,18 @@
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "get change list",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@change list@infra_internal/services/cq/cq.py@@@",
@@ -197,6 +269,18 @@
       "--verbose"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "python tests"
   },
   {
@@ -208,6 +292,18 @@
       "infra_internal/services/cq"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "luci_context": {
+      "realm": {
+        "name": "infra-internal:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "python cq tests"
   },
   {

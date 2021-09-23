@@ -12,6 +12,18 @@
       "[CACHE]/infra_gclient_with_go"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "ensure builder dir"
   },
   {
@@ -51,6 +63,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -109,6 +133,18 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "gclient runhooks"
   },
   {
@@ -125,6 +161,18 @@
       "INFRA_GO_VERSION_VARIANT": "bleeding_edge"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "init infra go env",
     "~followup_annotations": [
       "@@@STEP_TEXT@Using go 1.66.6@@@",
@@ -170,6 +218,18 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "go test"
   },
   {
@@ -195,6 +255,18 @@
         "[CACHE]/infra_gclient_with_go/infra/go/bin"
       ]
     },
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "go test (2)"
   },
   {
@@ -206,6 +278,18 @@
       "infra"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "python tests"
   },
   {
@@ -215,6 +299,18 @@
       "\n        import sys, os\n        print '\n'.join(os.listdir('./'))\n    "
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
+    "luci_context": {
+      "realm": {
+        "name": "infra:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "dirs"
   },
   {
