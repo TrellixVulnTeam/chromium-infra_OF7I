@@ -341,6 +341,7 @@ SPECS.update({
                 'manylinux-x64-py3.9',
             ],
             pyversions=['py2', 'py3'],
+            patch_version='chromium.1',
         ),
         SourceOrPrebuilt(
             'greenlet',
@@ -351,6 +352,7 @@ SPECS.update({
                 'windows-x86-py3',
                 'windows-x64-py3',
             ],
+            patch_version='chromium.1',
         ),
         SourceOrPrebuilt(
             'grpcio', '1.4.0', pyversions=['py2'], skip_plat=['mac-arm64']),
