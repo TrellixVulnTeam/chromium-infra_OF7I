@@ -120,6 +120,14 @@ SPECS = {}
 # missing prebuilt wheels.
 from .wheel_wheel import SourceOrPrebuilt
 from .builder import BuildDependencies
+
+_CFFI_DEPENDENCY = SourceOrPrebuilt(
+    'cffi',
+    '1.14.5',
+    patch_version='chromium.4',
+    packaged=[],
+)
+
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'SourceOrPrebuilt',
@@ -255,6 +263,12 @@ SPECS.update({
             patch_version='chromium.2',  # Rebuild for https://crbug.com/1233745
         ),
         SourceOrPrebuilt(
+            'freetype-py',
+            '2.2.0',
+            packaged=(),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'gevent',
             '1.4.0',
             packaged=('manylinux-x64', 'windows-x86', 'windows-x64'),
@@ -277,12 +291,7 @@ SPECS.update({
                     'Cython == 3.0a1',
                 ],
                 local=[
-                    SourceOrPrebuilt(
-                        'cffi',
-                        '1.14.5',
-                        patch_version='chromium.4',
-                        packaged=[],
-                    ),
+                    _CFFI_DEPENDENCY,
                     SourceOrPrebuilt(
                         'greenlet',
                         '1.0.0',
@@ -403,6 +412,25 @@ SPECS.update({
             ],
             skip_plat=[
                 'linux-arm64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+        # lxml doesn't emmbed dependencies in the repo. Instead it downloads
+        # the dependencies' source code in the build script. We use
+        # LIBXML2_VERSION and LIBXSLT_VERSION to specify the versions of
+        # libxml2 and libxslt.
+        SourceOrPrebuilt(
+            'lxml',
+            '4.6.3',
+            env={
+                'CFLAGS': '-O2 -g -fPIC',
+                'STATIC_DEPS': 'true',
+                'LIBXML2_VERSION': '2.9.10',
+                'LIBXSLT_VERSION': '1.1.34',
+            },
+            packaged=[
+                'windows-x86-py3',
+                'windows-x64-py3',
             ],
             pyversions=['py3'],
         ),
@@ -688,6 +716,25 @@ SPECS.update({
                 'mac-x64-cp38', 'mac-arm64-cp38', 'linux-arm64-py3',
                 'windows-x86-py3', 'windows-x64-py3'
             ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
+            'pynacl',
+            '1.4.0',
+            build_deps=BuildDependencies(
+                remote=[
+                    'setuptools >= 40.8.0',
+                    'wheel',
+                ],
+                local=[
+                    _CFFI_DEPENDENCY,
+                ],
+            ),
+            packaged=(
+                'windows-x86-py3',
+                'windows-x64-py3',
+            ),
+            skip_plat=['linux-arm64-py3'],
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(

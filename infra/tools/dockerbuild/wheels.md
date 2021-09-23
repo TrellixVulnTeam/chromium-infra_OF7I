@@ -1820,6 +1820,24 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
+### 2.2.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/freetype-py/${vpython_platform}"
+  version: "version:2.2.0"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **funcsigs**
 
 ### 1.0.2
@@ -3380,6 +3398,24 @@ wheel: <
 
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
+
+### 4.6.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/lxml/${vpython_platform}"
+  version: "version:4.6.3"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **macholib**
 
@@ -5290,6 +5326,23 @@ wheel: <
 * *manylinux-x64*
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
+
+### 1.4.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pynacl/${vpython_platform}"
+  version: "version:1.4.0"
+>
+```
+
+
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
 
 ## **pyobjc**
 
