@@ -11,8 +11,10 @@ option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 import "infra/unifiedfleet/api/v1/models/chromeos/device/config_id.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/license.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/modeminfo.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/peripherals.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/siminfo.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/manufacturing/config_id.proto";
 
 // Next Tag: 7
@@ -31,7 +33,7 @@ message ChromeOSDevice {
   };
 }
 
-// Next Tag: 5
+// Next Tag: 8
 message DeviceUnderTest{
   string hostname = 1;
   Peripherals peripherals = 2;
@@ -56,6 +58,10 @@ message DeviceUnderTest{
   repeated string pools = 4;
 
   repeated License licenses = 5;
+
+  ModemInfo modeminfo = 6;
+
+  repeated SIMInfo siminfo = 7;
 }
 
 // Next Tag: 5

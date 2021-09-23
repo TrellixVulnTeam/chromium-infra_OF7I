@@ -1,0 +1,43 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package unifiedfleet.api.v1.models.chromeos.lab;
+
+option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
+
+// This proto defines sim labels in lab config of a DUT.
+
+// Next Tag: 6
+message SIMInfo {
+  int32 slot_id = 1;
+  SIMType type = 2;
+  string eid = 3;
+  bool test_esim = 4;
+  repeated SIMProfileInfo profile_info = 5;
+}
+
+// Next Tag: 5
+message SIMProfileInfo {
+  string iccid = 1;
+  string sim_pin = 2;
+  string sim_puk = 3;
+  NetworkProvider carrier_name = 4;
+}
+// Next Tag: 5
+enum NetworkProvider {
+  NETWORK_OTHER = 0;
+  NETWORK_TEST = 1;
+  NETWORK_ATT = 2;
+  NETWORK_TMOBILE = 3;
+  NETWORK_VERIZON = 4;
+}
+
+// Next Tag: 3
+enum SIMType {
+  SIM_UNKNOWN = 0;
+  SIM_PHYSICAL = 1;
+  SIM_DIGITAL = 2;
+}
