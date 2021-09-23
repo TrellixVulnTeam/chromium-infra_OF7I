@@ -112,7 +112,7 @@ def GenTests(api):
       'winpe customization offline_winpe_2013_x64.PowerShell> ' +
       'Add file [CACHE]\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\infra_internal\\labs\\drivers\\microsoft\\windows_adk\\winpe' +
-      '\\winpe-dot3svc\\windows-amd64\\*',
+      '\\winpe-dot3svc\\windows-amd64',
       stdout=api.json.output({'results': {
           'Success': True,
       }}))

@@ -101,7 +101,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
   def get_local_src(self, src):
     if src.WhichOneof('src') == 'cipd_src':
       # Deref the cipd src and copy it to f
-      return self._cipd.get_local_src(src.cipd_src).join('*')
+      return self._cipd.get_local_src(src.cipd_src)
     if src.WhichOneof('src') == 'git_src':
       return self._git.get_local_src(src.git_src)
     if src.WhichOneof('src') == 'local_src':  # pragma: no cover
@@ -114,6 +114,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
 
   def add_file(self, f):
     src = self.get_local_src(f.src)
+    if self.m.path.isdir(src):
+      src.join('*')  # pragma: no cover
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', f.dst))

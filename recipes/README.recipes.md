@@ -947,13 +947,13 @@ API for using Windows PowerShell scripts.
 
 &mdash; **def [add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/api.py#110)(self, f, src):**
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#136)(self, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#138)(self, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
 &mdash; **def [download\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#75)(self, config):**
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#144)(self, name, command, logs=None, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#146)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
@@ -963,7 +963,7 @@ Executes the windows image builder user config.
 
 &mdash; **def [get\_local\_src](/recipes/recipe_modules/windows_scripts_executor/api.py#101)(self, src):**
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#121)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#123)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
