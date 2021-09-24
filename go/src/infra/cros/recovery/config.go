@@ -20,9 +20,8 @@ const defaultConfig = `
 		"labstation_repair":{
 			"critical_actions": [
 				"dut_state_repair_failed",
-				"has_dut_name",
-				"has_dut_board_name",
-				"has_dut_model_name",
+				"check_host_info",
+				"cros_ping",
 				"cros_ssh",
 				"cros_is_on_stable_version",
 				"update_provision_info",
@@ -31,6 +30,20 @@ const defaultConfig = `
 				"dut_state_ready"
 			],
 			"actions": {
+				"dut_state_repair_failed":{
+					"run_control": 2
+				},
+				"check_host_info":{
+					"docs":[
+						"Check basic info for deployment."
+					],
+					"exec_name": "sample_pass",
+					"dependencies":[
+						"has_dut_name",
+						"has_dut_board_name",
+						"has_dut_model_name"
+					]
+				},
 				"cros_is_on_stable_version":{
 					"conditions": [
 						"has_stable_version_cros_image",
@@ -136,6 +149,11 @@ const defaultConfig = `
 						"rpm_power_cycle"
 					]
 				},
+				"cros_ping":{
+					"recovery_actions":[
+						"rpm_power_cycle"
+					]
+				},
 				"cros_ssh":{
 					"recovery_actions":[
 						"rpm_power_cycle"
@@ -219,7 +237,8 @@ const defaultConfig = `
 		"labstation_deploy":{
 			"critical_actions": [
 				"dut_state_needs_deploy",
-				"check_deploy_info",
+				"check_host_info",
+				"cros_ping",
 				"cros_ssh",
 				"update_inv_info",
 				"install_stable_os",
@@ -229,13 +248,12 @@ const defaultConfig = `
 				"dut_state_ready"
 			],
 			"actions": {
-				"check_deploy_info":{
+				"check_host_info":{
 					"docs":[
 						"Check basic info for deployment."
 					],
 					"exec_name": "sample_pass",
 					"dependencies":[
-						"cros_ssh",
 						"has_dut_name",
 						"has_dut_board_name",
 						"has_dut_model_name"
