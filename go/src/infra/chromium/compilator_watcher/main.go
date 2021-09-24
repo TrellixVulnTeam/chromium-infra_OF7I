@@ -41,7 +41,6 @@ func luciEXEMain(ctx context.Context, input *buildbucket_pb.Build, userArgs []st
 	ctx = logging.SetLevel(ctx, logging.Info)
 
 	defer func() {
-		input.EndTime = timestamppb.New(clock.Now(ctx))
 		// processErr updates the returned err and input's SummaryMarkdown
 		err = processErr(ctx, err, input, send)
 		send()
@@ -274,6 +273,7 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 					return err
 				}
 				luciBuild.Status = buildbucket_pb.Status_SUCCESS
+				luciBuild.EndTime = timestamppb.New(clock.Now(ctx))
 				send()
 				return nil
 			}
@@ -282,6 +282,7 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 		if protoutil.IsEnded(compBuild.Status) {
 			luciBuild.Status = compBuild.GetStatus()
 			luciBuild.SummaryMarkdown = compBuild.GetSummaryMarkdown()
+			luciBuild.EndTime = timestamppb.New(clock.Now(ctx))
 			send()
 			return nil
 		}
