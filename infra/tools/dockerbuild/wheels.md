@@ -2674,6 +2674,7 @@ wheel: <
 * *manylinux-x64-ucs2*
 * *windows-x64*
 * *windows-x64-py3*
+* *windows-x86*
 * *windows-x86-py3*
 
 ### 1.0.0.chromium.1

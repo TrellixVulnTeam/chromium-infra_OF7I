@@ -333,9 +333,9 @@ SPECS.update({
             packaged=(
                 'manylinux-x64',
                 'windows-x64',
+                'windows-x86',
             ),
             skip_plat=[
-                'windows-x86',
                 # greenlet 0.4.15 relies on private Python internals which were
                 # changed in 3.9.
                 'manylinux-x64-py3.9',
