@@ -28,6 +28,7 @@
         "android-official",
         "fuchsia-official",
         "linux-official",
+        "linux-archive-tagged",
         "win-archive-dbg",
         "win32-archive-dbg"
       ]
