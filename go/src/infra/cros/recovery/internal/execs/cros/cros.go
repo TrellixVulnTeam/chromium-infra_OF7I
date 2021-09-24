@@ -70,6 +70,23 @@ func uptime(ctx context.Context, resource string, args *execs.RunArgs) (*time.Du
 	return &dur, errors.Annotate(err, "get uptime").Err()
 }
 
+// IsPingable checks whether the resource is pingable
+func IsPingable(ctx context.Context, args *execs.RunArgs, resourceName string, count int) error {
+	return args.Access.Ping(ctx, resourceName, count)
+}
+
+const (
+	pingAttemptInteval = 5 * time.Second
+	sshAttemptInteval  = 10 * time.Second
+)
+
+// WaitUntilPingable waiting resource to be pingable.
+func WaitUntilPingable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration, count int) error {
+	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
+		return IsPingable(ctx, args, resourceName, count)
+	}, "wait to ping")
+}
+
 // IsSSHable checks whether the resource is sshable
 func IsSSHable(ctx context.Context, args *execs.RunArgs, resourceName string) error {
 	if r := args.Access.Run(ctx, resourceName, "true"); r.ExitCode != 0 {
@@ -78,9 +95,9 @@ func IsSSHable(ctx context.Context, args *execs.RunArgs, resourceName string) er
 	return nil
 }
 
-// WaitToSSHable waiting resource to be sshable.
-func WaitToSSHable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration) error {
-	return retry.WithTimeout(ctx, 10*time.Second, waitTime, func() error {
+// WaitUntilSSHable waiting resource to be sshable.
+func WaitUntilSSHable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration) error {
+	return retry.WithTimeout(ctx, sshAttemptInteval, waitTime, func() error {
 		return IsSSHable(ctx, args, resourceName)
 	}, "wait to ssh access")
 }

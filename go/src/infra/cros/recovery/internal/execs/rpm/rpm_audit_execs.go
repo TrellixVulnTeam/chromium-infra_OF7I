@@ -19,14 +19,14 @@ func rpmAuditExec(ctx context.Context, args *execs.RunArgs, actionArgs []string)
 	if err := rpmPowerOffExec(ctx, args, actionArgs); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
-	if err := cros.IsSSHable(ctx, args, args.ResourceName); err == nil {
+	if err := cros.IsPingable(ctx, args, args.ResourceName, 2); err == nil {
 		args.DUT.RPMOutlet.State = tlw.RPMStateWrongConfig
 		return errors.Reason("rpm audit: resource still sshable").Err()
 	}
 	if err := rpmPowerOnExec(ctx, args, actionArgs); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
-	if err := cros.WaitToSSHable(ctx, args, args.ResourceName, cros.NormalBootingTime); err != nil {
+	if err := cros.WaitUntilSSHable(ctx, args, args.ResourceName, cros.NormalBootingTime); err != nil {
 		args.DUT.RPMOutlet.State = tlw.RPMStateWrongConfig
 		return errors.Annotate(err, "rpm audit: resource did not booted").Err()
 	}

@@ -9,13 +9,11 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/internal/retry"
 	"infra/cros/recovery/tlw"
 )
 
@@ -43,14 +41,12 @@ const (
 
 // pingExec verifies the DUT is pingable.
 func pingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return retry.WithTimeout(ctx, 20*time.Second, NormalBootingTime, func() error {
-		return args.Access.Ping(ctx, args.ResourceName, 2)
-	}, "cros dut ping")
+	return WaitUntilPingable(ctx, args, args.ResourceName, NormalBootingTime, 2)
 }
 
 // sshExec verifies ssh access to the DUT.
 func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return WaitToSSHable(ctx, args, args.ResourceName, NormalBootingTime)
+	return WaitUntilSSHable(ctx, args, args.ResourceName, NormalBootingTime)
 }
 
 // rebootExec reboots the cros DUT.
