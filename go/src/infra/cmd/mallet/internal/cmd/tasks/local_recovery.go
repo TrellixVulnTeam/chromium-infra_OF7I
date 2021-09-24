@@ -45,6 +45,7 @@ For now only running in testing mode.`,
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		c.Flags.BoolVar(&c.updateInventory, "update-inv", false, "Update UFS at the end execution.")
 		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Trigger deploy task.")
+		c.Flags.BoolVar(&c.showSteps, "steps", false, "Show generated steps.")
 		return c
 	},
 }
@@ -59,6 +60,7 @@ type localRecoveryRun struct {
 	onlyVerify      bool
 	updateInventory bool
 	deployTask      bool
+	showSteps       bool
 }
 
 // Run initiates execution of local recovery.
@@ -122,6 +124,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		Logger:                logger,
 		EnableRecovery:        !c.onlyVerify,
 		EnableUpdateInventory: c.updateInventory,
+		ShowSteps:             c.showSteps,
 		TaskName:              tn,
 	}
 	if c.configFile != "" {

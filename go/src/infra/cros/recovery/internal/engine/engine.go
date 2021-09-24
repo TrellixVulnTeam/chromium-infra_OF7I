@@ -96,7 +96,7 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
 	newCtx := ctx
 	if r.args != nil {
-		if r.args.StepHandler != nil {
+		if r.args.ShowSteps {
 			var step *build.Step
 			step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Run %s", actionName))
 			defer step.End(err)
@@ -210,7 +210,7 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 	}
 	newCtx := ctx
 	if r.args != nil {
-		if r.args.StepHandler != nil {
+		if r.args.ShowSteps {
 			var step *build.Step
 			step, newCtx = build.StartStep(newCtx, "Run continions")
 			defer step.End(err)
@@ -240,7 +240,7 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 	}
 	newCtx := ctx
 	if r.args != nil {
-		if r.args.StepHandler != nil {
+		if r.args.ShowSteps {
 			var step *build.Step
 			step, newCtx = build.StartStep(newCtx, "Run dependencies")
 			defer step.End(err)
@@ -266,7 +266,7 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 	}
 	newCtx := ctx
 	if r.args != nil {
-		if r.args.StepHandler != nil {
+		if r.args.ShowSteps {
 			var step *build.Step
 			step, newCtx = build.StartStep(newCtx, "Run recoveries")
 			defer step.End(err)

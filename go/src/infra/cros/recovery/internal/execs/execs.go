@@ -45,8 +45,8 @@ type RunArgs struct {
 	Access       tlw.Access
 	// Logger prints message to the logs.
 	Logger logger.Logger
-	// StepHandler provides option to report steps.
-	StepHandler logger.StepHandler
+	// Provide option to stop use steps.
+	ShowSteps bool
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
 }

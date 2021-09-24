@@ -56,7 +56,7 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	// Keep track of failure to run resources.
 	var errs []error
 	lastResourceIndex := len(resources) - 1
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
 		defer step.End(err)
@@ -98,7 +98,7 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs, resourceErrs []error) (err error) {
 	newCtx := ctx
 	log.Info(newCtx, "Resource %q: started", resource)
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		var step *build.Step
 		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Resource %q", resource))
 		defer step.End(err)
@@ -119,7 +119,7 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 // retrieveResources retrieves a list of target resources.
 func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, err error) {
 	newCtx := ctx
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		var step *build.Step
 		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
 		defer step.End(err)
@@ -136,7 +136,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 // If configuration is not provided by args then default is used.
 func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Configuration, err error) {
 	newCtx := ctx
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		var step *build.Step
 		step, newCtx = build.StartStep(newCtx, "Load configuration")
 		defer step.End(err)
@@ -161,7 +161,7 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 
 // readInventory reads single resource info from inventory.
 func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tlw.Dut, err error) {
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		step, _ := build.StartStep(ctx, "Read inventory")
 		defer step.End(err)
 	}
@@ -187,7 +187,7 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 //
 // Skip update if not enabled.
 func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (err error) {
-	if args.StepHandler != nil {
+	if args.ShowSteps {
 		step, _ := build.StartStep(ctx, "Update inventory")
 		defer step.End(err)
 	}
@@ -237,7 +237,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Access:         args.Access,
 		EnableRecovery: args.EnableRecovery,
 		Logger:         args.Logger,
-		StepHandler:    args.StepHandler,
+		ShowSteps:      args.ShowSteps,
 	}
 	var errs []error
 	// TODO(otabek@): Add closing plan logic.
@@ -257,7 +257,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 // runDUTPlan runs simple plan against the DUT.
 func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *planpb.Configuration, execArgs *execs.RunArgs) (err error) {
 	newCtx := ctx
-	if execArgs.StepHandler != nil {
+	if execArgs.ShowSteps {
 		var step *build.Step
 		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Run plan %q", planName))
 		defer step.End(err)
@@ -349,8 +349,10 @@ type RunArgs struct {
 	ConfigReader io.Reader
 	// Logger prints message to the logs.
 	Logger logger.Logger
-	// StepHandler provides option to report steps.
+	// Deprecated.
 	StepHandler logger.StepHandler
+	// Option to use steps.
+	ShowSteps bool
 	// Metrics is the metrics sink and event search API.
 	Metrics logger.Metrics
 	// TaskName used to drive the recovery process.
