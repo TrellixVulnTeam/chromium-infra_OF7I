@@ -33,6 +33,7 @@ var Recovery = &subcommands.Command{
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
 		c.Flags.BoolVar(&c.noStepper, "no-stepper", false, "Block steper from using. This will prevent by using steps and you can only see logs.")
+		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Run deploy task. By default run recovery task.")
 		return c
 	},
 }
@@ -45,10 +46,11 @@ type recoveryRun struct {
 	onlyVerify bool
 	noStepper  bool
 	configFile string
+	deployTask bool
 }
 
 // Flag to manage if a task is allowed to update inventory after running a task.
-const enableUpdateInventory = false
+const enableUpdateInventory = true
 
 func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
@@ -78,9 +80,13 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		}
 		configuration = b64.StdEncoding.EncodeToString(b)
 	}
+	task := string(recovery.TaskNameRecovery)
+	if c.deployTask {
+		task = string(recovery.TaskNameDeploy)
+	}
 	props, err := structbuilder.NewStruct(map[string]interface{}{
 		"unit_name":         unit,
-		"task_name":         string(recovery.TaskNameRecovery),
+		"task_name":         task,
 		"enable_recovery":   !c.onlyVerify,
 		"admin_service":     e.AdminService,
 		"inventory_service": e.UFSService,
