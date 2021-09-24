@@ -154,6 +154,12 @@ func TestManager(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(f, ShouldResembleIssuesStore, originalIssues)
 			}
+			// Create a monorail client that interacts with monorail
+			// as an end-user. This is needed as we distinguish user
+			// updates to the bug from system updates.
+			user := "users/100"
+			usercl, err := NewClient(UseFakeIssuesClient(ctx, f, user), "myhost")
+			So(err, ShouldBeNil)
 
 			Convey("If impact unchanged, does nothing", func() {
 				updateDoesNothing()
@@ -166,6 +172,7 @@ func TestManager(t *testing.T) {
 						Cluster: c,
 					},
 				}
+
 				Convey("Adjusts priority in response to changed impact", func() {
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
@@ -175,13 +182,6 @@ func TestManager(t *testing.T) {
 					updateDoesNothing()
 				})
 				Convey("Does not adjust priority if priority manually set", func() {
-					// Create a monorail client that interacts with monorail
-					// as an end-user. This is needed as we distinguish user
-					// updates to the bug from system updates.
-					user := "users/100"
-					usercl, err := NewClient(UseFakeIssuesClient(ctx, f, user), "myhost")
-					So(err, ShouldBeNil)
-
 					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "1")
 					err = usercl.ModifyIssues(ctx, updateReq)
 					So(err, ShouldBeNil)
@@ -202,7 +202,7 @@ func TestManager(t *testing.T) {
 					updateDoesNothing()
 
 					Convey("Unless manual priority cleared", func() {
-						updateReq := clearManualPriorityRequest(f.Issues[0].Issue.Name)
+						updateReq := removeLabelRequest(f.Issues[0].Issue.Name, manualPriorityLabel)
 						err = usercl.ModifyIssues(ctx, updateReq)
 						So(err, ShouldBeNil)
 						So(hasLabel(f.Issues[0].Issue, manualPriorityLabel), ShouldBeFalse)
@@ -219,9 +219,84 @@ func TestManager(t *testing.T) {
 					bm.Simulate = true
 					updateDoesNothing()
 				})
+				Convey("Does nothing if Restrict-View-Google is unset", func() {
+					// This requirement comes from security review, see crbug.com/1245877.
+					updateReq := removeLabelRequest(f.Issues[0].Issue.Name, restrictViewLabel)
+					err = usercl.ModifyIssues(ctx, updateReq)
+					So(err, ShouldBeNil)
+					So(hasLabel(f.Issues[0].Issue, restrictViewLabel), ShouldBeFalse)
+
+					updateDoesNothing()
+				})
+			})
+			Convey("If impact becomes zero", func() {
+				c.UnexpectedFailures1d = 0
+				bugsToUpdate := []*bugs.BugToUpdate{
+					{
+						BugName: bug,
+						Cluster: c,
+					},
+				}
+				Convey("Update closes bug", func() {
+					err := bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(f.Issues[0].Issue.Status.Status, ShouldEqual, VerifiedStatus)
+
+					// Verify repeated update has no effect.
+					updateDoesNothing()
+
+					Convey("If impact increases, bug is re-opened with correct priority", func() {
+						c.UnexpectedFailures1d = 1
+						Convey("Issue has owner", func() {
+							// Update issue owner.
+							updateReq := updateOwnerRequest(f.Issues[0].Issue.Name, "users/100")
+							err = usercl.ModifyIssues(ctx, updateReq)
+							So(err, ShouldBeNil)
+							So(f.Issues[0].Issue.Owner.GetUser(), ShouldEqual, "users/100")
+
+							// Issue should return to "Assigned" status.
+							err := bm.Update(ctx, bugsToUpdate)
+							So(err, ShouldBeNil)
+							So(f.Issues[0].Issue.Status.Status, ShouldEqual, AssignedStatus)
+							So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+							// Verify repeated update has no effect.
+							updateDoesNothing()
+						})
+						Convey("Issue has no owner", func() {
+							// Issue should return to "Untriaged" status.
+							err := bm.Update(ctx, bugsToUpdate)
+							So(err, ShouldBeNil)
+							So(f.Issues[0].Issue.Status.Status, ShouldEqual, UntriagedStatus)
+							So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+							// Verify repeated update has no effect.
+							updateDoesNothing()
+						})
+					})
+				})
 			})
 		})
 	})
+}
+
+func updateOwnerRequest(name string, owner string) *mpb.ModifyIssuesRequest {
+	return &mpb.ModifyIssuesRequest{
+		Deltas: []*mpb.IssueDelta{
+			{
+				Issue: &mpb.Issue{
+					Name: name,
+					Owner: &mpb.Issue_UserValue{
+						User: owner,
+					},
+				},
+				UpdateMask: &field_mask.FieldMask{
+					Paths: []string{"owner"},
+				},
+			},
+		},
+		CommentContent: "User comment.",
+	}
 }
 
 func updateBugPriorityRequest(name string, priority string) *mpb.ModifyIssuesRequest {
@@ -246,7 +321,7 @@ func updateBugPriorityRequest(name string, priority string) *mpb.ModifyIssuesReq
 	}
 }
 
-func clearManualPriorityRequest(name string) *mpb.ModifyIssuesRequest {
+func removeLabelRequest(name string, label string) *mpb.ModifyIssuesRequest {
 	return &mpb.ModifyIssuesRequest{
 		Deltas: []*mpb.IssueDelta{
 			{
@@ -254,7 +329,7 @@ func clearManualPriorityRequest(name string) *mpb.ModifyIssuesRequest {
 					Name: name,
 				},
 				UpdateMask:   &field_mask.FieldMask{},
-				LabelsRemove: []string{manualPriorityLabel},
+				LabelsRemove: []string{label},
 			},
 		},
 		CommentContent: "User comment.",

@@ -54,6 +54,15 @@ var AutomationUsers = []string{
 	"users/4149141945", // chops-weetbix-dev@appspot.gserviceaccount.com
 }
 
+// VerifiedStatus is that status of bugs that have been fixed and verified.
+const VerifiedStatus = "Verified"
+
+// AssignedStatus is the status of bugs that are open and assigned to an owner.
+const AssignedStatus = "Assigned"
+
+// UntriagedStatus is the status of bugs that have just been opened.
+const UntriagedStatus = "Untriaged"
+
 // PrepareNew prepares a new bug from the given cluster.
 func PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
 	title := cluster.ClusterID
@@ -68,7 +77,7 @@ func PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
 		Issue: &mpb.Issue{
 			Summary: fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
 			State:   mpb.IssueContentState_ACTIVE,
-			Status:  &mpb.Issue_StatusValue{Status: "Untriaged"},
+			Status:  &mpb.Issue_StatusValue{Status: UntriagedStatus},
 			FieldValues: []*mpb.FieldValue{
 				{
 					Field: typeFieldName,
@@ -86,7 +95,7 @@ func PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
 			}},
 		},
 		Description: bugDescription(cluster),
-		NotifyType:  mpb.NotifyType_NO_NOTIFICATION,
+		NotifyType:  mpb.NotifyType_EMAIL,
 	}
 }
 
@@ -96,59 +105,112 @@ func NeedsUpdate(cluster *clustering.Cluster, issue *mpb.Issue) bool {
 	if !hasLabel(issue, restrictViewLabel) {
 		return false
 	}
-	if hasLabel(issue, manualPriorityLabel) {
+	// Cases that a bug may be updated follow.
+	switch {
+	case clusterResolved(cluster) != issueVerified(issue):
+		return true
+	case !hasLabel(issue, manualPriorityLabel) &&
+		!clusterResolved(cluster) &&
+		clusterPriority(cluster) != IssuePriority(issue):
+		// The priority has changed on a cluster which is not verified as fixed
+		// and the user isn't manually controlling the priority.
+		return true
+	default:
 		return false
 	}
-	return clusterPriority(cluster) != IssuePriority(issue)
 }
 
 // MakeUpdate prepares an updated for the bug associated with a given cluster.
 // Must ONLY be called if NeedsUpdate(...) returns true.
 func MakeUpdate(cluster *clustering.Cluster, issue *mpb.Issue, comments []*mpb.Comment) *mpb.ModifyIssuesRequest {
-	if hasManuallySetPriority(comments) {
-		// We were not the last to update the priority of this issue.
-		// Set the 'manually controlled priority' label to reflect
-		// the state of this bug and avoid further attempts to update.
-		return &mpb.ModifyIssuesRequest{
-			Deltas: []*mpb.IssueDelta{
-				{
-					Issue: &mpb.Issue{
-						Name: issue.Name,
-						Labels: []*mpb.Issue_LabelValue{{
-							Label: manualPriorityLabel,
-						}},
-					},
-					UpdateMask: &field_mask.FieldMask{
-						Paths: []string{"labels"},
-					},
-				},
-			},
-			NotifyType:     mpb.NotifyType_NO_NOTIFICATION,
-			CommentContent: fmt.Sprintf("The bug priority has been manually set. To re-enable automatic priority updates by Weetbix, remove the %s label.", manualPriorityLabel),
+	delta := &mpb.IssueDelta{
+		Issue: &mpb.Issue{
+			Name: issue.Name,
+		},
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{},
+		},
+	}
+
+	var commentary []string
+	notify := false
+	if clusterResolved(cluster) != issueVerified(issue) {
+		// Verify or reopen the issue.
+		comment := prepareBugVerifiedUpdate(cluster, issue, delta)
+		commentary = append(commentary, comment)
+		notify = true
+	}
+	if !hasLabel(issue, manualPriorityLabel) &&
+		!clusterResolved(cluster) &&
+		clusterPriority(cluster) != IssuePriority(issue) {
+
+		if hasManuallySetPriority(comments) {
+			// We were not the last to update the priority of this issue.
+			// Set the 'manually controlled priority' label to reflect
+			// the state of this bug and avoid further attempts to update.
+			comment := prepareManualPriorityUpdate(issue, delta)
+			commentary = append(commentary, comment)
+		} else {
+			// We were the last to update the bug priority.
+			// Apply the priority update.
+			comment := preparePriorityUpdate(cluster, issue, delta)
+			commentary = append(commentary, comment)
+			// Only notify if increasing priority (decreasing priority number).
+			notify = notify || (clusterPriority(cluster) < IssuePriority(issue))
 		}
 	}
-	// We were the last to update the bug priority.
-	// Apply the priority update.
-	return &mpb.ModifyIssuesRequest{
+
+	update := &mpb.ModifyIssuesRequest{
 		Deltas: []*mpb.IssueDelta{
-			{
-				Issue: &mpb.Issue{
-					Name: issue.Name,
-					FieldValues: []*mpb.FieldValue{
-						{
-							Field: priorityFieldName,
-							Value: clusterPriority(cluster),
-						},
-					},
-				},
-				UpdateMask: &field_mask.FieldMask{
-					Paths: []string{"field_values"},
-				},
-			},
+			delta,
 		},
 		NotifyType:     mpb.NotifyType_NO_NOTIFICATION,
-		CommentContent: "The impact of this bug's test failures has changed. Weetbix has adjusted the bug priority.",
+		CommentContent: strings.Join(commentary, "\n\n"),
 	}
+	if notify {
+		update.NotifyType = mpb.NotifyType_EMAIL
+	}
+	return update
+}
+
+func prepareBugVerifiedUpdate(cluster *clustering.Cluster, issue *mpb.Issue, update *mpb.IssueDelta) string {
+	resolved := clusterResolved(cluster)
+	var status string
+	var comment string
+	if resolved {
+		status = VerifiedStatus
+		comment = "No further occurances of the failure cluster have been identified. Weetbix is marking the issue verified."
+	} else {
+		if issue.GetOwner().GetUser() != "" {
+			status = AssignedStatus
+		} else {
+			status = UntriagedStatus
+		}
+		comment = "Weetbix has identified new occurances of the failure cluster. The bug has been re-opened."
+	}
+	update.Issue.Status = &mpb.Issue_StatusValue{Status: status}
+	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "status")
+	return comment
+}
+
+func prepareManualPriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
+	update.Issue.Labels = []*mpb.Issue_LabelValue{{
+		Label: manualPriorityLabel,
+	}}
+	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "labels")
+	return fmt.Sprintf("The bug priority has been manually set. To re-enable automatic priority updates by Weetbix, remove the %s label.", manualPriorityLabel)
+}
+
+func preparePriorityUpdate(cluster *clustering.Cluster, issue *mpb.Issue, update *mpb.IssueDelta) string {
+	update.Issue.FieldValues = []*mpb.FieldValue{
+		{
+			Field: priorityFieldName,
+			Value: clusterPriority(cluster),
+		},
+	}
+	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "field_values")
+	return fmt.Sprintf("The impact of this bug's test failures has changed. "+
+		"Weetbix has adjusted the bug priority from %v to %v.", IssuePriority(issue), clusterPriority(cluster))
 }
 
 // hasManuallySetPriority returns whether the the given issue has a manually
@@ -229,6 +291,10 @@ func IssuePriority(issue *mpb.Issue) string {
 	return ""
 }
 
+func issueVerified(issue *mpb.Issue) bool {
+	return issue.Status.Status == VerifiedStatus
+}
+
 // bugDescription returns the description that should be used when creating
 // a new bug for the given cluster.
 func bugDescription(cluster *clustering.Cluster) string {
@@ -253,6 +319,11 @@ func clusterPriority(cluster *clustering.Cluster) string {
 		return "2"
 	}
 	return "3"
+}
+
+// clusterResolved returns whether the cluster has been resolved.
+func clusterResolved(cluster *clustering.Cluster) bool {
+	return cluster.UnexpectedFailures1d == 0
 }
 
 // sanitiseTitle removes tabs and line breaks from input, replacing them with

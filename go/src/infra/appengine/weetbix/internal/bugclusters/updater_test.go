@@ -175,7 +175,7 @@ func TestRun(t *testing.T) {
 
 				expectFinalBugClusters()
 			})
-			Convey("Deleting cluster updates issue priority", func() {
+			Convey("Deleting cluster closes issue", func() {
 				issue := f.Issues[0].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
 				So(monorail.IssuePriority(issue), ShouldEqual, "2")
@@ -188,7 +188,7 @@ func TestRun(t *testing.T) {
 				So(len(f.Issues), ShouldEqual, 3)
 				issue = f.Issues[0].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(monorail.IssuePriority(issue), ShouldEqual, "3")
+				So(issue.Status.Status, ShouldEqual, monorail.VerifiedStatus)
 			})
 		})
 	})
