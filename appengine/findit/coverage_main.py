@@ -10,8 +10,8 @@ from gae_libs import appengine_util
 
 from handlers import code_coverage
 
-# Default module.
-default_web_pages_handler_mappings = [
+# Feaure coverage worker module.
+feature_coverage_worker_handler_mappings = [
     # Run feature coverage worker at startup time.
     # This is because triggering worker via cron job results in the case where
     # a cron job gets triggered before the previous job has finished. With time
@@ -21,10 +21,10 @@ default_web_pages_handler_mappings = [
     # thus ensuring that we do not have oom errors.
     ('/_ah/start', code_coverage.ExportFeatureCoverageMetrics),
 ]
-default_web_application = webapp2.WSGIApplication(
-    default_web_pages_handler_mappings, debug=False)
+feature_coverage_worker_application = webapp2.WSGIApplication(
+    feature_coverage_worker_handler_mappings, debug=False)
 if appengine_util.IsInProductionApp():
-  gae_ts_mon.initialize(default_web_application)
+  gae_ts_mon.initialize(feature_coverage_worker_application)
 
 
 # "code-coverage-backend" module.
