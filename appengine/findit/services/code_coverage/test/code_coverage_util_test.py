@@ -644,11 +644,11 @@ class CodeCoverageUtilTest(WaterfallTestCase):
 
     first_call = mock.call(
         ('https://chromium-review.googlesource.com/changes/'
-         '?q=chromium/src+is:merged+hashtag:my_new_feature&S=0&n=100'
+         '?q=project:chromium/src+is:merged+hashtag:my_new_feature&S=0&n=100'
          '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
     second_call = mock.call(
         ('https://chromium-review.googlesource.com/changes/'
-         '?q=chromium/src+is:merged+hashtag:my_new_feature&S=100&n=100'
+         '?q=project:chromium/src+is:merged+hashtag:my_new_feature&S=100&n=100'
          '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
     mock_http_client.assert_has_calls([first_call, second_call])
     self.assertEqual(changes[:-1], first_response)

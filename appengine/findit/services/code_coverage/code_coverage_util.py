@@ -173,7 +173,7 @@ def _FetchChangeDetails(host, project, change):
 def FetchMergedChangesWithHashtag(host, project, hashtag):
   """Yields a generator object corresponding to changes with a given hashtag."""
   num_results = 100
-  template = ('https://%s/changes/?q=%s+is:merged+hashtag:%s&S=%d&n=%d'
+  template = ('https://%s/changes/?q=project:%s+is:merged+hashtag:%s&S=%d&n=%d'
               '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES')
   more = True
   skip = 0
