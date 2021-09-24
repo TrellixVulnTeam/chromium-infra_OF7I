@@ -1,10 +1,14 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 import React from 'react';
-import {makeStyles, withStyles} from '@material-ui/styles';
-import {blue, yellow, red, grey} from '@material-ui/core/colors';
+import { makeStyles, withStyles } from '@material-ui/styles';
+import { blue, yellow, red, grey } from '@material-ui/core/colors';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox, {CheckboxProps} from '@material-ui/core/Checkbox';
+import Checkbox, { CheckboxProps } from '@material-ui/core/Checkbox';
 import SelectMenu from './SelectMenu.tsx';
-import RadioDescription from './RadioDescription.tsx';
+import { RadioDescription } from './RadioDescription/RadioDescription.tsx';
 
 const CustomCheckbox = withStyles({
   root: {
@@ -42,7 +46,7 @@ const useStyles = makeStyles({
     fontSize: '16px',
     fontWeight: '500',
   },
-  star:{
+  star: {
     color: red[700],
     marginRight: '8px',
     fontSize: '16px',
@@ -63,8 +67,8 @@ const useStyles = makeStyles({
   },
 });
 
-export default function LandingStep({checkExisting, setCheckExisting, userType, setUserType, category, setCategory}:
-  {checkExisting: boolean, setCheckExisting: Function, userType: string, setUserType: Function, category: string, setCategory: Function}) {
+export default function LandingStep({ checkExisting, setCheckExisting, userType, setUserType, category, setCategory }:
+  { checkExisting: boolean, setCheckExisting: Function, userType: string, setUserType: Function, category: string, setCategory: Function }) {
   const classes = useStyles();
 
   const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,11 +86,11 @@ export default function LandingStep({checkExisting, setCheckExisting, userType, 
       <p className={classes.subheader}>
         Please select your following role: <span className={classes.red}>*</span>
       </p>
-      <RadioDescription value={userType} setValue={setUserType}/>
+      <RadioDescription value={userType} setValue={setUserType} />
       <div className={classes.subheader}>
         Which of the following best describes the issue that you are reporting? <span className={classes.red}>*</span>
       </div>
-      <SelectMenu option={category} setOption={setCategory}/>
+      <SelectMenu option={category} setOption={setCategory} />
       <div className={classes.warningBox}>
         <p className={classes.warningHeader}> Avoid duplicate issue reports:</p>
         <div>
