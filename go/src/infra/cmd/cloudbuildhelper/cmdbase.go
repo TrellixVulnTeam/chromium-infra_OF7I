@@ -228,6 +228,8 @@ func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool
 }
 
 // prepBaseOutput populates baseOutput based on the manifest and -infra flag.
+//
+// Note: `infra` may be nil if -infra flag is optional and was omitted.
 func prepBaseOutput(m *manifest.Manifest, infra *manifest.Infra) (*baseOutput, error) {
 	contextDir := m.ContextDir
 	if contextDir != "" {
@@ -243,11 +245,15 @@ func prepBaseOutput(m *manifest.Manifest, infra *manifest.Infra) (*baseOutput, e
 			return nil, errors.Annotate(err, "bad path in `sources`").Err()
 		}
 	}
+	var notify []manifest.NotifyConfig
+	if infra != nil {
+		notify = infra.Notify
+	}
 	return &baseOutput{
 		Name:       m.Name,
 		ContextDir: contextDir,
 		Sources:    sources,
-		Notify:     infra.Notify,
+		Notify:     notify,
 	}, nil
 }
 
