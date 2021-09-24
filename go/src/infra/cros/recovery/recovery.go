@@ -349,8 +349,6 @@ type RunArgs struct {
 	ConfigReader io.Reader
 	// Logger prints message to the logs.
 	Logger logger.Logger
-	// Deprecated.
-	StepHandler logger.StepHandler
 	// Option to use steps.
 	ShowSteps bool
 	// Metrics is the metrics sink and event search API.

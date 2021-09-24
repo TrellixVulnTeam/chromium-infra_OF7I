@@ -84,10 +84,6 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if t, ok := supportedTasks[in.TaskName]; ok {
 		task = t
 	}
-	var sh logger.StepHandler
-	if !in.GetNoStepper() {
-		sh = tlw.NewStepHandler(lg)
-	}
 	var metrics logger.Metrics
 	if !in.GetNoMetrics() {
 		var err error
@@ -106,7 +102,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		TaskName:              task,
 		Access:                access,
 		Logger:                lg,
-		StepHandler:           sh,
+		ShowSteps:             !in.GetNoStepper(),
 		Metrics:               metrics,
 		EnableRecovery:        in.GetEnableRecovery(),
 		EnableUpdateInventory: in.GetUpdateInventory(),
