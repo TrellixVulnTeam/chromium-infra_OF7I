@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -41,7 +42,7 @@ func releaseBuildPath(ctx context.Context, resource string, args *execs.RunArgs)
 	if len(parts) < 2 {
 		return "", errors.Reason("release build path: fail to read value from %s", r.Stdout).Err()
 	}
-	return parts[1], nil
+	return strings.TrimSpace(parts[1]), nil
 }
 
 // uptime returns uptime of resource.

@@ -71,7 +71,6 @@ func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
-	fromDevice = strings.TrimSuffix(fromDevice, "\n")
 	log.Debug(ctx, "Version on device: %s", fromDevice)
 	if fromDevice != expected {
 		return errors.Reason("match os version: mismatch, expected %q, found %q", expected, fromDevice).Err()
@@ -87,7 +86,6 @@ func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
-	fromDevice = strings.TrimSuffix(fromDevice, "\n")
 	log.Debug(ctx, "Version on device: %s", fromDevice)
 	if fromDevice == expected {
 		return errors.Reason("match os version: matched, expected %q, found %q", expected, fromDevice).Err()
