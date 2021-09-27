@@ -27,9 +27,8 @@ def RunSteps(api, image):
 def GenTests(api):
   # various step data for testing
   GEN_WPE_MEDIA_FAIL = api.step_data(
-      'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.generate ' +
-      'windows image folder for x86 in ' +
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
       '[CACHE]\\WinPEImage.PowerShell> Gen WinPE media for x86',
       stdout=api.json.output({
           'results': {
@@ -42,9 +41,8 @@ def GenTests(api):
       }))
 
   GEN_WPE_MEDIA_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.generate ' +
-      'windows image folder for x86 in ' +
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
       '[CACHE]\\WinPEImage.PowerShell> Gen WinPE media for x86',
       stdout=api.json.output({'results': {
           'Success': True,
@@ -52,8 +50,8 @@ def GenTests(api):
 
   MOUNT_WIM_PASS = api.step_data(
       'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.generate windows image folder for ' +
-      'x86 in [CACHE]\\WinPEImage.PowerShell> Mount wim to ' +
+      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
+      '[CACHE]\\WinPEImage.PowerShell> Mount wim to ' +
       '[CACHE]\\WinPEImage\\mount',
       stdout=api.json.output({
           'results': {
@@ -62,9 +60,19 @@ def GenTests(api):
       }))
 
   UMOUNT_WIM_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.PowerShell> ' +
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
       'Unmount wim at [CACHE]\\WinPEImage\\mount',
+      stdout=api.json.output({
+          'results': {
+              'Success': True
+          },
+      }))
+
+  DEINIT_WIM_ADD_CFG_TO_ROOT_PASS = api.step_data(
+      'execute config win10_2013_x64.offline winpe customization ' +
+      'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
+      'Add cfg [CACHE]\\win10_2013_x64.cfg',
       stdout=api.json.output({
           'results': {
               'Success': True
@@ -168,8 +176,9 @@ def GenTests(api):
   # Post process check for save and discard options during unmount
   UMOUNT_PP_DISCARD = api.post_process(
       StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.PowerShell> ' +
-      'Unmount wim at [CACHE]\\WinPEImage\\mount', [
+      'customization offline_winpe_2013_x64.Deinit WinPE ' +
+      'image modification.PowerShell> Unmount wim at ' +
+      '[CACHE]\\WinPEImage\\mount', [
           'python', '-u',
           'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\psinvoke.py',
           '--command', 'Dismount-WindowsImage', '--logs',
@@ -181,8 +190,9 @@ def GenTests(api):
 
   UMOUNT_PP_SAVE = api.post_process(
       StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.PowerShell> ' +
-      'Unmount wim at [CACHE]\\WinPEImage\\mount', [
+      'customization offline_winpe_2013_x64.Deinit WinPE ' +
+      'image modification.PowerShell> Unmount wim at ' +
+      '[CACHE]\\WinPEImage\\mount', [
           'python', '-u',
           'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\\psinvoke.py',
           '--command', 'Dismount-WindowsImage', '--logs',
@@ -191,6 +201,7 @@ def GenTests(api):
           '-LogPath "\[CLEANUP\]\\\\Dismount-WindowsImage\\\\unmount.log"',
           '-LogLevel WarningsInfo', '-Save'
       ])
+
 
   yield (
       api.test('Fail win image folder creation', api.platform('win', 64)) +
@@ -253,6 +264,7 @@ def GenTests(api):
                   ]))) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
       MOUNT_WIM_PASS +  # mount the generated wim
       ADD_FILE_CIPD_PASS +  # add the file from cipd
+      DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # add cfg to the root of image
       UMOUNT_WIM_PASS +  # Unmount the wim
       UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
       api.post_process(StatusSuccess) + api.post_process(DropExpectation))
@@ -274,6 +286,7 @@ def GenTests(api):
       GEN_WPE_MEDIA_PASS +  # successfully gen winpe media
       MOUNT_WIM_PASS +  # mount the wim
       ADD_FILE_STARTNET_PASS +  # Add the downloaded file
+      DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of the image
       UMOUNT_WIM_PASS +  # Unmount the wim
       UMOUNT_PP_SAVE +  # Check unmount didn't discard the changes
       api.post_process(StatusSuccess) + api.post_process(DropExpectation))
@@ -293,6 +306,7 @@ def GenTests(api):
                      ]))) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
          MOUNT_WIM_PASS +  # mount the generated wim
          INSTALL_FILE_WMI_PASS +  # install file from cipd
+         DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of image
          UMOUNT_WIM_PASS +  # Unmount the wim
          UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
@@ -316,6 +330,7 @@ def GenTests(api):
          FETCH_FILE_STARTNET_PASS +  # fetch the startnet file
          ADD_FILE_STARTNET_PASS +  # add file from git to wim
          ADD_FILE_CIPD_PASS +  # add the file from cipd to wim
+         DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of image
          UMOUNT_WIM_PASS +  # unmount the wim
          UMOUNT_PP_SAVE +  # Save the changes made to the wim
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

@@ -67,10 +67,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
               self.perform_winpe_actions(action)
           except Exception:
             # Unmount the image and discard changes on failure
-            self.deinit_win_pe_image(save=False)
+            self.deinit_win_pe_image(config, save=False)
             raise
           else:
-            self.deinit_win_pe_image()
+            self.deinit_win_pe_image(config)
 
   def download_wib_artifacts(self, config):
     # Download all the windows artifacts from cipd
@@ -122,7 +122,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
 
   def init_win_pe_image(self, arch, dest, index=1):
     """Calls Copy-PE to create WinPE media folder for arch"""
-    with self.m.step.nest('generate windows image folder for ' + arch + ' in ' +
+    with self.m.step.nest('Init WinPE image modification ' + arch + ' in ' +
                           str(dest)):
       # gen a winpe arch dir for the given arch
       self.m.powershell(
@@ -135,13 +135,19 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                               dest.join('media', 'sources', 'boot.wim'), index,
                               self.m.path['cleanup'])
 
-  def deinit_win_pe_image(self, save=True):
+  def deinit_win_pe_image(self, config, save=True):
     """Unmounts the winpe image and saves/discards changes to it"""
-    unmount_wim.unmount_win_wim(
-        self.m.powershell,
-        self._workdir.join('mount'),
-        self.m.path['cleanup'],
-        save=save)
+    with self.m.step.nest('Deinit WinPE image modification'):
+      if save:
+        src = self.m.path['cache'].join('{}.cfg'.format(config.name))
+        self.execute_script('Add cfg {}'.format(src), ADDFILE, None, '-Path',
+                            src, '-Recurse', '-Force', '-Destination',
+                            self._workdir.join('mount'))
+      unmount_wim.unmount_win_wim(
+          self.m.powershell,
+          self._workdir.join('mount'),
+          self.m.path['cleanup'],
+          save=save)
 
   def execute_script(self, name, command, logs=None, *args):
     """Executes the windows powershell script"""
