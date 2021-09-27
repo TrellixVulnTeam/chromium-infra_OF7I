@@ -77,3 +77,111 @@ func TestConvertActionToKarteAction(t *testing.T) {
 		})
 	}
 }
+
+// TestConvertKarteActionToAction tests conversion from a Karte action back to an action.
+func TestConvertKarteActionToAction(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name   string
+		input  *kartepb.Action
+		output *logger.Action
+	}{
+		{
+			name:   "nil action",
+			input:  nil,
+			output: nil,
+		},
+		{
+			name:   "empty action",
+			input:  &kartepb.Action{},
+			output: &logger.Action{},
+		},
+		{
+			name: "non-empty action",
+			input: &kartepb.Action{
+				Name:       "a",
+				FailReason: "w",
+			},
+			output: &logger.Action{
+				Name:       "a",
+				FailReason: "w",
+			},
+		},
+		{
+			name: "full action",
+			input: &kartepb.Action{
+				Name:           "name",
+				Kind:           "a",
+				SwarmingTaskId: "b",
+				AssetTag:       "c",
+				StartTime:      convertTimeToProtobufTimestamp(time.Unix(1, 2)),
+				StopTime:       convertTimeToProtobufTimestamp(time.Unix(3, 4)),
+				FailReason:     "w",
+				Status:         kartepb.Action_FAIL,
+			},
+			output: &logger.Action{
+				Name:           "name",
+				ActionKind:     "a",
+				SwarmingTaskID: "b",
+				AssetTag:       "c",
+				StartTime:      time.Unix(1, 2),
+				StopTime:       time.Unix(3, 4),
+				Status:         logger.ActionStatusFail,
+				FailReason:     "w",
+				Observations:   nil,
+			},
+		},
+	}
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			expected := tt.output
+			actual := convertKarteActionToAction(tt.input)
+			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(logger.Action{})); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
+}
+
+// TestConvertActionRoundTrip tests that converting an action to a karte action and back results in the same action.
+func TestConvertActionRoundTrip(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name  string
+		input *logger.Action
+	}{
+		{
+			name: "simple action",
+			input: &logger.Action{
+				Name: "aaaaa",
+			},
+		},
+		{
+			name: "complex action",
+			input: &logger.Action{
+				Name:           "aaaaaaaaaa",
+				ActionKind:     "a",
+				SwarmingTaskID: "b",
+				AssetTag:       "c",
+				StartTime:      time.Unix(1, 2),
+				StopTime:       time.Unix(3, 4),
+				Status:         logger.ActionStatusFail,
+				FailReason:     "w",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			expected := tt.input
+			actual := convertKarteActionToAction(convertActionToKarteAction(tt.input))
+			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(logger.Action{})); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
+}
