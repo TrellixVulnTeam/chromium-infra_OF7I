@@ -36,6 +36,7 @@ test_coverage_hints {
   chaos_dut: true
 }
 self_serve_pools: "poolval"
+stability: false
 reference_design: "reef"
 hwid_component: [
 	"cellular/fake_cellular"
@@ -505,6 +506,7 @@ test_coverage_hints {
   chaos_dut: true
 }
 self_serve_pools: "poolval"
+stability: false
 reference_design: "reef"
 wifi_chip: "wireless_xxxx"
 platform: "platformval"

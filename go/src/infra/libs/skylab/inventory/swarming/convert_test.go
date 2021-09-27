@@ -35,6 +35,7 @@ test_coverage_hints {
   chaos_dut: true
 }
 self_serve_pools: "poolval"
+stability: true
 reference_design: "reef"
 wifi_chip: "wireless_xxxx"
 hwid_component: [
@@ -183,6 +184,7 @@ test_coverage_hints {
   chaos_dut: true
 }
 self_serve_pools: "poolval"
+stability: true
 reference_design: "reef"
 wifi_chip: "wireless_xxxx"
 hwid_component: [
@@ -329,6 +331,7 @@ var fullDimensions = Dimensions{
 	"label-cts_abi":               {"CTS_ABI_ARM", "CTS_ABI_X86"},
 	"label-cts_cpu":               {"CTS_CPU_ARM", "CTS_CPU_X86"},
 	"label-detachablebase":        {"True"},
+	"label-device-stable":         {"True"},
 	"label-ec_type":               {"EC_TYPE_CHROME_OS"},
 	"label-fingerprint":           {"True"},
 	"label-flashrom":              {"True"},

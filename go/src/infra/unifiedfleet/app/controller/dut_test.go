@@ -2647,6 +2647,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
 			So(resp.GetSchedulableLabels(), ShouldBeNil)
 			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
 		})
 
 		Convey("GetChromeOSDevicedata - hostname happy path", func() {

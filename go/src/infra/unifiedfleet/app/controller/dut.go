@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/config/go/test/dut"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -25,6 +26,7 @@ import (
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
+	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
@@ -852,6 +854,12 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot AdaptToV1DutSpec %s", err)
 	}
+	// Set stability additionally
+	isStable, err := getStability(ctx, machine.GetChromeosMachine().GetModel())
+	if err != nil {
+		logging.Warningf(ctx, "stability cannot be set. Error: %s", err)
+	}
+	dutV1.GetCommon().GetLabels().Stability = &isStable
 	data.DutV1 = dutV1
 	return data, nil
 }
@@ -903,6 +911,15 @@ func getHwidData(ctx context.Context, inv2Client external.CrosInventoryClient, i
 	proto.UnmarshalText(s, &hwidData)
 	logging.Debugf(ctx, "InvV2 hwid data:\n %+v\nUFS hwid data:\n %+v ", resp, &hwidData)
 	return &hwidData, err
+}
+
+func getStability(ctx context.Context, model string) (bool, error) {
+	stability, err := configuration.GetDeviceStability(ctx, model)
+	if err == nil && stability != nil && stability.GetStability() == dut.DeviceStability_UNSTABLE {
+		return false, nil
+	}
+	// Return true for any failed case to make sure no models are false negative.
+	return true, err
 }
 
 // getSchedulableLabels gets Swarming schedulable labels based on DutAttributes

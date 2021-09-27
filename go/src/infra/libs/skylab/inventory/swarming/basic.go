@@ -63,6 +63,10 @@ func basicConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 			}
 		}
 	}
+
+	if ls.GetStability() {
+		dims["label-device-stable"] = []string{"True"}
+	}
 }
 
 func basicReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -99,6 +103,8 @@ func basicReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
 	}
 	ls.Variant = append(ls.Variant, d["label-variant"]...)
 	delete(d, "label-variant")
+
+	d = assignLastBoolValueAndDropKey(d, ls.Stability, "label-device-stable")
 	return d
 }
 

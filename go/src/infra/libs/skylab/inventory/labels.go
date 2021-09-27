@@ -39,6 +39,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 		HwidSku:       new(string),
 		Model:         new(string),
 		Sku:           new(string),
+		Stability:     new(bool),
 		OsType:        new(SchedulableLabels_OSType),
 		Peripherals: &Peripherals{
 			AudioBoard:             new(bool),

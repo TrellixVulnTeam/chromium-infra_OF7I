@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 37
+// NEXT TAG: 38
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -279,6 +279,9 @@ message SchedulableLabels {
   optional string reference_design = 24;
 
   repeated string self_serve_pools = 4;
+
+  // Refer to whether this DUT is stable enough to be scheduled for a test.
+  optional bool stability = 37;
 
   optional TestCoverageHints test_coverage_hints = 18;
 
