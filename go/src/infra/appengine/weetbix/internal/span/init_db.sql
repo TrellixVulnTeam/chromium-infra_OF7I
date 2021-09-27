@@ -37,7 +37,7 @@ CREATE TABLE AnalyzedTestVariants (
   -- Status of the flaky test variant, see AnalyzedTestVariantStatus.
   Status INT64 NOT NULL,
   -- Timestamp when the status field was last updated.
-  StatusUpdateTime TIMESTAMP,
+  StatusUpdateTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
 
   -- Compressed metadata for the test case.
   -- For example, the original test name, test location, etc.
