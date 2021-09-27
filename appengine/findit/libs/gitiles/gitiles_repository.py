@@ -99,8 +99,8 @@ class GitilesRepository(GitRepository):
     status_code, content, _response_headers = self.http_client.Get(
         url, {'format': 'text'}, headers=_GetAccessTokenHeader())
     if status_code != 200:
-      return None
-    return base64.b64decode(content)
+      return None, status_code
+    return base64.b64decode(content), 200
 
   def _GetDateTimeFromString(self,
                              datetime_string,
@@ -208,7 +208,8 @@ class GitilesRepository(GitRepository):
   def GetChangeDiff(self, revision):
     """Returns the raw diff of the given revision."""
     url = '%s/+/%s%%5E%%21/' % (self.repo_url, revision)
-    return self._SendRequestForTextResponse(url)
+    changediff, _ = self._SendRequestForTextResponse(url)
+    return changediff
 
   def GetBlame(self, path, revision):
     """Returns blame of the file at ``path`` of the given revision."""
@@ -233,6 +234,11 @@ class GitilesRepository(GitRepository):
 
   def GetSource(self, path, revision):
     """Returns source code of the file at ``path`` of the given revision."""
+    source, _ = self.GetSourceAndStatus(path, revision)
+    return source
+
+  def GetSourceAndStatus(self, path, revision):
+    """Like GetSource(), but also returns status code of the response."""
     url = '%s/+/%s/%s' % (self.repo_url, urllib.quote(revision), path)
     return self._SendRequestForTextResponse(url)
 

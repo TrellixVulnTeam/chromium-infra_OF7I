@@ -346,6 +346,17 @@ class GitRepositoryTest(TestCase):
     source = self.git_repo.GetSource(path, git_revision)
     self.assertEqual(original_source, source)
 
+  def testGetSourceAndStatus(self):
+    path = 'a/b/c.cc'
+    git_revision = 'dummy_abcd1234'
+    original_source = 'dummy source'
+    self.http_client_for_git.SetResponseForUrl(
+        '%s/+/%s/%s?format=text' % (self.repo_url, git_revision, path),
+        base64.b64encode(original_source))
+    source, status = self.git_repo.GetSourceAndStatus(path, git_revision)
+    self.assertEqual(original_source, source)
+    self.assertEqual(200, status)
+
   def testTimeConversion(self):
     datetime_with_timezone = 'Wed Jul 22 19:35:32 2014 +0400'
     expected_datetime = datetime(2014, 7, 22, 15, 35, 32)

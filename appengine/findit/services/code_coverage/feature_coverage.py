@@ -8,6 +8,7 @@ import logging
 import difflib
 import Queue
 from threading import Thread
+import time
 
 from google.appengine.ext import ndb
 
@@ -51,6 +52,8 @@ _CHROMIUM_PROJECT = 'chromium/src'
 _CHROMIUM_REPO = GitilesRepository(
     FinditHttpClient(),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
+_EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
+
 
 def _GetFeatureCommits(hashtag):
   """Returns merged commits corresponding to a feature.
@@ -307,7 +310,13 @@ def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
     file_content_queue (Queue): Queue which holds the output.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
-  content = _CHROMIUM_REPO.GetSource(file_path[2:], revision)
+  content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  wait_sec = 1
+  # short term qps exceeded, retry with exponential backoff
+  while status == 429 and wait_sec < _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
+    wait_sec *= 2
+    time.sleep(wait_sec)
+    content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
   file_content_queue.put((revision, content.split('\n') if content else []))
 
 
