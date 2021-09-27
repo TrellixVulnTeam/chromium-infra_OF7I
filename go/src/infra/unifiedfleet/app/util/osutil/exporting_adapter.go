@@ -328,6 +328,81 @@ func setLicenses(l *inventory.SchedulableLabels, lic []*chromeosLab.License) {
 	}
 }
 
+func setModemInfo(l *inventory.SchedulableLabels, m *chromeosLab.ModemInfo) {
+	p := inventory.NewModeminfo()
+	imei := m.GetImei()
+	p.Imei = &imei
+	supported_bands := m.GetSupportedBands()
+	p.SupportedBands = &supported_bands
+	sim_count := m.GetSimCount()
+	p.SimCount = &sim_count
+	var t inventory.ModemType
+	mtype := m.GetType()
+	switch mtype {
+	case chromeosLab.ModemType_MODEM_TYPE_QUALCOMM_SC7180:
+		t = inventory.ModemType_MODEM_TYPE_QUALCOMM_SC7180
+	case chromeosLab.ModemType_MODEM_TYPE_FIBOCOMM_L850GL:
+		t = inventory.ModemType_MODEM_TYPE_FIBOCOMM_L850GL
+	case chromeosLab.ModemType_MODEM_TYPE_NL668:
+		t = inventory.ModemType_MODEM_TYPE_NL668
+	default:
+		t = inventory.ModemType_MODEM_TYPE_UNSPECIFIED
+	}
+	p.Type = &t
+	l.Modeminfo = p
+}
+
+func setSimInfo(l *inventory.SchedulableLabels, sim []*chromeosLab.SIMInfo) {
+	l.Siminfo = make([]*inventory.SIMInfo, len(sim))
+	for i, v := range sim {
+		s := inventory.NewSiminfo()
+		sid := v.GetSlotId()
+		s.SlotId = &sid
+		var t inventory.SIMType
+		stype := v.GetType()
+		switch stype {
+		case chromeosLab.SIMType_SIM_PHYSICAL:
+			t = inventory.SIMType_SIM_PHYSICAL
+		case chromeosLab.SIMType_SIM_DIGITAL:
+			t = inventory.SIMType_SIM_DIGITAL
+		default:
+			t = inventory.SIMType_SIM_UNKNOWN
+		}
+		s.Type = &t
+		eid := v.GetEid()
+		s.Eid = &eid
+		testesim := v.GetTestEsim()
+		s.TestEsim = &testesim
+		s.ProfileInfo = make([]*inventory.SIMProfileInfo, len(v.GetProfileInfo()))
+		for j, p := range v.GetProfileInfo() {
+			s.ProfileInfo[j] = inventory.NewSimprofileinfo()
+			iccid := p.GetIccid()
+			s.ProfileInfo[j].Iccid = &iccid
+			pin := p.GetSimPin()
+			s.ProfileInfo[j].SimPin = &pin
+			puk := p.GetSimPuk()
+			s.ProfileInfo[j].SimPuk = &puk
+			var np inventory.NetworkProvider
+			pname := p.GetCarrierName()
+			switch pname {
+			case chromeosLab.NetworkProvider_NETWORK_TEST:
+				np = inventory.NetworkProvider_NETWORK_TEST
+			case chromeosLab.NetworkProvider_NETWORK_ATT:
+				np = inventory.NetworkProvider_NETWORK_ATT
+			case chromeosLab.NetworkProvider_NETWORK_TMOBILE:
+				np = inventory.NetworkProvider_NETWORK_TMOBILE
+			case chromeosLab.NetworkProvider_NETWORK_VERIZON:
+				np = inventory.NetworkProvider_NETWORK_VERIZON
+			default:
+				np = inventory.NetworkProvider_NETWORK_OTHER
+			}
+			s.ProfileInfo[j].CarrierName = &np
+		}
+		l.Siminfo[i] = s
+	}
+
+}
+
 func setDutStateHelper(s chromeosLab.PeripheralState) *bool {
 	var val bool
 	if s == chromeosLab.PeripheralState_UNKNOWN || s == chromeosLab.PeripheralState_NOT_CONNECTED {
@@ -481,6 +556,8 @@ func adaptV2DutToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.DeviceUnd
 
 	setDutPools(labels, dut.GetPools())
 	setLicenses(labels, dut.GetLicenses())
+	setModemInfo(labels, dut.GetModeminfo())
+	setSimInfo(labels, dut.GetSiminfo())
 	setDutPeripherals(labels, p)
 	setDutState(labels, data.GetDutState())
 	setDeviceConfig(labels, devConfig)

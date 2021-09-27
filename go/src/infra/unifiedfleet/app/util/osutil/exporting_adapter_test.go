@@ -141,6 +141,46 @@ var lse = ufspb.MachineLSE{
 									Identifier: "my-office-identifier-B002",
 								},
 							},
+							Modeminfo: &chromeosLab.ModemInfo{
+								Type:           chromeosLab.ModemType_MODEM_TYPE_QUALCOMM_SC7180,
+								Imei:           "imei",
+								SupportedBands: "bands",
+								SimCount:       1,
+							},
+							Siminfo: []*chromeosLab.SIMInfo{
+								{
+									Type:     chromeosLab.SIMType_SIM_DIGITAL,
+									SlotId:   1,
+									Eid:      "eid",
+									TestEsim: true,
+									ProfileInfo: []*chromeosLab.SIMProfileInfo{
+										{
+											Iccid:       "iccid1",
+											SimPin:      "pin1",
+											SimPuk:      "puk1",
+											CarrierName: chromeosLab.NetworkProvider_NETWORK_ATT,
+										},
+										{
+											Iccid:       "iccid2",
+											SimPin:      "pin2",
+											SimPuk:      "puk2",
+											CarrierName: chromeosLab.NetworkProvider_NETWORK_TEST,
+										},
+									},
+								},
+								{
+									Type:   chromeosLab.SIMType_SIM_PHYSICAL,
+									SlotId: 2,
+									ProfileInfo: []*chromeosLab.SIMProfileInfo{
+										{
+											Iccid:       "iccid1",
+											SimPin:      "pin1",
+											SimPuk:      "puk1",
+											CarrierName: chromeosLab.NetworkProvider_NETWORK_ATT,
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -353,6 +393,42 @@ common {
 		licenses: {
 			type: 2
 			identifier: "my-office-identifier-B002"
+		}
+		modeminfo {
+			type: MODEM_TYPE_QUALCOMM_SC7180
+			imei: "imei"
+			supported_bands: "bands"
+			sim_count: 1
+		}
+		siminfo {
+			slot_id: 1
+			type: SIM_DIGITAL
+			eid: "eid"
+			test_esim: true
+			profile_info {
+				iccid: "iccid1"
+				sim_pin: "pin1"
+				sim_puk: "puk1"
+				carrier_name: NETWORK_ATT
+			}
+			profile_info {
+				iccid: "iccid2"
+				sim_pin: "pin2"
+				sim_puk: "puk2"
+				carrier_name: NETWORK_TEST
+			}
+		}
+		siminfo {
+			slot_id: 2
+			type: SIM_PHYSICAL
+			eid: ""
+			test_esim: false
+			profile_info {
+				iccid: "iccid1"
+				sim_pin: "pin1"
+				sim_puk: "puk1"
+				carrier_name: NETWORK_ATT
+			}
 		}
 		model: "test_model"
 		os_type: OS_TYPE_CROS
