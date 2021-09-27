@@ -5,20 +5,21 @@
 package karte
 
 import (
-	kartepb "infra/cros/karte/api"
-	"infra/cros/recovery/logger"
 	"time"
 
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+
+	kartepb "infra/cros/karte/api"
+	"infra/cros/recovery/logger/metrics"
 )
 
-// ConvertActionStatusToKarteActionStatus takes a logger action status and converts it to a Karte action status.
-func convertActionStatusToKarteActionStatus(status logger.ActionStatus) kartepb.Action_Status {
+// ConvertActionStatusToKarteActionStatus takes a metrics action status and converts it to a Karte action status.
+func convertActionStatusToKarteActionStatus(status metrics.ActionStatus) kartepb.Action_Status {
 	// TODO(gregorynisbet): Add support for skipped actions to Karte.
 	switch status {
-	case logger.ActionStatusSuccess:
+	case metrics.ActionStatusSuccess:
 		return kartepb.Action_SUCCESS
-	case logger.ActionStatusFail:
+	case metrics.ActionStatusFail:
 		return kartepb.Action_FAIL
 	default:
 		return kartepb.Action_STATUS_UNSPECIFIED
@@ -26,14 +27,14 @@ func convertActionStatusToKarteActionStatus(status logger.ActionStatus) kartepb.
 }
 
 // ConvertKarteActionStatusToActionStatus takes a Karte action status and converts it to a logger action status.
-func convertKarteActionStatusToActionStatus(status kartepb.Action_Status) logger.ActionStatus {
+func convertKarteActionStatusToActionStatus(status kartepb.Action_Status) metrics.ActionStatus {
 	switch status {
 	case kartepb.Action_SUCCESS:
-		return logger.ActionStatusSuccess
+		return metrics.ActionStatusSuccess
 	case kartepb.Action_FAIL:
-		return logger.ActionStatusFail
+		return metrics.ActionStatusFail
 	default:
-		return logger.ActionStatusUnspecified
+		return metrics.ActionStatusUnspecified
 	}
 }
 
@@ -65,7 +66,7 @@ func convertProtobufTimestampToTime(t *timestamppb.Timestamp) time.Time {
 }
 
 // ConvertActionToKarteAction takes an action and converts it to a Karte action.
-func convertActionToKarteAction(action *logger.Action) *kartepb.Action {
+func convertActionToKarteAction(action *metrics.Action) *kartepb.Action {
 	if action == nil {
 		return nil
 	}
@@ -82,11 +83,11 @@ func convertActionToKarteAction(action *logger.Action) *kartepb.Action {
 }
 
 // ConvertKarteActionToAction takes a Karte action and converts it to an action.
-func convertKarteActionToAction(action *kartepb.Action) *logger.Action {
+func convertKarteActionToAction(action *kartepb.Action) *metrics.Action {
 	if action == nil {
 		return nil
 	}
-	return &logger.Action{
+	return &metrics.Action{
 		Name:           action.GetName(),
 		ActionKind:     action.GetKind(),
 		SwarmingTaskID: action.GetSwarmingTaskId(),

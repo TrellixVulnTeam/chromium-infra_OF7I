@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	kartepb "infra/cros/karte/api"
-	"infra/cros/recovery/logger"
+	"infra/cros/recovery/logger/metrics"
 )
 
 // TestConvertActionToKarteAction tests conversion from an action internal to
@@ -21,7 +21,7 @@ func TestConvertActionToKarteAction(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name   string
-		input  *logger.Action
+		input  *metrics.Action
 		output *kartepb.Action
 	}{
 		{
@@ -31,21 +31,21 @@ func TestConvertActionToKarteAction(t *testing.T) {
 		},
 		{
 			name:   "empty action",
-			input:  &logger.Action{},
+			input:  &metrics.Action{},
 			output: &kartepb.Action{},
 		},
 		{
 			name: "full action",
-			input: &logger.Action{
+			input: &metrics.Action{
 				Name:           "name",
 				ActionKind:     "a",
 				SwarmingTaskID: "b",
 				AssetTag:       "c",
 				StartTime:      time.Unix(1, 2),
 				StopTime:       time.Unix(3, 4),
-				Status:         logger.ActionStatusFail,
+				Status:         metrics.ActionStatusFail,
 				FailReason:     "w",
-				Observations: []*logger.Observation{
+				Observations: []*metrics.Observation{
 					{
 						MetricKind: "aa",
 						ValueType:  "bb",
@@ -84,7 +84,7 @@ func TestConvertKarteActionToAction(t *testing.T) {
 	cases := []struct {
 		name   string
 		input  *kartepb.Action
-		output *logger.Action
+		output *metrics.Action
 	}{
 		{
 			name:   "nil action",
@@ -94,7 +94,7 @@ func TestConvertKarteActionToAction(t *testing.T) {
 		{
 			name:   "empty action",
 			input:  &kartepb.Action{},
-			output: &logger.Action{},
+			output: &metrics.Action{},
 		},
 		{
 			name: "non-empty action",
@@ -102,7 +102,7 @@ func TestConvertKarteActionToAction(t *testing.T) {
 				Name:       "a",
 				FailReason: "w",
 			},
-			output: &logger.Action{
+			output: &metrics.Action{
 				Name:       "a",
 				FailReason: "w",
 			},
@@ -119,14 +119,14 @@ func TestConvertKarteActionToAction(t *testing.T) {
 				FailReason:     "w",
 				Status:         kartepb.Action_FAIL,
 			},
-			output: &logger.Action{
+			output: &metrics.Action{
 				Name:           "name",
 				ActionKind:     "a",
 				SwarmingTaskID: "b",
 				AssetTag:       "c",
 				StartTime:      time.Unix(1, 2),
 				StopTime:       time.Unix(3, 4),
-				Status:         logger.ActionStatusFail,
+				Status:         metrics.ActionStatusFail,
 				FailReason:     "w",
 				Observations:   nil,
 			},
@@ -138,7 +138,7 @@ func TestConvertKarteActionToAction(t *testing.T) {
 			t.Parallel()
 			expected := tt.output
 			actual := convertKarteActionToAction(tt.input)
-			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(logger.Action{})); diff != "" {
+			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(metrics.Action{})); diff != "" {
 				t.Errorf("unexpected diff (-want +got): %s", diff)
 			}
 		})
@@ -150,24 +150,24 @@ func TestConvertActionRoundTrip(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name  string
-		input *logger.Action
+		input *metrics.Action
 	}{
 		{
 			name: "simple action",
-			input: &logger.Action{
+			input: &metrics.Action{
 				Name: "aaaaa",
 			},
 		},
 		{
 			name: "complex action",
-			input: &logger.Action{
+			input: &metrics.Action{
 				Name:           "aaaaaaaaaa",
 				ActionKind:     "a",
 				SwarmingTaskID: "b",
 				AssetTag:       "c",
 				StartTime:      time.Unix(1, 2),
 				StopTime:       time.Unix(3, 4),
-				Status:         logger.ActionStatusFail,
+				Status:         metrics.ActionStatusFail,
 				FailReason:     "w",
 			},
 		},
@@ -179,7 +179,7 @@ func TestConvertActionRoundTrip(t *testing.T) {
 			t.Parallel()
 			expected := tt.input
 			actual := convertKarteActionToAction(convertActionToKarteAction(tt.input))
-			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(logger.Action{})); diff != "" {
+			if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(metrics.Action{})); diff != "" {
 				t.Errorf("unexpected diff (-want +got): %s", diff)
 			}
 		})

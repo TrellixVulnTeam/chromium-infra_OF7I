@@ -2,26 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// The metrics implementation inside the logger package is a default implementation
+// The metrics implementation inside the package of the same name is a default implementation
 // of the Metrics interface. It will never talk to external services.
 // It is intended only for local development.
-package logger
+package metrics
 
 import (
 	"context"
 	"encoding/json"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/logger"
 )
 
 // metrics is a default Metric implementation that logs all events
 // to the logger.
 type metrics struct {
-	logger Logger
+	logger logger.Logger
 }
 
 // NewLogMetrics creates a default metric sink.
-func NewLogMetrics(l Logger) Metrics {
+func NewLogMetrics(l logger.Logger) Metrics {
 	return &metrics{
 		logger: l,
 	}

@@ -2,9 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package logger
+package metrics
 
-import "fmt"
+import (
+	"fmt"
+
+	"infra/cros/recovery/logger"
+)
 
 // helpers_test.go contains utilities for creating fake versions of various
 // types for use in tests. For example, it contains a fake logger, which can
@@ -24,7 +28,7 @@ type fakeLogger struct {
 
 // NewFakeLogger creates a new logger that's suitable for
 // use in tests.
-func newFakeLogger() Logger {
+func newFakeLogger() logger.Logger {
 	return &fakeLogger{
 		messages: make(map[string][]string),
 	}

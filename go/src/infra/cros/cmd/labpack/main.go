@@ -31,6 +31,7 @@ import (
 	"infra/cros/recovery"
 	"infra/cros/recovery/karte"
 	"infra/cros/recovery/logger"
+	"infra/cros/recovery/logger/metrics"
 )
 
 func main() {
@@ -84,7 +85,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if t, ok := supportedTasks[in.TaskName]; ok {
 		task = t
 	}
-	var metrics logger.Metrics
+	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
 		metrics, err = karte.NewMetrics(ctx, kclient.DevConfig(auth.Options{}))

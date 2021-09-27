@@ -21,6 +21,7 @@ import (
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
+	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tlw"
 )
 
@@ -68,7 +69,7 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 			stop := time.Now()
 			_, err := args.Metrics.Create(
 				ctx,
-				&logger.Action{
+				&metrics.Action{
 					ActionKind: "run_recovery",
 					StartTime:  start,
 					StopTime:   stop,
@@ -352,7 +353,7 @@ type RunArgs struct {
 	// Option to use steps.
 	ShowSteps bool
 	// Metrics is the metrics sink and event search API.
-	Metrics logger.Metrics
+	Metrics metrics.Metrics
 	// TaskName used to drive the recovery process.
 	TaskName TaskName
 	// EnableRecovery tells if recovery actions are enabled.

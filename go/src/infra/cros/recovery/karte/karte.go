@@ -6,21 +6,21 @@ package karte
 
 import (
 	"context"
-	kartepb "infra/cros/karte/api"
 
 	"go.chromium.org/luci/common/errors"
 
+	kartepb "infra/cros/karte/api"
 	kclient "infra/cros/karte/client"
-	"infra/cros/recovery/logger"
+	"infra/cros/recovery/logger/metrics"
 )
 
-// Client is a wrapped Karte client that exposes only the logger.Metrics interface.
+// Client is a wrapped Karte client that exposes only the metrics.Metrics interface.
 type client struct {
 	impl kartepb.KarteClient
 }
 
 // NewMetrics creates a new metrics client.
-func NewMetrics(ctx context.Context, c *kclient.Config, o ...kclient.Option) (logger.Metrics, error) {
+func NewMetrics(ctx context.Context, c *kclient.Config, o ...kclient.Option) (metrics.Metrics, error) {
 	innerClient, err := kclient.NewClient(ctx, c, o...)
 	if err != nil {
 		return nil, errors.Annotate(err, "wrap karte client").Err()
@@ -31,7 +31,7 @@ func NewMetrics(ctx context.Context, c *kclient.Config, o ...kclient.Option) (lo
 // Create creates an action and returns the action that was just created.
 // Note that an action contains zero or more observations in it and that observations are not
 // separate.
-func (c *client) Create(ctx context.Context, action *logger.Action) (*logger.Action, error) {
+func (c *client) Create(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	karteResp, err := c.impl.CreateAction(
 		ctx,
 		&kartepb.CreateActionRequest{
@@ -45,9 +45,9 @@ func (c *client) Create(ctx context.Context, action *logger.Action) (*logger.Act
 }
 
 // Update takes an action and updates the entry in the Karte service, the source of truth.
-// TODO(gregorynisbet): This implementation is not complete. A logger action has observations attached to it.
+// TODO(gregorynisbet): This implementation is not complete. A metrics action has observations attached to it.
 // Updating Karte will require inspecting those observations and potentially updating or replacing them.
-func (c *client) Update(ctx context.Context, action *logger.Action) (*logger.Action, error) {
+func (c *client) Update(ctx context.Context, action *metrics.Action) (*metrics.Action, error) {
 	a := convertActionToKarteAction(action)
 	karteResp, err := c.impl.UpdateAction(
 		ctx,
@@ -63,6 +63,6 @@ func (c *client) Update(ctx context.Context, action *logger.Action) (*logger.Act
 }
 
 // Search takes a query struct and produces a resultset.
-func (c *client) Search(ctx context.Context, q *logger.Query) (*logger.QueryResult, error) {
+func (c *client) Search(ctx context.Context, q *metrics.Query) (*metrics.QueryResult, error) {
 	panic("not implemented")
 }
