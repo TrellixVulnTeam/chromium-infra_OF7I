@@ -1717,6 +1717,7 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
           name='%s-%s' % (gerrit_hashtag, task_id),
           queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
           payload=payload,
+          retry_options=taskqueue.TaskRetryOptions(task_retry_limit=2),
           tag=gerrit_hashtag)
       logging.info('task_added with payload %s' % payload)
     return {'return_code': 200}
@@ -1736,14 +1737,23 @@ class ExportFeatureCoverageMetrics(BaseHandler):
       # gets triggered multiple times by the time first invocation of feature
       # coverage for all hashtags finishes.
       tasks = queue.lease_tasks_by_tag(3600, 1000, deadline=60)
-    except (taskqueue.TransientError, apiproxy_errors.DeadlineExceededError):
-      return
-    if tasks:
-      for i in range(1, len(tasks)):
-        queue.delete_tasks(tasks[i])
-      feature_coverage.ExportFeatureCoverage(
-          int(tasks[0].extract_params()['modifier_id']))
-      queue.delete_tasks(tasks[0])
+      if tasks:
+        for i in range(1, len(tasks)):
+          queue.delete_tasks(tasks[i])
+        logging.info('Triggering feature coverage for feature %s', tasks[0].tag)
+        start_time = time.time()
+        feature_coverage.ExportFeatureCoverage(
+            int(tasks[0].extract_params()['modifier_id']))
+        minutes = (time.time() - start_time) / 60
+        logging.info(
+            'Generating feature coverage for feature %s took %.0f minutes',
+            tasks[0].tag, minutes)
+        queue.delete_tasks(tasks[0])
+    except Exception as e:
+      logging.exception(
+          "Error while processing feature coverage for feature %s",
+          tasks[0].tag,
+          exc_info=e)
 
   def HandleGet(self):
     queue = taskqueue.Queue(constants.FEATURE_COVERAGE_METRICS_QUEUE)
