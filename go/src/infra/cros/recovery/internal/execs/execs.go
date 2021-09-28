@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/logger"
+	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tlw"
 )
 
@@ -47,6 +48,8 @@ type RunArgs struct {
 	Logger logger.Logger
 	// Provide option to stop use steps.
 	ShowSteps bool
+	// Metrics records actions and observations.
+	Metrics metrics.Metrics
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
 }
