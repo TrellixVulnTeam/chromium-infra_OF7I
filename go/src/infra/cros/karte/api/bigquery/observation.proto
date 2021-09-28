@@ -1,0 +1,40 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromeos.karte.bigquery;
+
+option go_package = "infra/cros/karte/api;kartepb";
+
+// An observation represents a single concrete measurement. Examples
+// include running a command on a DUT or resetting the servo attached to
+// a DUT.
+//
+// Examples:
+//      battery_level:70 - battery level on device is 70%
+//      rrd:present      - rrd metric is present on device
+//      disk_usage:35    - 35% internal storage used
+//
+message Observation {
+  // The resource name of the observation. Names are generated
+  // automatically when a new observation is created.
+  string name = 1;
+
+  // A reference to a Karte action.
+  string action_name = 2;
+
+  // The metric kind records what measurement is being performed, e.g.
+  // "battery_level" or "disk_usage"
+  string metric_kind = 3;
+
+  // Type is "num" if the type is numeric. Type is "string" otherwise.
+  string type = 4;
+
+  // The string value of an observation.
+  string value_string = 5;
+
+  // The numeric value of a observation.
+  double value_number = 6;
+}

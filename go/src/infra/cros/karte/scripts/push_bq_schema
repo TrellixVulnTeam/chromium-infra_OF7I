@@ -37,6 +37,18 @@ def main():
       f"{24 * 365}h",
   ])
 
+  subprocess.check_call([
+      "bqschemaupdater",
+      "-table",
+      f"{project}.entities.observations",
+      "-message-dir",
+      message_dir,
+      "-message",
+      "chromeos.karte.bigquery.Observation",
+      "-partitioning-expiration",
+      f"{24 * 365}h",
+  ])
+
 
 if __name__ == "__main__":
   main()
