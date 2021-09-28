@@ -55,4 +55,5 @@ var crosEcTypeBoards = []string{
 	"zork",
 	"asurada",
 	"keeby",
+	"puff",
 }
