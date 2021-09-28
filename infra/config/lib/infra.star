@@ -166,11 +166,6 @@ def _tree_closing_notifiers():
             tree_status_host = "infra-status.appspot.com",
             template = "status",
         ),
-        luci.notifier(
-            name = "notify tandrii@",
-            on_new_status = ["FAILURE"],
-            notify_emails = ["tandrii+infra-continuous-self-appointed-gardener@google.com"],
-        ),
     ]
 
 _OS_TO_CATEGORY = {
