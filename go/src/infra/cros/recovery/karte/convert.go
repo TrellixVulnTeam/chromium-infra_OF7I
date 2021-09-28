@@ -26,7 +26,7 @@ func convertActionStatusToKarteActionStatus(status metrics.ActionStatus) kartepb
 	}
 }
 
-// ConvertKarteActionStatusToActionStatus takes a Karte action status and converts it to a logger action status.
+// ConvertKarteActionStatusToActionStatus takes a Karte action status and converts it to a metrics action status.
 func convertKarteActionStatusToActionStatus(status kartepb.Action_Status) metrics.ActionStatus {
 	switch status {
 	case kartepb.Action_SUCCESS:
