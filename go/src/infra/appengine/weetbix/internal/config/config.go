@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/config/validation"
@@ -25,13 +26,22 @@ var cachedCfg = cfgcache.Register(&cfgcache.Entry{
 	},
 })
 
-// Update fetches the config and puts it into the datastore.
+// Update fetches the latest config and puts it into the datastore.
 func Update(ctx context.Context) error {
-	_, err := cachedCfg.Update(ctx, nil)
-	return err
+	var errs []error
+	if _, err := cachedCfg.Update(ctx, nil); err != nil {
+		errs = append(errs, err)
+	}
+	if err := updateProjects(ctx); err != nil {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return errors.NewMultiError(errs...)
+	}
+	return nil
 }
 
-// Get returns the config stored in the cachedCfg.
+// Get returns the service-level config.
 func Get(ctx context.Context) (*Config, error) {
 	cfg, err := cachedCfg.Get(ctx, nil)
 	return cfg.(*Config), err

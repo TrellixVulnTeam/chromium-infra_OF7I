@@ -27,7 +27,7 @@ func createConfig() *Config {
 	return &cfg
 }
 
-func TestConfigValidator(t *testing.T) {
+func TestServiceConfigValidator(t *testing.T) {
 	t.Parallel()
 
 	validate := func(cfg *Config) error {
@@ -56,5 +56,68 @@ func TestConfigValidator(t *testing.T) {
 		cfg := createConfig()
 		cfg.MonorailHostname = ""
 		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+	})
+
+	Convey("empty monorail_hostname is not valid", t, func() {
+		cfg := createConfig()
+		cfg.MonorailHostname = ""
+		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+	})
+}
+
+func TestProjectConfigValidator(t *testing.T) {
+	t.Parallel()
+
+	validate := func(cfg *ProjectConfig) error {
+		c := validation.Context{Context: context.Background()}
+		validateProjectConfig(&c, cfg)
+		return c.Finalize()
+	}
+
+	Convey("config template is valid", t, func() {
+		content, err := ioutil.ReadFile(
+			"../../configs/projects/chromium/chops-weetbix-dev-template.cfg",
+		)
+		So(err, ShouldBeNil)
+		cfg := &ProjectConfig{}
+		So(prototext.Unmarshal(content, cfg), ShouldBeNil)
+		So(validate(cfg), ShouldBeNil)
+	})
+
+	Convey("valid config is valid", t, func() {
+		cfg := createProjectConfig()
+		So(validate(cfg), ShouldBeNil)
+	})
+
+	Convey("monorail", t, func() {
+		Convey("empty project is not valid", func() {
+			cfg := createProjectConfig()
+			cfg.Monorail.Project = ""
+			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+		})
+
+		Convey("illegal project is not valid", func() {
+			cfg := createProjectConfig()
+			// Project does not satisfy regex.
+			cfg.Monorail.Project = "-my-project"
+			So(validate(cfg), ShouldErrLike, "project is not a valid monorail project")
+		})
+
+		Convey("negative priority field ID is not valid", func() {
+			cfg := createProjectConfig()
+			cfg.Monorail.PriorityFieldId = -1
+			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
+
+		Convey("field value with negative field ID is not valid", func() {
+			cfg := createProjectConfig()
+			cfg.Monorail.DefaultFieldValues = []*MonorailFieldValue{
+				{
+					FieldId: -1,
+					Value:   "",
+				},
+			}
+			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
 	})
 }

@@ -8,7 +8,7 @@ package weetbix.v1;
 
 option go_package = "infra/appengine/weetbix/internal/config;config";
 
-// Config is the service-wide configuration data for Weetbix
+// Config is the service-wide configuration data for Weetbix.
 message Config {
   // The endpoint for Monorail APIs.
   string monorail_hostname = 1;
