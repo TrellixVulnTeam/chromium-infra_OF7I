@@ -1,0 +1,59 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromeos.karte.bigquery;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "infra/cros/karte/api/bigquery;kbqpb";
+
+// Action is the type a chromeos.karte.action that has been exported to BigQuery.
+message Action {
+  // The resource name of the action. Names are generated
+  // automatically when a new action is created.
+  string name = 1;
+
+  // A kind is a coarse-grained type of an action, such as
+  // ssh-attempt. New action_kinds will be created frequently so this field
+  // is a string; see https://google.aip.dev/126 for details.
+  string kind = 2;
+
+  // A swarming task ID is the ID of a single swarming task.
+  // The swarming task of an action is the swarming task that invoked the
+  // action.
+  // For example, "4f6c0ba2ef3fc610" is a swarming task ID.
+  string swarming_task_id = 3;
+
+  // An asset tag is the tag of a given asset in UFS.
+  // An asset tag may be a short number such as C444444 printed on a device,
+  // or it may be a UUID in some circumstances.
+  string asset_tag = 4;
+
+  // The start time is the time that an action started.
+  google.protobuf.Timestamp start_time = 5;
+
+  // The stop time is the time that an action finished.
+  google.protobuf.Timestamp stop_time = 6;
+
+  // The create time is the time that an action was created by Karte.
+  // This is the time that the event was first received, since events are
+  // immutable outside of rare cases.
+  // This field is managed by Karte itself.
+  google.protobuf.Timestamp create_time = 7;
+
+  // The status of an action is whether the action succeeded or failed.
+  string status = 8;
+
+  // The fail reason of an event is a diagnostic message that is emitted when
+  // the action in question has failed.
+  string fail_reason = 9;
+
+  // The seal time is when the particular Karte record is sealed and no further changes can be made.
+  google.protobuf.Timestamp seal_time = 10;
+
+  // This is the last time that the particular Karte record was updated on the Karte side.
+  google.protobuf.Timestamp update_time = 11;
+}

@@ -1,0 +1,42 @@
+#!/usr/bin/python3 -IEuB
+
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# This file pushes the bigquery schema to supported Karte projects.
+# Currently, only the dev karte project is supported, but this will change
+# in the near future.
+#
+# This script uses bqschemaupdater to inspect a collection of protos and
+# impose the new schema on the bigquery tables associated with a given
+# Karte project.
+
+import os
+import sys
+import subprocess
+
+this_file = __file__
+
+
+def main():
+  project = "chrome-fleet-karte-dev"
+
+  message_dir = os.path.realpath(
+      os.path.join(os.path.dirname(this_file), "..", "api", "bigquery"))
+
+  subprocess.check_call([
+      "bqschemaupdater",
+      "-table",
+      f"{project}.entities.actions",
+      "-message-dir",
+      message_dir,
+      "-message",
+      "chromeos.karte.bigquery.Action",
+      "-partitioning-expiration",
+      f"{24 * 365}h",
+  ])
+
+
+if __name__ == "__main__":
+  main()
