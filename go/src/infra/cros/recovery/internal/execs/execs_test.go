@@ -29,22 +29,19 @@ func TestRunExec(t *testing.T) {
 	})
 	t.Run("Good sample", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecGood, args, actionArgs)
-		if err != nil {
+		if err := Run(ctx, actionExecGood, args, actionArgs); err != nil {
 			t.Errorf("Expected to pass")
 		}
 	})
 	t.Run("Bad sample", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecBad, args, actionArgs)
-		if err == nil {
+		if err := Run(ctx, actionExecBad, args, actionArgs); err == nil {
 			t.Errorf("Expected to have status Fail")
 		}
 	})
 	t.Run("Send metrics action", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecMetricsAction, args, actionArgs)
-		if err != nil {
+		if err := Run(ctx, actionExecMetricsAction, args, actionArgs); err != nil {
 			t.Errorf("Expected to pass")
 		}
 	})
