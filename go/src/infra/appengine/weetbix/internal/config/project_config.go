@@ -12,6 +12,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/tsmon/field"
+	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/cfgclient"
 	"go.chromium.org/luci/config/validation"
@@ -24,6 +26,15 @@ import (
 var projectCacheSlot = caching.RegisterCacheSlot()
 
 const projectConfigKind = "weetbix.ProjectConfig"
+
+var (
+	importAttemptCounter = metric.NewCounter(
+		"weetbix/project_config/import_attempt",
+		"The number of import attempts of project config",
+		nil,
+		// status can be "success" or "failure".
+		field.String("project"), field.String("status"))
+)
 
 type cachedProjectConfig struct {
 	_extra datastore.PropertyMap `gae:"-,extra"`
@@ -76,8 +87,19 @@ func updateProjects(ctx context.Context) error {
 		}
 	}
 	forceUpdate := false
+	success := true
 	if err := updateStoredConfig(ctx, parsedConfigs, forceUpdate); err != nil {
 		errs = append(errs, err)
+		success = false
+	}
+	// Report success for all projects that passed validation, assuming the
+	// update succeeded.
+	for project, config := range parsedConfigs {
+		status := "success"
+		if !success || config.Config == nil {
+			status = "failure"
+		}
+		importAttemptCounter.Add(ctx, 1, project, status)
 	}
 
 	if len(errs) > 0 {
