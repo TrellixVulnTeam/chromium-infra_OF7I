@@ -2,12 +2,9 @@
 
 * [Contact a trooper](contacting_troopers.md)
 * [See what services chrome infra offers](services/index.md)
-* [Anything to do with the chromium recipe](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/chromium_tests/chromium_recipe.md)
-  . This includes:
-    * Adding a new test to a bot.
-    * Adding a new builder
-    * Adding a new trybot
-    And much more!
+* [Create a new
+  builder](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/infra/new_builder.md)
+* Something else? See http://g.co/bugatrooper
 
 ## User guides
 
