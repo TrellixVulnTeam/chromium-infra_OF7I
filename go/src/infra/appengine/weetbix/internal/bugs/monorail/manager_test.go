@@ -19,6 +19,7 @@ import (
 
 func NewCluster() *clustering.Cluster {
 	return &clustering.Cluster{
+		Project:                "chromium",
 		ClusterID:              "ClusterID",
 		UnexpectedFailures1d:   1300,
 		UnexpectedFailures3d:   3300,
@@ -39,12 +40,14 @@ func TestManager(t *testing.T) {
 	Convey("With Bug Manager", t, func() {
 		ctx := context.Background()
 		f := &FakeIssuesStore{
-			NextID: 100,
+			NextID:            100,
+			PriorityFieldName: "projects/chromium/fieldDefs/11",
 		}
 		user := AutomationUsers[0]
 		cl, err := NewClient(UseFakeIssuesClient(ctx, f, user), "myhost")
 		So(err, ShouldBeNil)
-		bm := NewBugManager(cl)
+		monorailCfgs := ChromiumTestConfig()
+		bm := NewBugManager(cl, monorailCfgs)
 
 		Convey("Create", func() {
 			c := NewCluster()
@@ -140,7 +143,7 @@ func TestManager(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(bug, ShouldEqual, "chromium/100")
 			So(len(f.Issues), ShouldEqual, 1)
-			So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
+			So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
 
 			bugsToUpdate := []*bugs.BugToUpdate{
 				{
@@ -176,7 +179,7 @@ func TestManager(t *testing.T) {
 				Convey("Adjusts priority in response to changed impact", func() {
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
-					So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
 
 					// Verify repeated update has no effect.
 					updateDoesNothing()
@@ -185,7 +188,7 @@ func TestManager(t *testing.T) {
 					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "1")
 					err = usercl.ModifyIssues(ctx, updateReq)
 					So(err, ShouldBeNil)
-					So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
 
 					// Check the update sets the label.
 					expectedIssue := CopyIssue(f.Issues[0].Issue)
@@ -209,7 +212,7 @@ func TestManager(t *testing.T) {
 
 						err := bm.Update(ctx, bugsToUpdate)
 						So(err, ShouldBeNil)
-						So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+						So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
 
 						// Verify repeated update has no effect.
 						updateDoesNothing()
@@ -258,7 +261,7 @@ func TestManager(t *testing.T) {
 							err := bm.Update(ctx, bugsToUpdate)
 							So(err, ShouldBeNil)
 							So(f.Issues[0].Issue.Status.Status, ShouldEqual, AssignedStatus)
-							So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+							So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
 
 							// Verify repeated update has no effect.
 							updateDoesNothing()
@@ -268,7 +271,7 @@ func TestManager(t *testing.T) {
 							err := bm.Update(ctx, bugsToUpdate)
 							So(err, ShouldBeNil)
 							So(f.Issues[0].Issue.Status.Status, ShouldEqual, UntriagedStatus)
-							So(IssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+							So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
 
 							// Verify repeated update has no effect.
 							updateDoesNothing()
@@ -307,7 +310,7 @@ func updateBugPriorityRequest(name string, priority string) *mpb.ModifyIssuesReq
 					Name: name,
 					FieldValues: []*mpb.FieldValue{
 						{
-							Field: priorityFieldName,
+							Field: "projects/chromium/fieldDefs/11",
 							Value: priority,
 						},
 					},

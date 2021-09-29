@@ -11,6 +11,7 @@ import (
 
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config"
 	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"go.chromium.org/luci/common/errors"
@@ -42,6 +43,8 @@ const monorailPageSize = 100
 // for clusters.
 type BugManager struct {
 	client *Client
+	// The snapshot of monorail configuration to use for each project.
+	monorailCfgs map[string]*config.MonorailProject
 	// Simulate, if set, tells BugManager not to make mutating changes
 	// to monorail but only log the changes it would make. Must be set
 	// when running locally as RPCs made from developer systems will
@@ -52,17 +55,23 @@ type BugManager struct {
 
 // NewBugManager initialises a new bug manager, using the specified
 // monorail client.
-func NewBugManager(client *Client) *BugManager {
+func NewBugManager(client *Client, monorailCfgs map[string]*config.MonorailProject) *BugManager {
 	return &BugManager{
-		client:   client,
-		Simulate: false,
+		client:       client,
+		monorailCfgs: monorailCfgs,
+		Simulate:     false,
 	}
 }
 
 // Create creates a new bug for the given cluster, returning its name, or
 // any encountered error.
 func (m *BugManager) Create(ctx context.Context, cluster *clustering.Cluster) (string, error) {
-	req := PrepareNew(cluster)
+	monorailCfg, ok := m.monorailCfgs[cluster.Project]
+	if !ok {
+		return "", fmt.Errorf("no monorail configuration exists for project %q", cluster.Project)
+	}
+	g := NewGenerator(cluster, monorailCfg)
+	req := g.PrepareNew()
 	if m.Simulate {
 		logging.Debugf(ctx, "Would create Monorail issue: %s", textPBMultiline.Format(req))
 		return "", bugs.ErrCreateSimulated
@@ -92,12 +101,17 @@ func (m *BugManager) Update(ctx context.Context, bugs []*bugs.BugToUpdate) error
 		return err
 	}
 	for _, ci := range cis {
-		if NeedsUpdate(ci.cluster, ci.issue) {
+		monorailCfg, ok := m.monorailCfgs[ci.cluster.Project]
+		if !ok {
+			return fmt.Errorf("no monorail configuration exists for project %q", ci.cluster.Project)
+		}
+		g := NewGenerator(ci.cluster, monorailCfg)
+		if g.NeedsUpdate(ci.issue) {
 			comments, err := m.client.ListComments(ctx, ci.issue.Name)
 			if err != nil {
 				return err
 			}
-			req := MakeUpdate(ci.cluster, ci.issue, comments)
+			req := g.MakeUpdate(ci.issue, comments)
 			if m.Simulate {
 				logging.Debugf(ctx, "Would update Monorail issue: %s", textPBMultiline.Format(req))
 			} else {

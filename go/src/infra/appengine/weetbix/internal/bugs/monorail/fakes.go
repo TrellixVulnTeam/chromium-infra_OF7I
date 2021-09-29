@@ -35,7 +35,7 @@ type fakeIssuesClient struct {
 // the given user is authenticated.
 func UseFakeIssuesClient(ctx context.Context, store *FakeIssuesStore, user string) context.Context {
 	f := &fakeIssuesClient{store: store, user: user}
-	return context.WithValue(context.Background(), &testMonorailClientKey, mpb.IssuesClient(f))
+	return context.WithValue(ctx, &testMonorailClientKey, mpb.IssuesClient(f))
 }
 
 func (f *fakeIssuesClient) GetIssue(ctx context.Context, in *mpb.GetIssueRequest, opts ...grpc.CallOption) (*mpb.Issue, error) {
@@ -169,7 +169,7 @@ func (f *fakeIssuesClient) ModifyIssues(ctx context.Context, in *mpb.ModifyIssue
 
 		// Currently only some amendments are created. Support for other
 		// amendments can be added if needed.
-		amendments := createAmendments(filteredDelta.Labels, delta.LabelsRemove, filteredDelta.FieldValues)
+		amendments := f.createAmendments(filteredDelta.Labels, delta.LabelsRemove, filteredDelta.FieldValues)
 		issue.Comments = append(issue.Comments, &mpb.Comment{
 			Name:       fmt.Sprintf("%s/comment/%v", name, len(issue.Comments)),
 			State:      mpb.IssueContentState_ACTIVE,
@@ -188,7 +188,7 @@ func (f *fakeIssuesClient) ModifyIssues(ctx context.Context, in *mpb.ModifyIssue
 	return result, nil
 }
 
-func createAmendments(labelUpdate []*mpb.Issue_LabelValue, labelDeletions []string, fieldUpdates []*mpb.FieldValue) []*mpb.Comment_Amendment {
+func (f *fakeIssuesClient) createAmendments(labelUpdate []*mpb.Issue_LabelValue, labelDeletions []string, fieldUpdates []*mpb.FieldValue) []*mpb.Comment_Amendment {
 	var amendments []string
 	for _, l := range labelUpdate {
 		amendments = append(amendments, l.Label)
@@ -197,7 +197,7 @@ func createAmendments(labelUpdate []*mpb.Issue_LabelValue, labelDeletions []stri
 		amendments = append(amendments, "-"+l)
 	}
 	for _, fv := range fieldUpdates {
-		if fv.Field == priorityFieldName {
+		if fv.Field == f.store.PriorityFieldName {
 			amendments = append(amendments, "Pri-"+fv.Value)
 		}
 		// Other field updates are currently not fully supported by the fake.
@@ -310,6 +310,10 @@ func (f *fakeIssuesClient) MakeIssue(ctx context.Context, in *mpb.MakeIssueReque
 	saved := CopyIssue(in.Issue)
 	saved.Name = fmt.Sprintf("%s/issues/%v", in.Parent, f.store.NextID)
 	saved.Reporter = f.user
+
+	// Ensure data is stored in sorted order, to ensure comparisons in test code are stable.
+	SortFieldValues(saved.FieldValues)
+	SortLabels(saved.Labels)
 
 	f.store.NextID++
 	issue := &IssueData{

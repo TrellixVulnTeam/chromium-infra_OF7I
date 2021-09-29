@@ -24,8 +24,9 @@ type IssueData struct {
 
 // FakeIssuesSystem stores the state of bugs for a fake implementation of monorail.
 type FakeIssuesStore struct {
-	Issues []*IssueData
-	NextID int
+	Issues            []*IssueData
+	NextID            int
+	PriorityFieldName string
 }
 
 // NewIssueData creates new monorail issue data for testing.
@@ -47,12 +48,12 @@ func NewIssue(uniqifier int) *mpb.Issue {
 		Reporter: "user@chromium.org",
 		FieldValues: []*mpb.FieldValue{
 			{
-				Field: priorityFieldName,
-				Value: "1",
+				Field: ChromiumTestTypeField,
+				Value: "Bug",
 			},
 			{
-				Field: typeFieldName,
-				Value: "Bug",
+				Field: ChromiumTestPriorityField,
+				Value: "1",
 			},
 		},
 		Labels: []*mpb.Issue_LabelValue{

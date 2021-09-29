@@ -8,6 +8,7 @@ import (
 	"context"
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config"
 )
 
 // UpdateBugs updates monorail bugs to reflect the latest analysis.
@@ -26,8 +27,16 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds 
 	if err != nil {
 		return err
 	}
+	projectCfg, err := config.Projects(ctx)
+	if err != nil {
+		return err
+	}
+	monorailCfg := make(map[string]*config.MonorailProject)
+	for project, cfg := range projectCfg {
+		monorailCfg[project] = cfg.Monorail
+	}
 	mgrs := make(map[string]BugManager)
-	mbm := monorail.NewBugManager(mc)
+	mbm := monorail.NewBugManager(mc, monorailCfg)
 	mbm.Simulate = simulate
 	mgrs[monorail.ManagerName] = mbm
 

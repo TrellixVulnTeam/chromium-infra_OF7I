@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	mpb "infra/monorailv2/api/v3/api_proto"
-
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config"
+	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"google.golang.org/genproto/protobuf/field_mask"
 )
@@ -31,15 +31,6 @@ const (
 	manualPriorityLabel = "Weetbix-Manual-Priority"
 	restrictViewLabel   = "Restrict-View-Google"
 	managedLabel        = "Weetbix-Managed"
-)
-
-const (
-	// typeFieldName is the name of the type field in the chromium project.
-	// For other projects, the definitions vary.
-	typeFieldName = "projects/chromium/fieldDefs/10"
-	// priorityFieldName is the name of the priority field in the chromium
-	// project. for other projects, the definitions vary.
-	priorityFieldName = "projects/chromium/fieldDefs/11"
 )
 
 // whitespaceRE matches blocks of whitespace, including new lines tabs and
@@ -63,55 +54,77 @@ const AssignedStatus = "Assigned"
 // UntriagedStatus is the status of bugs that have just been opened.
 const UntriagedStatus = "Untriaged"
 
-// PrepareNew prepares a new bug from the given cluster.
-func PrepareNew(cluster *clustering.Cluster) *mpb.MakeIssueRequest {
-	title := cluster.ClusterID
-	if cluster.ExampleFailureReason.Valid {
-		title = cluster.ExampleFailureReason.StringVal
+// Generator provides access to a methods to generate a new bug and/or bug
+// updates for a cluster.
+type Generator struct {
+	// The cluster to generate monorail changes for.
+	cluster *clustering.Cluster
+	// The monorail configuration to use.
+	monorailCfg *config.MonorailProject
+}
+
+// NewGenerator initialises a new Generator.
+func NewGenerator(cluster *clustering.Cluster, monorailCfg *config.MonorailProject) *Generator {
+	return &Generator{
+		cluster:     cluster,
+		monorailCfg: monorailCfg,
 	}
-	return &mpb.MakeIssueRequest{
-		// Analysis clusters are currently hardcoded to one project: chromium.
-		// We also have no configuration mapping LUCI projects to the monorail
-		// projects.
-		Parent: "projects/chromium",
-		Issue: &mpb.Issue{
-			Summary: fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
-			State:   mpb.IssueContentState_ACTIVE,
-			Status:  &mpb.Issue_StatusValue{Status: UntriagedStatus},
-			FieldValues: []*mpb.FieldValue{
-				{
-					Field: typeFieldName,
-					Value: "Bug",
-				},
-				{
-					Field: priorityFieldName,
-					Value: clusterPriority(cluster),
-				},
+}
+
+// PrepareNew prepares a new bug from the given cluster.
+func (g *Generator) PrepareNew() *mpb.MakeIssueRequest {
+	title := g.cluster.ClusterID
+	if g.cluster.ExampleFailureReason.Valid {
+		title = g.cluster.ExampleFailureReason.StringVal
+	}
+	issue := &mpb.Issue{
+		Summary: fmt.Sprintf("Tests are failing: %v", sanitiseTitle(title, 150)),
+		State:   mpb.IssueContentState_ACTIVE,
+		Status:  &mpb.Issue_StatusValue{Status: UntriagedStatus},
+		FieldValues: []*mpb.FieldValue{
+			{
+				Field: g.priorityFieldName(),
+				Value: g.clusterPriority(),
 			},
-			Labels: []*mpb.Issue_LabelValue{{
-				Label: restrictViewLabel,
-			}, {
-				Label: managedLabel,
-			}},
 		},
-		Description: bugDescription(cluster),
+		Labels: []*mpb.Issue_LabelValue{{
+			Label: restrictViewLabel,
+		}, {
+			Label: managedLabel,
+		}},
+	}
+	for _, fv := range g.monorailCfg.DefaultFieldValues {
+		issue.FieldValues = append(issue.FieldValues, &mpb.FieldValue{
+			Field: fmt.Sprintf("projects/%s/fieldDefs/%v", g.monorailCfg.Project, fv.FieldId),
+			Value: fv.Value,
+		})
+	}
+
+	return &mpb.MakeIssueRequest{
+		Parent:      fmt.Sprintf("projects/%s", g.monorailCfg.Project),
+		Issue:       issue,
+		Description: g.bugDescription(),
 		NotifyType:  mpb.NotifyType_EMAIL,
 	}
 }
 
+func (g *Generator) priorityFieldName() string {
+	return fmt.Sprintf("projects/%s/fieldDefs/%v", g.monorailCfg.Project, g.monorailCfg.PriorityFieldId)
+}
+
 // NeedsUpdate determines if the bug for the given cluster needs to be updated.
-func NeedsUpdate(cluster *clustering.Cluster, issue *mpb.Issue) bool {
+func (g *Generator) NeedsUpdate(issue *mpb.Issue) bool {
 	// Bugs must have restrict view label to be updated.
 	if !hasLabel(issue, restrictViewLabel) {
 		return false
 	}
 	// Cases that a bug may be updated follow.
 	switch {
-	case clusterResolved(cluster) != issueVerified(issue):
+	case g.clusterResolved() != issueVerified(issue):
 		return true
 	case !hasLabel(issue, manualPriorityLabel) &&
-		!clusterResolved(cluster) &&
-		clusterPriority(cluster) != IssuePriority(issue):
+		!g.clusterResolved() &&
+		g.clusterPriority() != g.IssuePriority(issue):
 		// The priority has changed on a cluster which is not verified as fixed
 		// and the user isn't manually controlling the priority.
 		return true
@@ -122,7 +135,7 @@ func NeedsUpdate(cluster *clustering.Cluster, issue *mpb.Issue) bool {
 
 // MakeUpdate prepares an updated for the bug associated with a given cluster.
 // Must ONLY be called if NeedsUpdate(...) returns true.
-func MakeUpdate(cluster *clustering.Cluster, issue *mpb.Issue, comments []*mpb.Comment) *mpb.ModifyIssuesRequest {
+func (g *Generator) MakeUpdate(issue *mpb.Issue, comments []*mpb.Comment) *mpb.ModifyIssuesRequest {
 	delta := &mpb.IssueDelta{
 		Issue: &mpb.Issue{
 			Name: issue.Name,
@@ -134,15 +147,15 @@ func MakeUpdate(cluster *clustering.Cluster, issue *mpb.Issue, comments []*mpb.C
 
 	var commentary []string
 	notify := false
-	if clusterResolved(cluster) != issueVerified(issue) {
+	if g.clusterResolved() != issueVerified(issue) {
 		// Verify or reopen the issue.
-		comment := prepareBugVerifiedUpdate(cluster, issue, delta)
+		comment := g.prepareBugVerifiedUpdate(issue, delta)
 		commentary = append(commentary, comment)
 		notify = true
 	}
 	if !hasLabel(issue, manualPriorityLabel) &&
-		!clusterResolved(cluster) &&
-		clusterPriority(cluster) != IssuePriority(issue) {
+		!g.clusterResolved() &&
+		g.clusterPriority() != g.IssuePriority(issue) {
 
 		if hasManuallySetPriority(comments) {
 			// We were not the last to update the priority of this issue.
@@ -153,10 +166,10 @@ func MakeUpdate(cluster *clustering.Cluster, issue *mpb.Issue, comments []*mpb.C
 		} else {
 			// We were the last to update the bug priority.
 			// Apply the priority update.
-			comment := preparePriorityUpdate(cluster, issue, delta)
+			comment := g.preparePriorityUpdate(issue, delta)
 			commentary = append(commentary, comment)
 			// Only notify if increasing priority (decreasing priority number).
-			notify = notify || (clusterPriority(cluster) < IssuePriority(issue))
+			notify = notify || (g.clusterPriority() < g.IssuePriority(issue))
 		}
 	}
 
@@ -173,8 +186,8 @@ func MakeUpdate(cluster *clustering.Cluster, issue *mpb.Issue, comments []*mpb.C
 	return update
 }
 
-func prepareBugVerifiedUpdate(cluster *clustering.Cluster, issue *mpb.Issue, update *mpb.IssueDelta) string {
-	resolved := clusterResolved(cluster)
+func (g *Generator) prepareBugVerifiedUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
+	resolved := g.clusterResolved()
 	var status string
 	var comment string
 	if resolved {
@@ -201,16 +214,16 @@ func prepareManualPriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) strin
 	return fmt.Sprintf("The bug priority has been manually set. To re-enable automatic priority updates by Weetbix, remove the %s label.", manualPriorityLabel)
 }
 
-func preparePriorityUpdate(cluster *clustering.Cluster, issue *mpb.Issue, update *mpb.IssueDelta) string {
+func (g *Generator) preparePriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
 	update.Issue.FieldValues = []*mpb.FieldValue{
 		{
-			Field: priorityFieldName,
-			Value: clusterPriority(cluster),
+			Field: g.priorityFieldName(),
+			Value: g.clusterPriority(),
 		},
 	}
 	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "field_values")
 	return fmt.Sprintf("The impact of this bug's test failures has changed. "+
-		"Weetbix has adjusted the bug priority from %v to %v.", IssuePriority(issue), clusterPriority(cluster))
+		"Weetbix has adjusted the bug priority from %v to %v.", g.IssuePriority(issue), g.clusterPriority())
 }
 
 // hasManuallySetPriority returns whether the the given issue has a manually
@@ -282,7 +295,8 @@ func hasLabel(issue *mpb.Issue, label string) bool {
 }
 
 // IssuePriority returns the priority of the given issue.
-func IssuePriority(issue *mpb.Issue) string {
+func (g *Generator) IssuePriority(issue *mpb.Issue) string {
+	priorityFieldName := g.priorityFieldName()
 	for _, fv := range issue.FieldValues {
 		if fv.Field == priorityFieldName {
 			return fv.Value
@@ -296,34 +310,34 @@ func issueVerified(issue *mpb.Issue) bool {
 }
 
 // bugDescription returns the description that should be used when creating
-// a new bug for the given cluster.
-func bugDescription(cluster *clustering.Cluster) string {
-	if cluster.ExampleFailureReason.Valid {
+// a new bug for the cluster.
+func (g *Generator) bugDescription() string {
+	if g.cluster.ExampleFailureReason.Valid {
 		// We should escape the failure reason in future, if monorail is
 		// extended to support markdown.
-		return fmt.Sprintf(FailureReasonTemplate, cluster.ExampleFailureReason.String())
+		return fmt.Sprintf(FailureReasonTemplate, g.cluster.ExampleFailureReason.String())
 	} else {
-		return fmt.Sprintf(TestNameTemplate, cluster.ClusterID)
+		return fmt.Sprintf(TestNameTemplate, g.cluster.ClusterID)
 	}
 }
 
 // clusterPriority returns the priority of the bug that should be created
-// for a given cluster.
-func clusterPriority(cluster *clustering.Cluster) string {
+// for the cluster.
+func (g *Generator) clusterPriority() string {
 	switch {
-	case cluster.UnexpectedFailures1d > 1000:
+	case g.cluster.UnexpectedFailures1d > 1000:
 		return "0"
-	case cluster.UnexpectedFailures1d > 500:
+	case g.cluster.UnexpectedFailures1d > 500:
 		return "1"
-	case cluster.UnexpectedFailures1d > 100:
+	case g.cluster.UnexpectedFailures1d > 100:
 		return "2"
 	}
 	return "3"
 }
 
 // clusterResolved returns whether the cluster has been resolved.
-func clusterResolved(cluster *clustering.Cluster) bool {
-	return cluster.UnexpectedFailures1d == 0
+func (g *Generator) clusterResolved() bool {
+	return g.cluster.UnexpectedFailures1d == 0
 }
 
 // sanitiseTitle removes tabs and line breaks from input, replacing them with

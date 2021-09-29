@@ -24,7 +24,8 @@ func TestRun(t *testing.T) {
 		setBugClusters(ctx, nil)
 
 		f := &monorail.FakeIssuesStore{
-			NextID: 100,
+			NextID:            100,
+			PriorityFieldName: "projects/chromium/fieldDefs/11",
 		}
 		user := monorail.AutomationUsers[0]
 		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f, user), "myhost")
@@ -41,7 +42,7 @@ func TestRun(t *testing.T) {
 		}
 
 		mgrs := make(map[string]BugManager)
-		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc)
+		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc, monorail.ChromiumTestConfig())
 
 		thres := clustering.ImpactThresholds{
 			UnexpectedFailures1d: 10,
@@ -162,7 +163,7 @@ func TestRun(t *testing.T) {
 			Convey("Changing cluster priority updates issue priority", func() {
 				issue := f.Issues[2].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
-				So(monorail.IssuePriority(issue), ShouldEqual, "3")
+				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "3")
 
 				clusters[3].UnexpectedFailures1d = 10000
 				err = bu.Run(ctx)
@@ -171,14 +172,14 @@ func TestRun(t *testing.T) {
 				So(len(f.Issues), ShouldEqual, 3)
 				issue = f.Issues[2].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
-				So(monorail.IssuePriority(issue), ShouldEqual, "0")
+				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "0")
 
 				expectFinalBugClusters()
 			})
 			Convey("Deleting cluster closes issue", func() {
 				issue := f.Issues[0].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(monorail.IssuePriority(issue), ShouldEqual, "2")
+				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "2")
 
 				// Drop the cluster at index 1.
 				cc.clusters = []*clustering.Cluster{cc.clusters[0], cc.clusters[2], cc.clusters[3]}
