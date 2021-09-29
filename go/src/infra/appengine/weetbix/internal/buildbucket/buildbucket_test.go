@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
-	"go.chromium.org/luci/common/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -25,8 +24,7 @@ func TestGetBuild(t *testing.T) {
 
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
-		mockClient := bbpb.NewMockBuildsClient(ctl)
-		ctx := context.WithValue(context.Background(), &mockedBBClientKey, mockClient)
+		mc := NewMockedClient(context.Background(), ctl)
 
 		bId := int64(87654321)
 		inv := "invocations/build-87654321"
@@ -48,12 +46,11 @@ func TestGetBuild(t *testing.T) {
 				},
 			}, nil
 		}
-		mockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(req),
-			gomock.Any()).DoAndReturn(resF)
+		mc.GetBuild(req, resF)
 
-		bc, err := NewClient(ctx, "bbhost")
+		bc, err := NewClient(mc.Ctx, "bbhost")
 		So(err, ShouldBeNil)
-		b, err := bc.GetResultDBInfo(ctx, bId)
+		b, err := bc.GetResultDBInfo(mc.Ctx, bId)
 		So(err, ShouldBeNil)
 		So(b.Infra.Resultdb.Invocation, ShouldEqual, inv)
 	})

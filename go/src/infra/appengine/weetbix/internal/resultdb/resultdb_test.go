@@ -11,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc"
 
-	"go.chromium.org/luci/common/proto"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -21,11 +20,9 @@ func TestQueryTestVariants(t *testing.T) {
 	t.Parallel()
 
 	Convey("QueryTestVariants", t, func() {
-
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
-		mockClient := rdbpb.NewMockResultDBClient(ctl)
-		ctx := context.WithValue(context.Background(), &mockResultDBClientKey, mockClient)
+		mc := NewMockedClient(context.Background(), ctl)
 
 		inv := "invocations/build-87654321"
 		req := &rdbpb.QueryTestVariantsRequest{
@@ -62,12 +59,11 @@ func TestQueryTestVariants(t *testing.T) {
 				NextPageToken: "",
 			}, nil
 		}
-		mockClient.EXPECT().QueryTestVariants(gomock.Any(), proto.MatcherEqual(req),
-			gomock.Any()).DoAndReturn(resF)
+		mc.QueryTestVariants(req, resF)
 
-		rc, err := NewClient(ctx, "rdbhost")
+		rc, err := NewClient(mc.Ctx, "rdbhost")
 		So(err, ShouldBeNil)
-		tvs, err := rc.QueryTestVariants(ctx, inv)
+		tvs, err := rc.QueryTestVariants(mc.Ctx, inv)
 		So(err, ShouldBeNil)
 		So(len(tvs), ShouldEqual, 2)
 	})
