@@ -29,8 +29,12 @@
         "fuchsia-official",
         "linux-official",
         "linux-archive-tagged",
+        "mac-archive-tagged",
+        "mac-arm64-archive-tagged",
         "win-archive-dbg",
-        "win32-archive-dbg"
+        "win-archive-tagged",
+        "win32-archive-dbg",
+        "win32-archive-tagged"
       ]
     },
     "chromium.android": {
