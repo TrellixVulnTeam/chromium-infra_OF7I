@@ -30,6 +30,9 @@ const AtlLabAdminRealm = "@internal:ufs/os-atl"
 // AcsLabAdminRealm is the admin realm for acs lab.
 const AcsLabAdminRealm = "@internal:ufs/os-acs"
 
+//SatLabInternalUserRealm is realm for satlab internal users.
+const SatLabInternalUserRealm = "@internal:ufs/satlab-internal-users"
+
 // SkipRealmsCheck flag to skip realms check
 var SkipRealmsCheck = false
 
@@ -134,8 +137,7 @@ func ToUFSRealm(zone string) string {
 		ufsZone == ufspb.Zone_ZONE_CHROMEOS7 || ufsZone == ufspb.Zone_ZONE_CHROMEOS15 {
 		return AcsLabAdminRealm
 	} else if ufsZone == ufspb.Zone_ZONE_SATLAB {
-		// TODO(eshwar) : Create a new satlab realm and return it here.
-		return ""
+		return SatLabInternalUserRealm
 	}
 	return AtlLabAdminRealm
 }
