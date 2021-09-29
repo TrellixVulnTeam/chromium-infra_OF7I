@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build !windows
 // +build !windows
 
 package main
@@ -16,6 +17,7 @@ import (
 	"infra/cros/internal/gs"
 
 	"github.com/golang/mock/gomock"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 	gitpb "go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
@@ -66,7 +68,8 @@ var (
 )
 
 type testConfig struct {
-	projects map[string][]string
+	projects   map[string][]string
+	otherRepos []string
 	// Map between buildspec name and whether or not to expect a GS write.
 	buildspecs       map[string]bool
 	branches         []string
@@ -121,28 +124,30 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 		nil,
 	).AnyTimes()
 
-	// Mock tip-of-branch (branch) manifest file requests.
+	projects := map[string]string{}
 	for prog, projs := range tc.projects {
+		projects["chromeos/program/"+prog] = fmt.Sprintf("chromeos-%s", prog)
 		for _, proj := range projs {
-			projects := []string{
-				"chromeos/program/" + prog,
-				"chromeos/project/" + prog + "/" + proj,
+			projects["chromeos/project/"+prog+"/"+proj] = fmt.Sprintf("chromeos-%s-%s", prog, proj)
+		}
+	}
+	for _, repo := range tc.otherRepos {
+		projects[repo] = gsBuildspecPath(repo).Bucket()
+	}
+	// Mock tip-of-branch (branch) manifest file requests.
+	for project := range projects {
+		for _, branch := range tc.branches {
+			reqLocalManifest := &gitilespb.DownloadFileRequest{
+				Project:    project,
+				Path:       "local_manifest.xml",
+				Committish: branch,
 			}
-			for _, project := range projects {
-				for _, branch := range tc.branches {
-					reqLocalManifest := &gitilespb.DownloadFileRequest{
-						Project:    project,
-						Path:       "local_manifest.xml",
-						Committish: branch,
-					}
-					gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
-						&gitilespb.DownloadFileResponse{
-							Contents: unpinnedLocalManifestXML,
-						},
-						nil,
-					)
-				}
-			}
+			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+				&gitilespb.DownloadFileResponse{
+					Contents: unpinnedLocalManifestXML,
+				},
+				nil,
+			).AnyTimes()
 		}
 	}
 
@@ -220,13 +225,8 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 	for buildspec, expectWrite := range tc.buildspecs {
 		relpath := fmt.Sprintf("buildspecs/%s", buildspec)
 		if expectWrite {
-			for prog, projs := range tc.projects {
-				for _, proj := range projs {
-					program_bucket := fmt.Sprintf("gs://chromeos-%s/", prog)
-					project_bucket := fmt.Sprintf("gs://chromeos-%s-%s/", prog, proj)
-					expectedWrites[program_bucket+relpath] = []byte(pinnedLocalManifestXML)
-					expectedWrites[project_bucket+relpath] = []byte(pinnedLocalManifestXML)
-				}
+			for _, bucket := range projects {
+				expectedWrites[string(lgs.MakePath(bucket, relpath))] = []byte(pinnedLocalManifestXML)
 			}
 		}
 		list := []string{}
@@ -237,11 +237,8 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 		expectedBucketLists[relpath] = list
 	}
 	expectedLists := make(map[string]map[string][]string)
-	for prog, projs := range tc.projects {
-		for _, proj := range projs {
-			expectedLists[fmt.Sprintf("chromeos-%s", prog)] = expectedBucketLists
-			expectedLists[fmt.Sprintf("chromeos-%s-%s", prog, proj)] = expectedBucketLists
-		}
+	for _, bucket := range projects {
+		expectedLists[bucket] = expectedBucketLists
 	}
 	if tc.dryRun {
 		expectedWrites = make(map[string][]byte)
@@ -460,6 +457,28 @@ func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
 		minMilestone: 94,
 		projects:     []string{"galaxy/*"},
 		push:         true,
+	}
+	assert.NilError(t, b.CreateBuildspecs(f, gc))
+}
+
+func TestCreateProjectBuildspecOtherRepos(t *testing.T) {
+	t.Parallel()
+	tc := testConfig{
+		projects: map[string][]string{
+			"galaxy": {"milkyway"},
+		},
+		otherRepos: []string{"chromeos-vendor-qti-camx"},
+		buildspecs: map[string]bool{
+			"full/buildspecs/93/13811.0.0.xml": true,
+		},
+		branches: []string{"refs/heads/release-R93-13816.B"},
+	}
+	f, gc := tc.setUpPPBTest(t)
+
+	b := projectBuildspec{
+		buildspec:  "full/buildspecs/93/13811.0.0.xml",
+		otherRepos: []string{"chromeos-vendor-qti-camx"},
+		projects:   []string{"galaxy/milkyway"},
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }

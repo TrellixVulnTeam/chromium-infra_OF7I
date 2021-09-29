@@ -60,6 +60,7 @@ type projectBuildspec struct {
 	watchPaths   []string
 	minMilestone int
 	projects     []string
+	otherRepos   []string
 	force        bool
 	ttl          int
 	push         bool
@@ -90,6 +91,11 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 			b.Flags.Var(luciflag.CommaList(&b.projects), "projects",
 				"Comma-separated list of projects (e.g. galaxy/milkyway) to create buildspecs for."+
 					" Supports wildcards, e.g. galaxy/* or galaxy/milk*.")
+			b.Flags.Var(luciflag.CommaList(&b.otherRepos), "other-repos",
+				"Comma-separated list of repositories (e.g. chromeos/vendor/qti/camx) to create buildspecs for."+
+					" Each repository must have a local_manifest.xml file at HEAD."+
+					" Buildspecs will be uploaded to the corresponding gs bucket, e.g."+
+					"gs://chromeos-vendor-qti-camx.")
 			b.Flags.IntVar(&b.ttl, "ttl", -1,
 				"TTL (in days) of newly generated buildspecs. If not set, no TTL will be set.")
 			return b
@@ -107,8 +113,8 @@ func (b *projectBuildspec) validate() error {
 		return fmt.Errorf("--min_milestone required for --paths")
 	}
 
-	if len(b.projects) == 0 {
-		return fmt.Errorf("must specify at least one project with --projects")
+	if len(b.projects) == 0 && len(b.otherRepos) == 0 {
+		return fmt.Errorf("must specify at least one project with --projects or --other-repos")
 	}
 	return nil
 }
@@ -152,16 +158,20 @@ func (b *projectBuildspec) Run(a subcommands.Application, args []string, env sub
 	return 0
 }
 
-// gsProjectPath returns the appropriate GS path for the given project/version.
-func gsProjectPath(program, project, buildspec string) lgs.Path {
-	relPath := filepath.Join("buildspecs/", buildspec)
-	return lgs.MakePath(fmt.Sprintf("chromeos-%s-%s", program, project), relPath)
+// gsProjectPath returns the appropriate GS path for the given project.
+func gsProjectPath(program, project string) lgs.Path {
+	return lgs.MakePath(fmt.Sprintf("chromeos-%s-%s", program, project), "buildspecs/")
 }
 
-// gsProgramPath returns the appropriate GS path for the given program/version.
-func gsProgramPath(program, buildspec string) lgs.Path {
-	relPath := filepath.Join("buildspecs/", buildspec)
-	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
+// gsProgramPath returns the appropriate GS path for the given program.
+func gsProgramPath(program string) lgs.Path {
+	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), "buildspecs/")
+}
+
+// gsBuildspecPath returns the appropriate GS path for the given CrOS repo.
+func gsBuildspecPath(name string) lgs.Path {
+	bucket := strings.Join(strings.Split(name, "/"), "-")
+	return lgs.MakePath(bucket, "buildspecs/")
 }
 
 // parseProject takes a project string of the form galaxy/milkway and returns
@@ -279,18 +289,33 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 	if err != nil {
 		return errors.Annotate(err, "failed to resolve projects").Err()
 	}
+	var errs []error
 	if len(projects) == 0 {
-		return fmt.Errorf("no projects were found for patterns %s", strings.Join(b.projects, ","))
+		errs = append(errs, fmt.Errorf("no projects were found for patterns %s", strings.Join(b.projects, ",")))
 	}
 
 	// Iterate through all projects/programs and create buildspecs.
-	var errs []error
 	for _, proj := range projects {
 		program, project, err := parseProject(proj)
 		if err != nil {
 			return errors.Annotate(err, "invalid project %s", proj).Err()
 		}
-		if err := CreateProjectBuildspecs(program, project, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+
+		logPrefix := fmt.Sprintf("%s/%s: ", program, project)
+		programProject := chromeosProgramPrefix + program
+		projectProject := chromeosProjectPrefix + program + "/" + project
+		projects := map[string]projectBuildspecConfig{
+			programProject: {
+				uploadPath: gsProgramPath(program),
+				optional:   true,
+			},
+			projectProject: {
+				uploadPath: gsProjectPath(program, project),
+				optional:   false,
+			},
+		}
+
+		if err := CreateProjectBuildspecs(logPrefix, projects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
 			// If the projects were not all explicitly specified (i.e. some
 			// projects were selected with a wildcard) we shouldn't fail if
 			// some project does not have a local manifest.
@@ -301,16 +326,33 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 			errs = append(errs, err)
 		}
 	}
+	// Process --other-repos.
+	otherProjects := map[string]projectBuildspecConfig{}
+	for _, project := range b.otherRepos {
+		otherProjects[project] = projectBuildspecConfig{
+			uploadPath: gsBuildspecPath(project),
+			optional:   false,
+		}
+	}
+	if err := CreateProjectBuildspecs("", otherProjects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+		errs = append(errs, err)
+	}
 	if len(errs) == 0 {
 		return nil
 	}
 	return errors.NewMultiError(errs...)
 }
 
-// CreateProjectBuildspec creates a project/program-specific buildspec as
+type projectBuildspecConfig struct {
+	uploadPath lgs.Path
+	optional   bool
+}
+
+// CreateProjectBuildspec creates local-manifest-specific buildspecs as
 // outlined in go/per-project-buildspecs.
-func CreateProjectBuildspecs(program, project string, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
-	logPrefix := fmt.Sprintf("%s/%s", program, project)
+// Projects is a map between project name and config, e.g.
+// chromeos/project/galaxy/milkyway : {gs://chromeos-galaxy-milkyway/, true}
+func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
 
 	// Aggregate buildspecs by milestone.
 	buildspecsByMilestone := make(map[int][]string)
@@ -359,22 +401,20 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 
 		localManifests := make(map[string]*repo.Manifest)
 
-		programProject := chromeosProgramPrefix + program
-		projectProject := chromeosProjectPrefix + program + "/" + project
-		for _, project := range []string{projectProject, programProject} {
+		for project, config := range projects {
 			// Load the local manifest for the appropriate project/branch.
 			localManifests[project], err = manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 				project, releaseBranch, "local_manifest.xml")
 			if err != nil {
-				if project == programProject {
-					LogErr("%s: couldn't load local_manifest.xml for program %s, it may not exist for the program so skipping...", logPrefix, program)
+				if config.optional {
+					LogErr("%scouldn't load local_manifest.xml for  %s, marked as optional so skipping...", logPrefix, project)
 					continue
 				}
 				err = MissingLocalManifestError{
 					project: project,
 					err:     err,
 				}
-				return errors.Annotate(err, "%s: error loading tip-of-branch manifest", logPrefix).Err()
+				return errors.Annotate(err, "%serror loading tip-of-branch manifest", logPrefix).Err()
 			}
 		}
 
@@ -400,28 +440,25 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 				return errors.Annotate(err, "error loading buildspec manifest").Err()
 			}
 
-			projects := map[string]lgs.Path{
-				programProject: gsProgramPath(program, buildspec),
-				projectProject: gsProjectPath(program, project, buildspec),
-			}
-			for project, uploadPath := range projects {
+			for project, config := range projects {
+				uploadPath := config.uploadPath.Concat(buildspec)
 				files, err := gsClient.List(ctx, uploadPath.Bucket(), uploadPath.Filename())
 				if !force && err == nil && len(files) > 0 {
 					// This is an optimization check so don't really care if there's an error.
-					LogOut("%s: %s already exists, will not regenerate unless --force is set",
+					LogOut("%s%s already exists, will not regenerate unless --force is set",
 						logPrefix, buildspec)
 					continue
 				}
 
-				localManifest := localManifests[project]
-				if localManifest == nil {
+				localManifest, ok := localManifests[project]
+				if !ok || localManifest == nil {
 					continue
 				}
 				// Create the project/program-specific buildspec.
 				if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 					switch err.(type) {
 					case manifestutil.MissingProjectsError:
-						LogOut("%s: missing projects in reference manifest, leaving unpinned: %s", logPrefix,
+						LogOut("%smissing projects in reference manifest, leaving unpinned: %s", logPrefix,
 							err.(manifestutil.MissingProjectsError).MissingProjects)
 					default:
 						return err
@@ -438,7 +475,7 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 					if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
 						return err
 					}
-					LogOut("%s: wrote buildspec to %s\n", logPrefix, string(uploadPath))
+					LogOut("%swrote buildspec to %s\n", logPrefix, string(uploadPath))
 					// Set TTL if appropriate.
 					if ttl > 0 {
 						if err := gsClient.SetTTL(ctx, uploadPath, time.Duration(ttl*24*int(time.Hour))); err != nil {
@@ -446,7 +483,7 @@ func CreateProjectBuildspecs(program, project string, buildspecs []string, push,
 						}
 					}
 				} else {
-					LogOut("%s: dry run, would have written buildspec to %s\n", logPrefix, string(uploadPath))
+					LogOut("%sdry run, would have written buildspec to %s\n", logPrefix, string(uploadPath))
 				}
 			}
 		}
