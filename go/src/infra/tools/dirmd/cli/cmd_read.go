@@ -85,6 +85,14 @@ func (r *readRun) run(ctx context.Context, dirs []string) error {
 		dirs = []string{"."}
 	}
 
+	// Canonicalize paths.
+	for i, d := range dirs {
+		var err error
+		if dirs[i], err = canonicalFSPath(d); err != nil {
+			return errors.Annotate(err, "failed to canonicalize %q", d).Err()
+		}
+	}
+
 	formInt, ok := dirmdpb.MappingForm_value[strings.ToUpper(r.formString)]
 	if !ok {
 		return errors.Reason("invalid value of -form").Err()

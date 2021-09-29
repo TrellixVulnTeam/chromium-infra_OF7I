@@ -39,12 +39,21 @@ type validateRun struct {
 func (r *validateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	exitCode := 0
 	for _, fileName := range args {
+		origFileName := fileName
+		var err error
+		if fileName, err = canonicalFSPath(fileName); err != nil {
+			fmt.Printf("%s: failed to canonicalize: %s\n", origFileName, err)
+			exitCode = 1
+			continue
+		}
+
 		if err := dirmd.ValidateFile(fileName); err != nil {
 			fmt.Printf("%s: %s\n", fileName, err)
 			exitCode = 1
-		} else {
-			fmt.Printf("%s: valid\n", fileName)
+			continue
 		}
+
+		fmt.Printf("%s: valid\n", fileName)
 	}
 	return exitCode
 }

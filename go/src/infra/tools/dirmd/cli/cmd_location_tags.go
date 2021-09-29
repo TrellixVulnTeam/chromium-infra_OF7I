@@ -58,6 +58,15 @@ func (r *tagRun) run(ctx context.Context, args []string) error {
 	defer cancel()
 	defer signals.HandleInterrupt(cancel)()
 
+	// Canonicalize paths.
+	var err error
+	if r.root, err = canonicalFSPath(r.root); err != nil {
+		return errors.Annotate(err, "failed to canonicalize %q", r.root).Err()
+	}
+	if r.repo, err = canonicalFSPath(r.repo); err != nil {
+		return errors.Annotate(err, "failed to canonicalize %q", r.repo).Err()
+	}
+
 	if len(args) != 0 {
 		return errors.Reason("unexpected positional arguments: %q", args).Err()
 	}
