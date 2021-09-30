@@ -3,6 +3,9 @@ extends: ../base.yaml
 
 inputsdir: ../../../go/src/go.chromium.org/luci/tokenserver/appengine
 
+sources:
+  - ../../../go/src/go.chromium.org/luci/tokenserver
+
 build:
   - go_gae_bundle: ${inputsdir}/frontend/app.yaml
     dest: ${contextdir}/frontend

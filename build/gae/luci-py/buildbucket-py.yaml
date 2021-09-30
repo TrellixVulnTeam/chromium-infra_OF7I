@@ -2,3 +2,7 @@ name: luci-py/buildbucket-py
 extends: ../base.yaml
 
 contextdir: ../../../appengine/cr-buildbucket
+
+sources:
+  - ../../../appengine/cr-buildbucket
+  - ../../../luci/appengine/components/components

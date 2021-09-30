@@ -3,6 +3,10 @@ extends: ../base.yaml
 
 contextdir: ../../../luci/appengine/config_service
 
+sources:
+  - ../../../luci/appengine/config_service
+  - ../../../luci/appengine/components/components
+
 build:
   - run: ['make', 'release']
     cwd: ${contextdir}/ui

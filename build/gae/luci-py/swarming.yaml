@@ -2,3 +2,7 @@ name: luci-py/swarming
 extends: ../base.yaml
 
 contextdir: ../../../luci/appengine/swarming
+
+sources:
+  - ../../../luci/appengine/swarming
+  - ../../../luci/appengine/components/components

@@ -4,6 +4,9 @@ extends: ../../../base.yaml
 contextdir: ../../../../../go/src/go.chromium.org/luci/server/cmd/tq-sweeper-spanner/docker
 deterministic: true
 
+sources:
+  - ../../../../../go/src/go.chromium.org/luci/server/cmd/tq-sweeper-spanner
+
 build:
   - go_binary: go.chromium.org/luci/server/cmd/tq-sweeper-spanner
     dest: ${contextdir}/bin/tq-sweeper-spanner

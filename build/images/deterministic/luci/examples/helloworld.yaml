@@ -4,5 +4,8 @@ extends: ../../../base.yaml
 dockerfile: ../../../../../go/src/go.chromium.org/luci/examples/k8s/helloworld/docker/Dockerfile
 deterministic: true
 
+sources:
+  - ../../../../../go/src/go.chromium.org/luci/examples/k8s/helloworld
+
 build:
   - go_binary: go.chromium.org/luci/examples/k8s/helloworld

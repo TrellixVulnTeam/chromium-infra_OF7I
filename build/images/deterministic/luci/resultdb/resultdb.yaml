@@ -4,6 +4,9 @@ extends: ../../../base.yaml
 contextdir: ../../../../../go/src/go.chromium.org/luci/resultdb/cmd/resultdb/docker
 deterministic: true
 
+sources:
+  - ../../../../../go/src/go.chromium.org/luci/resultdb
+
 build:
   - go_binary: go.chromium.org/luci/resultdb/cmd/resultdb
     dest: ${contextdir}/bin/resultdb

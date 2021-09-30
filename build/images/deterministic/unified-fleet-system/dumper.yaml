@@ -4,6 +4,9 @@ extends: ../../base.yaml
 dockerfile: ../../../../go/src/infra/unifiedfleet/cmd/dumper/docker/Dockerfile
 deterministic: true
 
+sources:
+  - ../../../../go/src/infra/unifiedfleet
+
 build:
   - go_binary: infra/unifiedfleet/cmd/dumper
     # ContextDir defaults to the directory with Dockerfile
