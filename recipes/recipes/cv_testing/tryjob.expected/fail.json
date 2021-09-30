@@ -1,0 +1,13 @@
+[
+  {
+    "cmd": [],
+    "name": "1 step per recipe keeps a recipe engine crash away"
+  },
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "tryjob wants to be red"
+    },
+    "name": "$result"
+  }
+]

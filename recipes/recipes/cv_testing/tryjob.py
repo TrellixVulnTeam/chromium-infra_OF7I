@@ -19,6 +19,10 @@ def RunSteps(api, properties):
   api.step('1 step per recipe keeps a recipe engine crash away', cmd=None)
   if properties.reuse_own_mode_only:
     api.cq.allow_reuse_for(api.cq.run_mode)
+  if properties.fail:
+    raise api.step.StepFailure('tryjob wants to be red')
+  if properties.infra_fail:
+    raise api.step.InfraFailure('tryjob wants to be purple')
 
 
 def GenTests(api):
@@ -34,4 +38,12 @@ def GenTests(api):
   yield test(
       'reuse-by-the-same-mode-only',
       api.properties(reuse_own_mode_only=True),
+  )
+  yield test(
+      'fail',
+      api.properties(fail=True),
+  )
+  yield test(
+      'infra_fail',
+      api.properties(infra_fail=True),
   )
