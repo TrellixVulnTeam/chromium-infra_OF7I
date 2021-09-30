@@ -12,6 +12,10 @@ option go_package = "infra/appengine/weetbix/internal/config;config";
 message ProjectConfig {
   // The monorail configuration to use when filing bugs.
   MonorailProject monorail = 1;
+
+  // The threshold at which to file bugs. If a cluster's impact exceeds
+  // the given threshold, a bug will be filed for it.
+  ImpactThreshold bug_filing_threshold = 2;
 }
 
 // MonorailProject describes the configuration to use when filing bugs
@@ -30,6 +34,17 @@ message MonorailProject {
   // https://monorail-prod.appspot.com/p/<project>/adminLabels, scrolling
   // down to Custom fields and finding the ID of the field you wish to set.
   int64 priority_field_id = 3;
+
+  // The possible bug priorities and their associated impact thresholds.
+  // Priorities must be listed from highest (i.e. P0) to lowest (i.e. P3).
+  // Higher priorities can only be reached if the thresholds for all lower
+  // priorities are also met.
+  // The impact thresholds for setting the lowest priority implicitly
+  // identifies the bug closure threshold -- if no priority can be
+  // matched, the bug is closed. Satisfying the threshold for filing bugs MUST
+  // at least imply the threshold for the lowest priority, and MAY imply
+  // the thresholds of higher priorities.
+  repeated MonorailPriority priorities = 4;
 }
 
 // MonorailFieldValue describes a monorail field/value pair.
@@ -57,4 +72,31 @@ message MonorailFieldValue {
   // defined in the Monorail v3 API, found here:
   // https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/api/v3/api_proto/issue_objects.proto?q=%22message%20FieldValue%22
   string value = 2;
+}
+
+// MonorailPriority represents configuration for when to use a given
+// priority value in a bug.
+message MonorailPriority {
+  // The monorail priority value. For example, "0". This depends on the
+  // valid priority field values you have defined in your monorail project.
+  string priority = 1;
+
+  // The threshold at which to apply the priority.
+  ImpactThreshold threshold = 2;
+}
+
+// ImpactThreshold specifies a condition on a cluster's impact metrics.
+// The threshold is considered satisfied if any of the individual metric
+// thresholds is satisfied (i.e. if multiple thresholds are set, they are
+// combined using an OR-semantic). If no threshold is set on any individual
+// metric, the threshold as a whole is unsatisfiable.
+message ImpactThreshold {
+  // The minimum number of unexpected failures that should occur in 1 day.
+  optional int64 unexpected_failures_1d = 1;
+
+  // The minimum number of unexpected failures that should occur in 3 days.
+  optional int64 unexpected_failures_3d = 2;
+
+  // The minimum number of unexpected failures that should occur in 7 days.
+  optional int64 unexpected_failures_7d = 3;
 }

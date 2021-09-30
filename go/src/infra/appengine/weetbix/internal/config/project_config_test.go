@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/caching"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -26,11 +27,25 @@ var textPBMultiline = prototext.MarshalOptions{
 	Multiline: true,
 }
 
+func createImpactThreshold() *ImpactThreshold {
+	return &ImpactThreshold{
+		UnexpectedFailures_1D: proto.Int64(1000),
+	}
+}
+
 func createProjectConfig() *ProjectConfig {
 	return &ProjectConfig{
 		Monorail: &MonorailProject{
-			Project: "chromium",
+			Project:         "chromium",
+			PriorityFieldId: 10,
+			Priorities: []*MonorailPriority{
+				{
+					Priority:  "0",
+					Threshold: createImpactThreshold(),
+				},
+			},
 		},
+		BugFilingThreshold: createImpactThreshold(),
 	}
 }
 

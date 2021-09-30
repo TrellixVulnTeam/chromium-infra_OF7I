@@ -44,6 +44,7 @@ func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectC
 
 func validateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
 	validateMonorail(ctx, cfg.Monorail)
+	validateImpactThreshold(ctx, cfg.BugFilingThreshold, "bug_filing_threshold")
 }
 
 func validateMonorail(ctx *validation.Context, cfg *MonorailProject) {
@@ -55,9 +56,10 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject) {
 		return
 	}
 
-	validateMonorailProject(ctx, cfg.GetProject())
-	validateDefaultFieldValues(ctx, cfg.GetDefaultFieldValues())
-	validateFieldID(ctx, cfg.GetPriorityFieldId(), "priority_field_id")
+	validateMonorailProject(ctx, cfg.Project)
+	validateDefaultFieldValues(ctx, cfg.DefaultFieldValues)
+	validateFieldID(ctx, cfg.PriorityFieldId, "priority_field_id")
+	validatePriorities(ctx, cfg.Priorities)
 }
 
 func validateMonorailProject(ctx *validation.Context, project string) {
@@ -91,4 +93,56 @@ func validateFieldID(ctx *validation.Context, fieldID int64, fieldName string) {
 func validateFieldValue(ctx *validation.Context, fv *MonorailFieldValue) {
 	validateFieldID(ctx, fv.GetFieldId(), "field_id")
 	// No validation applies to field value.
+}
+
+func validatePriorities(ctx *validation.Context, ps []*MonorailPriority) {
+	ctx.Enter("priorities")
+	if len(ps) == 0 {
+		ctx.Errorf("at least one monorail priority must be specified")
+	}
+	for i, p := range ps {
+		ctx.Enter("[%v]", i)
+		validatePriority(ctx, p)
+		ctx.Exit()
+	}
+	ctx.Exit()
+}
+
+func validatePriority(ctx *validation.Context, p *MonorailPriority) {
+	validatePriorityValue(ctx, p.Priority)
+	validateImpactThreshold(ctx, p.Threshold, "threshold")
+}
+
+func validatePriorityValue(ctx *validation.Context, value string) {
+	ctx.Enter("priority")
+	// Although it is possible to allow the priority field to be empty, it
+	// would be rather unusual for a project to set itself up this way. For
+	// now, prefer to enforce priority values are non-empty as this will pick
+	// likely configuration errors.
+	if value == "" {
+		ctx.Errorf("empty value is not allowed")
+	}
+	ctx.Exit()
+}
+
+func validateImpactThreshold(ctx *validation.Context, t *ImpactThreshold, fieldName string) {
+	ctx.Enter(fieldName)
+	defer ctx.Exit()
+
+	if t == nil {
+		ctx.Errorf("impact thresolds must be specified")
+		return
+	}
+
+	validateFailureCountThresold(ctx, t.UnexpectedFailures_1D, "unexpected_failures_1d")
+	validateFailureCountThresold(ctx, t.UnexpectedFailures_3D, "unexpected_failures_3d")
+	validateFailureCountThresold(ctx, t.UnexpectedFailures_7D, "unexpected_failures_7d")
+}
+
+func validateFailureCountThresold(ctx *validation.Context, threshold *int64, fieldName string) {
+	ctx.Enter(fieldName)
+	if threshold != nil && *threshold < 0 {
+		ctx.Errorf("value must be non-negative")
+	}
+	ctx.Exit()
 }

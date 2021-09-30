@@ -11,6 +11,7 @@ import (
 
 	"go.chromium.org/luci/config/validation"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -90,33 +91,80 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("monorail", t, func() {
-		Convey("empty project is not valid", func() {
-			cfg := createProjectConfig()
+		cfg := createProjectConfig()
+		Convey("must be specified", func() {
+			cfg.Monorail = nil
+			So(validate(cfg), ShouldErrLike, "monorail must be specified")
+		})
+
+		Convey("project must be specified", func() {
 			cfg.Monorail.Project = ""
 			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
 		})
 
-		Convey("illegal project is not valid", func() {
-			cfg := createProjectConfig()
+		Convey("illegal monorail project", func() {
 			// Project does not satisfy regex.
 			cfg.Monorail.Project = "-my-project"
 			So(validate(cfg), ShouldErrLike, "project is not a valid monorail project")
 		})
 
-		Convey("negative priority field ID is not valid", func() {
-			cfg := createProjectConfig()
+		Convey("negative priority field ID", func() {
 			cfg.Monorail.PriorityFieldId = -1
 			So(validate(cfg), ShouldErrLike, "value must be non-negative")
 		})
 
-		Convey("field value with negative field ID is not valid", func() {
-			cfg := createProjectConfig()
+		Convey("field value with negative field ID", func() {
 			cfg.Monorail.DefaultFieldValues = []*MonorailFieldValue{
 				{
 					FieldId: -1,
 					Value:   "",
 				},
 			}
+			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
+
+		Convey("priorities", func() {
+			priorities := cfg.Monorail.Priorities
+			Convey("at least one must be specified", func() {
+				cfg.Monorail.Priorities = nil
+				So(validate(cfg), ShouldErrLike, "at least one monorail priority must be specified")
+			})
+
+			Convey("priority value is empty", func() {
+				priorities[0].Priority = ""
+				So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+			})
+
+			Convey("threshold is not specified", func() {
+				priorities[0].Threshold = nil
+				So(validate(cfg), ShouldErrLike, "impact thresolds must be specified")
+			})
+			// Other thresholding validation cases tested under bug-filing threshold and are
+			// not repeated given the implementation is shared.
+		})
+	})
+	Convey("bug filing threshold", t, func() {
+		cfg := createProjectConfig()
+		threshold := cfg.BugFilingThreshold
+		So(threshold, ShouldNotBeNil)
+
+		Convey("must be specified", func() {
+			cfg.BugFilingThreshold = nil
+			So(validate(cfg), ShouldErrLike, "impact thresolds must be specified")
+		})
+
+		Convey("unexpected failures 1d is negative", func() {
+			threshold.UnexpectedFailures_1D = proto.Int64(-1)
+			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
+
+		Convey("unexpected failures 3d is negative", func() {
+			threshold.UnexpectedFailures_3D = proto.Int64(-1)
+			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
+
+		Convey("unexpected failures 7d is negative", func() {
+			threshold.UnexpectedFailures_7D = proto.Int64(-1)
 			So(validate(cfg), ShouldErrLike, "value must be non-negative")
 		})
 	})
