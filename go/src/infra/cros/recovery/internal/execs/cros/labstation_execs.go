@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	// Filter used to find in-use flags files.
+	// Glob used to find in-use flags files.
+	// The shell expands "*", this argument must NOT be quoted when used in a shell command.
 	// Examples: '/var/lib/servod/somebody_in_use'
-	inUseFlagFileFilter = "/var/lib/servod/*_in_use"
+	inUseFlagFileGlob = "/var/lib/servod/*_in_use"
 	// Threshold we decide to ignore a in_use file lock. In minutes.
 	inUseFlagFileExpirationMins = 90
 	// Default minimum labstation uptime.
@@ -29,7 +30,7 @@ const (
 // hasNoServoInUseExec fails if any servo is in-use now.
 func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
-	cmd := fmt.Sprintf("find %s -mmin -%d", inUseFlagFileFilter, inUseFlagFileExpirationMins)
+	cmd := fmt.Sprintf("find %s -mmin -%d", inUseFlagFileGlob, inUseFlagFileExpirationMins)
 	r := args.Access.Run(ctx, args.ResourceName, cmd)
 	// Ignore exit code as if it fail to execute that mean no flag files.
 	log.Debug(ctx, "Has no servo is-use: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
