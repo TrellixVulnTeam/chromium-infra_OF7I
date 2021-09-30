@@ -1,11 +1,14 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build linux
 // +build linux
 
 package osutils
 
 import (
+	"os/user"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -57,4 +60,21 @@ func TestFindInPathParents(t *testing.T) {
 	assert.Assert(t, strings.HasSuffix(res, "test_data/a/foo.txt"))
 	res = FindInPathParents(target_path, start_path, "test_data/a/b", PathExists)
 	assert.StringsEqual(t, res, "")
+}
+
+func TestResolveHomeRelPath(t *testing.T) {
+	usr, err := user.Current()
+	assert.NilError(t, err)
+
+	got, err := ResolveHomeRelPath("~")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, got, usr.HomeDir)
+
+	got, err = ResolveHomeRelPath("~/foo")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, got, filepath.Join(usr.HomeDir, "foo"))
+
+	got, err = ResolveHomeRelPath("foo/~/foo")
+	assert.NilError(t, err)
+	assert.StringsEqual(t, got, "foo/~/foo")
 }

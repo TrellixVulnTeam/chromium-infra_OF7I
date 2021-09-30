@@ -8,7 +8,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 func Abs(path string) string {
@@ -94,4 +96,22 @@ func CreateTmpCopy(src string) (string, func(), error) {
 	return out.Name(), func() {
 		os.Remove(out.Name())
 	}, nil
+}
+
+// ResolveHomeRelPath resolves any references to the invoker's home directory
+// in the given path.
+func ResolveHomeRelPath(path string) (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	dir := usr.HomeDir
+	if path == "~" {
+		path = dir
+	} else if strings.HasPrefix(path, "~/") {
+		// Use strings.HasPrefix so we don't match paths like
+		// "/something/~/something/"
+		path = filepath.Join(dir, path[2:])
+	}
+	return path, nil
 }
