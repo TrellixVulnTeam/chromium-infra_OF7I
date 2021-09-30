@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build linux
 // +build linux
 
 package main
@@ -15,10 +16,6 @@ import (
 	"infra/cros/internal/assert"
 	"infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
-
-	"github.com/golang/mock/gomock"
-	gitilespb "go.chromium.org/luci/common/proto/gitiles"
-	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
 
 func checkFiles(t *testing.T, path string, expected map[string]string) {
@@ -40,11 +37,6 @@ func checkFiles(t *testing.T, path string, expected map[string]string) {
 }
 
 func TestSetupProject(t *testing.T) {
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	defer ctl.Finish()
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-
 	branch := "mybranch"
 	expectedFiles := map[string]string{
 		"foo_program.xml": "chromeos/program/foo",
@@ -52,23 +44,18 @@ func TestSetupProject(t *testing.T) {
 		"baz_chipset.xml": "chromeos/overlays/chipset-baz-private",
 	}
 
+	expectedDownloads := map[string]map[string]map[string]string{}
 	for _, projectName := range expectedFiles {
-		req := &gitilespb.DownloadFileRequest{
-			Project:    projectName,
-			Path:       "local_manifest.xml",
-			Committish: branch,
-		}
-		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
-			&gitilespb.DownloadFileResponse{
-				Contents: projectName,
+		expectedDownloads[projectName] = map[string]map[string]string{
+			branch: {
+				"local_manifest.xml": projectName,
 			},
-			nil,
-		)
+		}
 	}
-	mockMap := map[string]gitilespb.GitilesClient{
-		chromeInternalHost: gitilesMock,
+	gc := &gerrit.FakeAPIClient{
+		T:                 t,
+		ExpectedDownloads: expectedDownloads,
 	}
-	gc := gerrit.NewTestClient(mockMap)
 
 	dir, err := ioutil.TempDir("", "setup_project")
 	defer os.RemoveAll(dir)
@@ -89,21 +76,6 @@ func TestSetupProject(t *testing.T) {
 }
 
 func TestSetupProject_allProjects(t *testing.T) {
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	defer ctl.Finish()
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-
-	gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
-		&gitilespb.ProjectsResponse{
-			Projects: []string{
-				"chromeos/project/foo/bar1",
-				"chromeos/project/foo/bar2",
-			},
-		},
-		nil,
-	)
-
 	branch := "mybranch"
 	expectedFiles := map[string]string{
 		"foo_program.xml":  "chromeos/program/foo",
@@ -112,23 +84,22 @@ func TestSetupProject_allProjects(t *testing.T) {
 		"baz_chipset.xml":  "chromeos/overlays/chipset-baz-private",
 	}
 
+	expectedDownloads := map[string]map[string]map[string]string{}
 	for _, projectName := range expectedFiles {
-		req := &gitilespb.DownloadFileRequest{
-			Project:    projectName,
-			Path:       "local_manifest.xml",
-			Committish: branch,
-		}
-		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
-			&gitilespb.DownloadFileResponse{
-				Contents: projectName,
+		expectedDownloads[projectName] = map[string]map[string]string{
+			branch: {
+				"local_manifest.xml": projectName,
 			},
-			nil,
-		)
+		}
 	}
-	mockMap := map[string]gitilespb.GitilesClient{
-		chromeInternalHost: gitilesMock,
+	gc := &gerrit.FakeAPIClient{
+		T:                 t,
+		ExpectedDownloads: expectedDownloads,
+		ExpectedProjects: []string{
+			"chromeos/project/foo/bar1",
+			"chromeos/project/foo/bar2",
+		},
 	}
-	gc := gerrit.NewTestClient(mockMap)
 
 	dir, err := ioutil.TempDir("", "setup_project")
 	defer os.RemoveAll(dir)
@@ -152,24 +123,13 @@ func TestSetupProject_allProjects(t *testing.T) {
 func TestSetupProject_buildspecs(t *testing.T) {
 	buildspec := "90/13811.0.0.xml"
 
-	// Mock Gitiles controller
-	ctl := gomock.NewController(t)
-	defer ctl.Finish()
-	gitilesMock := mock_gitiles.NewMockGitilesClient(ctl)
-
-	gitilesMock.EXPECT().Projects(gomock.Any(), gomock.Any()).Return(
-		&gitilespb.ProjectsResponse{
-			Projects: []string{
-				"chromeos/project/foo/bar1",
-				"chromeos/project/foo/bar2",
-			},
+	gc := &gerrit.FakeAPIClient{
+		T: t,
+		ExpectedProjects: []string{
+			"chromeos/project/foo/bar1",
+			"chromeos/project/foo/bar2",
 		},
-		nil,
-	)
-	mockMap := map[string]gitilespb.GitilesClient{
-		chromeInternalHost: gitilesMock,
 	}
-	gc := gerrit.NewTestClient(mockMap)
 
 	gsSuffix := "/buildspecs/" + buildspec
 	expectedDownloads := map[string][]byte{

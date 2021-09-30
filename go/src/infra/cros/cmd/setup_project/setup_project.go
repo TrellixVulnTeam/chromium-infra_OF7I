@@ -14,23 +14,21 @@ import (
 
 	gitiles "infra/cros/internal/gerrit"
 	"infra/cros/internal/gs"
+	"infra/cros/internal/osutils"
+	"infra/cros/internal/shared"
 
-	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
-	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
 const (
-	chromeExternalHost   = "chromium.googlesource.com"
-	chromeInternalHost   = "chrome-internal.googlesource.com"
-	googlePrivacyPolicy  = "https://policies.google.com/privacy"
-	googleTermsOfService = "https://policies.google.com/terms"
+	chromeExternalHost       = "https://chromium.googlesource.com"
+	chromeInternalHost       = "https://chrome-internal.googlesource.com"
+	chromeInternalReviewHost = "https://chrome-internal-review.googlesource.com"
+	googlePrivacyPolicy      = "https://policies.google.com/privacy"
+	googleTermsOfService     = "https://policies.google.com/terms"
 )
 
 var (
@@ -56,7 +54,7 @@ func LogErr(format string, a ...interface{}) {
 
 type setupProject struct {
 	subcommands.CommandRunBase
-	authFlags            authcli.Flags
+	gitCookiesPath       string
 	chromeosCheckoutPath string
 	// Settings for which local manifests to use.
 	program     string
@@ -68,7 +66,7 @@ type setupProject struct {
 	buildspec           string
 }
 
-func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
+func cmdSetupProject() *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "setup-project --checkout=/usr/.../chromiumos " +
 			"--program=galaxy {--project=milkyway|--all_projects}",
@@ -77,8 +75,6 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 			"\nGoogle Terms of Service: " + googleTermsOfService,
 		CommandRun: func() subcommands.CommandRun {
 			b := &setupProject{}
-			b.authFlags = authcli.Flags{}
-			b.authFlags.Register(b.GetFlags(), authOpts)
 			b.Flags.StringVar(&b.chromeosCheckoutPath, "checkout", "",
 				"Path to a ChromeOS checkout.")
 			b.Flags.StringVar(&b.program, "program", "",
@@ -97,6 +93,8 @@ func cmdSetupProject(authOpts auth.Options) *subcommands.Command {
 				per-project buildspecs to have been created for the appropriate
 				projects for the appropriate version, see go/per-project-buildspecs.
 				If set, takes priority over --branch.`))
+			b.Flags.StringVar(&b.gitCookiesPath, "gitcookies", "~/.gitcookies",
+				"Path to your .gitcookies file, used to auth with gerrit.")
 			return b
 		}}
 }
@@ -113,8 +111,8 @@ func (b *setupProject) validate() error {
 	if b.project == "" && !b.allProjects {
 		return fmt.Errorf("--project or --all_projects required")
 	}
-	if b.program != "" && b.allProjects {
-		return fmt.Errorf("--program and --all_projects cannot both be set")
+	if b.project != "" && b.allProjects {
+		return fmt.Errorf("--project and --all_projects cannot both be set")
 	}
 
 	if b.chipset != "" && b.buildspec != "" {
@@ -122,6 +120,17 @@ func (b *setupProject) validate() error {
 	}
 
 	return nil
+}
+
+func (b *setupProject) resolveGitCookiesPath() (string, error) {
+	gitCookiesPath, err := osutils.ResolveHomeRelPath(b.gitCookiesPath)
+	if err != nil {
+		return "", errors.Annotate(err, "error resolving gitcookies path").Err()
+	}
+	if !osutils.PathExists(gitCookiesPath) {
+		return "", fmt.Errorf("%s does not exist", gitCookiesPath)
+	}
+	return gitCookiesPath, nil
 }
 
 func (b *setupProject) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -137,39 +146,35 @@ func (b *setupProject) Run(a subcommands.Application, args []string, env subcomm
 	}
 
 	ctx := context.Background()
-	authOpts, err := b.authFlags.Options()
+	gsClient, err := gs.NewProdClient(ctx, nil)
 	if err != nil {
 		LogErr(err.Error())
 		return 2
 	}
-	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
-	if err != nil {
-		LogErr(err.Error())
-		return 3
-	}
-	gsClient, err := gs.NewProdClient(ctx, authedClient)
-	if err != nil {
-		LogErr(err.Error())
-		return 4
-	}
 
-	gitilesClient, err := gitiles.NewClient(authedClient)
-	if err != nil {
-		LogErr(err.Error())
-		return 5
+	var gitilesClient gitiles.APIClient
+	if b.buildspec == "" {
+		gitcookiesPath, err := b.resolveGitCookiesPath()
+		if err != nil {
+			LogErr(err.Error())
+			return 3
+		}
+		gitilesClient, err = gitiles.NewProdAPIClient(ctx, chromeInternalReviewHost, gitcookiesPath)
+		if err != nil {
+			LogErr(err.Error())
+			return 4
+		}
 	}
 
 	if err := b.setupProject(ctx, gsClient, gitilesClient); err != nil {
 		LogErr(err.Error())
-		return 6
+		return 5
 	}
 
 	return 0
 }
 
 type localManifest struct {
-	// If blank, chromeInternalHost will be used.
-	host    string
 	project string
 	branch  string
 	path    string
@@ -179,8 +184,8 @@ type localManifest struct {
 	downloadTo string
 }
 
-func projectsInProgram(ctx context.Context, gitilesClient *gitiles.Client, program string) ([]string, error) {
-	projects, err := gitilesClient.Projects(ctx, chromeInternalHost)
+func projectsInProgram(ctx context.Context, gitilesClient gitiles.APIClient, program string) ([]string, error) {
+	projects, err := gitilesClient.Projects()
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +213,7 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
 }
 
-func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, gitilesClient *gitiles.Client) error {
+func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, gitilesClient gitiles.APIClient) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
 	if err := os.Mkdir(localManifestPath, os.ModePerm); err != nil && !gerrs.Is(err, os.ErrExist) {
@@ -282,35 +287,32 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		var err error
 		var errmsg string
 		if string(file.gsPath) != "" {
-			err = gsClient.Download(file.gsPath, downloadPath)
-			if err != nil && file.project == programProject {
-				// If the program-level buildspec doesn't exist, don't fail.
-				// Unless something is very wrong, the project and program
-				// buildspecs will be generated together.
-				// If the project buildspec doesn't exist, this run will still fail.
-				// If the project buildspec doesn't exist, it must just be that
-				// this particular program doesn't have a local_manifest.xml.
-				if gerrs.Is(err, storage.ErrObjectNotExist) {
-					LogOut("program-level manifest doesn't exist, but this is sometimes expected behavior. continuing...")
-					continue
-				}
-			}
+			err = gsClient.DownloadWithGsutil(ctx, file.gsPath, downloadPath)
 			errmsg = fmt.Sprintf("error downloading %s", file.gsPath)
 		} else {
-			host := chromeInternalHost
-			if file.host != "" {
-				host = file.host
-			}
-			err = gitilesClient.DownloadFileFromGitilesToPath(ctx, host,
+			err = gitilesClient.DownloadFileFromGitilesToPath(
 				file.project, file.branch, file.path, downloadPath)
 			errmsg = fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
 				chromeInternalHost, file.project, file.path, file.branch)
+		}
+		if err != nil && file.project == programProject {
+			// If the program-level buildspec doesn't exist, don't fail.
+			// Unless something is very wrong, the project and program
+			// buildspecs will be generated together.
+			// If the project buildspec doesn't exist, this run will still fail.
+			// If the project buildspec doesn't exist, it must just be that
+			// this particular program doesn't have a local_manifest.xml.
+			if gerrs.Is(err, shared.ErrObjectNotExist) {
+				LogOut("program-level manifest doesn't exist, but this is sometimes expected behavior. continuing...")
+				continue
+			}
 		}
 
 		if err != nil {
 			cleanup(writtenFiles)
 			return errors.Annotate(err, errmsg).Err()
 		}
+		LogOut("installed %s", file.downloadTo)
 		writtenFiles = append(writtenFiles, downloadPath)
 	}
 
@@ -330,14 +332,11 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 }
 
 // GetApplication returns an instance of the application.
-func GetApplication(authOpts auth.Options) *subcommands.DefaultApplication {
+func GetApplication() *subcommands.DefaultApplication {
 	return &subcommands.DefaultApplication{
 		Name: "setup_project",
 		Commands: []*subcommands.Command{
-			authcli.SubcommandInfo(authOpts, "auth-info", false),
-			authcli.SubcommandLogin(authOpts, "auth-login", false),
-			authcli.SubcommandLogout(authOpts, "auth-logout", false),
-			cmdSetupProject(authOpts),
+			cmdSetupProject(),
 		},
 	}
 }
@@ -349,19 +348,8 @@ type setupProjectApplication struct {
 }
 
 func main() {
-	opts := auth.Options{
-		TokenServerHost: chromeinfra.TokenServerHost,
-		ClientID:        "300815340602-o77gh6n19i8796dqc9dsu99vcj23jf3o.apps.googleusercontent.com",
-		ClientSecret:    "QshHhnal9bMGsLFcIENHz-QG",
-		SecretsDir:      chromeinfra.SecretsDir(),
-	}
-	opts.Scopes = []string{
-		gerrit.OAuthScope,
-		auth.OAuthScopeEmail,
-	}
-	opts.Scopes = append(opts.Scopes, lgs.ReadOnlyScopes...)
 	s := &setupProjectApplication{
-		GetApplication(opts),
+		GetApplication(),
 		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds),
 		log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)}
 	os.Exit(subcommands.Run(s, nil))

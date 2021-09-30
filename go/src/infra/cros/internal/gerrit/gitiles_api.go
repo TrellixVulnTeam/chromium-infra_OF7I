@@ -1,0 +1,103 @@
+// Copyright 2021 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// Package gerrit contains functions for interacting with gerrit/gitiles.
+package gerrit
+
+import (
+	"bytes"
+	"context"
+	gerrs "errors"
+	"fmt"
+	"os"
+	"strings"
+
+	"infra/cros/internal/cmd"
+	"infra/cros/internal/git"
+	"infra/cros/internal/shared"
+
+	gerritapi "github.com/andygrunwald/go-gerrit"
+	"go.chromium.org/luci/common/errors"
+)
+
+type APIClient interface {
+	Projects() ([]string, error)
+	DownloadFileFromGitiles(project, branch, path string) (string, error)
+	DownloadFileFromGitilesToPath(project, branch, path, saveToPath string) error
+}
+
+type ProdAPIClient struct {
+	innerClient *gerritapi.Client
+}
+
+func NewProdAPIClient(ctx context.Context, host, gitcookiesPath string) (*ProdAPIClient, error) {
+	client, err := gerritapi.NewClient(host, nil)
+	if err != nil {
+		return nil, err
+	}
+	bareHost := strings.TrimPrefix(host, "http://")
+	bareHost = strings.TrimPrefix(host, "https://")
+
+	cmdRunner := cmd.RealCommandRunner{}
+	cmd := []string{bareHost, gitcookiesPath}
+	var stdoutBuf, stderrBuf bytes.Buffer
+	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "grep", cmd...); err != nil {
+		return nil, fmt.Errorf("error reading gitcookies from %s: %s", gitcookiesPath, stderrBuf.String())
+	}
+	cookie := strings.Fields(stdoutBuf.String())
+	cookieKey := cookie[5]
+	cookieValue := cookie[6]
+
+	client.Authentication.SetCookieAuth(cookieKey, cookieValue)
+
+	return &ProdAPIClient{
+		innerClient: client,
+	}, nil
+}
+
+// DownloadFileFromGitiles downloads a file from Gitiles.
+func (g *ProdAPIClient) DownloadFileFromGitiles(project, branch, path string) (string, error) {
+	branch = git.NormalizeRef(branch)
+	data, resp, err := g.innerClient.Projects.GetBranchContent(project, branch, path)
+	if err != nil {
+		if resp.StatusCode == 404 {
+			return "", shared.ErrObjectNotExist
+		}
+		return "", errors.Annotate(err, "download").Err()
+	}
+	return data, nil
+}
+
+// DownloadFileFromGitilesToPath downloads a file from Gitiles to a specified path.
+func (g *ProdAPIClient) DownloadFileFromGitilesToPath(project, branch, path, saveToPath string) error {
+	contents, err := g.DownloadFileFromGitiles(project, branch, path)
+	if err != nil {
+		return err
+	}
+
+	// Use existing file mode if the file already exists.
+	fileMode := os.FileMode(int(0644))
+	if fileData, err := os.Stat(saveToPath); err != nil && !gerrs.Is(err, os.ErrNotExist) {
+		return err
+	} else if fileData != nil {
+		fileMode = fileData.Mode()
+	}
+
+	return os.WriteFile(saveToPath, []byte(contents), fileMode)
+}
+
+// Projects returns a list of projects.
+func (c *ProdAPIClient) Projects() ([]string, error) {
+	pinfo, _, err := c.innerClient.Projects.ListProjects(&gerritapi.ProjectOptions{
+		Prefix: "",
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "list projects").Err()
+	}
+	projectNames := make([]string, 0, len(*pinfo))
+	for name := range *pinfo {
+		projectNames = append(projectNames, name)
+	}
+	return projectNames, nil
+}

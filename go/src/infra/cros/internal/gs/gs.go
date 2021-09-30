@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"infra/cros/internal/cmd"
+	"infra/cros/internal/shared"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
@@ -120,7 +121,7 @@ func (g *ProdClient) DownloadWithGsutil(ctx context.Context, gsPath gs.Path, loc
 	}
 	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, cwd, "gsutil", cmd...); err != nil {
 		if strings.Contains(stderrBuf.String(), "404") && strings.Contains(stderrBuf.String(), "does not exist") {
-			return errors.Annotate(storage.ErrObjectNotExist, "download (%s)", stderrBuf.String()).Err()
+			return errors.Annotate(shared.ErrObjectNotExist, "download (%s)", stderrBuf.String()).Err()
 		}
 	}
 	f, err := os.Create(localPath)
