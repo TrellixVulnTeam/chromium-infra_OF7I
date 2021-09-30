@@ -26,6 +26,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -52,6 +53,8 @@ type Generator struct {
 	StatusUpdateChannel *config.Config_PubSub
 	// Experiments to pass on to test_runner builders.
 	Experiments []string
+	// The Gerrit Changes associated with the test_runner invocation.
+	GerritChanges []*bbpb.GerritChange
 }
 
 // CheckConsistency checks the internal consistency of the various inputs to the
@@ -172,6 +175,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		TestRunnerRequest:                trr,
 		Timeout:                          timeout,
 		Experiments:                      g.Experiments,
+		GerritChanges:                    g.GerritChanges,
 	}, nil
 
 }

@@ -81,6 +81,7 @@ func NewRequestTaskSet(
 			Deadline:            tc.Deadline,
 			StatusUpdateChannel: tc.StatusUpdateChannel,
 			Experiments:         buildInstance.GetInput().GetExperiments(),
+			GerritChanges:       buildInstance.GetInput().GetGerritChanges(),
 		}
 		// test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
 		invocationResponses[iid] = response.NewInvocation(test.GetTest().GetName())

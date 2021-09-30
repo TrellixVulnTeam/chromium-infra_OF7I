@@ -61,6 +61,8 @@ type Args struct {
 	TestRunnerRequest *skylab_test_runner.Request
 	// Experiments to pass on to test_runner builders.
 	Experiments []string
+	// The Gerrit Changes associated with the test_runner invocation.
+	GerritChanges []*buildbucket_pb.GerritChange
 }
 
 // MessagePayload contains the information for Pubsub subscribers.
@@ -98,13 +100,22 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
 
+	// Add the hide-in-gerrit tag to CQ runs so it does not show up on Gerrit.
+	if len(a.GerritChanges) > 0 {
+		tags = append(tags, &buildbucket_pb.StringPair{
+			Key:   "hide-in-gerrit",
+			Value: "test_runner",
+		})
+	}
+
 	br := &buildbucket_pb.ScheduleBuildRequest{
-		Builder:     b,
-		Properties:  props,
-		Experiments: exps,
-		Tags:        tags,
-		Dimensions:  bbDims,
-		Priority:    int32(a.Priority),
+		Builder:       b,
+		GerritChanges: a.GerritChanges,
+		Properties:    props,
+		Experiments:   exps,
+		Tags:          tags,
+		Dimensions:    bbDims,
+		Priority:      int32(a.Priority),
 		Swarming: &buildbucket_pb.ScheduleBuildRequest_Swarming{
 			ParentRunId: a.ParentTaskID,
 		},

@@ -14,6 +14,7 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 )
 
 func TestDisplayNameTagsForUnamedRequest(t *testing.T) {
@@ -119,6 +120,37 @@ func TestExperiments(t *testing.T) {
 			Convey("the experiments field is propogated correctly", func() {
 				So(len(got.Experiments), ShouldEqual, 2)
 				So(got.Experiments, ShouldResemble, []string{"exp1", "exp2"})
+			})
+		})
+	})
+}
+
+func TestGerritChanges(t *testing.T) {
+	Convey("Given Gerrit Changes", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		setTestName(inv, "foo-name")
+		var params test_platform.Request_Params
+		var dummyWorkerConfig = &config.Config_SkylabWorker{}
+		setRequestMaximumDuration(&params, 1000)
+		Convey("when generating a test runner request's args", func() {
+			gc := &bbpb.GerritChange{
+				Host:     "a",
+				Project:  "b",
+				Change:   123,
+				Patchset: 1,
+			}
+			g := Generator{
+				Invocation:    inv,
+				Params:        &params,
+				WorkerConfig:  dummyWorkerConfig,
+				GerritChanges: []*bbpb.GerritChange{gc},
+			}
+			got, err := g.GenerateArgs(ctx)
+			So(err, ShouldBeNil)
+			Convey("the GerritChanges are added correctly", func() {
+				So(len(got.GerritChanges), ShouldEqual, 1)
+				So(got.GerritChanges, ShouldResemble, []*bbpb.GerritChange{gc})
 			})
 		})
 	})

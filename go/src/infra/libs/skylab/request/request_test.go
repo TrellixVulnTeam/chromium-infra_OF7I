@@ -212,6 +212,51 @@ func TestTagsBB(t *testing.T) {
 	})
 }
 
+func TestGerritChangesBB(t *testing.T) {
+	Convey("Given request arguments that specify Gerrit Changes", t, func() {
+		gc := &buildbucket_pb.GerritChange{
+			Host:     "a",
+			Project:  "b",
+			Change:   123,
+			Patchset: 1,
+		}
+		args := request.Args{
+			SwarmingTags:      []string{"k1:v1", "k2:v2"},
+			TestRunnerRequest: &skylab_test_runner.Request{},
+			GerritChanges:     []*buildbucket_pb.GerritChange{gc},
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest(nil)
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have the correct Gerrit Changes", func() {
+				So(req.GerritChanges, ShouldHaveLength, 1)
+				So(req.GerritChanges, ShouldResemble, []*buildbucket_pb.GerritChange{gc})
+			})
+			Convey("and the hide-in-gerrit tag", func() {
+				So(req.Tags, ShouldHaveLength, 3)
+
+				want := []*buildbucket_pb.StringPair{
+					{
+						Key:   "k1",
+						Value: "v1",
+					},
+					{
+						Key:   "k2",
+						Value: "v2",
+					},
+					{
+						Key:   "hide-in-gerrit",
+						Value: "test_runner",
+					},
+				}
+
+				So(sortBBStringPairs(req.Tags), ShouldResembleProto, sortBBStringPairs(want))
+			})
+		})
+	})
+}
+
 func TestPriorityBB(t *testing.T) {
 	Convey("Given request arguments that specify tags", t, func() {
 		args := request.Args{
