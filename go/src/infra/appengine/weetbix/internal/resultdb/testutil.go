@@ -30,8 +30,28 @@ func NewMockedClient(ctx context.Context, ctl *gomock.Controller) *MockedClient 
 	}
 }
 
-// QueryTestVariants Mocks the QueryTestVariants RPC.
+// QueryTestVariants mocks the QueryTestVariants RPC.
 func (mc *MockedClient) QueryTestVariants(req *rdbpb.QueryTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error)) {
 	mc.Client.EXPECT().QueryTestVariants(gomock.Any(), proto.MatcherEqual(req),
 		gomock.Any()).DoAndReturn(resF)
+}
+
+// GetInvocation mocks the GetInvocation RPC.
+func (mc *MockedClient) GetInvocation(req *rdbpb.GetInvocationRequest, resF func(ctx context.Context, in *rdbpb.GetInvocationRequest, opt grpc.CallOption) (*rdbpb.Invocation, error)) {
+	mc.Client.EXPECT().GetInvocation(gomock.Any(), proto.MatcherEqual(req),
+		gomock.Any()).DoAndReturn(resF)
+}
+
+// GetRealm is a shortcut of GetInvocation to get realm of the invocation.
+func (mc *MockedClient) GetRealm(inv, realm string) {
+	req := &rdbpb.GetInvocationRequest{
+		Name: inv,
+	}
+	resF := func(ctx context.Context, in *rdbpb.GetInvocationRequest, opt grpc.CallOption) (*rdbpb.Invocation, error) {
+		return &rdbpb.Invocation{
+			Name:  inv,
+			Realm: realm,
+		}, nil
+	}
+	mc.GetInvocation(req, resF)
 }

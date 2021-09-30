@@ -84,3 +84,23 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 
 	return tvs, nil
 }
+
+// GetInvocation retrieves the invocation.
+func (c *Client) GetInvocation(ctx context.Context, invName string) (*rdbpb.Invocation, error) {
+	inv, err := c.client.GetInvocation(ctx, &rdbpb.GetInvocationRequest{
+		Name: invName,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+	return inv, nil
+}
+
+// RealmFromInvocation retrieves the realm of the invocation.
+func (c *Client) RealmFromInvocation(ctx context.Context, invName string) (string, error) {
+	inv, err := c.GetInvocation(ctx, invName)
+	if err != nil {
+		return "", err
+	}
+	return inv.GetRealm(), nil
+}

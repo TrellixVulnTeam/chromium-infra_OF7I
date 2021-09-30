@@ -16,55 +16,64 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestQueryTestVariants(t *testing.T) {
+func TestResultDB(t *testing.T) {
 	t.Parallel()
-
-	Convey("QueryTestVariants", t, func() {
+	Convey(`resultdb`, t, func() {
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
 		mc := NewMockedClient(context.Background(), ctl)
+		rc, err := NewClient(mc.Ctx, "rdbhost")
+		So(err, ShouldBeNil)
 
 		inv := "invocations/build-87654321"
-		req := &rdbpb.QueryTestVariantsRequest{
-			Invocations: []string{inv},
-			PageSize:    1000,
-		}
+		Convey(`QueryTestVariants`, func() {
+			req := &rdbpb.QueryTestVariantsRequest{
+				Invocations: []string{inv},
+				PageSize:    1000,
+			}
 
-		resF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
-			if in.GetPageToken() == "" {
+			resF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
+				if in.GetPageToken() == "" {
+					return &rdbpb.QueryTestVariantsResponse{
+						TestVariants: []*rdbpb.TestVariant{
+							{
+								TestId:      "ninja://test1",
+								VariantHash: "hash1",
+								Status:      rdbpb.TestVariantStatus_UNEXPECTED,
+							},
+							{
+								TestId:      "ninja://test2",
+								VariantHash: "hash2",
+								Status:      rdbpb.TestVariantStatus_FLAKY,
+							},
+						},
+						NextPageToken: expectedTestVariantsPageToken,
+					}, nil
+				}
 				return &rdbpb.QueryTestVariantsResponse{
 					TestVariants: []*rdbpb.TestVariant{
 						{
-							TestId:      "ninja://test1",
-							VariantHash: "hash1",
-							Status:      rdbpb.TestVariantStatus_UNEXPECTED,
-						},
-						{
-							TestId:      "ninja://test2",
-							VariantHash: "hash2",
-							Status:      rdbpb.TestVariantStatus_FLAKY,
+							TestId:      "ninja://test3",
+							VariantHash: "hash3",
+							Status:      rdbpb.TestVariantStatus_EXPECTED,
 						},
 					},
-					NextPageToken: expectedTestVariantsPageToken,
+					NextPageToken: "",
 				}, nil
 			}
-			return &rdbpb.QueryTestVariantsResponse{
-				TestVariants: []*rdbpb.TestVariant{
-					{
-						TestId:      "ninja://test3",
-						VariantHash: "hash3",
-						Status:      rdbpb.TestVariantStatus_EXPECTED,
-					},
-				},
-				NextPageToken: "",
-			}, nil
-		}
-		mc.QueryTestVariants(req, resF)
+			mc.QueryTestVariants(req, resF)
+			tvs, err := rc.QueryTestVariants(mc.Ctx, inv)
+			So(err, ShouldBeNil)
+			So(len(tvs), ShouldEqual, 2)
+		})
 
-		rc, err := NewClient(mc.Ctx, "rdbhost")
-		So(err, ShouldBeNil)
-		tvs, err := rc.QueryTestVariants(mc.Ctx, inv)
-		So(err, ShouldBeNil)
-		So(len(tvs), ShouldEqual, 2)
+		Convey(`RealmFromInvocation`, func() {
+			realm := "realm"
+			mc.GetRealm(inv, realm)
+
+			actRealm, err := rc.RealmFromInvocation(mc.Ctx, inv)
+			So(err, ShouldBeNil)
+			So(actRealm, ShouldEqual, realm)
+		})
 	})
 }
