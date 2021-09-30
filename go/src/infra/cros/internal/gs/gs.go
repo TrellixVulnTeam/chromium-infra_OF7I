@@ -7,11 +7,15 @@ import (
 	"bytes"
 	"context"
 	gerrs "errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
+
+	"infra/cros/internal/cmd"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/gcloud/gs"
@@ -25,33 +29,43 @@ import (
 type Client interface {
 	WriteFileToGS(gsPath gs.Path, data []byte) error
 	Download(gsPath gs.Path, localPath string) error
+	DownloadWithGsutil(ctx context.Context, gsPath gs.Path, localPath string) error
 	Read(gsPath gs.Path) ([]byte, error)
 	SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error
 	List(ctx context.Context, bucket string, prefix string) ([]string, error)
 }
 
 type ProdClient struct {
+	noAuth      bool
 	client      gs.Client
 	plainClient *storage.Client
 }
 
 func NewProdClient(ctx context.Context, authedClient *http.Client) (*ProdClient, error) {
-	gsClient, err := gs.NewProdClient(ctx, authedClient.Transport)
-	if err != nil {
-		return nil, errors.Annotate(err, "new Google Storage client").Err()
+	if authedClient != nil {
+		gsClient, err := gs.NewProdClient(ctx, authedClient.Transport)
+		if err != nil {
+			return nil, errors.Annotate(err, "new Google Storage client").Err()
+		}
+		plainClient, err := storage.NewClient(ctx, option.WithHTTPClient(&http.Client{
+			Transport: authedClient.Transport,
+		}))
+		return &ProdClient{
+			client:      gsClient,
+			plainClient: plainClient,
+		}, nil
 	}
-	plainClient, err := storage.NewClient(ctx, option.WithHTTPClient(&http.Client{
-		Transport: authedClient.Transport,
-	}))
 
 	return &ProdClient{
-		client:      gsClient,
-		plainClient: plainClient,
+		noAuth: true,
 	}, nil
 }
 
 // WriteFileToGS writes the specified data to the specified gs path.
 func (g *ProdClient) WriteFileToGS(gsPath gs.Path, data []byte) error {
+	if g.noAuth {
+		return fmt.Errorf("client was initialized without auth, this method is unsupported")
+	}
 	gsWriter, err := g.client.NewWriter(gsPath)
 	if err != nil {
 		return err
@@ -75,6 +89,9 @@ func (g *ProdClient) WriteFileToGS(gsPath gs.Path, data []byte) error {
 
 // Download reads the specified path from gs to the specified local path.
 func (g *ProdClient) Download(gsPath gs.Path, localPath string) error {
+	if g.noAuth {
+		return fmt.Errorf("client was initialized without auth, this method is unsupported")
+	}
 	r, err := g.client.NewReader(gsPath, 0, -1)
 	if err != nil {
 		return errors.Annotate(err, "download").Err()
@@ -89,8 +106,38 @@ func (g *ProdClient) Download(gsPath gs.Path, localPath string) error {
 	return nil
 }
 
+// DownloadWithGsutil reads the specified path from gs to the specified local
+// path by shelling out to `gsutil` (which must exist on the client's path).
+// This function is used in contexts where OAuth-based authentication is not
+// available.
+func (g *ProdClient) DownloadWithGsutil(ctx context.Context, gsPath gs.Path, localPath string) error {
+	cmdRunner := cmd.RealCommandRunner{}
+	cmd := []string{"cat", string(gsPath)}
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, cwd, "gsutil", cmd...); err != nil {
+		if strings.Contains(stderrBuf.String(), "404") && strings.Contains(stderrBuf.String(), "does not exist") {
+			return errors.Annotate(storage.ErrObjectNotExist, "download (%s)", stderrBuf.String()).Err()
+		}
+	}
+	f, err := os.Create(localPath)
+	if err != nil {
+		return errors.Annotate(err, "download").Err()
+	}
+	if _, err := f.Write(stdoutBuf.Bytes()); err != nil {
+		return errors.Annotate(err, "download %s to %s", gsPath, localPath).Err()
+	}
+	return nil
+}
+
 // Read reads the specified path from gs and returns its contents.
 func (g *ProdClient) Read(gsPath gs.Path) ([]byte, error) {
+	if g.noAuth {
+		return nil, fmt.Errorf("client was initialized without auth, this method is unsupported")
+	}
 	r, err := g.client.NewReader(gsPath, 0, -1)
 	if err != nil {
 		return nil, errors.Annotate(err, "download").Err()
@@ -104,6 +151,9 @@ func (g *ProdClient) Read(gsPath gs.Path) ([]byte, error) {
 
 // List lists all the files in a specific bucket matching the given prefix.
 func (g *ProdClient) List(ctx context.Context, bucket string, prefix string) ([]string, error) {
+	if g.noAuth {
+		return nil, fmt.Errorf("client was initialized without auth, this method is unsupported")
+	}
 	bkt := g.plainClient.Bucket(bucket)
 	query := &storage.Query{Prefix: prefix}
 
@@ -124,6 +174,9 @@ func (g *ProdClient) List(ctx context.Context, bucket string, prefix string) ([]
 
 // Set TTL sets the object's time to live.
 func (g *ProdClient) SetTTL(ctx context.Context, gsPath gs.Path, ttl time.Duration) error {
+	if g.noAuth {
+		return fmt.Errorf("client was initialized without auth, this method is unsupported")
+	}
 	bucket := gsPath.Bucket()
 	path := gsPath.Filename()
 	_, err := g.plainClient.Bucket(bucket).Object(path).Update(ctx, storage.ObjectAttrsToUpdate{

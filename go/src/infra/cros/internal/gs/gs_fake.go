@@ -51,6 +51,18 @@ func (f *FakeClient) Download(gsPath gs.Path, localPath string) error {
 	return nil
 }
 
+func (f *FakeClient) DownloadWithGsutil(_ context.Context, gsPath gs.Path, localPath string) error {
+	data, ok := f.ExpectedDownloads[string(gsPath)]
+	if !ok {
+		f.T.Fatalf("unexpected download of file %s", gsPath)
+	}
+	if data == nil {
+		return errors.Annotate(storage.ErrObjectNotExist, "download").Err()
+	}
+	assert.NilError(f.T, ioutil.WriteFile(localPath, data, 0644))
+	return nil
+}
+
 func (f *FakeClient) Read(gsPath gs.Path) ([]byte, error) {
 	data, ok := f.ExpectedReads[string(gsPath)]
 	if !ok {
