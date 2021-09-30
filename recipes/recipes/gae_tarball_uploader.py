@@ -213,8 +213,9 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
       stdout=api.json.output(),
       step_test_data=lambda: api.json.test_api.output_stream(
           _roll_tarballs_test_data(versions)))
-  rolled = res.stdout['tarballs']
+  rolled = res.stdout.get('tarballs') or []
   deployments = res.stdout.get('deployments') or []
+  diff = res.stdout.get('diff') or ''
 
   # If added new pins, delete old unused pins (if any). Note that if we are
   # building a rollback CL, we often do not add new pins (since we actually
@@ -228,7 +229,7 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
 
   # Generate the commit message.
   message = str('\n'.join([
-      '[images] Rolling in tarballs.',
+      'Rolling in tarballs.',
       '',
       'Produced by %s' % api.buildbucket.build_url(),
       '',
@@ -236,7 +237,7 @@ def _mutate_pins_repo(api, root, spec, tarballs, meta):
   ] + [
       '  * %s: %s -> %s' % (d['tarball'], d['from'], d['to'])
       for d in deployments
-  ] + ['']))
+  ] + [''] + ([diff, ''] if diff else [])))
 
   # List of people to CC based on what staging deployments were updated.
   extra_cc = set()
@@ -264,6 +265,7 @@ def _roll_tarballs_test_data(versions):
           }
           for v in versions
       ],
+      'diff': 'Diff line1\nDiff line2',
   }
 
 
