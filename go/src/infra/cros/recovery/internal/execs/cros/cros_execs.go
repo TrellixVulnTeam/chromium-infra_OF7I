@@ -304,6 +304,22 @@ func isBatteryChargableOrGoodLevelExec(ctx context.Context, args *execs.RunArgs,
 	return nil
 }
 
+// isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
+func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.Access.Run(ctx, args.ResourceName, `cat /proc/cpuinfo | grep "model name"`)
+	if r.ExitCode != 0 {
+		return errors.Reason("not virtual machine: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	}
+	output := strings.TrimSpace(r.Stdout)
+	if output == "" {
+		return errors.Reason("not virtual machine: no cpu information found").Err()
+	}
+	if strings.Contains(strings.ToLower(output), "qemu") {
+		return errors.Reason("not virtual machine: qemu is virtual machine").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -323,4 +339,5 @@ func init() {
 	execs.Register("cros_is_battery_level_greater_than_minimum", isBatteryLevelGreaterThanMinimumExec)
 	execs.Register("cros_is_battery_charging", isBatteryChargingExec)
 	execs.Register("cros_is_battery_chargable_or_good_level", isBatteryChargableOrGoodLevelExec)
+	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
 }
