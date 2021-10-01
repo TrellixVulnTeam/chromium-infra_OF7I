@@ -285,6 +285,10 @@ class Builder(ndb.Model):
     # "Builder" conflicts with model.Builder.
     return 'Bucket.Builder'
 
+  @classmethod
+  def _use_memcache(cls, _):
+    return False
+
   # Binary config content.
   config = datastore_utils.ProtobufProperty(project_config_pb2.Builder)
   # Hash used for fast deduplication of configs. Set automatically on put.
