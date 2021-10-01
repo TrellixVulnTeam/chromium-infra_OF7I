@@ -223,7 +223,9 @@ const defaultConfig = `
 		},
 		"bluetooth_peer_repair":{
 			"critical_actions": [
-				"sample_pass"
+				"btpeer_state_broken",
+				"cros_ssh",
+				"btpeer_state_working"
 			],
 			"actions": {},
 			"allow_fail": true

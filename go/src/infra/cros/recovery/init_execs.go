@@ -6,6 +6,7 @@ package recovery
 
 // These package imports register exec functions for the execs package.
 import (
+	_ "infra/cros/recovery/internal/execs/btpeer"
 	_ "infra/cros/recovery/internal/execs/cros"
 	_ "infra/cros/recovery/internal/execs/dut"
 	_ "infra/cros/recovery/internal/execs/rpm"
