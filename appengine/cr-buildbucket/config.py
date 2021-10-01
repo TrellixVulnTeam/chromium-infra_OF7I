@@ -30,7 +30,7 @@ from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 import experiments
 
-CURRENT_BUCKET_SCHEMA_VERSION = 10
+CURRENT_BUCKET_SCHEMA_VERSION = 11
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 # The default percentage of builds that are marked as canary.
