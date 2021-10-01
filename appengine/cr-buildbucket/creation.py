@@ -169,6 +169,11 @@ class BuildRequest(_BuildRequestBase):
     if sbr.HasField('gitiles_commit'):
       bp.input.gitiles_commit.CopyFrom(sbr.gitiles_commit)
     bp.input.gerrit_changes.extend(sbr.gerrit_changes)
+
+    # update exps to reflect if we're using bbagent or not, regardless of how
+    # bbagent was reflected.
+    exps[experiments.USE_BBAGENT] = bp.exe.cmd and bp.exe.cmd[0] != 'recipes'
+
     bp.input.experimental = exps[experiments.NON_PROD]
     bp.input.experiments.extend(
         exp for exp, enabled in exps.iteritems() if enabled
@@ -659,10 +664,6 @@ def _apply_builder_config_async(builder_cfg, build_proto, exps):
   # use bbagent.
   #
   # All recipe bundles already support both 'recipes' and 'luciexe' entrypoints.
-
-  # update exps to reflect if we're using bbagent or not, regardless of the
-  # mechanism.
-  exps[experiments.USE_BBAGENT] = build_proto.exe.cmd[0] != 'recipes'
 
   # Populate swarming fields.
   sw = build_proto.infra.swarming

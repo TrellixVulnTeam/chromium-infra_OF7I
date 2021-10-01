@@ -224,6 +224,10 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.builder.builder, 'linux')
     self.assertEqual(build.created_by, auth.get_current_identity())
 
+    self.assertEqual(
+        build.proto.input.experiments, [u'luci.buildbucket.use_bbagent']
+    )
+
     infra = model.BuildInfra.key_for(build.key).get().parse()
     self.assertEqual(infra.logdog.hostname, 'logs.example.com')
     self.assertIn(
@@ -251,6 +255,9 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['luciexe'])
+    self.assertEqual(
+        build.proto.input.experiments, [u'luci.buildbucket.use_bbagent']
+    )
 
   def test_add_wait(self):
     builder_id = builder_pb2.BuilderID(
