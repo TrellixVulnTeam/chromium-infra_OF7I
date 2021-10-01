@@ -188,7 +188,7 @@ func (ic *InventoryClient) DeviceConfigsExists(ctx context.Context, in *invV2Api
 
 // GetManufacturingConfig mocks the GetManufaturingConfig api from InvV2.
 func (ic *InventoryClient) GetManufacturingConfig(ctx context.Context, in *invV2Api.GetManufacturingConfigRequest, opts ...grpc.CallOption) (*manufacturing.Config, error) {
-	if in.GetName() == "test" {
+	if in.GetName() == "test" || in.GetName() == "test-no-server" {
 		return &manufacturing.Config{
 			ManufacturingId: &manufacturing.ConfigID{Value: "test"},
 		}, nil

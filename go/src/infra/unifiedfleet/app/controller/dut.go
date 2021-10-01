@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	iv2api "infra/appengine/cros/lab_inventory/api/v1"
+	"infra/cros/hwid"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsdevice "infra/unifiedfleet/api/v1/models/chromeos/device"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -831,7 +832,7 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		logging.Warningf(ctx, "ManufacturingConfig for %s not found. Error: %s", hwid, err)
 	}
-	hwidData, err := getHwidData(ctx, invV2Client, hwid)
+	hwidData, err := getHwidData(ctx, hwid)
 	if err != nil {
 		logging.Warningf(ctx, "Hwid data for %s not found. Error: %s", hwid, err)
 	}
@@ -898,8 +899,8 @@ func getManufacturingConfig(ctx context.Context, inv2Client external.CrosInvento
 	return &mfgConfig, err
 }
 
-// getHwidData get hwid data form InvV2
-func getHwidData(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufspb.HwidData, error) {
+// getHwidDataFromInvV2 get hwid data from InvV2
+func getHwidDataFromInvV2(ctx context.Context, inv2Client external.CrosInventoryClient, id string) (*ufspb.HwidData, error) {
 	resp, err := inv2Client.GetHwidData(ctx, &iv2api.GetHwidDataRequest{
 		Name: id,
 	})
@@ -922,6 +923,21 @@ func getStability(ctx context.Context, model string) (bool, error) {
 	return true, err
 }
 
+// getHwidData gets HWID data from HWID server based on a given HWID.
+func getHwidData(ctx context.Context, hwid string) (*ufspb.HwidData, error) {
+	hwidClient, err := getHwidClient(ctx)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to get HwidClient. Error: %s", err)
+		return nil, err
+	}
+
+	d, err := GetHwidDataV1(ctx, hwidClient, hwid)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+
 // getSchedulableLabels gets Swarming schedulable labels based on DutAttributes
 // from UFS datastore. The feature will be turned off by default based on
 // the enable_boxster_label flag.
@@ -938,6 +954,14 @@ func getInventoryV2Client(ctx context.Context) (external.CrosInventoryClient, er
 		return nil, err
 	}
 	return es.NewCrosInventoryInterfaceFactory(ctx, config.Get(ctx).GetCrosInventoryHost())
+}
+
+func getHwidClient(ctx context.Context) (hwid.ClientInterface, error) {
+	es, err := external.GetServerInterface(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return es.NewHwidClientInterface(ctx)
 }
 
 func getRPMNamePortForOSMachineLSE(lse *ufspb.MachineLSE) (string, string) {

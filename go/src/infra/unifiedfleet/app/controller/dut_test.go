@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/config/go/api"
 	"go.chromium.org/chromiumos/config/go/payload"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/logging/gologger"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
@@ -2579,8 +2578,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	ctx = external.WithTestingContext(ctx)
-	ctx = gologger.StdConfig.Use(ctx)
-	ctx = logging.SetLevel(ctx, logging.Debug)
+
 	machine := &ufspb.Machine{
 		Name: "machine-1",
 		Device: &ufspb.Machine_ChromeosMachine{
@@ -2612,7 +2610,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 		ManufacturingId: &ufsmanufacturing.ConfigID{Value: "test"},
 	}
 
-	hwidData := &ufspb.HwidData{Sku: "test", Variant: "test"}
+	hwidMockData := &ufspb.HwidData{Sku: "test-sku", Variant: "test-variant"}
 
 	cfgBundle := &payload.ConfigBundle{
 		DesignList: []*api.Design{
@@ -2644,7 +2642,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp.GetDutState(), ShouldResembleProto, dutState)
 			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
 			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
-			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidMockData)
 			So(resp.GetSchedulableLabels(), ShouldBeNil)
 			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
@@ -2659,7 +2657,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp.GetDutState(), ShouldResembleProto, dutState)
 			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
 			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
-			So(resp.GetHwidData(), ShouldResembleProto, hwidData)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidMockData)
 			So(resp.GetSchedulableLabels(), ShouldBeNil)
 			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
@@ -2697,7 +2695,9 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 		})
 
-		Convey("GetChromeOSDevicedata - dutState not found", func() {
+		Convey("GetChromeOSDevicedata - data not found", func() {
+			// DutState, DeviceConfig, ManufacturingConfig, HwidData,
+			// SchedulableLabels all do not exist for "machine-3"
 			machine := &ufspb.Machine{
 				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeosMachine{
@@ -2768,6 +2768,137 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "NotFound")
+		})
+
+		Convey("GetChromeOSDevicedata - happy path; hwid out of date and server fails", func() {
+			// Mock server fails with test-no-server so use expired data found in datastore
+			// instead.
+			hwidMockDataExp := &ufspb.HwidData{Sku: "test-sku-no-server", Variant: "test-variant-no-server"}
+			expiredTime := time.Now().Add(-2 * time.Hour).UTC()
+			expiredLabels := &ufspb.DutLabel{
+				PossibleLabels: []string{
+					"test-possible-1",
+					"test-possible-2",
+				},
+				Labels: []*ufspb.DutLabel_Label{
+					{
+						Name:  "test-label-1",
+						Value: "test-value-1",
+					},
+					{
+						Name:  "Sku",
+						Value: "test-sku-no-server",
+					},
+					{
+						Name:  "variant",
+						Value: "test-variant-no-server",
+					},
+				},
+			}
+			fakeUpdateHwidData(ctx, expiredLabels, "test-no-server", expiredTime)
+
+			machineExp := &ufspb.Machine{
+				Name: "machine-using-exp",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						ReferenceBoard: "test",
+						BuildTarget:    "test",
+						Model:          "test",
+						Hwid:           "test-no-server",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machineExp)
+
+			dutMachinelseExp := mockDutMachineLSE("lse-using-exp")
+			dutMachinelseExp.Machines = []string{"machine-using-exp"}
+			inventory.CreateMachineLSE(ctx, dutMachinelseExp)
+
+			dutStateExp := mockDutState("machine-using-exp", "lse-using-exp")
+			UpdateDutState(ctx, dutStateExp)
+
+			resp, err := GetChromeOSDeviceData(ctx, "machine-using-exp", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelseExp)
+			So(resp.GetMachine(), ShouldResembleProto, machineExp)
+			So(resp.GetDutState(), ShouldResembleProto, dutStateExp)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidMockDataExp)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
+		})
+
+		Convey("GetChromeOSDevicedata - happy path; hwid out of date and new cache", func() {
+			// Datastore data is expired. Query hwid server, use values, and update cache.
+			expiredTime := time.Now().Add(-2 * time.Hour).UTC()
+			expiredLabels := &ufspb.DutLabel{
+				PossibleLabels: []string{
+					"test-possible-1",
+					"test-possible-2",
+				},
+				Labels: []*ufspb.DutLabel_Label{
+					{
+						Name:  "test-label-1",
+						Value: "test-value-1",
+					},
+					{
+						Name:  "Sku",
+						Value: "test-sku-exp",
+					},
+					{
+						Name:  "variant",
+						Value: "test-variant-exp",
+					},
+				},
+			}
+			hwid := "test"
+			fakeUpdateHwidData(ctx, expiredLabels, hwid, expiredTime)
+
+			machineHwid := &ufspb.Machine{
+				Name: "machine-using-hwid-server",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						ReferenceBoard: "test",
+						BuildTarget:    "test",
+						Model:          "test",
+						Hwid:           "test",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machineHwid)
+
+			dutMachinelseHwid := mockDutMachineLSE("lse-using-hwid-server")
+			dutMachinelseHwid.Machines = []string{"machine-using-hwid-server"}
+			inventory.CreateMachineLSE(ctx, dutMachinelseHwid)
+
+			dutStateHwid := mockDutState("machine-using-hwid-server", "lse-using-hwid-server")
+			UpdateDutState(ctx, dutStateHwid)
+
+			hwidEnt, err := configuration.GetHwidData(ctx, hwid)
+			So(err, ShouldBeNil)
+			So(hwidEnt, ShouldNotBeNil)
+			So(hwidEnt.Updated, ShouldHappenWithin, time.Millisecond, expiredTime)
+
+			resp, err := GetChromeOSDeviceData(ctx, "machine-using-hwid-server", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelseHwid)
+			So(resp.GetMachine(), ShouldResembleProto, machineHwid)
+			So(resp.GetDutState(), ShouldResembleProto, dutStateHwid)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidMockData)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
+
+			hwidEnt, err = configuration.GetHwidData(ctx, hwid)
+			So(err, ShouldBeNil)
+			So(hwidEnt, ShouldNotBeNil)
+			So(hwidEnt.Updated, ShouldHappenWithin, time.Second, time.Now().UTC())
 		})
 	})
 }

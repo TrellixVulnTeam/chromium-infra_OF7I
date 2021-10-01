@@ -17,7 +17,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 )
 
-func mockHwidData() *ufspb.DutLabel {
+func mockDutLabel() *ufspb.DutLabel {
 	return &ufspb.DutLabel{
 		PossibleLabels: []string{
 			"test-possible-1",
@@ -27,10 +27,6 @@ func mockHwidData() *ufspb.DutLabel {
 			{
 				Name:  "test-label-1",
 				Value: "test-value-1",
-			},
-			{
-				Name:  "test-label-2",
-				Value: "test-value-2",
 			},
 			{
 				Name:  "Sku",
@@ -50,7 +46,7 @@ func TestUpdateHwidData(t *testing.T) {
 	datastore.GetTestable(ctx).Consistent(true)
 
 	t.Run("update non-existent HwidData", func(t *testing.T) {
-		want := mockHwidData()
+		want := mockDutLabel()
 		got, err := UpdateHwidData(ctx, want, "test-hwid")
 		if err != nil {
 			t.Fatalf("UpdateHwidData failed: %s", err)
@@ -66,9 +62,9 @@ func TestUpdateHwidData(t *testing.T) {
 
 	t.Run("update existent HwidData", func(t *testing.T) {
 		hd2Id := "test-hwid-2"
-		hd2 := mockHwidData()
+		hd2 := mockDutLabel()
 
-		hd2update := mockHwidData()
+		hd2update := mockDutLabel()
 		hd2update.PossibleLabels = append(hd2update.PossibleLabels, "test-possible-3")
 
 		// Insert hd2 into datastore
@@ -89,7 +85,7 @@ func TestUpdateHwidData(t *testing.T) {
 	})
 
 	t.Run("update HwidData with empty hwid", func(t *testing.T) {
-		hd3 := mockHwidData()
+		hd3 := mockDutLabel()
 		got, err := UpdateHwidData(ctx, hd3, "")
 		if err == nil {
 			t.Errorf("UpdateHwidData succeeded with empty hwid")
@@ -111,7 +107,7 @@ func TestGetHwidData(t *testing.T) {
 
 	t.Run("get HwidData by existing ID", func(t *testing.T) {
 		id := "test-hwid"
-		want := mockHwidData()
+		want := mockDutLabel()
 		_, err := UpdateHwidData(ctx, want, id)
 		if err != nil {
 			t.Fatalf("UpdateHwidData failed: %s", err)
@@ -148,7 +144,7 @@ func TestParseHwidDataV1(t *testing.T) {
 	datastore.GetTestable(ctx).Consistent(true)
 
 	id := "test-hwid"
-	_, err := UpdateHwidData(ctx, mockHwidData(), id)
+	_, err := UpdateHwidData(ctx, mockDutLabel(), id)
 	if err != nil {
 		t.Fatalf("UpdateHwidData failed: %s", err)
 	}
