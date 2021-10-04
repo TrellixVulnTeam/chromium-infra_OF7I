@@ -832,7 +832,13 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		logging.Warningf(ctx, "ManufacturingConfig for %s not found. Error: %s", hwid, err)
 	}
-	hwidData, err := getHwidData(ctx, hwid)
+	useCachedHwidManufacturingConfig := config.Get(ctx).GetUseCachedHwidManufacturingConfig()
+	var hwidData *ufspb.HwidData
+	if useCachedHwidManufacturingConfig {
+		hwidData, err = getHwidData(ctx, hwid)
+	} else {
+		hwidData, err = getHwidDataFromInvV2(ctx, invV2Client, hwid)
+	}
 	if err != nil {
 		logging.Warningf(ctx, "Hwid data for %s not found. Error: %s", hwid, err)
 	}

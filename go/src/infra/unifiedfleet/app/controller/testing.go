@@ -5,8 +5,11 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
 
+	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/logging"
@@ -54,4 +57,20 @@ func initializeMockAuthDB(ctx context.Context, id identity.Identity, realm strin
 		Identity: id,
 		FakeDB:   authtest.NewFakeDB(mocks...),
 	})
+}
+
+func useTestingCfg(ctx context.Context) context.Context {
+	c, err := ioutil.ReadFile("test_config.cfg")
+	if err != nil {
+		return ctx
+	}
+
+	unmarshaller := &jsonpb.Unmarshaler{AllowUnknownFields: false}
+	var configList config.Config
+	err = unmarshaller.Unmarshal(bytes.NewBuffer(c), &configList)
+	if err != nil {
+		return ctx
+	}
+
+	return config.Use(ctx, &configList)
 }

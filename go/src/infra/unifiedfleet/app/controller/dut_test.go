@@ -18,6 +18,7 @@ import (
 	device "infra/unifiedfleet/api/v1/models/chromeos/device"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsmanufacturing "infra/unifiedfleet/api/v1/models/chromeos/manufacturing"
+	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/external"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/history"
@@ -2578,6 +2579,7 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	ctx = external.WithTestingContext(ctx)
+	ctx = useTestingCfg(ctx)
 
 	machine := &ufspb.Machine{
 		Name: "machine-1",
@@ -2643,6 +2645,27 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
 			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
 			So(resp.GetHwidData(), ShouldResembleProto, hwidMockData)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
+		})
+
+		Convey("GetChromeOSDevicedata - id happy path; inv v2 hwid api", func() {
+			cfgLst := &config.Config{
+				UseCachedHwidManufacturingConfig: false,
+			}
+			ctx2 := config.Use(ctx, cfgLst)
+			invV2HwidData := &ufspb.HwidData{Sku: "test", Variant: "test"}
+
+			resp, err := GetChromeOSDeviceData(ctx2, "machine-1", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldResembleProto, dutState)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldResembleProto, mfgCfg)
+			So(resp.GetHwidData(), ShouldResembleProto, invV2HwidData)
 			So(resp.GetSchedulableLabels(), ShouldBeNil)
 			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
 			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
