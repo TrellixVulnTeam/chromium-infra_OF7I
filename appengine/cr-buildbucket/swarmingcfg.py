@@ -241,6 +241,8 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
 
   If final is False, does not validate for completeness.
   """
+  del mixin_names  # no longer used argument.
+
   if final or builder.name:
     try:
       errors.validate_builder_name(builder.name)
@@ -322,11 +324,8 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
         if percent < 0 or percent > 100:
           ctx.error('value must be in [0, 100]')
 
-  for m in builder.mixins:
-    if not m:
-      ctx.error('referenced mixin name is empty')
-    elif m not in mixin_names:
-      ctx.error('mixin "%s" is not defined', m)
+  if builder.mixins:  # pragma: no cover
+    ctx.error('mixin is not allowed any more, use go/lucicfg')
 
   # Limit (expiration+execution) to 47h. See max_grant_validity_duration in
   # https://chrome-internal.googlesource.com/infradata/config/+/master/configs/luci-token-server/service_accounts.cfg
@@ -349,59 +348,10 @@ def _validate_cache_entry(entry, ctx):
 def validate_builder_mixins(mixins, ctx):
   """Validates mixins.
 
-  Checks that:
-  - mixins' attributes have valid values
-  - mixins have unique names
-  - mixins do not have circular references.
+  Mixins are no longer supported (see crbug/1256475).
   """
-  by_name = {m.name: m for m in mixins}
-  seen = set()
-  for i, m in enumerate(mixins):
-    with ctx.prefix('builder_mixin %s: ' % (m.name or '#%s' % (i + 1))):
-      if not m.name:
-        # with final=False below, validate_builder_cfg will ignore name.
-        ctx.error('name: unspecified')
-      elif m.name in seen:
-        ctx.error('name: duplicate')
-      else:
-        seen.add(m.name)
-      validate_builder_cfg(m, by_name, False, ctx)
-
-  # Check circular references.
-  circles = set()
-
-  def check_circular(chain):
-    mixin = by_name[chain[-1]]
-    for sub_name in mixin.mixins:
-      if not sub_name or sub_name not in by_name:
-        # This may happen if validation above fails.
-        # We've already reported this, so ignore here.
-        continue
-      try:
-        recurrence = chain.index(sub_name)
-      except ValueError:
-        recurrence = -1
-      if recurrence >= 0:
-        circle = chain[recurrence:]
-
-        # make circle deterministic
-        smallest = circle.index(min(circle))
-        circle = circle[smallest:] + circle[:smallest]
-
-        circles.add(tuple(circle))
-        continue
-
-      chain.append(sub_name)
-      try:
-        check_circular(chain)
-      finally:
-        chain.pop()
-
-  for name in by_name:
-    check_circular([name])
-  for circle in sorted(circles):
-    circle = list(circle) + [circle[0]]
-    ctx.error('circular mixin chain: %s', ' -> '.join(circle))
+  if mixins:
+    ctx.error('builder_mixins is not allowed any more, use go/lucicfg')
 
 
 def validate_project_cfg(swarming, mixins, mixins_are_valid, ctx):
