@@ -63,6 +63,22 @@ var (
 		"Number of Bytes written on disk.",
 		&types.MetricMetadata{Units: types.Bytes},
 		field.String("disk"))
+	diskReadCount = metric.NewCounter("dev/disk/io/read_count",
+		"The total number of read operations since boot.",
+		nil,
+		field.String("disk"))
+	diskReadTimeSpent = metric.NewCounter("dev/disk/io/read_time_spent",
+		"The total number of milliseconds spent by all reads since boot.",
+		&types.MetricMetadata{Units: types.Milliseconds},
+		field.String("disk"))
+	diskWriteCount = metric.NewCounter("dev/disk/io/write_count",
+		"The total number of write operations since boot.",
+		nil,
+		field.String("disk"))
+	diskWriteTimeSpent = metric.NewCounter("dev/disk/io/write_time_spent",
+		"The total number of milliseconds spent by all writes since boot.",
+		&types.MetricMetadata{Units: types.Milliseconds},
+		field.String("disk"))
 
 	memFree = metric.NewInt("dev/mem/free",
 		"Amount of memory available to a process (in Bytes). Buffers are considered free memory.",
@@ -217,7 +233,7 @@ func updateCPUMetrics(c context.Context) error {
 		return err
 	}
 	if len(cpuTimes) < 1 {
-		return status.Errorf(codes.OutOfRange, "cpu.Times(fales) returned no entries")
+		return status.Errorf(codes.OutOfRange, "cpu.Times(false) returned no entries")
 	}
 	user := cpuTimes[0].User - lastCPUTimes.User
 	system := cpuTimes[0].System - lastCPUTimes.System
@@ -281,7 +297,11 @@ func updateDiskMetrics(c context.Context) errors.MultiError {
 		for _, device := range devices {
 			counters := io[device]
 			diskRead.Set(c, int64(counters.ReadBytes), device)
+			diskReadCount.Set(c, int64(counters.ReadCount), device)
+			diskReadTimeSpent.Set(c, int64(counters.ReadTime), device)
 			diskWrite.Set(c, int64(counters.WriteBytes), device)
+			diskWriteCount.Set(c, int64(counters.WriteCount), device)
+			diskWriteTimeSpent.Set(c, int64(counters.WriteTime), device)
 		}
 	}
 

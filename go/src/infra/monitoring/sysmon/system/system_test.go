@@ -60,6 +60,23 @@ func TestMetrics(t *testing.T) {
 		iFree := inodesFree.Get(c, path)
 		iTotal := inodesTotal.Get(c, path)
 		So(iFree, ShouldBeLessThanOrEqualTo, iTotal)
+
+		// Try to get a device from reported metrics.
+		var device interface{}
+		for _, cell := range tsmon.Store(c).GetAll(c) {
+			if cell.MetricInfo.Name == diskRead.Info().Name {
+				device = cell.CellData.FieldVals[0]
+				break
+			}
+		}
+		So(device, ShouldNotBeNil)
+
+		So(diskRead.Get(c, device), ShouldBeGreaterThan, 0)
+		So(diskReadCount.Get(c, device), ShouldBeGreaterThan, 0)
+		So(diskReadTimeSpent.Get(c, device), ShouldBeGreaterThan, 0)
+		So(diskWrite.Get(c, device), ShouldBeGreaterThan, 0)
+		So(diskWriteCount.Get(c, device), ShouldBeGreaterThan, 0)
+		So(diskWriteTimeSpent.Get(c, device), ShouldBeGreaterThan, 0)
 	})
 
 	Convey("Memory", t, func() {
