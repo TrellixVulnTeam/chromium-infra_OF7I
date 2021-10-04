@@ -15,6 +15,7 @@ FLAKE_DETECTION_BACKEND = 'flake-detection-backend'
 DISABLED_TEST_BACKEND = 'disabled-test-backend'
 AUTO_ACTION_BACKEND = 'auto-action-backend'
 CODE_COVERAGE_BACKEND = 'code-coverage-backend'
+CODE_COVERAGE_FEATURE_COVERAGE_WORKER = 'code-coverage-feature-coverage-worker'
 
 # Names of all queues.
 DEFAULT_QUEUE = 'default'
@@ -27,9 +28,9 @@ AUTO_ACTION_QUEUE = 'auto-action-queue'
 FLAKE_DETECTION_MULTITASK_QUEUE = 'flake-detection-multitask-queue'
 DISABLED_TEST_DETECTION_QUEUE = 'disabled-test-detection-queue'
 DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
-FILES_ABSOLUTE_COVERAGE_METRICS_QUEUE = 'files-absolute-coverage-metrics-queue'
-FEATURE_COVERAGE_METRICS_QUEUE = 'feature-coverage-metrics-queue'
-ALL_FEATURE_COVERAGE_METRICS_QUEUE = 'all-feature-coverage-metrics-queue'
+FILES_ABSOLUTE_COVERAGE_QUEUE = 'files-absolute-coverage-queue'
+FEATURE_COVERAGE_QUEUE = 'feature-coverage-queue'
+ALL_FEATURE_COVERAGE_QUEUE = 'all-feature-coverage-queue'
 # Waterfall-related.
 WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL = (
     '/waterfall/task/process-failure-analysis-requests')

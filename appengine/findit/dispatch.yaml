@@ -2,6 +2,9 @@ dispatch:
   - url: "*/robots.txt"
     module: default
 
+  - url: "*/coverage/task/feature-coverage*"
+    module: code-coverage-feature-coverage-worker
+
   - url: "*/coverage/cron/*"
     module: code-coverage-backend
 

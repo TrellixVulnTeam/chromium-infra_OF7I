@@ -9,7 +9,7 @@ manual_scaling:
   instances: 5
 
 handlers:
-- url: /_ah/start
+- url: .*/coverage/task/feature-coverage.*
   script: coverage_main.feature_coverage_worker_application
   secure: always
 

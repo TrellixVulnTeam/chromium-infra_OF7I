@@ -12,14 +12,8 @@ from handlers import code_coverage
 
 # Feaure coverage worker module.
 feature_coverage_worker_handler_mappings = [
-    # Run feature coverage worker at startup time.
-    # This is because triggering worker via cron job results in the case where
-    # a cron job gets triggered before the previous job has finished. With time
-    # this results in a case, where memory required by coverage workers exceed
-    # the total allotted memory. Spawning workers at startup time ensures that
-    # the parallel processing factor is equal to the number of backend instances
-    # thus ensuring that we do not have oom errors.
-    ('/_ah/start', code_coverage.ExportFeatureCoverageMetrics),
+    ('.*/coverage/task/feature-coverage.*',
+     code_coverage.ExportFeatureCoverageMetrics),
 ]
 feature_coverage_worker_application = webapp2.WSGIApplication(
     feature_coverage_worker_handler_mappings, debug=False)

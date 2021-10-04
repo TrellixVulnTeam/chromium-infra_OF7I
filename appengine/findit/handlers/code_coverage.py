@@ -1648,7 +1648,7 @@ class ExportFilesAbsoluteCoverageMetricsCron(BaseHandler):
     # can be executed at any time.
     taskqueue.add(
         method='GET',
-        queue_name=constants.FILES_ABSOLUTE_COVERAGE_METRICS_QUEUE,
+        queue_name=constants.FILES_ABSOLUTE_COVERAGE_QUEUE,
         target=constants.CODE_COVERAGE_BACKEND,
         url='/coverage/task/files-absolute-coverage')
     return {'return_code': 200}
@@ -1674,7 +1674,7 @@ class ExportAllFeatureCoverageMetricsCron(BaseHandler):
     # can be executed at any time.
     taskqueue.add(
         method='GET',
-        queue_name=constants.ALL_FEATURE_COVERAGE_METRICS_QUEUE,
+        queue_name=constants.ALL_FEATURE_COVERAGE_QUEUE,
         target=constants.CODE_COVERAGE_BACKEND,
         url='/coverage/task/all-feature-coverage')
     return {'return_code': 200}
@@ -1710,59 +1710,27 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
     # Spawn a sub task for each active feature
     for modifier_id, gerrit_hashtag in self._GetActiveFeatureModifers():
       logging.info('%d...%s' % (modifier_id, gerrit_hashtag))
-      payload = 'modifier_id=%d' % (modifier_id)
-      task_id = datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
+      url = '/coverage/task/feature-coverage?modifier_id=%d' % (modifier_id)
       taskqueue.add(
-          method='PULL',
-          name='%s-%s' % (gerrit_hashtag, task_id),
-          queue_name=constants.FEATURE_COVERAGE_METRICS_QUEUE,
-          payload=payload,
-          retry_options=taskqueue.TaskRetryOptions(task_retry_limit=2),
-          tag=gerrit_hashtag)
-      logging.info('task_added with payload %s' % payload)
+          method='GET',
+          url=url,
+          queue_name=constants.FEATURE_COVERAGE_QUEUE,
+          target=constants.CODE_COVERAGE_FEATURE_COVERAGE_WORKER)
     return {'return_code': 200}
 
 
 class ExportFeatureCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
-  @staticmethod
-  def _LeaseAndExecuteTask(queue):
-    tasks = []
-    try:
-      # lease_tasks_by_tag() return tasks with tag = tag of oldest unleased
-      # task in the queue. We lease all tasks of same tag, and then execute
-      # only once, deleting the rest. This is to avoid duplicate work, which
-      # can arise if cron job which generates list of feature hashtags
-      # gets triggered multiple times by the time first invocation of feature
-      # coverage for all hashtags finishes.
-      tasks = queue.lease_tasks_by_tag(3600, 1000, deadline=60)
-      if tasks:
-        for i in range(1, len(tasks)):
-          queue.delete_tasks(tasks[i])
-        logging.info('Triggering feature coverage for feature %s', tasks[0].tag)
-        start_time = time.time()
-        feature_coverage.ExportFeatureCoverage(
-            int(tasks[0].extract_params()['modifier_id']))
-        minutes = (time.time() - start_time) / 60
-        logging.info(
-            'Generating feature coverage for feature %s took %.0f minutes',
-            tasks[0].tag, minutes)
-        queue.delete_tasks(tasks[0])
-    except Exception as e:
-      logging.exception(
-          "Error while processing feature coverage for feature %s",
-          tasks[0].tag,
-          exc_info=e)
-
   def HandleGet(self):
-    queue = taskqueue.Queue(constants.FEATURE_COVERAGE_METRICS_QUEUE)
-    while True:
-      ExportFeatureCoverageMetrics._LeaseAndExecuteTask(queue)
-      # Sleep for 10 minutes if there are no tasks in queue
-      stats = taskqueue.QueueStatistics.fetch(queue)
-      if not stats.tasks:
-        time.sleep(600)
+    start_time = time.time()
+    modifier_id = int(self.request.get('modifier_id'))
+    feature_coverage.ExportFeatureCoverage(modifier_id)
+    minutes = (time.time() - start_time) / 60
+    report_modifier = CoverageReportModifier.Get(modifier_id)
+    logging.info('Generating feature coverage for feature %s took %.0f minutes',
+                 report_modifier.gerrit_hashtag, minutes)
+    return {'return_code': 200}
 
 
 class UpdatePostsubmitReport(BaseHandler):
