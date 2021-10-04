@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,6 +33,9 @@ func checkFiles(t *testing.T, path string, expected map[string]string) {
 			continue
 		}
 		_, ok := expected[file.Name()]
+		if !ok {
+			fmt.Printf("%v\n", file.Name())
+		}
 		assert.Assert(t, ok)
 	}
 }
@@ -39,9 +43,10 @@ func checkFiles(t *testing.T, path string, expected map[string]string) {
 func TestSetupProject(t *testing.T) {
 	branch := "mybranch"
 	expectedFiles := map[string]string{
-		"foo_program.xml": "chromeos/program/foo",
-		"bar_project.xml": "chromeos/project/foo/bar",
-		"baz_chipset.xml": "chromeos/overlays/chipset-baz-private",
+		"foo_program.xml":                 "chromeos/program/foo",
+		"bar_project.xml":                 "chromeos/project/foo/bar",
+		"baz_chipset.xml":                 "chromeos/overlays/chipset-baz-private",
+		"chromeos-other-project_repo.xml": "chromeos/other/project",
 	}
 
 	expectedDownloads := map[string]map[string]map[string]string{}
@@ -69,6 +74,7 @@ func TestSetupProject(t *testing.T) {
 		localManifestBranch:  branch,
 		project:              "bar",
 		chipset:              "baz",
+		otherRepos:           []string{"chromeos/other/project"},
 	}
 	ctx := context.Background()
 	assert.NilError(t, b.setupProject(ctx, nil, gc))
@@ -133,9 +139,10 @@ func TestSetupProject_buildspecs(t *testing.T) {
 
 	gsSuffix := "/buildspecs/" + buildspec
 	expectedDownloads := map[string][]byte{
-		"gs://chromeos-foo" + gsSuffix:      []byte("chromeos/program/foo"),
-		"gs://chromeos-foo-bar1" + gsSuffix: []byte("chromeos/project/foo/bar1"),
-		"gs://chromeos-foo-bar2" + gsSuffix: []byte("chromeos/project/foo/bar2"),
+		"gs://chromeos-foo" + gsSuffix:           []byte("chromeos/program/foo"),
+		"gs://chromeos-foo-bar1" + gsSuffix:      []byte("chromeos/project/foo/bar1"),
+		"gs://chromeos-foo-bar2" + gsSuffix:      []byte("chromeos/project/foo/bar2"),
+		"gs://chromeos-other-project" + gsSuffix: []byte("chromeos/other/project"),
 	}
 
 	f := &gs.FakeClient{
@@ -155,13 +162,15 @@ func TestSetupProject_buildspecs(t *testing.T) {
 		allProjects:          true,
 		project:              "bar",
 		buildspec:            buildspec,
+		otherRepos:           []string{"chromeos/other/project"},
 	}
 	ctx := context.Background()
 	assert.NilError(t, b.setupProject(ctx, f, gc))
 	expectedFiles := map[string]string{
-		"foo_program.xml":  "chromeos/program/foo",
-		"bar1_project.xml": "chromeos/project/foo/bar1",
-		"bar2_project.xml": "chromeos/project/foo/bar2",
+		"foo_program.xml":                 "chromeos/program/foo",
+		"bar1_project.xml":                "chromeos/project/foo/bar1",
+		"bar2_project.xml":                "chromeos/project/foo/bar2",
+		"chromeos-other-project_repo.xml": "chromeos/other/project",
 	}
 	checkFiles(t, localManifestDir, expectedFiles)
 }

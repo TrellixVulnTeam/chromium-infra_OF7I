@@ -20,6 +20,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	luciflag "go.chromium.org/luci/common/flag"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
@@ -61,6 +62,7 @@ type setupProject struct {
 	project     string
 	allProjects bool
 	chipset     string
+	otherRepos  []string
 	// Modifiers on where to get the local manifests.
 	localManifestBranch string
 	buildspec           string
@@ -85,6 +87,9 @@ func cmdSetupProject() *subcommands.Command {
 				"If specified, will include all projects under the specified program.")
 			b.Flags.StringVar(&b.chipset, "chipset", "",
 				"Name of the chipset overlay to sync a local manifest from.")
+			b.Flags.Var(luciflag.CommaList(&b.otherRepos), "other-repos",
+				"Other chrome-internal repos to sync a local manifest from, e.g."+
+					"chromeos/vendor/qti/camx.")
 			b.Flags.StringVar(&b.localManifestBranch, "branch", "main",
 				"Sync the project from the local manifest at the given branch.")
 			b.Flags.StringVar(&b.buildspec, "buildspec", "",
@@ -213,6 +218,16 @@ func gsProgramPath(program, buildspec string) lgs.Path {
 	return lgs.MakePath(fmt.Sprintf("chromeos-%s", program), relPath)
 }
 
+func dasherizeProject(name string) string {
+	return strings.Join(strings.Split(name, "/"), "-")
+}
+
+// gsBuildspecPath returns the appropriate GS path for the given CrOS repo.
+func gsBuildspecPath(name, buildspec string) lgs.Path {
+	relPath := filepath.Join("buildspecs/", buildspec)
+	return lgs.MakePath(dasherizeProject(name), relPath)
+}
+
 func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, gitilesClient gitiles.APIClient) error {
 	localManifestPath := filepath.Join(b.chromeosCheckoutPath, ".repo/local_manifests")
 	// Create local_manifests dir if it does not already exist.
@@ -272,6 +287,22 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 				downloadTo: fmt.Sprintf("%s_chipset.xml", b.chipset),
 			},
 		)
+	}
+
+	if len(b.otherRepos) > 0 {
+		for _, project := range b.otherRepos {
+			var gspath lgs.Path
+			if b.buildspec != "" {
+				gspath = gsBuildspecPath(project, b.buildspec)
+			}
+			files = append(files, localManifest{
+				project:    project,
+				branch:     b.localManifestBranch,
+				path:       "local_manifest.xml",
+				downloadTo: fmt.Sprintf("%s_repo.xml", dasherizeProject(project)),
+				gsPath:     gspath,
+			})
+		}
 	}
 
 	cleanup := func(files []string) {

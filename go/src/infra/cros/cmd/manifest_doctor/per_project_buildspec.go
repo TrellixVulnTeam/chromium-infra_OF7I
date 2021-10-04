@@ -290,7 +290,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 		return errors.Annotate(err, "failed to resolve projects").Err()
 	}
 	var errs []error
-	if len(projects) == 0 {
+	if len(b.projects) > 0 && len(projects) == 0 {
 		errs = append(errs, fmt.Errorf("no projects were found for patterns %s", strings.Join(b.projects, ",")))
 	}
 
