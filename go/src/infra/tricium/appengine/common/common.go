@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/gerritauth"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
 )
@@ -118,5 +119,19 @@ func NewRPCServer() *prpc.Server {
 	// UnaryServerInterceptor: grpcmon.NewUnaryServerInterceptor(nil),
 	return &prpc.Server{
 		AccessControl: prpc.AllowOriginAll,
+		Authenticator: &auth.Authenticator{
+			Methods: []auth.Method{
+				// The default method used by majority of clients.
+				&server.OAuth2Method{
+					Scopes: []string{"https://www.googleapis.com/auth/userinfo.email"},
+				},
+				// For authenticating calls from Gerrit plugins.
+				&gerritauth.AuthMethod{
+					Header:        "X-Gerrit-Auth",
+					SignerAccount: "gerritcodereview@system.gserviceaccount.com",
+					Audience:      "https://api.cr.dev",
+				},
+			},
+		},
 	}
 }
