@@ -9,17 +9,17 @@ from recipe_engine.recipe_api import Property
 from recipe_engine import post_process
 
 DEPS = [
-  'depot_tools/bot_update',
-  'depot_tools/gclient',
-
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/step',
+    'depot_tools/bot_update',
+    'depot_tools/gclient',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/raw_io',
+    'recipe_engine/step',
 ]
 
 PROPERTIES = {
@@ -70,10 +70,25 @@ def RunSteps(api, git_repo):
   recipes_py_path = root_dir.join(
       's',
       *(cfg_recipes_path.split('/') + ['recipes.py']))
-  api.step('recipe simulation test', [
-    recipes_py_path,
-    'test', 'run',
-  ])
+  try:
+    api.step(
+        'recipe simulation test', [
+            recipes_py_path,
+            'test',
+            'run',
+        ],
+        stdout=api.raw_io.output_text())
+  except api.step.StepFailure as e:
+    # Run tests again to eliminate the coverage flakiness.
+    # TODO(crbug.com/1147793): Remove it after Py3 migration is fully done.
+    api.step.active_result.presentation.logs['stdout'] = e.result.stdout
+    if 'Insufficient total coverage' not in e.result.stdout:
+      raise e
+    api.step('recipe simulation test (eliminate flakiness)', [
+        recipes_py_path,
+        'test',
+        'run',
+    ])
 
 
 def GenTests(api):
@@ -133,3 +148,38 @@ def GenTests(api):
           git_repo='https://chromium.googlesource.com/infra/infra.GIT',
       )
   )
+  yield (
+      api.test('py2_py3_coverage_flakiness') + api.properties(
+          git_repo='https://chromium.googlesource.com/infra/infra',) +
+      api.step_data(
+          'read %s' % CFG_PATH,
+          api.file.read_raw('''
+        {
+          "api_version": 2,
+          "project_id": "infra",
+          "recipes_path": "recipes",
+          "repo_name": "infra"
+        }
+      ''')) + api.step_data(
+              'recipe simulation test',
+              stdout=api.raw_io.output_text(
+                  'FATAL: Insufficient total coverage for py2+py3 (99.99%)'),
+              retcode=1) +
+      api.step_data('recipe simulation test (eliminate flakiness)', retcode=0))
+  yield (api.test('simulation_test_error') + api.properties(
+      git_repo='https://chromium.googlesource.com/infra/infra',) +
+         api.step_data(
+             'read %s' % CFG_PATH,
+             api.file.read_raw('''
+        {
+          "api_version": 2,
+          "project_id": "infra",
+          "recipes_path": "recipes",
+          "repo_name": "infra"
+        }
+      ''')) + api.step_data(
+                 'recipe simulation test',
+                 stdout=api.raw_io.output_text('FAILED'),
+                 retcode=1) +
+         api.post_process(post_process.StepFailure, 'recipe simulation test') +
+         api.post_process(post_process.DropExpectation))
