@@ -221,6 +221,15 @@ const (
 	Cr50KeyEnvDev         Cr50KeyEnv = "CR50_KEYENV_DEV"
 )
 
+// Audio loopback dongle is plugged in.
+type AudioLoopbackState string
+
+const (
+	AudioLoopbackStateUnspecified AudioLoopbackState = "UNSPECIFIED"
+	// Device and software on it is working as expected.
+	AudioLoopbackStateWorking AudioLoopbackState = "WORKING"
+)
+
 // Dut holds info about setup used as testbed.
 type Dut struct {
 	// Name is the resource name for the DUT.
@@ -241,6 +250,8 @@ type Dut struct {
 	Cr50Phase Cr50Phase
 	// Key env for RW Cr50 firmware version.
 	Cr50KeyEnv Cr50KeyEnv
+	// Audio loopback dongle is plugged in.
+	AudioLoopbackState AudioLoopbackState
 	// State of the DUT.
 	State dutstate.State
 

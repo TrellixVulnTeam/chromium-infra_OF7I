@@ -66,6 +66,13 @@ func convertStorageType(t ufsdevice.Config_Storage) tlw.StorageType {
 	}
 }
 
+func convertAudioLoopbackState(s ufslab.PeripheralState) tlw.AudioLoopbackState {
+	if s == ufslab.PeripheralState_WORKING {
+		return tlw.AudioLoopbackStateWorking
+	}
+	return tlw.AudioLoopbackStateUnspecified
+}
+
 var servoStates = map[ufslab.PeripheralState]tlw.ServoState{
 	ufslab.PeripheralState_WORKING:               tlw.ServoStateWorking,
 	ufslab.PeripheralState_MISSING_CONFIG:        tlw.ServoStateMissingConfig,

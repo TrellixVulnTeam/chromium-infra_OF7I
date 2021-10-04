@@ -180,6 +180,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		RPMOutlet:          createRPMOutlet(p.GetRpm(), ds),
 		Cr50Phase:          convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:         convertCr50KeyEnv(ds.GetCr50KeyEnv()),
+		AudioLoopbackState: convertAudioLoopbackState(ds.GetAudioLoopbackDongle()),
 		ExtraAttributes: map[string][]string{
 			"pool": dut.GetPools(),
 		},
@@ -365,10 +366,10 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 			state.WorkingBluetoothBtpeer += 1
 		}
 	}
-
-	// TODO(otabek@): get more data and convert.
-	// if p.GetAudioLoopbackDongle() {
-	// 	state.AudioLoopbackDongle = ufslab.PeripheralState_WORKING
-	// }
+	if dut.AudioLoopbackState == tlw.AudioLoopbackStateWorking {
+		state.AudioLoopbackDongle = ufslab.PeripheralState_WORKING
+	} else {
+		state.AudioLoopbackDongle = ufslab.PeripheralState_UNKNOWN
+	}
 	return state
 }
