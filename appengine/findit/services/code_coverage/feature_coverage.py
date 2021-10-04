@@ -13,6 +13,7 @@ import time
 from google.appengine.ext import ndb
 
 from common.findit_http_client import FinditHttpClient
+from gae_libs.http import auth_util
 from libs import time_util
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoverageReportModifier
@@ -50,7 +51,11 @@ _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
 _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
 _CHROMIUM_REPO = GitilesRepository(
-    FinditHttpClient(),
+    FinditHttpClient(
+        interceptor=auth_util.AuthenticatingInterceptor(
+            # Don't log 404 as it is expected
+            # e.g. a file can missing at a parent commit.
+            no_error_logging_statuses=[404])),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
 _EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
 
