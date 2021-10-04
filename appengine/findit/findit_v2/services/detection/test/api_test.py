@@ -80,6 +80,18 @@ class APITest(unittest.TestCase):
   @mock.patch(
       'findit_v2.services.projects.GetProjectAPI',
       return_value=DummyProjectAPI())
+  def testTestFailureChromium(self, _):
+    build = Build()
+    step = build.steps.add()
+    step.name = 'test'
+    step.status = common_pb2.FAILURE
+    builder = build.builder
+    builder.project = 'chromium'
+    self.assertFalse(api.OnBuildFailure(self.context, build))
+
+  @mock.patch(
+      'findit_v2.services.projects.GetProjectAPI',
+      return_value=DummyProjectAPI())
   @mock.patch.object(compile_analysis, 'AnalyzeCompileFailure')
   def testCompileFailure(self, mock_analyzer, _):
     build = Build()

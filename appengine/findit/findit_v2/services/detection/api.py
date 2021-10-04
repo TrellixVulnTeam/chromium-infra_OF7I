@@ -42,6 +42,10 @@ def OnBuildFailure(context, build):
   test_steps = [fs[0] for fs in failed_steps if fs[1] == StepTypeEnum.TEST]
   if test_steps:
     logging.info('Test failure found in build %d.', build.id)
+    # TODO(nqmtuan): reenable test failure analysis in v2 for chromium
+    if build.builder.project == 'chromium':
+      logging.info('Temporarily disable test failure analysis in v2')
+      return False
     analysis_triggered = test_analysis.AnalyzeTestFailure(
         context, build, test_steps)
 

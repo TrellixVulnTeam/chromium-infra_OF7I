@@ -18,7 +18,7 @@ class ProjectsTest(unittest.TestCase):
 
   @parameterized.expand([
       ('chromium', 'ci', 'Linux Builder', BuilderTypeEnum.SUPPORTED),
-      ('chromium', 'ci', 'Linux Tests', BuilderTypeEnum.UNSUPPORTED),
+      ('chromium', 'ci', 'Linux Tests', BuilderTypeEnum.SUPPORTED),
       ('chromeos', 'postsubmit', 'xx-postsubmit', BuilderTypeEnum.SUPPORTED),
       ('chromeos', 'postsubmit', 'postsubmit-orchestrator',
        BuilderTypeEnum.SUPPORTED),
