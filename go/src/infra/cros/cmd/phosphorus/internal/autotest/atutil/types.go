@@ -106,45 +106,47 @@ var _ keyvalsJob = &Test{}
 
 // Test represents a test to run.  Test implements AutoservJob.
 type Test struct {
-	Args             string
-	ClientTest       bool
-	ControlFile      string
-	ControlName      string
-	ExecutionTag     string
-	Hosts            []string
-	Keyvals          map[string]string
-	Name             string
-	Owner            string
-	ParentJobID      int
-	PeerDuts         []string
-	RequireSSP       bool
-	ResultsDir       string
-	SSPBaseImageName string
-	TestSourceBuild  string
+	Args               string
+	ClientTest         bool
+	ControlFile        string
+	ControlName        string
+	ExecutionTag       string
+	ImageStorageServer string
+	Hosts              []string
+	Keyvals            map[string]string
+	Name               string
+	Owner              string
+	ParentJobID        int
+	PeerDuts           []string
+	RequireSSP         bool
+	ResultsDir         string
+	SSPBaseImageName   string
+	TestSourceBuild    string
 }
 
 // AutoservArgs represents the CLI args for `autoserv`.
 func (t *Test) AutoservArgs() *autotest.AutoservArgs {
 	return &autotest.AutoservArgs{
-		Args:             t.Args,
-		ClientTest:       t.ClientTest,
-		ControlFile:      t.ControlFile,
-		ControlName:      t.ControlName,
-		ExecutionTag:     t.ExecutionTag,
-		Hosts:            t.Hosts,
-		HostInfoSubDir:   hostInfoSubDir,
-		JobName:          t.Name,
-		JobOwner:         t.Owner,
-		Lab:              true,
-		NoTee:            true,
-		ParentJobID:      t.ParentJobID,
-		PeerDuts:         t.PeerDuts,
-		RequireSSP:       t.RequireSSP,
-		ResultsDir:       t.ResultsDir,
-		SSPBaseImageName: t.SSPBaseImageName,
-		TestSourceBuild:  t.TestSourceBuild,
-		VerifyJobRepoURL: true,
-		WritePidfile:     true,
+		Args:               t.Args,
+		ClientTest:         t.ClientTest,
+		ControlFile:        t.ControlFile,
+		ControlName:        t.ControlName,
+		ExecutionTag:       t.ExecutionTag,
+		ImageStorageServer: t.ImageStorageServer,
+		Hosts:              t.Hosts,
+		HostInfoSubDir:     hostInfoSubDir,
+		JobName:            t.Name,
+		JobOwner:           t.Owner,
+		Lab:                true,
+		NoTee:              true,
+		ParentJobID:        t.ParentJobID,
+		PeerDuts:           t.PeerDuts,
+		RequireSSP:         t.RequireSSP,
+		ResultsDir:         t.ResultsDir,
+		SSPBaseImageName:   t.SSPBaseImageName,
+		TestSourceBuild:    t.TestSourceBuild,
+		VerifyJobRepoURL:   true,
+		WritePidfile:       true,
 	}
 }
 
