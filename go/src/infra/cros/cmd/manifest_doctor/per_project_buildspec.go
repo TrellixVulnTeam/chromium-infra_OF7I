@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -295,37 +296,38 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 	}
 
 	// Iterate through all projects/programs and create buildspecs.
+	projectConfig := map[string]projectBuildspecConfig{}
 	for _, proj := range projects {
 		program, project, err := parseProject(proj)
 		if err != nil {
 			return errors.Annotate(err, "invalid project %s", proj).Err()
 		}
 
-		logPrefix := fmt.Sprintf("%s/%s: ", program, project)
 		programProject := chromeosProgramPrefix + program
 		projectProject := chromeosProjectPrefix + program + "/" + project
-		projects := map[string]projectBuildspecConfig{
-			programProject: {
-				uploadPath: gsProgramPath(program),
-				optional:   true,
-			},
-			projectProject: {
-				uploadPath: gsProjectPath(program, project),
-				optional:   false,
-			},
+		projectConfig[programProject] = projectBuildspecConfig{
+			uploadPath: gsProgramPath(program),
+			optional:   true,
+			logPrefix:  program + ": ",
 		}
+		projectConfig[projectProject] = projectBuildspecConfig{
+			uploadPath: gsProjectPath(program, project),
+			optional:   false,
+			logPrefix:  fmt.Sprintf("%s/%s: ", program, project),
+		}
+	}
 
-		if err := CreateProjectBuildspecs(logPrefix, projects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
-			// If the projects were not all explicitly specified (i.e. some
-			// projects were selected with a wildcard) we shouldn't fail if
-			// some project does not have a local manifest.
-			if gerrs.Is(err, &MissingLocalManifestError{}) && hasWildcard {
-				LogErr(err.Error())
-				continue
-			}
+	if err := CreateProjectBuildspecs(projectConfig, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+		// If the projects were not all explicitly specified (i.e. some
+		// projects were selected with a wildcard) we shouldn't fail if
+		// some project does not have a local manifest.
+		if gerrs.Is(err, &MissingLocalManifestError{}) && hasWildcard {
+			LogErr(err.Error())
+		} else {
 			errs = append(errs, err)
 		}
 	}
+
 	// Process --other-repos.
 	otherProjects := map[string]projectBuildspecConfig{}
 	for _, project := range b.otherRepos {
@@ -334,7 +336,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 			optional:   false,
 		}
 	}
-	if err := CreateProjectBuildspecs("", otherProjects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+	if err := CreateProjectBuildspecs(otherProjects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
 		errs = append(errs, err)
 	}
 	if len(errs) == 0 {
@@ -346,14 +348,14 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 type projectBuildspecConfig struct {
 	uploadPath lgs.Path
 	optional   bool
+	logPrefix  string
 }
 
 // CreateProjectBuildspec creates local-manifest-specific buildspecs as
 // outlined in go/per-project-buildspecs.
 // Projects is a map between project name and config, e.g.
 // chromeos/project/galaxy/milkyway : {gs://chromeos-galaxy-milkyway/, true}
-func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
-
+func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	// Aggregate buildspecs by milestone.
 	buildspecsByMilestone := make(map[int][]string)
 	for _, buildspec := range buildspecs {
@@ -375,6 +377,14 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 		return err
 	}
 
+	// Process the projects in alphabetical order for consistent logging.
+	projectNames := make([]string, 0, len(projects))
+	for k := range projects {
+		projectNames = append(projectNames, k)
+	}
+	sort.Strings(projectNames)
+
+	var errs []error
 	for milestone, buildspecs := range buildspecsByMilestone {
 		var releaseBranch string
 		hasPreviousMilestone := false
@@ -401,20 +411,21 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 
 		localManifests := make(map[string]*repo.Manifest)
 
-		for project, config := range projects {
+		for _, project := range projectNames {
+			config := projects[project]
 			// Load the local manifest for the appropriate project/branch.
 			localManifests[project], err = manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 				project, releaseBranch, "local_manifest.xml")
 			if err != nil {
 				if config.optional {
-					LogErr("%scouldn't load local_manifest.xml for  %s, marked as optional so skipping...", logPrefix, project)
+					LogErr("%scouldn't load local_manifest.xml for %s, marked as optional so skipping...", config.logPrefix, project)
 					continue
 				}
 				err = MissingLocalManifestError{
 					project: project,
 					err:     err,
 				}
-				return errors.Annotate(err, "%serror loading tip-of-branch manifest", logPrefix).Err()
+				errs = append(errs, errors.Annotate(err, "%serror loading tip-of-branch manifest", config.logPrefix).Err())
 			}
 		}
 
@@ -446,7 +457,7 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 				if !force && err == nil && len(files) > 0 {
 					// This is an optimization check so don't really care if there's an error.
 					LogOut("%s%s already exists, will not regenerate unless --force is set",
-						logPrefix, buildspec)
+						config.logPrefix, buildspec)
 					continue
 				}
 
@@ -458,7 +469,7 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 				if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 					switch err.(type) {
 					case manifestutil.MissingProjectsError:
-						LogOut("%smissing projects in reference manifest, leaving unpinned: %s", logPrefix,
+						LogOut("%smissing projects in reference manifest, leaving unpinned: %s", config.logPrefix,
 							err.(manifestutil.MissingProjectsError).MissingProjects)
 					default:
 						return err
@@ -475,7 +486,7 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 					if err := gsClient.WriteFileToGS(uploadPath, localManifestRaw); err != nil {
 						return err
 					}
-					LogOut("%swrote buildspec to %s\n", logPrefix, string(uploadPath))
+					LogOut("%swrote buildspec to %s\n", config.logPrefix, string(uploadPath))
 					// Set TTL if appropriate.
 					if ttl > 0 {
 						if err := gsClient.SetTTL(ctx, uploadPath, time.Duration(ttl*24*int(time.Hour))); err != nil {
@@ -483,11 +494,13 @@ func CreateProjectBuildspecs(logPrefix string, projects map[string]projectBuilds
 						}
 					}
 				} else {
-					LogOut("%sdry run, would have written buildspec to %s\n", logPrefix, string(uploadPath))
+					LogOut("%sdry run, would have written buildspec to %s\n", config.logPrefix, string(uploadPath))
 				}
 			}
 		}
 	}
-
-	return nil
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.NewMultiError(errs...)
 }
