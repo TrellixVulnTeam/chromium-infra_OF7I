@@ -11,6 +11,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/span"
+
+	spanutil "infra/appengine/weetbix/internal/span"
 )
 
 // BugCluster represents a set of failure associated with a bug.
@@ -67,7 +69,7 @@ func Create(ctx context.Context, bc *BugCluster) error {
 	case bc.Bug == "":
 		return errors.New("bug must be specified")
 	}
-	ms := spanner.InsertMap("BugClusters", map[string]interface{}{
+	ms := spanutil.InsertMap("BugClusters", map[string]interface{}{
 		"Project":             bc.Project,
 		"Bug":                 bc.Bug,
 		"AssociatedClusterId": bc.AssociatedClusterID,

@@ -91,7 +91,7 @@ message AnalyzedTestVariant {
 
   // Metadata for the test variant.
   // See luci.resultdb.v1.Tags for details.
-  repeated StringPair tags = 7;
+  repeated luci.resultdb.v1.StringPair tags = 7;
 
   // A range of time. Flake statistics are calculated using test results
   // within that range.

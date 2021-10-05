@@ -10,16 +10,6 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
 
-// A string key-value pair.
-message StringPair {
-  // Regex: ^[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)*$
-  // Max length: 64.
-  string key = 1;
-
-  // Max length: 256.
-  string value = 2;
-}
-
 // A range of timestamps.
 message TimeRange {
   // The oldest timestamp to include in the range.

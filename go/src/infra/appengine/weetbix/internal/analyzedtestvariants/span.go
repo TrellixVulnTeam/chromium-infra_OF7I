@@ -11,20 +11,20 @@ import (
 
 	"go.chromium.org/luci/server/span"
 
+	spanutil "infra/appengine/weetbix/internal/span"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
 // Read reads AnalyzedTestVariant rows by keys.
 func Read(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant) error) error {
 	fields := []string{"Realm", "TestId", "VariantHash", "Status"}
+	var b spanutil.Buffer
 	return span.Read(ctx, "AnalyzedTestVariants", ks, fields).Do(
 		func(row *spanner.Row) error {
-			var status int64
 			tv := &pb.AnalyzedTestVariant{}
-			if err := row.Columns(&tv.Realm, &tv.TestId, &tv.VariantHash, &status); err != nil {
+			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status); err != nil {
 				return err
 			}
-			tv.Status = pb.AnalyzedTestVariantStatus(status)
 			return f(tv)
 		},
 	)
