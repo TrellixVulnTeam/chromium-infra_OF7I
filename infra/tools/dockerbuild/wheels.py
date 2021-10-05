@@ -1142,6 +1142,7 @@ SPECS.update({
         Universal('altgraph', '0.16.1'),
         Universal('apipkg', '1.5'),
         Universal('appdirs', '1.4.3'),
+        Universal('appengine-python-standard', '0.2.2', pyversions=['py3']),
         Universal('argcomplete', '1.12.2'),
         Universal('argparse',
                   '1.4.0'),  # Includes fixes missing from stdlib 2.7.6

@@ -541,6 +541,20 @@ wheel: <
 
 * *universal*
 
+## **appengine-python-standard-py3**
+
+### 0.2.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/appengine-python-standard-py3"
+  version: "version:0.2.2"
+>
+```
+
+
+* *universal*
+
 ## **argcomplete**
 
 ### 1.12.2
