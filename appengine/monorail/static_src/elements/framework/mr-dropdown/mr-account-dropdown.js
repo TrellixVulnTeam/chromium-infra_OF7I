@@ -50,7 +50,7 @@ export class MrAccountDropdown extends LitElement {
       {text: 'Switch accounts', url: this.loginUrl},
       {separator: true},
       {text: 'Profile', url: `/u/${this.userDisplayName}`},
-      {text: 'Updates', url: `/u/${this.userDisplayName}/updates`},
+      {text: 'History', url: `/u/${this.userDisplayName}/updates`},
       {text: 'Settings', url: '/hosting/settings'},
       {text: 'Saved queries', url: `/u/${this.userDisplayName}/queries`},
       {text: 'Hotlists', url: `/u/${this.userDisplayName}/hotlists`},
