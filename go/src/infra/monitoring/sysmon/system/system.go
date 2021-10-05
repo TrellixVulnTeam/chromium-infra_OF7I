@@ -171,7 +171,11 @@ func init() {
 	bootTime := time.Unix(int64(bootTimeSecs), 0)
 
 	diskRead.SetFixedResetTime(bootTime)
+	diskReadCount.SetFixedResetTime(bootTime)
+	diskReadTimeSpent.SetFixedResetTime(bootTime)
 	diskWrite.SetFixedResetTime(bootTime)
+	diskWriteCount.SetFixedResetTime(bootTime)
+	diskWriteTimeSpent.SetFixedResetTime(bootTime)
 	netUp.SetFixedResetTime(bootTime)
 	netDown.SetFixedResetTime(bootTime)
 	netErrUp.SetFixedResetTime(bootTime)
