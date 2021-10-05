@@ -316,6 +316,8 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     expected_task_def = {
         'name':
             'bb-1-chromium/try/linux-1',
+        'realm':
+            'chromium:try',
         'tags': [
             'buildbucket_bucket:chromium/try',
             'buildbucket_build_id:1',

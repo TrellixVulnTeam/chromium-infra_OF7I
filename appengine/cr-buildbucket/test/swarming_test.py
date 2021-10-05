@@ -567,6 +567,8 @@ class TaskDefTest(BaseTest):
     expected = {
         'name':
             'bb-1-chromium/try/linux-1',
+        'realm':
+            'chromium:try',
         'priority':
             '108',
         'tags': [
@@ -686,7 +688,6 @@ class SyncBuildTest(BaseTest):
   def setUp(self):
     super(SyncBuildTest, self).setUp()
     self.patch('components.net.json_request_async', autospec=True)
-    self.patch('components.auth.delegate_async', return_value=future('blah'))
 
     self.build_token = 'beeff00d'
     self.gen_build_token_mock = self.patch(
@@ -754,8 +755,7 @@ class SyncBuildTest(BaseTest):
         method='POST',
         scopes=net.EMAIL_SCOPE,
         payload=self._expected_task_def(),
-        project_id=None,
-        delegation_token='blah',  # see delegate_async mock in setUp
+        project_id=test_util.BUILD_DEFAULTS.builder.project,
         deadline=30,
         max_attempts=1,
     )
@@ -764,7 +764,7 @@ class SyncBuildTest(BaseTest):
     bundle = model.BuildBundle.get(1)
     self.assertEqual(bundle.build.update_token, self.build_token)
 
-  def test_create_task_no_realms(self):
+  def test_create_task(self):
     net.json_request_async.return_value = future({'task_id': 'x'})
     swarming._sync_build(self.build.proto.id, 0)
 
@@ -773,22 +773,9 @@ class SyncBuildTest(BaseTest):
         method='POST',
         scopes=net.EMAIL_SCOPE,
         payload=self._expected_task_def(),
-        project_id=None,
-        delegation_token='blah',  # see delegate_async mock in setUp
+        project_id=test_util.BUILD_DEFAULTS.builder.project,
         deadline=30,
         max_attempts=1,
-    )
-
-    # Test delegation token params.
-    self.assertEqual(
-        auth.delegate_async.mock_calls, [
-            mock.call(
-                services=[u'https://swarming.example.com'],
-                audience=[auth.Identity('user', 'test@localhost')],
-                impersonate=auth.Identity('user', 'john@example.com'),
-                tags=['buildbucket:bucket:chromium/try'],
-            )
-        ]
     )
 
     # Assert that we've persisted information about the new task.
@@ -813,26 +800,6 @@ class SyncBuildTest(BaseTest):
         swarming.SYNC_QUEUE_NAME, [expected_continuation], transactional=False
     )
 
-  def test_create_task_with_realms(self):
-    self.build.experiments.append('+%s' % (experiments.USE_REALMS,))
-    self.build.put()
-
-    net.json_request_async.return_value = future({'task_id': 'x'})
-    swarming._sync_build(self.build.proto.id, 0)
-
-    # Check we made the correct Swarming call. The rest of the logic is
-    # identical to the no-realms case and covered in test_create_task_no_realms.
-    net.json_request_async.assert_called_with(
-        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new',
-        method='POST',
-        scopes=net.EMAIL_SCOPE,
-        payload=self._expected_task_def(realm='chromium:try'),
-        project_id='chromium',
-        delegation_token=None,
-        deadline=30,
-        max_attempts=1,
-    )
-
   @mock.patch('swarming.cancel_task', autospec=True)
   def test_already_exists_after_creation(self, cancel_task):
 
@@ -847,7 +814,9 @@ class SyncBuildTest(BaseTest):
     net.json_request_async.side_effect = json_request_async
 
     self._create_task()
-    cancel_task.assert_called_with('swarming.example.com', 'new task', None)
+    cancel_task.assert_called_with(
+        'swarming.example.com', 'new task', 'chromium:try'
+    )
 
   def test_http_400(self):
     net.json_request_async.return_value = future_exception(
@@ -912,12 +881,6 @@ class SyncBuildTest(BaseTest):
       ({
           'task_result': {'state': 'PENDING'},
           'status': common_pb2.SCHEDULED,
-      },),
-      ({
-          'experiments': [experiments.USE_REALMS],
-          'task_result': {'state': 'PENDING'},
-          'status': common_pb2.SCHEDULED,
-          'project_id': test_util.BUILD_DEFAULTS.builder.project,
       },),
       ({
           'task_result': {
@@ -1044,9 +1007,7 @@ class SyncBuildTest(BaseTest):
   ])
   def test_sync_with_task_result(self, case):
     logging.info('test case: %s', case)
-    bundle = test_util.build_bundle(
-        id=1, input={'experiments': case.get('experiments', [])}
-    )
+    bundle = test_util.build_bundle(id=1)
     bundle.put()
 
     net.json_request_async.return_value = future(case['task_result'])
@@ -1061,8 +1022,7 @@ class SyncBuildTest(BaseTest):
         method='GET',
         scopes=net.EMAIL_SCOPE,
         payload=None,
-        project_id=case.get('project_id'),
-        delegation_token=None,
+        project_id=test_util.BUILD_DEFAULTS.builder.project,
         deadline=None,
         max_attempts=None,
     )
@@ -1132,13 +1092,9 @@ class CancelTest(BaseTest):
         side_effect=json_request_async
     )
 
-  @parameterized.expand([
-      (None, None),
-      ('chromium:try', 'chromium'),
-  ])
-  def test_cancel_task(self, realm, project_id):
+  def test_cancel_task(self):
     self.json_response = {'ok': True}
-    swarming.cancel_task('swarming.example.com', 'deadbeef', realm)
+    swarming.cancel_task('swarming.example.com', 'deadbeef', 'chromium:try')
     net.json_request_async.assert_called_with(
         (
             'https://swarming.example.com/'
@@ -1146,9 +1102,8 @@ class CancelTest(BaseTest):
         ),
         method='POST',
         scopes=net.EMAIL_SCOPE,
-        delegation_token=None,
         payload={'kill_running': True},
-        project_id=project_id,
+        project_id=test_util.BUILD_DEFAULTS.builder.project,
         deadline=None,
         max_attempts=None,
     )
@@ -1158,7 +1113,7 @@ class CancelTest(BaseTest):
         'was_running': True,
         'ok': False,
     }
-    swarming.cancel_task('swarming.example.com', 'deadbeef', None)
+    swarming.cancel_task('swarming.example.com', 'deadbeef', 'chromium:try')
 
 
 class CancelTQTaskTest(BaseTest):
@@ -1185,7 +1140,7 @@ class CancelTQTaskTest(BaseTest):
             'payload': {
                 'hostname': 'swarming.example.com',
                 'task_id': 'deadbeef',
-                'realm': None,
+                'realm': 'chromium:try',
             },
         }]
     )

@@ -386,28 +386,6 @@ def self_identity():  # pragma: no cover
   return auth.Identity('user', app_identity.get_service_account_name())
 
 
-def delegate_async(target_service_host, identity=None, tag=''):
-  """Mints a delegation token for the current identity."""
-  tag = tag or ''
-  identity = identity or auth.get_current_identity()
-
-  # TODO(vadimsh): 'identity' here can be 'project:<...>' and we happily create
-  # a delegation token for it, which is weird. Buildbucket should call Swarming
-  # using 'project:<...>' identity directly, not through a delegation token.
-
-  def impl():
-    return auth.delegate_async(
-        audience=[self_identity()],
-        services=['https://%s' % target_service_host],
-        impersonate=identity,
-        tags=[tag] if tag else [],
-    )
-
-  return _get_or_create_cached_future(
-      identity, 'delegation_token:%s:%s' % (target_service_host, tag), impl
-  )
-
-
 def current_identity_cannot(action_format, *args):  # pragma: no cover
   """Returns AuthorizationError."""
   action = action_format % args

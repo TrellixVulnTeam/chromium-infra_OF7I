@@ -419,11 +419,6 @@ class Build(ndb.Model):
     """True if the build opted-in into using BBAgent GetBuild mode."""
     return '+%s' % (experiments.BBAGENT_GET_BUILD,) in self.experiments
 
-  @property
-  def uses_realms(self):  # pragma: no cover
-    """True if the build opted-in into using LUCI Realms."""
-    return '+%s' % (experiments.USE_REALMS,) in self.experiments
-
 
 class BuildDetailEntity(ndb.Model):
   """A base class for a Datastore entity that stores some details of one Build.

@@ -4,12 +4,16 @@
 
 import re
 
-# Names of well-known experiments
+# Names of active well-known experiments
 BBAGENT_GET_BUILD = 'luci.buildbucket.bbagent_getbuild'
 CANARY = 'luci.buildbucket.canary_software'
 NON_PROD = 'luci.non_production'
 RECIPE_PY3 = 'luci.recipes.use_python3'
 USE_BBAGENT = 'luci.buildbucket.use_bbagent'
+
+# Decommissioned experiments which still may linger in configs but have
+# no effect. Can be removed once configs no longer reference them and all
+# Buildbucket GAE versions that use them are deleted.
 USE_REALMS = 'luci.use_realms'
 
 WELL_KNOWN = frozenset([

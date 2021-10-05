@@ -137,6 +137,7 @@ def compute_task_def(build, settings, fake_build):
 
   task = {
       'name': 'bb-%d-%s' % (build.proto.id, build.builder_id),
+      'realm': build.realm,
       'tags': _compute_tags(build),
       'priority': str(sw.priority),
       'task_slices': _compute_task_slices(build, settings),
@@ -580,26 +581,6 @@ def _create_swarming_task(build):
   for ts in task_def['task_slices']:
     ts['properties']['secret_bytes'] = secret_bytes_b64
 
-  auth_kwargs = {}
-  if build.uses_realms:
-    # If running in realms mode, use the project identity when calling Swarming.
-    # Swarming will check whether this project is allowed to use the requested
-    # pool. This replaces `delegation_tag` mechanism.
-    auth_kwargs.update(act_as_project=build.project)
-    # Associate the task with the build's realm. Swarming will use it to
-    # control who can access the Swarming task.
-    task_def['realm'] = build.realm
-  else:
-    # In non-realms mode use delegation tokens, this is deprecated.
-    auth_kwargs.update(
-        # "Pretend" to be the user who submitted the build.
-        impersonate=True,
-        delegation_identity=build.created_by,
-        # Tell Swarming what bucket the task belongs to. Swarming uses this to
-        # authorize access to pools assigned to specific buckets only.
-        delegation_tag='buildbucket:bucket:%s' % build.bucket_id,
-    )
-
   new_task_id = None
   try:
     res = _call_api_async(
@@ -608,10 +589,12 @@ def _create_swarming_task(build):
         method='POST',
         payload=task_def,
         deadline=30,
+        # Use the project identity when calling Swarming. Swarming will check
+        # whether this project is allowed to use the requested pool.
+        act_as_project=build.project,
         # Try only once so we don't have multiple swarming tasks with same
         # build_id and valid token, otherwise they will race.
         max_attempts=1,
-        **auth_kwargs
     ).get_result()
     new_task_id = res['task_id']
     assert new_task_id
@@ -676,9 +659,7 @@ def _create_swarming_task(build):
           'canceling task %s, best effort',
           new_task_id,
       )
-      cancel_task(
-          sw.hostname, new_task_id, build.realm if build.uses_realms else None
-      )
+      cancel_task(sw.hostname, new_task_id, build.realm)
 
 
 class TaskSyncBuild(webapp2.RequestHandler):  # pragma: no cover
@@ -705,11 +686,10 @@ def cancel_task_async(hostname, task_id, realm):
   Args:
     hostname: Swarming service hostname.
     task_id: ID of the Swarming task to cancel.
-    realm: if set, use the corresponding project identity when calling Swarming.
+    realm: the builder realm, used to figure out what LUCI project to act as.
   """
+  assert realm
 
-  # When running in Realms mode use the project identity instead of the
-  # Buildbucket's own account.
   res = yield _call_api_async(
       hostname=hostname,
       path='task/%s/cancel' % task_id,
@@ -717,7 +697,7 @@ def cancel_task_async(hostname, task_id, realm):
       payload={
           'kill_running': True,
       },
-      act_as_project=realm.split(':')[0] if realm else None,
+      act_as_project=realm.split(':')[0],
   )
 
   if res.get('ok'):
@@ -750,7 +730,7 @@ def cancel_task_transactionally_async(build, swarming):
       'payload': {
           'hostname': swarming.hostname,
           'task_id': swarming.task_id,
-          'realm': build.realm if build.uses_realms else None,
+          'realm': build.realm,
       },
   }
   return tq.enqueue_async('backend-default', [task_def])
@@ -782,12 +762,10 @@ def _load_task_result(build):
   hostname = build.proto.infra.swarming.hostname
   task_id = build.proto.infra.swarming.task_id
 
-  # When running in Realms mode use the project identity instead of the
-  # Buildbucket's own account.
   result = _call_api_async(
       hostname=hostname,
       path='task/%s/result' % task_id,
-      act_as_project=build.project if build.uses_realms else None,
+      act_as_project=build.project,
   ).get_result()
 
   if not result:
@@ -1101,48 +1079,27 @@ def get_backend_routes():  # pragma: no cover
 # Utility functions
 
 
-@ndb.tasklet
 def _call_api_async(
     hostname,
     path,
+    act_as_project,
     method='GET',
     payload=None,
-    act_as_project=None,
-    impersonate=False,
-    delegation_tag=None,
-    delegation_identity=None,
     deadline=None,
     max_attempts=None,
 ):
-  """Calls Swarming API.
-
-  Has three modes of authentication:
-    1. `not impersonate and not act_as_project`: act as Buildbucket.
-    2. `impersonate and not act_as_project`: act as `delegation_identity`.
-    3. `not impersonate and act_as_project`: act as `project:<act_as_project>`.
-
-  All other combinations are forbidden.
-  """
-  assert not (impersonate and act_as_project)
-
-  delegation_token = None
-  if impersonate:
-    delegation_token = yield user.delegate_async(
-        hostname, identity=delegation_identity, tag=delegation_tag
-    )
-
+  """Calls Swarming API authenticating as `project:<act_as_project>`."""
+  assert act_as_project
   url = 'https://%s/_ah/api/swarming/v1/%s' % (hostname, path)
-  res = yield net.json_request_async(
+  return net.json_request_async(
       url,
       method=method,
       payload=payload,
       scopes=net.EMAIL_SCOPE,
       deadline=deadline,
       max_attempts=max_attempts,
-      delegation_token=delegation_token,
       project_id=act_as_project,
   )
-  raise ndb.Return(res)
 
 
 def _parse_ts(ts):
