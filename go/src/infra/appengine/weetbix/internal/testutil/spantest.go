@@ -51,6 +51,15 @@ func SpannerTestContext(tb testing.TB) context.Context {
 	// Do not mock clock in integration tests because we cannot mock Spanner's
 	// clock.
 	ctx := testingContext(false)
+
+	// All higher-level Convey scopes are run for each nested Convey call.
+	// So spanner will try to apply the same mutations in the top-level for each
+	// nested Convey call.
+	// Clean up database to avoid the "AlreadyExists" errors.
+	err := cleanupDatabase(ctx, spannerClient)
+	if err != nil {
+		tb.Fatal(err)
+	}
 	ctx = span.UseClient(ctx, spannerClient)
 	return ctx
 }
@@ -160,6 +169,16 @@ func spannerTestMain(m *testing.M) (exitCode int, err error) {
 	}
 
 	return m.Run(), nil
+}
+
+// cleanupDatabase deletes all data from all tables.
+func cleanupDatabase(ctx context.Context, client *spanner.Client) error {
+	_, err := client.Apply(ctx, []*spanner.Mutation{
+		// No need to explicitly delete interleaved tables.
+		spanner.Delete("AnalyzedTestVariants", spanner.AllKeys()),
+		spanner.Delete("BugClusters", spanner.AllKeys()),
+	})
+	return err
 }
 
 // MustApply applies the mutations to the spanner client in the context.
