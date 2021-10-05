@@ -11,11 +11,13 @@ import (
 
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/testutil"
 
 	"cloud.google.com/go/bigquery"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestRun(t *testing.T) {
@@ -44,10 +46,12 @@ func TestRun(t *testing.T) {
 		mgrs := make(map[string]BugManager)
 		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc, monorail.ChromiumTestConfig())
 
-		thres := clustering.ImpactThresholds{
-			UnexpectedFailures1d: 10,
-			UnexpectedFailures3d: 30,
-			UnexpectedFailures7d: 70,
+		thres := map[string]*config.ImpactThreshold{
+			"chromium": {
+				UnexpectedFailures_1D: proto.Int64(10),
+				UnexpectedFailures_3D: proto.Int64(30),
+				UnexpectedFailures_7D: proto.Int64(70),
+			},
 		}
 
 		Convey("With no impactful clusters", func() {
@@ -223,9 +227,9 @@ func (f *fakeClusterClient) ReadImpactfulClusters(ctx context.Context, opts clus
 	var results []*clustering.Cluster
 	for _, c := range f.clusters {
 		include := containsValue(opts.AlwaysIncludeClusterIDs, c.ClusterID) ||
-			c.UnexpectedFailures1d >= opts.Thresholds.UnexpectedFailures1d ||
-			c.UnexpectedFailures3d >= opts.Thresholds.UnexpectedFailures3d ||
-			c.UnexpectedFailures7d >= opts.Thresholds.UnexpectedFailures7d
+			(opts.Thresholds.UnexpectedFailures_1D != nil && int64(c.UnexpectedFailures1d) >= *opts.Thresholds.UnexpectedFailures_1D) ||
+			(opts.Thresholds.UnexpectedFailures_3D != nil && int64(c.UnexpectedFailures3d) >= *opts.Thresholds.UnexpectedFailures_3D) ||
+			(opts.Thresholds.UnexpectedFailures_7D != nil && int64(c.UnexpectedFailures7d) >= *opts.Thresholds.UnexpectedFailures_7D)
 		if include {
 			results = append(results, c)
 		}

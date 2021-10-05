@@ -7,6 +7,8 @@ package monorail
 import (
 	"infra/appengine/weetbix/internal/config"
 	mpb "infra/monorailv2/api/v3/api_proto"
+
+	"github.com/golang/protobuf/proto"
 )
 
 // ChromiumTestPriorityField is the resource name of the priority field
@@ -30,6 +32,32 @@ func ChromiumTestConfig() map[string]*config.MonorailProject {
 				},
 			},
 			PriorityFieldId: 11,
+			Priorities: []*config.MonorailPriority{
+				{
+					Priority: "0",
+					Threshold: &config.ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(1000),
+					},
+				},
+				{
+					Priority: "1",
+					Threshold: &config.ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(500),
+					},
+				},
+				{
+					Priority: "2",
+					Threshold: &config.ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(100),
+					},
+				},
+				{
+					Priority: "3",
+					Threshold: &config.ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(1),
+					},
+				},
+			},
 		},
 	}
 	return projectCfg

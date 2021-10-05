@@ -168,8 +168,8 @@ func (g *Generator) MakeUpdate(issue *mpb.Issue, comments []*mpb.Comment) *mpb.M
 			// Apply the priority update.
 			comment := g.preparePriorityUpdate(issue, delta)
 			commentary = append(commentary, comment)
-			// Only notify if increasing priority (decreasing priority number).
-			notify = notify || (g.clusterPriority() < g.IssuePriority(issue))
+			// Notify if new priority is higher than existing priority.
+			notify = notify || g.isHigherPriority(g.clusterPriority(), g.IssuePriority(issue))
 		}
 	}
 
@@ -309,6 +309,25 @@ func issueVerified(issue *mpb.Issue) bool {
 	return issue.Status.Status == VerifiedStatus
 }
 
+// isHigherPriority returns whether priority p1 is higher than priority p2.
+func (g *Generator) isHigherPriority(p1 string, p2 string) bool {
+	i1 := g.indexOfPriority(p1)
+	i2 := g.indexOfPriority(p2)
+	// higher priority means lower index.
+	return i1 < i2
+}
+
+func (g *Generator) indexOfPriority(priority string) int {
+	for i, p := range g.monorailCfg.Priorities {
+		if p.Priority == priority {
+			return i
+		}
+	}
+	// If we can't find the priority, treat it as one lower than
+	// the lowest priority we know about.
+	return len(g.monorailCfg.Priorities)
+}
+
 // bugDescription returns the description that should be used when creating
 // a new bug for the cluster.
 func (g *Generator) bugDescription() string {
@@ -324,20 +343,29 @@ func (g *Generator) bugDescription() string {
 // clusterPriority returns the priority of the bug that should be created
 // for the cluster.
 func (g *Generator) clusterPriority() string {
-	switch {
-	case g.cluster.UnexpectedFailures1d > 1000:
-		return "0"
-	case g.cluster.UnexpectedFailures1d > 500:
-		return "1"
-	case g.cluster.UnexpectedFailures1d > 100:
-		return "2"
+	if len(g.monorailCfg.Priorities) == 0 {
+		// This should never happen; it means configuration is being used for
+		// a project that has never passed validation.
+		panic(fmt.Sprintf("invalid configuration in use for monorail project %q; no monorail priorities configured", g.monorailCfg.Project))
 	}
-	return "3"
+	// Default to using the lowest priority.
+	priority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
+	for i := len(g.monorailCfg.Priorities) - 2; i >= 0; i-- {
+		p := g.monorailCfg.Priorities[i]
+		if !g.cluster.MeetsThreshold(p.Threshold) {
+			// A cluster cannot reach a higher priority unless it has
+			// met the thresholds for all lower priorities.
+			break
+		}
+		priority = p
+	}
+	return priority.Priority
 }
 
 // clusterResolved returns whether the cluster has been resolved.
 func (g *Generator) clusterResolved() bool {
-	return g.cluster.UnexpectedFailures1d == 0
+	lowestPriority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
+	return !g.cluster.MeetsThreshold(lowestPriority.Threshold)
 }
 
 // sanitiseTitle removes tabs and line breaks from input, replacing them with

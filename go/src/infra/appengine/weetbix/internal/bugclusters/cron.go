@@ -18,7 +18,7 @@ import (
 // on monorail as the developer themselves rather than the Weetbix service.
 // This leads to bugs errounously being detected as having manual priority
 // changes.
-func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds clustering.ImpactThresholds, simulate bool) error {
+func UpdateBugs(ctx context.Context, monorailHost, projectID string, simulate bool) error {
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
@@ -32,8 +32,10 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, thresholds 
 		return err
 	}
 	monorailCfg := make(map[string]*config.MonorailProject)
+	thresholds := make(map[string]*config.ImpactThreshold)
 	for project, cfg := range projectCfg {
 		monorailCfg[project] = cfg.Monorail
+		thresholds[project] = cfg.BugFilingThreshold
 	}
 	mgrs := make(map[string]BugManager)
 	mbm := monorail.NewBugManager(mc, monorailCfg)

@@ -178,6 +178,9 @@ func (f *fakeIssuesClient) ModifyIssues(ctx context.Context, in *mpb.ModifyIssue
 			Commenter:  f.user,
 			Amendments: amendments,
 		})
+		if in.NotifyType == mpb.NotifyType_EMAIL {
+			issue.NotifyCount++
+		}
 		// Copy the proto so that if the consumer modifies it, the saved proto
 		// is not changed.
 		updatedIssues = append(updatedIssues, CopyIssue(issue.Issue))
@@ -327,6 +330,10 @@ func (f *fakeIssuesClient) MakeIssue(ctx context.Context, in *mpb.MakeIssueReque
 				Commenter: in.Issue.Reporter,
 			},
 		},
+		NotifyCount: 0,
+	}
+	if in.NotifyType == mpb.NotifyType_EMAIL {
+		issue.NotifyCount = 1
 	}
 
 	f.store.Issues = append(f.store.Issues, issue)

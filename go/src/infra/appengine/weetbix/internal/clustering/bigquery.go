@@ -6,6 +6,8 @@ package clustering
 
 import (
 	"context"
+	"infra/appengine/weetbix/internal/config"
+	"math"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -13,24 +15,13 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// ImpactThresholds captures impact thresholds at which an action should
-// be taken.
-type ImpactThresholds struct {
-	// The unexpected failure (1 day) threshold.
-	UnexpectedFailures1d int
-	// The unexpected failure (3 day) threshold.
-	UnexpectedFailures3d int
-	// The unexpected failure (7 day) threshold.
-	UnexpectedFailures7d int
-}
-
 // ImpactfulClusterReadOptions specifies options for ReadImpactfulClusters().
 type ImpactfulClusterReadOptions struct {
 	// Project is the LUCI Project for which analysis is being performed.
 	Project string
 	// Thresholds is the set of thresholds, which if any are met
 	// or exceeded, should result in the cluster being returned.
-	Thresholds ImpactThresholds
+	Thresholds *config.ImpactThreshold
 	// AlwaysIncludeClusterIDs is the set of clusters for which analysis
 	// should always be read, if available. This is typically the set of
 	// clusters for which bugs have been filed.
@@ -79,6 +70,9 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 	if opts.Project != "chromium" {
 		return nil, errors.New("chromium is the only project for which analysis is currently supported")
 	}
+	if opts.Thresholds == nil {
+		return nil, errors.New("thresholds must be specified")
+	}
 
 	q := c.client.Query(`
 	SELECT cluster_id as ClusterID,
@@ -99,12 +93,24 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		OR cluster_id IN UNNEST(@alwaysSelectClusters)
 	ORDER BY unexpected_failures_1d DESC, unexpected_failures_3d DESC, unexpected_failures_7d DESC
 	`)
+	unexpectedFailures1d := int64(math.MaxInt64)
+	if opts.Thresholds.UnexpectedFailures_1D != nil {
+		unexpectedFailures1d = *opts.Thresholds.UnexpectedFailures_1D
+	}
+	unexpectedFailures3d := int64(math.MaxInt64)
+	if opts.Thresholds.UnexpectedFailures_3D != nil {
+		unexpectedFailures3d = *opts.Thresholds.UnexpectedFailures_3D
+	}
+	unexpectedFailures7d := int64(math.MaxInt64)
+	if opts.Thresholds.UnexpectedFailures_7D != nil {
+		unexpectedFailures7d = *opts.Thresholds.UnexpectedFailures_7D
+	}
 	// TODO(crbug.com/1243174): This will not scale if the set of
 	// cluster IDs to always select grows too large.
 	q.Parameters = []bigquery.QueryParameter{
-		{Name: "unexpFailThreshold1d", Value: opts.Thresholds.UnexpectedFailures1d},
-		{Name: "unexpFailThreshold3d", Value: opts.Thresholds.UnexpectedFailures3d},
-		{Name: "unexpFailThreshold7d", Value: opts.Thresholds.UnexpectedFailures7d},
+		{Name: "unexpFailThreshold1d", Value: unexpectedFailures1d},
+		{Name: "unexpFailThreshold3d", Value: unexpectedFailures3d},
+		{Name: "unexpFailThreshold7d", Value: unexpectedFailures7d},
 		{Name: "alwaysSelectClusters", Value: opts.AlwaysIncludeClusterIDs},
 	}
 	job, err := q.Run(ctx)

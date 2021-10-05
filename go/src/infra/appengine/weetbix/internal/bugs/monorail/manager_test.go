@@ -21,9 +21,9 @@ func NewCluster() *clustering.Cluster {
 	return &clustering.Cluster{
 		Project:                "chromium",
 		ClusterID:              "ClusterID",
-		UnexpectedFailures1d:   1300,
-		UnexpectedFailures3d:   3300,
-		UnexpectedFailures7d:   7300,
+		UnexpectedFailures1d:   700,
+		UnexpectedFailures3d:   2100,
+		UnexpectedFailures7d:   4900,
 		UnexoneratedFailures1d: 120,
 		UnexoneratedFailures3d: 320,
 		UnexoneratedFailures7d: 720,
@@ -80,7 +80,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "0",
+							Value: "1",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -92,6 +92,7 @@ func TestManager(t *testing.T) {
 				So(len(issue.Comments), ShouldEqual, 1)
 				So(issue.Comments[0].Content, ShouldContainSubstring, reason)
 				So(issue.Comments[0].Content, ShouldNotContainSubstring, "ClusterIDShouldNotAppearInOutput")
+				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("With test name failure cluster", func() {
 				c.ClusterID = "ninja://:blink_web_tests/media/my-suite/my-test.html"
@@ -118,7 +119,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "0",
+							Value: "1",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -129,12 +130,56 @@ func TestManager(t *testing.T) {
 				})
 				So(len(issue.Comments), ShouldEqual, 1)
 				So(issue.Comments[0].Content, ShouldContainSubstring, "ninja://:blink_web_tests/media/my-suite/my-test.html")
+				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("Does nothing if in simulation mode", func() {
 				bm.Simulate = true
 				_, err := bm.Create(ctx, c)
 				So(err, ShouldEqual, bugs.ErrCreateSimulated)
 				So(len(f.Issues), ShouldEqual, 0)
+			})
+			Convey("Filed bug is below keep-open thresholds", func() {
+				// This scenario is indicative of poor configuration.
+				// The objective is simply to ensure the system handles
+				// this case gracefully.
+				c.ClusterID = "ninja://:blink_web_tests/media/my-suite/my-test.html"
+				c.ExampleFailureReason = bigquery.NullString{Valid: false}
+				c.UnexpectedFailures1d = 0
+				c.UnexpectedFailures3d = 0
+				c.UnexpectedFailures7d = 0
+
+				bug, err := bm.Create(ctx, c)
+				So(err, ShouldBeNil)
+				So(bug, ShouldEqual, "chromium/100")
+				So(len(f.Issues), ShouldEqual, 1)
+				issue := f.Issues[0]
+
+				So(issue.Issue, ShouldResembleProto, &mpb.Issue{
+					Name:     "projects/chromium/issues/100",
+					Summary:  "Tests are failing: ninja://:blink_web_tests/media/my-suite/my-test.html",
+					Reporter: AutomationUsers[0],
+					State:    mpb.IssueContentState_ACTIVE,
+					Status:   &mpb.Issue_StatusValue{Status: "Untriaged"},
+					FieldValues: []*mpb.FieldValue{
+						{
+							// Type field.
+							Field: "projects/chromium/fieldDefs/10",
+							Value: "Bug",
+						},
+						{
+							// Priority field.
+							Field: "projects/chromium/fieldDefs/11",
+							Value: "3",
+						},
+					},
+					Labels: []*mpb.Issue_LabelValue{{
+						Label: "Restrict-View-Google",
+					}, {
+						Label: "Weetbix-Managed",
+					}},
+				})
+				So(len(issue.Comments), ShouldEqual, 1)
+				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 		})
 		Convey("Update", func() {
@@ -143,7 +188,7 @@ func TestManager(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(bug, ShouldEqual, "chromium/100")
 			So(len(f.Issues), ShouldEqual, 1)
-			So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
+			So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
 
 			bugsToUpdate := []*bugs.BugToUpdate{
 				{
@@ -175,20 +220,37 @@ func TestManager(t *testing.T) {
 						Cluster: c,
 					},
 				}
-
-				Convey("Adjusts priority in response to changed impact", func() {
+				Convey("Reduces priority in response to reduced impact", func() {
+					originalNotifyCount := f.Issues[0].NotifyCount
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
 					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+					// Does not notify.
+					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount)
+
+					// Verify repeated update has no effect.
+					updateDoesNothing()
+				})
+				Convey("Increases priority in response to increased impact", func() {
+					c.UnexpectedFailures1d = 9000
+
+					originalNotifyCount := f.Issues[0].NotifyCount
+					err := bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
+
+					// Notified the increase.
+					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount+1)
 
 					// Verify repeated update has no effect.
 					updateDoesNothing()
 				})
 				Convey("Does not adjust priority if priority manually set", func() {
-					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "1")
+					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "0")
 					err = usercl.ModifyIssues(ctx, updateReq)
 					So(err, ShouldBeNil)
-					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
 
 					// Check the update sets the label.
 					expectedIssue := CopyIssue(f.Issues[0].Issue)
@@ -197,9 +259,13 @@ func TestManager(t *testing.T) {
 					})
 					SortLabels(expectedIssue.Labels)
 
+					So(f.Issues[0].NotifyCount, ShouldEqual, 1)
 					err = bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
 					So(f.Issues[0].Issue, ShouldResembleProto, expectedIssue)
+
+					// Does not notify.
+					So(f.Issues[0].NotifyCount, ShouldEqual, 1)
 
 					// Check repeated update does nothing more.
 					updateDoesNothing()
@@ -232,7 +298,7 @@ func TestManager(t *testing.T) {
 					updateDoesNothing()
 				})
 			})
-			Convey("If impact becomes zero", func() {
+			Convey("If impact falls below lowest priority threshold", func() {
 				c.UnexpectedFailures1d = 0
 				bugsToUpdate := []*bugs.BugToUpdate{
 					{

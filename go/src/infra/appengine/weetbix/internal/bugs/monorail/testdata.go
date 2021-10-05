@@ -20,6 +20,9 @@ import (
 type IssueData struct {
 	Issue    *mpb.Issue
 	Comments []*mpb.Comment
+	// NotifyCount is the number of times a notification has been generated
+	// for the issue.
+	NotifyCount int
 }
 
 // FakeIssuesSystem stores the state of bugs for a fake implementation of monorail.
@@ -36,6 +39,7 @@ func NewIssueData(uniqifier int) *IssueData {
 	result.Comments = []*mpb.Comment{
 		NewComment(result.Issue.Name, 1),
 	}
+	result.NotifyCount = 0
 	return result
 }
 
@@ -90,8 +94,9 @@ func CopyIssuesStore(s *FakeIssuesStore) *FakeIssuesStore {
 // CopyIssuesStore performs a deep copy of the given IssueData.
 func CopyIssueData(d *IssueData) *IssueData {
 	return &IssueData{
-		Issue:    CopyIssue(d.Issue),
-		Comments: CopyComments(d.Comments),
+		Issue:       CopyIssue(d.Issue),
+		Comments:    CopyComments(d.Comments),
+		NotifyCount: d.NotifyCount,
 	}
 }
 
@@ -139,6 +144,9 @@ func ShouldResembleIssuesStore(actual interface{}, expected ...interface{}) stri
 		}
 		if err := assertions.ShouldResembleProto(aIssue.Comments, eIssue.Comments); err != "" {
 			return fmt.Sprintf("issue #%v: %s", i, err)
+		}
+		if aIssue.NotifyCount != eIssue.NotifyCount {
+			return fmt.Sprintf("issue #%v notification count: got %v, want %v", i, aIssue.NotifyCount, eIssue.NotifyCount)
 		}
 	}
 	if err := convey.ShouldEqual(as.NextID, es.NextID); err != "" {

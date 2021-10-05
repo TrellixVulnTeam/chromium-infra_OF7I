@@ -159,20 +159,29 @@ func (hc *handlers) listClusters(ctx *router.Context) {
 	if err != nil {
 		logging.Errorf(ctx.Context, "Creating new clustering client: %v", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
 	}
 	defer func() {
 		if err := cc.Close(); err != nil {
 			logging.Warningf(ctx.Context, "Closing clustering client: %v", err)
 		}
 	}()
+	projectCfgs, err := config.Projects(ctx.Context)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Obtain project config: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	projectCfg := projectCfgs["chromium"]
+	if projectCfg == nil {
+		logging.Errorf(ctx.Context, "No config exists for project: chromium")
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
 
 	opts := clustering.ImpactfulClusterReadOptions{
-		Project: "chromium",
-		Thresholds: clustering.ImpactThresholds{
-			UnexpectedFailures1d: 1000,
-			UnexpectedFailures3d: 3000,
-			UnexpectedFailures7d: 7000,
-		},
+		Project:    "chromium",
+		Thresholds: projectCfg.BugFilingThreshold,
 	}
 	clusters, err := cc.ReadImpactfulClusters(ctx.Context, opts)
 	if err != nil {
@@ -189,14 +198,8 @@ func (hc *handlers) updateBugs(ctx context.Context) error {
 	if err != nil {
 		return errors.Annotate(err, "get config").Err()
 	}
-	// TODO(crbug.com/1243174): Replace with (possibly project-specific) configuration.
-	t := clustering.ImpactThresholds{
-		UnexpectedFailures1d: 1000,
-		UnexpectedFailures3d: 3000,
-		UnexpectedFailures7d: 7000,
-	}
 	simulate := !hc.prod
-	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, t, simulate)
+	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, simulate)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}

@@ -12,6 +12,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -53,8 +54,9 @@ type BugUpdater struct {
 	// managers stores the manager responsible for updating bugs for each
 	// bug tracking system (monorail, buganizer, etc.).
 	managers map[string]BugManager
-	// thresholds are the impact thresholds at which bugs should be filed.
-	thresholds clustering.ImpactThresholds
+	// bugFilingThreshold stores the per-project threshold at which bugs should be filed.
+	// The map key is the project name.
+	bugFilingThresholds map[string]*config.ImpactThreshold
 	// MaxBugsFiledPerRun is the maximum number of bugs to file each time
 	// BugUpdater runs. This throttles the rate of changes to monorail.
 	MaxBugsFiledPerRun int
@@ -62,12 +64,12 @@ type BugUpdater struct {
 
 // NewBugUpdater initialises a new BugUpdater. The specified impact thresholds are used
 // when determining whether to a file a bug.
-func NewBugUpdater(mgrs map[string]BugManager, cc ClusterClient, thresholds clustering.ImpactThresholds) *BugUpdater {
+func NewBugUpdater(mgrs map[string]BugManager, cc ClusterClient, bugFilingThresholds map[string]*config.ImpactThreshold) *BugUpdater {
 	return &BugUpdater{
-		managers:           mgrs,
-		clusterClient:      cc,
-		thresholds:         thresholds,
-		MaxBugsFiledPerRun: 1, // Default value.
+		managers:            mgrs,
+		clusterClient:       cc,
+		bugFilingThresholds: bugFilingThresholds,
+		MaxBugsFiledPerRun:  1, // Default value.
 	}
 }
 
@@ -83,7 +85,7 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 	}
 	clusters, err := b.clusterClient.ReadImpactfulClusters(ctx, clustering.ImpactfulClusterReadOptions{
 		Project:                 analysisProject,
-		Thresholds:              b.thresholds,
+		Thresholds:              b.bugFilingThresholds[analysisProject],
 		AlwaysIncludeClusterIDs: clusterIDs,
 	})
 	if err != nil {
