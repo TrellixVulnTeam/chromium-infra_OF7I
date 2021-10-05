@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -75,7 +74,7 @@ type testConfig struct {
 	branches         []string
 	buildspecsExists bool
 	expectedForce    bool
-	watchPaths       map[string]map[string][]string
+	watchPaths       map[string][]string
 	allProjects      []string
 	expectedSetTTL   map[string]time.Duration
 	dryRun           bool
@@ -150,76 +149,20 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 			).AnyTimes()
 		}
 	}
-
-	// Mock external and internal buildspec file requests.
-	for buildspec := range tc.buildspecs {
-		reqExternalBuildspec := &gitilespb.DownloadFileRequest{
-			Project:    "chromiumos/manifest-versions",
-			Path:       buildspec,
-			Committish: "HEAD",
-		}
-		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqExternalBuildspec)).Return(
-			&gitilespb.DownloadFileResponse{
-				Contents: "",
-			},
-			nil,
-		).AnyTimes()
-
-		reqBuildspecs := &gitilespb.DownloadFileRequest{
-			Project:    "chromeos/manifest-versions",
-			Path:       buildspec,
-			Committish: "HEAD",
-		}
-		gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqBuildspecs)).Return(
-			&gitilespb.DownloadFileResponse{
-				Contents: buildspecXML,
-			},
-			nil,
-		).AnyTimes()
-	}
-
-	// Set up gerrit.List expectations.
-	if tc.watchPaths != nil {
-		for watchPath, subpaths := range tc.watchPaths {
-			subdirs := []string{}
-			for subpath, files := range subpaths {
-				subdirs = append(subdirs, subpath)
-				if files == nil {
-					continue
-				}
-				reqList := &gitilespb.ListFilesRequest{
-					Project:    "chromiumos/manifest-versions",
-					Path:       filepath.Join(watchPath, subpath),
-					Committish: "HEAD",
-				}
-				gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
-					&gitilespb.ListFilesResponse{
-						Files: namesToFiles(files),
-					},
-					nil,
-				)
-			}
-			reqList := &gitilespb.ListFilesRequest{
-				Project:    "chromiumos/manifest-versions",
-				Path:       watchPath,
-				Committish: "HEAD",
-			}
-			gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
-				&gitilespb.ListFilesResponse{
-					Files: namesToFiles(subdirs),
-				},
-				nil,
-			)
-		}
-	}
-
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
 		chromeExternalHost: gitilesMock,
 	}
 	gc := gerrit.NewTestClient(mockMap)
 
-	expectedWrites := make(map[string][]byte)
+	// Mock external and internal buildspec file requests.
+	expectedReads := map[string][]byte{}
+	expectedWrites := map[string][]byte{}
+	for buildspec := range tc.buildspecs {
+		expectedReads[string(lgs.MakePath(externalBuildspecBucket, buildspec))] = []byte("")
+		expectedReads[string(lgs.MakePath(internalBuildspecBucket, buildspec))] = []byte(buildspecXML)
+	}
+
 	expectedBucketLists := make(map[string][]string)
 
 	for buildspec, expectWrite := range tc.buildspecs {
@@ -243,9 +186,20 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 	if tc.dryRun {
 		expectedWrites = make(map[string][]byte)
 	}
+	// Set up gs.List expectations.
+	expectedLists[externalBuildspecBucket] = map[string][]string{}
+	expectedLists[internalBuildspecBucket] = map[string][]string{}
+
+	if tc.watchPaths != nil {
+		for prefix, files := range tc.watchPaths {
+			expectedLists[externalBuildspecBucket][prefix] = files
+			expectedLists[internalBuildspecBucket][prefix] = files
+		}
+	}
 
 	f := &gs.FakeClient{
 		T:              t,
+		ExpectedReads:  expectedReads,
 		ExpectedWrites: expectedWrites,
 		ExpectedLists:  expectedLists,
 		ExpectedSetTTL: tc.expectedSetTTL,
@@ -372,20 +326,15 @@ func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
 
 func TestCreateProjectBuildspecMultiple(t *testing.T) {
 	t.Parallel()
-	watchPaths := map[string]map[string][]string{
+	watchPaths := map[string][]string{
 		"full/buildspecs/": {
-			"93": nil,
-			"94": {
-				"13010.0.0-rc1.xml",
-				"13011.0.0-rc1.xml",
-			},
+			"full/buildspecs/93/",
+			"full/buildspecs/94/13010.0.0-rc1.xml",
+			"full/buildspecs/94/13011.0.0-rc1.xml",
 		},
 		"buildspecs/": {
-			"93": nil,
-			"94": {
-				"13010.0.0.xml",
-				"13011.0.0.xml",
-			},
+			"full/buildspecs/94/13010.0.0.xml",
+			"full/buildspecs/94/13011.0.0.xml",
 		},
 	}
 
@@ -415,20 +364,15 @@ func TestCreateProjectBuildspecMultiple(t *testing.T) {
 
 func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
 	t.Parallel()
-	watchPaths := map[string]map[string][]string{
+	watchPaths := map[string][]string{
 		"full/buildspecs/": {
-			"93": nil,
-			"94": {
-				"13010.0.0-rc1.xml",
-				"13011.0.0-rc1.xml",
-			},
+			"full/buildspecs/93/",
+			"full/buildspecs/94/13010.0.0-rc1.xml",
+			"full/buildspecs/94/13011.0.0-rc1.xml",
 		},
 		"buildspecs/": {
-			"93": nil,
-			"94": {
-				"13010.0.0.xml",
-				"13011.0.0.xml",
-			},
+			"full/buildspecs/94/13010.0.0.xml",
+			"full/buildspecs/94/13011.0.0.xml",
 		},
 	}
 

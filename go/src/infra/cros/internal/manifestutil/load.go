@@ -13,9 +13,11 @@ import (
 	"regexp"
 
 	"infra/cros/internal/gerrit"
+	"infra/cros/internal/gs"
 	"infra/cros/internal/repo"
 
 	"go.chromium.org/luci/common/errors"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
 var (
@@ -84,6 +86,11 @@ func loadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, h
 	return loadManifest(file, getFile, mergeManifests)
 }
 
+func loadManifestFromGS(ctx context.Context, gsClient gs.Client, path lgs.Path, mergeManifests bool) (*repo.Manifest, error) {
+	getFile := loadFromGSInnerFunc(ctx, gsClient, path)
+	return loadManifest(path.Filename(), getFile, mergeManifests)
+}
+
 // LoadManifestTree loads the manifest at the given file path into
 // a Manifest struct. It also loads all included manifests.
 // Returns a map mapping manifest filenames to file contents.
@@ -140,6 +147,12 @@ func loadFromGitilesInnerFunc(ctx context.Context, gerritClient *gerrit.Client, 
 	}
 }
 
+func loadFromGSInnerFunc(_ context.Context, gsClient gs.Client, path lgs.Path) (getFile func(file string) ([]byte, error)) {
+	return func(f string) ([]byte, error) {
+		return gsClient.Read(path)
+	}
+}
+
 // LoadManifestTree loads the manifest from the specified remote location into
 // a Manifest struct. It also loads all included manifests.
 // Returns a map mapping manifest filenames to file contents.
@@ -158,4 +171,11 @@ func LoadManifestFromGitiles(ctx context.Context, gerritClient *gerrit.Client, h
 // using the Gitiles API and also calls MergeManifests to resolve includes.
 func LoadManifestFromGitilesWithIncludes(ctx context.Context, gerritClient *gerrit.Client, host, project, branch, file string) (*repo.Manifest, error) {
 	return loadManifestFromGitiles(ctx, gerritClient, host, project, branch, file, true)
+}
+
+// LoadManifestFromGS loads the manifest from the specified remote location
+// using the GS api.
+// TODO: test
+func LoadManifestFromGS(ctx context.Context, gsClient gs.Client, path lgs.Path) (*repo.Manifest, error) {
+	return loadManifestFromGS(ctx, gsClient, path, false)
 }

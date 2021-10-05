@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -21,8 +22,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	luciflag "go.chromium.org/luci/common/flag"
 	lgs "go.chromium.org/luci/common/gcloud/gs"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"infra/cros/internal/branch"
 	"infra/cros/internal/gerrit"
@@ -32,8 +31,10 @@ import (
 )
 
 const (
-	chromeosProgramPrefix = "chromeos/program/"
-	chromeosProjectPrefix = "chromeos/project/"
+	chromeosProgramPrefix   = "chromeos/program/"
+	chromeosProjectPrefix   = "chromeos/project/"
+	externalBuildspecBucket = "buildspecs-external"
+	internalBuildspecBucket = "buildspecs-internal"
 )
 
 var (
@@ -229,7 +230,7 @@ func getProjects(ctx context.Context, gerritClient *gerrit.Client, projectPatter
 	return projects, hasWildcard, nil
 }
 
-func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *gerrit.Client) ([]string, error) {
+func (b *projectBuildspec) findBuildspecs(ctx context.Context, gsClient gs.Client) ([]string, error) {
 	// Find buildspecs.
 	if len(b.watchPaths) == 0 {
 		return []string{b.buildspec}, nil
@@ -237,35 +238,22 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *ger
 	var errs []error
 	var buildspecs []string
 	for _, watchPath := range b.watchPaths {
-		dirs, err := gerritClient.ListFiles(ctx, chromeExternalHost,
-			externalManifestVersionsProject, "HEAD", watchPath)
+		files, err := gsClient.List(ctx, externalBuildspecBucket, watchPath)
 		if err != nil {
-			fullPath := fmt.Sprintf("%s/%s/+/HEAD/%s", chromeExternalHost,
-				externalManifestVersionsProject, watchPath)
+			fullPath := fmt.Sprintf("gs://%s/%s", externalBuildspecBucket, watchPath)
 			LogErr("failed to list %s, skipping...", fullPath)
 			errs = append(errs, errors.Annotate(err, "failed to list %s", fullPath).Err())
 			continue
 		}
-		for _, dir := range dirs {
+		for _, file := range files {
+			dir := filepath.Dir(strings.TrimPrefix(file, watchPath))
 			mstone, err := strconv.Atoi(dir)
 			if err != nil {
-				LogErr("dir %s in %s is not a mstone, skipping...", dir, watchPath)
+				LogErr("%s in %s is not a mstone, skipping...", dir, watchPath)
 				continue
 			}
-			if mstone >= b.minMilestone {
-				mstoneDir := filepath.Join(watchPath, dir)
-				contents, err := gerritClient.ListFiles(ctx, chromeExternalHost,
-					externalManifestVersionsProject, "HEAD", mstoneDir)
-				if err != nil {
-					fullPath := fmt.Sprintf("%s/%s/+/HEAD/%s", chromeExternalHost,
-						externalManifestVersionsProject, watchPath)
-					LogErr("failed to list %s, skipping...", mstoneDir)
-					errs = append(errs, errors.Annotate(err, "failed to list %s", fullPath).Err())
-					continue
-				}
-				for _, file := range contents {
-					buildspecs = append(buildspecs, filepath.Join(mstoneDir, file))
-				}
+			if mstone >= b.minMilestone && filepath.Base(file) != "" {
+				buildspecs = append(buildspecs, file)
 			}
 		}
 	}
@@ -277,7 +265,7 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gerritClient *ger
 
 func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *gerrit.Client) error {
 	ctx := context.Background()
-	buildspecs, err := b.findBuildspecs(ctx, gerritClient)
+	buildspecs, err := b.findBuildspecs(ctx, gsClient)
 	if err != nil {
 		return err
 	}
@@ -430,23 +418,21 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 		}
 
 		for _, buildspec := range buildspecs {
-			publicBuildspecPath := buildspec
-			_, err = gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
-				"chromiumos/manifest-versions", "HEAD", publicBuildspecPath)
+			publicBuildspecPath := lgs.MakePath(externalBuildspecBucket, buildspec)
+
+			_, err = gsClient.Read(publicBuildspecPath)
 			if err != nil {
-				errorCode, ok := status.FromError(err)
-				if ok && errorCode.Code() == codes.NotFound {
-					publicBuildspecURL := fmt.Sprintf("%s/chromiumos/manifest-versions/%s", chromeExternalHost, publicBuildspecPath)
+				if gerrs.Is(err, storage.ErrObjectNotExist) {
 					LogErr("Warning: A public buildspec does not exist at %s, so this "+
-						"buildspec will not be all that useful to partners.", publicBuildspecURL)
+						"buildspec will not be all that useful to partners.", string(publicBuildspecPath))
 				}
 				// Otherwise, ignore the error, as this check isn't critical to the overall
 				// success of the invocation.
 			}
 
 			// Load the internal buildspec.
-			buildspecManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
-				"chromeos/manifest-versions", "HEAD", buildspec)
+			privateBuildspecPath := lgs.MakePath(internalBuildspecBucket, buildspec)
+			buildspecManifest, err := manifestutil.LoadManifestFromGS(ctx, gsClient, privateBuildspecPath)
 			if err != nil {
 				return errors.Annotate(err, "error loading buildspec manifest").Err()
 			}

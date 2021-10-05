@@ -11,10 +11,12 @@ import (
 
 	"infra/cros/internal/assert"
 	"infra/cros/internal/gerrit"
+	"infra/cros/internal/gs"
 	"infra/cros/internal/repo"
 	"infra/cros/internal/util"
 
 	"github.com/golang/mock/gomock"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/proto/gitiles/mock_gitiles"
 )
@@ -379,4 +381,20 @@ func TestLoadManifestFromGitiles_symlink(t *testing.T) {
 	assert.NilError(t, err)
 	assert.NilError(t, ManifestMapEq(gotMap, expected))
 
+}
+
+func TestLoadManifestFromGS(t *testing.T) {
+	path := lgs.MakePath("test-bucket", "manifest.xml")
+	expectedReads := map[string][]byte{
+		string(path): []byte(fooXML),
+	}
+	f := &gs.FakeClient{
+		T:             t,
+		ExpectedReads: expectedReads,
+	}
+
+	ctx := context.Background()
+	got, err := LoadManifestFromGS(ctx, f, path)
+	assert.NilError(t, err)
+	assert.Assert(t, ManifestEq(got, fooManifest))
 }
