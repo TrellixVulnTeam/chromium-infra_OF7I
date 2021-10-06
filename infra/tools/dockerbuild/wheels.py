@@ -306,7 +306,7 @@ SPECS.update({
                     _CFFI_DEPENDENCY,
                     SourceOrPrebuilt(
                         'greenlet',
-                        '1.0.0',
+                        '0.4.16',
                         packaged=[
                             'windows-x86',
                             'windows-x64',
@@ -318,6 +318,7 @@ SPECS.update({
             ),
             packaged=[],
             pyversions=['py3'],
+            patch_version='chromium.1',
         ),
         SourceOrPrebuilt(
             'google-crc32c',
@@ -342,6 +343,15 @@ SPECS.update({
             ],
             pyversions=['py2', 'py3'],
             patch_version='chromium.1',
+        ),
+        SourceOrPrebuilt(
+            'greenlet',
+            '0.4.16',
+            packaged=(
+                'windows-x64',
+                'windows-x86',
+            ),
+            pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
             'greenlet',
