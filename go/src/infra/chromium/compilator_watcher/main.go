@@ -14,12 +14,15 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc/codes"
+
 	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/buildbucket/protoutil"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/luciexe/exe"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"infra/chromium/compilator_watcher/internal/bb"
@@ -63,10 +66,11 @@ func luciEXEMain(ctx context.Context, input *buildbucket_pb.Build, userArgs []st
 }
 
 type cmdArgs struct {
-	compilatorID           int64
-	phase                  string
-	compPollingTimeoutSec  time.Duration
-	compPollingIntervalSec time.Duration
+	compilatorID                   int64
+	phase                          string
+	compPollingTimeoutSec          time.Duration
+	compPollingIntervalSec         time.Duration
+	maxConsecutiveGetBuildTimeouts int64
 }
 
 func parseArgs(args []string) (cmdArgs, error) {
@@ -75,15 +79,20 @@ func parseArgs(args []string) (cmdArgs, error) {
 	compBuildId := fs.String("compilator-id", "", "Buildbucket ID of triggered compilator")
 	getSwarmingTriggerProps := fs.Bool("get-swarming-trigger-props", false, "Sub-build will report steps up to `swarming trigger properties`")
 	getLocalTests := fs.Bool("get-local-tests", false, "Sub-build will report steps of local tests")
-	compPollingTimeoutSec := fs.String(
+	compPollingTimeoutSec := fs.Int64(
 		"compilator-polling-timeout-sec",
-		"7200",
+		7200,
 		"Max number of seconds to poll compilator")
 
-	compPollingIntervalSec := fs.String(
+	compPollingIntervalSec := fs.Int64(
 		"compilator-polling-interval-sec",
-		"10",
+		10,
 		"Number of seconds to wait between compilator polls")
+
+	maxGetBuildTimeouts := fs.Int64(
+		"max-consecutive-get-build-timeouts",
+		3,
+		"The maximum amount of consecutive timeouts allowed when running GetBuild for the compilator build")
 
 	if err := fs.Parse(args); err != nil {
 		return cmdArgs{}, err
@@ -105,24 +114,17 @@ func parseArgs(args []string) (cmdArgs, error) {
 	if *getSwarmingTriggerProps {
 		phase = swarmingPhase
 	}
-
 	convertedCompBuildID, err := strconv.ParseInt(*compBuildId, 10, 64)
-
-	convertedCompPollingTimeoutSec, err := strconv.ParseInt(*compPollingTimeoutSec, 10, 64)
-	if err != nil {
-		return cmdArgs{}, err
-	}
-
-	convertedCompPollingIntervalSec, err := strconv.ParseInt(*compPollingIntervalSec, 10, 64)
 	if err != nil {
 		return cmdArgs{}, err
 	}
 
 	return cmdArgs{
-		compilatorID:           convertedCompBuildID,
-		phase:                  phase,
-		compPollingTimeoutSec:  time.Duration(convertedCompPollingTimeoutSec) * time.Second,
-		compPollingIntervalSec: time.Duration(convertedCompPollingIntervalSec) * time.Second,
+		compilatorID:                   convertedCompBuildID,
+		phase:                          phase,
+		compPollingTimeoutSec:          time.Duration(*compPollingTimeoutSec) * time.Second,
+		compPollingIntervalSec:         time.Duration(*compPollingIntervalSec) * time.Second,
+		maxConsecutiveGetBuildTimeouts: *maxGetBuildTimeouts,
 	}, nil
 }
 
@@ -245,12 +247,23 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 
 	var latestCompBuildStepName = ""
 
+	var timeoutCounts int64 = 0
 	for {
-		compBuild, err := bClient.GetBuild(ctx, parsedArgs.compilatorID)
+		compBuild, err := bClient.GetBuild(cctx, parsedArgs.compilatorID)
 
-		if err != nil {
+		// Check that the err is from the GetBuild call, not the
+		// timeout set for polling
+		if err != nil && cctx.Err() == nil {
+			if grpcutil.Code(err) == codes.DeadlineExceeded {
+				if timeoutCounts < parsedArgs.maxConsecutiveGetBuildTimeouts {
+					timeoutCounts += 1
+					continue
+				}
+			}
 			return err
 		}
+		// Reset counter
+		timeoutCounts = 0
 
 		switch maybeLatestCompStepName := getLatestBuildStepName(compBuild); {
 		case maybeLatestCompStepName != latestCompBuildStepName:

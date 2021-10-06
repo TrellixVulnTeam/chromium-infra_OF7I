@@ -28,9 +28,9 @@ type Client struct {
 
 // NewClient returns a new client to interact with buildbucket builds from the given builder.
 func NewClient(ctx context.Context) (*Client, error) {
-	if builds := ctx.Value(FakeBuildsContextKey); builds != nil {
+	if buildResponses := ctx.Value(FakeBuildsContextKey); buildResponses != nil {
 		return &Client{client: &fakeBuildClient{
-			builds:    builds.([]*buildbucket_pb.Build),
+			responses: buildResponses.([]FakeGetBuildResponse),
 			callCount: 0}}, nil
 	}
 	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, auth.Options{}).Client()
@@ -82,13 +82,27 @@ func (c *Client) GetBuild(ctx context.Context, ID int64) (*buildbucket_pb.Build,
 
 const FakeBuildsContextKey = "Key for fake builds"
 
+type FakeGetBuildResponse struct {
+	// Build is the build message that will be returned as the GetBuild response
+	//
+	// Mutually exclusive with Err
+	Build *buildbucket_pb.Build
+	// error to return instead of a Build
+	//
+	// Mutually exclusive with Err
+	Err error
+}
+
 type fakeBuildClient struct {
-	builds    []*buildbucket_pb.Build
+	responses []FakeGetBuildResponse
 	callCount int
 }
 
 func (c *fakeBuildClient) GetBuild(ctx context.Context, in *buildbucket_pb.GetBuildRequest, opts ...grpc.CallOption) (*buildbucket_pb.Build, error) {
-	to_return := c.builds[c.callCount]
+	to_return := c.responses[c.callCount]
 	c.callCount += 1
-	return to_return, nil
+	if to_return.Err != nil {
+		return nil, to_return.Err
+	}
+	return to_return.Build, nil
 }

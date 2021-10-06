@@ -15,6 +15,8 @@ import (
 	"go.chromium.org/luci/common/clock/testclock"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/luciexe/exe"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	bb "infra/chromium/compilator_watcher/internal/bb"
@@ -150,7 +152,7 @@ func TestLuciEXEMain(t *testing.T) {
 			ctx = context.WithValue(
 				ctx,
 				bb.FakeBuildsContextKey,
-				[]*buildbucket_pb.Build{compBuild})
+				[]bb.FakeGetBuildResponse{{Build: compBuild}})
 			err := luciEXEMain(ctx, input, userArgs, sender)
 
 			So(err, ShouldBeNil)
@@ -179,7 +181,7 @@ func TestLuciEXEMain(t *testing.T) {
 			ctx = context.WithValue(
 				ctx,
 				bb.FakeBuildsContextKey,
-				[]*buildbucket_pb.Build{compBuild})
+				[]bb.FakeGetBuildResponse{{Build: compBuild}})
 			err := luciEXEMain(ctx, input, userArgs, sender)
 
 			So(err, ShouldBeNil)
@@ -209,7 +211,7 @@ func TestLuciEXEMain(t *testing.T) {
 			ctx = context.WithValue(
 				ctx,
 				bb.FakeBuildsContextKey,
-				[]*buildbucket_pb.Build{compBuild})
+				[]bb.FakeGetBuildResponse{{Build: compBuild}})
 			err := luciEXEMain(ctx, input, userArgs, sender)
 
 			So(err, ShouldBeNil)
@@ -221,8 +223,8 @@ func TestLuciEXEMain(t *testing.T) {
 		})
 
 		Convey("updates last step even if step name is the same", func() {
-			compBuilds := []*buildbucket_pb.Build{
-				getBuildsWithSteps([]stepNameStatusPair{
+			compBuilds := []bb.FakeGetBuildResponse{
+				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "lookup GN args",
 						status:   buildbucket_pb.Status_SUCCESS,
@@ -231,8 +233,8 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "analyze",
 						status:   buildbucket_pb.Status_STARTED,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-				getBuildsWithSteps([]stepNameStatusPair{
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "lookup GN args",
 						status:   buildbucket_pb.Status_SUCCESS,
@@ -241,7 +243,7 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "analyze",
 						status:   buildbucket_pb.Status_SUCCESS,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_SUCCESS),
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_SUCCESS)},
 			}
 			ctx = context.WithValue(
 				ctx,
@@ -265,19 +267,19 @@ func TestLuciEXEMain(t *testing.T) {
 
 		Convey("updates last step even if step name is the same but is hidden failing step", func() {
 			Convey("and no steps have been copied yet", func() {
-				compBuilds := []*buildbucket_pb.Build{
-					getBuildsWithSteps([]stepNameStatusPair{
+				compBuilds := []bb.FakeGetBuildResponse{
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "report builders",
 							status:   buildbucket_pb.Status_STARTED,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-					getBuildsWithSteps([]stepNameStatusPair{
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "report builders",
 							status:   buildbucket_pb.Status_FAILURE,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE),
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE)},
 				}
 				ctx = context.WithValue(
 					ctx,
@@ -295,14 +297,14 @@ func TestLuciEXEMain(t *testing.T) {
 				So(input.GetSteps(), ShouldResembleProto, expectedSteps)
 			})
 			Convey("and previous copied steps exist", func() {
-				compBuilds := []*buildbucket_pb.Build{
-					getBuildsWithSteps([]stepNameStatusPair{
+				compBuilds := []bb.FakeGetBuildResponse{
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "builder cache",
 							status:   buildbucket_pb.Status_SUCCESS,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-					getBuildsWithSteps([]stepNameStatusPair{
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "builder cache",
 							status:   buildbucket_pb.Status_SUCCESS,
@@ -311,8 +313,8 @@ func TestLuciEXEMain(t *testing.T) {
 							stepName: "gclient config",
 							status:   buildbucket_pb.Status_STARTED,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-					getBuildsWithSteps([]stepNameStatusPair{
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "builder cache",
 							status:   buildbucket_pb.Status_SUCCESS,
@@ -321,7 +323,7 @@ func TestLuciEXEMain(t *testing.T) {
 							stepName: "gclient config",
 							status:   buildbucket_pb.Status_FAILURE,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE),
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE)},
 				}
 				ctx = context.WithValue(
 					ctx,
@@ -345,8 +347,8 @@ func TestLuciEXEMain(t *testing.T) {
 		})
 
 		Convey("copies correct Steps according to phase", func() {
-			compBuilds := []*buildbucket_pb.Build{
-				getBuildsWithSteps([]stepNameStatusPair{
+			compBuilds := []bb.FakeGetBuildResponse{
+				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "setup_build",
 						status:   buildbucket_pb.Status_SUCCESS,
@@ -359,8 +361,8 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "builder cache",
 						status:   buildbucket_pb.Status_SUCCESS,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-				getBuildsWithSteps([]stepNameStatusPair{
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "setup_build",
 						status:   buildbucket_pb.Status_SUCCESS,
@@ -385,8 +387,8 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "compile (with patch)",
 						status:   buildbucket_pb.Status_SUCCESS,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED),
-				getBuildsWithSteps([]stepNameStatusPair{
+				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "setup_build",
 						status:   buildbucket_pb.Status_SUCCESS,
@@ -431,7 +433,7 @@ func TestLuciEXEMain(t *testing.T) {
 					"swarming_trigger_properties": {
 						Kind: &structpb.Value_StructValue{StructValue: swarmingProps},
 					},
-				}, buildbucket_pb.Status_SUCCESS),
+				}, buildbucket_pb.Status_SUCCESS)},
 			}
 			ctx = context.WithValue(
 				ctx,
@@ -510,8 +512,8 @@ func TestLuciEXEMain(t *testing.T) {
 				So(input.GetSteps(), ShouldResembleProto, expectedSteps)
 			})
 			Convey("and displays failed hidden steps", func() {
-				compBuilds := []*buildbucket_pb.Build{
-					getBuildsWithSteps([]stepNameStatusPair{
+				compBuilds := []bb.FakeGetBuildResponse{
+					{Build: getBuildsWithSteps([]stepNameStatusPair{
 						{
 							stepName: "setup_build",
 							status:   buildbucket_pb.Status_SUCCESS,
@@ -528,7 +530,7 @@ func TestLuciEXEMain(t *testing.T) {
 							stepName: "lookup GN args",
 							status:   buildbucket_pb.Status_FAILURE,
 						},
-					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE),
+					}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE)},
 				}
 				ctx = context.WithValue(
 					ctx,
@@ -560,6 +562,8 @@ func TestLuciEXEMain(t *testing.T) {
 					"-get-swarming-trigger-props",
 					"-compilator-polling-timeout-sec",
 					"5",
+					"-max-consecutive-get-build-timeouts",
+					"3",
 				}
 
 				clk.SetTimerCallback(func(amt time.Duration, timer clock.Timer) {
@@ -582,6 +586,97 @@ func TestLuciEXEMain(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(exe.InfraErrorTag.In(err), ShouldBeTrue)
 				So(input.SummaryMarkdown, ShouldResemble, "Error while running compilator_watcher: Timeout waiting for compilator build")
+			})
+
+			Convey("handles timeouts from GetBuild", func() {
+				userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
+
+				Convey("by allowing up to max N consecutive errs", func() {
+					compBuilds := []bb.FakeGetBuildResponse{
+						{Build: getBuildsWithSteps([]stepNameStatusPair{
+							{
+								stepName: "report builders",
+								status:   buildbucket_pb.Status_STARTED,
+							},
+						}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Build: getBuildsWithSteps([]stepNameStatusPair{
+							{
+								stepName: "report builders",
+								status:   buildbucket_pb.Status_FAILURE,
+							},
+						}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE)},
+					}
+					ctx = context.WithValue(
+						ctx,
+						bb.FakeBuildsContextKey,
+						compBuilds)
+					err := luciEXEMain(ctx, input, userArgs, sender)
+					So(err, ShouldBeNil)
+					expectedSteps := getSteps([]stepNameStatusPair{
+						{
+							stepName: "report builders",
+							status:   buildbucket_pb.Status_FAILURE,
+						},
+					})
+					So(input.GetSteps(), ShouldResembleProto, expectedSteps)
+
+				})
+				Convey("and raising err if the num of consecutive errs exceeds max number", func() {
+					compBuilds := []bb.FakeGetBuildResponse{
+						{Build: getBuildsWithSteps([]stepNameStatusPair{
+							{
+								stepName: "report builders",
+								status:   buildbucket_pb.Status_STARTED,
+							},
+						}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+					}
+					ctx = context.WithValue(
+						ctx,
+						bb.FakeBuildsContextKey,
+						compBuilds)
+					err := luciEXEMain(ctx, input, userArgs, sender)
+					So(err, ShouldNotBeNil)
+					So(err, ShouldErrLike, "rpc error: code = DeadlineExceeded desc = Gateway Timeout")
+				})
+				Convey("and errs need to be consecutive", func() {
+					compBuilds := []bb.FakeGetBuildResponse{
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Build: getBuildsWithSteps([]stepNameStatusPair{
+							{
+								stepName: "report builders",
+								status:   buildbucket_pb.Status_STARTED,
+							},
+						}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Err: grpcStatus.Error(codes.DeadlineExceeded, "Gateway Timeout")},
+						{Build: getBuildsWithSteps([]stepNameStatusPair{
+							{
+								stepName: "report builders",
+								status:   buildbucket_pb.Status_FAILURE,
+							},
+						}, map[string]*structpb.Value{}, buildbucket_pb.Status_FAILURE)},
+					}
+					ctx = context.WithValue(
+						ctx,
+						bb.FakeBuildsContextKey,
+						compBuilds)
+					err := luciEXEMain(ctx, input, userArgs, sender)
+					So(err, ShouldBeNil)
+					expectedSteps := getSteps([]stepNameStatusPair{
+						{
+							stepName: "report builders",
+							status:   buildbucket_pb.Status_FAILURE,
+						},
+					})
+					So(input.GetSteps(), ShouldResembleProto, expectedSteps)
+				})
 			})
 		})
 	})
