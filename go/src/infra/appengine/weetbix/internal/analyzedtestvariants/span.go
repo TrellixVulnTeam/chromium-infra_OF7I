@@ -44,7 +44,7 @@ func QueryTestVariantsByBuilder(ctx context.Context, realm, builder string, f fu
 	st.Params = map[string]interface{}{
 		"realm":    realm,
 		"builder":  builder,
-		"statuses": []int{int(pb.AnalyzedTestVariantStatus_FLAKY), int(pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED), int(pb.AnalyzedTestVariantStatus_FLAKY_SUSPECT)},
+		"statuses": []int{int(pb.AnalyzedTestVariantStatus_FLAKY), int(pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED), int(pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS)},
 	}
 
 	var b spanutil.Buffer

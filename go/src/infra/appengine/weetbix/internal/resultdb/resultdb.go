@@ -18,6 +18,7 @@ import (
 // See https://source.chromium.org/chromium/_/chromium/infra/luci/luci-go/+/bcfdf0380e026668674c1f1cae919e1b2ace8ed3:resultdb/internal/testvariants/query.go;l=353;drc=2a22b94e783feb1c02109d8b6f7cf93a4a4b69f6
 const expectedTestVariantsPageToken = "CghFWFBFQ1RFRAoACgA="
 
+// mockResultDBClientKey is the context key indicates using mocked resultb client in tests.
 var mockResultDBClientKey = "used in tests only for setting the mock resultdb client"
 
 func newResultDBClient(ctx context.Context, host string) (rdbpb.ResultDBClient, error) {

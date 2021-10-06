@@ -20,30 +20,36 @@ enum AnalyzedTestVariantStatus {
   // Not to be used in actual test variants; serves as a default value for an unset field.
   STATUS_UNSPECIFIED = 0;
 
-  // The test variant is currently flaky.
-  FLAKY = 1;
-
-  // Results of the test variant have been consistently expected for
-  // a period of time.
-  // TODO(chanli@): mention the configuration that specifies the time range.
-  CONSISTENTLY_EXPECTED = 2;
-
-  // Results of the test variant have been consistently unexpected for
-  // a period of time.
-  CONSISTENTLY_UNEXPECTED = 3;
-
-  // There are no new results of the test variant for a period of time.
-  // It's likely that this test variant has been disabled or removed.
-  NO_NEW_RESULTS = 4;
-
-  // The test variant may be a flake but with current data it cannot be decided.
+  // The test variant has unexpected results, but Weetbix cannot determine
+  // If it is FLAKY or CONSISTENTLY_UNEXPECTED.
   // This status can be used when
   // * in in-build flakiness cases, a test variant with flaky results in a build
   //   is newly detected but the service has not been notified if the build
   //   contributes to a CL's submission or not.
+  //   *  Note that this does not apply to Chromium flaky analysis because for
+  //      Chromium Weetbix only ingests test results from builds contribute to
+  //      CL submissions.
   // * in cross-build flakiness cases, a test variant is newly detected in a build
   //   where all of its results are unexpected.
-  FLAKY_SUSPECT = 5;
+  HAS_UNEXPECTED_RESULTS = 5;
+
+  // The test variant is currently flaky.
+  FLAKY = 10;
+
+  // Results of the test variant have been consistently unexpected for
+  // a period of time.
+  CONSISTENTLY_UNEXPECTED = 20;
+
+
+  // Results of the test variant have been consistently expected for
+  // a period of time.
+  // TODO(chanli@): mention the configuration that specifies the time range.
+  CONSISTENTLY_EXPECTED = 30;
+
+  // There are no new results of the test variant for a period of time.
+  // It's likely that this test variant has been disabled or removed.
+  NO_NEW_RESULTS = 40;
+
 }
 
 // Flake statistics of a test variant.

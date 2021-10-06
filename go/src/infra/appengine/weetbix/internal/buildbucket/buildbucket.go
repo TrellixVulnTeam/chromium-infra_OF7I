@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 )
 
+// mockedBBClientKey is the context key indicates using mocked buildbucket client in tests.
 var mockedBBClientKey = "used in tests only for setting the mock buildbucket client"
 
 func newBuildsClient(ctx context.Context, host string) (bbpb.BuildsClient, error) {

@@ -10,10 +10,13 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"go.chromium.org/luci/common/logging"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/common/errors"
 	cvpb "go.chromium.org/luci/cv/api/v0"
 	"go.chromium.org/luci/server/tq"
 
+	"infra/appengine/weetbix/internal/buildbucket"
+	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 )
 
@@ -53,6 +56,46 @@ func Schedule(ctx context.Context, cvRun *cvpb.Run, build *taskspb.Build) error 
 }
 
 func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) error {
-	logging.Debugf(ctx, "ResultIngestion task for build %d", payload.Build.Id)
+	rdbInfo, err := rdbInfoFromBuild(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	rdbHost := rdbInfo.Hostname
+	inv := rdbInfo.Invocation
+	rc, err := resultdb.NewClient(ctx, rdbHost)
+	if err != nil {
+		return err
+	}
+	realm, err := rc.RealmFromInvocation(ctx, inv)
+	if err != nil {
+		return err
+	}
+	tvs, err := rc.QueryTestVariants(ctx, inv)
+	if err != nil {
+		return err
+	}
+
+	if err = createOrUpdateAnalyzedTestVariants(ctx, realm, tvs); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func rdbInfoFromBuild(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.BuildInfra_ResultDB, error) {
+	bbHost := payload.Build.Host
+	bId := payload.Build.Id
+	bc, err := buildbucket.NewClient(ctx, bbHost)
+	if err != nil {
+		return nil, err
+	}
+	b, err := bc.GetResultDBInfo(ctx, bId)
+	switch {
+	case err != nil:
+		return nil, err
+	case b.GetInfra().GetResultdb() == nil || b.Infra.Resultdb.GetInvocation() == "":
+		return nil, errors.Reason("build %s-%d not have ResultDB invocation", bbHost, bId).Err()
+	}
+	return b.Infra.Resultdb, nil
 }

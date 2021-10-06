@@ -29,7 +29,7 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 				map[string]interface{}{
 					"Builder": builder,
 				}),
-			insert.AnalyzedTestVariant(realm, "ninja://test1", "variantHash2", pb.AnalyzedTestVariantStatus_FLAKY_SUSPECT, map[string]interface{}{
+			insert.AnalyzedTestVariant(realm, "ninja://test1", "variantHash2", pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS, map[string]interface{}{
 				"Builder": builder,
 			}),
 			insert.AnalyzedTestVariant(realm, "ninja://test2", "variantHash1", status,
