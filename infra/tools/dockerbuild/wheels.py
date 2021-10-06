@@ -738,6 +738,12 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'pylsqpack',
+            '0.3.12',
+            packaged=(),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'pynacl',
             '1.2.1',
             packaged=(),

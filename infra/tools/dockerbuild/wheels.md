@@ -5417,6 +5417,26 @@ wheel: <
 
 * *universal*
 
+## **pylsqpack**
+
+### 0.3.12
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pylsqpack/${vpython_platform}"
+  version: "version:0.3.12"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **pynacl**
 
 ### 1.2.1
