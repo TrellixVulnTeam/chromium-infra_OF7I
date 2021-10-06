@@ -55,3 +55,9 @@ func (mc *MockedClient) GetRealm(inv, realm string) {
 	}
 	mc.GetInvocation(req, resF)
 }
+
+// BatchGetTestVariants mocks the BatchGetTestVariants RPC.
+func (mc *MockedClient) BatchGetTestVariants(req *rdbpb.BatchGetTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.BatchGetTestVariantsRequest, opt grpc.CallOption) (*rdbpb.BatchGetTestVariantsResponse, error)) {
+	mc.Client.EXPECT().BatchGetTestVariants(gomock.Any(), proto.MatcherEqual(req),
+		gomock.Any()).DoAndReturn(resF)
+}

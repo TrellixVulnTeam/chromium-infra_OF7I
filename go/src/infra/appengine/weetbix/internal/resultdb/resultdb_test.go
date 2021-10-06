@@ -75,5 +75,42 @@ func TestResultDB(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(actRealm, ShouldEqual, realm)
 		})
+
+		Convey(`BatchGetTestVariants`, func() {
+			req := &rdbpb.BatchGetTestVariantsRequest{
+				Invocation: inv,
+				TestVariants: []*rdbpb.BatchGetTestVariantsRequest_TestVariantIdentifier{
+					{
+						TestId:      "ninja://test1",
+						VariantHash: "hash1",
+					},
+					{
+						TestId:      "ninja://test2",
+						VariantHash: "hash2",
+					},
+				},
+			}
+
+			resF := func(ctx context.Context, in *rdbpb.BatchGetTestVariantsRequest, opt grpc.CallOption) (*rdbpb.BatchGetTestVariantsResponse, error) {
+				return &rdbpb.BatchGetTestVariantsResponse{
+					TestVariants: []*rdbpb.TestVariant{
+						{
+							TestId:      "ninja://test1",
+							VariantHash: "hash1",
+							Status:      rdbpb.TestVariantStatus_UNEXPECTED,
+						},
+						{
+							TestId:      "ninja://test2",
+							VariantHash: "hash2",
+							Status:      rdbpb.TestVariantStatus_FLAKY,
+						},
+					},
+				}, nil
+			}
+			mc.BatchGetTestVariants(req, resF)
+			tvs, err := rc.BatchGetTestVariants(mc.Ctx, req)
+			So(err, ShouldBeNil)
+			So(len(tvs), ShouldEqual, 2)
+		})
 	})
 }

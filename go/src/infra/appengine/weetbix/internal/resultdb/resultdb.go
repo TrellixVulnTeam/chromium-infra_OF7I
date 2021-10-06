@@ -14,9 +14,11 @@ import (
 	"go.chromium.org/luci/server/auth"
 )
 
-// expectedTestVariantsPageToken is the next page token for expected test variants.
-// See https://source.chromium.org/chromium/_/chromium/infra/luci/luci-go/+/bcfdf0380e026668674c1f1cae919e1b2ace8ed3:resultdb/internal/testvariants/query.go;l=353;drc=2a22b94e783feb1c02109d8b6f7cf93a4a4b69f6
-const expectedTestVariantsPageToken = "CghFWFBFQ1RFRAoACgA="
+const (
+	// expectedTestVariantsPageToken is the next page token for expected test variants.
+	// See https://source.chromium.org/chromium/_/chromium/infra/luci/luci-go/+/bcfdf0380e026668674c1f1cae919e1b2ace8ed3:resultdb/internal/testvariants/query.go;l=353;drc=2a22b94e783feb1c02109d8b6f7cf93a4a4b69f6
+	expectedTestVariantsPageToken = "CghFWFBFQ1RFRAoACgA="
+)
 
 // mockResultDBClientKey is the context key indicates using mocked resultb client in tests.
 var mockResultDBClientKey = "used in tests only for setting the mock resultdb client"
@@ -104,4 +106,13 @@ func (c *Client) RealmFromInvocation(ctx context.Context, invName string) (strin
 		return "", err
 	}
 	return inv.GetRealm(), nil
+}
+
+// BatchGetTestVariants retrieves the requested test variants.
+func (c *Client) BatchGetTestVariants(ctx context.Context, req *rdbpb.BatchGetTestVariantsRequest) ([]*rdbpb.TestVariant, error) {
+	rsp, err := c.client.BatchGetTestVariants(ctx, req, nil)
+	if err != nil {
+		return nil, err
+	}
+	return rsp.GetTestVariants(), nil
 }
