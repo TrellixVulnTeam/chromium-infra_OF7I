@@ -96,7 +96,7 @@ def RunSteps(api, platforms, dry_run, rebuild):
       if all(api.path.basename(p) in {'wheels.py', 'wheels.md'} for p in files):
         run_wheel_json = lambda step_name: \
           api.step(step_name,
-                   ['vpython', '-vpython-spec', '.vpython',
+                   ['vpython', '-vpython-spec', '.vpython3',
                     '-m', 'infra.tools.dockerbuild', 'wheel-json'],
                    stdout=api.json.output()).stdout
 

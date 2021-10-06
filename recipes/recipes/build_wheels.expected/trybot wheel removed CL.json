@@ -338,7 +338,7 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      ".vpython",
+      ".vpython3",
       "-m",
       "infra.tools.dockerbuild",
       "wheel-json"
@@ -422,7 +422,7 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      ".vpython",
+      ".vpython3",
       "-m",
       "infra.tools.dockerbuild",
       "wheel-json"
