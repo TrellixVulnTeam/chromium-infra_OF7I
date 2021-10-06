@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/maruel/subcommands"
 
@@ -93,19 +92,14 @@ func (r *cmdInitImpl) execute(ctx context.Context) error {
 		return errors.Annotate(err, "creating scan plugin directory").Err()
 	}
 
-	scanProgAssetPrefix := filepath.Base(plugDir) + "/"
-
-	for assetName, data := range templates.Assets() {
-		if strings.HasPrefix(assetName, scanProgAssetPrefix) {
-			outPath := filepath.Join(plugDir, assetName[len(scanProgAssetPrefix):])
-			if err := ioutil.WriteFile(outPath, []byte(data), 0666); err != nil {
-				return errors.Annotate(err, "writing %q", outPath).Err()
-			}
+	for path, data := range templates.Plugin() {
+		outPath := filepath.Join(plugDir, path)
+		if err := ioutil.WriteFile(outPath, []byte(data), 0666); err != nil {
+			return errors.Annotate(err, "writing %q", outPath).Err()
 		}
 	}
 
-	return ioutil.WriteFile(
-		r.path.ConfigFile(), templates.GetAsset("default.cfg"), 0666)
+	return ioutil.WriteFile(r.path.ConfigFile(), templates.Config(), 0666)
 }
 
 func (r *cmdInitImpl) Run(a subcommands.Application, args []string, env subcommands.Env) int {
