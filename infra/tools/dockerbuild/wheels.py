@@ -159,6 +159,11 @@ SPECS.update({
             pyversions=['py2'],
         ),
         SourceOrPrebuilt(
+            'PyYAML',
+            '5.4.1',
+            packaged=(),
+        ),
+        SourceOrPrebuilt(
             'SQLAlchemy',
             '1.2.5',
             packaged=(),
