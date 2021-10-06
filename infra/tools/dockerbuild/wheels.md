@@ -1265,6 +1265,20 @@ wheel: <
 
 * *universal*
 
+## **clang**
+
+### 5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/clang-py2_py3"
+  version: "version:5.0"
+>
+```
+
+
+* *universal*
+
 ## **cloudpickle-py3**
 
 ### 1.6.0
