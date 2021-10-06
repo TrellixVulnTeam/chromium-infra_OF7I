@@ -788,6 +788,7 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	var lse *ufspb.MachineLSE
 	var err error
 	if hostname != "" {
+		logging.Debugf(ctx, "getting full configs for host %s", hostname)
 		lse, err = GetMachineLSE(ctx, hostname)
 		if err != nil {
 			return nil, err
@@ -796,6 +797,7 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 			id = lse.GetMachines()[0]
 		}
 	} else {
+		logging.Debugf(ctx, "getting full configs for machine %s", id)
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", id, false)
 		if err != nil {
 			return nil, err
