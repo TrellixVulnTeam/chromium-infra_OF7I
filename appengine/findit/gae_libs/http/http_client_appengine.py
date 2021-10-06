@@ -20,13 +20,10 @@ GAE_RETRIABLE_EXCEPTIONS = [
 class HttpClientAppengine(RetryHttpClient):
   """A http client for running on appengine."""
 
-  def __init__(self,
-               follow_redirects=True,
-               interceptor=auth_util.AuthenticatingInterceptor(
-                   retriable_exceptions=GAE_RETRIABLE_EXCEPTIONS),
-               *args,
-               **kwargs):
+  def __init__(self, follow_redirects=True, interceptor=None, *args, **kwargs):
     """Create a new client suitable for use within the app engine app."""
+    interceptor = interceptor or auth_util.AuthenticatingInterceptor(
+        retriable_exceptions=GAE_RETRIABLE_EXCEPTIONS)
     super(HttpClientAppengine, self).__init__(
         interceptor=interceptor, *args, **kwargs)
     self.follow_redirects = follow_redirects

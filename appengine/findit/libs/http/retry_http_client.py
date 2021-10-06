@@ -14,12 +14,10 @@ class RetryHttpClient(object):
   Subclasses should implement abstract functions below.
   """
 
-  def __init__(self,
-               no_error_logging_statuses=None,
-               interceptor=LoggingInterceptor()):
+  def __init__(self, no_error_logging_statuses=None, interceptor=None):
     # If an http request results in the given statuses, the subclasses should
     # not log an error.
-    self.interceptor = interceptor
+    self.interceptor = interceptor or LoggingInterceptor()
     if isinstance(self.interceptor, LoggingInterceptor):
       no_error_logging_statuses = no_error_logging_statuses or []
       self.interceptor.no_error_logging_statuses = no_error_logging_statuses
