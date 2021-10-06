@@ -12,15 +12,17 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
 
-	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
+	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
@@ -111,15 +113,46 @@ func TestIngestTestResults(t *testing.T) {
 				"ninja://test_has_unexpected":     pb.AnalyzedTestVariantStatus_FLAKY,
 			}
 			act := make(map[string]pb.AnalyzedTestVariantStatus)
-			err = analyzedtestvariants.Read(ctx, spanner.AllKeys(), func(atv *pb.AnalyzedTestVariant) error {
-				So(atv.Realm, ShouldEqual, realm)
-				So(atv.TestId, ShouldNotEqual, "ninja://test_skip")
-				act[atv.TestId] = atv.Status
-				return nil
-			})
+			sampleTestId := "ninja://test_new_failure"
+			expProto := &pb.AnalyzedTestVariant{
+				Realm:        realm,
+				TestId:       sampleTestId,
+				VariantHash:  "hash",
+				Status:       pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS,
+				Variant:      sampleVar,
+				Tags:         pbutil.StringPairs("monorail_component", "Monorail>Component"),
+				TestMetadata: sampleTmd,
+			}
+
+			fields := []string{"Realm", "TestId", "VariantHash", "Status", "Variant", "Tags", "TestMetadata"}
+			var actProto *pb.AnalyzedTestVariant
+			var b spanutil.Buffer
+			err = span.Read(ctx, "AnalyzedTestVariants", spanner.AllKeys(), fields).Do(
+				func(row *spanner.Row) error {
+					tv := &pb.AnalyzedTestVariant{}
+					var tmd spanutil.Compressed
+					err = b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &tv.Variant, &tv.Tags, &tmd)
+					So(err, ShouldBeNil)
+					So(tv.Realm, ShouldEqual, realm)
+
+					if len(tmd) > 0 {
+						tv.TestMetadata = &rdbpb.TestMetadata{}
+						err = proto.Unmarshal(tmd, tv.TestMetadata)
+						So(err, ShouldBeNil)
+					}
+
+					act[tv.TestId] = tv.Status
+					if tv.TestId == sampleTestId {
+						actProto = tv
+					}
+					return nil
+				},
+			)
+
 			So(err, ShouldBeNil)
 			So(len(act), ShouldEqual, 6)
 			So(act, ShouldResemble, exp)
+			So(actProto, ShouldResembleProto, expProto)
 		})
 	})
 }

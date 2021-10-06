@@ -10,6 +10,11 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 )
 
+var sampleVar = pbutil.Variant("k1", "v1")
+var sampleTmd = &rdbpb.TestMetadata{
+	Name: "test_new_failure",
+}
+
 func mockedGetBuildRsp(inv string) *bbpb.Build {
 	return &bbpb.Build{
 		Infra: &bbpb.BuildInfra{
@@ -25,9 +30,11 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 	return &rdbpb.QueryTestVariantsResponse{
 		TestVariants: []*rdbpb.TestVariant{
 			{
-				TestId:      "ninja://test_new_failure",
-				VariantHash: "hash",
-				Status:      rdbpb.TestVariantStatus_UNEXPECTED,
+				TestId:       "ninja://test_new_failure",
+				VariantHash:  "hash",
+				Status:       rdbpb.TestVariantStatus_UNEXPECTED,
+				Variant:      pbutil.Variant("k1", "v1"),
+				TestMetadata: sampleTmd,
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{

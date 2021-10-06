@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/spanner"
+	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/logging"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
@@ -134,11 +135,19 @@ func insertRow(realm string, tv *rdbpb.TestVariant) (*spanner.Mutation, error) {
 		"Realm":            realm,
 		"TestId":           tv.TestId,
 		"VariantHash":      tv.VariantHash,
+		"Variant":          tv.Variant,
 		"Status":           int64(status),
 		"CreateTime":       spanner.CommitTimestamp,
 		"StatusUpdateTime": spanner.CommitTimestamp,
 		"Builder":          builder(tv.Variant),
-		// TODO(crbug.com/1249605): Save composite fields Variant, Tags and TestMetadata.
+		"Tags":             extractLocationTags(tv),
+	}
+	if tv.TestMetadata != nil {
+		tmd, err := proto.Marshal(tv.TestMetadata)
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal TestMetadata to bytes: %q", err))
+		}
+		row["TestMetadata"] = spanutil.Compressed(tmd)
 	}
 
 	return spanutil.InsertMap("AnalyzedTestVariants", row), nil
@@ -191,4 +200,27 @@ func builder(v *rdbpb.Variant) string {
 		}
 	}
 	return ""
+}
+
+func extractLocationTags(tv *rdbpb.TestVariant) []*rdbpb.StringPair {
+	tags := make([]*rdbpb.StringPair, 0)
+	knownKeys := make(map[string]struct{})
+	for _, tr := range tv.Results {
+		for _, t := range tr.Result.GetTags() {
+			if _, ok := locBasedTagKeys[t.Key]; !ok {
+				// We don't care about this tag.
+				continue
+			}
+			if _, ok := knownKeys[t.Key]; ok {
+				// We've got this tag.
+				continue
+			}
+			knownKeys[t.Key] = struct{}{}
+			tags = append(tags, &rdbpb.StringPair{
+				Key:   t.Key,
+				Value: t.Value,
+			})
+		}
+	}
+	return tags
 }
