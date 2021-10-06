@@ -23,13 +23,13 @@ func cmdInit(opts cmdBaseOptions) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "init path/to/directory",
 		ShortDesc: "Initialize a new migration project folder.",
-		LongDesc: `Creates a new lucicfg migration project folder.
+		LongDesc: `Creates a new migration project folder.
 
-The directory specified must be empty or already be a lucicfg migration project.
+The directory specified must be empty or already be a migration project.
 If the directory is an existing project, then nothing happens. Otherwise this
 will write the following files:
-  * .migration - config file for the migration project
-  * _plugin/plugin_main.go - No-op Golang 'plugin' used with the 'scan'
+  * .migration/config.cfg - config file for the migration project.
+  * _plugin/plugin_main.go - No-op Golang plugin used with the 'scan'
     subcommand. See documentation within this file for more information.
 
 The project directory will be used to contain checkouts and status information

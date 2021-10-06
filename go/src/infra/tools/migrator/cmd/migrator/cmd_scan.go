@@ -26,19 +26,18 @@ projects through the project's plugin. Note that this scans the state of the
 files in the luci-config service, NOT the state of the files in the migrator
 project.
 
-If the plugin's 'FindProblems' function is undefined OR it makes any Report
-calls, this will ensure that the project is checked out locally on disk. If
-FindProblems is defined and does NOT make any Report calls, this will inform
-you that the checkout can be removed (pass '-clean' to automatically delete
-them).
+If the plugin's 'FindProblems' function makes any Report calls, this will ensure
+that the project is checked out locally on disk. If 'FindProblems' does NOT make
+any Report calls, this will inform you that the checkout can be removed (pass
+'-clean' to automatically delete them).
 
-If scan does a new checkout, and the plugin defines ApplyFix, it will be invoked
-once on the checked-out project.
+If scan does a new checkout, plugin's 'ApplyFix' will be invoked once on the
+checked-out project.
 
-If a checkout already exists on disk, this will NOT attempt to update it; It's
-recommended to use standard git tooling to pull/rebase/etc. If you really want
-a new checkout, you can delete the checked-out project and run 'scan' again
-to get a fresh top-of-tree version.
+If a checkout already exists on disk and '-re-apply' is not passed, this will
+NOT attempt to update it. It's recommended to use standard git tooling to
+pull/rebase/etc. If you really want a new checkout, you can delete the
+checked-out project and run 'scan' again to get a fresh top-of-tree version.
 `,
 
 		CommandRun: func() subcommands.CommandRun {

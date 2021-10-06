@@ -84,6 +84,13 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		return
 	}
 
+	// Bail early if the migrator config is broken.
+	migratorCfg, err := project.LoadConfigFile()
+	if err != nil {
+		err = errors.Annotate(err, "bad config in %q", project).Err()
+		return
+	}
+
 	git := gitRunner{ctx: ctx, root: project.ProjectRepoTemp(projPB.Id)}
 
 	if err = os.Mkdir(git.root, 0777); err != nil {
@@ -102,6 +109,9 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 	}
 
 	git.run("init")
+	for key, val := range migratorCfg.GetGit().Config {
+		git.run("config", key, val)
+	}
 	git.run("config", "extensions.PartialClone", "origin")
 	git.run("config", "depot-tools.upstream", originRef)
 	git.run("remote", "add", "origin", remoteURL)

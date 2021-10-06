@@ -9,7 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"google.golang.org/protobuf/encoding/prototext"
+
 	"go.chromium.org/luci/common/errors"
+
+	"infra/tools/migrator/internal/migratorpb"
 )
 
 // ProjectDir is an absolute path to a migrator project directory.
@@ -30,10 +34,10 @@ func (p ProjectDir) ConfigDir() string {
 // ConfigFile returns the absolute path of the migrator project's main config
 // file.
 //
-// The existance of this file is used to determine if a folder is a migrator
+// The existence of this file is used to determine if a folder is a migrator
 // project.
 func (p ProjectDir) ConfigFile() string {
-	return filepath.Join(p.ConfigDir(), "config")
+	return filepath.Join(p.ConfigDir(), "config.cfg")
 }
 
 // TrashDir returns the absolute path of the migrator project's trash
@@ -83,6 +87,19 @@ func (p ProjectDir) CleanTrash() error {
 	return os.RemoveAll(p.TrashDir())
 }
 
+// LoadConfigFile loads the migration project config.
+func (p ProjectDir) LoadConfigFile() (*migratorpb.Config, error) {
+	blob, err := ioutil.ReadFile(p.ConfigFile())
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to load the migration project config").Err()
+	}
+	var cfg migratorpb.Config
+	if err := (prototext.UnmarshalOptions{}).Unmarshal(blob, &cfg); err != nil {
+		return nil, errors.Annotate(err, "failed to unmarshal the migration project config %q", p.ConfigFile()).Err()
+	}
+	return &cfg, nil
+}
+
 // FindProjectRoot finds a migrator ProjectDir starting from `abspath` and
 // working up towards the filesystem root.
 func FindProjectRoot(abspath string) (ProjectDir, error) {
@@ -90,6 +107,9 @@ func FindProjectRoot(abspath string) (ProjectDir, error) {
 	for {
 		if st, err := os.Stat(curPath.ConfigFile()); err == nil {
 			if st.Mode().IsRegular() {
+				if _, err := curPath.LoadConfigFile(); err != nil {
+					return "", errors.Annotate(err, "bad migration project: %q", curPath).Err()
+				}
 				return curPath, nil
 			}
 		}

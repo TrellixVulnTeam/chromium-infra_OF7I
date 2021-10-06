@@ -1,0 +1,24 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package infra.tools.migrator;
+
+option go_package = "infra/tools/migrator/internal/migratorpb";
+
+// Config is migrator's own config written as a text proto to default.cfg in
+// the migrator project directory.
+message Config {
+  // Git-related configuration.
+  message Git {
+    // A list of key-value pairs to pass to "git config ..." when initializing
+    // local repos.
+    //
+    // Useful to set e.g. "user.email".
+    map<string, string> config = 1;
+  }
+
+  Git git = 1;
+}
