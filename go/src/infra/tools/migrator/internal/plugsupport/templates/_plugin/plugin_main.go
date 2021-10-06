@@ -1,4 +1,4 @@
-// Copyright 2020 The LUCI Authors. All rights reserved.
+// Copyright 2021 The LUCI Authors. All rights reserved.
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	m "infra/tools/migrator"
+	"infra/tools/migrator/plugin"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/logging"
@@ -24,10 +25,11 @@ type impl struct{}
 // will cause the migrator tool to set up a checkout for this project.
 //
 // Logging is set up for this context, and will be diverted to a per-project
-// logfile.
+// logfile. The current working directory is set to the migrator project
+// directory.
 //
 // This function should panic on error.
-func (impl) FindProblems(ctx context.Context, proj m.Project) {
+func (*impl) FindProblems(ctx context.Context, proj m.Project) {
 	// The body of this function should be adjusted according to the needs of your
 	// particular migration. The content below is just for reference/example.
 	if proj.ID() == "chromium" {
@@ -73,10 +75,11 @@ func (impl) FindProblems(ctx context.Context, proj m.Project) {
 // struct; this will let you carry over information from ReportProblems.
 //
 // Logging is set up for this context, and will be diverted to a per-project
-// logfile.
+// logfile. The current working directory is set to the migrator project
+// directory.
 //
 // This function should panic on error.
-func (impl) ApplyFix(ctx context.Context, repo m.Repo) {
+func (*impl) ApplyFix(ctx context.Context, repo m.Repo) {
 	// The body of this function should be adjusted according to the needs of your
 	// particular migration. The content below is just for reference/example.
 	//
@@ -89,12 +92,8 @@ func (impl) ApplyFix(ctx context.Context, repo m.Repo) {
 	}
 }
 
-// InstantiateAPI implements the migrator's plugin API.
-func InstantiateAPI() m.API { return impl{} }
-
-// Type assertion to make sure it's type-conformant
-var _ m.InstantiateAPI = InstantiateAPI
-
+// main just passes control to the migrator runtime which then arranges calls
+// to the impl methods.
 func main() {
-	panic("This is meant to be run as a Go plugin for the `migrator` tool.")
+	plugin.Main(func() m.API { return &impl{} })
 }

@@ -22,12 +22,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"plugin"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/tools/migrator"
 	"infra/tools/migrator/internal/plugsupport"
 )
 
@@ -51,7 +49,7 @@ func ensureEmptyDirectory(ctx context.Context, path string) error {
 	}
 }
 
-func withPlugin(ctx context.Context, proj plugsupport.ProjectDir, cb func(migrator.InstantiateAPI) error) (err error) {
+func invokePlugin(ctx context.Context, proj plugsupport.ProjectDir, command plugsupport.Command) error {
 	proj.CleanTrash()
 
 	outDir, err := proj.MkTempDir()
@@ -60,10 +58,8 @@ func withPlugin(ctx context.Context, proj plugsupport.ProjectDir, cb func(migrat
 	}
 	plugFile := filepath.Join(outDir, "plug")
 
-	cmd := exec.CommandContext(
-		ctx, "go", "build", "-buildmode=plugin", "-o", plugFile, ".")
+	cmd := exec.CommandContext(ctx, "go", "build", "-o", plugFile, ".")
 	cmd.Dir = proj.PluginDir()
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=1") // required to compile plugins
 
 	output := bytes.Buffer{}
 	cmd.Stdout = &output
@@ -78,17 +74,6 @@ func withPlugin(ctx context.Context, proj plugsupport.ProjectDir, cb func(migrat
 		return errors.Annotate(err, "building plugin").Err()
 	}
 
-	plug, err := plugin.Open(plugFile)
-	if err != nil {
-		return errors.Annotate(err, "loading plugin").Err()
-	}
-
-	loadedPlug, err := plugsupport.APIFromPlugin(plug)
-	if err != nil {
-		return errors.Annotate(err, "parsing plugin").Err()
-	}
-
 	defer proj.CleanTrash()
-
-	return cb(loadedPlug)
+	return plugsupport.Invoke(ctx, proj, plugFile, command)
 }

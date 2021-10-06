@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/maruel/subcommands"
 
@@ -25,7 +24,9 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/config/cfgclient"
+	"go.chromium.org/luci/hardcoded/chromeinfra"
+
+	"infra/tools/migrator/internal/plugsupport"
 )
 
 // TODO(iannucci): the 'subcommands' library is a mess, use something better.
@@ -48,27 +49,44 @@ type cmdBaseOptions struct {
 type cmdBase struct {
 	subcommands.CommandRunBase
 
-	logFlags  logging.Config
-	authFlags authcli.Flags
+	logFlags          logging.Config
+	authFlags         authcli.Flags
+	configServiceHost string
 
-	authenticator *auth.Authenticator
+	contextConfig plugsupport.ContextConfig
 }
 
 func (c *cmdBase) initFlags(opts cmdBaseOptions) {
 	c.logFlags.Level = logging.Info
 	c.logFlags.AddFlags(&c.Flags)
 	c.authFlags.Register(&c.Flags, opts.authOpts)
+	c.Flags.StringVar(&c.configServiceHost, "config-service-host", chromeinfra.ConfigServiceHost,
+		"Hostname of a LUCI Config service to fetch project info from.")
 }
 
 func (c *cmdBase) doContextExecute(a subcommands.Application, cmd command, args []string, env subcommands.Env) int {
-	ctx := c.logFlags.Set(cli.GetContext(a, cmd, env))
+	// This is basically a plugsupport.RootContext(...).
+	ctx := cli.GetContext(a, cmd, env)
+
+	// Collect tweaks for the root context (the same ones we pass to the plugin).
 	authOpts, err := c.authFlags.Options()
 	if err != nil {
 		logging.Errorf(ctx, "bad auth arguments: %s\n\n", err)
 		c.GetFlags().Usage()
 		return 1
 	}
-	c.authenticator = auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts)
+	c.contextConfig = plugsupport.ContextConfig{
+		Logging:           c.logFlags,
+		Auth:              authOpts,
+		ConfigServiceHost: c.configServiceHost,
+	}
+
+	// Actually apply them to the root context.
+	if ctx, err = c.contextConfig.Apply(ctx); err != nil {
+		logging.Errorf(ctx, "failed to prepare the root context: %s\n\n", err)
+		c.GetFlags().Usage()
+		return 1
+	}
 
 	//positional
 	min, max := cmd.positionalRange()
@@ -88,19 +106,6 @@ func (c *cmdBase) doContextExecute(a subcommands.Application, cmd command, args 
 		c.GetFlags().Usage()
 		return 1
 	}
-
-	client, err := cfgclient.New(cfgclient.Options{
-		ServiceHost: "luci-config.appspot.com",
-		ClientFactory: func(context.Context) (*http.Client, error) {
-			return c.authenticator.Client()
-		},
-	})
-	if err != nil {
-		logging.Errorf(ctx, "cannot configure LUCI config client: %s", err)
-		return 1
-	}
-
-	ctx = cfgclient.Use(ctx, client)
 
 	if err := cmd.execute(ctx); err != nil {
 		errors.Log(ctx, err)

@@ -5,7 +5,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -15,10 +14,9 @@ import (
 	"go.chromium.org/luci/client/versioncli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/logging/gologger"
-	"go.chromium.org/luci/common/system/signals"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
+
+	"infra/tools/migrator/internal/plugsupport"
 )
 
 const (
@@ -51,13 +49,7 @@ fixit CLs en-masse, and exporting migration status to e.g. CSV for project
 management purposes.
 `, AppName, Version),
 
-		Context: func(ctx context.Context) context.Context {
-			ctx = gologger.StdConfig.Use(ctx)
-			ctx = logging.SetLevel(ctx, logging.Info)
-			ctx, cancel := context.WithCancel(ctx)
-			signals.HandleInterrupt(cancel)
-			return ctx
-		},
+		Context: plugsupport.RootContext,
 
 		Commands: []*subcommands.Command{
 			cmdInit(defaults),

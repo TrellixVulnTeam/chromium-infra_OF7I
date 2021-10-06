@@ -48,11 +48,7 @@ type API interface {
 	ApplyFix(ctx context.Context, repo Repo)
 }
 
-// InstantiateAPI is the symbol that plugins must export.
+// InstantiateAPI is the factory for API instances (one per LUCI project).
 //
 // It should return a new instance of API.
-//
-// If this returns nil, it has the effect of a plugin which:
-//    FindProblems reports a generic problem "FindProblems not defined".
-//    ApplyFix does nothing.
 type InstantiateAPI func() API

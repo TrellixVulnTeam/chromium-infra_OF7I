@@ -6,21 +6,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"runtime/debug"
 
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/logging/gologger"
-	"go.chromium.org/luci/common/logging/teelogger"
-	configpb "go.chromium.org/luci/common/proto/config"
-	"go.chromium.org/luci/common/sync/parallel"
-	"go.chromium.org/luci/config/cfgclient"
 
-	"infra/tools/migrator"
 	"infra/tools/migrator/internal/plugsupport"
 )
 
@@ -89,155 +80,15 @@ func (r *cmdScanImpl) validateFlags(ctx context.Context, positionals []string, e
 	return err
 }
 
-func (r *cmdScanImpl) scanProject(ctx context.Context, inst migrator.API, proj migrator.Project) {
-	defer func() {
-		if rcov := recover(); rcov != nil {
-			// TODO(iannucci): report this better
-			logging.Errorf(ctx, "fatal error: %s", rcov)
-			logging.Errorf(ctx, string(debug.Stack()))
-			proj.Report("FATAL_ERROR", fmt.Sprintf("%s", rcov))
-		}
-	}()
-
-	inst.FindProblems(ctx, proj)
-}
-
-// Callback should return true to delete the project's log file.
-func (r *cmdScanImpl) perProjectContext(ctx context.Context, projPB *configpb.Project, cb func(ctx context.Context) bool) {
-	ctx = plugsupport.InitReportSink(ctx)
-	ctx = (&gologger.LoggerConfig{
-		Out: os.Stderr,
-		// We pick a more helpful format here which includes the project.
-		// The gorey details of the filename are recorded to the .log file.
-		Format: fmt.Sprintf("%%{color}[%%{level:.1s}|%s]%%{color:reset} %%{message}", projPB.Id),
-	}).Use(ctx)
-
-	logFile, err := os.Create(r.projectDir.ProjectLog(projPB.Id))
-	if err != nil {
-		// should never happen, let it fly
-		panic(errors.Annotate(err, "opening logfile").Err())
-	}
-	defer logFile.Close()
-	ctx = teelogger.Use(
-		ctx,
-		(&gologger.LoggerConfig{
-			Out:    logFile,
-			Format: `[%{level:.1s} %{shortfile}] %{message}`,
-		}).NewLogger,
-	)
-
-	if removeLog := cb(ctx); removeLog {
-		logFile.Close()
-		os.Remove(logFile.Name())
-	}
-}
-
-func (r *cmdScanImpl) doRepoCreation(ctx context.Context, inst migrator.API, projPB *configpb.Project, reporter migrator.Reportable) (repo migrator.Repo, newCheckout bool) {
-	if r.squeaky && r.clean {
-		if err := os.RemoveAll(r.projectDir.ProjectRepo(projPB.Id)); err != nil && !os.IsNotExist(err) {
-			logging.Errorf(ctx, "Failed to clean repo, creation may fail: %s", err)
-		}
-	}
-	repo, newCheckout, err := plugsupport.CreateOrLoadRepo(ctx, r.projectDir, projPB.Id, projPB)
-	if err != nil {
-		logging.Errorf(ctx, "Failed to checkout repo: %s", err)
-		reporter.Report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
-		return
-	}
-	return
-}
-
-func (r *cmdScanImpl) doApplyFix(ctx context.Context, inst migrator.API, reporter migrator.Reportable, repo migrator.Repo) {
-	defer func() {
-		if rcov := recover(); rcov != nil {
-			// TODO(iannucci): report this better
-			logging.Errorf(ctx, "fatal error: %s", rcov)
-			logging.Errorf(ctx, string(debug.Stack()))
-			reporter.Report("APPLY_FIX_FAILURE", "Failed to run ApplyFix")
-		}
-	}()
-	inst.ApplyFix(ctx, repo)
-}
-
-func (r *cmdScanImpl) doRepoCleanup(ctx context.Context, projID string) {
-	checkoutDir := r.projectDir.ProjectRepo(projID)
-	if r.clean {
-		if _, err := os.Stat(checkoutDir); !os.IsNotExist(err) {
-			logging.Warningf(ctx, "Cleaning checkout.")
-			if err := os.RemoveAll(checkoutDir); err != nil {
-				logging.Errorf(ctx, "Failed to remove repo: %s", err)
-			}
-		}
-		return
-	}
-	if _, err := os.Stat(checkoutDir); err == nil {
-		logging.Warningf(ctx, "No reports found; This checkout can be removed.")
-		logging.Warningf(ctx, "Pass `-clean` to do this automatically.")
-	}
-}
-
 func (r *cmdScanImpl) execute(ctx context.Context) error {
-	return withPlugin(ctx, r.projectDir, func(factory migrator.InstantiateAPI) error {
-		// Note; we use this formulation because the GetProjects API excludes vital
-		// information on how to check out the project from Git (specifically, the
-		// ref and path are omitted).
-		projectPB := &configpb.ProjectsCfg{}
-		err := cfgclient.Get(ctx, "services/luci-config", "projects.cfg", cfgclient.ProtoText(projectPB), nil)
-		if err != nil {
-			panic(errors.Annotate(err, "loading luci-config projects.cfg").Err())
-		}
-
-		allReports := &migrator.ReportDump{}
-
-		err = parallel.WorkPool(8, func(ch chan<- func() error) {
-			for _, projPB := range projectPB.Projects {
-				projPB := projPB
-				ch <- func() (err error) {
-					inst := factory()
-
-					r.perProjectContext(ctx, projPB, func(ctx context.Context) bool {
-						defer func() {
-							numReports := allReports.UpdateFrom(plugsupport.DumpReports(ctx))
-							if numReports > 0 {
-								logging.Warningf(ctx, "%d reports", numReports)
-							}
-						}()
-
-						proj := plugsupport.RemoteProject(ctx, projPB.Id)
-						r.scanProject(ctx, inst, proj)
-
-						if !plugsupport.HasActionableReports(ctx) {
-							r.doRepoCleanup(ctx, projPB.Id)
-							return true
-						}
-
-						// Otherwise create it, and maybe ApplyFix.
-						repo, newCheckout := r.doRepoCreation(ctx, inst, projPB, proj)
-						if repo != nil {
-							if newCheckout || r.reapply {
-								r.doApplyFix(ctx, inst, proj, repo)
-							} else if !newCheckout {
-								logging.Infof(ctx, "checkout already exists, skipping ApplyFix (pass -re-apply to run anyway).")
-							}
-						}
-						return false
-					})
-
-					return nil
-				}
-			}
-		})
-		if err != nil {
-			// Nothing above should return an error.
-			panic(err)
-		}
-
-		scanOut, err := os.Create(r.projectDir.ReportPath())
-		if err != nil {
-			return err
-		}
-		defer scanOut.Close()
-		return allReports.WriteToCSV(scanOut)
+	return invokePlugin(ctx, r.projectDir, plugsupport.Command{
+		Action:        "scan",
+		ContextConfig: r.contextConfig,
+		ScanConfig: plugsupport.ScanConfig{
+			Squeaky: r.squeaky,
+			Clean:   r.clean,
+			Reapply: r.reapply,
+		},
 	})
 }
 
