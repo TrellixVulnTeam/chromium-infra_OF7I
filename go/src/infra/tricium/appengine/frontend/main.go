@@ -6,6 +6,8 @@ package main
 
 import (
 	"google.golang.org/appengine"
+
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 )
 
 func main() {
