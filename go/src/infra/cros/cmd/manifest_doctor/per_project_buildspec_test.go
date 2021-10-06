@@ -70,14 +70,15 @@ type testConfig struct {
 	projects   map[string][]string
 	otherRepos []string
 	// Map between buildspec name and whether or not to expect a GS write.
-	buildspecs       map[string]bool
-	branches         []string
-	buildspecsExists bool
-	expectedForce    bool
-	watchPaths       map[string][]string
-	allProjects      []string
-	expectedSetTTL   map[string]time.Duration
-	dryRun           bool
+	buildspecs              map[string]bool
+	branches                []string
+	buildspecsExists        bool
+	expectedForce           bool
+	watchPaths              map[string][]string
+	allProjects             []string
+	noLocalManifestProjects []string
+	expectedSetTTL          map[string]time.Duration
+	dryRun                  bool
 }
 
 func namesToFiles(files []string) []*gitpb.File {
@@ -149,6 +150,20 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 			).AnyTimes()
 		}
 	}
+	for _, project := range tc.noLocalManifestProjects {
+		for _, branch := range tc.branches {
+			reqLocalManifest := &gitilespb.DownloadFileRequest{
+				Project:    project,
+				Path:       "local_manifest.xml",
+				Committish: branch,
+			}
+			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(reqLocalManifest)).Return(
+				nil,
+				fmt.Errorf("file does not exist"),
+			).AnyTimes()
+		}
+	}
+
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
 		chromeExternalHost: gitilesMock,
@@ -391,7 +406,13 @@ func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
 		allProjects: []string{
 			"chromeos/project/galaxy/milkyway",
 			"chromeos/project/galaxy/andromeda",
+			"chromeos/project/galaxy/missing",
 			"chromeos/foo",
+		},
+		// Test that a project missing a local manifest file does not doom
+		// the overall run, if wildcards are in use.
+		noLocalManifestProjects: []string{
+			"chromeos/project/galaxy/missing",
 		},
 	}
 	f, gc := tc.setUpPPBTest(t)

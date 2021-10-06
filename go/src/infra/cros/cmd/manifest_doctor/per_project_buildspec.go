@@ -309,7 +309,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 		// If the projects were not all explicitly specified (i.e. some
 		// projects were selected with a wildcard) we shouldn't fail if
 		// some project does not have a local manifest.
-		if gerrs.Is(err, &MissingLocalManifestError{}) && hasWildcard {
+		if errors.Contains(err, &MissingLocalManifestError{}) && hasWildcard {
 			LogErr(err.Error())
 		} else {
 			errs = append(errs, err)
@@ -402,7 +402,7 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 		for _, project := range projectNames {
 			config := projects[project]
 			// Load the local manifest for the appropriate project/branch.
-			localManifests[project], err = manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
+			localManifest, err := manifestutil.LoadManifestFromGitiles(ctx, gerritClient, chromeInternalHost,
 				project, releaseBranch, "local_manifest.xml")
 			if err != nil {
 				if config.optional {
@@ -414,6 +414,8 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 					err:     err,
 				}
 				errs = append(errs, errors.Annotate(err, "%serror loading tip-of-branch manifest", config.logPrefix).Err())
+			} else {
+				localManifests[project] = localManifest
 			}
 		}
 
@@ -437,7 +439,8 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 				return errors.Annotate(err, "error loading buildspec manifest").Err()
 			}
 
-			for project, config := range projects {
+			for project, localManifest := range localManifests {
+				config := projects[project]
 				uploadPath := config.uploadPath.Concat(buildspec)
 				files, err := gsClient.List(ctx, uploadPath.Bucket(), uploadPath.Filename())
 				if !force && err == nil && len(files) > 0 {
@@ -447,10 +450,6 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 					continue
 				}
 
-				localManifest, ok := localManifests[project]
-				if !ok || localManifest == nil {
-					continue
-				}
 				// Create the project/program-specific buildspec.
 				if err := manifestutil.PinManifestFromManifest(localManifest, buildspecManifest); err != nil {
 					switch err.(type) {
