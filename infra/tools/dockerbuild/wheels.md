@@ -1008,6 +1008,20 @@ wheel: <
 
 * *universal*
 
+## **boto3-py3**
+
+### 1.18.56
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/boto3-py3"
+  version: "version:1.18.56"
+>
+```
+
+
+* *universal*
+
 ## **cachetools**
 
 ### 2.0.1
