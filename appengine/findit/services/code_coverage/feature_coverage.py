@@ -52,10 +52,9 @@ _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
 _CHROMIUM_REPO = GitilesRepository(
     FinditHttpClient(
-        interceptor=auth_util.AuthenticatingInterceptor(
-            # Don't log 404 as it is expected
-            # e.g. a file can missing at a parent commit.
-            no_error_logging_statuses=[404])),
+        # Don't log 404 as it is expected
+        # e.g. a file can missing at a parent commit.
+        no_error_logging_statuses=[404]),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
 _EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
 
