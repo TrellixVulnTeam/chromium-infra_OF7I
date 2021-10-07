@@ -138,6 +138,8 @@ Circumstantially, other ways of creating `vpython` CIPD wheel packages include:
 Bot builds set the `VPYTHON_VIRTUALENV_ROOT` environment variable to control
 the directory that is used to accumulate VirtualEnv deployments.
 
+Check [deployment](deployment.md) document for detail.
+
 ## Building
 
 `vpython` is built by the [set of infra-packager-* builders](
