@@ -247,7 +247,7 @@ def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
   FlushEntities(entities, total, last=True)
 
 
-def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
+def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
                         coverage_per_file, files_with_missing_coverage):
   """Create bigquery rows for files modified as part of a feature.
 
@@ -257,6 +257,10 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
       gerrit_hashtag (string): Gerrit hashtag corresponding to the feature.
       modifier_id (int): Id of the CoverageReportModifier corresponding to
                           the gerrit hashtag.
+      run_id (int): Unique id of this execution of feature coverage logic.
+                    This is exported to bigquery, so that downstream reporting
+                    logic can group rows added in one execution of the
+                    feature coverage algorithm.
       coverage_per_file (dict): Mapping from file_path to the coverage data
                               corresponding to interesting lines in the file.
       files_with_missing_coverage(set): A set of files for which coverage info
@@ -275,6 +279,8 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
             postsubmit_report.gitiles_commit.revision,
         'builder':
             postsubmit_report.builder,
+        'run_id':
+            run_id,
         'gerrit_hashtag':
             gerrit_hashtag,
         'modifier_id':
@@ -294,6 +300,7 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, modifier_id,
     bq_rows.append({
         'project': postsubmit_report.gitiles_commit.project,
         'revision': postsubmit_report.gitiles_commit.revision,
+        'run_id': run_id,
         'builder': postsubmit_report.builder,
         'gerrit_hashtag': gerrit_hashtag,
         'modifier_id': modifier_id,
@@ -329,12 +336,14 @@ def _GetAllowedBuilders():
   return _SOURCE_BUILDERS
 
 
-def ExportFeatureCoverage(modifier_id):
+def ExportFeatureCoverage(modifier_id, run_id):
   """Exports coverage metrics to Datastore and Bigquery for input feature.
 
   Args:
     modifier_id(int): Id of the CoverageReportModifier corresponding
                       to the feature
+    run_id(int): Unique id corresponding to the current execution of
+                feature coverage logic.
   """
   # NDB caches each result in the in-context cache while accessing.
   # This is problematic as due to the size of the result set,
@@ -440,7 +449,7 @@ def ExportFeatureCoverage(modifier_id):
         report, interesting_lines_per_builder_per_file[builder])
     _CreateModifiedFileCoverage(coverage_per_file, report, gerrit_hashtag,
                                 modifier_id)
-    bq_rows = _CreateBigqueryRows(report, gerrit_hashtag, modifier_id,
+    bq_rows = _CreateBigqueryRows(report, gerrit_hashtag, run_id, modifier_id,
                                   coverage_per_file,
                                   files_with_missing_coverage)
     if bq_rows:

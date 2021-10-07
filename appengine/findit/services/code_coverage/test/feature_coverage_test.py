@@ -4,6 +4,7 @@
 
 import mock
 from datetime import datetime
+import time
 
 from google.appengine.ext import ndb
 
@@ -96,14 +97,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -211,14 +214,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -284,14 +289,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -357,14 +364,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -430,8 +439,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -471,8 +481,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     commit_to_content = {'p1': 'line1', 'c1': 'line1\nline2', 'latest': ''}
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -532,14 +543,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -594,8 +607,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -629,8 +643,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.xml'),
     ]
+    run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
@@ -670,13 +685,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     commit_to_content = {'p1': '', 'c1': 'line1', 'latest': 'line1'}
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
-    feature_coverage.ExportFeatureCoverage(123)
+    run_id = int(time.time())
+
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,
@@ -740,14 +758,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123)
+    feature_coverage.ExportFeatureCoverage(123, run_id)
 
     mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
                                            'chromium/src', 'my_feature')
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
+        'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
         'modifier_id': 123,

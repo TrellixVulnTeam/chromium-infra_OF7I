@@ -1725,7 +1725,7 @@ class ExportFeatureCoverageMetrics(BaseHandler):
   def HandleGet(self):
     start_time = time.time()
     modifier_id = int(self.request.get('modifier_id'))
-    feature_coverage.ExportFeatureCoverage(modifier_id)
+    feature_coverage.ExportFeatureCoverage(modifier_id, int(start_time))
     minutes = (time.time() - start_time) / 60
     report_modifier = CoverageReportModifier.Get(modifier_id)
     logging.info('Generating feature coverage for feature %s took %.0f minutes',
