@@ -1929,6 +1929,20 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
+## **frozendict-py3**
+
+### 2.0.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/frozendict-py3"
+  version: "version:2.0.6"
+>
+```
+
+
+* *universal*
+
 ## **funcsigs**
 
 ### 1.0.2
@@ -3580,6 +3594,20 @@ wheel: <
 
 * *universal*
 
+## **mock-py3**
+
+### 4.0.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/mock-py3"
+  version: "version:4.0.3"
+>
+```
+
+
+* *universal*
+
 ## **monotonic**
 
 ### 1.5
@@ -4787,6 +4815,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/protobuf-py2_py3"
   version: "version:3.17.3"
+>
+```
+
+
+* *universal*
+
+### 3.18.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/protobuf-py2_py3"
+  version: "version:3.18.1"
 >
 ```
 
@@ -6125,6 +6165,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/rsa-py3"
   version: "version:4.7.2"
+>
+```
+
+
+* *universal*
+
+## **ruamel.yaml-py3**
+
+### 0.17.16
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/ruamel_yaml-py3"
+  version: "version:0.17.16"
 >
 ```
 
