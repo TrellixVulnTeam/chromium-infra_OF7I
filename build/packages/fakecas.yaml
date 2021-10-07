@@ -1,0 +1,12 @@
+package: infra/tools/luci/fakecas/${platform}
+description: Tool runs local fake CAS server.
+platforms:
+  - linux-amd64
+  - mac-amd64
+  - windows-amd64
+go_packages:
+  - go.chromium.org/luci/tools/cmd/fakecas
+root: ../../go/bin
+data:
+  - file: fakecas${exe_suffix}
+  - version_file: .versions/fakecas${exe_suffix}.cipd_version
