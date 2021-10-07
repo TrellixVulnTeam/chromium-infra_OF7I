@@ -199,7 +199,7 @@ func downloadCasURLs(ctx context.Context, base string, urls map[string]string) e
 			return
 		}
 
-		casClient, err := casclient.NewLegacy(ctx, string(instance), authOpts, true)
+		casClient, err := casclient.NewLegacy(ctx, casclient.AddrProd, string(instance), authOpts, true)
 		if err != nil {
 			errs <- err
 			return

@@ -48,7 +48,7 @@ func NewClient(ctx context.Context, execRoot string) *Client {
 	factory, _ := ctx.Value(&ctxKey).(CasClientFactory)
 	if factory == nil {
 		factory = func(ctx context.Context, instance string) (CasClient, error) {
-			return casclient.NewLegacy(ctx, instance, chromeinfra.DefaultAuthOptions(), true)
+			return casclient.NewLegacy(ctx, casclient.AddrProd, instance, chromeinfra.DefaultAuthOptions(), true)
 		}
 	}
 	return &Client{execRoot, map[string]CasClient{}, factory}
