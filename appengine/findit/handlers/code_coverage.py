@@ -1714,6 +1714,8 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
       taskqueue.add(
           method='GET',
           url=url,
+          name='%s-%s' %
+          (gerrit_hashtag, datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
           queue_name=constants.FEATURE_COVERAGE_QUEUE,
           target=constants.CODE_COVERAGE_FEATURE_COVERAGE_WORKER)
     return {'return_code': 200}
