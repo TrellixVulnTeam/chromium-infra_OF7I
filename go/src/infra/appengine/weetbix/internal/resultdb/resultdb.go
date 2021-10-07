@@ -34,8 +34,9 @@ func newResultDBClient(ctx context.Context, host string) (rdbpb.ResultDBClient, 
 	}
 	return rdbpb.NewResultDBPRPCClient(
 		&prpc.Client{
-			C:    &http.Client{Transport: t},
-			Host: host,
+			C:       &http.Client{Transport: t},
+			Host:    host,
+			Options: prpc.DefaultOptions(),
 		}), nil
 }
 

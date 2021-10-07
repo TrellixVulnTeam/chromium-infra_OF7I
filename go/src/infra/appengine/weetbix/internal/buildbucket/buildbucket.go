@@ -30,8 +30,9 @@ func newBuildsClient(ctx context.Context, host string) (bbpb.BuildsClient, error
 	}
 	return bbpb.NewBuildsPRPCClient(
 		&prpc.Client{
-			C:    &http.Client{Transport: t},
-			Host: host,
+			C:       &http.Client{Transport: t},
+			Host:    host,
+			Options: prpc.DefaultOptions(),
 		}), nil
 }
 
