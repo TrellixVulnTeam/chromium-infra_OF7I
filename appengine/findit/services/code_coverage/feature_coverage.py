@@ -328,6 +328,10 @@ def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
     wait_sec *= 2
     time.sleep(wait_sec)
     content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  if wait_sec >= _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
+    logging.warning(
+        "Couldn't fetch content for %s at revision %s due to exceeding qps",
+        file_path, revision)
   file_content_queue.put((revision, content.split('\n') if content else []))
 
 
