@@ -6,8 +6,6 @@ from collections import defaultdict
 import json
 import logging
 import difflib
-import Queue
-from threading import Thread
 import time
 
 from google.appengine.ext import ndb
@@ -311,14 +309,17 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
     })
   return bq_rows
 
-def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
+
+def _FetchFileContentAtCommit(file_path, revision):
   """Fetches lines in a file at the specified revision.
 
   Args:
     file_path (string): chromium/src relative path to file whose content is to
       be fetched. Must start with '//'.
     revision (string): commit hash of the revision.
-    file_content_queue (Queue): Queue which holds the output.
+  Returns:
+    A list of strings representing the file content at the revision. If file
+    is not found at the revision, an empty list is returned.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
   content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
@@ -328,7 +329,7 @@ def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
     wait_sec *= 2
     time.sleep(wait_sec)
     content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
-  file_content_queue.put((revision, content.split('\n') if content else []))
+  return content.split('\n') if content else []
 
 
 def _GetAllowedBuilders():
@@ -369,7 +370,6 @@ def ExportFeatureCoverage(modifier_id, run_id):
     report = query.fetch(limit=1)[0]
     builder_to_latest_report[builder] = report
 
-  file_content_queue = Queue.Queue()
   files_deleted_at_latest = defaultdict(list)
   interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
   commits = _GetFeatureCommits(gerrit_hashtag)
@@ -378,7 +378,7 @@ def ExportFeatureCoverage(modifier_id, run_id):
       file_path = '//' + file_path
 
       # Fetch content at latest coverage report commits
-      builder_to_latest_content_thread = {}
+      builder_to_latest_content = defaultdict(list)
       file_type_supported_by_builders = False
       for builder, report in builder_to_latest_report.items():
         if not any([
@@ -389,53 +389,31 @@ def ExportFeatureCoverage(modifier_id, run_id):
         file_type_supported_by_builders = True
         if file_path in files_deleted_at_latest[builder]:
           continue
-        builder_to_latest_content_thread[builder] = Thread(
-            target=_FetchFileContentAtCommit,
-            args=(file_path, report.gitiles_commit.revision,
-                  file_content_queue))
-        builder_to_latest_content_thread[builder].start()
+        builder_to_latest_content[builder] = _FetchFileContentAtCommit(
+            file_path, report.gitiles_commit.revision)
 
       # Skip processing if file type is not supported by any builder.
-      # This is done particulartly because there are large configuration files
+      # This is done particularly because there are large configuration files
       # like .xml/.pyl etc, fetching whose content result in oom errors
       if not file_type_supported_by_builders:
         continue
 
-      # Fetch content at feature and parent commit
-      feature_commit_thread = Thread(
-          target=_FetchFileContentAtCommit,
-          args=(file_path, commit['feature_commit'], file_content_queue))
-      parent_commit_thread = Thread(
-          target=_FetchFileContentAtCommit,
-          args=(file_path, commit['parent_commit'], file_content_queue))
-      feature_commit_thread.start()
-      parent_commit_thread.start()
-
-      # Wait for all threads to finish
-      for thread in builder_to_latest_content_thread.values():
-        thread.join()
-      feature_commit_thread.join()
-      parent_commit_thread.join()
-
-      # Consume content from all threads
-      contents = defaultdict(list)
-      while not file_content_queue.empty():
-        # It's correct to do block=False as all threads have been joined before.
-        k, v = file_content_queue.get(block=False)
-        contents[k] = v
-
+      content_at_feature_commit = _FetchFileContentAtCommit(
+          file_path, commit['feature_commit'])
+      content_at_parent_commit = _FetchFileContentAtCommit(
+          file_path, commit['parent_commit'])
       # File content must be there at feature commit
-      assert contents[commit['feature_commit']], (
+      assert content_at_feature_commit, (
           "File Content not found for path %s at commit %s (CL: %s)" %
           (file_path, commit['feature_commit'], commit['cl_number']))
 
       # Calculate interesting lines for file corresponding to each builder
       for builder, report in builder_to_latest_report.items():
-        content_at_latest = contents[report.gitiles_commit.revision]
+        content_at_latest = builder_to_latest_content[builder]
         if content_at_latest:
-          interesting_lines = _GetInterestingLines(
-              content_at_latest, contents[commit['feature_commit']],
-              contents[commit['parent_commit']])
+          interesting_lines = _GetInterestingLines(content_at_latest,
+                                                   content_at_feature_commit,
+                                                   content_at_parent_commit)
           interesting_lines_per_builder_per_file[builder][file_path] = (
               interesting_lines_per_builder_per_file[builder][file_path]
               | interesting_lines)
