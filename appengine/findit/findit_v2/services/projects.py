@@ -80,7 +80,9 @@ PROJECT_CFG = {
         # Auto-actions
         'auto_actions_enabled_for_project': True,
         'auto_revert_enabled_for_project': True,
-        'auto_commit_enabled_for_project': True,
+        # Auto commit need to be disabled until we have verifiable build
+        # process for Findit (crbug.com/1175944)
+        'auto_commit_enabled_for_project': False,
         # Do not automatically revert Culprits older than this. Commented out as
         # this is the default value.
         # 'max_revertible_culprit_age_hours': 24,

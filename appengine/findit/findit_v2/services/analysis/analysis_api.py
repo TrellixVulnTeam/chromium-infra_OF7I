@@ -1569,6 +1569,7 @@ class AnalysisAPI(object):
     previous_revert_action = cls._CheckPreviousRevertAction(culprit)
     if previous_revert_action:
       return previous_revert_action
+    logging.info('Requesting review for culprit %s', culprit.key.id())
     bug_link = gerrit.CreateFinditWrongBugLink(
         gerrit.FINDIT_BUILD_FAILURE_COMPONENT,
         None,
