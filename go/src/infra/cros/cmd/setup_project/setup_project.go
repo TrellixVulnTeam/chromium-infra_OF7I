@@ -113,11 +113,17 @@ func (b *setupProject) validate() error {
 		return fmt.Errorf("error validating --chromeos_checkout=%s", b.chromeosCheckoutPath)
 	}
 
-	if b.project == "" && !b.allProjects {
-		return fmt.Errorf("--project or --all_projects required")
+	if b.project == "" && !b.allProjects && len(b.otherRepos) == 0 {
+		return fmt.Errorf("--project, --all_projects or --other-repos required")
 	}
 	if b.project != "" && b.allProjects {
 		return fmt.Errorf("--project and --all_projects cannot both be set")
+	}
+	if b.program == "" && b.project != "" {
+		return fmt.Errorf("--program must be used with --project")
+	}
+	if b.program == "" && b.allProjects {
+		return fmt.Errorf("--program must be used with --all_projects")
 	}
 
 	if b.chipset != "" && b.buildspec != "" {
@@ -248,7 +254,7 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		projects = []string{b.project}
 	}
 
-	if len(projects) == 0 {
+	if len(projects) == 0 && len(b.otherRepos) == 0 {
 		return fmt.Errorf("no projects found")
 	}
 	for _, project := range projects {
@@ -265,18 +271,21 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 		})
 	}
 
-	var gspath lgs.Path
-	if b.buildspec != "" {
-		gspath = gsProgramPath(b.program, b.buildspec)
+	var programProject string
+	if len(projects) != 0 {
+		var gspath lgs.Path
+		if b.buildspec != "" {
+			gspath = gsProgramPath(b.program, b.buildspec)
+		}
+		programProject = fmt.Sprintf("chromeos/program/%s", b.program)
+		files = append(files, localManifest{
+			project:    programProject,
+			branch:     b.localManifestBranch,
+			path:       "local_manifest.xml",
+			gsPath:     gspath,
+			downloadTo: fmt.Sprintf("%s_program.xml", b.program),
+		})
 	}
-	programProject := fmt.Sprintf("chromeos/program/%s", b.program)
-	files = append(files, localManifest{
-		project:    programProject,
-		branch:     b.localManifestBranch,
-		path:       "local_manifest.xml",
-		gsPath:     gspath,
-		downloadTo: fmt.Sprintf("%s_program.xml", b.program),
-	})
 
 	if b.chipset != "" && b.buildspec == "" {
 		files = append(files,
@@ -326,7 +335,7 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 			errmsg = fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
 				chromeInternalHost, file.project, file.path, file.branch)
 		}
-		if err != nil && file.project == programProject {
+		if err != nil && programProject != "" && file.project == programProject {
 			// If the program-level buildspec doesn't exist, don't fail.
 			// Unless something is very wrong, the project and program
 			// buildspecs will be generated together.

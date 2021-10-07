@@ -81,6 +81,41 @@ func TestSetupProject(t *testing.T) {
 	checkFiles(t, localManifestDir, expectedFiles)
 }
 
+func TestSetupProject_onlyOtherRepo(t *testing.T) {
+	branch := "mybranch"
+	expectedFiles := map[string]string{
+		"chromeos-other-project_repo.xml": "chromeos/other/project",
+	}
+
+	expectedDownloads := map[string]map[string]map[string]string{}
+	for _, projectName := range expectedFiles {
+		expectedDownloads[projectName] = map[string]map[string]string{
+			branch: {
+				"local_manifest.xml": projectName,
+			},
+		}
+	}
+	gc := &gerrit.FakeAPIClient{
+		T:                 t,
+		ExpectedDownloads: expectedDownloads,
+	}
+
+	dir, err := ioutil.TempDir("", "setup_project")
+	defer os.RemoveAll(dir)
+	assert.NilError(t, err)
+	localManifestDir := filepath.Join(dir, ".repo/local_manifests/")
+	assert.NilError(t, os.MkdirAll(localManifestDir, os.ModePerm))
+
+	b := setupProject{
+		chromeosCheckoutPath: dir,
+		localManifestBranch:  branch,
+		otherRepos:           []string{"chromeos/other/project"},
+	}
+	ctx := context.Background()
+	assert.NilError(t, b.setupProject(ctx, nil, gc))
+	checkFiles(t, localManifestDir, expectedFiles)
+}
+
 func TestSetupProject_allProjects(t *testing.T) {
 	branch := "mybranch"
 	expectedFiles := map[string]string{
