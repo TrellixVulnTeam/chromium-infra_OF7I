@@ -194,7 +194,10 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 	var errs []error
 	for _, dh := range i.DUTs {
 		ta := lucifer.TaskArgs{
-			AbortSock:  filepath.Join(dh.ResultsDir, "abort_sock"),
+			// Swarming task number 5670d0e630f66c10 failed due to a path length that was too long (108 chars).
+			// Let's kick the can down the road and use a shorter suffix for the abort socket.
+			// TODO(gregorynisbet): Come up with a permanent solution for short paths.
+			AbortSock:  filepath.Join(dh.ResultsDir, "sk"),
 			GCPProject: gcpProject,
 			ResultsDir: dh.ResultsDir,
 			LogDogFile: fifoPath,
