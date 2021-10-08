@@ -504,9 +504,9 @@ built-in to the OS image (if available).
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-#### **class [RecipeAutorollerApi](/recipes/recipe_modules/recipe_autoroller/api.py#130)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [RecipeAutorollerApi](/recipes/recipe_modules/recipe_autoroller/api.py#131)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [roll\_projects](/recipes/recipe_modules/recipe_autoroller/api.py#134)(self, projects, db_gcs_bucket):**
+&mdash; **def [roll\_projects](/recipes/recipe_modules/recipe_autoroller/api.py#135)(self, projects, db_gcs_bucket):**
 
 Attempts to roll each project from the provided list.
 

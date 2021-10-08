@@ -9,7 +9,8 @@ import re
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
-from PB.recipe_engine.recipes_cfg import RepoSpec, DepRepoSpecs
+from PB.recipe_engine.recipes_cfg import (AutorollRecipeOptions, DepRepoSpecs,
+                                          RepoSpec)
 
 
 class RepoData(object):
@@ -319,7 +320,14 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     upload_args = ['--send-mail']
     if roll_result['trivial']:
       s = spec.autoroll_recipe_options.trivial
-      upload_args.append('--set-bot-commit')
+      opts = AutorollRecipeOptions.TrivialOptions
+      if s.self_approve_method == opts.CODE_REVIEW_1_APPROVE:
+        upload_args.extend(['-o', '-l=Code-Review+1'])
+      elif s.self_approve_method == opts.CODE_REVIEW_2_APPROVE:
+        upload_args.extend(['-o', '-l=Code-Review+2'])
+      else:
+        upload_args.append('--set-bot-commit')
+
       if s.tbr_emails:
         upload_args.extend(['-r', self.m.random.choice(s.tbr_emails)])
       upload_args.append('--r-owners')

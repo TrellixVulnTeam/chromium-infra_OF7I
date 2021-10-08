@@ -185,6 +185,18 @@ def GenTests(api):
   )
 
   yield test(
+      'trivial_code_review_1',
+      api.recipe_autoroller.roll_data(
+          'build', repo_spec(self_approve_method='CODE_REVIEW_1_APPROVE')),
+  )
+
+  yield test(
+      'trivial_code_review_2',
+      api.recipe_autoroller.roll_data(
+          'build', repo_spec(self_approve_method='CODE_REVIEW_2_APPROVE')),
+  )
+
+  yield test(
       'repo_disabled',
       api.recipe_autoroller.roll_data(
           'build', repo_spec(disable_reason='I am a water buffalo.')),

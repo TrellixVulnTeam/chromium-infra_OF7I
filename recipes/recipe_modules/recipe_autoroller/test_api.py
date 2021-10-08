@@ -16,6 +16,7 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
                 tbr_emails=_TBR_EMAILS,
                 extra_reviewers=_EXTRA_REVIEWERS,
                 disable_reason='',
+                self_approve_method='BOT_COMMIT_APPROVE',
                 trivial_commit=True,
                 trivial_dryrun=False,
                 nontrivial_dryrun=True,
@@ -37,6 +38,7 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
               'tbr_emails': list(tbr_emails),
               'automatic_commit': trivial_commit,
               'dry_run': trivial_dryrun,
+              'self_approve_method': self_approve_method,
           },
           'nontrivial': {
               'extra_reviewer_emails': list(extra_reviewers),
