@@ -557,11 +557,9 @@ SPECS.update({
             packaged=[
                 'mac-arm64-cp38',
             ],
-            arch_map={'mac-arm64-cp38': _NUMPY_MAC_ARM},
-            only_plat=[
-                'mac-x64-cp38',
-                'mac-arm64-cp38',
-            ],
+            arch_map={
+                'mac-arm64-cp38': _NUMPY_MAC_ARM,
+            },
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
@@ -580,11 +578,9 @@ SPECS.update({
                         '1.21.1',
                         packaged=[
                             'mac-arm64-cp38',
-                            'mac-x64-cp38',
                         ],
                         arch_map={
                             'mac-arm64-cp38': _NUMPY_MAC_ARM,
-                            'mac-x64-cp38': _NUMPY_MAC_x64,
                         },
                     ),
                 ]),
@@ -623,11 +619,9 @@ SPECS.update({
                         '1.21.1',
                         packaged=[
                             'mac-arm64-cp38',
-                            'mac-x64-cp38',
                         ],
                         arch_map={
                             'mac-arm64-cp38': _NUMPY_MAC_ARM,
-                            'mac-x64-cp38': _NUMPY_MAC_x64,
                         },
                     ),
                 ],
