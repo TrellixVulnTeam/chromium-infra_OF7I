@@ -5,19 +5,16 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"infra/tools/dirmd"
 
 	planpb "go.chromium.org/chromiumos/config/go/test/plan"
 	"go.chromium.org/luci/common/errors"
-	"infra/tools/dirmd"
 )
 
 // ValidateMapping validates ChromeOS test config in mapping.
 func ValidateMapping(mapping *dirmd.Mapping) error {
 	validationFns := []func(string, *planpb.SourceTestPlan) error{
-		validateEnabledTestEnvironments,
-		validateAtLeastOneRequirement,
+		validateAtLeastOneTestPlanStarlarkFile,
 		validatePathRegexps,
 	}
 
@@ -34,47 +31,9 @@ func ValidateMapping(mapping *dirmd.Mapping) error {
 	return nil
 }
 
-func validateEnabledTestEnvironments(_ string, plan *planpb.SourceTestPlan) error {
-	for _, env := range plan.GetEnabledTestEnvironments() {
-		if env == planpb.SourceTestPlan_TEST_ENVIRONMENT_UNSPECIFIED {
-			return fmt.Errorf("TEST_ENVIRONMENT_UNSPECIFIED cannot be used in enabled_test_environments")
-		}
-	}
-
-	if len(plan.GetEnabledTestEnvironments()) == 0 {
-		return fmt.Errorf("enabled_test_environments must not be empty")
-	}
-
-	return nil
-}
-
-func validateAtLeastOneRequirement(_ string, plan *planpb.SourceTestPlan) error {
-	messageReflect := proto.MessageReflect(plan.Requirements)
-
-	hasRequirement := false
-
-	messageReflect.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-		// Requirements must be explicitly set, even if they are an empty
-		// message. For singular message fields, it is possible to distinguish
-		// between the default value (empty message) and whether the field was
-		// explicitly populated with the default value. See documentation of
-		// the Has method: https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect#Message.
-		//
-		// Check that the requirement is a singular message field, and then call
-		// Has. Note that this condition is only determined by the fields
-		// in the SourceTestPlan schema, not by the actual input proto; thus,
-		// panic if true, since it should be impossible for code that passes
-		// unit tests.
-		if !(fd.Cardinality() == protoreflect.Optional && fd.Kind() == protoreflect.MessageKind) {
-			panic(fmt.Sprintf("Requirements must be singular message fields. Invalid requirement: %q", fd.FullName()))
-		}
-
-		hasRequirement = true
-		return false
-	})
-
-	if !hasRequirement {
-		return fmt.Errorf("at least one requirement must be specified")
+func validateAtLeastOneTestPlanStarlarkFile(_ string, plan *planpb.SourceTestPlan) error {
+	if len(plan.GetTestPlanStarlarkFiles()) == 0 {
+		return fmt.Errorf("at least one TestPlanStarlarkFile must be specified")
 	}
 
 	return nil

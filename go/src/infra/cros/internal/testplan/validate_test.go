@@ -3,11 +3,12 @@ package testplan
 import (
 	"testing"
 
-	"go.chromium.org/chromiumos/config/go/test/plan"
 	"infra/cros/internal/assert"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
 	"infra/tools/dirmd/proto/chromeos"
+
+	"go.chromium.org/chromiumos/config/go/test/plan"
 )
 
 func TestValidateMapping(t *testing.T) {
@@ -26,7 +27,7 @@ func TestValidateMapping(t *testing.T) {
 			},
 		},
 		{
-			"single test environment",
+			"single starlark file",
 			&dirmd.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					"a/b/c": {
@@ -35,12 +36,13 @@ func TestValidateMapping(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "test/repo",
+												Path: "a/b/c/text.txt",
+											},
 										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-										}},
+									},
 								},
 							},
 						},
@@ -49,7 +51,7 @@ func TestValidateMapping(t *testing.T) {
 			},
 		},
 		{
-			"multiple test environments",
+			"multiple starlark files",
 			&dirmd.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					"a/b/c": {
@@ -58,13 +60,17 @@ func TestValidateMapping(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-											plan.SourceTestPlan_VIRTUAL,
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "test/repo1",
+												Path: "a/b/c/test.star",
+											},
+											{
+												Repo: "test/repo2",
+												Path: "test2.star",
+											},
 										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-										}},
+									},
 								},
 							},
 						},
@@ -82,11 +88,11 @@ func TestValidateMapping(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "test/repo",
+												Path: "a/b/c/text.txt",
+											},
 										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
 										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
@@ -108,11 +114,11 @@ func TestValidateMapping(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "test/repo",
+												Path: "a/b/c/text.txt",
+											},
 										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
 										PathRegexpExcludes: []string{`a/b/c/.*\.md`},
@@ -140,7 +146,7 @@ func TestValidateMappingErrors(t *testing.T) {
 		errorSubstring string
 	}{
 		{
-			"enabled_test_environments empty",
+			"starlark files empty",
 			&dirmd.Mapping{
 				Dirs: map[string]*dirmdpb.Metadata{
 					"a/b/c": {
@@ -149,55 +155,7 @@ func TestValidateMappingErrors(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-										}},
-								},
-							},
-						},
-					},
-				},
-			},
-			"enabled_test_environments must not be empty",
-		},
-		{
-			"enabled_test_environments has TEST_ENVIRONMENT_UNSPECIFIED",
-			&dirmd.Mapping{
-				Dirs: map[string]*dirmdpb.Metadata{
-					"a/b/c": {
-						TeamEmail: "exampleteam@google.com",
-						Chromeos: &chromeos.ChromeOS{
-							Cq: &chromeos.ChromeOS_CQ{
-								SourceTestPlans: []*plan.SourceTestPlan{
-									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-											plan.SourceTestPlan_TEST_ENVIRONMENT_UNSPECIFIED,
-										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-										}},
-								},
-							},
-						},
-					},
-				},
-			},
-			"TEST_ENVIRONMENT_UNSPECIFIED cannot be used in enabled_test_environments",
-		},
-		{
-			"no requirements message",
-			&dirmd.Mapping{
-				Dirs: map[string]*dirmdpb.Metadata{
-					"a/b/c": {
-						TeamEmail: "exampleteam@google.com",
-						Chromeos: &chromeos.ChromeOS{
-							Cq: &chromeos.ChromeOS_CQ{
-								SourceTestPlans: []*plan.SourceTestPlan{
-									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-										},
+										PathRegexps: []string{"a/b/.*"},
 									},
 								},
 							},
@@ -205,30 +163,7 @@ func TestValidateMappingErrors(t *testing.T) {
 					},
 				},
 			},
-			"at least one requirement must be specified",
-		},
-		{
-			"empty requirements message",
-			&dirmd.Mapping{
-				Dirs: map[string]*dirmdpb.Metadata{
-					"a/b/c": {
-						TeamEmail: "exampleteam@google.com",
-						Chromeos: &chromeos.ChromeOS{
-							Cq: &chromeos.ChromeOS_CQ{
-								SourceTestPlans: []*plan.SourceTestPlan{
-									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-										},
-										Requirements: &plan.SourceTestPlan_Requirements{},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			"at least one requirement must be specified",
+			"at least one TestPlanStarlarkFile must be specified",
 		},
 		{
 			"invalid regexp",
@@ -240,11 +175,11 @@ func TestValidateMappingErrors(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
-										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "testrepo",
+												Path: "testfile",
+											},
 										},
 										PathRegexps: []string{"a/b/c/d/["},
 									},
@@ -266,12 +201,13 @@ func TestValidateMappingErrors(t *testing.T) {
 							Cq: &chromeos.ChromeOS_CQ{
 								SourceTestPlans: []*plan.SourceTestPlan{
 									{
-										EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-											plan.SourceTestPlan_HARDWARE,
+										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+											{
+												Repo: "testrepo",
+												Path: "testfile",
+											},
 										},
-										Requirements: &plan.SourceTestPlan_Requirements{
-											KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-										}, PathRegexps: []string{`a/b/e/.*\.txt`},
+										PathRegexps: []string{`a/b/e/.*\.txt`},
 									},
 								},
 							},

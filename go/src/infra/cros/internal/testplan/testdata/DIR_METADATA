@@ -1,11 +1,14 @@
 chromeos {
     cq {
         source_test_plans {
-            enabled_test_environments: HARDWARE
-            requirements {
-                kernel_versions {}
+            test_plan_starlark_files {
+                repo: "repo1"
+                path: "test1.star"
             }
-            test_tag_excludes: "flaky"
+            test_plan_starlark_files {
+                repo: "repo2"
+                path: "test2.star"
+            }
         }
     }
 }

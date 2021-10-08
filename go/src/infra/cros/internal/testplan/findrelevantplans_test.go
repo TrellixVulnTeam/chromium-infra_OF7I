@@ -66,13 +66,16 @@ func TestFindRelevantPlans(t *testing.T) {
 	}
 
 	expectedPlan := &plan.SourceTestPlan{
-		EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-			plan.SourceTestPlan_HARDWARE,
+		TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+			{
+				Repo: "repo1",
+				Path: "test1.star",
+			},
+			{
+				Repo: "repo2",
+				Path: "test2.star",
+			},
 		},
-		Requirements: &plan.SourceTestPlan_Requirements{
-			KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
-		},
-		TestTagExcludes: []string{"flaky"},
 	}
 
 	if len(relevantPlans) != 1 {

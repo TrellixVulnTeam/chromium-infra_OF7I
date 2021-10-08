@@ -37,44 +37,44 @@ func TestSourceTestPlans(t *testing.T) {
 	// Make each a fn. so each SourceTestPlan in a mapping is unique.
 	hwKernelPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_HARDWARE,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "hwkv.star",
+				},
 			},
 		}
 	}
 
 	vmKernelPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_VIRTUAL,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				KernelVersions: &plan.SourceTestPlan_Requirements_KernelVersions{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "vmkv.star",
+				},
 			},
 		}
 	}
 
 	vmSocPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_VIRTUAL,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "vmsoc.star",
+				},
 			},
 		}
 	}
 
 	onlyCPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_VIRTUAL,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "vmsoc.star",
+				},
 			},
 			PathRegexps: []string{`.*\.c`, `.*\.h`},
 		}
@@ -82,11 +82,11 @@ func TestSourceTestPlans(t *testing.T) {
 
 	onlyPyPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_HARDWARE,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "vmsoc.star",
+				},
 			},
 			PathRegexps: []string{`.*\.py`},
 		}
@@ -94,11 +94,11 @@ func TestSourceTestPlans(t *testing.T) {
 
 	noDocsPlan := func() *plan.SourceTestPlan {
 		return &plan.SourceTestPlan{
-			EnabledTestEnvironments: []plan.SourceTestPlan_TestEnvironment{
-				plan.SourceTestPlan_VIRTUAL,
-			},
-			Requirements: &plan.SourceTestPlan_Requirements{
-				SocFamilies: &plan.SourceTestPlan_Requirements_SocFamilies{},
+			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
+				{
+					Repo: "testrepo",
+					Path: "vmsoc.star",
+				},
 			},
 			PathRegexpExcludes: []string{`.*\.md`, `.*/README`},
 		}
