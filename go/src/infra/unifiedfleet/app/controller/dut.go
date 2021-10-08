@@ -834,6 +834,13 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 	if err != nil {
 		logging.Warningf(ctx, "ManufacturingConfig for %s not found. Error: %s", hwid, err)
 	}
+	isStable, err := getStability(ctx, machine.GetChromeosMachine().GetModel())
+	if err != nil {
+		logging.Warningf(ctx, "stability cannot be set. Error: %s", err)
+	}
+
+	// Fetch hwid data at last as it may retry and finally exceed the ctx deadline, which
+	// causes the following operations using ctx fails.
 	useCachedHwidManufacturingConfig := config.Get(ctx).GetUseCachedHwidManufacturingConfig()
 	var hwidData *ufspb.HwidData
 	if useCachedHwidManufacturingConfig {
@@ -864,10 +871,6 @@ func GetChromeOSDeviceData(ctx context.Context, id, hostname string) (*ufspb.Chr
 		return nil, status.Errorf(codes.Internal, "Cannot AdaptToV1DutSpec %s", err)
 	}
 	// Set stability additionally
-	isStable, err := getStability(ctx, machine.GetChromeosMachine().GetModel())
-	if err != nil {
-		logging.Warningf(ctx, "stability cannot be set. Error: %s", err)
-	}
 	dutV1.GetCommon().GetLabels().Stability = &isStable
 	data.DutV1 = dutV1
 	return data, nil

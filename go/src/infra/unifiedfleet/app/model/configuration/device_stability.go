@@ -15,8 +15,6 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
 // DeviceStabilityKind is the datastore entity kind for device stability.
@@ -53,7 +51,7 @@ func GetDeviceStability(ctx context.Context, id string) (*dut.DeviceStability, e
 	if datastore.IsErrNoSuchEntity(err) {
 		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Entity not found %s", id))
 	}
-	return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	return nil, status.Errorf(codes.Unknown, fmt.Sprintf("fail to get entity for %s: %s", id, err))
 }
 
 func UpdateDeviceStability(ctx context.Context, id string, ds *dut.DeviceStability) error {
