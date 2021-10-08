@@ -13,7 +13,7 @@
   * [omahaproxy](#recipe_modules-omahaproxy)
   * [powershell](#recipe_modules-powershell)
   * [provenance](#recipe_modules-provenance)
-  * [recipe_autoroller](#recipe_modules-recipe_autoroller)
+  * [recipe_autoroller](#recipe_modules-recipe_autoroller) (Python3 ✅)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [windows_adk](#recipe_modules-windows_adk)
   * [windows_scripts_executor](#recipe_modules-windows_scripts_executor)
@@ -55,8 +55,8 @@
   * [luci_py](#recipes-luci_py)
   * [powershell:examples/test](#recipes-powershell_examples_test)
   * [provenance:examples/usage](#recipes-provenance_examples_usage)
-  * [recipe_autoroller](#recipes-recipe_autoroller) &mdash; Rolls recipes.
-  * [recipe_autoroller:examples/full](#recipes-recipe_autoroller_examples_full)
+  * [recipe_autoroller](#recipes-recipe_autoroller) (Python3 ✅) &mdash; Rolls recipes.
+  * [recipe_autoroller:examples/full](#recipes-recipe_autoroller_examples_full) (Python3 ✅)
   * [recipe_bundler](#recipes-recipe_bundler)
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
   * [recipe_simulation](#recipes-recipe_simulation) &mdash; A continuous builder which runs recipe tests.
@@ -501,13 +501,13 @@ provenance will be installed using cipd and verified using the provenance
 built-in to the OS image (if available).
 ### *recipe_modules* / [recipe\_autoroller](/recipes/recipe_modules/recipe_autoroller)
 
-[DEPS](/recipes/recipe_modules/recipe_autoroller/__init__.py#5): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/random][recipe_engine/recipe_modules/random], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipe_modules/recipe_autoroller/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/random][recipe_engine/recipe_modules/random], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [RecipeAutorollerApi](/recipes/recipe_modules/recipe_autoroller/api.py#131)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [RecipeAutorollerApi](/recipes/recipe_modules/recipe_autoroller/api.py#133)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [roll\_projects](/recipes/recipe_modules/recipe_autoroller/api.py#135)(self, projects, db_gcs_bucket):**
+&mdash; **def [roll\_projects](/recipes/recipe_modules/recipe_autoroller/api.py#134)(self, projects, db_gcs_bucket):**
 
 Attempts to roll each project from the provided list.
 
@@ -1366,20 +1366,20 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/provenance/examples/usage.py#11)(api):**
 ### *recipes* / [recipe\_autoroller](/recipes/recipes/recipe_autoroller.py)
 
-[DEPS](/recipes/recipes/recipe_autoroller.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/recipe_autoroller.py#9): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Rolls recipes.cfg dependencies for public projects.
 
-&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#30)(api, projects, db_gcs_bucket):**
+&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#32)(api, projects, db_gcs_bucket):**
 ### *recipes* / [recipe\_autoroller:examples/full](/recipes/recipe_modules/recipe_autoroller/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/recipe_autoroller/examples/full.py#5): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipe_modules/recipe_autoroller/examples/full.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/recipe_autoroller/examples/full.py#31)(api, projects, db_gcs_bucket):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/recipe_autoroller/examples/full.py#33)(api, projects, db_gcs_bucket):**
 ### *recipes* / [recipe\_bundler](/recipes/recipes/recipe_bundler.py)
 
 [DEPS](/recipes/recipes/recipe_bundler.py#8): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

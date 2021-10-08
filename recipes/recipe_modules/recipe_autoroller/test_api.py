@@ -105,20 +105,19 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   def repo_data(self, project, trivial, status, timestamp):
-    return (
-      self.override_step_data(
+    return (self.override_step_data(
         '%s.gsutil repo_state' % project,
-        self.m.raw_io.stream_output(
-          json.dumps({
-            'issue': '123456789',
-            'issue_url': 'https://codereview.chromium.org/123456789',
-            'trivial': trivial,
-            'last_roll_ts_utc': timestamp,
-          }),
-          stream='stdout'),
-        self.m.raw_io.stream_output('', stream='stderr')) +
-      self.step_data('%s.git cl status' % project,
-                     self.m.raw_io.stream_output(status)))
+        self.m.raw_io.stream_output_text(
+            json.dumps({
+                'issue': '123456789',
+                'issue_url': 'https://codereview.chromium.org/123456789',
+                'trivial': trivial,
+                'last_roll_ts_utc': timestamp,
+            }),
+            stream='stdout'),
+        self.m.raw_io.stream_output_text('', stream='stderr')) +
+            self.step_data('%s.git cl status' % project,
+                           self.m.raw_io.stream_output_text(status)))
 
   def recipe_cfg(self, project, spec=None):
     """Returns mock recipes.cfg data (only) for |project|.

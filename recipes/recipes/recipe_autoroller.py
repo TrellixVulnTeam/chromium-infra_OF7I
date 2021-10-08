@@ -4,6 +4,8 @@
 
 """Rolls recipes.cfg dependencies for public projects."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'recipe_autoroller',
     'recipe_engine/buildbucket',

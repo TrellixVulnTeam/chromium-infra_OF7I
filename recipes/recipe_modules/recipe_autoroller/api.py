@@ -5,6 +5,7 @@
 import base64
 import datetime
 import re
+import traceback
 
 from google.protobuf import json_format as jsonpb
 
@@ -81,7 +82,8 @@ _ROLL_STALE_THRESHOLD = datetime.timedelta(hours=2)
 
 
 def _gs_path(project_url):
-  return 'repo_metadata/%s' % base64.urlsafe_b64encode(project_url)
+  return 'repo_metadata/%s' % base64.urlsafe_b64encode(
+      project_url.encode()).decode()
 
 
 def get_commit_message(roll_result, build_id):
@@ -129,9 +131,6 @@ def get_commit_message(roll_result, build_id):
 
 
 class RecipeAutorollerApi(recipe_api.RecipeApi):
-  def __init__(self, **kwargs):
-    super(RecipeAutorollerApi, self).__init__(**kwargs)
-
   def roll_projects(self, projects, db_gcs_bucket):
     """Attempts to roll each project from the provided list.
 
@@ -259,51 +258,65 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
         'autoroll_recipe_options', {}
     ).get('disable_reason')
 
-  def _roll_project(self, project_id, project_url, recipes_dir, db_gcs_bucket):
-    with self.m.step.nest(str(project_id)):
-      # Keep persistent checkout. Speeds up the roller for large repos
-      # like chromium/src.
-      workdir = self._prepare_checkout(project_id, project_url)
+  def _roll_project(self, project_id, *args, **kwargs):
+    with self.m.step.nest(str(project_id)) as presentation:
+      try:
+        return self._roll_project_impl(project_id, *args, **kwargs)
+      except Exception:
+        # TODO(crbug.com/1256194): Print the stack trace unconditionally, even
+        # in testing mode, once Py2 support is no longer required. Stack trace
+        # formatting differs slightly between Python 2 and 3, making it
+        # difficult to maintain compatibility between the two versions for
+        # expectation files that contain stack traces.
+        if not self._test_data.enabled:  # pragma: no cover
+          presentation.logs['exception'] = traceback.format_exc()
+        raise
 
-      recipes_cfg_path = workdir.join('infra', 'config', 'recipes.cfg')
+  def _roll_project_impl(self, project_id, project_url, recipes_dir,
+                         db_gcs_bucket):
+    # Keep persistent checkout. Speeds up the roller for large repos
+    # like chromium/src.
+    workdir = self._prepare_checkout(project_id, project_url)
 
-      disable_reason = self._get_disable_reason(recipes_cfg_path)
-      if disable_reason:
-        rslt = self.m.python.succeeding_step('disabled', disable_reason)
-        rslt.presentation.status = self.m.step.WARNING
-        return ROLL_SKIP
+    recipes_cfg_path = workdir.join('infra', 'config', 'recipes.cfg')
 
-      status = self._check_previous_roll(project_url, workdir, db_gcs_bucket)
-      if status is not None:
-        # This means that the previous roll is still going, or similar. In this
-        # situation we're done with this repo, for now.
-        return status
+    disable_reason = self._get_disable_reason(recipes_cfg_path)
+    if disable_reason:
+      rslt = self.m.python.succeeding_step('disabled', disable_reason)
+      rslt.presentation.status = self.m.step.WARNING
+      return ROLL_SKIP
 
-      roll_step = self.m.python(
-          'roll',
-          recipes_dir.join('recipes.py'), [
-              '--package', recipes_cfg_path, '-vv', 'autoroll', '--output-json',
-              self.m.json.output()
-          ],
-          venv=True)
-      roll_result = roll_step.json.output
+    status = self._check_previous_roll(project_url, workdir, db_gcs_bucket)
+    if status is not None:
+      # This means that the previous roll is still going, or similar. In this
+      # situation we're done with this repo, for now.
+      return status
 
-      if roll_result['success'] and roll_result['picked_roll_details']:
-        self._process_successful_roll(project_url, roll_step, workdir,
-                                      recipes_dir, recipes_cfg_path,
-                                      db_gcs_bucket)
-        return ROLL_SUCCESS
+    roll_step = self.m.python(
+        'roll',
+        recipes_dir.join('recipes.py'), [
+            '--package', recipes_cfg_path, '-vv', 'autoroll', '--output-json',
+            self.m.json.output()
+        ],
+        venv=True)
+    roll_result = roll_step.json.output
 
-      num_rejected = roll_result['rejected_candidates_count']
-      if not roll_result['roll_details'] and num_rejected == 0:
-        roll_step.presentation.step_text += ' (already at latest revisions)'
-        return ROLL_EMPTY
+    if roll_result['success'] and roll_result['picked_roll_details']:
+      self._process_successful_roll(project_url, roll_step, workdir,
+                                    recipes_dir, recipes_cfg_path,
+                                    db_gcs_bucket)
+      return ROLL_SUCCESS
 
-      for i, roll_candidate in enumerate(roll_result['roll_details']):
-        roll_step.presentation.logs['candidate #%d' % (i + 1)] = (
-            self.m.json.dumps(roll_candidate['spec']).splitlines())
+    num_rejected = roll_result['rejected_candidates_count']
+    if not roll_result['roll_details'] and num_rejected == 0:
+      roll_step.presentation.step_text += ' (already at latest revisions)'
+      return ROLL_EMPTY
 
-      return ROLL_FAILURE
+    for i, roll_candidate in enumerate(roll_result['roll_details']):
+      roll_step.presentation.logs['candidate #%d' % (i + 1)] = (
+          self.m.json.dumps(roll_candidate['spec']).splitlines())
+
+    return ROLL_FAILURE
 
   def _process_successful_roll(self, project_url, roll_step, workdir,
                                recipes_dir, recipes_cfg_path, db_gcs_bucket):
@@ -425,11 +438,11 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     """
     cat_result = self.m.gsutil.cat(
         'gs://%s/%s' % (db_gcs_bucket, _gs_path(project_url)),
-        stdout=self.m.raw_io.output(),
-        stderr=self.m.raw_io.output(),
-        ok_ret=(0,1),
+        stdout=self.m.raw_io.output_text(),
+        stderr=self.m.raw_io.output_text(),
+        ok_ret=(0, 1),
         name='repo_state',
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output(
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
             'No URLs matched', stream='stderr', retcode=1))
 
     if cat_result.retcode:
@@ -447,12 +460,11 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     with self.m.context(cwd=workdir):
       status_result = self.m.git_cl(
-          'status',
-          ['--issue', repo_data.issue, '--field', 'status'],
-          name='git cl status', stdout=self.m.raw_io.output(),
-          step_test_data=lambda: self.m.raw_io.test_api.stream_output(
-              'foo')
-      ).stdout.strip()
+          'status', ['--issue', repo_data.issue, '--field', 'status'],
+          name='git cl status',
+          stdout=self.m.raw_io.output_text(),
+          step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
+              'foo')).stdout.strip()
       self.m.step.active_result.presentation.step_text = status_result
 
     return repo_data, status_result
