@@ -774,6 +774,12 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'ruamel.yaml.clib',
+            '0.2.6',
+            packaged=(),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'scan-build',
             '2.0.8',
             packaged=(),

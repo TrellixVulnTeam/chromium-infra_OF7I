@@ -6190,6 +6190,26 @@ wheel: <
 
 * *universal*
 
+## **ruamel.yaml.clib**
+
+### 0.2.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
+  version: "version:0.2.6"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **scan-build**
 
 ### 2.0.8
