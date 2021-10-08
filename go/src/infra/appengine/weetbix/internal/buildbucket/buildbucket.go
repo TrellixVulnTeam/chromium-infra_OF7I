@@ -62,5 +62,5 @@ func (c *Client) GetResultDBInfo(ctx context.Context, bId int64) (*bbpb.Build, e
 		Fields: &field_mask.FieldMask{
 			Paths: []string{"infra.resultdb"},
 		},
-	}, nil)
+	})
 }

@@ -32,7 +32,7 @@ func TestResultDB(t *testing.T) {
 				PageSize:    1000,
 			}
 
-			resF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
+			resF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
 				if in.GetPageToken() == "" {
 					return &rdbpb.QueryTestVariantsResponse{
 						TestVariants: []*rdbpb.TestVariant{
@@ -91,23 +91,21 @@ func TestResultDB(t *testing.T) {
 				},
 			}
 
-			resF := func(ctx context.Context, in *rdbpb.BatchGetTestVariantsRequest, opt grpc.CallOption) (*rdbpb.BatchGetTestVariantsResponse, error) {
-				return &rdbpb.BatchGetTestVariantsResponse{
-					TestVariants: []*rdbpb.TestVariant{
-						{
-							TestId:      "ninja://test1",
-							VariantHash: "hash1",
-							Status:      rdbpb.TestVariantStatus_UNEXPECTED,
-						},
-						{
-							TestId:      "ninja://test2",
-							VariantHash: "hash2",
-							Status:      rdbpb.TestVariantStatus_FLAKY,
-						},
+			res := &rdbpb.BatchGetTestVariantsResponse{
+				TestVariants: []*rdbpb.TestVariant{
+					{
+						TestId:      "ninja://test1",
+						VariantHash: "hash1",
+						Status:      rdbpb.TestVariantStatus_UNEXPECTED,
 					},
-				}, nil
+					{
+						TestId:      "ninja://test2",
+						VariantHash: "hash2",
+						Status:      rdbpb.TestVariantStatus_FLAKY,
+					},
+				},
 			}
-			mc.BatchGetTestVariants(req, resF)
+			mc.BatchGetTestVariants(req, res)
 			tvs, err := rc.BatchGetTestVariants(mc.Ctx, req)
 			So(err, ShouldBeNil)
 			So(len(tvs), ShouldEqual, 2)

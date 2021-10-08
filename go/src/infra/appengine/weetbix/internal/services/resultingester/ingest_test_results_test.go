@@ -62,16 +62,13 @@ func TestIngestTestResults(t *testing.T) {
 				Paths: []string{"infra.resultdb"},
 			},
 		}
-		bbResF := func(ctx context.Context, in *bbpb.GetBuildRequest, opt grpc.CallOption) (*bbpb.Build, error) {
-			return mockedGetBuildRsp(inv), nil
-		}
-		mbc.GetBuild(bbReq, bbResF)
+		mbc.GetBuild(bbReq, mockedGetBuildRsp(inv))
 
 		tvReq := &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{inv},
 			PageSize:    1000,
 		}
-		tvResF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
+		tvResF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
 			return mockedQueryTestVariantsRsp(), nil
 		}
 		mrc.QueryTestVariants(tvReq, tvResF)

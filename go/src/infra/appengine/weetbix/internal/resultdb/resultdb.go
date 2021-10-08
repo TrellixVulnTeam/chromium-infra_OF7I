@@ -67,7 +67,7 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 			Invocations: []string{invName},
 			PageSize:    1000, // Maximum page size.
 			PageToken:   pageToken,
-		}, nil)
+		})
 		if err != nil {
 			return tvs, err
 		}
@@ -93,7 +93,7 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 func (c *Client) GetInvocation(ctx context.Context, invName string) (*rdbpb.Invocation, error) {
 	inv, err := c.client.GetInvocation(ctx, &rdbpb.GetInvocationRequest{
 		Name: invName,
-	}, nil)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (c *Client) RealmFromInvocation(ctx context.Context, invName string) (strin
 
 // BatchGetTestVariants retrieves the requested test variants.
 func (c *Client) BatchGetTestVariants(ctx context.Context, req *rdbpb.BatchGetTestVariantsRequest) ([]*rdbpb.TestVariant, error) {
-	rsp, err := c.client.BatchGetTestVariants(ctx, req, nil)
+	rsp, err := c.client.BatchGetTestVariants(ctx, req)
 	if err != nil {
 		return nil, err
 	}

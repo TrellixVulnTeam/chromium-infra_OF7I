@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/grpc"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 
@@ -36,17 +35,15 @@ func TestGetBuild(t *testing.T) {
 			},
 		}
 
-		resF := func(ctx context.Context, in *bbpb.GetBuildRequest, opt grpc.CallOption) (*bbpb.Build, error) {
-			return &bbpb.Build{
-				Infra: &bbpb.BuildInfra{
-					Resultdb: &bbpb.BuildInfra_ResultDB{
-						Hostname:   "results.api.cr.dev",
-						Invocation: inv,
-					},
+		res := &bbpb.Build{
+			Infra: &bbpb.BuildInfra{
+				Resultdb: &bbpb.BuildInfra_ResultDB{
+					Hostname:   "results.api.cr.dev",
+					Invocation: inv,
 				},
-			}, nil
+			},
 		}
-		mc.GetBuild(req, resF)
+		mc.GetBuild(req, res)
 
 		bc, err := NewClient(mc.Ctx, "bbhost")
 		So(err, ShouldBeNil)

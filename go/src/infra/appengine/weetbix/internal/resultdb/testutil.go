@@ -31,15 +31,15 @@ func NewMockedClient(ctx context.Context, ctl *gomock.Controller) *MockedClient 
 }
 
 // QueryTestVariants mocks the QueryTestVariants RPC.
-func (mc *MockedClient) QueryTestVariants(req *rdbpb.QueryTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opt grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error)) {
+func (mc *MockedClient) QueryTestVariants(req *rdbpb.QueryTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error)) {
 	mc.Client.EXPECT().QueryTestVariants(gomock.Any(), proto.MatcherEqual(req),
 		gomock.Any()).DoAndReturn(resF)
 }
 
 // GetInvocation mocks the GetInvocation RPC.
-func (mc *MockedClient) GetInvocation(req *rdbpb.GetInvocationRequest, resF func(ctx context.Context, in *rdbpb.GetInvocationRequest, opt grpc.CallOption) (*rdbpb.Invocation, error)) {
+func (mc *MockedClient) GetInvocation(req *rdbpb.GetInvocationRequest, res *rdbpb.Invocation) {
 	mc.Client.EXPECT().GetInvocation(gomock.Any(), proto.MatcherEqual(req),
-		gomock.Any()).DoAndReturn(resF)
+		gomock.Any()).Return(res, nil)
 }
 
 // GetRealm is a shortcut of GetInvocation to get realm of the invocation.
@@ -47,17 +47,14 @@ func (mc *MockedClient) GetRealm(inv, realm string) {
 	req := &rdbpb.GetInvocationRequest{
 		Name: inv,
 	}
-	resF := func(ctx context.Context, in *rdbpb.GetInvocationRequest, opt grpc.CallOption) (*rdbpb.Invocation, error) {
-		return &rdbpb.Invocation{
-			Name:  inv,
-			Realm: realm,
-		}, nil
-	}
-	mc.GetInvocation(req, resF)
+	mc.GetInvocation(req, &rdbpb.Invocation{
+		Name:  inv,
+		Realm: realm,
+	})
 }
 
 // BatchGetTestVariants mocks the BatchGetTestVariants RPC.
-func (mc *MockedClient) BatchGetTestVariants(req *rdbpb.BatchGetTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.BatchGetTestVariantsRequest, opt grpc.CallOption) (*rdbpb.BatchGetTestVariantsResponse, error)) {
+func (mc *MockedClient) BatchGetTestVariants(req *rdbpb.BatchGetTestVariantsRequest, res *rdbpb.BatchGetTestVariantsResponse) {
 	mc.Client.EXPECT().BatchGetTestVariants(gomock.Any(), proto.MatcherEqual(req),
-		gomock.Any()).DoAndReturn(resF)
+		gomock.Any()).Return(res, nil)
 }
