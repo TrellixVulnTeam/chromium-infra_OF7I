@@ -17,7 +17,7 @@ import (
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/cros/cmd/cros-provision/internal/docker"
+	"infra/cros/cmd/cros-tool-runner/internal/docker"
 )
 
 const (

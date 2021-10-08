@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// ProvisionCLI is providing tool to provision request device to required software dependencies.
+// cros-tool-runner is handling requests and run corresponding tools at various stages of build/test workflow.
 package main
 
 import (
@@ -18,7 +18,7 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	serverauth "go.chromium.org/luci/server/auth"
 
-	"infra/cros/cmd/cros-provision/internal/tasks"
+	"infra/cros/cmd/cros-tool-runner/internal/tasks"
 )
 
 func main() {
@@ -30,8 +30,8 @@ func main() {
 
 func getApplication(authOpts auth.Options) *cli.Application {
 	return &cli.Application{
-		Name:  "cros-provision",
-		Title: "A tool for running provisioning on the ChromeOS devices.",
+		Name:  "cros-tool-runner",
+		Title: "A tool for running corresponding tools.",
 		Context: func(ctx context.Context) context.Context {
 			return gologger.StdConfig.Use(ctx)
 		},

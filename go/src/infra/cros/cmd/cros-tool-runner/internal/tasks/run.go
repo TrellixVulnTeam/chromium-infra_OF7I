@@ -27,7 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"infra/cmdsupport/cmdlib"
-	"infra/cros/cmd/cros-provision/internal/provision"
+	"infra/cros/cmd/cros-tool-runner/internal/provision"
 )
 
 // Run executes the provisioning for requested devices.
@@ -41,9 +41,9 @@ Tool used to perfrom provisioning OS, components and FW to ChromeOS device speci
 
 Supporting two ways to execute provisioning.
 1) Provide ProvisionCliInput as jsonproto structure in JSON file. (provision_cli.proto)
-	Usage: cros-provision run -in-json your_in.json -out-json your_out.json
+	Usage: cros-tool-runner run -in-json your_in.json -out-json your_out.json
 2) Provide all required detail in command line interface.
-	Usage: cros-provision run -dut-name your_device_name -cros chrome_os_dir_path [-prevent-reboot] [-dut-service-docker-image repo:tag] [-provision-service-docker-image repo:tag]
+	Usage: cros-tool-runner run -dut-name your_device_name -cros chrome_os_dir_path [-prevent-reboot] [-dut-service-docker-image repo:tag] [-provision-service-docker-image repo:tag]
 `,
 		CommandRun: func() subcommands.CommandRun {
 			c := &runCmd{}
