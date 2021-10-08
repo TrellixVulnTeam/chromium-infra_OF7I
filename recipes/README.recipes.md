@@ -56,6 +56,7 @@
   * [powershell:examples/test](#recipes-powershell_examples_test)
   * [provenance:examples/usage](#recipes-provenance_examples_usage)
   * [recipe_autoroller](#recipes-recipe_autoroller) &mdash; Rolls recipes.
+  * [recipe_autoroller:examples/full](#recipes-recipe_autoroller_examples_full)
   * [recipe_bundler](#recipes-recipe_bundler)
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
   * [recipe_simulation](#recipes-recipe_simulation) &mdash; A continuous builder which runs recipe tests.
@@ -1371,7 +1372,14 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 Rolls recipes.cfg dependencies for public projects.
 
-&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#33)(api, projects, db_gcs_bucket):**
+&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#30)(api, projects, db_gcs_bucket):**
+### *recipes* / [recipe\_autoroller:examples/full](/recipes/recipe_modules/recipe_autoroller/examples/full.py)
+
+[DEPS](/recipes/recipe_modules/recipe_autoroller/examples/full.py#5): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+
+PYTHON_VERSION_COMPATIBILITY: PY2
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/recipe_autoroller/examples/full.py#31)(api, projects, db_gcs_bucket):**
 ### *recipes* / [recipe\_bundler](/recipes/recipes/recipe_bundler.py)
 
 [DEPS](/recipes/recipes/recipe_bundler.py#8): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
