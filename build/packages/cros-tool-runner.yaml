@@ -1,0 +1,10 @@
+package: chromiumos/infra/cros-tool-runner/${platform}
+description: Program for running corresponding tools for ChromeOS testing process.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/cros-tool-runner
+root: ../../go/bin
+data:
+  - file: cros-tool-runner${exe_suffix}
+  - version_file: .versions/cros-tool-runner${exe_suffix}.cipd_version
