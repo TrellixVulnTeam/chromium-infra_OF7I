@@ -33,7 +33,7 @@ type recoveryEngine struct {
 var startOverTag = errors.BoolTag{Key: errors.NewTagKey("start-over")}
 
 // Run runs the recovery plan.
-func Run(ctx context.Context, planName string, plan *planpb.Plan, args *execs.RunArgs) (context.Context, error) {
+func Run(ctx context.Context, planName string, plan *planpb.Plan, args *execs.RunArgs) error {
 	r := &recoveryEngine{
 		planName: planName,
 		plan:     plan,
@@ -54,7 +54,7 @@ func (r *recoveryEngine) close() {
 }
 
 // runPlan executes recovery plan with critical-actions.
-func (r *recoveryEngine) runPlan(ctx context.Context) (context.Context, error) {
+func (r *recoveryEngine) runPlan(ctx context.Context) error {
 	log.Info(ctx, "Plan %q: started", r.planName)
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
@@ -66,14 +66,14 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (context.Context, error) {
 			if r.plan.GetAllowFail() {
 				log.Info(ctx, "Plan %q: failed with error: %s.", r.planName, err)
 				log.Info(ctx, "Plan %q: is allowed to fail, continue.", r.planName)
-				return ctx, nil
+				return nil
 			}
-			return ctx, errors.Annotate(err, "run plan %q", r.planName).Err()
+			return errors.Annotate(err, "run plan %q", r.planName).Err()
 		}
 		break
 	}
 	log.Info(ctx, "Plan %q: finished successfully.", r.planName)
-	return ctx, nil
+	return nil
 }
 
 // runActions runs actions in order.

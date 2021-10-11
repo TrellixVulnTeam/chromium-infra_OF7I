@@ -160,11 +160,7 @@ func TestRun(t *testing.T) {
 			args := &execs.RunArgs{
 				EnableRecovery: true,
 			}
-			// We intentionally throw away the context after each test.
-			newCtx, err := Run(ctx, c.name, c.got, args)
-			if newCtx == nil {
-				t.Errorf("Case %q fail to receive new context", c.name)
-			}
+			err := Run(ctx, c.name, c.got, args)
 			if c.expSuccess {
 				if err != nil {
 					t.Errorf("Case %q fail but expected to pass. Received error: %s", c.name, err)
@@ -192,10 +188,7 @@ func TestRunPlanDoNotRunActionAsResultInCache(t *testing.T) {
 	}
 	r.initCache()
 	r.cacheActionResult("a", nil)
-	newCtx, err := r.runPlan(ctx)
-	if newCtx == nil {
-		t.Errorf("Fail to receive new context")
-	}
+	err := r.runPlan(ctx)
 	if err != nil {
 		t.Errorf("Expected plan pass as single action cached with result=nil. Received error: %s", err)
 	}

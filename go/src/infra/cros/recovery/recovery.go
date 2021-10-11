@@ -271,7 +271,7 @@ func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *plan
 	for _, resource := range resources {
 		execArgs.ResourceName = resource
 		log.Info(ctx, "Run plan %q for %q: started", planName, resource)
-		ctx, err = engine.Run(ctx, planName, plan, execArgs)
+		err = engine.Run(ctx, planName, plan, execArgs)
 		if err != nil {
 			log.Error(ctx, "Run plan %q for %q: fail. Error: %s", planName, resource, err)
 			if plan.GetAllowFail() {
