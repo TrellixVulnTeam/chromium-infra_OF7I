@@ -115,6 +115,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
             4,  # Four interesting lines are instrumented(line1-2, line4-5)
         'covered_lines':
             4,  # Two interesting lines are covered(line1-2, line4-5)
+        'interesting_lines': 4,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -231,6 +232,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'total_lines':
             2,  # Two interesting lines are instrumented(line2, line3)
         'covered_lines': 1,  # One interesting lines is covered(line3)
+        'interesting_lines': 3,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -305,6 +307,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
         'covered_lines': 1,  # One interesting line is covered(line2)
+        'interesting_lines': 1,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -380,6 +383,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
         'covered_lines': 1,  # One interesting line is covered(line2)
+        'interesting_lines': 1,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -561,6 +565,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         # (line2 and line3 modified)
         'covered_lines': 2,  # Two interesting lines are covered
         # (line2 and line3 modified)
+        'interesting_lines': 2,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -701,6 +706,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'path': 'myfile.cc',
         'total_lines': None,
         'covered_lines': None,
+        'interesting_lines': 1,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -774,6 +780,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
         'covered_lines': 1,  # One interesting line is covered(line2)
+        'interesting_lines': 1,
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]

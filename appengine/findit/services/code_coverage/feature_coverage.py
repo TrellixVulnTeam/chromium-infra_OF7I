@@ -177,6 +177,10 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
     interesting_line_ranges = [{'first': -1, 'last': -1}]
     for line_range in file_coverage.data['lines']:
       for line_num in range(line_range['first'], line_range['last'] + 1):
+        # `total` signifies number of lines which are interesting
+        # AND instrumented. This means There could be lines which are
+        # interesting but are not included in `total` because they were not
+        # instrumented. e.g. a feature CL adds a comment
         if line_num in interesting_lines_per_file[file_path]:
           total += 1
           if line_num == interesting_line_ranges[-1]['last'] + 1:
@@ -247,7 +251,8 @@ def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
 
 
 def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
-                        coverage_per_file, files_with_missing_coverage):
+                        coverage_per_file, files_with_missing_coverage,
+                        interesting_lines_per_file):
   """Create bigquery rows for files modified as part of a feature.
 
   Args:
@@ -264,6 +269,8 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
                               corresponding to interesting lines in the file.
       files_with_missing_coverage(set): A set of files for which coverage info
                                         was not found.
+      interesting_lines_per_file (dict): A dict mapping file name to interesting
+                                        lines
 
   Returns:
     A list of dict objects whose keys are column names and values are column
@@ -290,6 +297,8 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
             coverage_per_file[file_path]['summaries'][0]['total'],
         'covered_lines':
             coverage_per_file[file_path]['summaries'][0]['covered'],
+        'interesting_lines':
+            len(interesting_lines_per_file[file_path]),
         'commit_timestamp':
             postsubmit_report.commit_timestamp.isoformat(),
         'insert_timestamp':
@@ -306,6 +315,7 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
         'path': file_path[2:],
         'total_lines': None,
         'covered_lines': None,
+        'interesting_lines': len(interesting_lines_per_file[file_path]),
         'commit_timestamp': postsubmit_report.commit_timestamp.isoformat(),
         'insert_timestamp': time_util.GetUTCNow().isoformat()
     })
@@ -452,9 +462,10 @@ def ExportFeatureCoverage(modifier_id, run_id):
         report, interesting_lines_per_builder_per_file[builder])
     _CreateModifiedFileCoverage(coverage_per_file, report, gerrit_hashtag,
                                 modifier_id)
-    bq_rows = _CreateBigqueryRows(report, gerrit_hashtag, run_id, modifier_id,
-                                  coverage_per_file,
-                                  files_with_missing_coverage)
+    bq_rows = _CreateBigqueryRows(
+        report, gerrit_hashtag, run_id, modifier_id, coverage_per_file,
+        files_with_missing_coverage,
+        interesting_lines_per_builder_per_file[builder])
     if bq_rows:
       bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
                                            'code_coverage_summaries',
