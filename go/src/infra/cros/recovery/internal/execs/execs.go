@@ -8,6 +8,7 @@ package execs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -67,4 +68,24 @@ func Run(ctx context.Context, name string, args *RunArgs, actionArgs []string) e
 func Exist(name string) bool {
 	_, ok := knownExecMap[name]
 	return ok
+}
+
+// Runner defines the type for a function that will execute a command
+// on a host, and returns the result as a single line.
+type Runner func(context.Context, string) (string, error)
+
+// NewRunner returns a function of type Runner that executes a command
+// on a host and returns the results as a single line. This function
+// defines the specific host on which the command will be
+// executed. Examples of such specific hosts can be the DUT, or the
+// servo-host etc.
+func (args RunArgs) NewRunner(host string) Runner {
+	runner := func(ctx context.Context, cmd string) (string, error) {
+		r := args.Access.Run(ctx, host, cmd)
+		if r.ExitCode != 0 {
+			return "", errors.Reason("runner: command %q completed with exit code %q", cmd, r.ExitCode).Err()
+		}
+		return strings.TrimSpace(r.Stdout), nil
+	}
+	return runner
 }
