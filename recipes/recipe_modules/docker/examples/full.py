@@ -4,6 +4,8 @@
 
 from recipe_engine.post_process import DoesNotRun, Filter, StatusFailure
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'recipe_engine/raw_io',
     'recipe_engine/step',
@@ -44,7 +46,7 @@ def GenTests(api):
   yield api.test(
       'fail_get_version',
       api.override_step_data('docker version',
-                             api.raw_io.stream_output('Foo: bar')),
+                             api.raw_io.stream_output_text('Foo: bar')),
       api.post_process(DoesNotRun, 'log version'),
       api.post_process(Filter('docker version')),
   )

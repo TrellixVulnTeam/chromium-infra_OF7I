@@ -1,3 +1,5 @@
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'recipe_engine/cipd',
   'recipe_engine/file',

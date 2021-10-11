@@ -14,7 +14,8 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
                            mocked_sources=None):
     if not image:
       img = 'example.com/fake-registry/%s' % target
-      digest = 'sha256:'+sha256(target).hexdigest()[:16]+'...'
+      digest = 'sha256:' + sha256(
+          target.encode('utf-8')).hexdigest()[:16] + '...'
       tag = canonical_tag
       if tag == ':inputs-hash':
         tag = 'cbh-inputs-deadbead...'
@@ -59,7 +60,7 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
                             mocked_sources=None):
     if not tarball:
       name = 'example/%s' % target
-      digest = sha256(name).hexdigest()[:16]+'...'
+      digest = sha256(name.encode('utf-8')).hexdigest()[:16] + '...'
       bucket = 'example'
       path = 'tarballs/example/%s/%s.tar.gz' % (target, digest)
       tag = canonical_tag or '11111-deadbeef'
@@ -114,4 +115,4 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
         paths.append(repo_path.join(src) if src != '.' else repo_path)
 
     # JSON should have only strings, not Paths.
-    return map(str, paths)
+    return [str(p) for p in paths]

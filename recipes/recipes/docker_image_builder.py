@@ -5,6 +5,8 @@
 from recipe_engine.post_process import DoesNotRun, MustRun, DropExpectation
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'depot_tools/bot_update',
     'depot_tools/gclient',
@@ -45,9 +47,13 @@ def RunSteps(api, arch_type):
   container_name = api.properties['container_name']
   with api.step.nest('clear old images'):
     get_images_step = api.docker(
-        'images', '-q', '-f', 'reference=%s:*' % container_name,
-        step_name='list images', stdout=api.raw_io.output(),
-        step_test_data=lambda: api.raw_io.test_api.stream_output('img1'))
+        'images',
+        '-q',
+        '-f',
+        'reference=%s:*' % container_name,
+        step_name='list images',
+        stdout=api.raw_io.output_text(),
+        step_test_data=lambda: api.raw_io.test_api.stream_output_text('img1'))
     image_ids = [line.strip() for line in get_images_step.stdout.splitlines()]
     for image_id in set(image_ids):
       try:
@@ -74,9 +80,10 @@ def RunSteps(api, arch_type):
 
   # Push the image to the registry.
   upload_step = api.docker(
-      'push', registry_image_name,
+      'push',
+      registry_image_name,
       stdout=api.raw_io.output(),
-      step_test_data=lambda: api.raw_io.test_api.stream_output(
+      step_test_data=lambda: api.raw_io.test_api.stream_output_text(
           '1-2-3: digest: sha256:deadbeef size:123'))
   image_spec = 'unknown'
   for line in upload_step.stdout.splitlines():

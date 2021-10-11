@@ -3,13 +3,13 @@
 ## Table of Contents
 
 **[Recipe Modules](#Recipe-Modules)**
-  * [cloudbuildhelper](#recipe_modules-cloudbuildhelper) &mdash; API for calling 'cloudbuildhelper' tool.
-  * [cloudkms](#recipe_modules-cloudkms)
-  * [conda](#recipe_modules-conda) &mdash; Functions to work with Miniconda python environment.
-  * [docker](#recipe_modules-docker)
-  * [infra_checkout](#recipe_modules-infra_checkout)
-  * [infra_cipd](#recipe_modules-infra_cipd)
-  * [infra_system](#recipe_modules-infra_system)
+  * [cloudbuildhelper](#recipe_modules-cloudbuildhelper) (Python3 ✅) &mdash; API for calling 'cloudbuildhelper' tool.
+  * [cloudkms](#recipe_modules-cloudkms) (Python3 ✅)
+  * [conda](#recipe_modules-conda) (Python3 ✅) &mdash; Functions to work with Miniconda python environment.
+  * [docker](#recipe_modules-docker) (Python3 ✅)
+  * [infra_checkout](#recipe_modules-infra_checkout) (Python3 ✅)
+  * [infra_cipd](#recipe_modules-infra_cipd) (Python3 ✅)
+  * [infra_system](#recipe_modules-infra_system) (Python3 ✅)
   * [omahaproxy](#recipe_modules-omahaproxy)
   * [powershell](#recipe_modules-powershell)
   * [provenance](#recipe_modules-provenance)
@@ -27,14 +27,14 @@
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
   * [build_wheels](#recipes-build_wheels)
   * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) &mdash; This recipe verifies importing of chromium bootstrap protos.
-  * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover)
-  * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
-  * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
-  * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage)
+  * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover) (Python3 ✅)
+  * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
+  * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll) (Python3 ✅)
+  * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage) (Python3 ✅)
   * [cv_testing/tryjob](#recipes-cv_testing_tryjob) &mdash; Recipe to test LUCI CQ/CV itself.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
-  * [docker:examples/full](#recipes-docker_examples_full)
-  * [docker_image_builder](#recipes-docker_image_builder)
+  * [docker:examples/full](#recipes-docker_examples_full) (Python3 ✅)
+  * [docker_image_builder](#recipes-docker_image_builder) (Python3 ✅)
   * [fleet_systems/dhcp](#recipes-fleet_systems_dhcp) &mdash; Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
   * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
   * [gerrit_hello_world](#recipes-gerrit_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
@@ -43,14 +43,14 @@
   * [gsutil_hello_world](#recipes-gsutil_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
   * [images_builder](#recipes-images_builder)
   * [images_pins_roller](#recipes-images_pins_roller)
-  * [infra_checkout:examples/ci](#recipes-infra_checkout_examples_ci)
-  * [infra_checkout:examples/commit_label](#recipes-infra_checkout_examples_commit_label)
-  * [infra_checkout:examples/try](#recipes-infra_checkout_examples_try)
-  * [infra_cipd:examples/usage](#recipes-infra_cipd_examples_usage)
+  * [infra_checkout:examples/ci](#recipes-infra_checkout_examples_ci) (Python3 ✅)
+  * [infra_checkout:examples/commit_label](#recipes-infra_checkout_examples_commit_label) (Python3 ✅)
+  * [infra_checkout:examples/try](#recipes-infra_checkout_examples_try) (Python3 ✅)
+  * [infra_cipd:examples/usage](#recipes-infra_cipd_examples_usage) (Python3 ✅)
   * [infra_continuous](#recipes-infra_continuous)
   * [infra_frontend_tester](#recipes-infra_frontend_tester)
   * [infra_repo_trybot](#recipes-infra_repo_trybot)
-  * [infra_system:examples/full](#recipes-infra_system_examples_full)
+  * [infra_system:examples/full](#recipes-infra_system_examples_full) (Python3 ✅)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
   * [powershell:examples/test](#recipes-powershell_examples_test)
@@ -79,9 +79,9 @@
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#5): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for calling 'cloudbuildhelper' tool.
 
@@ -91,7 +91,7 @@ See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#106)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#107)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -115,7 +115,7 @@ Raises:
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#428)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#430)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -127,7 +127,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#448)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#450)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -151,7 +151,7 @@ Reports the version of cloudbuildhelper tool via the step text.
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#404)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#406)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -164,7 +164,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#312)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#314)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -183,9 +183,9 @@ Raises:
   StepFailure on failures.
 ### *recipe_modules* / [cloudkms](/recipes/recipe_modules/cloudkms)
 
-[DEPS](/recipes/recipe_modules/cloudkms/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudkms/__init__.py#7): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [CloudKMSApi](/recipes/recipe_modules/cloudkms/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -241,9 +241,9 @@ Args:
     account credentials to use.
 ### *recipe_modules* / [conda](/recipes/recipe_modules/conda)
 
-[DEPS](/recipes/recipe_modules/conda/__init__.py#1): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
+[DEPS](/recipes/recipe_modules/conda/__init__.py#3): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Functions to work with Miniconda python environment.
 
@@ -264,9 +264,9 @@ Returns:
   deletes the environment on exit.
 ### *recipe_modules* / [docker](/recipes/recipe_modules/docker)
 
-[DEPS](/recipes/recipe_modules/docker/__init__.py#5): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/docker/__init__.py#7): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [DockerApi](/recipes/recipe_modules/docker/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -336,9 +336,9 @@ Args:
       docker host. Read more https://docs.docker.com/network/host/.
 ### *recipe_modules* / [infra\_checkout](/recipes/recipe_modules/infra_checkout)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [InfraCheckoutApi](/recipes/recipe_modules/infra_checkout/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -384,9 +384,9 @@ Returns:
   a Checkout object with commands for common actions on infra checkout.
 ### *recipe_modules* / [infra\_cipd](/recipes/recipe_modules/infra_cipd)
 
-[DEPS](/recipes/recipe_modules/infra_cipd/__init__.py#5): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_cipd/__init__.py#7): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [InfraCIPDApi](/recipes/recipe_modules/infra_cipd/api.py#11)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -427,9 +427,9 @@ Tests previously built packages integrity.
 Uploads previously built packages.
 ### *recipe_modules* / [infra\_system](/recipes/recipe_modules/infra_system)
 
-[DEPS](/recipes/recipe_modules/infra_system/__init__.py#9): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform]
+[DEPS](/recipes/recipe_modules/infra_system/__init__.py#10): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [InfraSystemApi](/recipes/recipe_modules/infra_system/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1140,38 +1140,38 @@ The protos are exported via a symlink in
 &mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#14)(api):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#13)(api):**
 ### *recipes* / [cloudbuildhelper:examples/full](/recipes/recipe_modules/cloudbuildhelper/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#16)(api):**
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#44)(api):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#46)(api):**
 
-&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#28)(api):**
+&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#30)(api):**
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#125)(api):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#127)(api):**
 ### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#13)(api):**
 ### *recipes* / [cloudkms:examples/usage](/recipes/recipe_modules/cloudkms/examples/usage.py)
 
-[DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#5): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#7): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#13)(api):**
 ### *recipes* / [cv\_testing/tryjob](/recipes/recipes/cv_testing/tryjob.py)
 
 [DEPS](/recipes/recipes/cv_testing/tryjob.py#9): [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1192,18 +1192,18 @@ Recipe to build windows depot_tools bootstrap zipfile.
 &mdash; **def [RunSteps](/recipes/recipes/depot_tools_builder.py#26)(api):**
 ### *recipes* / [docker:examples/full](/recipes/recipe_modules/docker/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/docker/examples/full.py#7): [docker](#recipe_modules-docker), [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/docker/examples/full.py#9): [docker](#recipe_modules-docker), [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/docker/examples/full.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/docker/examples/full.py#16)(api):**
 ### *recipes* / [docker\_image\_builder](/recipes/recipes/docker_image_builder.py)
 
-[DEPS](/recipes/recipes/docker_image_builder.py#8): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [docker](#recipe_modules-docker), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/docker_image_builder.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [docker](#recipe_modules-docker), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/service\_account][recipe_engine/recipe_modules/service_account], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipes/docker_image_builder.py#36)(api, arch_type):**
+&mdash; **def [RunSteps](/recipes/recipes/docker_image_builder.py#38)(api, arch_type):**
 ### *recipes* / [fleet\_systems/dhcp](/recipes/recipes/fleet_systems/dhcp.py)
 
 [DEPS](/recipes/recipes/fleet_systems/dhcp.py#8): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/tryserver][depot_tools/recipe_modules/tryserver], [docker](#recipe_modules-docker), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1270,32 +1270,32 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipes/images_pins_roller.py#24)(api, properties):**
 ### *recipes* / [infra\_checkout:examples/ci](/recipes/recipe_modules/infra_checkout/examples/ci.py)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/examples/ci.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_checkout/examples/ci.py#7): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/ci.py#17)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/ci.py#19)(api):**
 ### *recipes* / [infra\_checkout:examples/commit\_label](/recipes/recipe_modules/infra_checkout/examples/commit_label.py)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#16)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#18)(api):**
 ### *recipes* / [infra\_checkout:examples/try](/recipes/recipe_modules/infra_checkout/examples/try.py)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/examples/try.py#5): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
+[DEPS](/recipes/recipe_modules/infra_checkout/examples/try.py#7): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/try.py#12)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/try.py#14)(api):**
 ### *recipes* / [infra\_cipd:examples/usage](/recipes/recipe_modules/infra_cipd/examples/usage.py)
 
-[DEPS](/recipes/recipe_modules/infra_cipd/examples/usage.py#10): [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_cipd/examples/usage.py#11): [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_cipd/examples/usage.py#24)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_cipd/examples/usage.py#25)(api):**
 ### *recipes* / [infra\_continuous](/recipes/recipes/infra_continuous.py)
 
 [DEPS](/recipes/recipes/infra_continuous.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1329,11 +1329,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipes/infra_repo_trybot.py#33)(api, go_version_variant):**
 ### *recipes* / [infra\_system:examples/full](/recipes/recipe_modules/infra_system/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/infra_system/examples/full.py#5): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_system/examples/full.py#7): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_system/examples/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/infra_system/examples/full.py#15)(api):**
 ### *recipes* / [luci\_go](/recipes/recipes/luci_go.py)
 
 [DEPS](/recipes/recipes/luci_go.py#9): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/tricium][recipe_engine/recipe_modules/tricium]

@@ -32,9 +32,9 @@ class DockerApi(recipe_api.RecipeApi):
     """Returns Docker version installed or None if failed to detect."""
     docker_version_step = self(
         'version',
-        stdout=self.m.raw_io.output(),
-        step_test_data=(
-            lambda: self.m.raw_io.test_api.stream_output('Version: 1.2.3')))
+        stdout=self.m.raw_io.output_text(),
+        step_test_data=(lambda: self.m.raw_io.test_api.stream_output_text(
+            'Version: 1.2.3')))
     for line in docker_version_step.stdout.splitlines():
       line = line.strip().lower()
       if line.startswith('version: '):

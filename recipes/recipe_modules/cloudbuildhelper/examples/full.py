@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'cloudbuildhelper',
   'infra_checkout',
@@ -26,19 +28,19 @@ def RunSteps(api):
 
 
 def repo_checkout_metadata(api):
-    return api.infra_checkout.CheckoutMetadata(
-        root=api.path['start_dir'],
-        repos={
-            'a': {
-                'repository': 'https://a.example.com',
-                'revision': 'aaaa',
-            },
-            'a/b': {
-                'repository': 'https://b.example.com',
-                'revision': 'bbbb',
-            },
-       },
-    )
+  return api.infra_checkout.CheckoutMetadata(
+      root=api.path['start_dir'],
+      repos={
+          'a': {
+              'repository': 'https://a.example.com',
+              'revision': 'aaaa',
+          },
+          'a/b': {
+              'repository': 'https://b.example.com',
+              'revision': 'bbbb',
+          },
+      },
+  )
 
 
 def build(api):

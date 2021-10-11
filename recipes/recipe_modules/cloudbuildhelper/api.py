@@ -93,13 +93,14 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     res = self.m.step(
         name='cloudbuildhelper version',
         cmd=[self.command, 'version'],
-        stdout=self.m.raw_io.output(),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('\n'.join([
-            'cloudbuildhelper v6.6.6',
-            '',
-            'CIPD package name: infra/tools/cloudbuildhelper/...',
-            'CIPD instance ID:  lTJD7x...',
-        ])),
+        stdout=self.m.raw_io.output_text(),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
+            '\n'.join([
+                'cloudbuildhelper v6.6.6',
+                '',
+                'CIPD package name: infra/tools/cloudbuildhelper/...',
+                'CIPD instance ID:  lTJD7x...',
+            ])),
     )
     res.presentation.step_text += '\n' + res.stdout
 
@@ -303,7 +304,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
           'Digest: %s' % img['digest'],
       ]
       # Display all added tags (including the canonical one we got via `img`).
-      for t in set((tags or [])+([img['tag']] if img.get('tag') else [])):
+      for t in sorted(
+          set((tags or []) + ([img['tag']] if img.get('tag') else []))):
         lines.append('Tag: %s' % t)
       r.presentation.step_text += '\n'.join(lines)
     else:
