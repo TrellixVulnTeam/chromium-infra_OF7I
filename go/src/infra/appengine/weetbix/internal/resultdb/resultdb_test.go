@@ -14,6 +14,7 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestResultDB(t *testing.T) {
@@ -67,13 +68,20 @@ func TestResultDB(t *testing.T) {
 			So(len(tvs), ShouldEqual, 2)
 		})
 
-		Convey(`RealmFromInvocation`, func() {
+		Convey(`GetInvocation`, func() {
 			realm := "realm"
-			mc.GetRealm(inv, realm)
+			req := &rdbpb.GetInvocationRequest{
+				Name: inv,
+			}
+			res := &rdbpb.Invocation{
+				Name:  inv,
+				Realm: realm,
+			}
+			mc.GetInvocation(req, res)
 
-			actRealm, err := rc.RealmFromInvocation(mc.Ctx, inv)
+			invProto, err := rc.GetInvocation(mc.Ctx, inv)
 			So(err, ShouldBeNil)
-			So(actRealm, ShouldEqual, realm)
+			So(invProto, ShouldResembleProto, res)
 		})
 
 		Convey(`BatchGetTestVariants`, func() {

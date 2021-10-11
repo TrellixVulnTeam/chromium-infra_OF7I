@@ -62,21 +62,21 @@ func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) 
 	}
 
 	rdbHost := rdbInfo.Hostname
-	inv := rdbInfo.Invocation
+	invName := rdbInfo.Invocation
 	rc, err := resultdb.NewClient(ctx, rdbHost)
 	if err != nil {
 		return err
 	}
-	realm, err := rc.RealmFromInvocation(ctx, inv)
+	inv, err := rc.GetInvocation(ctx, invName)
 	if err != nil {
 		return err
 	}
-	tvs, err := rc.QueryTestVariants(ctx, inv)
+	tvs, err := rc.QueryTestVariants(ctx, invName)
 	if err != nil {
 		return err
 	}
 
-	if err = createOrUpdateAnalyzedTestVariants(ctx, realm, tvs); err != nil {
+	if err = createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, tvs); err != nil {
 		return err
 	}
 

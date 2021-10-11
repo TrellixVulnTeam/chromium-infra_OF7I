@@ -64,6 +64,15 @@ func TestIngestTestResults(t *testing.T) {
 		}
 		mbc.GetBuild(bbReq, mockedGetBuildRsp(inv))
 
+		invReq := &rdbpb.GetInvocationRequest{
+			Name: inv,
+		}
+		invRes := &rdbpb.Invocation{
+			Name:  inv,
+			Realm: realm,
+		}
+		mrc.GetInvocation(invReq, invRes)
+
 		tvReq := &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{inv},
 			PageSize:    1000,
@@ -72,7 +81,6 @@ func TestIngestTestResults(t *testing.T) {
 			return mockedQueryTestVariantsRsp(), nil
 		}
 		mrc.QueryTestVariants(tvReq, tvResF)
-		mrc.GetRealm(inv, realm)
 
 		// Prepare some existing analyzed test variants to update.
 		ms := []*spanner.Mutation{

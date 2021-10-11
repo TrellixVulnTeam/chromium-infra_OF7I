@@ -100,15 +100,6 @@ func (c *Client) GetInvocation(ctx context.Context, invName string) (*rdbpb.Invo
 	return inv, nil
 }
 
-// RealmFromInvocation retrieves the realm of the invocation.
-func (c *Client) RealmFromInvocation(ctx context.Context, invName string) (string, error) {
-	inv, err := c.GetInvocation(ctx, invName)
-	if err != nil {
-		return "", err
-	}
-	return inv.GetRealm(), nil
-}
-
 // BatchGetTestVariants retrieves the requested test variants.
 func (c *Client) BatchGetTestVariants(ctx context.Context, req *rdbpb.BatchGetTestVariantsRequest) ([]*rdbpb.TestVariant, error) {
 	rsp, err := c.client.BatchGetTestVariants(ctx, req)
