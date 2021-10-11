@@ -6,8 +6,10 @@ package controller
 
 import (
 	"context"
+	"runtime/debug"
 	"time"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/hwid"
@@ -26,11 +28,17 @@ const cacheAge = time.Hour
 // 3. If HWID server data available, cache into datastore and return data.
 // 4. If server fails, return expired datastore data if present. If not, return
 //    nil and error.
-func GetHwidDataV1(ctx context.Context, c hwid.ClientInterface, hwid string) (*ufspb.HwidData, error) {
+func GetHwidDataV1(ctx context.Context, c hwid.ClientInterface, hwid string) (data *ufspb.HwidData, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Reason("Recovered from %v\n%s", r, debug.Stack()).Err()
+		}
+	}()
+
 	var hwidEnt *configuration.HwidDataEntity
 	var hwidEntNew *configuration.HwidDataEntity
 
-	hwidEnt, err := configuration.GetHwidData(ctx, hwid)
+	hwidEnt, err = configuration.GetHwidData(ctx, hwid)
 	if err != nil && !util.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -55,7 +63,7 @@ func GetHwidDataV1(ctx context.Context, c hwid.ClientInterface, hwid string) (*u
 		hwidEnt = hwidEntNew
 	}
 
-	data, err := configuration.ParseHwidDataV1(hwidEnt)
+	data, err = configuration.ParseHwidDataV1(hwidEnt)
 	if err != nil {
 		return nil, err
 	}

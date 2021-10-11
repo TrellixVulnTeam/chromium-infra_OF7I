@@ -31,7 +31,11 @@ func (e *HTTPError) Error() string {
 
 func ExecuteRequest(ctx context.Context, hc *http.Client, req *http.Request, value proto.Message) error {
 	resp, err := ctxhttp.Do(ctx, hc, req)
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+	}()
 	if err != nil {
 		return err
 	}
