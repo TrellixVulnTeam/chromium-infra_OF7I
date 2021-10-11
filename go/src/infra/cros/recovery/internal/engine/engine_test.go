@@ -156,9 +156,11 @@ func TestRun(t *testing.T) {
 	for _, c := range planTestCases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
+			// t.Parallel() -- TODO(gregorynisbet): Consider parallelizing.
 			args := &execs.RunArgs{
 				EnableRecovery: true,
 			}
+			// We intentionally throw away the context after each test.
 			newCtx, err := Run(ctx, c.name, c.got, args)
 			if newCtx == nil {
 				t.Errorf("Case %q fail to receive new context", c.name)

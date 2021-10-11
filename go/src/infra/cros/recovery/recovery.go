@@ -97,21 +97,20 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 
 // runResource run single resource.
 func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs, resourceErrs []error) (err error) {
-	newCtx := ctx
-	log.Info(newCtx, "Resource %q: started", resource)
+	log.Info(ctx, "Resource %q: started", resource)
 	if args.ShowSteps {
 		var step *build.Step
-		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Resource %q", resource))
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Resource %q", resource))
 		defer step.End(err)
 	}
-	dut, err := readInventory(newCtx, resource, args)
+	dut, err := readInventory(ctx, resource, args)
 	if err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
-	if err := runDUTPlans(newCtx, dut, config, args); err != nil {
+	if err := runDUTPlans(ctx, dut, config, args); err != nil {
 		resourceErrs = append(resourceErrs, err)
 	}
-	if err := updateInventory(newCtx, dut, args); err != nil {
+	if err := updateInventory(ctx, dut, args); err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
 	return nil
@@ -119,27 +118,25 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 
 // retrieveResources retrieves a list of target resources.
 func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, err error) {
-	newCtx := ctx
 	if args.ShowSteps {
 		var step *build.Step
-		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
 		defer step.End(err)
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
 		defer args.Logger.DedentLogging()
 	}
-	resources, err = args.Access.ListResourcesForUnit(newCtx, args.UnitName)
+	resources, err = args.Access.ListResourcesForUnit(ctx, args.UnitName)
 	return resources, errors.Annotate(err, "retrieve resources").Err()
 }
 
 // loadConfiguration loads and verifies a configuration.
 // If configuration is not provided by args then default is used.
 func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Configuration, err error) {
-	newCtx := ctx
 	if args.ShowSteps {
 		var step *build.Step
-		step, newCtx = build.StartStep(newCtx, "Load configuration")
+		step, ctx = build.StartStep(ctx, "Load configuration")
 		defer step.End(err)
 	}
 	if args.Logger != nil {
@@ -151,7 +148,7 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 		// Get default configuration if not provided.
 		cr = DefaultConfig()
 	}
-	if config, err = loader.LoadConfiguration(newCtx, cr); err != nil {
+	if config, err = loader.LoadConfiguration(ctx, cr); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	}
 	if len(config.GetPlans()) == 0 {
@@ -257,10 +254,9 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 
 // runDUTPlan runs simple plan against the DUT.
 func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *planpb.Configuration, execArgs *execs.RunArgs) (err error) {
-	newCtx := ctx
 	if execArgs.ShowSteps {
 		var step *build.Step
-		step, newCtx = build.StartStep(newCtx, fmt.Sprintf("Run plan %q", planName))
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Run plan %q", planName))
 		defer step.End(err)
 	}
 	if execArgs.Logger != nil {
@@ -269,17 +265,17 @@ func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *plan
 	}
 	resources := collectResourcesForPlan(planName, dut)
 	if len(resources) == 0 {
-		log.Info(newCtx, "Run plan %q: no resources found.", planName)
+		log.Info(ctx, "Run plan %q: no resources found.", planName)
 	}
 	plan := config.GetPlans()[planName]
 	for _, resource := range resources {
 		execArgs.ResourceName = resource
-		log.Info(newCtx, "Run plan %q for %q: started", planName, resource)
-		newCtx, err = engine.Run(newCtx, planName, plan, execArgs)
+		log.Info(ctx, "Run plan %q for %q: started", planName, resource)
+		ctx, err = engine.Run(ctx, planName, plan, execArgs)
 		if err != nil {
-			log.Error(newCtx, "Run plan %q for %q: fail. Error: %s", planName, resource, err)
+			log.Error(ctx, "Run plan %q for %q: fail. Error: %s", planName, resource, err)
 			if plan.GetAllowFail() {
-				log.Debug(newCtx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
+				log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
 			} else {
 				return errors.Annotate(err, "run plan %q for %q", planName, resource).Err()
 			}
