@@ -34,14 +34,14 @@ func RunOrch(ctx context.Context, request *tpv2.Request) error {
 		return fmt.Errorf("at least one TestSpec in request required")
 	}
 
-	for _, spec := range testSpecs {
-		swarmingDims, err := testorchestrator.GetRequestedDimensions(ctx, spec.GetHwTestSpec().Rules.DutCriteria)
-		if err != nil {
-			return err
-		}
+	// for _, spec := range testSpecs {
+	// 	swarmingDims, err := testorchestrator.GetRequestedDimensions(ctx, spec.GetHwTestPlanV1().CoverageRules)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		logging.Infof(ctx, "Computed RequestedDimensions: %s", swarmingDims)
-	}
+	// 	logging.Infof(ctx, "Computed RequestedDimensions: %s", swarmingDims)
+	// }
 
 	gsClient, err := storage.NewClient(ctx)
 	if err != nil {

@@ -54,7 +54,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d
-	go.chromium.org/chromiumos/config/go v0.0.0-20210225201405-02ec5b5e84b7
+	go.chromium.org/chromiumos/config/go v0.0.0-20211012171127-50826c369fec
 	go.chromium.org/chromiumos/infra/proto/go v0.0.0-00010101000000-000000000000
 	go.chromium.org/luci v0.0.0-20201029184154-594d11850ebf
 	go.opencensus.io v0.23.0
