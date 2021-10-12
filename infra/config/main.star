@@ -108,7 +108,6 @@ luci.notify(tree_closing_enabled = True)
 # Global builder defaults.
 luci.builder.defaults.execution_timeout.set(45 * time.minute)
 luci.builder.defaults.experiments.set({
-    "luci.buildbucket.bbagent_getbuild": 100,
     "luci.use_realms": 100,
 })
 
