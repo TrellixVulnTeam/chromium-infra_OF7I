@@ -142,6 +142,17 @@ func TestProjectConfigValidator(t *testing.T) {
 			// Other thresholding validation cases tested under bug-filing threshold and are
 			// not repeated given the implementation is shared.
 		})
+
+		Convey("priority hysteresis", func() {
+			Convey("value too high", func() {
+				cfg.Monorail.PriorityHysteresisPercent = 1001
+				So(validate(cfg), ShouldErrLike, "value must not exceed 1000 percent")
+			})
+			Convey("value is negative", func() {
+				cfg.Monorail.PriorityHysteresisPercent = -1
+				So(validate(cfg), ShouldErrLike, "value must not be negative")
+			})
+		})
 	})
 	Convey("bug filing threshold", t, func() {
 		cfg := createProjectConfig()

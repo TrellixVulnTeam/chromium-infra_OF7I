@@ -16,6 +16,8 @@ import (
 // From https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/project/project_constants.py;l=13.
 var monorailProjectRE = regexp.MustCompile(`^[a-z0-9][-a-z0-9]{0,61}[a-z0-9]$`)
 
+const maxHysteresisPercent = 1000
+
 func validateConfig(ctx *validation.Context, cfg *Config) {
 	validateMonorailHostname(ctx, cfg.MonorailHostname)
 }
@@ -60,6 +62,7 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject) {
 	validateDefaultFieldValues(ctx, cfg.DefaultFieldValues)
 	validateFieldID(ctx, cfg.PriorityFieldId, "priority_field_id")
 	validatePriorities(ctx, cfg.Priorities)
+	validatePriorityHysteresisPercent(ctx, cfg.PriorityHysteresisPercent)
 }
 
 func validateMonorailProject(ctx *validation.Context, project string) {
@@ -137,6 +140,17 @@ func validateImpactThreshold(ctx *validation.Context, t *ImpactThreshold, fieldN
 	validateFailureCountThresold(ctx, t.UnexpectedFailures_1D, "unexpected_failures_1d")
 	validateFailureCountThresold(ctx, t.UnexpectedFailures_3D, "unexpected_failures_3d")
 	validateFailureCountThresold(ctx, t.UnexpectedFailures_7D, "unexpected_failures_7d")
+}
+
+func validatePriorityHysteresisPercent(ctx *validation.Context, value int64) {
+	ctx.Enter("priority_hysteresis_percent")
+	if value > maxHysteresisPercent {
+		ctx.Errorf("value must not exceed %v percent", maxHysteresisPercent)
+	}
+	if value < 0 {
+		ctx.Errorf("value must not be negative")
+	}
+	ctx.Exit()
 }
 
 func validateFailureCountThresold(ctx *validation.Context, threshold *int64, fieldName string) {

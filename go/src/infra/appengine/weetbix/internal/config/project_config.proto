@@ -45,6 +45,20 @@ message MonorailProject {
   // at least imply the threshold for the lowest priority, and MAY imply
   // the thresholds of higher priorities.
   repeated MonorailPriority priorities = 4;
+
+  // Controls the amount of hysteresis used in setting bug priorities.
+  // Once a bug is assigned a given priority, its priority will only be
+  // increased if it exceeds the next priority's thresholds by the
+  // specified percentage margin, and decreased if the current priority's
+  // thresholds exceed the bug's impact by the given percentage margin.
+  //
+  // A value of 100 indicates impact may be double the threshold for
+  // the next highest priority value, (or half the threshold of the
+  // current priority value,) before a bug's priority is increased
+  // (or decreased).
+  //
+  // Valid values are from 0 (no hystersis) to 1,000 (10x hysteresis).
+  int64 priority_hysteresis_percent = 5;
 }
 
 // MonorailFieldValue describes a monorail field/value pair.
