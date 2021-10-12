@@ -73,7 +73,7 @@ CREATE TABLE Verdicts (
   -- Combination of Realm, TestId and VariantHash can identify a test variant.
   VariantHash STRING(64) NOT NULL,
 
-  -- ID of the build invocation the results belong to.
+  -- Id of the build invocation the results belong to.
   InvocationId STRING(MAX) NOT NULL,
 
   -- Flag indicates if the verdict belongs to a try build.
@@ -85,6 +85,9 @@ CREATE TABLE Verdicts (
   -- for deciding the test variant's status because they could be noises.
   -- This field is only meaningful for PreSubmit verdicts.
   HasContributedToClSubmission BOOL,
+
+  -- If the unexpected results in the verdict are exonerated.
+  Exonerated BOOL,
 
   -- Status of the results for the parent test variant in this verdict,
   -- See VerdictStatus.
