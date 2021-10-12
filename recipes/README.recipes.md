@@ -12,7 +12,7 @@
   * [infra_system](#recipe_modules-infra_system) (Python3 ✅)
   * [omahaproxy](#recipe_modules-omahaproxy)
   * [powershell](#recipe_modules-powershell)
-  * [provenance](#recipe_modules-provenance)
+  * [provenance](#recipe_modules-provenance) (Python3 ✅)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller) (Python3 ✅)
   * [support_3pp](#recipe_modules-support_3pp) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
   * [windows_adk](#recipe_modules-windows_adk)
@@ -54,7 +54,7 @@
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
   * [powershell:examples/test](#recipes-powershell_examples_test)
-  * [provenance:examples/usage](#recipes-provenance_examples_usage)
+  * [provenance:examples/usage](#recipes-provenance_examples_usage) (Python3 ✅)
   * [recipe_autoroller](#recipes-recipe_autoroller) (Python3 ✅) &mdash; Rolls recipes.
   * [recipe_autoroller:examples/full](#recipes-recipe_autoroller_examples_full) (Python3 ✅)
   * [recipe_bundler](#recipes-recipe_bundler)
@@ -474,9 +474,9 @@ Raises:
   StepFailure if the failure is detected. See resources/psinvoke.py
 ### *recipe_modules* / [provenance](/recipes/recipe_modules/provenance)
 
-[DEPS](/recipes/recipe_modules/provenance/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/provenance/__init__.py#7): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [ProvenanceApi](/recipes/recipe_modules/provenance/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1359,11 +1359,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/powershell/examples/test.py#17)(api):**
 ### *recipes* / [provenance:examples/usage](/recipes/recipe_modules/provenance/examples/usage.py)
 
-[DEPS](/recipes/recipe_modules/provenance/examples/usage.py#5): [provenance](#recipe_modules-provenance), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/provenance/examples/usage.py#7): [provenance](#recipe_modules-provenance), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/provenance/examples/usage.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/provenance/examples/usage.py#13)(api):**
 ### *recipes* / [recipe\_autoroller](/recipes/recipes/recipe_autoroller.py)
 
 [DEPS](/recipes/recipes/recipe_autoroller.py#9): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/time][recipe_engine/recipe_modules/time]
