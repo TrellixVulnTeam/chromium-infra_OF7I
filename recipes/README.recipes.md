@@ -18,7 +18,7 @@
   * [windows_adk](#recipe_modules-windows_adk)
   * [windows_scripts_executor](#recipe_modules-windows_scripts_executor)
   * [windows_sdk](#recipe_modules-windows_sdk)
-  * [zip](#recipe_modules-zip)
+  * [zip](#recipe_modules-zip) (Python3 ✅)
 
 **[Recipes](#Recipes)**
   * [3pp](#recipes-3pp) &mdash; This recipe builds and packages third party software, such as Git.
@@ -74,7 +74,7 @@
   * [windows_scripts_executor:examples/git_test](#recipes-windows_scripts_executor_examples_git_test)
   * [windows_scripts_executor:examples/test](#recipes-windows_scripts_executor_examples_test)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full)
-  * [zip:examples/full](#recipes-zip_examples_full)
+  * [zip:examples/full](#recipes-zip_examples_full) (Python3 ✅)
 ## Recipe Modules
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
@@ -1004,9 +1004,9 @@ Raises:
     StepFailure or InfraFailure.
 ### *recipe_modules* / [zip](/recipes/recipe_modules/zip)
 
-[DEPS](/recipes/recipe_modules/zip/__init__.py#5): [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+[DEPS](/recipes/recipe_modules/zip/__init__.py#7): [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [ZipApi](/recipes/recipe_modules/zip/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1527,11 +1527,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/windows_sdk/examples/full.py#13)(api):**
 ### *recipes* / [zip:examples/full](/recipes/recipe_modules/zip/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/zip/examples/full.py#5): [zip](#recipe_modules-zip), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/zip/examples/full.py#7): [zip](#recipe_modules-zip), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/zip/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/zip/examples/full.py#17)(api):**
 
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/4a06fb543238f49f674a44be355dde429286fa86/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/4a06fb543238f49f674a44be355dde429286fa86/recipes/README.recipes.md#recipe_modules-depot_tools
