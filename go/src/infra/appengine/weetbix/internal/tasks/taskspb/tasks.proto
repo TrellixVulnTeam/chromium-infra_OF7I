@@ -7,6 +7,7 @@ syntax = "proto3";
 package weetbix.internal.tasks;
 
 import "go.chromium.org/luci/cv/api/v0/run.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 
 option go_package = "infra/appengine/weetbix/internal/tasks/taskspb";
 
@@ -28,4 +29,24 @@ message IngestTestResults {
 
   // Information of a Buildbucket build.
   Build build = 2;
+}
+
+// ResultDB-specific information.
+message ResultDB {
+  // Information of the invocation.
+  luci.resultdb.v1.Invocation invocation = 1;
+  // Hostname of the ResultDB instance, such as "results.api.cr.dev".
+  string host = 2;
+}
+
+// Payload of CollectTestResults task.
+message CollectTestResults {
+  // ResultDB-specific information.
+  ResultDB resultdb = 1;
+  // Builder of the invocation.
+  string builder = 2;
+  // If the task is for a try build.
+  bool is_pre_submit = 3;
+  // If the try build contributes to a CL's submission.
+  bool contributed_to_cl_submission = 4;
 }

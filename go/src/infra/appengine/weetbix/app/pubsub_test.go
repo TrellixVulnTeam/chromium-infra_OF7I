@@ -42,7 +42,7 @@ func TestHandleBuild(t *testing.T) {
 	t.Parallel()
 	ctx := testutil.TestingContext()
 	ctx, _ = tq.TestingContext(ctx, nil)
-	resultingester.RegisterResultIngestionTasksClass()
+	resultingester.RegisterTasksClass()
 
 	Convey(`Test BuildbucketPubSubHandler`, t, func() {
 		Convey(`non chromium build is ignored`, func() {

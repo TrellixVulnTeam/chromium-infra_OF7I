@@ -35,7 +35,7 @@ import (
 func TestSchedule(t *testing.T) {
 	Convey(`TestSchedule`, t, func() {
 		ctx, skdr := tq.TestingContext(testutil.TestingContext(), nil)
-		RegisterResultIngestionTasksClass()
+		RegisterTasksClass()
 
 		build := &taskspb.Build{}
 		So(Schedule(ctx, nil, build), ShouldBeNil)

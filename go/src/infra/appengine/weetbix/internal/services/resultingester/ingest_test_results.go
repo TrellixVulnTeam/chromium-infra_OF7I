@@ -25,8 +25,8 @@ const (
 	resultIngestionQueue     = "result-ingestion"
 )
 
-// RegisterResultIngestionTasksClass registers the task class for tq dispatcher.
-func RegisterResultIngestionTasksClass() {
+// RegisterTasksClass registers the task class for tq dispatcher.
+func RegisterTasksClass() {
 	tq.RegisterTaskClass(tq.TaskClass{
 		ID:        resultIngestionTaskClass,
 		Prototype: &taskspb.IngestTestResults{},

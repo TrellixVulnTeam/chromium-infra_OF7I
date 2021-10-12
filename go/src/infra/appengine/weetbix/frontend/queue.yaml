@@ -3,3 +3,6 @@
 queue:
 - name: result-ingestion
   rate: 500/s
+
+- name: result-collection
+  rate: 500/s

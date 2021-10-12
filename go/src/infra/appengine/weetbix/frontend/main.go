@@ -248,7 +248,7 @@ func main() {
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
-		resultingester.RegisterResultIngestionTasksClass()
+		resultingester.RegisterTasksClass()
 
 		return nil
 	})
