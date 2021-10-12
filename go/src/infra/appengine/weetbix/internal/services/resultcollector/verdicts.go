@@ -21,6 +21,9 @@ import (
 func createVerdicts(ctx context.Context, task *taskspb.CollectTestResults, tvs []*rdbpb.TestVariant) error {
 	ms := make([]*spanner.Mutation, 0, len(tvs))
 	for _, tv := range tvs {
+		if tv.Status == rdbpb.TestVariantStatus_UNEXPECTEDLY_SKIPPED {
+			continue
+		}
 		m := insertVerdict(task, tv)
 		if m == nil {
 			continue

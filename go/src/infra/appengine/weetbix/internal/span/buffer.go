@@ -47,6 +47,7 @@ type Ptr interface {
 //   - rdbpb.Variant
 //   - rdbpb.StringPair
 //   - proto.Message
+//   - pb.VerdictStatus
 type Buffer struct {
 	NullString  spanner.NullString
 	NullTime    spanner.NullTime
@@ -97,6 +98,8 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 		spanPtr = &b.StringSlice
 	case proto.Message:
 		spanPtr = &b.ByteSlice
+	case *pb.VerdictStatus:
+		spanPtr = &b.Int64
 	default:
 		spanPtr = goPtr
 	}
@@ -154,6 +157,9 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 			// If it was written to Spanner, it should have been validated.
 			panic(err)
 		}
+
+	case *pb.VerdictStatus:
+		*goPtr = pb.VerdictStatus(b.Int64)
 
 	default:
 		panic(fmt.Sprintf("impossible %q", goPtr))
@@ -221,6 +227,9 @@ func ToSpanner(v interface{}) interface{} {
 			ret[key] = ToSpanner(el)
 		}
 		return ret
+
+	case pb.VerdictStatus:
+		return int64(v)
 
 	default:
 		return v
