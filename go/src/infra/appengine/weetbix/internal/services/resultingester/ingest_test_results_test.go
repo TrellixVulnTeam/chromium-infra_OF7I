@@ -5,13 +5,11 @@
 package resultingester
 
 import (
-	"context"
 	"testing"
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
@@ -76,11 +74,11 @@ func TestIngestTestResults(t *testing.T) {
 		tvReq := &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{inv},
 			PageSize:    1000,
+			Predicate: &rdbpb.TestVariantPredicate{
+				Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
+			},
 		}
-		tvResF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
-			return mockedQueryTestVariantsRsp(), nil
-		}
-		mrc.QueryTestVariants(tvReq, tvResF)
+		mrc.QueryTestVariants(tvReq, mockedQueryTestVariantsRsp())
 
 		// Prepare some existing analyzed test variants to update.
 		ms := []*spanner.Mutation{

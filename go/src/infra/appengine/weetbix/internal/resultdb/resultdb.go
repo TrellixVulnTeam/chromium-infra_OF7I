@@ -14,12 +14,6 @@ import (
 	"go.chromium.org/luci/server/auth"
 )
 
-const (
-	// expectedTestVariantsPageToken is the next page token for expected test variants.
-	// See https://source.chromium.org/chromium/_/chromium/infra/luci/luci-go/+/bcfdf0380e026668674c1f1cae919e1b2ace8ed3:resultdb/internal/testvariants/query.go;l=353;drc=2a22b94e783feb1c02109d8b6f7cf93a4a4b69f6
-	expectedTestVariantsPageToken = "CghFWFBFQ1RFRAoACgA="
-)
-
 // mockResultDBClientKey is the context key indicates using mocked resultb client in tests.
 var mockResultDBClientKey = "used in tests only for setting the mock resultdb client"
 
@@ -65,8 +59,11 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 	for {
 		rsp, err := c.client.QueryTestVariants(ctx, &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{invName},
-			PageSize:    1000, // Maximum page size.
-			PageToken:   pageToken,
+			Predicate: &rdbpb.TestVariantPredicate{
+				Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
+			},
+			PageSize:  1000, // Maximum page size.
+			PageToken: pageToken,
 		})
 		if err != nil {
 			return tvs, err
@@ -74,13 +71,7 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 
 		tvs = append(tvs, rsp.TestVariants...)
 		pageToken = rsp.GetNextPageToken()
-		// QueryTestVariants always returns expected test variants in a new page.
-		//
-		// We only care about test variants with any unexpected result, so we can stop
-		// if the next page is for expected test variants.
-		// TODO(crbug.com/1249596): Update the request to query test variants with
-		// any unexpected results only.
-		if pageToken == expectedTestVariantsPageToken || pageToken == "" {
+		if pageToken == "" {
 			// No more test variants with unexpected results.
 			break
 		}

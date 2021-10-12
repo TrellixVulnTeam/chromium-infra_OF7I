@@ -36,8 +36,11 @@ var locBasedTagKeys = map[string]struct{}{
 // createOrUpdateAnalyzedTestVariants looks for new analyzed test variants or
 // the ones to be updated, and save them in Spanner.
 func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm string, tvs []*rdbpb.TestVariant) error {
-	ks := testVariantKeySet(realm, tvs)
+	if len(tvs) == 0 {
+		return nil
+	}
 
+	ks := testVariantKeySet(realm, tvs)
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		found := make(map[testVariantKey]*pb.AnalyzedTestVariant)
 		err := analyzedtestvariants.Read(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {

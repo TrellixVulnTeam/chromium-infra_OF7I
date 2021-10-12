@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"google.golang.org/grpc"
 
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 
@@ -31,38 +30,26 @@ func TestResultDB(t *testing.T) {
 			req := &rdbpb.QueryTestVariantsRequest{
 				Invocations: []string{inv},
 				PageSize:    1000,
+				Predicate: &rdbpb.TestVariantPredicate{
+					Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
+				},
 			}
 
-			resF := func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error) {
-				if in.GetPageToken() == "" {
-					return &rdbpb.QueryTestVariantsResponse{
-						TestVariants: []*rdbpb.TestVariant{
-							{
-								TestId:      "ninja://test1",
-								VariantHash: "hash1",
-								Status:      rdbpb.TestVariantStatus_UNEXPECTED,
-							},
-							{
-								TestId:      "ninja://test2",
-								VariantHash: "hash2",
-								Status:      rdbpb.TestVariantStatus_FLAKY,
-							},
-						},
-						NextPageToken: expectedTestVariantsPageToken,
-					}, nil
-				}
-				return &rdbpb.QueryTestVariantsResponse{
-					TestVariants: []*rdbpb.TestVariant{
-						{
-							TestId:      "ninja://test3",
-							VariantHash: "hash3",
-							Status:      rdbpb.TestVariantStatus_EXPECTED,
-						},
+			res := &rdbpb.QueryTestVariantsResponse{
+				TestVariants: []*rdbpb.TestVariant{
+					{
+						TestId:      "ninja://test1",
+						VariantHash: "hash1",
+						Status:      rdbpb.TestVariantStatus_UNEXPECTED,
 					},
-					NextPageToken: "",
-				}, nil
+					{
+						TestId:      "ninja://test2",
+						VariantHash: "hash2",
+						Status:      rdbpb.TestVariantStatus_FLAKY,
+					},
+				},
 			}
-			mc.QueryTestVariants(req, resF)
+			mc.QueryTestVariants(req, res)
 			tvs, err := rc.QueryTestVariants(mc.Ctx, inv)
 			So(err, ShouldBeNil)
 			So(len(tvs), ShouldEqual, 2)

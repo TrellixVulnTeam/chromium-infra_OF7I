@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/golang/mock/gomock"
-	"google.golang.org/grpc"
 
 	"go.chromium.org/luci/common/proto"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
@@ -31,9 +30,9 @@ func NewMockedClient(ctx context.Context, ctl *gomock.Controller) *MockedClient 
 }
 
 // QueryTestVariants mocks the QueryTestVariants RPC.
-func (mc *MockedClient) QueryTestVariants(req *rdbpb.QueryTestVariantsRequest, resF func(ctx context.Context, in *rdbpb.QueryTestVariantsRequest, opts ...grpc.CallOption) (*rdbpb.QueryTestVariantsResponse, error)) {
+func (mc *MockedClient) QueryTestVariants(req *rdbpb.QueryTestVariantsRequest, res *rdbpb.QueryTestVariantsResponse) {
 	mc.Client.EXPECT().QueryTestVariants(gomock.Any(), proto.MatcherEqual(req),
-		gomock.Any()).DoAndReturn(resF)
+		gomock.Any()).Return(res, nil)
 }
 
 // GetInvocation mocks the GetInvocation RPC.
