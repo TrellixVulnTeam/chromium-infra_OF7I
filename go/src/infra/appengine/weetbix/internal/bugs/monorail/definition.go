@@ -64,11 +64,14 @@ type Generator struct {
 }
 
 // NewGenerator initialises a new Generator.
-func NewGenerator(cluster *clustering.Cluster, monorailCfg *config.MonorailProject) *Generator {
+func NewGenerator(cluster *clustering.Cluster, monorailCfg *config.MonorailProject) (*Generator, error) {
+	if len(monorailCfg.Priorities) == 0 {
+		return nil, fmt.Errorf("invalid configuration in use for monorail project %q; no monorail priorities configured", monorailCfg.Project)
+	}
 	return &Generator{
 		cluster:     cluster,
 		monorailCfg: monorailCfg,
-	}
+	}, nil
 }
 
 // PrepareNew prepares a new bug from the given cluster.
@@ -120,11 +123,11 @@ func (g *Generator) NeedsUpdate(issue *mpb.Issue) bool {
 	}
 	// Cases that a bug may be updated follow.
 	switch {
-	case g.clusterResolved() != issueVerified(issue):
+	case !g.isCompatibleWithVerified(issueVerified(issue)):
 		return true
 	case !hasLabel(issue, manualPriorityLabel) &&
-		!g.clusterResolved() &&
-		g.clusterPriority() != g.IssuePriority(issue):
+		!issueVerified(issue) &&
+		!g.isCompatibleWithPriority(g.IssuePriority(issue)):
 		// The priority has changed on a cluster which is not verified as fixed
 		// and the user isn't manually controlling the priority.
 		return true
@@ -147,15 +150,18 @@ func (g *Generator) MakeUpdate(issue *mpb.Issue, comments []*mpb.Comment) *mpb.M
 
 	var commentary []string
 	notify := false
-	if g.clusterResolved() != issueVerified(issue) {
+	issueVerified := issueVerified(issue)
+	if !g.isCompatibleWithVerified(issueVerified) {
 		// Verify or reopen the issue.
 		comment := g.prepareBugVerifiedUpdate(issue, delta)
 		commentary = append(commentary, comment)
 		notify = true
+		// After the update, whether the issue was verified will have changed.
+		issueVerified = g.clusterResolved()
 	}
 	if !hasLabel(issue, manualPriorityLabel) &&
-		!g.clusterResolved() &&
-		g.clusterPriority() != g.IssuePriority(issue) {
+		!issueVerified &&
+		!g.isCompatibleWithPriority(g.IssuePriority(issue)) {
 
 		if hasManuallySetPriority(comments) {
 			// We were not the last to update the priority of this issue.
@@ -310,10 +316,14 @@ func issueVerified(issue *mpb.Issue) bool {
 }
 
 // isHigherPriority returns whether priority p1 is higher than priority p2.
+// The passed strings are the priority field values as used in monorail. These
+// must be matched against monorail project configuration in order to
+// identify the ordering of the priorities.
 func (g *Generator) isHigherPriority(p1 string, p2 string) bool {
 	i1 := g.indexOfPriority(p1)
 	i2 := g.indexOfPriority(p2)
-	// higher priority means lower index.
+	// Priorities are configured from highest to lowest, so higher priorities
+	// have lower indexes.
 	return i1 < i2
 }
 
@@ -340,14 +350,58 @@ func (g *Generator) bugDescription() string {
 	}
 }
 
-// clusterPriority returns the priority of the bug that should be created
-// for the cluster.
-func (g *Generator) clusterPriority() string {
-	if len(g.monorailCfg.Priorities) == 0 {
-		// This should never happen; it means configuration is being used for
-		// a project that has never passed validation.
-		panic(fmt.Sprintf("invalid configuration in use for monorail project %q; no monorail priorities configured", g.monorailCfg.Project))
+// isCompatibleWithVerified returns whether the impact of the current cluster
+// is compatible with the issue having the given verified status, based on
+// configured thresholds and hysteresis.
+func (g *Generator) isCompatibleWithVerified(verified bool) bool {
+	hysteresisPerc := g.monorailCfg.PriorityHysteresisPercent
+	lowestPriority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
+	if verified {
+		// The issue is verified. Only reopen if there is enough impact
+		// to exceed the threshold with hysteresis.
+		return !g.cluster.MeetsInflatedThreshold(lowestPriority.Threshold, hysteresisPerc)
+	} else {
+		// The issue is not verified. Only close if the impact falls
+		// below the threshold with hysteresis.
+		return g.cluster.MeetsInflatedThreshold(lowestPriority.Threshold, -hysteresisPerc)
 	}
+}
+
+// isCompatibleWithPriority returns whether the impact of the current cluster
+// is compatible with the issue having the given priority, based on
+// configured thresholds and hysteresis.
+func (g *Generator) isCompatibleWithPriority(issuePriority string) bool {
+	index := g.indexOfPriority(issuePriority)
+	if index >= len(g.monorailCfg.Priorities) {
+		// Unknown priority in use. The priority should be updated to
+		// one of the configured priorities.
+		return false
+	}
+
+	p := g.monorailCfg.Priorities[index]
+	var nextP *config.MonorailPriority
+	if (index - 1) >= 0 {
+		nextP = g.monorailCfg.Priorities[index-1]
+	}
+	hysteresisPerc := g.monorailCfg.PriorityHysteresisPercent
+	// The cluster does not satisfy its current priority if it falls below
+	// the current priority's thresholds, even after deflating them by
+	// the hystersis margin.
+	if !g.cluster.MeetsInflatedThreshold(p.Threshold, -hysteresisPerc) {
+		return false
+	}
+	// It also does not satisfy its current priority if it meets the
+	// the next priority's priority's thresholds, after inflating them by
+	// the hystersis margin. (Assuming there exists a higher priority.)
+	if nextP != nil && g.cluster.MeetsInflatedThreshold(nextP.Threshold, hysteresisPerc) {
+		return false
+	}
+	return true
+}
+
+// clusterPriority returns the desired priority of the bug, if no hysteresis
+// is applied.
+func (g *Generator) clusterPriority() string {
 	// Default to using the lowest priority.
 	priority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
 	for i := len(g.monorailCfg.Priorities) - 2; i >= 0; i-- {
@@ -362,7 +416,8 @@ func (g *Generator) clusterPriority() string {
 	return priority.Priority
 }
 
-// clusterResolved returns whether the cluster has been resolved.
+// clusterResolved returns the desired state of whether the cluster has been
+// verified, if no hysteresis has been applied.
 func (g *Generator) clusterResolved() bool {
 	lowestPriority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
 	return !g.cluster.MeetsThreshold(lowestPriority.Threshold)

@@ -32,15 +32,15 @@ type ImpactfulClusterReadOptions struct {
 type Cluster struct {
 	Project                string              `json:"project"`
 	ClusterID              string              `json:"clusterId"`
-	UnexpectedFailures1d   int                 `json:"unexpectedFailures1d"`
-	UnexpectedFailures3d   int                 `json:"unexpectedFailures3d"`
-	UnexpectedFailures7d   int                 `json:"unexpectedFailures7d"`
-	UnexoneratedFailures1d int                 `json:"unexoneratedFailures1d"`
-	UnexoneratedFailures3d int                 `json:"unexoneratedFailures3d"`
-	UnexoneratedFailures7d int                 `json:"unexoneratedFailures7d"`
-	AffectedRuns1d         int                 `json:"affectedRuns1d"`
-	AffectedRuns3d         int                 `json:"affectedRuns3d"`
-	AffectedRuns7d         int                 `json:"affectedRuns7d"`
+	UnexpectedFailures1d   int64               `json:"unexpectedFailures1d"`
+	UnexpectedFailures3d   int64               `json:"unexpectedFailures3d"`
+	UnexpectedFailures7d   int64               `json:"unexpectedFailures7d"`
+	UnexoneratedFailures1d int64               `json:"unexoneratedFailures1d"`
+	UnexoneratedFailures3d int64               `json:"unexoneratedFailures3d"`
+	UnexoneratedFailures7d int64               `json:"unexoneratedFailures7d"`
+	AffectedRuns1d         int64               `json:"affectedRuns1d"`
+	AffectedRuns3d         int64               `json:"affectedRuns3d"`
+	AffectedRuns7d         int64               `json:"affectedRuns7d"`
 	ExampleFailureReason   bigquery.NullString `json:"exampleFailureReason"`
 }
 

@@ -167,9 +167,9 @@ func TestRun(t *testing.T) {
 			Convey("Changing cluster priority updates issue priority", func() {
 				issue := f.Issues[2].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "3")
+				So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "0")
 
-				clusters[3].UnexpectedFailures1d = 10000
+				monorail.SetChromiumP0Impact(clusters[3])
 				err = bu.Run(ctx)
 				So(err, ShouldBeNil)
 
@@ -183,7 +183,7 @@ func TestRun(t *testing.T) {
 			Convey("Deleting cluster closes issue", func() {
 				issue := f.Issues[0].Issue
 				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "2")
+				So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
 
 				// Drop the cluster at index 1.
 				cc.clusters = []*clustering.Cluster{cc.clusters[0], cc.clusters[2], cc.clusters[3]}

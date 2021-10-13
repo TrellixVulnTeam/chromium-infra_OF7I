@@ -18,20 +18,12 @@ import (
 )
 
 func NewCluster() *clustering.Cluster {
-	return &clustering.Cluster{
-		Project:                "chromium",
-		ClusterID:              "ClusterID",
-		UnexpectedFailures1d:   700,
-		UnexpectedFailures3d:   2100,
-		UnexpectedFailures7d:   4900,
-		UnexoneratedFailures1d: 120,
-		UnexoneratedFailures3d: 320,
-		UnexoneratedFailures7d: 720,
-		AffectedRuns1d:         11,
-		AffectedRuns3d:         31,
-		AffectedRuns7d:         71,
-		ExampleFailureReason:   bigquery.NullString{StringVal: "Some failure reason.", Valid: true},
+	cluster := &clustering.Cluster{
+		Project:              "chromium",
+		ClusterID:            "ClusterID",
+		ExampleFailureReason: bigquery.NullString{StringVal: "Some failure reason.", Valid: true},
 	}
+	return cluster
 }
 
 func TestManager(t *testing.T) {
@@ -51,6 +43,7 @@ func TestManager(t *testing.T) {
 
 		Convey("Create", func() {
 			c := NewCluster()
+			SetChromiumHighP2Impact(c)
 			Convey("With reason-based failure cluster", func() {
 				reason := `Expected equality of these values:
 					"Expected_Value"
@@ -80,7 +73,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "1",
+							Value: "2",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -119,7 +112,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "1",
+							Value: "2",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -144,9 +137,7 @@ func TestManager(t *testing.T) {
 				// this case gracefully.
 				c.ClusterID = "ninja://:blink_web_tests/media/my-suite/my-test.html"
 				c.ExampleFailureReason = bigquery.NullString{Valid: false}
-				c.UnexpectedFailures1d = 0
-				c.UnexpectedFailures3d = 0
-				c.UnexpectedFailures7d = 0
+				SetChromiumClosureImpact(c)
 
 				bug, err := bm.Create(ctx, c)
 				So(err, ShouldBeNil)
@@ -184,6 +175,7 @@ func TestManager(t *testing.T) {
 		})
 		Convey("Update", func() {
 			c := NewCluster()
+			SetChromiumP1Impact(c)
 			bug, err := bm.Create(ctx, c)
 			So(err, ShouldBeNil)
 			So(bug, ShouldEqual, "chromium/100")
@@ -213,18 +205,24 @@ func TestManager(t *testing.T) {
 				updateDoesNothing()
 			})
 			Convey("If impact changed", func() {
-				c.UnexpectedFailures1d = 1
+				SetChromiumP3Impact(c)
 				bugsToUpdate := []*bugs.BugToUpdate{
 					{
 						BugName: bug,
 						Cluster: c,
 					},
 				}
+				Convey("Does not reduce priority if impact within hysteresis range", func() {
+					SetChromiumHighP2Impact(c)
+
+					updateDoesNothing()
+				})
 				Convey("Reduces priority in response to reduced impact", func() {
+					SetChromiumP2Impact(c)
 					originalNotifyCount := f.Issues[0].NotifyCount
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
-					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "2")
 
 					// Does not notify.
 					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount)
@@ -232,8 +230,13 @@ func TestManager(t *testing.T) {
 					// Verify repeated update has no effect.
 					updateDoesNothing()
 				})
+				Convey("Does not increase priority if impact within hysteresis range", func() {
+					SetChromiumLowP0Impact(c)
+
+					updateDoesNothing()
+				})
 				Convey("Increases priority in response to increased impact", func() {
-					c.UnexpectedFailures1d = 9000
+					SetChromiumP0Impact(c)
 
 					originalNotifyCount := f.Issues[0].NotifyCount
 					err := bm.Update(ctx, bugsToUpdate)
@@ -299,13 +302,23 @@ func TestManager(t *testing.T) {
 				})
 			})
 			Convey("If impact falls below lowest priority threshold", func() {
-				c.UnexpectedFailures1d = 0
+				SetChromiumClosureImpact(c)
 				bugsToUpdate := []*bugs.BugToUpdate{
 					{
 						BugName: bug,
 						Cluster: c,
 					},
 				}
+				Convey("Update leaves bug open if impact within hysteresis range", func() {
+					SetChromiumClosureHighImpact(c)
+
+					// Update may reduce the priority from P1 to P3, but the
+					// issue should be left open. This is because hysteresis on
+					// priority and issue verified state is applied separately.
+					err := bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(f.Issues[0].Issue.Status.Status, ShouldEqual, UntriagedStatus)
+				})
 				Convey("Update closes bug", func() {
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
@@ -314,8 +327,14 @@ func TestManager(t *testing.T) {
 					// Verify repeated update has no effect.
 					updateDoesNothing()
 
+					Convey("Does not reopen bug if impact within hysteresis range", func() {
+						SetChromiumP3LowImpact(c)
+
+						updateDoesNothing()
+					})
+
 					Convey("If impact increases, bug is re-opened with correct priority", func() {
-						c.UnexpectedFailures1d = 1
+						SetChromiumP3Impact(c)
 						Convey("Issue has owner", func() {
 							// Update issue owner.
 							updateReq := updateOwnerRequest(f.Issues[0].Issue.Name, "users/100")

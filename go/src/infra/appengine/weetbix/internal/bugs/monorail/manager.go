@@ -70,7 +70,10 @@ func (m *BugManager) Create(ctx context.Context, cluster *clustering.Cluster) (s
 	if !ok {
 		return "", fmt.Errorf("no monorail configuration exists for project %q", cluster.Project)
 	}
-	g := NewGenerator(cluster, monorailCfg)
+	g, err := NewGenerator(cluster, monorailCfg)
+	if err != nil {
+		return "", errors.Annotate(err, "create issue generator").Err()
+	}
 	req := g.PrepareNew()
 	if m.Simulate {
 		logging.Debugf(ctx, "Would create Monorail issue: %s", textPBMultiline.Format(req))
@@ -105,7 +108,10 @@ func (m *BugManager) Update(ctx context.Context, bugs []*bugs.BugToUpdate) error
 		if !ok {
 			return fmt.Errorf("no monorail configuration exists for project %q", ci.cluster.Project)
 		}
-		g := NewGenerator(ci.cluster, monorailCfg)
+		g, err := NewGenerator(ci.cluster, monorailCfg)
+		if err != nil {
+			return errors.Annotate(err, "create issue generator").Err()
+		}
 		if g.NeedsUpdate(ci.issue) {
 			comments, err := m.client.ListComments(ctx, ci.issue.Name)
 			if err != nil {
