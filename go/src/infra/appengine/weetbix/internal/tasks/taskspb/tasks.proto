@@ -50,3 +50,15 @@ message CollectTestResults {
   // If the try build contributes to a CL's submission.
   bool contributed_to_cl_submission = 4;
 }
+
+// Information that can form a key to an AnalyzedTestVariant row.
+message TestVariantKey {
+  string realm = 1;
+  string test_id = 2;
+  string variant_hash = 3;
+
+}
+// Payload of UpdateTestVariant task.
+message UpdateTestVariant {
+  TestVariantKey test_variant_key = 1;
+}
