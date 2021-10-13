@@ -6,6 +6,8 @@
 package insert
 
 import (
+	"time"
+
 	"cloud.google.com/go/spanner"
 
 	pb "infra/appengine/weetbix/proto/v1"
@@ -29,4 +31,18 @@ func AnalyzedTestVariant(realm, tId, vHash string, status pb.AnalyzedTestVariant
 	}
 	updateDict(values, extraValues)
 	return spanner.InsertMap("AnalyzedTestVariants", values)
+}
+
+// Verdict returns a spanner mutation that inserts a Verdicts row.
+func Verdict(realm, tId, vHash, invID string, status pb.VerdictStatus, invTime time.Time, extraValues map[string]interface{}) *spanner.Mutation {
+	values := map[string]interface{}{
+		"Realm":                  realm,
+		"TestId":                 tId,
+		"VariantHash":            vHash,
+		"InvocationId":           invID,
+		"Status":                 int64(status),
+		"InvocationCreationTime": invTime,
+	}
+	updateDict(values, extraValues)
+	return spanner.InsertMap("Verdicts", values)
 }

@@ -8,12 +8,83 @@ import (
 	"context"
 	"fmt"
 
+	"cloud.google.com/go/spanner"
+	"google.golang.org/api/iterator"
+
+	"go.chromium.org/luci/server/span"
+
+	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
 // ComputeTestVariantStatusFromVerdicts computes the test variant's status based
 // on its verdicts within a time range.
+//
+// Currently the time range is the past one day, but should be configurable.
+// TODO(crbug.com/1259374): Use the value in configurations.
 func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.TestVariantKey) (pb.AnalyzedTestVariantStatus, error) {
-	return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, fmt.Errorf("not implemented")
+	st := spanner.NewStatement(`
+		SELECT Status
+		FROM Verdicts@{FORCE_INDEX=VerdictsByTInvocationCreationTime, spanner_emulator.disable_query_null_filtered_index_check=true}
+		WHERE Realm = @realm
+		AND TestId = @testID
+		AND VariantHash = @variantHash
+		AND InvocationCreationTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day)
+	`)
+	st.Params = map[string]interface{}{
+		"realm":       tvKey.Realm,
+		"testID":      tvKey.TestId,
+		"variantHash": tvKey.VariantHash,
+	}
+
+	totalCount := 0
+	unexpectedCount := 0
+
+	itr := span.Query(ctx, st)
+	defer itr.Stop()
+	var b spanutil.Buffer
+	for {
+		row, err := itr.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, err
+		}
+		var verdictStatus pb.VerdictStatus
+		if err = b.FromSpanner(row, &verdictStatus); err != nil {
+			return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, err
+		}
+
+		totalCount++
+		switch verdictStatus {
+		case pb.VerdictStatus_VERDICT_FLAKY:
+			// Any flaky verdict means the test variant is flaky.
+			// Return status right away.
+			itr.Stop()
+			return pb.AnalyzedTestVariantStatus_FLAKY, nil
+		case pb.VerdictStatus_UNEXPECTED:
+			unexpectedCount++
+		case pb.VerdictStatus_EXPECTED:
+		default:
+			panic(fmt.Sprintf("got unsupported verdict status %d", int(verdictStatus)))
+		}
+	}
+
+	return computeTestVariantStatus(totalCount, unexpectedCount), nil
+}
+
+func computeTestVariantStatus(total, unexpected int) pb.AnalyzedTestVariantStatus {
+	switch {
+	case total == 0:
+		// No new results of the test variant.
+		return pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS
+	case unexpected == 0:
+		return pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED
+	case unexpected == total:
+		return pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED
+	default:
+		return pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS
+	}
 }
