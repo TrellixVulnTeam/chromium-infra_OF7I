@@ -233,13 +233,23 @@ func createBuilder(ctx context.Context, tags []string, refs []string, serviceAcc
 	return builder
 }
 
-func packageXcode(ctx context.Context, xcodeAppPath string, cipdPackagePrefix, serviceAccountJSON, outputDir string) error {
-	xcodeVersion, buildVersion, err := getXcodeVersion(filepath.Join(xcodeAppPath, "Contents", "version.plist"))
+// PackageXcodeArgs are the parameters for PackageXcode() to keep them
+// manageable.
+type PackageXcodeArgs struct {
+	xcodeAppPath       string
+	cipdPackagePrefix  string
+	serviceAccountJSON string
+	outputDir          string
+	skipRefTag         bool
+}
+
+func packageXcode(ctx context.Context, args PackageXcodeArgs) error {
+	xcodeVersion, buildVersion, err := getXcodeVersion(filepath.Join(args.xcodeAppPath, "Contents", "version.plist"))
 	if err != nil {
-		return errors.Annotate(err, "this doesn't look like a valid Xcode.app folder: %s", xcodeAppPath).Err()
+		return errors.Annotate(err, "this doesn't look like a valid Xcode.app folder: %s", args.xcodeAppPath).Err()
 	}
 
-	packages, err := makeXcodePackages(xcodeAppPath, cipdPackagePrefix)
+	packages, err := makeXcodePackages(args.xcodeAppPath, args.cipdPackagePrefix)
 	if err != nil {
 		return err
 	}
@@ -251,7 +261,13 @@ func packageXcode(ctx context.Context, xcodeAppPath string, cipdPackagePrefix, s
 		strings.ToLower(buildVersion), // Refs must match [a-z0-9_-]*
 		"latest",
 	}
-	buildFn := createBuilder(ctx, tags, refs, serviceAccountJSON, outputDir)
+
+	if args.skipRefTag {
+		tags = []string{}
+		refs = []string{}
+	}
+
+	buildFn := createBuilder(ctx, tags, refs, args.serviceAccountJSON, args.outputDir)
 
 	if err = buildCipdPackages(packages, buildFn); err != nil {
 		return err
@@ -272,6 +288,7 @@ type PackageRuntimeAndXcodeArgs struct {
 	cipdPackagePrefix  string
 	serviceAccountJSON string
 	outputDir          string
+	skipRefTag         bool
 }
 
 // Packages runtime & rest of Xcode.
@@ -283,11 +300,19 @@ func packageRuntimeAndXcode(ctx context.Context, args PackageRuntimeAndXcodeArgs
 		cipdPackagePrefix:  args.cipdPackagePrefix,
 		serviceAccountJSON: args.serviceAccountJSON,
 		outputDir:          args.outputDir,
+		skipRefTag:         args.skipRefTag,
 	}
 	if err := packageRuntime(ctx, packageRuntimeArgs); err != nil {
 		return errors.Annotate(err, "Error when packaging runtime.").Err()
 	}
-	if err := packageXcode(ctx, args.xcodeAppPath, args.cipdPackagePrefix, args.serviceAccountJSON, args.outputDir); err != nil {
+	packageXcodeArgs := PackageXcodeArgs{
+		xcodeAppPath:       args.xcodeAppPath,
+		cipdPackagePrefix:  args.cipdPackagePrefix,
+		serviceAccountJSON: args.serviceAccountJSON,
+		outputDir:          args.outputDir,
+		skipRefTag:         args.skipRefTag,
+	}
+	if err := packageXcode(ctx, packageXcodeArgs); err != nil {
 		return errors.Annotate(err, "Error when packaging rest of Xcode.").Err()
 	}
 	return nil
@@ -301,6 +326,7 @@ type PackageRuntimeArgs struct {
 	cipdPackagePrefix  string
 	serviceAccountJSON string
 	outputDir          string
+	skipRefTag         bool
 }
 
 // Packages the iOS runtime named |runtimeFileName|(e.g. iOS.simruntime) under
@@ -362,6 +388,11 @@ func packageRuntime(ctx context.Context, args PackageRuntimeArgs) error {
 			xcodeBuildVersion,
 			runtimeID+"_"+xcodeBuildVersion,
 		)
+	}
+
+	if args.skipRefTag {
+		tags = []string{}
+		refs = []string{}
 	}
 
 	buildFn := createBuilder(ctx, tags, refs, args.serviceAccountJSON, args.outputDir)

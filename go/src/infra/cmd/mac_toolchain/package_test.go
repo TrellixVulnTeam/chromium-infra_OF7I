@@ -158,7 +158,14 @@ func TestPackageXcode(t *testing.T) {
 		ctx := useMockCmd(context.Background(), &s)
 
 		Convey("for remote upload using default credentials", func() {
-			err := packageXcode(ctx, "testdata/Xcode-new.app", "test/prefix", "", "")
+			packageXcodeArgs := PackageXcodeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+				skipRefTag:         false,
+			}
+			err := packageXcode(ctx, packageXcodeArgs)
 			So(err, ShouldBeNil)
 			So(s.Calls, ShouldHaveLength, 2)
 
@@ -174,9 +181,39 @@ func TestPackageXcode(t *testing.T) {
 				So(s.Calls[i].Args, ShouldNotContain, "-service-account-json")
 			}
 		})
+		Convey("for remote upload using default credentials without ref/tag", func() {
+			packageXcodeArgs := PackageXcodeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+				skipRefTag:         true,
+			}
+			err := packageXcode(ctx, packageXcodeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 2)
+
+			for i := 0; i < 2; i++ {
+				So(s.Calls[i].Executable, ShouldEqual, "cipd")
+				So(s.Calls[i].Args, ShouldContain, "create")
+				So(s.Calls[i].Args, ShouldContain, "-verification-timeout")
+				So(s.Calls[i].Args, ShouldContain, "60m")
+				So(s.Calls[i].Args, ShouldNotContain, "-ref")
+				So(s.Calls[i].Args, ShouldNotContain, "-tag")
+
+				So(s.Calls[i].Args, ShouldNotContain, "-service-account-json")
+			}
+		})
 
 		Convey("for remote upload using a service account", func() {
-			err := packageXcode(ctx, "testdata/Xcode-new.app", "test/prefix", "test-sa", "")
+			packageXcodeArgs := PackageXcodeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "test-sa",
+				outputDir:          "",
+				skipRefTag:         false,
+			}
+			err := packageXcode(ctx, packageXcodeArgs)
 			So(err, ShouldBeNil)
 			So(s.Calls, ShouldHaveLength, 2)
 
@@ -196,7 +233,14 @@ func TestPackageXcode(t *testing.T) {
 		Convey("for local package creating", func() {
 			// Make sure `outputDir` actually exists in testdata; otherwise the test
 			// will needlessly create a directory and leave it behind.
-			err := packageXcode(ctx, "testdata/Xcode-new.app", "test/prefix", "", "testdata/outdir")
+			packageXcodeArgs := PackageXcodeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "testdata/outdir",
+				skipRefTag:         false,
+			}
+			err := packageXcode(ctx, packageXcodeArgs)
 			So(err, ShouldBeNil)
 			So(s.Calls, ShouldHaveLength, 2)
 
@@ -276,6 +320,7 @@ func TestPackageRuntime(t *testing.T) {
 				cipdPackagePrefix:  "test/prefix",
 				serviceAccountJSON: "",
 				outputDir:          "",
+				skipRefTag:         false,
 			}
 			err := packageRuntime(ctx, packageRuntimeArgs)
 			So(err, ShouldBeNil)
@@ -295,6 +340,28 @@ func TestPackageRuntime(t *testing.T) {
 			So(s.Calls[0].Args, ShouldNotContain, "-service-account-json")
 		})
 
+		Convey("package an Xcode default runtime without refs & tags", func() {
+			packageRuntimeArgs := PackageRuntimeArgs{
+				xcodeAppPath:       "testdata/Xcode-new.app",
+				runtimePath:        filepath.Join("testdata", "Xcode-new.app", XcodeIOSSimulatorRuntimeRelPath, "iOS.simruntime"),
+				cipdPackagePrefix:  "test/prefix",
+				serviceAccountJSON: "",
+				outputDir:          "",
+				skipRefTag:         true,
+			}
+			err := packageRuntime(ctx, packageRuntimeArgs)
+			So(err, ShouldBeNil)
+			So(s.Calls, ShouldHaveLength, 1)
+
+			So(s.Calls[0].Executable, ShouldEqual, "cipd")
+			So(s.Calls[0].Args, ShouldContain, "create")
+			So(s.Calls[0].Args, ShouldContain, "-verification-timeout")
+			So(s.Calls[0].Args, ShouldContain, "60m")
+			So(s.Calls[0].Args, ShouldNotContain, "-tag")
+			So(s.Calls[0].Args, ShouldNotContain, "-ref")
+			So(s.Calls[0].Args, ShouldNotContain, "-service-account-json")
+		})
+
 		Convey("package a runtime in cutomized path", func() {
 			packageRuntimeArgs := PackageRuntimeArgs{
 				xcodeAppPath:       "",
@@ -302,6 +369,7 @@ func TestPackageRuntime(t *testing.T) {
 				cipdPackagePrefix:  "test/prefix",
 				serviceAccountJSON: "",
 				outputDir:          "",
+				skipRefTag:         false,
 			}
 			err := packageRuntime(ctx, packageRuntimeArgs)
 			So(err, ShouldBeNil)
@@ -327,6 +395,7 @@ func TestPackageRuntime(t *testing.T) {
 				cipdPackagePrefix:  "test/prefix",
 				serviceAccountJSON: "",
 				outputDir:          "testdata/outdir",
+				skipRefTag:         false,
 			}
 			err := packageRuntime(ctx, packageRuntimeArgs)
 			So(err, ShouldBeNil)

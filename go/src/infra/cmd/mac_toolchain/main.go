@@ -92,6 +92,7 @@ type uploadRun struct {
 	commonFlags
 	xcodePath          string
 	serviceAccountJSON string
+	skipRefTag         bool
 }
 
 type packageRun struct {
@@ -182,6 +183,7 @@ func (c *uploadRun) Run(a subcommands.Application, args []string, env subcommand
 		cipdPackagePrefix:  c.cipdPackagePrefix,
 		serviceAccountJSON: c.serviceAccountJSON,
 		outputDir:          "",
+		skipRefTag:         c.skipRefTag,
 	}
 	if err := packageRuntimeAndXcode(ctx, packageRuntimeAndXcodeArgs); err != nil {
 		errors.Log(ctx, err)
@@ -208,6 +210,7 @@ func (c *packageRun) Run(a subcommands.Application, args []string, env subcomman
 		cipdPackagePrefix:  c.cipdPackagePrefix,
 		serviceAccountJSON: "",
 		outputDir:          c.outputDir,
+		skipRefTag:         false,
 	}
 	if err := packageRuntimeAndXcode(ctx, packageRuntimeAndXcodeArgs); err != nil {
 		errors.Log(ctx, err)
@@ -313,6 +316,7 @@ func uploadFlagVars(c *uploadRun) {
 	commonFlagVars(&c.commonFlags)
 	c.Flags.StringVar(&c.serviceAccountJSON, "service-account-json", "", "Service account to use for authentication.")
 	c.Flags.StringVar(&c.xcodePath, "xcode-path", "", "Path to Xcode.app to be uploaded. (required)")
+	c.Flags.BoolVar(&c.skipRefTag, "skip-ref-tag", false, "Whether to skip attaching CIPD tags or refs for Xcode packages to be uploaded.")
 }
 
 func packageFlagVars(c *packageRun) {

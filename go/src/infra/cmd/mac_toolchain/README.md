@@ -77,6 +77,13 @@ upload and tag them properly. Run `mac_toolchain help upload` for more options.
 The upload command is meant to be run manually, and it will upload many GB of
 data. Be patient.
 
+By changing `CFBundleShortVersionString` and `ProductBuildVersion` in
+`Xcode.app/Contents/version.plist`, you can customize the Xcode version in CIPD
+`ref`s and `tag`s attached to Xcode when uploading.
+
+By passing in `-skip-ref-tag` argument, the uploaded packages will have no CIPD
+`ref` or `tag` attached.
+
 ## Working with iOS runtime packages
 
 mac_toolchain uploads the default iOS runtime and the rest of Xcode to different
