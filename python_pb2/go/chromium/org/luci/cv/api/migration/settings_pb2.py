@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z1go.chromium.org/luci/cv/api/migration;migrationpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\x98\x02\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12\x36\n\ruse_cv_status\x18\x04 \x01(\x0b\x32\x1f.migration.Settings.UseCVStatus\x1a]\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x04 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a\x45\n\x0bUseCVStatus\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/cv/api/migration/settings.proto\x12\tmigration\"\xae\x03\n\x08Settings\x12.\n\tapi_hosts\x18\x01 \x03(\x0b\x32\x1b.migration.Settings.ApiHost\x12:\n\ruse_cv_status\x18\x04 \x01(\x0b\x32\x1f.migration.Settings.UseCVStatusB\x02\x18\x01\x12\x43\n\x14use_cv_start_message\x18\x05 \x01(\x0b\x32%.migration.Settings.UseCVStartMessage\x1a]\n\x07\x41piHost\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x16\n\x0eproject_regexp\x18\x02 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x04 \x03(\t\x12\x0c\n\x04prod\x18\x03 \x01(\x08\x1a\x45\n\x0bUseCVStatus\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\t\x1aK\n\x11UseCVStartMessage\x12\x16\n\x0eproject_regexp\x18\x01 \x03(\t\x12\x1e\n\x16project_regexp_exclude\x18\x02 \x03(\tB3Z1go.chromium.org/luci/cv/api/migration;migrationpbb\x06proto3'
 )
 
 
@@ -73,8 +73,8 @@ _SETTINGS_APIHOST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=184,
-  serialized_end=277,
+  serialized_start=257,
+  serialized_end=350,
 )
 
 _SETTINGS_USECVSTATUS = _descriptor.Descriptor(
@@ -111,8 +111,46 @@ _SETTINGS_USECVSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=279,
-  serialized_end=348,
+  serialized_start=352,
+  serialized_end=421,
+)
+
+_SETTINGS_USECVSTARTMESSAGE = _descriptor.Descriptor(
+  name='UseCVStartMessage',
+  full_name='migration.Settings.UseCVStartMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='project_regexp', full_name='migration.Settings.UseCVStartMessage.project_regexp', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='project_regexp_exclude', full_name='migration.Settings.UseCVStartMessage.project_regexp_exclude', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=423,
+  serialized_end=498,
 )
 
 _SETTINGS = _descriptor.Descriptor(
@@ -136,11 +174,18 @@ _SETTINGS = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='use_cv_start_message', full_name='migration.Settings.use_cv_start_message', index=2,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
-  nested_types=[_SETTINGS_APIHOST, _SETTINGS_USECVSTATUS, ],
+  nested_types=[_SETTINGS_APIHOST, _SETTINGS_USECVSTATUS, _SETTINGS_USECVSTARTMESSAGE, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -150,13 +195,15 @@ _SETTINGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=348,
+  serialized_end=498,
 )
 
 _SETTINGS_APIHOST.containing_type = _SETTINGS
 _SETTINGS_USECVSTATUS.containing_type = _SETTINGS
+_SETTINGS_USECVSTARTMESSAGE.containing_type = _SETTINGS
 _SETTINGS.fields_by_name['api_hosts'].message_type = _SETTINGS_APIHOST
 _SETTINGS.fields_by_name['use_cv_status'].message_type = _SETTINGS_USECVSTATUS
+_SETTINGS.fields_by_name['use_cv_start_message'].message_type = _SETTINGS_USECVSTARTMESSAGE
 DESCRIPTOR.message_types_by_name['Settings'] = _SETTINGS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -175,6 +222,13 @@ Settings = _reflection.GeneratedProtocolMessageType('Settings', (_message.Messag
     # @@protoc_insertion_point(class_scope:migration.Settings.UseCVStatus)
     })
   ,
+
+  'UseCVStartMessage' : _reflection.GeneratedProtocolMessageType('UseCVStartMessage', (_message.Message,), {
+    'DESCRIPTOR' : _SETTINGS_USECVSTARTMESSAGE,
+    '__module__' : 'go.chromium.org.luci.cv.api.migration.settings_pb2'
+    # @@protoc_insertion_point(class_scope:migration.Settings.UseCVStartMessage)
+    })
+  ,
   'DESCRIPTOR' : _SETTINGS,
   '__module__' : 'go.chromium.org.luci.cv.api.migration.settings_pb2'
   # @@protoc_insertion_point(class_scope:migration.Settings)
@@ -182,7 +236,9 @@ Settings = _reflection.GeneratedProtocolMessageType('Settings', (_message.Messag
 _sym_db.RegisterMessage(Settings)
 _sym_db.RegisterMessage(Settings.ApiHost)
 _sym_db.RegisterMessage(Settings.UseCVStatus)
+_sym_db.RegisterMessage(Settings.UseCVStartMessage)
 
 
 DESCRIPTOR._options = None
+_SETTINGS.fields_by_name['use_cv_status']._options = None
 # @@protoc_insertion_point(module_scope)

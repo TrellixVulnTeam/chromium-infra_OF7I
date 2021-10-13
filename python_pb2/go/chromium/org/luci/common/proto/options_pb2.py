@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto2',
   serialized_options=b'Z!go.chromium.org/luci/common/proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n/go.chromium.org/luci/common/proto/options.proto\x12\x04luci\x1a google/protobuf/descriptor.proto\"\x1b\n\x08Metadata\x12\x0f\n\x07\x64oc_url\x18\x01 \x01(\t**\n\x11TextPBFieldFormat\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x00\x12\x08\n\x04JSON\x10\x01:E\n\rfile_metadata\x12\x1c.google.protobuf.FileOptions\x18\xe4\xbf\x04 \x01(\x0b\x32\x0e.luci.Metadata:P\n\x0etext_pb_format\x12\x1d.google.protobuf.FieldOptions\x18\xe5\xbf\x04 \x01(\x0e\x32\x17.luci.TextPBFieldFormatB#Z!go.chromium.org/luci/common/proto'
+  serialized_pb=b'\n/go.chromium.org/luci/common/proto/options.proto\x12\x04luci\x1a google/protobuf/descriptor.proto\"\x1b\n\x08Metadata\x12\x0f\n\x07\x64oc_url\x18\x01 \x01(\t**\n\x11TextPBFieldFormat\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x00\x12\x08\n\x04JSON\x10\x01:E\n\rfile_metadata\x12\x1c.google.protobuf.FileOptions\x18\xe4\xbf\x04 \x01(\x0b\x32\x0e.luci.Metadata:P\n\x0etext_pb_format\x12\x1d.google.protobuf.FieldOptions\x18\xe5\xbf\x04 \x01(\x0e\x32\x17.luci.TextPBFieldFormat:7\n\x0elucicfg_ignore\x12\x1d.google.protobuf.FieldOptions\x18\xe6\xbf\x04 \x01(\x08\x42#Z!go.chromium.org/luci/common/proto'
   ,
   dependencies=[google_dot_protobuf_dot_descriptor__pb2.DESCRIPTOR,])
 
@@ -70,6 +70,14 @@ text_pb_format = _descriptor.FieldDescriptor(
   message_type=None, enum_type=None, containing_type=None,
   is_extension=True, extension_scope=None,
   serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key)
+LUCICFG_IGNORE_FIELD_NUMBER = 73702
+lucicfg_ignore = _descriptor.FieldDescriptor(
+  name='lucicfg_ignore', full_name='luci.lucicfg_ignore', index=2,
+  number=73702, type=8, cpp_type=7, label=1,
+  has_default_value=False, default_value=False,
+  message_type=None, enum_type=None, containing_type=None,
+  is_extension=True, extension_scope=None,
+  serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key)
 
 
 _METADATA = _descriptor.Descriptor(
@@ -107,6 +115,7 @@ DESCRIPTOR.message_types_by_name['Metadata'] = _METADATA
 DESCRIPTOR.enum_types_by_name['TextPBFieldFormat'] = _TEXTPBFIELDFORMAT
 DESCRIPTOR.extensions_by_name['file_metadata'] = file_metadata
 DESCRIPTOR.extensions_by_name['text_pb_format'] = text_pb_format
+DESCRIPTOR.extensions_by_name['lucicfg_ignore'] = lucicfg_ignore
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Metadata = _reflection.GeneratedProtocolMessageType('Metadata', (_message.Message,), {
@@ -120,6 +129,7 @@ file_metadata.message_type = _METADATA
 google_dot_protobuf_dot_descriptor__pb2.FileOptions.RegisterExtension(file_metadata)
 text_pb_format.enum_type = _TEXTPBFIELDFORMAT
 google_dot_protobuf_dot_descriptor__pb2.FieldOptions.RegisterExtension(text_pb_format)
+google_dot_protobuf_dot_descriptor__pb2.FieldOptions.RegisterExtension(lucicfg_ignore)
 
 DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)
