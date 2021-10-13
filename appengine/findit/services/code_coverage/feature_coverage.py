@@ -35,12 +35,14 @@ _CLANG_SUPPORTED_EXTENSIONS = [
 # These should be ci builders.
 _SOURCE_BUILDERS = {
     'linux-code-coverage': _CLANG_SUPPORTED_EXTENSIONS,
+    'mac-code-coverage': _CLANG_SUPPORTED_EXTENSIONS,
     'win10-code-coverage': _CLANG_SUPPORTED_EXTENSIONS,
     'android-code-coverage': ['.java'],
     'android-code-coverage-native': _CLANG_SUPPORTED_EXTENSIONS,
     'ios-simulator-code-coverage': _CLANG_SUPPORTED_EXTENSIONS,
     'linux-chromeos-code-coverage': _CLANG_SUPPORTED_EXTENSIONS,
     'linux-code-coverage_unit': _CLANG_SUPPORTED_EXTENSIONS,
+    'mac-code-coverage_unit': _CLANG_SUPPORTED_EXTENSIONS,
     'win10-code-coverage_unit': _CLANG_SUPPORTED_EXTENSIONS,
     'android-code-coverage_unit': ['.java'],
     'android-code-coverage-native_unit': _CLANG_SUPPORTED_EXTENSIONS,
