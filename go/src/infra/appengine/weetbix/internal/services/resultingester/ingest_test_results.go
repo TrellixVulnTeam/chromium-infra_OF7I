@@ -56,13 +56,14 @@ func Schedule(ctx context.Context, cvRun *cvpb.Run, build *taskspb.Build) error 
 }
 
 func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) error {
-	rdbInfo, err := rdbInfoFromBuild(ctx, payload)
+	b, err := getBuilderAndResultDBInfo(ctx, payload)
 	if err != nil {
 		return err
 	}
 
-	rdbHost := rdbInfo.Hostname
-	invName := rdbInfo.Invocation
+	rdbHost := b.Infra.Resultdb.Hostname
+	invName := b.Infra.Resultdb.Invocation
+	builder := b.Builder.Builder
 	rc, err := resultdb.NewClient(ctx, rdbHost)
 	if err != nil {
 		return err
@@ -76,26 +77,26 @@ func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) 
 		return err
 	}
 
-	if err = createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, tvs); err != nil {
+	if err = createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func rdbInfoFromBuild(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.BuildInfra_ResultDB, error) {
+func getBuilderAndResultDBInfo(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {
 	bbHost := payload.Build.Host
 	bId := payload.Build.Id
 	bc, err := buildbucket.NewClient(ctx, bbHost)
 	if err != nil {
 		return nil, err
 	}
-	b, err := bc.GetResultDBInfo(ctx, bId)
+	b, err := bc.GetBuildWithBuilderAndRDBInfo(ctx, bId)
 	switch {
 	case err != nil:
 		return nil, err
 	case b.GetInfra().GetResultdb() == nil || b.Infra.Resultdb.GetInvocation() == "":
 		return nil, errors.Reason("build %s-%d not have ResultDB invocation", bbHost, bId).Err()
 	}
-	return b.Infra.Resultdb, nil
+	return b, nil
 }

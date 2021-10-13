@@ -54,13 +54,20 @@ func NewClient(ctx context.Context, host string) (*Client, error) {
 	}, nil
 }
 
-// GetResultDBInfo returns bbpb.Build which contains information about the resultdb
-// invocation.
-func (c *Client) GetResultDBInfo(ctx context.Context, bId int64) (*bbpb.Build, error) {
-	return c.client.GetBuild(ctx, &bbpb.GetBuildRequest{
-		Id: bId,
-		Fields: &field_mask.FieldMask{
-			Paths: []string{"infra.resultdb"},
+// GetBuild returns bbpb.Build for the requested build.
+func (c *Client) GetBuild(ctx context.Context, req *bbpb.GetBuildRequest) (*bbpb.Build, error) {
+	return c.client.GetBuild(ctx, req)
+}
+
+// GetBuildWithBuilderAndRDBInfo is a shortcut for GetBuild which returns the
+// bbpb.Build that contains builder and information about the resultdb invocation.
+func (c *Client) GetBuildWithBuilderAndRDBInfo(ctx context.Context, id int64) (*bbpb.Build, error) {
+	return c.GetBuild(ctx, &bbpb.GetBuildRequest{
+		Id: id,
+		Mask: &bbpb.BuildMask{
+			Fields: &field_mask.FieldMask{
+				Paths: []string{"builder", "infra.resultdb"},
+			},
 		},
 	})
 }

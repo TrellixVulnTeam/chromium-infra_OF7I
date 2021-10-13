@@ -9,10 +9,8 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
-	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/protobuf/proto"
 
-	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
@@ -50,17 +48,11 @@ func TestIngestTestResults(t *testing.T) {
 		mbc := buildbucket.NewMockedClient(mrc.Ctx, ctl)
 		ctx := mbc.Ctx
 
-		bId := int64(87654321)
+		bID := int64(87654321)
 		inv := "invocations/build-87654321"
 		realm := "chromium:ci"
 
-		bbReq := &bbpb.GetBuildRequest{
-			Id: bId,
-			Fields: &field_mask.FieldMask{
-				Paths: []string{"infra.resultdb"},
-			},
-		}
-		mbc.GetBuild(bbReq, mockedGetBuildRsp(inv))
+		mbc.GetBuildWithBuilderAndRDBInfo(bID, mockedGetBuildRsp(inv))
 
 		invReq := &rdbpb.GetInvocationRequest{
 			Name: inv,
@@ -97,7 +89,7 @@ func TestIngestTestResults(t *testing.T) {
 			payload := &taskspb.IngestTestResults{
 				Build: &taskspb.Build{
 					Host: "host",
-					Id:   bId,
+					Id:   bID,
 				},
 			}
 			err := ingestTestResults(ctx, payload)

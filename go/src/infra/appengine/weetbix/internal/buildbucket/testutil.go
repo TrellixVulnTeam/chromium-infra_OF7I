@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/golang/mock/gomock"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/proto"
@@ -32,4 +33,16 @@ func NewMockedClient(ctx context.Context, ctl *gomock.Controller) *MockedClient 
 // GetBuild Mocks the GetBuild RPC.
 func (mc *MockedClient) GetBuild(req *bbpb.GetBuildRequest, res *bbpb.Build) {
 	mc.Client.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(req), gomock.Any()).Return(res, nil)
+}
+
+func (mc *MockedClient) GetBuildWithBuilderAndRDBInfo(bID int64, res *bbpb.Build) {
+	req := &bbpb.GetBuildRequest{
+		Id: bID,
+		Mask: &bbpb.BuildMask{
+			Fields: &field_mask.FieldMask{
+				Paths: []string{"builder", "infra.resultdb"},
+			},
+		},
+	}
+	mc.GetBuild(req, res)
 }

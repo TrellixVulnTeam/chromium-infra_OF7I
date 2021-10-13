@@ -35,7 +35,7 @@ var locBasedTagKeys = map[string]struct{}{
 
 // createOrUpdateAnalyzedTestVariants looks for new analyzed test variants or
 // the ones to be updated, and save them in Spanner.
-func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm string, tvs []*rdbpb.TestVariant) error {
+func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder string, tvs []*rdbpb.TestVariant) error {
 	if len(tvs) == 0 {
 		return nil
 	}
@@ -62,7 +62,7 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm string, tvs [
 			k := testVariantKey{tv.TestId, tv.VariantHash}
 			atv, ok := found[k]
 			if !ok {
-				m, err := insertRow(realm, tv)
+				m, err := insertRow(realm, builder, tv)
 				if err != nil {
 					logging.Errorf(ctx, "Insert test variant %s: %s", tvStr, err)
 					continue
@@ -128,7 +128,7 @@ func shouldSkipTestVariant(tv *rdbpb.TestVariant) bool {
 	return true
 }
 
-func insertRow(realm string, tv *rdbpb.TestVariant) (*spanner.Mutation, error) {
+func insertRow(realm, builder string, tv *rdbpb.TestVariant) (*spanner.Mutation, error) {
 	status, err := derivedStatus(tv.Status)
 	if err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func insertRow(realm string, tv *rdbpb.TestVariant) (*spanner.Mutation, error) {
 		"Status":           int64(status),
 		"CreateTime":       spanner.CommitTimestamp,
 		"StatusUpdateTime": spanner.CommitTimestamp,
-		"Builder":          builder(tv.Variant),
+		"Builder":          builder,
 		"Tags":             extractLocationTags(tv),
 	}
 	if tv.TestMetadata != nil {
@@ -194,15 +194,6 @@ func updatedStatus(derived, old pb.AnalyzedTestVariantStatus) (pb.AnalyzedTestVa
 	default:
 		return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, fmt.Errorf("unsupported updated Status")
 	}
-}
-
-func builder(v *rdbpb.Variant) string {
-	for k, v := range v.GetDef() {
-		if k == "builder" {
-			return v
-		}
-	}
-	return ""
 }
 
 func extractLocationTags(tv *rdbpb.TestVariant) []*rdbpb.StringPair {

@@ -17,6 +17,11 @@ var sampleTmd = &rdbpb.TestMetadata{
 
 func mockedGetBuildRsp(inv string) *bbpb.Build {
 	return &bbpb.Build{
+		Builder: &bbpb.BuilderID{
+			Project: "chromium",
+			Bucket:  "ci",
+			Builder: "builder",
+		},
 		Infra: &bbpb.BuildInfra{
 			Resultdb: &bbpb.BuildInfra_ResultDB{
 				Hostname:   "results.api.cr.dev",
