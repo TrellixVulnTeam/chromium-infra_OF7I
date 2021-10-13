@@ -657,7 +657,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where the file under consideration is not present
-  # in the latest coverage report.
+  # in the latest coverage report, but such a file has non zero interesting
+  # lines.
   @mock.patch.object(
       feature_coverage,
       '_GetAllowedBuilders',
@@ -667,9 +668,8 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
-  def testMissingCoverageFileType_EmptyRowsCreated(self, mock_merged_changes,
-                                                   mock_file_content,
-                                                   mocked_report_rows, *_):
+  def testMissingCoverage_NonZeroInterestingLines_EmptyRowsCreated(
+      self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
@@ -713,6 +713,53 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
                                           'feature_coverage')
+
+  # This test tests the case where the file under consideration is not present
+  # in the latest coverage report. And also such a file as zero interesting
+  # lines. This could be because file was part of feature commit, but the
+  # changes made in those commits were overridden later on
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={'linux-code-coverage': ['.cc']})
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testMissingCoverage_ZeroInterestingLines_NoRowsCreated(
+      self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    postsubmit_report = PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True)
+    postsubmit_report.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'myfile.cc'),
+    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1 modified',
+        'latest': 'line1'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
+
+    feature_coverage.ExportFeatureCoverage(123, run_id)
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
+    self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case when qps to gitiles exceeds short term limit
   @mock.patch.object(

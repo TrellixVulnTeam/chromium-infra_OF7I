@@ -163,7 +163,13 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
   """
   coverage_per_file = {}
   files_with_missing_coverage = set()
-  for file_path in interesting_lines_per_file.keys():
+  for file_path, interesting_lines in interesting_lines_per_file.items():
+    # Only export result for files which have non zero number of interesting
+    # lines. If this is not the case, it means the changes done as part of the
+    # feature were later overridden by a non-feature commit. Therefore, it isn't
+    # useful to export coverage info for such files.
+    if not interesting_lines:
+      continue
     file_coverage = FileCoverageData.Get(
         postsubmit_report.gitiles_commit.server_host,
         postsubmit_report.gitiles_commit.project,
@@ -183,7 +189,7 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
         # AND instrumented. This means There could be lines which are
         # interesting but are not included in `total` because they were not
         # instrumented. e.g. a feature CL adds a comment
-        if line_num in interesting_lines_per_file[file_path]:
+        if line_num in interesting_lines:
           total += 1
           if line_num == interesting_line_ranges[-1]['last'] + 1:
             interesting_line_ranges[-1]['last'] += 1
