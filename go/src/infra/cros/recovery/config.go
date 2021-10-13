@@ -189,10 +189,10 @@ const defaultConfig = `
 		"servo_repair":{
 			"critical_actions": [
 				"cros_ssh",
-				"servo_host_servod_restart",
+				"servo_host_servod_init",
+				"servo_root_present",
 				"servod_echo",
-				"servo_detect_usbkey",
-				"servo_audit_usbkey"
+				"servo_detect_usbkey"
 			],
 			"actions": {
 				"servo_host_servod_restart":{

@@ -13,6 +13,7 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros"
+	"infra/cros/recovery/internal/execs/servo/topology"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
@@ -161,10 +162,26 @@ func servoAuditUSBKey(ctx context.Context, args *execs.RunArgs, actionArgs []str
 	return nil
 }
 
+// Verify that the root servo is enumerated/present on the host.
+func isRootServoPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	runner := args.NewRunner(args.DUT.ServoHost.Name)
+	rootServo, err := topology.GetRootServo(ctx, runner, args.DUT.ServoHost.Servo.SerialNumber)
+	if err != nil {
+		return errors.Annotate(err, "is root servo present").Err()
+	}
+	if !rootServo.IsGood(ctx) {
+		log.Info(ctx, "is servo root present: no good root servo found")
+		return errors.Reason("is servo root present: no good root servo found").Err()
+	}
+	log.Info(ctx, "is servo root present: success")
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
 	execs.Register("servo_host_servod_restart", servodRestartActionExec)
 	execs.Register("servo_detect_usbkey", servoDetectUSBKey)
 	execs.Register("servo_audit_usbkey", servoAuditUSBKey)
+	execs.Register("servo_root_present", isRootServoPresentExec)
 }
