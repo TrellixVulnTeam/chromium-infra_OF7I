@@ -18,6 +18,7 @@ import (
 
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
+	"infra/appengine/weetbix/internal/services/resultcollector"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
@@ -41,12 +42,16 @@ func TestSchedule(t *testing.T) {
 
 func TestIngestTestResults(t *testing.T) {
 	Convey(`TestIngestTestResults`, t, func() {
+		ctx := testutil.SpannerTestContext(t)
+		ctx, _ = tq.TestingContext(ctx, nil)
+		resultcollector.RegisterTaskClass()
+
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
 
-		mrc := resultdb.NewMockedClient(testutil.SpannerTestContext(t), ctl)
+		mrc := resultdb.NewMockedClient(ctx, ctl)
 		mbc := buildbucket.NewMockedClient(mrc.Ctx, ctl)
-		ctx := mbc.Ctx
+		ctx = mbc.Ctx
 
 		bID := int64(87654321)
 		inv := "invocations/build-87654321"

@@ -42,7 +42,7 @@ type verdict struct {
 func TestSchedule(t *testing.T) {
 	Convey(`TestSchedule`, t, func() {
 		ctx, skdr := tq.TestingContext(testutil.TestingContext(), nil)
-		RegisterTasksClass()
+		RegisterTaskClass()
 
 		inv := &rdbpb.Invocation{
 			Name:  "invocations/build-87654321",

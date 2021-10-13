@@ -34,6 +34,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
 )
 
@@ -248,7 +249,10 @@ func main() {
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
+
+		// Register task queue tasks.
 		resultingester.RegisterTasksClass()
+		resultcollector.RegisterTaskClass()
 
 		return nil
 	})

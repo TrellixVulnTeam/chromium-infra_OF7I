@@ -17,6 +17,7 @@ import (
 
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
+	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 )
 
@@ -78,6 +79,12 @@ func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) 
 	}
 
 	if err = createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
+		return err
+	}
+
+	// Currently only Chromium CI results are ingested.
+	isPreSubmit, contributedToCLSubmission := false, false
+	if err = resultcollector.Schedule(ctx, inv, rdbHost, b.Builder.Builder, isPreSubmit, contributedToCLSubmission); err != nil {
 		return err
 	}
 

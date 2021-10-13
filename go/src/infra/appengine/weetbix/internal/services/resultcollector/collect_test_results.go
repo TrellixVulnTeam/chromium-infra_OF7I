@@ -23,18 +23,18 @@ import (
 )
 
 const (
-	resultCollectionTaskClass = "result-collection"
-	resultCollectionQueue     = "result-collection"
+	taskClass                 = "result-collection"
+	queue                     = "result-collection"
 	maxBatchSize              = 500
 	maxConcurrentBatchRequest = 10
 )
 
-// RegisterTasksClass registers the task class for tq dispatcher.
-func RegisterTasksClass() {
+// RegisterTaskClass registers the task class for tq dispatcher.
+func RegisterTaskClass() {
 	tq.RegisterTaskClass(tq.TaskClass{
-		ID:        resultCollectionTaskClass,
+		ID:        taskClass,
 		Prototype: &taskspb.CollectTestResults{},
-		Queue:     resultCollectionQueue,
+		Queue:     queue,
 		Kind:      tq.NonTransactional,
 		Handler: func(ctx context.Context, payload proto.Message) error {
 			task := payload.(*taskspb.CollectTestResults)
