@@ -16,7 +16,6 @@ import (
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/info"
-	"go.chromium.org/luci/server/analytics"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/router"
@@ -104,10 +103,12 @@ func indexPage(ctx *router.Context) {
 		"IsDevAppServer": info.IsDevAppServer(c),
 		"IsStaging":      isStaging,
 		"XsrfToken":      tok,
-		"AnalyticsID":    analytics.ID(c),
-		"User":           user.Email(),
-		"LogoutUrl":      logoutURL,
-		"LoginUrl":       loginURL,
+		// TODO(robertocn): find a way to either fix this OR delete this entire app,
+		// which appears to be dead.
+		"AnalyticsID": "",
+		"User":        user.Email(),
+		"LogoutUrl":   logoutURL,
+		"LoginUrl":    loginURL,
 	}
 
 	err = mainPage.Execute(w, data)
