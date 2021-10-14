@@ -126,13 +126,6 @@ ci_builder(
 try_builder(name = "infra-try-bionic-64", os = "Ubuntu-18.04", properties = {
     "go_version_variant": "bleeding_edge",
 })
-try_builder(
-    name = "infra-try-bionic-arm64",
-    os = "Ubuntu-18.04",
-    cpu = "arm64",
-    experiment_percentage = 100,
-    properties = {"go_version_variant": "bleeding_edge"},
-)
 
 try_builder(name = "infra-try-mac", os = "Mac-10.15", properties = {
     "go_version_variant": "legacy",
