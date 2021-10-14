@@ -14,9 +14,8 @@ from model.flake.flake_type import FlakeType
 from model.test_inventory import LuciTest
 from monorail_api import Issue
 from services import flake_issue_util
+from services import issue_generator
 from services import monorail_util
-from services.issue_generator import FlakeDetectionGroupIssueGenerator
-from services.issue_generator import FlakyTestIssueGenerator
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 # pylint:disable=unused-argument, unused-variable
@@ -391,6 +390,73 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
         datetime.datetime(2018, 1, 2),
         flake_issue.last_updated_time_by_flake_detection)
     self.assertEqual(flake.flake_issue_key, flake_issue.key)
+
+  # This test tests that an additional instruction was added in bug description.
+  @mock.patch.object(issue_generator, "_IsJavaTest", return_value=True)
+  @mock.patch.object(
+      flake_issue_util,
+      'SearchRecentlyClosedIssueIdForFlakyTest',
+      return_value=None)
+  @mock.patch('services.monorail_util.UpdateIssueWithIssueGenerator')
+  @mock.patch.object(
+      flake_issue_util, 'SearchOpenIssueIdForFlakyTest', return_value=None)
+  @mock.patch.object(monorail_util, 'UpdateBug')
+  @mock.patch.object(monorail_util, 'CreateBug', return_value=666661)
+  @mock.patch.object(monorail_util, 'GetMonorailIssueForIssueId')
+  def testCreateIssueForJavaTest(self, mock_issue, mock_create_bug_fn,
+                                 mock_update_bug_fn, *_):
+    mock_issue.return_value = Issue({
+        'status': 'Untriaged',
+        'priority': 1,
+        'updated': '2018-12-07T17:52:45',
+        'id': '666666',
+    })
+    flake = Flake.query().fetch()[0]
+    flake.tags.append('component::Blink')
+    flake.canonical_step_name = 'testCreateIssue'
+    flake.put()
+    occurrences = FlakeOccurrence.query(
+        FlakeOccurrence.flake_type.IN(
+            [FlakeType.CQ_FALSE_REJECTION,
+             FlakeType.RETRY_WITH_PATCH])).fetch()
+
+    groups_wo_issue, groups_w_issue = (
+        flake_issue_util.GetFlakeGroupsForActionsOnBugs([(flake, occurrences,
+                                                          None)]))
+    flake_issue_util.ReportFlakesToMonorail(groups_wo_issue, groups_w_issue)
+
+    expected_wrong_result_link = (
+        'https://bugs.chromium.org/p/chromium/issues/entry?status=Unconfirmed&'
+        'labels=Pri-1,Test-Flake-Detection-Wrong,Type-Bug&'
+        'components=Infra%3ETest%3EFlakiness&'
+        'summary=Flake%20Detection%20-%20Wrong%20'
+        'result%3A%20test&comment=Link%20to%20flake%20details%3A%20'
+        'https://analysis.chromium.org'
+        '/p/chromium/flake-portal/flakes/occurrences?key={}%0A%0AIssue%20'
+        'Description:%0A%0A').format(flake.key.urlsafe())
+
+    expected_description = textwrap.dedent("""
+test_label is flaky.
+
+3 flake occurrences of this test have been detected within the
+past 24 hours. List of all flake occurrences can be found at:
+https://analysis.chromium.org/p/chromium/flake-portal/flakes/occurrences?key={}.
+
+See go/clank-flakiness-manual for instructions on reproducing and fixing flaky tests.
+
+Unless the culprit CL is found and reverted, please disable this test first
+within 30 minutes then find an appropriate owner.
+
+If the result above is wrong, please file a bug using this link:
+{}
+
+Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
+        flake.key.urlsafe(), expected_wrong_result_link)
+
+    self.assertTrue(mock_create_bug_fn.called)
+    self.assertFalse(mock_update_bug_fn.called)
+    issue = mock_create_bug_fn.call_args_list[0][0][0]
+    self.assertEqual(expected_description, issue.description)
 
   @mock.patch.object(
       flake_issue_util,
@@ -1167,6 +1233,61 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
     issue = mock_create_bug.call_args_list[0][0][0]
     self.assertEqual(['Blink'], issue.components)
     self.assertItemsEqual(expected_labels, issue.labels)
+
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 1, 2))
+  @mock.patch.object(
+      monorail_util,
+      'GetMonorailIssueForIssueId',
+      return_value=Issue({
+          'status': 'Untriaged',
+          'priority': 1,
+          'updated': '2018-12-07T17:52:45',
+          'id': '234567',
+      }))
+  @mock.patch.object(monorail_util, 'PostCommentOnMonorailBug')
+  @mock.patch.object(monorail_util, 'CreateBug', return_value=234567)
+  def testCreateIssueForAJavaTestGroup(self, mock_create_bug, *_):
+    flake1 = self._CreateFlake('s1', 'org.chromium.rest#t1',
+                               'org.chromium.rest#t1')
+    flake1.tags.append('component::Blink')
+    flake1.put()
+    occurrences1 = [
+        self._CreateFlakeOccurrence(1, 's1', 'org.chromium.rest#t1', 12345,
+                                    flake1.key),
+        self._CreateFlakeOccurrence(2, 's1', 'org.chromium.rest#t1', 12346,
+                                    flake1.key)
+    ]
+    flake2 = self._CreateFlake('s1', 'org.chromium.rest#t2',
+                               'org.chromium.rest#t2')
+    occurrences2 = [
+        self._CreateFlakeOccurrence(1, 's1', 'org.chromium.rest#t2', 12345,
+                                    flake2.key),
+        self._CreateFlakeOccurrence(2, 's1', 'org.chromium.rest#t2', 12346,
+                                    flake2.key)
+    ]
+    flake_group = flake_issue_util.FlakeGroupByOccurrences(flake1, occurrences1)
+    flake_group.AddFlakeIfBelong(flake2, occurrences2)
+
+    flake_issue_util._CreateIssuesForFlakes([flake_group], 30)
+
+    issue = mock_create_bug.call_args_list[0][0][0]
+    expected_description = textwrap.dedent("""
+Tests in s1 is flaky.
+
+2 flake occurrences of tests below have been detected within
+the past 24 hours:
+
+org.chromium.rest#t1
+org.chromium.rest#t2
+
+See go/clank-flakiness-manual for instructions on reproducing and fixing flaky tests.
+
+Please try to find and revert the culprit if the culprit is obvious.
+Otherwise please find an appropriate owner.
+
+""").format()
+    self.assertEqual(expected_description, issue.description)
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 1, 2))

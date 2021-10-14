@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 """Utilities to generate content of bugs to be logged."""
 import abc
+import re
 import textwrap
 
 from google.appengine.ext import ndb
@@ -30,6 +31,11 @@ from waterfall import buildbot
 # a common culprit.
 _CULPRIT_LINK_TEMPLATE = ('https://analysis.chromium.org'
                           '/p/chromium/flake-portal/analysis/culprit?key={}')
+
+# Additional instruction on java tests.
+_JAVA_TEST_ADDITIONAL_INSTRUCTION = (
+    '\n\nSee go/clank-flakiness-manual for instructions on reproducing and '
+    'fixing flaky tests.')
 
 # The base template for updating a bug with culprit findings.
 _RESULT_WITH_CULPRIT_TEMPLATE = textwrap.dedent("""
@@ -74,7 +80,7 @@ _FLAKE_DETECTION_BUG_DESCRIPTION = textwrap.dedent("""
 
 {num_occurrences} flake occurrences of this test have been detected within the
 past 24 hours. List of all flake occurrences can be found at:
-{flake_url}.
+{flake_url}.{additional_instruction}
 
 Unless the culprit CL is found and reverted, please disable this test first
 within 30 minutes then find an appropriate owner.
@@ -116,7 +122,7 @@ Tests in {canonical_step_name} is flaky.
 {num_occurrences} flake occurrences of tests below have been detected within
 the past 24 hours:
 
-{flake_list}
+{flake_list}{additional_instruction}
 
 Please try to find and revert the culprit if the culprit is obvious.
 Otherwise please find an appropriate owner.
@@ -253,6 +259,19 @@ def _GetAutoAssignOwner(analysis):
     return email
 
   return None
+
+
+def _IsJavaTest(test_name):
+  """ Checks if a test is a java test.
+
+  Args:
+      test_name(string) : Name of the test.
+
+  Returns:
+      A boolean.
+  """
+  test_name_pattern = re.compile('^org\.chromium.*#.*$')
+  return test_name_pattern.match(test_name) is not None
 
 
 def GenerateDuplicateComment(culprit):
@@ -549,6 +568,7 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
         test_name=self._flake.test_label_name,
         num_occurrences=self._num_occurrences,
         flake_url=self._GetLinkForFlake(),
+        additional_instruction=self._GetAdditionalInstruction(),
         previous_tracking_bug_text=previous_tracking_bug_text,
         footer=self._GetFooter())
 
@@ -615,6 +635,16 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
     return _FLAKE_DETECTION_FOOTER_TEMPLATE.format(
         wrong_results_bug_link=wrong_results_bug_link)
 
+  def _GetAdditionalInstruction(self):
+    """Gets additional instructions for the test.
+
+    Returns:
+        A string for the instruction.
+    """
+    if _IsJavaTest(self.GetTestName()):  # pragma: no branch
+      return _JAVA_TEST_ADDITIONAL_INSTRUCTION
+    return ''
+
 
 class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
   """Encapsulates the details of issues filed by Flake Detection for a flake
@@ -662,6 +692,19 @@ class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
 
   def _GenerateFlakeList(self):
     return '\n'.join([flake.test_label_name for flake in self._flakes])
+
+  def _GetAdditionalInstruction(self):
+    """Gets additional instructions for the test.
+
+    Returns:
+        A string for the instruction.
+    """
+    if len(self._flakes) == 0:  # pragma: no cover
+      return ''
+    first_test_name = self._flakes[0].test_label_name
+    if _IsJavaTest(first_test_name):  # pragma: no branch
+      return _JAVA_TEST_ADDITIONAL_INSTRUCTION
+    return ''
 
   def _GetNumOccurrences(self):
     """Returns processed num occurrences.
@@ -726,6 +769,7 @@ class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
         canonical_step_name=self._canonical_step_name,
         num_occurrences=self._GetNumOccurrences(),
         flake_list=self._GenerateFlakeList(),
+        additional_instruction=self._GetAdditionalInstruction(),
         previous_tracking_bug_text=previous_tracking_bug_text)
 
   def GetFirstCommentWhenBugJustCreated(self):
