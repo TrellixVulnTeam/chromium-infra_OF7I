@@ -277,13 +277,12 @@ func TestGetHwidDataV1(t *testing.T) {
 	})
 
 	t.Run("no data in datastore and hwid server errors", func(t *testing.T) {
-		var want *ufspb.HwidData = nil
 		got, err := GetHwidDataV1(ctx, client, "test-err")
 		if err != nil {
 			t.Fatalf("GetHwidDataV1 unknown error: %s", err)
 		}
-		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
-			t.Errorf("GetHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)
+		if got != nil {
+			t.Errorf("GetHwidDataV1 is not nil: %s", got)
 		}
 	})
 
@@ -293,13 +292,12 @@ func TestGetHwidDataV1(t *testing.T) {
 		}
 		trafficCtx := config.Use(ctx, cfgLst)
 
-		var want *ufspb.HwidData = nil
 		got, err := GetHwidDataV1(trafficCtx, client, "test-no-data")
 		if err != nil {
 			t.Fatalf("GetHwidDataV1 unknown error: %s", err)
 		}
-		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
-			t.Errorf("GetHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)
+		if got != nil {
+			t.Errorf("GetHwidDataV1 is not nil: %s", got)
 		}
 	})
 }
