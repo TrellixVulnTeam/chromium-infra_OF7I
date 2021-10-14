@@ -439,6 +439,7 @@ indexes:
   - name: bucket
   - name: builder
   - name: visible
+  - name: modifier_id
   - name: commit_timestamp
     direction: desc
 

@@ -80,6 +80,12 @@ class PostsubmitReport(ndb.Model):
   # is to quanrantine a 'bad' report. All the reports are visible to admins.
   visible = ndb.BooleanProperty(indexed=True, default=False, required=True)
 
+  # TODO(crbug.com/1237114): Mark as required once data are backfilled.
+  # Id of the associated coverage report modifier, 0 otherwise
+  # For e.g. a usual full codebase PostSubmitReport would
+  # have modifier_id as 0.
+  modifier_id = ndb.IntegerProperty(indexed=True, required=False)
+
   @classmethod
   def _CreateKey(cls, server_host, project, ref, revision, bucket, builder):
     return ndb.Key(
@@ -391,6 +397,12 @@ class SummaryCoverageData(ndb.Model):
 
   # Coverage data for a directory or a component.
   data = ndb.JsonProperty(indexed=False, compressed=True, required=True)
+
+  # TODO(crbug.com/1237114): Mark as required once data are backfilled.
+  # Id of the associated coverage report modifier, 0 otherwise
+  # For e.g. a summary entity corresponding to usual full codebase
+  # PostSubmitReport would have modifier_id as 0.
+  modifier_id = ndb.IntegerProperty(indexed=True, required=False)
 
   @classmethod
   def _CreateKey(cls, server_host, project, ref, revision, data_type, path,
