@@ -13,6 +13,7 @@ import (
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	cvpb "go.chromium.org/luci/cv/api/v0"
+	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/tq"
 
 	"infra/appengine/weetbix/internal/buildbucket"
@@ -73,12 +74,15 @@ func ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) 
 	if err != nil {
 		return err
 	}
-	tvs, err := rc.QueryTestVariants(ctx, invName)
-	if err != nil {
-		return err
-	}
 
-	if err = createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
+	// Query test variants from ResultDB and save/update the corresponding
+	// AnalyzedTestVariant rows.
+	// We read test variants from ResultDB in pages, and the func will be called
+	// once per page of test variants.
+	err = rc.QueryTestVariants(ctx, invName, func(tvs []*rdbpb.TestVariant) error {
+		return createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs)
+	})
+	if err != nil {
 		return err
 	}
 

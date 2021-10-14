@@ -53,7 +53,9 @@ func NewClient(ctx context.Context, host string) (*Client, error) {
 }
 
 // QueryTestVariants queries test variants with any unexpected results.
-func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*rdbpb.TestVariant, err error) {
+//
+// f is called once per page of test variants.
+func (c *Client) QueryTestVariants(ctx context.Context, invName string, f func([]*rdbpb.TestVariant) error) error {
 	pageToken := ""
 
 	for {
@@ -66,10 +68,13 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 			PageToken: pageToken,
 		})
 		if err != nil {
-			return tvs, err
+			return err
 		}
 
-		tvs = append(tvs, rsp.TestVariants...)
+		if err = f(rsp.TestVariants); err != nil {
+			return err
+		}
+
 		pageToken = rsp.GetNextPageToken()
 		if pageToken == "" {
 			// No more test variants with unexpected results.
@@ -77,7 +82,7 @@ func (c *Client) QueryTestVariants(ctx context.Context, invName string) (tvs []*
 		}
 	}
 
-	return tvs, nil
+	return nil
 }
 
 // GetInvocation retrieves the invocation.

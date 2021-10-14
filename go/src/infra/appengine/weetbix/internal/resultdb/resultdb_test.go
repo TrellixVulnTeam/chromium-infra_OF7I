@@ -50,7 +50,11 @@ func TestResultDB(t *testing.T) {
 				},
 			}
 			mc.QueryTestVariants(req, res)
-			tvs, err := rc.QueryTestVariants(mc.Ctx, inv)
+			var tvs []*rdbpb.TestVariant
+			err := rc.QueryTestVariants(mc.Ctx, inv, func(res []*rdbpb.TestVariant) error {
+				tvs = append(tvs, res...)
+				return nil
+			})
 			So(err, ShouldBeNil)
 			So(len(tvs), ShouldEqual, 2)
 		})
