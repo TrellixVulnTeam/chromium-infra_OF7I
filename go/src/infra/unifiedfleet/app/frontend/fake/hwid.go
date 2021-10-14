@@ -41,7 +41,7 @@ func mockDutLabel() *ufspb.DutLabel {
 
 // QueryHwid mocks hwid.ClientInterface.QueryHwid()
 func (hc *HwidClient) QueryHwid(ctx context.Context, hwid string) (*ufspb.DutLabel, error) {
-	if hwid == "test" {
+	if hwid == "test" || hwid == "test-no-cached-hwid-data" {
 		return mockDutLabel(), nil
 	} else if hwid == "test-no-server" {
 		return &ufspb.DutLabel{}, errors.Reason("Mocked failure; could not query data").Err()

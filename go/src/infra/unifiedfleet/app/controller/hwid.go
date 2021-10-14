@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"math/rand"
 	"runtime/debug"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"infra/cros/hwid"
 	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
 )
@@ -35,44 +37,33 @@ func GetHwidDataV1(ctx context.Context, c hwid.ClientInterface, hwid string) (da
 		}
 	}()
 
-	var hwidEnt *configuration.HwidDataEntity
-	var hwidEntNew *configuration.HwidDataEntity
-
-	hwidEnt, err = configuration.GetHwidData(ctx, hwid)
+	hwidEnt, err := configuration.GetHwidData(ctx, hwid)
 	if err != nil && !util.IsNotFoundError(err) {
 		return nil, err
 	}
 
-	if hwidEnt == nil {
-		hwidEntNew, err = cacheHwidData(ctx, c, hwid)
+	cacheExpired := false
+	if hwidEnt != nil {
+		cacheExpired = time.Now().UTC().After(hwidEnt.Updated.Add(cacheAge))
+	}
+
+	hwidServerOk := rand.Float32() < config.Get(ctx).GetHwidServiceTrafficRatio()
+	if hwidServerOk && (hwidEnt == nil || cacheExpired) {
+		hwidEntNew, err := fetchHwidData(ctx, c, hwid)
 		if err != nil {
-			return nil, err
+			logging.Warningf(ctx, "Error fetching HWID server data: %s", err)
 		}
-	} else {
-		now := time.Now().UTC()
-		lastUpdated := hwidEnt.Updated
-		if now.After(lastUpdated.Add(cacheAge)) {
-			hwidEntNew, err = cacheHwidData(ctx, c, hwid)
-			if err != nil {
-				logging.Warningf(ctx, "Error querying from HWID server. Falling back to existing HWID data: %s", err)
-			}
+
+		if hwidEntNew != nil {
+			hwidEnt = hwidEntNew
 		}
 	}
-
-	if hwidEntNew != nil {
-		hwidEnt = hwidEntNew
-	}
-
-	data, err = configuration.ParseHwidDataV1(hwidEnt)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return configuration.ParseHwidDataV1(hwidEnt)
 }
 
-// cacheHwidData queries the hwid server with an hwid and stores the results
+// fetchHwidData queries the hwid server with an hwid and stores the results
 // into the UFS datastore.
-func cacheHwidData(ctx context.Context, c hwid.ClientInterface, hwid string) (*configuration.HwidDataEntity, error) {
+func fetchHwidData(ctx context.Context, c hwid.ClientInterface, hwid string) (*configuration.HwidDataEntity, error) {
 	newData, err := c.QueryHwid(ctx, hwid)
 	if err != nil {
 		return nil, err

@@ -77,9 +77,15 @@ func GetHwidData(ctx context.Context, hwid string) (*HwidDataEntity, error) {
 	return entity, nil
 }
 
-// ParseHwidDataV1 parses an HwidDataEntity into the ufspb.HwidData proto
-// containing sku and variant.
+// ParseHwidDataV1 returns sku and variant.
+//
+// It parses a given HwidDataEntity into the ufspb.HwidData proto containing
+// sku and variant. No error is returned if the entity is nil.
 func ParseHwidDataV1(ent *HwidDataEntity) (*ufspb.HwidData, error) {
+	if ent == nil {
+		return nil, nil
+	}
+
 	entData, err := ent.GetProto()
 	if err != nil {
 		return nil, err

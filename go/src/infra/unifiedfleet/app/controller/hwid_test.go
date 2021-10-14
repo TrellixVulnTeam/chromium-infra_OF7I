@@ -98,7 +98,7 @@ func TestGetHwidDataV1(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	ctx = external.WithTestingContext(ctx)
-	ctx = config.Use(ctx, &config.Config{})
+	ctx = useTestingCfg(ctx)
 	datastore.GetTestable(ctx).Consistent(true)
 
 	es, err := external.GetServerInterface(ctx)
@@ -279,8 +279,24 @@ func TestGetHwidDataV1(t *testing.T) {
 	t.Run("no data in datastore and hwid server errors", func(t *testing.T) {
 		var want *ufspb.HwidData = nil
 		got, err := GetHwidDataV1(ctx, client, "test-err")
-		if err == nil {
-			t.Fatalf("GetHwidDataV1 succeeded without error")
+		if err != nil {
+			t.Fatalf("GetHwidDataV1 unknown error: %s", err)
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("GetHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("no data in datastore and throttle hwid server", func(t *testing.T) {
+		cfgLst := &config.Config{
+			HwidServiceTrafficRatio: 0,
+		}
+		trafficCtx := config.Use(ctx, cfgLst)
+
+		var want *ufspb.HwidData = nil
+		got, err := GetHwidDataV1(trafficCtx, client, "test-no-data")
+		if err != nil {
+			t.Fatalf("GetHwidDataV1 unknown error: %s", err)
 		}
 		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 			t.Errorf("GetHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)

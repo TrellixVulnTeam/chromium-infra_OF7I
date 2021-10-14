@@ -2923,6 +2923,88 @@ func TestGetChromeOSDeviceData(t *testing.T) {
 			So(hwidEnt, ShouldNotBeNil)
 			So(hwidEnt.Updated, ShouldHappenWithin, time.Second, time.Now().UTC())
 		})
+
+		Convey("GetChromeOSDevicedata - throttle hwid server traffic and no data in datastore", func() {
+			// Try to get data from datastore but no data. Throttle traffic to hwid
+			// server. HwidData should be nil. "test-no-cached-hwid-data" returns
+			// valid fake, but HwidClient should not be called due to throttle.
+			cfgLst := &config.Config{
+				HwidServiceTrafficRatio:          0,
+				UseCachedHwidManufacturingConfig: true,
+			}
+			trafficCtx := config.Use(ctx, cfgLst)
+
+			machineThrottle := &ufspb.Machine{
+				Name: "machine-throttle-hwid",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						ReferenceBoard: "test",
+						BuildTarget:    "test",
+						Model:          "test",
+						Hwid:           "test-no-cached-hwid-data",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machineThrottle)
+
+			dutMachinelseThrottle := mockDutMachineLSE("lse-throttle-hwid")
+			dutMachinelseThrottle.Machines = []string{"machine-throttle-hwid"}
+			inventory.CreateMachineLSE(ctx, dutMachinelseThrottle)
+
+			dutStateThrottle := mockDutState("machine-throttle-hwid", "lse-throttle-hwid")
+			UpdateDutState(ctx, dutStateThrottle)
+
+			resp, err := GetChromeOSDeviceData(trafficCtx, "machine-throttle-hwid", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelseThrottle)
+			So(resp.GetMachine(), ShouldResembleProto, machineThrottle)
+			So(resp.GetDutState(), ShouldResembleProto, dutStateThrottle)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldBeNil)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
+		})
+
+		Convey("GetChromeOSDevicedata - normal hwid server traffic and no data in datastore", func() {
+			// Try to get data from datastore but no data. No throttle traffic to
+			// hwid server. HwidData should return fake data using
+			// "test-no-cached-hwid-data".
+			machineNoThrottle := &ufspb.Machine{
+				Name: "machine-no-throttle-hwid",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						ReferenceBoard: "test",
+						BuildTarget:    "test",
+						Model:          "test",
+						Hwid:           "test-no-cached-hwid-data",
+					},
+				},
+			}
+			registration.CreateMachine(ctx, machineNoThrottle)
+
+			dutMachinelseNoThrottle := mockDutMachineLSE("lse-no-throttle-hwid")
+			dutMachinelseNoThrottle.Machines = []string{"machine-no-throttle-hwid"}
+			inventory.CreateMachineLSE(ctx, dutMachinelseNoThrottle)
+
+			dutStateNoThrottle := mockDutState("machine-no-throttle-hwid", "lse-no-throttle-hwid")
+			UpdateDutState(ctx, dutStateNoThrottle)
+
+			resp, err := GetChromeOSDeviceData(ctx, "machine-no-throttle-hwid", "")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, dutMachinelseNoThrottle)
+			So(resp.GetMachine(), ShouldResembleProto, machineNoThrottle)
+			So(resp.GetDutState(), ShouldResembleProto, dutStateNoThrottle)
+			So(resp.GetDeviceConfig(), ShouldResembleProto, devCfg)
+			So(resp.GetManufacturingConfig(), ShouldBeNil)
+			So(resp.GetHwidData(), ShouldResembleProto, hwidMockData)
+			So(resp.GetSchedulableLabels(), ShouldBeNil)
+			So(resp.GetRespectAutomatedSchedulableLabels(), ShouldBeFalse)
+			So(resp.GetDutV1().GetCommon().GetLabels().GetStability(), ShouldBeTrue)
+		})
 	})
 }
 

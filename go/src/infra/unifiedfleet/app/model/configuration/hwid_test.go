@@ -149,6 +149,17 @@ func TestParseHwidDataV1(t *testing.T) {
 		t.Fatalf("UpdateHwidData failed: %s", err)
 	}
 
+	t.Run("parse nil HwidEntity", func(t *testing.T) {
+		var want *ufspb.HwidData = nil
+		got, err := ParseHwidDataV1(nil)
+		if err != nil {
+			t.Fatalf("ParseHwidDataV1 failed: %s", err)
+		}
+		if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+			t.Errorf("ParseHwidDataV1 returned unexpected diff (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("parse hwid data from HwidEntity", func(t *testing.T) {
 		want := &ufspb.HwidData{
 			Sku:     "test-sku",
