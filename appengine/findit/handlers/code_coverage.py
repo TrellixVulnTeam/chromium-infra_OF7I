@@ -48,6 +48,7 @@ from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services.code_coverage import feature_coverage
 from services.code_coverage import files_absolute_coverage
+from services.code_coverage import referenced_coverage
 from services import bigquery_helper as bq
 from services import test_tag_util
 from waterfall import waterfall_config
@@ -1643,7 +1644,7 @@ class ExportFilesAbsoluteCoverageMetricsCron(BaseHandler):
     # Cron jobs run independently of each other. Therefore, there is no
     # guarantee that they will run either sequentially or simultaneously.
     #
-    # Executing per CL metrics concurrently doesn't bring much
+    # Executing this job concurrently doesn't bring much
     # benefits, so use task queue to enforce that at most one  task
     # can be executed at any time.
     taskqueue.add(
@@ -1669,7 +1670,7 @@ class ExportAllFeatureCoverageMetricsCron(BaseHandler):
     # Cron jobs run independently of each other. Therefore, there is no
     # guarantee that they will run either sequentially or simultaneously.
     #
-    # Executing Feature Coverage metrics concurrently doesn't bring much
+    # Executing this job concurrently doesn't bring much
     # benefits, so use task queue to enforce that at most one task
     # can be executed at any time.
     taskqueue.add(
@@ -1732,6 +1733,32 @@ class ExportFeatureCoverageMetrics(BaseHandler):
     report_modifier = CoverageReportModifier.Get(modifier_id)
     logging.info('Generating feature coverage for feature %s took %.0f minutes',
                  report_modifier.gerrit_hashtag, minutes)
+    return {'return_code': 200}
+
+
+class CreateReferencedCoverageMetrics(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    referenced_coverage.CreateReferencedCoverage()
+    return {'return_code': 200}
+
+
+class CreateReferencedCoverageMetricsCron(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    # Cron jobs run independently of each other. Therefore, there is no
+    # guarantee that they will run either sequentially or simultaneously.
+    #
+    # Executing this job concurrently doesn't bring much
+    # benefits, so use task queue to enforce that at most one task
+    # can be executed at any time.
+    taskqueue.add(
+        method='GET',
+        queue_name=constants.REFERENCED_COVERAGE_METRICS_QUEUE,
+        target=constants.CODE_COVERAGE_BACKEND,
+        url='/coverage/task/referenced-coverage')
     return {'return_code': 200}
 
 

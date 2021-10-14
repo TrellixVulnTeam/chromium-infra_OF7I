@@ -31,6 +31,7 @@ DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
 FILES_ABSOLUTE_COVERAGE_QUEUE = 'files-absolute-coverage-queue'
 FEATURE_COVERAGE_QUEUE = 'feature-coverage-queue'
 ALL_FEATURE_COVERAGE_QUEUE = 'all-feature-coverage-queue'
+REFERENCED_COVERAGE_METRICS_QUEUE = 'referenced-coverage-metrics-queue'
 # Waterfall-related.
 WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL = (
     '/waterfall/task/process-failure-analysis-requests')

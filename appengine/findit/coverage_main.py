@@ -33,6 +33,10 @@ code_coverage_backend_handler_mappings = [
      code_coverage.ExportAllFeatureCoverageMetricsCron),
     ('.*/coverage/task/all-feature-coverage',
      code_coverage.ExportAllFeatureCoverageMetrics),
+    ('.*/coverage/cron/referenced-coverage',
+     code_coverage.CreateReferencedCoverageMetricsCron),
+    ('.*/coverage/task/referenced-coverage',
+     code_coverage.CreateReferencedCoverageMetrics),
     ('.*/coverage/task/postsubmit-report/update',
      code_coverage.UpdatePostsubmitReport),
 ]

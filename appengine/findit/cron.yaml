@@ -78,3 +78,10 @@ cron:
   timezone: America/Los_Angeles
   retry_parameters:
     job_retry_limit: 2
+
+- description: Create referenced coverage metrics.
+  url: /coverage/cron/referenced-coverage
+  schedule: 1 of month 00:00
+  timezone: America/Los_Angeles
+  retry_parameters:
+    job_retry_limit: 0
