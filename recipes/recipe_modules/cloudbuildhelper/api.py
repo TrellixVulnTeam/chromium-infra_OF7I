@@ -334,7 +334,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     Raises:
       StepFailure on failures.
     """
-    name, _ = self.m.path.splitext(self.m.path.basename(manifest))
+    name = self.m.path.basename(self.m.path.splitext(manifest)[0])
 
     cmd = [self.command, 'upload', manifest, '-canonical-tag', canonical_tag]
     if build_id:
