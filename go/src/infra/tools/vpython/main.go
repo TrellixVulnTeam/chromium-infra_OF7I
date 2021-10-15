@@ -105,7 +105,8 @@ func mainImpl(c context.Context, argv []string, env environ.Env) int {
 	if strings.HasSuffix(argv[0], "python3") || strings.HasSuffix(argv[0], "python3.exe") {
 		defaultConfig.SpecLoader.CommonSpecNames = []string{".vpython3"}
 		defaultConfig.SpecLoader.PartnerSuffix = ".vpython3"
-		defaultConfig.DefaultSpec.PythonVersion = "3"
+		defaultConfig.DefaultSpec.PythonVersion = "3.8"
+		defaultConfig.DefaultVerificationTags = verificationScenarios38
 		defaultConfig.VpythonOptIn = true
 	}
 	return defaultConfig.Main(c, argv, env)
