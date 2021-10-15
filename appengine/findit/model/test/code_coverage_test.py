@@ -5,11 +5,13 @@
 import datetime
 
 from google.appengine.api import datastore_errors
+from google.appengine.ext import ndb
 
 from model.code_coverage import CoveragePercentage
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
 from model.code_coverage import FileCoverageData
+from model.code_coverage import GitilesCommit
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
@@ -19,6 +21,80 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 class CodeCoverageTest(WaterfallTestCase):
 
   def testCreateAndGetPostsubmitReport(self):
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = '99999'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+    commit_position = 100
+    commit_timestamp = datetime.datetime(2018, 1, 1)
+
+    manifest = [
+        DependencyRepository(
+            path='//src',
+            server_host='chromium.googlesource.com',
+            project='chromium/src.git',
+            revision='88888')
+    ]
+
+    summary_metrics = [{
+        'covered': 1,
+        'total': 2,
+        'name': 'region'
+    }, {
+        'covered': 1,
+        'total': 2,
+        'name': 'function'
+    }, {
+        'covered': 1,
+        'total': 2,
+        'name': 'line'
+    }]
+
+    build_id = 123456789
+    visible = True
+    modifier_id = 123
+
+    report = PostsubmitReport.Create(
+        server_host=server_host,
+        project=project,
+        ref=ref,
+        revision=revision,
+        bucket=bucket,
+        builder=builder,
+        commit_position=commit_position,
+        commit_timestamp=commit_timestamp,
+        manifest=manifest,
+        summary_metrics=summary_metrics,
+        build_id=build_id,
+        visible=visible,
+        modifier_id=modifier_id)
+    report.put()
+
+    # Test key.
+    self.assertEqual(
+        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
+        'coverage$linux-code-coverage$123', report.key.id())
+
+    # Test Create.
+    fetched_reports = PostsubmitReport.query().fetch()
+    self.assertEqual(1, len(fetched_reports))
+    self.assertEqual(report, fetched_reports[0])
+
+    # Test Get.
+    self.assertEqual(
+        report,
+        PostsubmitReport.Get(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision,
+            bucket=bucket,
+            builder=builder,
+            modifier_id=modifier_id))
+
+  def testCreateAndGetPostsubmitReport_DefaultModifierId(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
     ref = 'refs/heads/main'
@@ -71,12 +147,76 @@ class CodeCoverageTest(WaterfallTestCase):
     # Test key.
     self.assertEqual(
         'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
-        'coverage$linux-code-coverage', report.key.id())
+        'coverage$linux-code-coverage$0', report.key.id())
 
     # Test Create.
     fetched_reports = PostsubmitReport.query().fetch()
     self.assertEqual(1, len(fetched_reports))
     self.assertEqual(report, fetched_reports[0])
+
+    # Test Get.
+    self.assertEqual(
+        report,
+        PostsubmitReport.Get(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision,
+            bucket=bucket,
+            builder=builder))
+
+  def testGetPostsubmitReport_LegacyKey(self):
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = '99999'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+    commit_position = 100
+    commit_timestamp = datetime.datetime(2018, 1, 1)
+
+    manifest = [
+        DependencyRepository(
+            path='//src',
+            server_host='chromium.googlesource.com',
+            project='chromium/src.git',
+            revision='88888')
+    ]
+
+    summary_metrics = [{
+        'covered': 1,
+        'total': 2,
+        'name': 'region'
+    }, {
+        'covered': 1,
+        'total': 2,
+        'name': 'function'
+    }, {
+        'covered': 1,
+        'total': 2,
+        'name': 'line'
+    }]
+
+    build_id = 123456789
+    visible = True
+    legacy_id = '%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
+                                       bucket, builder)
+    report = PostsubmitReport(
+        id=legacy_id,
+        gitiles_commit=GitilesCommit(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision),
+        bucket=bucket,
+        builder=builder,
+        commit_position=commit_position,
+        commit_timestamp=commit_timestamp,
+        manifest=manifest,
+        summary_metrics=summary_metrics,
+        build_id=build_id,
+        visible=visible)
+    report.put()
 
     # Test Get.
     self.assertEqual(
@@ -217,7 +357,105 @@ class CodeCoverageTest(WaterfallTestCase):
             builder=builder,
             modifier_id=modifier_id))
 
-  def testAndCreateAndGetDirectoryCoverageData(self):
+  def testCreateAndGetFileCoverageData_DefaultModifierId(self):
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = '99999'
+    path = '//dir/test.cc'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+    data = {
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 5,
+        }],
+        'timestamp': 1357,
+        'revision': '12345'
+    }
+
+    file_coverage_data = FileCoverageData.Create(
+        server_host=server_host,
+        project=project,
+        ref=ref,
+        revision=revision,
+        path=path,
+        bucket=bucket,
+        builder=builder,
+        data=data)
+    file_coverage_data.put()
+
+    # Test key.
+    self.assertEqual(
+        ('chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
+         '//dir/test.cc$coverage$linux-code-coverage$0'),
+        file_coverage_data.key.id())
+
+    # Test Create.
+    fetched_file_coverage_data = FileCoverageData.query().fetch()
+    self.assertEqual(1, len(fetched_file_coverage_data))
+    self.assertEqual(file_coverage_data, fetched_file_coverage_data[0])
+
+    # Test Get.
+    self.assertEqual(
+        file_coverage_data,
+        FileCoverageData.Get(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision,
+            path=path,
+            bucket=bucket,
+            builder=builder))
+
+  def testGetFileCoverageData_LegacyKey(self):
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = '99999'
+    path = '//dir/test.cc'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+    data = {
+        'path': '//dir/test.cc',
+        'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 5,
+        }],
+        'timestamp': 1357,
+        'revision': '12345'
+    }
+    legacy_id = '%s$%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
+                                          path, bucket, builder)
+    file_coverage_data = FileCoverageData(
+        id=legacy_id,
+        gitiles_commit=GitilesCommit(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision),
+        path=path,
+        bucket=bucket,
+        builder=builder,
+        data=data)
+    file_coverage_data.put()
+
+    # Test Get.
+    self.assertEqual(
+        file_coverage_data,
+        FileCoverageData.Get(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision,
+            path=path,
+            bucket=bucket,
+            builder=builder))
+
+  def testAndCreateAndGetSummaryCoverageData(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
     ref = 'refs/heads/main'
@@ -245,7 +483,72 @@ class CodeCoverageTest(WaterfallTestCase):
         'path':
             '//dir/',
     }
+    modifier_id = 123
+    dir_coverage_data = SummaryCoverageData.Create(
+        server_host=server_host,
+        project=project,
+        ref=ref,
+        revision=revision,
+        data_type=data_type,
+        path=path,
+        bucket=bucket,
+        builder=builder,
+        data=data,
+        modifier_id=modifier_id)
+    dir_coverage_data.put()
 
+    # Test key.
+    self.assertEqual(
+        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
+        'dirs$//dir/$coverage$linux-code-coverage$123',
+        dir_coverage_data.key.id())
+
+    # Test Create.
+    fetched_dir_coverage_data = SummaryCoverageData.query().fetch()
+    self.assertEqual(1, len(fetched_dir_coverage_data))
+    self.assertEqual(dir_coverage_data, fetched_dir_coverage_data[0])
+
+    # Test Get.
+    self.assertEqual(
+        dir_coverage_data,
+        SummaryCoverageData.Get(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision,
+            data_type=data_type,
+            path=path,
+            bucket=bucket,
+            builder=builder,
+            modifier_id=modifier_id))
+
+  def testAndCreateAndGetSummaryCoverageData_DefaultModifierId(self):
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = '99999'
+    data_type = 'dirs'
+    path = '//dir/'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+    data = {
+        'dirs': [],
+        'files': [],
+        'summaries': [{
+            'covered': 1,
+            'total': 1,
+            'name': 'region'
+        }, {
+            'covered': 1,
+            'total': 1,
+            'name': 'function'
+        }, {
+            'covered': 1,
+            'total': 1,
+            'name': 'line'
+        }],
+        'path': '//dir/',
+    }
     dir_coverage_data = SummaryCoverageData.Create(
         server_host=server_host,
         project=project,
@@ -261,7 +564,8 @@ class CodeCoverageTest(WaterfallTestCase):
     # Test key.
     self.assertEqual(
         'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
-        'dirs$//dir/$coverage$linux-code-coverage', dir_coverage_data.key.id())
+        'dirs$//dir/$coverage$linux-code-coverage$0',
+        dir_coverage_data.key.id())
 
     # Test Create.
     fetched_dir_coverage_data = SummaryCoverageData.query().fetch()
@@ -281,13 +585,13 @@ class CodeCoverageTest(WaterfallTestCase):
             bucket=bucket,
             builder=builder))
 
-  def testAndCreateAndGetComponentCoverageData(self):
+  def testGetSummaryCoverageData_LegacyKey(self):
     server_host = 'chromium.googlesource.com'
     project = 'chromium/src'
     ref = 'refs/heads/main'
     revision = '99999'
-    data_type = 'components'
-    path = 'Test>Component'
+    data_type = 'dirs'
+    path = '//dir/'
     bucket = 'coverage'
     builder = 'linux-code-coverage'
     data = {
@@ -306,37 +610,28 @@ class CodeCoverageTest(WaterfallTestCase):
             'total': 1,
             'name': 'line'
         }],
-        'path':
-            'Test>Component',
+        'path': '//dir/',
     }
 
-    component_coverage_data = SummaryCoverageData.Create(
-        server_host=server_host,
-        project=project,
-        ref=ref,
-        revision=revision,
+    legacy_id = '%s$%s$%s$%s$%s$%s$%s$%s' % (
+        server_host, project, ref, revision, data_type, path, bucket, builder)
+    dir_coverage_data = SummaryCoverageData(
+        id=legacy_id,
+        gitiles_commit=GitilesCommit(
+            server_host=server_host,
+            project=project,
+            ref=ref,
+            revision=revision),
         data_type=data_type,
         path=path,
         bucket=bucket,
         builder=builder,
         data=data)
-    component_coverage_data.put()
-
-    # Test key.
-    self.assertEqual(
-        'chromium.googlesource.com$chromium/src$refs/heads/main$99999$'
-        'components$Test>Component$coverage$linux-code-coverage',
-        component_coverage_data.key.id())
-
-    # Test Create.
-    fetched_component_coverage_data = SummaryCoverageData.query().fetch()
-    self.assertEqual(1, len(fetched_component_coverage_data))
-    self.assertEqual(component_coverage_data,
-                     fetched_component_coverage_data[0])
+    dir_coverage_data.put()
 
     # Test Get.
     self.assertEqual(
-        component_coverage_data,
+        dir_coverage_data,
         SummaryCoverageData.Get(
             server_host=server_host,
             project=project,

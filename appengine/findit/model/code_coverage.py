@@ -87,10 +87,11 @@ class PostsubmitReport(ndb.Model):
   modifier_id = ndb.IntegerProperty(indexed=True, required=False)
 
   @classmethod
-  def _CreateKey(cls, server_host, project, ref, revision, bucket, builder):
+  def _CreateKey(cls, server_host, project, ref, revision, bucket, builder,
+                 modifier_id):
     return ndb.Key(
-        cls, '%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision, bucket,
-                                    builder))
+        cls, '%s$%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
+                                       bucket, builder, str(modifier_id)))
 
   @classmethod
   def Create(cls,
@@ -105,8 +106,10 @@ class PostsubmitReport(ndb.Model):
              summary_metrics,
              build_id,
              visible,
-             commit_position=None):
-    key = cls._CreateKey(server_host, project, ref, revision, bucket, builder)
+             commit_position=None,
+             modifier_id=0):
+    key = cls._CreateKey(server_host, project, ref, revision, bucket, builder,
+                         modifier_id)
     gitiles_commit = GitilesCommit(
         server_host=server_host, project=project, ref=ref, revision=revision)
     return cls(
@@ -119,19 +122,34 @@ class PostsubmitReport(ndb.Model):
         manifest=manifest,
         summary_metrics=summary_metrics,
         build_id=build_id,
-        visible=visible)
+        visible=visible,
+        modifier_id=modifier_id)
 
   @classmethod
-  def Get(cls, server_host, project, ref, revision, bucket, builder):
-    entity = cls._CreateKey(server_host, project, ref, revision, bucket,
-                            builder).get()
-    if entity:
-      return entity
+  def Get(cls,
+          server_host,
+          project,
+          ref,
+          revision,
+          bucket,
+          builder,
+          modifier_id=0):
+    entity_v3 = cls._CreateKey(server_host, project, ref, revision, bucket,
+                               builder, modifier_id).get()
+    if entity_v3:
+      return entity_v3
+
+    # TODO(crbug.com/1237114): Remove following code once data are backfilled.
+    entity_v2 = ndb.Key(
+        cls, '%s$%s$%s$%s$%s$%s' %
+        (server_host, project, ref, revision, bucket, builder)).get()
+    if entity_v2:
+      return entity_v2
 
     # TODO(crbug.com/939443): Remove following code once data are backfilled.
-    legacy_key = ndb.Key(cls,
-                         '%s$%s$%s$%s' % (server_host, project, ref, revision))
-    return legacy_key.get()
+    legacy_key_v1 = ndb.Key(
+        cls, '%s$%s$%s$%s' % (server_host, project, ref, revision))
+    return legacy_key_v1.get()
 
 
 class CoverageReportModifier(ndb.Model):
@@ -412,13 +430,30 @@ class SummaryCoverageData(ndb.Model):
                                           data_type, path, bucket, builder))
 
   @classmethod
-  def Create(cls, server_host, project, ref, revision, data_type, path, bucket,
-             builder, data):
+  def _CreateKey(cls, server_host, project, ref, revision, data_type, path,
+                 bucket, builder, modifier_id):
+    return ndb.Key(
+        cls, '%s$%s$%s$%s$%s$%s$%s$%s$%s' %
+        (server_host, project, ref, revision, data_type, path, bucket, builder,
+         modifier_id))
+
+  @classmethod
+  def Create(cls,
+             server_host,
+             project,
+             ref,
+             revision,
+             data_type,
+             path,
+             bucket,
+             builder,
+             data,
+             modifier_id=0):
     if data_type == 'dirs':
       assert path.startswith('//'), 'Directory path must start with //'
 
     key = cls._CreateKey(server_host, project, ref, revision, data_type, path,
-                         bucket, builder)
+                         bucket, builder, modifier_id)
     gitiles_commit = GitilesCommit(
         server_host=server_host, project=project, ref=ref, revision=revision)
     return cls(
@@ -428,18 +463,35 @@ class SummaryCoverageData(ndb.Model):
         path=path,
         bucket=bucket,
         builder=builder,
-        data=data)
+        data=data,
+        modifier_id=modifier_id)
 
   @classmethod
-  def Get(cls, server_host, project, ref, revision, data_type, path, bucket,
-          builder):
-    entity = cls._CreateKey(server_host, project, ref, revision, data_type,
-                            path, bucket, builder).get()
-    if entity:
-      return entity
+  def Get(cls,
+          server_host,
+          project,
+          ref,
+          revision,
+          data_type,
+          path,
+          bucket,
+          builder,
+          modifier_id=0):
+    entity_v3 = cls._CreateKey(server_host, project, ref, revision, data_type,
+                               path, bucket, builder, modifier_id).get()
+    if entity_v3:
+      return entity_v3
+
+    # TODO(crbug.com/1237114): Remove following code once data are backfilled.
+    entity_v2 = ndb.Key(
+        cls,
+        '%s$%s$%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
+                                     data_type, path, bucket, builder)).get()
+    if entity_v2:
+      return entity_v2
 
     # TODO(crbug.com/939443): Remove following code once data are backfilled.
-    legacy_key = ndb.Key(
-        cls, '%s$%s$%s$%s$%s$%s' % (server_host, project, ref, revision,
-                                    data_type, path))
-    return legacy_key.get()
+    legacy_key_v1 = ndb.Key(
+        cls, '%s$%s$%s$%s$%s$%s' %
+        (server_host, project, ref, revision, data_type, path))
+    return legacy_key_v1.get()
