@@ -23,9 +23,21 @@ type classifier func(map[string]bool, string) commands.Decision
 type replacer func(string) string
 
 // readContents gets the content of a DNS file.
-// TODO(gregorynisbet): inline this function.
+// If the DNS file does not exist, replace it with an empty container.
 func readContents() (string, error) {
+	// Defensively touch the file if it does not already exist.
+	// See b/199796469 for details.
 	args := []string{
+		paths.DockerPath,
+		"exec",
+		"dns",
+		"touch",
+		"/etc/dut_hosts/hosts",
+	}
+	if err := exec.Command(args[0], args[1:]...).Run(); err != nil {
+		return "", errors.Annotate(err, "defensively touch dns file").Err()
+	}
+	args = []string{
 		paths.DockerPath,
 		"exec",
 		"dns",
