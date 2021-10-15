@@ -291,7 +291,7 @@ const defaultConfig = `
 					"dependencies": [
 						"cros_ssh",
 						"root_present_servo_v3",
-						"root_present_servo_v4",
+						"servo_v4_root_present",
 						"servo_topology"
 					],
 					"exec_name":"sample_pass"
@@ -342,14 +342,13 @@ const defaultConfig = `
 					],
 					"exec_name":"sample_pass"
 				},
-				"root_present_servo_v4": {
+				"servo_v4_root_present": {
 					"dependencies": [
 						"cros_ssh"
 					],
 					"conditions": [
 						"is_not_servo_v3"
-					],
-					"exec_name":"sample_pass"
+					]
 				},
 				"servo_fw_updated": {
 					"conditions": [

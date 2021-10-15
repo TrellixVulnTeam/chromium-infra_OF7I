@@ -183,5 +183,5 @@ func init() {
 	execs.Register("servo_host_servod_restart", servodRestartActionExec)
 	execs.Register("servo_detect_usbkey", servoDetectUSBKey)
 	execs.Register("servo_audit_usbkey", servoAuditUSBKey)
-	execs.Register("servo_root_present", isRootServoPresentExec)
+	execs.Register("servo_v4_root_present", isRootServoPresentExec)
 }
