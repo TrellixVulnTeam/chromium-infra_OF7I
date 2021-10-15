@@ -154,6 +154,10 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "get node"
+  },
+  {
     "cmd": [
       "cipd",
       "ensure",
@@ -178,8 +182,9 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "ensure_installed",
+    "name": "get node.ensure_installed",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
@@ -194,6 +199,10 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "get chrome"
+  },
+  {
     "cmd": [
       "python",
       "-u",
@@ -203,7 +212,7 @@
       "----",
       "cp",
       "gs://chromium-browser-snapshots/Linux_x64/LAST_CHANGE",
-      "[CLEANUP]/gs_dir_tmp_1"
+      "[CLEANUP]/chrome_tmp_1"
     ],
     "infra_step": true,
     "luci_context": {
@@ -218,7 +227,10 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "gsutil download"
+    "name": "get chrome.gsutil download",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -228,7 +240,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "[CLEANUP]/gs_dir_tmp_1/LAST_CHANGE",
+      "[CLEANUP]/chrome_tmp_1/LAST_CHANGE",
       "/path/to/tmp/"
     ],
     "infra_step": true,
@@ -244,8 +256,9 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "read latest chrome version",
+    "name": "get chrome.read latest chrome version",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_END@LAST_CHANGE@@@"
     ]
   },
@@ -259,7 +272,7 @@
       "----",
       "cp",
       "gs://chromium-browser-snapshots/Linux_x64//chrome-linux.zip",
-      "[CLEANUP]/gs_dir_tmp_1"
+      "[CLEANUP]/chrome_tmp_1"
     ],
     "infra_step": true,
     "luci_context": {
@@ -274,7 +287,10 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "gsutil download (2)"
+    "name": "get chrome.gsutil download (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -294,8 +310,11 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "unzip chrome",
-    "stdin": "{\"output\": \"[CLEANUP]/gs_dir_tmp_1/zip\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/gs_dir_tmp_1/chrome-linux.zip\"}"
+    "name": "get chrome.unzip chrome",
+    "stdin": "{\"output\": \"[CLEANUP]/chrome_tmp_1/zip\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/chrome_tmp_1/chrome-linux.zip\"}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -304,7 +323,7 @@
     ],
     "cwd": "[START_DIR]/gerrit_plugins_code_coverage",
     "env": {
-      "LAUNCHPAD_CHROME": "[CLEANUP]/gs_dir_tmp_1/zip/chrome-linux/chrome",
+      "LAUNCHPAD_CHROME": "[CLEANUP]/chrome_tmp_1/zip/chrome-linux/chrome",
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
     "luci_context": {
@@ -329,7 +348,7 @@
     ],
     "cwd": "[START_DIR]/gerrit_plugins_code_coverage",
     "env": {
-      "LAUNCHPAD_CHROME": "[CLEANUP]/gs_dir_tmp_1/zip/chrome-linux/chrome",
+      "LAUNCHPAD_CHROME": "[CLEANUP]/chrome_tmp_1/zip/chrome-linux/chrome",
       "PATH": "[START_DIR]/packages/bin:<PATH>"
     },
     "luci_context": {
