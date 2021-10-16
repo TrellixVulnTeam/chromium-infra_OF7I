@@ -453,6 +453,14 @@ def ExportFeatureCoverage(modifier_id, run_id):
 
       # Calculate interesting lines for file corresponding to each builder
       for builder, report in builder_to_latest_report.items():
+        # Check again if the file type is supported by the builder. This is
+        # needed because content_at_latest could still be available if two
+        # builders have PostsubmitReports generated at the same commit
+        if not any([
+            file_path.endswith(extension)
+            for extension in _SOURCE_BUILDERS[builder]
+        ]):
+          continue
         content_at_latest = contents[report.gitiles_commit.revision]
         if content_at_latest:
           interesting_lines = _GetInterestingLines(

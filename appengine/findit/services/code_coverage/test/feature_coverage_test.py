@@ -771,8 +771,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
-  def testSingleCommit_ModifiesExistingFile_FileStaysIntact(
-      self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
+  def testExponentialBackoffWithGitiles(self, mock_merged_changes,
+                                        mock_file_content, mocked_report_rows,
+                                        *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
@@ -787,6 +788,107 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         build_id=2000,
         visible=True)
     postsubmit_report.put()
+    file_coverage_data = FileCoverageData.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        path='//myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        data={'lines': [{
+            'count': 100,
+            'first': 1,
+            'last': 2
+        }]})
+    file_coverage_data.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
+    ]
+    commit_to_content = {
+        'p1': 'line1',
+        'c1': 'line1\nline2',
+        'latest': 'line1\nline2'
+    }
+
+    qps_exceeded_already = []
+
+    def _getMockContent(_, revision):
+      if revision not in qps_exceeded_already:
+        qps_exceeded_already.append(revision)
+        return '', 429
+      else:
+        return commit_to_content[revision], 200
+
+    mock_file_content.side_effect = _getMockContent
+    run_id = int(time.time())
+
+    feature_coverage.ExportFeatureCoverage(123, run_id)
+
+    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
+                                           'chromium/src', 'my_feature')
+    expected_bq_rows = [{
+        'project': 'chromium/src',
+        'revision': 'latest',
+        'run_id': run_id,
+        'builder': 'linux-code-coverage',
+        'gerrit_hashtag': 'my_feature',
+        'modifier_id': 123,
+        'path': 'myfile.cc',
+        'total_lines': 1,  # One interesting line is instrumented(line2)
+        'covered_lines': 1,  # One interesting line is covered(line2)
+        'interesting_lines': 1,
+        'commit_timestamp': '2020-01-07T00:00:00',
+        'insert_timestamp': '2020-09-21T00:00:00',
+    }]
+    mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
+                                          'code_coverage_summaries',
+                                          'feature_coverage')
+
+  # This test tests the case when two builders with different supporting
+  # file types generate PostsubmitReports at the same commit. In this case,
+  # bigquery table should contain rows only for the one supporting the file
+  # type
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={
+          'linux-code-coverage': ['.cc'],
+          'android-code-coverage': ['.java']
+      })
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testMultipleBuildersWithReportsAtSameRevision(self, mock_merged_changes,
+                                                    mock_file_content,
+                                                    mocked_report_rows, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True).put()
+    PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='android-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2001,
+        visible=True).put()
     file_coverage_data = FileCoverageData.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
