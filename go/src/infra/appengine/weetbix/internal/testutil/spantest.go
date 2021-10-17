@@ -177,6 +177,7 @@ func cleanupDatabase(ctx context.Context, client *spanner.Client) error {
 		// No need to explicitly delete interleaved tables.
 		spanner.Delete("AnalyzedTestVariants", spanner.AllKeys()),
 		spanner.Delete("BugClusters", spanner.AllKeys()),
+		spanner.Delete("ClusteringState", spanner.AllKeys()),
 	})
 	return err
 }

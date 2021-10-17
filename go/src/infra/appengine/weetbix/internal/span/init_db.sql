@@ -133,3 +133,33 @@ CREATE TABLE BugClusters (
   -- in future, if it is needed for performance.
   IsActive BOOL,
 ) PRIMARY KEY (Project, Bug);
+
+-- Clustering state records the clustering state of failed test results, organised
+-- by chunk.
+CREATE TABLE ClusteringState (
+  -- The LUCI Project the test results belong to.
+  Project STRING(40) NOT NULL,
+  -- The identity of the chunk of test results. 32 lowercase hexadecimal
+  -- characters assigned by the ingestion process.
+  ChunkId STRING(32) NOT NULL,
+  -- The start of the retention period of the test results in the chunk.
+  PartitionTime TIMESTAMP NOT NULL,
+  -- The identity of the blob storing the chunk's test results.
+  ObjectId STRING(32) NOT NULL,
+  -- The version of clustering algorithms used to cluster test results in this
+  -- chunk. (This is a version over the set of algorithms, distinct from the
+  -- versions of a single algorithm, e.g.:
+  -- v1 -> {failurereason-v1}, v2 -> {failurereason-v1, testname-v1},
+  -- v3 -> {failurereason-v2, testname-v1}.)
+  AlgorithmsVersion INT64 NOT NULL,
+  -- The version of the set of failure association rules used to match test
+  -- results in this chunk. This is the "Last Updated" time of the most
+  -- recently updated failure association rule in the snapshot of failure
+  -- association rules used to match the test results.
+  RuleVersion TIMESTAMP NOT NULL,
+  -- Serialized ChunkClusters proto containing which test result is in which
+  -- cluster.
+  Clusters BYTES(MAX) NOT NULL,
+  -- The Spanner commit timestamp of when the row was last updated.
+  LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+) PRIMARY KEY (Project, ChunkId);
