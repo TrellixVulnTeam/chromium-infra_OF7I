@@ -81,7 +81,7 @@ func makeAddShivasFlags(c *addDUT) flagmap {
 		out["deploy-skip-download-image"] = []string{}
 	}
 	if c.deploySkipInstallFirmware {
-		out["deploy-skip-install-firmware"] = []string{}
+		out["deploy-skip-install-fw"] = []string{}
 	}
 	if c.deploySkipInstallOS {
 		out["deploy-skip-install-os"] = []string{}
