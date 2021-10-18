@@ -38,6 +38,11 @@ var AddDUTCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.address, "address", "", "IP address of host")
 		c.Flags.BoolVar(&c.skipDNS, "skip-dns", false, "whether to skip updating the DNS")
+		c.Flags.BoolVar(
+			&c.fullDeploy,
+			"full-deploy",
+			false,
+			"whether to run full deployment workflow(include OS and firmware install)")
 		registerAddShivasFlags(c)
 		return c
 	},
@@ -60,6 +65,8 @@ type addDUT struct {
 	qualifiedServo string
 	// QualifiedRack is the rack with the satlab ID prepended.
 	qualifiedRack string
+	// FullDeploy is run complete deployment task which includes OS and Firmware installs
+	fullDeploy bool
 }
 
 // Run adds a DUT and returns an exit status.
@@ -158,6 +165,13 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		})()
 	}
 
+	// For Satlab,  default we skip certain deployment task such as
+	// downloading image, installing OS and firmware".
+	if !c.fullDeploy {
+		c.deploySkipDownloadImage = true
+		c.deploySkipInstallOS = true
+		c.deploySkipInstallFirmware = true
+	}
 	if err := (&shivas.Rack{
 		Name:      c.qualifiedRack,
 		Namespace: c.envFlags.Namespace,
