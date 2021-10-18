@@ -320,6 +320,25 @@ func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArg
 	return nil
 }
 
+// waitForSystemExec waits for system-service to be running.
+//
+// Sometimes, update_engine will take a while to update firmware, so we
+// should give this some time to finish. See crbug.com/765686#c38 for details.
+func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	serviceName := "system-services"
+	// Check the status of an upstart init script
+	cmd := fmt.Sprintf("status %s", serviceName)
+	r := args.NewRunner(args.ResourceName)
+	output, err := r(ctx, cmd)
+	if err != nil {
+		return errors.Annotate(err, "wait for system").Err()
+	}
+	if !strings.Contains(output, "start/running") {
+		return errors.Reason("wait for system: service %s not running", serviceName).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -340,4 +359,6 @@ func init() {
 	execs.Register("cros_is_battery_charging", isBatteryChargingExec)
 	execs.Register("cros_is_battery_chargable_or_good_level", isBatteryChargableOrGoodLevelExec)
 	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
+	execs.Register("cros_wait_for_system", waitForSystemExec)
+
 }
