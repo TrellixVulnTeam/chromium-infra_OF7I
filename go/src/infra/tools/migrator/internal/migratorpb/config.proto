@@ -20,5 +20,15 @@ message Config {
     map<string, string> config = 1;
   }
 
+  // Git-related configuration.
   Git git = 1;
+
+  // Regexps with names of projects to visit (ORed together).
+  //
+  // Uses https://golang.org/s/re2syntax syntax. Regexps are implicitly wrapped
+  // into ^(...)$.
+  //
+  // Projects that do not match this filter are considered non-existent.
+  // If empty, visit all projects.
+  repeated string projects_re = 2;
 }

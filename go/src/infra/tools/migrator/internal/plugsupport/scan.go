@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"runtime/debug"
 
 	"go.chromium.org/luci/common/errors"
@@ -46,10 +47,15 @@ func (s *scanner) run(ctx context.Context) error {
 		return errors.Annotate(err, "loading luci-config projects.cfg").Err()
 	}
 
+	projectsToVisit, err := s.filterProjects(projectPB.Projects)
+	if err != nil {
+		return errors.Annotate(err, "when applying projects_re filter").Err()
+	}
+
 	allReports := &migrator.ReportDump{}
 
 	err = parallel.WorkPool(8, func(ch chan<- func() error) {
-		for _, projPB := range projectPB.Projects {
+		for _, projPB := range projectsToVisit {
 			projPB := projPB
 			ch <- func() (err error) {
 				inst := s.factory()
@@ -97,6 +103,43 @@ func (s *scanner) run(ctx context.Context) error {
 	}
 	defer scanOut.Close()
 	return allReports.WriteToCSV(scanOut)
+}
+
+// filterProjects returns a list of projects that pass `projects_re` filter.
+func (s *scanner) filterProjects(projs []*configpb.Project) ([]*configpb.Project, error) {
+	cfg, err := s.projectDir.LoadConfigFile()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cfg.ProjectsRe) == 0 {
+		return projs, nil
+	}
+
+	regs := make([]*regexp.Regexp, len(cfg.ProjectsRe))
+	for i, str := range cfg.ProjectsRe {
+		str = "^(" + str + ")$"
+		regs[i], err = regexp.Compile(str)
+		if err != nil {
+			return nil, errors.Annotate(err, "when compiling %q", str).Err()
+		}
+	}
+
+	var filtered []*configpb.Project
+	for _, proj := range projs {
+		match := false
+		for _, reg := range regs {
+			if reg.MatchString(proj.Id) {
+				match = true
+				break
+			}
+		}
+		if match {
+			filtered = append(filtered, proj)
+		}
+	}
+
+	return filtered, nil
 }
 
 // perProjectContext calls the callback with a per-project context.
