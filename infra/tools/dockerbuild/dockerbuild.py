@@ -232,6 +232,29 @@ def _build_one_wheel(system, args, git_revision, updated_packages, spec_name,
   updated_packages.add(package.name)
 
 
+class WheelDumpCheckFailed(Exception):
+  pass
+
+
+class _WheelDumpCompare(object):
+
+  def __init__(self, fd):
+    self._file = fd
+
+  # write will compare the input with the old file chunk by chunk.
+  def write(self, new):
+    if self._file.read(len(new)) != new:
+      raise WheelDumpCheckFailed(
+          'Please run `vpython3 -m infra.tools.dockerbuild wheel-dump`')
+
+  # done should be called when input is exhausted. It verifies reaching the
+  # end of the old file so the results are exactly same.
+  def done(self):
+    if self._file.read(1):
+      raise WheelDumpCheckFailed(
+          'Please run `vpython3 -m infra.tools.dockerbuild wheel-dump`')
+
+
 def _main_wheel_dump(args, system):
   try:
     md = markdown.Generator()
@@ -244,7 +267,13 @@ def _main_wheel_dump(args, system):
           plat = None
         md.add_package(w, plat)
 
-    md.write(args.output)
+    if args.check:
+      md_cmp = _WheelDumpCompare(args.output)
+      md.write(md_cmp)
+      md_cmp.done()
+    else:
+      args.output.truncate(0)
+      md.write(args.output)
   finally:
     args.output.close()
 
@@ -378,9 +407,16 @@ def add_argparse_options(parser):
   # Subcommand: wheel-dump
   subparser = subparsers.add_parser('wheel-dump',
       help='Dumps a markdown-compatible set of generated wheels.')
-  subparser.add_argument('--output',
-      type=argparse.FileType('w'), default=markdown.DEFAULT_PATH,
+  subparser.add_argument(
+      '--output',
+      type=argparse.FileType('r+'),
+      default=markdown.DEFAULT_PATH,
       help='Path to write the markdown file.')
+  subparser.add_argument(
+      '--check',
+      action='store_true',
+      default=False,
+      help='Only compare the generated result with the markdown file.')
   subparser.set_defaults(func=_main_wheel_dump)
 
   # Subcommand: wheel-json
