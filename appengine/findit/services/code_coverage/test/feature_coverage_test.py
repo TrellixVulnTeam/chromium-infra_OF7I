@@ -81,19 +81,25 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         path='//myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
-        data={'lines': [{
-            'count': 10,
-            'first': 1,
-            'last': 5
-        }]})
+        data={
+            'lines': [{
+                'count': 10,
+                'first': 1,
+                'last': 5
+            }, {
+                'count': 0,
+                'first': 6,
+                'last': 7
+            }]
+        })
     file_coverage_data.put()
     mock_merged_changes.return_value = [
         _CreateMockMergedChange('c1', 'p1', 'myfile.cc')
     ]
     commit_to_content = {
-        'p1': 'line3',
-        'c1': 'line1\nline2\nline3\nline4\nline5',
-        'latest': 'line1\nline2\nline3\nline4\nline5'
+        'p1': 'line3\nline7',
+        'c1': 'line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8',
+        'latest': 'line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8'
     }
     mock_file_content.side_effect = (
         lambda path, revision: (commit_to_content[revision], 200))
@@ -112,10 +118,9 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines':
-            4,  # Four interesting lines are instrumented(line1-2, line4-5)
-        'covered_lines':
-            4,  # Two interesting lines are covered(line1-2, line4-5)
-        'interesting_lines': 4,
+            5,  # Five interesting lines are instrumented(line 1,2,4,5,6)
+        'covered_lines': 4,  # Four interesting lines are covered(line 1,2,4,5)
+        'interesting_lines': 6,  # Six interesting lines (line 1,2,4,5,6,8)
         'commit_timestamp': '2020-01-07T00:00:00',
         'insert_timestamp': '2020-09-21T00:00:00',
     }]
@@ -142,10 +147,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                 'first': 4,
                 'last': 5,
                 'count': 10
+            }, {
+                'first': 6,
+                'last': 6,
+                'count': 0
             }],
             'summaries': [{
                 'name': 'line',
-                'total': 4,
+                'total': 5,
                 'covered': 4
             }],
             'revision': 'latest'

@@ -182,7 +182,7 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
     total = 0
     covered = 0
     # add a dummy range to simplify logic
-    interesting_line_ranges = [{'first': -1, 'last': -1}]
+    interesting_line_ranges = [{'first': -1, 'last': -1, 'count': -1}]
     for line_range in file_coverage.data['lines']:
       for line_num in range(line_range['first'], line_range['last'] + 1):
         # `total` signifies number of lines which are interesting
@@ -191,10 +191,14 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
         # instrumented. e.g. a feature CL adds a comment
         if line_num in interesting_lines:
           total += 1
-          if line_num == interesting_line_ranges[-1]['last'] + 1:
+          if (line_num == interesting_line_ranges[-1]['last'] + 1 and
+              line_range['count'] == interesting_line_ranges[-1]['count']):
+            # Append to the last interesting line range if line numbers are
+            # continuous and they share the same execution count
             interesting_line_ranges[-1]['last'] += 1
           else:
             # Line range gets broken by an uninteresting line
+            # or new line range with a different execution count is encountered
             interesting_line_ranges.append({
                 'first': line_num,
                 'last': line_num,
@@ -378,7 +382,6 @@ def ExportFeatureCoverage(modifier_id, run_id):
   context.set_memcache_policy(False)
 
   gerrit_hashtag = CoverageReportModifier.Get(modifier_id).gerrit_hashtag
-
   builder_to_latest_report = {}
   for builder in _GetAllowedBuilders().keys():
     # Fetch latest full codebase coverage report for the builder
@@ -471,7 +474,6 @@ def ExportFeatureCoverage(modifier_id, run_id):
               | interesting_lines)
         else:
           files_deleted_at_latest[builder].append(file_path)
-
   # Export feature coverage data to Datastore and Bigquery
   for builder, report in builder_to_latest_report.items():
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
