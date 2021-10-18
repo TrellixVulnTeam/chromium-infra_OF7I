@@ -654,7 +654,13 @@ SPECS.update({
                     ),
                 ],
             ),
-            packaged=[],
+            packaged=[
+                # TODO(fancl): We should copy msvcp140.dll and
+                # msvcp140_1.dll for windows build. See also:
+                # https://github.com/MacPython/pandas-wheels/blob/master/azure/windows.yml
+                'windows-x86-py3',
+                'windows-x64-py3',
+            ],
             skip_plat=[
                 'linux-arm64-py3',
             ],
