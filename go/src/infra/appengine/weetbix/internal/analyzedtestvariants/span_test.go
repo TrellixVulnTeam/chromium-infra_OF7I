@@ -49,16 +49,13 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 		testutil.MustApply(ctx, ms...)
 
 		Convey(`TestRead`, func() {
-			ctx, cancel := span.ReadOnlyTransaction(ctx)
-			defer cancel()
-
 			ks := spanner.KeySets(
 				spanner.Key{realm, "ninja://test1", "variantHash1"},
 				spanner.Key{realm, "ninja://test1", "variantHash2"},
 				spanner.Key{realm, "ninja://test-not-exists", "variantHash1"},
 			)
 			atvs := make([]*pb.AnalyzedTestVariant, 0)
-			err := Read(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {
+			err := Read(span.Single(ctx), ks, func(atv *pb.AnalyzedTestVariant, _ spanner.NullTime) error {
 				So(atv.Realm, ShouldEqual, realm)
 				atvs = append(atvs, atv)
 				return nil
@@ -68,11 +65,8 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 		})
 
 		Convey(`TestQueryTestVariantsByBuilder`, func() {
-			ctx, cancel := span.ReadOnlyTransaction(ctx)
-			defer cancel()
-
 			atvs := make([]*pb.AnalyzedTestVariant, 0)
-			err := QueryTestVariantsByBuilder(ctx, realm, builder, func(atv *pb.AnalyzedTestVariant) error {
+			err := QueryTestVariantsByBuilder(span.Single(ctx), realm, builder, func(atv *pb.AnalyzedTestVariant) error {
 				atvs = append(atvs, atv)
 				return nil
 			})

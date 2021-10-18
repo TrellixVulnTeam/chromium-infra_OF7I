@@ -16,18 +16,32 @@ import (
 )
 
 // Read reads AnalyzedTestVariant rows by keys.
-func Read(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant) error) error {
-	fields := []string{"Realm", "TestId", "VariantHash", "Status"}
+func Read(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant, spanner.NullTime) error) error {
+	fields := []string{"Realm", "TestId", "VariantHash", "Status", "NextUpdateTaskEnqueueTime"}
 	var b spanutil.Buffer
 	return span.Read(ctx, "AnalyzedTestVariants", ks, fields).Do(
 		func(row *spanner.Row) error {
 			tv := &pb.AnalyzedTestVariant{}
-			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status); err != nil {
+			var t spanner.NullTime
+			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &t); err != nil {
 				return err
 			}
-			return f(tv)
+			return f(tv, t)
 		},
 	)
+}
+
+// ReadNextUpdateTaskEnqueueTime reads the NextUpdateTaskEnqueueTime from the
+// requested test variant.
+func ReadNextUpdateTaskEnqueueTime(ctx context.Context, k spanner.Key) (spanner.NullTime, error) {
+	row, err := span.ReadRow(ctx, "AnalyzedTestVariants", k, []string{"NextUpdateTaskEnqueueTime"})
+	if err != nil {
+		return spanner.NullTime{}, err
+	}
+
+	var t spanner.NullTime
+	err = row.Column(0, &t)
+	return t, err
 }
 
 // QueryTestVariantsByBuilder queries AnalyzedTestVariants with unexpected

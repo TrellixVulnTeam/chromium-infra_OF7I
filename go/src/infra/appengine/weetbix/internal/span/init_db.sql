@@ -38,6 +38,10 @@ CREATE TABLE AnalyzedTestVariants (
   Status INT64 NOT NULL,
   -- Timestamp when the status field was last updated.
   StatusUpdateTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+  -- Timestamp the next UpdateTestVariant task is enqueued.
+  -- This timestamp is used as a token to validate an UpdateTestVariant is
+  -- expected. A task with unmatched token will be silently ignored.
+  NextUpdateTaskEnqueueTime TIMESTAMP,
 
   -- Compressed metadata for the test case.
   -- For example, the original test name, test location, etc.
@@ -163,3 +167,11 @@ CREATE TABLE ClusteringState (
   -- The Spanner commit timestamp of when the row was last updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
 ) PRIMARY KEY (Project, ChunkId);
+
+-- Stores transactional tasks reminders.
+-- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.
+CREATE TABLE TQReminders (
+                             ID STRING(MAX) NOT NULL,
+                             FreshUntil TIMESTAMP NOT NULL,
+                             Payload BYTES(102400) NOT NULL,
+) PRIMARY KEY (ID ASC);

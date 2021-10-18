@@ -6,3 +6,9 @@ queue:
 
 - name: result-collection
   rate: 500/s
+
+- name: update-test-variant
+  rate: 500/s
+
+- name: tq-sweep
+  rate: 500/s

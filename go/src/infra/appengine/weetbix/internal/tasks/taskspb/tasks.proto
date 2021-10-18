@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package weetbix.internal.tasks;
 
+import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/cv/api/v0/run.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 
@@ -61,4 +62,9 @@ message TestVariantKey {
 // Payload of UpdateTestVariant task.
 message UpdateTestVariant {
   TestVariantKey test_variant_key = 1;
+
+  // The time this task is ready to be enqueued.
+  // The task will run only if this time matches the AnalyzedTestVariants row's
+  // NextUpdateTaskEnqueueTime.
+  google.protobuf.Timestamp enqueue_time = 2;
 }

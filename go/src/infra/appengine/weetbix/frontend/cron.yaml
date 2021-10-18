@@ -5,3 +5,6 @@ cron:
 - description: "Create and update bugs for high-impact clusters"
   url: /internal/cron/update-bugs
   schedule: every 60 minutes
+- description: "Sweeper job for transactional tasks."
+  url: /internal/tasks/c/sweep
+  schedule: every 1 minutes
