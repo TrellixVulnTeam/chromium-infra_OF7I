@@ -11,6 +11,53 @@ from .builder import Builder, BuildPackageFromPyPiWheel, BuildPackageFromSource
 from .build_types import Spec
 
 
+class ConditionalWheel(Builder):
+  """Builds a wheel selected based on different conditions.
+
+  ConditionalWheel can help user select wheel based on platform without
+  match_tag
+
+  Args:
+    name (str): The name of the conditional wheel.
+    version (str): The conditional wheel version. Note there is no
+        patch_version for ConditionalWheel, as the bundle wheel version
+        can be set to any value we like.
+    select_fn (Callable[[System, Wheel], Wheel]): A function select the wheel
+        to be built.
+    pyversions (iterable or None): The list of "python" wheel fields (see
+        "Wheel.pyversion_str"). If None, a default Python version will be
+        used.
+    default (bool): If true, the wheel will be built by default.
+    only_plat: (See Builder's "only_plat" argument.)
+    skip_plat: (See Builder's "skip_plat" argument.)
+  """
+
+  def __init__(self,
+               name,
+               version,
+               select_fn,
+               pyversions=None,
+               only_plat=None,
+               skip_plat=None,
+               default=True):
+    self._select_fn = select_fn
+    super(ConditionalWheel, self).__init__(
+        Spec(
+            name,
+            version,
+            universal=False,
+            pyversions=pyversions,
+            default=default,
+            version_suffix=None),
+        only_plat=only_plat,
+        skip_plat=skip_plat)
+
+  def build_fn(self, system, wheel):
+    b = self._select_fn(system, wheel)
+    w = b.wheel(system, wheel.plat)
+    return b.build_wheel(w, system, rebuild=True)
+
+
 class SourceOrPrebuilt(Builder):
 
   def __init__(self,

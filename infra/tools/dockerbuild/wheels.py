@@ -113,6 +113,43 @@ def assert_sorted(section_type, *builders):
 
 SPECS = {}
 
+from .wheel_wheel import ConditionalWheel
+
+
+# Select Numpy version based on platform. Accelerate framework on old macOS
+# releases is buggy and prebuilt numpy 1.20.x disabled it. For version after
+# 1.21.0 it's re-enabled which is causing numpy breaking on old macOS.
+# We need numpy 1.21.0 or later to support mac-arm.
+# See also: https://crbug.com/1223517#c10
+def select_numpy(_system, wheel):
+  # Use prebuilt numpy~=1.20.0 for mac-x64, which runs old macOS.
+  if wheel.plat.name.startswith('mac-x64'):
+    return Prebuilt(
+        'numpy',
+        '1.20.3',
+        ['mac-x64-cp38'],
+        arch_map={
+            'mac-x64-cp38': _NUMPY_MAC_x64,
+        },
+        pyversions=['py3'],
+    )
+  # Use numpy>=1.21.0 for all other platforms to include support for mac-arm.
+  return SourceOrPrebuilt(
+      'numpy',
+      '1.21.1',
+      packaged=[
+          'mac-arm64-cp38',
+      ],
+      arch_map={
+          'mac-arm64-cp38': _NUMPY_MAC_ARM,
+      },
+      skip_plat=[
+          'mac-x64-py3',
+          'mac-x64-cp38',
+      ],
+      pyversions=['py3'],
+  )
+
 # When adding a wheel, please add it to the appropriate section.
 
 # SourceOrPrebuilts. These are for packages on PyPi which have prebuilts for
@@ -573,21 +610,17 @@ SPECS.update({
                     'cmake',
                 ],
                 local=[
-                    SourceOrPrebuilt(
+                    ConditionalWheel(
                         'numpy',
-                        '1.21.1',
-                        packaged=[
-                            'mac-arm64-cp38',
-                        ],
-                        arch_map={
-                            'mac-arm64-cp38': _NUMPY_MAC_ARM,
-                        },
+                        '1.2x.supported.1',
+                        select_numpy,
                     ),
                 ]),
-            packaged=[],
+            packaged=(),
             skip_plat=[
                 'linux-arm64-py3',
             ],
+            patch_version='chromium.1',
             pyversions=['py3'],
             src_filter=lambda path: not _OPENCV_SRC_RE.match(path),
         ),
@@ -614,15 +647,10 @@ SPECS.update({
                     'Cython>=0.29.21,<3',
                 ],
                 local=[
-                    SourceOrPrebuilt(
+                    ConditionalWheel(
                         'numpy',
-                        '1.21.1',
-                        packaged=[
-                            'mac-arm64-cp38',
-                        ],
-                        arch_map={
-                            'mac-arm64-cp38': _NUMPY_MAC_ARM,
-                        },
+                        '1.2x.supported.1',
+                        select_numpy,
                     ),
                 ],
             ),

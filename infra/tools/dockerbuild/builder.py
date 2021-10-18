@@ -515,11 +515,14 @@ def PrepareBuildDependenciesCmd(system, wheel, build_dir, deps_dir, deps):
     host_plat = wheel.plat
   for dep in deps.local:
     dep_wheel = dep.wheel(system, host_plat)
-    dep.build(dep_wheel, system, rebuild=True)
-    dep_path = dep_wheel.path(system)
-    dep_path = util.copy_to(dep_path, deps_dir)
-    dep_rel = os.path.relpath(dep_path, build_dir)
-    local_wheels.append('{}@{}'.format(dep.spec.name, dep_rel))
+    # build_wheel may return sub wheels different from the original wheel.
+    # e.g. the result of a MultiWheel's build is a list of all included wheels.
+    subs = dep.build_wheel(dep_wheel, system, rebuild=True)
+    for sub in subs:
+      sub_path = sub.path(system)
+      sub_path = util.copy_to(sub_path, deps_dir)
+      sub_rel = os.path.relpath(sub_path, build_dir)
+      local_wheels.append('{}@{}'.format(sub.spec.name, sub_rel))
 
   # Generate pyproject.toml to control build dependencies
   cmd = ['generate_pyproject.py']
