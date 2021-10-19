@@ -144,12 +144,13 @@ func TestUnpackTarball(t *testing.T) {
 
 	// Create an array holding some basic info to build headers. Contains regular files and directories.
 	files := []file{
-		{"test1.so.sym", "debug symbols", 0600},
-		{"test2.so.sym", "debug symbols", 0600},
+		{"/test1.so.sym", "debug symbols", 0600},
+		{"./test2.so.sym", "debug symbols", 0600},
 		{"b/c", "", fs.ModeDir},
-		{"test3.so.sym", "debug symbols", 0600},
+		{"../test3.so.sym", "debug symbols", 0600},
 		{"a/b/c/d/", "", fs.ModeDir},
-		{"test4.so.sym", "debug symbols", 0600},
+		{"./test4.so.sym", "debug symbols", 0600},
+		{"a/shouldntadd.txt", "not a symbol file", 0600},
 	}
 
 	// List of files we expect to see return after the test call.
@@ -197,7 +198,7 @@ func TestUnpackTarball(t *testing.T) {
 			}
 			expectedSymbolFiles[path] = true
 		} else {
-			t.Error("error: unexpected symbol file returned")
+			t.Errorf("error: unexpected symbol file returned %s", path)
 		}
 	}
 
@@ -214,14 +215,16 @@ func TestGenerateConfigs(t *testing.T) {
 		"/test4.so.sym",
 	}
 	expectedTasks := map[taskConfig]bool{
-		{"/test1.so.sym", 0, false, false, false}: false,
-		{"/test2.so.sym", 0, false, false, false}: false,
-		{"/test3.so.sym", 0, false, false, false}: false,
-		{"/test4.so.sym", 0, false, false, false}: false,
+		{"/test1.so.sym", "test1.so.sym", "debugId", 0, false, false, false}: false,
+		{"/test2.so.sym", "test2.so.sym", "debugId", 0, false, false, false}: false,
+		{"/test3.so.sym", "test3.so.sym", "debugId", 0, false, false, false}: false,
+		{"/test4.so.sym", "test4.so.sym", "debugId", 0, false, false, false}: false,
 	}
 
-	tasks := generateConfigs(mockPaths, 0, false, false)
-
+	tasks, err := generateConfigs(mockPaths, 0, false, false)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
 	// Check that returns aren't nil.
 	if tasks == nil {
 		t.Error("error: recieved tasks when nil was expected")
@@ -235,7 +238,7 @@ func TestGenerateConfigs(t *testing.T) {
 			}
 			expectedTasks[task] = true
 		} else {
-			t.Error("error: unexpected task returned")
+			t.Errorf("error: unexpected task returned %+v", task)
 		}
 	}
 }
@@ -245,16 +248,16 @@ func TestGenerateConfigs(t *testing.T) {
 func TestUploadSymbols(t *testing.T) {
 	// Create tasks and expected returns.
 	tasks := []taskConfig{
-		{"/test1.so.sym", 0, false, false, false},
-		{"/test2.so.sym", 0, false, false, false},
-		{"/test3.so.sym", 0, false, false, false},
-		{"/test4.so.sym", 0, false, false, false},
+		{"/test1.so.sym", "test1.so.sym", "", 0, false, false, false},
+		{"/test1.so.sym", "test2.so.sym", "", 0, false, false, false},
+		{"/test1.so.sym", "test3.so.sym", "", 0, false, false, false},
+		{"/test1.so.sym", "test4.so.sym", "", 0, false, false, false},
 	}
 	expectedTasks := map[taskConfig]bool{
-		{"/test1.so.sym", 0, false, false, false}: false,
-		{"/test2.so.sym", 0, false, false, false}: false,
-		{"/test3.so.sym", 0, false, false, false}: false,
-		{"/test4.so.sym", 0, false, false, false}: false,
+		{"/test1.so.sym", "test1.so.sym", "", 0, false, false, false}: false,
+		{"/test1.so.sym", "test2.so.sym", "", 0, false, false, false}: false,
+		{"/test1.so.sym", "test3.so.sym", "", 0, false, false, false}: false,
+		{"/test1.so.sym", "test4.so.sym", "", 0, false, false, false}: false,
 	}
 
 	// Mock upload function to check that we are receiving the expected tasks.

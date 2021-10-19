@@ -23,7 +23,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -37,12 +36,11 @@ const (
 	sleepTimeMs = 100
 )
 
-// Regex used when finding symbol files.
-var fileRegex = regexp.MustCompile(`([\w-]+.so.sym)$`)
-
 // taskConfig will contain the information needed to complete the upload task.
 type taskConfig struct {
 	symbolPath  string
+	debugFile   string
+	debugId     string
 	retryQuota  uint64
 	dryRun      bool
 	isStaging   bool
@@ -64,6 +62,17 @@ type uploadDebugSymbols struct {
 // TODO(b/197010274): remove skeleton code.
 var upload = func(task *taskConfig) bool {
 	return false
+}
+
+// getFilename takes a file path, relative or full, and returns the filename.
+func getFilename(filePath string) (string, error) {
+	basePath := filepath.Base(filePath)
+
+	if basePath == "." {
+		return filePath, fmt.Errorf("error: given filepath %s is invalid", filePath)
+	}
+
+	return basePath, nil
 }
 
 func getCmdUploadDebugSymbols(authOpts auth.Options) *subcommands.Command {
@@ -166,8 +175,11 @@ func unpackTarball(inputPath, outputDir string) ([]string, error) {
 		// The header indicates it's a file. Store and save the file if it is a symbol file.
 		if header.FileInfo().Mode().IsRegular() {
 			// Check if the file is a symbol file.
-			filename := fileRegex.FindString(header.Name)
-			if filename == "" {
+			filename, err := getFilename(header.Name)
+			if err != nil {
+				return nil, err
+			}
+			if filepath.Ext(filename) != ".sym" {
 				continue
 			}
 
@@ -193,7 +205,7 @@ func unpackTarball(inputPath, outputDir string) ([]string, error) {
 // generateConfigs will take a list of strings with containing the paths to the
 // unpacked symbol files. It will return a list of generated task configs
 // alongside the communication channels to be used.
-func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging bool) []taskConfig {
+func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging bool) ([]taskConfig, error) {
 	// The task should only sleep on retry.
 	shouldSleep := false
 
@@ -201,10 +213,15 @@ func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging 
 
 	// Generate task configurations.
 	for index, filepath := range symbolFiles {
-		tasks[index] = taskConfig{filepath, retryQuota, dryRun, isStaging, shouldSleep}
+		// read first line of file and get the symbolid
+		debugFile, err := getFilename(filepath)
+		if err != nil {
+			return nil, err
+		}
+		tasks[index] = taskConfig{filepath, debugFile, "debugId", retryQuota, dryRun, isStaging, shouldSleep}
 	}
 
-	return tasks
+	return tasks, nil
 }
 
 // uploadSymbols is the main loop that will spawn goroutines that will handle the
@@ -232,7 +249,6 @@ func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
 	// currentWorkerCount will track how many workers are.
 	currentWorkerCount := uint64(0)
 
-	// Define sync tools to use for safe asynchronous tasks.
 	var waitgroup sync.WaitGroup
 
 	// This is the main driver loop for the distributed worker design.
@@ -354,7 +370,7 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 		log.Fatal(err)
 	}
 
-	tasks := generateConfigs(symbolFiles, b.retryQuota, b.dryRun, b.isStaging)
+	tasks, err := generateConfigs(symbolFiles, b.retryQuota, b.dryRun, b.isStaging)
 	if err != nil {
 		log.Fatal(err)
 	}
