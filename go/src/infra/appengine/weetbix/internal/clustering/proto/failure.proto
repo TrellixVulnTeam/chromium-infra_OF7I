@@ -8,11 +8,14 @@ package weetbix.internal.clustering;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+import "infra/appengine/weetbix/proto/v1/failure_reason.proto";
 
 option go_package = "infra/appengine/weetbix/internal/clustering/proto;clusteringpb";
 
 // Chunk is a set of unexpected test failures which are processed together
 // for efficiency.
+// Serialised and stored in GCS.
 message Chunk {
   repeated Failure failures = 1;
 }
@@ -20,7 +23,7 @@ message Chunk {
 // Weetbix internal representation of an unexpected test failure.
 message Failure {
   // The identity of the test result, as defined by the source system.
-  TestResultId test_result_id = 1;
+  weetbix.v1.TestResultId test_result_id = 1;
 
   // Timestamp representing the start of the data retention period. This acts
   // as the partitioning key in time/date-partitioned tables.
@@ -35,25 +38,25 @@ message Failure {
   // "{LUCI_PROJECT}:{REALM_SUFFIX}", for example "chromium:ci".
   string realm = 4;
 
-  // Unique identifier for the test.
+  // The unique identifier of the test.
   // For test results from ResultDB, see luci.resultdb.v1.TestResult.test_id.
   string test_id = 5;
 
-  // Description of one specific way of running the test,
+  // key:value pairs to specify the way of running a particular test.
   // e.g. a specific bucket, builder and a test suite.
-  Variant variant = 6;
+  weetbix.v1.Variant variant = 6;
 
   // Hash of the variant.
   // hex(sha256(''.join(sorted('%s:%s\n' for k, v in variant.items())))).
   string variant_hash = 7;
 
   // A failure reason describing why the test failed.
-  FailureReason failure_reason = 8;
+  weetbix.v1.FailureReason failure_reason = 8;
 
   // The bug tracking component corresponding to this test case, as identified
   // by the test results system. If no information is available, this is
   // unset.
-  BugTrackingComponent bug_tracking_component = 9;
+  weetbix.v1.BugTrackingComponent bug_tracking_component = 9;
 
   // The point in time when the test case started to execute.
   google.protobuf.Timestamp start_time = 10;
@@ -69,8 +72,8 @@ message Failure {
   // Identity of the presubmit run that contains this test result.
   // This should be unique per "CQ+1"/"CQ+2" attempt on gerrit.
   //
-  // One presumbit run MAY have many root invocation IDs (e.g. for its
-  // various tryjobs), but every root invocation ID only ever has one
+  // One presumbit run MAY have many ingested invocation IDs (e.g. for its
+  // various tryjobs), but every ingested invocation ID only ever has one
   // presubmit run ID (if any).
   //
   // All test results for the same presubmit run will have one
@@ -78,34 +81,39 @@ message Failure {
   //
   // If the test result was not collected as part of a presubmit run,
   // this is unset.
-  PresubmitRunId presubmit_run_id = 13;
+  weetbix.v1.PresubmitRunId presubmit_run_id = 13;
 
-  // The top-level invocation (i.e. invocation for the build) which
-  // contains this test result.
+  // The invocation from which this test result was ingested. This is
+  // the top-level invocation that was ingested, an "invocation" being
+  // a container of test results as identified by the source test result
+  // system.
   //
-  // All test results with the same root invocation ID will have the same
-  // partition time.
-  string root_invocation_id = 14;
+  // For ResultDB, Weetbix ingests invocations corresponding to
+  // buildbucket builds.
+  //
+  // All test results ingested from the same invocation (i.e. with the
+  // same ingested_invocation_id) will have the same partition time.
+  string ingested_invocation_id = 14;
 
-  // The zero-based index for this test result, in the sequence of this
-  // root invocation's results for this test variant. Within the sequence,
+  // The zero-based index for this test result, in the sequence of the
+  // ingested invocation's results for this test variant. Within the sequence,
   // test results are ordered by start_time and then by test result ID.
   // The first test result is 0, the last test result is
-  // root_invocation_result_count - 1.
-  int64 root_invocation_result_index = 15;
+  // ingested_invocation_result_count - 1.
+  int64 ingested_invocation_result_index = 15;
 
-  // The number of test results having this test variant and root
+  // The number of test results having this test variant in the ingested
   // invocation.
-  int64 root_invocation_result_count = 16;
+  int64 ingested_invocation_result_count = 16;
 
-  // Is the root invocation blocked by this test variant? This is
+  // Is the ingested invocation blocked by this test variant? This is
   // only true if all (non-skipped) test results for this test variant
-  // are unexpected failures.
+  // (in the ingested invocation) are unexpected failures.
   //
   // Exoneration does not factor into this value; check is_exonerated
-  // to see if the impact of this root invocation being blocked was
+  // to see if the impact of this ingested invocation being blocked was
   // mitigated by exoneration.
-  bool is_root_invocation_blocked = 17;
+  bool is_ingested_invocation_blocked = 17;
 
   // The identifier of the test run the test ran in. Test results in different
   // test runs are generally considered independent as they should be unable
@@ -127,84 +135,15 @@ message Failure {
   // test_run_result_count - 1.
   int64 test_run_result_index = 19;
 
-  // The number of test results having this test variant and task.
+  // The number of test results having this test variant and test run.
   int64 test_run_result_count = 20;
 
-  // Is the task blocked by this test variant? This is only true if all
-  // (non-skipped) test results for this test variant are unexpected failures.
+  // Is the test run blocked by this test variant? This is only true if all
+  // (non-skipped) test results for this test variant (in the test run)
+  // are unexpected failures.
   //
   // Exoneration does not factor into this value; check is_exonerated
-  // to see if the impact of this root invocation being blocked was
+  // to see if the impact of this test run being blocked was
   // mitigated by exoneration.
   bool is_test_run_blocked = 21;
-}
-
-// Identity of a test result.
-message TestResultId {
-  // The test results system.
-  // Currently, the only valid value is "resultdb".
-  string system = 1;
-
-  // ID for the test result in the test results system.
-  // For test results in ResultDB, the format is:
-  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}"
-  // Where INVOCATION_ID, URL_ESCAPED_TEST_ID and RESULT_ID are values defined
-  // in ResultDB.
-  string id = 2;
-}
-
-// Identity of a presubmit run (also known as a "CQ Run" or "CV Run").
-message PresubmitRunId {
-  // The system that was used to process the presubmit run.
-  // Currently, the only valid value is "luci-cv" for LUCI Commit Verifier
-  // (LUCI CV).
-  string system = 1;
-
-  // Identity of the presubmit run.
-  // If the presubmit system is LUCI CV, the format of this value is:
-  //   "{LUCI_PROJECT}/{LUCI_CV_ID}", e.g.
-  //   "infra/8988819463854-1-f94732fe20056fd1".
-  string id = 2;
-}
-
-// Identity of a bug tracking component in a bug tracking system.
-message BugTrackingComponent {
-  // The bug tracking system corresponding to this test case, as identified
-  // by the test results system.
-  // Currently, the only valid value is "monorail".
-  string bug_tracking_system = 1;
-
-  // The bug tracking component corresponding to this test case, as identified
-  // by the test results system.
-  // If the bug tracking system is monorail, this is the component as the
-  // user would see it, e.g. "Infra>Test>Flakiness". For monorail, the bug
-  // tracking project (e.g. "chromium") is not encoded, but assumed to be
-  // specified in the project's Weetbix configuration.
-  string bug_tracking_component = 2;
-}
-
-// Variant represents a way of running a test case.
-//
-// The same test case can be executed in different ways, for example on
-// different OS, GPUs, with different compile options or runtime flags.
-message Variant {
-  // The definition of the variant. Each key-value pair represents a
-  // parameter describing how the test was run (e.g. OS, GPU, etc.).
-  map<string, string> def = 1;
-}
-
-// Information about why a test failed.
-message FailureReason {
-  // The error message that ultimately caused the test to fail. This should
-  // only be the error message and should not include any stack traces.
-  // An example would be the message from an Exception in a Java test.
-  // In the case that a test failed due to multiple expectation failures, any
-  // immediately fatal failure should be chosen, or otherwise the first
-  // expectation failure.
-  // If this field is empty, other fields may be used to cluster the failure
-  // instead.
-  //
-  // The size of the message must be equal to or smaller than 1024 bytes in
-  // UTF-8.
-  string primary_error_message = 1;
 }

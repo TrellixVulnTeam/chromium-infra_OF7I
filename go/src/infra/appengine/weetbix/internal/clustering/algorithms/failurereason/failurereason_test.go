@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -21,7 +22,7 @@ func TestAlgorithm(t *testing.T) {
 	Convey(`ID of appropriate length`, t, func() {
 		a := &Algorithm{}
 		id := a.Cluster(&cpb.Failure{
-			FailureReason: &cpb.FailureReason{
+			FailureReason: &pb.FailureReason{
 				PrimaryErrorMessage: "abcd this is a test failure message",
 			},
 		})
@@ -32,12 +33,12 @@ func TestAlgorithm(t *testing.T) {
 	Convey(`Same ID for same cluster with different numbers`, t, func() {
 		a := &Algorithm{}
 		id1 := a.Cluster(&cpb.Failure{
-			FailureReason: &cpb.FailureReason{
+			FailureReason: &pb.FailureReason{
 				PrimaryErrorMessage: "Null pointer exception at ip 0x45637271",
 			},
 		})
 		id2 := a.Cluster(&cpb.Failure{
-			FailureReason: &cpb.FailureReason{
+			FailureReason: &pb.FailureReason{
 				PrimaryErrorMessage: "Null pointer exception at ip 0x12345678",
 			},
 		})
@@ -46,12 +47,12 @@ func TestAlgorithm(t *testing.T) {
 	Convey(`Different ID for different clusters`, t, func() {
 		a := &Algorithm{}
 		id1 := a.Cluster(&cpb.Failure{
-			FailureReason: &cpb.FailureReason{
+			FailureReason: &pb.FailureReason{
 				PrimaryErrorMessage: "Exception in TestMethod",
 			},
 		})
 		id2 := a.Cluster(&cpb.Failure{
-			FailureReason: &cpb.FailureReason{
+			FailureReason: &pb.FailureReason{
 				PrimaryErrorMessage: "Exception in MethodUnderTest",
 			},
 		})

@@ -144,6 +144,308 @@ func (x *TimeRange) GetLatest() *timestamppb.Timestamp {
 	return nil
 }
 
+// Identity of a test result.
+type TestResultId struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The test results system.
+	// Currently, the only valid value is "resultdb".
+	System string `protobuf:"bytes,1,opt,name=system,proto3" json:"system,omitempty"`
+	// ID for the test result in the test results system.
+	// For test results in ResultDB, the format is:
+	// "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}"
+	// Where INVOCATION_ID, URL_ESCAPED_TEST_ID and RESULT_ID are values defined
+	// in ResultDB.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *TestResultId) Reset() {
+	*x = TestResultId{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResultId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResultId) ProtoMessage() {}
+
+func (x *TestResultId) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResultId.ProtoReflect.Descriptor instead.
+func (*TestResultId) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TestResultId) GetSystem() string {
+	if x != nil {
+		return x.System
+	}
+	return ""
+}
+
+func (x *TestResultId) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+// Variant represents a way of running a test case.
+//
+// The same test case can be executed in different ways, for example on
+// different OS, GPUs, with different compile options or runtime flags.
+type Variant struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The definition of the variant. Each key-value pair represents a
+	// parameter describing how the test was run (e.g. OS, GPU, etc.).
+	Def map[string]string `protobuf:"bytes,1,rep,name=def,proto3" json:"def,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *Variant) Reset() {
+	*x = Variant{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Variant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Variant) ProtoMessage() {}
+
+func (x *Variant) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Variant.ProtoReflect.Descriptor instead.
+func (*Variant) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Variant) GetDef() map[string]string {
+	if x != nil {
+		return x.Def
+	}
+	return nil
+}
+
+type StringPair struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Regex: ^[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)*$
+	// Max length: 64.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// Max length: 256.
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *StringPair) Reset() {
+	*x = StringPair{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StringPair) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StringPair) ProtoMessage() {}
+
+func (x *StringPair) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StringPair.ProtoReflect.Descriptor instead.
+func (*StringPair) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *StringPair) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *StringPair) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+// Identity of a bug tracking component in a bug tracking system.
+type BugTrackingComponent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The bug tracking system corresponding to this test case, as identified
+	// by the test results system.
+	// Currently, the only valid value is "monorail".
+	System string `protobuf:"bytes,1,opt,name=system,proto3" json:"system,omitempty"`
+	// The bug tracking component corresponding to this test case, as identified
+	// by the test results system.
+	// If the bug tracking system is monorail, this is the component as the
+	// user would see it, e.g. "Infra>Test>Flakiness". For monorail, the bug
+	// tracking project (e.g. "chromium") is not encoded, but assumed to be
+	// specified in the project's Weetbix configuration.
+	Component string `protobuf:"bytes,2,opt,name=component,proto3" json:"component,omitempty"`
+}
+
+func (x *BugTrackingComponent) Reset() {
+	*x = BugTrackingComponent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BugTrackingComponent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BugTrackingComponent) ProtoMessage() {}
+
+func (x *BugTrackingComponent) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BugTrackingComponent.ProtoReflect.Descriptor instead.
+func (*BugTrackingComponent) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BugTrackingComponent) GetSystem() string {
+	if x != nil {
+		return x.System
+	}
+	return ""
+}
+
+func (x *BugTrackingComponent) GetComponent() string {
+	if x != nil {
+		return x.Component
+	}
+	return ""
+}
+
+// Identity of a presubmit run (also known as a "CQ Run" or "CV Run").
+type PresubmitRunId struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The system that was used to process the presubmit run.
+	// Currently, the only valid value is "luci-cv" for LUCI Commit Verifier
+	// (LUCI CV).
+	System string `protobuf:"bytes,1,opt,name=system,proto3" json:"system,omitempty"`
+	// Identity of the presubmit run.
+	// If the presubmit system is LUCI CV, the format of this value is:
+	//   "{LUCI_PROJECT}/{LUCI_CV_ID}", e.g.
+	//   "infra/8988819463854-1-f94732fe20056fd1".
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *PresubmitRunId) Reset() {
+	*x = PresubmitRunId{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PresubmitRunId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PresubmitRunId) ProtoMessage() {}
+
+func (x *PresubmitRunId) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PresubmitRunId.ProtoReflect.Descriptor instead.
+func (*PresubmitRunId) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PresubmitRunId) GetSystem() string {
+	if x != nil {
+		return x.System
+	}
+	return ""
+}
+
+func (x *PresubmitRunId) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 var File_infra_appengine_weetbix_proto_v1_common_proto protoreflect.FileDescriptor
 
 var file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc = []byte{
@@ -160,16 +462,39 @@ var file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc = []byte{
 	0x74, 0x12, 0x32, 0x0a, 0x06, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x06, 0x6c,
-	0x61, 0x74, 0x65, 0x73, 0x74, 0x2a, 0x60, 0x0a, 0x0d, 0x56, 0x65, 0x72, 0x64, 0x69, 0x63, 0x74,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1e, 0x0a, 0x1a, 0x56, 0x45, 0x52, 0x44, 0x49, 0x43,
-	0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49,
-	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x55, 0x4e, 0x45, 0x58, 0x50, 0x45,
-	0x43, 0x54, 0x45, 0x44, 0x10, 0x0a, 0x12, 0x11, 0x0a, 0x0d, 0x56, 0x45, 0x52, 0x44, 0x49, 0x43,
-	0x54, 0x5f, 0x46, 0x4c, 0x41, 0x4b, 0x59, 0x10, 0x1e, 0x12, 0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50,
-	0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x32, 0x42, 0x2c, 0x5a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61,
-	0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62,
-	0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x77, 0x65, 0x65, 0x74,
-	0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x74, 0x65, 0x73, 0x74, 0x22, 0x36, 0x0a, 0x0c, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x71, 0x0a,
+	0x07, 0x56, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x12, 0x2e, 0x0a, 0x03, 0x64, 0x65, 0x66, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e,
+	0x76, 0x31, 0x2e, 0x56, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x66, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x52, 0x03, 0x64, 0x65, 0x66, 0x1a, 0x36, 0x0a, 0x08, 0x44, 0x65, 0x66, 0x45,
+	0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01,
+	0x22, 0x34, 0x0a, 0x0a, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x69, 0x72, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x4c, 0x0a, 0x14, 0x42, 0x75, 0x67, 0x54, 0x72, 0x61,
+	0x63, 0x6b, 0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12, 0x1c, 0x0a, 0x09, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e,
+	0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x6f, 0x6d, 0x70, 0x6f,
+	0x6e, 0x65, 0x6e, 0x74, 0x22, 0x38, 0x0a, 0x0e, 0x50, 0x72, 0x65, 0x73, 0x75, 0x62, 0x6d, 0x69,
+	0x74, 0x52, 0x75, 0x6e, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12, 0x0e,
+	0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x2a, 0x60,
+	0x0a, 0x0d, 0x56, 0x65, 0x72, 0x64, 0x69, 0x63, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
+	0x1e, 0x0a, 0x1a, 0x56, 0x45, 0x52, 0x44, 0x49, 0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55,
+	0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x0e, 0x0a, 0x0a, 0x55, 0x4e, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x0a, 0x12,
+	0x11, 0x0a, 0x0d, 0x56, 0x45, 0x52, 0x44, 0x49, 0x43, 0x54, 0x5f, 0x46, 0x4c, 0x41, 0x4b, 0x59,
+	0x10, 0x1e, 0x12, 0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x32,
+	0x42, 0x2c, 0x5a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67,
+	0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -185,20 +510,27 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_infra_appengine_weetbix_proto_v1_common_proto_goTypes = []interface{}{
 	(VerdictStatus)(0),            // 0: weetbix.v1.VerdictStatus
 	(*TimeRange)(nil),             // 1: weetbix.v1.TimeRange
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*TestResultId)(nil),          // 2: weetbix.v1.TestResultId
+	(*Variant)(nil),               // 3: weetbix.v1.Variant
+	(*StringPair)(nil),            // 4: weetbix.v1.StringPair
+	(*BugTrackingComponent)(nil),  // 5: weetbix.v1.BugTrackingComponent
+	(*PresubmitRunId)(nil),        // 6: weetbix.v1.PresubmitRunId
+	nil,                           // 7: weetbix.v1.Variant.DefEntry
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_infra_appengine_weetbix_proto_v1_common_proto_depIdxs = []int32{
-	2, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
-	2, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	8, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
+	8, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
+	7, // 2: weetbix.v1.Variant.def:type_name -> weetbix.v1.Variant.DefEntry
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_weetbix_proto_v1_common_proto_init() }
@@ -219,6 +551,66 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_init() {
 				return nil
 			}
 		}
+		file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResultId); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Variant); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StringPair); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BugTrackingComponent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PresubmitRunId); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -226,7 +618,7 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -37,3 +37,66 @@ enum VerdictStatus {
   // All results of the verdict are expected.
   EXPECTED = 50;
 }
+
+// Identity of a test result.
+message TestResultId {
+  // The test results system.
+  // Currently, the only valid value is "resultdb".
+  string system = 1;
+
+  // ID for the test result in the test results system.
+  // For test results in ResultDB, the format is:
+  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}"
+  // Where INVOCATION_ID, URL_ESCAPED_TEST_ID and RESULT_ID are values defined
+  // in ResultDB.
+  string id = 2;
+}
+
+// Variant represents a way of running a test case.
+//
+// The same test case can be executed in different ways, for example on
+// different OS, GPUs, with different compile options or runtime flags.
+message Variant {
+  // The definition of the variant. Each key-value pair represents a
+  // parameter describing how the test was run (e.g. OS, GPU, etc.).
+  map<string, string> def = 1;
+}
+
+message StringPair {
+  // Regex: ^[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)*$
+  // Max length: 64.
+  string key = 1;
+
+  // Max length: 256.
+  string value = 2;
+}
+
+// Identity of a bug tracking component in a bug tracking system.
+message BugTrackingComponent {
+  // The bug tracking system corresponding to this test case, as identified
+  // by the test results system.
+  // Currently, the only valid value is "monorail".
+  string system = 1;
+
+  // The bug tracking component corresponding to this test case, as identified
+  // by the test results system.
+  // If the bug tracking system is monorail, this is the component as the
+  // user would see it, e.g. "Infra>Test>Flakiness". For monorail, the bug
+  // tracking project (e.g. "chromium") is not encoded, but assumed to be
+  // specified in the project's Weetbix configuration.
+  string component = 2;
+}
+
+// Identity of a presubmit run (also known as a "CQ Run" or "CV Run").
+message PresubmitRunId {
+  // The system that was used to process the presubmit run.
+  // Currently, the only valid value is "luci-cv" for LUCI Commit Verifier
+  // (LUCI CV).
+  string system = 1;
+
+  // Identity of the presubmit run.
+  // If the presubmit system is LUCI CV, the format of this value is:
+  //   "{LUCI_PROJECT}/{LUCI_CV_ID}", e.g.
+  //   "infra/8988819463854-1-f94732fe20056fd1".
+  string id = 2;
+}

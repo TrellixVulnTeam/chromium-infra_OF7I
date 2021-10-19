@@ -1,0 +1,25 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
+
+// Information about why a test failed.
+message FailureReason {
+  // The error message that ultimately caused the test to fail. This should
+  // only be the error message and should not include any stack traces.
+  // An example would be the message from an Exception in a Java test.
+  // In the case that a test failed due to multiple expectation failures, any
+  // immediately fatal failure should be chosen, or otherwise the first
+  // expectation failure.
+  // If this field is empty, other fields may be used to cluster the failure
+  // instead.
+  //
+  // The size of the message must be equal to or smaller than 1024 bytes in
+  // UTF-8.
+  string primary_error_message = 1;
+}

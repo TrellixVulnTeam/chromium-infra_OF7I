@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -25,11 +26,11 @@ func TestAlgorithm(t *testing.T) {
 	Convey(`Same ID for same test name`, t, func() {
 		a := &Algorithm{}
 		id1 := a.Cluster(&cpb.Failure{
-			TestResultId: &cpb.TestResultId{System: "resultdb", Id: "1"},
+			TestResultId: &pb.TestResultId{System: "resultdb", Id: "1"},
 			TestId:       "ninja://test_name_one/",
 		})
 		id2 := a.Cluster(&cpb.Failure{
-			TestResultId: &cpb.TestResultId{System: "resultdb", Id: "1"},
+			TestResultId: &pb.TestResultId{System: "resultdb", Id: "1"},
 			TestId:       "ninja://test_name_one/",
 		})
 		So(id2, ShouldResemble, id1)
