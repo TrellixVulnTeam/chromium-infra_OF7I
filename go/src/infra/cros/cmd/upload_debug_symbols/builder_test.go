@@ -208,17 +208,28 @@ func TestUnpackTarball(t *testing.T) {
 // a list of filepaths are given.
 func TestGenerateConfigs(t *testing.T) {
 	// Create mocks and expected returns.
+	expectedTasks := map[taskConfig]bool{}
 	mockPaths := []string{
-		"/test1.so.sym",
-		"/test2.so.sym",
-		"/test3.so.sym",
-		"/test4.so.sym",
+		"test1.so.sym",
+		"test2.so.sym",
+		"test3.so.sym",
+		"test4.so.sym",
 	}
-	expectedTasks := map[taskConfig]bool{
-		{"/test1.so.sym", "test1.so.sym", "debugId", 0, false, false, false}: false,
-		{"/test2.so.sym", "test2.so.sym", "debugId", 0, false, false, false}: false,
-		{"/test3.so.sym", "test3.so.sym", "debugId", 0, false, false, false}: false,
-		{"/test4.so.sym", "test4.so.sym", "debugId", 0, false, false, false}: false,
+
+	testDir, err := ioutil.TempDir("", "configGenTest")
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+	defer os.RemoveAll(testDir)
+	for index, path := range mockPaths {
+		mockPath := filepath.Join(testDir, path)
+		err = ioutil.WriteFile(mockPath, []byte("MODULE Linux arm F4F6FA6CCBDEF455039C8DE869C8A2F40 blkid"), 0644)
+		if err != nil {
+			t.Error("error: " + err.Error())
+		}
+		task := taskConfig{mockPath, mockPaths[index], "F4F6FA6CCBDEF455039C8DE869C8A2F40", 0, false, false, false}
+		expectedTasks[task] = false
+		mockPaths[index] = mockPath
 	}
 
 	tasks, err := generateConfigs(mockPaths, 0, false, false)
@@ -243,21 +254,58 @@ func TestGenerateConfigs(t *testing.T) {
 	}
 }
 
+// TestFilterTasksAlreadyUploaded will verify that we are properly sending the batch request
+// to the crash API.
+// TODO(b/197010274): implement https mocks. Send a reply indicating duplicates to test filtering.
+func TestFilterTasksAlreadyUploaded(t *testing.T) {
+	mockTasks := []taskConfig{
+		{"/test1.so.sym", "test1.so.sym", "abc", 0, false, false, false},
+		{"/test2.so.sym", "test2.so.sym", "def", 0, false, false, false},
+		{"/test3.so.sym", "test3.so.sym", "ghi", 0, false, false, false},
+		{"/test4.so.sym", "test4.so.sym", "jkl", 0, false, false, false},
+	}
+	expectedTasks := map[taskConfig]bool{
+		{"/test1.so.sym", "test1.so.sym", "abc", 0, false, false, false}: false,
+		{"/test2.so.sym", "test2.so.sym", "def", 0, false, false, false}: false,
+		{"/test3.so.sym", "test3.so.sym", "ghi", 0, false, false, false}: false,
+		{"/test4.so.sym", "test4.so.sym", "jkl", 0, false, false, false}: false,
+	}
+
+	filteredTasks, err := filterTasksAlreadyUploaded(mockTasks)
+	if err != nil {
+		t.Error("error: " + err.Error())
+	}
+
+	// TODO(juahurta): This comparison code is replicated a few times, turn it into a function.
+	// Verify that we received a list pointing to all the expected files and no others.
+	for _, task := range filteredTasks {
+		if val, ok := expectedTasks[task]; ok {
+			if val {
+				t.Error("error: task appeared multiple times in function return")
+			}
+			expectedTasks[task] = true
+		} else {
+			t.Errorf("error: unexpected task returned %+v", task)
+		}
+	}
+
+}
+
 // TestUploadSymbols affirms that the worker design and retry model are valid.
 // TODO(b/197010274): implement mocks for upload worker.
 func TestUploadSymbols(t *testing.T) {
 	// Create tasks and expected returns.
 	tasks := []taskConfig{
 		{"/test1.so.sym", "test1.so.sym", "", 0, false, false, false},
-		{"/test1.so.sym", "test2.so.sym", "", 0, false, false, false},
-		{"/test1.so.sym", "test3.so.sym", "", 0, false, false, false},
-		{"/test1.so.sym", "test4.so.sym", "", 0, false, false, false},
+		{"/test2.so.sym", "test2.so.sym", "", 0, false, false, false},
+		{"/test3.so.sym", "test3.so.sym", "", 0, false, false, false},
+		{"/test4.so.sym", "test4.so.sym", "", 0, false, false, false},
 	}
 	expectedTasks := map[taskConfig]bool{
 		{"/test1.so.sym", "test1.so.sym", "", 0, false, false, false}: false,
-		{"/test1.so.sym", "test2.so.sym", "", 0, false, false, false}: false,
-		{"/test1.so.sym", "test3.so.sym", "", 0, false, false, false}: false,
-		{"/test1.so.sym", "test4.so.sym", "", 0, false, false, false}: false,
+		{"/test2.so.sym", "test2.so.sym", "", 0, false, false, false}: false,
+		{"/test3.so.sym", "test3.so.sym", "", 0, false, false, false}: false,
+		{"/test4.so.sym", "test4.so.sym", "", 0, false, false, false}: false,
 	}
 
 	// Mock upload function to check that we are receiving the expected tasks.

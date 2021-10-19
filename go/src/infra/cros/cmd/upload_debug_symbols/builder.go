@@ -10,8 +10,10 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -213,13 +215,71 @@ func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging 
 
 	// Generate task configurations.
 	for index, filepath := range symbolFiles {
-		// read first line of file and get the symbolid
-		debugFile, err := getFilename(filepath)
+		var debugId string
+
+		// debugFile is used in the body of the call to the crash service.
+		debugFilename, err := getFilename(filepath)
 		if err != nil {
 			return nil, err
 		}
-		tasks[index] = taskConfig{filepath, debugFile, "debugId", retryQuota, dryRun, isStaging, shouldSleep}
+
+		// Get id from from the first line of the file.
+		file, err := os.Open(filepath)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		lineScanner := bufio.NewScanner(file)
+
+		if lineScanner.Scan() {
+			line := strings.Split(lineScanner.Text(), " ")
+
+			// 	The first line of the syms file will read like:
+			// 		MODULE Linux arm F4F6FA6CCBDEF455039C8DE869C8A2F40 blkid
+			if len(line) != 5 {
+				return nil, fmt.Errorf("error: incorrect first line format for symbol file %s", debugFilename)
+			}
+
+			debugId = strings.ReplaceAll(line[3], "-", "")
+		}
+
+		tasks[index] = taskConfig{filepath, debugFilename, debugId, retryQuota, dryRun, isStaging, shouldSleep}
 	}
+
+	// Filter out already uploaded debug symbols.
+	tasks, err := filterTasksAlreadyUploaded(tasks)
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+// filterTasksAlreadyUploaded will send a batch request to the crash service for
+// file upload status. It will then filter out symbols that have already been
+// uploaded, reducing our upload time.
+func filterTasksAlreadyUploaded(tasks []taskConfig) ([]taskConfig, error) {
+	// Variable name formatting comes from API definition.
+	type apiSymbolFileDefinition struct {
+		DebugFile string `json:"debug_file"`
+		DebugId   string `json:"debug_id"`
+	}
+
+	// Body of the post call sent to the crash API.
+	type apiBody struct {
+		SymbolIds []apiSymbolFileDefinition `json:"symbol_ids"`
+	}
+	body := apiBody{SymbolIds: []apiSymbolFileDefinition{}}
+
+	for _, task := range tasks {
+		body.SymbolIds = append(body.SymbolIds, apiSymbolFileDefinition{task.debugFile, task.debugId})
+	}
+
+	_, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	// TODO(b/197010274): Send a list of symbol files to the crash api to test for duplicates.
 
 	return tasks, nil
 }
