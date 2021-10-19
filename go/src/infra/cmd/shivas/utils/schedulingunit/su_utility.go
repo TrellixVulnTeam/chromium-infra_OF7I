@@ -7,6 +7,7 @@ package schedulingunit
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"infra/libs/skylab/inventory/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -81,8 +82,15 @@ func labelIntersection(label string, dims []swarming.Dimensions) []string {
 			}
 		}
 	}
+	// Iterate over the keys of valueCount in lexicographic order.
+	var keys []string
 	var labels []string
-	for label, count := range valueCount {
+	for label := range valueCount {
+		keys = append(keys, label)
+	}
+	sort.Strings(keys)
+	for _, label := range keys {
+		count := valueCount[label]
 		if count == len(dims) {
 			labels = append(labels, label)
 		}
