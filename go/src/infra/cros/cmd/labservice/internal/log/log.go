@@ -13,6 +13,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// TODO(ayatane): log to cloud or something
+
 // Infof logs information a developer might find useful for debugging.
 func Infof(ctx context.Context, format string, args ...interface{}) {
 	logging.Get(ctx).LogCall(logging.Info, 1, format, args)
