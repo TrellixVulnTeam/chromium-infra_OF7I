@@ -5,6 +5,7 @@
 package resultingester
 
 import (
+	"sort"
 	"testing"
 
 	"cloud.google.com/go/spanner"
@@ -15,10 +16,12 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
+	_ "go.chromium.org/luci/server/tq/txn/spanner"
 
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
+	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
@@ -43,8 +46,9 @@ func TestSchedule(t *testing.T) {
 func TestIngestTestResults(t *testing.T) {
 	Convey(`TestIngestTestResults`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
-		ctx, _ = tq.TestingContext(ctx, nil)
+		ctx, skdr := tq.TestingContext(ctx, nil)
 		resultcollector.RegisterTaskClass()
+		testvariantupdator.RegisterTaskClass()
 
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
@@ -124,14 +128,16 @@ func TestIngestTestResults(t *testing.T) {
 				TestMetadata: sampleTmd,
 			}
 
-			fields := []string{"Realm", "TestId", "VariantHash", "Status", "Variant", "Tags", "TestMetadata"}
+			var testIDsWithNextTask []string
+			fields := []string{"Realm", "TestId", "VariantHash", "Status", "Variant", "Tags", "TestMetadata", "NextUpdateTaskEnqueueTime"}
 			var actProto *pb.AnalyzedTestVariant
 			var b spanutil.Buffer
 			err = span.Read(ctx, "AnalyzedTestVariants", spanner.AllKeys(), fields).Do(
 				func(row *spanner.Row) error {
 					tv := &pb.AnalyzedTestVariant{}
 					var tmd spanutil.Compressed
-					err = b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &tv.Variant, &tv.Tags, &tmd)
+					var enqTime spanner.NullTime
+					err = b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &tv.Variant, &tv.Tags, &tmd, &enqTime)
 					So(err, ShouldBeNil)
 					So(tv.Realm, ShouldEqual, realm)
 
@@ -145,14 +151,47 @@ func TestIngestTestResults(t *testing.T) {
 					if tv.TestId == sampleTestId {
 						actProto = tv
 					}
+
+					if !enqTime.IsNull() {
+						testIDsWithNextTask = append(testIDsWithNextTask, tv.TestId)
+					}
 					return nil
 				},
 			)
-
 			So(err, ShouldBeNil)
-			So(len(act), ShouldEqual, 6)
 			So(act, ShouldResemble, exp)
 			So(actProto, ShouldResembleProto, expProto)
+			sort.Strings(testIDsWithNextTask)
+
+			// Should have enqueued 1 CollectTestResults task, 3 UpdateTestVariant tasks.
+			So(len(skdr.Tasks().Payloads()), ShouldEqual, 4)
+			expColTask := &taskspb.CollectTestResults{
+				Resultdb: &taskspb.ResultDB{
+					Invocation: &rdbpb.Invocation{
+						Name:  inv,
+						Realm: realm,
+					},
+					Host: "results.api.cr.dev",
+				},
+				Builder:                   "builder",
+				IsPreSubmit:               false,
+				ContributedToClSubmission: false,
+			}
+			var actTestIDsWithTasks []string
+			for _, pl := range skdr.Tasks().Payloads() {
+				switch pl.(type) {
+				case *taskspb.UpdateTestVariant:
+					plp := pl.(*taskspb.UpdateTestVariant)
+					actTestIDsWithTasks = append(actTestIDsWithTasks, plp.TestVariantKey.TestId)
+				case *taskspb.CollectTestResults:
+					plp := pl.(*taskspb.CollectTestResults)
+					So(plp, ShouldResembleProto, expColTask)
+				default:
+				}
+			}
+			sort.Strings(actTestIDsWithTasks)
+			So(len(actTestIDsWithTasks), ShouldEqual, 3)
+			So(actTestIDsWithTasks, ShouldResemble, testIDsWithNextTask)
 		})
 	})
 }

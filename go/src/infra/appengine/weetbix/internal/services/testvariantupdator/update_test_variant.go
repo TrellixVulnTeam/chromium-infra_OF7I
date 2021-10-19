@@ -144,7 +144,7 @@ func updateTestVariantStatus(ctx context.Context, task *taskspb.UpdateTestVarian
 			vals["NextUpdateTaskEnqueueTime"] = now
 		} else {
 			vals["Status"] = int64(newStatus)
-			vals["StatusUpdateTime"] = now
+			vals["StatusUpdateTime"] = spanner.CommitTimestamp
 			if newStatus != pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED && newStatus != pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS {
 				// Only schedule the next UpdateTestVariant task if the test variant
 				// still has unexpected failures.

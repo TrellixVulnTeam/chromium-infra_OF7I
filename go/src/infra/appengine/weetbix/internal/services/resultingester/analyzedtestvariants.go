@@ -7,15 +7,18 @@ package resultingester
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"google.golang.org/protobuf/proto"
 
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
+	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
 	pb "infra/appengine/weetbix/proto/v1"
 )
@@ -53,6 +56,9 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 		}
 
 		ms := make([]*spanner.Mutation, 0)
+		// A map of test variants to the enqueue time of their first UpdateTestVariant
+		// task.
+		tvToEnQTime := make(map[testVariantKey]time.Time)
 		for _, tv := range tvs {
 			tvStr := fmt.Sprintf("%s-%s-%s", realm, tv.TestId, tv.VariantHash)
 			if shouldSkipTestVariant(tv) {
@@ -62,12 +68,13 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 			k := testVariantKey{tv.TestId, tv.VariantHash}
 			atv, ok := found[k]
 			if !ok {
-				m, err := insertRow(realm, builder, tv)
+				m, enqueueTime, err := insertRow(ctx, realm, builder, tv)
 				if err != nil {
 					logging.Errorf(ctx, "Insert test variant %s: %s", tvStr, err)
 					continue
 				}
 				ms = append(ms, m)
+				tvToEnQTime[k] = enqueueTime
 			} else {
 				if atv.Status == pb.AnalyzedTestVariantStatus_FLAKY {
 					// The saved analyzed test variant is a known flake, any status of the new
@@ -86,17 +93,28 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 				}
 
 				if ns != atv.Status {
-					m := spanutil.UpdateMap("AnalyzedTestVariants", map[string]interface{}{
+					vals := map[string]interface{}{
 						"Realm":       atv.Realm,
 						"TestId":      atv.TestId,
 						"VariantHash": atv.VariantHash,
 						"Status":      int64(ns),
-					})
-					ms = append(ms, m)
+					}
+					if atv.Status == pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED || atv.Status == pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS {
+						// The test variant starts to have unexpected failures again, need
+						// to start updating its status.
+						now := clock.Now(ctx)
+						vals["NextUpdateTaskEnqueueTime"] = now
+						tvToEnQTime[k] = now
+					}
+
+					ms = append(ms, spanutil.UpdateMap("AnalyzedTestVariants", vals))
 				}
 			}
 		}
 		span.BufferWrite(ctx, ms...)
+		for tvKey, enQTime := range tvToEnQTime {
+			testvariantupdator.Schedule(ctx, realm, tvKey.TestId, tvKey.VariantHash, enQTime)
+		}
 		return nil
 	})
 	return err
@@ -128,22 +146,24 @@ func shouldSkipTestVariant(tv *rdbpb.TestVariant) bool {
 	return true
 }
 
-func insertRow(realm, builder string, tv *rdbpb.TestVariant) (*spanner.Mutation, error) {
+func insertRow(ctx context.Context, realm, builder string, tv *rdbpb.TestVariant) (mu *spanner.Mutation, enqueueTime time.Time, err error) {
 	status, err := derivedStatus(tv.Status)
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
+	now := clock.Now(ctx)
 	row := map[string]interface{}{
-		"Realm":            realm,
-		"TestId":           tv.TestId,
-		"VariantHash":      tv.VariantHash,
-		"Variant":          tv.Variant,
-		"Status":           int64(status),
-		"CreateTime":       spanner.CommitTimestamp,
-		"StatusUpdateTime": spanner.CommitTimestamp,
-		"Builder":          builder,
-		"Tags":             extractLocationTags(tv),
+		"Realm":                     realm,
+		"TestId":                    tv.TestId,
+		"VariantHash":               tv.VariantHash,
+		"Variant":                   tv.Variant,
+		"Status":                    int64(status),
+		"CreateTime":                spanner.CommitTimestamp,
+		"StatusUpdateTime":          spanner.CommitTimestamp,
+		"Builder":                   builder,
+		"Tags":                      extractLocationTags(tv),
+		"NextUpdateTaskEnqueueTime": now,
 	}
 	if tv.TestMetadata != nil {
 		tmd, err := proto.Marshal(tv.TestMetadata)
@@ -153,7 +173,7 @@ func insertRow(realm, builder string, tv *rdbpb.TestVariant) (*spanner.Mutation,
 		row["TestMetadata"] = spanutil.Compressed(tmd)
 	}
 
-	return spanutil.InsertMap("AnalyzedTestVariants", row), nil
+	return spanutil.InsertMap("AnalyzedTestVariants", row), now, nil
 }
 
 func derivedStatus(tvStatus rdbpb.TestVariantStatus) (pb.AnalyzedTestVariantStatus, error) {
