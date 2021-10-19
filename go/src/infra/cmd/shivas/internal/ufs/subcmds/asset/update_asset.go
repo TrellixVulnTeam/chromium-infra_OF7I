@@ -5,13 +5,17 @@
 package asset
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
@@ -34,6 +38,7 @@ var UpdateAssetCmd = &subcommands.Command{
 		c.commonFlags.Register(&c.Flags)
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.AssetFileText)
+		c.Flags.BoolVar(&c.scan, "scan", false, "Update asset location using barcode scanner")
 
 		c.Flags.StringVar(&c.name, "name", "", "Asset tag of the asset")
 		c.Flags.StringVar(&c.location, "location", "", "location of the asset in barcode format. "+cmdhelp.ClearFieldHelpText)
@@ -64,6 +69,7 @@ type updateAsset struct {
 	commonFlags site.CommonFlags
 
 	newSpecsFile string
+	scan         bool
 
 	name       string
 	location   string
@@ -112,6 +118,9 @@ func (c *updateAsset) innerRun(a subcommands.Application, args []string, env sub
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if c.scan {
+		return c.scanAndUpdateLocation(ctx, ic, a.GetOut(), os.Stdin)
+	}
 	var asset ufspb.Asset
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &asset); err != nil {
@@ -275,63 +284,70 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 }
 
 func (c *updateAsset) validateArgs() error {
-	if c.newSpecsFile != "" {
+	if c.newSpecsFile != "" || c.scan {
+		errFmtStr := ""
+		if c.newSpecsFile != "" {
+			errFmtStr = "Wrong usage!!\nThe JSON input file is already specified. '%s' cannot be specified at the same time."
+		}
+		if c.scan {
+			errFmtStr = "Wrong usage!!\n '-scan' is already specified. '%s' cannot be specified at the same time."
+		}
 		if c.name != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-name"))
 		}
 		if c.location != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-location' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-location"))
 		}
 		if c.zone != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-zone' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-zone"))
 		}
 		if c.aisle != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-aisle' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-aisle"))
 		}
 		if c.row != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-row' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-row"))
 		}
 		if c.shelf != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-shelf' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-shelf"))
 		}
 		if c.rack != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-rack' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-rack"))
 		}
 		if c.racknumber != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-racknumber' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-racknumber"))
 		}
 		if c.position != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-position' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-position"))
 		}
 		if c.barcode != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-barcode' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-barcode"))
 		}
 		if c.assetType != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-type' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-barcode"))
 		}
 		if c.model != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-model' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-model"))
 		}
 		if c.costcenter != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-costcenter' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-costcenter"))
 		}
 		if c.gcn != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-gcn' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-gcn"))
 		}
 		if c.board != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-board' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-board"))
 		}
 		if c.reference != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-reference' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-reference"))
 		}
 		if c.mac != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-mac' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-mac"))
 		}
 		if c.phase != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-phase' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-phase"))
 		}
 	}
-	if c.newSpecsFile == "" {
+	if c.newSpecsFile == "" && !c.scan {
 		if c.name == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
@@ -347,6 +363,64 @@ func (c *updateAsset) validateArgs() error {
 		if c.assetType != "" && !ufsUtil.IsAssetType(c.assetType) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid asset type, please check help info for '-type'.", c.assetType)
 		}
+	}
+	return nil
+}
+
+// scanAndUpdateLocation loops until quit, collects the new location and asset tags and updates the asset location
+func (c *updateAsset) scanAndUpdateLocation(ctx context.Context, ic ufsAPI.FleetClient, w io.Writer, r io.Reader) error {
+	var location *ufspb.Location
+	scanner := bufio.NewScanner(r)
+
+	// Attempt to get location
+	location, err := deriveLocation(ctx, ic, c.location, c.rack, c.shelf, c.position)
+	if err != nil {
+		if c.commonFlags.Verbose() {
+			fmt.Fprintf(w, "Cannot determine location from inputs. Need to scan the location.\n%v\n", err)
+		}
+	}
+
+	fmt.Fprintf(w, "Connect the barcode scanner to your device.\n")
+	prompt(w, location.GetRack())
+	for scanner.Scan() {
+		token := scanner.Text()
+		if token == "" {
+			prompt(w, location.GetRack())
+			continue
+		}
+		// Attempt to update location
+		if utils.IsLocation(token) {
+			l, err := utils.GetLocation(token)
+			if err != nil || l.GetRack() == "" {
+				fmt.Fprintf(w, "Cannot determine rack for the location %s. %s\n", token, err.Error())
+				continue
+			}
+			location = l
+			prompt(w, location.GetRack())
+			continue
+		}
+
+		if location != nil {
+			// Create and add asset
+			asset := &ufspb.Asset{
+				Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
+				Location: location,
+			}
+
+			_, err := ic.UpdateAsset(ctx, &ufsAPI.UpdateAssetRequest{
+				Asset: asset,
+				UpdateMask: &field_mask.FieldMask{
+					Paths: []string{"location"},
+				},
+			})
+
+			if err != nil {
+				fmt.Fprintf(w, "Failed to update asset %s location to UFS. %s \n", token, err.Error())
+			} else {
+				fmt.Fprintf(w, "Updated asset %s location to UFS \n", token)
+			}
+		}
+		prompt(w, location.GetRack())
 	}
 	return nil
 }
