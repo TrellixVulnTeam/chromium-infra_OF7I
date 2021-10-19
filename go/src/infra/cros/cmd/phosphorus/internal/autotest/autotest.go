@@ -87,7 +87,12 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 		args = append(args, "-m", strings.Join(cmd.Hosts, ","))
 	}
 	if cmd.ImageStorageServer != "" {
-		args = append(args, "--image-storage-server", cmd.ImageStorageServer)
+		modCmd := cmd.ImageStorageServer
+		// TODO(engeg@): Remove as soon as autotest is fixed.
+		if !strings.HasSuffix(modCmd, "/") {
+			modCmd = modCmd + "/"
+		}
+		args = append(args, "--image-storage-server", modCmd)
 	}
 	if len(cmd.JobLabels) != 0 {
 		args = append(args, "--job-labels", strings.Join(cmd.JobLabels, ","))
