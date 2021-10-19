@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	lucipb "go.chromium.org/luci/common/proto"
 	configpb "go.chromium.org/luci/common/proto/config"
 
 	"infra/tools/migrator"
@@ -119,44 +120,66 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 	git.run("config", "remote.origin.partialclonefilter", "blob:none")
 	git.run("fetch", "--depth", "1", "origin")
 
+	// Path where generated configs (e.g. project.cfg) are.
+	generatedRoot := gitLoc.Path
+	if generatedRoot == "" {
+		generatedRoot = "."
+	}
+
+	// Attempt to read project.cfg from the git guts. It contains lucicfg metadata
+	// describing how to find the root of the lucicfg config tree. This returns
+	// nil if the config is missing.
+	projectCfg, err := readProjectCfgFromGit(&git, generatedRoot, originRef)
+	if err != nil {
+		err = errors.Annotate(err, "failed to read project.cfg").Err()
+		return
+	}
+
 	// toAdd will have the list of file patterns we want from our sparse checkout;
 	// We do the `sparse-checkout add` call at most once because it's pretty slow
 	// on each invocation (it updates some internal git state and may also do
 	// network fetches to pull down missing blobs; this is optimized if you feed
 	// it all the new patterns simultaneously).
 	toAdd := stringset.Set{}
-	toAdd.Add(gitLoc.Path)
+	toAdd.Add(generatedRoot)
 
-	var foundRelConfigRoot bool
-	relConfigRoot := ""
-
-	// Run from gitLoc.Path all the way up to "."; We need to add all OWNERS files
-	// and will calculate relConfigRoot along the way.
-	//
-	// TODO(iannucci): have a deterministic way to find the relConfigRoot; maybe
-	// a generated metadata file?
-	for cur := gitLoc.Path; cur != "."; cur = path.Dir(cur) {
-		if !foundRelConfigRoot && git.check("cat-file", "-t", originRef+":"+cur+"/main.star") {
-			foundRelConfigRoot = true
-			relConfigRoot = cur
-			toAdd.Add(cur)
-		}
+	// Run from generatedRoot all the way up to "."; We need to add all OWNERS
+	// files.
+	for cur := generatedRoot; cur != "."; cur = path.Dir(cur) {
 		toAdd.Add(filepath.Join(cur, "DIR_METADATA"))
 		toAdd.Add(filepath.Join(cur, "OWNERS"))
 		toAdd.Add(filepath.Join(cur, "PRESUBMIT.py"))
 	}
 
-	if relConfigRoot == "" {
-		// We didn't find it heuristically.
-		relConfigRoot = gitLoc.Path
+	// We need to checkout the directory with lucicfg's main package. Grab its
+	// location from the project config metadata but fallback to a heuristic of
+	// finding the main.star for projects that don't have the metadata yet.
+	relConfigRoot := generatedRoot
+	configDir := projectCfg.GetLucicfg().GetConfigDir()
+	if configDir != "" {
+		// configDir is e.g. "generated/luci", we want to "step up" the
+		// corresponding number of times to get from generatedRoot to relConfigRoot.
+		levelsUp := strings.Count(path.Clean(configDir), "/") + 1
+		for i := 0; i < levelsUp; i++ {
+			relConfigRoot = path.Dir(relConfigRoot)
+		}
+	} else {
+		// Go up until we see main.star.
+		for ; relConfigRoot != "."; relConfigRoot = path.Dir(relConfigRoot) {
+			if git.check("cat-file", "-t", originRef+":"+relConfigRoot+"/main.star") {
+				break
+			}
+		}
+		logging.Warningf(ctx, "guessed lucicfg config root: %s", relConfigRoot)
 	}
+	toAdd.Add(relConfigRoot)
 
 	// Finalize the checkout.
 
 	// We do a sparse checkout iff the relConfigRoot is somewhere deeper than
 	// the root of the repo. Otherwise the whole checkout is the config
 	// directory.
-	if !(relConfigRoot == "" || relConfigRoot == ".") {
+	if relConfigRoot != "." {
 		git.run("sparse-checkout", "init")
 		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
 		if err = git.err; err != nil {
@@ -166,7 +189,7 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 
 	git.run("new-branch", "fix_config")
 
-	git.run("config", generatedConfigRootKey, gitLoc.Path)
+	git.run("config", generatedConfigRootKey, generatedRoot)
 	git.run("config", relConfigRootKey, relConfigRoot)
 
 	if err = git.err; err != nil {
@@ -174,6 +197,19 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 	}
 
 	return os.Rename(git.root, realPath)
+}
+
+// readProjectCfgFromGit reads project.cfg from the repo using `git cat-file`.
+func readProjectCfgFromGit(git *gitRunner, generatedRoot, originRef string) (*configpb.ProjectCfg, error) {
+	body := git.read("cat-file", "-p", fmt.Sprintf("%s:%s/project.cfg", originRef, generatedRoot))
+	if body == "" {
+		return nil, nil
+	}
+	var cfg configpb.ProjectCfg
+	if err := lucipb.UnmarshalTextML(body, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 // CreateOrLoadRepo loads a new repo, checking it out if it's not available
