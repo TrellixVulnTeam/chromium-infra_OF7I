@@ -30,12 +30,40 @@ type Reportable interface {
 type Project interface {
 	Reportable
 
+	// ID is the project identifier, as it appears in projects.cfg.
 	ID() string
 
 	// ConfigFiles returns a mapping of path to config file.
 	//
 	// May do a (cached) network operation to retrieve the data.
 	ConfigFiles() map[string]ConfigFile
+}
+
+// LocalProject is a checked out project that can be modified.
+type LocalProject interface {
+	Project
+
+	// ConfigRoot returns the path to the config file 'root' within the repo.
+	//
+	// This would be the directory with the root of the lucicfg Starlark code
+	// tree, if the repo has one, otherwise it is the root of the repository.
+	//
+	// This an 'absolute-style' path (see Shell).
+	ConfigRoot() string
+
+	// GeneratedConfigRoot returns the path to the generated config files (i.e.
+	// the ones seen by the luci-config service).
+	//
+	// This an 'absolute-style' path (see Shell).
+	GeneratedConfigRoot() string
+
+	// Repo is the repository that contains this project.
+	Repo() Repo
+
+	// Shell returns a new shell object that can be used to modify configs.
+	//
+	// Its cwd is set to the ConfigRoot.
+	Shell() Shell
 }
 
 // ConfigFile encapsulates as single configuration file from a Project.

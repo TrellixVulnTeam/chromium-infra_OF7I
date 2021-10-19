@@ -6,6 +6,7 @@ package plugsupport
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,15 +18,15 @@ import (
 )
 
 type shell struct {
-	repo *repo
-
-	cwd string // relative to repo.root
+	ctx  context.Context
+	root string
+	cwd  string // relative to root
 }
 
 func (s *shell) Cd(path string) {
 	newRel := s.computeRepoRelative(path)
 
-	abs := filepath.Join(s.repo.root, newRel)
+	abs := filepath.Join(s.root, newRel)
 	st, err := os.Stat(abs)
 	if err != nil {
 		panic(errors.Annotate(err, "Cd(%q) -> /%s", path, newRel).Err())
@@ -54,7 +55,7 @@ func (s *shell) computeRepoRelative(path string) string {
 }
 
 func (s *shell) ModifyFile(path string, modify func(oldContents string) string, mode ...os.FileMode) {
-	abspath := filepath.Join(s.repo.root, s.computeRepoRelative(path))
+	abspath := filepath.Join(s.root, s.computeRepoRelative(path))
 
 	newMode := os.FileMode(0666)
 
@@ -81,7 +82,7 @@ func (s *shell) ModifyFile(path string, modify func(oldContents string) string, 
 
 func (s *shell) Stat(path string) os.FileInfo {
 	relpath := s.computeRepoRelative(path)
-	abspath := filepath.Join(s.repo.root, relpath)
+	abspath := filepath.Join(s.root, relpath)
 	st, err := os.Stat(abspath)
 	if os.IsNotExist(err) {
 		return nil
@@ -93,19 +94,19 @@ func (s *shell) Stat(path string) os.FileInfo {
 }
 
 func (s *shell) Run(name string, args ...string) {
-	cmd := exec.CommandContext(s.repo.ctx, name, args...)
-	cmd.Dir = filepath.Join(s.repo.root, s.cwd)
-	logging.Infof(s.repo.ctx, "%q: Run(%q %q)", cmd.Dir, name, args)
-	if err := redirectIOAndWait(cmd, defaultLogger(s.repo.ctx)); err != nil {
+	cmd := exec.CommandContext(s.ctx, name, args...)
+	cmd.Dir = filepath.Join(s.root, s.cwd)
+	logging.Infof(s.ctx, "%q: Run(%q %q)", cmd.Dir, name, args)
+	if err := redirectIOAndWait(cmd, defaultLogger(s.ctx)); err != nil {
 		panic(errors.Annotate(err, "Run(%q, %q)", name, args).Err())
 	}
 }
 
 func (s *shell) Retval(name string, args ...string) int {
-	cmd := exec.CommandContext(s.repo.ctx, name, args...)
-	cmd.Dir = filepath.Join(s.repo.root, s.cwd)
-	logging.Infof(s.repo.ctx, "%q: Retval(%q %q)", cmd.Dir, name, args)
-	if err := redirectIOAndWait(cmd, defaultLogger(s.repo.ctx)); err != nil {
+	cmd := exec.CommandContext(s.ctx, name, args...)
+	cmd.Dir = filepath.Join(s.root, s.cwd)
+	logging.Infof(s.ctx, "%q: Retval(%q %q)", cmd.Dir, name, args)
+	if err := redirectIOAndWait(cmd, defaultLogger(s.ctx)); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			return exitError.ExitCode()
 		}
@@ -115,13 +116,23 @@ func (s *shell) Retval(name string, args ...string) int {
 }
 
 func (s *shell) Stdout(name string, args ...string) string {
-	cmd := exec.CommandContext(s.repo.ctx, name, args...)
-	cmd.Dir = filepath.Join(s.repo.root, s.cwd)
+	cmd := exec.CommandContext(s.ctx, name, args...)
+	cmd.Dir = filepath.Join(s.root, s.cwd)
 	var buffer bytes.Buffer
 	cmd.Stdout = &buffer
-	logging.Infof(s.repo.ctx, "%q: Stdout(%q %q)", cmd.Dir, name, args)
-	if err := redirectIOAndWait(cmd, defaultLogger(s.repo.ctx)); err != nil {
+	logging.Infof(s.ctx, "%q: Stdout(%q %q)", cmd.Dir, name, args)
+	if err := redirectIOAndWait(cmd, defaultLogger(s.ctx)); err != nil {
 		panic(errors.Annotate(err, "Stdout(%q, %q)", name, args).Err())
 	}
 	return buffer.String()
+}
+
+func defaultLogger(ctx context.Context) func(bool, string) {
+	return func(fromStdout bool, line string) {
+		if fromStdout {
+			logging.Infof(ctx, "%s", line)
+		} else {
+			logging.Errorf(ctx, "%s", line)
+		}
+	}
 }

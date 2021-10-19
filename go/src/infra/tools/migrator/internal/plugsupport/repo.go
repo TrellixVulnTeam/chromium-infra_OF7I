@@ -27,88 +27,100 @@ import (
 )
 
 type repo struct {
-	root string
-
-	relConfigRoot          string
-	relGeneratedConfigRoot string
-
-	projID string
-
-	ctx context.Context
+	projectDir ProjectDir          // the root migrator project directory
+	checkoutID string              // how to name the checkout directory on disk
+	remoteURL  string              // https://... repo URL
+	remoteRef  string              // e.g. "refs/heads/main"
+	projects   []*configpb.Project // LUCI projects located within this repo
+	root       string              // the absolute path to the repo checkout
 }
 
-func (r *repo) Project() migrator.Project {
+// configRootKey is a key for "git config".
+func configRootKey(projID string) string {
+	return fmt.Sprintf("migrator.%s.configRoot", projID)
+}
+
+// generatedConfigRootKey is a key for "git config".
+func generatedConfigRootKey(projID string) string {
+	return fmt.Sprintf("migrator.%s.generatedConfigRoot", projID)
+}
+
+// localProject returns a reference to the local checked out project.
+func (r *repo) localProject(ctx context.Context, projID string) migrator.LocalProject {
+	git := gitRunner{ctx: ctx, root: r.root}
 	return &localProject{
-		id:  migrator.ReportID{Project: r.projID},
-		dir: filepath.Join(r.root, r.relGeneratedConfigRoot),
-		ctx: r.ctx,
+		id:                     migrator.ReportID{Project: projID},
+		repo:                   r,
+		ctx:                    ctx,
+		relConfigRoot:          git.read("config", configRootKey(projID)),
+		relGeneratedConfigRoot: git.read("config", generatedConfigRootKey(projID)),
 	}
 }
 
-const (
-	generatedConfigRootKey = "migrator.generatedConfigRoot"
-	relConfigRootKey       = "migrator.relConfigRoot"
-)
-
-func (r *repo) ConfigRoot() string          { return "/" + r.relConfigRoot }
-func (r *repo) GeneratedConfigRoot() string { return "/" + r.relGeneratedConfigRoot }
-
-func loadRepo(ctx context.Context, project ProjectDir, projID string) (ret migrator.Repo, err error) {
-	git := gitRunner{ctx: ctx, root: project.ProjectRepo(projID)}
-
-	ret = &repo{
-		root: git.root,
-
-		relConfigRoot:          git.read("config", relConfigRootKey),
-		relGeneratedConfigRoot: git.read("config", generatedConfigRootKey),
-
-		projID: projID,
-
-		ctx: ctx,
+// initialize either creates or loads the repo checkout.
+func (r *repo) initialize(ctx context.Context) (newCheckout bool, err error) {
+	r.root = r.projectDir.CheckoutDir(r.checkoutID)
+	switch _, err = os.Stat(r.root); {
+	case os.IsNotExist(err):
+		return true, r.create(ctx)
+	case err == nil:
+		return false, r.load(ctx)
+	default:
+		return false, errors.Annotate(err, "statting checkout").Err()
 	}
-
-	return ret, git.err
 }
 
-func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Project) (err error) {
-	realPath := project.ProjectRepo(projPB.Id)
-	gitLoc := projPB.GetGitilesLocation()
+// load verifies the checkout has all LUCI projects we need.
+func (r *repo) load(ctx context.Context) error {
+	git := gitRunner{ctx: ctx, root: r.root}
 
+	for _, proj := range r.projects {
+		configRoot := git.read("config", configRootKey(proj.Id))
+		generatedConfigRoot := git.read("config", generatedConfigRootKey(proj.Id))
+		if configRoot == "" || generatedConfigRoot == "" {
+			return errors.Reason(
+				"the checkout %q is lacking LUCI project %q; you may need to rerun the migration with -squeaky -clean flags",
+				r.checkoutID, proj.Id,
+			).Err()
+		}
+	}
+
+	return git.err
+}
+
+// create initializes a new repo checkout.
+func (r *repo) create(ctx context.Context) error {
 	// We do this because `git cl` makes very broad assumptions about ref names.
 	var originRef string
-	if prefix := "refs/heads/"; strings.HasPrefix(gitLoc.Ref, prefix) {
-		originRef = strings.Replace(gitLoc.Ref, prefix, "refs/remotes/origin/", 1)
-	} else if prefix := "refs/branch-heads/"; strings.HasPrefix(gitLoc.Ref, prefix) {
-		originRef = strings.Replace(gitLoc.Ref, prefix, "refs/remotes/branch-heads/", 1)
+	if prefix := "refs/heads/"; strings.HasPrefix(r.remoteRef, prefix) {
+		originRef = strings.Replace(r.remoteRef, prefix, "refs/remotes/origin/", 1)
+	} else if prefix := "refs/branch-heads/"; strings.HasPrefix(r.remoteRef, prefix) {
+		originRef = strings.Replace(r.remoteRef, prefix, "refs/remotes/branch-heads/", 1)
 	} else {
-		err = errors.Reason("malformed GitilesLocation.Ref, must be `refs/heads/` or `refs/branch-heads/`: %q", gitLoc.Ref).Err()
-		return
+		return errors.Reason("malformed remote ref, must be `refs/heads/` or `refs/branch-heads/`: %q", r.remoteRef).Err()
 	}
 
 	// Bail early if the migrator config is broken.
-	migratorCfg, err := project.LoadConfigFile()
+	migratorCfg, err := r.projectDir.LoadConfigFile()
 	if err != nil {
-		err = errors.Annotate(err, "bad config in %q", project).Err()
-		return
+		return errors.Annotate(err, "bad migrator config in %q", r.projectDir).Err()
 	}
 
-	git := gitRunner{ctx: ctx, root: project.ProjectRepoTemp(projPB.Id)}
-
+	git := gitRunner{ctx: ctx, root: r.projectDir.CheckoutTemp(r.checkoutID)}
 	if err = os.Mkdir(git.root, 0777); err != nil {
-		err = errors.Annotate(err, "creating repo checkout").Err()
-		return
+		return errors.Annotate(err, "creating repo checkout").Err()
 	}
 
 	// "sso://" simplifies authenticating into internal repos.
-	remoteURL := strings.Replace(gitLoc.Repo, "https://", "sso://", 1)
+	remoteURL := strings.Replace(r.remoteURL, "https://", "sso://", 1)
 
 	// Bail early with a clear error message if we have no read access.
-	git.run("ls-remote", remoteURL, gitLoc.Ref)
+	git.run("ls-remote", remoteURL, r.remoteRef)
 	if git.err != nil {
-		err = errors.Reason("no read access to %q ref %q", gitLoc.Repo, gitLoc.Ref).Err()
-		return
+		return errors.Reason("no read access to %q ref %q", remoteURL, r.remoteRef).Err()
 	}
 
+	// Fetch the state into the git guts, but do not check out it yet.
 	git.run("init")
 	for key, val := range migratorCfg.GetGit().Config {
 		git.run("config", key, val)
@@ -116,31 +128,42 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 	git.run("config", "extensions.PartialClone", "origin")
 	git.run("config", "depot-tools.upstream", originRef)
 	git.run("remote", "add", "origin", remoteURL)
-	git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+originRef)
+	git.run("config", "remote.origin.fetch", "+"+r.remoteRef+":"+originRef)
 	git.run("config", "remote.origin.partialclonefilter", "blob:none")
 	git.run("fetch", "--depth", "1", "origin")
 
+	// Figure out what directories we need to have in the checkout.
+	toAdd := stringset.Set{}
+	for _, proj := range r.projects {
+		if err := r.prepRepoForProject(&git, originRef, proj, toAdd); err != nil {
+			return errors.Annotate(err, "when examining LUCI project %q", proj.Id).Err()
+		}
+	}
+
+	// We do a sparse checkout iff the stuff we want is somewhere deeper than
+	// the root of the repo. Otherwise the whole checkout is the config
+	// directory.
+	if !toAdd.Has(".") {
+		git.run("sparse-checkout", "init")
+		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
+	}
+	git.run("new-branch", "fix_config")
+	if git.err != nil {
+		return git.err
+	}
+
+	return os.Rename(git.root, r.root)
+}
+
+// prepRepoForProject figures out what directories we need to check out.
+func (r *repo) prepRepoForProject(git *gitRunner, originRef string, proj *configpb.Project, toAdd stringset.Set) error {
 	// Path where generated configs (e.g. project.cfg) are.
-	generatedRoot := gitLoc.Path
+	generatedRoot := proj.GetGitilesLocation().GetPath()
 	if generatedRoot == "" {
 		generatedRoot = "."
 	}
 
-	// Attempt to read project.cfg from the git guts. It contains lucicfg metadata
-	// describing how to find the root of the lucicfg config tree. This returns
-	// nil if the config is missing.
-	projectCfg, err := readProjectCfgFromGit(&git, generatedRoot, originRef)
-	if err != nil {
-		err = errors.Annotate(err, "failed to read project.cfg").Err()
-		return
-	}
-
-	// toAdd will have the list of file patterns we want from our sparse checkout;
-	// We do the `sparse-checkout add` call at most once because it's pretty slow
-	// on each invocation (it updates some internal git state and may also do
-	// network fetches to pull down missing blobs; this is optimized if you feed
-	// it all the new patterns simultaneously).
-	toAdd := stringset.Set{}
+	// Need to checkout all generated files themselves.
 	toAdd.Add(generatedRoot)
 
 	// Run from generatedRoot all the way up to "."; We need to add all OWNERS
@@ -151,113 +174,49 @@ func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		toAdd.Add(filepath.Join(cur, "PRESUBMIT.py"))
 	}
 
+	// Attempt to read project.cfg from the git guts. It contains lucicfg metadata
+	// describing how to find the root of the lucicfg config tree.
+	var projectCfg configpb.ProjectCfg
+	blob := git.read("cat-file", "-p", fmt.Sprintf("%s:%s/project.cfg", originRef, generatedRoot))
+	if blob != "" {
+		if err := lucipb.UnmarshalTextML(blob, &projectCfg); err != nil {
+			return errors.Annotate(err, "failed to unmarshal project.cfg").Err()
+		}
+	}
+
 	// We need to checkout the directory with lucicfg's main package. Grab its
 	// location from the project config metadata but fallback to a heuristic of
 	// finding the main.star for projects that don't have the metadata yet.
-	relConfigRoot := generatedRoot
+	configRoot := generatedRoot
 	configDir := projectCfg.GetLucicfg().GetConfigDir()
 	if configDir != "" {
 		// configDir is e.g. "generated/luci", we want to "step up" the
-		// corresponding number of times to get from generatedRoot to relConfigRoot.
+		// corresponding number of times to get from generatedRoot to configRoot.
 		levelsUp := strings.Count(path.Clean(configDir), "/") + 1
 		for i := 0; i < levelsUp; i++ {
-			relConfigRoot = path.Dir(relConfigRoot)
+			configRoot = path.Dir(configRoot)
 		}
 	} else {
 		// Go up until we see main.star.
-		for ; relConfigRoot != "."; relConfigRoot = path.Dir(relConfigRoot) {
-			if git.check("cat-file", "-t", originRef+":"+relConfigRoot+"/main.star") {
+		for ; configRoot != "."; configRoot = path.Dir(configRoot) {
+			if git.check("cat-file", "-t", originRef+":"+configRoot+"/main.star") {
 				break
 			}
 		}
-		logging.Warningf(ctx, "guessed lucicfg config root: %s", relConfigRoot)
 	}
-	toAdd.Add(relConfigRoot)
+	toAdd.Add(configRoot)
 
-	// Finalize the checkout.
+	// Store these directories for reuse in load(...) and localProject(...).
+	git.run("config", configRootKey(proj.Id), configRoot)
+	git.run("config", generatedConfigRootKey(proj.Id), generatedRoot)
 
-	// We do a sparse checkout iff the relConfigRoot is somewhere deeper than
-	// the root of the repo. Otherwise the whole checkout is the config
-	// directory.
-	if relConfigRoot != "." {
-		git.run("sparse-checkout", "init")
-		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
-		if err = git.err; err != nil {
-			return
-		}
-	}
-
-	git.run("new-branch", "fix_config")
-
-	git.run("config", generatedConfigRootKey, generatedRoot)
-	git.run("config", relConfigRootKey, relConfigRoot)
-
-	if err = git.err; err != nil {
-		return
-	}
-
-	return os.Rename(git.root, realPath)
-}
-
-// readProjectCfgFromGit reads project.cfg from the repo using `git cat-file`.
-func readProjectCfgFromGit(git *gitRunner, generatedRoot, originRef string) (*configpb.ProjectCfg, error) {
-	body := git.read("cat-file", "-p", fmt.Sprintf("%s:%s/project.cfg", originRef, generatedRoot))
-	if body == "" {
-		return nil, nil
-	}
-	var cfg configpb.ProjectCfg
-	if err := lucipb.UnmarshalTextML(body, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
-
-// CreateOrLoadRepo loads a new repo, checking it out if it's not available
-// locally.
-//
-// If `projPB` is nil, the repo MUST exist locally, or this returns an error.
-//
-// Returns `true` if this did a new checkout.
-func CreateOrLoadRepo(ctx context.Context, project ProjectDir, projID string, projPB *configpb.Project) (ret migrator.Repo, newCheckout bool, err error) {
-	realPath := project.ProjectRepo(projID)
-
-	if _, err = os.Stat(realPath); err != nil && !os.IsNotExist(err) {
-		err = errors.Annotate(err, "statting checkout").Err()
-		return
-	} else if os.IsNotExist(err) {
-		if projPB == nil {
-			err = errors.Reason("projPB==nil and project %q is not already checked out", projID).Err()
-			return
-		}
-		newCheckout = true
-		if err = createRepo(ctx, project, projPB); err != nil {
-			return
-		}
-	}
-
-	ret, err = loadRepo(ctx, project, projID)
-	return
-}
-
-// Shell returns a new 'Shell' object for use in plugins.
-func (r *repo) Shell() migrator.Shell {
-	return &shell{repo: r, cwd: r.relConfigRoot}
+	return git.err
 }
 
 type gitRunner struct {
 	root string
 	err  error
 	ctx  context.Context
-}
-
-func defaultLogger(ctx context.Context) func(bool, string) {
-	return func(fromStdout bool, line string) {
-		if fromStdout {
-			logging.Infof(ctx, "%s", line)
-		} else {
-			logging.Errorf(ctx, "%s", line)
-		}
-	}
 }
 
 // Sets up redirection for cmd.Std{out,err} to `log`.
@@ -380,5 +339,5 @@ func (r *gitRunner) read(args ...string) string {
 		logging.Errorf(r.ctx, "%s", line)
 	})
 	r.err = errors.Annotate(err, "running git %q", args).Err()
-	return buf.String()
+	return strings.TrimSpace(buf.String())
 }

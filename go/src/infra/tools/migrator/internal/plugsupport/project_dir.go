@@ -61,17 +61,17 @@ func (p ProjectDir) ProjectLog(projectID string) string {
 	return filepath.Join(string(p), projectID+".scan.log")
 }
 
-// ProjectRepoTemp returns a LUCI project temporary checkout directory.
+// CheckoutTemp returns a temporary checkout directory.
 //
 // During repo creation, the initial git repo is cloned here and then moved to
-// its ProjectRepo() path on success.
-func (p ProjectDir) ProjectRepoTemp(projectID string) string {
-	return filepath.Join(p.TrashDir(), projectID)
+// its CheckoutDir() path on success.
+func (p ProjectDir) CheckoutTemp(checkoutID string) string {
+	return filepath.Join(p.TrashDir(), checkoutID)
 }
 
-// ProjectRepo returns the path for a specific LUCI project's git checkout.
-func (p ProjectDir) ProjectRepo(projectID string) string {
-	return filepath.Join(string(p), projectID)
+// CheckoutDir returns the path for a git checkout.
+func (p ProjectDir) CheckoutDir(checkoutID string) string {
+	return filepath.Join(string(p), checkoutID)
 }
 
 // MkTempDir generates a new temporary directory within TrashDir().

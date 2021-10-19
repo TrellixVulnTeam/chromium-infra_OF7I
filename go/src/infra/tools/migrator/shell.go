@@ -22,8 +22,6 @@ const TieStderr = "2>&1"
 //
 // It is not permitted to access a path outside the Repo's root.
 //
-// A just-created Shell starts with the 'cwd' at the ConfigDir.
-//
 // Errors
 //
 // All functions of Shell will panic under error conditions. This is consistent

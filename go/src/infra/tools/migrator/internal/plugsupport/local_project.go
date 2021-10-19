@@ -20,9 +20,12 @@ import (
 )
 
 type localProject struct {
-	id  migrator.ReportID
-	dir string
-	ctx context.Context
+	id   migrator.ReportID
+	repo *repo
+	ctx  context.Context
+
+	relConfigRoot          string
+	relGeneratedConfigRoot string
 
 	configsOnce sync.Once
 	configsErr  error
@@ -34,8 +37,11 @@ var _ migrator.Project = (*localProject)(nil)
 func (l *localProject) ID() string { return l.id.Project }
 
 func (l *localProject) ConfigFiles() map[string]migrator.ConfigFile {
+	dir := filepath.Join(l.repo.root, l.relGeneratedConfigRoot)
+
 	l.configsOnce.Do(func() {
-		l.configsErr = filepath.Walk(l.dir, func(path string, info os.FileInfo, err error) error {
+		l.configs = make(map[string]migrator.ConfigFile)
+		l.configsErr = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -43,14 +49,14 @@ func (l *localProject) ConfigFiles() map[string]migrator.ConfigFile {
 				return filepath.SkipDir
 			}
 			if info.Mode().IsRegular() {
-				relpath := path[len(l.dir)+1:]
+				relpath := filepath.ToSlash(path[len(dir)+1:])
 				l.configs[relpath] = &localConfigFile{
 					id: migrator.ReportID{
 						Project:    l.id.Project,
 						ConfigFile: relpath,
 					},
-					generatedConfigRoot: l.dir,
-					ctx:                 l.ctx,
+					abs: path,
+					ctx: l.ctx,
 				}
 			}
 			return nil
@@ -66,11 +72,21 @@ func (l *localProject) Report(tag, description string, opts ...migrator.ReportOp
 	getReportSink(l.ctx).add(l.id, tag, description, opts...)
 }
 
+func (l *localProject) ConfigRoot() string          { return "/" + l.relConfigRoot }
+func (l *localProject) GeneratedConfigRoot() string { return "/" + l.relGeneratedConfigRoot }
+func (l *localProject) Repo() migrator.Repo         { return l.repo }
+
+func (l *localProject) Shell() migrator.Shell {
+	return &shell{
+		ctx:  l.ctx,
+		root: l.repo.root,
+		cwd:  l.relConfigRoot,
+	}
+}
+
 type localConfigFile struct {
-	id migrator.ReportID
-
-	generatedConfigRoot string
-
+	id  migrator.ReportID
+	abs string
 	ctx context.Context
 
 	rawDataOnce sync.Once
@@ -82,7 +98,7 @@ func (l *localConfigFile) Path() string { return l.id.ConfigFile }
 
 func (l *localConfigFile) RawData() string {
 	l.rawDataOnce.Do(func() {
-		data, err := ioutil.ReadFile(filepath.Join(l.generatedConfigRoot, l.id.ConfigFile))
+		data, err := ioutil.ReadFile(l.abs)
 		l.rawData = string(data)
 		l.rawDataErr = err
 	})

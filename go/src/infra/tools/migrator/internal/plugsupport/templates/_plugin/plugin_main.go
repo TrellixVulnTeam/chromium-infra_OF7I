@@ -79,14 +79,13 @@ func (*impl) FindProblems(ctx context.Context, proj m.Project) {
 // directory.
 //
 // This function should panic on error.
-func (*impl) ApplyFix(ctx context.Context, repo m.Repo) {
+func (*impl) ApplyFix(ctx context.Context, proj m.LocalProject) {
 	// The body of this function should be adjusted according to the needs of your
 	// particular migration. The content below is just for reference/example.
 	//
 	// If you can't do automated fixes for your migration, just leave this
 	// function body blank.
-
-	sh := repo.Shell() // NOTE: starts in repo.ConfigRoot()
+	sh := proj.Shell()
 	if sh.Stat("main.star") != nil {
 		sh.Run("./main.star", m.TieStderr)
 	}

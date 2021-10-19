@@ -10,7 +10,9 @@ import (
 	"os"
 	"regexp"
 	"runtime/debug"
+	"strings"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
@@ -36,6 +38,124 @@ type scanner struct {
 	cfg        ScanConfig
 }
 
+// scannedProject is a project being scanned.
+type scannedProject struct {
+	ctx    context.Context      // has logging and reports sink
+	done   func(removeLog bool) // called to finalize the log
+	pb     *configpb.Project    // an entry from projects.cfg
+	api    migrator.API         // a project-specific instance of the plugin impl
+	remote migrator.Project     // an instance of RemoteProject
+}
+
+// repoRef is a repo:ref pair.
+type repoRef struct {
+	repo string
+	ref  string
+}
+
+// scan calls FindProblems to scan the remote project for errors.
+func (p *scannedProject) scan() {
+	defer func() {
+		if rcov := recover(); rcov != nil {
+			// TODO(iannucci): report this better
+			logging.Errorf(p.ctx, "fatal error: %s", rcov)
+			logging.Errorf(p.ctx, string(debug.Stack()))
+			p.remote.Report("FATAL_ERROR", fmt.Sprintf("%s", rcov))
+		}
+	}()
+	p.api.FindProblems(p.ctx, p.remote)
+}
+
+// applyFix calls ApplyFix to modify the local configs checkout.
+func (p *scannedProject) applyFix(repo *repo) {
+	defer func() {
+		if rcov := recover(); rcov != nil {
+			// TODO(iannucci): report this better
+			logging.Errorf(p.ctx, "fatal error: %s", rcov)
+			logging.Errorf(p.ctx, string(debug.Stack()))
+			p.remote.Report("APPLY_FIX_FAILURE", "Failed to run ApplyFix")
+		}
+	}()
+	p.api.ApplyFix(p.ctx, repo.localProject(p.ctx, p.pb.Id))
+}
+
+// hasActionableReports returns true if we need to checkout and fix the project.
+func (p *scannedProject) hasActionableReports() bool {
+	return HasActionableReports(p.ctx)
+}
+
+// repoRef returns repo:ref pair where project configs are hosted.
+func (p *scannedProject) repoRef() repoRef {
+	return repoRef{
+		repo: p.pb.GetGitilesLocation().GetRepo(),
+		ref:  p.pb.GetGitilesLocation().GetRef(),
+	}
+}
+
+// finalize collects the per-project reports and closes the log.
+func (p *scannedProject) finalize(dump *migrator.ReportDump) {
+	numReports := dump.UpdateFrom(DumpReports(p.ctx))
+	if numReports > 0 {
+		logging.Warningf(p.ctx, "%d reports", numReports)
+	}
+	p.done(!p.hasActionableReports())
+}
+
+type multiProjectCheckout struct {
+	ctx        context.Context   // logs into all relevant projects at once
+	checkoutID string            // identifier of this checkout on disk
+	repoRef    repoRef           // repo:ref pair
+	projs      []*scannedProject // projects that are located there
+}
+
+// checkoutID figures out how to name a git checkout given projects there.
+func checkoutID(r repoRef, projs []*scannedProject) string {
+	if len(projs) == 1 {
+		return projs[0].pb.Id + "-project"
+	}
+	// Convert the repo name into an ID using some heuristic to make it less ugly.
+	id := strings.TrimPrefix(r.repo, "https://")
+	id = strings.ReplaceAll(id, "infra/config", "")
+	id = strings.ReplaceAll(id, ".googlesource.com", "")
+	id = strings.ReplaceAll(id, ".", "-")
+	id = strings.ReplaceAll(id, "/", "-")
+	id = strings.Trim(id, "-")
+	return id + "-repo"
+}
+
+// multiLoggingContext makes a context that logs into all project contexts.
+func multiLoggingContext(ctx context.Context, projs []*scannedProject) context.Context {
+	// Clear any default logging in `ctx`, we want to tee only to `projs`.
+	ctx = logging.SetFactory(ctx, nil)
+
+	// Collects all per-project logging sinks.
+	var out []logging.Factory
+	for _, proj := range projs {
+		if f := logging.GetFactory(proj.ctx); f != nil {
+			out = append(out, f)
+		}
+	}
+
+	// Log to all of them at once.
+	return teelogger.Use(ctx, out...)
+}
+
+// report writes the report to all projects at once.
+func (co *multiProjectCheckout) report(tag, description string, opts ...migrator.ReportOption) {
+	for _, proj := range co.projs {
+		proj.remote.Report(tag, description, opts...)
+	}
+}
+
+// projectPBs returns a list with project protos from projects.cfg.
+func (co *multiProjectCheckout) projectPBs() []*configpb.Project {
+	out := make([]*configpb.Project, len(co.projs))
+	for i, p := range co.projs {
+		out[i] = p.pb
+	}
+	return out
+}
+
 // run implements the "scan" command logic.
 func (s *scanner) run(ctx context.Context) error {
 	// Note: we use this formulation because the GetProjects API excludes vital
@@ -47,56 +167,86 @@ func (s *scanner) run(ctx context.Context) error {
 		return errors.Annotate(err, "loading luci-config projects.cfg").Err()
 	}
 
+	// Prep all projects for visiting.
 	projectsToVisit, err := s.filterProjects(projectPB.Projects)
 	if err != nil {
 		return errors.Annotate(err, "when applying projects_re filter").Err()
 	}
+	projs := make([]*scannedProject, len(projectsToVisit))
+	for i, projPB := range projectsToVisit {
+		projCtx, doneCB := s.perProjectContext(ctx, projPB.Id)
+		projs[i] = &scannedProject{
+			ctx:    projCtx,
+			done:   doneCB,
+			pb:     projPB,
+			api:    s.factory(),
+			remote: RemoteProject(projCtx, projPB.Id),
+		}
+	}
 
-	allReports := &migrator.ReportDump{}
+	// Group projects by git repo:ref they are hosted in, this would allow us to
+	// figure out how to name git checkouts on disk.
+	projectsByRepo := make(map[repoRef][]*scannedProject)
+	for _, proj := range projs {
+		projectsByRepo[proj.repoRef()] = append(projectsByRepo[proj.repoRef()], proj)
+	}
+	checkouts := make([]*multiProjectCheckout, 0, len(projectsByRepo))
+	seenIDs := stringset.New(0)
+	for repoRef, projs := range projectsByRepo {
+		id := checkoutID(repoRef, projs)
+		checkouts = append(checkouts, &multiProjectCheckout{
+			ctx:        multiLoggingContext(ctx, projs),
+			checkoutID: id,
+			repoRef:    repoRef,
+			projs:      projs,
+		})
+		if !seenIDs.Add(id) {
+			panic(fmt.Sprintf("collision in the checkout IDs on %q vs %v, change the heuristic in checkoutID", id, seenIDs.ToSortedSlice()))
+		}
+	}
 
-	err = parallel.WorkPool(8, func(ch chan<- func() error) {
-		for _, projPB := range projectsToVisit {
-			projPB := projPB
-			ch <- func() (err error) {
-				inst := s.factory()
-
-				s.perProjectContext(ctx, projPB, func(ctx context.Context) bool {
-					defer func() {
-						numReports := allReports.UpdateFrom(DumpReports(ctx))
-						if numReports > 0 {
-							logging.Warningf(ctx, "%d reports", numReports)
-						}
-					}()
-
-					proj := RemoteProject(ctx, projPB.Id)
-					s.scanProject(ctx, inst, proj)
-
-					if !HasActionableReports(ctx) {
-						s.doRepoCleanup(ctx, projPB.Id)
-						return true
-					}
-
-					// Otherwise create it, and maybe ApplyFix.
-					repo, newCheckout := s.doRepoCreation(ctx, inst, projPB, proj)
-					if repo != nil {
-						if newCheckout || s.cfg.Reapply {
-							s.doApplyFix(ctx, inst, proj, repo)
-						} else if !newCheckout {
-							logging.Infof(ctx, "checkout already exists, skipping ApplyFix (pass -re-apply to run anyway).")
-						}
-					}
-					return false
-				})
-
+	// Discover if we need to fix anything. This operates on the remote configs
+	// and safe to do in parallel. It updates the reports stored in per-project
+	// contexts.
+	parallel.WorkPool(32, func(ch chan<- func() error) {
+		for _, proj := range projs {
+			proj := proj
+			ch <- func() error {
+				proj.scan()
 				return nil
 			}
 		}
 	})
-	if err != nil {
-		// Nothing above should return an error.
-		panic(err)
+
+	// Visit all checkouts and either fix problems there or clean them up.
+	parallel.WorkPool(16, func(ch chan<- func() error) {
+		for _, checkout := range checkouts {
+			checkout := checkout
+			ch <- func() error {
+				allGood := true
+				for _, proj := range checkout.projs {
+					if proj.hasActionableReports() {
+						allGood = false
+						break
+					}
+				}
+				if allGood {
+					s.doCheckoutCleanup(checkout)
+				} else {
+					s.doCheckoutFixups(checkout)
+				}
+				return nil
+			}
+		}
+	})
+
+	// Finalize all per-project logs and collect the reports.
+	allReports := &migrator.ReportDump{}
+	for _, proj := range projs {
+		proj.finalize(allReports)
 	}
 
+	// Write the reports out as CSV.
 	scanOut, err := os.Create(s.projectDir.ReportPath())
 	if err != nil {
 		return err
@@ -142,24 +292,22 @@ func (s *scanner) filterProjects(projs []*configpb.Project) ([]*configpb.Project
 	return filtered, nil
 }
 
-// perProjectContext calls the callback with a per-project context.
-//
-// The callback should return true to delete the project's log file.
-func (s *scanner) perProjectContext(ctx context.Context, projPB *configpb.Project, cb func(ctx context.Context) bool) {
+// perProjectContext prepares a context with project logs and reports sink.
+func (s *scanner) perProjectContext(ctx context.Context, projID string) (out context.Context, done func(removeLog bool)) {
 	ctx = InitReportSink(ctx)
 	ctx = (&gologger.LoggerConfig{
 		Out: os.Stderr,
 		// We pick a more helpful format here which includes the project.
-		// The gorey details of the filename are recorded to the .log file.
-		Format: fmt.Sprintf("%%{color}[%%{level:.1s}|%s]%%{color:reset} %%{message}", projPB.Id),
+		// The gory details of the filename are recorded to the .log file.
+		Format: fmt.Sprintf("%%{color}[%%{level:.1s}|%s]%%{color:reset} %%{message}", projID),
 	}).Use(ctx)
 
-	logFile, err := os.Create(s.projectDir.ProjectLog(projPB.Id))
+	logFile, err := os.Create(s.projectDir.ProjectLog(projID))
 	if err != nil {
 		// should never happen, let it fly
 		panic(errors.Annotate(err, "opening logfile").Err())
 	}
-	defer logFile.Close()
+
 	ctx = teelogger.Use(
 		ctx,
 		(&gologger.LoggerConfig{
@@ -168,65 +316,60 @@ func (s *scanner) perProjectContext(ctx context.Context, projPB *configpb.Projec
 		}).NewLogger,
 	)
 
-	if removeLog := cb(ctx); removeLog {
+	return ctx, func(removeLog bool) {
 		logFile.Close()
-		os.Remove(logFile.Name())
-	}
-}
-
-func (s *scanner) scanProject(ctx context.Context, inst migrator.API, proj migrator.Project) {
-	defer func() {
-		if rcov := recover(); rcov != nil {
-			// TODO(iannucci): report this better
-			logging.Errorf(ctx, "fatal error: %s", rcov)
-			logging.Errorf(ctx, string(debug.Stack()))
-			proj.Report("FATAL_ERROR", fmt.Sprintf("%s", rcov))
-		}
-	}()
-
-	inst.FindProblems(ctx, proj)
-}
-
-func (r *scanner) doApplyFix(ctx context.Context, inst migrator.API, reporter migrator.Reportable, repo migrator.Repo) {
-	defer func() {
-		if rcov := recover(); rcov != nil {
-			// TODO(iannucci): report this better
-			logging.Errorf(ctx, "fatal error: %s", rcov)
-			logging.Errorf(ctx, string(debug.Stack()))
-			reporter.Report("APPLY_FIX_FAILURE", "Failed to run ApplyFix")
-		}
-	}()
-	inst.ApplyFix(ctx, repo)
-}
-
-func (s *scanner) doRepoCreation(ctx context.Context, inst migrator.API, projPB *configpb.Project, reporter migrator.Reportable) (repo migrator.Repo, newCheckout bool) {
-	if s.cfg.Squeaky && s.cfg.Clean {
-		if err := os.RemoveAll(s.projectDir.ProjectRepo(projPB.Id)); err != nil && !os.IsNotExist(err) {
-			logging.Errorf(ctx, "Failed to clean repo, creation may fail: %s", err)
+		if removeLog {
+			os.Remove(logFile.Name())
 		}
 	}
-	repo, newCheckout, err := CreateOrLoadRepo(ctx, s.projectDir, projPB.Id, projPB)
-	if err != nil {
-		logging.Errorf(ctx, "Failed to checkout repo: %s", err)
-		reporter.Report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
-		return
-	}
-	return
 }
 
-func (s *scanner) doRepoCleanup(ctx context.Context, projID string) {
-	checkoutDir := s.projectDir.ProjectRepo(projID)
+func (s *scanner) doCheckoutCleanup(co *multiProjectCheckout) {
+	checkoutDir := s.projectDir.CheckoutDir(co.checkoutID)
 	if s.cfg.Clean {
 		if _, err := os.Stat(checkoutDir); !os.IsNotExist(err) {
-			logging.Warningf(ctx, "Cleaning checkout.")
+			logging.Warningf(co.ctx, "Cleaning checkout.")
 			if err := os.RemoveAll(checkoutDir); err != nil {
-				logging.Errorf(ctx, "Failed to remove repo: %s", err)
+				logging.Errorf(co.ctx, "Failed to remove repo: %s", err)
 			}
 		}
 		return
 	}
+
 	if _, err := os.Stat(checkoutDir); err == nil {
-		logging.Warningf(ctx, "No reports found; This checkout can be removed.")
-		logging.Warningf(ctx, "Pass `-clean` to do this automatically.")
+		logging.Warningf(co.ctx, "No reports found; This checkout can be removed.")
+		logging.Warningf(co.ctx, "Pass `-clean` to do this automatically.")
+	}
+}
+
+func (s *scanner) doCheckoutFixups(co *multiProjectCheckout) {
+	if s.cfg.Squeaky && s.cfg.Clean {
+		checkoutDir := s.projectDir.CheckoutDir(co.checkoutID)
+		if err := os.RemoveAll(checkoutDir); err != nil && !os.IsNotExist(err) {
+			logging.Errorf(co.ctx, "Failed to clean repo, creation may fail: %s", err)
+		}
+	}
+
+	r := &repo{
+		projectDir: s.projectDir,
+		checkoutID: co.checkoutID,
+		remoteURL:  co.repoRef.repo,
+		remoteRef:  co.repoRef.ref,
+		projects:   co.projectPBs(),
+	}
+
+	newCheckout, err := r.initialize(co.ctx)
+	if err != nil {
+		logging.Errorf(co.ctx, "Failed to checkout repo: %s", err)
+		co.report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
+		return
+	}
+
+	for _, proj := range co.projs {
+		if newCheckout || s.cfg.Reapply {
+			proj.applyFix(r)
+		} else if !newCheckout {
+			logging.Infof(proj.ctx, "checkout already exists, skipping ApplyFix (pass -re-apply to run anyway).")
+		}
 	}
 }
