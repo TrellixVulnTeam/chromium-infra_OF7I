@@ -85,10 +85,7 @@ func (*impl) ApplyFix(ctx context.Context, proj m.LocalProject) {
 	//
 	// If you can't do automated fixes for your migration, just leave this
 	// function body blank.
-	sh := proj.Shell()
-	if sh.Stat("main.star") != nil {
-		sh.Run("./main.star", m.TieStderr)
-	}
+	proj.RegenerateConfigs()
 }
 
 // main just passes control to the migrator runtime which then arranges calls

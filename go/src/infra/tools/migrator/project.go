@@ -64,6 +64,9 @@ type LocalProject interface {
 	//
 	// Its cwd is set to the ConfigRoot.
 	Shell() Shell
+
+	// RegenerateConfigs runs lucicfg to regenerate project configs.
+	RegenerateConfigs()
 }
 
 // ConfigFile encapsulates as single configuration file from a Project.

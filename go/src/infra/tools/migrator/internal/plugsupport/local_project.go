@@ -6,15 +6,18 @@ package plugsupport
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
 
 	"go.chromium.org/luci/common/errors"
 	lucipb "go.chromium.org/luci/common/proto"
+	configpb "go.chromium.org/luci/common/proto/config"
 
 	"infra/tools/migrator"
 )
@@ -82,6 +85,40 @@ func (l *localProject) Shell() migrator.Shell {
 		root: l.repo.root,
 		cwd:  l.relConfigRoot,
 	}
+}
+
+func (l *localProject) RegenerateConfigs() {
+	// Attempt to read lucicfg invocation details from project.cfg.
+	f := l.ConfigFiles()["project.cfg"]
+	if f == nil {
+		panic(errors.Reason("no project.cfg in the configs").Err())
+	}
+	var cfg configpb.ProjectCfg
+	f.TextPb(&cfg)
+
+	// Use the config metadata, if available, or "guess" main.star.
+	meta := cfg.GetLucicfg()
+	if meta.GetEntryPoint() == "" {
+		meta = &configpb.GeneratorMetadata{
+			EntryPoint: "main.star",
+		}
+	}
+
+	// Sort vars for less random logging output.
+	vars := make([]string, 0, len(meta.Vars))
+	for k, v := range meta.Vars {
+		vars = append(vars, fmt.Sprintf("%s=%s", k, v))
+	}
+	sort.Strings(vars)
+	cmd := []string{"generate", meta.EntryPoint}
+	for _, v := range vars {
+		cmd = append(cmd, "-var", v)
+	}
+
+	// lucicfg logs to stderr, make its output less red in the migrator logs.
+	cmd = append(cmd, migrator.TieStderr)
+
+	l.Shell().Run("lucicfg", cmd...)
 }
 
 type localConfigFile struct {
