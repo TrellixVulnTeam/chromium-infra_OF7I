@@ -597,7 +597,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:             category + "/Removed",
-				Message:              removedHistogramError,
+				Message:              "[ERROR] The following had metadata removed from histograms.xml: [Test.Histogram2]. Instead of removing them, mark unused histograms as <obsolete>, and include the date or milestone when they were removed. (It's ok to delete metadata for histograms that were never recorded, e.g., to fix a typo in the name.) https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries. (You don't need to move newly marked obsolete histograms to obsolete_histograms.xml. However, if you *have* moved histograms across files or converted existing histograms to variants of a patterned one, you'll see this message as a false-positive; feel free to ignore it in that case.)",
 				Path:                 "rm/remove_histogram.xml",
 				ShowOnUnchangedLines: true,
 			},
