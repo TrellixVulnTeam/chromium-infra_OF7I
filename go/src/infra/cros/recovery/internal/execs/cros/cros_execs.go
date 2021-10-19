@@ -37,6 +37,7 @@ const (
 	provisionFailed = "/var/tmp/provision_failed"
 	// The percentage of the battery that is considered to be not enough.
 	minimumBatteryLevel = 80
+	verify_gsc_cmd      = "gsctool -a -f"
 )
 
 // pingExec verifies the DUT is pingable.
@@ -339,6 +340,21 @@ func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	return nil
 }
 
+// isGscToolPresentExec confirms that GSC tool is functional.
+//
+// If board/model expected to have GSC tool but it does not have it then need
+// to re-image the host to recover it.
+// If host-info has label 'cr50' then we expect to have GSC tool on the host.
+func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.NewRunner(args.ResourceName)
+	_, err := r(ctx, verify_gsc_cmd)
+	if err != nil {
+		return errors.Annotate(err, "gsc tool present: gsc tool issue detected").Err()
+	}
+	log.Debug(ctx, "GSC tool is functional")
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -360,5 +376,5 @@ func init() {
 	execs.Register("cros_is_battery_chargable_or_good_level", isBatteryChargableOrGoodLevelExec)
 	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
 	execs.Register("cros_wait_for_system", waitForSystemExec)
-
+	execs.Register("cros_is_gsc_tool_present", isGscToolPresentExec)
 }
