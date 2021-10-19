@@ -70,6 +70,26 @@ func dutLabelValues(label string, dims []swarming.Dimensions) []string {
 	return res
 }
 
+// labelIntersection takes a label name and a slice of device dimensions, and
+// return only values that are common in all devices.
+func labelIntersection(label string, dims []swarming.Dimensions) []string {
+	valueCount := make(map[string]int)
+	for _, dim := range dims {
+		if values, ok := dim[label]; ok {
+			for _, v := range values {
+				valueCount[v] += 1
+			}
+		}
+	}
+	var labels []string
+	for label, count := range valueCount {
+		if count == len(dims) {
+			labels = append(labels, label)
+		}
+	}
+	return labels
+}
+
 func SchedulingUnitDimensions(su *ufspb.SchedulingUnit, dutsDims []swarming.Dimensions) map[string][]string {
 	suDims := map[string][]string{
 		"dut_name":        {ufsUtil.RemovePrefix(su.GetName())},
@@ -88,6 +108,16 @@ func SchedulingUnitDimensions(su *ufspb.SchedulingUnit, dutsDims []swarming.Dime
 		joinedLabels := joinSingleValueLabel(dutLabelValues(dutLabelName, dutsDims))
 		if len(joinedLabels) > 0 {
 			suDims[suLabelName] = joinedLabels
+		}
+	}
+	// conjunctionLabels define labels we want present it in SU only if all
+	// their devices has the given label, and SU will only inherit values that
+	// are common among all devices under the SU.
+	conjunctionLabels := []string{"label-device-stable"}
+	for _, label := range conjunctionLabels {
+		values := labelIntersection(label, dutsDims)
+		if len(values) > 0 {
+			suDims[label] = values
 		}
 	}
 	return suDims

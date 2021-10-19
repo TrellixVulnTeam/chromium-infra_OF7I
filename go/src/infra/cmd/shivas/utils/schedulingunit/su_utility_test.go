@@ -95,26 +95,115 @@ func TestDutLabelValues(t *testing.T) {
 	})
 }
 
+func TestLabelIntersection(t *testing.T) {
+	Convey("Test find intersection from a given label name.", t, func() {
+		dims := []swarming.Dimensions{
+			{
+				"label-device-stable": {"True"},
+				"label-foo":           {"common_value1", "common_value2", "common_value3", "special_value1"},
+				"label-foo2":          {"value"},
+			},
+			{
+				"label-device-stable": {"True"},
+				"label-foo":           {"common_value1", "common_value2", "common_value3", "special_value2"},
+				"label-foo2":          {"value"},
+			},
+			{
+				"label-device-stable": {"True"},
+				"label-foo":           {"common_value1", "common_value2", "common_value3", "special_value3"},
+			},
+		}
+		So(labelIntersection("label-device-stable", dims), ShouldResemble, []string{"True"})
+		So(labelIntersection("label-foo", dims), ShouldResemble, []string{"common_value1", "common_value2", "common_value3"})
+		So(labelIntersection("label-foo2", dims), ShouldResemble, []string(nil))
+	})
+}
+
 func TestSchedulingUnitDimensions(t *testing.T) {
-	Convey("Test with a non-empty scheduling unit.", t, func() {
+	Convey("Test with a non-empty scheduling unit with all devices are stable.", t, func() {
 		su := &ufspb.SchedulingUnit{
 			Name:  "schedulingunit/test-unit1",
 			Pools: []string{"nearby_sharing"},
 		}
 		dims := []swarming.Dimensions{
 			{
-				"dut_name":      {"host1"},
-				"label-board":   {"coral"},
-				"label-model":   {"babytiger"},
-				"dut_state":     {"ready"},
-				"random-label1": {"123"},
+				"dut_name":            {"host1"},
+				"label-board":         {"coral"},
+				"label-model":         {"babytiger"},
+				"dut_state":           {"ready"},
+				"random-label1":       {"123"},
+				"label-device-stable": {"True"},
 			},
 			{
-				"dut_name":      {"host2"},
-				"label-board":   {"nami"},
-				"label-model":   {"bard"},
-				"dut_state":     {"repair_failed"},
-				"random-label2": {"abc"},
+				"dut_name":            {"host2"},
+				"label-board":         {"nami"},
+				"label-model":         {"bard"},
+				"dut_state":           {"repair_failed"},
+				"random-label2":       {"abc"},
+				"label-device-stable": {"True"},
+			},
+			{
+				"dut_name":            {"host3"},
+				"label-board":         {"eve"},
+				"label-model":         {"eve"},
+				"dut_state":           {"ready"},
+				"random-label2":       {"!@#"},
+				"label-device-stable": {"True"},
+			},
+		}
+		expectedResult := map[string][]string{
+			"dut_name":            {"test-unit1"},
+			"dut_id":              {"test-unit1"},
+			"label-pool":          {"nearby_sharing"},
+			"label-dut_count":     {"3"},
+			"label-multiduts":     {"True"},
+			"label-managed_dut":   {"host1", "host2", "host3"},
+			"dut_state":           {"repair_failed"},
+			"label-board":         {"coral", "nami", "eve"},
+			"label-model":         {"babytiger", "bard", "eve"},
+			"label-device-stable": {"True"},
+		}
+		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
+	})
+
+	Convey("Test with an empty scheduling unit.", t, func() {
+		su := &ufspb.SchedulingUnit{
+			Name:  "schedulingunit/test-unit1",
+			Pools: []string{"nearby_sharing"},
+		}
+		var dims []swarming.Dimensions
+		expectedResult := map[string][]string{
+			"dut_name":        {"test-unit1"},
+			"dut_id":          {"test-unit1"},
+			"label-pool":      {"nearby_sharing"},
+			"label-dut_count": {"0"},
+			"label-multiduts": {"True"},
+			"dut_state":       {"unknown"},
+		}
+		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
+	})
+
+	Convey("Test with an scheduling unit that include non-stable device.", t, func() {
+		su := &ufspb.SchedulingUnit{
+			Name:  "schedulingunit/test-unit1",
+			Pools: []string{"nearby_sharing"},
+		}
+		dims := []swarming.Dimensions{
+			{
+				"dut_name":            {"host1"},
+				"label-board":         {"coral"},
+				"label-model":         {"babytiger"},
+				"dut_state":           {"ready"},
+				"random-label1":       {"123"},
+				"label-device-stable": {"True"},
+			},
+			{
+				"dut_name":            {"host2"},
+				"label-board":         {"nami"},
+				"label-model":         {"bard"},
+				"dut_state":           {"repair_failed"},
+				"random-label2":       {"abc"},
+				"label-device-stable": {"True"},
 			},
 			{
 				"dut_name":      {"host3"},
@@ -134,23 +223,6 @@ func TestSchedulingUnitDimensions(t *testing.T) {
 			"dut_state":         {"repair_failed"},
 			"label-board":       {"coral", "nami", "eve"},
 			"label-model":       {"babytiger", "bard", "eve"},
-		}
-		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
-	})
-
-	Convey("Test with an empty scheduling unit.", t, func() {
-		su := &ufspb.SchedulingUnit{
-			Name:  "schedulingunit/test-unit1",
-			Pools: []string{"nearby_sharing"},
-		}
-		var dims []swarming.Dimensions
-		expectedResult := map[string][]string{
-			"dut_name":        {"test-unit1"},
-			"dut_id":          {"test-unit1"},
-			"label-pool":      {"nearby_sharing"},
-			"label-dut_count": {"0"},
-			"label-multiduts": {"True"},
-			"dut_state":       {"unknown"},
 		}
 		So(SchedulingUnitDimensions(su, dims), ShouldResemble, expectedResult)
 	})
