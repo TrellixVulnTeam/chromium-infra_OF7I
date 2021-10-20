@@ -664,6 +664,7 @@ SPECS.update({
             skip_plat=[
                 'linux-arm64-py3',
             ],
+            patch_version='chromium.1',
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(

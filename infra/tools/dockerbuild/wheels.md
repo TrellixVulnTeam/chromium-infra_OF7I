@@ -4311,12 +4311,12 @@ wheel: <
 * *linux-arm64-py3*
 * *manylinux-x64-py3*
 
-### 1.3.2
+### 1.3.2.chromium.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pandas/${vpython_platform}"
-  version: "version:1.3.2"
+  version: "version:1.3.2.chromium.1"
 >
 ```
 
