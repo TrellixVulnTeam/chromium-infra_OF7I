@@ -30,6 +30,12 @@ message IngestTestResults {
 
   // Information of a Buildbucket build.
   Build build = 2;
+
+  // Timestamp representing the start of the data retention period
+  // for the ingested test results. In case of multiple builds
+  // ingested for one CV run, the partition_time used for all
+  // builds must be the same.
+  google.protobuf.Timestamp partition_time = 3;
 }
 
 // ResultDB-specific information.

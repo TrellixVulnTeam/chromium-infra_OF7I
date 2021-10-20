@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/errors"
@@ -15,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -62,7 +64,7 @@ func BuildbucketPubSubHandler(ctx *router.Context) {
 }
 
 func pubSubHandlerImpl(ctx context.Context, request *http.Request) error {
-	build, err := extractBuild(request)
+	build, createTime, err := extractBuildAndCreateTime(request)
 
 	switch {
 	case err != nil:
@@ -73,11 +75,16 @@ func pubSubHandlerImpl(ctx context.Context, request *http.Request) error {
 		return nil
 
 	default:
-		return resultingester.Schedule(ctx, nil, build)
+		task := &taskspb.IngestTestResults{
+			CvRun:         nil,
+			Build:         build,
+			PartitionTime: timestamppb.New(createTime),
+		}
+		return resultingester.Schedule(ctx, task)
 	}
 }
 
-func extractBuild(r *http.Request) (*taskspb.Build, error) {
+func extractBuildAndCreateTime(r *http.Request) (*taskspb.Build, time.Time, error) {
 	// Sent by pubsub.
 	// This struct is just convenient for unwrapping the json message.
 	// See https://source.chromium.org/chromium/infra/infra/+/main:luci/appengine/components/components/pubsub.py;l=178;drc=78ce3aa55a2e5f77dc05517ef3ec377b3f36dc6e.
@@ -88,7 +95,7 @@ func extractBuild(r *http.Request) (*taskspb.Build, error) {
 		Attributes map[string]interface{}
 	}
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		return nil, errors.Annotate(err, "could not decode message").Err()
+		return nil, time.Time{}, errors.Annotate(err, "could not decode message").Err()
 	}
 
 	var message struct {
@@ -97,17 +104,21 @@ func extractBuild(r *http.Request) (*taskspb.Build, error) {
 	}
 	switch err := json.Unmarshal(msg.Message.Data, &message); {
 	case err != nil:
-		return nil, errors.Annotate(err, "could not parse pubsub message data").Err()
+		return nil, time.Time{}, errors.Annotate(err, "could not parse pubsub message data").Err()
 	case message.Build.Bucket != chromiumCIBucket:
 		// Received a non-chromium-ci build, ignore it.
-		return nil, nil
+		return nil, time.Time{}, nil
 	case message.Build.Status != bbv1.StatusCompleted:
 		// Received build that hasn't completed yet, ignore it.
-		return nil, nil
+		return nil, time.Time{}, nil
+	case message.Build.CreatedTs == 0:
+		return nil, time.Time{}, errors.New("build did not have created timestamp specified")
 	}
 
-	return &taskspb.Build{
+	createTime := bbv1.ParseTimestamp(message.Build.CreatedTs)
+	build := &taskspb.Build{
 		Id:   message.Build.Id,
 		Host: message.Hostname,
-	}, nil
+	}
+	return build, createTime, nil
 }

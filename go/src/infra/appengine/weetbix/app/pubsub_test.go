@@ -11,14 +11,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/server/tq"
 
-	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
+
+	// Needed to ensure task class is registered.
+	_ "infra/appengine/weetbix/internal/services/resultingester"
 )
 
 func makeReq(build bbv1.LegacyApiCommonBuildMessage) io.ReadCloser {
@@ -42,15 +45,15 @@ func TestHandleBuild(t *testing.T) {
 	t.Parallel()
 	ctx := testutil.TestingContext()
 	ctx, _ = tq.TestingContext(ctx, nil)
-	resultingester.RegisterTasksClass()
 
 	Convey(`Test BuildbucketPubSubHandler`, t, func() {
 		Convey(`non chromium build is ignored`, func() {
 			buildExp := bbv1.LegacyApiCommonBuildMessage{
-				Project: "fake",
-				Bucket:  "luci.fake.bucket",
-				Id:      87654321,
-				Status:  bbv1.StatusCompleted,
+				Project:   "fake",
+				Bucket:    "luci.fake.bucket",
+				Id:        87654321,
+				Status:    bbv1.StatusCompleted,
+				CreatedTs: bbv1.FormatTimestamp(time.Now()),
 			}
 			r := &http.Request{Body: makeReq(buildExp)}
 			err := pubSubHandlerImpl(ctx, r)
@@ -59,10 +62,11 @@ func TestHandleBuild(t *testing.T) {
 
 		Convey(`chromium build is processed`, func() {
 			buildExp := bbv1.LegacyApiCommonBuildMessage{
-				Project: "chromium",
-				Bucket:  chromiumCIBucket,
-				Id:      87654321,
-				Status:  bbv1.StatusCompleted,
+				Project:   "chromium",
+				Bucket:    chromiumCIBucket,
+				Id:        87654321,
+				Status:    bbv1.StatusCompleted,
+				CreatedTs: bbv1.FormatTimestamp(time.Now()),
 			}
 			r := &http.Request{Body: makeReq(buildExp)}
 			err := pubSubHandlerImpl(ctx, r)

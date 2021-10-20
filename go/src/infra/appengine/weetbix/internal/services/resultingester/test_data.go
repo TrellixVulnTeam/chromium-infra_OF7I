@@ -43,8 +43,11 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
-							Tags:   pbutil.StringPairs("random_tag", "random_tag_value", "monorail_component", "Monorail>Component"),
+							TestId:      "ninja://test_new_failure",
+							VariantHash: "hash",
+							Variant:     pbutil.Variant("k1", "v1"),
+							Status:      rdbpb.TestStatus_FAIL,
+							Tags:        pbutil.StringPairs("random_tag", "random_tag_value", "monorail_component", "Monorail>Component"),
 						},
 					},
 				},
@@ -56,7 +59,9 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
+							TestId:      "ninja://test_known_flake",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_FAIL,
 						},
 					},
 				},
@@ -68,7 +73,9 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
+							TestId:      "ninja://test_consistent_failure",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_FAIL,
 						},
 					},
 				},
@@ -80,7 +87,9 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
+							TestId:      "ninja://test_no_new_results",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_FAIL,
 						},
 					},
 				},
@@ -93,7 +102,9 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_SKIP,
+							TestId:      "ninja://test_skip",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_SKIP,
 						},
 					},
 				},
@@ -105,12 +116,16 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
+							TestId:      "ninja://test_new_flake",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_FAIL,
 						},
 					},
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_PASS,
+							TestId:      "ninja://test_new_flake",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_PASS,
 						},
 					},
 				},
@@ -122,12 +137,16 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_FAIL,
+							TestId:      "ninja://test_has_unexpected",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_FAIL,
 						},
 					},
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_PASS,
+							TestId:      "ninja://test_has_unexpected",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_PASS,
 						},
 					},
 				},
@@ -139,7 +158,9 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 				Results: []*rdbpb.TestResultBundle{
 					{
 						Result: &rdbpb.TestResult{
-							Status: rdbpb.TestStatus_PASS,
+							TestId:      "ninja://test_unexpected_pass",
+							VariantHash: "hash",
+							Status:      rdbpb.TestStatus_PASS,
 						},
 					},
 				},

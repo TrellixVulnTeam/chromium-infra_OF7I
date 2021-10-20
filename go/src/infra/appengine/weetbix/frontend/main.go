@@ -252,10 +252,11 @@ func main() {
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
 
 		// Register task queue tasks.
-		resultingester.RegisterTasksClass()
+		if err := resultingester.RegisterTaskClass(srv); err != nil {
+			return errors.Annotate(err, "register result ingester").Err()
+		}
 		resultcollector.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
-
 		return nil
 	})
 }

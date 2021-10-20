@@ -7,10 +7,12 @@ package resultingester
 import (
 	"sort"
 	"testing"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
@@ -18,7 +20,11 @@ import (
 	"go.chromium.org/luci/server/tq"
 	_ "go.chromium.org/luci/server/tq/txn/spanner"
 
+	"infra/appengine/weetbix/internal/analysis"
+	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/buildbucket"
+	"infra/appengine/weetbix/internal/clustering/chunkstore"
+	"infra/appengine/weetbix/internal/clustering/ingestion"
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
@@ -35,11 +41,14 @@ import (
 func TestSchedule(t *testing.T) {
 	Convey(`TestSchedule`, t, func() {
 		ctx, skdr := tq.TestingContext(testutil.TestingContext(), nil)
-		RegisterTasksClass()
 
-		build := &taskspb.Build{}
-		So(Schedule(ctx, nil, build), ShouldBeNil)
-		So(skdr.Tasks().Payloads()[0], ShouldResembleProto, &taskspb.IngestTestResults{Build: build})
+		task := &taskspb.IngestTestResults{
+			Build:         &taskspb.Build{},
+			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		}
+		expected := proto.Clone(task).(*taskspb.IngestTestResults)
+		So(Schedule(ctx, task), ShouldBeNil)
+		So(skdr.Tasks().Payloads()[0], ShouldResembleProto, expected)
 	})
 }
 
@@ -49,6 +58,13 @@ func TestIngestTestResults(t *testing.T) {
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		resultcollector.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
+
+		chunkStore := chunkstore.NewFakeClient()
+		clusteredFailures := clusteredfailures.NewFakeClient()
+		analysis := analysis.NewClusteringHandler(clusteredFailures)
+		ri := &resultIngester{
+			clustering: ingestion.New(chunkStore, analysis),
+		}
 
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
@@ -94,14 +110,15 @@ func TestIngestTestResults(t *testing.T) {
 		}
 		testutil.MustApply(ctx, ms...)
 
-		Convey(`ingest test variants`, func() {
+		Convey(`valid payload`, func() {
 			payload := &taskspb.IngestTestResults{
 				Build: &taskspb.Build{
 					Host: "host",
 					Id:   bID,
 				},
+				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
 			}
-			err := ingestTestResults(ctx, payload)
+			err := ri.ingestTestResults(ctx, payload)
 			So(err, ShouldBeNil)
 
 			// Read rows from Spanner to confirm the analyzed test variants are saved.
@@ -192,6 +209,28 @@ func TestIngestTestResults(t *testing.T) {
 			sort.Strings(actTestIDsWithTasks)
 			So(len(actTestIDsWithTasks), ShouldEqual, 3)
 			So(actTestIDsWithTasks, ShouldResemble, testIDsWithNextTask)
+
+			// Confirm chunks have been written to GCS.
+			So(len(chunkStore.Blobs), ShouldEqual, 1)
+
+			// Confirm clustering has occurred, with each test result in at
+			// least one cluster.
+			actualClusteredFailures := make(map[string]int)
+			for project, insertions := range clusteredFailures.InsertionsByProject {
+				So(project, ShouldEqual, "chromium")
+				for _, f := range insertions {
+					actualClusteredFailures[f.TestId] += 1
+				}
+			}
+			expectedClusteredFailures := map[string]int{
+				"ninja://test_new_failure":        1,
+				"ninja://test_known_flake":        1,
+				"ninja://test_consistent_failure": 1,
+				"ninja://test_no_new_results":     1,
+				"ninja://test_new_flake":          1,
+				"ninja://test_has_unexpected":     1,
+			}
+			So(actualClusteredFailures, ShouldResemble, expectedClusteredFailures)
 		})
 	})
 }
