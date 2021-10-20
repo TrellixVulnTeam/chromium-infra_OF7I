@@ -49,7 +49,6 @@ require (
 	github.com/pkg/profile v1.6.0
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/sergi/go-diff v1.2.0
 	github.com/shirou/gopsutil v2.20.10-0.20201018091616-3202231bcdbd+incompatible
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.2.1 // indirect
@@ -99,6 +98,9 @@ replace github.com/shirou/gopsutil => github.com/shirou/gopsutil v2.20.10-0.2020
 
 // Apparently checking out NDKs at head isn't really safe.
 replace golang.org/x/mobile => golang.org/x/mobile v0.0.0-20170111200746-6f0c9f6df9bb
+
+// Version 1.2.0 has a bug: https://github.com/sergi/go-diff/issues/115
+exclude github.com/sergi/go-diff v1.2.0
 
 // Infra modules are included via gclient DEPS.
 replace (
