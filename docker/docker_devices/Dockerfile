@@ -1,7 +1,6 @@
 FROM ubuntu:bionic
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV CHROMIUM_REV 4f36f9c9d232eeb83825f6f5597ae17dd6786445
 
 RUN /usr/bin/apt-get update
 RUN /usr/bin/apt-get -y dist-upgrade
@@ -30,11 +29,11 @@ RUN echo 'msttcorefonts msttcorefonts/defoma select note' \
 
 RUN /bin/mkdir /tmp/setup-deps
 RUN /usr/bin/wget -O- \
-      "https://chromium.googlesource.com/chromium/src/+/${CHROMIUM_REV}/build/install-build-deps.sh?format=TEXT" \
+      "https://chromium.googlesource.com/chromium/src/+/HEAD/build/install-build-deps.sh?format=TEXT" \
         | /usr/bin/base64 -d \
         > /tmp/setup-deps/install-build-deps.sh
 RUN /usr/bin/wget -O- \
-      "https://chromium.googlesource.com/chromium/src/+/${CHROMIUM_REV}/build/install-build-deps-android.sh?format=TEXT" \
+      "https://chromium.googlesource.com/chromium/src/+/HEAD/build/install-build-deps-android.sh?format=TEXT" \
         | /usr/bin/base64 -d \
         > /tmp/setup-deps/install-build-deps-android.sh
 RUN /bin/chmod a+x /tmp/setup-deps/install-build-deps*.sh
