@@ -61,12 +61,13 @@ require (
 	golang.org/x/build v0.0.0-20210913192547-14e3e09d6b10
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/mobile v0.0.0-20191031020345-0945064e013a
-	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.org/x/tools v0.1.5
+	golang.org/x/tools v0.1.8-0.20211014194737-fc98fb2abd48
+	golang.org/x/tools/gopls v0.7.3
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gonum.org/v1/gonum v0.9.3
 	google.golang.org/api v0.56.0

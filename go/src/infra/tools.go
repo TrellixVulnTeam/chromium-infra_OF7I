@@ -12,6 +12,7 @@ import (
 	_ "github.com/smartystreets/goconvey"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "golang.org/x/tools/cmd/stringer"
+	_ "golang.org/x/tools/gopls"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 
 	_ "go.chromium.org/luci/gae/tools/proto-gae"
