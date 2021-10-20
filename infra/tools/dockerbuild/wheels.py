@@ -1001,8 +1001,12 @@ SPECS.update({
             'pillow',
             '8.3.1',
             [
-                'manylinux-x64-py3', 'manylinux-x64-py3.9', 'mac-x64-cp38',
-                'mac-arm64-cp38', 'windows-x64-py3'
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'mac-x64-cp38',
+                'mac-arm64-cp38',
+                'windows-x64-py3',
+                'windows-x86-py3',
             ],
         ),
         Prebuilt('pynacl', '1.2.1', ['manylinux-x64', 'mac-x64']),
