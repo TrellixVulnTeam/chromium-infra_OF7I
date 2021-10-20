@@ -48,7 +48,7 @@ func RegisterTaskClass() {
 		Handler: func(ctx context.Context, payload proto.Message) error {
 			task := payload.(*taskspb.UpdateTestVariant)
 			tvKey := task.TestVariantKey
-			_, err := checkTask(ctx, task)
+			_, err := checkTask(span.Single(ctx), task)
 			switch {
 			case err == errShouldNotSchedule:
 				// Ignore the task.
