@@ -36,6 +36,7 @@ import (
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
+	"infra/appengine/weetbix/internal/services/testvariantupdator"
 )
 
 // authGroup is the name of the LUCI Auth group that controls whether the user
@@ -253,6 +254,7 @@ func main() {
 		// Register task queue tasks.
 		resultingester.RegisterTasksClass()
 		resultcollector.RegisterTaskClass()
+		testvariantupdator.RegisterTaskClass()
 
 		return nil
 	})
