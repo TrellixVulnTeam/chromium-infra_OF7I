@@ -16,18 +16,32 @@ import (
 // From https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/project/project_constants.py;l=13.
 var monorailProjectRE = regexp.MustCompile(`^[a-z0-9][-a-z0-9]{0,61}[a-z0-9]$`)
 
+// https://cloud.google.com/storage/docs/naming-buckets
+var bucketRE = regexp.MustCompile(`^[a-z0-9][a-z0-9\-_.]{1,220}[a-z0-9]$`)
+
 const maxHysteresisPercent = 1000
 
 func validateConfig(ctx *validation.Context, cfg *Config) {
 	validateMonorailHostname(ctx, cfg.MonorailHostname)
+	validateChunkGCSBucket(ctx, cfg.ChunkGcsBucket)
 }
 
 func validateMonorailHostname(ctx *validation.Context, hostname string) {
 	ctx.Enter("monorail_hostname")
 	if hostname == "" {
 		ctx.Errorf("empty value is not allowed")
-	} else if _, err := url.Parse(hostname); err != nil {
-		ctx.Errorf("invalid hostname: %s", hostname)
+	} else if _, err := url.Parse("https://" + hostname + "/"); err != nil {
+		ctx.Errorf("invalid hostname: %q", hostname)
+	}
+	ctx.Exit()
+}
+
+func validateChunkGCSBucket(ctx *validation.Context, bucket string) {
+	ctx.Enter("chunk_gcs_bucket")
+	if bucket == "" {
+		ctx.Errorf("empty value is not allowed")
+	} else if !bucketRE.MatchString(bucket) {
+		ctx.Errorf("invalid bucket: %q", bucket)
 	}
 	ctx.Exit()
 }

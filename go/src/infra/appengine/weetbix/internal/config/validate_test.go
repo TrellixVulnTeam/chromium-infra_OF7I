@@ -19,6 +19,7 @@ import (
 
 var sampleConfigStr = `
 	monorail_hostname: "monorail-test.appspot.com"
+	chunk_gcs_bucket: "my-chunk-bucket"
 `
 
 // createConfig returns a new valid Config for testing.
@@ -50,19 +51,31 @@ func TestServiceConfigValidator(t *testing.T) {
 	Convey("valid config is valid", t, func() {
 		cfg := createConfig()
 		So(validate(cfg), ShouldBeNil)
-
 	})
 
-	Convey("empty monorail_hostname is not valid", t, func() {
-		cfg := createConfig()
-		cfg.MonorailHostname = ""
-		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+	Convey("monorail hostname", t, func() {
+		Convey("must be specified", func() {
+			cfg := createConfig()
+			cfg.MonorailHostname = ""
+			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+		})
+		Convey("must be correctly formed", func() {
+			cfg := createConfig()
+			cfg.MonorailHostname = "monorail host"
+			So(validate(cfg), ShouldErrLike, `invalid hostname: "monorail host"`)
+		})
 	})
-
-	Convey("empty monorail_hostname is not valid", t, func() {
-		cfg := createConfig()
-		cfg.MonorailHostname = ""
-		So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+	Convey("chunk GCS bucket", t, func() {
+		Convey("must be specified", func() {
+			cfg := createConfig()
+			cfg.ChunkGcsBucket = ""
+			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+		})
+		Convey("must be correctly formed", func() {
+			cfg := createConfig()
+			cfg.ChunkGcsBucket = "my bucket"
+			So(validate(cfg), ShouldErrLike, `invalid bucket: "my bucket"`)
+		})
 	})
 }
 
