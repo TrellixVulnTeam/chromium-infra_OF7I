@@ -31,9 +31,12 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
+const testPriority = 42
+
 type startedJob struct {
 	Benchmark     string
 	Configuration string
+	Priority      int32
 	Story         string
 	StoryTags     []string
 }
@@ -71,6 +74,7 @@ func (c *fakePinpointClient) ScheduleJob(ctx context.Context, in *proto.Schedule
 		Benchmark:     in.Job.GetTelemetryBenchmark().Benchmark,
 		Configuration: in.Job.Config,
 		Story:         in.Job.GetTelemetryBenchmark().GetStory(),
+		Priority:      in.Job.Priority,
 	}
 	if in.Job.GetTelemetryBenchmark().GetStoryTags() != nil {
 		started_job.StoryTags = in.Job.GetTelemetryBenchmark().GetStoryTags().StoryTags
@@ -127,49 +131,53 @@ func TestBatchKickoff(t *testing.T) {
 		var err error
 		runner.baseCommandRun.workDir, err = ioutil.TempDir("", "tmp")
 		So(err, ShouldBeNil)
-		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "batch", batch_experiments, &experiment)
+		jobs, err := runBatchJob(&runner, context.Background(), os.Stdout, c, "batch", batch_experiments, &experiment, testPriority)
 		So(err, ShouldBeNil)
 
 		expected := []startedJob{
 			{
 				Benchmark:     "desktop",
 				Configuration: "linux",
+				Priority:      testPriority,
 				Story:         "dsA",
 				StoryTags:     []string{},
 			},
 			{
 				Benchmark:     "desktop",
 				Configuration: "linux",
+				Priority:      testPriority,
 				Story:         "dsB",
 				StoryTags:     []string{},
 			},
 			{
 				Benchmark:     "desktop",
 				Configuration: "win",
+				Priority:      testPriority,
 				Story:         "dsA",
 				StoryTags:     []string{},
 			},
 			{
 				Benchmark:     "desktop",
 				Configuration: "win",
+				Priority:      testPriority,
 				Story:         "dsB",
 				StoryTags:     []string{},
 			},
 			{
 				Benchmark:     "mobile",
 				Configuration: "pixel",
+				Priority:      testPriority,
 				Story:         "msA",
 				StoryTags:     []string{},
 			},
 			{
 				Benchmark:     "mobile",
 				Configuration: "pixel",
+				Priority:      testPriority,
 				Story:         "",
 				StoryTags:     []string{"tagA", "tagB"},
 			},
 		}
-		fmt.Printf("%s\n", c.Jobs)
-		fmt.Printf("%s\n", expected)
 		So(cmp.Equal(c.Jobs, expected, cmpopts.SortSlices(less)), ShouldBeTrue)
 		So(len(jobs), ShouldEqual, 6)
 

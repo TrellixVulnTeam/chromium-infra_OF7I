@@ -16,6 +16,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const testPriority = 42
+
 func shouldContainMap(actual interface{}, expected ...interface{}) string {
 	v := actual.(url.Values)
 	e := expected[0].(map[string]interface{})
@@ -108,6 +110,31 @@ func TestSimpleConversions(t *testing.T) {
 				So(v, shouldContainMap, map[string]interface{}{
 					"start_git_hash": "c0dec0de",
 					"end_git_hash":   "f00dc0de"})
+
+				// Check that priority is unset
+				So(v, shouldContainMap, map[string]interface{}{
+					"priority": "0"})
+			})
+
+			Convey("We support Telemetry specifying priority", func() {
+				telemetryJob :=
+					&pinpoint_proto.JobSpec{
+						Priority:            testPriority,
+						ComparisonMagnitude: 1000.0,
+						Arguments: &pinpoint_proto.JobSpec_TelemetryBenchmark{
+							TelemetryBenchmark: &pinpoint_proto.TelemetryBenchmark{
+								Benchmark: "some-benchmark",
+								StorySelection: &pinpoint_proto.TelemetryBenchmark_Story{
+									Story: "some-story"},
+								Measurement:   "some-metric",
+								GroupingLabel: "some-grouping-label",
+								Statistic:     pinpoint_proto.TelemetryBenchmark_NONE}}}
+				proto.Merge(telemetryJob, job)
+				v, err := JobToValues(telemetryJob, "user@example.com")
+				So(err, ShouldBeNil)
+
+				So(v, shouldContainMap, map[string]interface{}{
+					"priority": fmt.Sprintf("%d", testPriority)})
 			})
 
 			Convey("We support Telemetry specifying story tags", func() {

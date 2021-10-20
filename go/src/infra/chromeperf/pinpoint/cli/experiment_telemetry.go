@@ -36,6 +36,9 @@ import (
 // TODO(crbug/1230880): Increase concurrency after we solve the underlying Datastore issue.
 const MaxScheduleConcurrency = 1
 
+const defaultJobPriority = 0
+const batchJobPriority = 10
+
 type experimentTelemetryRun struct {
 	experimentBaseRun
 	benchmark, measurement string
@@ -130,6 +133,13 @@ func getTelemetryBatchExperiments(e *experimentTelemetryRun,
 	extra_args := e.Flags.Args()
 	applyFlags(e, &batch_experiments, extra_args)
 	return batch_experiments, nil
+}
+
+func getExperimentPriority(p preset) int32 {
+	if p.TelemetryBatchExperiment != nil {
+		return batchJobPriority
+	}
+	return defaultJobPriority // Use default priority for non-batch jobs
 }
 
 func applyFlags(e *experimentTelemetryRun,
@@ -239,7 +249,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 	batch_id string,
 	experiment *proto.Experiment,
 	bot_cfg, benchmark, measurement, story string,
-	storyTags, extraArgs []string) (*proto.Job, error) {
+	storyTags, extraArgs []string, priority int32) (*proto.Job, error) {
 	js := &proto.JobSpec{
 		BatchId:        batch_id,
 		ComparisonMode: proto.JobSpec_PERFORMANCE,
@@ -252,6 +262,7 @@ func scheduleTelemetryJob(e *experimentTelemetryRun,
 			TelemetryBenchmark: newTelemetryBenchmark(
 				benchmark, measurement, story, storyTags, extraArgs),
 		},
+		Priority: priority,
 	}
 
 	if e.issue.issueID != 0 {
@@ -279,7 +290,8 @@ func runBatchJob(e *experimentTelemetryRun,
 	c proto.PinpointClient,
 	batch_id string,
 	batch_experiments []telemetryBatchExperiment,
-	experiment *proto.Experiment) ([]*proto.Job, error) {
+	experiment *proto.Experiment,
+	priority int32) ([]*proto.Job, error) {
 
 	outpath := path.Join(e.baseCommandRun.workDir, batch_id+".txt")
 	outfile, err := os.Create(outpath)
@@ -302,7 +314,7 @@ func runBatchJob(e *experimentTelemetryRun,
 						j, err := scheduleTelemetryJob(e, ctx,
 							c, batch_id, experiment, bot_config, config.Benchmark,
 							config.Measurement, story,
-							[]string{}, config.ExtraArgs)
+							[]string{}, config.ExtraArgs, priority)
 						if err != nil {
 							return err
 						}
@@ -317,7 +329,7 @@ func runBatchJob(e *experimentTelemetryRun,
 						j, err := scheduleTelemetryJob(e, ctx,
 							c, batch_id, experiment, bot_config, config.Benchmark,
 							config.Measurement, "",
-							config.StoryTags, config.ExtraArgs)
+							config.StoryTags, config.ExtraArgs, priority)
 						if err != nil {
 							return err
 						}
@@ -373,7 +385,7 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 	defer fmt.Fprintf(a.GetOut(), "Finished actions for batch: %s\n", batch_id)
 
 	jobs, err := runBatchJob(e, ctx, a.GetOut(), c, batch_id,
-		batch_experiments, experiment)
+		batch_experiments, experiment, getExperimentPriority(p))
 	if err != nil {
 		return errors.Annotate(err, "Failed to start all jobs: ").Err()
 	}

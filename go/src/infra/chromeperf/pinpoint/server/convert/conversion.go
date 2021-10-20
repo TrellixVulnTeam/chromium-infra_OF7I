@@ -77,6 +77,8 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 		v.Set("batch_id", job.BatchId)
 	}
 
+	v.Set("priority", fmt.Sprintf("%d", job.Priority))
+
 	// We're turning a floating point comparison magnitude to a string.
 	if job.ComparisonMagnitude != 0.0 {
 		v.Set("comparison_magnitude", fmt.Sprintf("%f", job.ComparisonMagnitude))
@@ -200,6 +202,7 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 		return nil, errors.Reason("unsupported arguments in JobSpec").
 			InternalReason("args type is %v", args).Err()
 	}
+
 	return v, nil
 }
 
