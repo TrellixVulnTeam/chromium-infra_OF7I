@@ -40,16 +40,16 @@ func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectC
 		ctx.Errorf("failed to unmarshal as text proto: %s", err)
 		return nil
 	}
-	validateProjectConfig(ctx, msg)
+	ValidateProjectConfig(ctx, msg)
 	return msg
 }
 
-func validateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
-	validateMonorail(ctx, cfg.Monorail)
+func ValidateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
+	validateMonorail(ctx, cfg.Monorail, cfg.BugFilingThreshold)
 	validateImpactThreshold(ctx, cfg.BugFilingThreshold, "bug_filing_threshold")
 }
 
-func validateMonorail(ctx *validation.Context, cfg *MonorailProject) {
+func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingThres *ImpactThreshold) {
 	ctx.Enter("monorail")
 	defer ctx.Exit()
 
@@ -61,7 +61,7 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject) {
 	validateMonorailProject(ctx, cfg.Project)
 	validateDefaultFieldValues(ctx, cfg.DefaultFieldValues)
 	validateFieldID(ctx, cfg.PriorityFieldId, "priority_field_id")
-	validatePriorities(ctx, cfg.Priorities)
+	validatePriorities(ctx, cfg.Priorities, bugFilingThres)
 	validatePriorityHysteresisPercent(ctx, cfg.PriorityHysteresisPercent)
 }
 
@@ -98,7 +98,7 @@ func validateFieldValue(ctx *validation.Context, fv *MonorailFieldValue) {
 	// No validation applies to field value.
 }
 
-func validatePriorities(ctx *validation.Context, ps []*MonorailPriority) {
+func validatePriorities(ctx *validation.Context, ps []*MonorailPriority, bugFilingThres *ImpactThreshold) {
 	ctx.Enter("priorities")
 	if len(ps) == 0 {
 		ctx.Errorf("at least one monorail priority must be specified")
@@ -106,6 +106,12 @@ func validatePriorities(ctx *validation.Context, ps []*MonorailPriority) {
 	for i, p := range ps {
 		ctx.Enter("[%v]", i)
 		validatePriority(ctx, p)
+		if i == len(ps)-1 {
+			// The lowest priority threshold must be satisfied by
+			// the bug-filing threshold. This ensures that bugs meeting the
+			// bug-filing threshold meet the bug keep-open threshold.
+			validatePrioritySatisfiedByBugFilingThreshold(ctx, p, bugFilingThres)
+		}
 		ctx.Exit()
 	}
 	ctx.Exit()
@@ -114,6 +120,20 @@ func validatePriorities(ctx *validation.Context, ps []*MonorailPriority) {
 func validatePriority(ctx *validation.Context, p *MonorailPriority) {
 	validatePriorityValue(ctx, p.Priority)
 	validateImpactThreshold(ctx, p.Threshold, "threshold")
+}
+
+func validatePrioritySatisfiedByBugFilingThreshold(ctx *validation.Context, p *MonorailPriority, bugFilingThres *ImpactThreshold) {
+	ctx.Enter("threshold")
+	defer ctx.Exit()
+	t := p.Threshold
+	if t == nil || bugFilingThres == nil {
+		// Priority without threshold and no bug filing threshold specified
+		// are already reported as errors elsewhere.
+		return
+	}
+	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_1D, bugFilingThres.UnexpectedFailures_1D, "unexpected_failures_1d")
+	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_3D, bugFilingThres.UnexpectedFailures_3D, "unexpected_failures_3d")
+	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_7D, bugFilingThres.UnexpectedFailures_7D, "unexpected_failures_7d")
 }
 
 func validatePriorityValue(ctx *validation.Context, value string) {
@@ -159,4 +179,25 @@ func validateFailureCountThresold(ctx *validation.Context, threshold *int64, fie
 		ctx.Errorf("value must be non-negative")
 	}
 	ctx.Exit()
+}
+
+func validateBugFilingThresholdSatisfiesFailureCountThresold(ctx *validation.Context, threshold *int64, bugFilingThres *int64, fieldName string) {
+	ctx.Enter(fieldName)
+	defer ctx.Exit()
+	if bugFilingThres == nil {
+		// Bugs are not filed based on this threshold.
+		return
+	}
+	if *bugFilingThres < 0 {
+		// The bug-filing threshold is invalid. This is already reported as an
+		// error elsewhere.
+		return
+	}
+	// If a bug may be filed at a particular threshold, it must also be
+	// allowed to stay open at that threshold.
+	if threshold == nil {
+		ctx.Errorf("%s threshold must be set, with a value of at most %v (the configured bug-filing threshold). This ensures that bugs which are filed meet the criteria to stay open", fieldName, *bugFilingThres)
+	} else if *threshold > *bugFilingThres {
+		ctx.Errorf("value must be at most %v (the configured bug-filing threshold). This ensures that bugs which are filed meet the criteria to stay open", *bugFilingThres)
+	}
 }

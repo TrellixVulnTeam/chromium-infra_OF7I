@@ -71,7 +71,7 @@ func TestProjectConfigValidator(t *testing.T) {
 
 	validate := func(cfg *ProjectConfig) error {
 		c := validation.Context{Context: context.Background()}
-		validateProjectConfig(&c, cfg)
+		ValidateProjectConfig(&c, cfg)
 		return c.Finalize()
 	}
 
@@ -138,6 +138,34 @@ func TestProjectConfigValidator(t *testing.T) {
 			Convey("threshold is not specified", func() {
 				priorities[0].Threshold = nil
 				So(validate(cfg), ShouldErrLike, "impact thresolds must be specified")
+			})
+
+			Convey("last priority", func() {
+				lastPriority := priorities[len(priorities)-1]
+				bugFilingThres := cfg.BugFilingThreshold
+				Convey("unexpected failures 1d must be set if set on bug-filing threshold", func() {
+					bugFilingThres.UnexpectedFailures_1D = proto.Int64(100)
+					lastPriority.Threshold.UnexpectedFailures_1D = nil
+					So(validate(cfg), ShouldErrLike, "unexpected_failures_1d threshold must be set, with a value of at most 100")
+				})
+
+				Convey("unexpected failures 1d must be satisfied by the bug-filing threshold", func() {
+					bugFilingThres.UnexpectedFailures_1D = proto.Int64(100)
+					lastPriority.Threshold.UnexpectedFailures_1D = proto.Int64(101)
+					So(validate(cfg), ShouldErrLike, "value must be at most 100")
+				})
+
+				Convey("unexpected failures 3d must be satisfied by the bug-filing threshold", func() {
+					bugFilingThres.UnexpectedFailures_3D = proto.Int64(300)
+					lastPriority.Threshold.UnexpectedFailures_3D = proto.Int64(301)
+					So(validate(cfg), ShouldErrLike, "value must be at most 300")
+				})
+
+				Convey("unexpected failures 7d must be satisfied by the bug-filing threshold", func() {
+					bugFilingThres.UnexpectedFailures_7D = proto.Int64(700)
+					lastPriority.Threshold.UnexpectedFailures_7D = proto.Int64(701)
+					So(validate(cfg), ShouldErrLike, "value must be at most 700")
+				})
 			})
 			// Other thresholding validation cases tested under bug-filing threshold and are
 			// not repeated given the implementation is shared.

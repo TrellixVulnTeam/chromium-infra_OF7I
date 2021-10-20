@@ -54,8 +54,13 @@ func ChromiumTestConfig() map[string]*config.MonorailProject {
 				},
 				{
 					Priority: "3",
+					// Should be less onerous than the bug-filing thresholds
+					// used in BugUpdater tests, to avoid bugs that were filed
+					// from being immediately closed.
 					Threshold: &config.ImpactThreshold{
 						UnexpectedFailures_1D: proto.Int64(50),
+						UnexpectedFailures_3D: proto.Int64(300),
+						UnexpectedFailures_7D: proto.Int64(700),
 					},
 				},
 			},

@@ -16,6 +16,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/config/validation"
 	"go.chromium.org/luci/server/span"
 	"google.golang.org/protobuf/proto"
 )
@@ -44,16 +45,28 @@ func TestRun(t *testing.T) {
 		}
 
 		mgrs := make(map[string]BugManager)
-		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc, monorail.ChromiumTestConfig())
+		monorailCfg := monorail.ChromiumTestConfig()
+		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc, monorailCfg)
 
 		thres := map[string]*config.ImpactThreshold{
+			// Should be more onerous than the "keep-open" thresholds
+			// configured for each individual bug manager.
 			"chromium": {
-				UnexpectedFailures_1D: proto.Int64(10),
-				UnexpectedFailures_3D: proto.Int64(30),
-				UnexpectedFailures_7D: proto.Int64(70),
+				UnexpectedFailures_1D: proto.Int64(100),
+				UnexpectedFailures_3D: proto.Int64(300),
+				UnexpectedFailures_7D: proto.Int64(700),
 			},
 		}
 
+		Convey("Configuration used for testing is valid", func() {
+			c := validation.Context{Context: context.Background()}
+			projectCfg := &config.ProjectConfig{
+				Monorail:           monorailCfg["chromium"],
+				BugFilingThreshold: thres["chromium"],
+			}
+			config.ValidateProjectConfig(&c, projectCfg)
+			So(c.Finalize(), ShouldBeNil)
+		})
 		Convey("With no impactful clusters", func() {
 			bu := NewBugUpdater(mgrs, cc, thres)
 			err = bu.Run(ctx)
@@ -90,15 +103,15 @@ func TestRun(t *testing.T) {
 				So(f.Issues[0].Issue.Summary, ShouldContainSubstring, "Test failure reason.")
 			}
 			Convey("1d unexpected failures", func() {
-				clusters[1].UnexpectedFailures1d = 10
+				clusters[1].UnexpectedFailures1d = 100
 				test()
 			})
 			Convey("3d unexpected failures", func() {
-				clusters[1].UnexpectedFailures3d = 30
+				clusters[1].UnexpectedFailures3d = 300
 				test()
 			})
 			Convey("7d unexpected failures", func() {
-				clusters[1].UnexpectedFailures7d = 70
+				clusters[1].UnexpectedFailures7d = 700
 				test()
 			})
 		})
@@ -110,8 +123,8 @@ func TestRun(t *testing.T) {
 				So(len(f.Issues), ShouldEqual, count)
 			}
 			clusters[1].UnexpectedFailures1d = 200
-			clusters[2].UnexpectedFailures3d = 30
-			clusters[3].UnexpectedFailures7d = 70
+			clusters[2].UnexpectedFailures3d = 300
+			clusters[3].UnexpectedFailures7d = 700
 
 			bu := NewBugUpdater(mgrs, cc, thres)
 			// Limit to one bug filed each time, so that

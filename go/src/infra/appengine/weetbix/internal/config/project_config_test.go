@@ -27,12 +27,6 @@ var textPBMultiline = prototext.MarshalOptions{
 	Multiline: true,
 }
 
-func createImpactThreshold() *ImpactThreshold {
-	return &ImpactThreshold{
-		UnexpectedFailures_1D: proto.Int64(1000),
-	}
-}
-
 func createProjectConfig() *ProjectConfig {
 	return &ProjectConfig{
 		Monorail: &MonorailProject{
@@ -40,12 +34,22 @@ func createProjectConfig() *ProjectConfig {
 			PriorityFieldId: 10,
 			Priorities: []*MonorailPriority{
 				{
-					Priority:  "0",
-					Threshold: createImpactThreshold(),
+					Priority: "0",
+					Threshold: &ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(1500),
+					},
+				},
+				{
+					Priority: "1",
+					Threshold: &ImpactThreshold{
+						UnexpectedFailures_1D: proto.Int64(500),
+					},
 				},
 			},
 		},
-		BugFilingThreshold: createImpactThreshold(),
+		BugFilingThreshold: &ImpactThreshold{
+			UnexpectedFailures_1D: proto.Int64(1000),
+		},
 	}
 }
 
