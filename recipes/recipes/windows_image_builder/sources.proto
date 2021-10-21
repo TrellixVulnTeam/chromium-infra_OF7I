@@ -9,11 +9,13 @@ package recipes.infra.windows_image_builder.sources;
 message Src {
   oneof src {
     // local_src refers to the local file on the bot
-    string local_src = 1 [deprecated=true];
+    string local_src = 1;
     // CIPD src refers to a cipd instance
     CIPDSrc cipd_src = 2;
     // git src refers to a file in a git repo
     GITSrc git_src = 3;
+    // gcs_src refers to a file in cloud storage
+    GCSSrc gcs_src = 4;
   }
 }
 
@@ -35,4 +37,17 @@ message GITSrc {
   string ref = 2;
   // The file we need in the repo
   string src = 3;
+}
+
+// Ref to a file in cloud storage
+// Example: gs://win-image-bucket/wim/vanilla.wim would be written as
+// GCCSrc{
+//    bucket: "win-image-bucket",
+//    source: "wim/vanilla.wim"
+// }
+message GCSSrc {
+  // Cloud Storage bucket the artifact is in
+  string bucket = 1;
+  // File in the bucket
+  string source = 2;
 }

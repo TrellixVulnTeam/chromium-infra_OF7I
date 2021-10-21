@@ -299,6 +299,10 @@
   },
   {
     "cmd": [],
+    "name": "Get all gcs artifacts"
+  },
+  {
+    "cmd": [],
     "name": "execute config test_config"
   },
   {

@@ -6,6 +6,7 @@ from recipe_engine import recipe_api
 from recipe_engine.recipe_api import Property
 from . import cipd_manager
 from . import git_manager
+from . import gcs_manager
 # Windows command helpers
 from . import add_windows_package
 from . import mount_wim
@@ -27,6 +28,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._workdir = ''
     self._cipd = None
     self._git = None
+    self._gcs = None
 
   def pin_wib_config(self, config):
     """ pin_wib_config pins the given config to current refs."""
@@ -37,6 +39,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     cipd_packages = self.m.path['cache'].join('CIPDPkgs')
     # Using a dir in cache to download all git artifacts
     git_packages = self.m.path['cache'].join('GITPkgs')
+    # Using a dir in cache to download all the GCS artifacts
+    gcs_packages = self.m.path['cache'].join('GCSPkgs')
 
     # Initialize cipd downloader
     self._cipd = cipd_manager.CIPDManager(self.m.step, self.m.cipd,
@@ -44,6 +48,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     # Initialize git downloader
     self._git = git_manager.GITManager(self.m.step, self.m.gitiles, self.m.file,
                                        git_packages)
+    # Initialize the gcs downloader
+    self._gcs = gcs_manager.GCSManager(self.m.step, self.m.gsutil, gcs_packages)
 
     # Pin all the cipd instance
     self._cipd.pin_packages('Pin all the cipd packages', config)
@@ -80,6 +86,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._cipd.download_packages('Get all cipd artifacts', config)
     # Download all the windows artifacts from git
     self._git.download_packages('Get all git artifacts', config)
+    # Download all the artifacts from cloud storage
+    self._gcs.download_packages('Get all gcs artifacts', config)
 
   def perform_winpe_actions(self, offline_action):
     """Performs the given offline_action"""
