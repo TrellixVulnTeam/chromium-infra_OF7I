@@ -171,7 +171,11 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		c.deploySkipDownloadImage = true
 		c.deploySkipInstallOS = true
 		c.deploySkipInstallFirmware = true
+		c.deploySkipRecoveryMode = true
+	} else {
+		c.deployActions = append(c.deployActions, "verify-recovery-mode")
 	}
+
 	if err := (&shivas.Rack{
 		Name:      c.qualifiedRack,
 		Namespace: c.envFlags.Namespace,

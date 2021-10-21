@@ -86,6 +86,9 @@ func makeAddShivasFlags(c *addDUT) flagmap {
 	if c.deploySkipInstallOS {
 		out["deploy-skip-install-os"] = []string{}
 	}
+	if c.deploySkipRecoveryMode {
+		out["deploy-skip-recovery-mode"] = []string{}
+	}
 	if len(c.tags) != 0 {
 		out["tags"] = []string{strings.Join(c.tags, ",")}
 	}
@@ -188,6 +191,7 @@ type shivasAddDUT struct {
 	deploySkipDownloadImage   bool
 	deploySkipInstallOS       bool
 	deploySkipInstallFirmware bool
+	deploySkipRecoveryMode    bool
 	deploymentTicket          string
 	tags                      []string
 	state                     string
@@ -223,7 +227,7 @@ type shivasAddDUT struct {
 
 // DefaultDeployTaskActions are the default actoins run at deploy time.
 // TODO(gregorynisbet): this about which actions make sense for satlab.
-var defaultDeployTaskActions = []string{"servo-verification", "update-label", "verify-recovery-mode", "run-pre-deploy-verification"}
+var defaultDeployTaskActions = []string{"servo-verification", "update-label", "run-pre-deploy-verification"}
 
 // Register flags inherited from shivas in place in the add DUT command.
 // Keep this up to date with infra/cmd/shivas/ufs/subcmds/dut/add_dut.go
@@ -256,6 +260,7 @@ func registerAddShivasFlags(c *addDUT) {
 	c.Flags.BoolVar(&c.deploySkipDownloadImage, "deploy-skip-download-image", false, "skips downloading image and staging usb")
 	c.Flags.BoolVar(&c.deploySkipInstallFirmware, "deploy-skip-install-fw", false, "skips installing firmware")
 	c.Flags.BoolVar(&c.deploySkipInstallOS, "deploy-skip-install-os", false, "skips installing os image")
+	c.Flags.BoolVar(&c.deploySkipRecoveryMode, "deploy-skip-recovery-mode", false, "skips recovery mode step for dut deployment")
 	c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine.")
 	c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags.")
 	c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
