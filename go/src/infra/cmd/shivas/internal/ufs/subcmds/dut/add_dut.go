@@ -30,7 +30,7 @@ import (
 
 // Regexp to enforce the input format
 var servoHostPortRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-\.]+:[0-9]+$`)
-var defaultDeployTaskActions = []string{"servo-verification", "update-label", "verify-recovery-mode", "run-pre-deploy-verification"}
+var defaultDeployTaskActions = []string{"servo-verification", "update-label", "run-pre-deploy-verification"}
 
 // TODO(anushruth): Find a better place to put these tags.
 var shivasTags = []string{"shivas:" + site.VersionNumber, "triggered_using:shivas"}
@@ -83,6 +83,7 @@ var AddDUTCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.deploySkipDownloadImage, "deploy-skip-download-image", false, "skips downloading image and staging usb")
 		c.Flags.BoolVar(&c.deploySkipInstallFirmware, "deploy-skip-install-fw", false, "skips installing firmware")
 		c.Flags.BoolVar(&c.deploySkipInstallOS, "deploy-skip-install-os", false, "skips installing os image")
+		c.Flags.BoolVar(&c.deploySkipRecoveryMode, "deploy-skip-recovery-mode", false, "skips recovery mode step for dut deployment")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine.")
 		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags.")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
@@ -140,6 +141,7 @@ type addDUT struct {
 	deployTags                []string
 	deploySkipDownloadImage   bool
 	deploySkipInstallOS       bool
+	deploySkipRecoveryMode    bool
 	deploySkipInstallFirmware bool
 	deploymentTicket          string
 	tags                      []string
@@ -611,6 +613,9 @@ func (c *addDUT) updateDeployActions() {
 	}
 	if !c.deploySkipInstallFirmware {
 		c.deployActions = append(c.deployActions, "install-firmware")
+	}
+	if !c.deploySkipRecoveryMode {
+		c.deployActions = append(c.deployActions, "verify-recovery-mode")
 	}
 }
 
