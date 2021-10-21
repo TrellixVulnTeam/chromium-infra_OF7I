@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
@@ -134,8 +135,8 @@ def GenTests(api):
       }}))
 
   # actions for adding files
-  ACTION_ADD_STARTNET = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_STARTNET = actions.Action(
+      add_file=actions.AddFile(
           name='add_startnet_file',
           src=sources.Src(
               git_src=sources.GITSrc(
@@ -145,8 +146,8 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
-  ACTION_ADD_DOT3SVC = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_DOT3SVC = actions.Action(
+      add_file=actions.AddFile(
           name='add winpe-dot3svc',
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
@@ -159,8 +160,8 @@ def GenTests(api):
       ))
 
   # actions for installing windows packages
-  ACTION_INSTALL_WMI = wib.Action(
-      add_windows_package=wib.AddWindowsPackage(
+  ACTION_INSTALL_WMI = actions.Action(
+      add_windows_package=actions.AddWindowsPackage(
           name='install_winpe_wmi',
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
@@ -212,7 +213,7 @@ def GenTests(api):
               offline_winpe_customization=wib.OfflineCustomization(
                   name='offline_winpe_2013_x64',
                   offline_customization=[
-                      wib.OfflineAction(
+                      actions.OfflineAction(
                           name='network_setup', actions=[ACTION_ADD_STARTNET])
                   ]))) +
       PIN_FILE_STARTNET_PASS +  # pin the startnet file to current refs
@@ -238,7 +239,7 @@ def GenTests(api):
               offline_winpe_customization=wib.OfflineCustomization(
                   name='offline_winpe_2013_x64',
                   offline_customization=[
-                      wib.OfflineAction(
+                      actions.OfflineAction(
                           name='network_setup', actions=[ACTION_ADD_STARTNET])
                   ]))) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
       PIN_FILE_STARTNET_PASS +  # pin the git file to current refs
@@ -257,7 +258,7 @@ def GenTests(api):
               offline_winpe_customization=wib.OfflineCustomization(
                   name='offline_winpe_2013_x64',
                   offline_customization=[
-                      wib.OfflineAction(
+                      actions.OfflineAction(
                           name='network_setup', actions=[
                               ACTION_ADD_DOT3SVC,
                           ])
@@ -277,7 +278,7 @@ def GenTests(api):
               offline_winpe_customization=wib.OfflineCustomization(
                   name='offline_winpe_2013_x64',
                   offline_customization=[
-                      wib.OfflineAction(
+                      actions.OfflineAction(
                           name='network_setup', actions=[
                               ACTION_ADD_STARTNET,
                           ])
@@ -299,7 +300,7 @@ def GenTests(api):
                  offline_winpe_customization=wib.OfflineCustomization(
                      name='offline_winpe_2013_x64',
                      offline_customization=[
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='wmi_setup', actions=[
                                  ACTION_INSTALL_WMI,
                              ])
@@ -318,7 +319,7 @@ def GenTests(api):
           offline_winpe_customization=wib.OfflineCustomization(
               name='offline_winpe_2013_x64',
               offline_customization=[
-                  wib.OfflineAction(
+                  actions.OfflineAction(
                       name='network_setup',
                       actions=[
                           ACTION_ADD_STARTNET,

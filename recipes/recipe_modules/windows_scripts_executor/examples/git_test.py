@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
@@ -50,8 +51,8 @@ def GenTests(api):
       api.gitiles.make_encoded_file('select volume S'))
 
   # actions for adding files
-  ACTION_ADD_STARTNET = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_STARTNET = actions.Action(
+      add_file=actions.AddFile(
           name='add_startnet_file',
           src=sources.Src(
               git_src=sources.GITSrc(
@@ -61,8 +62,8 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
-  ACTION_ADD_DISKPART = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_DISKPART = actions.Action(
+      add_file=actions.AddFile(
           name='add_diskpart_file',
           src=sources.Src(
               git_src=sources.GITSrc(
@@ -80,7 +81,7 @@ def GenTests(api):
                  offline_winpe_customization=wib.OfflineCustomization(
                      name='offWpeCust',
                      offline_customization=[
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='action-1', actions=[ACTION_ADD_STARTNET])
                      ]))) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
          api.post_process(StatusSuccess) +  # recipe should pass
@@ -94,7 +95,7 @@ def GenTests(api):
                  offline_winpe_customization=wib.OfflineCustomization(
                      name='offWpeCust',
                      offline_customization=[
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='action-1',
                              actions=[ACTION_ADD_STARTNET, ACTION_ADD_DISKPART])
                      ]))) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +

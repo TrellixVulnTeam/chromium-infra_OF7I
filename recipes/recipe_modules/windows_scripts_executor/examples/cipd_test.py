@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
@@ -49,8 +50,8 @@ def GenTests(api):
           }
       }))
 
-  ACTION_ADD_CIPD_1 = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_CIPD_1 = actions.Action(
+      add_file=actions.AddFile(
           name='add cipd-1',
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
@@ -61,8 +62,8 @@ def GenTests(api):
           dst='Windows\\Users\\',
       ))
 
-  ACTION_ADD_CIPD_2 = wib.Action(
-      add_file=wib.AddFile(
+  ACTION_ADD_CIPD_2 = actions.Action(
+      add_file=actions.AddFile(
           name='add cipd-2',
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
@@ -82,7 +83,7 @@ def GenTests(api):
               offline_winpe_customization=wib.OfflineCustomization(
                   name='offline_winpe',
                   offline_customization=[
-                      wib.OfflineAction(
+                      actions.OfflineAction(
                           name='add files', actions=[ACTION_ADD_CIPD_1])
                   ]))) + api.post_process(StatusSuccess) +
       api.post_process(DropExpectation))
@@ -96,7 +97,7 @@ def GenTests(api):
                  offline_winpe_customization=wib.OfflineCustomization(
                      name='offline_winpe',
                      offline_customization=[
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='add files',
                              actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2])
                      ]))) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
@@ -111,10 +112,10 @@ def GenTests(api):
                  offline_winpe_customization=wib.OfflineCustomization(
                      name='offline_winpe',
                      offline_customization=[
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='add files-1',
                              actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2]),
-                         wib.OfflineAction(
+                         actions.OfflineAction(
                              name='add files-2', actions=[ACTION_ADD_CIPD_1])
                      ]))) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

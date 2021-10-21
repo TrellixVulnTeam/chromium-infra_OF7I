@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
@@ -15,7 +16,7 @@ DEPS = [
     'recipe_engine/json',
 ]
 
-PROPERTIES = wib.AddWindowsPackage
+PROPERTIES = actions.AddWindowsPackage
 
 
 def RunSteps(api, package):
@@ -42,7 +43,7 @@ def GenTests(api):
           }
       }))
 
-  INSTALL_FILE_NO_ARGS = wib.AddWindowsPackage(
+  INSTALL_FILE_NO_ARGS = actions.AddWindowsPackage(
       name='add cipd',
       src=sources.Src(
           cipd_src=sources.CIPDSrc(
@@ -52,7 +53,7 @@ def GenTests(api):
           ),),
   )
 
-  INSTALL_FILE_ARGS = wib.AddWindowsPackage(
+  INSTALL_FILE_ARGS = actions.AddWindowsPackage(
       name='add cipd',
       src=sources.Src(
           cipd_src=sources.CIPDSrc(

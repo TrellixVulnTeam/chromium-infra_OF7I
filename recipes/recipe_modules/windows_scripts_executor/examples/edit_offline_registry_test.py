@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
@@ -14,7 +15,7 @@ DEPS = [
     'recipe_engine/json',
 ]
 
-PROPERTIES = wib.Action
+PROPERTIES = actions.Action
 
 
 def RunSteps(api, edit_offline_registry_action):
@@ -23,8 +24,8 @@ def RunSteps(api, edit_offline_registry_action):
 
 
 def GenTests(api):
-  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES = wib.Action(
-      edit_offline_registry=wib.EditOfflineRegistry(
+  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES = actions.Action(
+      edit_offline_registry=actions.EditOfflineRegistry(
           name='edit tamper protection',
           reg_hive_file='Windows\\System32\\Config\\software',
           reg_key_path='Microsoft\\Windows Defender\\Features',

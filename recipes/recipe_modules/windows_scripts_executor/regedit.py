@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import actions
 
 # Format strings for use in mount cmdline options
 EDIT_OFFLINE_REG_CMD = 'Edit-OfflineRegistry'
@@ -17,7 +18,7 @@ EDIT_OFFLINE_REG_PROPERTY_TYPE = '-PropertyType "{}"'
 def edit_offline_registry(powershell, res, edit_offline_registry_action, img):
   action = edit_offline_registry_action
 
-  ptype = wib.RegPropertyType.Name(action.property_type).upper()
+  ptype = actions.RegPropertyType.Name(action.property_type).upper()
 
   args = [
       EDIT_OFFLINE_REG_IMG_PATH.format(img),
