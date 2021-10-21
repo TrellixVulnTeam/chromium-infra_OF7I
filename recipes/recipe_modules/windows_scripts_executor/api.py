@@ -56,21 +56,24 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._workdir = self.m.path['cache'].join('WinPEImage')
 
     with self.m.step.nest('execute config ' + config.name):
-      wpec = config.offline_winpe_customization
-      if wpec and len(wpec.offline_customization) > 0:
-        with self.m.step.nest('offline winpe customization ' + wpec.name):
-          self.init_win_pe_image(
-              wib.Arch.Name(config.arch).replace('ARCH_', '').lower(),
-              self._workdir)
-          try:
-            for action in wpec.offline_customization:
-              self.perform_winpe_actions(action)
-          except Exception:
-            # Unmount the image and discard changes on failure
-            self.deinit_win_pe_image(config, save=False)
-            raise
-          else:
-            self.deinit_win_pe_image(config)
+      for customization in config.customizations:
+        cust_type = customization.WhichOneof('customization')
+        if cust_type == 'offline_winpe_customization':
+          wpec = customization.offline_winpe_customization
+          if wpec and len(wpec.offline_customization) > 0:
+            with self.m.step.nest('offline winpe customization ' + wpec.name):
+              self.init_win_pe_image(
+                  wib.Arch.Name(config.arch).replace('ARCH_', '').lower(),
+                  self._workdir)
+              try:
+                for action in wpec.offline_customization:
+                  self.perform_winpe_actions(action)
+              except Exception:
+                # Unmount the image and discard changes on failure
+                self.deinit_win_pe_image(config, save=False)
+                raise
+              else:
+                self.deinit_win_pe_image(config)
 
   def download_wib_artifacts(self, config):
     # Download all the windows artifacts from cipd

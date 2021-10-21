@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package recipes.infra.windows_image_builder.windows_image_builder;
 
+import "recipes/infra/windows_image_builder/offline_winpe_customization.proto";
 import "recipes/infra/windows_image_builder/sources.proto";
 import "recipes/infra/windows_image_builder/actions.proto";
 
@@ -19,23 +20,16 @@ message Image {
   // The architecture to build for..
   Arch arch = 2;
 
-  // The offline winpe customization user requirements.
-  OfflineCustomization offline_winpe_customization = 3;
-
-  // The offline windows OS customization user requirements.
-  OfflineCustomization offline_os_customization = 4;
+  // List of customizations to be performed for this image.
+  repeated Customization customizations = 3;
 }
 
-message OfflineCustomization {
-  // The name of an OfflineCustomization.
-  //
-  // E.g. basic_offline_winpe, basic_offline_windowsOS
-  string name = 1;
-
-  // The name of OfflineCustomizations you want to take precident. The last
-  // entry specified takes precident when multiple actions of the same name are
-  // listed.
-  repeated actions.OfflineAction offline_customization = 3;
+// Customization is a union of all possible customizations that are supported
+message Customization{
+  oneof customization{
+    // Customize a WinPE image
+    offline_winpe_customization.OfflineWinPECustomization offline_winpe_customization = 1;
+  }
 }
 
 enum Arch {

@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
+                                                    as winpe)
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
@@ -80,42 +82,54 @@ def GenTests(api):
           wib.Image(
               name='cipd-test',
               arch=wib.ARCH_X86,
-              offline_winpe_customization=wib.OfflineCustomization(
-                  name='offline_winpe',
-                  offline_customization=[
-                      actions.OfflineAction(
-                          name='add files', actions=[ACTION_ADD_CIPD_1])
-                  ]))) + api.post_process(StatusSuccess) +
+              customizations=[
+                  wib.Customization(
+                      offline_winpe_customization=winpe
+                      .OfflineWinPECustomization(
+                          name='offline_winpe',
+                          offline_customization=[
+                              actions.OfflineAction(
+                                  name='add files', actions=[ACTION_ADD_CIPD_1])
+                          ]))
+              ])) + api.post_process(StatusSuccess) +
       api.post_process(DropExpectation))
 
-  yield (api.test('Test cipd pin and download packages in single action',
-                  api.platform('win', 64)) +
-         api.properties(
-             wib.Image(
-                 name='cipd-test',
-                 arch=wib.ARCH_X86,
-                 offline_winpe_customization=wib.OfflineCustomization(
-                     name='offline_winpe',
-                     offline_customization=[
-                         actions.OfflineAction(
-                             name='add files',
-                             actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2])
-                     ]))) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
+  yield (api.test(
+      'Test cipd pin and download packages in single action',
+      api.platform('win', 64)
+  ) + api.properties(
+      wib.Image(
+          name='cipd-test',
+          arch=wib.ARCH_X86,
+          customizations=[
+              wib.Customization(
+                  offline_winpe_customization=winpe.OfflineWinPECustomization(
+                      name='offline_winpe',
+                      offline_customization=[
+                          actions.OfflineAction(
+                              name='add files',
+                              actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2])
+                      ]))
+          ])) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
-  yield (api.test('Test cipd pin and download packages in multiple actions',
-                  api.platform('win', 64)) +
-         api.properties(
-             wib.Image(
-                 name='cipd-test',
-                 arch=wib.ARCH_X86,
-                 offline_winpe_customization=wib.OfflineCustomization(
-                     name='offline_winpe',
-                     offline_customization=[
-                         actions.OfflineAction(
-                             name='add files-1',
-                             actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2]),
-                         actions.OfflineAction(
-                             name='add files-2', actions=[ACTION_ADD_CIPD_1])
-                     ]))) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
+  yield (api.test(
+      'Test cipd pin and download packages in multiple actions',
+      api.platform('win', 64)
+  ) + api.properties(
+      wib.Image(
+          name='cipd-test',
+          arch=wib.ARCH_X86,
+          customizations=[
+              wib.Customization(
+                  offline_winpe_customization=winpe.OfflineWinPECustomization(
+                      name='offline_winpe',
+                      offline_customization=[
+                          actions.OfflineAction(
+                              name='add files-1',
+                              actions=[ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2]),
+                          actions.OfflineAction(
+                              name='add files-2', actions=[ACTION_ADD_CIPD_1])
+                      ]))
+          ])) + PIN_CIPD_1_PASS + PIN_CIPD_2_PASS +
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

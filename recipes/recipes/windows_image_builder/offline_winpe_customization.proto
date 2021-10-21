@@ -1,0 +1,24 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.windows_image_builder.offline_winpe_customization;
+
+import  "recipes/infra/windows_image_builder/actions.proto";
+
+/* OfflineWinPECustomization generates a WinPE wim and mounts it to
+ * '[MOUNT_DIR]/<name>/mount'. It performs the given customizations and stores
+ * the outputs to '[OUT]/<name>/{<config-hash>.wim, <config-hash>.cfg}' and GCS
+ * bucket WinPE.
+ */
+message OfflineWinPECustomization {
+  // The name of an OfflineCustomization.
+  //
+  // E.g. gce_winpe_customization
+  string name = 1;
+
+  // List of OfflineActions to be executed for this customization
+  repeated actions.OfflineAction offline_customization = 3;
+}

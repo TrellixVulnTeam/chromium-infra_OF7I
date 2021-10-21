@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
+                                                    as winpe)
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
@@ -73,32 +75,43 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
-  yield (api.test('Add git src in action', api.platform('win', 64)) +
-         api.properties(
-             wib.Image(
-                 name='win10Img',
-                 arch=wib.ARCH_X86,
-                 offline_winpe_customization=wib.OfflineCustomization(
-                     name='offWpeCust',
-                     offline_customization=[
-                         actions.OfflineAction(
-                             name='action-1', actions=[ACTION_ADD_STARTNET])
-                     ]))) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
+  yield (api.test(
+      'Add git src in action', api.platform('win', 64)
+  ) + api.properties(
+      wib.Image(
+          name='win10Img',
+          arch=wib.ARCH_X86,
+          customizations=[
+              wib.Customization(
+                  offline_winpe_customization=winpe.OfflineWinPECustomization(
+                      name='offWpeCust',
+                      offline_customization=[
+                          actions.OfflineAction(
+                              name='action-1', actions=[ACTION_ADD_STARTNET])
+                      ]))
+          ])) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
          api.post_process(StatusSuccess) +  # recipe should pass
          api.post_process(DropExpectation))
 
-  yield (api.test('Add multiple git src in action', api.platform('win', 64)) +
-         api.properties(
-             wib.Image(
-                 name='win10Img',
-                 arch=wib.ARCH_X86,
-                 offline_winpe_customization=wib.OfflineCustomization(
-                     name='offWpeCust',
-                     offline_customization=[
-                         actions.OfflineAction(
-                             name='action-1',
-                             actions=[ACTION_ADD_STARTNET, ACTION_ADD_DISKPART])
-                     ]))) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
-         PIN_FILE_DISKPART_PASS + FETCH_FILE_DISKPART_PASS +
-         api.post_process(StatusSuccess) +  # recipe should pass
-         api.post_process(DropExpectation))
+  yield (
+      api.test('Add multiple git src in action', api.platform('win', 64)) +
+      api.properties(
+          wib.Image(
+              name='win10Img',
+              arch=wib.ARCH_X86,
+              customizations=[
+                  wib.Customization(
+                      offline_winpe_customization=winpe
+                      .OfflineWinPECustomization(
+                          name='offWpeCust',
+                          offline_customization=[
+                              actions.OfflineAction(
+                                  name='action-1',
+                                  actions=[
+                                      ACTION_ADD_STARTNET, ACTION_ADD_DISKPART
+                                  ])
+                          ]))
+              ])) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
+      PIN_FILE_DISKPART_PASS + FETCH_FILE_DISKPART_PASS +
+      api.post_process(StatusSuccess) +  # recipe should pass
+      api.post_process(DropExpectation))
