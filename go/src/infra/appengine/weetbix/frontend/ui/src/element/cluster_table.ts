@@ -19,9 +19,12 @@ export class ClusterTable extends LitElement {
         if (this.clusters === undefined) {
             return html`Loading...`;
         }
+        const clusterLink = (cluster: Cluster): string => {
+            return `/project/${cluster.project}/cluster/${cluster.clusterId}`;
+        }
         return html`
         <div id="container">
-            <h1>${this.clusters[0].project}: Clusters</h1>
+            <h1>Clusters in project ${this.clusters[0].project}</h1>
             <table>
                 <thead>
                     <tr>
@@ -40,16 +43,56 @@ export class ClusterTable extends LitElement {
                 <tbody>
                     ${this.clusters.map(c => html`
                     <tr>
-                        <td>${c.exampleFailureReason || c.clusterId}</td>
-                        <td class="number">${c.unexpectedFailures1d}</td>
-                        <td class="number">${c.unexpectedFailures3d}</td>
-                        <td class="number">${c.unexpectedFailures7d}</td>
-                        <td class="number">${c.unexoneratedFailures1d}</td>
-                        <td class="number">${c.unexoneratedFailures3d}</td>
-                        <td class="number">${c.unexoneratedFailures7d}</td>
-                        <td class="number">${c.affectedRuns1d}</td>
-                        <td class="number">${c.affectedRuns3d}</td>
-                        <td class="number">${c.affectedRuns7d}</td>
+                        <td class="failure-reason">
+                            <a href=${clusterLink(c)}>
+                                ${c.exampleFailureReason || c.clusterId}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexpectedFailures1d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexpectedFailures3d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexpectedFailures7d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexoneratedFailures1d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexoneratedFailures3d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.unexoneratedFailures7d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.affectedRuns1d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.affectedRuns3d}
+                            </a>
+                        </td>
+                        <td class="number">
+                            <a href=${clusterLink(c)}>
+                                ${c.affectedRuns7d}
+                            </a>
+                        </td>
                     </tr>`)}
                 </tbody>
             </table>
@@ -61,20 +104,37 @@ export class ClusterTable extends LitElement {
             margin: 20px 14px;
         }
         h1 {
-            font-size: 1em;
+            font-size: 18px;
+            font-weight: normal;
         }
         table {
             border-collapse: collapse;
+            max-width: 100%;
         }
         th {
             font-weight: normal;
             color: var(--greyed-out-text-color);
+            text-align: left;
+            font-size: var(--font-size-small);
         }
         td,th {
             padding: 4px;
+            max-width: 80%;
         }
         td.number {
             text-align: right;
+        }
+        td a {
+            display: block;
+            text-decoration: none;
+            color: var(--default-text-color);
+        }
+        tbody tr:hover {
+            background-color: var(--light-active-color);
+        }
+        .failure-reason {
+            word-break: break-all;
+            font-size: var(--font-size-small);
         }
     `];
 }

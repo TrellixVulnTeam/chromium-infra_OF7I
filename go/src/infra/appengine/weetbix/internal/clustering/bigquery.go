@@ -6,6 +6,7 @@ package clustering
 
 import (
 	"context"
+	"fmt"
 	"infra/appengine/weetbix/internal/config"
 	"math"
 
@@ -41,7 +42,16 @@ type Cluster struct {
 	AffectedRuns1d         int64               `json:"affectedRuns1d"`
 	AffectedRuns3d         int64               `json:"affectedRuns3d"`
 	AffectedRuns7d         int64               `json:"affectedRuns7d"`
+	AffectedTests1d        []SubCluster        `json:"affectedTests1d"`
+	AffectedTests3d        []SubCluster        `json:"affectedTests3d"`
+	AffectedTests7d        []SubCluster        `json:"affectedTests7d"`
 	ExampleFailureReason   bigquery.NullString `json:"exampleFailureReason"`
+	ExampleResultID        string              `json:"exampleResultId"`
+}
+
+type SubCluster struct {
+	Value     string `json:"value"`
+	Num_Fails int    `json:"numFails"`
 }
 
 // NewClient creates a new client for reading clusters. Close() MUST
@@ -135,4 +145,55 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		clusters = append(clusters, row)
 	}
 	return clusters, nil
+}
+
+// ReadCluster reads information about a single cluster.
+func (c *Client) ReadCluster(ctx context.Context, clusterID string) (*Cluster, error) {
+	q := c.client.Query(`
+	SELECT
+		cluster_id as ClusterID,
+		unexpected_failures_1d as UnexpectedFailures1d,
+		unexpected_failures_3d as UnexpectedFailures3d,
+		unexpected_failures_7d as UnexpectedFailures7d,
+		unexonerated_failures_1d as UnexoneratedFailures1d,
+		unexonerated_failures_3d as UnexoneratedFailures3d,
+		unexonerated_failures_7d as UnexoneratedFailures7d,
+		affected_runs_1d as AffectedRuns1d,
+		affected_runs_3d as AffectedRuns3d,
+		affected_runs_7d as AffectedRuns7d,
+		affected_tests_1d as AffectedTests1d,
+		affected_tests_3d as AffectedTests3d,
+		affected_tests_7d as AffectedTests7d,
+		example_failure_reason.primary_error_message as ExampleFailureReason,
+		example_result_id as ExampleResultID
+		FROM chromium.clusters
+		WHERE cluster_id = @clusterID
+	`)
+	q.Parameters = []bigquery.QueryParameter{
+		{Name: "clusterID", Value: clusterID},
+	}
+	job, err := q.Run(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "querying cluster").Err()
+	}
+	it, err := job.Read(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "obtain cluster iterator").Err()
+	}
+	clusters := []*Cluster{}
+	for {
+		row := &Cluster{}
+		err := it.Next(row)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, errors.Annotate(err, "obtain next cluster row").Err()
+		}
+		clusters = append(clusters, row)
+	}
+	if len(clusters) == 0 {
+		return nil, fmt.Errorf("cluster %s not found", clusterID)
+	}
+	return clusters[0], nil
 }

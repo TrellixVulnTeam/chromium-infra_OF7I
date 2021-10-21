@@ -8,6 +8,7 @@ import { customElement, html, LitElement, property } from 'lit-element';
 import { Context, Router } from '@vaadin/router';
 import './element/bug_cluster_table.ts';
 import './element/cluster_table.ts';
+import './element/cluster_page.ts';
 import './element/not_found_page.ts';
 import './element/title_bar.ts';
 
@@ -48,6 +49,7 @@ const serverRoute = (ctx: Context) => { window.location.pathname = ctx.pathname;
 router.setRoutes([
     { path: '/auth/(.*)', action: serverRoute },  // For logout links.
     { path: '/', component: 'cluster-table' },
+    { path: '/project/:project/cluster/:id', component: 'cluster-page' },
     { path: '/monorail-test', component: 'monorail-test' },
     { path: '/bugcluster', component: 'bug-cluster-table' },
     { path: '(.*)', component: 'not-found-page' },

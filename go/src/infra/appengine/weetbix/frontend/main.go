@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/errors"
@@ -195,6 +196,39 @@ func (hc *handlers) listClusters(ctx *router.Context) {
 	respondWithJSON(ctx, clusters)
 }
 
+func (hc *handlers) getCluster(ctx *router.Context) {
+	projectID := ctx.Params.ByName("project")
+	if projectID != "chromium" {
+		http.Error(ctx.Writer, "Only the chromium project is currently supported", 400)
+		return
+	}
+	clusterID := strings.TrimPrefix(ctx.Params.ByName("id"), "/")
+	if clusterID == "" {
+		http.Error(ctx.Writer, "Please supply a cluster ID.", http.StatusBadRequest)
+		return
+	}
+	cc, err := clustering.NewClient(ctx.Context, hc.cloudProject)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Creating new clustering client: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		if err := cc.Close(); err != nil {
+			logging.Warningf(ctx.Context, "Closing clustering client: %v", err)
+		}
+	}()
+
+	clusters, err := cc.ReadCluster(ctx.Context, clusterID)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+
+	respondWithJSON(ctx, clusters)
+}
+
 func (hc *handlers) updateBugs(ctx context.Context) error {
 	cfg, err := config.Get(ctx)
 	if err != nil {
@@ -238,6 +272,7 @@ func main() {
 			prod:         srv.Options.Prod,
 		}
 		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
+		srv.Routes.GET("/api/project/:project/cluster/*id", mw, handlers.getCluster)
 		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)
 		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
