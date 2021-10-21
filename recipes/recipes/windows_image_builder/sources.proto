@@ -1,0 +1,38 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.windows_image_builder.sources;
+
+message Src {
+  oneof src {
+    // local_src refers to the local file on the bot
+    string local_src = 1 [deprecated=true];
+    // CIPD src refers to a cipd instance
+    CIPDSrc cipd_src = 2;
+    // git src refers to a file in a git repo
+    GITSrc git_src = 3;
+  }
+}
+
+// Ref to cipd file to be used as a source
+message CIPDSrc {
+  // Name/Path of the cipd package
+  string package = 1;
+  // Refs can be a instance or 'latest'
+  string refs = 2;
+  // Platform support for the package
+  string platform = 3;
+}
+
+// Ref to git file to be used as source
+message GITSrc {
+  // Name of the GIT repo to pull from
+  string repo = 1;
+  // refs/commit to pull
+  string ref = 2;
+  // The file we need in the repo
+  string src = 3;
+}

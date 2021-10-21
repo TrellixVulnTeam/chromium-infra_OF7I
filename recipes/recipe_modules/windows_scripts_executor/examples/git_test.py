@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
@@ -52,8 +53,8 @@ def GenTests(api):
   ACTION_ADD_STARTNET = wib.Action(
       add_file=wib.AddFile(
           name='add_startnet_file',
-          src=wib.Src(
-              git_src=wib.GITSrc(
+          src=sources.Src(
+              git_src=sources.GITSrc(
                   repo='chromium.dev',
                   ref='HEAD',
                   src='windows/artifacts/startnet.cmd'),),
@@ -63,8 +64,8 @@ def GenTests(api):
   ACTION_ADD_DISKPART = wib.Action(
       add_file=wib.AddFile(
           name='add_diskpart_file',
-          src=wib.Src(
-              git_src=wib.GITSrc(
+          src=sources.Src(
+              git_src=sources.GITSrc(
                   repo='chromium.dev',
                   ref='HEAD',
                   src='windows/artifacts/diskpart.txt'),),

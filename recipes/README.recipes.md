@@ -1485,18 +1485,18 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_scripts\_executor:examples/add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#11): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#20)(api, package):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#21)(api, package):**
 ### *recipes* / [windows\_scripts\_executor:examples/cipd\_test](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#11): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#20)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#21)(api, image):**
 ### *recipes* / [windows\_scripts\_executor:examples/edit\_offline\_registry\_test](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#10): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
@@ -1506,18 +1506,18 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#20)(api, edit_offline_registry_action):**
 ### *recipes* / [windows\_scripts\_executor:examples/git\_test](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#10): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#11): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#21)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#22)(api, image):**
 ### *recipes* / [windows\_scripts\_executor:examples/test](/recipes/recipe_modules/windows_scripts_executor/examples/test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#10): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#11): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#21)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#22)(api, image):**
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

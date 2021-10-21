@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
@@ -51,8 +52,8 @@ def GenTests(api):
   ACTION_ADD_CIPD_1 = wib.Action(
       add_file=wib.AddFile(
           name='add cipd-1',
-          src=wib.Src(
-              cipd_src=wib.CIPDSrc(
+          src=sources.Src(
+              cipd_src=sources.CIPDSrc(
                   package='infra/files/cipd-1',
                   refs='latest',
                   platform='windows-amd64',
@@ -63,8 +64,8 @@ def GenTests(api):
   ACTION_ADD_CIPD_2 = wib.Action(
       add_file=wib.AddFile(
           name='add cipd-2',
-          src=wib.Src(
-              cipd_src=wib.CIPDSrc(
+          src=sources.Src(
+              cipd_src=sources.CIPDSrc(
                   package='infra/files/cipd-2',
                   refs='latest',
                   platform='windows-amd64',
