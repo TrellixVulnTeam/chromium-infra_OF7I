@@ -69,7 +69,7 @@ func (c *podPerfCmd) startPodPerf() error {
 	}
 
 	for {
-		reportToBigQuery(inserter, getPodPerf(mi, podFilter), 5*time.Second)
+		reportToBigQuery(inserter, getPodPerf(mi, podFilter), 30*time.Second)
 		time.Sleep((time.Duration)(c.scanIntervalMinute) * time.Minute)
 	}
 }

@@ -64,7 +64,7 @@ func (c *podStatCmd) startPodStat() error {
 
 func reportPodStatLoop(clusterName string, p k8sTypedCoreV1.PodInterface, r *bigquery.Inserter, interval time.Duration) {
 	for {
-		reportToBigQuery(r, getPodStat(clusterName, p), 5*time.Second)
+		reportToBigQuery(r, getPodStat(clusterName, p), 30*time.Second)
 		time.Sleep(interval)
 	}
 }
