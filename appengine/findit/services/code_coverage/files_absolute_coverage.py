@@ -49,8 +49,8 @@ def _ExportAbsoluteCoverageForBuilder(builder):
       PostsubmitReport.gitiles_commit.server_host == server_host,
       PostsubmitReport.gitiles_commit.project == project,
       PostsubmitReport.bucket == "ci", PostsubmitReport.builder == builder,
-      PostsubmitReport.visible == True).order(
-          -PostsubmitReport.commit_timestamp)
+      PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
+      0).order(-PostsubmitReport.commit_timestamp)
   entities = query.fetch(limit=1)
   report = entities[0]
   latest_revision = report.gitiles_commit.revision

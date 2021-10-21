@@ -211,7 +211,7 @@ def CreateReferencedCoverage():
         PostsubmitReport.gitiles_commit.server_host == _CHROMIUM_SERVER_HOST,
         PostsubmitReport.gitiles_commit.project == _CHROMIUM_PROJECT,
         PostsubmitReport.bucket == 'ci', PostsubmitReport.builder == builder,
-        PostsubmitReport.visible == True).order(
-            -PostsubmitReport.commit_timestamp)
+        PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
+        0).order(-PostsubmitReport.commit_timestamp)
     report = query.fetch(limit=1)[0]
     _CreateReferencedCoverage(report)
