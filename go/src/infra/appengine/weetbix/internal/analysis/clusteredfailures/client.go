@@ -41,7 +41,7 @@ type Client struct {
 
 // Insert inserts the given rows in BigQuery.
 func (c *Client) Insert(ctx context.Context, luciProject string, rows []*bqpb.ClusteredFailureRow) error {
-	client, err := bqutil.Client(ctx, luciProject, c.projectID)
+	client, err := bqutil.Client(ctx, c.projectID)
 	if err != nil {
 		return err
 	}

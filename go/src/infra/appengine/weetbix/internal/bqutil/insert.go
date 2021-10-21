@@ -17,9 +17,11 @@ import (
 )
 
 // Client returns a new BigQuery client for use with the given GCP project,
-// that authenticates as the given LUCI Project.
-func Client(ctx context.Context, luciProject string, gcpProject string) (*bigquery.Client, error) {
-	tr, err := auth.GetRPCTransport(ctx, auth.AsProject, auth.WithProject(luciProject), auth.WithScopes(bigquery.Scope))
+// that authenticates as Weetbix itself. Only use this method if the
+// specification of the BigQuery dataset to access is not under the
+// control of the project (e.g. via configuration).
+func Client(ctx context.Context, gcpProject string) (*bigquery.Client, error) {
+	tr, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(bigquery.Scope))
 	if err != nil {
 		return nil, err
 	}
