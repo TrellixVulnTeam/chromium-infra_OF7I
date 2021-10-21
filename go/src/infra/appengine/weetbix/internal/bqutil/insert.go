@@ -21,6 +21,9 @@ import (
 // specification of the BigQuery dataset to access is not under the
 // control of the project (e.g. via configuration).
 func Client(ctx context.Context, gcpProject string) (*bigquery.Client, error) {
+	if gcpProject == "" {
+		return nil, errors.New("GCP Project must be specified")
+	}
 	tr, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(bigquery.Scope))
 	if err != nil {
 		return nil, err

@@ -30,7 +30,9 @@ var schemaApplyer = bq.NewSchemaApplyer(caching.RegisterLRUCache(50))
 
 // NewClient creates a new client for exporting clustered failures.
 func NewClient(projectID string) *Client {
-	return &Client{}
+	return &Client{
+		projectID: projectID,
+	}
 }
 
 // Client provides methods to export clustered failures to BigQuery.
@@ -43,7 +45,7 @@ type Client struct {
 func (c *Client) Insert(ctx context.Context, luciProject string, rows []*bqpb.ClusteredFailureRow) error {
 	client, err := bqutil.Client(ctx, c.projectID)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "creating BQ client").Err()
 	}
 	defer client.Close()
 
