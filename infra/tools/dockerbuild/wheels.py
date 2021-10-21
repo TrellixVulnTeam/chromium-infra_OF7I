@@ -334,6 +334,7 @@ SPECS.update({
                 'GEVENT_NO_LIBUV_BUILD': '1',
             },
             pyversions=['py2'],
+            patch_version='chromium.1',
         ),
         SourceOrPrebuilt(
             'gevent',
