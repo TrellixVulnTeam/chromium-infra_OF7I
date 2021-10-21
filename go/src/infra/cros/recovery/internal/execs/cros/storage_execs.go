@@ -6,6 +6,8 @@ package cros
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -55,6 +57,54 @@ func auditStorageSMARTExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	return nil
 }
 
+// hasEnoughStorageSpaceExec confirms the given path has at least the amount of free space specified by the actionArgs arguments.
+// provides arguments should be in the formart of:
+// ["path:x"]
+// x is the number of GB of the disk space.
+// input will only consist of one path and its corresponding value for storage.
+func hasEnoughStorageSpaceExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if len(actionArgs) != 1 {
+		return errors.Reason("has enough storage space: input in wrong format").Err()
+	}
+	inputs := strings.Split(actionArgs[0], ":")
+	if len(inputs) != 2 {
+		return errors.Reason("has enough storage space: input in wrong format").Err()
+	}
+	path := inputs[0]
+	pathMinSpaceInGB, convertErr := strconv.ParseFloat(inputs[1], 64)
+	if convertErr != nil {
+		return errors.Annotate(convertErr, "has enough storage space: convert stateful path min space").Err()
+	}
+	if err := pathHasEnoughValue(ctx, args, args.ResourceName, path, "disk space", pathMinSpaceInGB); err != nil {
+		return errors.Annotate(err, "has enough storage space").Err()
+	}
+	return nil
+}
+
+// hasEnoughInodesExec confirms the given path has at least the amount of free inodes specified by the actionArgs arguments.
+// provides arguments should be in the formart of:
+// ["path:x"]
+// x is the number of kilos of inodes.
+// input will only consist of one path and its corresponding value for storage.
+func hasEnoughInodesExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if len(actionArgs) != 1 {
+		return errors.Reason("has enough inodes: input in wrong format").Err()
+	}
+	inputs := strings.Split(actionArgs[0], ":")
+	if len(inputs) != 2 {
+		return errors.Reason("has enough inodes: input in wrong format").Err()
+	}
+	path := inputs[0]
+	pathMinKiloInodes, convertErr := strconv.ParseFloat(inputs[1], 64)
+	if convertErr != nil {
+		return errors.Annotate(convertErr, "has enough storage inodes: convert stateful path min kilo inodes").Err()
+	}
+	err := pathHasEnoughValue(ctx, args, args.ResourceName, path, "inodes", pathMinKiloInodes*1000)
+	return errors.Annotate(err, "has enough storage inodes").Err()
+}
+
 func init() {
 	execs.Register("cros_audit_storage_smart", auditStorageSMARTExec)
+	execs.Register("cros_has_enough_storage_space", hasEnoughStorageSpaceExec)
+	execs.Register("cros_has_enough_inodes", hasEnoughInodesExec)
 }

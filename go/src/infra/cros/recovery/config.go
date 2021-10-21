@@ -570,9 +570,40 @@ const defaultConfig = `
 		},
 		"cros_repair":{
 			"critical_actions": [
-				"sample_pass"
-			],
-			"actions": {}
+                "cros_ssh",
+                "cros_stateful_partition_has_enough_inodes",
+                "cros_stateful_partition_has_enough_storage_space",
+                "cros_encrypted_stateful_partition_has_enough_storage_space"
+            ],
+            "actions": {
+                "cros_stateful_partition_has_enough_inodes":{
+                    "docs":[
+                        "check the stateful partition path has enough inodes"
+                    ],
+                    "exec_name":"cros_has_enough_inodes",
+                    "exec_extra_args":[
+                        "/mnt/stateful_partition:100"
+                    ]
+                },
+                "cros_stateful_partition_has_enough_storage_space":{
+                    "docs":[
+                        "check the stateful partition have enough disk space. The storage unit is in GB."
+                    ],
+                    "exec_name":"cros_has_enough_storage_space",
+                    "exec_extra_args":[
+                        "/mnt/stateful_partition:0.7"
+                    ]
+                },
+                "cros_encrypted_stateful_partition_has_enough_storage_space":{
+                    "docs":[
+                        "check the encrypted stateful partition have enough disk space. The storage unit is in GB."
+                    ],
+                    "exec_name":"cros_has_enough_storage_space",
+                    "exec_extra_args":[
+                        "/mnt/stateful_partition/encrypted:0.1"
+                    ]
+                }
+            }
 		},
 		"labstation_deploy":{
 			"critical_actions": [
