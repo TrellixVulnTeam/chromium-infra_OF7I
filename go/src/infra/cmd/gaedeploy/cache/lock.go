@@ -26,7 +26,7 @@ func lockFS(ctx context.Context, path string, giveUpTimeout time.Duration) (unlo
 		Path: path,
 		Block: fslock.Blocker(func() error {
 			attempt++
-			delay := 5*time.Second + time.Duration(rand.Int63n(int64(5*time.Second)))
+			delay := time.Second + time.Duration(rand.Int63n(int64(time.Second)))
 			logging.Warningf(ctx, "Failed to grab FS lock on attempt %d, retrying after %s...", attempt, delay)
 			tr := clock.Sleep(ctx, delay)
 			return tr.Err

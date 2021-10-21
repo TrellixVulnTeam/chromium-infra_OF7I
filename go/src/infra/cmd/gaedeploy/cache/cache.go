@@ -46,28 +46,35 @@ type Cache struct {
 // If the cache has such tarball already (as identified by its SHA256 digest),
 // calls `cb` right away. Otherwise fetches and unpacks the tarball first.
 //
-// `cb` may modify files in the directory if necessary. Modification will be
-// preserved in the cache, so `cb` should be careful with them.
-//
-// Access to an unpacked tarball directory is protected by a global file system
-// lock. Only one `WithTarball` invocation can touch it concurrently.
+// `cb` may modify files in the directory if necessary. Modifications will be
+// preserved in the cache, and multiple concurrent WithTarballs calls (perhaps
+// made from different processes) will see each other's modifications, so `cb`
+// should be careful doing them. This is required to allow gaedeploy to generate
+// temporary app-specific GAE YAMLs, which are required by gcloud to be
+// side-by-side with the code being deployed (and thus must reside inside the
+// unpacked tarball directory).
 func (c *Cache) WithTarball(ctx context.Context, src source.Source, cb func(path string) error) error {
 	entryDir := filepath.Join(c.Root, hex.EncodeToString(src.SHA256()))
 	if err := os.MkdirAll(entryDir, 0700); err != nil {
 		return errors.Annotate(err, "failed to create a directory for the tarball").Err()
 	}
 
-	// Enter the global critical section to avoid weird cache states due to
-	// concurrent execution of multiple processes.
-	unlock, err := lockFS(ctx, filepath.Join(entryDir, "lock"), 15*time.Minute)
+	// Enter the global critical section to avoid weird cache states when
+	// unpacking the tarball due to concurrent execution of multiple processes.
+	unlockFS, err := lockFS(ctx, filepath.Join(entryDir, "lock"), 5*time.Minute)
 	if err != nil {
 		return errors.Annotate(err, "failed to grab the FS lock").Err()
 	}
-	defer func() {
-		if err := unlock(); err != nil {
-			logging.Errorf(ctx, "Failed to remove the FS lock: %s", err)
+	unlocked := false
+	unlock := func() {
+		if !unlocked {
+			unlocked = true
+			if err := unlockFS(); err != nil {
+				logging.Errorf(ctx, "Failed to remove the FS lock: %s", err)
+			}
 		}
-	}()
+	}
+	defer unlock()
 
 	// Drop a JSON file with info about the cache entry. Used by the GC.
 	err = modifyMetadata(ctx, entryDir, func(m *cacheMetadata) {
@@ -131,6 +138,10 @@ func (c *Cache) WithTarball(ctx context.Context, src source.Source, cb func(path
 	} else {
 		logging.Infof(ctx, "Found the unpackaged tarball in the cache.")
 	}
+
+	// Now that we have unpacked everything, release the lock to allow multiple
+	// concurrent callbacks to read from the cache directory at the same time.
+	unlock()
 
 	// Let the callback do the rest.
 	return cb(tarballDir)

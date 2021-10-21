@@ -164,13 +164,30 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 			}
 		}
 
+		// E.g. "frontend/" and "app.yaml".
+		modDir, yamlBaseName := filepath.Split(c.moduleYAML)
+		yamlBaseName = strings.TrimSuffix(yamlBaseName, ".yaml")
+
 		// Need to save the YAML on disk in the same directory as the original one,
-		// so that gcloud resolves all paths in it correctly. Keep it hanging there
-		// afterwards to aid in debugging, it is harmless.
-		modDir, yamlBaseName := filepath.Dir(c.moduleYAML), filepath.Base(c.moduleYAML)
-		yamlName := ".gaedeploy_" + yamlBaseName
-		if err := ioutil.WriteFile(filepath.Join(root, filepath.Join(modDir, yamlName)), blob, 0600); err != nil {
-			return errors.Annotate(err, "failed to save processed module config").Err()
+		// so that gcloud resolves all paths in it correctly. Need to put in a temp
+		// file with randomized name so that multiple concurrent deploys from the
+		// same unpacked tarball directory don't accidentally overwrite each others
+		// files.
+		yamlTmp, err := ioutil.TempFile(filepath.Join(root, modDir), ".gaedeploy_"+yamlBaseName+".*.yaml")
+		if err != nil {
+			return errors.Annotate(err, "failed to create a temp file").Err()
+		}
+		defer func() {
+			yamlTmp.Close()
+			if err := os.Remove(yamlTmp.Name()); err != nil {
+				logging.Errorf(ctx, "Failed to remove the temp file: %s", err)
+			}
+		}()
+		if _, err := yamlTmp.Write(blob); err != nil {
+			return errors.Annotate(err, "failed to write the processed module config").Err()
+		}
+		if err := yamlTmp.Close(); err != nil {
+			return errors.Annotate(err, "failed to flush the processed module config").Err()
 		}
 
 		// If this is a tarball with Go code, need to setup GOPATH and deploy
@@ -191,7 +208,7 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 			"--no-promote",
 			"--no-stop-previous-version",
 			"--version", c.moduleVersion,
-			yamlName,
+			filepath.Base(yamlTmp.Name()),
 		}, filepath.Join(root, modDir), env, c.dryRun)
 	})
 }
