@@ -199,6 +199,18 @@ func TestGlogLogsParser(t *testing.T) {
 				"caller":   "example.cc:123",
 			},
 		},
+		{
+			line:          "I20211025 19:34:56.123456 12345 example.cc:123] Hellow World",
+			wantSuccess:   true,
+			wantTimestamp: "2021-10-25T19:34:56.123456-07:00",
+			wantSeverity:  Info,
+			wantPayload:   "[tid:12345 example.cc:123] Hellow World",
+			wantLabels: map[string]string{
+				"threadID": "12345",
+				"module":   "example.cc",
+				"caller":   "example.cc:123",
+			},
+		},
 	})
 }
 

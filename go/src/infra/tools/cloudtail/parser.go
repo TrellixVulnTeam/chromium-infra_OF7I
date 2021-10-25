@@ -283,7 +283,7 @@ var (
 	glogRe = regexp.MustCompile(
 		`^` +
 			`([IWEF])` + // Severity
-			`(\d{2})(\d{2})` + // mmDD
+			`(\d{4})?(\d{2})(\d{2})` + // mmDD or yyyymmDD
 			` (\d{2}:\d{2}:\d{2}\.\d{6})` + // YY:MM:SS.microseconds
 			` *(\d+)` + // Thread ID
 			` ([^:]+):(\d+)` + // Module and line number
@@ -323,15 +323,32 @@ func (p *glogLogsParser) fromMonthDayHMS(month, day, hms string) (time.Time, err
 
 func (p *glogLogsParser) ParseLogLine(line string) *Entry {
 	if matches := glogRe.FindStringSubmatch(line); matches != nil {
-		timestamp, err := p.fromMonthDayHMS(matches[2], matches[3], matches[4])
-		if err != nil {
-			return nil
-		}
 		severity := matches[1]
-		threadID := matches[5]
-		module := matches[6]
-		line, _ := strconv.Atoi(matches[7])
-		message := matches[8]
+		threadID := matches[6]
+		module := matches[7]
+		line, _ := strconv.Atoi(matches[8])
+		message := matches[9]
+		var timestamp time.Time
+		var err error
+		if matches[2] == "" {
+			// Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+			timestamp, err = p.fromMonthDayHMS(matches[3], matches[4], matches[5])
+			if err != nil {
+				return nil
+			}
+		} else {
+			// new glog format (>= 0.5.0)
+			// Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
+			t := fmt.Sprintf("%s-%s-%sT%s", matches[2], matches[3], matches[4], matches[5])
+			now := time.Now()
+			if p.now != nil {
+				now = *p.now
+			}
+			timestamp, err = time.ParseInLocation("2006-01-02T15:04:05.000000", t, now.Location())
+			if err != nil {
+				return nil
+			}
+		}
 
 		return &Entry{
 			Timestamp:   timestamp,
