@@ -47,7 +47,7 @@ file a bug [here](https://bugs.chromium.org/p/chromium/issues/entry?template=+Vp
 [VPython]: ./vpython.md
 [Python VirtualEnvs]: https://virtualenv.pypa.io/en/stable/
 [PyPI]: https://pypi.python.org/
-[vpython spec]: https://chromium.googlesource.com/chromium/src.git/+/master/.vpython
-[LUCI]: https://chrome-internal.googlesource.com/infradata/config/+/master/configs/cr-buildbucket/swarming_task_template.json#70
-[depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools/+/master/cipd_manifest.txt#11
-[wheels.md]: https://chromium.googlesource.com/infra/infra/+/master/infra/tools/dockerbuild/wheels.md
+[vpython spec]: https://chromium.googlesource.com/chromium/src.git/+/main/.vpython
+[LUCI]: https://chrome-internal.googlesource.com/infradata/config/+/main/configs/cr-buildbucket/settings.cfg
+[depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools/+/main/cipd_manifest.txt#38
+[wheels.md]: https://chromium.googlesource.com/infra/infra/+/main/infra/tools/dockerbuild/wheels.md
