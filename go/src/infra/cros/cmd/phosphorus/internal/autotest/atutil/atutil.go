@@ -9,28 +9,37 @@ package atutil
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
+	"go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/cmd/phosphorus/internal/autotest"
 	"infra/cros/cmd/phosphorus/internal/osutil"
+	"infra/cros/internal/docker"
 )
 
 const (
-	keyvalFile      = "keyval"
-	autoservPidFile = ".autoserv_execute"
-	tkoPidFile      = ".parser_execute"
+	keyvalFile                = "keyval"
+	autoservPidFile           = ".autoserv_execute"
+	tkoPidFile                = ".parser_execute"
+	sspDeployShadowConfigFile = "ssp_deploy_shadow_config.json"
 )
 
 // RunAutoserv runs an autoserv task.
@@ -42,9 +51,21 @@ const (
 //
 // Output is written to the Writer.
 //
+// If dockerImage is set, the autoserv task will run inside a Docker container.
+// The location of autoserv in the container is specified by m (the same as if
+// autoserv runs on the host). Similarly, results are written to the results dir
+// specified by j.
+//
 // Result.TestsFailed may not be set, depending on AutoservJob.  An
 // error is not returned for test failures.
-func RunAutoserv(ctx context.Context, m *MainJob, j AutoservJob, w io.Writer) (r *Result, err error) {
+func RunAutoserv(
+	ctx context.Context,
+	m *MainJob,
+	j AutoservJob,
+	w io.Writer,
+	dockerClient client.CommonAPIClient,
+	containerImageInfo *api.ContainerImageInfo,
+) (r *Result, err error) {
 	if err2 := prepareHostInfo(m.ResultsDir, j); err2 != nil {
 		return nil, err2
 	}
@@ -64,9 +85,9 @@ func RunAutoserv(ctx context.Context, m *MainJob, j AutoservJob, w io.Writer) (r
 	}
 	switch {
 	case isTest(a):
-		return runTest(ctx, m.AutotestConfig, a, w)
+		return runTest(ctx, m.AutotestConfig, a, w, dockerClient, containerImageInfo)
 	default:
-		return runTask(ctx, m.AutotestConfig, a, w)
+		return runTask(ctx, m.AutotestConfig, a, w, dockerClient, containerImageInfo)
 	}
 }
 
@@ -93,25 +114,169 @@ func TKOParse(c autotest.Config, resultsDir string, w io.Writer) (failed int, er
 	return n, nil
 }
 
+type SSPDeployConfig struct {
+	Source      string `json:"source,omitempty"`
+	Target      string `json:"target,omitempty"`
+	Append      bool   `json:"append,omitempty"`
+	Mount       bool   `json:"mount,omitempty"`
+	Readonly    bool   `json:"readonly,omitempty"`
+	ForceCreate bool   `json:"force_create,omitempty"`
+}
+
+// ParseSSPDeployShadowConfig parses a JSON file containing ssp deploy shadow
+// config into Mounts for use in a ContainerConfig.
+func ParseSSPDeployShadowConfig(
+	ctx context.Context,
+	autotestConfig autotest.Config,
+	configFile string,
+) ([]mount.Mount, error) {
+	bytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed reading SSP deploy shadow config file")
+	}
+
+	var deployConfigs []SSPDeployConfig
+	err = json.Unmarshal(bytes, &deployConfigs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed parsing SSP deploy shadow config file")
+	}
+
+	var mounts []mount.Mount
+
+	for _, config := range deployConfigs {
+		if !path.IsAbs(config.Target) {
+			return nil, fmt.Errorf("target path must be absolute (%s)", config.Target)
+		}
+
+		if config.Append {
+			if !filepath.IsAbs(config.Source) {
+				if strings.HasPrefix(config.Source, "~") {
+					return nil, fmt.Errorf("source path may not have '~' (%s)", config.Source)
+				}
+
+				config.Source = filepath.Join(autotestConfig.AutotestDir, config.Source)
+			}
+		}
+
+		if _, err := os.Stat(config.Source); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				if config.ForceCreate {
+					logging.Infof(ctx, "source %s does not exist, creating because forceCreate is set", config.Source)
+
+					if err := os.MkdirAll(config.Source, os.ModePerm); err != nil {
+						return nil, fmt.Errorf("failed creating source dir (%s): %w", config.Source, err)
+					}
+				} else {
+					return nil, fmt.Errorf("source %s does not exist, and forceCreate is not set", config.Source)
+				}
+			} else {
+				return nil, fmt.Errorf("failed calling stat on file (%s): %w", config.Source, err)
+			}
+		}
+
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Target:   config.Target,
+			Source:   config.Source,
+			ReadOnly: config.Readonly,
+		})
+	}
+
+	return mounts, nil
+}
+
 // runTask runs an autoserv task.
 //
 // Result.TestsFailed is always zero.
-func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w io.Writer) (*Result, error) {
+func runTask(ctx context.Context,
+	c autotest.Config,
+	a *autotest.AutoservArgs,
+	w io.Writer,
+	dockerClient client.CommonAPIClient,
+	containerImageInfo *api.ContainerImageInfo,
+) (*Result, error) {
 	r := &Result{}
-	cmd := autotest.AutoservCommand(c, a)
-	cmd.Stdout = w
-	cmd.Stderr = w
 
-	var err error
-	r.RunResult, err = osutil.RunWithAbort(ctx, cmd)
-	if err != nil {
-		return r, err
+	if reflect.ValueOf(dockerClient).IsNil() != (containerImageInfo == nil) {
+		return r, errors.New("Docker client and ContainerImageInfo must both be nil or non-nil")
 	}
-	if es, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok {
-		r.Exit = es.ExitStatus()
+
+	if !reflect.ValueOf(dockerClient).IsNil() {
+		// SSP args should not be specified when autoserv is run in a Docker
+		// container.
+		argsNoSSP := *a
+		argsNoSSP.SSPBaseImageName = ""
+		argsNoSSP.RequireSSP = false
+		cmd := autotest.AutoservCommand(c, &argsNoSSP)
+
+		imageName := fmt.Sprintf(
+			"%s/%s/%s@%s",
+			containerImageInfo.GetRepository().GetHostname(),
+			containerImageInfo.GetRepository().GetProject(),
+			containerImageInfo.GetName(),
+			containerImageInfo.GetDigest(),
+		)
+
+		logging.Infof(ctx, "pulling Docker image %s (has tags %q)", imageName, containerImageInfo.GetTags())
+		err := docker.PullImage(ctx, dockerClient, *containerImageInfo)
+		if err != nil {
+			return r, errors.Wrap(err, "failed pulling Docker image")
+		}
+
+		containerConfig := &container.Config{
+			Image:        imageName,
+			Cmd:          cmd.Args,
+			User:         "chromeos-test",
+			AttachStdout: true,
+			AttachStderr: true,
+		}
+
+		sspDeployShadowConfigMounts, err := ParseSSPDeployShadowConfig(
+			ctx, c, filepath.Join(c.AutotestDir, sspDeployShadowConfigFile),
+		)
+		if err != nil {
+			return r, errors.Wrap(err, "failed parsing SSP deploy shadow config")
+		}
+
+		// The results dir on the host is bound to the same path in the
+		// container. Thus, autoserv will write to a.ResultsDir in the
+		// container, which is bound to a.ResultsDir in the host, so results
+		// are available in the expected location on the host.
+		hostConfig := &container.HostConfig{
+			NetworkMode: "host",
+			Mounts: append(sspDeployShadowConfigMounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   a.ResultsDir,
+				Target:   a.ResultsDir,
+				ReadOnly: false,
+			}),
+		}
+
+		logging.Infof(ctx, "creating Docker container with command %q", containerConfig.Cmd)
+
+		resp, err := docker.RunContainer(ctx, dockerClient, containerConfig, hostConfig)
+		if err != nil {
+			return r, err
+		}
+
+		r.Exit = int(resp.StatusCode)
 	} else {
-		return r, errors.New("RunAutoserv: failed to get exit status: unknown process state")
+		cmd := autotest.AutoservCommand(c, a)
+		cmd.Stdout = w
+		cmd.Stderr = w
+
+		var err error
+		r.RunResult, err = osutil.RunWithAbort(ctx, cmd)
+		if err != nil {
+			return r, err
+		}
+		if es, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok {
+			r.Exit = es.ExitStatus()
+		} else {
+			return r, errors.New("RunAutoserv: failed to get exit status: unknown process state")
+		}
 	}
+
 	logging.Infof(ctx, "RunAutoserv: exited %d", r.Exit)
 	return r, nil
 }
@@ -121,8 +286,15 @@ func runTask(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w
 // Unlike runTask, this function performs some things only needed for
 // tests, like parsing the number of test failed and writing a job
 // finished timestamp.
-func runTest(ctx context.Context, c autotest.Config, a *autotest.AutoservArgs, w io.Writer) (*Result, error) {
-	r, err := runTask(ctx, c, a, w)
+func runTest(
+	ctx context.Context,
+	c autotest.Config,
+	a *autotest.AutoservArgs,
+	w io.Writer,
+	dockerClient client.CommonAPIClient,
+	containerImageInfo *api.ContainerImageInfo,
+) (*Result, error) {
+	r, err := runTask(ctx, c, a, w, dockerClient, containerImageInfo)
 	if !r.Started || r.Exit != 0 {
 		// autoserv did not exit cleanly so artifacts may not be present.
 		return r, err

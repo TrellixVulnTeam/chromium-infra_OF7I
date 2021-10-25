@@ -13,10 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/maruel/subcommands"
 	"github.com/pkg/errors"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
 )
@@ -137,7 +139,27 @@ func runTestStep(ctx context.Context, r *phosphorus.RunTestRequest) (*autoservRe
 		SSPBaseImageName:   r.Config.GetTask().GetSspBaseImageName(),
 	}
 
-	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)
+	var dockerClient *client.Client
+
+	if r.ContainerImageInfo != nil {
+		var err error
+		registry := r.GetContainerImageInfo().GetRepository().GetHostname()
+		if registry == "" {
+			return nil, fmt.Errorf("ContainerImageInfo must set repository hostname")
+		}
+
+		dockerClient, err = client.NewClientWithOpts(
+			client.FromEnv,
+			client.WithAPIVersionNegotiation(),
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "creating Docker client")
+		}
+
+		logging.Infof(ctx, "using Docker client version %s", dockerClient.ClientVersion())
+	}
+
+	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout, dockerClient, r.ContainerImageInfo)
 	if err != nil {
 		return nil, errors.Wrap(err, "run test")
 	}

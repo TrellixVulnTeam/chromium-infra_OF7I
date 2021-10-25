@@ -317,7 +317,7 @@ func provisionViaAutoserv(ctx context.Context, tag string, r *phosphorus.PrejobR
 		ResultsDir: fullPath,
 	}
 
-	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
+	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout, nil, nil)
 	if err != nil {
 		return nil, errors.Annotate(err, "run provision").Err()
 	}
@@ -337,7 +337,7 @@ func resetViaAutoserv(ctx context.Context, r *phosphorus.PrejobRequest) (*atutil
 		ResultsDir: fullPath,
 		Type:       atutil.Reset,
 	}
-	ar, err := atutil.RunAutoserv(ctx, j, a, os.Stdout)
+	ar, err := atutil.RunAutoserv(ctx, j, a, os.Stdout, nil, nil)
 	if err != nil {
 		return nil, errors.Annotate(err, "run reset").Err()
 	}
