@@ -22,6 +22,7 @@ PROPERTIES = wib.Image
 
 
 def RunSteps(api, image):
+  api.windows_scripts_executor.module_init()
   # Test pin and download cipd pkgs
   api.windows_scripts_executor.pin_wib_config(image)
   api.windows_scripts_executor.download_wib_artifacts(image)

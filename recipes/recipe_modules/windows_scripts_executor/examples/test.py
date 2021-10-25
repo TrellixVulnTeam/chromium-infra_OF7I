@@ -23,7 +23,9 @@ PROPERTIES = wib.Image
 
 
 def RunSteps(api, image):
+  api.windows_scripts_executor.module_init()
   api.windows_scripts_executor.pin_wib_config(image)
+  api.windows_scripts_executor.save_config_to_disk(image)
   api.windows_scripts_executor.download_wib_artifacts(image)
   api.windows_scripts_executor.execute_wib_config(image)
 
@@ -76,7 +78,7 @@ def GenTests(api):
   DEINIT_WIM_ADD_CFG_TO_ROOT_PASS = api.step_data(
       'execute config win10_2013_x64.offline winpe customization ' +
       'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
-      'Add cfg [CACHE]\\win10_2013_x64.cfg',
+      'Add cfg [CLEANUP]\\configs\\win10_2013_x64.cfg',
       stdout=api.json.output({
           'results': {
               'Success': True

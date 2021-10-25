@@ -29,12 +29,12 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._cipd = None
     self._git = None
     self._gcs = None
+    self._configs_dir = ''
 
-  def pin_wib_config(self, config):
-    """ pin_wib_config pins the given config to current refs."""
-    if config.arch == wib.Arch.ARCH_UNSPECIFIED:
-      raise self.m.step.StepFailure('Missing arch in config')
-
+  def module_init(self):
+    """ module_init initializes all the dirs and sub modules required."""
+    # Use configs dir in cleanup to store all the pinned configs
+    self._configs_dir = self.m.path['cleanup'].join('configs')
     # Using a dir in cache to download all cipd artifacts
     cipd_packages = self.m.path['cache'].join('CIPDPkgs')
     # Using a dir in cache to download all git artifacts
@@ -51,10 +51,25 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     # Initialize the gcs downloader
     self._gcs = gcs_manager.GCSManager(self.m.step, self.m.gsutil, gcs_packages)
 
+  def pin_wib_config(self, config):
+    """ pin_wib_config pins the given config to current refs."""
+    if config.arch == wib.Arch.ARCH_UNSPECIFIED:
+      raise self.m.step.StepFailure('Missing arch in config')
+
     # Pin all the cipd instance
     self._cipd.pin_packages('Pin all the cipd packages', config)
     # Pin all the windows artifacts from git
     self._git.pin_packages('Pin git artifacts to refs', config)
+
+  def save_config_to_disk(self, config):
+    """ save_config_to_disk writes the given config to disk, calculates a hash
+        of the config and returns the hash"""
+    cfg_file = self._configs_dir.join('{}.cfg'.format(config.name))
+    self.m.file.write_proto(
+        'Write config {}'.format(cfg_file), cfg_file, config, codec='TEXTPB')
+    # Calculate the checksum for the config for use as unique id for the image.
+    cfg_key = self.m.file.file_hash(cfg_file)
+    return cfg_key
 
   def execute_wib_config(self, config):
     """Executes the windows image builder user config."""
@@ -150,7 +165,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     """Unmounts the winpe image and saves/discards changes to it"""
     with self.m.step.nest('Deinit WinPE image modification'):
       if save:
-        src = self.m.path['cache'].join('{}.cfg'.format(config.name))
+        # copy the config file to the root of the wim
+        src = self._configs_dir.join('{}.cfg'.format(config.name))
         self.execute_script('Add cfg {}'.format(src), ADDFILE, None, '-Path',
                             src, '-Recurse', '-Force', '-Destination',
                             self._workdir.join('mount'))

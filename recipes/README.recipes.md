@@ -945,41 +945,50 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#126)(self, f):**
+&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#141)(self, f):**
 
-&mdash; **def [add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/api.py#121)(self, f, src):**
+&mdash; **def [add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/api.py#136)(self, f, src):**
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#149)(self, config, save=True):**
+&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#164)(self, config, save=True):**
 
 Unmounts the winpe image and saves/discards changes to it
 
-&mdash; **def [download\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#84)(self, config):**
+&mdash; **def [download\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#99)(self, config):**
 
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#163)(self, name, command, logs=None, \*args):**
+&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#179)(self, name, command, logs=None, \*args):**
 
 Executes the windows powershell script
 
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#59)(self, config):**
+&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#74)(self, config):**
 
 Executes the windows image builder user config.
 
-&mdash; **def [get\_local\_src](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, src):**
+&mdash; **def [get\_local\_src](/recipes/recipe_modules/windows_scripts_executor/api.py#127)(self, src):**
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#134)(self, arch, dest, index=1):**
+&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#149)(self, arch, dest, index=1):**
 
 Calls Copy-PE to create WinPE media folder for arch
 
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#97)(self, action):**
+&mdash; **def [module\_init](/recipes/recipe_modules/windows_scripts_executor/api.py#34)(self):**
+
+module_init initializes all the dirs and sub modules required.
+
+&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#112)(self, action):**
 
 Performs the given action
 
-&mdash; **def [perform\_winpe\_actions](/recipes/recipe_modules/windows_scripts_executor/api.py#92)(self, offline_action):**
+&mdash; **def [perform\_winpe\_actions](/recipes/recipe_modules/windows_scripts_executor/api.py#107)(self, offline_action):**
 
 Performs the given offline_action
 
-&mdash; **def [pin\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#33)(self, config):**
+&mdash; **def [pin\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#54)(self, config):**
 
 pin_wib_config pins the given config to current refs.
+
+&mdash; **def [save\_config\_to\_disk](/recipes/recipe_modules/windows_scripts_executor/api.py#64)(self, config):**
+
+save_config_to_disk writes the given config to disk, calculates a hash
+of the config and returns the hash
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]

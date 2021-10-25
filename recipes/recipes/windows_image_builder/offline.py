@@ -73,19 +73,12 @@ def RunSteps(api, inputs):
               arch=wib.ARCH_X86,
           ))
 
+  api.windows_scripts_executor.module_init()
   # Pin the configs to current refs
   api.windows_scripts_executor.pin_wib_config(config)
 
-  # Write back the config to generate this image deterministically.
-  api.file.write_proto(
-      'Write wim config {}.cfg'.format(config.name),
-      api.path['cache'].join('{}.cfg'.format(config.name)),
-      config,
-      codec='TEXTPB')
-  # Calculate the checksum for the config for use as unique id for the image.
-  api.file.compute_hash('Gen checksum for wim {}.cfg'.format(config.name),
-                        [api.path['cache'].join('{}.cfg'.format(config.name))],
-                        api.path['cache'])
+  # write the config to disk
+  api.windows_scripts_executor.save_config_to_disk(config)
 
   #TODO(anushruth): Check if the build can be skipped
 

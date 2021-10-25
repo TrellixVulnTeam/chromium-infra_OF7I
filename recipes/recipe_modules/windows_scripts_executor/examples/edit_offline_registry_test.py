@@ -19,6 +19,7 @@ PROPERTIES = actions.Action
 
 
 def RunSteps(api, edit_offline_registry_action):
+  api.windows_scripts_executor.module_init()
   api.windows_scripts_executor.perform_winpe_action(
       edit_offline_registry_action)
 

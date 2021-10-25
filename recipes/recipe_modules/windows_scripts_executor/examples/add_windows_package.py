@@ -20,6 +20,7 @@ PROPERTIES = actions.AddWindowsPackage
 
 
 def RunSteps(api, package):
+  api.windows_scripts_executor.module_init()
   # Test pin and download cipd pkgs
   api.windows_scripts_executor.add_windows_package(package, 'C:\\Test')
 
