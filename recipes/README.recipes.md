@@ -1350,7 +1350,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/luci_py.py#24)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/luci_py.py#25)(api):**
 ### *recipes* / [powershell:examples/test](/recipes/recipe_modules/powershell/examples/test.py)
 
 [DEPS](/recipes/recipe_modules/powershell/examples/test.py#8): [powershell](#recipe_modules-powershell), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]

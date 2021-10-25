@@ -18,6 +18,7 @@ DEPS = [
 
 ASSETS_DIFF_FAILURE_MESSAGE = '''
 - Please check the diffs in the previous step
+- Please run `make format` to format files
 - Please run `make release` to update assets '''
 
 
@@ -243,6 +244,7 @@ def _step_swarming_ui_tests(api, changes):
 
 
 def _steps_check_diffs_on_ui_assets(api):
+  api.step('build assets', ['make', 'format'], ok_ret='any')
   api.step('build assets', ['make', 'release'])
   diff_check = api.git('diff', '--exit-code', ok_ret='any')
   if diff_check.retcode != 0:
