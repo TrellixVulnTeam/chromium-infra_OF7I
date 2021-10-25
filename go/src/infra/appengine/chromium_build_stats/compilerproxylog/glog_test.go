@@ -180,6 +180,8 @@ GOMA_RPC_EXTRA_PARAMS=?tot
 GOMA_SERVER_HOST=staging-goma.chromium.org
 GOMA_TMP_DIR=/var/folders/px/zrfs83fx2db3xsp30wm25fz00000gm/T/goma_chrome-bot
 GOMA_USE_SSL=true
+I20211024 19:13:18.768012 317894144 goma_init.cc:0] don't panic on following line
+Item updated count = 0
 `
 	rd := strings.NewReader(logcontent)
 	gp, err := NewGlogParser(rd)
@@ -238,6 +240,15 @@ GOMA_USE_SSL=true
 				"GOMA_SERVER_HOST=staging-goma.chromium.org",
 				"GOMA_TMP_DIR=/var/folders/px/zrfs83fx2db3xsp30wm25fz00000gm/T/goma_chrome-bot",
 				"GOMA_USE_SSL=true",
+			},
+		},
+		{
+			Level:     Info,
+			Timestamp: timeAt("2021/10/24 19:13:18.768012"),
+			ThreadID:  "317894144",
+			Lines: []string{
+				"goma_init.cc:0] don't panic on following line",
+				"Item updated count = 0",
 			},
 		},
 	}

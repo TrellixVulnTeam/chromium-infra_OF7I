@@ -73,10 +73,13 @@ func (lv LogLevel) String() string {
 }
 
 func logTimestamp(dt []byte) (time.Time, []byte, error) {
-	if dt[4] == ' ' {
+	if dt[4] == ' ' && len(dt) > len(timestampLayout) {
 		t, err := time.Parse(timestampLayout, string(dt[:len(timestampLayout)]))
 		return t, dt[len(timestampLayout):], err
 
+	}
+	if len(dt) < len(timestampLayoutFullYear) {
+		return time.Time{}, dt, fmt.Errorf("short line %d < %d", len(dt), len(timestampLayoutFullYear))
 	}
 	t, err := time.Parse(timestampLayoutFullYear, string(dt[:len(timestampLayoutFullYear)]))
 	return t, dt[len(timestampLayoutFullYear):], err
@@ -115,10 +118,11 @@ func ParseLogline(line []byte) (Logline, error) {
 		return Logline{Lines: []string{string(line)}}, nil
 	}
 
-	t, line, err := logTimestamp(line[1:])
+	t, next, err := logTimestamp(line[1:])
 	if err != nil {
 		return Logline{Lines: []string{string(line)}}, nil
 	}
+	line = next
 
 	// Parse restline as `(\d+) *(.*)`
 	restline := strings.TrimLeftFunc(string(line), isSpace)
