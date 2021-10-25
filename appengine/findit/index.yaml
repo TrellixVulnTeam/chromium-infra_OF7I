@@ -449,25 +449,9 @@ indexes:
   - name: gitiles_commit.server_host
   - name: bucket
   - name: builder
+  - name: modifier_id
   - name: commit_timestamp
     direction: desc
-
-- kind: PostsubmitReport
-  properties:
-  - name: gitiles_commit.project
-  - name: gitiles_commit.server_host
-  - name: bucket
-  - name: builder
-  - name: visible
-  - name: commit_timestamp
-
-- kind: PostsubmitReport
-  properties:
-  - name: gitiles_commit.project
-  - name: gitiles_commit.server_host
-  - name: bucket
-  - name: builder
-  - name: commit_timestamp
 
 - kind: FileCoverageData
   properties:

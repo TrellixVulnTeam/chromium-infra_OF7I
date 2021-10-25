@@ -184,11 +184,11 @@ def _GetSameOrMostRecentReportForEachPlatform(luci_project, host, project, ref,
       continue
 
     query = PostsubmitReport.query(
-        PostsubmitReport.gitiles_commit.server_host == host,
         PostsubmitReport.gitiles_commit.project == project,
+        PostsubmitReport.gitiles_commit.server_host == host,
         PostsubmitReport.bucket == bucket, PostsubmitReport.builder == builder,
-        PostsubmitReport.visible == True).order(
-            -PostsubmitReport.commit_timestamp)
+        PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
+        0).order(-PostsubmitReport.commit_timestamp)
     entities = query.fetch(limit=1)
     if entities:
       result[platform] = entities[0]
@@ -495,11 +495,12 @@ def _IsReportSuspicious(report):
   target_bucket = report.bucket
   target_builder = report.builder
   most_recent_visible_reports = PostsubmitReport.query(
-      PostsubmitReport.gitiles_commit.server_host == target_server_host,
       PostsubmitReport.gitiles_commit.project == target_project,
+      PostsubmitReport.gitiles_commit.server_host == target_server_host,
       PostsubmitReport.bucket == target_bucket,
-      PostsubmitReport.builder == target_builder, PostsubmitReport.visible ==
-      True).order(-PostsubmitReport.commit_timestamp).fetch(1)
+      PostsubmitReport.builder == target_builder,
+      PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
+      0).order(-PostsubmitReport.commit_timestamp).fetch(1)
   if not most_recent_visible_reports:
     logging.warn('No existing visible reports to use for reference, the new '
                  'report is determined as not suspicious by default')
@@ -1307,9 +1308,10 @@ class ServeCodeCoverageData(BaseHandler):
     direction = self.request.get('direction', 'next').lower()
 
     query = PostsubmitReport.query(
-        PostsubmitReport.gitiles_commit.server_host == host,
         PostsubmitReport.gitiles_commit.project == project,
-        PostsubmitReport.bucket == bucket, PostsubmitReport.builder == builder)
+        PostsubmitReport.gitiles_commit.server_host == host,
+        PostsubmitReport.bucket == bucket, PostsubmitReport.builder == builder,
+        PostsubmitReport.modifier_id == 0)
     order_props = [(PostsubmitReport.commit_timestamp, 'desc')]
     entities, prev_cursor, next_cursor = GetPagedResults(
         query, order_props, cursor, direction, page_size)
@@ -1436,11 +1438,12 @@ class ServeCodeCoverageData(BaseHandler):
     # Get latest report if revision not specified
     if not revision:
       query = PostsubmitReport.query(
-          PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.gitiles_commit.project == project,
+          PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
-          PostsubmitReport.builder == builder, PostsubmitReport.visible ==
-          True).order(-PostsubmitReport.commit_timestamp)
+          PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
+          PostsubmitReport.modifier_id == 0).order(
+              -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]
       revision = report.gitiles_commit.revision
