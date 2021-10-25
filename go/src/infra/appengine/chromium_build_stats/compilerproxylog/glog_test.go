@@ -147,3 +147,108 @@ F0911 03:42:27.789012 27539 compiler_info.cc:2128] Unknown compiler type
 		}
 	}
 }
+
+func TestGlogParser_FullYear(t *testing.T) {
+	logcontent := `Log file created at: 2021/10/24 19:13:18
+Running on machine: build309-m9.golo.chromium.org
+Running duration (h:mm:ss): 0:00:00
+Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I20211024 19:13:18.766117 317894144 goma_init.cc:89] google-internal goma client
+I20211024 19:13:18.767921 317894144 goma_init.cc:112] goma flags:GOMA_BURST_MAX_SUBPROCS=8 (autoconfigured)
+GOMA_BURST_MAX_SUBPROCS_HEAVY=2 (auto configured)
+GOMA_BURST_MAX_SUBPROCS_LOW=8 (auto configured)
+GOMA_CACHE_DIR=/opt/s/w/ir/cache/goma/data/Chromium_iOS_Goma_RBE_ToT
+GOMA_COMPILER_INFO_POOL=2 (auto configured)
+GOMA_COMPILER_PROXY_DAEMON_MODE=true
+GOMA_COMPILER_PROXY_HTTP_THREADS=1 (auto configured)
+GOMA_COMPILER_PROXY_LOCK_FILENAME=goma_compiler_proxy.lock
+GOMA_COMPILER_PROXY_PORT=8088
+GOMA_COMPILER_PROXY_SOCKET_NAME=goma.ipc
+GOMA_COMPILER_PROXY_THREADS=4 (auto configured)
+GOMA_DEPS_CACHE_FILE=goma_deps_cache
+GOMA_DUMP_COUNTERZ_FILE=/opt/s/w/ir/x/t/goma_counterz
+GOMA_DUMP_STATS_FILE=/opt/s/w/ir/x/t/goma_stats
+GOMA_ENABLE_COUNTERZ=true
+GOMA_FAIL_FAST=true
+GOMA_HERMETIC=error
+GOMA_INCLUDE_PROCESSOR_THREADS=4 (auto configured)
+GOMA_LOG_CLEAN_INTERVAL=86400
+GOMA_MAX_SUBPROCS=2 (auto configured)
+GOMA_MAX_SUBPROCS_LOW=1 (auto configured)
+GOMA_PING_TIMEOUT_SEC=60
+GOMA_RPC_EXTRA_PARAMS=?tot
+GOMA_SERVER_HOST=staging-goma.chromium.org
+GOMA_TMP_DIR=/var/folders/px/zrfs83fx2db3xsp30wm25fz00000gm/T/goma_chrome-bot
+GOMA_USE_SSL=true
+`
+	rd := strings.NewReader(logcontent)
+	gp, err := NewGlogParser(rd)
+	if err != nil {
+		t.Fatalf("NewGlogParser()=%v, %v; want=_, <nil>", gp, err)
+	}
+	if got, want := gp.Created.Format("2006-01-02T15:04:05"), "2021-10-24T19:13:18"; got != want {
+		t.Errorf("gp.Created=%s (%v); want=%s", got, gp.Created, want)
+	}
+	if got, want := gp.Machine, "build309-m9.golo.chromium.org"; got != want {
+		t.Errorf("gp.Machine=%q; want=%q", got, want)
+	}
+	var got []Logline
+	for gp.Next() {
+		got = append(got, gp.Logline())
+	}
+	if err := gp.Err(); err != nil {
+		t.Fatalf("gp.Err()=%v; want=<nil>", err)
+	}
+
+	want := []Logline{
+		{
+			Level:     Info,
+			Timestamp: timeAt("2021/10/24 19:13:18.766117"),
+			ThreadID:  "317894144",
+			Lines:     []string{"goma_init.cc:89] google-internal goma client"},
+		},
+		{
+			Level:     Info,
+			Timestamp: timeAt("2021/10/24 19:13:18.767921"),
+			ThreadID:  "317894144",
+			Lines: []string{
+				"goma_init.cc:112] goma flags:GOMA_BURST_MAX_SUBPROCS=8 (autoconfigured)",
+				"GOMA_BURST_MAX_SUBPROCS_HEAVY=2 (auto configured)",
+				"GOMA_BURST_MAX_SUBPROCS_LOW=8 (auto configured)",
+				"GOMA_CACHE_DIR=/opt/s/w/ir/cache/goma/data/Chromium_iOS_Goma_RBE_ToT",
+				"GOMA_COMPILER_INFO_POOL=2 (auto configured)",
+				"GOMA_COMPILER_PROXY_DAEMON_MODE=true",
+				"GOMA_COMPILER_PROXY_HTTP_THREADS=1 (auto configured)",
+				"GOMA_COMPILER_PROXY_LOCK_FILENAME=goma_compiler_proxy.lock",
+				"GOMA_COMPILER_PROXY_PORT=8088",
+				"GOMA_COMPILER_PROXY_SOCKET_NAME=goma.ipc",
+				"GOMA_COMPILER_PROXY_THREADS=4 (auto configured)",
+				"GOMA_DEPS_CACHE_FILE=goma_deps_cache",
+				"GOMA_DUMP_COUNTERZ_FILE=/opt/s/w/ir/x/t/goma_counterz",
+				"GOMA_DUMP_STATS_FILE=/opt/s/w/ir/x/t/goma_stats",
+				"GOMA_ENABLE_COUNTERZ=true",
+				"GOMA_FAIL_FAST=true",
+				"GOMA_HERMETIC=error",
+				"GOMA_INCLUDE_PROCESSOR_THREADS=4 (auto configured)",
+				"GOMA_LOG_CLEAN_INTERVAL=86400",
+				"GOMA_MAX_SUBPROCS=2 (auto configured)",
+				"GOMA_MAX_SUBPROCS_LOW=1 (auto configured)",
+				"GOMA_PING_TIMEOUT_SEC=60",
+				"GOMA_RPC_EXTRA_PARAMS=?tot",
+				"GOMA_SERVER_HOST=staging-goma.chromium.org",
+				"GOMA_TMP_DIR=/var/folders/px/zrfs83fx2db3xsp30wm25fz00000gm/T/goma_chrome-bot",
+				"GOMA_USE_SSL=true",
+			},
+		},
+	}
+	if len(got) != len(want) {
+		t.Errorf("GlogParser=%v; want=%v", got, want)
+		t.Fatalf("GlogParser=%d; want=%d", len(got), len(want))
+	}
+	for i, gi := range got {
+		wi := want[i]
+		if !reflect.DeepEqual(gi, wi) {
+			t.Errorf("%d: got=%v; want=%v", i, gi, wi)
+		}
+	}
+}

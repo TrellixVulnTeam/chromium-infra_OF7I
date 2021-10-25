@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	createdLayout   = "2006/01/02 15:04:05"
-	timestampLayout = "0102 15:04:05.000000"
+	createdLayout           = "2006/01/02 15:04:05"
+	timestampLayout         = "0102 15:04:05.000000"
+	timestampLayoutFullYear = "20060102 15:04:05.000000"
 )
 
 var (
@@ -71,8 +72,14 @@ func (lv LogLevel) String() string {
 	return ""
 }
 
-func logTimestamp(dt []byte) (time.Time, error) {
-	return time.Parse(timestampLayout, string(dt))
+func logTimestamp(dt []byte) (time.Time, []byte, error) {
+	if dt[4] == ' ' {
+		t, err := time.Parse(timestampLayout, string(dt[:len(timestampLayout)]))
+		return t, dt[len(timestampLayout):], err
+
+	}
+	t, err := time.Parse(timestampLayoutFullYear, string(dt[:len(timestampLayoutFullYear)]))
+	return t, dt[len(timestampLayoutFullYear):], err
 }
 
 // Logline is one logical log line.
@@ -93,7 +100,7 @@ func isSpace(ch rune) bool {
 
 // ParseLogline parses one line as Logline.
 func ParseLogline(line []byte) (Logline, error) {
-	// Parse log line that matches with `^([IWEF])(\d{4} \d{2}:\d{2}:\d{2}.\d{6}) *(\d+) *(.*)`.
+	// Parse log line that matches with `^([IWEF])(\d{4,8} \d{2}:\d{2}:\d{2}.\d{6}) *(\d+) *(.*)`.
 
 	if len(line) < len("I")+len(timestampLayout)+1 {
 		return Logline{Lines: []string{string(line)}}, nil
@@ -108,13 +115,13 @@ func ParseLogline(line []byte) (Logline, error) {
 		return Logline{Lines: []string{string(line)}}, nil
 	}
 
-	t, err := logTimestamp(line[1 : 1+len(timestampLayout)])
+	t, line, err := logTimestamp(line[1:])
 	if err != nil {
 		return Logline{Lines: []string{string(line)}}, nil
 	}
 
 	// Parse restline as `(\d+) *(.*)`
-	restline := strings.TrimLeftFunc(string(line[1+len(timestampLayout):]), isSpace)
+	restline := strings.TrimLeftFunc(string(line), isSpace)
 	afterThreadID := strings.TrimLeftFunc(restline, unicode.IsDigit)
 	if afterThreadID == restline {
 		// Not match with `(\d+)'.
