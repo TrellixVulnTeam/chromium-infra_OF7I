@@ -187,18 +187,12 @@ func (r *repo) prepRepoForProject(git *gitRunner, originRef string, proj *config
 	// We need to checkout the directory with lucicfg's main package. Grab its
 	// location from the project config metadata but fallback to a heuristic of
 	// finding the main.star for projects that don't have the metadata yet.
-	configRoot := generatedRoot
-	configDir := projectCfg.GetLucicfg().GetConfigDir()
-	if configDir != "" {
-		// configDir is e.g. "generated/luci", we want to "step up" the
-		// corresponding number of times to get from generatedRoot to configRoot.
-		levelsUp := strings.Count(path.Clean(configDir), "/") + 1
-		for i := 0; i < levelsUp; i++ {
-			configRoot = path.Dir(configRoot)
-		}
+	var configRoot string
+	if packageDir := projectCfg.GetLucicfg().GetPackageDir(); packageDir != "" {
+		configRoot = path.Join(generatedRoot, packageDir)
 	} else {
 		// Go up until we see main.star.
-		for ; configRoot != "."; configRoot = path.Dir(configRoot) {
+		for configRoot = generatedRoot; configRoot != "."; configRoot = path.Dir(configRoot) {
 			if git.check("cat-file", "-t", originRef+":"+configRoot+"/main.star") {
 				break
 			}
