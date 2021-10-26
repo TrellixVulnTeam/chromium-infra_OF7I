@@ -165,6 +165,7 @@ const (
 	multiCheckout  projectType = "multi"
 	pinned         projectType = "pinned"
 	tot            projectType = "tot"
+	drop           projectType = "drop"
 )
 
 func (m *Manifest) getProjects(ptype projectType) []*Project {
@@ -182,6 +183,8 @@ func (m *Manifest) getProjects(ptype projectType) []*Project {
 			includeProject = ptype == pinned
 		} else if projectMode == Tot {
 			includeProject = ptype == tot
+		} else if projectMode == Drop {
+			includeProject = ptype == drop
 		} else if projectCount[project.Name] == 1 {
 			includeProject = ptype == singleCheckout
 		}
@@ -265,6 +268,7 @@ var (
 	manifestAttrBranchingCreate = "create"
 	manifestAttrBranchingPin    = "pin"
 	manifestAttrBranchingToT    = "tot"
+	manifestAttrBranchingDrop   = "drop"
 )
 
 // BranchMode is a particular branching mode (Pinned, ToT, Create).
@@ -279,9 +283,11 @@ const (
 	Tot BranchMode = "tot"
 	// Create branch mode.
 	Create BranchMode = "create"
+	// Drop branch mode.
+	Drop BranchMode = "drop"
 )
 
-// ProjectBranchMode returns the branch mode (create, pinned, tot) of a project.
+// ProjectBranchMode returns the branch mode (create, pinned, tot, drop) of a project.
 func (m *Manifest) ProjectBranchMode(project Project) BranchMode {
 	// Anotation is set.
 	explicitMode, _ := project.GetAnnotation("branch-mode")
@@ -293,6 +299,8 @@ func (m *Manifest) ProjectBranchMode(project Project) BranchMode {
 			return Pinned
 		case manifestAttrBranchingToT:
 			return Tot
+		case manifestAttrBranchingDrop:
+			return Drop
 		default:
 			return UnspecifiedMode
 		}

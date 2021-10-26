@@ -8,6 +8,11 @@
 
   <project name="baz" path="baz/" remote="chromium"/>
   <project name="fiz" path="fiz/" revision="124" />
+  <project name="fiz" path="fiz2/" revision="125">
+    <annotation name="branch-mode" value="pin"/>
+  </project>
+
+
   <project name="buz1" path="buz/" bogus="true" remote="google">
     <annotation name="branch-mode" value="pin"/>
   </project>

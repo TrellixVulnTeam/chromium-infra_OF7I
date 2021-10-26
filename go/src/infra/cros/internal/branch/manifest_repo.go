@@ -137,8 +137,9 @@ func (c *Client) repairManifest(m *ManifestRepo, path string, branchesByPath map
 		manifest.Remotes[i].Revision = ""
 	}
 
+	keepProjects := []repo.Project{}
 	// Update all project revisions.
-	for i, project := range manifest.Projects {
+	for _, project := range manifest.Projects {
 		// Path defaults to name.
 		if project.Path == "" {
 			project.Path = project.Name
@@ -150,6 +151,7 @@ func (c *Client) repairManifest(m *ManifestRepo, path string, branchesByPath map
 			// which is our source of truth. Our best bet is to just use what we have in the manifest
 			// we're repairing.
 			c.LogErr("Warning: project %s does not exist in working manifest. Using it as it exists in %s.", project.Path, path)
+			keepProjects = append(keepProjects, project)
 			continue
 		}
 
@@ -173,6 +175,9 @@ func (c *Client) repairManifest(m *ManifestRepo, path string, branchesByPath map
 				return nil, errors.Annotate(err, "error repairing manifest").Err()
 			}
 			project.Revision = revision
+		case repo.Drop:
+			// Drop the project from the manifest.
+			continue
 		default:
 			return nil, fmt.Errorf("project %s branch mode unspecifed", project.Path)
 		}
@@ -183,10 +188,11 @@ func (c *Client) repairManifest(m *ManifestRepo, path string, branchesByPath map
 		}
 		// Clear upstream.
 		project.Upstream = ""
-		manifest.Projects[i] = project
+		keepProjects = append(keepProjects, project)
 	}
+	manifest.Projects = keepProjects
 
-	return manifestutil.UpdateManifestElements(&manifest, manifestData)
+	return manifestutil.UpdateManifestElementsStrict(&manifest, manifestData)
 }
 
 // listManifests finds all manifests included directly or indirectly by root

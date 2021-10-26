@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build linux
 // +build linux
 
 package manifestutil
@@ -153,4 +154,44 @@ func TestUpdateManifestElements_extraneous(t *testing.T) {
 
 	_, err = UpdateManifestElements(referenceManifest, input)
 	assert.ErrorContains(t, err, "contained default")
+}
+
+func TestUpdateManifestElementsStrict(t *testing.T) {
+	input, err := ioutil.ReadFile("test_data/update/pre.xml")
+	assert.NilError(t, err)
+
+	referenceManifest := &repo.Manifest{
+		Default: repo.Default{
+			RemoteName: "chromeos1",
+			Revision:   "456",
+		},
+		Remotes: []repo.Remote{
+			{
+				Name:  "chromium",
+				Alias: "chromeos1",
+				Fetch: "https://chromium.org/remote",
+			},
+		},
+		Projects: []repo.Project{
+			{
+				Name:       "baz",
+				Path:       "baz/",
+				RemoteName: "chromium1",
+			},
+			{
+				Name:       "buz1",
+				Path:       "buz/",
+				RemoteName: "google",
+			},
+		},
+	}
+
+	got, err := UpdateManifestElementsStrict(referenceManifest, input)
+	assert.NilError(t, err)
+
+	expected, err := ioutil.ReadFile("test_data/update/post_strict.xml")
+	assert.NilError(t, err)
+	if string(got) != string(expected) {
+		t.Fatalf("mismatch on UpdateManifestElementsStrict(...)\ngot:%v\n\nexpected:%v\n\n", string(got), string(expected))
+	}
 }

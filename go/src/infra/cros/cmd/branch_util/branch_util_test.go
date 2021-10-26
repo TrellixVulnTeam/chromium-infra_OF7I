@@ -1,6 +1,7 @@
 // Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//go:build linux
 // +build linux
 
 package main
@@ -76,6 +77,11 @@ const (
   <project name="chromiumos/multicheckout"
            path="src/third_party/multicheckout-b"
            revision="refs/heads/multicheckout-b"/>
+
+  <project name="to/be/dropped"
+		   path="src/drop">
+	<annotation name="branch-mode" value="drop"/>
+  </project>
 `
 	projectsInternalXML = `
   <project name="chromeos/manifest-internal"

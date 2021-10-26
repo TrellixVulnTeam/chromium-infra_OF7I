@@ -21,6 +21,10 @@ import (
 const (
 	attrRegexpTemplate = `%s="([^\"]*)"`
 	tagRegexpTempate   = "<%s[^(<>)]*>"
+	// Matches <tag/> and <tag><subtag .../></tag>.
+	// Slight limitation: does not match <tag><tag></tag></tag>. But this
+	// shouldn't be an issue for manifests.
+	fullTagRegexpTemplate = `[ \t]*<%[1]s[^(<>)]*?(\/>|>[\s\S]*?<\/%[1]s>)\n*`
 )
 
 func delAttr(tag, attr string) string {
@@ -84,6 +88,26 @@ func findProjectTag(project *repo.Project, rawManifest string) string {
 	return ""
 }
 
+// Given a Project struct, find the corresponding tag in a raw XML file
+// (including the end tag). Empty string indicates no match.
+func findFullProjectTag(project *repo.Project, rawManifest string) string {
+	projectRegexp := regexp.MustCompile(fmt.Sprintf(fullTagRegexpTemplate, "project"))
+	for _, tag := range projectRegexp.FindAllString(rawManifest, -1) {
+		p := &repo.Project{}
+		err := xml.Unmarshal([]byte(tag), p)
+		if err != nil {
+			continue
+		}
+
+		// Together, Name and Path form a unique identifier.
+		// If Path is blank, Name is (or at least ought to be) a unique identifier.
+		if project.Name == p.Name && (p.Path == "" || project.Path == p.Path) {
+			return tag
+		}
+	}
+	return ""
+}
+
 func updateElement(manifest, elt string, attrs map[string]string) string {
 	var newElt string
 	// Sort the keys so that this function is deterministic (for testing).
@@ -127,6 +151,16 @@ func updateElement(manifest, elt string, attrs map[string]string) string {
 // This function will NOT remove elements from the manifest just because they
 // do not exist in the reference manifest.
 func UpdateManifestElements(reference *repo.Manifest, rawManifest []byte) ([]byte, error) {
+	return updateManifestElements(reference, rawManifest, false)
+}
+
+// UpdateManifestElementsStrict does the same thing as UpdateManifestElements
+// except that it removes projects not present in the reference manifest.
+func UpdateManifestElementsStrict(reference *repo.Manifest, rawManifest []byte) ([]byte, error) {
+	return updateManifestElements(reference, rawManifest, true)
+}
+
+func updateManifestElements(reference *repo.Manifest, rawManifest []byte, deleteMissing bool) ([]byte, error) {
 	manifest := string(rawManifest)
 
 	// We use xml.Unmarshal to avoid the complexities of a
@@ -168,16 +202,24 @@ func UpdateManifestElements(reference *repo.Manifest, rawManifest []byte) ([]byt
 	}
 
 	// Sync <project> tag(s) to reference.
-	usedProjects := 0
+	usedProject := map[string]bool{}
 	for _, project := range parsedManifest.Projects {
 		projectTag := findProjectTag(&project, manifest)
 		projectPath := getAttr(projectTag, "path")
 		if referenceProject, _ := reference.GetProjectByPath(projectPath); referenceProject != nil {
 			manifest = updateElement(manifest, projectTag, referenceProject.AttrMap())
-			usedProjects += 1
+			usedProject[project.Path] = true
 		}
 	}
-	if usedProjects < len(reference.Projects) {
+	if deleteMissing {
+		for _, project := range parsedManifest.Projects {
+			if _, used := usedProject[project.Path]; !used {
+				tag := findFullProjectTag(&project, manifest)
+				manifest = strings.Replace(manifest, tag, "", 1)
+			}
+		}
+	}
+	if len(usedProject) < len(reference.Projects) {
 		return nil, fmt.Errorf("reference contained project(s) not present in the manifest")
 	}
 

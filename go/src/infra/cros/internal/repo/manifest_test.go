@@ -209,6 +209,7 @@ func TestGetProjects(t *testing.T) {
 			{Path: "c/", Name: "c", Annotations: []Annotation{{Name: "branch-mode", Value: "tot"}}},
 			{Path: "d/", Name: "chromiumos/d"},
 			{Path: "e/", Name: "chromiumos/e"},
+			{Path: "f/", Name: "chromiumos/f", Annotations: []Annotation{{Name: "branch-mode", Value: "drop"}}},
 		},
 		Remotes: []Remote{
 			{Name: "cros"},
@@ -274,6 +275,11 @@ var canBranchTestManifestAnnotation = Manifest{
 				{Name: "branch-mode", Value: "bogus"},
 			},
 		},
+		{Path: "foo5/", Name: "foo3",
+			Annotations: []Annotation{
+				{Name: "branch-mode", Value: "drop"},
+			},
+		},
 	},
 }
 var canBranchTestManifestRemote = Manifest{
@@ -308,6 +314,7 @@ func TestProjectBranchMode_annotation(t *testing.T) {
 	assertBranchModesEqual(t, manifest.ProjectBranchMode(manifest.Projects[1]), Pinned)
 	assertBranchModesEqual(t, manifest.ProjectBranchMode(manifest.Projects[2]), Tot)
 	assertBranchModesEqual(t, manifest.ProjectBranchMode(manifest.Projects[3]), UnspecifiedMode)
+	assertBranchModesEqual(t, manifest.ProjectBranchMode(manifest.Projects[4]), Drop)
 }
 
 func TestProjectBranchMode_remote(t *testing.T) {
