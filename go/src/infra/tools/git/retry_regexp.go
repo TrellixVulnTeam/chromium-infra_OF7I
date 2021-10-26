@@ -103,6 +103,10 @@ var defaultGitRetryRegexpSource = []string{
 	`fetch-pack: expected hash then LF at end of http-fetch output`,
 	`fetch-pack: unable to finish http-fetch`,
 	`fetch-pack: pack downloaded from .* does not match expected hash .*`,
+	`fetch-pack: invalid index-pack output`,
+
+	// fxbug.dev/87312
+	`fatal: expected flush after ref listing`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
