@@ -107,8 +107,6 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	if c.servo == "" {
 		// If no servo configuration is provided, use
 		// the docker_servod configuration
-		// TODO(gregorynisbet): Add support for
-		// -servo-docker flag once shivas supports it.
 		c.qualifiedServo = site.MaybePrepend(
 			site.Satlab,
 			dockerHostBoxIdentifier,
@@ -118,6 +116,18 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 				"docker_servod:9999",
 			),
 		)
+		if c.servoDockerContainerName == "" {
+			c.servoDockerContainerName = site.MaybePrepend(
+				site.Satlab,
+				dockerHostBoxIdentifier,
+				fmt.Sprintf(
+					"%s-%s",
+					c.hostname,
+					"docker_servod",
+				),
+			)
+		}
+
 	} else {
 		c.qualifiedServo = site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.servo)
 	}
