@@ -203,7 +203,12 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 
 	logPrefix := fmt.Sprintf("%s, %s", branch, path)
 
-	if hasBranch, err := git.RemoteHasBranch(projectPath, "cros-internal", branch); err != nil {
+	var hasBranch bool
+	if err := shared.DoWithRetry(ctx, shared.DefaultOpts, func() error {
+		var err error
+		hasBranch, err = git.RemoteHasBranch(projectPath, "cros-internal", branch)
+		return err
+	}); err != nil {
 		return false, errors.Annotate(err, "%s: failed to ls-remote branch from remote", logPrefix).Err()
 	} else if !hasBranch {
 		LogOut("%s: branch does not exist for project, skipping...", logPrefix)
