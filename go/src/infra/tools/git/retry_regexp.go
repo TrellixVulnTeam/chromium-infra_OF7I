@@ -107,6 +107,7 @@ var defaultGitRetryRegexpSource = []string{
 
 	// fxbug.dev/87312
 	`fatal: expected flush after ref listing`,
+	`fatal: expected response end packet after ref listing`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
