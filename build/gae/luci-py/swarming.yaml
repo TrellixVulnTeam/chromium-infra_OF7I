@@ -4,6 +4,7 @@ extends: ../base.yaml
 contextdir: ../../../luci/appengine/swarming
 
 sources:
+  - ../../../luci/DEPS
   - ../../../luci/appengine/components/components
   - ../../../luci/appengine/swarming
   - ../../../luci/appengine/third_party
