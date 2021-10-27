@@ -14,7 +14,6 @@ import (
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/tlw"
 )
 
 const (
@@ -215,96 +214,6 @@ func isLastProvisionSuccessfulExec(ctx context.Context, args *execs.RunArgs, act
 	return nil
 }
 
-// isACPowerConnectedExec confirms whether the DUT is connected through AC power.
-func isACPowerConnectedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := ReadPowerInfo(ctx, args)
-	if err != nil {
-		return errors.Annotate(err, "ac power connected").Err()
-	}
-	powerByAC, err := p.IsACOnline()
-	if err != nil {
-		return errors.Annotate(err, "ac power connected").Err()
-	}
-	if !powerByAC {
-		return errors.Reason("ac power connected: is not plugged in").Err()
-	}
-	return nil
-}
-
-// isBatteryExpectedExec confirms whether the DUT is expected to have battery according to inventory.
-func isBatteryExpectedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT.PowerSupplyType != tlw.PowerSupplyTypeBattery {
-		return errors.Reason("is battery expected: battery is not expected").Err()
-	}
-	return nil
-}
-
-// isBatteryPresentExec confirms that the DUT has battery.
-func isBatteryPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := ReadPowerInfo(ctx, args)
-	if err != nil {
-		return errors.Annotate(err, "battery present").Err()
-	}
-	hasBattery, err := p.HasBattery()
-	if err != nil {
-		return errors.Annotate(err, "battery present").Err()
-	}
-	if !hasBattery {
-		return errors.Reason("battery present: battery is not presented.").Err()
-	}
-	return nil
-}
-
-// isBatteryLevelGreaterThanMinimumExec confirms the battery has enough charge.
-func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := ReadPowerInfo(ctx, args)
-	if err != nil {
-		return errors.Annotate(err, "battery has enough charge").Err()
-	}
-	currentLevel, err := p.BatteryLevel()
-	if err != nil {
-		return errors.Annotate(err, "battery has enough charge").Err()
-	}
-	if currentLevel < minimumBatteryLevel {
-		return errors.Reason("battery has enough charge: battery's current level is less than the minimum level: %d", minimumBatteryLevel).Err()
-	}
-	return nil
-}
-
-// isBatteryChargingExec confirms the battery is charging.
-func isBatteryChargingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := ReadPowerInfo(ctx, args)
-	if err != nil {
-		return errors.Annotate(err, "battery charging").Err()
-	}
-	isDischarging, err := p.IsBatteryDischarging()
-	if err != nil {
-		return errors.Annotate(err, "battery charging").Err()
-	}
-	if isDischarging {
-		return errors.Reason("battery charging: battery is in discharging state").Err()
-	}
-	return nil
-}
-
-// isBatteryChargableOrGoodLevelExec confirms the battery either has enough charge or is charging.
-func isBatteryChargableOrGoodLevelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	batteryLevelError, batteryChargingError := isBatteryLevelGreaterThanMinimumExec(ctx, args, actionArgs), isBatteryChargingExec(ctx, args, actionArgs)
-	if batteryLevelError != nil && batteryChargingError != nil {
-		multiBatteryError := errors.NewMultiError(batteryLevelError, batteryChargingError)
-		// Log both of batteryLevelError and batteryChargingError
-		log.Error(ctx, multiBatteryError[0].Error()+" and "+multiBatteryError[1].Error())
-		return errors.Annotate(multiBatteryError, "battery chargable or good level: battery does not have enough charge and in discharging state").Err()
-	}
-	if batteryLevelError != nil {
-		log.Error(ctx, batteryLevelError.Error())
-	}
-	if batteryChargingError != nil {
-		log.Error(ctx, batteryChargingError.Error())
-	}
-	return nil
-}
-
 // isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
 func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.Access.Run(ctx, args.ResourceName, `cat /proc/cpuinfo | grep "model name"`)
@@ -368,12 +277,6 @@ func init() {
 	execs.Register("cros_has_python_interpreter_working", hasPythonInterpreterExec)
 	execs.Register("cros_has_critical_kernel_error", hasCriticalKernelErrorExec)
 	execs.Register("cros_is_last_provision_successful", isLastProvisionSuccessfulExec)
-	execs.Register("cros_is_ac_power_connected", isACPowerConnectedExec)
-	execs.Register("cros_is_battery_expected", isBatteryExpectedExec)
-	execs.Register("cros_is_battery_present", isBatteryPresentExec)
-	execs.Register("cros_is_battery_level_greater_than_minimum", isBatteryLevelGreaterThanMinimumExec)
-	execs.Register("cros_is_battery_charging", isBatteryChargingExec)
-	execs.Register("cros_is_battery_chargable_or_good_level", isBatteryChargableOrGoodLevelExec)
 	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
 	execs.Register("cros_wait_for_system", waitForSystemExec)
 	execs.Register("cros_is_gsc_tool_present", isGscToolPresentExec)

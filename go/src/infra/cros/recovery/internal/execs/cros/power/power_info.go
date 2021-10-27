@@ -2,15 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package cros
+package power
 
 import (
 	"context"
 	"strconv"
 	"strings"
 
-	"go.chromium.org/luci/common/errors"
 	"infra/cros/recovery/internal/execs"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 // powerSupplyInfo holds info from power_supply_info.
