@@ -20,19 +20,15 @@ from services import bigquery_helper
 
 class ReferencedCoverageTest(WaterfallTestCase):
 
-  @mock.patch.object(
-      referenced_coverage,
-      '_GetAllowedBuilders',
-      return_value=['linux-code-coverage'])
-  @mock.patch.object(GitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   def testFileModifiedSinceReferenceCommit_FileCoverageGetsCreated(
       self, mock_file_content, *_):
-    CoverageReportModifier(reference_commit='past_commit', id=123).put()
+    CoverageReportModifier(reference_commit='old', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -45,7 +41,7 @@ class ReferencedCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -55,17 +51,20 @@ class ReferencedCoverageTest(WaterfallTestCase):
             'last': 5
         }]})
     file_coverage_data.put()
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2\nline3\nline4\nline5'
-    mock_file_content.side_effect = [latest_content, content_at_feature_commit]
+    commit_to_content = {
+        'old': 'line1\nline2\nline3',
+        'latest': 'line1\nline2\nline3\nline4\nline5'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
 
-    referenced_coverage.CreateReferencedCoverage()
+    referenced_coverage.CreateReferencedCoverage(123, 'linux-code-coverage')
 
     entity = FileCoverageData.Get(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -83,22 +82,18 @@ class ReferencedCoverageTest(WaterfallTestCase):
                 'total': 2,
                 'covered': 2
             }],
-            'revision': 'rev'
+            'revision': 'latest'
         })
 
-  @mock.patch.object(
-      referenced_coverage,
-      '_GetAllowedBuilders',
-      return_value=['linux-code-coverage'])
-  @mock.patch.object(GitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   def testFileModifiedSinceReferenceCommit_DirSummaryGetsCreated(
       self, mock_file_content, *_):
-    CoverageReportModifier(reference_commit='past_commit', id=123).put()
+    CoverageReportModifier(reference_commit='old', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -111,7 +106,7 @@ class ReferencedCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -121,17 +116,20 @@ class ReferencedCoverageTest(WaterfallTestCase):
             'last': 5
         }]})
     file_coverage_data.put()
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2\nline3\nline4\nline5'
-    mock_file_content.side_effect = [latest_content, content_at_feature_commit]
+    commit_to_content = {
+        'old': 'line1\nline2\nline3',
+        'latest': 'line1\nline2\nline3\nline4\nline5'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
 
-    referenced_coverage.CreateReferencedCoverage()
+    referenced_coverage.CreateReferencedCoverage(123, 'linux-code-coverage')
 
     entity1 = SummaryCoverageData.Get(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         data_type='dirs',
         path='//a/',
         bucket='ci',
@@ -141,7 +139,7 @@ class ReferencedCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         data_type='dirs',
         path='//',
         bucket='ci',
@@ -187,19 +185,15 @@ class ReferencedCoverageTest(WaterfallTestCase):
             'files': []
         })
 
-  @mock.patch.object(
-      referenced_coverage,
-      '_GetAllowedBuilders',
-      return_value=['linux-code-coverage'])
-  @mock.patch.object(GitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   def testFileModifiedSinceReferenceCommit_PostsubmitReportGetsCreated(
       self, mock_file_content, *_):
-    CoverageReportModifier(reference_commit='past_commit', id=123).put()
+    CoverageReportModifier(reference_commit='old', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -212,7 +206,7 @@ class ReferencedCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -222,17 +216,20 @@ class ReferencedCoverageTest(WaterfallTestCase):
             'last': 5
         }]})
     file_coverage_data.put()
-    content_at_feature_commit = 'line1\nline2\nline3'
-    latest_content = 'line1\nline2\nline3\nline4\nline5'
-    mock_file_content.side_effect = [latest_content, content_at_feature_commit]
+    commit_to_content = {
+        'old': 'line1\nline2\nline3',
+        'latest': 'line1\nline2\nline3\nline4\nline5'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
 
-    referenced_coverage.CreateReferencedCoverage()
+    referenced_coverage.CreateReferencedCoverage(123, 'linux-code-coverage')
 
     entity = PostsubmitReport.Get(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         modifier_id=123)
@@ -242,18 +239,14 @@ class ReferencedCoverageTest(WaterfallTestCase):
         'name': 'line'
     }])
 
-  @mock.patch.object(
-      referenced_coverage,
-      '_GetAllowedBuilders',
-      return_value=['linux-code-coverage'])
-  @mock.patch.object(GitilesRepository, 'GetSource')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
   def testFileUnmodifiedSinceReferenceCommit(self, mock_file_content, *_):
-    CoverageReportModifier(reference_commit='past_commit', id=123).put()
+    CoverageReportModifier(reference_commit='old', id=123).put()
     postsubmit_report = PostsubmitReport.Create(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
@@ -266,7 +259,7 @@ class ReferencedCoverageTest(WaterfallTestCase):
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',
@@ -276,17 +269,20 @@ class ReferencedCoverageTest(WaterfallTestCase):
             'last': 5
         }]})
     file_coverage_data.put()
-    content_at_feature_commit = 'line1\nline2\nline3\nline4\nline5'
-    latest_content = 'line1\nline2\nline3\nline4\nline5'
-    mock_file_content.side_effect = [latest_content, content_at_feature_commit]
+    commit_to_content = {
+        'old': 'line1\nline2\nline3\nline4\nline5',
+        'latest': 'line1\nline2\nline3\nline4\nline5'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
 
-    referenced_coverage.CreateReferencedCoverage()
+    referenced_coverage.CreateReferencedCoverage(123, 'linux-code-coverage')
 
     entity = FileCoverageData.Get(
         server_host='chromium.googlesource.com',
         project='chromium/src',
         ref='refs/heads/main',
-        revision='rev',
+        revision='latest',
         path='//a/myfile.cc',
         bucket='ci',
         builder='linux-code-coverage',

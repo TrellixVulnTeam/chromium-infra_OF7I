@@ -1614,7 +1614,7 @@ class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   @mock.patch.object(feature_coverage, 'ExportFeatureCoverage')
-  def testFeatureCoverageFilesExported(self, mock_detect, _):
+  def testFeatureCoverageLogicInvoked(self, mock_detect, _):
     CoverageReportModifier(gerrit_hashtag='f1', id=123).put()
     response = self.test_app.get(
         '/coverage/task/feature-coverage?modifier_id=123', status=200)
@@ -1629,15 +1629,17 @@ class CreateReferencedCoverageMetricsCronTest(WaterfallTestCase):
   ],
                                        debug=True)
 
+  @mock.patch.object(
+      code_coverage.CreateReferencedCoverageMetricsCron,
+      '_GetSourceBuilders',
+      return_value=['linux-code-coverage', 'linux-code-coverage_unit'])
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testTaskAddedToQueue(self, mocked_is_request_from_appself):
+  def testTaskAddedToQueue(self, mocked_is_request_from_appself, _):
+    CoverageReportModifier(reference_commit='c1', id=456).put()
     response = self.test_app.get('/coverage/cron/referenced-coverage')
     self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/coverage/cron/referenced-coverage')
-    self.assertEqual(200, response.status_int)
-
     tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='referenced-coverage-metrics-queue')
+        queue_names='referenced-coverage-queue')
     self.assertEqual(2, len(tasks))
     self.assertTrue(mocked_is_request_from_appself.called)
 
@@ -1651,9 +1653,10 @@ class CreateReferencedCoverageMetricsTest(WaterfallTestCase):
 
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   @mock.patch.object(referenced_coverage, 'CreateReferencedCoverage')
-  def testReferencedCoverageFilesExported(self, mock_detect, _):
-    response = self.test_app.get(
-        '/coverage/task/referenced-coverage', status=200)
+  def testReferencedCoverageLogicInvoked(self, mock_detect, _):
+    url = ('/coverage/task/referenced-coverage'
+           '?modifier_id=123&builder=linux-code-coverage')
+    response = self.test_app.get(url, status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
 

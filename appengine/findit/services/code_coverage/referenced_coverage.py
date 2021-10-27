@@ -2,9 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from collections import defaultdict
 import json
 import logging
 import difflib
+import Queue
+from threading import Thread
 
 from google.appengine.ext import ndb
 
@@ -22,23 +25,6 @@ from services.code_coverage import diff_util
 
 _PAGE_SIZE = 100
 
-# List of builders for which coverage metrics to be exported.
-# These should be ci builders.
-_SOURCE_BUILDERS = [
-    'linux-code-coverage'
-    'win10-code-coverage',
-    'android-code-coverage',
-    'android-code-coverage-native',
-    'ios-simulator-code-coverage',
-    'linux-chromeos-code-coverage',
-    'linux-code-coverage_unit',
-    'win10-code-coverage_unit',
-    'android-code-coverage_unit',
-    'android-code-coverage-native_unit',
-    'ios-simulator-code-coverage_unit',
-    'linux-chromeos-code-coverage_unit',
-]
-
 _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
 _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
@@ -48,6 +34,7 @@ _CHROMIUM_REPO = GitilesRepository(
         # e.g. a file can missing at a parent commit.
         no_error_logging_statuses=[404]),
     'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
+_EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
 
 
 def _GetModifiedLinesSinceCommit(latest_lines, commit_lines):
@@ -116,38 +103,28 @@ def _GetReferencedFileCoverage(file_coverage, modified_lines):
     return data
 
 
-def _GetActiveReferenceCommits():
-  """Returns commits against which coverage is to be generated.
-
-  Returns value is a dict where key is reference commit and and value is the
-  id of the corresponding CoverageReportModifier.
-  """
-  query = CoverageReportModifier.query(
-      CoverageReportModifier.server_host == _CHROMIUM_SERVER_HOST,
-      CoverageReportModifier.project == _CHROMIUM_PROJECT,
-      CoverageReportModifier.is_active == True,
-      CoverageReportModifier.reference_commit != None)
-  commits = {}
-  for x in query.fetch():
-    commits[x.reference_commit] = x.key.id()
-  return commits
-
-
-def _GetFileContentAtCommit(file_path, revision):
-  """Returns lines in a file at the specified revision.
+def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
+  """Fetches lines in a file at the specified revision.
 
   Args:
     file_path (string): chromium/src relative path to file whose content is to
       be fetched. Must start with '//'.
     revision (string): commit hash of the revision.
-
-  Returns:
-    A list of strings representing the lines in the file. If file is not found
-    at the specified revision, an empty list is returned.
+    file_content_queue (Queue): Queue which holds the output.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
-  content = _CHROMIUM_REPO.GetSource(file_path[2:], revision)
-  return content.split('\n') if content else []
+  content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  wait_sec = 1
+  # short term qps exceeded, retry with exponential backoff
+  while status == 429 and wait_sec < _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
+    wait_sec *= 2
+    time.sleep(wait_sec)
+    content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  if wait_sec >= _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
+    logging.warning(
+        "Couldn't fetch content for %s at revision %s due to exceeding qps",
+        file_path, revision)
+  file_content_queue.put((revision, content.split('\n') if content else []))
 
 
 def _FlushEntities(entities, total, last=False):
@@ -216,77 +193,90 @@ def _ExportDirSummaryCoverage(directories_coverage, postsubmit_report,
   _FlushEntities(entities, total, last=True)
 
 
-def _CreateReferencedCoverage(postsubmit_report):
+def _CreateReferencedCoverage(modifier_id, postsubmit_report):
   """Creates coverage entities referenced against a past commit.
 
   Args:
+    modifier_id(int): id of the CoverageReportModifier
+        object corresponding to the reference commit
     postsubmit_report(PostsubmitReport): Full codebase report which acts as
                         input to the algorithm.
   """
 
-  for reference_commit, modifier_id in _GetActiveReferenceCommits().items():
-    # Fetch file coverage entities corresponding to the full codebase report
-    query = FileCoverageData.query(
-        FileCoverageData.gitiles_commit.server_host ==
-        postsubmit_report.gitiles_commit.server_host,
-        FileCoverageData.gitiles_commit.project ==
-        postsubmit_report.gitiles_commit.project,
-        FileCoverageData.gitiles_commit.ref ==
-        postsubmit_report.gitiles_commit.ref,
-        FileCoverageData.gitiles_commit.revision ==
-        postsubmit_report.gitiles_commit.revision,
-        FileCoverageData.bucket == postsubmit_report.bucket,
-        FileCoverageData.builder == postsubmit_report.builder,
-        FileCoverageData.modifier_id == 0)
-    more = True
-    cursor = None
-    referenced_file_coverage = []
-    while more:
-      results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
-      for file_coverage in results:
-        content_at_latest = _GetFileContentAtCommit(
-            file_coverage.path, file_coverage.gitiles_commit.revision)
-        assert content_at_latest
+  reference_commit = CoverageReportModifier.Get(modifier_id).reference_commit
+  # Fetch file coverage entities corresponding to the full codebase report
+  query = FileCoverageData.query(
+      FileCoverageData.gitiles_commit.server_host ==
+      postsubmit_report.gitiles_commit.server_host,
+      FileCoverageData.gitiles_commit.project ==
+      postsubmit_report.gitiles_commit.project,
+      FileCoverageData.gitiles_commit.ref ==
+      postsubmit_report.gitiles_commit.ref,
+      FileCoverageData.gitiles_commit.revision ==
+      postsubmit_report.gitiles_commit.revision,
+      FileCoverageData.bucket == postsubmit_report.bucket,
+      FileCoverageData.builder == postsubmit_report.builder,
+      FileCoverageData.modifier_id == 0)
+  more = True
+  cursor = None
+  referenced_file_coverage = []
+  file_content_queue = Queue.Queue()
+  while more:
+    results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
+    for file_coverage in results:
+      content_at_latest_thread = Thread(
+          target=_FetchFileContentAtCommit,
+          args=(file_coverage.path, file_coverage.gitiles_commit.revision,
+                file_content_queue))
+      content_at_reference_commit_thread = Thread(
+          target=_FetchFileContentAtCommit,
+          args=(file_coverage.path, reference_commit, file_content_queue))
+      content_at_latest_thread.start()
+      content_at_reference_commit_thread.start()
+      content_at_latest_thread.join()
+      content_at_reference_commit_thread.join()
 
-        content_at_reference_commit = _GetFileContentAtCommit(
-            file_coverage.path, reference_commit)
-        referenced_coverage = _GetReferencedFileCoverage(
-            file_coverage,
-            _GetModifiedLinesSinceCommit(content_at_latest,
-                                         content_at_reference_commit))
-        if referenced_coverage:
-          referenced_file_coverage.append(referenced_coverage)
+      # Consume content from all threads
+      contents = defaultdict(list)
+      while not file_content_queue.empty():
+        # It's correct to do block=False as all threads have been joined before.
+        k, v = file_content_queue.get(block=False)
+        contents[k] = v
+      assert contents[file_coverage.gitiles_commit.revision]
 
-    referenced_directory_coverage, _ = (
-        aggregation_util.get_aggregated_coverage_data_from_files(
-            referenced_file_coverage))
-    _ExportFileCoverage(referenced_file_coverage, postsubmit_report,
-                        modifier_id)
-    _ExportDirSummaryCoverage(referenced_directory_coverage, postsubmit_report,
-                              modifier_id)
-    # Create a top level PostsubmitReport entity with visible = True
-    if referenced_directory_coverage:
-      referenced_report = PostsubmitReport.Create(
-          server_host=postsubmit_report.gitiles_commit.server_host,
-          project=postsubmit_report.gitiles_commit.project,
-          ref=postsubmit_report.gitiles_commit.ref,
-          revision=postsubmit_report.gitiles_commit.revision,
-          bucket=postsubmit_report.bucket,
-          builder=postsubmit_report.builder,
-          commit_timestamp=postsubmit_report.commit_timestamp,
-          manifest=postsubmit_report.manifest,
-          summary_metrics=referenced_directory_coverage['//']['summaries'],
-          build_id=postsubmit_report.build_id,
-          visible=True,
-          modifier_id=modifier_id)
-      referenced_report.put()
+      referenced_coverage = _GetReferencedFileCoverage(
+          file_coverage,
+          _GetModifiedLinesSinceCommit(
+              contents[file_coverage.gitiles_commit.revision],
+              contents[reference_commit]))
+      if referenced_coverage:
+        referenced_file_coverage.append(referenced_coverage)
+
+  referenced_directory_coverage, _ = (
+      aggregation_util.get_aggregated_coverage_data_from_files(
+          referenced_file_coverage))
+  _ExportFileCoverage(referenced_file_coverage, postsubmit_report, modifier_id)
+  _ExportDirSummaryCoverage(referenced_directory_coverage, postsubmit_report,
+                            modifier_id)
+  # Create a top level PostsubmitReport entity with visible = True
+  if referenced_directory_coverage:
+    referenced_report = PostsubmitReport.Create(
+        server_host=postsubmit_report.gitiles_commit.server_host,
+        project=postsubmit_report.gitiles_commit.project,
+        ref=postsubmit_report.gitiles_commit.ref,
+        revision=postsubmit_report.gitiles_commit.revision,
+        bucket=postsubmit_report.bucket,
+        builder=postsubmit_report.builder,
+        commit_timestamp=postsubmit_report.commit_timestamp,
+        manifest=postsubmit_report.manifest,
+        summary_metrics=referenced_directory_coverage['//']['summaries'],
+        build_id=postsubmit_report.build_id,
+        visible=True,
+        modifier_id=modifier_id)
+    referenced_report.put()
 
 
-def _GetAllowedBuilders():
-  return _SOURCE_BUILDERS
-
-
-def CreateReferencedCoverage():
+def CreateReferencedCoverage(modifier_id, builder):
   # NDB caches each result in the in-context cache while accessing.
   # This is problematic as due to the size of the result set,
   # cache grows beyond the memory quota. Turn this off to prevent oom errors.
@@ -296,13 +286,12 @@ def CreateReferencedCoverage():
   # https://github.com/googlecloudplatform/datastore-ndb-python/issues/156#issuecomment-110869490
   context = ndb.get_context()
   context.set_cache_policy(False)
-  for builder in _GetAllowedBuilders():
-    # Fetch latest full codebase coverage report for the builder
-    query = PostsubmitReport.query(
-        PostsubmitReport.gitiles_commit.server_host == _CHROMIUM_SERVER_HOST,
-        PostsubmitReport.gitiles_commit.project == _CHROMIUM_PROJECT,
-        PostsubmitReport.bucket == 'ci', PostsubmitReport.builder == builder,
-        PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
-        0).order(-PostsubmitReport.commit_timestamp)
-    report = query.fetch(limit=1)[0]
-    _CreateReferencedCoverage(report)
+  # Fetch latest full codebase coverage report for the builder
+  query = PostsubmitReport.query(
+      PostsubmitReport.gitiles_commit.server_host == _CHROMIUM_SERVER_HOST,
+      PostsubmitReport.gitiles_commit.project == _CHROMIUM_PROJECT,
+      PostsubmitReport.bucket == 'ci', PostsubmitReport.builder == builder,
+      PostsubmitReport.visible == True, PostsubmitReport.modifier_id ==
+      0).order(-PostsubmitReport.commit_timestamp)
+  report = query.fetch(limit=1)[0]
+  _CreateReferencedCoverage(modifier_id, report)

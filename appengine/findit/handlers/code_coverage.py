@@ -1739,29 +1739,59 @@ class ExportFeatureCoverageMetrics(BaseHandler):
     return {'return_code': 200}
 
 
+class CreateReferencedCoverageMetricsCron(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def _GetSourceBuilders(self):
+    """Returns CI builders for which coverage metrics are to be generated."""
+    return [
+        'linux-code-coverage', 'mac-code-coverage', 'win10-code-coverage',
+        'android-code-coverage', 'android-code-coverage-native',
+        'ios-simulator-code-coverage', 'linux-chromeos-code-coverage',
+        'linux-code-coverage_unit', 'mac-code-coverage_unit',
+        'win10-code-coverage_unit', 'android-code-coverage_unit',
+        'android-code-coverage-native_unit', 'ios-simulator-code-coverage_unit',
+        'linux-chromeos-code-coverage_unit'
+    ]
+
+  def _GetActiveReferenceCommits(self):
+    """Returns commits against which coverage is to be generated.
+
+    Returns id of the CoverageReportModifier corresponding to the active
+    reference commits.
+    """
+    query = CoverageReportModifier.query(
+        CoverageReportModifier.server_host == 'chromium.googlesource.com',
+        CoverageReportModifier.project == 'chromium/src',
+        CoverageReportModifier.is_active == True)
+    modifier_ids = []
+    for x in query.fetch():
+      if x.reference_commit:
+        modifier_ids.append(x.key.id())
+    return modifier_ids
+
+  def HandleGet(self):
+    modifier_ids = self._GetActiveReferenceCommits()
+    assert len(modifier_ids) <= 1, "More than one reference commit found"
+    if modifier_ids:
+      for builder in self._GetSourceBuilders():
+        url = '/coverage/task/referenced-coverage?modifier_id=%d&builder=%s' % (
+            modifier_ids[0], builder)
+        taskqueue.add(
+            method='GET',
+            queue_name=constants.REFERENCED_COVERAGE_QUEUE,
+            target=constants.CODE_COVERAGE_BACKEND,
+            url=url)
+    return {'return_code': 200}
+
+
 class CreateReferencedCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
-    referenced_coverage.CreateReferencedCoverage()
-    return {'return_code': 200}
-
-
-class CreateReferencedCoverageMetricsCron(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def HandleGet(self):
-    # Cron jobs run independently of each other. Therefore, there is no
-    # guarantee that they will run either sequentially or simultaneously.
-    #
-    # Executing this job concurrently doesn't bring much
-    # benefits, so use task queue to enforce that at most one task
-    # can be executed at any time.
-    taskqueue.add(
-        method='GET',
-        queue_name=constants.REFERENCED_COVERAGE_METRICS_QUEUE,
-        target=constants.CODE_COVERAGE_BACKEND,
-        url='/coverage/task/referenced-coverage')
+    modifier_id = int(self.request.get('modifier_id'))
+    builder = self.request.get('builder')
+    referenced_coverage.CreateReferencedCoverage(modifier_id, builder)
     return {'return_code': 200}
 
 
