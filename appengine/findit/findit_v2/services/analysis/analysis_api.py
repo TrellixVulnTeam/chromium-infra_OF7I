@@ -521,9 +521,7 @@ class AnalysisAPI(object):
 
       need_go_back = False
       for step_ui_name, step_info in detailed_failures.iteritems():
-        if not prev_steps.get(step_ui_name):
-          # For some reason the step didn't run in the previous build.
-          need_go_back = True
+        if step_info.get('last_passed_build'):
           continue
 
         if prev_steps.get(step_ui_name) and prev_steps[
@@ -533,42 +531,25 @@ class AnalysisAPI(object):
           self._UpdateFailuresWithPreviousBuildInfo(step_info, prev_build_info)
           continue
 
+        need_go_back = True
+
         if not prev_failures.get(step_ui_name):
           # The step didn't pass nor fail, Findit cannot get useful information
           # from it, going back.
-          need_go_back = True
           continue
 
+        # Update first failed build
         failures = step_info['failures']
         if not failures:
-          # Same step failed, but there's no atomic level failure info.
-          if step_info['last_passed_build']:
-            # Last pass has been found for this failure, skip the failure.
-            continue
           step_info['first_failed_build'] = prev_build_info
-          need_go_back = True
           continue
 
-        step_last_passed_found = True
         for atomic_failure_identifier, failure in failures.iteritems():
-          if failure['last_passed_build']:
-            # Last pass has been found for this failure, skip the failure.
-            continue
-
           if prev_failures[step_ui_name]['failures'].get(
               atomic_failure_identifier):
             # The same failure happened in the previous build, going back.
             failure['first_failed_build'] = prev_build_info
             step_info['first_failed_build'] = prev_build_info
-            need_go_back = True
-            step_last_passed_found = False
-          else:
-            # The failure didn't happen in the previous build, first failure
-            # found.
-            failure['last_passed_build'] = prev_build_info
-
-        if step_last_passed_found:
-          step_info['last_passed_build'] = prev_build_info
 
       if not need_go_back:
         return

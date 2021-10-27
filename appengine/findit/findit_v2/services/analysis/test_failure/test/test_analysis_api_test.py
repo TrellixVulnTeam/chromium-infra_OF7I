@@ -416,17 +416,17 @@ class TestAnalysisAPITest(wf_testcase.TestCase):
             'failures': {
                 frozenset(['test3']): {
                     'properties': {},
-                    'first_failed_build': self.build_info,
-                    'last_passed_build': build_122_info,
+                    'first_failed_build': build_121_info,
+                    'last_passed_build': None,
                 },
                 frozenset(['test4']): {
                     'properties': {},
                     'first_failed_build': build_121_info,
-                    'last_passed_build': build_120_info,
+                    'last_passed_build': None,
                 },
             },
             'first_failed_build': build_121_info,
-            'last_passed_build': build_120_info,
+            'last_passed_build': None,
         },
     }
 

@@ -489,19 +489,19 @@ class AnalysisAPITest(wf_testcase.TestCase):
                     'properties': {
                         'rule': 'CXX'
                     },
-                    'first_failed_build': self.build_info,
-                    'last_passed_build': build_122_info,
+                    'first_failed_build': build_121_info,
+                    'last_passed_build': None,
                 },
                 frozenset(['target3']): {
                     'properties': {
                         'rule': 'ACTION',
                     },
                     'first_failed_build': build_121_info,
-                    'last_passed_build': build_120_info,
+                    'last_passed_build': None,
                 },
             },
             'first_failed_build': build_121_info,
-            'last_passed_build': build_120_info,
+            'last_passed_build': None,
         },
     }
 
