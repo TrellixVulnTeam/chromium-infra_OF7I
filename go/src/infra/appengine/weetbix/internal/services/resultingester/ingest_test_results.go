@@ -136,8 +136,10 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	// We read test variants from ResultDB in pages, and the func will be called
 	// once per page of test variants.
 	err = rc.QueryTestVariants(ctx, invName, func(tvs []*rdbpb.TestVariant) error {
-		if err := createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
-			return errors.Annotate(err, "ingesting for test variant analysis").Err()
+		if shouldIngestForTestVariants(payload) {
+			if err := createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
+				return errors.Annotate(err, "ingesting for test variant analysis").Err()
+			}
 		}
 		// Clustering ingestion is designed to behave gracefully in case of
 		// a task retry. Given the same options and same test variants (in

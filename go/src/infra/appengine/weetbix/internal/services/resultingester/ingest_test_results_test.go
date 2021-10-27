@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	cvv0 "go.chromium.org/luci/cv/api/v0"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
@@ -49,6 +50,48 @@ func TestSchedule(t *testing.T) {
 		expected := proto.Clone(task).(*taskspb.IngestTestResults)
 		So(Schedule(ctx, task), ShouldBeNil)
 		So(skdr.Tasks().Payloads()[0], ShouldResembleProto, expected)
+	})
+}
+
+func TestShouldIngestForTestVariants(t *testing.T) {
+	t.Parallel()
+	Convey(`ci`, t, func() {
+		payload := &taskspb.IngestTestResults{
+			Build: &taskspb.Build{
+				Host: "host",
+				Id:   int64(1),
+			},
+			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		}
+		So(shouldIngestForTestVariants(payload), ShouldBeTrue)
+	})
+
+	Convey(`successful cq run`, t, func() {
+		payload := &taskspb.IngestTestResults{
+			CvRun: &cvv0.Run{
+				Status: cvv0.Run_SUCCEEDED,
+			},
+			Build: &taskspb.Build{
+				Host: "host",
+				Id:   int64(2),
+			},
+			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		}
+		So(shouldIngestForTestVariants(payload), ShouldBeTrue)
+	})
+
+	Convey(`failed cq run`, t, func() {
+		payload := &taskspb.IngestTestResults{
+			CvRun: &cvv0.Run{
+				Status: cvv0.Run_FAILED,
+			},
+			Build: &taskspb.Build{
+				Host: "host",
+				Id:   int64(3),
+			},
+			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		}
+		So(shouldIngestForTestVariants(payload), ShouldBeFalse)
 	})
 }
 

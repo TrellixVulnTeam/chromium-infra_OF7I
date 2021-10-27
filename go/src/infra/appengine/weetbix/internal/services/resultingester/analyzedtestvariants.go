@@ -14,12 +14,14 @@ import (
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	cvv0 "go.chromium.org/luci/cv/api/v0"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
+	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
 )
@@ -35,6 +37,21 @@ var locBasedTagKeys = map[string]struct{}{
 	"monorail_component": {},
 	"os":                 {},
 	"team_email":         {},
+}
+
+func shouldIngestForTestVariants(task *taskspb.IngestTestResults) bool {
+	switch {
+	case task.CvRun == nil:
+		return true
+	case task.CvRun.Status == cvv0.Run_SUCCEEDED:
+		// Only ingest test variants for successful CV (full) runs.
+		// Note that this is only true for Chromium, but since Weetbix test variant
+		// analysis only supports Chromium at the moment so it's fine.
+		// TODO(crbug.com/1259374): Update this after we have per project configs.
+		return true
+	default:
+		return false
+	}
 }
 
 // createOrUpdateAnalyzedTestVariants looks for new analyzed test variants or
