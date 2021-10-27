@@ -8,6 +8,7 @@ package sshpool
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -73,8 +74,9 @@ func (p *Pool) GetContext(ctx context.Context, host string) (*ssh.Client, error)
 			if c, err := p.Get(host); err == nil {
 				return c, err
 			}
+			log.Printf("sshpool GetContext: retrying connection to %s", host)
 			// Add a slight delay to not hammer the host with SSH connections.
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
