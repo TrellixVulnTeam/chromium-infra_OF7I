@@ -285,6 +285,7 @@ func main() {
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
+		srv.Routes.POST("/_ah/push-handlers/cvrun", nil, app.CVRunPubSubHandler)
 
 		// Register task queue tasks.
 		if err := resultingester.RegisterTaskClass(srv); err != nil {
