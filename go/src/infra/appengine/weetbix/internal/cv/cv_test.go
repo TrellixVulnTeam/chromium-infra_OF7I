@@ -17,9 +17,12 @@ func TestGetRun(t *testing.T) {
 	t.Parallel()
 
 	Convey("Get run", t, func() {
-		ctx := UseFakeClient(context.Background())
-		client, err := NewClient(ctx, "host")
 		rID := "projects/chromium/runs/run-id"
+		runs := map[string]*cvv0.Run{
+			rID: {},
+		}
+		ctx := UseFakeClient(context.Background(), runs)
+		client, err := NewClient(ctx, "host")
 		req := &cvv0.GetRunRequest{
 			Id: rID,
 		}
