@@ -13,7 +13,7 @@ import (
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/resultdb/pbutil"
+	rdbbutil "go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/tq"
@@ -119,7 +119,7 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	}
 
 	// Setup clustering ingestion.
-	invID, err := pbutil.ParseInvocationName(invName)
+	invID, err := rdbbutil.ParseInvocationName(invName)
 	opts := ingestion.Options{
 		Project:       project,
 		InvocationID:  invID,

@@ -20,6 +20,7 @@ import (
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
+	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
@@ -157,7 +158,7 @@ func insertRow(ctx context.Context, realm, builder string, tv *rdbpb.TestVariant
 		"Realm":                     realm,
 		"TestId":                    tv.TestId,
 		"VariantHash":               tv.VariantHash,
-		"Variant":                   tv.Variant,
+		"Variant":                   pbutil.VariantFromResultDB(tv.Variant),
 		"Status":                    int64(status),
 		"CreateTime":                spanner.CommitTimestamp,
 		"StatusUpdateTime":          spanner.CommitTimestamp,
@@ -166,7 +167,7 @@ func insertRow(ctx context.Context, realm, builder string, tv *rdbpb.TestVariant
 		"NextUpdateTaskEnqueueTime": now,
 	}
 	if tv.TestMetadata != nil {
-		tmd, err := proto.Marshal(tv.TestMetadata)
+		tmd, err := proto.Marshal(pbutil.TestMetadataFromResultDB(tv.TestMetadata))
 		if err != nil {
 			panic(fmt.Sprintf("failed to marshal TestMetadata to bytes: %q", err))
 		}
@@ -216,8 +217,8 @@ func updatedStatus(derived, old pb.AnalyzedTestVariantStatus) (pb.AnalyzedTestVa
 	}
 }
 
-func extractLocationTags(tv *rdbpb.TestVariant) []*rdbpb.StringPair {
-	tags := make([]*rdbpb.StringPair, 0)
+func extractLocationTags(tv *rdbpb.TestVariant) []*pb.StringPair {
+	tags := make([]*pb.StringPair, 0)
 	knownKeys := make(map[string]struct{})
 	for _, tr := range tv.Results {
 		for _, t := range tr.Result.GetTags() {
@@ -230,7 +231,7 @@ func extractLocationTags(tv *rdbpb.TestVariant) []*rdbpb.StringPair {
 				continue
 			}
 			knownKeys[t.Key] = struct{}{}
-			tags = append(tags, &rdbpb.StringPair{
+			tags = append(tags, &pb.StringPair{
 				Key:   t.Key,
 				Value: t.Value,
 			})

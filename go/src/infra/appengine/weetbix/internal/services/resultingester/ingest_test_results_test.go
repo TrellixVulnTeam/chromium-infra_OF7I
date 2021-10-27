@@ -14,7 +14,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
@@ -32,6 +31,7 @@ import (
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
+	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -140,9 +140,9 @@ func TestIngestTestResults(t *testing.T) {
 				TestId:       sampleTestId,
 				VariantHash:  "hash",
 				Status:       pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS,
-				Variant:      sampleVar,
+				Variant:      pbutil.VariantFromResultDB(sampleVar),
 				Tags:         pbutil.StringPairs("monorail_component", "Monorail>Component"),
-				TestMetadata: sampleTmd,
+				TestMetadata: pbutil.TestMetadataFromResultDB(sampleTmd),
 			}
 
 			var testIDsWithNextTask []string
@@ -159,7 +159,7 @@ func TestIngestTestResults(t *testing.T) {
 					So(tv.Realm, ShouldEqual, realm)
 
 					if len(tmd) > 0 {
-						tv.TestMetadata = &rdbpb.TestMetadata{}
+						tv.TestMetadata = &pb.TestMetadata{}
 						err = proto.Unmarshal(tmd, tv.TestMetadata)
 						So(err, ShouldBeNil)
 					}

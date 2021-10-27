@@ -14,12 +14,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
-
+	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "go.chromium.org/luci/common/testing/assertions"
-	"go.chromium.org/luci/resultdb/pbutil"
 )
 
 func TestTypeConversion(t *testing.T) {
@@ -56,7 +54,7 @@ func TestTypeConversion(t *testing.T) {
 		test(pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, int64(0))
 	})
 
-	Convey(`*rdbpb.Variant`, t, func() {
+	Convey(`*pb.Variant`, t, func() {
 		Convey(`Works`, func() {
 			test(
 				pbutil.Variant("a", "1", "b", "2"),
@@ -65,13 +63,13 @@ func TestTypeConversion(t *testing.T) {
 		})
 		Convey(`Empty`, func() {
 			test(
-				(*rdbpb.Variant)(nil),
+				(*pb.Variant)(nil),
 				[]string{},
 			)
 		})
 	})
 
-	Convey(`[]*rdbpb.StringPair`, t, func() {
+	Convey(`[]*pb.StringPair`, t, func() {
 		test(
 			pbutil.StringPairs("a", "1", "b", "2"),
 			[]string{"a:1", "b:2"},

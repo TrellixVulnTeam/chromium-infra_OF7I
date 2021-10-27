@@ -11,7 +11,7 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 )
 
-// VariantFromResultDB returns a Weetbix TestResultId corresponding to the
+// TestResultIDFromResultDB returns a Weetbix TestResultId corresponding to the
 // supplied ResultDB test result name.
 // The format of name should be:
 // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}".
@@ -29,7 +29,7 @@ func VariantFromResultDB(v *rdbpb.Variant) *pb.Variant {
 	return &pb.Variant{Def: v.Def}
 }
 
-// VariantFromResultDB returns a Weetbix FailureReason corresponding to the
+// FailureReasonFromResultDB returns a Weetbix FailureReason corresponding to the
 // supplied ResultDB FailureReason.
 func FailureReasonFromResultDB(fr *rdbpb.FailureReason) *pb.FailureReason {
 	if fr == nil {
@@ -38,4 +38,26 @@ func FailureReasonFromResultDB(fr *rdbpb.FailureReason) *pb.FailureReason {
 	return &pb.FailureReason{
 		PrimaryErrorMessage: fr.PrimaryErrorMessage,
 	}
+}
+
+// TestMetadataFromResultDB converts a ResultDB TestMetadata to a Weetbix
+// TestMetadata.
+func TestMetadataFromResultDB(rdbTmd *rdbpb.TestMetadata) *pb.TestMetadata {
+	if rdbTmd == nil {
+		return nil
+	}
+
+	tmd := &pb.TestMetadata{
+		Name: rdbTmd.Name,
+	}
+	loc := tmd.GetLocation()
+	if loc != nil {
+		tmd.Location = &pb.TestLocation{
+			Repo:     loc.Repo,
+			FileName: loc.FileName,
+			Line:     loc.Line,
+		}
+	}
+
+	return tmd
 }

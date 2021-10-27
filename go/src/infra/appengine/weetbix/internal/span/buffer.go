@@ -13,11 +13,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.chromium.org/luci/common/errors"
-	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 
+	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"go.chromium.org/luci/resultdb/pbutil"
 )
 
 // Value can be converted to a Spanner value.
@@ -44,8 +42,8 @@ type Ptr interface {
 //   - string
 //   - timestamppb.Timestamp
 //   - pb.AnalyzedTestVariantStatus
-//   - rdbpb.Variant
-//   - rdbpb.StringPair
+//   - pb.Variant
+//   - pb.StringPair
 //   - proto.Message
 //   - pb.VerdictStatus
 type Buffer struct {
@@ -92,9 +90,9 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 		spanPtr = &b.NullTime
 	case *pb.AnalyzedTestVariantStatus:
 		spanPtr = &b.Int64
-	case **rdbpb.Variant:
+	case **pb.Variant:
 		spanPtr = &b.StringSlice
-	case *[]*rdbpb.StringPair:
+	case *[]*pb.StringPair:
 		spanPtr = &b.StringSlice
 	case proto.Message:
 		spanPtr = &b.ByteSlice
@@ -134,14 +132,14 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 	case *pb.AnalyzedTestVariantStatus:
 		*goPtr = pb.AnalyzedTestVariantStatus(b.Int64)
 
-	case **rdbpb.Variant:
+	case **pb.Variant:
 		if *goPtr, err = pbutil.VariantFromStrings(b.StringSlice); err != nil {
 			// If it was written to Spanner, it should have been validated.
 			panic(err)
 		}
 
-	case *[]*rdbpb.StringPair:
-		*goPtr = make([]*rdbpb.StringPair, len(b.StringSlice))
+	case *[]*pb.StringPair:
+		*goPtr = make([]*pb.StringPair, len(b.StringSlice))
 		for i, p := range b.StringSlice {
 			if (*goPtr)[i], err = pbutil.StringPairFromString(p); err != nil {
 				// If it was written to Spanner, it should have been validated.
@@ -196,10 +194,10 @@ func ToSpanner(v interface{}) interface{} {
 	case pb.AnalyzedTestVariantStatus:
 		return int64(v)
 
-	case *rdbpb.Variant:
+	case *pb.Variant:
 		return pbutil.VariantToStrings(v)
 
-	case []*rdbpb.StringPair:
+	case []*pb.StringPair:
 		return pbutil.StringPairsToStrings(v...)
 
 	case proto.Message:

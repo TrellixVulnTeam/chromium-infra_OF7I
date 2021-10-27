@@ -7,8 +7,6 @@ syntax = "proto3";
 package weetbix.v1;
 
 import "google/api/field_behavior.proto";
-import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
-import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
 import "infra/appengine/weetbix/proto/v1/common.proto";
 
 option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
@@ -125,14 +123,14 @@ message AnalyzedTestVariant {
 
   // Description of one specific way of running the test,
   // e.g. a specific bucket, builder and a test suite.
-  luci.resultdb.v1.Variant variant = 5;
+  Variant variant = 5;
 
   // Information about the test at the time of its execution.
-  luci.resultdb.v1.TestMetadata test_metadata = 6;
+  TestMetadata test_metadata = 6;
 
   // Metadata for the test variant.
   // See luci.resultdb.v1.Tags for details.
-  repeated luci.resultdb.v1.StringPair tags = 7;
+  repeated StringPair tags = 7;
 
   // A range of time. Flake statistics are calculated using test results
   // within that range.
