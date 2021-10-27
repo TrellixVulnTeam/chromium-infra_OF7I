@@ -172,7 +172,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		PowerSupplyType:    supplyType,
 		Storage:            createDUTStorage(dc, ds),
 		Wifi:               createDUTWifi(data.GetManufacturingConfig(), ds),
-		Bluetooth:          createDUTBluetooth(ds),
+		Bluetooth:          createDUTBluetooth(ds, dc),
 		BluetoothPeerHosts: bluetoothPeerHosts,
 		Battery:            battery,
 		ServoHost:          createServoHost(p, ds),
@@ -266,10 +266,20 @@ func createDUTWifi(make *ufsmake.ManufacturingConfig, ds *ufslab.DutState) *tlw.
 	}
 }
 
-func createDUTBluetooth(ds *ufslab.DutState) *tlw.DUTBluetooth {
+func createDUTBluetooth(ds *ufslab.DutState, dc *ufsdevice.Config) *tlw.DUTBluetooth {
 	return &tlw.DUTBluetooth{
-		State: convertHardwareState(ds.GetBluetoothState()),
+		Expected: configHasFeature(dc, ufsdevice.Config_HARDWARE_FEATURE_BLUETOOTH),
+		State:    convertHardwareState(ds.GetBluetoothState()),
 	}
+}
+
+func configHasFeature(dc *ufsdevice.Config, hf ufsdevice.Config_HardwareFeature) bool {
+	for _, f := range dc.GetHardwareFeatures() {
+		if f == hf {
+			return true
+		}
+	}
+	return false
 }
 
 func getUFSDutMetaFromSpecs(dutID string, dut *tlw.Dut) *ufspb.DutMeta {

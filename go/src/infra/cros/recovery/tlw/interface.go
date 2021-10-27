@@ -357,6 +357,8 @@ type DUTWifi struct {
 
 // DUTBluetooth holds info about internal bluetooth of the DUT.
 type DUTBluetooth struct {
+	// The hardware expected present based on hardware feature.
+	Expected bool
 	// State of the component.
 	State HardwareState
 }
