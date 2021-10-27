@@ -13,5 +13,5 @@
 per-file go.*=set noparent
 per-file go.*=vadimsh@chromium.org
 per-file go.*=iannucci@chromium.org
-per-file go.*=tandrii@google.com
 per-file go.*=tikuta@chromium.org
+per-file go.*=yiwzhang@google.com
