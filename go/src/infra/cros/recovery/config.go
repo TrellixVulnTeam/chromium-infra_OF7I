@@ -570,12 +570,22 @@ const defaultConfig = `
 		},
 		"cros_repair":{
 			"critical_actions": [
-                "cros_ssh",
-                "cros_stateful_partition_has_enough_inodes",
-                "cros_stateful_partition_has_enough_storage_space",
-                "cros_encrypted_stateful_partition_has_enough_storage_space"
+				"cros_ssh",
+				"cros_check_provision_labels",
+				"cros_stateful_partition_has_enough_storage_space",
+				"cros_encrypted_stateful_partition_has_enough_storage_space"
             ],
             "actions": {
+				"cros_check_provision_labels":{
+					"docs":[
+						"check the match of both the cros_version and job_repo_url between the DUT and inventory."
+					],
+					"dependencies":[
+						"cros_match_cros_version_to_inventory",
+						"cros_match_job_repo_url_version_to_inventory"
+					],
+					"exec_name":"sample_pass"
+				},
                 "cros_stateful_partition_has_enough_inodes":{
                     "docs":[
                         "check the stateful partition path has enough inodes"
