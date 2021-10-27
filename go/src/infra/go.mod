@@ -16,6 +16,7 @@ require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/VividCortex/godaemon v1.0.0
 	github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794
+	github.com/alecthomas/participle/v2 v2.0.0-alpha7
 	github.com/andygrunwald/go-gerrit v0.0.0-20210726065827-cc4e14e40b5b
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210907221601-4f80a5e09cd0 // indirect
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20210909182119-af1232ee0d79
