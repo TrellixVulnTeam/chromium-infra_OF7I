@@ -289,9 +289,11 @@ func newTestVariant(uniqifier int, testRunCount int, resultsPerTestRun int) *rdb
 	for i := 0; i < testRunCount; i++ {
 		for j := 0; j < resultsPerTestRun; j++ {
 			tr := newTestResult(uniqifier, i, j)
-			tr.TestId = testID
-			tr.Variant = proto.Clone(variant).(*rdbpb.Variant)
-			tr.VariantHash = "hash"
+			// Test ID, Variant, VariantHash are not populated on the test
+			// results of a Test Variant as it is present on the parent record.
+			tr.TestId = ""
+			tr.Variant = nil
+			tr.VariantHash = ""
 			tv.Results = append(tv.Results, &rdbpb.TestResultBundle{Result: tr})
 		}
 	}
@@ -301,14 +303,8 @@ func newTestVariant(uniqifier int, testRunCount int, resultsPerTestRun int) *rdb
 func newTestResult(uniqifier, testRunNum, resultNum int) *rdbpb.TestResult {
 	resultID := fmt.Sprintf("result-%v-%v", testRunNum, resultNum)
 	return &rdbpb.TestResult{
-		Name:     fmt.Sprintf("invocations/testrun-%v/tests/test-name-%v/results/%s", testRunNum, uniqifier, resultID),
-		TestId:   fmt.Sprintf("ninja://test_name/%v", uniqifier),
-		ResultId: resultID,
-		Variant: &rdbpb.Variant{
-			Def: map[string]string{
-				"k1": "v1",
-			},
-		},
+		Name:        fmt.Sprintf("invocations/testrun-%v/tests/test-name-%v/results/%s", testRunNum, uniqifier, resultID),
+		ResultId:    resultID,
 		Expected:    false,
 		Status:      rdbpb.TestStatus_CRASH,
 		SummaryHtml: "<p>Some SummaryHTML</p>",
@@ -320,7 +316,6 @@ func newTestResult(uniqifier, testRunNum, resultNum int) *rdbpb.TestResult {
 				Value: "Component>MyComponent",
 			},
 		},
-		VariantHash:  "hash",
 		TestMetadata: &rdbpb.TestMetadata{},
 		FailureReason: &rdbpb.FailureReason{
 			PrimaryErrorMessage: "Failure reason.",

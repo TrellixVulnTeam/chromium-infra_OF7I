@@ -56,7 +56,7 @@ func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Fai
 			}
 
 			exonerated := len(tv.Exonerations) > 0
-			failure := failureFromResult(tr.Result, opts, exonerated, testRun)
+			failure := failureFromResult(tv, tr.Result, opts, exonerated, testRun)
 			failure.IngestedInvocationResultIndex = int64(i)
 			failure.IngestedInvocationResultCount = int64(len(tv.Results))
 			failure.IsIngestedInvocationBlocked = !hasPass
@@ -112,7 +112,7 @@ func sortResultsByStartTime(results []*rdbpb.TestResultBundle) []*rdbpb.TestResu
 	return sortedResults
 }
 
-func failureFromResult(tr *rdbpb.TestResult, opts Options, exonerated bool, testRunID string) *cpb.Failure {
+func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options, exonerated bool, testRunID string) *cpb.Failure {
 	var presubmitRunID *pb.PresubmitRunId
 	if opts.PresubmitRunID != nil {
 		// Copy the proto to avoid aliasing the original.
@@ -123,9 +123,9 @@ func failureFromResult(tr *rdbpb.TestResult, opts Options, exonerated bool, test
 		PartitionTime:                 timestamppb.New(opts.PartitionTime),
 		ChunkIndex:                    -1, // To be populated by chunking.
 		Realm:                         opts.Realm,
-		TestId:                        tr.TestId,
-		Variant:                       pbutil.VariantFromResultDB(tr.Variant),
-		VariantHash:                   tr.VariantHash,
+		TestId:                        tv.TestId,                              // Get from variant, as it is not populated on each result.
+		Variant:                       pbutil.VariantFromResultDB(tv.Variant), // Get from variant, as it is not populated on each result.
+		VariantHash:                   tv.VariantHash,                         // Get from variant, as it is not populated on each result.
 		FailureReason:                 pbutil.FailureReasonFromResultDB(tr.FailureReason),
 		BugTrackingComponent:          extractBugTrackingComponent(tr.Tags),
 		StartTime:                     tr.StartTime,
