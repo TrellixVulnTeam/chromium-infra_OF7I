@@ -48,4 +48,4 @@ per-file wpt*.py=qyearsley@chromium.org
 per-file wpt*.py=robertma@chromium.org
 
 per-file 3pp.py=bryner@google.com
-per-file 3pp.py=orodley@google.com
+per-file 3pp.py=fancl@chromium.org
