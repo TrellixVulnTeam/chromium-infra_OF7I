@@ -6,6 +6,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"testing"
 
@@ -67,6 +68,7 @@ func TestGetRepoToSourceRoot_repoToolFails(t *testing.T) {
 		ExpectedDir: f,
 		// Simulate the `repo list` command returning a nonzero exit code.
 		FailCommand: true,
+		FailError:   errors.New("example error"),
 	}
 	if err != nil {
 		t.Error(err)

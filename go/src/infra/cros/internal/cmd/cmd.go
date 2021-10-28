@@ -10,8 +10,9 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"reflect"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // CommandRunner is the common interface for this module.
@@ -41,7 +42,7 @@ type FakeCommandRunner struct {
 	ExpectedCmdPartial []string
 	ExpectedDir        string
 	FailCommand        bool
-	FailError          string
+	FailError          error
 }
 
 // RunCommand runs a command (not actually).
@@ -52,10 +53,8 @@ func (c FakeCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf 
 	if len(c.ExpectedCmd) > 0 && len(c.ExpectedCmdPartial) > 0 {
 		return fmt.Errorf("ExpectedCmd and ExpectedCmdPartial cannot both be set")
 	} else if len(c.ExpectedCmd) > 0 {
-		if !reflect.DeepEqual(cmd, c.ExpectedCmd) {
-			expectedCmd := strings.Join(c.ExpectedCmd, " ")
-			actualCmd := strings.Join(cmd, " ")
-			return fmt.Errorf("wrong cmd; expected %s got %s", expectedCmd, actualCmd)
+		if diff := cmp.Diff(c.ExpectedCmd, cmd); diff != "" {
+			return fmt.Errorf("wrong cmd; (-want +got):\n%v", diff)
 		}
 	} else if len(c.ExpectedCmdPartial) > 0 {
 		partialStr := strings.Join(c.ExpectedCmdPartial, " ")
@@ -70,7 +69,7 @@ func (c FakeCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf 
 		}
 	}
 	if c.FailCommand {
-		return fmt.Errorf(c.FailError)
+		return c.FailError
 	}
 	return nil
 }

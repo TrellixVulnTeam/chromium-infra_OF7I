@@ -4,6 +4,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -36,6 +37,7 @@ func TestRunGit_error(t *testing.T) {
 		Stdout:      "I don't feel so go--",
 		Stderr:      "sudden death",
 		FailCommand: true,
+		FailError:   errors.New("failed to run log"),
 	}
 
 	output, err := RunGit("myrepo", []string{"log"})
@@ -169,7 +171,7 @@ func TestIsReachable_false(t *testing.T) {
 		ExpectedCmd: []string{"git", "merge-base", "--is-ancestor", toRef, fromRef},
 		ExpectedDir: fakeGitRepo,
 		FailCommand: true,
-		FailError:   "exit status 1",
+		FailError:   errors.New("exit status 1"),
 	}
 
 	ok, err := IsReachable(fakeGitRepo, toRef, fromRef)

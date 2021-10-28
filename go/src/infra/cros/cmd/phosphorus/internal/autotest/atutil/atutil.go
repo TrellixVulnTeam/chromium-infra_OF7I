@@ -15,9 +15,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
@@ -25,13 +25,13 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cros/cmd/phosphorus/internal/autotest"
 	"infra/cros/cmd/phosphorus/internal/osutil"
+	"infra/cros/internal/cmd"
 	"infra/cros/internal/docker"
 )
 
@@ -51,7 +51,9 @@ const (
 //
 // Output is written to the Writer.
 //
-// If dockerImage is set, the autoserv task will run inside a Docker container.
+// If containerImageInfo is set, the autoserv task will run inside a
+// Docker container.
+//
 // The location of autoserv in the container is specified by m (the same as if
 // autoserv runs on the host). Similarly, results are written to the results dir
 // specified by j.
@@ -63,7 +65,7 @@ func RunAutoserv(
 	m *MainJob,
 	j AutoservJob,
 	w io.Writer,
-	dockerClient client.CommonAPIClient,
+	dockerCmdRunner cmd.CommandRunner,
 	containerImageInfo *api.ContainerImageInfo,
 ) (r *Result, err error) {
 	if err2 := prepareHostInfo(m.ResultsDir, j); err2 != nil {
@@ -85,9 +87,9 @@ func RunAutoserv(
 	}
 	switch {
 	case isTest(a):
-		return runTest(ctx, m.AutotestConfig, a, w, dockerClient, containerImageInfo)
+		return runTest(ctx, m.AutotestConfig, a, w, dockerCmdRunner, containerImageInfo)
 	default:
-		return runTask(ctx, m.AutotestConfig, a, w, dockerClient, containerImageInfo)
+		return runTask(ctx, m.AutotestConfig, a, w, dockerCmdRunner, containerImageInfo)
 	}
 }
 
@@ -192,16 +194,12 @@ func runTask(ctx context.Context,
 	c autotest.Config,
 	a *autotest.AutoservArgs,
 	w io.Writer,
-	dockerClient client.CommonAPIClient,
+	dockerCmdRunner cmd.CommandRunner,
 	containerImageInfo *api.ContainerImageInfo,
 ) (*Result, error) {
 	r := &Result{}
 
-	if reflect.ValueOf(dockerClient).IsNil() != (containerImageInfo == nil) {
-		return r, errors.New("Docker client and ContainerImageInfo must both be nil or non-nil")
-	}
-
-	if !reflect.ValueOf(dockerClient).IsNil() {
+	if containerImageInfo.GetName() != "" {
 		// SSP args should not be specified when autoserv is run in a Docker
 		// container.
 		argsNoSSP := *a
@@ -217,18 +215,10 @@ func runTask(ctx context.Context,
 			containerImageInfo.GetDigest(),
 		)
 
-		logging.Infof(ctx, "pulling Docker image %s (has tags %q)", imageName, containerImageInfo.GetTags())
-		err := docker.PullImage(ctx, dockerClient, *containerImageInfo)
-		if err != nil {
-			return r, errors.Wrap(err, "failed pulling Docker image")
-		}
-
 		containerConfig := &container.Config{
-			Image:        imageName,
-			Cmd:          cmd.Args,
-			User:         "chromeos-test",
-			AttachStdout: true,
-			AttachStderr: true,
+			Image: imageName,
+			Cmd:   cmd.Args,
+			User:  "chromeos-test",
 		}
 
 		sspDeployShadowConfigMounts, err := ParseSSPDeployShadowConfig(
@@ -254,12 +244,15 @@ func runTask(ctx context.Context,
 
 		logging.Infof(ctx, "creating Docker container with command %q", containerConfig.Cmd)
 
-		resp, err := docker.RunContainer(ctx, dockerClient, containerConfig, hostConfig)
+		err = docker.RunContainer(ctx, dockerCmdRunner, containerConfig, hostConfig)
 		if err != nil {
-			return r, err
+			var exErr *exec.ExitError
+			if errors.As(err, &exErr) {
+				r.Exit = exErr.ProcessState.ExitCode()
+			} else {
+				return r, err
+			}
 		}
-
-		r.Exit = int(resp.StatusCode)
 	} else {
 		cmd := autotest.AutoservCommand(c, a)
 		cmd.Stdout = w
@@ -291,10 +284,10 @@ func runTest(
 	c autotest.Config,
 	a *autotest.AutoservArgs,
 	w io.Writer,
-	dockerClient client.CommonAPIClient,
+	dockerCmdRunner cmd.CommandRunner,
 	containerImageInfo *api.ContainerImageInfo,
 ) (*Result, error) {
-	r, err := runTask(ctx, c, a, w, dockerClient, containerImageInfo)
+	r, err := runTask(ctx, c, a, w, dockerCmdRunner, containerImageInfo)
 	if !r.Started || r.Exit != 0 {
 		// autoserv did not exit cleanly so artifacts may not be present.
 		return r, err

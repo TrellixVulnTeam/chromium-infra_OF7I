@@ -1,18 +1,123 @@
 package atutil_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/google/go-cmp/cmp"
+	"go.chromium.org/chromiumos/config/go/build/api"
 
 	"infra/cros/cmd/phosphorus/internal/autotest"
 	"infra/cros/cmd/phosphorus/internal/autotest/atutil"
+	"infra/cros/internal/cmd"
 )
+
+func TestRunAutoserv(t *testing.T) {
+	autotestDir, err := ioutil.TempDir("", "autotest-dir-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testConfig := []atutil.SSPDeployConfig{
+		{
+			Source:      filepath.Join(autotestDir, "nonexistingdir"),
+			Target:      "/etc/nonexistingdir",
+			ForceCreate: true,
+		},
+	}
+
+	testConfigJSON, err := json.Marshal(testConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testConfigPath := filepath.Join(autotestDir, "ssp_deploy_shadow_config.json")
+	if err := os.WriteFile(testConfigPath, testConfigJSON, os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	resultsDir, err := ioutil.TempDir("", "results-dir-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	m := &atutil.MainJob{
+		AutotestConfig: autotest.Config{
+			AutotestDir: autotestDir,
+		},
+		ResultsDir: resultsDir,
+	}
+
+	j := &atutil.Test{
+		Args:             "test args",
+		ResultsDir:       resultsDir,
+		RequireSSP:       true,
+		SSPBaseImageName: "testsspname",
+	}
+
+	containerImageInfo := &api.ContainerImageInfo{
+		Repository: &api.GcrRepository{
+			Hostname: "gcr.io",
+			Project:  "testproject",
+		},
+		Name:   "testimage",
+		Digest: "abc",
+		Tags:   []string{"build123"},
+	}
+
+	var w bytes.Buffer
+
+	bytesWriter := bytes.NewBuffer([]byte{})
+	stdWriter := stdcopy.NewStdWriter(bytesWriter, stdcopy.Stdout)
+
+	_, err = stdWriter.Write([]byte("Some test stdout"))
+	if err != nil {
+		t.Fatalf("Failed to write to stdWriter: %q", err)
+	}
+
+	cmdRunner := cmd.FakeCommandRunner{}
+
+	cmdRunner.ExpectedCmd = []string{
+		"docker", "run",
+		"--user", "chromeos-test",
+		"--network", "host",
+		fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
+		fmt.Sprintf("--mount=source=%s,target=%s,type=bind", resultsDir, resultsDir),
+		"gcr.io/testproject/testimage@abc",
+		filepath.Join(autotestDir, "server", "autoserv"),
+		"--args", "test args",
+		"-s",
+		"--host-info-subdir", "host_info_store",
+		"--lab", "True",
+		"-n",
+		"-r", resultsDir,
+		"--verify_job_repo_url",
+		"-p",
+		"--local-only-host-info", "True",
+		"",
+	}
+
+	result, err := atutil.RunAutoserv(
+		ctx, m, j, &w, cmdRunner, containerImageInfo,
+	)
+
+	if err != nil {
+		t.Fatalf("RunAutoserv returned error: %s", err)
+	}
+
+	if result.Exit != 0 {
+		t.Errorf("Expected exit code 0, got %d", result.Exit)
+	}
+}
 
 func TestParseSSPDeployShadowConfig(t *testing.T) {
 	ctx := context.Background()

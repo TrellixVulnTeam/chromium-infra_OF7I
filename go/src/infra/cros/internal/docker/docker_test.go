@@ -1,32 +1,25 @@
 package docker_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"io"
 	"testing"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
-	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/golang/mock/gomock"
 
+	"infra/cros/internal/cmd"
 	"infra/cros/internal/docker"
-	dockertesting "infra/cros/internal/docker/testing"
 )
 
 func TestRunContainer(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	m := dockertesting.NewMockContainerAPIClient(ctrl)
 	ctx := context.Background()
 
 	containerConfig := &container.Config{
-		Cmd: strslice.StrSlice{"ls", "-l"},
+		Cmd:   strslice.StrSlice{"ls", "-l"},
+		User:  "testuser",
+		Image: "testimage",
 	}
 
 	hostConfig := &container.HostConfig{
@@ -36,63 +29,34 @@ func TestRunContainer(t *testing.T) {
 				Source: "/tmp/hostdir",
 				Target: "/usr/local/containerdir",
 			},
+			{
+				Type:     mount.TypeBind,
+				Source:   "/othersource",
+				Target:   "/othertarget",
+				ReadOnly: true,
+			},
 		},
+		NetworkMode: "host",
 	}
 
-	m.
-		EXPECT().
-		ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "").
-		Return(
-			container.ContainerCreateCreatedBody{
-				ID:       "123",
-				Warnings: []string{"Warning: small problem creating container"},
-			}, nil,
-		)
-	m.
-		EXPECT().
-		ContainerStart(ctx, "123", types.ContainerStartOptions{})
-
-	respC := make(chan container.ContainerWaitOKBody, 1)
-	respC <- container.ContainerWaitOKBody{
-		StatusCode: 5,
-		Error: &container.ContainerWaitOKBodyError{
-			Message: "Error in container",
-		},
+	cmdRunner := cmd.FakeCommandRunner{}
+	cmdRunner.ExpectedCmd = []string{
+		"docker", "run",
+		"--user", "testuser",
+		"--network", "host",
+		"--mount=source=/tmp/hostdir,target=/usr/local/containerdir,type=bind",
+		"--mount=source=/othersource,target=/othertarget,type=bind,readonly",
+		"testimage",
+		"ls", "-l",
 	}
 
-	m.
-		EXPECT().
-		ContainerWait(ctx, "123", container.WaitConditionNotRunning).
-		Return(respC, nil)
-
-	var bytesWriter bytes.Buffer
-	stdWriter := stdcopy.NewStdWriter(&bytesWriter, stdcopy.Stdout)
-
-	_, err := stdWriter.Write([]byte("Some test stdout"))
+	err := docker.RunContainer(ctx, cmdRunner, containerConfig, hostConfig)
 	if err != nil {
-		t.Fatalf("Failed to write to stdWriter: %q", err)
-	}
-
-	m.
-		EXPECT().
-		ContainerLogs(ctx, "123", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).
-		Return(io.NopCloser(&bytesWriter), nil)
-
-	resp, err := docker.RunContainer(ctx, m, containerConfig, hostConfig)
-	if err != nil {
-		t.Fatalf("RunContainer failed: %q", err)
-	}
-
-	if resp.StatusCode != 5 {
-		t.Errorf("Expected StatusCode to be %d, got %d", 5, resp.StatusCode)
+		t.Fatalf("RunContainer failed: %s", err)
 	}
 }
 
-func TestRunContainer_WaitError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	m := dockertesting.NewMockContainerAPIClient(ctrl)
+func TestRunContainer_CmdError(t *testing.T) {
 	ctx := context.Background()
 
 	containerConfig := &container.Config{
@@ -109,24 +73,11 @@ func TestRunContainer_WaitError(t *testing.T) {
 		},
 	}
 
-	m.
-		EXPECT().
-		ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "").
-		Return(container.ContainerCreateCreatedBody{ID: "123"}, nil)
-	m.
-		EXPECT().
-		ContainerStart(ctx, "123", types.ContainerStartOptions{})
+	cmdRunner := cmd.FakeCommandRunner{}
+	cmdRunner.FailCommand = true
+	cmdRunner.FailError = errors.New("docker cmd failed.")
 
-	errC := make(chan error)
-
-	writeErrC := func() { errC <- errors.New("ContainerWait had error") }
-	go writeErrC()
-
-	m.
-		EXPECT().ContainerWait(ctx, "123", container.WaitConditionNotRunning).
-		Return(nil, errC)
-
-	_, err := docker.RunContainer(ctx, m, containerConfig, hostConfig)
+	err := docker.RunContainer(ctx, cmdRunner, containerConfig, hostConfig)
 	if err == nil {
 		t.Errorf("RunContainer expected to fail")
 	}
