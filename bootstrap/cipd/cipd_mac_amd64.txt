@@ -25,4 +25,4 @@ infra/tools/cloudbuildhelper/mac-amd64 git_revision:3ac10131e8f5c39a1e909ae8c748
 
 # Result adapter can wrap some test frameworks for `rdb stream` compatibility.
 @Subdir result_adapter
-infra/tools/result_adapter/mac-amd64 git_revision:18eac35dc014899a0836db0570740f3706d8621d
+infra/tools/result_adapter/mac-amd64 git_revision:d1c03082ecda0148d8096f1fd8bf5491eafc7323
