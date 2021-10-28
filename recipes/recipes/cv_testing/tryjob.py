@@ -6,6 +6,8 @@
 
 from PB.recipes.infra.cv_testing import tryjob as pb
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'recipe_engine/cq',
   'recipe_engine/properties',

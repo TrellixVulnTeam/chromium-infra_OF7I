@@ -31,7 +31,7 @@
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll) (Python3 ✅)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage) (Python3 ✅)
-  * [cv_testing/tryjob](#recipes-cv_testing_tryjob) &mdash; Recipe to test LUCI CQ/CV itself.
+  * [cv_testing/tryjob](#recipes-cv_testing_tryjob) (Python3 ✅) &mdash; Recipe to test LUCI CQ/CV itself.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
   * [docker:examples/full](#recipes-docker_examples_full) (Python3 ✅)
   * [docker_image_builder](#recipes-docker_image_builder) (Python3 ✅)
@@ -1184,13 +1184,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#13)(api):**
 ### *recipes* / [cv\_testing/tryjob](/recipes/recipes/cv_testing/tryjob.py)
 
-[DEPS](/recipes/recipes/cv_testing/tryjob.py#9): [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/cv_testing/tryjob.py#11): [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Recipe to test LUCI CQ/CV itself.
 
-&mdash; **def [RunSteps](/recipes/recipes/cv_testing/tryjob.py#18)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/cv_testing/tryjob.py#20)(api, properties):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
 [DEPS](/recipes/recipes/depot_tools_builder.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
