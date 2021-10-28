@@ -242,7 +242,9 @@ def _CreateReferencedCoverage(modifier_id, postsubmit_report):
         # It's correct to do block=False as all threads have been joined before.
         k, v = file_content_queue.get(block=False)
         contents[k] = v
-      assert contents[file_coverage.gitiles_commit.revision]
+      assert contents[file_coverage.gitiles_commit.revision], (
+          "File Content not found for path %s at commit %s" %
+          (file_coverage.path, file_coverage.gitiles_commit.revision))
 
       referenced_coverage = _GetReferencedFileCoverage(
           file_coverage,
