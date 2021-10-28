@@ -42,7 +42,7 @@ func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, action
 	expectedSerialNumber := args.DUT.SerialNumber
 	actualSerialNumber := strings.TrimSpace(r.Stdout)
 	if actualSerialNumber != expectedSerialNumber {
-		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, expectedSerialNumber).Err()
+		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, actualSerialNumber).Err()
 	}
 	return nil
 }
