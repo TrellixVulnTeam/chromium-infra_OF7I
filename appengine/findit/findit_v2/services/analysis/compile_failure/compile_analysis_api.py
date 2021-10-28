@@ -273,9 +273,11 @@ class CompileAnalysisAPI(AnalysisAPI):
           'A revert was manually created for this culprit',
           silent=True)
 
-    if CulpritAction.GetRecentActionsByType(
-        CulpritAction.REVERT, revert_committed=False) >= action_settings.get(
-            'auto_create_revert_daily_threshold_compile', 10):
+    if len(
+        CulpritAction.GetRecentActionsByType(
+            CulpritAction.REVERT,
+            revert_committed=False)) >= action_settings.get(
+                'auto_create_revert_daily_threshold_compile', 10):
       return self._Notify(project_api, culprit, 'Reached revert creation quota')
 
     if not project_config.get('auto_revert_enabled_for_project', False):
@@ -304,9 +306,11 @@ class CompileAnalysisAPI(AnalysisAPI):
 
     revert_description = self._ComposeRevertDescription(project_api, culprit)
     if project_config.get('auto_commit_enabled_for_project', False):
-      if CulpritAction.GetRecentActionsByType(
-          CulpritAction.REVERT, revert_committed=True) < action_settings.get(
-              'auto_commit_revert_daily_threshold_compile', 4):
+      if len(
+          CulpritAction.GetRecentActionsByType(
+              CulpritAction.REVERT,
+              revert_committed=True)) < action_settings.get(
+                  'auto_commit_revert_daily_threshold_compile', 4):
         action = self._CommitRevert(project_api, revert_description, culprit)
         if action:
           return action

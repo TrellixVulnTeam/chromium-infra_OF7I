@@ -253,44 +253,44 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
             'notify': True
         }),
         # Reached the revert quota.
-        ([True, True, True, False, False, False, 100], {
+        ([True, True, True, False, False, False, [None] * 100], {
             'notify': True
         }),
         # Auto-revert disabled.
-        ([True, True, True, False, False, False, 0, False], {
+        ([True, True, True, False, False, False, [], False], {
             'notify': True
         }),
         # Culprit tagged with NOAUTOREVERT=True
-        ([True, True, True, False, False, False, 0, True, True], {
+        ([True, True, True, False, False, False, [], True, True], {
             'notify': True
         }),
         # CQed changes depend on the culprit.
-        ([True, True, True, False, False, False, 0, True, False, True], {
+        ([True, True, True, False, False, False, [], True, False, True], {
             'notify': True
         }),
         # Culprit landed over 24 hours ago.
-        ([True, True, True, False, False, False, 0, True, False, False,
+        ([True, True, True, False, False, False, [], True, False, False,
           False], {
               'notify': True
           }),
         # Culprit author allowed.
         ([
-            True, True, True, False, False, False, 0, True, False, False, True,
+            True, True, True, False, False, False, [], True, False, False, True,
             ['dummy@account.org']
         ], {
             'notify': True
         }),
         # Auto-commit disabled.
         ([
-            True, True, True, False, False, False, 0, True, False, False, True,
+            True, True, True, False, False, False, [], True, False, False, True,
             [], False
         ], {
             'review': True
         }),
         # Auto-commit quota reached.
         ([
-            True, True, True, False, False, False, 0, True, False, False, True,
-            [], True, 100
+            True, True, True, False, False, False, [], True, False, False, True,
+            [], True, [None] * 100
         ], {
             'review': True
         }),
@@ -310,7 +310,7 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       check_suspect.return_value = scenario.get(2, True)
       MockGerritClient.revert_of = scenario.get(3, False)
       check_revert.return_value = scenario.get(4, False), scenario.get(5, False)
-      actions_by_type.side_effect = [scenario.get(6, 0), scenario.get(13, 0)]
+      actions_by_type.side_effect = [scenario.get(6, []), scenario.get(13, [])]
       projects.PROJECT_CFG['chromium'][
           'auto_revert_enabled_for_project'] = scenario.get(7, True)
       MockGerritClient.auto_revert_off = scenario.get(8, False)
