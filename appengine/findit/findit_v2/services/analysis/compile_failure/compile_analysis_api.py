@@ -191,7 +191,22 @@ class CompileAnalysisAPI(AnalysisAPI):
             .gitiles_id).fetch()
     return groups[0] if groups else None
 
-  def OnCulpritFound(self, context, analyzed_build_id, culprit):
+  def _CheckIfCulpritIsASuspect(self, culprit, failures):
+    """Checks if culprit is one of the suspects for failures."""
+    all_suspect_keys = []
+    for failure in failures:
+      all_suspect_keys.extend(failure.suspect_commit_key)
+    all_suspects = [suspect_key.get() for suspect_key in all_suspect_keys]
+    for suspect in all_suspects:
+      if (culprit.gitiles_id == suspect.gitiles_id and
+          culprit.gitiles_host == suspect.gitiles_host and
+          culprit.gitiles_project == suspect.gitiles_project and
+          culprit.gitiles_ref == suspect.gitiles_ref):
+        return True
+
+    return False
+
+  def OnCulpritFound(self, context, analyzed_build_id, culprit, failures):
     """Decides and executes the action for the found culprit change.
 
     This possible actions include:
@@ -211,6 +226,7 @@ class CompileAnalysisAPI(AnalysisAPI):
       analyzed_build_id: Buildbucket id of the continuous build being analyzed.
       culprit: The Culprit entity for the change identified as causing the
           failures.
+      failures: Failure entities associated with the culprit.
 
     Returns:
       The CulpritAction entity describing the action taken, None if no action
@@ -231,6 +247,11 @@ class CompileAnalysisAPI(AnalysisAPI):
     if not build_util.AllLaterBuildsHaveOverlappingFailure(
         context, analyzed_build_id, culprit):
       return self._NoAction(culprit, 'Build has recovered')
+
+    # Check if the culprit is one of the suspects
+    if context.luci_project_name == "chromium":
+      if not self._CheckIfCulpritIsASuspect(culprit, failures):
+        return self._NoAction(culprit, 'Culprit is not a suspect')
 
     change_info, gerrit_client = (
         project_api.gerrit_actions.ChangeInfoAndClientFromCommit(culprit))

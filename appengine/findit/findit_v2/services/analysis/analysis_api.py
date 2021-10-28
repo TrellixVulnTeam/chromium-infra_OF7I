@@ -318,7 +318,8 @@ class AnalysisAPI(object):
     """
     raise NotImplementedError()
 
-  def OnCulpritFound(self, context, analyzed_build_id, culprit_commit):
+  def OnCulpritFound(self, context, analyzed_build_id, culprit_commit,
+                     failures):
     """Subclasses may override this to take action when a culprit is identified.
 
     Args:
@@ -326,6 +327,7 @@ class AnalysisAPI(object):
       analyzed_build_id: Buildbucket id of the continuous build being analyzed.
       culprit: The Culprit entity for the change identified as causing the
           failures.
+      failures: Failure entities associated with the culprit.
 
     Returns:
       The CulpritAction entity describing the action taken, None if no action
@@ -1434,7 +1436,8 @@ class AnalysisAPI(object):
       if culprit_commit:
         # Analysis for these failures has run to the end.
         culprit_entity = self._SaveCulpritInFailures(failures, culprit_commit)
-        self.OnCulpritFound(context, analyzed_build_id, culprit_entity)
+        self.OnCulpritFound(context, analyzed_build_id, culprit_entity,
+                            failures)
         analysis_errors.append(None)
         continue
 

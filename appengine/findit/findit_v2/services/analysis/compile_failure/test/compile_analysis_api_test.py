@@ -10,9 +10,9 @@ from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
 
-from findit_v2.model.compile_failure import CompileFailureGroup
+from findit_v2.model.compile_failure import CompileFailure, CompileFailureGroup
 from findit_v2.model.culprit_action import CulpritAction
-from findit_v2.model.gitiles_commit import Culprit
+from findit_v2.model.gitiles_commit import Culprit, Suspect
 from findit_v2.model.gitiles_commit import GitilesCommit
 from findit_v2.model.luci_build import LuciFailedBuild
 from findit_v2.services import build_util
@@ -198,9 +198,10 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(CompileAnalysisAPI, '_RequestReview')
   @mock.patch.object(CompileAnalysisAPI, '_CommitRevert')
   @mock.patch.object(CompileAnalysisAPI, '_Notify')
-  def testOnCulpritFound(self, notify, commit, review, no_action, check_revert,
-                         change_info_and_client, changed_in_time, cqed_changes,
-                         actions_by_type, ongoing_failure):
+  @mock.patch.object(CompileAnalysisAPI, '_CheckIfCulpritIsASuspect')
+  def testOnCulpritFound(self, check_suspect, notify, commit, review, no_action,
+                         check_revert, change_info_and_client, changed_in_time,
+                         cqed_changes, actions_by_type, ongoing_failure):
 
     class MockGerritClient(object):
       revert_of = False
@@ -235,56 +236,61 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
         ([True, False], {
             'no_action': True
         }),
+        # Culprit is not a suspect.
+        ([True, False, False], {
+            'no_action': True
+        }),
         # The culprit is a revert.
-        ([True, True, True], {
+        ([True, True, True, True], {
             'notify': True
         }),
         # The culprit is already reverted by findit.
-        ([True, True, False, True, True], {
+        ([True, True, True, False, True, True], {
             'no_action': True
         }),
         # The culprit is already reverted by sheriff.
-        ([True, True, False, True, False], {
+        ([True, True, True, False, True, False], {
             'notify': True
         }),
         # Reached the revert quota.
-        ([True, True, False, False, False, 100], {
+        ([True, True, True, False, False, False, 100], {
             'notify': True
         }),
         # Auto-revert disabled.
-        ([True, True, False, False, False, 0, False], {
+        ([True, True, True, False, False, False, 0, False], {
             'notify': True
         }),
         # Culprit tagged with NOAUTOREVERT=True
-        ([True, True, False, False, False, 0, True, True], {
+        ([True, True, True, False, False, False, 0, True, True], {
             'notify': True
         }),
         # CQed changes depend on the culprit.
-        ([True, True, False, False, False, 0, True, False, True], {
+        ([True, True, True, False, False, False, 0, True, False, True], {
             'notify': True
         }),
         # Culprit landed over 24 hours ago.
-        ([True, True, False, False, False, 0, True, False, False, False], {
-            'notify': True
-        }),
+        ([True, True, True, False, False, False, 0, True, False, False,
+          False], {
+              'notify': True
+          }),
         # Culprit author allowed.
         ([
-            True, True, False, False, False, 0, True, False, False, True,
+            True, True, True, False, False, False, 0, True, False, False, True,
             ['dummy@account.org']
         ], {
             'notify': True
         }),
         # Auto-commit disabled.
         ([
-            True, True, False, False, False, 0, True, False, False, True, [],
-            False
+            True, True, True, False, False, False, 0, True, False, False, True,
+            [], False
         ], {
             'review': True
         }),
         # Auto-commit quota reached.
         ([
-            True, True, False, False, False, 0, True, False, False, True, [],
-            True, 100
+            True, True, True, False, False, False, 0, True, False, False, True,
+            [], True, 100
         ], {
             'review': True
         }),
@@ -301,18 +307,19 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
       projects.PROJECT_CFG['chromium'][
           'auto_actions_enabled_for_project'] = scenario.get(0, True)
       ongoing_failure.return_value = scenario.get(1, True)
-      MockGerritClient.revert_of = scenario.get(2, False)
-      check_revert.return_value = scenario.get(3, False), scenario.get(4, False)
-      actions_by_type.side_effect = [scenario.get(5, 0), scenario.get(12, 0)]
+      check_suspect.return_value = scenario.get(2, True)
+      MockGerritClient.revert_of = scenario.get(3, False)
+      check_revert.return_value = scenario.get(4, False), scenario.get(5, False)
+      actions_by_type.side_effect = [scenario.get(6, 0), scenario.get(13, 0)]
       projects.PROJECT_CFG['chromium'][
-          'auto_revert_enabled_for_project'] = scenario.get(6, True)
-      MockGerritClient.auto_revert_off = scenario.get(7, False)
-      cqed_changes.return_value = scenario.get(8, False)
-      changed_in_time.return_value = scenario.get(9, True)
+          'auto_revert_enabled_for_project'] = scenario.get(7, True)
+      MockGerritClient.auto_revert_off = scenario.get(8, False)
+      cqed_changes.return_value = scenario.get(9, False)
+      changed_in_time.return_value = scenario.get(10, True)
       projects.PROJECT_CFG['chromium'][
-          'automated_account_allowlist'] = scenario.get(10, [])
+          'automated_account_allowlist'] = scenario.get(11, [])
       projects.PROJECT_CFG['chromium'][
-          'auto_commit_enabled_for_project'] = scenario.get(11, True)
+          'auto_commit_enabled_for_project'] = scenario.get(12, True)
 
       # Code under test.
       self.analysis_api.OnCulpritFound(
@@ -320,13 +327,36 @@ class CompileAnalysisAPITest(wf_testcase.WaterfallTestCase):
           Culprit.GetOrCreate(self.context.gitiles_host,
                               self.context.gitiles_project,
                               self.context.gitiles_ref, 'badc0de', 666,
-                              [self.compile_failure.key.urlsafe()]))
+                              [self.compile_failure.key.urlsafe()]), [])
 
       # Verify expected actions were called.
       self.assertEqual(result.get('no_action', False), bool(no_action.called))
       self.assertEqual(result.get('notify', False), bool(notify.called))
       self.assertEqual(result.get('review', False), bool(review.called))
       self.assertEqual(result.get('commit', False), bool(commit.called))
+
+  def testCheckIfCulpritIsASuspect(self):
+    culprit = Culprit.GetOrCreate(self.context.gitiles_host,
+                                  self.context.gitiles_project,
+                                  self.context.gitiles_ref, 'badc0de', 123)
+    self.assertFalse(self.analysis_api._CheckIfCulpritIsASuspect(culprit, []))
+    suspect1 = Suspect.GetOrCreate(self.context.gitiles_host,
+                                   self.context.gitiles_project,
+                                   self.context.gitiles_ref, 'abcdef', 234)
+    failure1 = CompileFailure.Create(self.build_entity.key, 'step', ['target1'])
+    failure2 = CompileFailure.Create(self.build_entity.key, 'step', ['target2'])
+    failure2.suspect_commit_key.append(suspect1.key)
+    self.assertFalse(
+        self.analysis_api._CheckIfCulpritIsASuspect(culprit,
+                                                    [failure1, failure2]))
+
+    suspect2 = Suspect.GetOrCreate(self.context.gitiles_host,
+                                   self.context.gitiles_project,
+                                   self.context.gitiles_ref, 'badc0de', 123)
+    failure2.suspect_commit_key.append(suspect2.key)
+    self.assertTrue(
+        self.analysis_api._CheckIfCulpritIsASuspect(culprit,
+                                                    [failure1, failure2]))
 
   @mock.patch.object(GerritActions, 'RequestReview')
   @mock.patch.object(GerritActions, 'CommitRevert')
