@@ -102,7 +102,7 @@ CIPD_PACKAGE_BUILDERS = {
     'native:test',
     'windows-386:test',
   ],
-  'infra-internal-continuous-mac-10.15-64': [
+  'infra-internal-continuous-mac-11-64': [
     'native:test:legacy',
   ],
 
@@ -263,7 +263,7 @@ def GenTests(api):
 
   yield test('internal-ci-linux', 'infra-internal-continuous-trusty-64',
              INTERNAL_REPO, 'infra-internal', 'ci', 'linux')
-  yield test('internal-ci-mac', 'infra-internal-continuous-mac-10.15-64',
+  yield test('internal-ci-mac', 'infra-internal-continuous-mac-11-64',
              INTERNAL_REPO, 'infra-internal', 'ci', 'mac')
 
   yield test('public-packager-mac', 'infra-packager-mac-64',
