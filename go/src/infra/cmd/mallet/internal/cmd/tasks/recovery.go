@@ -34,6 +34,7 @@ var Recovery = &subcommands.Command{
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
 		c.Flags.BoolVar(&c.noStepper, "no-stepper", false, "Block steper from using. This will prevent by using steps and you can only see logs.")
 		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Run deploy task. By default run recovery task.")
+		c.Flags.BoolVar(&c.updateUFS, "update-ufs", false, "Update result to UFS. By default no.")
 		return c
 	},
 }
@@ -47,10 +48,8 @@ type recoveryRun struct {
 	noStepper  bool
 	configFile string
 	deployTask bool
+	updateUFS  bool
 }
-
-// Flag to manage if a task is allowed to update inventory after running a task.
-const enableUpdateInventory = true
 
 func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
@@ -90,7 +89,7 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		"enable_recovery":   !c.onlyVerify,
 		"admin_service":     e.AdminService,
 		"inventory_service": e.UFSService,
-		"update_inventory":  enableUpdateInventory,
+		"update_inventory":  c.updateUFS,
 		"no_stepper":        c.noStepper,
 		"no_metrics":        true,
 		"configuration":     configuration,
