@@ -6,7 +6,6 @@ package clusteredfailures
 
 import (
 	"context"
-	"strings"
 
 	"cloud.google.com/go/bigquery"
 	"go.chromium.org/luci/common/bq"
@@ -49,7 +48,10 @@ func (c *Client) Insert(ctx context.Context, luciProject string, rows []*bqpb.Cl
 	}
 	defer client.Close()
 
-	dataset := datasetForProject(luciProject)
+	dataset, err := bqutil.DatasetForProject(luciProject)
+	if err != nil {
+		return errors.Annotate(err, "getting dataset").Err()
+	}
 
 	// Dataset for the project may have to be manually created.
 	table := client.Dataset(dataset).Table(tableName)
@@ -72,12 +74,4 @@ func (c *Client) Insert(ctx context.Context, luciProject string, rows []*bqpb.Cl
 		return errors.Annotate(err, "inserting clustered failures").Err()
 	}
 	return nil
-}
-
-func datasetForProject(luciProject string) string {
-	// The valid alphabet of LUCI project names [1] is [a-z0-9-] whereas
-	// the valid alphabet of BQ dataset names [2] is [a-zA-Z0-9_].
-	// [1]: https://source.chromium.org/chromium/infra/infra/+/main:luci/appengine/components/components/config/common.py?q=PROJECT_ID_PATTERN
-	// [2]: https://cloud.google.com/bigquery/docs/datasets#dataset-naming
-	return strings.ReplaceAll(luciProject, "-", "_")
 }
