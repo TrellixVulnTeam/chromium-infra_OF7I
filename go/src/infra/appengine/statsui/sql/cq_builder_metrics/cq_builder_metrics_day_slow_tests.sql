@@ -50,7 +50,7 @@ USING
       ANY_VALUE(b.builder) builder,
       ANY_VALUE(b.start_time) builder_start_time,
       (
-        SELECT SUBSTR(i, 6) FROM t.request.tags i WHERE i LIKE 'name:%'
+        SELECT SUBSTR(i, 12) FROM t.request.tags i WHERE i LIKE 'test_suite:%'
       ) test_name,
       MAX(TIMESTAMP_DIFF(t.start_time, t.create_time, SECOND)) max_shard_pending,
       MAX(TIMESTAMP_DIFF(t.end_time, t.start_time, SECOND)) max_shard_runtime
@@ -76,6 +76,7 @@ USING
       count(id) num_runs,
       countif(t.max_shard_runtime > slow_p50_cutoff) num_slow_runs,
     FROM tests t
+    WHERE t.test_name is not null
     GROUP BY t.date, t.builder, t.test_name
     ),
     slow_tests AS (
