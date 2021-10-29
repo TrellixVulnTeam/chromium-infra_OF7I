@@ -27,6 +27,7 @@ func newApplication() *cli.Application {
 			return gologger.StdConfig.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
+			kartecli.CreateAction,
 			kartecli.ListActions,
 			kartecli.CheckServer,
 		},
