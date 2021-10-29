@@ -200,8 +200,15 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 			}
 		}
 
-		// Perform the actual deployment.
-		return gcloud.Run(ctx, []string{
+		// Use "beta" variant of the command if the module has "app_engine_apis",
+		// otherwise this setting has no effect.
+		//
+		// See https://cloud.google.com/appengine/docs/standard/go/services/access.
+		var command []string
+		if mod.UsesAppEngineAPIs() {
+			command = append(command, "beta")
+		}
+		command = append(command,
 			"app", "deploy",
 			"--project", c.appID,
 			"--quiet", // disable interactive prompts
@@ -209,7 +216,10 @@ func (c *cmdModuleRun) exec(ctx context.Context) error {
 			"--no-stop-previous-version",
 			"--version", c.moduleVersion,
 			filepath.Base(yamlTmp.Name()),
-		}, filepath.Join(root, modDir), env, c.dryRun)
+		)
+
+		// Perform the actual deployment.
+		return gcloud.Run(ctx, command, filepath.Join(root, modDir), env, c.dryRun)
 	})
 }
 

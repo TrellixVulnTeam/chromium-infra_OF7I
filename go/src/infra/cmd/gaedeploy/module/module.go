@@ -137,6 +137,12 @@ func (m *Module) DumpYAML() ([]byte, error) {
 	return yaml.Marshal(m.conf)
 }
 
+// UsesAppEngineAPIs returns the value of "app_engine_apis" field.
+func (m *Module) UsesAppEngineAPIs() bool {
+	val, _ := m.conf["app_engine_apis"].(bool)
+	return val
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // varsDecl is appID => var name => its value, as read from the YAML.
