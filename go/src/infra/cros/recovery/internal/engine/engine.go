@@ -97,7 +97,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, fmt.Sprintf("Run %s", actionName))
-			defer step.End(err)
+			defer func() { step.End(err) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -210,7 +210,7 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, "Run continions")
-			defer step.End(err)
+			defer func() { step.End(err) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -239,7 +239,7 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, "Run dependencies")
-			defer step.End(err)
+			defer func() { step.End(err) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -264,7 +264,7 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, "Run recoveries")
-			defer step.End(err)
+			defer func() { step.End(err) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()

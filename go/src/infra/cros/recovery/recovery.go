@@ -60,7 +60,7 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if args.Metrics != nil {
 		start := time.Now()
@@ -101,7 +101,7 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Resource %q", resource))
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	dut, err := readInventory(ctx, resource, args)
 	if err != nil {
@@ -121,7 +121,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Retrieve resources for %s", args.UnitName))
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -137,7 +137,7 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, "Load configuration")
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -161,7 +161,7 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tlw.Dut, err error) {
 	if args.ShowSteps {
 		step, _ := build.StartStep(ctx, "Read inventory")
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -187,7 +187,7 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (err error) {
 	if args.ShowSteps {
 		step, _ := build.StartStep(ctx, "Update inventory")
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -257,7 +257,7 @@ func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *plan
 	if execArgs.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Run plan %q", planName))
-		defer step.End(err)
+		defer func() { step.End(err) }()
 	}
 	if execArgs.Logger != nil {
 		execArgs.Logger.IndentLogging()
