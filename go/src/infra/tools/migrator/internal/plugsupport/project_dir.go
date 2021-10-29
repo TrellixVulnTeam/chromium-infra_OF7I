@@ -49,10 +49,16 @@ func (p ProjectDir) TrashDir() string {
 	return filepath.Join(string(p), ".trash")
 }
 
-// ReportPath returns the absolute path of the migrator project's CSV scan
+// ScanReportPath returns the absolute path of the migrator project's CSV scan
 // report file.
-func (p ProjectDir) ReportPath() string {
+func (p ProjectDir) ScanReportPath() string {
 	return filepath.Join(string(p), "scan.csv")
+}
+
+// StatusReportPath returns the absolute path of the migrator project's CSV
+// status report file.
+func (p ProjectDir) StatusReportPath() string {
+	return filepath.Join(string(p), "status.csv")
 }
 
 // ProjectLog returns the absolute path of the scan log for a given LUCI

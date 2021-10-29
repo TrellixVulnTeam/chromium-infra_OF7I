@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/maruel/subcommands"
 
@@ -34,8 +35,6 @@ import (
 type command interface {
 	subcommands.CommandRun
 
-	initFlags(opts cmdBaseOptions)
-
 	positionalRange() (min, max int)
 
 	validateFlags(ctx context.Context, positionals []string, env subcommands.Env) error
@@ -46,20 +45,29 @@ type cmdBaseOptions struct {
 	authOpts auth.Options
 }
 
+type cmdInitParams struct {
+	opts               cmdBaseOptions
+	discoverProjectDir bool
+}
+
 type cmdBase struct {
 	subcommands.CommandRunBase
+
+	discoverProjectDir bool // true to initialie projectDir based on cwd
 
 	logFlags          logging.Config
 	authFlags         authcli.Flags
 	configServiceHost string
 
 	contextConfig plugsupport.ContextConfig
+	projectDir    plugsupport.ProjectDir
 }
 
-func (c *cmdBase) initFlags(opts cmdBaseOptions) {
+func (c *cmdBase) initFlags(p cmdInitParams) {
+	c.discoverProjectDir = p.discoverProjectDir
 	c.logFlags.Level = logging.Info
 	c.logFlags.AddFlags(&c.Flags)
-	c.authFlags.Register(&c.Flags, opts.authOpts)
+	c.authFlags.Register(&c.Flags, p.opts.authOpts)
 	c.Flags.StringVar(&c.configServiceHost, "config-service-host", chromeinfra.ConfigServiceHost,
 		"Hostname of a LUCI Config service to fetch project info from.")
 }
@@ -101,6 +109,14 @@ func (c *cmdBase) doContextExecute(a subcommands.Application, cmd command, args 
 		return 1
 	}
 
+	if c.discoverProjectDir {
+		c.projectDir, err = findProjectDir()
+		if err != nil {
+			logging.Errorf(ctx, "can't find the project directory: %s\n\n", err)
+			return 1
+		}
+	}
+
 	if err = cmd.validateFlags(ctx, args, env); err != nil {
 		logging.Errorf(ctx, "bad arguments: %s\n\n", err)
 		c.GetFlags().Usage()
@@ -113,4 +129,12 @@ func (c *cmdBase) doContextExecute(a subcommands.Application, cmd command, args 
 	}
 
 	return 0
+}
+
+func findProjectDir() (plugsupport.ProjectDir, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", errors.Annotate(err, "getting working directory").Err()
+	}
+	return plugsupport.FindProjectRoot(wd)
 }

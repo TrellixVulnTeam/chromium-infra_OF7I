@@ -10,12 +10,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"google.golang.org/protobuf/encoding/prototext"
 
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
@@ -26,11 +29,11 @@ import (
 	"infra/tools/migrator"
 )
 
+const localBranch = "fix_config"
+
 type repo struct {
 	projectDir ProjectDir          // the root migrator project directory
 	checkoutID string              // how to name the checkout directory on disk
-	remoteURL  string              // https://... repo URL
-	remoteRef  string              // e.g. "refs/heads/main"
 	projects   []*configpb.Project // LUCI projects located within this repo
 	root       string              // the absolute path to the repo checkout
 }
@@ -45,11 +48,71 @@ func generatedConfigRootKey(projID string) string {
 	return fmt.Sprintf("migrator.%s.generatedConfigRoot", projID)
 }
 
+// projectsMetadataFile is a path to the file with projects metadata.
+func projectsMetadataFile(repoRoot string) string {
+	return filepath.Join(repoRoot, ".git", "luci-projects.cfg")
+}
+
+// discoverRepo looks at the checkout directory on disk and returns the
+// corresponding &repo{...} if it is a valid git checkout with all necessary
+// metadata.
+//
+// Returns ErrNotExist if there's no checkout there. Any other error indicates
+// there's a checkout, but it appears to be broken.
+func discoverRepo(ctx context.Context, projectDir ProjectDir, checkoutID string) (*repo, error) {
+	root := projectDir.CheckoutDir(checkoutID)
+	projects, err := readProjectsMetadata(projectsMetadataFile(root))
+	if err != nil {
+		return nil, err
+	}
+	r := &repo{
+		projectDir: projectDir,
+		checkoutID: checkoutID,
+		projects:   projects,
+		root:       root,
+	}
+	if err := r.load(ctx, false); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// discoverAllRepos discovers all checked out repositories in the project dir.
+func discoverAllRepos(ctx context.Context, dir ProjectDir) ([]*repo, error) {
+	infos, err := ioutil.ReadDir(string(dir))
+	if err != nil {
+		return nil, err
+	}
+
+	var repos []*repo
+	for _, info := range infos {
+		if !info.IsDir() || strings.HasPrefix(info.Name(), ".") || strings.HasPrefix(info.Name(), "_") {
+			continue
+		}
+		switch r, err := discoverRepo(ctx, dir, info.Name()); {
+		case err == nil:
+			repos = append(repos, r)
+		case !os.IsNotExist(err):
+			logging.Errorf(ctx, "Error when scanning checkout %q: %s", info.Name(), err)
+		}
+	}
+
+	return repos, nil
+}
+
+// git returns an object that can execute git commands in the repo.
+func (r *repo) git(ctx context.Context) gitRunner {
+	return gitRunner{ctx: ctx, root: r.root}
+}
+
 // localProject returns a reference to the local checked out project.
 func (r *repo) localProject(ctx context.Context, projID string) migrator.LocalProject {
-	git := gitRunner{ctx: ctx, root: r.root}
+	git := r.git(ctx)
 	return &localProject{
-		id:                     migrator.ReportID{Project: projID},
+		id: migrator.ReportID{
+			Checkout: r.checkoutID,
+			Project:  projID,
+		},
 		repo:                   r,
 		ctx:                    ctx,
 		relConfigRoot:          git.read("config", configRootKey(projID)),
@@ -58,21 +121,21 @@ func (r *repo) localProject(ctx context.Context, projID string) migrator.LocalPr
 }
 
 // initialize either creates or loads the repo checkout.
-func (r *repo) initialize(ctx context.Context) (newCheckout bool, err error) {
+func (r *repo) initialize(ctx context.Context, remoteURL, remoteRef string) (newCheckout bool, err error) {
 	r.root = r.projectDir.CheckoutDir(r.checkoutID)
 	switch _, err = os.Stat(r.root); {
 	case os.IsNotExist(err):
-		return true, r.create(ctx)
+		return true, r.create(ctx, remoteURL, remoteRef)
 	case err == nil:
-		return false, r.load(ctx)
+		return false, r.load(ctx, true)
 	default:
 		return false, errors.Annotate(err, "statting checkout").Err()
 	}
 }
 
 // load verifies the checkout has all LUCI projects we need.
-func (r *repo) load(ctx context.Context) error {
-	git := gitRunner{ctx: ctx, root: r.root}
+func (r *repo) load(ctx context.Context, writeMetadata bool) error {
+	git := r.git(ctx)
 
 	for _, proj := range r.projects {
 		configRoot := git.read("config", configRootKey(proj.Id))
@@ -85,19 +148,30 @@ func (r *repo) load(ctx context.Context) error {
 		}
 	}
 
-	return git.err
+	if git.err != nil {
+		return git.err
+	}
+
+	// Make sure the metadata file is up-to-date (has no extra entries).
+	if writeMetadata {
+		if err := writeProjectsMetadata(projectsMetadataFile(r.root), r.projects); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // create initializes a new repo checkout.
-func (r *repo) create(ctx context.Context) error {
+func (r *repo) create(ctx context.Context, remoteURL, remoteRef string) error {
 	// We do this because `git cl` makes very broad assumptions about ref names.
 	var originRef string
-	if prefix := "refs/heads/"; strings.HasPrefix(r.remoteRef, prefix) {
-		originRef = strings.Replace(r.remoteRef, prefix, "refs/remotes/origin/", 1)
-	} else if prefix := "refs/branch-heads/"; strings.HasPrefix(r.remoteRef, prefix) {
-		originRef = strings.Replace(r.remoteRef, prefix, "refs/remotes/branch-heads/", 1)
+	if prefix := "refs/heads/"; strings.HasPrefix(remoteRef, prefix) {
+		originRef = strings.Replace(remoteRef, prefix, "refs/remotes/origin/", 1)
+	} else if prefix := "refs/branch-heads/"; strings.HasPrefix(remoteRef, prefix) {
+		originRef = strings.Replace(remoteRef, prefix, "refs/remotes/branch-heads/", 1)
 	} else {
-		return errors.Reason("malformed remote ref, must be `refs/heads/` or `refs/branch-heads/`: %q", r.remoteRef).Err()
+		return errors.Reason("malformed remote ref, must be `refs/heads/` or `refs/branch-heads/`: %q", remoteRef).Err()
 	}
 
 	// Bail early if the migrator config is broken.
@@ -112,12 +186,12 @@ func (r *repo) create(ctx context.Context) error {
 	}
 
 	// "sso://" simplifies authenticating into internal repos.
-	remoteURL := strings.Replace(r.remoteURL, "https://", "sso://", 1)
+	remoteURL = strings.Replace(remoteURL, "https://", "sso://", 1)
 
 	// Bail early with a clear error message if we have no read access.
-	git.run("ls-remote", remoteURL, r.remoteRef)
+	git.run("ls-remote", remoteURL, remoteRef)
 	if git.err != nil {
-		return errors.Reason("no read access to %q ref %q", remoteURL, r.remoteRef).Err()
+		return errors.Reason("no read access to %q ref %q", remoteURL, remoteRef).Err()
 	}
 
 	// Fetch the state into the git guts, but do not check out it yet.
@@ -128,7 +202,7 @@ func (r *repo) create(ctx context.Context) error {
 	git.run("config", "extensions.PartialClone", "origin")
 	git.run("config", "depot-tools.upstream", originRef)
 	git.run("remote", "add", "origin", remoteURL)
-	git.run("config", "remote.origin.fetch", "+"+r.remoteRef+":"+originRef)
+	git.run("config", "remote.origin.fetch", "+"+remoteRef+":"+originRef)
 	git.run("config", "remote.origin.partialclonefilter", "blob:none")
 	git.run("fetch", "--depth", "1", "origin")
 
@@ -147,9 +221,13 @@ func (r *repo) create(ctx context.Context) error {
 		git.run("sparse-checkout", "init")
 		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
 	}
-	git.run("new-branch", "fix_config")
+	git.run("new-branch", localBranch)
 	if git.err != nil {
 		return git.err
+	}
+
+	if err := writeProjectsMetadata(projectsMetadataFile(git.root), r.projects); err != nil {
+		return err
 	}
 
 	return os.Rename(git.root, r.root)
@@ -205,6 +283,35 @@ func (r *repo) prepRepoForProject(git *gitRunner, originRef string, proj *config
 	git.run("config", generatedConfigRootKey(proj.Id), generatedRoot)
 
 	return git.err
+}
+
+// reportID returns ID to use for reports about this specific checkout.
+func (r *repo) reportID() migrator.ReportID {
+	return migrator.ReportID{Checkout: r.checkoutID}
+}
+
+// writeProjectsMetadata writes a metadata file with []configpb.Project.
+func writeProjectsMetadata(path string, projects []*configpb.Project) error {
+	blob, err := (prototext.MarshalOptions{Indent: "  "}).Marshal(&configpb.ProjectsCfg{
+		Projects: projects,
+	})
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, blob, 0600)
+}
+
+// readProjectsMetadata reads the file written by writeProjectsMetadata.
+func readProjectsMetadata(path string) ([]*configpb.Project, error) {
+	blob, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var cfg configpb.ProjectsCfg
+	if err := (prototext.UnmarshalOptions{}).Unmarshal(blob, &cfg); err != nil {
+		return nil, err
+	}
+	return cfg.Projects, nil
 }
 
 type gitRunner struct {
@@ -322,7 +429,7 @@ func (r *gitRunner) read(args ...string) string {
 		return ""
 	}
 
-	logging.Infof(r.ctx, "running git %q", args)
+	logging.Debugf(r.ctx, "running git %q", args)
 
 	buf := &bytes.Buffer{}
 
@@ -332,6 +439,12 @@ func (r *gitRunner) read(args ...string) string {
 	err := redirectIOAndWait(cmd, func(fromStdout bool, line string) {
 		logging.Errorf(r.ctx, "%s", line)
 	})
-	r.err = errors.Annotate(err, "running git %q", args).Err()
+
+	// Ignore exit status of "git config <key>" commands. Non-zero exit code
+	// usually means the config key is absent.
+	if len(args) != 2 || args[0] != "config" {
+		r.err = errors.Annotate(err, "running git %q", args).Err()
+	}
+
 	return strings.TrimSpace(buf.String())
 }

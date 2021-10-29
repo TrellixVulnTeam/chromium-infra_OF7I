@@ -55,6 +55,7 @@ func (l *localProject) ConfigFiles() map[string]migrator.ConfigFile {
 				relpath := filepath.ToSlash(path[len(dir)+1:])
 				l.configs[relpath] = &localConfigFile{
 					id: migrator.ReportID{
+						Checkout:   l.id.Checkout,
 						Project:    l.id.Project,
 						ConfigFile: relpath,
 					},

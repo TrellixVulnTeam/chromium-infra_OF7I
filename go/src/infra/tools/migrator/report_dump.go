@@ -5,6 +5,7 @@
 package migrator
 
 import (
+	"bufio"
 	"encoding/csv"
 	"io"
 	"sort"
@@ -75,6 +76,7 @@ func (r *ReportDump) Iterate(cb func(ReportID, []*Report) bool) {
 		keys = append(keys, key)
 	}
 	sort.Slice(keys, sortby.Chain{
+		func(i, j int) bool { return keys[i].Checkout < keys[j].Checkout },
 		func(i, j int) bool { return keys[i].Project < keys[j].Project },
 		func(i, j int) bool { return keys[i].ConfigFile < keys[j].ConfigFile },
 	}.Use)
@@ -115,7 +117,7 @@ func (r *ReportDump) Empty() bool {
 const (
 	schemaPrefix  = "{schema="
 	schemaSuffix  = "}"
-	schemaVersion = "v2"
+	schemaVersion = "v3"
 )
 
 // parseSchemaVersion returns the "v1" from e.g. "{schema=v1}" or "" if `token`
@@ -128,7 +130,7 @@ func parseSchemaVersion(token string) string {
 }
 
 var csvHeader = []string{
-	"Project", "ConfigFile", "Tag", "Problem", "Actionable", "Metadata",
+	"Checkout", "Project", "ConfigFile", "Tag", "Problem", "Actionable", "Metadata",
 	schemaPrefix + schemaVersion + schemaSuffix,
 }
 
@@ -205,4 +207,69 @@ func (r *ReportDump) WriteToCSV(out io.Writer) error {
 
 	cw.Flush()
 	return cw.Error()
+}
+
+// PrettyPrint formats the report for terminal output.
+//
+// For each report calls `row` callback to get the list of columns for it.
+// If the callback returns an empty list, this report is skipped.
+func (r *ReportDump) PrettyPrint(out io.Writer, header []string, row func(r *Report) []string) {
+	rows := make([][]string, 0, 20)
+	rows = append(rows, header)
+
+	r.Iterate(func(key ReportID, reports []*Report) bool {
+		for _, report := range reports {
+			if r := row(report); len(r) > 0 {
+				rows = append(rows, r)
+			}
+		}
+		return true
+	})
+
+	if len(rows) == 1 {
+		return // have only the header, no actual rows to print
+	}
+
+	maxLen := 0
+	for _, r := range rows {
+		if len(r) > maxLen {
+			maxLen = len(r)
+		}
+	}
+
+	widths := make([]int, maxLen)
+	for _, r := range rows {
+		for i, w := range widths {
+			if i == len(r) {
+				break
+			}
+			if l := len(r[i]); l > w {
+				widths[i] = l
+			}
+		}
+	}
+
+	totalW := 0
+	for _, w := range widths {
+		totalW += w
+	}
+
+	buf := bufio.NewWriter(out)
+	defer buf.Flush()
+	for ri, r := range rows {
+		for coli, v := range r {
+			if coli != 0 {
+				buf.WriteString(" │ ")
+			}
+			buf.WriteString(v)
+			for c := len(v); c < widths[coli]; c++ {
+				buf.WriteRune(' ')
+			}
+		}
+		buf.WriteRune('\n')
+		if ri == 0 {
+			buf.WriteString(strings.Repeat("─", totalW+3*(len(widths)-1)))
+			buf.WriteRune('\n')
+		}
+	}
 }

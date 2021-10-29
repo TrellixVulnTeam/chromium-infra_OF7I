@@ -26,8 +26,9 @@ func TestReportID(t *testing.T) {
 		})
 
 		Convey(`String`, func() {
-			So(ReportID{Project: "foo"}.String(), ShouldResemble, "foo")
-			So(ReportID{Project: "foo", ConfigFile: "file"}.String(), ShouldResemble, "foo|file")
+			So(ReportID{Checkout: "checkout"}.String(), ShouldResemble, "checkout")
+			So(ReportID{Checkout: "checkout", Project: "foo"}.String(), ShouldResemble, "checkout|foo")
+			So(ReportID{Checkout: "checkout", Project: "foo", ConfigFile: "file"}.String(), ShouldResemble, "checkout|foo|file")
 		})
 	})
 }
@@ -37,7 +38,7 @@ func TestReport(t *testing.T) {
 
 	Convey(`Report`, t, func() {
 		r := &Report{
-			ReportID: ReportID{"proj-foo", "config.file"},
+			ReportID: ReportID{"checkout", "proj-foo", "config.file"},
 			Tag:      "SOME_TAG",
 			Problem:  "This is a problem.",
 			Metadata: map[string]stringset.Set{
@@ -57,13 +58,13 @@ func TestReport(t *testing.T) {
 
 		Convey(`ToCSVRow`, func() {
 			So(r.ToCSVRow(), ShouldResemble, []string{
-				"proj-foo", "config.file", "SOME_TAG", "This is a problem.", "false",
+				"checkout", "proj-foo", "config.file", "SOME_TAG", "This is a problem.", "false",
 				"meta:value",
 			})
 
 			r.Actionable = true
 			So(r.ToCSVRow(), ShouldResemble, []string{
-				"proj-foo", "config.file", "SOME_TAG", "This is a problem.", "true",
+				"checkout", "proj-foo", "config.file", "SOME_TAG", "This is a problem.", "true",
 				"meta:value",
 			})
 		})
@@ -71,13 +72,14 @@ func TestReport(t *testing.T) {
 		Convey(`NewReportFromCSVRow`, func() {
 			Convey(`Good`, func() {
 				report, err := NewReportFromCSVRow([]string{
-					"proj-foo", "config.file", "SOME_TAG", "This is a problem.",
-					"meta:value", "meta:other_value", "other_meta:1",
+					"checkout", "proj-foo", "config.file", "SOME_TAG", "This is a problem.",
+					"true", "meta:value", "meta:other_value", "other_meta:1",
 				})
 				So(err, ShouldBeNil)
-				So(report.ReportID, ShouldResemble, ReportID{"proj-foo", "config.file"})
+				So(report.ReportID, ShouldResemble, ReportID{"checkout", "proj-foo", "config.file"})
 				So(report.Tag, ShouldResemble, "SOME_TAG")
 				So(report.Problem, ShouldResemble, "This is a problem.")
+				So(report.Actionable, ShouldBeTrue)
 				So(report.Metadata, ShouldResemble, map[string]stringset.Set{
 					"meta":       stringset.NewFromSlice("value", "other_value"),
 					"other_meta": stringset.NewFromSlice("1"),
@@ -85,43 +87,59 @@ func TestReport(t *testing.T) {
 			})
 
 			Convey(`Bad`, func() {
-				Convey(`no Project`, func() {
+				Convey(`no Checkout`, func() {
 					_, err := NewReportFromCSVRow(nil)
-					So(err, ShouldErrLike, "Project field")
+					So(err, ShouldErrLike, "Checkout field")
 
 					_, err = NewReportFromCSVRow([]string{""})
+					So(err, ShouldErrLike, "Checkout field")
+				})
+
+				Convey(`no Project`, func() {
+					_, err := NewReportFromCSVRow([]string{"checkout"})
+					So(err, ShouldErrLike, "Project field")
+
+					_, err = NewReportFromCSVRow([]string{"checkout", ""})
 					So(err, ShouldErrLike, "Project field")
 				})
 
 				Convey(`no ConfigFile`, func() {
-					_, err := NewReportFromCSVRow([]string{"proj-foo"})
+					_, err := NewReportFromCSVRow([]string{"checkout", "proj-foo"})
 					So(err, ShouldErrLike, "ConfigFile field")
 
-					_, err = NewReportFromCSVRow([]string{"proj-foo", ""})
+					_, err = NewReportFromCSVRow([]string{"checkout", "proj-foo", ""})
 					So(err, ShouldErrLike, "Tag field")
 				})
 
 				Convey(`no Tag`, func() {
-					_, err := NewReportFromCSVRow([]string{"proj-foo", ""})
+					_, err := NewReportFromCSVRow([]string{"checkout", "proj-foo", ""})
 					So(err, ShouldErrLike, "Tag field")
 
-					_, err = NewReportFromCSVRow([]string{"proj-foo", "", ""})
+					_, err = NewReportFromCSVRow([]string{"checkout", "proj-foo", "", ""})
 					So(err, ShouldErrLike, "Tag field")
 				})
 
 				Convey(`no Problem`, func() {
-					_, err := NewReportFromCSVRow([]string{"proj-foo", "", "TAG"})
+					_, err := NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG"})
 					So(err, ShouldErrLike, "Problem field")
 
-					_, err = NewReportFromCSVRow([]string{"proj-foo", "", "TAG", ""})
+					_, err = NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG", ""})
+					So(err, ShouldErrLike, "Actionable field")
+				})
+
+				Convey(`no Actionable`, func() {
+					_, err := NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG", ""})
+					So(err, ShouldErrLike, "Actionable field")
+
+					_, err = NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG", "", "true"})
 					So(err, ShouldBeNil)
 				})
 
 				Convey(`bad metadata`, func() {
-					_, err := NewReportFromCSVRow([]string{"proj-foo", "", "TAG", "", "bad"})
+					_, err := NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG", "", "true", "bad"})
 					So(err, ShouldErrLike, "Malformed metadata")
 
-					_, err = NewReportFromCSVRow([]string{"proj-foo", "", "TAG", "", "ok:value"})
+					_, err = NewReportFromCSVRow([]string{"checkout", "proj-foo", "", "TAG", "", "true", "ok:value"})
 					So(err, ShouldBeNil)
 				})
 			})

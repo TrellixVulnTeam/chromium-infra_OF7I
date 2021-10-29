@@ -31,7 +31,10 @@ type remoteProject struct {
 // RemoteProject returns a new migrator.Project object for `projID`.
 func RemoteProject(ctx context.Context, projID string) migrator.Project {
 	return &remoteProject{
-		id:  migrator.ReportID{Project: projID},
+		id: migrator.ReportID{
+			Checkout: "remote",
+			Project:  projID,
+		},
 		ctx: ctx,
 	}
 }
@@ -47,6 +50,7 @@ func (p *remoteProject) ConfigFiles() map[string]migrator.ConfigFile {
 			for _, file := range files {
 				p.configs[file] = &remoteConfigFile{
 					id: migrator.ReportID{
+						Checkout:   p.id.Checkout,
 						Project:    p.id.Project,
 						ConfigFile: file,
 					},

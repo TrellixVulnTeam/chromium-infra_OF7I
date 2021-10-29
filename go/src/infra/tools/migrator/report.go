@@ -14,9 +14,10 @@ import (
 	"go.chromium.org/luci/config"
 )
 
-// ReportID is a simple Project/ConfigFile tuple and identifies the object which
-// generated the report.
+// ReportID is a (Checkout, Project, ConfigFile) tuple and identifies the object
+// which generated the report.
 type ReportID struct {
+	Checkout   string
 	Project    string
 	ConfigFile string
 }
@@ -29,10 +30,15 @@ func (r ReportID) ConfigSet() config.Set {
 }
 
 func (r ReportID) String() string {
-	if r.ConfigFile == "" {
-		return r.Project
+	chunks := make([]string, 1, 3)
+	chunks[0] = r.Checkout
+	if r.Project != "" {
+		chunks = append(chunks, r.Project)
 	}
-	return fmt.Sprintf("%s|%s", r.Project, r.ConfigFile)
+	if r.ConfigFile != "" {
+		chunks = append(chunks, r.ConfigFile)
+	}
+	return strings.Join(chunks, "|")
 }
 
 // Report stores a single tagged problem (and metadata).
@@ -62,11 +68,11 @@ func (r *Report) Clone() *Report {
 }
 
 // ToCSVRow returns a CSV row:
-//    Project, ConfigFile, Tag, Problem, Actionable, Metadata*
+//    Checkout, Project, ConfigFile, Tag, Problem, Actionable, Metadata*
 //
 // Where Metadata* is one key:value entry per value in Metadata.
 func (r *Report) ToCSVRow() []string {
-	ret := []string{r.Project, r.ConfigFile, r.Tag, r.Problem, fmt.Sprintf("%t", r.Actionable)}
+	ret := []string{r.Checkout, r.Project, r.ConfigFile, r.Tag, r.Problem, fmt.Sprintf("%t", r.Actionable)}
 	if len(r.Metadata) > 0 {
 		keys := make([]string, len(r.Metadata))
 		for key := range r.Metadata {
@@ -95,6 +101,10 @@ func NewReportFromCSVRow(row []string) (ret *Report, err error) {
 
 	ret = &Report{}
 	var ok bool
+	if ret.Checkout, ok = shift(); !ok || ret.Checkout == "" {
+		err = errors.New("Checkout field required")
+		return
+	}
 	if ret.Project, ok = shift(); !ok || ret.Project == "" {
 		err = errors.New("Project field required")
 		return
@@ -111,6 +121,14 @@ func NewReportFromCSVRow(row []string) (ret *Report, err error) {
 		err = errors.New("Problem field required (may be empty)")
 		return
 	}
+
+	actionable := ""
+	if actionable, ok = shift(); !ok {
+		err = errors.New("Actionable field required")
+		return
+	}
+	ret.Actionable = actionable == "true"
+
 	for i, mdata := range row {
 		toks := strings.SplitN(mdata, ":", 2)
 		if len(toks) != 2 {

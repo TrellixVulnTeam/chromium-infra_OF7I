@@ -38,7 +38,10 @@ of all repos for which scanner returns an 'affected' response, when running
 
 		CommandRun: func() subcommands.CommandRun {
 			ret := cmdInitImpl{}
-			ret.initFlags(opts)
+			ret.initFlags(cmdInitParams{
+				opts:               opts,
+				discoverProjectDir: false,
+			})
 			return &ret
 		},
 	}

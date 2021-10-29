@@ -54,6 +54,7 @@ management purposes.
 		Commands: []*subcommands.Command{
 			cmdInit(defaults),
 			cmdScan(defaults),
+			cmdStatus(defaults),
 
 			{}, // spacer
 

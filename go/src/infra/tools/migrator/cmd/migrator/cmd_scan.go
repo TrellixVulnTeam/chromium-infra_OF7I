@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/tools/migrator"
 	"infra/tools/migrator/internal/plugsupport"
 )
 
@@ -42,7 +43,11 @@ checked-out project and run 'scan' again to get a fresh top-of-tree version.
 
 		CommandRun: func() subcommands.CommandRun {
 			ret := cmdScanImpl{}
-			ret.initFlags(opts)
+			ret.initFlags(cmdInitParams{
+				opts:               opts,
+				discoverProjectDir: true,
+			})
+
 			ret.Flags.BoolVar(&ret.squeaky, "squeaky", false,
 				"If set in conjunction with `clean`, will checkout all repos from scratch.")
 			ret.Flags.BoolVar(&ret.clean, "clean", false,
@@ -58,10 +63,9 @@ checked-out project and run 'scan' again to get a fresh top-of-tree version.
 type cmdScanImpl struct {
 	cmdBase
 
-	projectDir plugsupport.ProjectDir
-	squeaky    bool
-	clean      bool
-	reapply    bool
+	squeaky bool
+	clean   bool
+	reapply bool
 }
 
 func (r *cmdScanImpl) positionalRange() (min, max int) { return 0, 0 }
@@ -70,17 +74,11 @@ func (r *cmdScanImpl) validateFlags(ctx context.Context, positionals []string, e
 	if r.squeaky && !r.clean {
 		return errors.New("you can't be squeaky without being clean! (pass -clean flag)")
 	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		return errors.Annotate(err, "getting working directory").Err()
-	}
-	r.projectDir, err = plugsupport.FindProjectRoot(wd)
-	return err
+	return nil
 }
 
 func (r *cmdScanImpl) execute(ctx context.Context) error {
-	return invokePlugin(ctx, r.projectDir, plugsupport.Command{
+	err := invokePlugin(ctx, r.projectDir, plugsupport.Command{
 		Action:        "scan",
 		ContextConfig: r.contextConfig,
 		ScanConfig: plugsupport.ScanConfig{
@@ -89,6 +87,37 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 			Reapply: r.reapply,
 		},
 	})
+	if err != nil {
+		return err
+	}
+
+	report, err := os.Open(r.projectDir.ScanReportPath())
+	if err != nil {
+		return err
+	}
+	defer report.Close()
+
+	dump, err := migrator.NewReportDumpFromCSV(report)
+	if err != nil {
+		return err
+	}
+
+	// Pretty print actionable reports for convenience.
+	dump.PrettyPrint(os.Stdout,
+		[]string{"Project", "Tag", "Problem"},
+		func(r *migrator.Report) []string {
+			if !r.Actionable {
+				return nil
+			}
+			return []string{
+				r.Project,
+				r.Tag,
+				r.Problem,
+			}
+		},
+	)
+
+	return nil
 }
 
 func (r *cmdScanImpl) Run(a subcommands.Application, args []string, env subcommands.Env) int {

@@ -247,7 +247,7 @@ func (s *scanner) run(ctx context.Context) error {
 	}
 
 	// Write the reports out as CSV.
-	scanOut, err := os.Create(s.projectDir.ReportPath())
+	scanOut, err := os.Create(s.projectDir.ScanReportPath())
 	if err != nil {
 		return err
 	}
@@ -353,12 +353,10 @@ func (s *scanner) doCheckoutFixups(co *multiProjectCheckout) {
 	r := &repo{
 		projectDir: s.projectDir,
 		checkoutID: co.checkoutID,
-		remoteURL:  co.repoRef.repo,
-		remoteRef:  co.repoRef.ref,
 		projects:   co.projectPBs(),
 	}
 
-	newCheckout, err := r.initialize(co.ctx)
+	newCheckout, err := r.initialize(co.ctx, co.repoRef.repo, co.repoRef.ref)
 	if err != nil {
 		logging.Errorf(co.ctx, "Failed to checkout repo: %s", err)
 		co.report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
