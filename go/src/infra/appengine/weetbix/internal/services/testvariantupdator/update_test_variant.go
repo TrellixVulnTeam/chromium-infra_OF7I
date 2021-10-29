@@ -7,6 +7,7 @@ package testvariantupdator
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"cloud.google.com/go/spanner"
@@ -70,7 +71,7 @@ func RegisterTaskClass() {
 // Schedule enqueues a task to update an AnalyzedTestVariant row.
 func Schedule(ctx context.Context, realm, testID, variantHash string, enqTime time.Time) {
 	tq.MustAddTask(ctx, &tq.Task{
-		Title: fmt.Sprintf("%s-%s-%s", realm, testID, variantHash),
+		Title: fmt.Sprintf("%s-%s-%s", realm, url.PathEscape(testID), variantHash),
 		Payload: &taskspb.UpdateTestVariant{
 			TestVariantKey: &taskspb.TestVariantKey{
 				Realm:       realm,
