@@ -172,7 +172,7 @@ func TestDeployExe(t *testing.T) {
 				cmd, err := bootstrapper.DeployExe(ctx, exe)
 
 				So(err, ShouldBeNil)
-				So(cmd, ShouldResemble, []string{filepath.Join(execRoot, "fake-package", "fake-exe"), "foo", "bar"})
+				So(cmd, ShouldResemble, []string{filepath.Join(execRoot, "fake-exe"), "foo", "bar"})
 			})
 
 		})

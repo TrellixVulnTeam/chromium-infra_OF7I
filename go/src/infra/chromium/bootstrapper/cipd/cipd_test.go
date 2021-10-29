@@ -158,7 +158,7 @@ func TestDownloadPackage(t *testing.T) {
 			packagePath, err := client.DownloadPackage(ctx, "fake-package", "fake-instance-id")
 
 			So(err, ShouldBeNil)
-			So(packagePath, ShouldEqual, filepath.Join(cipdRoot, "fake-package"))
+			So(packagePath, ShouldEqual, filepath.Join(cipdRoot))
 
 		})
 

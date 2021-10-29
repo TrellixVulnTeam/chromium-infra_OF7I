@@ -162,7 +162,7 @@ func TestPerformBootstrap(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(cmd, ShouldNotBeNil)
 			So(cmd.Args, ShouldResemble, []string{
-				filepath.Join(cipdRoot, "fake-package", "fake-exe"),
+				filepath.Join(cipdRoot, "fake-exe"),
 				"--output",
 				"fake-output-path",
 			})
