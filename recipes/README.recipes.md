@@ -26,7 +26,7 @@
   * [build_from_tarball](#recipes-build_from_tarball)
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
   * [build_wheels](#recipes-build_wheels)
-  * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) &mdash; This recipe verifies importing of chromium bootstrap protos.
+  * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) (Python3 ✅) &mdash; This recipe verifies importing of chromium bootstrap protos.
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover) (Python3 ✅)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll) (Python3 ✅)
@@ -1140,14 +1140,14 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipes/build_wheels.py#55)(api, platforms, dry_run, rebuild):**
 ### *recipes* / [chromium\_bootstrap/test](/recipes/recipes/chromium_bootstrap/test.py)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This recipe verifies importing of chromium bootstrap protos.
 
 The protos are exported via a symlink in
 //recipe/recipe_proto/infra/chromium.
 
-&mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#16)(api):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]

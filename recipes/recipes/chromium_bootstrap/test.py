@@ -7,6 +7,8 @@ The protos are exported via a symlink in
 //recipe/recipe_proto/infra/chromium.
 """
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 from PB.infra.chromium.chromium_bootstrap import (
     ChromiumBootstrapModuleProperties)
 
