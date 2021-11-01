@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -300,6 +301,54 @@ func TestVerifyPlanAcyclic(t *testing.T) {
 				}
 			} else if len(tt.errorActions) != 0 {
 				t.Errorf("got nil, want %q", tt.errorActions)
+			}
+		})
+	}
+}
+
+var createMissingActionsCases = []struct {
+	name      string
+	inPlan    *planpb.Plan
+	inActions []string
+	outPlan   *planpb.Plan
+}{
+	{
+		"init Actions and set action if missed in actions map",
+		&planpb.Plan{
+			Actions: nil,
+		},
+		[]string{"a"},
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"a": {},
+			},
+		},
+	},
+	{
+		"do not replace if action is present in the plan",
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"a": {Dependencies: []string{"F"}},
+			},
+		},
+		[]string{"a"},
+		&planpb.Plan{
+			Actions: map[string]*planpb.Action{
+				"a": {Dependencies: []string{"F"}},
+			},
+		},
+	},
+}
+
+func TestCreateMissingActions(t *testing.T) {
+	t.Parallel()
+	for _, tt := range createMissingActionsCases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			createMissingActions(tt.inPlan, tt.inActions)
+			if !reflect.DeepEqual(tt.inPlan, tt.outPlan) {
+				t.Errorf("case %q: did not updated in expecteds struct", tt.name)
 			}
 		})
 	}

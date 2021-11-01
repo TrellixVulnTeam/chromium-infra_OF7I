@@ -100,6 +100,9 @@ func verifyPlanAcyclic(plan *planpb.Plan) error {
 
 // createMissingActions creates missing actions to the plan.
 func createMissingActions(p *planpb.Plan, actions []string) {
+	if p.GetActions() == nil {
+		p.Actions = make(map[string]*planpb.Action)
+	}
 	for _, a := range actions {
 		if _, ok := p.GetActions()[a]; !ok {
 			p.GetActions()[a] = &planpb.Action{}
