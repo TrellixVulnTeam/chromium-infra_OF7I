@@ -922,18 +922,6 @@ class ProcessCodeCoverageData(BaseHandler):
                                         full_gs_metadata_dir, build.builder,
                                         build_id, mimic_builder_name)
 
-        all_referenced_json_gs_path = ('%s/all_referenced.json.gz' %
-                                       full_gs_metadata_dir)
-        if _IsFileAvailableInGs(all_referenced_json_gs_path):
-          data = _GetValidatedData(all_referenced_json_gs_path)
-          mimic_builder_name = mimic_builder_name + '_referenced'
-          self._ProcessFullRepositoryData(build.input.gitiles_commit, data,
-                                          full_gs_metadata_dir, build.builder,
-                                          build_id, mimic_builder_name)
-        else:
-          logging.warning('Referenced data not available for builder %s' %
-                          mimic_builder_name)
-
   def _IsGitilesCommitAvailable(self, gitiles_commit):
     """Returns True if gitiles_commit is available in the input property."""
     return (gitiles_commit.host and gitiles_commit.project and
@@ -1426,8 +1414,6 @@ class ServeCodeCoverageData(BaseHandler):
     builder = platform_info_map[platform]['builder']
     if test_suite_type == 'unit':
       builder += '_unit'
-    if reference_mode:
-      builder += '_referenced'
     warning = platform_info_map[platform].get('warning')
 
     if list_reports:
