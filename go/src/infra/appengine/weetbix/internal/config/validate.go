@@ -5,25 +5,54 @@
 package config
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 
 	protov1 "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	luciproto "go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/config/validation"
+
+	"infra/appengine/weetbix/pbutil"
 )
-
-// From https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/project/project_constants.py;l=13.
-var monorailProjectRE = regexp.MustCompile(`^[a-z0-9][-a-z0-9]{0,61}[a-z0-9]$`)
-
-// https://cloud.google.com/storage/docs/naming-buckets
-var bucketRE = regexp.MustCompile(`^[a-z0-9][a-z0-9\-_.]{1,220}[a-z0-9]$`)
 
 const maxHysteresisPercent = 1000
 
+var (
+	// https://cloud.google.com/storage/docs/naming-buckets
+	bucketRE = regexp.MustCompile(`^[a-z0-9][a-z0-9\-_.]{1,220}[a-z0-9]$`)
+
+	// From https://source.chromium.org/chromium/infra/infra/+/main:appengine/monorail/project/project_constants.py;l=13.
+	monorailProjectRE = regexp.MustCompile(`^[a-z0-9][-a-z0-9]{0,61}[a-z0-9]$`)
+
+	// https://source.chromium.org/chromium/infra/infra/+/main:luci/appengine/auth_service/proto/realms_config.proto;l=85;drc=04e290f764a293d642d287b0118e9880df4afb35
+	realmRE = regexp.MustCompile(`^[a-z0-9_\.\-/]{1,400}$`)
+
+	// Patterns for BigQuery table.
+	// https://cloud.google.com/resource-manager/docs/creating-managing-projects
+	cloudProjectRE = regexp.MustCompile(`^[a-z][a-z0-9\-]{4,28}[a-z0-9]$`)
+	// https://cloud.google.com/bigquery/docs/datasets#dataset-naming
+	datasetRE = regexp.MustCompile(`^[a-zA-Z0-9_]*$`)
+	// https://cloud.google.com/bigquery/docs/tables#table_naming
+	tableRE = regexp.MustCompile(`^[\p{L}\p{M}\p{N}\p{Pc}\p{Pd}\p{Zs}]*$`)
+)
+
+func validateStringConfig(ctx *validation.Context, name, cfg string, re *regexp.Regexp) {
+	ctx.Enter(name)
+	switch err := pbutil.ValidateWithRe(re, cfg); err {
+	case pbutil.Unspecified:
+		ctx.Errorf("empty %s is not allowed", name)
+	case pbutil.DoesNotMatch:
+		ctx.Errorf("invalid %s: %q", name, cfg)
+	}
+	ctx.Exit()
+}
+
 func validateConfig(ctx *validation.Context, cfg *Config) {
 	validateMonorailHostname(ctx, cfg.MonorailHostname)
-	validateChunkGCSBucket(ctx, cfg.ChunkGcsBucket)
+	validateStringConfig(ctx, "chunk_gcs_bucket", cfg.ChunkGcsBucket, bucketRE)
 }
 
 func validateMonorailHostname(ctx *validation.Context, hostname string) {
@@ -36,14 +65,76 @@ func validateMonorailHostname(ctx *validation.Context, hostname string) {
 	ctx.Exit()
 }
 
-func validateChunkGCSBucket(ctx *validation.Context, bucket string) {
-	ctx.Enter("chunk_gcs_bucket")
-	if bucket == "" {
-		ctx.Errorf("empty value is not allowed")
-	} else if !bucketRE.MatchString(bucket) {
-		ctx.Errorf("invalid bucket: %q", bucket)
+func validateDuration(ctx *validation.Context, name string, du *durationpb.Duration) {
+	ctx.Enter(name)
+	defer ctx.Exit()
+
+	switch {
+	case du == nil:
+		ctx.Errorf("empty %s is not allowed", name)
+	case du.CheckValid() != nil:
+		ctx.Errorf("%s is invalid", name)
+	case du.AsDuration() < 0:
+		ctx.Errorf("%s is less than 0", name)
 	}
-	ctx.Exit()
+}
+
+func validateUpdateTestVariantTask(ctx *validation.Context, utCfg *UpdateTestVariantTask) {
+	ctx.Enter("update_test_variant")
+	defer ctx.Exit()
+	if utCfg == nil {
+		return
+	}
+	validateDuration(ctx, "interval", utCfg.UpdateTestVariantTaskInterval)
+	validateDuration(ctx, "duration", utCfg.TestVariantStatusUpdateDuration)
+}
+
+func validateBigQueryTable(ctx *validation.Context, tCfg *BigQueryExport_BigQueryTable) {
+	ctx.Enter("table")
+	defer ctx.Exit()
+	if tCfg == nil {
+		ctx.Errorf("empty bigquery table is not allowed")
+	}
+	validateStringConfig(ctx, "cloud_project", tCfg.CloudProject, cloudProjectRE)
+	validateStringConfig(ctx, "dataset", tCfg.Dataset, datasetRE)
+	validateStringConfig(ctx, "table_name", tCfg.Table, tableRE)
+}
+
+func validateBigQueryExport(ctx *validation.Context, bqCfg *BigQueryExport) {
+	ctx.Enter("bigquery_export")
+	defer ctx.Exit()
+	if bqCfg == nil {
+		return
+	}
+	validateBigQueryTable(ctx, bqCfg.Table)
+	if bqCfg.GetPredicate() == nil {
+		return
+	}
+	if err := pbutil.ValidateAnalyzedTestVariantPredicate(bqCfg.Predicate); err != nil {
+		ctx.Errorf(fmt.Sprintf("%s", err))
+	}
+}
+
+func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *TestVariantAnalysisConfig) {
+	ctx.Enter("test_variant")
+	defer ctx.Exit()
+	if tvCfg == nil {
+		return
+	}
+	validateUpdateTestVariantTask(ctx, tvCfg.UpdateTestVariantTask)
+	for _, bqe := range tvCfg.BqExports {
+		validateBigQueryExport(ctx, bqe)
+	}
+}
+
+func validateRealmConfig(ctx *validation.Context, rCfg *Realm) {
+	ctx.Enter(fmt.Sprintf("realm %s", rCfg.Name))
+	defer ctx.Exit()
+	if rCfg == nil {
+		return
+	}
+	validateStringConfig(ctx, "realm_name", rCfg.Name, realmRE)
+	validateTestVariantAnalysisConfig(ctx, rCfg.TestVariantAnalysis)
 }
 
 // validateProjectConfigRaw deserializes the project-level config message
@@ -61,6 +152,9 @@ func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectC
 func ValidateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
 	validateMonorail(ctx, cfg.Monorail, cfg.BugFilingThreshold)
 	validateImpactThreshold(ctx, cfg.BugFilingThreshold, "bug_filing_threshold")
+	for _, rCfg := range cfg.Realms {
+		validateRealmConfig(ctx, rCfg)
+	}
 }
 
 func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingThres *ImpactThreshold) {
@@ -72,21 +166,11 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingTh
 		return
 	}
 
-	validateMonorailProject(ctx, cfg.Project)
+	validateStringConfig(ctx, "project", cfg.Project, monorailProjectRE)
 	validateDefaultFieldValues(ctx, cfg.DefaultFieldValues)
 	validateFieldID(ctx, cfg.PriorityFieldId, "priority_field_id")
 	validatePriorities(ctx, cfg.Priorities, bugFilingThres)
 	validatePriorityHysteresisPercent(ctx, cfg.PriorityHysteresisPercent)
-}
-
-func validateMonorailProject(ctx *validation.Context, project string) {
-	ctx.Enter("project")
-	if project == "" {
-		ctx.Errorf("empty value is not allowed")
-	} else if !monorailProjectRE.MatchString(project) {
-		ctx.Errorf("project is not a valid monorail project")
-	}
-	ctx.Exit()
 }
 
 func validateDefaultFieldValues(ctx *validation.Context, fvs []*MonorailFieldValue) {

@@ -1,0 +1,54 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+import "google/protobuf/duration.proto";
+import "infra/appengine/weetbix/proto/v1/predicate.proto";
+
+option go_package = "infra/appengine/weetbix/internal/config;config";
+
+// Configurations for BigQuery export.
+message BigQueryExport {
+  message BigQueryTable {
+    string cloud_project = 1;
+    string dataset = 2;
+    string table = 3;
+  }
+  // The BigQuery table the analyzed test variants should be exported to.
+  //
+  // Weetbix will use the project-scoped service account when exporting the
+  // data.
+  // The project-scoped service account MUST have permissions to create the
+  // table in the dataset and insert rows to the table, e.g. WRITER role.
+  BigQueryTable table = 1;
+
+  // Use predicate to query test variants that should be exported to
+  // BigQuery table.
+  weetbix.v1.AnalyzedTestVariantPredicate predicate = 2;
+}
+
+// Configurations for UpdateTestVariant task.
+message UpdateTestVariantTask {
+  // A task will run every interval to calculate the test variant's status.
+  google.protobuf.Duration update_test_variant_task_interval = 1;
+
+  // In each task, verdicts within the duration will be queried
+  // and used to calculate the test variant's status.
+  //
+  // For example, if the duration is 24 hours, Weetbix will use all the verdicts
+  // from the last 24 hours to calculate the variant's status.
+  google.protobuf.Duration test_variant_status_update_duration = 2;
+}
+
+message TestVariantAnalysisConfig {
+  // Configurations for UpdateTestVariant task.
+  UpdateTestVariantTask update_test_variant_task = 1;
+
+  // Configurations for BigQuery export.
+  repeated BigQueryExport bq_exports = 2;
+
+}

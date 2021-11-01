@@ -17,6 +17,9 @@ import (
 	"go.chromium.org/luci/server/caching"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+
+	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -49,6 +52,27 @@ func createProjectConfig() *ProjectConfig {
 		},
 		BugFilingThreshold: &ImpactThreshold{
 			UnexpectedFailures_1D: proto.Int64(1000),
+		},
+		Realms: []*Realm{
+			{
+				Name: "ci",
+				TestVariantAnalysis: &TestVariantAnalysisConfig{
+					UpdateTestVariantTask: &UpdateTestVariantTask{
+						UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
+						TestVariantStatusUpdateDuration: durationpb.New(6 * time.Hour),
+					},
+					BqExports: []*BigQueryExport{
+						{
+							Table: &BigQueryExport_BigQueryTable{
+								CloudProject: "test-hrd",
+								Dataset:      "chromium",
+								Table:        "flaky_test_variants",
+							},
+							Predicate: &pb.AnalyzedTestVariantPredicate{},
+						},
+					},
+				},
+			},
 		},
 	}
 }

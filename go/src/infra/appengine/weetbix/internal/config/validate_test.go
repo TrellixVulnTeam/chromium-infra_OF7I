@@ -8,10 +8,12 @@ import (
 	"context"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"go.chromium.org/luci/config/validation"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -69,12 +71,12 @@ func TestServiceConfigValidator(t *testing.T) {
 		Convey("must be specified", func() {
 			cfg := createConfig()
 			cfg.ChunkGcsBucket = ""
-			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+			So(validate(cfg), ShouldErrLike, "empty chunk_gcs_bucket is not allowed")
 		})
 		Convey("must be correctly formed", func() {
 			cfg := createConfig()
 			cfg.ChunkGcsBucket = "my bucket"
-			So(validate(cfg), ShouldErrLike, `invalid bucket: "my bucket"`)
+			So(validate(cfg), ShouldErrLike, `invalid chunk_gcs_bucket: "my bucket"`)
 		})
 	})
 }
@@ -112,13 +114,13 @@ func TestProjectConfigValidator(t *testing.T) {
 
 		Convey("project must be specified", func() {
 			cfg.Monorail.Project = ""
-			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
+			So(validate(cfg), ShouldErrLike, "empty project is not allowed")
 		})
 
 		Convey("illegal monorail project", func() {
 			// Project does not satisfy regex.
 			cfg.Monorail.Project = "-my-project"
-			So(validate(cfg), ShouldErrLike, "project is not a valid monorail project")
+			So(validate(cfg), ShouldErrLike, `invalid project: "-my-project"`)
 		})
 
 		Convey("negative priority field ID", func() {
@@ -218,6 +220,108 @@ func TestProjectConfigValidator(t *testing.T) {
 		Convey("unexpected failures 7d is negative", func() {
 			threshold.UnexpectedFailures_7D = proto.Int64(-1)
 			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		})
+	})
+
+	Convey("realm config", t, func() {
+		cfg := createProjectConfig()
+		So(len(cfg.Realms), ShouldEqual, 1)
+		realm := cfg.Realms[0]
+
+		Convey("realm name", func() {
+			Convey("must be specified", func() {
+				realm.Name = ""
+				So(validate(cfg), ShouldErrLike, "empty realm_name is not allowed")
+			})
+			Convey("invalid", func() {
+				realm.Name = "chromium:ci"
+				So(validate(cfg), ShouldErrLike, `invalid realm_name: "chromium:ci"`)
+			})
+			Convey("valid", func() {
+				realm.Name = "ci"
+				So(validate(cfg), ShouldBeNil)
+			})
+		})
+
+		Convey("TestVariantAnalysisConfig", func() {
+			tvCfg := realm.TestVariantAnalysis
+			So(tvCfg, ShouldNotBeNil)
+			utCfg := tvCfg.UpdateTestVariantTask
+			So(utCfg, ShouldNotBeNil)
+			Convey("UpdateTestVariantTask", func() {
+				Convey("interval", func() {
+					Convey("empty not allowed", func() {
+						utCfg.UpdateTestVariantTaskInterval = nil
+						So(validate(cfg), ShouldErrLike, `empty interval is not allowed`)
+					})
+					Convey("must be greater than 0", func() {
+						utCfg.UpdateTestVariantTaskInterval = durationpb.New(-time.Hour)
+						So(validate(cfg), ShouldErrLike, `interval is less than 0`)
+					})
+				})
+
+				Convey("duration", func() {
+					Convey("empty not allowed", func() {
+						utCfg.TestVariantStatusUpdateDuration = nil
+						So(validate(cfg), ShouldErrLike, `empty duration is not allowed`)
+					})
+					Convey("must be greater than 0", func() {
+						utCfg.TestVariantStatusUpdateDuration = durationpb.New(-time.Hour)
+						So(validate(cfg), ShouldErrLike, `duration is less than 0`)
+					})
+				})
+			})
+
+			bqExports := tvCfg.BqExports
+			So(len(bqExports), ShouldEqual, 1)
+			bqe := bqExports[0]
+			So(bqe, ShouldNotBeNil)
+			Convey("BqExport", func() {
+				table := bqe.Table
+				So(table, ShouldNotBeNil)
+				Convey("BigQueryTable", func() {
+					Convey("cloud project", func() {
+						Convey("should npt be empty", func() {
+							table.CloudProject = ""
+							So(validate(cfg), ShouldErrLike, "empty cloud_project is not allowed")
+						})
+						Convey("not end with hyphen", func() {
+							table.CloudProject = "project-"
+							So(validate(cfg), ShouldErrLike, `invalid cloud_project: "project-"`)
+						})
+						Convey("not too short", func() {
+							table.CloudProject = "p"
+							So(validate(cfg), ShouldErrLike, `invalid cloud_project: "p"`)
+						})
+						Convey("must start with letter", func() {
+							table.CloudProject = "0project"
+							So(validate(cfg), ShouldErrLike, `invalid cloud_project: "0project"`)
+						})
+					})
+
+					Convey("dataset", func() {
+						Convey("should npt be empty", func() {
+							table.Dataset = ""
+							So(validate(cfg), ShouldErrLike, "empty dataset is not allowed")
+						})
+						Convey("should be valid", func() {
+							table.Dataset = "data-set"
+							So(validate(cfg), ShouldErrLike, `invalid dataset: "data-set"`)
+						})
+					})
+
+					Convey("table", func() {
+						Convey("should npt be empty", func() {
+							table.Table = ""
+							So(validate(cfg), ShouldErrLike, "empty table_name is not allowed")
+						})
+						Convey("should be valid", func() {
+							table.Table = "table/name"
+							So(validate(cfg), ShouldErrLike, `invalid table_name: "table/name"`)
+						})
+					})
+				})
+			})
 		})
 	})
 }

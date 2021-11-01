@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package weetbix.v1;
 
+import "infra/appengine/weetbix/internal/config/test_variant_analysis_config.proto";
+
 option go_package = "infra/appengine/weetbix/internal/config;config";
 
 // ProjectConfig is the project-specific configuration data for Weetbix.
@@ -16,6 +18,9 @@ message ProjectConfig {
   // The threshold at which to file bugs. If a cluster's impact exceeds
   // the given threshold, a bug will be filed for it.
   ImpactThreshold bug_filing_threshold = 2;
+
+  // Per realm configurations.
+  repeated Realm realms = 3;
 }
 
 // MonorailProject describes the configuration to use when filing bugs
@@ -113,4 +118,17 @@ message ImpactThreshold {
 
   // The minimum number of unexpected failures that should occur in 7 days.
   optional int64 unexpected_failures_7d = 3;
+}
+
+// Configurations per realm.
+message Realm {
+  // Name of the realm.
+  //
+  // Must match `^[a-z0-9_\.\-/]{1,400}$`.
+  // Must not contain the project part. I.e. for "chromium:ci" realm the value
+  // here must be "ci".
+  string name = 1;
+
+  // Test variant analysis configurations for the realm.
+  TestVariantAnalysisConfig test_variant_analysis = 2;
 }

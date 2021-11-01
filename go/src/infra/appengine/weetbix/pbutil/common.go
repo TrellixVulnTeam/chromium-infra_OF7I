@@ -18,8 +18,11 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
+const maxStringPairKeyLength = 64
+const maxStringPairValueLength = 256
 const stringPairKeyPattern = `[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)*`
 
+var stringPairKeyRe = regexp.MustCompile(fmt.Sprintf(`^%s$`, stringPairKeyPattern))
 var stringPairRe = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", stringPairKeyPattern))
 
 // MustTimestampProto converts a time.Time to a *timestamppb.Timestamp and panics
