@@ -196,17 +196,15 @@ func TestRunDUTPlan(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "failed")
 		})
 		Convey("fail when bad action in the plan", func() {
-			config.Plans = map[string]*planpb.Plan{
-				PlanCrOSRepair: {
-					CriticalActions: []string{"sample_fail"},
-					Actions: map[string]*planpb.Action{
-						"sample_fail": {
-							ExecName: "sample_fail",
-						},
+			plan := &planpb.Plan{
+				CriticalActions: []string{"sample_fail"},
+				Actions: map[string]*planpb.Action{
+					"sample_fail": {
+						ExecName: "sample_fail",
 					},
 				},
 			}
-			err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs)
+			err := runDUTPlanPerResource(ctx, "test_dut", PlanCrOSRepair, plan, execArgs)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			}
@@ -229,19 +227,15 @@ func TestRunDUTPlan(t *testing.T) {
 			DUT: dut,
 		}
 		Convey("Run good plan", func() {
-			config := &planpb.Configuration{
-				Plans: map[string]*planpb.Plan{
-					PlanCrOSRepair: {
-						CriticalActions: []string{"sample_pass"},
-						Actions: map[string]*planpb.Action{
-							"sample_pass": {
-								ExecName: "sample_pass",
-							},
-						},
+			plan := &planpb.Plan{
+				CriticalActions: []string{"sample_pass"},
+				Actions: map[string]*planpb.Action{
+					"sample_pass": {
+						ExecName: "sample_pass",
 					},
 				},
 			}
-			if err := runDUTPlan(ctx, PlanCrOSRepair, dut, config, execArgs); err != nil {
+			if err := runDUTPlanPerResource(ctx, "DUT3", PlanCrOSRepair, plan, execArgs); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
 			}
 		})

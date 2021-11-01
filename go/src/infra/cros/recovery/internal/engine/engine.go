@@ -41,7 +41,7 @@ func Run(ctx context.Context, planName string, plan *planpb.Plan, args *execs.Ru
 	}
 	r.initCache()
 	defer r.close()
-	log.Debug(ctx, "Received plan %s\n%s", r.planName, r.describe())
+	log.Debug(ctx, "Received plan %s for %s \n%s", r.planName, r.args.ResourceName, r.describe())
 	return r.runPlan(ctx)
 }
 
@@ -55,17 +55,17 @@ func (r *recoveryEngine) close() {
 
 // runPlan executes recovery plan with critical-actions.
 func (r *recoveryEngine) runPlan(ctx context.Context) error {
-	log.Info(ctx, "Plan %q: started", r.planName)
+	log.Info(ctx, "Plan %q for %s: started", r.planName, r.args.ResourceName)
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
-				log.Info(ctx, "Plan %q: received request to start over.", r.planName)
+				log.Info(ctx, "Plan %q for %s: received request to start over.", r.planName, r.args.ResourceName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
 				continue
 			}
 			if r.plan.GetAllowFail() {
-				log.Info(ctx, "Plan %q: failed with error: %s.", r.planName, err)
-				log.Info(ctx, "Plan %q: is allowed to fail, continue.", r.planName)
+				log.Info(ctx, "Plan %q for %s: failed with error: %s.", r.planName, r.args.ResourceName, err)
+				log.Info(ctx, "Plan %q for %s: is allowed to fail, continue.", r.planName, r.args.ResourceName)
 				return nil
 			}
 			return errors.Annotate(err, "run plan %q", r.planName).Err()

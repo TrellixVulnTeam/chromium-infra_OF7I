@@ -54,9 +54,6 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
-	// Keep track of failure to run resources.
-	var errs []error
-	lastResourceIndex := len(resources) - 1
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
@@ -81,12 +78,15 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 			}
 		})()
 	}
+	// Keep track of failure to run resources.
+	// If one resource fail we still will try to run another one.
+	var errs []error
 	for ir, resource := range resources {
-		if err := runResource(ctx, resource, config, args, errs); err != nil {
-			return errors.Annotate(err, "run recovery %q", resource).Err()
-		}
-		if ir != lastResourceIndex {
+		if ir != 0 {
 			log.Debug(ctx, "Continue to the next resource.")
+		}
+		if err := runResource(ctx, resource, config, args); err != nil {
+			errs = append(errs, errors.Annotate(err, "run recovery %q", resource).Err())
 		}
 	}
 	if len(errs) > 0 {
@@ -96,7 +96,7 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 }
 
 // runResource run single resource.
-func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs, resourceErrs []error) (err error) {
+func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs) (err error) {
 	log.Info(ctx, "Resource %q: started", resource)
 	if args.ShowSteps {
 		var step *build.Step
@@ -108,7 +108,7 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
 	if err := runDUTPlans(ctx, dut, config, args); err != nil {
-		resourceErrs = append(resourceErrs, err)
+		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
 	if err := updateInventory(ctx, dut, args); err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
@@ -216,7 +216,7 @@ func logDUTInfo(ctx context.Context, resource string, dut *tlw.Dut, msg string) 
 }
 
 // runDUTPlans executes single DUT against task's plans.
-func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration, args *RunArgs) (err error) {
+func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration, args *RunArgs) error {
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
 		defer args.Logger.DedentLogging()
@@ -237,50 +237,47 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Logger:         args.Logger,
 		ShowSteps:      args.ShowSteps,
 	}
-	var errs []error
 	// TODO(otabek@): Add closing plan logic.
 	for _, planName := range planNames {
-		if err := runDUTPlan(ctx, planName, dut, config, execArgs); err != nil {
-			log.Debug(ctx, "Run DUT %q plans: finished with error: %s.", dut.Name, err)
-			errs = append(errs, err)
+		log.Info(ctx, "Run plan %q: starting...", planName)
+		resources := collectResourcesForPlan(planName, execArgs.DUT)
+		if len(resources) == 0 {
+			log.Info(ctx, "Run plan %q: no resources found.", planName)
+			continue
+		}
+		plan := config.GetPlans()[planName]
+		for _, resource := range resources {
+			if err := runDUTPlanPerResource(ctx, resource, planName, plan, execArgs); err != nil {
+				log.Info(ctx, "Run %q plan for %s: finished with error: %s.", planName, resource, err)
+				if plan.GetAllowFail() {
+					log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
+				} else {
+					return errors.Annotate(err, "run plan %q", planName).Err()
+				}
+			}
 		}
 	}
-	if len(errs) == 0 {
-		log.Info(ctx, "Run DUT %q plans: finished successfully.", dut.Name)
-		return nil
-	}
-	return errors.Annotate(errors.MultiError(errs), "run plans").Err()
+	log.Info(ctx, "Run DUT %q plans: finished successfully.", dut.Name)
+	return nil
 }
 
-// runDUTPlan runs simple plan against the DUT.
-func runDUTPlan(ctx context.Context, planName string, dut *tlw.Dut, config *planpb.Configuration, execArgs *execs.RunArgs) (err error) {
+// runDUTPlanPerResource runs a plan against the single resource of the DUT.
+func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) (err error) {
+	log.Info(ctx, "Run plan %q for %q: started", planName, resource)
 	if execArgs.ShowSteps {
 		var step *build.Step
-		step, ctx = build.StartStep(ctx, fmt.Sprintf("Run plan %q", planName))
+		step, ctx = build.StartStep(ctx, fmt.Sprintf("Run plan %q for %q", planName, resource))
 		defer func() { step.End(err) }()
 	}
 	if execArgs.Logger != nil {
 		execArgs.Logger.IndentLogging()
 		defer execArgs.Logger.DedentLogging()
 	}
-	resources := collectResourcesForPlan(planName, dut)
-	if len(resources) == 0 {
-		log.Info(ctx, "Run plan %q: no resources found.", planName)
+	execArgs.ResourceName = resource
+	if err = engine.Run(ctx, planName, plan, execArgs); err != nil {
+		return errors.Annotate(err, "run plan %q for %q", planName, execArgs.ResourceName).Err()
 	}
-	plan := config.GetPlans()[planName]
-	for _, resource := range resources {
-		execArgs.ResourceName = resource
-		log.Info(ctx, "Run plan %q for %q: started", planName, resource)
-		err = engine.Run(ctx, planName, plan, execArgs)
-		if err != nil {
-			log.Error(ctx, "Run plan %q for %q: fail. Error: %s", planName, resource, err)
-			if plan.GetAllowFail() {
-				log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
-			} else {
-				return errors.Annotate(err, "run plan %q for %q", planName, resource).Err()
-			}
-		}
-	}
+	log.Info(ctx, "Run plan %q for %s: finished successfully.", planName, execArgs.ResourceName)
 	return nil
 }
 
