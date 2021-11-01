@@ -43,7 +43,7 @@ USING
       AND b.builder.project = 'chromium'
       AND b.builder.builder = cq.builder
     ),
-    tests AS (
+    test_tasks AS (
     SELECT
       b.id,
       ANY_VALUE(b.date) date,
@@ -64,7 +64,7 @@ USING
       AND t.request.parent_task_id = b.task_id
     GROUP BY id, test_name
     ),
-    tests_grouped AS (
+    test_metrics AS (
     SELECT
       t.date,
       t.builder,
@@ -75,16 +75,28 @@ USING
       APPROX_QUANTILES(t.max_shard_runtime, 100) max_shard_runtime,
       count(id) num_runs,
       countif(t.max_shard_runtime > slow_p50_cutoff) num_slow_runs,
-    FROM tests t
+    FROM test_tasks t
     WHERE t.test_name is not null
     GROUP BY t.date, t.builder, t.test_name
+    HAVING num_runs > 10
     ),
-    slow_tests AS (
+    slow_test_metrics AS (
     SELECT *
-    FROM tests_grouped
+    FROM test_metrics
     WHERE (max_shard_runtime[OFFSET(50)] > slow_p50_cutoff or max_shard_runtime[OFFSET(90)] > slow_p90_cutoff)
-      AND num_runs > 10
     )
+  SELECT
+    date,
+    'Count Tests' AS metric,
+    builder,
+    MAX(max_builder_start_time) AS max_builder_start_time,
+    ARRAY_AGG(
+      STRUCT(test_name AS label, CAST(num_runs AS NUMERIC) AS value)
+      ORDER BY test_name
+    ) AS value_agg,
+  FROM test_metrics
+  GROUP BY date, builder
+  UNION ALL
   SELECT
     date,
     'P50 Slow Tests' AS metric,
@@ -94,7 +106,7 @@ USING
       STRUCT(test_name AS label, CAST(max_shard_runtime[OFFSET(50)] AS NUMERIC) AS value)
       ORDER BY test_name
     ) AS value_agg,
-  FROM slow_tests
+  FROM slow_test_metrics
   GROUP BY date, builder
   UNION ALL
   SELECT
@@ -106,21 +118,9 @@ USING
       STRUCT(test_name AS label, CAST(max_shard_runtime[OFFSET(90)] AS NUMERIC) AS value)
       ORDER BY test_name
     ) AS value_agg,
-  FROM slow_tests
+  FROM slow_test_metrics
   GROUP BY date, builder
-  UNION ALL
-  SELECT
-    date,
-    'Count Slow Tests' AS metric,
-    builder,
-    MAX(max_builder_start_time) AS max_builder_start_time,
-    ARRAY_AGG(
-      STRUCT(test_name AS label, CAST(num_slow_runs AS NUMERIC) AS value)
-      ORDER BY test_name
-    ) AS value_agg,
-  FROM slow_tests
-  GROUP BY date, builder
-   ) S
+  ) S
 ON
   T.date = S.date AND T.metric = S.metric AND T.builder = S.builder
   WHEN MATCHED AND T.checkpoint != string(S.max_builder_start_time, "UTC") THEN
