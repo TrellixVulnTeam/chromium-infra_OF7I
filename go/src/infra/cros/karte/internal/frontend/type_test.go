@@ -64,7 +64,7 @@ func TestConvertActionEntityToAction(t *testing.T) {
 			},
 		},
 		{
-			name: "erorr reason",
+			name: "error reason",
 			in: &ActionEntity{
 				FailReason: "aaaa",
 			},

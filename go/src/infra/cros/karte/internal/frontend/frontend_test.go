@@ -27,11 +27,13 @@ func TestCreateAction(t *testing.T) {
 	k := NewKarteFrontend()
 	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
 		Action: &kartepb.Action{
+			Name: "",
 			Kind: "ssh-attempt",
 		},
 	})
 	expected := &kartepb.Action{
-		Name: "",
+		// The name is randomly generated. We expect to see the name that we actually saw.
+		Name: resp.GetName(),
 		Kind: "ssh-attempt",
 	}
 	if err != nil {
@@ -58,6 +60,26 @@ func TestCreateAction(t *testing.T) {
 	case 1:
 	default:
 		t.Errorf("datastore should not have more than 1 item")
+	}
+}
+
+// TestRejectActionWithUserDefinedName tests that an action with a user-defined name is rejected.
+func TestRejectActionWithUserDefinedName(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	k := NewKarteFrontend()
+	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
+		Action: &kartepb.Action{
+			Name: "aaaaa",
+			Kind: "ssh-attempt",
+		},
+	})
+	if resp != nil {
+		t.Errorf("unexpected response: %s", resp.String())
+	}
+	if err == nil {
+		t.Errorf("expected response to be rejected")
 	}
 }
 
