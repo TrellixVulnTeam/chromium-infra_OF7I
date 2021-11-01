@@ -41,7 +41,9 @@ func getApplication() *cli.Application {
 			subcmds.AddCmd,
 			subcmds.DeleteCmd,
 			subcmds.GetCmd,
-			subcmds.UpdateCmd,
+			// TODO(gregorynisbet): Satlab update DUT is currently disabled. Please uncomment this line
+			//                      once updating DUTs is supported on satlab.
+			// subcmds.UpdateCmd,
 		},
 	}
 }
