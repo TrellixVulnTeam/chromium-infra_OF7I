@@ -87,6 +87,7 @@ def RunSteps(api, inputs):
 
   api.windows_scripts_executor.download_wib_artifacts(config)
   api.windows_scripts_executor.execute_wib_config(config)
+  api.windows_scripts_executor.upload_wib_artifacts()
 
 
 def GenTests(api):

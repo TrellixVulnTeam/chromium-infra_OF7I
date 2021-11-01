@@ -17,6 +17,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
+    'recipe_engine/path'
 ]
 
 PROPERTIES = wib.Image
@@ -28,6 +29,8 @@ def RunSteps(api, image):
   api.windows_scripts_executor.save_config_to_disk(image)
   api.windows_scripts_executor.download_wib_artifacts(image)
   api.windows_scripts_executor.execute_wib_config(image)
+  api.path.mock_add_paths('[CACHE]\\WinPEImage\\media\\sources\\boot.wim')
+  api.windows_scripts_executor.upload_wib_artifacts()
 
 
 def GenTests(api):
@@ -78,12 +81,11 @@ def GenTests(api):
   DEINIT_WIM_ADD_CFG_TO_ROOT_PASS = api.step_data(
       'execute config win10_2013_x64.offline winpe customization ' +
       'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
-      'Add cfg [CLEANUP]\\configs\\win10_2013_x64.cfg',
-      stdout=api.json.output({
-          'results': {
-              'Success': True
-          },
-      }))
+      'Add cfg [CLEANUP]\\configs\\' +
+      '47b1439eac8e449985c991d6dade5fb2e0ee63f83c40dc2c301cf7dc7e240848.cfg',
+      stdout=api.json.output({'results': {
+          'Success': True,
+      }}))
 
   PIN_FILE_STARTNET_PASS = api.step_data(
       'Pin git artifacts to refs.gitiles log: ' +
