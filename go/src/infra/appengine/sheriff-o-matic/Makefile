@@ -39,12 +39,6 @@ getversion_staging:
 	$(eval VERS := $(shell $(GAE_PY) version -p ./frontend -A sheriff-o-matic-staging | cut -c 1-35))
 	echo version is $(VERS)
 
-deploy_prod: build getversion_prod
-	cp cron_prod.yaml cron.yaml
-	gcloud app deploy --no-promote --no-stop-previous-version frontend/app.yaml backend/app.yaml dispatch.yaml cron.yaml frontend/queue.yaml --project sheriff-o-matic --version $(VERS)
-	cp cron_default.yaml cron.yaml
-	rm frontend/elements/som-app/som-app.vulcanized.html
-
 bqtools:
 	go install go.chromium.org/luci/tools/cmd/bqschemaupdater
 
@@ -56,11 +50,11 @@ update_bq_prod: bqtools
 	bqschemaupdater -proto-dir ./som/model/gen -table sheriff-o-matic.events.alerts -message gen.SOMAlertsEvent
 	bqschemaupdater -proto-dir ./som/model/gen -table sheriff-o-matic.events.annotations -message gen.SOMAnnotationEvent
 
-deploy_staging: build getversion_staging
-	cp cron_staging.yaml cron.yaml
-	gcloud app deploy --no-promote --no-stop-previous-version frontend/app.yaml backend/app.yaml dispatch.yaml cron.yaml frontend/queue.yaml --project sheriff-o-matic-staging --version $(VERS)
-	cp cron_default.yaml cron.yaml
-	rm frontend/elements/som-app/som-app.vulcanized.html
+deploy_staging: build
+	$(GAE_PY) upload -A sheriff-o-matic-staging --app-dir . default analyzer
+
+deploy_prod: build
+	$(GAE_PY) upload -A sheriff-o-matic --app-dir . default analyzer
 
 devserver:
 	$(DEVSERVER_PY) frontend/app.yaml backend/app.yaml
@@ -69,6 +63,11 @@ devserver:
 # accessible by hostname:port, rather than just localhost:port.
 devserver_remote:
 	$(DEVSERVER_PY) --host $$HOSTNAME frontend/app.yaml backend/app.yaml
+
+deploy_cron_staging:
+	cp cron_staging.yaml cron.yaml
+	gcloud app deploy --no-promote --no-stop-previous-version cron.yaml --project sheriff-o-matic-staging
+	cp cron_default.yaml cron.yaml
 
 deploy_cron_prod:
 	cp cron_prod.yaml cron.yaml
