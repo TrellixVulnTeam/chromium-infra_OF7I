@@ -63,7 +63,9 @@ def _CreateSampleManifest():
   ]
 
 
-def _CreateSamplePostsubmitReport(manifest=None, builder='linux-code-coverage'):
+def _CreateSamplePostsubmitReport(manifest=None,
+                                  builder='linux-code-coverage',
+                                  modifier_id=0):
   """Returns a sample PostsubmitReport for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -80,10 +82,12 @@ def _CreateSamplePostsubmitReport(manifest=None, builder='linux-code-coverage'):
       manifest=manifest,
       summary_metrics=_CreateSampleCoverageSummaryMetric(),
       build_id=123456789,
+      modifier_id=modifier_id,
       visible=True)
 
 
-def _CreateSampleDirectoryCoverageData(builder='linux-code-coverage'):
+def _CreateSampleDirectoryCoverageData(builder='linux-code-coverage',
+                                       modifier_id=0):
   """Returns a sample directory SummaryCoverageData for testing purpose.
 
   Note: only use this method if the exact values don't matter.
@@ -97,6 +101,7 @@ def _CreateSampleDirectoryCoverageData(builder='linux-code-coverage'):
       path='//dir/',
       bucket='coverage',
       builder=builder,
+      modifier_id=modifier_id,
       data={
           'dirs': [],
           'path':
@@ -702,6 +707,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/api/coverage-data', code_coverage.ServeCodeCoverageData),
       ('.*/coverage', code_coverage.ServeCodeCoverageData),
+      ('.*/coverage/referenced', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/component', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/dir', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/file', code_coverage.ServeCodeCoverageData),
@@ -1184,6 +1190,29 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
+  def testServeFullRepoDirectoryView_WithModifier(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    revision = 'aaaaa'
+    path = '//dir/'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report.put()
+
+    dir_coverage_data = _CreateSampleDirectoryCoverageData(modifier_id=123)
+    dir_coverage_data.put()
+
+    request_url = (
+        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '&path=%s&platform=%s&modifier_id=%d') % (host, project, ref, revision,
+                                                  path, platform, 123)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
   def testServeFullRepoComponentView(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
 
@@ -1269,7 +1298,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     path = '//dir/test.cc'
     platform = 'linux'
 
-    report = _CreateSamplePostsubmitReport()
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
     report.put()
 
     file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)
@@ -1283,6 +1312,15 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     mock_get_file_from_gs.assert_called_with(
         '/source-files-for-coverage/chromium.googlesource.com/chromium/'
         'src.git/dir/test.cc/bbbbb')
+
+  def testServeFullRepoReferencedReport_RedirectsWithModifier(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+    CoverageReportModifier(reference_commit='past_commit', id=123).put()
+    request_url = '/p/chromium/coverage/referenced'
+    response = self.test_app.get(request_url)
+    self.assertEqual(302, response.status_int)
+    self.assertIn('/p/chromium/coverage?modifier_id=123',
+                  response.headers.get('Location', ''))
 
   @mock.patch.object(code_coverage, '_GetFileContentFromGs')
   def testServeFullRepoFileViewWithNonAsciiChars(self, mock_get_file_from_gs):

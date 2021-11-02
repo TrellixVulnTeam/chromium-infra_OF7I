@@ -73,8 +73,8 @@ def GetMetricsBasedOnCoverageTool(coverage_tool):  # pragma: no cover
 
   Returns:
     A list of dict of following format:
-    {'name': clang, 'detail': blala}, where the name is the name of the metric
-    and detail is an explanation of what the metric stands for.
+    {'name': 'line', 'detail': 'blala'}, where the name is the name of the
+    metric and detail is an explanation of what the metric stands for.
   """
   metrics = []
   if coverage_tool == 'clang':

@@ -515,6 +515,24 @@ def _IsReportSuspicious(report):
   return False
 
 
+def _GetActiveReferenceCommit(server_host, project):
+  """Returns commit against which coverage is to be generated.
+
+  Returns id of the CoverageReportModifier corresponding to the active
+  reference commit.
+  """
+  query = CoverageReportModifier.query(
+      CoverageReportModifier.server_host == server_host,
+      CoverageReportModifier.project == project,
+      CoverageReportModifier.is_active == True)
+  modifier_ids = []
+  for x in query.fetch():
+    if x.reference_commit:
+      modifier_ids.append(x.key.id())
+  assert len(modifier_ids) <= 1, "More than one reference commit found"
+  return modifier_ids[0] if modifier_ids else None
+
+
 class FetchSourceFile(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
@@ -1289,7 +1307,7 @@ class ServeCodeCoverageData(BaseHandler):
 
   def _ServeProjectViewCoverageData(self, luci_project, host, project, ref,
                                     revision, platform, bucket, builder,
-                                    test_suite_type):
+                                    test_suite_type, modifier_id):
     """Serves coverage data for the project view."""
     cursor = self.request.get('cursor', None)
     page_size = int(self.request.get('page_size', 100))
@@ -1319,6 +1337,12 @@ class ServeCodeCoverageData(BaseHandler):
     current_user = users.get_current_user()
     show_invisible_report = (
         current_user.email().endswith('@google.com') if current_user else False)
+    metrics = code_coverage_util.GetMetricsBasedOnCoverageTool(
+        _GetPostsubmitPlatformInfoMap(luci_project)[platform]['coverage_tool'])
+    if modifier_id != 0:
+      # Only line coverage metric is supported for cases other than
+      # default post submit report
+      metrics = [x for x in metrics if x['name'] == 'line']
     return {
         'data': {
             'luci_project':
@@ -1335,15 +1359,15 @@ class ServeCodeCoverageData(BaseHandler):
                 _GetPostsubmitPlatformInfoMap(luci_project)[platform]
                 ['ui_name'],
             'metrics':
-                code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _GetPostsubmitPlatformInfoMap(luci_project)[platform]
-                    ['coverage_tool']),
+                metrics,
             'data':
                 data,
             'data_type':
                 'project',
             'test_suite_type':
                 test_suite_type,
+            'modifier_id':
+                modifier_id,
             'platform_select':
                 _MakePlatformSelect(luci_project, host, project, ref, revision,
                                     None, platform),
@@ -1380,14 +1404,30 @@ class ServeCodeCoverageData(BaseHandler):
 
     host = self.request.get('host', default_config['host'])
     project = self.request.get('project', default_config['project'])
+
+    # If the request is for referenced coverage, find the corresponding
+    # CoverageReportModifier and redirect with modifier_id in params
+    if self.request.path.endswith('/referenced'):
+      modifier_id = _GetActiveReferenceCommit(host, project)
+      if not modifier_id:
+        return BaseHandler.CreateError(
+            'No reference commit found for host %s and project %s' % host,
+            project)
+      path = self.request.path[:-len('/referenced')]
+      query_string = self.request.query_string
+      if query_string:
+        query_string = '%s&modifier_id=%d' % (query_string, modifier_id)
+      else:
+        query_string = 'modifier_id=%d' % (modifier_id)
+      new_url = 'https://%s%s?%s' % (self.request.host, path, query_string)
+      return self.CreateRedirect(new_url)
+
     ref = self.request.get('ref', default_config['ref'])
     revision = self.request.get('revision')
     platform = self.request.get('platform', default_config['platform'])
     list_reports = self.request.get('list_reports', 'False').lower() == 'true'
     path = self.request.get('path')
     test_suite_type = self.request.get('test_suite_type', 'any')
-    reference_mode = self.request.get('reference_mode',
-                                      'False').lower() == 'true'
     modifier_id = int(self.request.get('modifier_id', '0'))
 
     logging.info('host=%s', host)
@@ -1397,7 +1437,6 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('path=%s', path)
     logging.info('platform=%s', platform)
     logging.info('test_suite_type=%s' % test_suite_type)
-    logging.info('reference_mode=%s' % str(reference_mode))
     logging.info('modifier_id=%d' % modifier_id)
 
     configs = _GetAllowedGitilesConfigs()
@@ -1419,7 +1458,8 @@ class ServeCodeCoverageData(BaseHandler):
     if list_reports:
       return self._ServeProjectViewCoverageData(luci_project, host, project,
                                                 ref, revision, platform, bucket,
-                                                builder, test_suite_type)
+                                                builder, test_suite_type,
+                                                modifier_id)
 
     # Get latest report if revision not specified
     if not revision:
@@ -1428,7 +1468,7 @@ class ServeCodeCoverageData(BaseHandler):
           PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
           PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
-          PostsubmitReport.modifier_id == 0).order(
+          PostsubmitReport.modifier_id == modifier_id).order(
               -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]
@@ -1441,7 +1481,8 @@ class ServeCodeCoverageData(BaseHandler):
           ref=ref,
           revision=revision,
           bucket=bucket,
-          builder=builder)
+          builder=builder,
+          modifier_id=modifier_id)
       if not report:
         return BaseHandler.CreateError('Report record not found', 404)
 
@@ -1492,7 +1533,8 @@ class ServeCodeCoverageData(BaseHandler):
           data_type=data_type,
           path=path,
           bucket=bucket,
-          builder=builder)
+          builder=builder,
+          modifier_id=modifier_id)
       if not entity:
         warning = (
             'Path "%s" does not exist in this report, defaulting to root' %
@@ -1507,7 +1549,8 @@ class ServeCodeCoverageData(BaseHandler):
             data_type=data_type,
             path=path,
             bucket=bucket,
-            builder=builder)
+            builder=builder,
+            modifier_id=modifier_id)
 
     def _GetLineToData(report, path, metadata):
       """Returns coverage data per line in a file.
@@ -1581,6 +1624,13 @@ class ServeCodeCoverageData(BaseHandler):
     # Compute the mapping of the name->path mappings in order.
     path_parts = _GetNameToPathSeparator(path, data_type)
     path_root, _ = _GetPathRootAndSeparatorFromDataType(data_type)
+    metrics = code_coverage_util.GetMetricsBasedOnCoverageTool(
+        coverage_tool=_GetPostsubmitPlatformInfoMap(luci_project)[platform]
+        ['coverage_tool'])
+    if modifier_id != 0:
+      # Only line coverage metric is supported for cases other than
+      # default post submit report
+      metrics = [x for x in metrics if x['name'] == 'line']
     return {
         'data': {
             'luci_project':
@@ -1601,17 +1651,15 @@ class ServeCodeCoverageData(BaseHandler):
             'path_root':
                 path_root,
             'metrics':
-                code_coverage_util.GetMetricsBasedOnCoverageTool(
-                    _GetPostsubmitPlatformInfoMap(luci_project)[platform]
-                    ['coverage_tool']),
+                metrics,
             'data':
                 data,
             'data_type':
                 data_type,
             'test_suite_type':
                 test_suite_type,
-            'reference_mode':
-                reference_mode,
+            'modifier_id':
+                modifier_id,
             'path_parts':
                 path_parts,
             'platform_select':
@@ -1740,29 +1788,13 @@ class CreateReferencedCoverageMetricsCron(BaseHandler):
         'linux-chromeos-code-coverage_unit'
     ]
 
-  def _GetActiveReferenceCommits(self):
-    """Returns commits against which coverage is to be generated.
-
-    Returns id of the CoverageReportModifier corresponding to the active
-    reference commits.
-    """
-    query = CoverageReportModifier.query(
-        CoverageReportModifier.server_host == 'chromium.googlesource.com',
-        CoverageReportModifier.project == 'chromium/src',
-        CoverageReportModifier.is_active == True)
-    modifier_ids = []
-    for x in query.fetch():
-      if x.reference_commit:
-        modifier_ids.append(x.key.id())
-    return modifier_ids
-
   def HandleGet(self):
-    modifier_ids = self._GetActiveReferenceCommits()
-    assert len(modifier_ids) <= 1, "More than one reference commit found"
-    if modifier_ids:
+    modifier_id = _GetActiveReferenceCommit(
+        server_host='chromium.googlesource.com', project='chromium/src')
+    if modifier_id:
       for builder in self._GetSourceBuilders():
         url = '/coverage/task/referenced-coverage?modifier_id=%d&builder=%s' % (
-            modifier_ids[0], builder)
+            modifier_id, builder)
         taskqueue.add(
             method='GET',
             queue_name=constants.REFERENCED_COVERAGE_QUEUE,

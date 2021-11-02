@@ -52,6 +52,7 @@ code_coverage_frontend_handler_mappings = [
     # These mappings are separated so that ts_mon data (e.g. latency) is
     # groupable by view. (instead of a single entry like .*/coverage.*)
     ('.*/coverage', code_coverage.ServeCodeCoverageData),
+    ('.*/coverage/referenced', code_coverage.ServeCodeCoverageData),
     ('.*/coverage/component', code_coverage.ServeCodeCoverageData),
     ('.*/coverage/dir', code_coverage.ServeCodeCoverageData),
     ('.*/coverage/file', code_coverage.ServeCodeCoverageData),

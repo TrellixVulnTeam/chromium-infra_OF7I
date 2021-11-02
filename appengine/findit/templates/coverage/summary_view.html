@@ -140,18 +140,24 @@
           </select>
           Split:
           <select id="view_select" name="path" onchange="switchPlatform()">
-          {% if data_type == 'components' %}
-            <option value="{{path}}" selected="selected">By Component</option>
-            <option value="//">By Directory</option>
-          {% else %}
+          {% if modifier_id != 0 %}
+            <!-- Only directory wise split available for referenced coverage -->
             <option value="{{path}}" selected="selected">By Directory</option>
-            <option value=">>">By Component</option>
+          {% else %}
+            {% if data_type == 'components' %}
+              <option value="{{path}}" selected="selected">By Component</option>
+              <option value="//">By Directory</option>
+            {% else %}
+              <option value="{{path}}" selected="selected">By Directory</option>
+              <option value=">>">By Component</option>
+            {% endif %}
           {% endif %}
           </select>
           {% for name, value in platform_select.params.iteritems() %}
             <input type="hidden" name="{{name}}" value="{{value}}"/>
           {% endfor %}
-          See <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&test_suite_type={{test_suite_type}}">Previous Reports</a>
+          <input type = "hidden" name = "modifier_id" value = "{{modifier_id}}"/>          
+          See <a href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&platform={{platform}}&list_reports=true&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">Previous Reports</a>
         </form>
         <br>
         <br>
@@ -170,19 +176,19 @@
         <thead>
           <tr class="coverage-header">
             <th colspan="4">
-              <a href="/p/{{luci_project}}/coverage?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&platform={{platform}}">{{gitiles_commit.project}}</a>
-              - {{gitiles_commit.revision[:7]}}
+              {{gitiles_commit.project}} - {{gitiles_commit.revision[:7]}}
               {% if data_type == 'components' %}
-                {% if path_root == path %}
-                - <a href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path=>>&platform={{platform}}&test_suite_type={{test_suite_type}}">ALL</a>
+                {% if path == path_root %}
+                - <a href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path=>>&platform={{platform}}&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">ALL</a>
                 {% else %}
-                - <a href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path=>>&platform={{platform}}&test_suite_type={{test_suite_type}}">ALL>></a><a style="padding-left:.3ex;" href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path}}&platform={{platform}}">{{path}}</a>
+                - <a href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path=>>&platform={{platform}}&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">ALL>></a><a style="padding-left:.3ex;" href="/p/{{luci_project}}/coverage/component?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path}}&platform={{platform}}">{{path}}</a>
                 {% endif %}
               {% else %}
-              - <a title="{{path_root}}" href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path_root}}&platform={{platform}}&test_suite_type={{test_suite_type}}">{{path_root}}</a>{% if path_parts %}{% for name, sub_path in path_parts %}<a style="padding-left:.3ex;" title="{{sub_path}}" href="/p/{{luci_project}}/coverage/{{'dir' if name.endswith('/') else 'file'}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{sub_path}}&platform={{platform}}">{{name}}</a>{% endfor %}{% endif %}
+                - <a title="{{path_root}}" href="/p/{{luci_project}}/coverage/dir?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path_root}}&platform={{platform}}&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">{{path_root}}</a>{% if path_parts %}{% for name, sub_path in path_parts %}<a style="padding-left:.3ex;" title="{{sub_path}}" href="/p/{{luci_project}}/coverage/{{'dir' if name.endswith('/') else 'file'}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{sub_path}}&platform={{platform}}">{{name}}</a>{% endfor %}{% endif %}
               {% endif %}
             </th>
           </tr>
+          <!--Add a filter to narrow down component faster-->
           {% if data_type == 'components' and path == '>>'%}
           <tr style="text-align:left">
             <th colspan="4">
@@ -190,6 +196,7 @@
             </th>
           </tr>
           {% endif %}
+          <!--Title of the first column-->
           <tr>
             {% if data_type == 'components' and path == '>>'%}
             <th>
@@ -198,6 +205,7 @@
             {% else %}
             <th>Path</th>
             {% endif %}
+            <!--Title of the rest of the columns-->
             {% for m in metrics %}
               <th title="{{ m.detail }}">{{ m.name | capitalize }} </th>
             {% endfor %}
@@ -246,7 +254,7 @@
           <tr data-path="{{datum.path}}">
             <td>
               {% if data_type != 'components' %}
-              <a href="/p/{{luci_project}}/coverage/{{'dir' if datum.name.endswith('/') else 'file'}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path}}{{datum.name}}&platform={{platform}}&test_suite_type={{test_suite_type}}">{{datum.name}}</a>
+              <a href="/p/{{luci_project}}/coverage/{{'dir' if datum.name.endswith('/') else 'file'}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{path}}{{datum.name}}&platform={{platform}}&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">{{datum.name}}</a>
               {% else %}
                 {% if path == '>>' %}
                   {% set real_data_type = 'components' %}
@@ -255,7 +263,7 @@
                   {% set real_data_type = 'dirs' %}
                   {% set url_path = 'dir' %}
                 {% endif %}
-                <a href="/p/{{luci_project}}/coverage/{{url_path}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{datum.path}}&data_type={{real_data_type}}&platform={{platform}}&test_suite_type={{test_suite_type}}">{{datum.path}}</a>
+                <a href="/p/{{luci_project}}/coverage/{{url_path}}?host={{gitiles_commit.host}}&project={{gitiles_commit.project}}&ref={{gitiles_commit.ref}}&revision={{gitiles_commit.revision}}&path={{datum.path}}&data_type={{real_data_type}}&platform={{platform}}&test_suite_type={{test_suite_type}}&modifier_id={{modifier_id}}">{{datum.path}}</a>
               {% endif %}
             </td>
             {% for target_metric in metrics %}
