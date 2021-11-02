@@ -81,6 +81,10 @@ _KITCHEN_CHECKOUT = 'kitchen-checkout'
 # USER_PACKAGE_DIR and USER_PACKAGE_DIR/bin are prepended to $PATH.
 USER_PACKAGE_DIR = 'cipd_bin_packages'
 
+# How long to retry _create_swarming_task before giving up with INFRA_FAILURE.
+_SWARMING_CREATE_TASK_GIVE_UP_TIMEOUT = datetime.timedelta(minutes=10)
+
+
 ################################################################################
 # Creation/cancellation of tasks.
 
@@ -600,8 +604,15 @@ def _create_swarming_task(build):
     assert new_task_id
     logging.info('Created a swarming task %r', new_task_id)
   except net.Error as err:
+    extra_err = ''
+
     if err.status_code >= 500 or err.status_code is None:
-      raise
+      # Give up if HTTP 500s are happening continuously. Otherwise re-raise the
+      # exception so Cloud Tasks retries the task.
+      age = utils.utcnow() - build.proto.create_time.ToDatetime()
+      if age < _SWARMING_CREATE_TASK_GIVE_UP_TIMEOUT:
+        raise
+      extra_err = ' after several attempts'
 
     # Dump the task definition to the log.
     # Pop secret bytes.
@@ -609,12 +620,13 @@ def _create_swarming_task(build):
       ts['properties'].pop('secret_bytes')
     logging.error(
         (
-            'Swarming responded with HTTP %d. '
+            'Swarming responded with HTTP %d%s. '
             'Ending the build with INFRA_FAILURE.\n'
             'Task def: %s\n'
             'Response: %s'
         ),
         err.status_code,
+        extra_err,
         task_def,
         err.response,
     )
@@ -622,8 +634,8 @@ def _create_swarming_task(build):
         build_id,
         common_pb2.INFRA_FAILURE,
         (
-            'Swarming task creation API responded with HTTP %d: `%s`' %
-            (err.status_code, err.response.replace('`', '"'))
+            'Swarming task creation API responded with HTTP %d%s: `%s`' %
+            (err.status_code, extra_err, err.response.replace('`', '"'))
         ),
         end_time=utils.utcnow(),
     )

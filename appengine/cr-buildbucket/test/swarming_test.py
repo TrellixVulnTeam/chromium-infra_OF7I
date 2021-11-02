@@ -840,6 +840,24 @@ class SyncBuildTest(BaseTest):
     with self.assertRaises(net.Error):
       self._create_task()
 
+  def test_http_500_give_up(self):
+    net.json_request_async.return_value = future_exception(
+        net.Error('internal', 500, 'Internal server error')
+    )
+
+    self.now += swarming._SWARMING_CREATE_TASK_GIVE_UP_TIMEOUT
+    self.now += datetime.timedelta(seconds=1)
+
+    self._create_task()
+
+    build = self.build.key.get()
+    self.assertEqual(build.status, common_pb2.INFRA_FAILURE)
+    self.assertEqual(
+        build.proto.summary_markdown,
+        'Swarming task creation API responded with HTTP 500 after '
+        'several attempts: `Internal server error`'
+    )
+
   def test_validate(self):
     build = test_util.build()
     swarming.validate_build(build)
