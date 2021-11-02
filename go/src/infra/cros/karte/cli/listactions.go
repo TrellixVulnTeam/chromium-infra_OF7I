@@ -30,6 +30,7 @@ var ListActions = &subcommands.Command{
 	CommandRun: func() subcommands.CommandRun {
 		r := &listActionsRun{}
 		r.authFlags.Register(&r.Flags, site.DefaultAuthOptions)
+		r.Flags.StringVar(&r.filter, "filter", "", "Karte query command")
 		// TODO(gregorynisbet): add envFlags.
 		return r
 	},
@@ -38,6 +39,7 @@ var ListActions = &subcommands.Command{
 type listActionsRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
+	filter    string
 }
 
 // Run runs listactions and returns an exit status.
@@ -61,6 +63,7 @@ func (c *listActionsRun) innerRun(ctx context.Context, a subcommands.Application
 	kClient, err := client.NewClient(ctx, client.DevConfig(authOptions))
 	res, err := kClient.ListActions(ctx, &kartepb.ListActionsRequest{
 		PageSize: defaultPageSize,
+		Filter:   c.filter,
 	})
 	if err != nil {
 		return errors.Annotate(err, "inner run").Err()
