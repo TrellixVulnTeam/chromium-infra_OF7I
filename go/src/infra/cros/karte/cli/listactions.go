@@ -51,6 +51,9 @@ func (c *listActionsRun) Run(a subcommands.Application, args []string, env subco
 }
 
 func (c *listActionsRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
+	if len(args) > 0 {
+		return fmt.Errorf("list-actions: positional arguments not supported")
+	}
 	authOptions, err := c.authFlags.Options()
 	if err != nil {
 		return errors.Annotate(err, "inner run").Err()
