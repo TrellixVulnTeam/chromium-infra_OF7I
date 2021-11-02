@@ -11,11 +11,11 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/filterexp"
 )
 
