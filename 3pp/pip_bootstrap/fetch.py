@@ -11,6 +11,11 @@ import sys
 import urllib
 
 import pkg_resources
+import certifi
+
+# Make sure up-to-date root certificates are used.
+urllib._urlopener = urllib.FancyURLopener(
+    context=ssl.create_default_context(cafile=certifi.where()))
 
 
 def _get_wheel_url(pkgname, version):

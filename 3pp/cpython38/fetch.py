@@ -12,6 +12,7 @@ import sys
 import urllib
 
 from pkg_resources import parse_version
+import certifi
 
 
 # TODO: Find these files dynamically.
@@ -41,6 +42,10 @@ _FILES = frozenset([
     'tools.msi',
     'ucrt.msi'
 ])
+
+# Make sure up-to-date root certificates are used.
+urllib._urlopener = urllib.FancyURLopener(
+    context=ssl.create_default_context(cafile=certifi.where()))
 
 
 def get_webinstaller_suffix(platform):
