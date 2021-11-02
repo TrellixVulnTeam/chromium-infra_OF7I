@@ -21,7 +21,7 @@ describe('Index Page', () => {
     })
     it('loads cluster table', () => {
         // check for the header text in the cluster table.
-        cy.get('cluster-table').contains('Unexonerated');
+        cy.get('cluster-table').contains('Test Runs Failed');
     })
     it('loads a cluster page', () => {
         cy.get('cluster-table').get('td').first().click();

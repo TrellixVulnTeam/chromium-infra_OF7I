@@ -49,7 +49,7 @@ const serverRoute = (ctx: Context) => { window.location.pathname = ctx.pathname;
 router.setRoutes([
     { path: '/auth/(.*)', action: serverRoute },  // For logout links.
     { path: '/', component: 'cluster-table' },
-    { path: '/project/:project/cluster/:id', component: 'cluster-page' },
+    { path: '/projects/:project/clusters/:algorithm/:id', component: 'cluster-page' },
     { path: '/monorail-test', component: 'monorail-test' },
     { path: '/bugcluster', component: 'bug-cluster-table' },
     { path: '(.*)', component: 'not-found-page' },

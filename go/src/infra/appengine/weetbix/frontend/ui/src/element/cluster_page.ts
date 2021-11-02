@@ -15,20 +15,24 @@ export class ClusterPage extends LitElement {
     cluster: Cluster | undefined;
 
     @property()
-    projectId: string;
+    project: string;
 
     @property()
-    clusterId: string;
+    clusterAlgorithm: string;
+
+    @property()
+    clusterID: string;
 
 
     connectedCallback() {
         super.connectedCallback()
 
         // Take the first parameter value only.
-        this.projectId = typeof this.location.params.project == 'string' ? this.location.params.project : this.location.params.project[0];
-        this.clusterId = typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
+        this.project = typeof this.location.params.project == 'string' ? this.location.params.project : this.location.params.project[0];
+        this.clusterAlgorithm =  typeof this.location.params.algorithm == 'string' ? this.location.params.algorithm : this.location.params.algorithm[0];
+        this.clusterID =  typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
 
-        fetch(`/api/project/${encodeURIComponent(this.projectId)}/cluster/${encodeURIComponent(this.clusterId)}`)
+        fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterID)}`)
             .then(r => r.json())
             .then(cluster => this.cluster = cluster);
     }
@@ -37,13 +41,24 @@ export class ClusterPage extends LitElement {
         if (this.cluster === undefined) {
             return html`Loading...`;
         }
+        const clusterDescription = (cluster: Cluster): string => {
+            if (cluster.clusterAlgorithm.startsWith("testname-")) {
+                return cluster.exampleTestId;
+            } else if (cluster.clusterAlgorithm.startsWith("failurereason-")) {
+                return cluster.exampleFailureReason;
+            }
+            return `${cluster.clusterAlgorithm}/${cluster.clusterId}`;
+        }
+        const metric = (counts: Counts): number => {
+            return counts.nominal;
+        }
         const c = this.cluster;
         const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
         return html`
         <div id="container">
-            <h1>Cluster <span class="cluster-id">${c.clusterId}</span></h1>
-            <h2>Example Failure</h2>
-            <pre class="failure-reason">${c.exampleFailureReason || c.clusterId}</pre>
+            <h1>Cluster <span class="cluster-id">${c.clusterAlgorithm}/${c.clusterId}</span></h1>
+            <h2>Cluster Definition</h2>
+            <pre class="failure-reason">${clusterDescription(c)}</pre>
             <h2>Impact</h2>
             <table>
                 <thead>
@@ -56,22 +71,22 @@ export class ClusterPage extends LitElement {
                 </thead>
                 <tbody>
                     <tr>
+                        <th>Presubmit Runs Failed</th>
+                        <td class="number">${metric(c.presubmitRejects1d)}</td>
+                        <td class="number">${metric(c.presubmitRejects3d)}</td>
+                        <td class="number">${metric(c.presubmitRejects7d)}</td>
+                    </tr>
+                    <tr>
+                        <th>Test Runs Failed</th>
+                        <td class="number">${metric(c.testRunFailures1d)}</td>
+                        <td class="number">${metric(c.testRunFailures3d)}</td>
+                        <td class="number">${metric(c.testRunFailures7d)}</td>
+                    </tr>
+                    <tr>
                         <th>Unexpected Failures</th>
-                        <td class="number">${c.unexpectedFailures1d}</td>
-                        <td class="number">${c.unexpectedFailures3d}</td>
-                        <td class="number">${c.unexpectedFailures7d}</td>
-                    </tr>
-                    <tr>
-                        <th>Unexonerated Failures</th>
-                        <td class="number">${c.unexoneratedFailures1d}</td>
-                        <td class="number">${c.unexoneratedFailures3d}</td>
-                        <td class="number">${c.unexoneratedFailures7d}</td>
-                    </tr>
-                    <tr>
-                        <th>Affected Runs</th>
-                        <td class="number">${c.affectedRuns1d}</td>
-                        <td class="number">${c.affectedRuns3d}</td>
-                        <td class="number">${c.affectedRuns7d}</td>
+                        <td class="number">${metric(c.failures1d)}</td>
+                        <td class="number">${metric(c.failures3d)}</td>
+                        <td class="number">${metric(c.failures7d)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -153,21 +168,29 @@ export class ClusterPage extends LitElement {
 
 // Cluster is the cluster information sent by the server.
 interface Cluster {
-    project: string;
+    clusterAlgorithm: string;
     clusterId: number;
-    unexpectedFailures1d: number;
-    unexpectedFailures3d: number;
-    unexpectedFailures7d: number;
-    unexoneratedFailures1d: number;
-    unexoneratedFailures3d: number;
-    unexoneratedFailures7d: number;
-    affectedRuns1d: number;
-    affectedRuns3d: number;
-    affectedRuns7d: number;
+    presubmitRejects1d: Counts;
+    presubmitRejects3d: Counts;
+    presubmitRejects7d: Counts;
+    testRunFailures1d: Counts;
+    testRunFailures3d: Counts;
+    testRunFailures7d: Counts;
+    failures1d: Counts;
+    failures3d: Counts;
+    failures7d: Counts;
     affectedTests1d: SubCluster[];
     affectedTests3d: SubCluster[];
     affectedTests7d: SubCluster[];
     exampleFailureReason: string;
+    exampleTestId: string;
+}
+
+interface Counts {
+    nominal: number;
+    preExoneration: number;
+    residual: number;
+    residualPreExoneration: number;
 }
 
 interface SubCluster {

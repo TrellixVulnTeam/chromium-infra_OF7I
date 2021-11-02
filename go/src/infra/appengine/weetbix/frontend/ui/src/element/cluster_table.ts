@@ -2,17 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css } from 'lit-element';
+import { LitElement, html, customElement, property, state, css } from 'lit-element';
 
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
 export class ClusterTable extends LitElement {
     @property()
+    project: string;
+
+    @state()
     clusters: Cluster[] | undefined;
 
     connectedCallback() {
         super.connectedCallback()
-        fetch("/api/cluster").then(r => r.json()).then(clusters => this.clusters = clusters);
+        this.project = "chromium";
+        fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters`).then(r => r.json()).then(clusters => this.clusters = clusters);
     }
 
     render() {
@@ -20,24 +24,35 @@ export class ClusterTable extends LitElement {
             return html`Loading...`;
         }
         const clusterLink = (cluster: Cluster): string => {
-            return `/project/${cluster.project}/cluster/${cluster.clusterId}`;
+            return `/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(cluster.clusterAlgorithm)}/${encodeURIComponent(cluster.clusterId)}`;
+        }
+        const clusterDescription = (cluster: Cluster): string => {
+            if (cluster.clusterAlgorithm.startsWith("testname-")) {
+                return cluster.exampleTestId;
+            } else if (cluster.clusterAlgorithm.startsWith("failurereason-")) {
+                return cluster.exampleFailureReason;
+            }
+            return `${cluster.clusterAlgorithm}/${cluster.clusterId}`;
+        }
+        const metric = (counts: Counts): number => {
+            return counts.nominal;
         }
         return html`
         <div id="container">
-            <h1>Clusters in project ${this.clusters[0].project}</h1>
+            <h1>Clusters in project ${this.project}</h1>
             <table>
                 <thead>
                     <tr>
                         <th>Cluster</th>
+                        <th>Presubmit Runs Failed (1d)</th>
+                        <th>Presubmit Runs Failed (3d)</th>
+                        <th>Presubmit Runs Failed (7d)</th>
+                        <th>Test Runs Failed (1d)</th>
+                        <th>Test Runs Failed (3d)</th>
+                        <th>Test Runs Failed (7d)</th>
                         <th>Unexpected Failures (1d)</th>
                         <th>Unexpected Failures (3d)</th>
                         <th>Unexpected Failures (7d)</th>
-                        <th>Unexonerated Failures (1d)</th>
-                        <th>Unexonerated Failures (3d)</th>
-                        <th>Unexonerated Failures (7d)</th>
-                        <th>Affected Runs (1d)</th>
-                        <th>Affected Runs (3d)</th>
-                        <th>Affected Runs (7d)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,52 +60,52 @@ export class ClusterTable extends LitElement {
                     <tr>
                         <td class="failure-reason">
                             <a href=${clusterLink(c)}>
-                                ${c.exampleFailureReason || c.clusterId}
+                                ${clusterDescription(c)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexpectedFailures1d}
+                                ${metric(c.presubmitRejects1d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexpectedFailures3d}
+                                ${metric(c.presubmitRejects3d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexpectedFailures7d}
+                                ${metric(c.presubmitRejects7d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexoneratedFailures1d}
+                                ${metric(c.testRunFailures1d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexoneratedFailures3d}
+                                ${metric(c.testRunFailures3d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.unexoneratedFailures7d}
+                                ${metric(c.testRunFailures7d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.affectedRuns1d}
+                                ${metric(c.failures1d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.affectedRuns3d}
+                                ${metric(c.failures3d)}
                             </a>
                         </td>
                         <td class="number">
                             <a href=${clusterLink(c)}>
-                                ${c.affectedRuns7d}
+                                ${metric(c.failures7d)}
                             </a>
                         </td>
                     </tr>`)}
@@ -141,16 +156,24 @@ export class ClusterTable extends LitElement {
 
 // Cluster is the cluster information sent by the server.
 interface Cluster {
-    project: string;
+    clusterAlgorithm: string;
     clusterId: number;
-    unexpectedFailures1d: number;
-    unexpectedFailures3d: number;
-    unexpectedFailures7d: number;
-    unexoneratedFailures1d: number;
-    unexoneratedFailures3d: number;
-    unexoneratedFailures7d: number;
-    affectedRuns1d: number;
-    affectedRuns3d: number;
-    affectedRuns7d: number;
+    presubmitRejects1d: Counts;
+    presubmitRejects3d: Counts;
+    presubmitRejects7d: Counts;
+    testRunFailures1d: Counts;
+    testRunFailures3d: Counts;
+    testRunFailures7d: Counts;
+    failures1d: Counts;
+    failures3d: Counts;
+    failures7d: Counts;
     exampleFailureReason: string;
+    exampleTestId: string;
+}
+
+interface Counts {
+    nominal: number;
+    preExoneration: number;
+    residual: number;
+    residualPreExoneration: number;
 }

@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/errors"
@@ -31,9 +30,9 @@ import (
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
 	"infra/appengine/weetbix/app"
+	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugclusters"
 	"infra/appengine/weetbix/internal/bugs/monorail"
-	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -158,15 +157,15 @@ func (hc *handlers) listBugClusters(ctx *router.Context) {
 }
 
 func (hc *handlers) listClusters(ctx *router.Context) {
-	cc, err := clustering.NewClient(ctx.Context, hc.cloudProject)
+	ac, err := analysis.NewClient(ctx.Context, hc.cloudProject)
 	if err != nil {
-		logging.Errorf(ctx.Context, "Creating new clustering client: %v", err)
+		logging.Errorf(ctx.Context, "Creating new analysis client: %v", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 	defer func() {
-		if err := cc.Close(); err != nil {
-			logging.Warningf(ctx.Context, "Closing clustering client: %v", err)
+		if err := ac.Close(); err != nil {
+			logging.Warningf(ctx.Context, "Closing analysis client: %v", err)
 		}
 	}()
 	projectCfgs, err := config.Projects(ctx.Context)
@@ -182,11 +181,11 @@ func (hc *handlers) listClusters(ctx *router.Context) {
 		return
 	}
 
-	opts := clustering.ImpactfulClusterReadOptions{
+	opts := analysis.ImpactfulClusterReadOptions{
 		Project:    "chromium",
 		Thresholds: projectCfg.BugFilingThreshold,
 	}
-	clusters, err := cc.ReadImpactfulClusters(ctx.Context, opts)
+	clusters, err := ac.ReadImpactfulClusters(ctx.Context, opts)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Reading Clusters from BigQuery: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
@@ -197,29 +196,36 @@ func (hc *handlers) listClusters(ctx *router.Context) {
 }
 
 func (hc *handlers) getCluster(ctx *router.Context) {
-	projectID := ctx.Params.ByName("project")
-	if projectID != "chromium" {
-		http.Error(ctx.Writer, "Only the chromium project is currently supported", 400)
-		return
-	}
-	clusterID := strings.TrimPrefix(ctx.Params.ByName("id"), "/")
-	if clusterID == "" {
-		http.Error(ctx.Writer, "Please supply a cluster ID.", http.StatusBadRequest)
-		return
-	}
-	cc, err := clustering.NewClient(ctx.Context, hc.cloudProject)
+	projectCfgs, err := config.Projects(ctx.Context)
 	if err != nil {
-		logging.Errorf(ctx.Context, "Creating new clustering client: %v", err)
+		logging.Errorf(ctx.Context, "Obtain project config: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	projectID := ctx.Params.ByName("project")
+	if _, ok := projectCfgs[projectID]; !ok {
+		http.Error(ctx.Writer, "Project does not exist in Weetbix.", http.StatusBadRequest)
+		return
+	}
+	clusterAlgorithm := ctx.Params.ByName("algorithm")
+	clusterID := ctx.Params.ByName("id")
+	if clusterAlgorithm == "" || clusterID == "" {
+		http.Error(ctx.Writer, "Please supply a valid cluster ID.", http.StatusBadRequest)
+		return
+	}
+	ac, err := analysis.NewClient(ctx.Context, hc.cloudProject)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Creating new analysis client: %v", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 	defer func() {
-		if err := cc.Close(); err != nil {
-			logging.Warningf(ctx.Context, "Closing clustering client: %v", err)
+		if err := ac.Close(); err != nil {
+			logging.Warningf(ctx.Context, "Closing analysis client: %v", err)
 		}
 	}()
 
-	clusters, err := cc.ReadCluster(ctx.Context, clusterID)
+	clusters, err := ac.ReadCluster(ctx.Context, projectID, clusterAlgorithm, clusterID)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
@@ -272,8 +278,8 @@ func main() {
 			prod:         srv.Options.Prod,
 		}
 		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
-		srv.Routes.GET("/api/project/:project/cluster/*id", mw, handlers.getCluster)
-		srv.Routes.GET("/api/cluster", mw, handlers.listClusters)
+		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.getCluster)
+		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.listClusters)
 		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
 		// Anything that is not found, serve app html and let the client side router handle it.
