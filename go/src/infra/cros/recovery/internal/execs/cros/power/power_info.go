@@ -45,13 +45,13 @@ type powerSupplyInfo struct {
 //       state:                   Discharging
 //       percentage:              95.9276
 //       technology:              Li-ion
-func ReadPowerInfo(ctx context.Context, args *execs.RunArgs) (*powerSupplyInfo, error) {
-	r := args.Access.Run(ctx, args.ResourceName, "power_supply_info")
-	if r.ExitCode != 0 {
-		return nil, errors.Reason("read power information: failed with code %d and %q", r.ExitCode, r.Stderr).Err()
+func ReadPowerInfo(ctx context.Context, r execs.Runner) (*powerSupplyInfo, error) {
+	output, err := r(ctx, "power_supply_info")
+	if err != nil {
+		return nil, errors.Annotate(err, "read power information").Err()
 	}
 	return &powerSupplyInfo{
-		powerInfo: getPowerSupplyInfoInMap(strings.TrimSpace(r.Stdout)),
+		powerInfo: getPowerSupplyInfoInMap(output),
 	}, nil
 }
 
@@ -98,6 +98,17 @@ func (p *powerSupplyInfo) BatteryLevel() (float64, error) {
 		return -1, errors.Reason("battery level: no battery's percentage info found").Err()
 	}
 	return -1, errors.Reason("battery level: no battery").Err()
+}
+
+// ReadBatteryPath returns path to battery properties on the DUT.
+func (p *powerSupplyInfo) ReadBatteryPath() (string, error) {
+	if battery, ok := p.powerInfo["Battery"]; ok {
+		if batteryPath, ok := battery["path"]; ok {
+			return batteryPath, nil
+		}
+		return "", errors.Reason("read battery path: no battery's path info found").Err()
+	}
+	return "", errors.Reason("read battery path: no battery").Err()
 }
 
 // getPowerSupplyInfoInMap is a helper function to get power supply information for ReadPowerInfo().

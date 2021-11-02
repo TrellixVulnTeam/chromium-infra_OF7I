@@ -17,7 +17,8 @@ import (
 
 // isACPowerConnectedExec confirms whether the DUT is connected through AC power.
 func isACPowerConnectedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := power.ReadPowerInfo(ctx, args)
+	r := args.NewRunner(args.ResourceName)
+	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "ac power connected").Err()
 	}
@@ -41,7 +42,8 @@ func isBatteryExpectedExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 
 // isBatteryPresentExec confirms that the DUT has battery.
 func isBatteryPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := power.ReadPowerInfo(ctx, args)
+	r := args.NewRunner(args.ResourceName)
+	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery present").Err()
 	}
@@ -57,7 +59,8 @@ func isBatteryPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 
 // isBatteryLevelGreaterThanMinimumExec confirms the battery has enough charge.
 func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := power.ReadPowerInfo(ctx, args)
+	r := args.NewRunner(args.ResourceName)
+	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery has enough charge").Err()
 	}
@@ -73,7 +76,8 @@ func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, args *execs.RunAr
 
 // isBatteryChargingExec confirms the battery is charging.
 func isBatteryChargingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	p, err := power.ReadPowerInfo(ctx, args)
+	r := args.NewRunner(args.ResourceName)
+	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery charging").Err()
 	}
