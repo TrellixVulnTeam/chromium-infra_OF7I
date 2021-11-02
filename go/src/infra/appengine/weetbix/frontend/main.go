@@ -32,7 +32,6 @@ import (
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugclusters"
-	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -118,28 +117,6 @@ type handlers struct {
 
 func (hc *handlers) indexPage(ctx *router.Context) {
 	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{})
-}
-
-func (hc *handlers) monorailTest(ctx *router.Context) {
-	// TODO(crbug.com/1243174): Replace as part of MVP development.
-	cfg, err := config.Get(ctx.Context)
-	if err != nil {
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	mc, err := monorail.NewClient(ctx.Context, cfg.GetMonorailHostname())
-	if err != nil {
-		logging.Errorf(ctx.Context, "Getting Monorail client: %s", err)
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	issue, err := mc.GetIssue(ctx.Context, "projects/chromium/issues/2")
-	if err != nil {
-		logging.Errorf(ctx.Context, "Getting Monorail issue: %s", err)
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	respondWithJSON(ctx, issue)
 }
 
 func (hc *handlers) listBugClusters(ctx *router.Context) {
@@ -277,7 +254,6 @@ func main() {
 			cloudProject: srv.Options.CloudProject,
 			prod:         srv.Options.Prod,
 		}
-		srv.Routes.GET("/api/monorailtest", mw, handlers.monorailTest)
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.getCluster)
 		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.listClusters)
 		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)

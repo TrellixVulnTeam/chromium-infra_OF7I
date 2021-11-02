@@ -34,7 +34,6 @@ export class TitleBar extends LitElement {
       <ul>
         <li><a href="/">Clusters</a></li>
         <li><a href="/bugcluster">Bug Clusters</a></li>
-        <li><a href="/monorail-test">Monorail Test</a></li>
       </ul>
     </div>
     <slot></slot>
