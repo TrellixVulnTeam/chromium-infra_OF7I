@@ -39,9 +39,10 @@ type ActionEntity struct {
 	StopTime       time.Time `gae:"stop_time"`
 	CreateTime     time.Time `gae:"receive_time"`
 	Status         int32     `gae:"status"`
-	FailReason     string    `gae:"fail_reason"` // previously: gae:"error_reason"
-	// After the seal time has passed, no further modifications may be made.
-	SealTime time.Time `gae:"seal_time"`
+	FailReason     string    `gae:"fail_reason"`
+	SealTime       time.Time `gae:"seal_time"` // After the seal time has passed, no further modifications may be made.
+	// Deprecated fields!
+	ErrorReason string `gae:"error_reason"` // succeeded by "fail_reason'.
 }
 
 // ConvertToAction converts a datastore action entity to an action proto.
