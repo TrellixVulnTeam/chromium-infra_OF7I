@@ -12,9 +12,16 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tlw"
+)
+
+const (
+	// This character separates the name and values for extra
+	// arguments defined for actions.
+	DefaultSplitter = ":"
 )
 
 // exec represents an execution function of the action.
@@ -88,4 +95,23 @@ func (args RunArgs) NewRunner(host string) Runner {
 		return strings.TrimSpace(r.Stdout), nil
 	}
 	return runner
+}
+
+// ParseActionArgs parses the action arguments using the splitter, and
+// returns a map of the key and values. If any mal-formed action
+// arguments are found their value is set to empty string in the map.
+func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) map[string]string {
+	argsMap := make(map[string]string)
+	for _, a := range actionArgs {
+		actionArg := strings.Split(a, splitter)
+		log.Debug(ctx, "Parse Action Args: action arg %q", a)
+		if len(actionArg) != 2 {
+			log.Debug(ctx, "Parse Action Args: malformed action arg %q", a)
+			argsMap[actionArg[0]] = ""
+		} else {
+			log.Debug(ctx, "Parse Action Args: k: %q, v: %q", actionArg[0], actionArg[1])
+			argsMap[actionArg[0]] = actionArg[1]
+		}
+	}
+	return argsMap
 }
