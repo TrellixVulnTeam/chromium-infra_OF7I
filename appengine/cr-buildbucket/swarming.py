@@ -84,6 +84,8 @@ USER_PACKAGE_DIR = 'cipd_bin_packages'
 # How long to retry _create_swarming_task before giving up with INFRA_FAILURE.
 _SWARMING_CREATE_TASK_GIVE_UP_TIMEOUT = datetime.timedelta(minutes=10)
 
+# How long to try a single /tasks/new RPC
+_SWARMING_CREATE_TASK_RPC_TIMEOUT = 30  # seconds
 
 ################################################################################
 # Creation/cancellation of tasks.
@@ -592,7 +594,7 @@ def _create_swarming_task(build):
         path='tasks/new',
         method='POST',
         payload=task_def,
-        deadline=30,
+        deadline=_SWARMING_CREATE_TASK_RPC_TIMEOUT,
         # Use the project identity when calling Swarming. Swarming will check
         # whether this project is allowed to use the requested pool.
         act_as_project=build.project,
@@ -620,7 +622,7 @@ def _create_swarming_task(build):
       ts['properties'].pop('secret_bytes')
     logging.error(
         (
-            'Swarming responded with HTTP %d%s. '
+            'Swarming responded with HTTP %s%s. '
             'Ending the build with INFRA_FAILURE.\n'
             'Task def: %s\n'
             'Response: %s'
@@ -630,13 +632,25 @@ def _create_swarming_task(build):
         task_def,
         err.response,
     )
+
+    # Note that `err.response` will be None if the RPC timed out, but just
+    # checking for truthiness isn't enough because swarming COULD return an
+    # empty body.
+    if err.response is not None:
+      msg = (
+          'Swarming task creation API responded with HTTP %d%s: `%s`' %
+          (err.status_code, extra_err, err.response.replace('`', '"'))
+      )
+    else:
+      msg = (
+          'Swarming task creation API timed-out%s. (timeout=%d sec)' %
+          (extra_err, _SWARMING_CREATE_TASK_RPC_TIMEOUT)
+      )
+
     _end_build(
         build_id,
         common_pb2.INFRA_FAILURE,
-        (
-            'Swarming task creation API responded with HTTP %d%s: `%s`' %
-            (err.status_code, extra_err, err.response.replace('`', '"'))
-        ),
+        msg,
         end_time=utils.utcnow(),
     )
     return

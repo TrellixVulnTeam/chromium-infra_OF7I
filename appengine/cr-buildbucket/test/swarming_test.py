@@ -858,6 +858,24 @@ class SyncBuildTest(BaseTest):
         'several attempts: `Internal server error`'
     )
 
+  def test_http_timeout_give_up(self):
+    net.json_request_async.return_value = future_exception(
+        net.Error(None, None, None)
+    )
+
+    self.now += swarming._SWARMING_CREATE_TASK_GIVE_UP_TIMEOUT
+    self.now += datetime.timedelta(seconds=1)
+
+    self._create_task()
+
+    build = self.build.key.get()
+    self.assertEqual(build.status, common_pb2.INFRA_FAILURE)
+    self.assertEqual(
+        build.proto.summary_markdown,
+        'Swarming task creation API timed-out after several '
+        'attempts. (timeout=30 sec)',
+    )
+
   def test_validate(self):
     build = test_util.build()
     swarming.validate_build(build)
