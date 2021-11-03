@@ -1763,6 +1763,20 @@ wheel: <
 
 * *universal*
 
+## **ecdsa**
+
+### 0.17.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/ecdsa-py2_py3"
+  version: "version:0.17.0"
+>
+```
+
+
+* *universal*
+
 ## **enum34-py2**
 
 ### 1.1.6
@@ -6814,6 +6828,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/tlslite-py2_py3"
   version: "version:0.4.9"
+>
+```
+
+
+* *universal*
+
+## **tlslite-ng**
+
+### 0.7.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tlslite-ng-py2_py3"
+  version: "version:0.7.6"
 >
 ```
 

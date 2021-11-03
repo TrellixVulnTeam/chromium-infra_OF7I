@@ -1173,6 +1173,7 @@ SPECS.update({
         UniversalSource('selenium', '2.29.0'),
         UniversalSource('termcolor', '1.1.0'),
         UniversalSource('tlslite', '0.4.9'),
+        UniversalSource('tlslite-ng', '0.7.6'),
         UniversalSource('websocket_client', '0.40.0'),
     )
 })
@@ -1256,6 +1257,7 @@ SPECS.update({
         Universal('docker', '2.7.0'),
         Universal('docker', '5.0.0'),
         Universal('docker-pycreds', '0.2.1'),
+        Universal('ecdsa', '0.17.0'),
         Universal('enum34', '1.1.6', pyversions=['py2']),
         Universal('enum34', '1.1.6', pyversions=['py3']),
         Universal('execnet', '1.8.0'),
