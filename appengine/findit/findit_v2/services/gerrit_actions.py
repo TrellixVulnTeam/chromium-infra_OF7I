@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import logging
+
 from infra_api_clients.codereview import gerrit
 from services import git
 
@@ -77,6 +79,7 @@ class GerritActions(object):
         }
       }
     """
+    logging.info("Creating revert for culprit %s", culprit.key.id())
     change_info, gerrit_client = self.ChangeInfoAndClientFromCommit(culprit)
     revert_info = gerrit_client.CreateRevert(
         reason, change_info['review_change_id'], full_change_info=True)

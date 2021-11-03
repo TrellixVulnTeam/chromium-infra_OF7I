@@ -29,6 +29,8 @@ class Gerrit(codereview.CodeReview):
         # Submit rule failed. Content should tell which rule failed like:
         # Change 677630: needs Code-Review
         logging.error('Committing revert failed: %s', content)
+      logging.error('Gerrit returns status_code = %d content = %s', status_code,
+                    content)
       return None
     # Remove XSSI magic prefix
     if content.startswith(')]}\''):
@@ -175,15 +177,18 @@ class Gerrit(codereview.CodeReview):
       A dict containing the response of the Revert Change api, described by:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revert-change
     """
+    logging.info('Creating revert for changeId = %s', change_id)
     parts = ['changes', change_id, 'revert']
     revert_cl_description = self._GenerateRevertCLDescription(
         change_id, reason, bug_id=bug_id)
     body = {'message': revert_cl_description}
     reverting_change = self._Post(parts, body=body)
     if not reverting_change or 'change_id' not in reverting_change:
+      logging.error('Could not revert change')
       return None
 
     if not self.SetBotCommitLabel(reverting_change['change_id']):
+      logging.error('Could not set Bot-Commit label')
       return None
     return reverting_change
 

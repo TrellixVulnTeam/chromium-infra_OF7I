@@ -18,6 +18,7 @@ class AsyncAction(BaseHandler):
 
   def HandlePost(self):
     # Args are a json-encoded dict sent as the push task's payload.
+    message = None
     try:
       message = self._RunAction(json.loads(self.request.body))
     except RuntimeError as rte:
@@ -42,6 +43,7 @@ class AsyncAction(BaseHandler):
       return 'Push task is missing required argument: %s' % ke.message
 
   def _Notify(self, project_api, task_args, culprit):
+    logging.info("Notify culprit %s", culprit.key.id())
     success = project_api.gerrit_actions.NotifyCulprit(
         culprit,
         task_args['message'],
@@ -50,6 +52,7 @@ class AsyncAction(BaseHandler):
       raise RuntimeError('Notification failed')
 
   def _RequestReview(self, project_api, task_args, culprit):
+    logging.info("Requesting review for culprit %s", culprit.key.id())
     revert = project_api.gerrit_actions.CreateRevert(
         culprit, task_args['revert_description'])
     if not revert:

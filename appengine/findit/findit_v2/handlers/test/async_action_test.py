@@ -19,6 +19,17 @@ class AsyncActionTest(testing.AppengineTestCase):
   ],
                                        debug=True)
 
+  @mock.patch.object(async_action.AsyncAction, '_RunAction')
+  def testHandlePostThrowsUnknownException(self, mock_run_action):
+    action = async_action.AsyncAction()
+    mock_request = mock.Mock()
+    mock_request.body = '{}'
+    action.request = mock_request
+    mock_run_action.side_effect = Exception('some random exception')
+    with self.assertRaises(Exception) as context:
+      action.HandlePost()
+    self.assertEquals(context.exception.message, 'some random exception')
+
   def testBadRequest(self):
     headers = {'X-AppEngine-QueueName': 'task_queue'}
     response = self.test_app.post('/url', '{}', headers=headers)
