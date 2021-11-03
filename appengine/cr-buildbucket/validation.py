@@ -126,7 +126,7 @@ def validate_requested_dimension(dim):
       _enter_err('nanos', 'must be 0')
 
 
-def validate_schedule_build_request(req):
+def validate_schedule_build_request(req, well_known_experiments):
   if '/' in req.request_id:  # pragma: no cover
     _enter_err('request_id', 'must not contain /')
 
@@ -170,7 +170,9 @@ def validate_schedule_build_request(req):
 
   for exp_name in req.experiments:
     with _enter('experiment "%s"' % (exp_name,)):
-      _maybe_err(experiments.check_invalid_name(exp_name))
+      _maybe_err(
+          experiments.check_invalid_name(exp_name, well_known_experiments)
+      )
 
 
 def validate_struct(struct):

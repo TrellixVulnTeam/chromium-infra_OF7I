@@ -237,26 +237,55 @@ class BuildRequest(_BuildRequestBase):
     return tags
 
   @staticmethod
-  def compute_experiments(sbr, builder_cfg):
+  def compute_experiments(sbr, builder_cfg, settings):
     """Returns a Dict[str, bool] of enabled/disabled experiments."""
-    # Well-known experiments are always set, and default to off.
-    exps = {exp_name: False for exp_name in experiments.WELL_KNOWN}
+    global_exps = []
+    ignored_exps = set()
 
+    for exp in settings.experiment.experiments:
+      if exp.inactive:
+        ignored_exps.add(str(exp.name))
+      elif config.builder_matches(sbr.builder, exp.builders):
+        global_exps.append(exp)
+
+    # 1. populate with defaults
+    exps = {str(exp.name): exp.default_value for exp in global_exps}
+
+    # 2. overwrite with builder config (if present)
     if builder_cfg:
-      for exp, percentage in builder_cfg.experiments.iteritems():
-        exps[exp] = _should_enable_experiment(percentage)
+      exps.update(builder_cfg.experiments)
 
-    # Check if the well-known experiments are set via deprecated fields.
+    # 3. overwrite with minimum global experiment values
+    for exp in global_exps:
+      exps[str(exp.name)] = max(exps[str(exp.name)], exp.minimum_value)
+
+    # 4. set implied experiments from deprecated fields (note that Go does this
+    #    differently by normalizing `sbr` ahead of time).
     if sbr.canary != common_pb2.UNSET:
-      exps[experiments.CANARY] = sbr.canary == common_pb2.YES
+      exps[experiments.CANARY] = 100 if sbr.canary == common_pb2.YES else 0
 
     if sbr.experimental != common_pb2.UNSET:
-      exps[experiments.NON_PROD] = (sbr.experimental == common_pb2.YES)
+      exps[experiments.NON_PROD
+          ] = (100 if sbr.experimental == common_pb2.YES else 0)
 
-    # overrides the result from Builder config or deprecated fields in SBR
-    exps.update(sbr.experiments)
+    # 4.5. explicit requests have highest precedence
+    for name, enabled in sbr.experiments.items():
+      exps[name] = 100 if enabled else 0
 
-    return exps
+    # 5. remove all inactive global experiments
+    for exp_name in ignored_exps:
+      if exp_name in exps:
+        # TODO(crbug.com/854099): If this code still exists in python (heaven
+        # help us), add some sort of warning mechanism to builds so this can
+        # show up in Milo.
+        logging.warning("dropping inactive experiment %r", exp_name)
+        del exps[exp_name]
+
+    # Finally, roll the dice and return the computed experiments.
+    return {
+        exp_name: _should_enable_experiment(pct)
+        for exp_name, pct in exps.items()
+    }
 
   @ndb.tasklet
   def create_build_async(
@@ -267,7 +296,7 @@ class BuildRequest(_BuildRequestBase):
     Assumes self is valid.
     """
     sbr = self.schedule_build_request
-    exps = self.compute_experiments(sbr, builder_cfg)
+    exps = self.compute_experiments(sbr, builder_cfg, settings)
 
     build_proto = yield self.create_build_proto_async(
         build_id, settings, builder_cfg, created_by, exps, now

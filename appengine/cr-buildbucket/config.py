@@ -28,9 +28,8 @@ from components.config import validation
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
-import experiments
 
-CURRENT_BUCKET_SCHEMA_VERSION = 11
+CURRENT_BUCKET_SCHEMA_VERSION = 12
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
 
 # The default percentage of builds that are marked as canary.
@@ -98,6 +97,11 @@ def validate_access_list(acl_list, ctx):
 def validate_buildbucket_cfg(cfg, ctx):
   import swarmingcfg
 
+  global_cfg = get_settings_async().get_result()
+  well_known_experiments = set(
+      e.name for e in global_cfg.experiment.experiments
+  )
+
   acl_set_names = set()
   for i, acl_set in enumerate(cfg.acl_sets):
     with ctx.prefix('ACL set #%d (%s): ', i + 1, acl_set.name):
@@ -147,7 +151,8 @@ def validate_buildbucket_cfg(cfg, ctx):
       if bucket.HasField('swarming'):  # pragma: no cover
         with ctx.prefix('swarming: '):
           swarmingcfg.validate_project_cfg(
-              bucket.swarming, mixin_by_name, mixins_are_valid, ctx
+              bucket.swarming, well_known_experiments, mixin_by_name,
+              mixins_are_valid, ctx
           )
 
 
@@ -441,41 +446,6 @@ def _normalize_acls(acls):
       del acls[i]
 
 
-def _backfill_experiments(builder_cfg):
-  """Sets well-known experiments defined by deprecated fields in Builder.
-
-  The mapping between deprecated fields and well-known experiments is:
-
-  {
-    'experimental': 'luci.non_production',
-    'task_template_canary_percentage': 'luci.buildbucket.canary_software',
-  }
-
-  If the well-known experiment is already set in the Builder's `experiments`
-  map, this function won't update it.
-  """
-  if experiments.CANARY not in builder_cfg.experiments:
-    builder_cfg.experiments[experiments.CANARY] = (
-        builder_cfg.task_template_canary_percentage.value
-        if builder_cfg.HasField('task_template_canary_percentage') else
-        _DEFAULT_CANARY_PERCENTAGE
-    )
-
-  if experiments.NON_PROD not in builder_cfg.experiments:
-    builder_cfg.experiments[
-        experiments.NON_PROD
-    ] = (100 if builder_cfg.experimental == project_config_pb2.YES else 0)
-
-  if experiments.BBAGENT_GET_BUILD not in builder_cfg.experiments:
-    builder_cfg.experiments[experiments.BBAGENT_GET_BUILD] = 0
-
-  if experiments.USE_BBAGENT not in builder_cfg.experiments:
-    builder_cfg.experiments[experiments.USE_BBAGENT] = 0
-
-  if experiments.USE_REALMS not in builder_cfg.experiments:
-    builder_cfg.experiments[experiments.USE_REALMS] = 0
-
-
 def put_bucket(project_id, revision, bucket_cfg):
   # New Bucket format uses short bucket names, e.g. "try" instead of
   # "luci.chromium.try".
@@ -592,7 +562,6 @@ def cron_update_buckets():
           flatten_swarmingcfg.flatten_builder(
               b, defaults, builder_mixins_by_name
           )
-          _backfill_experiments(b)
           builder_key = Builder.make_key(project_id, bucket_key.id(), b.name)
           builders_to_delete.discard(builder_key)
           builder = builders.get(builder_key)

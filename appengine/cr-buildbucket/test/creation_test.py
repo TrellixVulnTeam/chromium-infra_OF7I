@@ -162,6 +162,13 @@ class CreationTest(testing.AppengineTestCase):
     self.settings = service_config_pb2.SettingsCfg(
         swarming=dict(global_caches=[dict(path='git')]),
         logdog=dict(hostname='logs.example.com'),
+        experiment=dict(
+            experiments=[
+                dict(name=experiments.CANARY, default_value=10),
+                dict(name=experiments.NON_PROD),
+                dict(name=experiments.USE_BBAGENT),
+            ]
+        )
     )
     self.settings.swarming.bbagent_package.builders.regex_exclude.extend([
         'chromium/try/linux_legacy',
@@ -412,11 +419,8 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(
         build.experiments, [
             '-chromium.exp_foo',
-            '-' + experiments.BBAGENT_GET_BUILD,
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
-            '-' + experiments.RECIPE_PY3,
-            '-' + experiments.USE_REALMS,
         ]
     )
 
@@ -438,11 +442,41 @@ class CreationTest(testing.AppengineTestCase):
         build.experiments, [
             '+chromium.exp_foo',
             '-chromium.exp_bar',
-            '-' + experiments.BBAGENT_GET_BUILD,
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
-            '-' + experiments.RECIPE_PY3,
-            '-' + experiments.USE_REALMS,
+        ]
+    )
+
+  def test_schedule_ignored_experiments(self):
+    exp = self.settings.experiment.experiments.add()
+    exp.name = "luci.use_realms"
+    exp.default_value = 100
+    exp.inactive = True
+
+    exp = self.settings.experiment.experiments.add()
+    exp.name = "luci.unmentioned"
+    exp.default_value = 100
+    exp.inactive = True
+
+    exp = self.settings.experiment.experiments.add()
+    exp.name = "luci.avoids_filter"
+    exp.default_value = 100
+    exp.builders.regex.append('notchromium/other/thing')
+
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='mac_exp',
+    )
+    build = self.add({
+        'builder': builder_id, 'experiments': {'luci.use_realms': True,}
+    })
+    self.assertEqual(build.proto.input.experiments, [])
+    self.assertEqual(
+        build.experiments, [
+            '-chromium.exp_foo',
+            '-' + experiments.CANARY,
+            '-' + experiments.USE_BBAGENT,
         ]
     )
 

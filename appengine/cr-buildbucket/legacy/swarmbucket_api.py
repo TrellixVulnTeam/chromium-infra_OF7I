@@ -181,6 +181,11 @@ class SwarmbucketApi(remote.Service):
   )
   def get_task_def(self, request):
     """Returns a swarming task definition for a build request."""
+    settings = config.get_settings_async().get_result()
+    well_known_experiments = set(
+        exp.name for exp in settings.experiment.experiments
+    )
+
     try:
       # Checks access too.
       request.build_request.bucket = api.convert_bucket(
@@ -188,7 +193,8 @@ class SwarmbucketApi(remote.Service):
       )
 
       build_request = api.put_request_message_to_build_request(
-          request.build_request
+          request.build_request,
+          well_known_experiments,
       )
 
       builder_id = build_request.schedule_build_request.builder

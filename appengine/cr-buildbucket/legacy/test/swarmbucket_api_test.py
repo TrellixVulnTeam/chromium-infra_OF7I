@@ -15,6 +15,7 @@ from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 from test.test_util import future, mock_permissions
 import config
+import experiments
 import model
 import sequence
 import swarming
@@ -130,6 +131,14 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
             ],
         ),
         logdog=dict(hostname='logdog.example.com'),
+        experiment=dict(
+            experiments=[
+                dict(name=experiments.BBAGENT_GET_BUILD),
+                dict(name=experiments.CANARY),
+                dict(name=experiments.NON_PROD),
+                dict(name=experiments.USE_BBAGENT),
+            ],
+        )
     )
     self.patch(
         'config.get_settings_async',

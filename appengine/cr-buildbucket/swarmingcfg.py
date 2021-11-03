@@ -234,7 +234,9 @@ def _validate_properties(properties, ctx):
     ctx.error('properties is not a dict')
 
 
-def validate_builder_cfg(builder, mixin_names, final, ctx):
+def validate_builder_cfg(
+    builder, well_known_experiments, mixin_names, final, ctx
+):
   """Validates a Builder message.
 
   Does not apply mixins, only checks that a referenced mixin exists.
@@ -317,7 +319,7 @@ def validate_builder_cfg(builder, mixin_names, final, ctx):
   with ctx.prefix('experiments: '):
     for exp_name, percent in sorted(builder.experiments.items()):
       with ctx.prefix('"%s": ' % (exp_name)):
-        err = experiments.check_invalid_name(exp_name)
+        err = experiments.check_invalid_name(exp_name, well_known_experiments)
         if err:
           ctx.error(err)
 
@@ -354,11 +356,14 @@ def validate_builder_mixins(mixins, ctx):
     ctx.error('builder_mixins is not allowed any more, use go/lucicfg')
 
 
-def validate_project_cfg(swarming, mixins, mixins_are_valid, ctx):
+def validate_project_cfg(
+    swarming, well_known_experiments, mixins, mixins_are_valid, ctx
+):
   """Validates a project_config_pb2.Swarming message.
 
   Args:
     swarming (project_config_pb2.Swarming): the config to validate.
+    well_known_experiments (Set[string]) - The set of well-known experiments.
     mixins (dict): {mixin_name: mixin}, builder mixins that may be used by
       builders.
     mixins_are_valid (bool): if True, mixins are valid.
@@ -383,7 +388,9 @@ def validate_project_cfg(swarming, mixins, mixins_are_valid, ctx):
       if builder_defaults.name:
         ctx.error('name: not allowed')
       subctx = make_subctx()
-      validate_builder_cfg(builder_defaults, mixins, False, subctx)
+      validate_builder_cfg(
+          builder_defaults, well_known_experiments, mixins, False, subctx
+      )
       if subctx.result().has_errors:
         should_try_merge = False
 
@@ -392,7 +399,7 @@ def validate_project_cfg(swarming, mixins, mixins_are_valid, ctx):
     with ctx.prefix('builder %s: ' % (b.name or '#%s' % (i + 1))):
       # Validate b before merging, otherwise merging will fail.
       subctx = make_subctx()
-      validate_builder_cfg(b, mixins, False, subctx)
+      validate_builder_cfg(b, well_known_experiments, mixins, False, subctx)
       if subctx.result().has_errors or not should_try_merge:
         # Do no try to merge invalid configs.
         continue
@@ -403,7 +410,7 @@ def validate_project_cfg(swarming, mixins, mixins_are_valid, ctx):
         ctx.error('name: duplicate')
       else:
         seen.add(merged.name)
-      validate_builder_cfg(merged, mixins, True, ctx)
+      validate_builder_cfg(merged, well_known_experiments, mixins, True, ctx)
 
 
 def _validate_package(package, ctx, allow_predicate=True):

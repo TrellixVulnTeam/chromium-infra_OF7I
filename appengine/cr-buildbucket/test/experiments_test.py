@@ -17,7 +17,9 @@ class CheckInvalidExperimentNames(testing.AppengineTestCase):
       ('luci.use_realms'),
   ])
   def test_valid(self, exp_name):
-    self.assertIsNone(experiments.check_invalid_name(exp_name))
+    self.assertIsNone(
+        experiments.check_invalid_name(exp_name, {'luci.use_realms'})
+    )
 
   @parameterized.expand([
       ('bad!name'),
@@ -25,7 +27,8 @@ class CheckInvalidExperimentNames(testing.AppengineTestCase):
   ])
   def test_bad_name(self, exp_name):
     self.assertTrue(
-        experiments.check_invalid_name(exp_name).startswith('does not match')
+        experiments.check_invalid_name(exp_name,
+                                       set()).startswith('does not match')
     )
 
   @parameterized.expand([
@@ -33,6 +36,7 @@ class CheckInvalidExperimentNames(testing.AppengineTestCase):
   ])
   def test_reserved_name(self, exp_name):
     self.assertTrue(
-        experiments.check_invalid_name(exp_name)
-        .startswith('unknown experiment has reserved prefix')
+        experiments.check_invalid_name(
+            exp_name, set()
+        ).startswith('unknown experiment has reserved prefix')
     )

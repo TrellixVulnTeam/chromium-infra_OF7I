@@ -28,9 +28,13 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class BaseTestCase(unittest.TestCase):
   func_name = None
+  kwargs = None
 
   def validate(self, data):
-    getattr(validation, self.func_name)(data)
+    if self.kwargs:
+      getattr(validation, self.func_name)(data, **self.kwargs)
+    else:
+      getattr(validation, self.func_name)(data)
 
   def assert_valid(self, data):
     self.validate(data)
@@ -176,7 +180,12 @@ class BuilderIDTests(BaseTestCase):
 class ScheduleBuildRequestTests(BaseTestCase):
   func_name = 'validate_schedule_build_request'
 
+  def setUp(self):
+    self.wke = set()
+    self.kwargs = {'well_known_experiments': self.wke}
+
   def test_valid(self):
+    self.wke.add('luci.use_realms')
     msg = rpc_pb2.ScheduleBuildRequest(
         builder=dict(project='chromium', bucket='try', builder='linux-rel'),
         gitiles_commit=dict(

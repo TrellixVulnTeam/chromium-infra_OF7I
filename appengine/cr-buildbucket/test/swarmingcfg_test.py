@@ -31,7 +31,7 @@ class ProjectCfgTest(testing.AppengineTestCase):
     mixins = {m.name: m for m in buildbucket_cfg.builder_mixins}
 
     ctx = config_component.validation.Context()
-    swarmingcfg.validate_project_cfg(swarming_cfg, mixins, True, ctx)
+    swarmingcfg.validate_project_cfg(swarming_cfg, set(), mixins, True, ctx)
     self.assert_errors(ctx, expected_errors)
 
   def assert_errors(self, ctx, expected_errors):

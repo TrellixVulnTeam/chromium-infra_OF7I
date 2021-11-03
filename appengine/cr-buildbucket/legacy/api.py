@@ -203,7 +203,9 @@ def validate_known_build_parameters(params):
       if 'pool:' in override_builder_cfg.dimensions:
         bad('swarming.override_builder_cfg cannot remove pool dimension')
       with ctx.prefix('swarming.override_builder_cfg parameter: '):
-        swarmingcfg.validate_builder_cfg(override_builder_cfg, [], False, ctx)
+        swarmingcfg.validate_builder_cfg(
+            override_builder_cfg, set(), [], False, ctx
+        )
 
     if swarming:
       bad('unrecognized keys in swarming param: %r', swarming.keys())
@@ -215,7 +217,7 @@ def validate_known_build_parameters(params):
         swarmingcfg.validate_recipe_property(k, v, ctx)
 
 
-def put_request_message_to_build_request(put_request):
+def put_request_message_to_build_request(put_request, well_known_experiments):
   """Converts PutRequest to BuildRequest.
 
   Raises errors.InvalidInputError if the put_request is invalid.
@@ -321,7 +323,7 @@ def put_request_message_to_build_request(put_request):
 
   # Validate the resulting v2 request before continuing.
   with _wrap_validation_error():
-    validation.validate_schedule_build_request(sbr)
+    validation.validate_schedule_build_request(sbr, well_known_experiments)
 
   return creation.BuildRequest(
       schedule_build_request=sbr,
@@ -548,7 +550,10 @@ class BuildBucketApi(remote.Service):
     """Creates a new build."""
     request.bucket = convert_bucket(request.bucket)
     check_scheduling_permissions([request.bucket])
-    build_req = put_request_message_to_build_request(request)
+    settings = config.get_settings_async().get_result()
+    build_req = put_request_message_to_build_request(
+        request, set(exp.name for exp in settings.experiment.experiments)
+    )
     build = creation.add_async(build_req).get_result()
     return build_to_response_message(build, include_lease_key=True)
 
@@ -593,11 +598,18 @@ class BuildBucketApi(remote.Service):
         for b in request.builds
     ]
 
+    settings = config.get_settings_async().get_result()
+    well_known_experiments = set(
+        exp.name for exp in settings.experiment.experiments
+    )
+
     # Try to convert each PutRequest to BuildRequest.
     build_reqs = []  # [(index, creation.BuildRequest])
     for i, b in enumerate(request.builds):
       try:
-        build_reqs.append((i, put_request_message_to_build_request(b)))
+        build_reqs.append((
+            i, put_request_message_to_build_request(b, well_known_experiments)
+        ))
       except errors.Error as ex:
         res.results[i].error = exception_to_error_message(ex)
 

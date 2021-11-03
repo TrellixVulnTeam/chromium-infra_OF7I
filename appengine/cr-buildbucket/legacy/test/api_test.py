@@ -1120,7 +1120,7 @@ class SwarmingTestCases(testing.AppengineTestCase):
         bucket='chromium/try',
         parameters_json=json.dumps(dict(changes=changes))
     )
-    build_req = api.put_request_message_to_build_request(put_req)
+    build_req = api.put_request_message_to_build_request(put_req, set())
     props = bbutil.struct_to_dict(build_req.schedule_build_request.properties)
     self.assertEqual(
         props['repository'], 'https://chromium.googlsource.com/chromium/src'
@@ -1136,7 +1136,7 @@ class SwarmingTestCases(testing.AppengineTestCase):
             )
         )
     )
-    build_req = api.put_request_message_to_build_request(put_req)
+    build_req = api.put_request_message_to_build_request(put_req, set())
 
     builder_cfg = project_config_pb2.Builder()
     build_req.override_builder_cfg(builder_cfg)
@@ -1157,7 +1157,7 @@ class SwarmingTestCases(testing.AppengineTestCase):
             }
         })
     )
-    build_req = api.put_request_message_to_build_request(put_req)
+    build_req = api.put_request_message_to_build_request(put_req, set())
 
     builder_cfg = project_config_pb2.Builder()
     builder_cfg.properties = json.dumps({
@@ -1194,7 +1194,7 @@ class SwarmingTestCases(testing.AppengineTestCase):
             }
         })
     )
-    build_req = api.put_request_message_to_build_request(put_req)
+    build_req = api.put_request_message_to_build_request(put_req, set())
 
     builder_cfg = project_config_pb2.Builder()
     builder_cfg.properties = json.dumps({
