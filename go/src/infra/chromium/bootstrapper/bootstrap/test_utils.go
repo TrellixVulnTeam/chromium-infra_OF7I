@@ -29,9 +29,15 @@ func setPropertiesFromJson(build *buildbucketpb.Build, propsJson map[string]stri
 	util.PanicOnError(exe.WriteProperties(build.Input.Properties, props))
 }
 
-func setBootstrapProperties(build *buildbucketpb.Build, propsJson string) {
+func setBootstrapPropertiesProperties(build *buildbucketpb.Build, propsJson string) {
 	setPropertiesFromJson(build, map[string]string{
-		"$bootstrap": propsJson,
+		"$bootstrap/properties": propsJson,
+	})
+}
+
+func setBootstrapExeProperties(build *buildbucketpb.Build, propsJson string) {
+	setPropertiesFromJson(build, map[string]string{
+		"$bootstrap/exe": propsJson,
 	})
 }
 

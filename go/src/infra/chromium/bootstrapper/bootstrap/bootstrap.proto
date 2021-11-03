@@ -21,8 +21,11 @@ message GitilesRepo {
   string project = 2;
 }
 
-// The input properties consumed by the bootstrapper binary
-message BootstrapProperties {
+// The input properties identifying the location that the bootstrapped
+// properties can be found
+//
+// Next ID: 4
+message BootstrapPropertiesProperties {
   // A project where the builder property files are retrieved from a specified
   // repository
   message TopLevelProject {
@@ -75,7 +78,12 @@ message BootstrapProperties {
   // Required, the path to the properties file, relative to the root of
   // the config repo
   string properties_file = 3;
+}
 
+// The input properties identifying the executable to bootstrap
+//
+// Next ID: 2
+message BootstrapExeProperties {
   // Required, the executable to bootstrap
-  buildbucket.v2.Executable exe = 4;
+  buildbucket.v2.Executable exe = 1;
 }

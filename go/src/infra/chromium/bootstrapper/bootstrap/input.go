@@ -5,6 +5,9 @@
 package bootstrap
 
 import (
+	"sort"
+	"strings"
+
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/led/ledcmd"
@@ -21,28 +24,57 @@ type Input struct {
 	commit          *buildbucketpb.GitilesCommit
 	changes         []*buildbucketpb.GerritChange
 	buildProperties *structpb.Struct
-	properties      *BootstrapProperties
+	propsProperties *BootstrapPropertiesProperties
+	exeProperties   *BootstrapExeProperties
 	casRecipeBundle *apipb.CASReference
 }
 
-// NewInput creates a new Input, returning an error if the $bootstrap property
-// on the build is missing or invalid.
+// NewInput creates a new Input, returning an error if the build input fails to
+// validate.
+//
+// The build input can fail to validate for the following reasons:
+// * The $bootstrap/properties property is not set.
+// * The $bootstrap/properties property is set, but not to a valid
+//   BootstrapPropertiesProperties message.
+// * The $bootstrap/exe property is not set.
+// * The $bootstrap/exe property is set, but not to a valid
+//   BootstrapExeProperties message.
 func NewInput(build *buildbucketpb.Build) (*Input, error) {
-	bootstrapProperties := &BootstrapProperties{}
-	casRecipeBundle := &apipb.CASReference{}
 	properties := build.GetInput().GetProperties()
 	if properties == nil {
 		properties = &structpb.Struct{}
 	}
-	if err := exe.ParseProperties(properties, map[string]interface{}{
-		"$bootstrap":                   bootstrapProperties,
-		ledcmd.CASRecipeBundleProperty: casRecipeBundle,
-	}); err != nil {
+
+	// Check for the presence of required properties
+	propsProperties := &BootstrapPropertiesProperties{}
+	exeProperties := &BootstrapExeProperties{}
+	propsToParse := map[string]interface{}{
+		"$bootstrap/properties": propsProperties,
+		"$bootstrap/exe":        exeProperties,
+	}
+	missingProps := make([]string, 0, len(propsToParse))
+	for k := range propsToParse {
+		if _, ok := properties.Fields[k]; !ok {
+			missingProps = append(missingProps, k)
+		}
+	}
+	if len(missingProps) != 0 {
+		sort.Strings(missingProps)
+		return nil, errors.Reason("the following required properties are not set: %s", strings.Join(missingProps, ", ")).Err()
+	}
+
+	casRecipeBundle := &apipb.CASReference{}
+	propsToParse[ledcmd.CASRecipeBundleProperty] = casRecipeBundle
+
+	if err := exe.ParseProperties(properties, propsToParse); err != nil {
 		return nil, errors.Annotate(err, "failed to parse properties").Err()
 	}
 
-	if err := validate(bootstrapProperties, "$bootstrap"); err != nil {
-		return nil, errors.Annotate(err, "failed to validate $bootstrap property").Err()
+	if err := validate(propsProperties, "$bootstrap/properties"); err != nil {
+		return nil, errors.Annotate(err, "failed to validate $bootstrap/properties property").Err()
+	}
+	if err := validate(exeProperties, "$bootstrap/exe"); err != nil {
+		return nil, errors.Annotate(err, "failed to validate $bootstrap/exe property").Err()
 	}
 
 	if casRecipeBundle.Digest == nil {
@@ -57,14 +89,19 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 	}
 
 	properties = proto.Clone(properties).(*structpb.Struct)
+	for k := range propsToParse {
+		delete(properties.Fields, k)
+	}
+	// TODO(gbeaty) Remove this once the builders no longer set the
+	// $bootstrap property
 	delete(properties.Fields, "$bootstrap")
-	delete(properties.Fields, "led_cas_recipe_bundle")
 
 	input := &Input{
 		commit:          commit,
 		changes:         changes,
 		buildProperties: properties,
-		properties:      bootstrapProperties,
+		propsProperties: propsProperties,
+		exeProperties:   exeProperties,
 		casRecipeBundle: casRecipeBundle,
 	}
 	return input, nil

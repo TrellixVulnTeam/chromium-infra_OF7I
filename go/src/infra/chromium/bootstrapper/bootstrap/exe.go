@@ -34,23 +34,23 @@ func (b *ExeBootstrapper) GetBootstrappedExeInfo(ctx context.Context, input *Inp
 			Cas: input.casRecipeBundle,
 		}
 	} else {
-		logging.Infof(ctx, "resolving CIPD package %s@%s", input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
-		pin, err := b.cipd.ResolveVersion(ctx, input.properties.Exe.CipdPackage, input.properties.Exe.CipdVersion)
+		logging.Infof(ctx, "resolving CIPD package %s@%s", input.exeProperties.Exe.CipdPackage, input.exeProperties.Exe.CipdVersion)
+		pin, err := b.cipd.ResolveVersion(ctx, input.exeProperties.Exe.CipdPackage, input.exeProperties.Exe.CipdVersion)
 		if err != nil {
 			return nil, err
 		}
 		source = &BootstrappedExe_Cipd{
 			Cipd: &Cipd{
 				Server:           chromeinfra.CIPDServiceURL,
-				Package:          input.properties.Exe.CipdPackage,
-				RequestedVersion: input.properties.Exe.CipdVersion,
+				Package:          input.exeProperties.Exe.CipdPackage,
+				RequestedVersion: input.exeProperties.Exe.CipdVersion,
 				ActualVersion:    pin.InstanceID,
 			},
 		}
 	}
 	return &BootstrappedExe{
 		Source: source,
-		Cmd:    input.properties.Exe.Cmd,
+		Cmd:    input.exeProperties.Exe.Cmd,
 	}, nil
 }
 

@@ -78,22 +78,10 @@ type BootstrapConfig struct {
 
 // GetBootstrapConfig does the necessary work to extract the properties from the
 // appropriate version of the properties file.
-//
-// The properties will be composed of multiple elements:
-//   * The properties read from the properties file identified by the
-//     config_project and properties_file fields of the build's $bootstrap
-//     property.
-//   * The $build/chromium_bootstrap property will be set with information about
-//     the bootstrapping process that the bootstrapped executable can use to
-//     ensure it operates in a manner that is consistent with the bootstrapping
-//     process. See chromium_bootstrap.proto for more information.
-//   * The build's input properties with the $bootstrap property removed. Values
-//     specified in the build's properties override properties in the properties
-//     file.
 func (b *PropertyBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input) (*BootstrapConfig, error) {
 	var config *BootstrapConfig
-	switch x := input.properties.ConfigProject.(type) {
-	case *BootstrapProperties_TopLevelProject_:
+	switch x := input.propsProperties.ConfigProject.(type) {
+	case *BootstrapPropertiesProperties_TopLevelProject_:
 		var err error
 		if config, err = b.getTopLevelConfig(ctx, input, x.TopLevelProject); err != nil {
 			return nil, err
@@ -108,14 +96,14 @@ func (b *PropertyBootstrapper) GetBootstrapConfig(ctx context.Context, input *In
 	}
 
 	config.buildProperties = input.buildProperties
-	if err := b.getPropertiesFromFile(ctx, input.properties.PropertiesFile, config); err != nil {
-		return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.properties.PropertiesFile).Err()
+	if err := b.getPropertiesFromFile(ctx, input.propsProperties.PropertiesFile, config); err != nil {
+		return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.propsProperties.PropertiesFile).Err()
 	}
 
 	return config, nil
 }
 
-func (b *PropertyBootstrapper) getTopLevelConfig(ctx context.Context, input *Input, topLevel *BootstrapProperties_TopLevelProject) (*BootstrapConfig, error) {
+func (b *PropertyBootstrapper) getTopLevelConfig(ctx context.Context, input *Input, topLevel *BootstrapPropertiesProperties_TopLevelProject) (*BootstrapConfig, error) {
 	ref := topLevel.Ref
 	change := findMatchingGerritChange(input.changes, topLevel.Repo)
 	if change != nil {
@@ -237,15 +225,15 @@ func convertGerritHostToGitilesHost(host string) string {
 //
 // The properties will be composed of multiple elements:
 //   * The properties read from the properties file identified by the
-//     config_project and properties_file fields of the build's $bootstrap
-//     property.
+//     config_project and properties_file fields of the build's
+//     $bootstrap/properties property.
 //   * The $build/chromium_bootstrap property will be set with information about
 //     the bootstrapping process that the bootstrapped executable can use to
 //     ensure it operates in a manner that is consistent with the bootstrapping
 //     process. See chromium_bootstrap.proto for more information.
-//   * The build's input properties with the $bootstrap property removed. Values
-//     specified in the build's properties override properties in the properties
-//     file.
+//   * The build's input properties with the $bootstrap/properties and
+//     $bootstrap/exe properties removed. Values specified in the build's
+//     properties override properties in the properties file.
 func (c *BootstrapConfig) GetProperties(bootstrappedExe *BootstrappedExe) (*structpb.Struct, error) {
 	properties := proto.Clone(c.builderProperties).(*structpb.Struct)
 

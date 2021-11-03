@@ -115,45 +115,31 @@ func TestValidate(t *testing.T) {
 	})
 }
 
-func createBootstrapProperties(propsJson []byte) *BootstrapProperties {
-	props := &BootstrapProperties{}
+func createBootstrapPropertiesProperties(propsJson []byte) *BootstrapPropertiesProperties {
+	props := &BootstrapPropertiesProperties{}
 	PanicOnError(protojson.Unmarshal(propsJson, props))
 	return props
 }
 
-func TestBootstrapProtoValidation(t *testing.T) {
+func TestBootstrapPropertiesPropertiesValidation(t *testing.T) {
 	t.Parallel()
 
 	Convey("validate", t, func() {
 
 		Convey("fails for unset required top-level fields", func() {
-			props := createBootstrapProperties([]byte("{}"))
+			props := createBootstrapPropertiesProperties([]byte("{}"))
 
 			err := validate(props, "$test")
 
 			So(err, ShouldErrLike,
 				"none of the config_project fields in $test is set",
-				"$test.properties_file is not set",
-				"$test.exe is not set")
-		})
-
-		Convey("fails for unset required fields in exe", func() {
-			props := createBootstrapProperties([]byte(`{
-				"exe": {}
-			}`))
-
-			err := validate(props, "$test")
-
-			So(err, ShouldErrLike,
-				"$test.exe.cipd_package is not set",
-				"$test.exe.cipd_version is not set",
-				"$test.exe.cmd is not set")
+				"$test.properties_file is not set")
 		})
 
 		Convey("with a top level project", func() {
 
 			Convey("fails for unset required fields in top_level_project", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 					"top_level_project": {}
 				}`))
 
@@ -165,7 +151,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			})
 
 			Convey("fails for unset required fields in top_level_project.repo", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"top_level_project": {
 							"repo": {}
 						}
@@ -179,7 +165,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			})
 
 			Convey("succeeds for valid properties", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"top_level_project": {
 							"repo": {
 								"host": "chromium.googlesource.com",
@@ -187,12 +173,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 							},
 							"ref": "refs/heads/top-level"
 						},
-						"properties_file": "infra/config/bucket/builder/properties.textpb",
-						"exe": {
-							"cipd_package": "fake-package",
-							"cipd_version": "fake-version",
-							"cmd": ["fake-cmd"]
-						}
+						"properties_file": "infra/config/bucket/builder/properties.textpb"
 					}`))
 
 				err := validate(props, "$test")
@@ -204,7 +185,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 		Convey("with a dependency project", func() {
 
 			Convey("fails for unset required fields in dependency_project", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"dependency_project": {}
 					}`))
 
@@ -218,7 +199,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			})
 
 			Convey("fails for unset required fields in dependency_project.top_level_repo", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"dependency_project": {
 							"top_level_repo": {}
 						}
@@ -232,7 +213,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			})
 
 			Convey("fails for unset required fields in dependency_project.config_repo", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"dependency_project": {
 							"config_repo": {}
 						}
@@ -246,7 +227,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 			})
 
 			Convey("succeeds for valid properties", func() {
-				props := createBootstrapProperties([]byte(`{
+				props := createBootstrapPropertiesProperties([]byte(`{
 						"dependency_project": {
 							"top_level_repo": {
 								"host": "chromium.googlesource.com",
@@ -259,12 +240,7 @@ func TestBootstrapProtoValidation(t *testing.T) {
 							},
 							"config_repo_path": "path/to/dependency"
 						},
-						"properties_file": "infra/config/generated/builders/bucket/builder/properties.textpb",
-						"exe": {
-							"cipd_package": "fake-package",
-							"cipd_version": "fake-version",
-							"cmd": ["fake-cmd"]
-						}
+						"properties_file": "infra/config/generated/builders/bucket/builder/properties.textpb"
 					}`))
 
 				err := validate(props, "$test")
@@ -272,6 +248,55 @@ func TestBootstrapProtoValidation(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
+		})
+
+	})
+}
+
+func createBootstrapExeProperties(propsJson []byte) *BootstrapExeProperties {
+	props := &BootstrapExeProperties{}
+	PanicOnError(protojson.Unmarshal(propsJson, props))
+	return props
+}
+
+func TestBootstrapExePropertiesValidation(t *testing.T) {
+	t.Parallel()
+
+	Convey("validate", t, func() {
+
+		Convey("fails for unset required top-level fields", func() {
+			props := createBootstrapExeProperties([]byte("{}"))
+
+			err := validate(props, "$test")
+
+			So(err, ShouldErrLike, "$test.exe is not set")
+		})
+
+		Convey("fails for unset required fields in exe", func() {
+			props := createBootstrapExeProperties([]byte(`{
+				"exe": {}
+			}`))
+
+			err := validate(props, "$test")
+
+			So(err, ShouldErrLike,
+				"$test.exe.cipd_package is not set",
+				"$test.exe.cipd_version is not set",
+				"$test.exe.cmd is not set")
+		})
+
+		Convey("succeeds for valid properties", func() {
+			props := createBootstrapExeProperties([]byte(`{
+				"exe": {
+					"cipd_package": "fake-package",
+					"cipd_version": "fake-version",
+					"cmd": ["fake-cmd"]
+				}
+			}`))
+
+			err := validate(props, "$test")
+
+			So(err, ShouldBeNil)
 		})
 
 	})

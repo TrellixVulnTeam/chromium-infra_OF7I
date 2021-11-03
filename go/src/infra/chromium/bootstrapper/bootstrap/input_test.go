@@ -23,33 +23,43 @@ func TestInput(t *testing.T) {
 			},
 		}
 
-		Convey("fails for missing $bootstrap", func() {
+		Convey("fails if no required bootstrap properties are not set", func() {
 			input, err := NewInput(build)
 
-			So(err, ShouldErrLike, "none of the config_project fields in $bootstrap is set")
+			So(err, ShouldErrLike, "the following required properties are not set: $bootstrap/exe, $bootstrap/properties")
 			So(input, ShouldBeNil)
 		})
 
-		Convey("fails for incorrectly typed $bootstrap", func() {
-			setBootstrapProperties(build, `{"foo": "bar"}`)
+		Convey("fails validating $bootstrap/properties", func() {
+			setBootstrapExeProperties(build, `{
+				"exe": {
+					"cipd_package": "fake-package",
+					"cipd_version": "fake-version",
+					"cmd": ["fake-exe"]
+				}
+			}`)
 
-			input, err := NewInput(build)
+			Convey("for incorrectly typed $bootstrap/properties", func() {
+				setBootstrapPropertiesProperties(build, `{"foo": "bar"}`)
 
-			So(err, ShouldErrLike, `unknown field "foo"`)
-			So(input, ShouldBeNil)
+				input, err := NewInput(build)
+
+				So(err, ShouldErrLike, `unknown field "foo"`)
+				So(input, ShouldBeNil)
+			})
+
+			Convey("for invalid $bootstrap/properties", func() {
+				setBootstrapPropertiesProperties(build, "{}")
+				input, err := NewInput(build)
+
+				So(err, ShouldErrLike, "none of the config_project fields in $bootstrap/properties is set")
+				So(input, ShouldBeNil)
+			})
+
 		})
 
-		Convey("fails for invalid $bootstrap", func() {
-			setBootstrapProperties(build, "{}")
-
-			input, err := NewInput(build)
-
-			So(err, ShouldErrLike, "none of the config_project fields in $bootstrap is set")
-			So(input, ShouldBeNil)
-		})
-
-		Convey("succeeds", func() {
-			setBootstrapProperties(build, `{
+		Convey("fails validating $bootstrap/exe", func() {
+			setBootstrapPropertiesProperties(build, `{
 				"top_level_project": {
 					"repo": {
 						"host": "chromium.googlesource.com",
@@ -57,7 +67,41 @@ func TestInput(t *testing.T) {
 					},
 					"ref": "refs/heads/top-level"
 				},
-				"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+				"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
+			}`)
+
+			Convey("for incorrectly typed $bootstrap/exe", func() {
+				setBootstrapExeProperties(build, `{"foo": "bar"}`)
+
+				input, err := NewInput(build)
+
+				So(err, ShouldErrLike, `unknown field "foo"`)
+				So(input, ShouldBeNil)
+			})
+
+			Convey("for invalid $bootstrap/exe", func() {
+				setBootstrapExeProperties(build, "{}")
+
+				input, err := NewInput(build)
+
+				So(err, ShouldErrLike, "$bootstrap/exe.exe is not set")
+				So(input, ShouldBeNil)
+			})
+
+		})
+
+		Convey("succeeds", func() {
+			setBootstrapPropertiesProperties(build, `{
+				"top_level_project": {
+					"repo": {
+						"host": "chromium.googlesource.com",
+						"project": "top/level"
+					},
+					"ref": "refs/heads/top-level"
+				},
+				"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
+			}`)
+			setBootstrapExeProperties(build, `{
 				"exe": {
 					"cipd_package": "fake-package",
 					"cipd_version": "fake-version",
@@ -66,7 +110,7 @@ func TestInput(t *testing.T) {
 			}`)
 			build.Input.Properties.Fields["foo"] = structpb.NewStringValue("bar")
 
-			Convey("for well-formed $bootstrap", func() {
+			Convey("for well-formed properties", func() {
 				input, err := NewInput(build)
 
 				So(err, ShouldBeNil)
@@ -75,7 +119,7 @@ func TestInput(t *testing.T) {
 				So(input.buildProperties, ShouldResembleProtoJSON, `{
 					"foo": "bar"
 				}`)
-				So(input.properties, ShouldResembleProtoJSON, `{
+				So(input.propsProperties, ShouldResembleProtoJSON, `{
 					"top_level_project": {
 						"repo": {
 							"host": "chromium.googlesource.com",
@@ -83,7 +127,9 @@ func TestInput(t *testing.T) {
 						},
 						"ref": "refs/heads/top-level"
 					},
-					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
+				}`)
+				So(input.exeProperties, ShouldResembleProtoJSON, `{
 					"exe": {
 						"cipd_package": "fake-package",
 						"cipd_version": "fake-version",
@@ -92,7 +138,8 @@ func TestInput(t *testing.T) {
 				}`)
 				So(input.casRecipeBundle, ShouldBeNil)
 				// Make sure the build wasn't modified
-				So(build.Input.Properties.Fields, ShouldContainKey, "$bootstrap")
+				So(build.Input.Properties.Fields, ShouldContainKey, "$bootstrap/properties")
+				So(build.Input.Properties.Fields, ShouldContainKey, "$bootstrap/exe")
 			})
 
 			Convey("with commit set if build has commit", func() {

@@ -110,7 +110,7 @@ func TestPerformBootstrap(t *testing.T) {
 		input := createInput(`{
 			"input": {
 				"properties": {
-					"$bootstrap": {
+					"$bootstrap/properties": {
 						"top_level_project": {
 							"repo": {
 								"host": "fake-host",
@@ -118,7 +118,9 @@ func TestPerformBootstrap(t *testing.T) {
 							},
 							"ref": "fake-ref"
 						},
-						"properties_file": "fake-properties-file",
+						"properties_file": "fake-properties-file"
+					},
+					"$bootstrap/exe": {
 						"exe": {
 							"cipd_package": "fake-package",
 							"cipd_version": "fake-version",

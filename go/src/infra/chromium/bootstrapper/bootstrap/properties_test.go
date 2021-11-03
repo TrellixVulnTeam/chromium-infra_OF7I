@@ -54,7 +54,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 			},
 		}))
 
-		setBootstrapProperties(build, `{
+		setBootstrapPropertiesProperties(build, `{
 			"top_level_project": {
 				"repo": {
 					"host": "chromium.googlesource.com",
@@ -62,7 +62,9 @@ func TestGetBootstrapConfig(t *testing.T) {
 				},
 				"ref": "refs/heads/top-level"
 			},
-			"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
+			"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
+		}`)
+		setBootstrapExeProperties(build, `{
 			"exe": {
 				"cipd_package": "fake-package",
 				"cipd_version": "fake-version",
@@ -234,7 +236,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 						"infra/config/fake-bucket/fake-builder/properties.textpb": strPtr(`{}`),
 					},
 				}
-				setBootstrapProperties(build, `{
+				setBootstrapPropertiesProperties(build, `{
 					"top_level_project": {
 						"repo": {
 							"host": "chromium.googlesource.com",
@@ -242,12 +244,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 						},
 						"ref": "refs/heads/top-level"
 					},
-					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
-					"exe": {
-						"cipd_package": "fake-package",
-						"cipd_version": "fake-version",
-						"cmd": ["fake-exe"]
-					}
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
 				}`)
 				build.Input.Properties.Fields["test_property"] = structpb.NewStringValue("foo")
 				input := getInput(build)
@@ -262,7 +259,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 
 			Convey("for top-level project", func() {
 
-				setBootstrapProperties(build, `{
+				setBootstrapPropertiesProperties(build, `{
 					"top_level_project": {
 						"repo": {
 							"host": "chromium.googlesource.com",
@@ -270,12 +267,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 						},
 						"ref": "refs/heads/top-level"
 					},
-					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb",
-					"exe": {
-						"cipd_package": "fake-package",
-						"cipd_version": "fake-version",
-						"cmd": ["fake-exe"]
-					}
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
 				}`)
 
 				Convey("returns config with properties from top level ref when no commit or change for project", func() {

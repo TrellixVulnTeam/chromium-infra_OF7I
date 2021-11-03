@@ -46,7 +46,7 @@ func TestGetBootstrappedExeInfo(t *testing.T) {
 				Properties: &structpb.Struct{},
 			},
 		}
-		setBootstrapProperties(build, `{
+		setBootstrapPropertiesProperties(build, `{
 			"top_level_project": {
 				"repo": {
 					"host": "fake-host",
@@ -54,7 +54,9 @@ func TestGetBootstrappedExeInfo(t *testing.T) {
 				},
 				"ref": "fake-ref"
 			},
-			"properties_file": "fake-properties-file",
+			"properties_file": "fake-properties-file"
+		}`)
+		setBootstrapExeProperties(build, `{
 			"exe": {
 				"cipd_package": "fake-package",
 				"cipd_version": "fake-ref",

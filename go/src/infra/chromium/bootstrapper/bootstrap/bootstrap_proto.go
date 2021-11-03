@@ -87,12 +87,12 @@ func (x *GitilesRepo) validate(v *validator) {
 	}
 }
 
-func (x *BootstrapProperties) validate(v *validator) {
+func (x *BootstrapPropertiesProperties) validate(v *validator) {
 	switch config := x.ConfigProject.(type) {
-	case *BootstrapProperties_TopLevelProject_:
+	case *BootstrapPropertiesProperties_TopLevelProject_:
 		v.validate(config, "top_level_project")
 
-	case *BootstrapProperties_DependencyProject_:
+	case *BootstrapPropertiesProperties_DependencyProject_:
 		v.validate(config, "dependency_project")
 
 	case nil:
@@ -104,22 +104,9 @@ func (x *BootstrapProperties) validate(v *validator) {
 	if x.PropertiesFile == "" {
 		v.errorf("${}.properties_file is not set")
 	}
-	if x.Exe == nil {
-		v.errorf("${}.exe is not set")
-	} else {
-		if x.Exe.CipdPackage == "" {
-			v.errorf("${}.exe.cipd_package is not set")
-		}
-		if x.Exe.CipdVersion == "" {
-			v.errorf("${}.exe.cipd_version is not set")
-		}
-		if len(x.Exe.Cmd) == 0 {
-			v.errorf("${}.exe.cmd is not set")
-		}
-	}
 }
 
-func (x *BootstrapProperties_TopLevelProject_) validate(v *validator) {
+func (x *BootstrapPropertiesProperties_TopLevelProject_) validate(v *validator) {
 	t := x.TopLevelProject
 	if t.Repo == nil {
 		v.errorf("${}.repo is not set")
@@ -131,7 +118,7 @@ func (x *BootstrapProperties_TopLevelProject_) validate(v *validator) {
 	}
 }
 
-func (x *BootstrapProperties_DependencyProject_) validate(v *validator) {
+func (x *BootstrapPropertiesProperties_DependencyProject_) validate(v *validator) {
 	d := x.DependencyProject
 	if d.TopLevelRepo == nil {
 		v.errorf("${}.top_level_repo is not set")
@@ -148,5 +135,21 @@ func (x *BootstrapProperties_DependencyProject_) validate(v *validator) {
 	}
 	if d.ConfigRepoPath == "" {
 		v.errorf("${}.config_repo_path is not set")
+	}
+}
+
+func (x *BootstrapExeProperties) validate(v *validator) {
+	if x.Exe == nil {
+		v.errorf("${}.exe is not set")
+	} else {
+		if x.Exe.CipdPackage == "" {
+			v.errorf("${}.exe.cipd_package is not set")
+		}
+		if x.Exe.CipdVersion == "" {
+			v.errorf("${}.exe.cipd_version is not set")
+		}
+		if len(x.Exe.Cmd) == 0 {
+			v.errorf("${}.exe.cmd is not set")
+		}
 	}
 }
