@@ -314,9 +314,10 @@ const defaultConfig = `
 					"conditions": [
 						"is_not_servo_v3"
 					],
-					"exec_name":"sample_pass",
+					"exec_name":"servo_topology_update",
 					"exec_extra_args": [
-						"min_child:1"
+						"min_child:1",
+						"persist_topology:true"
 					]
 				},
 				"servo_topology_dual_setup": {
@@ -324,9 +325,10 @@ const defaultConfig = `
 						"is_not_servo_v3",
 						"is_dual_setup"
 					],
-					"exec_name":"sample_pass",
+					"exec_name":"servo_topology_update",
 					"exec_extra_args": [
-						"min_child:2"
+						"min_child:2",
+						"persist_topology:true"
 					],
 					"recovery_actions": [
 						"servod_restart_dut"
@@ -512,6 +514,9 @@ const defaultConfig = `
 					"exec_name":"sample_pass"
 				},
 				"is_dual_setup": {
+					"exec_name":"sample_pass"
+				},
+				"is_not_dual_setup": {
 					"exec_name":"sample_pass"
 				},
 				"servod_set_main_device": {

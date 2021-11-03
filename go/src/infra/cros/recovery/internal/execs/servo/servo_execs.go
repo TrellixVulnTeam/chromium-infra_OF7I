@@ -7,6 +7,7 @@ package servo
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -27,6 +28,25 @@ const (
 	// drives. The USB-drive path will be attached to it when
 	// badblocks needs to be executed on a drive.
 	badBlocksCommandPrefix = "badblocks -w -e 100 -b 4096 -t random %s"
+
+	// This parameter represents the configuration for minimum number
+	// of child servo devices to be verified-for.
+	topologyMinChildArg = "min_child"
+
+	// This parameter represents the configuration to control whether
+	// the servo topology that read during servo topology verification
+	// is persisted for use by other actions.
+	persistTopologyArg = "persist_topology"
+
+	// The default value that will be used to drive whether or not the
+	// topology needs to be persisted. A value that is passed from the
+	// configuration will over-ride this.
+	persistTopologyDefaultValue = false
+
+	// The default value that will be used for validating the number
+	// of servo children in the servo topology. A value that is passed
+	// from the configuration will over-ride this.
+	topologyMinChildCountDefaultValue = 1
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -169,11 +189,59 @@ func isRootServoPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs
 	if err != nil {
 		return errors.Annotate(err, "is root servo present").Err()
 	}
-	if !rootServo.IsGood(ctx) {
+	if !topology.IsItemGood(ctx, rootServo) {
 		log.Info(ctx, "is servo root present: no good root servo found")
 		return errors.Reason("is servo root present: no good root servo found").Err()
 	}
 	log.Info(ctx, "is servo root present: success")
+	return nil
+}
+
+// Verify that the root servo is enumerated/present on the host.
+func servoTopologyUpdate(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	runner := args.NewRunner(args.DUT.ServoHost.Name)
+	servoTopology, err := topology.RetrieveServoTopology(ctx, runner, args.DUT.ServoHost.Servo.SerialNumber)
+	if err != nil {
+		return errors.Annotate(err, "servo verify topology").Err()
+	}
+	if servoTopology.Root == nil {
+		return errors.Reason("servo verify topology: root servo not found").Err()
+	}
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	minChildCount := topologyMinChildCountDefaultValue
+	persistTopology := persistTopologyDefaultValue
+	for k, v := range argsMap {
+		log.Debug(ctx, "Servo Topology Update: k:%q, v:%q", k, v)
+		if v != "" {
+			// a non-empty value string implies that the corresponding
+			// action arg was parsed correctly.
+			switch k {
+			case topologyMinChildArg:
+				// If the configuration contains any min_child parameters,
+				// it will be used for validation here. If no such
+				// argument is present, we will not conduct any validation
+				// of number of child servo based min_child.
+				minChildCount, err = strconv.Atoi(v)
+				if err != nil {
+					return errors.Reason("servo verify topology: malformed min child config in action arg %q:%q", k, v).Err()
+				}
+			case persistTopologyArg:
+				persistTopology, err = strconv.ParseBool(v)
+				if err != nil {
+					return errors.Reason("servo verify topology: malformed update servo config in action arg %q:%q", k, v).Err()
+				}
+			}
+		}
+	}
+	if len(servoTopology.Children) < minChildCount {
+		return errors.Reason("servo verify topology: expected a min of %d children, found %d", minChildCount, len(servoTopology.Children)).Err()
+	}
+	if persistTopology {
+		// This verified topology will be used in all subsequent
+		// action that need the servo topology. This will avoid time
+		// with re-fetching the topology.
+		args.DUT.ServoHost.ServoTopology = servoTopology
+	}
 	return nil
 }
 
@@ -184,4 +252,5 @@ func init() {
 	execs.Register("servo_detect_usbkey", servoDetectUSBKey)
 	execs.Register("servo_audit_usbkey", servoAuditUSBKey)
 	execs.Register("servo_v4_root_present", isRootServoPresentExec)
+	execs.Register("servo_topology_update", servoTopologyUpdate)
 }

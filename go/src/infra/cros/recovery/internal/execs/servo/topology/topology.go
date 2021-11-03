@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
 const (
@@ -51,6 +53,16 @@ const (
 	SERVO_C2D2_TYPE        = "c2d2"
 	SERVO_SERVO_MICRO_TYPE = "servo_micro"
 	SERVO_SWEETBERRY_TYPE  = "sweetberry"
+
+	// This character delimits the prefix that represents base-name of
+	// servo hub path. For example, given the root servo base name
+	// '1-3.2.1', the prefix '1-3.2' represents the servo hub. The
+	// character '.' delineates this prefix within the complete base
+	// name.
+	servoTailSplitter = "."
+
+	// This command finds the complete path of files named 'serial'
+	serialFindCMD = "find %s/* -name serial"
 )
 
 // Mapping of various vid-pid values to servo types.
@@ -63,40 +75,9 @@ var vidPidServoTypes = map[string]string{
 	"18d1:5020": SERVO_SWEETBERRY_TYPE,
 }
 
-// ConnectedServo represents a servo device that is connected to a
-// servo-host.
-type ConnectedServo struct {
-	// This is the complete path on the file system for the servo
-	// device.
-	path string
-	// This is the type of product for servo, such as Servo V4.
-	product string
-	// This is the serial number for the servo device.
-	serial string
-	// This is the type of device for servo, such as servo_v4.
-	deviceType string
-	// This is the concatenation of vendor-ID and product-ID values
-	// for the servo device.
-	vidPid string
-	// This is the complete hub path for a servo device.
-	hubPath string
-	// This is the version of servo device.
-	version string
-}
-
-// String representation of ConnectedServo instance.
-func (c *ConnectedServo) String() string {
-	return fmt.Sprintf("path %q, product %q, serial %q, deviceType %q, vidPid %q, hubPath %q, version %q", c.path, c.product, c.serial, c.deviceType, c.vidPid, c.hubPath, c.version)
-}
-
-// IsGood checks whether a ConnectedServo has minimum required data.
-func (c *ConnectedServo) IsGood(ctx context.Context) bool {
-	return c.serial != "" && c.deviceType != "" && c.hubPath != ""
-}
-
-// GetRootServo fetches the root-servo for a given servo serial
-// number.
-func GetRootServo(ctx context.Context, runner execs.Runner, servoSerial string) (*ConnectedServo, error) {
+// GetRootServo fetches the ServoTopologyItem representing the
+// root-servo for a given servo serial number.
+func GetRootServo(ctx context.Context, runner execs.Runner, servoSerial string) (*tlw.ServoTopologyItem, error) {
 	devicePath, err := getRootServoPath(ctx, runner, servoSerial)
 	if err != nil {
 		return nil, errors.Annotate(err, "get root servo").Err()
@@ -104,37 +85,37 @@ func GetRootServo(ctx context.Context, runner execs.Runner, servoSerial string) 
 	return readDeviceInfo(ctx, runner, devicePath), nil
 }
 
-// readDeviceInfo retrieves the ConnectedServo structure representing the
-// servo for the passed devicePath
-func readDeviceInfo(ctx context.Context, runner execs.Runner, devicePath string) *ConnectedServo {
+// readDeviceInfo retrieves the ServoTopologyItem structure
+// representing the servo for the passed devicePath
+func readDeviceInfo(ctx context.Context, runner execs.Runner, devicePath string) *tlw.ServoTopologyItem {
 	var err error
-	servo := &ConnectedServo{
-		path: devicePath,
+	servo := &tlw.ServoTopologyItem{
+		SysfsPath: devicePath,
 	}
-	servo.serial, err = readServoFs(ctx, runner, servo.path, serialNumberFileName)
+	servo.Serial, err = readServoFs(ctx, runner, devicePath, serialNumberFileName)
 	if err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	servo.vidPid, err = fsReadVidPid(ctx, runner, servo.path)
+	vidPid, err := fsReadVidPid(ctx, runner, devicePath)
 	if err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	if err = servo.convertVidPidToServoType(); err != nil {
+	if servo.Type, err = convertVidPidToServoType(vidPid); err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	servo.hubPath, err = readServoFs(ctx, runner, servo.path, servoHubFileName)
+	servo.UsbHubPort, err = readServoFs(ctx, runner, devicePath, servoHubFileName)
 	if err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	servo.version, err = readServoFs(ctx, runner, servo.path, configurationFileName)
+	servo.FwVersion, err = readServoFs(ctx, runner, devicePath, configurationFileName)
 	if err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	servo.product, err = readServoFs(ctx, runner, servo.path, productFileName)
+	servo.SysfsProduct, err = readServoFs(ctx, runner, devicePath, productFileName)
 	if err != nil {
 		log.Debug(ctx, "Read Device Info: %q", err)
 	}
-	log.Debug(ctx, "Read Device Info: servoPath %q, servoSerial %q, servoVidPid %q, servoType %q, servoHub %q, servoVersion %q, servoProduct %q", servo.path, servo.serial, servo.vidPid, servo.deviceType, servo.hubPath, servo.version, servo.product)
+	log.Debug(ctx, "Read Device Info: servo %q", ConvertServoTopologyItemToString(servo))
 	return servo
 }
 
@@ -180,14 +161,95 @@ func fsReadVidPid(ctx context.Context, runner execs.Runner, servoPath string) (s
 
 // Get the value of servo type based on the a fixed map of vid-pid to
 // serial type string.
-func (c *ConnectedServo) convertVidPidToServoType() error {
-	if c.vidPid == "" {
-		return errors.Reason("convert vid pid to servo type: vidPid is empty").Err()
+func convertVidPidToServoType(vidPid string) (string, error) {
+	if vidPid == "" {
+		return "", errors.Reason("convert vid pid to servo type: vidPid is empty").Err()
 	}
-	var ok bool
-	c.deviceType, ok = vidPidServoTypes[c.vidPid]
+	deviceType, ok := vidPidServoTypes[vidPid]
 	if !ok {
-		return errors.Reason("convert vid pid to servo type: servo type for vidPid %q does not exist", c.vidPid).Err()
+		return "", errors.Reason("convert vid pid to servo type: servo type for vidPid %q does not exist", vidPid).Err()
 	}
-	return nil
+	return deviceType, nil
+}
+
+// Retrieve the servo topology consisting of root servo and servo
+// children on a host.
+func RetrieveServoTopology(ctx context.Context, runner execs.Runner, servoSerial string) (*tlw.ServoTopology, error) {
+	servoTopology := &tlw.ServoTopology{}
+	devices, err := ListOfDevices(ctx, runner, servoSerial)
+	if err != nil {
+		errors.Annotate(err, "retrieve servo topology").Err()
+	}
+	for _, d := range devices {
+		if IsItemGood(ctx, d) {
+			if d.Serial == servoSerial {
+				servoTopology.Root = d
+			} else {
+				servoTopology.Children = append(servoTopology.Children, d)
+			}
+		} else {
+			log.Info(ctx, "Retrieve Servo Topology: %q is missing some data", d)
+		}
+	}
+	return servoTopology, nil
+}
+
+// ListOfDevices returns a slice of ServoTopologyItem objects that
+// represent all the servo devices connected to the servo host.
+func ListOfDevices(ctx context.Context, runner execs.Runner, servoSerial string) ([]*tlw.ServoTopologyItem, error) {
+	devices := []*tlw.ServoTopologyItem{}
+	servoHub, err := findServoHub(ctx, runner, servoSerial)
+	if err != nil {
+		return nil, errors.Annotate(err, "retrieve servo topology").Err()
+	}
+	// Find all serial files of devices under servo-hub. Each device
+	// has to have a serial number.
+	v, err := runner(ctx, fmt.Sprintf(serialFindCMD, servoHub))
+	if err != nil {
+		return nil, errors.Annotate(err, "retrieve servo topology").Err()
+	}
+	for _, device := range strings.Split(v, "\n") {
+		devices = append(devices, readDeviceInfo(ctx, runner, filepath.Dir(device)))
+	}
+	return devices, nil
+}
+
+// Find the servo hub path. This is the directory that contains
+// details within subdirectries about all available servo devices.
+// The root servo is connected directly to the servo-hub. To find
+// other servos connected to the hub we need find the path to the
+// servo-hub. The servod-tool always return direct path to the servo,
+// such as:
+//    /sys/bus/usb/devices/1-3.2.1
+//    base path:  /sys/bus/usb/devices/
+//    root-servo:  1-3.2.1
+// The alternative path to the same root servo is
+// '/sys/bus/usb/devices/1-3.2/1-3.2.1/' where '1-3.2' is path to
+// servo-hub. To extract path to servo-hub, remove last digit of the
+// port where root servo connects to the servo-hub.
+//    base path:  /sys/bus/usb/devices/
+//    servo-hub:  1-3.2
+//    root-servo: .1
+// Later we will join only base path with servo-hub.
+func findServoHub(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
+	rootServoPath, err := getRootServoPath(ctx, runner, servoSerial)
+	if err != nil {
+		return "", errors.Annotate(err, "find servo hub").Err()
+	}
+	basePath, servoTail := filepath.Dir(rootServoPath), filepath.Base(rootServoPath)
+	log.Debug(ctx, "Find Servo Hub: basePath %q, servoTail %q", basePath, servoTail)
+	servoHubTail := strings.Split(servoTail, servoTailSplitter)
+	return filepath.Join(basePath, strings.Join(servoHubTail[:len(servoHubTail)-1], servoTailSplitter)), nil
+}
+
+// ConvertServoTopologyItemToString returns a string representation of
+// ServoTopologyItem instance.
+func ConvertServoTopologyItemToString(c *tlw.ServoTopologyItem) string {
+	return fmt.Sprintf("deviceType %q, product %q, serial %q, hub %q, path %q, version %q", c.Type, c.SysfsProduct, c.Serial, c.UsbHubPort, c.SysfsPath, c.FwVersion)
+}
+
+// IsItemGood checks whether a ServoTopologyItem has
+// minimum required data.
+func IsItemGood(ctx context.Context, c *tlw.ServoTopologyItem) bool {
+	return c.Serial != "" && c.Type != "" && c.UsbHubPort != ""
 }

@@ -466,6 +466,11 @@ type ServoTopologyItem struct {
 	//   '2'    - port on servo hub (part of servo_v4 or servo_v4.1) connected to the smart-hub
 	// The same path will look '1-6.2' if connected servo_v4 directly to the labstation.
 	UsbHubPort string
+
+	// This is the complete path on the file system for the servo device.
+	SysfsPath string
+	// This is the version of servo device.
+	FwVersion string
 }
 
 // ServoState describes the state of setup/communication issue related to servo functionality provided by servo.
