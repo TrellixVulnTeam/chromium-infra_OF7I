@@ -1,11 +1,19 @@
+// copyright 2021 the chromium os authors. all rights reserved.
+// use of this source code is governed by a bsd-style license that can be
+// found in the license file.
+
 package engine
 
 import (
 	"context"
 	"testing"
+	"time"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/planpb"
+	"infra/cros/recovery/logger/metrics"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // TODO(otabek@) Add cases with verification the cache.
@@ -673,5 +681,46 @@ func TestRecoveryCachePersistence(t *testing.T) {
 				t.Errorf("Case %q after reset: expectaton did not matche expectations: Expected: %v, Got: %v", c.name, c.used, !c.used)
 			}
 		})
+	}
+}
+
+// TestCallMetricsInSimplePlan tests that calling a simple plan with a fake implementation of a metrics interface calls the metrics implementation.
+func TestCallMetricsInSimplePlan(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := newFakeMetrics()
+	r := &recoveryEngine{
+		planName: "2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+	}
+	expected := []*metrics.Action{
+		{
+			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+		},
+		{
+			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+		},
+	}
+	r.plan = &planpb.Plan{
+		Actions: map[string]*planpb.Action{
+			"a": {},
+			"b": {},
+			"r": {},
+		},
+	}
+	r.args = &execs.RunArgs{
+		Metrics: m,
+	}
+	err := r.runPlan(ctx)
+	// TODO(gregorynisbet): Mock the time.Now() function everywhere instead of removing times
+	// from test cases.
+	for i := range m.actions {
+		var zero time.Time
+		m.actions[i].StartTime = zero
+	}
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if diff := cmp.Diff(expected, m.actions); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", diff)
 	}
 }

@@ -54,8 +54,16 @@ func (r *recoveryEngine) close() {
 }
 
 // runPlan executes recovery plan with critical-actions.
-func (r *recoveryEngine) runPlan(ctx context.Context) error {
-	log.Info(ctx, "Plan %q for %s: started", r.planName, r.args.ResourceName)
+func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
+	newCtx := ctx
+	log.Info(newCtx, "Plan %q: started", r.planName)
+	if r.args != nil && r.args.Metrics != nil {
+		_, closer := r.args.NewMetric(
+			newCtx,
+			fmt.Sprintf("plan:%s", r.planName),
+		)
+		defer closer(ctx, err)
+	}
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
@@ -93,6 +101,16 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 3) Run dependencies of the action. Fail if any fails.
 // 4) Run action exec function. Fail if any fail.
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
+	newCtx := ctx
+	if r.args != nil && r.args.Metrics != nil {
+		_, closer := r.args.NewMetric(
+			newCtx,
+			// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
+			//                      assigned to an action by recoverylib.
+			fmt.Sprintf("action:%s", actionName),
+		)
+		defer closer(ctx, err)
+	}
 	if r.args != nil {
 		if r.args.ShowSteps {
 			var step *build.Step

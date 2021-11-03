@@ -38,6 +38,7 @@ const (
 )
 
 // An action is an event performed on a DUT.
+// TODO(gregorynisbet): Rename an action to something else so we don't collide with the other notion of an action.
 type Action struct {
 	// Name is the identifier for an action. It is controlled by Karte.
 	Name string

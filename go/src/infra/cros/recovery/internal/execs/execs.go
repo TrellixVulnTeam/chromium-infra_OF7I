@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -60,6 +61,21 @@ type RunArgs struct {
 	Metrics metrics.Metrics
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
+}
+
+// CloserFunc is a function that updates an action and is safe to use in a defer block.
+type CloserFunc = func(context.Context, error)
+
+// NewMetric creates a new metric. Neither the action nor the closer function that NewMetrics returns will
+// ever be nil.
+// TODO(gregorynisbet): Consider adding a time parameter.
+func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, CloserFunc) {
+	startTime := time.Now()
+	action := &metrics.Action{
+		ActionKind: kind,
+		StartTime:  startTime,
+	}
+	return createMetric(ctx, a.Metrics, action)
 }
 
 // Run runs exec function provided by this package by name.
@@ -114,4 +130,48 @@ func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) 
 		}
 	}
 	return argsMap
+}
+
+// CreateMetric creates a metric with an actionKind, and a startTime.
+// It returns an action and a closer function.
+//
+// Intended usage:
+//
+//  err is managed by the containing function.
+//
+//  Note that it is necessary to explicitly defer evaluation of err to the
+//  end of the function.
+//
+//  action, closer := createMetric(ctx, ...)
+//  if closer != nil {
+//    defer func() {
+//      closer(ctx, err)
+//    }
+//  }
+//
+func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action) (*metrics.Action, func(context.Context, error)) {
+	if m == nil {
+		return nil, nil
+	}
+	a, err := m.Create(ctx, action)
+	if err != nil {
+		log.Error(ctx, err.Error())
+	}
+	closer := func(ctx context.Context, e error) {
+		if m == nil {
+			return
+		}
+		if a == nil {
+			return
+		}
+		// TODO(gregorynisbet): Consider strategies for multiple fail reasons.
+		if e != nil {
+			a.FailReason = e.Error()
+		}
+		_, err := m.Update(ctx, a)
+		if err != nil {
+			log.Error(ctx, err.Error())
+		}
+	}
+	return a, closer
 }
