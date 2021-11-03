@@ -6,7 +6,6 @@ package analysis
 
 import (
 	"context"
-	"encoding/hex"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -133,7 +132,7 @@ func entryFromUpdate(project, chunkID string, cluster *clustering.ClusterID, fai
 	failure = proto.Clone(failure).(*cpb.Failure)
 	entry := &bqpb.ClusteredFailureRow{
 		ClusterAlgorithm: cluster.Algorithm,
-		ClusterId:        hex.EncodeToString(cluster.ID),
+		ClusterId:        cluster.ID,
 		TestResultSystem: failure.TestResultId.System,
 		TestResultId:     failure.TestResultId.Id,
 		LastUpdated:      timestamppb.New(commitTime),

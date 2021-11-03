@@ -87,17 +87,17 @@ func TestSpanner(t *testing.T) {
 				Convey(`Algorithm missing`, func() {
 					e.Clusters[1][1].Algorithm = ""
 					err := testCreate(e)
-					So(err, ShouldErrLike, `test result 1: cluster 1: algorithm name ("") is not valid`)
+					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 				})
 				Convey("Algorithm invalid", func() {
 					e.Clusters[1][1].Algorithm = "!!!"
 					err := testCreate(e)
-					So(err, ShouldErrLike, `test result 1: cluster 1: algorithm name ("!!!") is not valid`)
+					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 				})
 				Convey("ID missing", func() {
-					e.Clusters[1][1].ID = []byte{}
+					e.Clusters[1][1].ID = ""
 					err := testCreate(e)
-					So(err, ShouldErrLike, `test result 1: cluster 1: cluster ID must be specified`)
+					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: ID is empty`)
 				})
 			})
 		})
@@ -116,17 +116,17 @@ func newEntry(uniqifier int) *Entry {
 			{
 				{
 					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:        "00112233445566778899aabbccddeeff",
 				},
 			},
 			{
 				{
 					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:        "00112233445566778899aabbccddeeff",
 				},
 				{
 					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        []byte{2},
+					ID:        "22",
 				},
 			},
 		},

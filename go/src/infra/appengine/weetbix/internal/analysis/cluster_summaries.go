@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/appengine/weetbix/internal/bqutil"
+	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 )
 
@@ -30,22 +31,21 @@ type ImpactfulClusterReadOptions struct {
 // ClusterSummary represents a statistical summary of a cluster's failures,
 // and their impact.
 type ClusterSummary struct {
-	ClusterAlgorithm     string              `json:"clusterAlgorithm"`
-	ClusterID            string              `json:"clusterId"`
-	PresubmitRejects1d   Counts              `json:"presubmitRejects1d"`
-	PresubmitRejects3d   Counts              `json:"presubmitRejects3d"`
-	PresubmitRejects7d   Counts              `json:"presubmitRejects7d"`
-	TestRunFails1d       Counts              `json:"testRunFailures1d"`
-	TestRunFails3d       Counts              `json:"testRunFailures3d"`
-	TestRunFails7d       Counts              `json:"testRunFailures7d"`
-	Failures1d           Counts              `json:"failures1d"`
-	Failures3d           Counts              `json:"failures3d"`
-	Failures7d           Counts              `json:"failures7d"`
-	AffectedTests1d      []SubCluster        `json:"affectedTests1d"`
-	AffectedTests3d      []SubCluster        `json:"affectedTests3d"`
-	AffectedTests7d      []SubCluster        `json:"affectedTests7d"`
-	ExampleFailureReason bigquery.NullString `json:"exampleFailureReason"`
-	ExampleTestID        string              `json:"exampleTestId"`
+	ClusterID            clustering.ClusterID `json:"clusterId"`
+	PresubmitRejects1d   Counts               `json:"presubmitRejects1d"`
+	PresubmitRejects3d   Counts               `json:"presubmitRejects3d"`
+	PresubmitRejects7d   Counts               `json:"presubmitRejects7d"`
+	TestRunFails1d       Counts               `json:"testRunFailures1d"`
+	TestRunFails3d       Counts               `json:"testRunFailures3d"`
+	TestRunFails7d       Counts               `json:"testRunFailures7d"`
+	Failures1d           Counts               `json:"failures1d"`
+	Failures3d           Counts               `json:"failures3d"`
+	Failures7d           Counts               `json:"failures7d"`
+	AffectedTests1d      []SubCluster         `json:"affectedTests1d"`
+	AffectedTests3d      []SubCluster         `json:"affectedTests3d"`
+	AffectedTests7d      []SubCluster         `json:"affectedTests7d"`
+	ExampleFailureReason bigquery.NullString  `json:"exampleFailureReason"`
+	ExampleTestID        string               `json:"exampleTestId"`
 }
 
 // SubCluster represents the name of a test and the number of times
@@ -108,8 +108,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 
 	q := c.client.Query(`
 		SELECT
-			cluster_algorithm as ClusterAlgorithm,
-			cluster_id as ClusterID,` +
+			STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) as ClusterID,` +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "1d") +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "3d") +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "7d") +
@@ -193,8 +192,7 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject, clusterAlgorithm,
 
 	q := c.client.Query(`
 		SELECT
-			cluster_algorithm as ClusterAlgorithm,
-			cluster_id as ClusterID,` +
+			STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) as ClusterID,` +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "1d") +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "3d") +
 		selectCounts("presubmit_rejects", "PresubmitRejects", "7d") +

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, state, css } from 'lit-element';
+import { LitElement, html, customElement, property, css } from 'lit-element';
 
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
@@ -10,7 +10,7 @@ export class ClusterTable extends LitElement {
     @property()
     project: string;
 
-    @state()
+    @property()
     clusters: Cluster[] | undefined;
 
     connectedCallback() {
@@ -24,15 +24,15 @@ export class ClusterTable extends LitElement {
             return html`Loading...`;
         }
         const clusterLink = (cluster: Cluster): string => {
-            return `/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(cluster.clusterAlgorithm)}/${encodeURIComponent(cluster.clusterId)}`;
+            return `/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(cluster.clusterId.algorithm)}/${encodeURIComponent(cluster.clusterId.id)}`;
         }
         const clusterDescription = (cluster: Cluster): string => {
-            if (cluster.clusterAlgorithm.startsWith("testname-")) {
+            if (cluster.clusterId.algorithm.startsWith("testname-")) {
                 return cluster.exampleTestId;
-            } else if (cluster.clusterAlgorithm.startsWith("failurereason-")) {
+            } else if (cluster.clusterId.algorithm.startsWith("failurereason-")) {
                 return cluster.exampleFailureReason;
             }
-            return `${cluster.clusterAlgorithm}/${cluster.clusterId}`;
+            return `${cluster.clusterId.algorithm}/${cluster.clusterId.id}`;
         }
         const metric = (counts: Counts): number => {
             return counts.nominal;
@@ -156,8 +156,7 @@ export class ClusterTable extends LitElement {
 
 // Cluster is the cluster information sent by the server.
 interface Cluster {
-    clusterAlgorithm: string;
-    clusterId: number;
+    clusterId: ClusterId;
     presubmitRejects1d: Counts;
     presubmitRejects3d: Counts;
     presubmitRejects7d: Counts;
@@ -169,6 +168,11 @@ interface Cluster {
     failures7d: Counts;
     exampleFailureReason: string;
     exampleTestId: string;
+}
+
+interface ClusterId {
+    algorithm: string;
+    id: string;
 }
 
 interface Counts {

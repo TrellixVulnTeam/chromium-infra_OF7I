@@ -42,12 +42,12 @@ export class ClusterPage extends LitElement {
             return html`Loading...`;
         }
         const clusterDescription = (cluster: Cluster): string => {
-            if (cluster.clusterAlgorithm.startsWith("testname-")) {
+            if (cluster.clusterId.algorithm.startsWith("testname-")) {
                 return cluster.exampleTestId;
-            } else if (cluster.clusterAlgorithm.startsWith("failurereason-")) {
+            } else if (cluster.clusterId.algorithm.startsWith("failurereason-")) {
                 return cluster.exampleFailureReason;
             }
-            return `${cluster.clusterAlgorithm}/${cluster.clusterId}`;
+            return `${cluster.clusterId.algorithm}/${cluster.clusterId.id}`;
         }
         const metric = (counts: Counts): number => {
             return counts.nominal;
@@ -56,7 +56,7 @@ export class ClusterPage extends LitElement {
         const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
         return html`
         <div id="container">
-            <h1>Cluster <span class="cluster-id">${c.clusterAlgorithm}/${c.clusterId}</span></h1>
+            <h1>Cluster <span class="cluster-id">${c.clusterId.algorithm}/${c.clusterId.id}</span></h1>
             <h2>Cluster Definition</h2>
             <pre class="failure-reason">${clusterDescription(c)}</pre>
             <h2>Impact</h2>
@@ -168,8 +168,7 @@ export class ClusterPage extends LitElement {
 
 // Cluster is the cluster information sent by the server.
 interface Cluster {
-    clusterAlgorithm: string;
-    clusterId: number;
+    clusterId: ClusterId;
     presubmitRejects1d: Counts;
     presubmitRejects3d: Counts;
     presubmitRejects7d: Counts;
@@ -191,6 +190,11 @@ interface Counts {
     preExoneration: number;
     residual: number;
     residualPreExoneration: number;
+}
+
+interface ClusterId {
+    algorithm: string;
+    id: string;
 }
 
 interface SubCluster {

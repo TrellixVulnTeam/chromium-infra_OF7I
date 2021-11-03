@@ -61,6 +61,10 @@ func Create(ctx context.Context, e *Entry) error {
 	if err := validateEntry(e); err != nil {
 		return err
 	}
+	clusters, err := encodeClusters(e.Clusters)
+	if err != nil {
+		return err
+	}
 	ms := spanutil.InsertMap("ClusteringState", map[string]interface{}{
 		"Project":           e.Project,
 		"ChunkID":           e.ChunkID,
@@ -68,7 +72,7 @@ func Create(ctx context.Context, e *Entry) error {
 		"ObjectID":          e.ObjectID,
 		"AlgorithmsVersion": e.AlgorithmsVersion,
 		"RuleVersion":       e.RuleVersion,
-		"Clusters":          encodeClusters(e.Clusters),
+		"Clusters":          clusters,
 		"LastUpdated":       spanner.CommitTimestamp,
 	})
 	span.BufferWrite(ctx, ms)
@@ -141,11 +145,8 @@ func validateClusters(clusters [][]*clustering.ClusterID) error {
 	for i, tr := range clusters {
 		// Inner slice has the list of clusters per test result.
 		for j, c := range tr {
-			if !clustering.AlgorithmRe.MatchString(c.Algorithm) {
-				return fmt.Errorf("test result %v: cluster %v: algorithm name (%q) is not valid", i, j, c.Algorithm)
-			}
-			if len(c.ID) == 0 {
-				return fmt.Errorf("test result %v: cluster %v: cluster ID must be specified", i, j)
+			if err := c.Validate(); err != nil {
+				return errors.Annotate(err, "test result %v: cluster %v: cluster ID is not valid", i, j).Err()
 			}
 		}
 	}

@@ -5,6 +5,7 @@
 package algorithms
 
 import (
+	"encoding/hex"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -63,7 +64,7 @@ func Cluster(failures []*cpb.Failure) *ClusterResults {
 			}
 			ids = append(ids, &clustering.ClusterID{
 				Algorithm: a.Name(),
-				ID:        id,
+				ID:        hex.EncodeToString(id),
 			})
 		}
 		result = append(result, ids)

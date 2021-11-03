@@ -5,6 +5,7 @@
 package state
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -35,7 +36,7 @@ func decodeClusters(cc *cpb.ChunkClusters) ([][]*clustering.ClusterID, error) {
 			t := cc.ClusterTypes[cluster.TypeRef]
 			clusters[j] = &clustering.ClusterID{
 				Algorithm: t.Algorithm,
-				ID:        cluster.ClusterId,
+				ID:        hex.EncodeToString(cluster.ClusterId),
 			}
 		}
 		results[i] = clusters
@@ -44,14 +45,18 @@ func decodeClusters(cc *cpb.ChunkClusters) ([][]*clustering.ClusterID, error) {
 }
 
 // encodeClusters encodes the clusters assigned to each test result to the protobuf representation.
-func encodeClusters(clusterRefs [][]*clustering.ClusterID) *cpb.ChunkClusters {
+func encodeClusters(clusterRefs [][]*clustering.ClusterID) (*cpb.ChunkClusters, error) {
 	rb := newRefBuilder()
 	resultClusters := make([]*cpb.TestResultClusters, len(clusterRefs))
 	for i, refs := range clusterRefs {
 		clusters := &cpb.TestResultClusters{}
 		clusters.ClusterRefs = make([]int64, len(refs))
 		for j, r := range refs {
-			clusters.ClusterRefs[j] = rb.ReferenceCluster(r)
+			clusterRef, err := rb.ReferenceCluster(r)
+			if err != nil {
+				return nil, errors.Annotate(err, "cluster ID %s/%s is invalid", r.Algorithm, r.ID).Err()
+			}
+			clusters.ClusterRefs[j] = clusterRef
 		}
 		resultClusters[i] = clusters
 	}
@@ -60,7 +65,7 @@ func encodeClusters(clusterRefs [][]*clustering.ClusterID) *cpb.ChunkClusters {
 		ReferencedClusters: rb.refs,
 		ResultClusters:     resultClusters,
 	}
-	return result
+	return result, nil
 }
 
 // refBuilder assists in constructing the type and cluster references used in
@@ -82,19 +87,25 @@ func newRefBuilder() *refBuilder {
 	}
 }
 
-func (rb *refBuilder) ReferenceCluster(ref *clustering.ClusterID) int64 {
+func (rb *refBuilder) ReferenceCluster(ref *clustering.ClusterID) (int64, error) {
 	refKey := ref.Key()
 	idx, ok := rb.refMap[refKey]
 	if !ok {
+		// Convert from hexadecimal to byte representation, for storage
+		// efficiency.
+		id, err := hex.DecodeString(ref.ID)
+		if err != nil {
+			return -1, err
+		}
 		ref := &cpb.ReferencedCluster{
 			TypeRef:   rb.ReferenceClusterType(ref.Algorithm),
-			ClusterId: ref.ID,
+			ClusterId: id,
 		}
 		idx = len(rb.refs)
 		rb.refMap[refKey] = idx
 		rb.refs = append(rb.refs, ref)
 	}
-	return int64(idx)
+	return int64(idx), nil
 }
 
 func (rb *refBuilder) ReferenceClusterType(algorithm string) int64 {
