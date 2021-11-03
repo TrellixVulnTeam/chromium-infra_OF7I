@@ -7,8 +7,10 @@ package resultcollector
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/spanner"
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
@@ -20,11 +22,13 @@ import (
 
 func createVerdicts(ctx context.Context, task *taskspb.CollectTestResults, tvs []*rdbpb.TestVariant) error {
 	ms := make([]*spanner.Mutation, 0, len(tvs))
+	// Each batch of verdicts use the same ingestion time.
+	now := clock.Now(ctx)
 	for _, tv := range tvs {
 		if tv.Status == rdbpb.TestVariantStatus_UNEXPECTEDLY_SKIPPED {
 			continue
 		}
-		m := insertVerdict(task, tv)
+		m := insertVerdict(task, tv, now)
 		if m == nil {
 			continue
 		}
@@ -37,7 +41,7 @@ func createVerdicts(ctx context.Context, task *taskspb.CollectTestResults, tvs [
 	return err
 }
 
-func insertVerdict(task *taskspb.CollectTestResults, tv *rdbpb.TestVariant) *spanner.Mutation {
+func insertVerdict(task *taskspb.CollectTestResults, tv *rdbpb.TestVariant, ingestionTime time.Time) *spanner.Mutation {
 	inv := task.Resultdb.Invocation
 	invId, err := pbutil.ParseInvocationName(inv.Name)
 	if err != nil {
@@ -48,6 +52,7 @@ func insertVerdict(task *taskspb.CollectTestResults, tv *rdbpb.TestVariant) *spa
 		"Realm":                        inv.Realm,
 		"InvocationId":                 invId,
 		"InvocationCreationTime":       inv.CreateTime,
+		"IngestionTime":                ingestionTime,
 		"TestId":                       tv.TestId,
 		"VariantHash":                  tv.VariantHash,
 		"Status":                       deriveVerdictStatus(tv),

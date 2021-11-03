@@ -26,11 +26,11 @@ import (
 func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.TestVariantKey) (pb.AnalyzedTestVariantStatus, error) {
 	st := spanner.NewStatement(`
 		SELECT Status
-		FROM Verdicts@{FORCE_INDEX=VerdictsByTInvocationCreationTime, spanner_emulator.disable_query_null_filtered_index_check=true}
+		FROM Verdicts@{FORCE_INDEX=VerdictsByKeyAndIngestionTime, spanner_emulator.disable_query_null_filtered_index_check=true}
 		WHERE Realm = @realm
 		AND TestId = @testID
 		AND VariantHash = @variantHash
-		AND InvocationCreationTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day)
+		AND IngestionTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day)
 	`)
 	st.Params = map[string]interface{}{
 		"realm":       tvKey.Realm,

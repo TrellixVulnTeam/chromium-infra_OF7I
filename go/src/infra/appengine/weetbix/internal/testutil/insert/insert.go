@@ -42,6 +42,7 @@ func Verdict(realm, tId, vHash, invID string, status pb.VerdictStatus, invTime t
 		"InvocationId":           invID,
 		"Status":                 int64(status),
 		"InvocationCreationTime": invTime,
+		"IngestionTime":          invTime.Add(time.Hour),
 	}
 	updateDict(values, extraValues)
 	return spanner.InsertMap("Verdicts", values)

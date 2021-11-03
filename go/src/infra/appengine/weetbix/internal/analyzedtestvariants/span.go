@@ -49,7 +49,7 @@ func ReadNextUpdateTaskEnqueueTime(ctx context.Context, k spanner.Key) (spanner.
 func QueryTestVariantsByBuilder(ctx context.Context, realm, builder string, f func(*pb.AnalyzedTestVariant) error) error {
 	st := spanner.NewStatement(`
 		SELECT TestId, VariantHash
-		FROM AnalyzedTestVariants@{FORCE_INDEX=AnalyzedTestVariantsPerBuilderAndStatus, spanner_emulator.disable_query_null_filtered_index_check=true}
+		FROM AnalyzedTestVariants@{FORCE_INDEX=AnalyzedTestVariantsByBuilderAndStatus, spanner_emulator.disable_query_null_filtered_index_check=true}
 		WHERE Realm = @realm
 		AND Builder = @builder
 		AND Status in UNNEST(@statuses)

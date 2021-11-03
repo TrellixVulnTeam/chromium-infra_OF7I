@@ -62,8 +62,12 @@ CREATE TABLE AnalyzedTestVariants (
 
 -- Used by finding test variants with FLAKY status on a builder in
 -- CollectFlakeResults task.
-CREATE NULL_FILTERED INDEX AnalyzedTestVariantsPerBuilderAndStatus
+CREATE NULL_FILTERED INDEX AnalyzedTestVariantsByBuilderAndStatus
 ON AnalyzedTestVariants (Realm, Builder, Status);
+
+-- Used by finding test variants to export to BigQuery.
+CREATE INDEX AnalyzedTestVariantsByRealmAndStatus
+ON AnalyzedTestVariants (Realm, Status);
 
 -- Stores results of a test variant in one invocation.
 CREATE TABLE Verdicts (
@@ -105,6 +109,9 @@ CREATE TABLE Verdicts (
   --Creation time of the invocation containing this verdict.
   InvocationCreationTime TIMESTAMP NOT NULL,
 
+  -- Ingestion time of the verdict.
+  IngestionTime TIMESTAMP NOT NULL,
+
   -- List of colon-separated key-value pairs, where key is the cluster algorithm
   -- and value is the cluster id.
   -- key can be repeated.
@@ -119,6 +126,14 @@ INTERLEAVE IN PARENT AnalyzedTestVariants ON DELETE CASCADE;
 -- Used by finding most recent verdicts to calculate flakiness statistics.
 CREATE NULL_FILTERED INDEX VerdictsByTInvocationCreationTime
  ON Verdicts (Realm, TestId, VariantHash, InvocationCreationTime DESC);
+
+-- Used by finding most recent verdicts of a test variant to calculate status.
+CREATE NULL_FILTERED INDEX VerdictsByKeyAndIngestionTime
+ ON Verdicts (Realm, TestId, VariantHash, IngestionTime DESC);
+
+-- Used by finding most recent verdicts to construct test variant rows to export.
+CREATE NULL_FILTERED INDEX VerdictsByIngestionTime
+ ON Verdicts (Realm, IngestionTime DESC);
 
 -- BugClusters contains the bugs tracked by Weetbix, and the failure clusters
 -- they are associated with.
