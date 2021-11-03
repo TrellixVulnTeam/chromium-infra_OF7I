@@ -196,7 +196,7 @@ const defaultConfig = `
 				"lock_labstation",
 				"has_enough_disk_space",
 				"servo_components_check",
-				"servo_fw_updated",
+				"servo_fw_need_update",
 				"servo_host_servod_init",
 				"servod_echo",
 				"servod_get_serialname",
@@ -353,14 +353,13 @@ const defaultConfig = `
 						"is_not_servo_v3"
 					]
 				},
-				"servo_fw_updated": {
+				"servo_fw_need_update": {
 					"conditions": [
 						"is_not_servo_v3"
 					],
 					"recovery_actions": [
 						"servo_fw_update"
-					],
-					"exec_name":"sample_pass"
+					]
 				},
 				"servod_get_serialname": {
 					"docs":[

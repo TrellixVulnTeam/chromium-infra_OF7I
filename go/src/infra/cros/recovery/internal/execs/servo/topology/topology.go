@@ -253,3 +253,13 @@ func ConvertServoTopologyItemToString(c *tlw.ServoTopologyItem) string {
 func IsItemGood(ctx context.Context, c *tlw.ServoTopologyItem) bool {
 	return c.Serial != "" && c.Type != "" && c.UsbHubPort != ""
 }
+
+// Create and return a slice of all the servo devices in servo topology.
+func AllDevices(c *tlw.ServoTopology) []*tlw.ServoTopologyItem {
+	devices := []*tlw.ServoTopologyItem{}
+	devices = append(devices, c.Root)
+	for _, d := range c.Children {
+		devices = append(devices, d)
+	}
+	return devices
+}

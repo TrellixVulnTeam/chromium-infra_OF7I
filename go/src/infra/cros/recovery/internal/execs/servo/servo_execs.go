@@ -260,6 +260,39 @@ func servoServodEchoHost(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// Verify that the servo firmware is up-to-date.
+func servoFirmwareNeedsUpdateExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	runner := args.NewRunner(args.DUT.ServoHost.Name)
+	// The servo topology check should have already been done in an
+	// action. The topology determined at that time would have been
+	// saved in this data structure if the 'updateServo' argument was
+	// passed for that action. We will make use of any such persisting
+	// topology instead of re-computing it. This is avoid unnecessary
+	// expenditure of time in obtaining the topology here.
+	devices := topology.AllDevices(args.DUT.ServoHost.ServoTopology)
+	var err error
+	if devices == nil {
+		// This situation can arise if the servo topology has been
+		// verified in an earlier action, but the topology was not
+		// persisted because the updateServo parameter was not set in
+		// that action. In this case we do not have any choice but to
+		// re-compute the topology.
+		devices, err = topology.ListOfDevices(ctx, runner, args.DUT.ServoHost.Servo.SerialNumber)
+		if err != nil {
+			errors.Annotate(err, "servo verify firmware update").Err()
+		}
+		log.Debug(ctx, "Servo Verify Firmware Update: topology re-computer because pre-existing servo topology not found.")
+	}
+	for _, d := range devices {
+		if topology.IsItemGood(ctx, d) {
+			if needsUpdate(ctx, runner, d, args.DUT.ServoHost.Servo.FirmwareChannel, args.DUT.Board) {
+				return errors.Reason("servo verify firmware update: servo needs update").Err()
+			}
+		}
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -269,4 +302,5 @@ func init() {
 	execs.Register("servo_v4_root_present", isRootServoPresentExec)
 	execs.Register("servo_topology_update", servoTopologyUpdate)
 	execs.Register("servo_servod_echo_host", servoServodEchoHost)
+	execs.Register("servo_fw_need_update", servoFirmwareNeedsUpdateExec)
 }
