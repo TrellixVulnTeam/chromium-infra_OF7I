@@ -209,7 +209,8 @@ const defaultConfig = `
 				"servo_ec_check",
 				"servo_testlab_enabled",
 				"servo_detect_usbkey",
-				"servo_audit_usbkey"
+				"servo_audit_usbkey",
+				"servo_servod_echo_host"
 			],
 			"actions": {
 				"servo_host_servod_restart": {
@@ -553,6 +554,14 @@ const defaultConfig = `
 				},
 				"servod_restart_dut": {
 					"exec_name":"sample_pass"
+				},
+				"servo_servod_echo_host": {
+					"exec_timeout": {
+						"seconds": 30
+					}
+				},
+				"servod_echo": {
+					"dependencies" : ["servo_servod_echo_host"]
 				}
 			},
 			"allow_fail": true

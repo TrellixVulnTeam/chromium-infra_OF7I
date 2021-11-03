@@ -47,6 +47,10 @@ const (
 	// of servo children in the servo topology. A value that is passed
 	// from the configuration will over-ride this.
 	topologyMinChildCountDefaultValue = 1
+
+	// This command, when executed from servo host, checks whether the
+	// servod process is responsive.
+	servodHostCheckupCmd = "dut-control -p %d serialname"
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -245,6 +249,17 @@ func servoTopologyUpdate(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// Verify that servod is responsive
+func servoServodEchoHost(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	runner := args.NewRunner(args.DUT.ServoHost.Name)
+	v, err := runner(ctx, fmt.Sprintf(servodHostCheckupCmd, args.DUT.ServoHost.ServodPort))
+	if err != nil {
+		return errors.Annotate(err, "servo remote echo: servod is not responsive for dut-control commands").Err()
+	}
+	log.Debug(ctx, "Servo Remote Echo: Servod is responsive: %q", v)
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -253,4 +268,5 @@ func init() {
 	execs.Register("servo_audit_usbkey", servoAuditUSBKey)
 	execs.Register("servo_v4_root_present", isRootServoPresentExec)
 	execs.Register("servo_topology_update", servoTopologyUpdate)
+	execs.Register("servo_servod_echo_host", servoServodEchoHost)
 }
