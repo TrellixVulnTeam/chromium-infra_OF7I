@@ -101,13 +101,9 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		}
 	}
 
-	// No reverter needed for these as these are extracted as part of Servo Topology.
-	if servoTopology := p.GetServoTopology(); servoTopology != nil {
-		if servoTopologyMain := servoTopology.GetMain(); servoTopologyMain != nil {
-			labels = append(labels, fmt.Sprintf("servo_component:%s", servoTopologyMain.GetType()))
-		}
-		for _, v := range servoTopology.GetChildren() {
-			labels = append(labels, fmt.Sprintf("servo_component:%s", v.GetType()))
+	if servoComponent := p.GetServoComponent(); servoComponent != nil {
+		for _, v := range servoComponent {
+			labels = append(labels, fmt.Sprintf("servo_component:%s", v))
 		}
 	}
 
@@ -283,6 +279,8 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 				}
 			}
 			p.ServoTopology = topology
+		case "servo_component":
+			p.ServoComponent = append(p.ServoComponent, v)
 		case "working_bluetooth_btpeer":
 			i, err := strconv.Atoi(v)
 			if err != nil {

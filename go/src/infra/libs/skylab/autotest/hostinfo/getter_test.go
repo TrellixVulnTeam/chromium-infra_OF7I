@@ -215,6 +215,7 @@ func TestGetContentsForHostname(t *testing.T) {
 							Huddly:              nil,
 							Mimo:                nil,
 							Servo:               b(true),
+							ServoComponent:      []string{"servo_v4", "ccd_cr50"},
 							ServoState:          peripheralState(inventory.PeripheralState_WORKING),
 							ServoType:           s("servo_v4_with_ccd_cr50"),
 							ServoTopology: &inventory.ServoTopology{

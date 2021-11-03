@@ -48,6 +48,8 @@ peripherals: {
   wificell: true
   stylus: true
   servo: true
+  servo_component: "ccd_cr50"
+  servo_component: "servo_v4"
   servo_state: 3
   servo_topology: {
 	main: {
