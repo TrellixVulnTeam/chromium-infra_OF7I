@@ -112,13 +112,8 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 		dims["label-camerabox_light"] = []string{light.String()}
 	}
 
-	if servoTopology := p.GetServoTopology(); servoTopology != nil {
-		if servoTopologyMain := servoTopology.GetMain(); servoTopologyMain != nil {
-			appendDim(dims, "label-servo_component", servoTopologyMain.GetType())
-		}
-		for _, v := range servoTopology.GetChildren() {
-			appendDim(dims, "label-servo_component", v.GetType())
-		}
+	for _, v := range p.GetServoComponent() {
+		appendDim(dims, "label-servo_component", v)
 	}
 
 	hardwareStatePrefixLength := len("HARDWARE_")
@@ -188,8 +183,10 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 		delete(d, "label-camerabox_light")
 	}
 
-	// Omitting reverter for servo_component as it is derived from servo topology.
-	// We are not exposing servo topology at the moment.
+	p.ServoComponent = make([]string, len(d["label-servo_component"]))
+	for i, v := range d["label-servo_component"] {
+		p.ServoComponent[i] = v
+	}
 	delete(d, "label-servo_component")
 
 	if servoUSBState, ok := getLastStringValue(d, "label-servo_usb_state"); ok {

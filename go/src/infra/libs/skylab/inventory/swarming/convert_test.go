@@ -47,15 +47,8 @@ peripherals: {
   wificell: true
   stylus: true
   servo: true
+  servo_component: ["servo_v4", "ccd_cr50"]
   servo_state: 1
-  servo_topology: {
-	main: {
-		type: "servo_v4"
-	}
-	children: {
-		type: "ccd_cr50"
-	}
-  }
   servo_type: ""
   servo_usb_state: 3
   wifi_state: 2
@@ -196,6 +189,7 @@ peripherals: {
   wificell: true
   stylus: true
   servo: true
+  servo_component: ["servo_v4", "ccd_cr50"]
   servo_state: 1
   servo_type: ""
   servo_usb_state: 3
