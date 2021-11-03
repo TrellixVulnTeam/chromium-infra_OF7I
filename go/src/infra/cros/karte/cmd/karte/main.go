@@ -30,6 +30,7 @@ func newApplication() *cli.Application {
 			kartecli.CreateAction,
 			kartecli.ListActions,
 			kartecli.CheckServer,
+			kartecli.Backfill,
 		},
 	}
 }
