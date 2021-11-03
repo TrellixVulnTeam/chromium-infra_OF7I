@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/maruel/subcommands"
@@ -17,7 +18,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"infra/cros/cmd/phosphorus/internal/botcache"
+	"infra/cros/cmd/phosphorus/internal/skylab_local_state/inv"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
 	"infra/libs/skylab/inventory"
@@ -128,7 +131,10 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 		if err != nil {
 			return err
 		}
-		hostInfo := getFullHostInfo(dut, dutState)
+		hostInfo, err := getFullHostInfo(ctx, dut, dutState)
+		if err != nil {
+			return err
+		}
 		if err := writeHostInfo(resultsDir, *dut.GetCommon().Hostname, hostInfo); err != nil {
 			return err
 		}
@@ -257,6 +263,25 @@ func hostInfoFromDutInfo(dut *inventory.DeviceUnderTest) *skylab_local_state.Aut
 	return &i
 }
 
+// getDUTTopology fetches the DUT topology from the inventory server
+func getDUTTopology(ctx context.Context, dut *inventory.DeviceUnderTest) (*labapi.DutTopology, error) {
+	invService, err := inv.NewClient()
+	if err != nil {
+		return nil, errors.Annotate(err, "Start InventoryServer client").Err()
+	}
+	stream, err := invService.Client.GetDutTopology(ctx, &labapi.GetDutTopologyRequest{})
+	if err != nil {
+		return nil, errors.Annotate(err, "InventoryServer.GetDutTopology").Err()
+	}
+	response := &labapi.GetDutTopologyResponse{}
+	err = stream.RecvMsg(response)
+	if err != nil {
+		return nil, errors.Annotate(err, "InventoryServer get response").Err()
+	}
+	inv.CloseClient(invService)
+	return response.GetSuccess().DutTopology, nil
+}
+
 // addDutStateToHostInfo adds provisionable labels and attributes from
 // the bot state to the host info labels and attributes.
 func addDutStateToHostInfo(hostInfo *skylab_local_state.AutotestHostInfo, dutState *lab_platform.DutState) {
@@ -281,11 +306,19 @@ func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.Auto
 }
 
 // getFullHostInfo aggregates data from local and admin services state into one hostinfo object
-func getFullHostInfo(dut *inventory.DeviceUnderTest, dutState *lab_platform.DutState) *skylab_local_state.AutotestHostInfo {
+func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
+	useDutTopo := os.Getenv("USE_DUT_TOPO")
+	if strings.ToLower(useDutTopo) == "true" {
+		_, err := getDUTTopology(ctx, dut)
+		if err != nil {
+			// Output error to stdout during testing
+			fmt.Println("Error getting DUT topology: ", err.Error())
+			return nil, errors.Annotate(err, "get dut topology").Err()
+		}
+	}
 	hostInfo := hostInfoFromDutInfo(dut)
-
 	addDutStateToHostInfo(hostInfo, dutState)
-	return hostInfo
+	return hostInfo, nil
 }
 
 // createDutTopology construct a DutTopology will be wrapped into LoadResponse.
