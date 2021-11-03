@@ -10,6 +10,7 @@ from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
+from RECIPE_MODULES.infra.windows_scripts_executor import test_helper as t
 
 DEPS = [
     'depot_tools/gitiles',
@@ -34,111 +35,10 @@ def RunSteps(api, image):
 
 
 def GenTests(api):
-  # various step data for testing
-  GEN_WPE_MEDIA_FAIL = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
-      '[CACHE]\\WinPEImage.PowerShell> Gen WinPE media for x86',
-      stdout=api.json.output({
-          'results': {
-              'Success': False,
-              'Command': 'powershell',
-              'ErrorInfo': {
-                  'Message': 'Failed step'
-              },
-          }
-      }))
-
-  GEN_WPE_MEDIA_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
-      '[CACHE]\\WinPEImage.PowerShell> Gen WinPE media for x86',
-      stdout=api.json.output({'results': {
-          'Success': True,
-      }}))
-
-  MOUNT_WIM_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.Init WinPE image modification x86 in ' +
-      '[CACHE]\\WinPEImage.PowerShell> Mount wim to ' +
-      '[CACHE]\\WinPEImage\\mount',
-      stdout=api.json.output({
-          'results': {
-              'Success': True
-          },
-      }))
-
-  UMOUNT_WIM_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
-      'Unmount wim at [CACHE]\\WinPEImage\\mount',
-      stdout=api.json.output({
-          'results': {
-              'Success': True
-          },
-      }))
-
-  DEINIT_WIM_ADD_CFG_TO_ROOT_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.Deinit WinPE image modification.PowerShell> ' +
-      'Add cfg [CLEANUP]\\configs\\' +
-      '47b1439eac8e449985c991d6dade5fb2e0ee63f83c40dc2c301cf7dc7e240848.cfg',
-      stdout=api.json.output({'results': {
-          'Success': True,
-      }}))
-
-  PIN_FILE_STARTNET_PASS = api.step_data(
-      'Pin git artifacts to refs.gitiles log: ' +
-      'HEAD/windows/artifacts/startnet.cmd',
-      api.gitiles.make_log_test_data('HEAD'),
-  )
-
-  FETCH_FILE_STARTNET_PASS = api.step_data(
-      'Get all git artifacts.fetch ' +
-      'ef70cb069518e6dc3ff24bfae7f195de5099c377:' +
-      'windows/artifacts/startnet.cmd',
-      api.gitiles.make_encoded_file('Wpeinit'))
-
-  ADD_FILE_STARTNET_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.PowerShell> Add file ' +
-      '[CACHE]\\GITPkgs\\ef70cb069518e6dc3ff24bfae7f195de5099c377\\' +
-      'windows\\artifacts\\startnet.cmd',
-      stdout=api.json.output({'results': {
-          'Success': True,
-      }}))
-
-  ADD_FILE_STARTNET_FAIL = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.PowerShell> Add file ' +
-      '[CACHE]\\GITPkgs\\ef70cb069518e6dc3ff24bfae7f195de5099c377\\' +
-      'windows\\artifacts\\startnet.cmd',
-      stdout=api.json.output({
-          'results': {
-              'Success': False,
-              'Command': 'powershell',
-              'ErrorInfo': {
-                  'Message': 'Failed step',
-              },
-          }
-      }))
-
-  ADD_FILE_CIPD_PASS = api.step_data(
-      'execute config win10_2013_x64.offline ' +
-      'winpe customization offline_winpe_2013_x64.PowerShell> ' +
-      'Add file [CACHE]\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
-      '\\infra_internal\\labs\\drivers\\microsoft\\windows_adk\\winpe' +
-      '\\winpe-dot3svc\\windows-amd64',
-      stdout=api.json.output({'results': {
-          'Success': True,
-      }}))
-
-  INSTALL_FILE_WMI_PASS = api.step_data(
-      'execute config win10_2013_x64.offline winpe customization ' +
-      'offline_winpe_2013_x64.PowerShell> Install package install_winpe_wmi',
-      stdout=api.json.output({'results': {
-          'Success': True,
-      }}))
+  image = 'general_tests'
+  cust_name = 'generic_cust'
+  arch = 'x86'
+  key = '0f0012e3f5da9daac6c2e6017fc08c696cc36465ec4d11df75e7e1fdd1602c15'
 
   # actions for adding files
   ACTION_ADD_STARTNET = actions.Action(
@@ -179,194 +79,117 @@ def GenTests(api):
           args=['-IgnoreCheck'],
       ))
 
-
-  # Post process check for save and discard options during unmount
-  UMOUNT_PP_DISCARD = api.post_process(
-      StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.Deinit WinPE ' +
-      'image modification.PowerShell> Unmount wim at ' +
-      '[CACHE]\\WinPEImage\\mount', [
-          'python', '-u',
-          'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\psinvoke.py',
-          '--command', 'Dismount-WindowsImage', '--logs',
-          '\[CLEANUP\]\\\\Dismount-WindowsImage', '--',
-          '-Path "\[CACHE\]\\\\WinPEImage\\\\mount"',
-          '-LogPath "\[CLEANUP\]\\\\Dismount-WindowsImage\\\\unmount.log"',
-          '-LogLevel WarningsInfo', '-Discard'
-      ])
-
-  UMOUNT_PP_SAVE = api.post_process(
-      StepCommandRE, 'execute config win10_2013_x64.offline winpe ' +
-      'customization offline_winpe_2013_x64.Deinit WinPE ' +
-      'image modification.PowerShell> Unmount wim at ' +
-      '[CACHE]\\WinPEImage\\mount', [
-          'python', '-u',
-          'RECIPE_MODULE\[infra::powershell\]\\\\resources\\\\\psinvoke.py',
-          '--command', 'Dismount-WindowsImage', '--logs',
-          '\[CLEANUP\]\\\\Dismount-WindowsImage', '--',
-          '-Path "\[CACHE\]\\\\WinPEImage\\\\mount"',
-          '-LogPath "\[CLEANUP\]\\\\Dismount-WindowsImage\\\\unmount.log"',
-          '-LogLevel WarningsInfo', '-Save'
-      ])
-
-
   yield (api.test('Fail win image folder creation', api.platform('win', 64)) +
+         # generate image with add starnet action
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
+                         [ACTION_ADD_STARTNET])) +
+         # mock pinning the file to current refs
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock git fetch file
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock failure in gen winpe media step
+         t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
+         # The recipe execution should fail
+         api.post_process(StatusFailure) + api.post_process(DropExpectation))
+
+  yield (api.test('Missing arch in config', api.platform('win', 64)) +
          api.properties(
              wib.Image(
-                 name='win10_2013_x64',
-                 arch=wib.ARCH_X86,
+                 name=image,
                  customizations=[
                      wib.Customization(
                          offline_winpe_customization=winpe
-                         .OfflineWinPECustomization(
-                             name='offline_winpe_2013_x64',
-                             offline_customization=[
-                                 actions.OfflineAction(
-                                     name='network_setup',
-                                     actions=[ACTION_ADD_STARTNET])
-                             ]))
+                         .OfflineWinPECustomization(name=cust_name,))
                  ])) +
-         PIN_FILE_STARTNET_PASS +  # pin the startnet file to current refs
-         FETCH_FILE_STARTNET_PASS +  # fetch the startnet file from gitiles
-         GEN_WPE_MEDIA_FAIL +  # Fail to create a winpe media folder
-         api.post_process(StatusFailure) +  # recipe should fail
-         api.post_process(DropExpectation))
-
-  yield (
-      api.test('Missing arch in config', api.platform('win', 64)) +
-      api.properties(
-          wib.Image(
-              name='win10_2013_x64',
-              customizations=[
-                  wib.Customization(
-                      offline_winpe_customization=winpe.
-                      OfflineWinPECustomization(name='offline_winpe_2013_x64',))
-              ])) + api.post_process(StatusFailure) +  # recipe should fail
-      api.post_process(DropExpectation))
+         # recipe execution should fail
+         api.post_process(StatusFailure) + api.post_process(DropExpectation))
 
   yield (api.test('Fail add file step', api.platform('win', 64)) +
+         # generate image with add starnet action
          api.properties(
-             wib.Image(
-                 name='win10_2013_x64',
-                 arch=wib.ARCH_X86,
-                 customizations=[
-                     wib.Customization(
-                         offline_winpe_customization=winpe
-                         .OfflineWinPECustomization(
-                             name='offline_winpe_2013_x64',
-                             offline_customization=[
-                                 actions.OfflineAction(
-                                     name='network_setup',
-                                     actions=[ACTION_ADD_STARTNET])
-                             ]))
-                 ])) + GEN_WPE_MEDIA_PASS + MOUNT_WIM_PASS +
-         PIN_FILE_STARTNET_PASS +  # pin the git file to current refs
-         FETCH_FILE_STARTNET_PASS +  # fetch the file from gitiles
-         ADD_FILE_STARTNET_FAIL +  # Fail to add file
-         UMOUNT_WIM_PASS +  # Unmount the wim
-         UMOUNT_PP_DISCARD +  # Discard the changes made to wim
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
+                         [ACTION_ADD_STARTNET])) +
+         # mock all the init and deinit steps
+         t.MOCK_WPE_INIT_DEINIT_FAILURE(api, arch, image, cust_name) +
+         # mock git pin execution
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock the git fetch execution
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock add file from git to image execution
+         t.ADD_GIT_FILE(
+             api, image, cust_name, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+             'windows\\artifacts\\startnet.cmd', False) +  # Fail to add file
          api.post_process(StatusFailure) +  # recipe fails
          api.post_process(DropExpectation))
 
   yield (api.test('Add file from cipd', api.platform('win', 64)) +
+         # generate image with add starnet action
          api.properties(
-             wib.Image(
-                 name='win10_2013_x64',
-                 arch=wib.ARCH_X86,
-                 customizations=[
-                     wib.Customization(
-                         offline_winpe_customization=winpe
-                         .OfflineWinPECustomization(
-                             name='offline_winpe_2013_x64',
-                             offline_customization=[
-                                 actions.OfflineAction(
-                                     name='network_setup',
-                                     actions=[
-                                         ACTION_ADD_DOT3SVC,
-                                     ])
-                             ]))
-                 ])) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
-         MOUNT_WIM_PASS +  # mount the generated wim
-         ADD_FILE_CIPD_PASS +  # add the file from cipd
-         DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # add cfg to the root of image
-         UMOUNT_WIM_PASS +  # Unmount the wim
-         UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
+                         [ACTION_ADD_DOT3SVC])) +
+         # mock init and deinit steps for offline customization
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
+         # mock add cipd file step
+         t.ADD_CIPD_FILE(
+             api,
+             'infra_internal\\labs\\drivers\\microsoft\\windows_adk\\winpe\\' +
+             'winpe-dot3svc', 'windows-amd64', image, cust_name) +
+         # assert that recipe completed execution successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
-  yield (
-      api.test('Add file from git', api.platform('win', 64)) + api.properties(
-          wib.Image(
-              name='win10_2013_x64',
-              arch=wib.ARCH_X86,
-              customizations=[
-                  wib.Customization(
-                      offline_winpe_customization=winpe
-                      .OfflineWinPECustomization(
-                          name='offline_winpe_2013_x64',
-                          offline_customization=[
-                              actions.OfflineAction(
-                                  name='network_setup',
-                                  actions=[
-                                      ACTION_ADD_STARTNET,
-                                  ])
-                          ]))
-              ])) + PIN_FILE_STARTNET_PASS +  # pin the startnet refs
-      FETCH_FILE_STARTNET_PASS +  # fetch the startnet file
-      GEN_WPE_MEDIA_PASS +  # successfully gen winpe media
-      MOUNT_WIM_PASS +  # mount the wim
-      ADD_FILE_STARTNET_PASS +  # Add the downloaded file
-      DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of the image
-      UMOUNT_WIM_PASS +  # Unmount the wim
-      UMOUNT_PP_SAVE +  # Check unmount didn't discard the changes
-      api.post_process(StatusSuccess) + api.post_process(DropExpectation))
-
-  yield (api.test(
-      'Install package from cipd', api.platform('win', 64)
-  ) + api.properties(
-      wib.Image(
-          name='win10_2013_x64',
-          arch=wib.ARCH_X86,
-          customizations=[
-              wib.Customization(
-                  offline_winpe_customization=winpe.OfflineWinPECustomization(
-                      name='offline_winpe_2013_x64',
-                      offline_customization=[
-                          actions.OfflineAction(
-                              name='wmi_setup', actions=[
-                                  ACTION_INSTALL_WMI,
-                              ])
-                      ]))
-          ])) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
-         MOUNT_WIM_PASS +  # mount the generated wim
-         INSTALL_FILE_WMI_PASS +  # install file from cipd
-         DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of image
-         UMOUNT_WIM_PASS +  # Unmount the wim
-         UMOUNT_PP_SAVE +  # Check if the changes are saved to wim
+  yield (api.test('Add file from git', api.platform('win', 64)) +
+         # generate image with add starnet action
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
+                         [ACTION_ADD_STARTNET])) +
+         # mock init and deinit steps for offline customization
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
+         # mock git pin execution
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock the git fetch execution
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock add file from git step
+         t.ADD_GIT_FILE(api, image, cust_name,
+                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                        'windows\\artifacts\\startnet.cmd') +
+         # assert that the recipe completed successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
-  yield (api.test('Happy path', api.platform('win', 64)) + api.properties(
-      wib.Image(
-          name='win10_2013_x64',
-          arch=wib.ARCH_X86,
-          customizations=[
-              wib.Customization(
-                  offline_winpe_customization=winpe.OfflineWinPECustomization(
-                      name='offline_winpe_2013_x64',
-                      offline_customization=[
-                          actions.OfflineAction(
-                              name='network_setup',
-                              actions=[
-                                  ACTION_ADD_STARTNET,
-                                  ACTION_ADD_DOT3SVC,
-                              ])
-                      ]))
-          ])) + GEN_WPE_MEDIA_PASS +  # generate the winpe media
-         MOUNT_WIM_PASS +  # mount the generated wim
-         PIN_FILE_STARTNET_PASS +  # pin the startnet file to current refs
-         FETCH_FILE_STARTNET_PASS +  # fetch the startnet file
-         ADD_FILE_STARTNET_PASS +  # add file from git to wim
-         ADD_FILE_CIPD_PASS +  # add the file from cipd to wim
-         DEINIT_WIM_ADD_CFG_TO_ROOT_PASS +  # Add the cfg to the root of image
-         UMOUNT_WIM_PASS +  # unmount the wim
-         UMOUNT_PP_SAVE +  # Save the changes made to the wim
+  yield (api.test('Install package from cipd', api.platform('win', 64)) +
+         # generate image with add starnet action
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'wmi_setup',
+                         [ACTION_INSTALL_WMI])) +
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image,
+                                        cust_name) +  # mock {de}init steps
+         t.INSTALL_FILE(api, 'install_winpe_wmi', image,
+                        cust_name) +  # install file from cipd
+         api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  yield (api.test('Happy path', api.platform('win', 64)) +
+         # generate image with add starnet action
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
+                         [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])) +
+         # mock init and deinit steps for offline customization
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
+         # mock git pin execution
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock the git fetch execution
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock add file from git step
+         t.ADD_GIT_FILE(api, image, cust_name,
+                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                        'windows\\artifacts\\startnet.cmd') +
+         # mock add file from cipd step
+         t.ADD_CIPD_FILE(
+             api, 'infra_internal\\labs\\drivers\\microsoft\\' +
+             'windows_adk\\winpe\\winpe-dot3svc', 'windows-amd64', image,
+             cust_name) +
+         # assert that the recipe executed successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
