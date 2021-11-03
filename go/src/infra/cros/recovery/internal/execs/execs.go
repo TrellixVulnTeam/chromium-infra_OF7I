@@ -93,6 +93,24 @@ func Exist(name string) bool {
 	return ok
 }
 
+// 127: linux command line error of command not found.
+var SSHErrorCLINotFound = errors.BoolTag{Key: errors.NewTagKey("ssh_error_cli_not_found")}
+
+// other linux error tag.
+var GeneralError = errors.BoolTag{Key: errors.NewTagKey("general_error")}
+
+// internal error tag.
+var SSHErrorInternal = errors.BoolTag{Key: errors.NewTagKey("ssh_error_internal")}
+
+// -1: fail to create ssh session.
+var FailToCreateSSHErrorInternal = errors.BoolTag{Key: errors.NewTagKey("fail_to_create_ssh_error_internal")}
+
+// -2: session is down, but the server sends no confirmation of the exit status.
+var NoExitStatusErrorInternal = errors.BoolTag{Key: errors.NewTagKey("no_exit_status_error_internal")}
+
+// other internal error tag.
+var OtherErrorInternal = errors.BoolTag{Key: errors.NewTagKey("other_error_internal")}
+
 // Runner defines the type for a function that will execute a command
 // on a host, and returns the result as a single line.
 type Runner func(context.Context, string) (string, error)
@@ -102,11 +120,29 @@ type Runner func(context.Context, string) (string, error)
 // defines the specific host on which the command will be
 // executed. Examples of such specific hosts can be the DUT, or the
 // servo-host etc.
-func (args RunArgs) NewRunner(host string) Runner {
+func (args *RunArgs) NewRunner(host string) Runner {
 	runner := func(ctx context.Context, cmd string) (string, error) {
 		r := args.Access.Run(ctx, host, cmd)
-		if r.ExitCode != 0 {
-			return "", errors.Reason("runner: command %q completed with exit code %q", cmd, r.ExitCode).Err()
+		exitCode := r.ExitCode
+		if exitCode != 0 {
+			errAnnotator := errors.Reason("runner: command %q completed with exit code %q", cmd, r.ExitCode)
+			// different kinds of internal errors
+			if exitCode < 0 {
+				errAnnotator.Tag(SSHErrorInternal)
+				if exitCode == -1 {
+					errAnnotator.Tag(FailToCreateSSHErrorInternal)
+				} else if exitCode == -2 {
+					errAnnotator.Tag(NoExitStatusErrorInternal)
+				} else if exitCode == -3 {
+					errAnnotator.Tag(OtherErrorInternal)
+				}
+				// general linux errors
+			} else if exitCode == 127 {
+				errAnnotator.Tag(SSHErrorCLINotFound)
+			} else {
+				errAnnotator.Tag(GeneralError)
+			}
+			return "", errAnnotator.Err()
 		}
 		return strings.TrimSpace(r.Stdout), nil
 	}
