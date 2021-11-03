@@ -50,6 +50,9 @@ builder(
     # Each trigger from 'publish_tarball' should result in a build.
     triggering_policy = scheduler.greedy_batching(max_batch_size = 1),
     cores = 32,
+    experiments = {
+        "luci.recipes.use_python3": 100,
+    },
 )
 
 luci.notifier(
