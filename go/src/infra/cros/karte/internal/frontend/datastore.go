@@ -195,7 +195,8 @@ func (q *ActionEntitiesQuery) Next(ctx context.Context, batchSize int32) ([]*Act
 func newActionEntitiesQuery(token string, filter string) (*ActionEntitiesQuery, error) {
 	expr, err := filterexp.Parse(filter)
 	if err != nil {
-		return nil, errors.Annotate(err, "make action entities query").Err()
+		// TODO(gregorynisbet): Pick more consistent strategy for assigning error statuses.
+		return nil, status.Errorf(codes.InvalidArgument, "make action entities query: %s", err)
 	}
 	q, err := filterexp.ApplyConditions(
 		datastore.NewQuery(ActionKind),
