@@ -768,6 +768,9 @@ class TaskCancelSwarmingTask(webapp2.RequestHandler):  # pragma: no cover
   @decorators.require_taskqueue('backend-default')
   def post(self, host, task_id):  # pylint: disable=unused-argument
     payload = json.loads(self.request.body)
+    if not payload.get('realm'):
+      logging.warning("dropping cancel_task_async without realm: %r", payload)
+      return
     cancel_task(payload['hostname'], payload['task_id'], payload['realm'])
 
 
