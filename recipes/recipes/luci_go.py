@@ -56,7 +56,7 @@ def apply_golangci_lint(api, co):
 
   # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/golangci-lint
   linter = api.cipd.ensure_tool('infra/3pp/tools/golangci-lint/${platform}',
-                                'version:2@1.42.0')
+                                'version:2@1.43.0')
   result = api.step(
       'run golangci-lint',
       [
