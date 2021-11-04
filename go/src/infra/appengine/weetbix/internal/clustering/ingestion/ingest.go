@@ -182,7 +182,7 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return err
 	}
 
-	clusterResults := algorithms.Cluster(chunk.Failures)
+	clusterResults := algorithms.Cluster(clustering.FailuresFromProtos(chunk.Failures))
 
 	clusterState := &state.Entry{
 		Project:           i.opts.Project,

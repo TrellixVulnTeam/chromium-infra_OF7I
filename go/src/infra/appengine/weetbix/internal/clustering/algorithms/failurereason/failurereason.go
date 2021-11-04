@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"regexp"
 
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/internal/clustering"
 )
 
 // AlgorithmVersion is the version of the clustering algorithm. The algorithm
@@ -46,12 +46,12 @@ func (a *Algorithm) Name() string {
 
 // Cluster clusters the given test failure and returns its cluster ID (if it
 // can be clustered) or nil otherwise.
-func (a *Algorithm) Cluster(failure *cpb.Failure) []byte {
-	if failure.FailureReason == nil || failure.FailureReason.PrimaryErrorMessage == "" {
+func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
+	if failure.Reason == nil || failure.Reason.PrimaryErrorMessage == "" {
 		return nil
 	}
 	// Replace numbers and hex values.
-	id := clusterExp.ReplaceAllString(failure.FailureReason.PrimaryErrorMessage, "0")
+	id := clusterExp.ReplaceAllString(failure.Reason.PrimaryErrorMessage, "0")
 	// sha256 hash the resulting string.
 	h := sha256.Sum256([]byte(id))
 	// Take first 16 bytes as the ID. (Risk of collision is

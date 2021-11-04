@@ -13,9 +13,9 @@ import (
 
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
+	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -251,8 +251,8 @@ func TestIngest(t *testing.T) {
 
 func setTestNameClustered(e *bqpb.ClusteredFailureRow) {
 	e.ClusterAlgorithm = "testname-v1"
-	e.ClusterId = hex.EncodeToString((&testname.Algorithm{}).Cluster(&cpb.Failure{
-		TestId: e.TestId,
+	e.ClusterId = hex.EncodeToString((&testname.Algorithm{}).Cluster(&clustering.Failure{
+		TestID: e.TestId,
 	}))
 }
 

@@ -7,7 +7,7 @@ package failurereason
 import (
 	"testing"
 
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/internal/clustering"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -16,45 +16,35 @@ import (
 func TestAlgorithm(t *testing.T) {
 	Convey(`Does not cluster test result without failure reason`, t, func() {
 		a := &Algorithm{}
-		id := a.Cluster(&cpb.Failure{})
+		id := a.Cluster(&clustering.Failure{})
 		So(id, ShouldBeNil)
 	})
 	Convey(`ID of appropriate length`, t, func() {
 		a := &Algorithm{}
-		id := a.Cluster(&cpb.Failure{
-			FailureReason: &pb.FailureReason{
-				PrimaryErrorMessage: "abcd this is a test failure message",
-			},
+		id := a.Cluster(&clustering.Failure{
+			Reason: &pb.FailureReason{PrimaryErrorMessage: "abcd this is a test failure message"},
 		})
 		// IDs may be 16 bytes at most.
 		So(len(id), ShouldBeGreaterThan, 0)
-		So(len(id), ShouldBeLessThanOrEqualTo, 16)
+		So(len(id), ShouldBeLessThanOrEqualTo, clustering.MaxClusterIDBytes)
 	})
 	Convey(`Same ID for same cluster with different numbers`, t, func() {
 		a := &Algorithm{}
-		id1 := a.Cluster(&cpb.Failure{
-			FailureReason: &pb.FailureReason{
-				PrimaryErrorMessage: "Null pointer exception at ip 0x45637271",
-			},
+		id1 := a.Cluster(&clustering.Failure{
+			Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
 		})
-		id2 := a.Cluster(&cpb.Failure{
-			FailureReason: &pb.FailureReason{
-				PrimaryErrorMessage: "Null pointer exception at ip 0x12345678",
-			},
+		id2 := a.Cluster(&clustering.Failure{
+			Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x12345678"},
 		})
 		So(id2, ShouldResemble, id1)
 	})
 	Convey(`Different ID for different clusters`, t, func() {
 		a := &Algorithm{}
-		id1 := a.Cluster(&cpb.Failure{
-			FailureReason: &pb.FailureReason{
-				PrimaryErrorMessage: "Exception in TestMethod",
-			},
+		id1 := a.Cluster(&clustering.Failure{
+			Reason: &pb.FailureReason{PrimaryErrorMessage: "Exception in TestMethod"},
 		})
-		id2 := a.Cluster(&cpb.Failure{
-			FailureReason: &pb.FailureReason{
-				PrimaryErrorMessage: "Exception in MethodUnderTest",
-			},
+		id2 := a.Cluster(&clustering.Failure{
+			Reason: &pb.FailureReason{PrimaryErrorMessage: "Exception in MethodUnderTest"},
 		})
 		So(id2, ShouldNotResemble, id1)
 	})

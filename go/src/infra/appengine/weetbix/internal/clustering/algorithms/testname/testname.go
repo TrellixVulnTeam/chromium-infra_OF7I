@@ -8,8 +8,7 @@ package testname
 import (
 	"crypto/sha256"
 	"fmt"
-
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/internal/clustering"
 )
 
 // AlgorithmVersion is the version of the clustering algorithm. The algorithm
@@ -37,8 +36,8 @@ func (a *Algorithm) Name() string {
 
 // Cluster clusters the given test failure and returns its cluster ID (if it
 // can be clustered) or nil otherwise.
-func (a *Algorithm) Cluster(failure *cpb.Failure) []byte {
-	id := failure.TestId
+func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
+	id := failure.TestID
 	// Hash test ID to generate a unique fingerprint.
 	h := sha256.Sum256([]byte(id))
 	// Take first 16 bytes as the ID. (Risk of collision is

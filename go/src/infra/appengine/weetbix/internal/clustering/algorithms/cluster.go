@@ -11,7 +11,6 @@ import (
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
 )
 
 // Algorithm represents the interface that each clustering algorithm must
@@ -22,7 +21,7 @@ type Algorithm interface {
 	// Cluster clusters the given test failure and returns its cluster ID (if
 	// it can be clustered) or nil otherwise. THe returned cluster ID must be
 	// at most 16 bytes.
-	Cluster(failure *cpb.Failure) []byte
+	Cluster(failure *clustering.Failure) []byte
 }
 
 // AlgorithmsVersion is the version of the set of algorithms used.
@@ -53,7 +52,7 @@ type ClusterResults struct {
 
 // Cluster clusters the given test failures using all registered
 // clustering algorithms.
-func Cluster(failures []*cpb.Failure) *ClusterResults {
+func Cluster(failures []*clustering.Failure) *ClusterResults {
 	var result [][]*clustering.ClusterID
 	for _, f := range failures {
 		var ids []*clustering.ClusterID
