@@ -7,6 +7,7 @@ package testname
 import (
 	"testing"
 
+	"infra/appengine/weetbix/internal/bugclusters/rules"
 	"infra/appengine/weetbix/internal/clustering"
 	pb "infra/appengine/weetbix/proto/v1"
 
@@ -14,35 +15,65 @@ import (
 )
 
 func TestAlgorithm(t *testing.T) {
-	Convey(`ID of appropriate length`, t, func() {
+	Convey(`Cluster`, t, func() {
 		a := &Algorithm{}
-		id := a.Cluster(&clustering.Failure{
-			TestID: "ninja://test_name",
+		Convey(`ID of appropriate length`, func() {
+			id := a.Cluster(&clustering.Failure{
+				TestID: "ninja://test_name",
+			})
+			// IDs may be 16 bytes at most.
+			So(len(id), ShouldBeGreaterThan, 0)
+			So(len(id), ShouldBeLessThanOrEqualTo, clustering.MaxClusterIDBytes)
 		})
-		// IDs may be 16 bytes at most.
-		So(len(id), ShouldBeGreaterThan, 0)
-		So(len(id), ShouldBeLessThanOrEqualTo, clustering.MaxClusterIDBytes)
+		Convey(`Same ID for same test name`, func() {
+			id1 := a.Cluster(&clustering.Failure{
+				TestID: "ninja://test_name_one/",
+				Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+			})
+			id2 := a.Cluster(&clustering.Failure{
+				TestID: "ninja://test_name_one/",
+				Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
+			})
+			So(id2, ShouldResemble, id1)
+		})
+		Convey(`Different ID for different clusters`, func() {
+			id1 := a.Cluster(&clustering.Failure{
+				TestID: "ninja://test_name_one/",
+			})
+			id2 := a.Cluster(&clustering.Failure{
+				TestID: "ninja://test_name_two/",
+			})
+			So(id2, ShouldNotResemble, id1)
+		})
 	})
-	Convey(`Same ID for same test name`, t, func() {
+	Convey(`Failure Association Rule`, t, func() {
 		a := &Algorithm{}
-		id1 := a.Cluster(&clustering.Failure{
-			TestID: "ninja://test_name_one/",
-			Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+		test := func(failure *clustering.Failure, expectedRule string) {
+			rule := a.FailureAssociationRule(failure)
+			So(rule, ShouldEqual, expectedRule)
+
+			// Test the rule is valid syntax and matches at least the example failure.
+			expr, err := rules.Parse(rule, "test")
+			So(err, ShouldBeNil)
+			So(expr.Evaluate(map[string]string{
+				"test": failure.TestID,
+			}), ShouldBeTrue)
+		}
+		Convey(`ninja Test ID`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+			}
+			test(failure, `test = "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html"`)
 		})
-		id2 := a.Cluster(&clustering.Failure{
-			TestID: "ninja://test_name_one/",
-			Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
-		})
-		So(id2, ShouldResemble, id1)
 	})
-	Convey(`Different ID for different clusters`, t, func() {
+	Convey(`Cluster Description`, t, func() {
 		a := &Algorithm{}
-		id1 := a.Cluster(&clustering.Failure{
-			TestID: "ninja://test_name_one/",
-		})
-		id2 := a.Cluster(&clustering.Failure{
-			TestID: "ninja://test_name_two/",
-		})
-		So(id2, ShouldNotResemble, id1)
+
+		failure := &clustering.Failure{
+			TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+		}
+		description := a.ClusterDescription(failure)
+		So(description.Title, ShouldEqual, "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html")
+		So(description.Description, ShouldContainSubstring, "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html")
 	})
 }

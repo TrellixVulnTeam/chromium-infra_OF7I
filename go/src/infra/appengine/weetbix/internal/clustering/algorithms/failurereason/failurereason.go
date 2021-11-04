@@ -13,6 +13,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"infra/appengine/weetbix/internal/clustering"
 )
@@ -21,7 +23,7 @@ import (
 // version should be incremented whenever existing test results may be
 // clustered differently (i.e. Cluster(f) returns a different value for some
 // f that may have been already ingested).
-const AlgorithmVersion = 1
+const AlgorithmVersion = 2
 
 // AlgorithmName is the identifier for the clustering algorithm.
 // Weetbix requires all clustering algorithms to have a unique identifier.
@@ -31,9 +33,12 @@ const AlgorithmVersion = 1
 // of an algorithm has a different name.
 var AlgorithmName = fmt.Sprintf("failurereason-v%v", AlgorithmVersion)
 
+const bugDescriptionTemplate = `This bug is for all test failures where the primary error message is similar to the following (ignoring numbers and hexadecimal values):
+%s`
+
 // To match any 1 or more digit numbers, or hex values (often appear in temp
 // file names or prints of pointers), which will be replaced.
-var clusterExp = regexp.MustCompile(`[0-9]+|[\-0-9a-fA-F\s]{16,}|[0-9a-fA-Fx]{8,}|[/+0-9a-zA-Z]{10,}=+`)
+var clusterExp = regexp.MustCompile(`[/+0-9a-zA-Z]{10,}=+|[\-0-9a-fA-F\s]{16,}|[0-9a-fA-Fx]{8,}|[0-9]+`)
 
 // Algorithm represents an instance of the reason-based clustering
 // algorithm.
@@ -57,4 +62,41 @@ func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
 	// Take first 16 bytes as the ID. (Risk of collision is
 	// so low as to not warrant full 32 bytes.)
 	return h[0:16]
+}
+
+// ClusterDescription returns a description of the cluster, for use when
+// filing bugs, with the help of the given example failure.
+func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription {
+	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
+		return nil
+	}
+	// Quote and escape.
+	primaryError := strconv.QuoteToGraphic(example.Reason.PrimaryErrorMessage)
+	// Unquote, so we are left with the escaped error message only.
+	primaryError = primaryError[1 : len(primaryError)-1]
+	return &clustering.ClusterDescription{
+		Title:       primaryError,
+		Description: fmt.Sprintf(bugDescriptionTemplate, primaryError),
+	}
+}
+
+// FailureAssociationRule returns a failure association rule that
+// captures the definition of cluster containing the given example.
+func (a *Algorithm) FailureAssociationRule(example *clustering.Failure) string {
+	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
+		return ""
+	}
+	// Escape \, % and _ so that they are not interpreted as by LIKE
+	// pattern matching.
+	rewriter := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	likePattern := rewriter.Replace(example.Reason.PrimaryErrorMessage)
+
+	// Replace hexadecimal seqeunces with wildcard matches. This is technically
+	// broader than our original cluster definition, but is more readable, and
+	// usually ends up matching the exact same set of failures.
+	likePattern = clusterExp.ReplaceAllString(likePattern, "%")
+
+	// Escape the pattern as a string literal.
+	stringLiteral := strconv.QuoteToGraphic(likePattern)
+	return fmt.Sprintf("reason LIKE %s", stringLiteral)
 }

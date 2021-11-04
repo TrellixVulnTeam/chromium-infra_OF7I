@@ -10,4 +10,4 @@ import "regexp"
 var ChunkRe = regexp.MustCompile(`^[0-9a-f]{1,32}$`)
 
 // algorithmRe matches validly formed clustering algorithm names.
-var AlgorithmRe = regexp.MustCompile(`^[0-9a-z\-.]{1,32}$`)
+var AlgorithmRe = regexp.MustCompile(`^[0-9a-z\-]{1,32}$`)

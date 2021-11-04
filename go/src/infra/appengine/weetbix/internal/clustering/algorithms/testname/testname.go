@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"infra/appengine/weetbix/internal/clustering"
+	"strconv"
 )
 
 // AlgorithmVersion is the version of the clustering algorithm. The algorithm
@@ -43,4 +44,22 @@ func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
 	// Take first 16 bytes as the ID. (Risk of collision is
 	// so low as to not warrant full 32 bytes.)
 	return h[0:16]
+}
+
+const bugDescriptionTemplate = `This bug is for all test failures with the test name: %s`
+
+// ClusterDescription returns a description of the cluster, for use when
+// filing bugs, with the help of the given example failure.
+func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription {
+	return &clustering.ClusterDescription{
+		Title:       example.TestID,
+		Description: fmt.Sprintf(bugDescriptionTemplate, example.TestID),
+	}
+}
+
+// FailureAssociationRule returns a failure association rule that
+// captures the definition of cluster containing the given example.
+func (a *Algorithm) FailureAssociationRule(example *clustering.Failure) string {
+	stringLiteral := strconv.QuoteToGraphic(example.TestID)
+	return fmt.Sprintf("test = %s", stringLiteral)
 }

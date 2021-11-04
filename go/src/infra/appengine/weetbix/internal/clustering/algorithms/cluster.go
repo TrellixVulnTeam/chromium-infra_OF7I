@@ -6,6 +6,7 @@ package algorithms
 
 import (
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -22,12 +23,24 @@ type Algorithm interface {
 	// it can be clustered) or nil otherwise. THe returned cluster ID must be
 	// at most 16 bytes.
 	Cluster(failure *clustering.Failure) []byte
+	// FailureAssociationRule returns a failure association rule that
+	// captures the definition of cluster containing the given example.
+	FailureAssociationRule(example *clustering.Failure) string
+	// ClusterDescription returns a description of the cluster, for use when
+	// filing bugs, with the help of the given example failure.
+	ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription
 }
 
 // AlgorithmsVersion is the version of the set of algorithms used.
 // Changing the set of algorithms below (including add, update or
 // deletion of an algorithm) should result in this version being
 // incremented.
+//
+// In case of algorithm deletion, make sure to update this constant
+// appropriately to ensure the AlgorithmsVersion still increases
+// (I.E. DO NOT simply delete "+ <myalgorithm>.AlgorithmVersion"
+// when deleting an algorithm without rolling its value (plus one)
+// into the constant.)
 const AlgorithmsVersion = 1 + failurereason.AlgorithmVersion + testname.AlgorithmVersion
 
 // algorithms is the set of clustering algorithms known to Weetbix.
@@ -74,4 +87,22 @@ func Cluster(failures []*clustering.Failure) *ClusterResults {
 		RuleVersion: time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC),
 		Clusters:    result,
 	}
+}
+
+// ErrAlgorithmNotExist is returned if a clusterID is passed whose
+// clustering algorithm is not supported. This may indicate the algorithm
+// is newer or older than the current version.
+var ErrAlgorithmNotExist = errors.New("algorithm does not exist")
+
+// ByName returns the algorithm with the given name. If the algorithm
+// does not exist, ErrAlgorithmNotExist is returned.
+func ByName(algorithm string) (Algorithm, error) {
+	for _, a := range algorithms {
+		if a.Name() == algorithm {
+			return a, nil
+		}
+	}
+	// We may be running old code, or the caller may be asking
+	// for an old (version of an) algorithm.
+	return nil, ErrAlgorithmNotExist
 }

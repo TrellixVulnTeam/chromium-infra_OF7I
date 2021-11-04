@@ -14,6 +14,7 @@ import (
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
 	"infra/appengine/weetbix/internal/testutil"
@@ -250,15 +251,17 @@ func TestIngest(t *testing.T) {
 }
 
 func setTestNameClustered(e *bqpb.ClusteredFailureRow) {
-	e.ClusterAlgorithm = "testname-v1"
+	e.ClusterAlgorithm = testname.AlgorithmName
 	e.ClusterId = hex.EncodeToString((&testname.Algorithm{}).Cluster(&clustering.Failure{
 		TestID: e.TestId,
 	}))
 }
 
 func setRegexpClustered(e *bqpb.ClusteredFailureRow) {
-	e.ClusterAlgorithm = "failurereason-v1"
-	e.ClusterId = "5b4886907ba205f9ee2d8815452cb6e7" // Cluster ID for "Failure reason."
+	e.ClusterAlgorithm = failurereason.AlgorithmName
+	e.ClusterId = hex.EncodeToString((&failurereason.Algorithm{}).Cluster(&clustering.Failure{
+		Reason: &pb.FailureReason{PrimaryErrorMessage: "Failure reason."},
+	}))
 }
 
 func sortClusteredFailures(cfs []*bqpb.ClusteredFailureRow) {
