@@ -135,24 +135,6 @@ CREATE NULL_FILTERED INDEX VerdictsByKeyAndIngestionTime
 CREATE NULL_FILTERED INDEX VerdictsByIngestionTime
  ON Verdicts (Realm, IngestionTime DESC);
 
--- BugClusters contains the bugs tracked by Weetbix, and the failure clusters
--- they are associated with.
-CREATE TABLE BugClusters (
-  -- The LUCI Project this bug belongs to.
-  Project STRING(40) NOT NULL,
-  -- The bug. For monorail, the scheme is monorail/{project}/{numeric id}.
-  Bug STRING(255) NOT NULL,
-  -- The associated failure cluster. In future, the intent is to replace
-  -- this in favour of a failure association rule.
-  AssociatedClusterId STRING(MAX) NOT NULL,
-  -- Whether the bug must still be updated by Weetbix. The only allowed
-  -- values are true or NULL (to indicate false). Only if the bug has
-  -- been closed and no failures have been observed for a while should
-  -- this be NULL. This makes it easy to retrofit a NULL_FILTERED index
-  -- in future, if it is needed for performance.
-  IsActive BOOL,
-) PRIMARY KEY (Project, Bug);
-
 -- FailureAssociationRules associate failures with bugs. When a rule
 -- is used to match incoming test failures, the resultant cluster is
 -- known as a 'bug cluster' because the failures in it are associated
