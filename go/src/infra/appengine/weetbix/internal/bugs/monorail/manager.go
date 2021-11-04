@@ -19,14 +19,6 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 )
 
-// ManagerName is the name of the monorail bug manager. It is used to
-// namespace bugs created by the manager.
-const ManagerName = "monorail"
-
-// bugRe matches internal bug names, like
-// "{monorail_project}/{numeric_id}".
-var bugRe = regexp.MustCompile(`^([a-z0-9\-_]+)/([0-9]+)$`)
-
 // monorailRe matches monorail issue names, like
 // "monorail/{monorail_project}/{numeric_id}".
 var monorailRe = regexp.MustCompile(`^projects/([a-z0-9\-_]+)/issues/([0-9]+)$`)
@@ -171,7 +163,7 @@ func (m *BugManager) fetchIssues(ctx context.Context, updates []*bugs.BugToUpdat
 // "{monorail_project}/{numeric_id}" to a monorail issue name like
 // "projects/{project}/issues/{numeric_id}".
 func toMonorailIssueName(bug string) (string, error) {
-	parts := bugRe.FindStringSubmatch(bug)
+	parts := bugs.MonorailBugIDRe.FindStringSubmatch(bug)
 	if parts == nil {
 		return "", fmt.Errorf("invalid bug %q", bug)
 	}

@@ -59,3 +59,9 @@ func (c ClusterID) Validate() error {
 	}
 	return nil
 }
+
+// IsEmpty returns whether the cluster ID is equal to its
+// zero value.
+func (c ClusterID) IsEmpty() bool {
+	return c.Algorithm == "" && c.ID == ""
+}

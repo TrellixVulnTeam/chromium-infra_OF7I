@@ -6,6 +6,7 @@ package bugclusters
 
 import (
 	"context"
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
@@ -40,7 +41,7 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, simulate bo
 	mgrs := make(map[string]BugManager)
 	mbm := monorail.NewBugManager(mc, monorailCfg)
 	mbm.Simulate = simulate
-	mgrs[monorail.ManagerName] = mbm
+	mgrs[bugs.MonorailSystem] = mbm
 
 	bu := NewBugUpdater(mgrs, cc, thresholds)
 	if err := bu.Run(ctx); err != nil {

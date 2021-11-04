@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"testing"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
@@ -46,7 +47,7 @@ func TestRun(t *testing.T) {
 
 		mgrs := make(map[string]BugManager)
 		monorailCfg := monorail.ChromiumTestConfig()
-		mgrs[monorail.ManagerName] = monorail.NewBugManager(mc, monorailCfg)
+		mgrs[bugs.MonorailSystem] = monorail.NewBugManager(mc, monorailCfg)
 
 		thres := map[string]*config.ImpactThreshold{
 			// Should be more onerous than the "keep-open" thresholds

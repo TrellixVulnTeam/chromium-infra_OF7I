@@ -10,7 +10,6 @@ import (
 	"regexp"
 
 	"infra/appengine/weetbix/internal/bugs"
-	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 
@@ -162,7 +161,7 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 // clusters table.
 func (b *BugUpdater) createBugCluster(ctx context.Context, cluster *clustering.Cluster) error {
 	// For now, the only issue system supported is monorail.
-	system := monorail.ManagerName
+	system := bugs.MonorailSystem
 	mgr := b.managers[system]
 	name, err := mgr.Create(ctx, cluster)
 
