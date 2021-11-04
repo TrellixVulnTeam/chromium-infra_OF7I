@@ -7,11 +7,11 @@ describe('Index Page', () => {
         cy.visit('/').get('button').click();
         cy.get('body').contains('Logout');
     })
-    it('loads bug cluster table', () => {
+    it('loads bugs table', () => {
         // Navigate to the bug cluster page
-        cy.contains('Bug Clusters').click();
+        cy.contains('Bugs').click();
         // check for the header text in the bug cluster table.
-        cy.get('bug-cluster-table').contains('Associated Cluster ID');
+        cy.get('bugs-table').contains('Source Cluster ID');
     })
     it('loads cluster table', () => {
         // check for the header text in the cluster table.

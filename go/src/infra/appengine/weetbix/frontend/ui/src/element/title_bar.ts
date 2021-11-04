@@ -33,7 +33,7 @@ export class TitleBar extends LitElement {
     <div id="secondary-container">
       <ul>
         <li><a href="/">Clusters</a></li>
-        <li><a href="/bugcluster">Bug Clusters</a></li>
+        <li><a href="/bugs">Bugs</a></li>
       </ul>
     </div>
     <slot></slot>

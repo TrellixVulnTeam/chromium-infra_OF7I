@@ -31,9 +31,9 @@ import (
 
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/analysis"
-	"infra/appengine/weetbix/internal/bugclusters"
 	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -121,18 +121,19 @@ func (hc *handlers) indexPage(ctx *router.Context) {
 	templates.MustRender(ctx.Context, ctx.Writer, "pages/index.html", templates.Args{})
 }
 
-func (hc *handlers) listBugClusters(ctx *router.Context) {
+func (hc *handlers) listRules(ctx *router.Context) {
 	transctx, cancel := spanmodule.ReadOnlyTransaction(ctx.Context)
 	defer cancel()
 
-	bcs, err := bugclusters.ReadActive(transctx)
+	projectID := ctx.Params.ByName("project")
+	rs, err := rules.ReadActive(transctx, projectID)
 	if err != nil {
-		logging.Errorf(ctx.Context, "Reading bugs: %s", err)
+		logging.Errorf(ctx.Context, "Reading rules: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
-	respondWithJSON(ctx, bcs)
+	respondWithJSON(ctx, rs)
 }
 
 func (hc *handlers) listClusters(ctx *router.Context) {
@@ -260,7 +261,7 @@ func main() {
 		}
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.getCluster)
 		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.listClusters)
-		srv.Routes.GET("/api/bugcluster", mw, handlers.listBugClusters)
+		srv.Routes.GET("/api/projects/:project/rules", mw, handlers.listRules)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
 		// Anything that is not found, serve app html and let the client side router handle it.
 		srv.Routes.NotFound(mw, handlers.indexPage)
