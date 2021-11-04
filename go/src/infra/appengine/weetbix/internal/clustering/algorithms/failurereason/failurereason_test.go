@@ -7,8 +7,8 @@ package failurereason
 import (
 	"testing"
 
-	"infra/appengine/weetbix/internal/bugclusters/rules"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -55,7 +55,7 @@ func TestAlgorithm(t *testing.T) {
 			So(rule, ShouldEqual, expectedRule)
 
 			// Test the rule is valid syntax and matches at least the example failure.
-			expr, err := rules.Parse(rule, "reason")
+			expr, err := lang.Parse(rule, "reason")
 			So(err, ShouldBeNil)
 			So(expr.Evaluate(map[string]string{
 				"reason": failure.Reason.PrimaryErrorMessage,

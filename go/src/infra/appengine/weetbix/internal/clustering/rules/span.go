@@ -14,9 +14,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/span"
 
-	"infra/appengine/weetbix/internal/bugclusters/rules"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/config"
 	spanutil "infra/appengine/weetbix/internal/span"
 )
@@ -136,7 +136,7 @@ func validateRule(r *FailureAssociationRule) error {
 	case r.SourceCluster.Validate() != nil && !r.SourceCluster.IsEmpty():
 		return errors.Annotate(r.SourceCluster.Validate(), "source cluster ID is not valid").Err()
 	}
-	_, err := rules.Parse(r.RuleDefinition, "test", "reason")
+	_, err := lang.Parse(r.RuleDefinition, "test", "reason")
 	if err != nil {
 		return errors.Annotate(err, "rule definition is not valid").Err()
 	}

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package bugclusters
+package updater
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"encoding/hex"
 
 	"infra/appengine/weetbix/internal/analysis"
-	lang "infra/appengine/weetbix/internal/bugclusters/rules"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/config"
 	pb "infra/appengine/weetbix/proto/v1"
 

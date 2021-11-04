@@ -32,6 +32,7 @@ import (
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugclusters"
+	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
@@ -221,7 +222,7 @@ func (hc *handlers) updateBugs(ctx context.Context) error {
 		return errors.Annotate(err, "get config").Err()
 	}
 	simulate := !hc.prod
-	err = bugclusters.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, simulate)
+	err = updater.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, simulate)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}

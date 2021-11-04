@@ -2,11 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package rules parses failure association rule predicates. The predicate
+// Package lang parses failure association rule predicates. The predicate
 // syntax defined here is intended to be a subset of BigQuery Standard SQL's
-// Expression syntax, to ensure well-defined semantics and simplify debugging
-// (by allowing developers to directly copy- paste expressions into BigQuery
-// if needed).
+// Expression syntax, with the same semantics. This provides a few benefits:
+// - Well-known and understood syntax and semantics.
+// - Ability to leverage existing high-quality documentation to communicate
+//   language concepts to end-users.
+// - Simplified debugging of Weetbix (by allowing direct copy- paste of
+//   expressions into BigQuery to verify clustering is correct).
+// - Possibility of using BigQuery as an execution engine in future.
 //
 // Rules permitted by this package look similar to:
 //  reason LIKE "% exited with code 5 %" AND NOT
@@ -36,7 +40,7 @@
 // - String is the production rule for a double-quoted string literal.
 // The precise definitions of which are omitted here but found in the
 // implementation.
-package rules
+package lang
 
 import (
 	"bytes"
