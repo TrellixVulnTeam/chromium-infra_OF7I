@@ -1,33 +1,36 @@
-// Copyright 2021 The Chromium OS Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// Copyright 2021 The Chromium OS Authors. All rights reserved. Use of this
+// source code is governed by a BSD-style license that can be found in the
+// LICENSE file.
 
 // Package main implements a distributed worker model for uploading debug
 // symbols to the crash service. This package will be called by recipes through
 // CIPD and will perform the buisiness logic of the builder.
-// TODO(b/197010274): Add meaningful logging, with timing, to builder.
 package main
 
 import (
 	"archive/tar"
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/auth/client/authcli"
-	lgs "go.chromium.org/luci/common/gcloud/gs"
 	"infra/cros/internal/gs"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
+
+	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
 const (
@@ -35,17 +38,50 @@ const (
 	prodUploadUrl    = "https://prod-crashsymbolcollector-pa.googleapis.com/v1"
 	stagingUploadUrl = "https://staging-crashsymbolcollector-pa.googleapis.com/v1"
 	// Time in milliseconds to sleep before retrying the task.
-	sleepTimeMs = 100
+	sleepTime = time.Second
+
+	// TODO(juahurta): add constants for crash file size limits
 )
+
+// These structs are used in the interactions with the crash API.
+type crashSymbolFile struct {
+	DebugFile string `json:"debug_file"`
+	DebugId   string `json:"debug_id"`
+}
+type crashUploadInformation struct {
+	UploadUrl string `json:"uploadUrl"`
+	UploadKey string `json:"uploadKey"`
+}
+type crashSubmitSymbolBody struct {
+	SymbolId crashSymbolFile `json:"symbol_id"`
+}
+type crashSubmitResposne struct {
+	Result string `json:"result"`
+}
+
+type filterDuplicatesRequestBody struct {
+	SymbolIds []crashSymbolFile `json:"symbol_ids"`
+}
+
+// The bulk status checker endpoint uses a different schema.
+type filterSymbolFileInfo struct {
+	DebugFile string `json:"debugFile"`
+	DebugId   string `json:"debugId"`
+}
+type filterResponseStatusPair struct {
+	SymbolId filterSymbolFileInfo `json:"symbolId"`
+	Status   string               `json:"status"`
+}
+type filterResponseBody struct {
+	Pairs []filterResponseStatusPair `json:"pairs"`
+}
 
 // taskConfig will contain the information needed to complete the upload task.
 type taskConfig struct {
 	symbolPath  string
 	debugFile   string
 	debugId     string
-	retryQuota  uint64
 	dryRun      bool
-	isStaging   bool
 	shouldSleep bool
 }
 
@@ -55,15 +91,180 @@ type uploadDebugSymbols struct {
 	gsPath      string
 	workerCount uint64
 	retryQuota  uint64
-	isStaging   bool
+	staging     bool
 	dryRun      bool
 }
 
+type crashConnectionInfo struct {
+	key    string
+	url    string
+	client crashClient
+}
+
+type crashClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// retrieveApiKey fetches the crash API key stored in the local keystore.
+func retrieveApiKey() (string, error) {
+	// TODO(juahurta): Locate and verify the key wanted on the bot.
+	apiKey := "HIDDEN KEY"
+	return apiKey, nil
+}
+
+// TODO(b/197010274): add function to strip CFI lines if file is too large
+
+// httpRequest  builds the http request and executes it using the globally
+// defined Client variable.
+func httpRequest(url, httpRequestType string, data io.Reader, headers http.Header, client crashClient) (*http.Response, error) {
+	request, err := http.NewRequest(httpRequestType, url, data)
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	if response == nil {
+		return nil, fmt.Errorf("nil http repsonse was recieved")
+	}
+	return response, nil
+}
+
+// crashRetrieveUploadInformation retrieves a unique upload url and key for the given symbol
+// file.
+func crashRetrieveUploadInformation(uploadInfo *crashUploadInformation, crash crashConnectionInfo) error {
+	// Crash endpoint with and without the key.
+	requestUrlWithoutKey := crash.url + "/uploads:create"
+	requestUrlWithKey := fmt.Sprintf("%s?key=%s", requestUrlWithoutKey, crash.key)
+	response, err := httpRequest(requestUrlWithKey, http.MethodPost, nil, nil, crash.client)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != 200 {
+		return fmt.Errorf("request to %s failed with status %d", requestUrlWithoutKey, response.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	err = json.Unmarshal(body, &uploadInfo)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// crashUploadSymbol uploads the file to crash storage using the unique URL provided.
+func crashUploadSymbol(symbolPath, uploadUrl string, crash crashConnectionInfo) error {
+	// URL used in error message, actual url exposes keys and non-authenticated
+	// upload urls.
+	nonExposingUrl := "https://storage.googleapis.com/crashsymboldropzone/"
+	// Open the file to be sent in the PUT request.
+	file, err := os.Open(symbolPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	response, err := httpRequest(uploadUrl, http.MethodPut, file, nil, crash.client)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode != 200 {
+		return fmt.Errorf("request to %s failed with status %d", nonExposingUrl, response.StatusCode)
+	}
+
+	return nil
+}
+
+// crashSubmitSymbolUpload confirms the upload with the crash service.
+func crashSubmitSymbolUpload(uploadKey string, task taskConfig, crash crashConnectionInfo) error {
+	// Crash endpoints with and without the keys obsfusicated.
+	requestUrlWithoutKey := crash.url + "/uploads/"
+	requestUrlWithKey := fmt.Sprintf("%s%s:complete?key=%s", requestUrlWithoutKey, uploadKey, crash.key)
+
+	bodyInfo := crashSubmitSymbolBody{
+		crashSymbolFile{
+			task.debugFile,
+			task.debugId,
+		},
+	}
+
+	body, err := json.Marshal(bodyInfo)
+	if err != nil {
+		return err
+	}
+
+	response, err := httpRequest(requestUrlWithKey, http.MethodPost, bytes.NewReader(body), nil, crash.client)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != 200 {
+		return fmt.Errorf("request to %s failed with status %d", requestUrlWithoutKey, response.StatusCode)
+	}
+	// TODO(juahurta): Check body of the response for a success message
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	var uploadStatus crashSubmitResposne
+	err = json.Unmarshal(responseBody, &uploadStatus)
+	if err != nil {
+		return err
+	}
+
+	if uploadStatus.Result == "RESULT_UNSPECIFIED" {
+		return fmt.Errorf("upload could not be completed")
+	}
+
+	return nil
+}
+
 // upload will perform the upload of the symbol file to the crash service.
-// Making this function a variable will allow us to mock it easier.
-// TODO(b/197010274): remove skeleton code.
-var upload = func(task *taskConfig) bool {
-	return false
+func upload(task *taskConfig, crash crashConnectionInfo) bool {
+	message := bytes.Buffer{}
+	uploadLogger := log.New(&message, "", logFlags)
+	uploadLogger.Printf("Uploading %s\n", task.debugFile)
+	if task.dryRun {
+		LogOut("Would have uploaded %s to crash", task.debugFile)
+		return true
+	}
+
+	var uploadInfo crashUploadInformation
+	err := crashRetrieveUploadInformation(&uploadInfo, crash)
+
+	if err != nil {
+		LogOut("error: %s", err.Error())
+		return false
+	}
+	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
+
+	err = crashUploadSymbol(task.symbolPath, uploadInfo.UploadUrl, crash)
+
+	if err != nil {
+		LogOut("error: %s", err.Error())
+		return false
+	}
+	uploadLogger.Printf("%s: SUCCESS\n", "https://storage.googleapis.com/crashsymboldropzone/")
+
+	err = crashSubmitSymbolUpload(uploadInfo.UploadKey, *task, crash)
+
+	if err != nil {
+		LogOut("error: %s", err.Error())
+		return false
+	}
+	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
+	LogOut(message.String())
+	return true
 }
 
 // getFilename takes a file path, relative or full, and returns the filename.
@@ -77,6 +278,7 @@ func getFilename(filePath string) (string, error) {
 	return basePath, nil
 }
 
+// getCmdUploadDebugSymbols builds the CLI command and captures flags.
 func getCmdUploadDebugSymbols(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "upload <options>",
@@ -84,17 +286,17 @@ func getCmdUploadDebugSymbols(authOpts auth.Options) *subcommands.Command {
 		CommandRun: func() subcommands.CommandRun {
 			b := &uploadDebugSymbols{}
 			b.authFlags = authcli.Flags{}
-			b.authFlags.Register(b.GetFlags(), authOpts)
 			b.Flags.StringVar(&b.gsPath, "gs-path", "", ("[Required] Url pointing to the GS " +
 				"bucket storing the tarball."))
 			b.Flags.Uint64Var(&b.workerCount, "worker-count", 64, ("Number of worker threads" +
 				" to spawn."))
-			b.Flags.Uint64Var(&b.retryQuota, "retry-count", 200, ("Number of total upload retries" +
+			b.Flags.Uint64Var(&b.retryQuota, "retry-quota", 200, ("Number of total upload retries" +
 				" allowed."))
-			b.Flags.BoolVar(&b.isStaging, "is-staging", false, ("Specifies if the builder" +
+			b.Flags.BoolVar(&b.staging, "staging", false, ("Specifies if the builder" +
 				" should push to the staging crash service or prod."))
-			b.Flags.BoolVar(&b.dryRun, "dry-run", false, ("Specified whether network" +
+			b.Flags.BoolVar(&b.dryRun, "dry-run", true, ("Specified whether network" +
 				" operations should be dry ran."))
+			b.authFlags.Register(b.GetFlags(), authOpts)
 			return b
 		}}
 }
@@ -102,6 +304,7 @@ func getCmdUploadDebugSymbols(authOpts auth.Options) *subcommands.Command {
 // generateClient handles the authentication of the user then generation of the
 // client to be used by the gs module.
 func generateClient(ctx context.Context, authOpts auth.Options) (*gs.ProdClient, error) {
+	LogOut("Generating authenticated client for Google Storage access.")
 	authedClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
 	if err != nil {
 		return nil, err
@@ -118,13 +321,15 @@ func generateClient(ctx context.Context, authOpts auth.Options) (*gs.ProdClient,
 // of the symbol files to be uploaded. Once downloaded it will return the local
 // filepath to tarball.
 func downloadTgz(client gs.Client, gsPath, tgzPath string) error {
+	LogOut("Downloading compressed symbols from %s and storing in %s", gsPath, tgzPath)
 	return client.Download(lgs.Path(gsPath), tgzPath)
 }
 
-// unzipTgz will take the local path of the fetched tarball and then unpack
-// it. It will then return a list of file paths pointing to the unpacked symbol
+// unzipTgz will take the local path of the fetched tarball and then unpack it.
+// It will then return a list of file paths pointing to the unpacked symbol
 // files.
 func unzipTgz(inputPath, outputPath string) error {
+	LogOut("Uncompressing files from %s and storing %s", inputPath, outputPath)
 	srcReader, err := os.Open(inputPath)
 	if err != nil {
 		return err
@@ -152,6 +357,7 @@ func unzipTgz(inputPath, outputPath string) error {
 // it. It will then return a list of file paths pointing to the unpacked symbol
 // files. Searches for .so.sym files.
 func unpackTarball(inputPath, outputDir string) ([]string, error) {
+	LogOut("Untarring files from %s and storing symbols in %s", inputPath, outputDir)
 	retArray := []string{}
 
 	// Open locally stored .tar file.
@@ -174,7 +380,8 @@ func unpackTarball(inputPath, outputDir string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		// The header indicates it's a file. Store and save the file if it is a symbol file.
+		// The header indicates it's a file. Store and save the file if it is a
+		// symbol file.
 		if header.FileInfo().Mode().IsRegular() {
 			// Check if the file is a symbol file.
 			filename, err := getFilename(header.Name)
@@ -207,7 +414,10 @@ func unpackTarball(inputPath, outputDir string) ([]string, error) {
 // generateConfigs will take a list of strings with containing the paths to the
 // unpacked symbol files. It will return a list of generated task configs
 // alongside the communication channels to be used.
-func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging bool) ([]taskConfig, error) {
+
+func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun bool, crash crashConnectionInfo) ([]taskConfig, error) {
+	LogOut("Generating %d task configs", len(symbolFiles))
+
 	// The task should only sleep on retry.
 	shouldSleep := false
 
@@ -228,29 +438,33 @@ func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging 
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
 		lineScanner := bufio.NewScanner(file)
 
 		if lineScanner.Scan() {
 			line := strings.Split(lineScanner.Text(), " ")
 
 			// 	The first line of the syms file will read like:
-			// 		MODULE Linux arm F4F6FA6CCBDEF455039C8DE869C8A2F40 blkid
+			// 	  MODULE Linux arm F4F6FA6CCBDEF455039C8DE869C8A2F40 blkid
 			if len(line) != 5 {
 				return nil, fmt.Errorf("error: incorrect first line format for symbol file %s", debugFilename)
 			}
 
 			debugId = strings.ReplaceAll(line[3], "-", "")
 		}
+		err = file.Close()
+		if err != nil {
+			return nil, err
+		}
 
-		tasks[index] = taskConfig{filepath, debugFilename, debugId, retryQuota, dryRun, isStaging, shouldSleep}
+		tasks[index] = taskConfig{filepath, debugFilename, debugId, dryRun, shouldSleep}
 	}
 
 	// Filter out already uploaded debug symbols.
-	tasks, err := filterTasksAlreadyUploaded(tasks)
+	tasks, err := filterTasksAlreadyUploaded(tasks, dryRun, crash)
 	if err != nil {
 		return nil, err
 	}
+	LogOut("%d of %d symbols were duplicates. %d symbols will be sent for upload.", (len(symbolFiles) - len(tasks)), len(symbolFiles), len(tasks))
 
 	return tasks, nil
 }
@@ -258,42 +472,73 @@ func generateConfigs(symbolFiles []string, retryQuota uint64, dryRun, isStaging 
 // filterTasksAlreadyUploaded will send a batch request to the crash service for
 // file upload status. It will then filter out symbols that have already been
 // uploaded, reducing our upload time.
-func filterTasksAlreadyUploaded(tasks []taskConfig) ([]taskConfig, error) {
-	// Variable name formatting comes from API definition.
-	type apiSymbolFileDefinition struct {
-		DebugFile string `json:"debug_file"`
-		DebugId   string `json:"debug_id"`
-	}
+// Variable name formatting comes from API definition.
 
-	// Body of the post call sent to the crash API.
-	type apiBody struct {
-		SymbolIds []apiSymbolFileDefinition `json:"symbol_ids"`
-	}
-	body := apiBody{SymbolIds: []apiSymbolFileDefinition{}}
+func filterTasksAlreadyUploaded(tasks []taskConfig, dryRun bool, crash crashConnectionInfo) ([]taskConfig, error) {
+	LogOut("Filtering out previously uploaded symbol files.")
 
+	var responseInfo filterResponseBody
+	symbols := filterDuplicatesRequestBody{SymbolIds: []crashSymbolFile{}}
+
+	// Generate body for api call.
 	for _, task := range tasks {
-		body.SymbolIds = append(body.SymbolIds, apiSymbolFileDefinition{task.debugFile, task.debugId})
+		symbols.SymbolIds = append(symbols.SymbolIds, crashSymbolFile{task.debugFile, task.debugId})
 	}
-
-	_, err := json.Marshal(body)
+	postBody, err := json.Marshal(symbols)
 	if err != nil {
 		return nil, err
 	}
-	// TODO(b/197010274): Send a list of symbol files to the crash api to test for duplicates.
 
-	return tasks, nil
+	header := http.Header{}
+	header.Add("Content-Type", "application/json")
+	response, err := httpRequest(fmt.Sprintf(crash.url+"/symbols:checkStatuses?key=%s", crash.key), http.MethodPost, bytes.NewReader(postBody), nil, crash.client)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != 200 {
+		return tasks, fmt.Errorf("request to %s failed with status %d", crash.client, response.StatusCode)
+	}
+
+	// Parse the response from the API.
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	err = json.Unmarshal(body, &responseInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to map for easier filtering.
+	responseMap := make(map[string]string)
+
+	for _, pair := range responseInfo.Pairs {
+		responseMap[pair.SymbolId.DebugFile] = pair.Status
+	}
+
+	// Return a list of tasks that include the non-uploaded symbol files only.
+	filtered := []taskConfig{}
+	for _, task := range tasks {
+		if responseMap[task.debugFile] != "FOUND" {
+			filtered = append(filtered, task)
+		}
+	}
+
+	return filtered, nil
 }
 
-// uploadSymbols is the main loop that will spawn goroutines that will handle the
-// upload tasks. Should its worker fail it's upload and we have retries left,
-// send the task to the end of the channel's buffer.
+// uploadSymbols is the main loop that will spawn goroutines that will handle
+// the upload tasks. Should its worker fail it's upload and we have retries
+// left, send the task to the end of the channel's buffer.
 func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
-	isStaging, dryRun bool) (int, error) {
-
+	staging bool, crash crashConnectionInfo) (int, error) {
 	// Number of tasks to process.
 	tasksLeftToComplete := uint64(len(tasks))
 
-	// If there are less tasks to complete than allotted workers, reduce the worker count.
+	// If there are less tasks to complete than allotted workers, reduce the
+	// worker count.
 	if maximumWorkers > tasksLeftToComplete {
 		maximumWorkers = tasksLeftToComplete
 	}
@@ -313,11 +558,12 @@ func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
 
 	// This is the main driver loop for the distributed worker design.
 	for {
-		// All tasks completed close channels and exit loop.
+		// All tasks have been completed, close the channel and exit the loop.
 		if tasksLeftToComplete == 0 {
 			// Close the task queue.
 			close(taskQueue)
 			// Wait for all goroutines to finish then exit function.
+			// All goroutines should be done by now but this is here just in case.
 			waitgroup.Wait()
 			return 0, nil
 		}
@@ -327,11 +573,11 @@ func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
 			return 1, fmt.Errorf("error: too many retries taken")
 		}
 
-		// If a slot is open then create another worker.
 		if currentWorkerCount >= maximumWorkers {
 			continue
 		}
 
+		// Perform a non-blocking check for a task in the queue.
 		select {
 		// If there is a task in the queue, create a worker to handle it.
 		case task := <-taskQueue:
@@ -341,15 +587,23 @@ func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
 			// Spawn a worker to handle the task.
 			go func() {
 				defer waitgroup.Done()
-				taskToRetry := upload(&task)
+				if task.shouldSleep {
+					time.Sleep(sleepTime)
+				}
+
+				// Since golang is pass by value we don't need to wory about sending
+				// crash here.
+				uploadSuccessful := upload(&task, crash)
 
 				// If the task failed, toss the task to the end of the queue.
-				if !taskToRetry {
+				if !uploadSuccessful {
+					task.shouldSleep = true
 					taskQueue <- task
 					// Decrement the retryQuota we have left.
 					atomic.AddUint64(&retryQuota, ^uint64(0))
 				} else {
-					// If the worker completed the task successfully, decrement the tasksLeftToComplete counter.
+					// If the worker completed the task successfully, decrement the
+					// tasksLeftToComplete counter.
 					atomic.AddUint64(&tasksLeftToComplete, ^uint64(0))
 				}
 				// Remove a worker from the current pool.
@@ -367,19 +621,19 @@ func uploadSymbols(tasks []taskConfig, maximumWorkers, retryQuota uint64,
 func (b *uploadDebugSymbols) validate() error {
 	errStr := ""
 	if b.gsPath == "" {
-		errStr = "error: -gs-path value is required.\n"
+		return fmt.Errorf("error: -gs-path value is required")
 	}
-	if strings.HasPrefix(b.gsPath, "gs://") {
-		errStr = fmt.Sprint(errStr, "error: -gs-path must point to a google storage location. E.g. gs://some-bucket/debug.tgz")
+	if !strings.HasPrefix(b.gsPath, "gs://") {
+		return fmt.Errorf("error: -gs-path must point to a google storage location. E.g. gs://some-bucket/debug.tgz")
 	}
-	if strings.HasSuffix(b.gsPath, "debug.tgz") {
-		errStr = fmt.Sprint(errStr, "error: -gs-path must point to a debug.tgz file.")
+	if !strings.HasSuffix(b.gsPath, "debug.tgz") {
+		return fmt.Errorf("error: -gs-path must point to a debug.tgz file. %s", b.gsPath)
 	}
 	if b.workerCount <= 0 {
-		errStr = fmt.Sprint(errStr, "error: -worker-count value must be greater than zero.\n")
+		return fmt.Errorf("error: -worker-count value must be greater than zero")
 	}
-	if b.retryQuota < 0 {
-		errStr = fmt.Sprint(errStr, "error: -retry-count value may not be negative.\n")
+	if b.retryQuota == 0 {
+		return fmt.Errorf("error: -retry-count value may not be zero")
 	}
 
 	if errStr != "" {
@@ -388,61 +642,97 @@ func (b *uploadDebugSymbols) validate() error {
 	return nil
 }
 
-// Run is the function to be called by the CLI execution.
-// TODO(b/197010274): Move business logic into a separate function so Run() can be tested fully.
+func initCrashConnectionInfo(crash *crashConnectionInfo, staging bool) error {
+	crash.client = &http.Client{}
+
+	if staging {
+		crash.url = stagingUploadUrl
+	} else {
+		crash.url = prodUploadUrl
+	}
+
+	apiKey, err := retrieveApiKey()
+	if err != nil {
+		return err
+	}
+
+	crash.key = apiKey
+	return nil
+}
+
+// Run is the function to be called by the CLI execution. TODO(b/197010274):
+// Move business logic into a separate function so Run() can be tested fully.
 func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+	ret := SetUp(b, a, args, env)
+	if ret != 0 {
+		return ret
+	}
+
+	var crash crashConnectionInfo
+	err := initCrashConnectionInfo(&crash, b.staging)
+	if err != nil {
+		LogErr(err.Error())
+		return 1
+	}
+
 	// Generate authenticated http client.
 	ctx := context.Background()
 	authOpts, err := b.authFlags.Options()
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
-	client, err := generateClient(ctx, authOpts)
+	authClient, err := generateClient(ctx, authOpts)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 	// Create local dir and file for tarball to live in.
 	workDir, err := ioutil.TempDir("", "tarball")
+	LogOut("Creating working folder at %s", workDir)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 	symbolDir, err := ioutil.TempDir(workDir, "symbols")
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 
 	tgzPath := filepath.Join(workDir, "debug.tgz")
 	tarbalPath := filepath.Join(workDir, "debug.tar")
 	defer os.RemoveAll(workDir)
 
-	err = downloadTgz(client, b.gsPath, tgzPath)
+	err = downloadTgz(authClient, b.gsPath, tgzPath)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 
 	err = unzipTgz(tgzPath, tarbalPath)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 
 	symbolFiles, err := unpackTarball(tarbalPath, symbolDir)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 
-	tasks, err := generateConfigs(symbolFiles, b.retryQuota, b.dryRun, b.isStaging)
+	tasks, err := generateConfigs(symbolFiles, b.retryQuota, b.dryRun, crash)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
 
-	retcode, err := uploadSymbols(tasks, b.workerCount, b.retryQuota, b.isStaging, b.dryRun)
-
+	retcode, err := uploadSymbols(tasks, b.workerCount, b.retryQuota, b.staging, crash)
 	if err != nil {
-		log.Fatal(err)
+		LogErr(err.Error())
+		return 1
 	}
-	// TODO(b/197010274): remove skeleton code.
-	// Return:
-	// 		0: Success, all symbols uploaded.
-	// 		1: Failure, more failures occurred than retries were allotted
+	LogOut("Exiting with retcode: %d", retcode)
 	return retcode
 }

@@ -18,6 +18,7 @@ var (
 	StdoutLog *log.Logger
 	// StderrLog contains the stderr logger for this package.
 	StderrLog *log.Logger
+	logFlags  = log.LstdFlags | log.Lmicroseconds
 )
 
 func getApplication(authOpts auth.Options) *subcommands.DefaultApplication {
@@ -78,7 +79,7 @@ func main() {
 		"https://www.googleapis.com/auth/devstorage.full_control"}
 	s := &uploadDebugSymbolsApplication{
 		getApplication(opts),
-		log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile),
-		log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)}
+		log.New(os.Stdout, "", logFlags),
+		log.New(os.Stderr, "", logFlags)}
 	os.Exit(subcommands.Run(s, nil))
 }
