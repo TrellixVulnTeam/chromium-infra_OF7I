@@ -338,6 +338,9 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
         upload_args.extend(['-o', '-l=Code-Review+1'])
       elif s.self_approve_method == opts.CODE_REVIEW_2_APPROVE:
         upload_args.extend(['-o', '-l=Code-Review+2'])
+      elif s.self_approve_method == opts.NO_LABELS_APPROVE:
+        # No-op to ensure that we require code coverage for this branch.
+        pass
       else:
         upload_args.append('--set-bot-commit')
 

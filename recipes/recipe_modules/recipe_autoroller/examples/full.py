@@ -196,6 +196,12 @@ def GenTests(api):
   )
 
   yield test(
+      'trivial_no_labels_approval',
+      api.recipe_autoroller.roll_data(
+          'build', repo_spec(self_approve_method='NO_LABELS_APPROVE')),
+  )
+
+  yield test(
       'repo_disabled',
       api.recipe_autoroller.roll_data(
           'build', repo_spec(disable_reason='I am a water buffalo.')),
