@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package chromeos.karte.bigquery;
 
-option go_package = "infra/cros/karte/api;kartepb";
+option go_package = "infra/cros/karte/api/bigquery;kbqpb";
 
 // An observation represents a single concrete measurement. Examples
 // include running a command on a DUT or resetting the servo attached to

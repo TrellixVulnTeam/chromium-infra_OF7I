@@ -6,11 +6,12 @@ package mock
 
 import (
 	context "context"
+	clients "infra/appengine/crosskylabadmin/app/clients"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	strpair "go.chromium.org/luci/common/data/strpair"
-	clients "infra/appengine/crosskylabadmin/app/clients"
-	reflect "reflect"
 )
 
 // MockSwarmingClient is a mock of SwarmingClient interface.
@@ -36,19 +37,34 @@ func (m *MockSwarmingClient) EXPECT() *MockSwarmingClientMockRecorder {
 	return m.recorder
 }
 
-// ListAliveIdleBotsInPool mocks base method.
-func (m *MockSwarmingClient) ListAliveIdleBotsInPool(c context.Context, pool string, dims strpair.Map) ([]*swarming.SwarmingRpcsBotInfo, error) {
+// CreateTask mocks base method.
+func (m *MockSwarmingClient) CreateTask(c context.Context, name string, args *clients.SwarmingCreateTaskArgs) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAliveIdleBotsInPool", c, pool, dims)
-	ret0, _ := ret[0].([]*swarming.SwarmingRpcsBotInfo)
+	ret := m.ctrl.Call(m, "CreateTask", c, name, args)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListAliveIdleBotsInPool indicates an expected call of ListAliveIdleBotsInPool.
-func (mr *MockSwarmingClientMockRecorder) ListAliveIdleBotsInPool(c, pool, dims interface{}) *gomock.Call {
+// CreateTask indicates an expected call of CreateTask.
+func (mr *MockSwarmingClientMockRecorder) CreateTask(c, name, args interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAliveIdleBotsInPool", reflect.TypeOf((*MockSwarmingClient)(nil).ListAliveIdleBotsInPool), c, pool, dims)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTask", reflect.TypeOf((*MockSwarmingClient)(nil).CreateTask), c, name, args)
+}
+
+// GetTaskResult mocks base method.
+func (m *MockSwarmingClient) GetTaskResult(ctx context.Context, tid string) (*swarming.SwarmingRpcsTaskResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTaskResult", ctx, tid)
+	ret0, _ := ret[0].(*swarming.SwarmingRpcsTaskResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTaskResult indicates an expected call of GetTaskResult.
+func (mr *MockSwarmingClientMockRecorder) GetTaskResult(ctx, tid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskResult", reflect.TypeOf((*MockSwarmingClient)(nil).GetTaskResult), ctx, tid)
 }
 
 // ListAliveBotsInPool mocks base method.
@@ -64,6 +80,21 @@ func (m *MockSwarmingClient) ListAliveBotsInPool(arg0 context.Context, arg1 stri
 func (mr *MockSwarmingClientMockRecorder) ListAliveBotsInPool(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAliveBotsInPool", reflect.TypeOf((*MockSwarmingClient)(nil).ListAliveBotsInPool), arg0, arg1, arg2)
+}
+
+// ListAliveIdleBotsInPool mocks base method.
+func (m *MockSwarmingClient) ListAliveIdleBotsInPool(c context.Context, pool string, dims strpair.Map) ([]*swarming.SwarmingRpcsBotInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAliveIdleBotsInPool", c, pool, dims)
+	ret0, _ := ret[0].([]*swarming.SwarmingRpcsBotInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAliveIdleBotsInPool indicates an expected call of ListAliveIdleBotsInPool.
+func (mr *MockSwarmingClientMockRecorder) ListAliveIdleBotsInPool(c, pool, dims interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAliveIdleBotsInPool", reflect.TypeOf((*MockSwarmingClient)(nil).ListAliveIdleBotsInPool), c, pool, dims)
 }
 
 // ListBotTasks mocks base method.
@@ -108,36 +139,6 @@ func (m *MockSwarmingClient) ListSortedRecentTasksForBot(c context.Context, botI
 func (mr *MockSwarmingClientMockRecorder) ListSortedRecentTasksForBot(c, botID, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSortedRecentTasksForBot", reflect.TypeOf((*MockSwarmingClient)(nil).ListSortedRecentTasksForBot), c, botID, limit)
-}
-
-// CreateTask mocks base method.
-func (m *MockSwarmingClient) CreateTask(c context.Context, name string, args *clients.SwarmingCreateTaskArgs) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTask", c, name, args)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTask indicates an expected call of CreateTask.
-func (mr *MockSwarmingClientMockRecorder) CreateTask(c, name, args interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTask", reflect.TypeOf((*MockSwarmingClient)(nil).CreateTask), c, name, args)
-}
-
-// GetTaskResult mocks base method.
-func (m *MockSwarmingClient) GetTaskResult(ctx context.Context, tid string) (*swarming.SwarmingRpcsTaskResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTaskResult", ctx, tid)
-	ret0, _ := ret[0].(*swarming.SwarmingRpcsTaskResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTaskResult indicates an expected call of GetTaskResult.
-func (mr *MockSwarmingClientMockRecorder) GetTaskResult(ctx, tid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskResult", reflect.TypeOf((*MockSwarmingClient)(nil).GetTaskResult), ctx, tid)
 }
 
 // MockBotTasksCursor is a mock of BotTasksCursor interface.

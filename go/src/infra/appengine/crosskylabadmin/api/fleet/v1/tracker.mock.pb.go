@@ -6,9 +6,10 @@ package fleet
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	grpc "google.golang.org/grpc"
-	reflect "reflect"
 )
 
 // MockTrackerClient is a mock of TrackerClient interface.
@@ -32,6 +33,26 @@ func NewMockTrackerClient(ctrl *gomock.Controller) *MockTrackerClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTrackerClient) EXPECT() *MockTrackerClientMockRecorder {
 	return m.recorder
+}
+
+// PushBotsForAdminAuditTasks mocks base method.
+func (m *MockTrackerClient) PushBotsForAdminAuditTasks(ctx context.Context, in *PushBotsForAdminAuditTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminAuditTasksResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PushBotsForAdminAuditTasks", varargs...)
+	ret0, _ := ret[0].(*PushBotsForAdminAuditTasksResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PushBotsForAdminAuditTasks indicates an expected call of PushBotsForAdminAuditTasks.
+func (mr *MockTrackerClientMockRecorder) PushBotsForAdminAuditTasks(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushBotsForAdminAuditTasks", reflect.TypeOf((*MockTrackerClient)(nil).PushBotsForAdminAuditTasks), varargs...)
 }
 
 // PushBotsForAdminTasks mocks base method.
@@ -94,26 +115,6 @@ func (mr *MockTrackerClientMockRecorder) ReportBots(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportBots", reflect.TypeOf((*MockTrackerClient)(nil).ReportBots), varargs...)
 }
 
-// PushBotsForAdminAuditTasks mocks base method.
-func (m *MockTrackerClient) PushBotsForAdminAuditTasks(ctx context.Context, in *PushBotsForAdminAuditTasksRequest, opts ...grpc.CallOption) (*PushBotsForAdminAuditTasksResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "PushBotsForAdminAuditTasks", varargs...)
-	ret0, _ := ret[0].(*PushBotsForAdminAuditTasksResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PushBotsForAdminAuditTasks indicates an expected call of PushBotsForAdminAuditTasks.
-func (mr *MockTrackerClientMockRecorder) PushBotsForAdminAuditTasks(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushBotsForAdminAuditTasks", reflect.TypeOf((*MockTrackerClient)(nil).PushBotsForAdminAuditTasks), varargs...)
-}
-
 // MockTrackerServer is a mock of TrackerServer interface.
 type MockTrackerServer struct {
 	ctrl     *gomock.Controller
@@ -135,6 +136,21 @@ func NewMockTrackerServer(ctrl *gomock.Controller) *MockTrackerServer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTrackerServer) EXPECT() *MockTrackerServerMockRecorder {
 	return m.recorder
+}
+
+// PushBotsForAdminAuditTasks mocks base method.
+func (m *MockTrackerServer) PushBotsForAdminAuditTasks(arg0 context.Context, arg1 *PushBotsForAdminAuditTasksRequest) (*PushBotsForAdminAuditTasksResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushBotsForAdminAuditTasks", arg0, arg1)
+	ret0, _ := ret[0].(*PushBotsForAdminAuditTasksResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PushBotsForAdminAuditTasks indicates an expected call of PushBotsForAdminAuditTasks.
+func (mr *MockTrackerServerMockRecorder) PushBotsForAdminAuditTasks(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushBotsForAdminAuditTasks", reflect.TypeOf((*MockTrackerServer)(nil).PushBotsForAdminAuditTasks), arg0, arg1)
 }
 
 // PushBotsForAdminTasks mocks base method.
@@ -180,19 +196,4 @@ func (m *MockTrackerServer) ReportBots(arg0 context.Context, arg1 *ReportBotsReq
 func (mr *MockTrackerServerMockRecorder) ReportBots(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportBots", reflect.TypeOf((*MockTrackerServer)(nil).ReportBots), arg0, arg1)
-}
-
-// PushBotsForAdminAuditTasks mocks base method.
-func (m *MockTrackerServer) PushBotsForAdminAuditTasks(arg0 context.Context, arg1 *PushBotsForAdminAuditTasksRequest) (*PushBotsForAdminAuditTasksResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PushBotsForAdminAuditTasks", arg0, arg1)
-	ret0, _ := ret[0].(*PushBotsForAdminAuditTasksResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PushBotsForAdminAuditTasks indicates an expected call of PushBotsForAdminAuditTasks.
-func (mr *MockTrackerServerMockRecorder) PushBotsForAdminAuditTasks(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushBotsForAdminAuditTasks", reflect.TypeOf((*MockTrackerServer)(nil).PushBotsForAdminAuditTasks), arg0, arg1)
 }
