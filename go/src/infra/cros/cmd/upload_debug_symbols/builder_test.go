@@ -46,9 +46,9 @@ func initCrashConnectionMock(mockURL, mockKey string, responseMap map[string]str
 	}
 }
 
-// TestDownloadTgz ensures that we are fetching from the correct service and
+// TestDownloadZippedSymbols ensures that we are fetching from the correct service and
 // handling the response appropriately.
-func TestDownloadTgz(t *testing.T) {
+func TestDownloadZippedSymbols(t *testing.T) {
 	gsPath := "gs://some-debug-symbol/degbug.tgz"
 
 	expectedDownloads := map[string][]byte{
@@ -63,12 +63,9 @@ func TestDownloadTgz(t *testing.T) {
 	if err != nil {
 		t.Error("error: " + err.Error())
 	}
-
-	tgzPath := filepath.Join(tarballDir, "debug.tgz")
-
 	defer os.RemoveAll(tarballDir)
 
-	err = downloadTgz(fakeClient, gsPath, tgzPath)
+	tgzPath, err := downloadZippedSymbols(fakeClient, gsPath, tarballDir)
 
 	if err != nil {
 		t.Error("error: " + err.Error())
@@ -80,7 +77,8 @@ func TestDownloadTgz(t *testing.T) {
 }
 
 // TestUnzipTgz confirms that we can properly unzip a given tgz file.
-func TestUnzipTgz(t *testing.T) {
+func TestUnzipSymbols(t *testing.T) {
+
 	targetString := "gzip test"
 
 	// Create temp dir to work in.
@@ -114,7 +112,7 @@ func TestUnzipTgz(t *testing.T) {
 		t.Error("error: " + err.Error())
 	}
 
-	err = unzipTgz(inputFilePath, outputFilePath)
+	err = unzipSymbols(inputFilePath, outputFilePath)
 	if err != nil {
 		t.Error("error: " + err.Error())
 	}
