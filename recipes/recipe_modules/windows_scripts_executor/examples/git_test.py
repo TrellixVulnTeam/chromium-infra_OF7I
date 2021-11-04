@@ -10,10 +10,12 @@ from PB.recipes.infra.windows_image_builder import sources
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
+from RECIPE_MODULES.infra.windows_scripts_executor import test_helper as t
 
 DEPS = [
     'depot_tools/gitiles',
     'windows_scripts_executor',
+    'recipe_engine/path',
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
@@ -21,38 +23,21 @@ DEPS = [
 
 PROPERTIES = wib.Image
 
+image = 'git_src_test'
+customization = 'add_file_from_git'
+key = '69c31bffdba451b237e80ee933b3667718166beb353bdb7c321ed167c8b51ce7'
+arch = 'x86'
 
-def RunSteps(api, image):
-  api.windows_scripts_executor.module_init()
-  api.windows_scripts_executor.pin_wib_config(image)
-  api.windows_scripts_executor.download_wib_artifacts(image)
+
+def RunSteps(api, config):
+  api.windows_scripts_executor.init(config)
+  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.gen_canonical_configs(config)
+  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.execute_config(config)
 
 
 def GenTests(api):
-  PIN_FILE_STARTNET_PASS = api.step_data(
-      'Pin git artifacts to refs.gitiles log: ' +
-      'HEAD/windows/artifacts/startnet.cmd',
-      api.gitiles.make_log_test_data('HEAD'),
-  )
-
-  FETCH_FILE_STARTNET_PASS = api.step_data(
-      'Get all git artifacts.fetch ' +
-      'ef70cb069518e6dc3ff24bfae7f195de5099c377:' +
-      'windows/artifacts/startnet.cmd',
-      api.gitiles.make_encoded_file('Wpeinit'))
-
-  PIN_FILE_DISKPART_PASS = api.step_data(
-      'Pin git artifacts to refs.gitiles log: ' +
-      'HEAD/windows/artifacts/diskpart.txt',
-      api.gitiles.make_log_test_data('HEAD'),
-  )
-
-  FETCH_FILE_DISKPART_PASS = api.step_data(
-      'Get all git artifacts.fetch ' +
-      'ef70cb069518e6dc3ff24bfae7f195de5099c377:' +
-      'windows/artifacts/diskpart.txt',
-      api.gitiles.make_encoded_file('select volume S'))
-
   # actions for adding files
   ACTION_ADD_STARTNET = actions.Action(
       add_file=actions.AddFile(
@@ -76,43 +61,49 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
-  yield (api.test(
-      'Add git src in action', api.platform('win', 64)
-  ) + api.properties(
-      wib.Image(
-          name='win10Img',
-          arch=wib.ARCH_X86,
-          customizations=[
-              wib.Customization(
-                  offline_winpe_customization=winpe.OfflineWinPECustomization(
-                      name='offWpeCust',
-                      offline_customization=[
-                          actions.OfflineAction(
-                              name='action-1', actions=[ACTION_ADD_STARTNET])
-                      ]))
-          ])) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
+  yield (api.test('Add git src in action', api.platform('win', 64)) +
+         # run a config for adding startnet file to wim
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, customization,
+                         'add_startnet_file', [ACTION_ADD_STARTNET])) +
+         # mock all the init and deinit steps
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
+         # mock pin of the git src
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock fetching the file from git
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock adding the file to wim
+         t.ADD_GIT_FILE(api, image, customization,
+                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                        'windows\\artifacts\\startnet.cmd') +
          api.post_process(StatusSuccess) +  # recipe should pass
          api.post_process(DropExpectation))
 
-  yield (
-      api.test('Add multiple git src in action', api.platform('win', 64)) +
-      api.properties(
-          wib.Image(
-              name='win10Img',
-              arch=wib.ARCH_X86,
-              customizations=[
-                  wib.Customization(
-                      offline_winpe_customization=winpe
-                      .OfflineWinPECustomization(
-                          name='offWpeCust',
-                          offline_customization=[
-                              actions.OfflineAction(
-                                  name='action-1',
-                                  actions=[
-                                      ACTION_ADD_STARTNET, ACTION_ADD_DISKPART
-                                  ])
-                          ]))
-              ])) + PIN_FILE_STARTNET_PASS + FETCH_FILE_STARTNET_PASS +
-      PIN_FILE_DISKPART_PASS + FETCH_FILE_DISKPART_PASS +
-      api.post_process(StatusSuccess) +  # recipe should pass
-      api.post_process(DropExpectation))
+  yield (api.test('Add multiple git src in action', api.platform('win', 64)) +
+         # run a config for adding startnet and diskpart files
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'action-1',
+                         [ACTION_ADD_STARTNET, ACTION_ADD_DISKPART])) +
+         # mock all the init and deinit steps
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
+         # mock pin of the git src
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         # mock fetching the file from git
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
+         # mock pin of the git src
+         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/diskpart.txt', 'HEAD') +
+         # mock fetching the file from git
+         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                          'windows/artifacts/diskpart.txt', 'Select volume S') +
+         # mock adding the file to wim
+         t.ADD_GIT_FILE(api, image, customization,
+                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                        'windows\\artifacts\\startnet.cmd') +
+         # mock adding the file to wim
+         t.ADD_GIT_FILE(api, image, customization,
+                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                        'windows\\artifacts\\diskpart.txt') +
+         api.post_process(StatusSuccess) +  # recipe should pass
+         api.post_process(DropExpectation))

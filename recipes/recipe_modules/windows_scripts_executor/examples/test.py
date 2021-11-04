@@ -23,24 +23,28 @@ DEPS = [
 
 PROPERTIES = wib.Image
 
+# constants for use in test
+image = 'general_tests'
+cust_name = 'generic_cust'
+arch = 'x86'
+key = '4fa9269b1b8ebc0cd8d2c1c2415374819838ffb0a4a541a601ec51749b555096'
 
-def RunSteps(api, image):
-  api.windows_scripts_executor.module_init()
-  api.windows_scripts_executor.pin_wib_config(image)
-  api.windows_scripts_executor.save_config_to_disk(image)
-  api.windows_scripts_executor.download_wib_artifacts(image)
-  api.windows_scripts_executor.execute_wib_config(image)
-  api.path.mock_add_paths('[CACHE]\\WinPEImage\\media\\sources\\boot.wim')
+
+def RunSteps(api, config):
+  api.windows_scripts_executor.init(config)
+  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.gen_canonical_configs(config)
+  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.execute_config(config)
+  # mock existence of customization output to trigger upload
+  api.path.mock_add_paths('[CACHE]\\GCSPkgs\\chrome-gce-images\\' +
+                          'WIB-WIM\\{}.wim'.format(key))
   api.windows_scripts_executor.upload_wib_artifacts()
 
 
 def GenTests(api):
-  image = 'general_tests'
-  cust_name = 'generic_cust'
-  arch = 'x86'
-  key = '0f0012e3f5da9daac6c2e6017fc08c696cc36465ec4d11df75e7e1fdd1602c15'
 
-  # actions for adding files
+  # actions for adding files from git
   ACTION_ADD_STARTNET = actions.Action(
       add_file=actions.AddFile(
           name='add_startnet_file',
@@ -52,13 +56,14 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
+  # action to copy file from cipd
   ACTION_ADD_DOT3SVC = actions.Action(
       add_file=actions.AddFile(
           name='add winpe-dot3svc',
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
                   package='infra_internal/labs/drivers/' +
-                  'microsoft/windows_adk/winpe/' + 'winpe-dot3svc',
+                  'microsoft/windows_adk/winpe/winpe-dot3svc',
                   refs='latest',
                   platform='windows-amd64',
               ),),
@@ -79,6 +84,17 @@ def GenTests(api):
           args=['-IgnoreCheck'],
       ))
 
+  # generate happy path image with custom destination for upload
+  HAPPY_PATH_IMAGE = t.WPE_IMAGE(image, wib.ARCH_X86, cust_name,
+                                 'network_setup',
+                                 [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])
+  HAPPY_PATH_IMAGE.customizations[
+      0].offline_winpe_customization.image_dest.bucket = 'test-bucket'
+  HAPPY_PATH_IMAGE.customizations[
+      0].offline_winpe_customization.image_dest.source = 'out/gce_winpe_rel.wim'
+
+  # Fail the step to gen winpe media folder using copy-pe
+  # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/copype-command-line-options
   yield (api.test('Fail win image folder creation', api.platform('win', 64)) +
          # generate image with add starnet action
          api.properties(
@@ -94,6 +110,7 @@ def GenTests(api):
          # The recipe execution should fail
          api.post_process(StatusFailure) + api.post_process(DropExpectation))
 
+  # Missing arch in config. Execution should fail if arch is ARCH_UNSPECIFIED
   yield (api.test('Missing arch in config', api.platform('win', 64)) +
          api.properties(
              wib.Image(
@@ -106,6 +123,7 @@ def GenTests(api):
          # recipe execution should fail
          api.post_process(StatusFailure) + api.post_process(DropExpectation))
 
+  # Failure in executing action add_step
   yield (api.test('Fail add file step', api.platform('win', 64)) +
          # generate image with add starnet action
          api.properties(
@@ -125,8 +143,9 @@ def GenTests(api):
          api.post_process(StatusFailure) +  # recipe fails
          api.post_process(DropExpectation))
 
+  # Add a file from cipd storage
   yield (api.test('Add file from cipd', api.platform('win', 64)) +
-         # generate image with add starnet action
+         # generate image with add dot3svc action
          api.properties(
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
                          [ACTION_ADD_DOT3SVC])) +
@@ -140,56 +159,70 @@ def GenTests(api):
          # assert that recipe completed execution successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
+  # Add a file from git
   yield (api.test('Add file from git', api.platform('win', 64)) +
          # generate image with add starnet action
          api.properties(
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
                          [ACTION_ADD_STARTNET])) +
-         # mock init and deinit steps for offline customization
+         # mock all the init and deinit steps for winpe
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
-         # mock git pin execution
+         # mock git pin file
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock the git fetch execution
+         # mock git fetch file
          t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
                           'windows/artifacts/startnet.cmd', 'Wpeinit') +
-         # mock add file from git step
+         # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
                         'windows\\artifacts\\startnet.cmd') +
-         # assert that the recipe completed successfully
+         # recipe execution should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
+  # install cab file from cipd
   yield (api.test('Install package from cipd', api.platform('win', 64)) +
-         # generate image with add starnet action
+         # generate image with install wmi action
          api.properties(
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'wmi_setup',
                          [ACTION_INSTALL_WMI])) +
-         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image,
-                                        cust_name) +  # mock {de}init steps
-         t.INSTALL_FILE(api, 'install_winpe_wmi', image,
-                        cust_name) +  # install file from cipd
+         # mock all the init and deinit steps for winpe
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
+         # mock install file step
+         t.INSTALL_FILE(api, 'install_winpe_wmi', image, cust_name) +
+         # recipe should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
+  # Generic happy path for recipe execution
   yield (api.test('Happy path', api.platform('win', 64)) +
-         # generate image with add starnet action
-         api.properties(
-             t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
-                         [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])) +
-         # mock init and deinit steps for offline customization
+         # start recipe with happy path image
+         api.properties(HAPPY_PATH_IMAGE) +
+         # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
-         # mock git pin execution
+         # mock git pin file
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock the git fetch execution
+         # mock git fetch file
          t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
                           'windows/artifacts/startnet.cmd', 'Wpeinit') +
-         # mock add file from git step
+         # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
                         'windows\\artifacts\\startnet.cmd') +
-         # mock add file from cipd step
+         # mock add file to image mount dir step
          t.ADD_CIPD_FILE(
              api, 'infra_internal\\labs\\drivers\\microsoft\\' +
              'windows_adk\\winpe\\winpe-dot3svc', 'windows-amd64', image,
              cust_name) +
-         # assert that the recipe executed successfully
+         # assert that the generated image was uploaded
+         t.CHECK_GCS_UPLOAD(
+             api, '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             '\\\\WIB-WIM\\\\{}.wim'.format(key),
+             'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+         # assert that the generated image was uploaded to custom dest
+         t.CHECK_GCS_UPLOAD(
+             api,
+             '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             '\\\\WIB-WIM\\\\{}.wim'.format(key),
+             'gs://test-bucket/out/gce_winpe_rel.wim',
+             orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+         # recipe should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

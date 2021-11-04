@@ -937,73 +937,120 @@ Downloads & Installs the Windows ADK.
 Ensures that the WinPE add-on is available.
 ### *recipe_modules* / [windows\_scripts\_executor](/recipes/recipe_modules/windows_scripts_executor)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#22)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [add\_file](/recipes/recipe_modules/windows_scripts_executor/api.py#156)(self, f):**
+&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#198)(self):**
 
-&mdash; **def [add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/api.py#151)(self, f, src):**
+download_available_packages downloads the src refs that are pinned 
 
-&mdash; **def [deinit\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#201)(self, src, dest, save=True):**
+&mdash; **def [ensure\_dirs](/recipes/recipe_modules/windows_scripts_executor/api.py#84)(self, dirs):**
 
-Unmounts the winpe image and saves/discards changes to it
+ensure_dirs ensures that the given dirs are created on the bot
+Args:
+  dirs: list of path variables representing directories
 
-&mdash; **def [download\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#106)(self, config):**
-
-&mdash; **def [ensure\_dirs](/recipes/recipe_modules/windows_scripts_executor/api.py#64)(self, dirs):**
-
-ensure_dirs ensures that the correct dirs are created on the bot
-
-&mdash; **def [execute\_offline\_winpe\_customization](/recipes/recipe_modules/windows_scripts_executor/api.py#164)(self, wpec, arch):**
-
-execute_offline_winpe_customization executes the config to build wim
-
-&mdash; **def [execute\_script](/recipes/recipe_modules/windows_scripts_executor/api.py#223)(self, name, command, logs=None, \*args):**
-
-Executes the windows powershell script
-
-&mdash; **def [execute\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#94)(self, config):**
+&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#205)(self, config):**
 
 Executes the windows image builder user config.
+Args:
+  config: wib.Image proto representing the image to be generated
 
-&mdash; **def [get\_local\_src](/recipes/recipe_modules/windows_scripts_executor/api.py#138)(self, src):**
+&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#100)(self, config):**
 
-get_local_src returns path to the source given on disk
+gen_canonical_configs strips all the names in the config and returns
+individual configs containing one customization per image.
+Args:
+  config: wib.Image proto representing the image to be generated
+Example:
+  Given an Image
+    Image{
+      arch: x86,
+      name: "windows10_x86_GCE",
+      customizations: [
+        Customization{
+          OfflineWinPECustomization{
+            name: "winpe_networking"
+            image_dest: GCSSrc{
+              bucket: "chrome-win-wim"
+              source: "rel/win10_networking.wim"
+            }
+            ...
+          }
+        },
+        Customization{
+          OfflineWinPECustomization{
+            name: "winpe_diskpart"
+            image_src: Src{
+              gcs_src: GCSSrc{
+                bucket: "chrome-win-wim"
+                source: "rel/win10_networking.wim"
+              }
+            }
+            ...
+          }
+        }
+      ]
+    }
+  Writes two configs: windows10_x86_GCE-winpe_networking.cfg with
+    Image{
+      arch: x86,
+      name: "",
+      customizations: [
+        Customization{
+          OfflineWinPECustomization{
+            name: ""
+            image_dest: GCSSrc{
+              bucket: "chrome-win-wim"
+              source: "rel/win10_networking.wim"
+            }
+            ...
+          }
+       }
+      ]
+    }
+  and windows10_x86_GCE-winpe_diskpart.cfg with
+    Image{
+      arch: x86,
+      name: "",
+      customizations: [
+        Customization{
+          OfflineWinPECustomization{
+            name: ""
+            image_src: Src{
+              gcs_src: GCSSrc{
+                bucket: "chrome-win-wim"
+                source: "rel/win10_networking.wim"
+              }
+            }
+            ...
+          }
+        }
+      ]
+    }
+  to disk, calculates the hash for each config and sets the key for each
+  of them. The strings representing name of the image, customization,...
+  etc,. are set to empty before calculating the hash to maintain the
+  uniqueness of the hash.
 
-&mdash; **def [init\_win\_pe\_image](/recipes/recipe_modules/windows_scripts_executor/api.py#182)(self, arch, source, dest, index=1):**
+&mdash; **def [init](/recipes/recipe_modules/windows_scripts_executor/api.py#29)(self, config):**
 
-Calls Copy-PE to create WinPE media folder for arch
+init initializes all the dirs and sub modules required.
+Args:
+  config: wib.Image proto object representing the image to be created
 
-&mdash; **def [module\_init](/recipes/recipe_modules/windows_scripts_executor/api.py#36)(self):**
-
-module_init initializes all the dirs and sub modules required.
-
-&mdash; **def [perform\_winpe\_action](/recipes/recipe_modules/windows_scripts_executor/api.py#123)(self, action):**
-
-Performs the given action
-
-&mdash; **def [perform\_winpe\_actions](/recipes/recipe_modules/windows_scripts_executor/api.py#118)(self, offline_action):**
-
-Performs the given offline_action
-
-&mdash; **def [pin\_wib\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#70)(self, config):**
+&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#93)(self):**
 
 pin_wib_config pins the given config to current refs.
 
-&mdash; **def [save\_config\_to\_disk](/recipes/recipe_modules/windows_scripts_executor/api.py#80)(self, config):**
+&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#214)(self):**
 
-save_config_to_disk writes the given config to disk, calculates a hash
-of the config and returns the hash. Configs are saved as two files,
-<image-name>.cfg and <config-hash>.cfg
-
-&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#114)(self):**
-
-upload_wib_artifacts uploads pending artifacts
+upload_wib_artifacts uploads all the available artifacts 
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1501,55 +1548,55 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/windows_adk/examples/ensure.py#16)(api):**
 ### *recipes* / [windows\_image\_builder/offline](/recipes/recipes/windows_image_builder/offline.py)
 
-[DEPS](/recipes/recipes/windows_image_builder/offline.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/windows_image_builder/offline.py#12): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#27)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#29)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
 ### *recipes* / [windows\_scripts\_executor:examples/add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#12): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#15): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#22)(api, package):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#30)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/cipd\_test](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#14): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#15): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#24)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/cipd_test.py#30)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/edit\_offline\_registry\_test](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#11): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#12): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#21)(api, edit_offline_registry_action):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/edit_offline_registry_test.py#28)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/gcs\_test](/recipes/recipe_modules/windows_scripts_executor/examples/gcs_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/gcs_test.py#15): [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/gcs_test.py#16): [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/gcs_test.py#27)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/gcs_test.py#33)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/git\_test](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#14): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#15): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#25)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/git_test.py#32)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/test](/recipes/recipe_modules/windows_scripts_executor/examples/test.py)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#15): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#27)(api, image):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/test.py#33)(api, config):**
 ### *recipes* / [windows\_sdk:examples/full](/recipes/recipe_modules/windows_sdk/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/examples/full.py#5): [windows\_sdk](#recipe_modules-windows_sdk), [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

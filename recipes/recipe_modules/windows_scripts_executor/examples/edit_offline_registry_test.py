@@ -7,21 +7,30 @@ from PB.recipes.infra.windows_image_builder import actions
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
+from RECIPE_MODULES.infra.windows_scripts_executor import test_helper as t
 
 DEPS = [
     'windows_scripts_executor',
+    'recipe_engine/path',
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
 ]
 
-PROPERTIES = actions.Action
+PROPERTIES = wib.Image
+
+image = 'regedit_test'
+customization = 'remove_tamper_protection'
+arch = 'x86'
+key = '96fe4737ff3346d68755d1359da74003c56d38571669d4c97602fd3f1d59d3f7'
 
 
-def RunSteps(api, edit_offline_registry_action):
-  api.windows_scripts_executor.module_init()
-  api.windows_scripts_executor.perform_winpe_action(
-      edit_offline_registry_action)
+def RunSteps(api, config):
+  api.windows_scripts_executor.init(config)
+  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.gen_canonical_configs(config)
+  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.execute_config(config)
 
 
 def GenTests(api):
@@ -35,62 +44,44 @@ def GenTests(api):
           property_type='DWord',
       ))
 
-  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PASS = api.step_data(
-      'PowerShell> Edit Offline Registry Key Features and Property ' +
-      'TamperProtection',
-      stdout=api.json.output({
-          'results': {
-              'Success': True
-          },
-      })
-    )
+  yield (
+      # name
+      api.test('Edit Offline Registry Action Fail', api.platform('win', 64)) +
 
-  EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_FAIL = api.step_data(
-      'PowerShell> Edit Offline Registry Key Features and Property ' +
-      'TamperProtection',
-      stdout=api.json.output(
-        {
-          'results': {
-              'Success': False,
-              'Command': 'powershell',
-              'ErrorInfo': {
-                  'Message': 'Failed step'
-              },
-          }
-        }
-      )
-    )
+      # test properties using config for regedit tamper protection
+      api.properties(
+          t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'regedit',
+                      [EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES])) +
+
+      # mock all the init and deinit steps
+      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, arch, image, customization) +
+
+      # mock registry edit action
+      t.EDIT_REGISTRY(api, 'TamperProtection', image, customization, False) +
+
+      # test recipe exit status
+      api.post_process(StatusFailure) +
+
+      # additional optional params
+      api.post_process(DropExpectation))
 
   yield (
-    # name
-    api.test('Edit Offline Registry Action Fail', api.platform('win', 64)) +
+      # name
+      api.test('Edit Offline Registry Action Pass', api.platform('win', 64)) +
 
-    # test properties
-    api.properties(EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES) +
+      # test properties
+      api.properties(
+          t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'regedit',
+                      [EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES])) +
 
-    # test expectations
-    EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_FAIL +
+      # mock all the init and deinit steps
+      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
 
-    # test recipe exit status
-    api.post_process(StatusFailure) +
+      # mock registry edit action
+      t.EDIT_REGISTRY(api, 'TamperProtection', image, customization) +
 
-    # additional optional params
-    api.post_process(DropExpectation)
-  )
+      # test recipe exit status
+      api.post_process(StatusSuccess) +
 
-  yield (
-    # name
-    api.test('Edit Offline Registry Action Pass', api.platform('win', 64)) +
-
-    # test properties
-    api.properties(EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES) +
-
-    # test expectations
-    EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PASS +
-
-    # test recipe exit status
-    api.post_process(StatusSuccess) +
-
-    # additional optional params
-    api.post_process(DropExpectation)
-  )
+      # additional optional params
+      api.post_process(DropExpectation))

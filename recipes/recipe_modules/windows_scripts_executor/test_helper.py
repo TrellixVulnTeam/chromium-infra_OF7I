@@ -13,6 +13,23 @@ from recipe_engine.post_process import StatusSuccess, StepCommandRE
 
 #    Step data mock methods. Use these to mock the step outputs
 
+# _gcs_stat is the mock output of gsutil stat command
+_gcs_stat = """
+{}:
+    Creation time:          Tue, 12 Oct 2021 00:32:06 GMT
+    Update time:            Tue, 12 Oct 2021 00:32:06 GMT
+    Storage class:          STANDARD
+    Content-Length:         658955236
+    Content-Type:           application/octet-stream
+    Metadata:
+        orig:               {}
+    Hash (crc32c):          oaYUgQ==
+    Hash (md5):             +W9+CqZbFtYTZrUrDPltMw==
+    ETag:                   CJOHnM3Pw/MCEAE=
+    Generation:             1633998726431635
+    Metageneration:         1
+"""
+
 
 def NEST(*args):
   """ NEST generates nested names for steps """
@@ -29,14 +46,30 @@ def NEST_WINPE_CUSTOMIZATION_STEP(customization):
   return 'offline winpe customization {}'.format(customization)
 
 
-def NEST_WINPE_INIT_STEP(arch):
+def NEST_WINPE_INIT_STEP(arch, customization):
   """ generate winpe init step nesting names """
-  return 'Init WinPE image modification {} in [CACHE]\\WinPEImage'.format(arch)
+  return 'Init WinPE image modification {}'.format(
+      arch) + ' in [CLEANUP]\\{}\\workdir'.format(customization)
 
 
 def NEST_WINPE_DEINIT_STEP():
   """ generate winpe deinit step nesting names """
   return 'Deinit WinPE image modification'
+
+
+def NEST_PIN_ALL_SRCS():
+  """ generate Pin Src step nesting name """
+  return 'Pin all the required artifacts'
+
+
+def NEST_DOWNLOAD_ALL_SRC():
+  """ Download all available packages step name"""
+  return 'Download all available packages'
+
+
+def NEST_UPLOAD_ALL_SRC():
+  """ Upload all gcs artifacts step name"""
+  return 'Upload all pending gcs artifacts'
 
 
 def json_res(api, success=True, err_msg='Failed step'):
@@ -76,7 +109,7 @@ def GEN_WPE_MEDIA(api, arch, image, customization, success=True):
   return api.step_data(
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
-          NEST_WINPE_INIT_STEP(arch),
+          NEST_WINPE_INIT_STEP(arch, customization),
           'PowerShell> Gen WinPE media for {}'.format(arch)),
       stdout=json_res(api, success))
 
@@ -86,8 +119,9 @@ def MOUNT_WIM(api, arch, image, customization, success=True):
   return api.step_data(
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
-          NEST_WINPE_INIT_STEP(arch),
-          'PowerShell> Mount wim to [CACHE]\\WinPEImage\\mount'),
+          NEST_WINPE_INIT_STEP(arch, customization),
+          'PowerShell> Mount wim to [CLEANUP]\\{}\\workdir\\mount'.format(
+              customization)),
       stdout=json_res(api, success))
 
 
@@ -97,7 +131,8 @@ def UMOUNT_WIM(api, image, customization, success=True):
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
           NEST_WINPE_DEINIT_STEP(),
-          'PowerShell> Unmount wim at [CACHE]\\WinPEImage\\mount'),
+          'PowerShell> Unmount wim at [CLEANUP]\\{}\\workdir\\mount'.format(
+              customization)),
       stdout=json_res(api, success))
 
 
@@ -114,16 +149,47 @@ def DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization, success=True):
 def GIT_PIN_FILE(api, refs, path, data):
   """ mock git pin file step """
   return api.step_data(
-      'Pin git artifacts to refs.gitiles log: ' + '{}/{}'.format(refs, path),
+      NEST(
+          NEST_PIN_ALL_SRCS(),
+          'gitiles log: ' + '{}/{}'.format(refs, path),
+      ),
       api.gitiles.make_log_test_data(data),
+  )
+
+
+def GCS_PIN_FILE(api, url, pin_url='', success=True):
+  """ mock gcs pin file action"""
+  retcode = 1
+  if success:
+    retcode = 0
+  if not pin_url:
+    pin_url = url
+  return api.step_data(
+      NEST(NEST_PIN_ALL_SRCS(), 'gsutil stat {}'.format(url)),
+      api.raw_io.stream_output(_gcs_stat.format(url, pin_url)),
+      retcode=retcode,
+  )
+
+
+def GCS_DOWNLOAD_FILE(api, bucket, source, success=True):
+  """ mock gcs download file action"""
+  retcode = 1
+  if success:
+    retcode = 0
+  return api.step_data(
+      NEST(NEST_DOWNLOAD_ALL_SRC(),
+           'gsutil download gs://{}/{}'.format(bucket, source)),
+      retcode=retcode,
   )
 
 
 def GIT_FETCH_FILE(api, commit, path, data):
   """ mock git fetch step """
   return api.step_data(
-      'Get all git artifacts.fetch ' + '{}:{}'.format(commit, path),
-      api.gitiles.make_encoded_file(data))
+      NEST(
+          NEST_DOWNLOAD_ALL_SRC(),
+          'fetch ' + '{}:{}'.format(commit, path),
+      ), api.gitiles.make_encoded_file(data))
 
 
 def ADD_GIT_FILE(api, image, customization, commit, path, success=True):
@@ -149,6 +215,12 @@ def ADD_CIPD_FILE(api, pkg, platform, image, customization, success=True):
       '\\{}\\{}'.format(pkg, platform), success)
 
 
+def ADD_GCS_FILE(api, bucket, path, image, customization, success=True):
+  """ mock add cipd file to unpacked image step """
+  return ADD_FILE(api, image, customization,
+                  '[CACHE]\\GCSPkgs\\{}\\{}'.format(bucket, path), success)
+
+
 def INSTALL_FILE(api, name, image, customization, success=True):
   """ mock install file to image step """
   return api.step_data(
@@ -156,6 +228,17 @@ def INSTALL_FILE(api, name, image, customization, success=True):
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
           'PowerShell> Install package {}'.format(name)),
       stdout=json_res(api, success))
+
+
+def EDIT_REGISTRY(api, name, image, customization, success=True):
+  """ mock registry edit action step"""
+  return api.step_data(
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
+          'PowerShell> Edit Offline Registry Key Features and Property {}'
+          .format(name)),
+      stdout=json_res(api, success))
+
 
 
 #    Assert methods to validate that a certain step was run
@@ -176,8 +259,37 @@ def CHECK_UMOUNT_WIM(api, image, customization, save=True):
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
           NEST_WINPE_DEINIT_STEP(),
-          'PowerShell> Unmount wim at [CACHE]\\WinPEImage\\mount'), args)
+          'PowerShell> Unmount wim at [CLEANUP]\\{}\\workdir\\mount'.format(
+              customization)), args)
 
+
+def CHECK_GCS_UPLOAD(api, source, destination, orig=''):
+  """
+      Post check the upload to GCS
+  """
+  if not orig:
+    orig = destination
+  args = ['.*'] * 11
+  args[7] = 'x-goog-meta-orig:{}'.format(orig)  # ensure the orig meta url
+  args[9] = source  # ensure the correct local src
+  args[10] = destination  # ensure upload to correct location
+  return api.post_process(
+      StepCommandRE,
+      NEST(NEST_UPLOAD_ALL_SRC(), 'gsutil upload {}'.format(destination)), args)
+
+
+def CHECK_INSTALL_CAB(api, image, customization, action, args=None):
+  """
+      Post check for installation
+  """
+  wild_card = ['.*'] * 12
+  if args:
+    wild_card.append(*args)
+  return api.post_process(
+      StepCommandRE,
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
+          'PowerShell> Install package {}'.format(action)), wild_card)
 
 #   Generate proto configs helper functions
 

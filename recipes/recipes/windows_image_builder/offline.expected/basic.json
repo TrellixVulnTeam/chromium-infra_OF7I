@@ -211,60 +211,7 @@
   },
   {
     "cmd": [],
-    "name": "Pin all the cipd packages"
-  },
-  {
-    "cmd": [],
-    "name": "Pin git artifacts to refs"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "name: \"test_config\"\narch: ARCH_X86\n",
-      "[CLEANUP]\\configs\\test_config.cfg"
-    ],
-    "infra_step": true,
-    "name": "Write config [CLEANUP]\\configs\\test_config.cfg",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@test_config.cfg@name: \"test_config\"@@@",
-      "@@@STEP_LOG_LINE@test_config.cfg@arch: ARCH_X86@@@",
-      "@@@STEP_LOG_END@test_config.cfg@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "file_hash",
-      "[CLEANUP]\\configs\\test_config.cfg"
-    ],
-    "infra_step": true,
-    "name": "Compute file hash",
-    "~followup_annotations": [
-      "@@@STEP_TEXT@Hash calculated: ac72de7864e9ba33c238c34dae263846fc8d92569713362d8f81b3344f210b53@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "[CLEANUP]\\configs\\test_config.cfg",
-      "[CLEANUP]\\configs\\ac72de7864e9ba33c238c34dae263846fc8d92569713362d8f81b3344f210b53.cfg"
-    ],
-    "infra_step": true,
-    "name": "Copy [CLEANUP]\\configs\\test_config.cfg to [CLEANUP]\\configs\\ac72de7864e9ba33c238c34dae263846fc8d92569713362d8f81b3344f210b53.cfg"
+    "name": "Pin all the required artifacts"
   },
   {
     "cmd": [],
@@ -402,11 +349,7 @@
   },
   {
     "cmd": [],
-    "name": "Get all git artifacts"
-  },
-  {
-    "cmd": [],
-    "name": "Get all gcs artifacts"
+    "name": "Download all available packages"
   },
   {
     "cmd": [],

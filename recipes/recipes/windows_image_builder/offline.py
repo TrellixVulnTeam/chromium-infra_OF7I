@@ -7,6 +7,8 @@ from recipe_engine import post_process
 from PB.recipes.infra.windows_image_builder import input as input_pb
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
+from RECIPE_MODULES.infra.windows_scripts_executor import test_helper as t
+
 DEPS = [
     'depot_tools/bot_update',
     'depot_tools/gclient',
@@ -73,20 +75,19 @@ def RunSteps(api, inputs):
               arch=wib.ARCH_X86,
           ))
 
-  api.windows_scripts_executor.module_init()
-  # Pin the configs to current refs
-  api.windows_scripts_executor.pin_wib_config(config)
+  api.windows_scripts_executor.init(config)
+  # Pin the configs to absolute refs
+  api.windows_scripts_executor.pin_available_sources()
 
-  # write the config to disk
-  api.windows_scripts_executor.save_config_to_disk(config)
+  api.windows_scripts_executor.gen_canonical_configs(config)
 
   #TODO(anushruth): Check if the build can be skipped
 
   # Ensure windows adk is installed
   api.windows_adk.ensure()
 
-  api.windows_scripts_executor.download_wib_artifacts(config)
-  api.windows_scripts_executor.execute_wib_config(config)
+  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.execute_config(config)
   api.windows_scripts_executor.upload_wib_artifacts()
 
 
