@@ -32,6 +32,7 @@ import (
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugclusters"
+	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -184,9 +185,11 @@ func (hc *handlers) getCluster(ctx *router.Context) {
 		http.Error(ctx.Writer, "Project does not exist in Weetbix.", http.StatusBadRequest)
 		return
 	}
-	clusterAlgorithm := ctx.Params.ByName("algorithm")
-	clusterID := ctx.Params.ByName("id")
-	if clusterAlgorithm == "" || clusterID == "" {
+	clusterID := clustering.ClusterID{
+		Algorithm: ctx.Params.ByName("algorithm"),
+		ID:        ctx.Params.ByName("id"),
+	}
+	if err := clusterID.Validate(); err != nil {
 		http.Error(ctx.Writer, "Please supply a valid cluster ID.", http.StatusBadRequest)
 		return
 	}
@@ -202,7 +205,7 @@ func (hc *handlers) getCluster(ctx *router.Context) {
 		}
 	}()
 
-	clusters, err := ac.ReadCluster(ctx.Context, projectID, clusterAlgorithm, clusterID)
+	clusters, err := ac.ReadCluster(ctx.Context, projectID, clusterID)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)

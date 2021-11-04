@@ -25,7 +25,10 @@ type ImpactfulClusterReadOptions struct {
 	Project string
 	// Thresholds is the set of thresholds, which if any are met
 	// or exceeded, should result in the cluster being returned.
+	// Thresholds are applied based on cluster residual impact.
 	Thresholds *config.ImpactThreshold
+	// AlwaysInclude is the set of clusters to always include.
+	AlwaysInclude []clustering.ClusterID
 }
 
 // ClusterSummary represents a statistical summary of a cluster's failures,
@@ -121,13 +124,14 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 			example_failure_reason.primary_error_message as ExampleFailureReason,
 			example_test_id as ExampleTestID
 		FROM ` + dataset + `.cluster_summaries
-		WHERE (failures_1d > @unexpFailThreshold1d
-			OR failures_3d > @unexpFailThreshold3d
-			OR failures_7d > @unexpFailThreshold7d)
+		WHERE (failures_residual_1d > @unexpFailThreshold1d
+			OR failures_residual_3d > @unexpFailThreshold3d
+			OR failures_residual_7d > @unexpFailThreshold7d)
+			OR STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) IN UNNEST(@alwaysInclude)
 		ORDER BY
-			failures_1d DESC,
-			failures_3d DESC,
-			failures_7d DESC
+			failures_residual_1d DESC,
+			failures_residual_3d DESC,
+			failures_residual_7d DESC
 	`)
 	q.Parameters = []bigquery.QueryParameter{
 		{
@@ -141,6 +145,10 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		{
 			Name:  "unexpFailThreshold7d",
 			Value: valueOrDefault(opts.Thresholds.UnexpectedFailures_7D, math.MaxInt64),
+		},
+		{
+			Name:  "alwaysInclude",
+			Value: opts.AlwaysInclude,
 		},
 	}
 	job, err := q.Run(ctx)
@@ -184,7 +192,7 @@ func selectCounts(sqlPrefix, fieldPrefix, suffix string) string {
 }
 
 // ReadCluster reads information about a single cluster.
-func (c *Client) ReadCluster(ctx context.Context, luciProject, clusterAlgorithm, clusterID string) (*ClusterSummary, error) {
+func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID clustering.ClusterID) (*ClusterSummary, error) {
 	dataset, err := bqutil.DatasetForProject(luciProject)
 	if err != nil {
 		return nil, errors.Annotate(err, "getting dataset").Err()
@@ -212,8 +220,8 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject, clusterAlgorithm,
 		  AND cluster_id = @clusterID
 	`)
 	q.Parameters = []bigquery.QueryParameter{
-		{Name: "clusterAlgorithm", Value: clusterAlgorithm},
-		{Name: "clusterID", Value: clusterID},
+		{Name: "clusterAlgorithm", Value: clusterID.Algorithm},
+		{Name: "clusterID", Value: clusterID.ID},
 	}
 	job, err := q.Run(ctx)
 	if err != nil {

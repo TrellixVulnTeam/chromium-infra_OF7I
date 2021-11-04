@@ -18,6 +18,8 @@ import (
 // be double this number.
 const MaxClusterIDBytes = 16
 
+const rulesAlgorithmPrefix = "rules-"
+
 // ClusterID represents the identity of a cluster. The LUCI Project is
 // omitted as it is assumed to be implicit from the context.
 type ClusterID struct {
@@ -64,4 +66,11 @@ func (c ClusterID) Validate() error {
 // zero value.
 func (c ClusterID) IsEmpty() bool {
 	return c.Algorithm == "" && c.ID == ""
+}
+
+// IsBugCluster returns whether this cluster is backed by a failure
+// association rule, and produced by a version of the failure association
+// rule based clustering algorithm.
+func (c ClusterID) IsBugCluster() bool {
+	return strings.HasPrefix(c.Algorithm, rulesAlgorithmPrefix)
 }

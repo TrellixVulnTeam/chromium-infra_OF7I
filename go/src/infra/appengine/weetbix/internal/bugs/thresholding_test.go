@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package clustering
+package bugs
 
 import (
 	"infra/appengine/weetbix/internal/config"
@@ -17,10 +17,10 @@ func TestThresholding(t *testing.T) {
 	t.Parallel()
 
 	Convey("With Cluster", t, func() {
-		cl := &Cluster{
-			UnexpectedFailures1d: 100,
-			UnexpectedFailures3d: 300,
-			UnexpectedFailures7d: 700,
+		cl := &ClusterImpact{
+			Failures1d: 100,
+			Failures3d: 300,
+			Failures7d: 700,
 		}
 		t := &config.ImpactThreshold{}
 		Convey("No cluster meets empty threshold", func() {
@@ -51,45 +51,45 @@ func TestThresholding(t *testing.T) {
 			// With 15% hysteresis, leads to effective threshold of
 			// 100 / 1.15 = 86.
 			t.UnexpectedFailures_1D = proto.Int64(100)
-			cl.UnexpectedFailures1d = 86
+			cl.Failures1d = 86
 			So(cl.MeetsInflatedThreshold(t, -15), ShouldBeTrue)
-			cl.UnexpectedFailures1d = 85
+			cl.Failures1d = 85
 			So(cl.MeetsInflatedThreshold(t, -15), ShouldBeFalse)
 		})
 		Convey("Threshold with inflation", func() {
 			// With 15% hysteresis, leads to effective threshold of
 			// 100 * 1.15 = 115.
 			t.UnexpectedFailures_1D = proto.Int64(100)
-			cl.UnexpectedFailures1d = 115
+			cl.Failures1d = 115
 			So(cl.MeetsInflatedThreshold(t, 15), ShouldBeTrue)
-			cl.UnexpectedFailures1d = 114
+			cl.Failures1d = 114
 			So(cl.MeetsInflatedThreshold(t, 15), ShouldBeFalse)
 		})
 		Convey("Thresholding of values near overflow", func() {
 			t.UnexpectedFailures_1D = proto.Int64(math.MaxInt64)
-			cl.UnexpectedFailures1d = math.MaxInt64
+			cl.Failures1d = math.MaxInt64
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of
 			// an int64, so make sure observed number of failures noticibily less.
-			cl.UnexpectedFailures1d = math.MaxInt64 - 10000
+			cl.Failures1d = math.MaxInt64 - 10000
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("Thresholding with inflation near overflow", func() {
 			t.UnexpectedFailures_1D = proto.Int64(math.MaxInt64)
-			cl.UnexpectedFailures1d = math.MaxInt64 / 11
+			cl.Failures1d = math.MaxInt64 / 11
 			So(cl.MeetsInflatedThreshold(t, -1000), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of
 			// an int64, so make sure observed number of failures noticibily less.
-			cl.UnexpectedFailures1d = math.MaxInt64/11 - 10000
+			cl.Failures1d = math.MaxInt64/11 - 10000
 			So(cl.MeetsInflatedThreshold(t, -1000), ShouldBeFalse)
 		})
 		Convey("Thresholding with deflation near overflow", func() {
 			t.UnexpectedFailures_1D = proto.Int64(math.MaxInt64 / 11)
-			cl.UnexpectedFailures1d = math.MaxInt64
+			cl.Failures1d = math.MaxInt64
 			So(cl.MeetsInflatedThreshold(t, 1000), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of
 			// an int64, so make sure observed number of failures noticibily less.
-			cl.UnexpectedFailures1d = math.MaxInt64 - 10000
+			cl.Failures1d = math.MaxInt64 - 10000
 			So(cl.MeetsInflatedThreshold(t, 1000), ShouldBeFalse)
 		})
 	})

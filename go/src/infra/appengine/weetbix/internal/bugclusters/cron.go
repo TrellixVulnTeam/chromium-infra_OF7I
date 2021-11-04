@@ -6,16 +6,19 @@ package bugclusters
 
 import (
 	"context"
+
+	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
-	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 // UpdateBugs updates monorail bugs to reflect the latest analysis.
 // Simulate, if true, avoids any changes being applied to monorail and logs
 // the changes which would be made instead. This must be set when running
-// on developer computers as developer-initiated monorail changes appear
+// on developer computers as Weetbix-initiated monorail changes appear
 // on monorail as the developer themselves rather than the Weetbix service.
 // This leads to bugs errounously being detected as having manual priority
 // changes.
@@ -24,7 +27,7 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, simulate bo
 	if err != nil {
 		return err
 	}
-	cc, err := clustering.NewClient(ctx, projectID)
+	ac, err := analysis.NewClient(ctx, projectID)
 	if err != nil {
 		return err
 	}
@@ -32,20 +35,25 @@ func UpdateBugs(ctx context.Context, monorailHost, projectID string, simulate bo
 	if err != nil {
 		return err
 	}
-	monorailCfg := make(map[string]*config.MonorailProject)
-	thresholds := make(map[string]*config.ImpactThreshold)
+	var errs []error
 	for project, cfg := range projectCfg {
-		monorailCfg[project] = cfg.Monorail
-		thresholds[project] = cfg.BugFilingThreshold
-	}
-	mgrs := make(map[string]BugManager)
-	mbm := monorail.NewBugManager(mc, monorailCfg)
-	mbm.Simulate = simulate
-	mgrs[bugs.MonorailSystem] = mbm
+		monorailCfg := cfg.Monorail
+		thresholds := cfg.BugFilingThreshold
+		mgrs := make(map[string]BugManager)
 
-	bu := NewBugUpdater(mgrs, cc, thresholds)
-	if err := bu.Run(ctx); err != nil {
-		return err
+		mbm := monorail.NewBugManager(mc, monorailCfg)
+		mbm.Simulate = simulate
+		mgrs[bugs.MonorailSystem] = mbm
+
+		bu := NewBugUpdater(project, mgrs, ac, thresholds)
+		if err := bu.Run(ctx); err != nil {
+			// Isolate other projects from bug update errors
+			// in one project.
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.NewMultiError(errs...)
 	}
 	return nil
 }
