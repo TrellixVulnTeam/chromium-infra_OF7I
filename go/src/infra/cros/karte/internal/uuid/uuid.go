@@ -6,7 +6,8 @@ package uuid
 
 import (
 	"github.com/google/uuid"
-	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/karte/internal/errors"
 )
 
 // UUID creates a new UUID as a string or returns an error if we failed to

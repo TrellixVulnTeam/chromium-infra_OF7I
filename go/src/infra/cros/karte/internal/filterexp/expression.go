@@ -5,15 +5,14 @@
 package filterexp
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/google/cel-go/cel"
-	"go.chromium.org/luci/common/errors"
-
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"infra/cros/karte/internal/errors"
 )
 
 // Comparisons are the valid comparisons.
@@ -103,7 +102,7 @@ func Parse(program string) ([]Expression, error) {
 		hopper = hopper[0 : len(hopper)-1]
 		v, ok := current.ExprKind.(*exprpb.Expr_CallExpr)
 		if !ok {
-			return nil, fmt.Errorf("parse program: unexpected expression kind %q", reflect.TypeOf(current).Name())
+			return nil, errors.Errorf("parse program: unexpected expression kind %q", reflect.TypeOf(current).Name())
 		}
 		c := v.CallExpr
 		switch {
@@ -121,7 +120,7 @@ func Parse(program string) ([]Expression, error) {
 			}
 			out = append(out, item)
 		default:
-			return nil, fmt.Errorf("parse program: unsupported top-level function %q", c.Function)
+			return nil, errors.Errorf("parse program: unsupported top-level function %q", c.Function)
 		}
 	}
 
@@ -195,7 +194,7 @@ func processComparison(comparisons []Expression, e *exprpb.Expr_Call) (Expressio
 		case *exprpb.Expr_IdentExpr:
 			newExpr.Tail = append(newExpr.Tail, NewIdentifier(v.IdentExpr.Name))
 		default:
-			return nil, fmt.Errorf("process comparison: unknown argument type %q", reflect.TypeOf(item).Name())
+			return nil, errors.Errorf("process comparison: unknown argument type %q", reflect.TypeOf(item).Name())
 		}
 	}
 	return &newExpr, nil
@@ -208,6 +207,6 @@ func extractConstantValue(e *exprpb.Constant) (Expression, error) {
 	case *exprpb.Constant_StringValue:
 		return NewConstant(v.StringValue), nil
 	default:
-		return nil, fmt.Errorf("extract constant value: type %q not implemented", reflect.TypeOf(v).Name())
+		return nil, errors.Errorf("extract constant value: type %q not implemented", reflect.TypeOf(v).Name())
 	}
 }

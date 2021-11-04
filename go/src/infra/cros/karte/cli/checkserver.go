@@ -10,8 +10,8 @@ import (
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
-	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/site"
 )
 
@@ -60,5 +60,5 @@ func (c *checkServerRun) innerRun(a subcommands.Application, args []string, env 
 	if err != nil {
 		return errors.Annotate(err, "printing HTTP response").Err()
 	}
-	return fmt.Errorf("check-server: bad status code %d", resp.StatusCode)
+	return errors.Errorf("check-server: bad status code %d", resp.StatusCode)
 }
