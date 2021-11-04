@@ -469,14 +469,19 @@ class CreationTest(testing.AppengineTestCase):
         builder='mac_exp',
     )
     build = self.add({
-        'builder': builder_id, 'experiments': {'luci.use_realms': True,}
+        'builder': builder_id, 'experiments': {
+            'luci.use_realms': True,
+            'unrelated.experiment': False,
+        }
     })
     self.assertEqual(build.proto.input.experiments, [])
     self.assertEqual(
         build.experiments, [
             '-chromium.exp_foo',
+            '-luci.avoids_filter',
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
+            '-unrelated.experiment',
         ]
     )
 

@@ -240,13 +240,20 @@ class BuildRequest(_BuildRequestBase):
   def compute_experiments(sbr, builder_cfg, settings):
     """Returns a Dict[str, bool] of enabled/disabled experiments."""
     global_exps = []
-    ignored_exps = set()
+    ignored_exps = []
 
     for exp in settings.experiment.experiments:
       if exp.inactive:
-        ignored_exps.add(str(exp.name))
-      elif config.builder_matches(sbr.builder, exp.builders):
-        global_exps.append(exp)
+        ignored_exps.append(str(exp.name))
+        continue
+
+      if not config.builder_matches(sbr.builder, exp.builders):
+        exp_copy = service_config_pb2.ExperimentSettings.Experiment()
+        exp_copy.CopyFrom(exp)
+        exp_copy.default_value = 0
+        exp_copy.minimum_value = 0
+        exp = exp_copy
+      global_exps.append(exp)
 
     # 1. populate with defaults
     exps = {str(exp.name): exp.default_value for exp in global_exps}
