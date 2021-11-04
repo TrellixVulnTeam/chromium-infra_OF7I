@@ -30,6 +30,11 @@ func cmdFetchRejections(authOpt *auth.Options) *subcommands.Command {
 				In order to conlude that a test variant is flaky and exclude it from analysis,
 				it must have mixed results in <min-cl-flakes> unique CLs.
 			`))
+			r.Flags.IntVar(&r.minVariantsSpam, "min-variants-spam", 20000, text.Doc(`
+				The minimum number of failed test variants in a patchset to consider it
+				spam. This config helps prevent row size overflows in the rejections
+				query.
+			`))
 			return r
 		},
 	}
@@ -38,7 +43,8 @@ func cmdFetchRejections(authOpt *auth.Options) *subcommands.Command {
 type fetchRejectionsRun struct {
 	baseCommandRun
 	baseHistoryRun
-	minCLFlakes int
+	minCLFlakes     int
+	minVariantsSpam int
 }
 
 func (r *fetchRejectionsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -57,6 +63,10 @@ func (r *fetchRejectionsRun) Run(a subcommands.Application, args []string, env s
 		bigquery.QueryParameter{
 			Name:  "minCLFlakes",
 			Value: r.minCLFlakes,
+		},
+		bigquery.QueryParameter{
+			Name:  "minVariantsSpam",
+			Value: r.minVariantsSpam,
 		},
 	))
 }
@@ -121,4 +131,5 @@ SELECT
 FROM failed_test_variants tv, tv.patchsets_with_failures
 JOIN affected_files USING (change, patchset)
 GROUP BY change, patchset
+HAVING COUNT(testVariant) < @minVariantsSpam
 `
