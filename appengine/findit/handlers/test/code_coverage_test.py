@@ -1200,7 +1200,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     path = '//dir/'
     platform = 'linux'
 
-    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report = _CreateSamplePostsubmitReport()
     report.put()
 
     dir_coverage_data = _CreateSampleDirectoryCoverageData(modifier_id=123)
@@ -1298,7 +1298,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     path = '//dir/test.cc'
     platform = 'linux'
 
-    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report = _CreateSamplePostsubmitReport()
     report.put()
 
     file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)

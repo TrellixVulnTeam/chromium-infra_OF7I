@@ -345,11 +345,12 @@ def _RetrieveChromeManifest(repo_url, revision,
   return manifest
 
 
-def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
+def _GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
   """Gets the matched dependency in the manifest of the report.
 
   Args:
-    report (PostsubmitReport): The report that the file is associated with.
+    manifest (DependencyRepository): Entity containing mapping from path prefix
+                                     to corresponding repo.
     file_path (str): Source absolute path to the file.
 
   Returns:
@@ -358,7 +359,7 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
 
-  for dep in report.manifest:
+  for dep in manifest:
     if file_path.startswith(
         dep.path) and dep.server_host in _GetAllowedGitilesConfigs():
       return dep
@@ -366,11 +367,12 @@ def _GetMatchedDependencyRepository(report, file_path):  # pragma: no cover.
   return None
 
 
-def _ComposeSourceFileGsPath(report, file_path, revision):
+def _ComposeSourceFileGsPath(manifest, file_path, revision):
   """Composes a cloud storage path for a specific revision of a source file.
 
   Args:
-    report (PostsubmitReport): The report that the file is associated with.
+    manifest (DependencyRepository): Entity containing mapping from path prefix
+                                     to corresponding repo.
     file_path (str): Source absolute path to the file.
     revision (str): The gitile revision of the file in its own repo.
 
@@ -381,7 +383,7 @@ def _ComposeSourceFileGsPath(report, file_path, revision):
   assert file_path.startswith('//'), 'All file path should start with "//".'
   assert revision, 'A valid revision is required'
 
-  dependency = _GetMatchedDependencyRepository(report, file_path)
+  dependency = _GetMatchedDependencyRepository(manifest, file_path)
   assert dependency, ('%s file does not belong to any dependency repository' %
                       file_path)
 
@@ -439,12 +441,13 @@ def _WriteFileContentToGs(gs_path, content):  # pragma: no cover.
     f.write(content)
 
 
-def _GetFileContentFromGitiles(report, file_path,
+def _GetFileContentFromGitiles(manifest, file_path,
                                revision):  # pragma: no cover.
   """Fetches the content of a specific revision of a file from gitiles.
 
   Args:
-    report (PostsubmitReport): The report that the file is associated with.
+    manifest (DependencyRepository): Entity containing mapping from path prefix
+                                     to corresponding repo.
     file_path (str): Source absolute path to the file.
     revision (str): The gitile revision of the file.
 
@@ -453,7 +456,7 @@ def _GetFileContentFromGitiles(report, file_path,
   assert file_path.startswith('//'), 'All file path should start with "//".'
   assert revision, 'A valid revision is required'
 
-  dependency = _GetMatchedDependencyRepository(report, file_path)
+  dependency = _GetMatchedDependencyRepository(manifest, file_path)
   assert dependency, ('%s file does not belong to any dependency repository' %
                       file_path)
 
@@ -549,13 +552,13 @@ class FetchSourceFile(BaseHandler):
     assert report, ('Postsubmit report does not exist for urlsafe key' %
                     report_key)
 
-    file_content = _GetFileContentFromGitiles(report, path, revision)
+    file_content = _GetFileContentFromGitiles(report.manifest, path, revision)
     if not file_content:
       logging.error('Failed to get file from gitiles for %s@%s' %
                     (path, revision))
       return
 
-    gs_path = _ComposeSourceFileGsPath(report, path, revision)
+    gs_path = _ComposeSourceFileGsPath(report.manifest, path, revision)
     _WriteFileContentToGs(gs_path, file_content)
 
 
@@ -738,7 +741,7 @@ class ProcessCodeCoverageData(BaseHandler):
     assert path.startswith('//'), 'All file path should start with "//"'
     assert revision, 'A valid revision is required'
 
-    gs_path = _ComposeSourceFileGsPath(report, path, revision)
+    gs_path = _ComposeSourceFileGsPath(report.manifest, path, revision)
     if _IsFileAvailableInGs(gs_path):
       return
 
@@ -1461,19 +1464,22 @@ class ServeCodeCoverageData(BaseHandler):
                                                 builder, test_suite_type,
                                                 modifier_id)
 
-    # Get latest report if revision not specified
+    # Get manifest and other key report attributes from the full codebase
+    # report at the specified revision. If the revision is not specified,
+    # get the required info from the latest full code base coverage reports
     if not revision:
       query = PostsubmitReport.query(
           PostsubmitReport.gitiles_commit.project == project,
           PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
           PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
-          PostsubmitReport.modifier_id == modifier_id).order(
+          PostsubmitReport.modifier_id == 0).order(
               -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]
       revision = report.gitiles_commit.revision
       ref = report.gitiles_commit.ref
+      manifest = report.manifest
     else:
       report = PostsubmitReport.Get(
           server_host=host,
@@ -1481,10 +1487,11 @@ class ServeCodeCoverageData(BaseHandler):
           ref=ref,
           revision=revision,
           bucket=bucket,
-          builder=builder,
-          modifier_id=modifier_id)
+          builder=builder)
       if not report:
         return BaseHandler.CreateError('Report record not found', 404)
+      else:
+        manifest = report.manifest
 
     def _GetDataType(path):
       if not path or path.endswith('/'):
@@ -1552,7 +1559,7 @@ class ServeCodeCoverageData(BaseHandler):
             builder=builder,
             modifier_id=modifier_id)
 
-    def _GetLineToData(report, path, metadata):
+    def _GetLineToData(manifest, path, metadata):
       """Returns coverage data per line in a file.
 
       Returns a list of tuples, sorted by line number, where the first
@@ -1571,11 +1578,11 @@ class ServeCodeCoverageData(BaseHandler):
       """
       line_to_data = collections.defaultdict(dict)
       if metadata.get('revision', ''):
-        gs_path = _ComposeSourceFileGsPath(report, path, metadata['revision'])
+        gs_path = _ComposeSourceFileGsPath(manifest, path, metadata['revision'])
         file_content = _GetFileContentFromGs(gs_path)
         if not file_content:
           # Fetching files from Gitiles is slow, only use it as a backup.
-          file_content = _GetFileContentFromGitiles(report, path,
+          file_content = _GetFileContentFromGitiles(manifest, path,
                                                     metadata['revision'])
       else:
         # If metadata['revision'] is empty, it means that the file is not
@@ -1619,7 +1626,7 @@ class ServeCodeCoverageData(BaseHandler):
         'metadata': entity.data,
     }
     if data_type == 'files':
-      data['line_to_data'] = _GetLineToData(report, path, entity.data)
+      data['line_to_data'] = _GetLineToData(manifest, path, entity.data)
 
     # Compute the mapping of the name->path mappings in order.
     path_parts = _GetNameToPathSeparator(path, data_type)
