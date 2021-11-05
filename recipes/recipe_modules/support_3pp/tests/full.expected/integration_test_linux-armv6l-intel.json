@@ -2442,7 +2442,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_4/manifest.json"
     ],
     "env": {
@@ -2470,7 +2470,7 @@
     "name": "building deps/bottom_dep_git.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -3216,7 +3216,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_6/manifest.json"
     ],
     "env": {
@@ -3244,7 +3244,7 @@
     "name": "building deps/bottom_dep_git (2).attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -4152,7 +4152,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_9/manifest.json"
     ],
     "env": {
@@ -4180,7 +4180,7 @@
     "name": "building deps/bottom_dep_url.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -5088,7 +5088,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_12/manifest.json"
     ],
     "env": {
@@ -5116,7 +5116,7 @@
     "name": "building deps/bottom_dep_url (2).attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -5803,7 +5803,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_15/manifest.json"
     ],
     "env": {
@@ -5832,7 +5832,7 @@
     "name": "building deps/deep_dep.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -6723,7 +6723,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_18/manifest.json"
     ],
     "env": {
@@ -6751,7 +6751,7 @@
     "name": "building tools/fetch_and_package.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -7659,7 +7659,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_21/manifest.json"
     ],
     "env": {
@@ -7687,7 +7687,7 @@
     "name": "building tools/pkg_override_and_no_latest.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -8665,7 +8665,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_25/manifest.json"
     ],
     "env": {
@@ -8693,7 +8693,7 @@
     "name": "building tools/posix_tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -9677,7 +9677,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_28/manifest.json"
     ],
     "env": {
@@ -9705,7 +9705,7 @@
     "name": "building tools/windows_experiment.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -11615,7 +11615,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_32/manifest.json"
     ],
     "env": {
@@ -11644,7 +11644,7 @@
     "name": "building build_tools/git_tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -13379,7 +13379,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_35/manifest.json"
     ],
     "env": {
@@ -13408,7 +13408,7 @@
     "name": "building build_tools/tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -14637,7 +14637,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_37/manifest.json"
     ],
     "env": {
@@ -14666,7 +14666,7 @@
     "name": "building build_tools/tool (2).attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -15735,7 +15735,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_40/manifest.json"
     ],
     "env": {
@@ -15763,7 +15763,7 @@
     "name": "building deps/dep.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -17080,7 +17080,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_43/manifest.json"
     ],
     "env": {
@@ -17108,7 +17108,7 @@
     "name": "building tools/pkg.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },
@@ -18378,7 +18378,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_46/manifest.json"
     ],
     "env": {
@@ -18406,7 +18406,7 @@
     "name": "building tools/pkg_checkout.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },

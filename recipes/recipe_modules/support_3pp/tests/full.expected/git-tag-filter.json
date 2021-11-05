@@ -732,7 +732,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}",
+      "{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}",
       "[CLEANUP]/tmp_tmp_4/manifest.json"
     ],
     "env": {
@@ -748,7 +748,7 @@
     "name": "building tools/tool.attach provenance.Provenance manifest",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_LOG_LINE@manifest.json@{\"subjectHash\": \"deadbeef\", \"recipe\": \"support_3pp:tests/full\", \"exp\": 0}@@@",
+      "@@@STEP_LOG_LINE@manifest.json@{\"exp\": 0, \"recipe\": \"support_3pp:tests/full\", \"subjectHash\": \"deadbeef\"}@@@",
       "@@@STEP_LOG_END@manifest.json@@@"
     ]
   },

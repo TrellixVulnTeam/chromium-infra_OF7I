@@ -7,7 +7,6 @@
 This defines the encapsulating logic for fetching, building, packaging, testing
 and uploading a ResolvedSpec.
 """
-import json
 import re
 
 from . import source
@@ -162,7 +161,7 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
           temp_dir = api.path.mkdtemp('tmp')
           manifest_path = temp_dir.join('manifest.json')
           api.file.write_text('Provenance manifest', manifest_path,
-                              json.dumps(provenance_manifest))
+                              api.json.dumps(provenance_manifest))
           provenance_path = temp_dir.join('provenance.attestation')
           api.provenance.generate(key_path, manifest_path, provenance_path)
 
