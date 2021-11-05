@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n0go.chromium.org/luci/buildbucket/proto/log.proto\x12\x0e\x62uildbucket.v2\x1a/go.chromium.org/luci/common/bq/pb/options.proto\"\x84\x01\n\x0ePRPCRequestLog\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06parent\x18\x02 \x01(\t\x12&\n\rcreation_time\x18\x03 \x01(\x03\x42\x0f\xe2\xbc$\x0b\n\tTIMESTAMP\x12\x10\n\x08\x64uration\x18\x04 \x01(\x05\x12\x0e\n\x06method\x18\x05 \x01(\t\x12\x0c\n\x04user\x18\x06 \x01(\tB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+  serialized_pb=b'\n0go.chromium.org/luci/buildbucket/proto/log.proto\x12\x0e\x62uildbucket.v2\x1a/go.chromium.org/luci/common/bq/pb/options.proto\"\x84\x01\n\x0ePRPCRequestLog\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06parent\x18\x02 \x01(\t\x12&\n\rcreation_time\x18\x03 \x01(\x03\x42\x0f\xe2\xbc$\x0b\n\tTIMESTAMP\x12\x10\n\x08\x64uration\x18\x04 \x01(\x03\x12\x0e\n\x06method\x18\x05 \x01(\t\x12\x0c\n\x04user\x18\x06 \x01(\tB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
   ,
   dependencies=[go_dot_chromium_dot_org_dot_luci_dot_common_dot_bq_dot_pb_dot_options__pb2.DESCRIPTOR,])
 
@@ -58,7 +58,7 @@ _PRPCREQUESTLOG = _descriptor.Descriptor(
       serialized_options=b'\342\274$\013\n\tTIMESTAMP', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
       name='duration', full_name='buildbucket.v2.PRPCRequestLog.duration', index=3,
-      number=4, type=5, cpp_type=1, label=1,
+      number=4, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,

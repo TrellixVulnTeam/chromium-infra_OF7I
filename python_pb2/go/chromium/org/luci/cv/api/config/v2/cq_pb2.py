@@ -18,48 +18,17 @@ from go.chromium.org.luci.common.proto import options_pb2 as go_dot_chromium_dot
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/cv/api/config/v2/cq.proto',
-  package='cq.config',
+  package='cv.config',
   syntax='proto3',
   serialized_options=b'Z,go.chromium.org/luci/cv/api/config/v2;config\242\376#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfg',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n.go.chromium.org/luci/cv/api/config/v2/cq.proto\x12\tcq.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xd9\x01\n\x06\x43onfig\x12\x1b\n\x13\x64raining_start_time\x18\x01 \x01(\t\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cq.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cq.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cq.config.ToggleB\x02\x18\x01\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"\x8f\x03\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cq.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cq.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cq.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cq.config.Toggle\x12)\n\x10\x61\x64\x64itional_modes\x18\x07 \x03(\x0b\x32\x0f.cq.config.Mode\x1a\x97\x01\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cq.config.ConfigGroup.Gerrit.Project\x1aG\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\t\x12\x1a\n\x12ref_regexp_exclude\x18\x03 \x03(\tJ\x04\x08\x03\x10\x04\"`\n\x04Mode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x63q_label_value\x18\x02 \x01(\x05\x12\x18\n\x10triggering_label\x18\x03 \x01(\t\x12\x18\n\x10triggering_value\x18\x04 \x01(\x05\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xba\x0b\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cq.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cq.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cq.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cq.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cq.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cq.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xd9\x06\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cq.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cq.config.Verifiers.Tryjob.RetryConfig\x12\x33\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cq.config.ToggleB\x02\x18\x01\x1a\x9c\x03\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cq.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\'\n\x0c\x63\x61ncel_stale\x18\x0b \x01(\x0e\x32\x11.cq.config.Toggle\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cq.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x12\x16\n\x0emode_allowlist\x18\x0e \x03(\tJ\x04\x08\x0c\x10\rJ\x04\x08\r\x10\x0e\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02\x42uZ,go.chromium.org/luci/cv/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3'
+  serialized_pb=b'\n.go.chromium.org/luci/cv/api/config/v2/cq.proto\x12\tcv.config\x1a\x1egoogle/protobuf/duration.proto\x1a/go.chromium.org/luci/common/proto/options.proto\"\xdd\x01\n\x06\x43onfig\x12\x1f\n\x13\x64raining_start_time\x18\x01 \x01(\tB\x02\x18\x01\x12\x1a\n\x0e\x63q_status_host\x18\x02 \x01(\tB\x02\x18\x01\x12\x30\n\x0esubmit_options\x18\x03 \x01(\x0b\x32\x18.cv.config.SubmitOptions\x12-\n\rconfig_groups\x18\x04 \x03(\x0b\x32\x16.cv.config.ConfigGroup\x12\x35\n\x16project_scoped_account\x18\x05 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\"\x8f\x03\n\x0b\x43onfigGroup\x12\x0c\n\x04name\x18\x06 \x01(\t\x12-\n\x06gerrit\x18\x01 \x03(\x0b\x32\x1d.cv.config.ConfigGroup.Gerrit\x12*\n\x0b\x63ombine_cls\x18\x04 \x01(\x0b\x32\x15.cv.config.CombineCLs\x12\'\n\tverifiers\x18\x02 \x01(\x0b\x32\x14.cv.config.Verifiers\x12#\n\x08\x66\x61llback\x18\x05 \x01(\x0e\x32\x11.cv.config.Toggle\x12)\n\x10\x61\x64\x64itional_modes\x18\x07 \x03(\x0b\x32\x0f.cv.config.Mode\x1a\x97\x01\n\x06Gerrit\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x37\n\x08projects\x18\x02 \x03(\x0b\x32%.cv.config.ConfigGroup.Gerrit.Project\x1aG\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nref_regexp\x18\x02 \x03(\t\x12\x1a\n\x12ref_regexp_exclude\x18\x03 \x03(\tJ\x04\x08\x03\x10\x04\"R\n\rSubmitOptions\x12\x11\n\tmax_burst\x18\x01 \x01(\x05\x12.\n\x0b\x62urst_delay\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"`\n\x04Mode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x63q_label_value\x18\x02 \x01(\x05\x12\x18\n\x10triggering_label\x18\x03 \x01(\t\x12\x18\n\x10triggering_value\x18\x04 \x01(\x05\"D\n\nCombineCLs\x12\x36\n\x13stabilization_delay\x18\x01 \x01(\x0b\x32\x19.google.protobuf.Duration\"\xba\x0b\n\tVerifiers\x12?\n\x11gerrit_cq_ability\x18\x01 \x01(\x0b\x32$.cv.config.Verifiers.GerritCQAbility\x12\x34\n\x0btree_status\x18\x02 \x01(\x0b\x32\x1f.cv.config.Verifiers.TreeStatus\x12+\n\x06tryjob\x18\x03 \x01(\x0b\x32\x1b.cv.config.Verifiers.Tryjob\x12/\n\x08\x63qlinter\x18\x04 \x01(\x0b\x32\x1d.cv.config.Verifiers.CQLinter\x12\'\n\x04\x66\x61ke\x18\x05 \x01(\x0b\x32\x19.cv.config.Verifiers.Fake\x1a\xee\x01\n\x0fGerritCQAbility\x12\x16\n\x0e\x63ommitter_list\x18\x01 \x03(\t\x12\x1b\n\x13\x64ry_run_access_list\x18\x02 \x03(\t\x12#\n\x1b\x61llow_submit_with_open_deps\x18\x03 \x01(\x08\x12Q\n\x1a\x61llow_owner_if_submittable\x18\x04 \x01(\x0e\x32-.cv.config.Verifiers.GerritCQAbility.CQAction\".\n\x08\x43QAction\x12\t\n\x05UNSET\x10\x00\x12\x0b\n\x07\x44RY_RUN\x10\x01\x12\n\n\x06\x43OMMIT\x10\x02\x1a\x19\n\nTreeStatus\x12\x0b\n\x03url\x18\x01 \x01(\t\x1a\xd9\x06\n\x06Tryjob\x12\x35\n\x08\x62uilders\x18\x01 \x03(\x0b\x32#.cv.config.Verifiers.Tryjob.Builder\x12=\n\x0cretry_config\x18\x02 \x01(\x0b\x32\'.cv.config.Verifiers.Tryjob.RetryConfig\x12\x33\n\x14\x63\x61ncel_stale_tryjobs\x18\x03 \x01(\x0e\x32\x11.cv.config.ToggleB\x02\x18\x01\x1a\x9c\x03\n\x07\x42uilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fincludable_only\x18\t \x01(\x08\x12\x32\n\x11result_visibility\x18\n \x01(\x0e\x32\x17.cv.config.CommentLevel\x12\x15\n\rdisable_reuse\x18\x02 \x01(\x08\x12\'\n\x0c\x63\x61ncel_stale\x18\x0b \x01(\x0e\x32\x11.cv.config.Toggle\x12\x14\n\x0ctriggered_by\x18\x03 \x01(\t\x12\x1d\n\x15\x65xperiment_percentage\x18\x04 \x01(\x02\x12\x44\n\requivalent_to\x18\x05 \x01(\x0b\x32-.cv.config.Verifiers.Tryjob.EquivalentBuilder\x12\x17\n\x0flocation_regexp\x18\x06 \x03(\t\x12\x1f\n\x17location_regexp_exclude\x18\x07 \x03(\t\x12\x1d\n\x15owner_whitelist_group\x18\x08 \x03(\t\x12\x16\n\x0emode_allowlist\x18\x0e \x03(\tJ\x04\x08\x0c\x10\rJ\x04\x08\r\x10\x0e\x1aT\n\x11\x45quivalentBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12\x1d\n\x15owner_whitelist_group\x18\x03 \x01(\t\x1a!\n\x11IncludableBuilder\x12\x0c\n\x04name\x18\x01 \x01(\t\x1a\x8b\x01\n\x0bRetryConfig\x12\x14\n\x0csingle_quota\x18\x01 \x01(\x05\x12\x14\n\x0cglobal_quota\x18\x02 \x01(\x05\x12\x16\n\x0e\x66\x61ilure_weight\x18\x03 \x01(\x05\x12 \n\x18transient_failure_weight\x18\x04 \x01(\x05\x12\x16\n\x0etimeout_weight\x18\x05 \x01(\x05\x1a\n\n\x08\x43QLinter\x1a;\n\x04\x46\x61ke\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x65ventual_state\x18\x02 \x01(\t\x12\r\n\x05\x64\x65lay\x18\x03 \x01(\x05*]\n\x0c\x43ommentLevel\x12\x17\n\x13\x43OMMENT_LEVEL_UNSET\x10\x00\x12\x16\n\x12\x43OMMENT_LEVEL_FULL\x10\x01\x12\x1c\n\x18\x43OMMENT_LEVEL_RESTRICTED\x10\x02*$\n\x06Toggle\x12\t\n\x05UNSET\x10\x00\x12\x07\n\x03YES\x10\x01\x12\x06\n\x02NO\x10\x02\x42uZ,go.chromium.org/luci/cv/api/config/v2;config\xa2\xfe#C\nAhttps://luci-config.appspot.com/schemas/projects:commit-queue.cfgb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_common_dot_proto_dot_options__pb2.DESCRIPTOR,])
 
-_TOGGLE = _descriptor.EnumDescriptor(
-  name='Toggle',
-  full_name='cq.config.Toggle',
-  filename=None,
-  file=DESCRIPTOR,
-  create_key=_descriptor._internal_create_key,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='UNSET', index=0, number=0,
-      serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
-    _descriptor.EnumValueDescriptor(
-      name='YES', index=1, number=1,
-      serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
-    _descriptor.EnumValueDescriptor(
-      name='NO', index=2, number=2,
-      serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=2485,
-  serialized_end=2521,
-)
-_sym_db.RegisterEnumDescriptor(_TOGGLE)
-
-Toggle = enum_type_wrapper.EnumTypeWrapper(_TOGGLE)
 _COMMENTLEVEL = _descriptor.EnumDescriptor(
   name='CommentLevel',
-  full_name='cq.config.CommentLevel',
+  full_name='cv.config.CommentLevel',
   filename=None,
   file=DESCRIPTOR,
   create_key=_descriptor._internal_create_key,
@@ -82,23 +51,54 @@ _COMMENTLEVEL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2523,
-  serialized_end=2616,
+  serialized_start=2489,
+  serialized_end=2582,
 )
 _sym_db.RegisterEnumDescriptor(_COMMENTLEVEL)
 
 CommentLevel = enum_type_wrapper.EnumTypeWrapper(_COMMENTLEVEL)
-UNSET = 0
-YES = 1
-NO = 2
+_TOGGLE = _descriptor.EnumDescriptor(
+  name='Toggle',
+  full_name='cv.config.Toggle',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='UNSET', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='YES', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='NO', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=2584,
+  serialized_end=2620,
+)
+_sym_db.RegisterEnumDescriptor(_TOGGLE)
+
+Toggle = enum_type_wrapper.EnumTypeWrapper(_TOGGLE)
 COMMENT_LEVEL_UNSET = 0
 COMMENT_LEVEL_FULL = 1
 COMMENT_LEVEL_RESTRICTED = 2
+UNSET = 0
+YES = 1
+NO = 2
 
 
 _VERIFIERS_GERRITCQABILITY_CQACTION = _descriptor.EnumDescriptor(
   name='CQAction',
-  full_name='cq.config.Verifiers.GerritCQAbility.CQAction',
+  full_name='cv.config.Verifiers.GerritCQAbility.CQAction',
   filename=None,
   file=DESCRIPTOR,
   create_key=_descriptor._internal_create_key,
@@ -121,50 +121,50 @@ _VERIFIERS_GERRITCQABILITY_CQACTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1477,
-  serialized_end=1523,
+  serialized_start=1481,
+  serialized_end=1527,
 )
 _sym_db.RegisterEnumDescriptor(_VERIFIERS_GERRITCQABILITY_CQACTION)
 
 
 _CONFIG = _descriptor.Descriptor(
   name='Config',
-  full_name='cq.config.Config',
+  full_name='cv.config.Config',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='draining_start_time', full_name='cq.config.Config.draining_start_time', index=0,
+      name='draining_start_time', full_name='cv.config.Config.draining_start_time', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cq_status_host', full_name='cq.config.Config.cq_status_host', index=1,
+      name='cq_status_host', full_name='cv.config.Config.cq_status_host', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='submit_options', full_name='cq.config.Config.submit_options', index=2,
+      name='submit_options', full_name='cv.config.Config.submit_options', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='config_groups', full_name='cq.config.Config.config_groups', index=3,
+      name='config_groups', full_name='cv.config.Config.config_groups', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='project_scoped_account', full_name='cq.config.Config.project_scoped_account', index=4,
+      name='project_scoped_account', full_name='cv.config.Config.project_scoped_account', index=4,
       number=5, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -183,73 +183,34 @@ _CONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=143,
-  serialized_end=360,
-)
-
-
-_SUBMITOPTIONS = _descriptor.Descriptor(
-  name='SubmitOptions',
-  full_name='cq.config.SubmitOptions',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='max_burst', full_name='cq.config.SubmitOptions.max_burst', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='burst_delay', full_name='cq.config.SubmitOptions.burst_delay', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=362,
-  serialized_end=444,
+  serialized_end=364,
 )
 
 
 _CONFIGGROUP_GERRIT_PROJECT = _descriptor.Descriptor(
   name='Project',
-  full_name='cq.config.ConfigGroup.Gerrit.Project',
+  full_name='cv.config.ConfigGroup.Gerrit.Project',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.ConfigGroup.Gerrit.Project.name', index=0,
+      name='name', full_name='cv.config.ConfigGroup.Gerrit.Project.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='ref_regexp', full_name='cq.config.ConfigGroup.Gerrit.Project.ref_regexp', index=1,
+      name='ref_regexp', full_name='cv.config.ConfigGroup.Gerrit.Project.ref_regexp', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='ref_regexp_exclude', full_name='cq.config.ConfigGroup.Gerrit.Project.ref_regexp_exclude', index=2,
+      name='ref_regexp_exclude', full_name='cv.config.ConfigGroup.Gerrit.Project.ref_regexp_exclude', index=2,
       number=3, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -267,27 +228,27 @@ _CONFIGGROUP_GERRIT_PROJECT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=769,
-  serialized_end=840,
+  serialized_start=689,
+  serialized_end=760,
 )
 
 _CONFIGGROUP_GERRIT = _descriptor.Descriptor(
   name='Gerrit',
-  full_name='cq.config.ConfigGroup.Gerrit',
+  full_name='cv.config.ConfigGroup.Gerrit',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='url', full_name='cq.config.ConfigGroup.Gerrit.url', index=0,
+      name='url', full_name='cv.config.ConfigGroup.Gerrit.url', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='projects', full_name='cq.config.ConfigGroup.Gerrit.projects', index=1,
+      name='projects', full_name='cv.config.ConfigGroup.Gerrit.projects', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -305,55 +266,55 @@ _CONFIGGROUP_GERRIT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=689,
-  serialized_end=840,
+  serialized_start=609,
+  serialized_end=760,
 )
 
 _CONFIGGROUP = _descriptor.Descriptor(
   name='ConfigGroup',
-  full_name='cq.config.ConfigGroup',
+  full_name='cv.config.ConfigGroup',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.ConfigGroup.name', index=0,
+      name='name', full_name='cv.config.ConfigGroup.name', index=0,
       number=6, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='gerrit', full_name='cq.config.ConfigGroup.gerrit', index=1,
+      name='gerrit', full_name='cv.config.ConfigGroup.gerrit', index=1,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='combine_cls', full_name='cq.config.ConfigGroup.combine_cls', index=2,
+      name='combine_cls', full_name='cv.config.ConfigGroup.combine_cls', index=2,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='verifiers', full_name='cq.config.ConfigGroup.verifiers', index=3,
+      name='verifiers', full_name='cv.config.ConfigGroup.verifiers', index=3,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='fallback', full_name='cq.config.ConfigGroup.fallback', index=4,
+      name='fallback', full_name='cv.config.ConfigGroup.fallback', index=4,
       number=5, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='additional_modes', full_name='cq.config.ConfigGroup.additional_modes', index=5,
+      name='additional_modes', full_name='cv.config.ConfigGroup.additional_modes', index=5,
       number=7, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -371,42 +332,81 @@ _CONFIGGROUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=447,
-  serialized_end=846,
+  serialized_start=367,
+  serialized_end=766,
 )
 
 
-_MODE = _descriptor.Descriptor(
-  name='Mode',
-  full_name='cq.config.Mode',
+_SUBMITOPTIONS = _descriptor.Descriptor(
+  name='SubmitOptions',
+  full_name='cv.config.SubmitOptions',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.Mode.name', index=0,
+      name='max_burst', full_name='cv.config.SubmitOptions.max_burst', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='burst_delay', full_name='cv.config.SubmitOptions.burst_delay', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=768,
+  serialized_end=850,
+)
+
+
+_MODE = _descriptor.Descriptor(
+  name='Mode',
+  full_name='cv.config.Mode',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='cv.config.Mode.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cq_label_value', full_name='cq.config.Mode.cq_label_value', index=1,
+      name='cq_label_value', full_name='cv.config.Mode.cq_label_value', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='triggering_label', full_name='cq.config.Mode.triggering_label', index=2,
+      name='triggering_label', full_name='cv.config.Mode.triggering_label', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='triggering_value', full_name='cq.config.Mode.triggering_value', index=3,
+      name='triggering_value', full_name='cv.config.Mode.triggering_value', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -424,21 +424,21 @@ _MODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=848,
-  serialized_end=944,
+  serialized_start=852,
+  serialized_end=948,
 )
 
 
 _COMBINECLS = _descriptor.Descriptor(
   name='CombineCLs',
-  full_name='cq.config.CombineCLs',
+  full_name='cv.config.CombineCLs',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='stabilization_delay', full_name='cq.config.CombineCLs.stabilization_delay', index=0,
+      name='stabilization_delay', full_name='cv.config.CombineCLs.stabilization_delay', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -456,42 +456,42 @@ _COMBINECLS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=946,
-  serialized_end=1014,
+  serialized_start=950,
+  serialized_end=1018,
 )
 
 
 _VERIFIERS_GERRITCQABILITY = _descriptor.Descriptor(
   name='GerritCQAbility',
-  full_name='cq.config.Verifiers.GerritCQAbility',
+  full_name='cv.config.Verifiers.GerritCQAbility',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='committer_list', full_name='cq.config.Verifiers.GerritCQAbility.committer_list', index=0,
+      name='committer_list', full_name='cv.config.Verifiers.GerritCQAbility.committer_list', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='dry_run_access_list', full_name='cq.config.Verifiers.GerritCQAbility.dry_run_access_list', index=1,
+      name='dry_run_access_list', full_name='cv.config.Verifiers.GerritCQAbility.dry_run_access_list', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='allow_submit_with_open_deps', full_name='cq.config.Verifiers.GerritCQAbility.allow_submit_with_open_deps', index=2,
+      name='allow_submit_with_open_deps', full_name='cv.config.Verifiers.GerritCQAbility.allow_submit_with_open_deps', index=2,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='allow_owner_if_submittable', full_name='cq.config.Verifiers.GerritCQAbility.allow_owner_if_submittable', index=3,
+      name='allow_owner_if_submittable', full_name='cv.config.Verifiers.GerritCQAbility.allow_owner_if_submittable', index=3,
       number=4, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -510,20 +510,20 @@ _VERIFIERS_GERRITCQABILITY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1285,
-  serialized_end=1523,
+  serialized_start=1289,
+  serialized_end=1527,
 )
 
 _VERIFIERS_TREESTATUS = _descriptor.Descriptor(
   name='TreeStatus',
-  full_name='cq.config.Verifiers.TreeStatus',
+  full_name='cv.config.Verifiers.TreeStatus',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='url', full_name='cq.config.Verifiers.TreeStatus.url', index=0,
+      name='url', full_name='cv.config.Verifiers.TreeStatus.url', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -541,97 +541,97 @@ _VERIFIERS_TREESTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1525,
-  serialized_end=1550,
+  serialized_start=1529,
+  serialized_end=1554,
 )
 
 _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   name='Builder',
-  full_name='cq.config.Verifiers.Tryjob.Builder',
+  full_name='cv.config.Verifiers.Tryjob.Builder',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.Verifiers.Tryjob.Builder.name', index=0,
+      name='name', full_name='cv.config.Verifiers.Tryjob.Builder.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='includable_only', full_name='cq.config.Verifiers.Tryjob.Builder.includable_only', index=1,
+      name='includable_only', full_name='cv.config.Verifiers.Tryjob.Builder.includable_only', index=1,
       number=9, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='result_visibility', full_name='cq.config.Verifiers.Tryjob.Builder.result_visibility', index=2,
+      name='result_visibility', full_name='cv.config.Verifiers.Tryjob.Builder.result_visibility', index=2,
       number=10, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='disable_reuse', full_name='cq.config.Verifiers.Tryjob.Builder.disable_reuse', index=3,
+      name='disable_reuse', full_name='cv.config.Verifiers.Tryjob.Builder.disable_reuse', index=3,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cancel_stale', full_name='cq.config.Verifiers.Tryjob.Builder.cancel_stale', index=4,
+      name='cancel_stale', full_name='cv.config.Verifiers.Tryjob.Builder.cancel_stale', index=4,
       number=11, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='triggered_by', full_name='cq.config.Verifiers.Tryjob.Builder.triggered_by', index=5,
+      name='triggered_by', full_name='cv.config.Verifiers.Tryjob.Builder.triggered_by', index=5,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='experiment_percentage', full_name='cq.config.Verifiers.Tryjob.Builder.experiment_percentage', index=6,
+      name='experiment_percentage', full_name='cv.config.Verifiers.Tryjob.Builder.experiment_percentage', index=6,
       number=4, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='equivalent_to', full_name='cq.config.Verifiers.Tryjob.Builder.equivalent_to', index=7,
+      name='equivalent_to', full_name='cv.config.Verifiers.Tryjob.Builder.equivalent_to', index=7,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='location_regexp', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp', index=8,
+      name='location_regexp', full_name='cv.config.Verifiers.Tryjob.Builder.location_regexp', index=8,
       number=6, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='location_regexp_exclude', full_name='cq.config.Verifiers.Tryjob.Builder.location_regexp_exclude', index=9,
+      name='location_regexp_exclude', full_name='cv.config.Verifiers.Tryjob.Builder.location_regexp_exclude', index=9,
       number=7, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='owner_whitelist_group', full_name='cq.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=10,
+      name='owner_whitelist_group', full_name='cv.config.Verifiers.Tryjob.Builder.owner_whitelist_group', index=10,
       number=8, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='mode_allowlist', full_name='cq.config.Verifiers.Tryjob.Builder.mode_allowlist', index=11,
+      name='mode_allowlist', full_name='cv.config.Verifiers.Tryjob.Builder.mode_allowlist', index=11,
       number=14, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -649,34 +649,34 @@ _VERIFIERS_TRYJOB_BUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1735,
-  serialized_end=2147,
+  serialized_start=1739,
+  serialized_end=2151,
 )
 
 _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
   name='EquivalentBuilder',
-  full_name='cq.config.Verifiers.Tryjob.EquivalentBuilder',
+  full_name='cv.config.Verifiers.Tryjob.EquivalentBuilder',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.Verifiers.Tryjob.EquivalentBuilder.name', index=0,
+      name='name', full_name='cv.config.Verifiers.Tryjob.EquivalentBuilder.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='percentage', full_name='cq.config.Verifiers.Tryjob.EquivalentBuilder.percentage', index=1,
+      name='percentage', full_name='cv.config.Verifiers.Tryjob.EquivalentBuilder.percentage', index=1,
       number=2, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='owner_whitelist_group', full_name='cq.config.Verifiers.Tryjob.EquivalentBuilder.owner_whitelist_group', index=2,
+      name='owner_whitelist_group', full_name='cv.config.Verifiers.Tryjob.EquivalentBuilder.owner_whitelist_group', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -694,20 +694,20 @@ _VERIFIERS_TRYJOB_EQUIVALENTBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2149,
-  serialized_end=2233,
+  serialized_start=2153,
+  serialized_end=2237,
 )
 
 _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
   name='IncludableBuilder',
-  full_name='cq.config.Verifiers.Tryjob.IncludableBuilder',
+  full_name='cv.config.Verifiers.Tryjob.IncludableBuilder',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.Verifiers.Tryjob.IncludableBuilder.name', index=0,
+      name='name', full_name='cv.config.Verifiers.Tryjob.IncludableBuilder.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -725,48 +725,48 @@ _VERIFIERS_TRYJOB_INCLUDABLEBUILDER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2235,
-  serialized_end=2268,
+  serialized_start=2239,
+  serialized_end=2272,
 )
 
 _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
   name='RetryConfig',
-  full_name='cq.config.Verifiers.Tryjob.RetryConfig',
+  full_name='cv.config.Verifiers.Tryjob.RetryConfig',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='single_quota', full_name='cq.config.Verifiers.Tryjob.RetryConfig.single_quota', index=0,
+      name='single_quota', full_name='cv.config.Verifiers.Tryjob.RetryConfig.single_quota', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='global_quota', full_name='cq.config.Verifiers.Tryjob.RetryConfig.global_quota', index=1,
+      name='global_quota', full_name='cv.config.Verifiers.Tryjob.RetryConfig.global_quota', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='failure_weight', full_name='cq.config.Verifiers.Tryjob.RetryConfig.failure_weight', index=2,
+      name='failure_weight', full_name='cv.config.Verifiers.Tryjob.RetryConfig.failure_weight', index=2,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='transient_failure_weight', full_name='cq.config.Verifiers.Tryjob.RetryConfig.transient_failure_weight', index=3,
+      name='transient_failure_weight', full_name='cv.config.Verifiers.Tryjob.RetryConfig.transient_failure_weight', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timeout_weight', full_name='cq.config.Verifiers.Tryjob.RetryConfig.timeout_weight', index=4,
+      name='timeout_weight', full_name='cv.config.Verifiers.Tryjob.RetryConfig.timeout_weight', index=4,
       number=5, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -784,34 +784,34 @@ _VERIFIERS_TRYJOB_RETRYCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2271,
-  serialized_end=2410,
+  serialized_start=2275,
+  serialized_end=2414,
 )
 
 _VERIFIERS_TRYJOB = _descriptor.Descriptor(
   name='Tryjob',
-  full_name='cq.config.Verifiers.Tryjob',
+  full_name='cv.config.Verifiers.Tryjob',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='builders', full_name='cq.config.Verifiers.Tryjob.builders', index=0,
+      name='builders', full_name='cv.config.Verifiers.Tryjob.builders', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='retry_config', full_name='cq.config.Verifiers.Tryjob.retry_config', index=1,
+      name='retry_config', full_name='cv.config.Verifiers.Tryjob.retry_config', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cancel_stale_tryjobs', full_name='cq.config.Verifiers.Tryjob.cancel_stale_tryjobs', index=2,
+      name='cancel_stale_tryjobs', full_name='cv.config.Verifiers.Tryjob.cancel_stale_tryjobs', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -829,13 +829,13 @@ _VERIFIERS_TRYJOB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1553,
-  serialized_end=2410,
+  serialized_start=1557,
+  serialized_end=2414,
 )
 
 _VERIFIERS_CQLINTER = _descriptor.Descriptor(
   name='CQLinter',
-  full_name='cq.config.Verifiers.CQLinter',
+  full_name='cv.config.Verifiers.CQLinter',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
@@ -853,34 +853,34 @@ _VERIFIERS_CQLINTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2412,
-  serialized_end=2422,
+  serialized_start=2416,
+  serialized_end=2426,
 )
 
 _VERIFIERS_FAKE = _descriptor.Descriptor(
   name='Fake',
-  full_name='cq.config.Verifiers.Fake',
+  full_name='cv.config.Verifiers.Fake',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='cq.config.Verifiers.Fake.name', index=0,
+      name='name', full_name='cv.config.Verifiers.Fake.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='eventual_state', full_name='cq.config.Verifiers.Fake.eventual_state', index=1,
+      name='eventual_state', full_name='cv.config.Verifiers.Fake.eventual_state', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='delay', full_name='cq.config.Verifiers.Fake.delay', index=2,
+      name='delay', full_name='cv.config.Verifiers.Fake.delay', index=2,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -898,48 +898,48 @@ _VERIFIERS_FAKE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2424,
-  serialized_end=2483,
+  serialized_start=2428,
+  serialized_end=2487,
 )
 
 _VERIFIERS = _descriptor.Descriptor(
   name='Verifiers',
-  full_name='cq.config.Verifiers',
+  full_name='cv.config.Verifiers',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='gerrit_cq_ability', full_name='cq.config.Verifiers.gerrit_cq_ability', index=0,
+      name='gerrit_cq_ability', full_name='cv.config.Verifiers.gerrit_cq_ability', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='tree_status', full_name='cq.config.Verifiers.tree_status', index=1,
+      name='tree_status', full_name='cv.config.Verifiers.tree_status', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='tryjob', full_name='cq.config.Verifiers.tryjob', index=2,
+      name='tryjob', full_name='cv.config.Verifiers.tryjob', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='cqlinter', full_name='cq.config.Verifiers.cqlinter', index=3,
+      name='cqlinter', full_name='cv.config.Verifiers.cqlinter', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='fake', full_name='cq.config.Verifiers.fake', index=4,
+      name='fake', full_name='cv.config.Verifiers.fake', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -957,14 +957,13 @@ _VERIFIERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1017,
-  serialized_end=2483,
+  serialized_start=1021,
+  serialized_end=2487,
 )
 
 _CONFIG.fields_by_name['submit_options'].message_type = _SUBMITOPTIONS
 _CONFIG.fields_by_name['config_groups'].message_type = _CONFIGGROUP
 _CONFIG.fields_by_name['project_scoped_account'].enum_type = _TOGGLE
-_SUBMITOPTIONS.fields_by_name['burst_delay'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _CONFIGGROUP_GERRIT_PROJECT.containing_type = _CONFIGGROUP_GERRIT
 _CONFIGGROUP_GERRIT.fields_by_name['projects'].message_type = _CONFIGGROUP_GERRIT_PROJECT
 _CONFIGGROUP_GERRIT.containing_type = _CONFIGGROUP
@@ -973,6 +972,7 @@ _CONFIGGROUP.fields_by_name['combine_cls'].message_type = _COMBINECLS
 _CONFIGGROUP.fields_by_name['verifiers'].message_type = _VERIFIERS
 _CONFIGGROUP.fields_by_name['fallback'].enum_type = _TOGGLE
 _CONFIGGROUP.fields_by_name['additional_modes'].message_type = _MODE
+_SUBMITOPTIONS.fields_by_name['burst_delay'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _COMBINECLS.fields_by_name['stabilization_delay'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _VERIFIERS_GERRITCQABILITY.fields_by_name['allow_owner_if_submittable'].enum_type = _VERIFIERS_GERRITCQABILITY_CQACTION
 _VERIFIERS_GERRITCQABILITY.containing_type = _VERIFIERS
@@ -997,28 +997,21 @@ _VERIFIERS.fields_by_name['tryjob'].message_type = _VERIFIERS_TRYJOB
 _VERIFIERS.fields_by_name['cqlinter'].message_type = _VERIFIERS_CQLINTER
 _VERIFIERS.fields_by_name['fake'].message_type = _VERIFIERS_FAKE
 DESCRIPTOR.message_types_by_name['Config'] = _CONFIG
-DESCRIPTOR.message_types_by_name['SubmitOptions'] = _SUBMITOPTIONS
 DESCRIPTOR.message_types_by_name['ConfigGroup'] = _CONFIGGROUP
+DESCRIPTOR.message_types_by_name['SubmitOptions'] = _SUBMITOPTIONS
 DESCRIPTOR.message_types_by_name['Mode'] = _MODE
 DESCRIPTOR.message_types_by_name['CombineCLs'] = _COMBINECLS
 DESCRIPTOR.message_types_by_name['Verifiers'] = _VERIFIERS
-DESCRIPTOR.enum_types_by_name['Toggle'] = _TOGGLE
 DESCRIPTOR.enum_types_by_name['CommentLevel'] = _COMMENTLEVEL
+DESCRIPTOR.enum_types_by_name['Toggle'] = _TOGGLE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Config = _reflection.GeneratedProtocolMessageType('Config', (_message.Message,), {
   'DESCRIPTOR' : _CONFIG,
   '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.Config)
+  # @@protoc_insertion_point(class_scope:cv.config.Config)
   })
 _sym_db.RegisterMessage(Config)
-
-SubmitOptions = _reflection.GeneratedProtocolMessageType('SubmitOptions', (_message.Message,), {
-  'DESCRIPTOR' : _SUBMITOPTIONS,
-  '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.SubmitOptions)
-  })
-_sym_db.RegisterMessage(SubmitOptions)
 
 ConfigGroup = _reflection.GeneratedProtocolMessageType('ConfigGroup', (_message.Message,), {
 
@@ -1027,33 +1020,40 @@ ConfigGroup = _reflection.GeneratedProtocolMessageType('ConfigGroup', (_message.
     'Project' : _reflection.GeneratedProtocolMessageType('Project', (_message.Message,), {
       'DESCRIPTOR' : _CONFIGGROUP_GERRIT_PROJECT,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-      # @@protoc_insertion_point(class_scope:cq.config.ConfigGroup.Gerrit.Project)
+      # @@protoc_insertion_point(class_scope:cv.config.ConfigGroup.Gerrit.Project)
       })
     ,
     'DESCRIPTOR' : _CONFIGGROUP_GERRIT,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.ConfigGroup.Gerrit)
+    # @@protoc_insertion_point(class_scope:cv.config.ConfigGroup.Gerrit)
     })
   ,
   'DESCRIPTOR' : _CONFIGGROUP,
   '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.ConfigGroup)
+  # @@protoc_insertion_point(class_scope:cv.config.ConfigGroup)
   })
 _sym_db.RegisterMessage(ConfigGroup)
 _sym_db.RegisterMessage(ConfigGroup.Gerrit)
 _sym_db.RegisterMessage(ConfigGroup.Gerrit.Project)
 
+SubmitOptions = _reflection.GeneratedProtocolMessageType('SubmitOptions', (_message.Message,), {
+  'DESCRIPTOR' : _SUBMITOPTIONS,
+  '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
+  # @@protoc_insertion_point(class_scope:cv.config.SubmitOptions)
+  })
+_sym_db.RegisterMessage(SubmitOptions)
+
 Mode = _reflection.GeneratedProtocolMessageType('Mode', (_message.Message,), {
   'DESCRIPTOR' : _MODE,
   '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.Mode)
+  # @@protoc_insertion_point(class_scope:cv.config.Mode)
   })
 _sym_db.RegisterMessage(Mode)
 
 CombineCLs = _reflection.GeneratedProtocolMessageType('CombineCLs', (_message.Message,), {
   'DESCRIPTOR' : _COMBINECLS,
   '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.CombineCLs)
+  # @@protoc_insertion_point(class_scope:cv.config.CombineCLs)
   })
 _sym_db.RegisterMessage(CombineCLs)
 
@@ -1062,14 +1062,14 @@ Verifiers = _reflection.GeneratedProtocolMessageType('Verifiers', (_message.Mess
   'GerritCQAbility' : _reflection.GeneratedProtocolMessageType('GerritCQAbility', (_message.Message,), {
     'DESCRIPTOR' : _VERIFIERS_GERRITCQABILITY,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.Verifiers.GerritCQAbility)
+    # @@protoc_insertion_point(class_scope:cv.config.Verifiers.GerritCQAbility)
     })
   ,
 
   'TreeStatus' : _reflection.GeneratedProtocolMessageType('TreeStatus', (_message.Message,), {
     'DESCRIPTOR' : _VERIFIERS_TREESTATUS,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.Verifiers.TreeStatus)
+    # @@protoc_insertion_point(class_scope:cv.config.Verifiers.TreeStatus)
     })
   ,
 
@@ -1078,52 +1078,52 @@ Verifiers = _reflection.GeneratedProtocolMessageType('Verifiers', (_message.Mess
     'Builder' : _reflection.GeneratedProtocolMessageType('Builder', (_message.Message,), {
       'DESCRIPTOR' : _VERIFIERS_TRYJOB_BUILDER,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-      # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Tryjob.Builder)
+      # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.Builder)
       })
     ,
 
     'EquivalentBuilder' : _reflection.GeneratedProtocolMessageType('EquivalentBuilder', (_message.Message,), {
       'DESCRIPTOR' : _VERIFIERS_TRYJOB_EQUIVALENTBUILDER,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-      # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Tryjob.EquivalentBuilder)
+      # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.EquivalentBuilder)
       })
     ,
 
     'IncludableBuilder' : _reflection.GeneratedProtocolMessageType('IncludableBuilder', (_message.Message,), {
       'DESCRIPTOR' : _VERIFIERS_TRYJOB_INCLUDABLEBUILDER,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-      # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Tryjob.IncludableBuilder)
+      # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.IncludableBuilder)
       })
     ,
 
     'RetryConfig' : _reflection.GeneratedProtocolMessageType('RetryConfig', (_message.Message,), {
       'DESCRIPTOR' : _VERIFIERS_TRYJOB_RETRYCONFIG,
       '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-      # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Tryjob.RetryConfig)
+      # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob.RetryConfig)
       })
     ,
     'DESCRIPTOR' : _VERIFIERS_TRYJOB,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Tryjob)
+    # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Tryjob)
     })
   ,
 
   'CQLinter' : _reflection.GeneratedProtocolMessageType('CQLinter', (_message.Message,), {
     'DESCRIPTOR' : _VERIFIERS_CQLINTER,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.Verifiers.CQLinter)
+    # @@protoc_insertion_point(class_scope:cv.config.Verifiers.CQLinter)
     })
   ,
 
   'Fake' : _reflection.GeneratedProtocolMessageType('Fake', (_message.Message,), {
     'DESCRIPTOR' : _VERIFIERS_FAKE,
     '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-    # @@protoc_insertion_point(class_scope:cq.config.Verifiers.Fake)
+    # @@protoc_insertion_point(class_scope:cv.config.Verifiers.Fake)
     })
   ,
   'DESCRIPTOR' : _VERIFIERS,
   '__module__' : 'go.chromium.org.luci.cv.api.config.v2.cq_pb2'
-  # @@protoc_insertion_point(class_scope:cq.config.Verifiers)
+  # @@protoc_insertion_point(class_scope:cv.config.Verifiers)
   })
 _sym_db.RegisterMessage(Verifiers)
 _sym_db.RegisterMessage(Verifiers.GerritCQAbility)
@@ -1138,6 +1138,7 @@ _sym_db.RegisterMessage(Verifiers.Fake)
 
 
 DESCRIPTOR._options = None
+_CONFIG.fields_by_name['draining_start_time']._options = None
 _CONFIG.fields_by_name['cq_status_host']._options = None
 _CONFIG.fields_by_name['project_scoped_account']._options = None
 _VERIFIERS_TRYJOB.fields_by_name['cancel_stale_tryjobs']._options = None
