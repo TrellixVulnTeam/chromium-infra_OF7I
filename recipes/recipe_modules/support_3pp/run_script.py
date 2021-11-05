@@ -16,17 +16,17 @@ def _extract_contextual_dockerbuild_env_args(api):
   # yapf: disable
   return [
     ('--env-prefix', k, str(v))
-    for k, vs in api.context.env_prefixes.items()
+    for k, vs in sorted(api.context.env_prefixes.items())
     for v in vs
     if k not in banlist
   ] + [
     ('--env-suffix', k, str(v))
-    for k, vs in api.context.env_suffixes.items()
+    for k, vs in sorted(api.context.env_suffixes.items())
     for v in vs
     if k not in banlist
   ] + [
     ('--env', k, str(v))
-    for k, v in api.context.env.items()
+    for k, v in sorted(api.context.env.items())
     if k not in banlist
   ]
   # yapf: enable
