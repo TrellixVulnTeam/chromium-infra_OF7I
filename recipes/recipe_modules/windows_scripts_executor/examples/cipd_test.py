@@ -33,11 +33,11 @@ def RunSteps(api, config):
   api.windows_scripts_executor.gen_canonical_configs(config)
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
-      '[CACHE]\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
+      '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\infra\\files\\cipd-1\\windows-amd64')
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
-      '[CACHE]\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
+      '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\infra\\files\\cipd-2\\windows-amd64')
   api.windows_scripts_executor.download_available_packages()
   api.windows_scripts_executor.execute_config(config)

@@ -195,7 +195,7 @@ def GIT_FETCH_FILE(api, commit, path, data):
 def ADD_GIT_FILE(api, image, customization, commit, path, success=True):
   """ mock add git file to unpacked image step """
   return ADD_FILE(api, image, customization,
-                  '[CACHE]\\GITPkgs\\' + commit + '\\' + path, success)
+                  '[CACHE]\\Pkgs\\GITPkgs\\' + commit + '\\' + path, success)
 
 
 def ADD_FILE(api, image, customization, path, success=True):
@@ -211,14 +211,15 @@ def ADD_CIPD_FILE(api, pkg, platform, image, customization, success=True):
   """ mock add cipd file to unpacked image step """
   return ADD_FILE(
       api, image, customization,
-      '[CACHE]\\' + 'CIPDPkgs\\resolved-instance_id-of-latest----------' +
+      '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\{}\\{}'.format(pkg, platform), success)
 
 
 def ADD_GCS_FILE(api, bucket, path, image, customization, success=True):
   """ mock add cipd file to unpacked image step """
   return ADD_FILE(api, image, customization,
-                  '[CACHE]\\GCSPkgs\\{}\\{}'.format(bucket, path), success)
+                  '[CACHE]\\Pkgs\\GCSPkgs\\{}\\{}'.format(bucket,
+                                                          path), success)
 
 
 def INSTALL_FILE(api, name, image, customization, success=True):

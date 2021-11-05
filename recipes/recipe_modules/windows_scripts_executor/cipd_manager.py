@@ -40,7 +40,7 @@ class CIPDManager:
         Args:
           src: sources.Src object representing cipd_src object.
     """
-    if src.WhichOneof('src') == 'cipd_src':
+    if src and src.WhichOneof('src') == 'cipd_src':
       self._pkg_record.append(src)
 
   def pin_packages(self):

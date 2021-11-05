@@ -36,7 +36,7 @@ def RunSteps(api, config):
   api.windows_scripts_executor.gen_canonical_configs(config)
   api.windows_scripts_executor.download_available_packages()
   api.windows_scripts_executor.execute_config(config)
-  api.path.mock_add_paths('[CACHE]\\GCSPkgs\\chrome-gce-images\\' +
+  api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
                           'WIB-WIM\\{}.wim'.format(key))
   api.windows_scripts_executor.upload_wib_artifacts()
 
@@ -84,7 +84,7 @@ def GenTests(api):
       t.ADD_GCS_FILE(api, 'WinTools', 'net\\ping.exe', image, customization) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
           '\\\\WIB-WIM\\\\{}.wim'.format(key),
           'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
@@ -122,7 +122,7 @@ def GenTests(api):
       t.GCS_DOWNLOAD_FILE(api, 'chrome-gce-images', 'WIB-WIM/ffaa037563.wim') +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
           '\\\\WIB-WIM\\\\{}.wim'.format(key),
           'gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
@@ -135,13 +135,13 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
-             api, '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
              '\\\\WIB-WIM\\\\{}.wim'.format(key),
              'gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
              api,
-             '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
              '\\\\WIB-WIM\\\\{}.wim'.format(key),
              'gs://chrome-gce-images/WIB-OUT/' + 'intermediate-winpe.wim',
              orig='gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +

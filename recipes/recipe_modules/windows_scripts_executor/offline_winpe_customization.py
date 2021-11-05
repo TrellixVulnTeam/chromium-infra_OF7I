@@ -40,11 +40,11 @@ class OfflineWinPECustomization(customization.Customization):
 
     # record all the sources
     wpec = self._customization.offline_winpe_customization
-    self.record_package(wpec.image_src)
+    self._source.record_download(wpec.image_src)
     if wpec:
       for off_action in wpec.offline_customization:
         for action in off_action.actions:
-          self.record_package(helper.get_src_from_action(action))
+          self._source.record_download(helper.get_src_from_action(action))
 
   def get_canonical_cfg(self):
     """ get_canonical_cfg returns canonical config after removing name and dest
@@ -89,8 +89,8 @@ class OfflineWinPECustomization(customization.Customization):
     wpec = self._customization.offline_winpe_customization
     if wpec and len(wpec.offline_customization) > 0:
       with self._step.nest('offline winpe customization ' + wpec.name):
-        src = self.get_local_src(wpec.image_src)
-        if str(self.get_local_src(wpec.image_src)) == '':
+        src = self._source.get_local_src(wpec.image_src)
+        if not src:
           src = self._workdir.join('media', 'sources', 'boot.wim')
         self.init_win_pe_image(self._arch, src, self._workdir)
         try:
@@ -157,15 +157,15 @@ class OfflineWinPECustomization(customization.Customization):
             name='Copy output to destination',
             source=src,
             # use the expected destination in the GCS cache
-            dest=self._gcs.get_local_src(sources.Src(gcs_src=default_src)))
+            dest=self._source.get_local_src(sources.Src(gcs_src=default_src)))
         # upload the output to default bucket for offline_winpe_customization
-        self._gcs.record_upload(default_src)
+        self._source.record_upload(default_src)
         # upload to any custom destinations that might be given
         cust = self._customization.offline_winpe_customization
         custom_destination = cust.image_dest
         if custom_destination.bucket and custom_destination.source:
-          self._gcs.record_upload(custom_destination,
-                                  self._gcs.get_gs_url(default_src))
+          self._source.record_upload(custom_destination,
+                                     self._source.get_url(default_src))
 
   def perform_winpe_action(self, action):
     """ perform_winpe_action Performs the given action
@@ -178,7 +178,7 @@ class OfflineWinPECustomization(customization.Customization):
       return self.add_file(action.add_file)
 
     if a == 'add_windows_package':
-      src = self.get_local_src(action.add_windows_package.src)
+      src = self._source.get_local_src(action.add_windows_package.src)
       return self.add_windows_package(action.add_windows_package, src)
 
     if a == 'edit_offline_registry':
@@ -212,7 +212,7 @@ class OfflineWinPECustomization(customization.Customization):
         Args:
           af: actions.AddFile proto object
     """
-    src = self.get_local_src(af.src)
+    src = self._source.get_local_src(af.src)
     if self._path.isdir(src):
       src.join('*')  # pragma: no cover
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,

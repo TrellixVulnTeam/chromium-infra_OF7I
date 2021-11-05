@@ -37,7 +37,7 @@ def RunSteps(api, config):
   api.windows_scripts_executor.download_available_packages()
   api.windows_scripts_executor.execute_config(config)
   # mock existence of customization output to trigger upload
-  api.path.mock_add_paths('[CACHE]\\GCSPkgs\\chrome-gce-images\\' +
+  api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
                           'WIB-WIM\\{}.wim'.format(key))
   api.windows_scripts_executor.upload_wib_artifacts()
 
@@ -214,13 +214,13 @@ def GenTests(api):
              cust_name) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
-             api, '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
              '\\\\WIB-WIM\\\\{}.wim'.format(key),
              'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
          # assert that the generated image was uploaded to custom dest
          t.CHECK_GCS_UPLOAD(
              api,
-             '\[CACHE\]\\\\GCSPkgs\\\\chrome-gce-images' +
+             '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
              '\\\\WIB-WIM\\\\{}.wim'.format(key),
              'gs://test-bucket/out/gce_winpe_rel.wim',
              orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +

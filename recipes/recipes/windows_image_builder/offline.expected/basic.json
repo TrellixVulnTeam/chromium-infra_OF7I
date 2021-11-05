@@ -116,8 +116,19 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "Create the necessary dirs"
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\Pkgs\\CIPDPkgs"
+    ],
+    "infra_step": true,
+    "name": "Ensure [CACHE]\\Pkgs\\CIPDPkgs"
   },
   {
     "cmd": [
@@ -129,13 +140,10 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CLEANUP]\\configs"
+      "[CACHE]\\Pkgs\\GITPkgs"
     ],
     "infra_step": true,
-    "name": "Create the necessary dirs.Ensure [CLEANUP]\\configs",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "Ensure [CACHE]\\Pkgs\\GITPkgs"
   },
   {
     "cmd": [
@@ -147,13 +155,10 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]\\CIPDPkgs"
+      "[CACHE]\\Pkgs\\GCSPkgs"
     ],
     "infra_step": true,
-    "name": "Create the necessary dirs.Ensure [CACHE]\\CIPDPkgs",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "Ensure [CACHE]\\Pkgs\\GCSPkgs"
   },
   {
     "cmd": [
@@ -165,49 +170,10 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]\\GITPkgs"
+      "[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM"
     ],
     "infra_step": true,
-    "name": "Create the necessary dirs.Ensure [CACHE]\\GITPkgs",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "ensure-directory",
-      "--mode",
-      "0777",
-      "[CACHE]\\GCSPkgs"
-    ],
-    "infra_step": true,
-    "name": "Create the necessary dirs.Ensure [CACHE]\\GCSPkgs",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "ensure-directory",
-      "--mode",
-      "0777",
-      "[CACHE]\\GCSPkgs\\chrome-gce-images\\WIB-WIM"
-    ],
-    "infra_step": true,
-    "name": "Create the necessary dirs.Ensure [CACHE]\\GCSPkgs\\chrome-gce-images\\WIB-WIM",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
+    "name": "Ensure [CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM"
   },
   {
     "cmd": [],

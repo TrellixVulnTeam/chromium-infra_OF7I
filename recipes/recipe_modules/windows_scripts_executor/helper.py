@@ -29,8 +29,8 @@ def get_build_offline_customization(offline_customization):
   """ get_build_offline_customization returns actions.OfflineAction object
       same as oc, but with all name strings reset
       Args:
-        offline_customization: OfflineAction proto object representing a sub
-        customization to be performed.
+        offline_customization: actions.OfflineAction proto object representing
+        a sub-customization to be performed.
       Example:
         Given a config
           OfflineAction{
@@ -45,6 +45,16 @@ def get_build_offline_customization(offline_customization):
   """
   acts = [get_build_actions(act) for act in offline_customization.actions]
   return actions.OfflineAction(actions=acts)
+
+
+def ensure_dirs(m_file, dirs):
+  """ ensure_dirs ensures that the given dirs are created on the bot
+      Args:
+        m_file: ref to recipe_engine/file module object
+        dirs: list of paths to dirs that need to be ensured
+  """
+  for d in dirs:
+    m_file.ensure_directory('Ensure {}'.format(d), d)
 
 
 def get_build_actions(action):

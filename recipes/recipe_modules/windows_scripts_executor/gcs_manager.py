@@ -38,7 +38,7 @@ class GCSManager:
         Args:
           src: sources.Src is a proto object that refers to a gcs_src ref
     """
-    if src.WhichOneof('src') == 'gcs_src':
+    if src and src.WhichOneof('src') == 'gcs_src':
       self._pkg_record.append(src)
 
   def pin_packages(self):

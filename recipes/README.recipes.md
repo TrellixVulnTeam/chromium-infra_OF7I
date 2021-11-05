@@ -941,27 +941,21 @@ Ensures that the WinPE add-on is available.
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#13)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#198)(self):**
+&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#159)(self):**
 
 download_available_packages downloads the src refs that are pinned 
 
-&mdash; **def [ensure\_dirs](/recipes/recipe_modules/windows_scripts_executor/api.py#84)(self, dirs):**
-
-ensure_dirs ensures that the given dirs are created on the bot
-Args:
-  dirs: list of path variables representing directories
-
-&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#205)(self, config):**
+&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#164)(self, config):**
 
 Executes the windows image builder user config.
 Args:
   config: wib.Image proto representing the image to be generated
 
-&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#100)(self, config):**
+&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#61)(self, config):**
 
 gen_canonical_configs strips all the names in the config and returns
 individual configs containing one customization per image.
@@ -1038,17 +1032,17 @@ Example:
   etc,. are set to empty before calculating the hash to maintain the
   uniqueness of the hash.
 
-&mdash; **def [init](/recipes/recipe_modules/windows_scripts_executor/api.py#29)(self, config):**
+&mdash; **def [init](/recipes/recipe_modules/windows_scripts_executor/api.py#24)(self, config):**
 
 init initializes all the dirs and sub modules required.
 Args:
   config: wib.Image proto object representing the image to be created
 
-&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#93)(self):**
+&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#56)(self):**
 
 pin_wib_config pins the given config to current refs.
 
-&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#214)(self):**
+&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#173)(self):**
 
 upload_wib_artifacts uploads all the available artifacts 
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)

@@ -9,7 +9,7 @@ class Customization(object):
   """
 
   def __init__(self, arch, scripts, configs, step, path, powershell, m_file,
-               cipd, git, gcs):
+               source):
     """ __init__ copies common module objects to class references. These are
         commonly used for all customizations
         Args:
@@ -19,18 +19,14 @@ class Customization(object):
           path: module object for recipe_engine/path
           powershell: module object for recipe_modules/powershell
           m_file: module object for recipe_engine/file
-          cipd: module object for cipd_manager
-          git: module object for git_manager
-          gcs: module object for gcs_manager
+          source: module object for Source from sources.py
     """
     self._arch = arch
     self._scripts = scripts
     self._step = step
     self._path = path
     self._powershell = powershell
-    self._cipd = cipd
-    self._git = git
-    self._gcs = gcs
+    self._source = source
     self._file = m_file
     self._key = ''
     self._configs = configs
@@ -47,31 +43,6 @@ class Customization(object):
           key: string representing the unique key for this customization
     """
     self._key = key
-
-  def record_package(self, src):
-    """ record_package records the given source for download
-        Args:
-          src: sources.Src proto representing a file/folder to be used
-    """
-    if src:
-      self._cipd.record_package(src)
-      self._gcs.record_package(src)
-      self._git.record_package(src)
-
-  def get_local_src(self, src):
-    """ get_local_src returns path on the bot to the referenced src
-        Args:
-          src: sources.Src proto representing a file/folder to be used
-    """
-    if src.WhichOneof('src') == 'cipd_src':
-      return self._cipd.get_local_src(src)
-    if src.WhichOneof('src') == 'git_src':
-      return self._git.get_local_src(src)
-    if src.WhichOneof('src') == 'local_src':  # pragma: no cover
-      return src.local_src
-    if src.WhichOneof('src') == 'gcs_src':
-      return self._gcs.get_local_src(src)
-    return ''
 
   def execute_script(self, name, command, logs=None, *args):
     """ Executes the windows powershell script
