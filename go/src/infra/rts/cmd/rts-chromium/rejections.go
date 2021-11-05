@@ -30,10 +30,9 @@ func cmdFetchRejections(authOpt *auth.Options) *subcommands.Command {
 				In order to conlude that a test variant is flaky and exclude it from analysis,
 				it must have mixed results in <min-cl-flakes> unique CLs.
 			`))
-			r.Flags.IntVar(&r.minVariantsSpam, "min-variants-spam", 20000, text.Doc(`
-				The minimum number of failed test variants in a patchset to consider it
-				spam. This config helps prevent row size overflows in the rejections
-				query.
+			r.Flags.IntVar(&r.failedVariantsLimit, "failed-variants-limit", 100000, text.Doc(`
+				The number of failed test variants in a patchset we truncate to.
+				This config helps prevent row size overflows in the rejections query.
 			`))
 			return r
 		},
@@ -43,8 +42,8 @@ func cmdFetchRejections(authOpt *auth.Options) *subcommands.Command {
 type fetchRejectionsRun struct {
 	baseCommandRun
 	baseHistoryRun
-	minCLFlakes     int
-	minVariantsSpam int
+	minCLFlakes         int
+	failedVariantsLimit int
 }
 
 func (r *fetchRejectionsRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -65,8 +64,8 @@ func (r *fetchRejectionsRun) Run(a subcommands.Application, args []string, env s
 			Value: r.minCLFlakes,
 		},
 		bigquery.QueryParameter{
-			Name:  "minVariantsSpam",
-			Value: r.minVariantsSpam,
+			Name:  "failedVariantsLimit",
+			Value: r.failedVariantsLimit,
 		},
 	))
 }
@@ -127,9 +126,8 @@ const rejectedPatchSetsSQL = commonSubqueries + `
 SELECT
 	patchsetArray(change, patchset, ANY_VALUE(files)) AS patchsets,
 	RFC3339(MIN(ps_approx_timestamp)) as timestamp,
-	ARRAY_AGG(testVariant) as failedTestVariants
+	ARRAY_AGG(testVariant LIMIT @failedVariantsLimit) as failedTestVariants
 FROM failed_test_variants tv, tv.patchsets_with_failures
 JOIN affected_files USING (change, patchset)
 GROUP BY change, patchset
-HAVING COUNT(testVariant) < @minVariantsSpam
 `
