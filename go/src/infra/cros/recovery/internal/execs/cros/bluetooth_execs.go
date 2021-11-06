@@ -46,25 +46,28 @@ func auditBluetoothExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 			btInfoArray := strings.Fields(lines[1])
 			if reflect.DeepEqual(btInfoArray, []string{"variant", "boolean", "true"}) {
 				args.DUT.Bluetooth.State = tlw.HardwareStateNormal
+				log.Info(ctx, "set bluetooth state to be: %s", tlw.HardwareStateNormal)
 				return nil
 			}
 		}
 	}
 	if execs.SSHErrorInternal.In(err) || execs.SSHErrorCLINotFound.In(err) {
 		args.DUT.Bluetooth.State = tlw.HardwareStateUnspecified
-		return errors.Annotate(err, "audit wifi: wifi hardware state unspecified").Err()
+		log.Info(ctx, "set bluetooth state to be: %s", tlw.HardwareStateUnspecified)
+		return errors.Annotate(err, "audit bluetooth").Err()
 	}
 	if args.DUT.Bluetooth.Expected {
 		// If bluetooth is not detected, but was expected by setup info
 		// then we set needs_replacement as it is probably a hardware issue.
 		args.DUT.Bluetooth.State = tlw.HardwareStateNeedReplacement
-		log.Info(ctx, "Detected problems with bluetooth on the DUT")
-		return errors.Annotate(err, "audit bluetooth: bluetooth hardware needs replacement").Err()
+		log.Info(ctx, "set bluetooth state to be: %s", tlw.HardwareStateNeedReplacement)
+		return errors.Annotate(err, "audit bluetooth").Err()
 	}
 	// the bluetooth state cannot be determined due to cmd failed
 	// therefore, set it to HardwareStateNotDetected.
 	args.DUT.Bluetooth.State = tlw.HardwareStateNotDetected
-	return errors.Annotate(err, "audit bluetooth: bluetooth hardware state not detected").Err()
+	log.Info(ctx, "set bluetooth state to be: %s", tlw.HardwareStateNotDetected)
+	return errors.Annotate(err, "audit bluetooth").Err()
 }
 
 func init() {
