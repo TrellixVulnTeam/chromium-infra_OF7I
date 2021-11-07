@@ -20,6 +20,16 @@ feature_coverage_worker_application = webapp2.WSGIApplication(
 if appengine_util.IsInProductionApp():
   gae_ts_mon.initialize(feature_coverage_worker_application)
 
+# Referenced coverage worker module.
+referenced_coverage_worker_handler_mappings = [
+    ('.*/coverage/task/referenced-coverage.*',
+     code_coverage.CreateReferencedCoverageMetrics),
+]
+referenced_coverage_worker_application = webapp2.WSGIApplication(
+    referenced_coverage_worker_handler_mappings, debug=False)
+if appengine_util.IsInProductionApp():
+  gae_ts_mon.initialize(referenced_coverage_worker_application)
+
 
 # "code-coverage-backend" module.
 code_coverage_backend_handler_mappings = [
@@ -35,8 +45,6 @@ code_coverage_backend_handler_mappings = [
      code_coverage.ExportAllFeatureCoverageMetrics),
     ('.*/coverage/cron/referenced-coverage',
      code_coverage.CreateReferencedCoverageMetricsCron),
-    ('.*/coverage/task/referenced-coverage',
-     code_coverage.CreateReferencedCoverageMetrics),
     ('.*/coverage/task/postsubmit-report/update',
      code_coverage.UpdatePostsubmitReport),
 ]
