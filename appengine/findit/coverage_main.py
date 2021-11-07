@@ -50,12 +50,12 @@ code_coverage_frontend_handler_mappings = [
     # TODO(crbug.com/924573): Migrate to '.*/coverage/api/coverage-data'.
     ('/coverage/api/coverage-data', code_coverage.ServeCodeCoverageData),
     # These mappings are separated so that ts_mon data (e.g. latency) is
-    # groupable by view. (instead of a single entry like .*/coverage.*)
-    ('.*/coverage', code_coverage.ServeCodeCoverageData),
-    ('.*/coverage/referenced', code_coverage.ServeCodeCoverageData),
-    ('.*/coverage/component', code_coverage.ServeCodeCoverageData),
-    ('.*/coverage/dir', code_coverage.ServeCodeCoverageData),
-    ('.*/coverage/file', code_coverage.ServeCodeCoverageData),
+    # groupable by view. (instead of a single entry like /coverage/p/.*)
+    ('/coverage/p/.*/referenced', code_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/component', code_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/dir', code_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/file', code_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*', code_coverage.ServeCodeCoverageData)
 ]
 code_coverage_frontend_web_application = webapp2.WSGIApplication(
     code_coverage_frontend_handler_mappings, debug=False)

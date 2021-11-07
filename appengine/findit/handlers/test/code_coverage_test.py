@@ -706,7 +706,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 class ServeCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/api/coverage-data', code_coverage.ServeCodeCoverageData),
-      ('.*/coverage', code_coverage.ServeCodeCoverageData),
+      ('/coverage/p/.*', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/referenced', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/component', code_coverage.ServeCodeCoverageData),
       ('.*/coverage/dir', code_coverage.ServeCodeCoverageData),
@@ -1155,7 +1155,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     report = _CreateSamplePostsubmitReport()
     report.put()
 
-    request_url = ('/p/chromium/coverage?host=%s&project=%s&ref=%s&platform=%s'
+    request_url = ('/coverage/p/chromium?host=%s&project=%s&ref=%s&platform=%s'
                    '&list_reports=true') % (host, project, ref, platform)
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
@@ -1165,7 +1165,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     report = _CreateSamplePostsubmitReport()
     report.put()
 
-    response = self.test_app.get('/p/chromium/coverage?&list_reports=true')
+    response = self.test_app.get('/coverage/p/chromium?&list_reports=true')
     self.assertEqual(200, response.status_int)
 
   def testServeFullRepoDirectoryView(self):
@@ -1185,7 +1185,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     dir_coverage_data.put()
 
     request_url = (
-        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '/coverage/p/chromium/dir?host=%s&project=%s&ref=%s&revision=%s'
         '&path=%s&platform=%s') % (host, project, ref, revision, path, platform)
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
@@ -1207,7 +1207,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     dir_coverage_data.put()
 
     request_url = (
-        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '/coverage/p/chromium/dir?host=%s&project=%s&ref=%s&revision=%s'
         '&path=%s&platform=%s&modifier_id=%d') % (host, project, ref, revision,
                                                   path, platform, 123)
     response = self.test_app.get(request_url)
@@ -1229,7 +1229,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     component_coverage_data = _CreateSampleComponentCoverageData()
     component_coverage_data.put()
 
-    request_url = ('/p/chromium/coverage/component?host=%s&project=%s&ref=%s'
+    request_url = ('/coverage/p/chromium/component?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s') % (
                        host, project, ref, revision, path, platform)
     response = self.test_app.get(request_url)
@@ -1253,7 +1253,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     dir_coverage_data.put()
 
     request_url = (
-        '/p/chromium/coverage/dir?host=%s&project=%s&ref=%s&revision=%s'
+        '/coverage/p/chromium/dir?host=%s&project=%s&ref=%s&revision=%s'
         '&path=%s&platform=%s&test_suite_type=unit') % (
             host, project, ref, revision, path, platform)
     response = self.test_app.get(request_url)
@@ -1277,7 +1277,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     file_coverage_data = _CreateSampleFileCoverageData()
     file_coverage_data.put()
 
-    request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
+    request_url = ('/coverage/p/chromium/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s') % (
                        host, project, ref, revision, path, platform)
     response = self.test_app.get(request_url)
@@ -1304,7 +1304,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)
     file_coverage_data.put()
 
-    request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
+    request_url = ('/coverage/p/chromium/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s&modifier_id=%d') % (
                        host, project, ref, revision, path, platform, 123)
     response = self.test_app.get(request_url)
@@ -1316,10 +1316,10 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
   def testServeFullRepoReferencedReport_RedirectsWithModifier(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     CoverageReportModifier(reference_commit='past_commit', id=123).put()
-    request_url = '/p/chromium/coverage/referenced'
+    request_url = '/coverage/p/chromium/referenced'
     response = self.test_app.get(request_url)
     self.assertEqual(302, response.status_int)
-    self.assertIn('/p/chromium/coverage?modifier_id=123',
+    self.assertIn('/coverage/p/chromium?modifier_id=123',
                   response.headers.get('Location', ''))
 
   @mock.patch.object(code_coverage, '_GetFileContentFromGs')
@@ -1332,7 +1332,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     file_coverage_data = _CreateSampleFileCoverageData()
     file_coverage_data.put()
 
-    request_url = ('/p/chromium/coverage/file?host=%s&project=%s&ref=%s'
+    request_url = ('/coverage/p/chromium/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s') % (
                        'chromium.googlesource.com', 'chromium/src',
                        'refs/heads/main', 'aaaaa', '//dir/test.cc', 'linux')

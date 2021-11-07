@@ -60,7 +60,7 @@ _BUILD_ID_REGEX = re.compile(r'.*/build/(\d+)$')
 _SOURCE_FILE_GS_BUCKET = 'source-files-for-coverage'
 
 # The regex to extract the luci project name from the url path.
-_LUCI_PROJECT_REGEX = re.compile(r'^/p/(.+)/coverage.*')
+_LUCI_PROJECT_REGEX = re.compile(r'^/coverage/p/([^/]+)')
 
 
 def _GetAllowedGitilesConfigs():
@@ -1398,6 +1398,7 @@ class ServeCodeCoverageData(BaseHandler):
     if not luci_project:
       return BaseHandler.CreateError('Invalid url path %s' % self.request.path,
                                      400)
+    logging.info('luci_project=%s', luci_project)
     default_config = _GetPostsubmitDefaultReportConfig(luci_project)
     if not default_config:
       return BaseHandler.CreateError(
@@ -1638,6 +1639,7 @@ class ServeCodeCoverageData(BaseHandler):
       # Only line coverage metric is supported for cases other than
       # default post submit report
       metrics = [x for x in metrics if x['name'] == 'line']
+
     return {
         'data': {
             'luci_project':

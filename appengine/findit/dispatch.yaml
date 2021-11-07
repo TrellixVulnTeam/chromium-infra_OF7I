@@ -2,15 +2,6 @@ dispatch:
   - url: "*/robots.txt"
     module: default
 
-  - url: "*/coverage/task/feature-coverage*"
-    module: code-coverage-feature-coverage-worker
-
-  - url: "*/coverage/cron/*"
-    module: code-coverage-backend
-
-  - url: "*/coverage/task/*"
-    module: code-coverage-backend
-
   - url: "*/findit/internal/*"
     module: findit-backend
 
@@ -38,32 +29,19 @@ dispatch:
   - url: "*/waterfall/*"
     module: frontend
 
-  # With the current chops url schema /p/PROJECT/feature, we can't always add a
-  # routing rule for each new project, because the limit of routing rule is 20.
-  # https://cloud.google.com/appengine/docs/standard/python/reference/dispatch-yaml#limits
-  #
-  # We have two options in the long run:
-  # 1. Have one single frontend that serves all user requests, and different
-  #    backend for different analysis pipelines. If the frontend changes too
-  #    often due to backend upgrade, this might couple the deployment of
-  #    different analysis pipelines.
-  # 2. Have different frontend/backend combination, and use a different url
-  #    schema /feature/project. But this is inconsistent with the existing url
-  #    schema for chops, while we can decouple deployments of the different
-  #    analysis pipelines.
-  #
-  # If a change is needed, we can add a url redirection handler in the default
-  # module, and register a (old_url_regex, new_url_pattern) there.
-  - url: "*/p/chromium/coverage*"
-    module: code-coverage-frontend
+  - url: "*/coverage/task/feature-coverage*"
+    module: code-coverage-feature-coverage-worker
 
-  - url: "*/p/fuchsia/coverage*"
-    module: code-coverage-frontend
+  - url: "*/coverage/cron/*"
+    module: code-coverage-backend
 
-  - url: "*/p/openscreen/coverage*"
-    module: code-coverage-frontend
+  - url: "*/coverage/task/*"
+    module: code-coverage-backend
 
-  - url: "*/p/cros/coverage*"
+  # NOTE: coverage frontend url scheme is opposite of flake frontend
+  # i.e. /coverage/p/project vs /project/p/coverage
+  # The former one is better because it saves us on number of routing rules
+  - url: "*/coverage/p/*"
     module: code-coverage-frontend
 
   # TODO(crbug.com/924573): Remove once the migration is done.

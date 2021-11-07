@@ -24,7 +24,7 @@ _REDIRECTION_MAPPING = {
         'hostname': 'analysis.chromium.org',
         'url-mappings': {
             '/coverage':
-                '/p/chromium/coverage',
+                '/coverage/p/chromium',
             '/flake/occurrences':
                 '/p/chromium/flake-portal/flakes/occurrences',
             '/flake/report':
@@ -48,7 +48,7 @@ _REDIRECTION_MAPPING = {
     'analysis.chromium.org': {
         'url-mappings': {
             '/p/chromium/flake-portal/analysis/analyze/flake-culprit':
-            '/p/chromium/flake-portal/analysis/culprit',
+                '/p/chromium/flake-portal/analysis/culprit',
         }
     }
 }
