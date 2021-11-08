@@ -1442,65 +1442,6 @@ class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
 
-
-class ExportAllFeatureCoverageMetricsCronTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/cron/all-feature-coverage',
-       code_coverage_monolith.ExportAllFeatureCoverageMetricsCron),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testTaskAddedToQueue(self, mocked_is_request_from_appself):
-    response = self.test_app.get('/coverage/cron/all-feature-coverage')
-    self.assertEqual(200, response.status_int)
-    response = self.test_app.get('/coverage/cron/all-feature-coverage')
-    self.assertEqual(200, response.status_int)
-
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='all-feature-coverage-queue')
-    self.assertEqual(2, len(tasks))
-    self.assertTrue(mocked_is_request_from_appself.called)
-
-
-class ExportAllFeatureCoverageMetricsTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/all-feature-coverage',
-       code_coverage_monolith.ExportAllFeatureCoverageMetrics),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testFeatureCoverageFilesExported(self, mocked_is_request_from_appself):
-    CoverageReportModifier(gerrit_hashtag='f1', id=123).put()
-    CoverageReportModifier(gerrit_hashtag='f2', id=456).put()
-
-    response = self.test_app.get('/coverage/task/all-feature-coverage')
-    self.assertEqual(200, response.status_int)
-
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='feature-coverage-queue')
-    self.assertEqual(2, len(tasks))
-    self.assertTrue(mocked_is_request_from_appself.called)
-
-
-class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/feature-coverage.*',
-       code_coverage_monolith.ExportFeatureCoverageMetrics),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  @mock.patch.object(feature_coverage, 'ExportFeatureCoverage')
-  def testFeatureCoverageLogicInvoked(self, mock_detect, _):
-    CoverageReportModifier(gerrit_hashtag='f1', id=123).put()
-    response = self.test_app.get(
-        '/coverage/task/feature-coverage?modifier_id=123', status=200)
-    self.assertEqual(1, mock_detect.call_count)
-    self.assertEqual(200, response.status_int)
-
-
 class CreateReferencedCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/cron/referenced-coverage',

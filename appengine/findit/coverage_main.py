@@ -9,12 +9,13 @@ import gae_ts_mon
 from gae_libs import appengine_util
 
 from handlers import code_coverage_monolith
+from handlers.code_coverage import export_feature_coverage
 from handlers.code_coverage import update_postsubmit_report
 
 # Feaure coverage worker module.
 feature_coverage_worker_handler_mappings = [
     ('.*/coverage/task/feature-coverage.*',
-     code_coverage_monolith.ExportFeatureCoverageMetrics),
+     export_feature_coverage.ExportFeatureCoverageMetrics),
 ]
 feature_coverage_worker_application = webapp2.WSGIApplication(
     feature_coverage_worker_handler_mappings, debug=False)
@@ -43,9 +44,9 @@ code_coverage_backend_handler_mappings = [
     ('.*/coverage/task/files-absolute-coverage',
      code_coverage_monolith.ExportFilesAbsoluteCoverageMetrics),
     ('.*/coverage/cron/all-feature-coverage',
-     code_coverage_monolith.ExportAllFeatureCoverageMetricsCron),
+     export_feature_coverage.ExportAllFeatureCoverageMetricsCron),
     ('.*/coverage/task/all-feature-coverage',
-     code_coverage_monolith.ExportAllFeatureCoverageMetrics),
+     export_feature_coverage.ExportAllFeatureCoverageMetrics),
     ('.*/coverage/cron/referenced-coverage',
      code_coverage_monolith.CreateReferencedCoverageMetricsCron),
     ('.*/coverage/task/postsubmit-report/update',
