@@ -57,7 +57,7 @@ func Run(ctx context.Context, pool *sshpool.Pool, addr string, cmd string) (resu
 		result.Stderr = fmt.Sprintf("run SSH %q: fail to get client from pool; %s", addr, err)
 		return
 	}
-	defer pool.Put(addr, sc)
+	defer func() { pool.Put(addr, sc) }()
 	result = internalRunSSH(cmd, sc)
 	log.Debug(ctx, "run SSH %q: Cmd: %q; ExitCode: %d; Stdout: %q;  Stderr: %q", addr, result.Command, result.ExitCode, result.Stdout, result.Stderr)
 	return
@@ -73,7 +73,7 @@ func internalRunSSH(cmd string, client *ssh.Client) (result *tlw.RunResult) {
 		result.Stderr = fmt.Sprintf("internal run SSH: %s", err)
 		return
 	}
-	defer session.Close()
+	defer func() { session.Close() }()
 	var stdOut, stdErr bytes.Buffer
 	session.Stdout = &stdOut
 	session.Stderr = &stdErr

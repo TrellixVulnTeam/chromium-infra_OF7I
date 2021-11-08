@@ -42,7 +42,7 @@ func newProxy(pool *sshpool.Pool, host string, remotePort int32, errFuncs ...fun
 		if err != nil {
 			return nil, errors.Annotate(err, "get proxy %q: fail to get client from pool", host).Err()
 		}
-		defer pool.Put(host, conn)
+		defer func() { pool.Put(host, conn) }()
 		// Establish connection with remote server.
 		return conn.Dial("tcp", remoteAddr)
 	}
@@ -100,13 +100,13 @@ func (p *proxy) handleConn(src net.Conn) error {
 	if p.closed {
 		return errors.Reason("handle connection: proxy closed").Err()
 	}
-	defer src.Close()
+	defer func() { src.Close() }()
 
 	dst, err := p.connFunc()
 	if err != nil {
 		return err
 	}
-	defer dst.Close()
+	defer func() { dst.Close() }()
 
 	ch := make(chan error)
 	go func() {

@@ -495,7 +495,7 @@ func (r *XMLRpc) Run(ctx context.Context, cl Call, out ...interface{}) error {
 	if err != nil {
 		return errors.Annotate(err, "timeout = %v", timeout).Err()
 	}
-	defer resp.Body.Close()
+	defer func() { resp.Body.Close() }()
 
 	// Read body and unmarshal XML.
 	bodyBytes, err := ioutil.ReadAll(resp.Body)

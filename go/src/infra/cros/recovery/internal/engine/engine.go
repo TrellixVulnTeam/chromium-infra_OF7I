@@ -40,7 +40,7 @@ func Run(ctx context.Context, planName string, plan *planpb.Plan, args *execs.Ru
 		args:     args,
 	}
 	r.initCache()
-	defer r.close()
+	defer func() { r.close() }()
 	log.Debug(ctx, "Received plan %s for %s \n%s", r.planName, r.args.ResourceName, r.describe())
 	return r.runPlan(ctx)
 }
@@ -62,7 +62,7 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
 		)
-		defer closer(ctx, err)
+		defer func() { closer(ctx, err) }()
 	}
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
@@ -109,7 +109,9 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 			//                      assigned to an action by recoverylib.
 			fmt.Sprintf("action:%s", actionName),
 		)
-		defer closer(ctx, err)
+		defer func() {
+			closer(ctx, err)
+		}()
 	}
 	if r.args != nil {
 		if r.args.ShowSteps {
@@ -119,7 +121,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
-			defer r.args.Logger.DedentLogging()
+			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
 	log.Info(ctx, "Action %q: started.", actionName)
@@ -202,7 +204,7 @@ func actionExecTimeout(a *planpb.Action) time.Duration {
 func (r *recoveryEngine) runActionExecWithTimeout(ctx context.Context, a *planpb.Action) error {
 	timeout := actionExecTimeout(a)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	defer func() { cancel() }()
 	cw := make(chan error, 1)
 	go func() {
 		err := execs.Run(ctx, a.ExecName, r.args, a.ExecExtraArgs)
@@ -232,7 +234,7 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
-			defer r.args.Logger.DedentLogging()
+			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
 	log.Debug(ctx, "Action %q: running conditions...", actionName)
@@ -261,7 +263,7 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
-			defer r.args.Logger.DedentLogging()
+			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
 	err = r.runActions(ctx, a.GetDependencies(), enableRecovery)
@@ -286,7 +288,7 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
-			defer r.args.Logger.DedentLogging()
+			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
 	for _, recoveryName := range a.GetRecoveryActions() {

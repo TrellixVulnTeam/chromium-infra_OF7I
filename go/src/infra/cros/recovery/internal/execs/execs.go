@@ -182,7 +182,7 @@ func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) 
 //  if closer != nil {
 //    defer func() {
 //      closer(ctx, err)
-//    }
+//    }()
 //  }
 //
 func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action) (*metrics.Action, func(context.Context, error)) {

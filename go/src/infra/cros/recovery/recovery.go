@@ -125,7 +125,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
-		defer args.Logger.DedentLogging()
+		defer func() { args.Logger.DedentLogging() }()
 	}
 	resources, err = args.Access.ListResourcesForUnit(ctx, args.UnitName)
 	return resources, errors.Annotate(err, "retrieve resources").Err()
@@ -141,7 +141,7 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
-		defer args.Logger.DedentLogging()
+		defer func() { args.Logger.DedentLogging() }()
 	}
 	cr := args.ConfigReader
 	if cr == nil {
@@ -165,7 +165,7 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
-		defer args.Logger.DedentLogging()
+		defer func() { args.Logger.DedentLogging() }()
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -191,7 +191,7 @@ func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (err erro
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
-		defer args.Logger.DedentLogging()
+		defer func() { args.Logger.DedentLogging() }()
 	}
 	logDUTInfo(ctx, dut.Name, dut, "updated DUT info")
 	if args.EnableUpdateInventory {
@@ -271,7 +271,7 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 	}
 	if execArgs.Logger != nil {
 		execArgs.Logger.IndentLogging()
-		defer execArgs.Logger.DedentLogging()
+		defer func() { execArgs.Logger.DedentLogging() }()
 	}
 	execArgs.ResourceName = resource
 	if err = engine.Run(ctx, planName, plan, execArgs); err != nil {

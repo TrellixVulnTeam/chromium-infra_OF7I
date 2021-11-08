@@ -30,7 +30,7 @@ func sampleMetricsAction(ctx context.Context, args *RunArgs, actionArgs []string
 		action.StartTime = time.Now()
 		action, _ = args.Metrics.Create(ctx, action)
 		// TODO(gregorynisbet): Uncomment when update lands.
-		// defer args.Metrics.Update(ctx, action)
+		// defer func() { args.Metrics.Update(ctx, action) }()
 	}
 	// Test sleeping for one nanosecond. This will cause time to pass, which will be
 	// reflected in the action and therefore in Karte.

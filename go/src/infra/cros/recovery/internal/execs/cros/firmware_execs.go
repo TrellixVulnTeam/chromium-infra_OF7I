@@ -38,7 +38,7 @@ func isFirmwareInGoodState(ctx context.Context, args *execs.RunArgs, actionArgs 
 	if err != nil {
 		return errors.Annotate(err, "firmware in good state").Err()
 	}
-	defer r(ctx, removeFirmwareFileCmd)
+	defer func() { r(ctx, removeFirmwareFileCmd) }()
 	for _, val := range []string{"A", "B"} {
 		_, err := r(ctx, fmt.Sprintf(verifyFirmwareCmd, val, val))
 		if err != nil {

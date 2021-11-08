@@ -113,12 +113,12 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	if err != nil {
 		return errors.Annotate(err, "copy to helper: failed to get client %q from pool", addr).Err()
 	}
-	defer pool.Put(addr, client)
+	defer func() { pool.Put(addr, client) }()
 	session, err := client.NewSession()
 	if err != nil {
 		return errors.Annotate(err, "copy to helper: failed to create SSH session").Err()
 	}
-	defer session.Close()
+	defer func() { session.Close() }()
 
 	// Read the input path on the local machine and create a
 	// compressed tar archive. Then write it to stdout. Here, the '-C'
@@ -133,7 +133,7 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	if err := createTarCmd.Start(); err != nil {
 		return errors.Annotate(err, "copy to helper: could not execute local command %q", createTarCmd).Err()
 	}
-	defer createTarCmd.Wait()
+	defer func() { createTarCmd.Wait() }()
 	remotePipe, err2 := session.StdinPipe()
 	if err2 != nil {
 		return errors.Annotate(err, "copy to helper: error with obtaining stdin pipe for the SSH Session").Err()
@@ -147,8 +147,8 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	// extract it to the file system on the remote machine.
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		defer remotePipe.Close()
+		defer func() { wg.Done() }()
+		defer func() { remotePipe.Close() }()
 		if _, err := io.Copy(remotePipe, createTarPipe); err != nil {
 			uploadErrors <- errors.Annotate(err, "copy to helper: error with copying contents from local stdout to remote stdin").Err()
 		}
@@ -161,7 +161,7 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	remoteTarReadCmd := fmt.Sprintf("%s -x --gzip -C %s", tarCmd, req.PathDestination)
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() { wg.Done() }()
 		if err := session.Start(remoteTarReadCmd); err != nil {
 			uploadErrors <- errors.Annotate(err, "copy to helper: remote device could not read the uploaded contents").Err()
 		} else if err := session.Wait(); err != nil {
@@ -211,12 +211,12 @@ func copyFromHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyReques
 	if err != nil {
 		return errors.Annotate(err, "copy from helper: failed to get client for %q from pool", addr).Err()
 	}
-	defer pool.Put(addr, client)
+	defer func() { pool.Put(addr, client) }()
 	session, err := client.NewSession()
 	if err != nil {
 		return errors.Annotate(err, "copy from helper: failed to create SSH session").Err()
 	}
-	defer session.Close()
+	defer func() { session.Close() }()
 
 	remoteSrc := req.PathSource
 	remoteFileName := filepath.Base(remoteSrc)
@@ -241,7 +241,7 @@ func copyFromHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyReques
 	if err != nil {
 		return errors.Annotate(err, "copy from helper: error with creating temporary dir %q", tmpDir).Err()
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { os.RemoveAll(tmpDir) }()
 
 	// Read from stdin and extract the contents to tmpDir. Here,
 	// the '-C' flag changes the working directory to tmpDir and

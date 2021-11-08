@@ -294,7 +294,7 @@ func (c *tlwClient) GetCacheUrl(ctx context.Context, resourceName, filePath stri
 	if err != nil {
 		return "", errors.Annotate(err, "connect to background TLW").Err()
 	}
-	defer conn.Close()
+	defer func() { conn.Close() }()
 	return CacheForDut(ctx, conn, filePath, resourceName)
 }
 
@@ -443,7 +443,7 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 	if err != nil {
 		return errors.Annotate(err, "provision: connect to TLS").Err()
 	}
-	defer conn.Close()
+	defer func() { conn.Close() }()
 	err = TLSProvision(ctx, conn, req)
 	return errors.Annotate(err, "provision").Err()
 }
