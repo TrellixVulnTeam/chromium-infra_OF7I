@@ -84,6 +84,14 @@ class BuildException(Exception):
   """Raised on errors during package build step."""
 
 
+class SearchException(Exception):
+  """Raised on errors during package search step."""
+
+
+class TagException(Exception):
+  """Raised on errors during package tag step."""
+
+
 class UploadException(Exception):
   """Raised on errors during package upload step."""
 
@@ -223,6 +231,15 @@ class PackageDef(collections.namedtuple(
       json.dump(pkg_def, f)
     return out_path, gen_files
 
+  def on_change_info(self, pkg_vars):
+    """Returns tags and path to check package changed."""
+    on_change_tags = [
+        get_on_change_tag(self.pkg_root, d, pkg_vars)
+        for d in self.pkg_def.get('data')
+        if d.get('upload_on_change')
+    ]
+    pkg_path = render_path(self.pkg_def.get('package'), pkg_vars)
+    return on_change_tags, pkg_path
 
 # Carries modifications for go-related env vars and cwd.
 #
@@ -292,11 +309,11 @@ def generate_bat_shim(pkg_root, target_rel):
   bat_path = os.path.join(base_dir, bat_name)
   with open(bat_path, 'w') as fd:
     fd.write('\n'.join([  # python turns \n into CRLF
-    '@set CIPD_EXE_SHIM="%%~dp0%s"' % (target_name,),
-    '@shift',
-    '@%CIPD_EXE_SHIM% %*',
-    ''
-  ]))
+        '@set CIPD_EXE_SHIM="%%~dp0%s"' % (target_name,),
+        '@shift',
+        '@%CIPD_EXE_SHIM% %*',
+        '',
+    ]))
   return bat_path
 
 
@@ -854,6 +871,16 @@ def is_targeting_windows(pkg_vars):
   return pkg_vars['platform'].startswith('windows-')
 
 
+def get_on_change_tag(root, pkg_data, pkg_vars):
+  """Get the tag for detecting package on change"""
+  h = hashlib.sha256()
+  data_file = render_path(pkg_data['file'], pkg_vars)
+  with open(os.path.join(root, data_file), 'rb') as f:
+    for chunk in iter(lambda: f.read(h.block_size * 256), b""):
+      h.update(chunk)
+  return ':'.join(['on_change', data_file, h.name, h.hexdigest()])
+
+
 def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
   """Invokes CIPD client to build a package.
 
@@ -864,7 +891,7 @@ def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
     package_vars: dict with variables to pass as -pkg-var to cipd.
 
   Returns:
-    {'package': <name>, 'instance_id': <sha1>}
+    {'package': <name>, 'instance_id': <hash>}
 
   Raises:
     BuildException on error.
@@ -893,7 +920,7 @@ def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
       print >> sys.stderr, 'FAILED! ' * 10
       raise BuildException('Failed to build the CIPD package, see logs')
 
-    # Expected result is {'package': 'name', 'instance_id': 'sha1'}
+    # Expected result is {'package': 'name', 'instance_id': 'hash'}
     info = json_output['result']
     print '%s %s' % (info['package'], info['instance_id'])
     return info
@@ -915,7 +942,7 @@ def upload_pkg(cipd_exe, pkg_file, service_url, tags, update_latest_ref,
     service_account: path to *.json file with service account to use.
 
   Returns:
-    {'package': <name>, 'instance_id': <sha1>}
+    {'package': <name>, 'instance_id': <hash>}
 
   Raises:
     UploadException on error.
@@ -941,6 +968,74 @@ def upload_pkg(cipd_exe, pkg_file, service_url, tags, update_latest_ref,
       service_url, info['package'], info['instance_id'])
   print '%s %s' % (info['package'], info['instance_id'])
   return info
+
+
+def search_pkg(cipd_exe, pkg_name, service_url, tags, service_account):
+  """Search existing cipd packages with given tags.
+
+  Args:
+    cipd_exe: path to cipd client binary to use.
+    pkg_name: name of the cipd package.
+    service_url: URL of a package repository service.
+    tags: tags to search in the package repository.
+    service_account: path to *.json file with service account to use.
+
+  Returns:
+    {'package': <name>, 'instance_id': <hash>}
+
+  Raises:
+    SearchException on error.
+  """
+  print_title('Searching: %s by on_change tags %s' % (pkg_name, tags))
+
+  args = ['-service-url', service_url]
+  for tag in tags:
+    args.extend(['-tag', tag])
+  if service_account:
+    args.extend(['-service-account-json', service_account])
+  args.append(pkg_name)
+  exit_code, json_output = run_cipd(cipd_exe, 'search', args)
+  if exit_code:
+    print
+    print >> sys.stderr, 'FAILED! ' * 10
+    raise SearchException('Failed to search the CIPD package, see logs')
+  result = json_output['result']
+  if result and len(result) > 1:
+    print
+    print >> sys.stderr, 'FAILED! ' * 10
+    raise SearchException('Multiple CIPD package matched, %s', result)
+  return result[0] if result else None
+
+
+def tag_pkg(cipd_exe, pkg_name, pkg_version, service_url, tags,
+            service_account):
+  """Tag existing cipd package with given tags.
+
+  Args:
+    cipd_exe: path to cipd client binary to use.
+    pkg_name: name of the cipd package.
+    pkg_version: version of the cipd package.
+    service_url: URL of a package repository service.
+    tags: tags to set to the cipd package
+    service_account: path to *.json file with service account to use.
+
+  Raises:
+    TagException on error.
+  """
+  print_title('Tagging: %s, %s' % (pkg_name, tags))
+
+  args = ['-service-url', service_url]
+  for tag in tags:
+    args.extend(['-tag', tag])
+  if service_account:
+    args.extend(['-service-account-json', service_account])
+  args.extend(['-version', pkg_version])
+  args.append(pkg_name)
+  exit_code, _ = run_cipd(cipd_exe, 'set-tag', args)
+  if exit_code:
+    print
+    print >> sys.stderr, 'FAILED! ' * 10
+    raise TagException('Failed to tag the CIPD package, see logs')
 
 
 def get_build_out_file(package_out_dir, pkg_def):
@@ -1113,13 +1208,36 @@ def run(
                    pkg_def.name,))
           continue
 
+        on_change_tags, pkg_path = pkg_def.on_change_info(package_vars)
+        if on_change_tags:
+          existed_pkg = search_pkg(cipd_exe, pkg_path, service_url,
+                                   on_change_tags, service_account_json)
+          if existed_pkg:
+            print('Not uploading %s, since all change tags are present.'
+                  ' result: %s' % (pkg_def.name, existed_pkg))
+            tag_pkg(
+                cipd_exe,
+                existed_pkg['package'],
+                existed_pkg['instance_id'],
+                service_url,
+                tags,
+                service_account_json,
+            )
+            succeeded.append({
+                'pkg_def_name': pkg_def.name,
+                'info': existed_pkg
+            })
+            continue
+          tags.extend(on_change_tags)
+
         info = upload_pkg(
             cipd_exe,
             out_file,
             service_url,
             tags,
             pkg_def.update_latest_ref,
-            service_account_json)
+            service_account_json,
+        )
       assert info is not None
       succeeded.append({'pkg_def_name': pkg_def.name, 'info': info})
     except (BuildException, UploadException) as e:

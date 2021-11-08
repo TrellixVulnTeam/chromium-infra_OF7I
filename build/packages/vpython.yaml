@@ -36,4 +36,5 @@ copies:
 data:
   - file: vpython${exe_suffix}
     generate_bat_shim: true
+    upload_on_change: true
   - version_file: .versions/vpython${exe_suffix}.cipd_version

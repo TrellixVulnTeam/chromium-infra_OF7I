@@ -121,6 +121,13 @@ data:
   # Kicks in only when the package is targeting Windows.
   - file: cipd.exe
     generate_bat_shim: true
+
+  # Only uploading the package when specified files in the cipd package changed.
+  # It will generate on-change tags and search if there is any package with
+  # same set of tags. If no such package available, package will be uploaded. In
+  # other case only tag will be updated on the package with same set of tags.
+  - file: vpython
+    upload_on_change: true
 ```
 
 Following features of the package definition are implemented by `build.py`
@@ -133,6 +140,7 @@ all necessary files for packaging):
 * `copies`
 * `posix_symlinks`
 * `generate_bat_shim`
+* `upload_on_change`
 
 
 Strings interpolation
