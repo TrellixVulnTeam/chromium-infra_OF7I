@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package steps;
 
-option go_package = "infra/cros/cmd/labpack/steps;stepspb";
+option go_package = "infra/cros/cmd/labpack/internal/steps;stepspb";
 
 // LabpackInput represents list of input parameters.
 message LabpackInput {

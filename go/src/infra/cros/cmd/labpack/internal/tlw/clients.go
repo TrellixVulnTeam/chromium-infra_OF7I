@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cros/cmd/labpack/site"
-	steps "infra/cros/cmd/labpack/steps"
+	"infra/cros/cmd/labpack/internal/site"
+	steps "infra/cros/cmd/labpack/internal/steps"
 	"infra/cros/recovery"
 	"infra/cros/recovery/tlw"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"

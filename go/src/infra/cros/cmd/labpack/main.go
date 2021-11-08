@@ -24,9 +24,9 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/build"
 
-	"infra/cros/cmd/labpack/site"
-	steps "infra/cros/cmd/labpack/steps"
-	"infra/cros/cmd/labpack/tlw"
+	"infra/cros/cmd/labpack/internal/site"
+	steps "infra/cros/cmd/labpack/internal/steps"
+	"infra/cros/cmd/labpack/internal/tlw"
 	kclient "infra/cros/karte/client"
 	"infra/cros/recovery"
 	"infra/cros/recovery/karte"
