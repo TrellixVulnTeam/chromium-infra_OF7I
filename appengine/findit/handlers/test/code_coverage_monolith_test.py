@@ -13,7 +13,7 @@ from google.appengine.api import taskqueue
 
 from gae_libs.handlers.base_handler import BaseHandler
 from gae_libs import token
-from handlers import code_coverage
+from handlers import code_coverage_monolith
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoveragePercentage
 from model.code_coverage import CoverageReportModifier
@@ -200,8 +200,10 @@ def _CreateSampleFileCoverageData(builder='linux-code-coverage', modifier_id=0):
 
 class FetchSourceFileTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/task/fetch-source-file', code_coverage.FetchSourceFile),
-      ('/coverage/task/process-data/.*', code_coverage.ProcessCodeCoverageData),
+      ('/coverage/task/fetch-source-file',
+       code_coverage_monolith.FetchSourceFile),
+      ('/coverage/task/process-data/.*',
+       code_coverage_monolith.ProcessCodeCoverageData),
   ],
                                        debug=True)
 
@@ -228,7 +230,7 @@ class FetchSourceFileTest(WaterfallTestCase):
                       'Please log in with your @google.com account.'),
                      response.json_body.get('error_message'))
 
-  @mock.patch.object(code_coverage, '_WriteFileContentToGs')
+  @mock.patch.object(code_coverage_monolith, '_WriteFileContentToGs')
   @mock.patch.object(GitilesRepository, 'GetSource', return_value='test')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testFetchSourceFile(self, mocked_is_request_from_appself,
@@ -266,7 +268,8 @@ class FetchSourceFileTest(WaterfallTestCase):
 
 class ProcessCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
-      ('/coverage/task/process-data/.*', code_coverage.ProcessCodeCoverageData),
+      ('/coverage/task/process-data/.*',
+       code_coverage_monolith.ProcessCodeCoverageData),
   ],
                                        debug=True)
 
@@ -286,8 +289,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
-  @mock.patch.object(code_coverage, '_GetValidatedData')
-  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(code_coverage_monolith, '_GetValidatedData')
+  @mock.patch.object(code_coverage_monolith, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testProcessCLPatchData(self, mocked_is_request_from_appself,
                              mocked_get_build, mocked_get_validated_data,
@@ -379,8 +382,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
-  @mock.patch.object(code_coverage, '_GetValidatedData')
-  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(code_coverage_monolith, '_GetValidatedData')
+  @mock.patch.object(code_coverage_monolith, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testProcessCLPatchDataUnitTestBuilder(self,
                                             mocked_is_request_from_appself,
@@ -475,8 +478,8 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
-  @mock.patch.object(code_coverage, '_GetValidatedData')
-  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(code_coverage_monolith, '_GetValidatedData')
+  @mock.patch.object(code_coverage_monolith, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testProcessCLPatchDataMergingData(self, _, mocked_get_build,
                                         mocked_get_validated_data,
@@ -568,13 +571,13 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
                      fetched_entities[0].incremental_percentages)
     self.assertEqual(expected_entity.based_on, fetched_entities[0].based_on)
 
-
-  @mock.patch.object(code_coverage.ProcessCodeCoverageData,
+  @mock.patch.object(code_coverage_monolith.ProcessCodeCoverageData,
                      '_FetchAndSaveFileIfNecessary')
-  @mock.patch.object(code_coverage, '_RetrieveChromeManifest')
-  @mock.patch.object(code_coverage.CachedGitilesRepository, 'GetChangeLog')
-  @mock.patch.object(code_coverage, '_GetValidatedData')
-  @mock.patch.object(code_coverage, 'GetV2Build')
+  @mock.patch.object(code_coverage_monolith, '_RetrieveChromeManifest')
+  @mock.patch.object(code_coverage_monolith.CachedGitilesRepository,
+                     'GetChangeLog')
+  @mock.patch.object(code_coverage_monolith, '_GetValidatedData')
+  @mock.patch.object(code_coverage_monolith, 'GetV2Build')
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
   def testProcessFullRepoData(self, mocked_is_request_from_appself,
                               mocked_get_build, mocked_get_validated_data,
@@ -704,15 +707,11 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
 
 class ServeCodeCoverageDataTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/api/coverage-data', code_coverage.ServeCodeCoverageData),
-      ('/coverage/p/.*', code_coverage.ServeCodeCoverageData),
-      ('.*/coverage/referenced', code_coverage.ServeCodeCoverageData),
-      ('.*/coverage/component', code_coverage.ServeCodeCoverageData),
-      ('.*/coverage/dir', code_coverage.ServeCodeCoverageData),
-      ('.*/coverage/file', code_coverage.ServeCodeCoverageData),
-  ],
-                                       debug=True)
+  app_module = webapp2.WSGIApplication(
+      [('/coverage/api/coverage-data',
+        code_coverage_monolith.ServeCodeCoverageData),
+       ('/coverage/p/.*', code_coverage_monolith.ServeCodeCoverageData)],
+      debug=True)
 
   def setUp(self):
     super(ServeCodeCoverageDataTest, self).setUp()
@@ -794,7 +793,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     with self.assertRaisesRegexp(Exception, r'.*400.*'):
       self.test_app.get(request_url)
 
-  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  @mock.patch.object(code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataNoEquivalentPatchsets(self,
                                                      mock_get_equivalent_ps):
     host = 'chromium-review.googlesource.com'
@@ -807,7 +806,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url, expect_errors=True)
     self.assertEqual(404, response.status_int)
 
-  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  @mock.patch.object(code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsetsHaveNoData(
       self, mock_get_equivalent_ps):
     host = 'chromium-review.googlesource.com'
@@ -822,9 +821,9 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url, expect_errors=True)
     self.assertEqual(404, response.status_int)
 
-  @mock.patch.object(code_coverage.code_coverage_util,
+  @mock.patch.object(code_coverage_util,
                      'RebasePresubmitCoverageDataBetweenPatchsets')
-  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  @mock.patch.object(code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsetsMissingData(
       self, mock_get_equivalent_ps, mock_rebase_data):
     host = 'chromium-review.googlesource.com'
@@ -864,9 +863,9 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url, expect_errors=True)
     self.assertEqual(500, response.status_int)
 
-  @mock.patch.object(code_coverage.code_coverage_util,
+  @mock.patch.object(code_coverage_util,
                      'RebasePresubmitCoverageDataBetweenPatchsets')
-  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  @mock.patch.object(code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchLinesDataEquivalentPatchsets(self, mock_get_equivalent_ps,
                                                    mock_rebase_data):
     host = 'chromium-review.googlesource.com'
@@ -1028,7 +1027,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     })
     self.assertEqual(expected_response_body, response.body)
 
-  @mock.patch.object(code_coverage.code_coverage_util, 'GetEquivalentPatchsets')
+  @mock.patch.object(code_coverage_util, 'GetEquivalentPatchsets')
   def testServeCLPatchPercentagesDataEquivalentPatchsets(
       self, mock_get_equivalent_ps):
     host = 'chromium-review.googlesource.com'
@@ -1259,7 +1258,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
-  @mock.patch.object(code_coverage, '_GetFileContentFromGs')
+  @mock.patch.object(code_coverage_monolith, '_GetFileContentFromGs')
   def testServeFullRepoFileView(self, mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     mock_get_file_from_gs.return_value = 'line one/nline two'
@@ -1286,7 +1285,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         '/source-files-for-coverage/chromium.googlesource.com/chromium/'
         'src.git/dir/test.cc/bbbbb')
 
-  @mock.patch.object(code_coverage, '_GetFileContentFromGs')
+  @mock.patch.object(code_coverage_monolith, '_GetFileContentFromGs')
   def testServeFullRepoFileView_WithModifier(self, mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     mock_get_file_from_gs.return_value = 'line one/nline two'
@@ -1322,7 +1321,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     self.assertIn('/coverage/p/chromium?modifier_id=123',
                   response.headers.get('Location', ''))
 
-  @mock.patch.object(code_coverage, '_GetFileContentFromGs')
+  @mock.patch.object(code_coverage_monolith, '_GetFileContentFromGs')
   def testServeFullRepoFileViewWithNonAsciiChars(self, mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     mock_get_file_from_gs.return_value = 'line one\n═══════════╪'
@@ -1354,7 +1353,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
         'first': 42,
         'last': 43,
     }]
-    regions = code_coverage._SplitLineIntoRegions(line, blocks)
+    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
     reconstructed_line = ''.join(region['text'] for region in regions)
     self.assertEqual(line, reconstructed_line)
 
@@ -1370,7 +1369,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
         'first': 20,
         'last': 22,
     }]
-    regions = code_coverage._SplitLineIntoRegions(line, blocks)
+    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
 
     self.assertEqual('one', regions[0]['text'])
     self.assertEqual('two', regions[1]['text'])
@@ -1392,7 +1391,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
   def testPrefixUncovered(self):
     line = 'NOCOVcov'
     blocks = [{'first': 1, 'last': 5}]
-    regions = code_coverage._SplitLineIntoRegions(line, blocks)
+    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
     self.assertEqual('NOCOV', regions[0]['text'])
     self.assertEqual('cov', regions[1]['text'])
     self.assertFalse(regions[0]['is_covered'])
@@ -1401,7 +1400,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
   def testSuffixUncovered(self):
     line = 'covNOCOV'
     blocks = [{'first': 4, 'last': 8}]
-    regions = code_coverage._SplitLineIntoRegions(line, blocks)
+    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
     self.assertEqual('cov', regions[0]['text'])
     self.assertEqual('NOCOV', regions[1]['text'])
     self.assertTrue(regions[0]['is_covered'])
@@ -1411,7 +1410,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
 class ExportFilesAbsoluteCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/cron/files-absolute-coverage',
-       code_coverage.ExportFilesAbsoluteCoverageMetricsCron),
+       code_coverage_monolith.ExportFilesAbsoluteCoverageMetricsCron),
   ],
                                        debug=True)
 
@@ -1431,7 +1430,7 @@ class ExportFilesAbsoluteCoverageMetricsCronTest(WaterfallTestCase):
 class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/files-absolute-coverage',
-       code_coverage.ExportFilesAbsoluteCoverageMetrics),
+       code_coverage_monolith.ExportFilesAbsoluteCoverageMetrics),
   ],
                                        debug=True)
 
@@ -1447,7 +1446,7 @@ class ExportFilesAbsoluteCoverageMetricsTest(WaterfallTestCase):
 class ExportAllFeatureCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/cron/all-feature-coverage',
-       code_coverage.ExportAllFeatureCoverageMetricsCron),
+       code_coverage_monolith.ExportAllFeatureCoverageMetricsCron),
   ],
                                        debug=True)
 
@@ -1467,7 +1466,7 @@ class ExportAllFeatureCoverageMetricsCronTest(WaterfallTestCase):
 class ExportAllFeatureCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/all-feature-coverage',
-       code_coverage.ExportAllFeatureCoverageMetrics),
+       code_coverage_monolith.ExportAllFeatureCoverageMetrics),
   ],
                                        debug=True)
 
@@ -1488,7 +1487,7 @@ class ExportAllFeatureCoverageMetricsTest(WaterfallTestCase):
 class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/feature-coverage.*',
-       code_coverage.ExportFeatureCoverageMetrics),
+       code_coverage_monolith.ExportFeatureCoverageMetrics),
   ],
                                        debug=True)
 
@@ -1505,12 +1504,12 @@ class ExportFeatureCoverageMetricsTest(WaterfallTestCase):
 class CreateReferencedCoverageMetricsCronTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/cron/referenced-coverage',
-       code_coverage.CreateReferencedCoverageMetricsCron),
+       code_coverage_monolith.CreateReferencedCoverageMetricsCron),
   ],
                                        debug=True)
 
   @mock.patch.object(
-      code_coverage.CreateReferencedCoverageMetricsCron,
+      code_coverage_monolith.CreateReferencedCoverageMetricsCron,
       '_GetSourceBuilders',
       return_value=['linux-code-coverage', 'linux-code-coverage_unit'])
   @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
@@ -1527,7 +1526,7 @@ class CreateReferencedCoverageMetricsCronTest(WaterfallTestCase):
 class CreateReferencedCoverageMetricsTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/referenced-coverage',
-       code_coverage.CreateReferencedCoverageMetrics),
+       code_coverage_monolith.CreateReferencedCoverageMetrics),
   ],
                                        debug=True)
 
@@ -1539,71 +1538,3 @@ class CreateReferencedCoverageMetricsTest(WaterfallTestCase):
     response = self.test_app.get(url, status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
-
-
-class UpdatePostsubmitReportTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/postsubmit-report/update',
-       code_coverage.UpdatePostsubmitReport),
-  ],
-                                       debug=True)
-
-  def setUp(self):
-    super(UpdatePostsubmitReportTest, self).setUp()
-    self.UpdateUnitTestConfigSettings(
-        'code_coverage_settings', {
-            'postsubmit_platform_info_map': {
-                'chromium': {
-                    'linux': {
-                        'bucket': 'coverage',
-                        'builder': 'linux-code-coverage',
-                        'coverage_tool': 'clang',
-                        'ui_name': 'Linux (C/C++)',
-                    },
-                },
-            },
-        })
-
-  def tearDown(self):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
-    super(UpdatePostsubmitReportTest, self).tearDown()
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testPostsubmitReportUpdated(self, *_):
-    self.mock_current_user(user_email='test@google.com', is_admin=False)
-    manifest = _CreateSampleManifest()
-    server_host = 'chromium.googlesource.com'
-    project = 'chromium/src'
-    luci_project = 'chromium'
-    platform = 'linux'
-    ref = 'refs/heads/main'
-    revision = '99999'
-    coverage_config = self.GetUnitTestConfigSettings(
-    ).code_coverage_settings.get('postsubmit_platform_info_map',
-                                 {}).get(luci_project, {})[platform]
-    bucket = coverage_config['bucket']
-    builder = coverage_config['builder']
-    report = PostsubmitReport.Create(
-        server_host=server_host,
-        project=project,
-        ref=ref,
-        revision=revision,
-        bucket=bucket,
-        builder=builder,
-        commit_timestamp=datetime(2018, 1, 1),
-        manifest=manifest,
-        summary_metrics=_CreateSampleCoverageSummaryMetric(),
-        build_id=123456789,
-        visible=False)
-    report.put()
-
-    request_url = (
-        '/coverage/task/postsubmit-report/update?host=%s&luci_project=%s'
-        '&platform=%s&project=%s&ref=%s&revision=%s&visible=%s') % (
-            server_host, luci_project, platform, project, ref, revision, True)
-    response = self.test_app.post(request_url)
-
-    self.assertEqual(200, response.status_int)
-    updated = PostsubmitReport.Get(server_host, project, ref, revision, bucket,
-                                   builder)
-    self.assertTrue(updated.visible)

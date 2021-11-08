@@ -34,6 +34,7 @@ from gae_libs.caches import PickledMemCache
 from gae_libs.dashboard_util import GetPagedResults
 from gae_libs.handlers.base_handler import BaseHandler, Permission
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from handlers.code_coverage import utils
 from libs.cache_decorator import Cached
 from libs.deps import chrome_dependency_fetcher
 from libs.time_util import ConvertUTCToPST
@@ -96,28 +97,6 @@ def _GetDisallowedDeps():
   return waterfall_config.GetCodeCoverageSettings().get('blacklisted_deps', {})
 
 
-def _GetPostsubmitPlatformInfoMap(luci_project):
-  """Returns a map of postsubmit platform information.
-
-  The map contains per-luci_project platform information, and following is
-  an example config:
-  {
-    'postsubmit_platform_info_map': {
-      'chromium': {
-        'linux': {
-          'bucket': 'ci',
-          'buider': 'linux-code-coverage',
-          'coverage_tool': 'clang',
-          'ui_name': 'Linux (C/C++)',
-        }
-      }
-    }
-  }
-  """
-  return waterfall_config.GetCodeCoverageSettings().get(
-      'postsubmit_platform_info_map', {}).get(luci_project, {})
-
-
 def _GetPostsubmitDefaultReportConfig(luci_project):
   """Returns a tuple of (host, project, ref, platform) to serve default report.
 
@@ -163,7 +142,8 @@ def _GetSameOrMostRecentReportForEachPlatform(luci_project, host, project, ref,
   most recent visible one.
   """
   result = {}
-  for platform, info in _GetPostsubmitPlatformInfoMap(luci_project).iteritems():
+  for platform, info in utils.GetPostsubmitPlatformInfoMap(
+      luci_project).iteritems():
     # Some 'platforms' are hidden from the selection to avoid confusion, as they
     # may be custom reports that do not make sense outside a certain team.
     # They should still be reachable via a url.
@@ -220,7 +200,8 @@ def _MakePlatformSelect(luci_project, host, project, ref, revision, path,
         'platform':
             platform,
         'ui_name':
-            _GetPostsubmitPlatformInfoMap(luci_project)[platform]['ui_name'],
+            utils.GetPostsubmitPlatformInfoMap(luci_project)[platform]
+            ['ui_name'],
         'selected':
             platform == current_platform,
     }
@@ -1341,7 +1322,8 @@ class ServeCodeCoverageData(BaseHandler):
     show_invisible_report = (
         current_user.email().endswith('@google.com') if current_user else False)
     metrics = code_coverage_util.GetMetricsBasedOnCoverageTool(
-        _GetPostsubmitPlatformInfoMap(luci_project)[platform]['coverage_tool'])
+        utils.GetPostsubmitPlatformInfoMap(luci_project)[platform]
+        ['coverage_tool'])
     if modifier_id != 0:
       # Only line coverage metric is supported for cases other than
       # default post submit report
@@ -1359,7 +1341,7 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                utils.GetPostsubmitPlatformInfoMap(luci_project)[platform]
                 ['ui_name'],
             'metrics':
                 metrics,
@@ -1449,7 +1431,7 @@ class ServeCodeCoverageData(BaseHandler):
           '"%s/%s/+/%s" is not supported.' % (host, project, ref), 400)
 
     logging.info('Servicing coverage data for postsubmit')
-    platform_info_map = _GetPostsubmitPlatformInfoMap(luci_project)
+    platform_info_map = utils.GetPostsubmitPlatformInfoMap(luci_project)
     if platform not in platform_info_map:
       return BaseHandler.CreateError('Platform: %s is not supported' % platform,
                                      400)
@@ -1633,7 +1615,7 @@ class ServeCodeCoverageData(BaseHandler):
     path_parts = _GetNameToPathSeparator(path, data_type)
     path_root, _ = _GetPathRootAndSeparatorFromDataType(data_type)
     metrics = code_coverage_util.GetMetricsBasedOnCoverageTool(
-        coverage_tool=_GetPostsubmitPlatformInfoMap(luci_project)[platform]
+        coverage_tool=utils.GetPostsubmitPlatformInfoMap(luci_project)[platform]
         ['coverage_tool'])
     if modifier_id != 0:
       # Only line coverage metric is supported for cases other than
@@ -1655,7 +1637,7 @@ class ServeCodeCoverageData(BaseHandler):
             'platform':
                 platform,
             'platform_ui_name':
-                _GetPostsubmitPlatformInfoMap(luci_project)[platform]
+                utils.GetPostsubmitPlatformInfoMap(luci_project)[platform]
                 ['ui_name'],
             'path_root':
                 path_root,
@@ -1819,40 +1801,4 @@ class CreateReferencedCoverageMetrics(BaseHandler):
     modifier_id = int(self.request.get('modifier_id'))
     builder = self.request.get('builder')
     referenced_coverage.CreateReferencedCoverage(modifier_id, builder)
-    return {'return_code': 200}
-
-
-class UpdatePostsubmitReport(BaseHandler):
-  PERMISSION_LEVEL = Permission.CORP_USER
-
-  def HandlePost(self):
-    luci_project = self.request.get('luci_project')
-    platform = self.request.get('platform')
-    platform_info_map = _GetPostsubmitPlatformInfoMap(luci_project)
-    if platform not in platform_info_map:
-      return BaseHandler.CreateError('Platform: %s is not supported' % platform,
-                                     400)
-    bucket = platform_info_map[platform]['bucket']
-    builder = platform_info_map[platform]['builder']
-
-    project = self.request.get('project')
-    host = self.request.get('host')
-    ref = self.request.get('ref')
-    revision = self.request.get('revision')
-    visible = self.request.get('visible').lower() == 'true'
-    report = PostsubmitReport.Get(
-        server_host=host,
-        project=project,
-        ref=ref,
-        revision=revision,
-        bucket=bucket,
-        builder=builder)
-
-    if not report:
-      return BaseHandler.CreateError('Report record not found', 404)
-
-    # At present, we only update visibility
-    report.visible = visible
-    report.put()
-
     return {'return_code': 200}
