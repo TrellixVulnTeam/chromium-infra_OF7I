@@ -244,15 +244,16 @@ func crashSubmitSymbolUpload(uploadKey string, task taskConfig, crash crashConne
 // upload will perform the upload of the symbol file to the crash service.
 func upload(task *taskConfig, crash crashConnectionInfo) bool {
 	message := bytes.Buffer{}
-	uploadLogger := log.New(&message, fmt.Sprintf("Uploading %s\n", task.debugFile), logFlags)
+	uploadLogger := log.New(&message, "", logFlags)
 	if task.dryRun {
-		LogOut("Would have uploaded %s to crash", task.debugFile)
+		uploadLogger.Printf("Would have uploaded %s to crash", task.debugFile)
+		LogOutNoFlags(message.String())
 		return true
 	}
+	uploadLogger.Printf("Uploading %s\n", task.debugFile)
 
 	var uploadInfo crashUploadInformation
 	err := crashRetrieveUploadInformation(&uploadInfo, crash)
-
 	if err != nil {
 		LogOut("error: %s", err.Error())
 		return false
@@ -260,7 +261,6 @@ func upload(task *taskConfig, crash crashConnectionInfo) bool {
 	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
 
 	err = crashUploadSymbol(task.symbolPath, uploadInfo.UploadUrl, crash)
-
 	if err != nil {
 		LogOut("error: %s", err.Error())
 		return false
@@ -268,13 +268,12 @@ func upload(task *taskConfig, crash crashConnectionInfo) bool {
 	uploadLogger.Printf("%s: SUCCESS\n", "https://storage.googleapis.com/crashsymboldropzone/")
 
 	err = crashSubmitSymbolUpload(uploadInfo.UploadKey, *task, crash)
-
 	if err != nil {
 		LogOut("error: %s", err.Error())
 		return false
 	}
 	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
-	LogOut(message.String())
+	LogOutNoFlags(message.String())
 	return true
 }
 

@@ -16,6 +16,8 @@ import (
 var (
 	// StdoutLog contains the stdout logger for this package.
 	StdoutLog *log.Logger
+	// StdoutLogNoFlags contains the stdout logger for this package without any flags.
+	StdoutLogNoFlags *log.Logger
 	// StderrLog contains the stderr logger for this package.
 	StderrLog *log.Logger
 	logFlags  = log.LstdFlags | log.Lmicroseconds
@@ -42,6 +44,14 @@ func LogOut(format string, a ...interface{}) {
 	}
 }
 
+// LogOutNoFlags logs to stdout without any flags. Specifically this is used
+// when uploading symbols to eliminate flag doubling.
+func LogOutNoFlags(format string, a ...interface{}) {
+	if StdoutLogNoFlags != nil {
+		StdoutLogNoFlags.Printf(format, a...)
+	}
+}
+
 // LogErr logs to stderr.
 func LogErr(format string, a ...interface{}) {
 	if StderrLog != nil {
@@ -51,6 +61,7 @@ func LogErr(format string, a ...interface{}) {
 
 func SetUp(c uploadDebugSymbolsCommand, a subcommands.Application, args []string, env subcommands.Env) int {
 	StdoutLog = a.(*uploadDebugSymbolsApplication).stdoutLog
+	StdoutLogNoFlags = a.(*uploadDebugSymbolsApplication).StdoutLogNoFlags
 	StderrLog = a.(*uploadDebugSymbolsApplication).stderrLog
 
 	// Validate flags/arguments.
@@ -63,8 +74,9 @@ func SetUp(c uploadDebugSymbolsCommand, a subcommands.Application, args []string
 
 type uploadDebugSymbolsApplication struct {
 	*subcommands.DefaultApplication
-	stdoutLog *log.Logger
-	stderrLog *log.Logger
+	stdoutLog        *log.Logger
+	StdoutLogNoFlags *log.Logger
+	stderrLog        *log.Logger
 }
 
 type uploadDebugSymbolsCommand interface {
@@ -80,6 +92,7 @@ func main() {
 	s := &uploadDebugSymbolsApplication{
 		getApplication(opts),
 		log.New(os.Stdout, "", logFlags),
+		log.New(os.Stdout, "", 0),
 		log.New(os.Stderr, "", logFlags)}
 	os.Exit(subcommands.Run(s, nil))
 }
