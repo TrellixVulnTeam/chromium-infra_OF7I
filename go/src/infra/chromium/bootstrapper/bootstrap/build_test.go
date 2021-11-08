@@ -23,7 +23,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 
 	ctx := context.Background()
 
-	Convey("PropertyBootstrapper.GetBootstrapConfig", t, func() {
+	Convey("BuildBootstrapper.GetBootstrapConfig", t, func() {
 
 		build := &buildbucketpb.Build{
 			Input: &buildbucketpb.Build_Input{
@@ -72,7 +72,7 @@ func TestGetBootstrapConfig(t *testing.T) {
 			}
 		}`)
 
-		bootstrapper := NewPropertyBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
+		bootstrapper := NewBuildBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
 
 		Convey("fails", func() {
 
@@ -447,12 +447,12 @@ func TestGetBootstrapConfig(t *testing.T) {
 	})
 }
 
-func TestGetProperties(t *testing.T) {
+func TestUpdateBuild(t *testing.T) {
 	t.Parallel()
 
-	Convey("BootstrapConfig.GetProperties", t, func() {
+	Convey("BootstrapConfig.UpdateBuild", t, func() {
 
-		Convey("returns properties with builder properties, $build/chromium_bootstrap module properties and build properties", func() {
+		Convey("updates build with gitiles commit, builder properties, $build/chromium_bootstrap module properties and build properties", func() {
 			config := &BootstrapConfig{
 				commit: &gitilesCommit{&buildbucketpb.GitilesCommit{
 					Host:    "fake-host",
@@ -484,37 +484,56 @@ func TestGetProperties(t *testing.T) {
 				},
 				Cmd: []string{"fake-exe"},
 			}
+			build := &buildbucketpb.Build{
+				Input: &buildbucketpb.Build_Input{
+					GitilesCommit: &buildbucketpb.GitilesCommit{
+						Host:    "fake-host",
+						Project: "fake-project",
+						Ref:     "fake-ref",
+					},
+				},
+			}
 
-			properties, err := config.GetProperties(exe)
+			err := config.UpdateBuild(build, exe)
 
 			So(err, ShouldBeNil)
-			So(properties, ShouldResembleProtoJSON, `{
-				"$build/chromium_bootstrap": {
-					"commits": [
-						{
-							"host": "fake-host",
-							"project": "fake-project",
-							"ref": "fake-ref",
-							"id": "fake-revision"
-						}
-					],
-					"exe": {
-						"cipd": {
-							"server": "fake-cipd-server",
-							"package": "fake-cipd-package",
-							"requested_version": "fake-cipd-ref",
-							"actual_version": "fake-cipd-instance-id"
-						},
-						"cmd": ["fake-exe"]
+			So(build, ShouldResembleProtoJSON, `{
+				"input": {
+					"gitiles_commit": {
+						"host": "fake-host",
+						"project": "fake-project",
+						"ref": "fake-ref",
+						"id": "fake-revision"
 					},
-					"skip_analysis_reasons": [
-						"skip-analysis-reason1",
-						"skip-analysis-reason2"
-					]
-				},
-				"foo": "build-foo-value",
-				"bar": "build-bar-value",
-				"baz": "builder-baz-value"
+					"properties": {
+						"$build/chromium_bootstrap": {
+							"commits": [
+								{
+									"host": "fake-host",
+									"project": "fake-project",
+									"ref": "fake-ref",
+									"id": "fake-revision"
+								}
+							],
+							"exe": {
+								"cipd": {
+									"server": "fake-cipd-server",
+									"package": "fake-cipd-package",
+									"requested_version": "fake-cipd-ref",
+									"actual_version": "fake-cipd-instance-id"
+								},
+								"cmd": ["fake-exe"]
+							},
+							"skip_analysis_reasons": [
+								"skip-analysis-reason1",
+								"skip-analysis-reason2"
+							]
+						},
+						"foo": "build-foo-value",
+						"bar": "build-bar-value",
+						"baz": "builder-baz-value"
+					}
+				}
 			}`)
 		})
 	})

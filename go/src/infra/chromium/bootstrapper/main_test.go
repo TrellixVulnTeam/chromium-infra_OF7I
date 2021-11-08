@@ -173,6 +173,12 @@ func TestPerformBootstrap(t *testing.T) {
 			proto.Unmarshal(contents, build)
 			So(build, ShouldResembleProtoJSON, `{
 				"input": {
+					"gitiles_commit": {
+						"host": "fake-host",
+						"project": "fake-project",
+						"ref": "fake-ref",
+						"id": "fake-revision"
+					},
 					"properties": {
 						"$build/chromium_bootstrap": {
 							"commits": [

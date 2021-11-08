@@ -101,7 +101,7 @@ func performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutput
 
 		// Get the input for the command
 		group.Go(func() error {
-			bootstrapper := bootstrap.NewPropertyBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
+			bootstrapper := bootstrap.NewBuildBootstrapper(gitiles.NewClient(ctx), gerrit.NewClient(ctx))
 
 			logging.Infof(ctx, "getting bootstrapped config")
 			config, err := bootstrapper.GetBootstrapConfig(ctx, bootstrapInput)
@@ -116,14 +116,13 @@ func performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutput
 				return ctx.Err()
 			}
 
-			logging.Infof(ctx, "getting bootstrapped properties")
-			properties, err := config.GetProperties(exe)
+			logging.Infof(ctx, "updating build")
+			err = config.UpdateBuild(build, exe)
 			if err != nil {
 				return err
 			}
 
 			logging.Infof(ctx, "marshalling bootstrapped build input")
-			build.Input.Properties = properties
 			recipeInput, err = proto.Marshal(build)
 			return errors.Annotate(err, "failed to marshall bootstrapped build input: <%s>", build).Err()
 		})

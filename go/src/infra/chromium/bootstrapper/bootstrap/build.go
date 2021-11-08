@@ -20,15 +20,15 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// PropertyBootstrapper provides the functionality for computing the properties
-// for the bootstrapped executable.
-type PropertyBootstrapper struct {
+// BuildBootstrapper provides the functionality for computing the build
+// that the bootstrapped executable receives as input.
+type BuildBootstrapper struct {
 	gitiles *gitiles.Client
 	gerrit  *gerrit.Client
 }
 
-func NewPropertyBootstrapper(gitiles *gitiles.Client, gerrit *gerrit.Client) *PropertyBootstrapper {
-	return &PropertyBootstrapper{gitiles: gitiles, gerrit: gerrit}
+func NewBuildBootstrapper(gitiles *gitiles.Client, gerrit *gerrit.Client) *BuildBootstrapper {
+	return &BuildBootstrapper{gitiles: gitiles, gerrit: gerrit}
 }
 
 // gitilesCommit is a simple wrapper around *buildbucketpb.GitilesCommit with
@@ -78,7 +78,7 @@ type BootstrapConfig struct {
 
 // GetBootstrapConfig does the necessary work to extract the properties from the
 // appropriate version of the properties file.
-func (b *PropertyBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input) (*BootstrapConfig, error) {
+func (b *BuildBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input) (*BootstrapConfig, error) {
 	var config *BootstrapConfig
 	switch x := input.propsProperties.ConfigProject.(type) {
 	case *BootstrapPropertiesProperties_TopLevelProject_:
@@ -103,7 +103,7 @@ func (b *PropertyBootstrapper) GetBootstrapConfig(ctx context.Context, input *In
 	return config, nil
 }
 
-func (b *PropertyBootstrapper) getTopLevelConfig(ctx context.Context, input *Input, topLevel *BootstrapPropertiesProperties_TopLevelProject) (*BootstrapConfig, error) {
+func (b *BuildBootstrapper) getTopLevelConfig(ctx context.Context, input *Input, topLevel *BootstrapPropertiesProperties_TopLevelProject) (*BootstrapConfig, error) {
 	ref := topLevel.Ref
 	change := findMatchingGerritChange(input.changes, topLevel.Repo)
 	if change != nil {
@@ -133,7 +133,7 @@ func (b *PropertyBootstrapper) getTopLevelConfig(ctx context.Context, input *Inp
 
 // getPropertiesFromFile updates config to include the properties contained in
 // the builder's properties file.
-func (b *PropertyBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile string, config *BootstrapConfig) error {
+func (b *BuildBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile string, config *BootstrapConfig) error {
 	var diff string
 	if change := config.change; change != nil {
 		// check if it affects the builder properties file and apply change
@@ -190,7 +190,7 @@ func (b *PropertyBootstrapper) getPropertiesFromFile(ctx context.Context, propsF
 
 }
 
-func (b *PropertyBootstrapper) populateCommitId(ctx context.Context, commit *gitilesCommit) error {
+func (b *BuildBootstrapper) populateCommitId(ctx context.Context, commit *gitilesCommit) error {
 	if commit.Id == "" {
 		logging.Infof(ctx, "getting revision for %s", commit)
 		revision, err := b.gitiles.FetchLatestRevision(ctx, commit.Host, commit.Project, commit.Ref)
@@ -221,7 +221,7 @@ func convertGerritHostToGitilesHost(host string) string {
 	return strings.Join(pieces, ".")
 }
 
-// GetProperties gets the properties to use for the bootstrapped build.
+// UpdateBuild gets the properties to use for the bootstrapped build.
 //
 // The properties will be composed of multiple elements:
 //   * The properties read from the properties file identified by the
@@ -234,7 +234,7 @@ func convertGerritHostToGitilesHost(host string) string {
 //   * The build's input properties with the $bootstrap/properties and
 //     $bootstrap/exe properties removed. Values specified in the build's
 //     properties override properties in the properties file.
-func (c *BootstrapConfig) GetProperties(bootstrappedExe *BootstrappedExe) (*structpb.Struct, error) {
+func (c *BootstrapConfig) UpdateBuild(build *buildbucketpb.Build, bootstrappedExe *BootstrappedExe) error {
 	properties := proto.Clone(c.builderProperties).(*structpb.Struct)
 
 	modProperties := &ChromiumBootstrapModuleProperties{
@@ -245,15 +245,18 @@ func (c *BootstrapConfig) GetProperties(bootstrappedExe *BootstrappedExe) (*stru
 	if err := exe.WriteProperties(properties, map[string]interface{}{
 		"$build/chromium_bootstrap": modProperties,
 	}); err != nil {
-		return nil, errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: {%s}", modProperties).Err()
+		return errors.Annotate(err, "failed to write out properties for chromium_bootstrap module: {%s}", modProperties).Err()
 	}
 
 	for key := range c.buildProperties.Fields {
 		delete(properties.Fields, key)
 	}
 	if err := exe.WriteProperties(properties, c.buildProperties.AsMap()); err != nil {
-		return nil, errors.Annotate(err, "failed to write out properties from the build: {%s}", c.buildProperties).Err()
+		return errors.Annotate(err, "failed to write out properties from the build: {%s}", c.buildProperties).Err()
 	}
 
-	return properties, nil
+	build.Input.Properties = properties
+	build.Input.GitilesCommit = c.commit.GitilesCommit
+
+	return nil
 }
