@@ -12,6 +12,7 @@ from handlers import code_coverage_monolith
 from handlers.code_coverage import export_absolute_coverage
 from handlers.code_coverage import export_feature_coverage
 from handlers.code_coverage import fetch_source_file
+from handlers.code_coverage import process_coverage
 from handlers.code_coverage import update_postsubmit_report
 
 # Feaure coverage worker module.
@@ -39,7 +40,7 @@ if appengine_util.IsInProductionApp():
 code_coverage_backend_handler_mappings = [
     ('.*/coverage/task/fetch-source-file', fetch_source_file.FetchSourceFile),
     ('.*/coverage/task/process-data/.*',
-     code_coverage_monolith.ProcessCodeCoverageData),
+     process_coverage.ProcessCodeCoverageData),
     ('.*/coverage/cron/files-absolute-coverage',
      export_absolute_coverage.ExportFilesAbsoluteCoverageMetricsCron),
     ('.*/coverage/task/files-absolute-coverage',

@@ -143,3 +143,21 @@ def WriteFileContentToGs(gs_path, content):  # pragma: no cover.
       gs_path, 'w', content_type='text/plain',
       retry_params=write_retry_params) as f:
     f.write(content)
+
+
+def GetFileContentFromGs(gs_path):  # pragma: no cover.
+  """Reads the content of a file in cloud storage.
+
+  This method is more expensive than |_IsFileAvailableInGs|, so if the goal is
+  to check if a file exists, |_IsFileAvailableInGs| is preferred.
+
+  Args:
+    gs_path (str): Path to the file, in the format /bucket/object.
+
+  Returns:
+    The content of the file if it exists, otherwise None."""
+  try:
+    with cloudstorage.open(gs_path) as f:
+      return f.read()
+  except cloudstorage.NotFoundError:
+    return None
