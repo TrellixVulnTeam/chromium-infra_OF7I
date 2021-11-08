@@ -13,7 +13,8 @@ class Source:
       implementation details on how each is handled.
   """
 
-  def __init__(self, cache, step, path, m_file, raw_io, cipd, gsutil, gitiles):
+  def __init__(self, cache, step, path, m_file, raw_io, cipd, gsutil, gitiles,
+               git):
     """ __init__ generates the src managers (git, gcs and cipd) and stores them
         in class variables.
         Args:
@@ -25,6 +26,7 @@ class Source:
           cipd: ref to recipe_engine/cipd module object
           gsutil: ref to depot_tools/gsutil module object
           gitiles: ref to depot_tools/gitiles module object
+          git: ref to depot_tools/git module object
     """
     # dir to store CIPD downloaded packages
     cipd_dir = cache.join('CIPDPkgs')
@@ -39,7 +41,8 @@ class Source:
     self._cipd = cipd_manager.CIPDManager(step, cipd, path, cipd_dir)
     self._gcs = gcs_manager.GCSManager(step, gsutil, path, m_file, raw_io,
                                        gcs_dir)
-    self._git = git_manager.GITManager(step, gitiles, m_file, path, git_dir)
+    self._git = git_manager.GITManager(step, gitiles, git, m_file, path,
+                                       git_dir)
 
   def record_download(self, src):
     """ record_download records src for pinning and downloading purposes

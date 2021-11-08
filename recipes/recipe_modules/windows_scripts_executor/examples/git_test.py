@@ -70,15 +70,35 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock fetching the file from git
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock adding the file to wim
          t.ADD_GIT_FILE(api, image, customization,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
                         'windows\\artifacts\\startnet.cmd') +
          api.post_process(StatusSuccess) +  # recipe should pass
          api.post_process(DropExpectation))
+
+  # Adding same git src in multiple actions should trigger only one fetch action
+  yield (
+      api.test('Add same git src in multiple actions', api.platform('win',
+                                                                    64)) +
+      # run a config for adding startnet file to wim
+      api.properties(
+          t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'add_startnet_file',
+                      [ACTION_ADD_STARTNET, ACTION_ADD_STARTNET])) +
+      # mock all the init and deinit steps
+      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
+      # mock pin of the git src, should only happen once
+      t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+      # mock adding the file to wim
+      t.ADD_GIT_FILE(api, image, customization,
+                     'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                     'windows\\artifacts\\startnet.cmd') +
+      # mock adding the file to wim
+      t.ADD_GIT_FILE(api, image, customization,
+                     'ef70cb069518e6dc3ff24bfae7f195de5099c377',
+                     'windows\\artifacts\\startnet.cmd (2)') +
+      api.post_process(StatusSuccess) +  # recipe should pass
+      api.post_process(DropExpectation))
 
   yield (api.test('Add multiple git src in action', api.platform('win', 64)) +
          # run a config for adding startnet and diskpart files
@@ -89,14 +109,8 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock fetching the file from git
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock pin of the git src
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/diskpart.txt', 'HEAD') +
-         # mock fetching the file from git
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/diskpart.txt', 'Select volume S') +
          # mock adding the file to wim
          t.ADD_GIT_FILE(api, image, customization,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',

@@ -937,25 +937,25 @@ Downloads & Installs the Windows ADK.
 Ensures that the WinPE add-on is available.
 ### *recipe_modules* / [windows\_scripts\_executor](/recipes/recipe_modules/windows_scripts_executor)
 
-[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/__init__.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#13)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [WindowsPSExecutorAPI](/recipes/recipe_modules/windows_scripts_executor/api.py#14)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#159)(self):**
+&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#161)(self):**
 
 download_available_packages downloads the src refs that are pinned 
 
-&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#164)(self, config):**
+&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#166)(self, config):**
 
 Executes the windows image builder user config.
 Args:
   config: wib.Image proto representing the image to be generated
 
-&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#61)(self, config):**
+&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#63)(self, config):**
 
 gen_canonical_configs strips all the names in the config and returns
 individual configs containing one customization per image.
@@ -1032,17 +1032,17 @@ Example:
   etc,. are set to empty before calculating the hash to maintain the
   uniqueness of the hash.
 
-&mdash; **def [init](/recipes/recipe_modules/windows_scripts_executor/api.py#24)(self, config):**
+&mdash; **def [init](/recipes/recipe_modules/windows_scripts_executor/api.py#25)(self, config):**
 
 init initializes all the dirs and sub modules required.
 Args:
   config: wib.Image proto object representing the image to be created
 
-&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#56)(self):**
+&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#58)(self):**
 
 pin_wib_config pins the given config to current refs.
 
-&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#173)(self):**
+&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#175)(self):**
 
 upload_wib_artifacts uploads all the available artifacts 
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)

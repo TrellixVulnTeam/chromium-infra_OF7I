@@ -176,6 +176,21 @@
     "name": "Ensure [CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM"
   },
   {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CLEANUP]\\configs"
+    ],
+    "infra_step": true,
+    "name": "Ensure [CLEANUP]\\configs"
+  },
+  {
     "cmd": [],
     "name": "Pin all the required artifacts"
   },

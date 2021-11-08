@@ -102,9 +102,6 @@ def GenTests(api):
                          [ACTION_ADD_STARTNET])) +
          # mock pinning the file to current refs
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock git fetch file
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock failure in gen winpe media step
          t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
          # The recipe execution should fail
@@ -133,9 +130,6 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_FAILURE(api, arch, image, cust_name) +
          # mock git pin execution
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock the git fetch execution
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock add file from git to image execution
          t.ADD_GIT_FILE(
              api, image, cust_name, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -169,9 +163,6 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock git fetch file
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -200,9 +191,6 @@ def GenTests(api):
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
          t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
-         # mock git fetch file
-         t.GIT_FETCH_FILE(api, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                          'windows/artifacts/startnet.cmd', 'Wpeinit') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',

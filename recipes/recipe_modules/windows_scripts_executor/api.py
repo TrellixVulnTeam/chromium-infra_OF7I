@@ -7,6 +7,7 @@ from recipe_engine.recipe_api import Property
 # Windows command helpers
 from . import offline_winpe_customization as offwinpecust
 from . import sources
+from . import helper
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 
 
@@ -34,9 +35,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._sources = sources.Source(self.m.path['cache'].join('Pkgs'),
                                    self.m.step, self.m.path, self.m.file,
                                    self.m.raw_io, self.m.cipd, self.m.gsutil,
-                                   self.m.gitiles)
+                                   self.m.gitiles, self.m.git)
 
     self._configs_dir = self.m.path['cleanup'].join('configs')
+    helper.ensure_dirs(self.m.file, [self._configs_dir])
 
     # initialize all customizations
     for cust in config.customizations:

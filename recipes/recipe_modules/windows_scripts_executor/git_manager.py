@@ -9,13 +9,18 @@ from . import helper
 class GITManager:
   """
     GITManager is used to download required artifacts from git and generate
-    a pinned config for the downloaded artifacts.
+    a pinned config for the downloaded artifacts. It uses gitiles to pin the
+    sources to refs, but downloads them using git. This is done as image
+    processor should be able to pin the sources without having to download
+    them, as depending on the result of the pinning. We might not need to
+    download them.
   """
 
-  def __init__(self, step, gitiles, f, path, cache):
+  def __init__(self, step, gitiles, git, f, path, cache):
     """ __init__ copies few module objects and cache dir path into class vars
         Args:
           step: module object for recipe_engine/step
+          git: module object for depot_tools/git
           gitiles: module object for depot_tools/gitiles
           f: module object for recipe_engine/file
           path: module object for recipe_engine/path
@@ -23,14 +28,17 @@ class GITManager:
     """
     # step is an instance of recipe_engine/step instance
     self._step = step
-    # gitiles is depot tools module instance
-    self._git = gitiles
+    # gitiles is depot tools module instance. For use in pinning the sources
+    self._gitiles = gitiles
+    # git is depot tools module instance. For use in downloading the sources
+    self._git = git
     # f is recipe_modules/file instance
     self._file = f
     # path instance
     self._path = path
     # cache will be used to download the artifacts to
     self._cache = cache
+    self._pinned_srcs = {}
     self._downloads = {}
     self._pkg_record = []
 
@@ -43,33 +51,36 @@ class GITManager:
       self._pkg_record.append(src)
 
   def pin_packages(self):
-    """ pin_package replaces a volatile ref to deterministic ref in git src"""
+    """ pin_package replaces a volatile ref to deterministic ref in all
+        git_src"""
     for src in self._pkg_record:
+      # gen_key is the path for the unpinned src
       gen_key = self.get_local_src(src)
-      # check of we pinned the source already
-      if gen_key not in self._downloads.keys():
-        pkg = src.git_src
-        commits, _ = self._git.log(pkg.repo, pkg.ref + '/' + pkg.src)
+      pkg = src.git_src
+      # check if we pinned the source already
+      if gen_key not in self._pinned_srcs.keys():
+        commits, _ = self._gitiles.log(pkg.repo, pkg.ref + '/' + pkg.src)
         # pin the file to the latest available commit
         pkg.ref = commits[0]['commit']
-        # record both keys for download
-        self._downloads[gen_key] = src
+        # copy the pinned src to avoid redoing it
+        self._pinned_srcs[gen_key] = src
+        # copy the pinned src to download list/dict
         self._downloads[self.get_local_src(src)] = src
+      else:
+        # copy the ref to src
+        pkg.ref = self._pinned_srcs[gen_key].git_src.ref
 
   def download_packages(self):
-    """ download_package downloads a given src to disk if it is a git_src."""
-    for path, src in self._downloads.items():
-      local_path = self.get_local_src(src)
-      if local_path == path and not self._path.exists(local_path):
-        # only download pinned configs
-        pkg = src.git_src
-        http_page = '/'.join([pkg.repo, '+', pkg.ref, pkg.src])
-        f = self._git.download_file(pkg.repo, pkg.src, branch=pkg.ref)
-        # ensure that the dir enclosing file exists
-        self._file.ensure_directory('Create dir',
-                                    '\\'.join(str(local_path).split('\\')[:-1]))
-        self._file.write_raw('Write {} to disk'.format(http_page), local_path,
-                             f)
+    """ download_package downloads all recorded git_src"""
+    for _, src in self._downloads.items():
+      g_src = src.git_src
+      local_path = self._cache.join(g_src.ref)
+      self._git.checkout(
+          step_suffix=g_src.src,
+          url=g_src.repo,
+          dir_path=local_path,
+          ref=g_src.ref,
+          file_name=g_src.src)
 
   def get_local_src(self, source):
     """ get_local_src returns the location of the downloaded package in

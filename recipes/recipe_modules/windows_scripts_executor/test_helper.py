@@ -183,15 +183,6 @@ def GCS_DOWNLOAD_FILE(api, bucket, source, success=True):
   )
 
 
-def GIT_FETCH_FILE(api, commit, path, data):
-  """ mock git fetch step """
-  return api.step_data(
-      NEST(
-          NEST_DOWNLOAD_ALL_SRC(),
-          'fetch ' + '{}:{}'.format(commit, path),
-      ), api.gitiles.make_encoded_file(data))
-
-
 def ADD_GIT_FILE(api, image, customization, commit, path, success=True):
   """ mock add git file to unpacked image step """
   return ADD_FILE(api, image, customization,
