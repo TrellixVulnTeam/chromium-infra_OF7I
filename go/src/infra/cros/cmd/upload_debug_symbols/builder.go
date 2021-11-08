@@ -39,7 +39,8 @@ const (
 	stagingUploadUrl = "https://staging-crashsymbolcollector-pa.googleapis.com/v1"
 	// Time in milliseconds to sleep before retrying the task.
 	sleepTime = time.Second
-
+	// This is the location on the bots where we'll find our key.
+	keyPath = "/creds/api_keys/api_key-chromeos-crash-uploader"
 	// TODO(juahurta): add constants for crash file size limits
 )
 
@@ -107,9 +108,20 @@ type crashClient interface {
 
 // retrieveApiKey fetches the crash API key stored in the local keystore.
 func retrieveApiKey() (string, error) {
-	// TODO(juahurta): Locate and verify the key wanted on the bot.
-	apiKey := "HIDDEN KEY"
-	return apiKey, nil
+	if _, err := os.Stat(keyPath); err != nil {
+		return "", fmt.Errorf("could not find crash api key")
+	}
+
+	file, err := os.Open(keyPath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	apiKey, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	return string(apiKey), nil
 }
 
 // TODO(b/197010274): add function to strip CFI lines if file is too large
