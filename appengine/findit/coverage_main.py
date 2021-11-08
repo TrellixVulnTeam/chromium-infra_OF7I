@@ -9,6 +9,7 @@ import gae_ts_mon
 from gae_libs import appengine_util
 
 from handlers import code_coverage_monolith
+from handlers.code_coverage import export_absolute_coverage
 from handlers.code_coverage import export_feature_coverage
 from handlers.code_coverage import update_postsubmit_report
 
@@ -40,9 +41,9 @@ code_coverage_backend_handler_mappings = [
     ('.*/coverage/task/process-data/.*',
      code_coverage_monolith.ProcessCodeCoverageData),
     ('.*/coverage/cron/files-absolute-coverage',
-     code_coverage_monolith.ExportFilesAbsoluteCoverageMetricsCron),
+     export_absolute_coverage.ExportFilesAbsoluteCoverageMetricsCron),
     ('.*/coverage/task/files-absolute-coverage',
-     code_coverage_monolith.ExportFilesAbsoluteCoverageMetrics),
+     export_absolute_coverage.ExportFilesAbsoluteCoverageMetrics),
     ('.*/coverage/cron/all-feature-coverage',
      export_feature_coverage.ExportAllFeatureCoverageMetricsCron),
     ('.*/coverage/task/all-feature-coverage',
