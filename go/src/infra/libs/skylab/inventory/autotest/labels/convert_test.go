@@ -243,12 +243,17 @@ var fullLabels = []string{
 	"working_bluetooth_btpeer:3",
 }
 
-func TestConvertEmpty(t *testing.T) {
+var baseExpectedLabels = []string{"conductive:False"}
+
+func TestConvertEmptyLabels(t *testing.T) {
 	t.Parallel()
 	ls := inventory.SchedulableLabels{}
 	got := Convert(&ls)
-	if len(got) > 0 {
-		t.Errorf("Got nonempty labels %#v", got)
+	if diff := prettyConfig.Compare(baseExpectedLabels, got); diff != "" {
+		t.Errorf(
+			"Convert base labels %#v got labels differ -want +got, %s",
+			baseExpectedLabels,
+			diff)
 	}
 }
 
@@ -287,7 +292,7 @@ func TestConvertServoStateWorking(t *testing.T) {
 			if err := proto.UnmarshalText(protoText, &ls); err != nil {
 				t.Fatalf("Error unmarshalling example text: %s", err)
 			}
-			want := testCase.expectLabels
+			want := append(baseExpectedLabels, testCase.expectLabels...)
 			got := Convert(&ls)
 			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
@@ -318,7 +323,7 @@ func TestConvertStorageState(t *testing.T) {
 			if err := proto.UnmarshalText(protoText, &ls); err != nil {
 				t.Fatalf("Error unmarshalling example text: %s", err)
 			}
-			want := testCase.expectLabels
+			want := append(baseExpectedLabels, testCase.expectLabels...)
 			got := Convert(&ls)
 			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
@@ -349,7 +354,7 @@ func TestConvertServoUSBState(t *testing.T) {
 			if err := proto.UnmarshalText(protoText, &ls); err != nil {
 				t.Fatalf("Error unmarshalling example text: %s", err)
 			}
-			want := testCase.expectLabels
+			want := append(baseExpectedLabels, testCase.expectLabels...)
 			got := Convert(&ls)
 			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
@@ -379,7 +384,7 @@ func TestConvertServoTypeWorking(t *testing.T) {
 			if err := proto.UnmarshalText(protoText, &ls); err != nil {
 				t.Fatalf("Error unmarshalling example text: %s", err)
 			}
-			want := testCase.expectLabels
+			want := append(baseExpectedLabels, testCase.expectLabels...)
 			got := Convert(&ls)
 			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(

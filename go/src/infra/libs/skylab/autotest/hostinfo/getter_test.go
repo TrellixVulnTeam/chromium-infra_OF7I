@@ -43,6 +43,7 @@ const fullResponse = `{
 		"hwid_component:FAKE-BATTERY",
 		"hwid_component:FAKE-DISPLAY",
 		"audio_loopback_dongle",
+		"conductive:False",
 		"servo",
 		"servo_state:WORKING",
 		"servo_type:servo_v4_with_ccd_cr50",

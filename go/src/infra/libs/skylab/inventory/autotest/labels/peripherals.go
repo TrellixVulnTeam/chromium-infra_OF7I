@@ -48,6 +48,8 @@ func boolPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 	if p.GetConductive() {
 		// Special case
 		labels = append(labels, "conductive:True")
+	} else {
+		labels = append(labels, "conductive:False")
 	}
 	if p.GetHuddly() {
 		labels = append(labels, "huddly")

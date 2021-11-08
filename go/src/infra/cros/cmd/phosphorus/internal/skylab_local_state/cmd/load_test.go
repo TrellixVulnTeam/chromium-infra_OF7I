@@ -13,8 +13,17 @@ import (
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
+
 	"infra/libs/skylab/inventory"
 )
+
+var baseExpectedLabels = []string{"conductive:False"}
+
+func addBaseExpectedLabels(oldLabels []string) []string {
+	labels := append(baseExpectedLabels, oldLabels...)
+	sort.Strings(labels)
+	return labels
+}
 
 func TestDutInfoToHostInfoConversion(t *testing.T) {
 	Convey("When a DUT info is converted to a host info the result is correct.", t, func() {
@@ -48,12 +57,12 @@ func TestDutInfoToHostInfoConversion(t *testing.T) {
 				"dummy_key": "dummy_value",
 				"sku":       "dummy_sku",
 			},
-			Labels: []string{
+			Labels: addBaseExpectedLabels([]string{
 				"board:dummy_board",
 				"device-sku:dummy_sku",
 				"os:cros",
 				"platform:dummy_board",
-			},
+			}),
 			SerializerVersion: 1,
 		}
 
