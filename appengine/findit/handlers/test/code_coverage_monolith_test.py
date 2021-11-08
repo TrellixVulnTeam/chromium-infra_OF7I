@@ -198,74 +198,6 @@ def _CreateSampleFileCoverageData(builder='linux-code-coverage', modifier_id=0):
       })
 
 
-class FetchSourceFileTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/fetch-source-file',
-       code_coverage_monolith.FetchSourceFile),
-      ('/coverage/task/process-data/.*',
-       code_coverage_monolith.ProcessCodeCoverageData),
-  ],
-                                       debug=True)
-
-  def setUp(self):
-    super(FetchSourceFileTest, self).setUp()
-    self.UpdateUnitTestConfigSettings(
-        'code_coverage_settings', {
-            'allowed_gitiles_configs': {
-                'chromium.googlesource.com': {
-                    'chromium/src': ['refs/heads/main',]
-                }
-            },
-        })
-
-  def tearDown(self):
-    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
-    super(FetchSourceFileTest, self).tearDown()
-
-  def testPermissionInProcessCodeCoverageData(self):
-    self.mock_current_user(user_email='test@google.com', is_admin=True)
-    response = self.test_app.post(
-        '/coverage/task/process-data/123?format=json', status=401)
-    self.assertEqual(('Either not log in yet or no permission. '
-                      'Please log in with your @google.com account.'),
-                     response.json_body.get('error_message'))
-
-  @mock.patch.object(code_coverage_monolith, '_WriteFileContentToGs')
-  @mock.patch.object(GitilesRepository, 'GetSource', return_value='test')
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testFetchSourceFile(self, mocked_is_request_from_appself,
-                          mocked_gitiles_get_source, mocked_write_to_gs):
-    path = '//v8/src/dir/file.cc'
-    revision = 'bbbbb'
-
-    manifest = [
-        DependencyRepository(
-            path='//v8/',
-            server_host='chromium.googlesource.com',
-            project='v8/v8.git',
-            revision='zzzzz')
-    ]
-    report = _CreateSamplePostsubmitReport(manifest=manifest)
-    report.put()
-
-    request_url = '/coverage/task/fetch-source-file'
-    params = {
-        'report_key': report.key.urlsafe(),
-        'path': path,
-        'revision': revision
-    }
-    response = self.test_app.post(request_url, params=params)
-    self.assertEqual(200, response.status_int)
-    mocked_is_request_from_appself.assert_called()
-
-    # Gitiles should fetch the revision of last_updated_revision instead of
-    # root_repo_revision and the path should be relative to //v8/.
-    mocked_gitiles_get_source.assert_called_with('src/dir/file.cc', 'bbbbb')
-    mocked_write_to_gs.assert_called_with(
-        ('/source-files-for-coverage/chromium.googlesource.com/v8/v8.git/'
-         'src/dir/file.cc/bbbbb'), 'test')
-
-
 class ProcessCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication([
       ('/coverage/task/process-data/.*',
@@ -286,6 +218,14 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   def tearDown(self):
     self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
     super(ProcessCodeCoverageDataTest, self).tearDown()
+
+  def testPermissionInProcessCodeCoverageData(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=True)
+    response = self.test_app.post(
+        '/coverage/task/process-data/123?format=json', status=401)
+    self.assertEqual(('Either not log in yet or no permission. '
+                      'Please log in with your @google.com account.'),
+                     response.json_body.get('error_message'))
 
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')

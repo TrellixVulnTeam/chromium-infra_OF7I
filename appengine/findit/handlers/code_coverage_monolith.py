@@ -56,34 +56,8 @@ from waterfall import waterfall_config
 # The regex to extract the build id from the url path.
 _BUILD_ID_REGEX = re.compile(r'.*/build/(\d+)$')
 
-# Cloud storage bucket used to store the source files fetched from gitile.
-_SOURCE_FILE_GS_BUCKET = 'source-files-for-coverage'
-
 # The regex to extract the luci project name from the url path.
 _LUCI_PROJECT_REGEX = re.compile(r'^/coverage/p/([^/]+)')
-
-
-def _GetAllowedGitilesConfigs():
-  """Returns the set of valid gitiles configurations.
-
-  The returned structure contains the tree of valid hosts, projects, and refs.
-
-  Please note that the hosts in the config are gitiles hosts instead of gerrit
-  hosts, such as: 'chromium.googlesource.com'.
-
-  Example config:
-  {
-    'allowed_gitiles_configs': {
-      'chromium.googlesource.com': {
-        'chromium/src': [
-          'refs/heads/master',
-        ]
-      }
-    }
-  }
-  """
-  return waterfall_config.GetCodeCoverageSettings().get(
-      'allowed_gitiles_configs', {})
 
 
 def _GetDisallowedDeps():
@@ -325,54 +299,6 @@ def _RetrieveChromeManifest(repo_url, revision,
   return manifest
 
 
-def _GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
-  """Gets the matched dependency in the manifest of the report.
-
-  Args:
-    manifest (DependencyRepository): Entity containing mapping from path prefix
-                                     to corresponding repo.
-    file_path (str): Source absolute path to the file.
-
-  Returns:
-    A DependencyRepository if a matched one is found and it is allowed,
-    otherwise None.
-  """
-  assert file_path.startswith('//'), 'All file path should start with "//".'
-
-  for dep in manifest:
-    if file_path.startswith(
-        dep.path) and dep.server_host in _GetAllowedGitilesConfigs():
-      return dep
-
-  return None
-
-
-def _ComposeSourceFileGsPath(manifest, file_path, revision):
-  """Composes a cloud storage path for a specific revision of a source file.
-
-  Args:
-    manifest (DependencyRepository): Entity containing mapping from path prefix
-                                     to corresponding repo.
-    file_path (str): Source absolute path to the file.
-    revision (str): The gitile revision of the file in its own repo.
-
-  Returns:
-    Cloud storage path to the file, in the format /bucket/object. For example,
-    /source-files-for-coverage/chromium.googlesource.com/v8/v8/src/date.cc/1234.
-  """
-  assert file_path.startswith('//'), 'All file path should start with "//".'
-  assert revision, 'A valid revision is required'
-
-  dependency = _GetMatchedDependencyRepository(manifest, file_path)
-  assert dependency, ('%s file does not belong to any dependency repository' %
-                      file_path)
-
-  # Calculate the relative path to the root of the dependency repository itself.
-  relative_file_path = file_path[len(dependency.path):]
-  return '/%s/%s/%s/%s/%s' % (_SOURCE_FILE_GS_BUCKET, dependency.server_host,
-                              dependency.project, relative_file_path, revision)
-
-
 def _IsFileAvailableInGs(gs_path):  # pragma: no cover.
   """Returns True if the specified object exists, otherwise False.
 
@@ -405,45 +331,6 @@ def _GetFileContentFromGs(gs_path):  # pragma: no cover.
       return f.read()
   except cloudstorage.NotFoundError:
     return None
-
-
-def _WriteFileContentToGs(gs_path, content):  # pragma: no cover.
-  """Writes the content of a file to cloud storage.
-
-  Args:
-    gs_path (str): Path to the file, in the format /bucket/object.
-    content (str): Content of the file.
-  """
-  write_retry_params = cloudstorage.RetryParams(backoff_factor=2)
-  with cloudstorage.open(
-      gs_path, 'w', content_type='text/plain',
-      retry_params=write_retry_params) as f:
-    f.write(content)
-
-
-def _GetFileContentFromGitiles(manifest, file_path,
-                               revision):  # pragma: no cover.
-  """Fetches the content of a specific revision of a file from gitiles.
-
-  Args:
-    manifest (DependencyRepository): Entity containing mapping from path prefix
-                                     to corresponding repo.
-    file_path (str): Source absolute path to the file.
-    revision (str): The gitile revision of the file.
-
-  Returns:
-    The content of the source file."""
-  assert file_path.startswith('//'), 'All file path should start with "//".'
-  assert revision, 'A valid revision is required'
-
-  dependency = _GetMatchedDependencyRepository(manifest, file_path)
-  assert dependency, ('%s file does not belong to any dependency repository' %
-                      file_path)
-
-  # Calculate the relative path to the root of the dependency repository itself.
-  relative_file_path = file_path[len(dependency.path):]
-  repo = CachedGitilesRepository(FinditHttpClient(), dependency.project_url)
-  return repo.GetSource(relative_file_path, revision)
 
 
 def _IsReportSuspicious(report):
@@ -514,32 +401,6 @@ def _GetActiveReferenceCommit(server_host, project):
       modifier_ids.append(x.key.id())
   assert len(modifier_ids) <= 1, "More than one reference commit found"
   return modifier_ids[0] if modifier_ids else None
-
-
-class FetchSourceFile(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def HandlePost(self):
-    report_key = self.request.get('report_key')
-    path = self.request.get('path')
-    revision = self.request.get('revision')
-
-    assert report_key, 'report_key is required'
-    assert path, 'path is required'
-    assert revision, 'revision is required'
-
-    report = entity_util.GetEntityFromUrlsafeKey(report_key)
-    assert report, ('Postsubmit report does not exist for urlsafe key' %
-                    report_key)
-
-    file_content = _GetFileContentFromGitiles(report.manifest, path, revision)
-    if not file_content:
-      logging.error('Failed to get file from gitiles for %s@%s' %
-                    (path, revision))
-      return
-
-    gs_path = _ComposeSourceFileGsPath(report.manifest, path, revision)
-    _WriteFileContentToGs(gs_path, file_content)
 
 
 class ProcessCodeCoverageData(BaseHandler):
@@ -721,7 +582,7 @@ class ProcessCodeCoverageData(BaseHandler):
     assert path.startswith('//'), 'All file path should start with "//"'
     assert revision, 'A valid revision is required'
 
-    gs_path = _ComposeSourceFileGsPath(report.manifest, path, revision)
+    gs_path = utils.ComposeSourceFileGsPath(report.manifest, path, revision)
     if _IsFileAvailableInGs(gs_path):
       return
 
@@ -1187,7 +1048,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('patchset=%d', patchset)
     logging.info('type=%s', data_type)
 
-    configs = _GetAllowedGitilesConfigs()
+    configs = utils._GetAllowedGitilesConfigs()
     if project not in configs.get(host.replace('-review', ''), {}):
       return BaseHandler.CreateError(
           error_message='"%s/%s" is not supported.' % (host, project),
@@ -1424,7 +1285,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('test_suite_type=%s' % test_suite_type)
     logging.info('modifier_id=%d' % modifier_id)
 
-    configs = _GetAllowedGitilesConfigs()
+    configs = utils._GetAllowedGitilesConfigs()
     if ref not in configs.get(host, {}).get(project, []):
       return BaseHandler.CreateError(
           '"%s/%s/+/%s" is not supported.' % (host, project, ref), 400)
@@ -1560,12 +1421,13 @@ class ServeCodeCoverageData(BaseHandler):
       """
       line_to_data = collections.defaultdict(dict)
       if metadata.get('revision', ''):
-        gs_path = _ComposeSourceFileGsPath(manifest, path, metadata['revision'])
+        gs_path = utils.ComposeSourceFileGsPath(manifest, path,
+                                                metadata['revision'])
         file_content = _GetFileContentFromGs(gs_path)
         if not file_content:
           # Fetching files from Gitiles is slow, only use it as a backup.
-          file_content = _GetFileContentFromGitiles(manifest, path,
-                                                    metadata['revision'])
+          file_content = utils.GetFileContentFromGitiles(
+              manifest, path, metadata['revision'])
       else:
         # If metadata['revision'] is empty, it means that the file is not
         # a source file.
