@@ -299,7 +299,7 @@ func getClangUnit(ctx context.Context, clangInfo *clangUnitInfo, rootPath, outDi
 	unitProto.WorkingDirectory = convertPathToForwardSlashes(clangInfo.unit.Directory)
 	unitProto.OutputKey = outputFile
 	unitProto.VName = &kpb.VName{
-		Corpus:   corpusForFile(ctx, clangInfo.unit.File, corpus),
+		Corpus:   corpus,
 		Language: "c++",
 	}
 

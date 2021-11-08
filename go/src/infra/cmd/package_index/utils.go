@@ -17,11 +17,11 @@ import (
 	kpb "infra/cmd/package_index/kythe/proto"
 )
 
-// A list of path prefixes to external corpsus names, used by kythe/grimoire
-// to find external headers.
-var externalCorpora = map[string]string{
-	"src/third_party/depot_tools/win_toolchain": "winsdk",
-	"src/build/linux/debian_sid_amd64-sysroot":  "debian_amd64",
+// A list of path prefixes to set a different root and path, used by
+// kythe/grimoire to find external headers.
+var rootModifiers = []string{
+	"src/third_party/depot_tools/win_toolchain",
+	"src/build/linux/debian_sid_amd64-sysroot",
 }
 
 // Substrings of arguments that should be removed from compile commands on Windows.
@@ -190,31 +190,13 @@ func setVnameForFile(ctx context.Context, vnameProto *kpb.VName, filepath, defau
 
 	vnameProto.Corpus = defaultCorpus
 	vnameProto.Path = filepath
-	for prefix, corpus := range externalCorpora {
+	for _, prefix := range rootModifiers {
 		if strings.HasPrefix(filepath, prefix+"/") {
 			vnameProto.Path = filepath[len(prefix)+1:]
 			vnameProto.Root = prefix
-			vnameProto.Corpus = corpus
 			break
 		}
 	}
-}
-
-// corpusForFile returns the appropriate corpus name for filepath.
-//
-// Specifically, this checks if the file should be put in a special corpus
-// (e.g. the one for the Windows SDK). If not, returns defaultCorpus.
-func corpusForFile(ctx context.Context, filepath, defaultCorpus string) string {
-	if strings.Contains(filepath, "\\") {
-		panic("Filepath contains \\")
-	}
-
-	for prefix, corpus := range externalCorpora {
-		if strings.HasPrefix(filepath, prefix) {
-			return corpus
-		}
-	}
-	return defaultCorpus
 }
 
 // isUnwantedWinArg checks if a given arg should be removed for
