@@ -343,13 +343,6 @@ func (s *scanner) doCheckoutCleanup(co *multiProjectCheckout) {
 }
 
 func (s *scanner) doCheckoutFixups(co *multiProjectCheckout) {
-	if s.cfg.Squeaky && s.cfg.Clean {
-		checkoutDir := s.projectDir.CheckoutDir(co.checkoutID)
-		if err := os.RemoveAll(checkoutDir); err != nil && !os.IsNotExist(err) {
-			logging.Errorf(co.ctx, "Failed to clean repo, creation may fail: %s", err)
-		}
-	}
-
 	r := &repo{
 		projectDir: s.projectDir,
 		checkoutID: co.checkoutID,
@@ -361,6 +354,15 @@ func (s *scanner) doCheckoutFixups(co *multiProjectCheckout) {
 		logging.Errorf(co.ctx, "Failed to checkout repo: %s", err)
 		co.report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
 		return
+	}
+
+	if !newCheckout && s.cfg.Squeaky && s.cfg.Clean {
+		if err := r.reset(co.ctx); err != nil {
+			logging.Errorf(co.ctx, "Failed to reset the repo: %s", err)
+			co.report("REPO_RESET_FAILURE", "Failed to reset the repo")
+			return
+		}
+		newCheckout = true
 	}
 
 	for _, proj := range co.projs {

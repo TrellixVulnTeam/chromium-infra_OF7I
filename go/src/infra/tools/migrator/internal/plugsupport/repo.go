@@ -275,6 +275,26 @@ func (r *repo) create(ctx context.Context, remoteURL, remoteRef string) error {
 	return os.Rename(git.root, r.root)
 }
 
+// reset updates the repo to the state as if it was just fetched.
+//
+// Fetches the most recent state of the remote ref, recreates fix_config branch.
+func (r *repo) reset(ctx context.Context) error {
+	git := r.git(ctx)
+
+	git.run("fetch", "--depth", "1", "origin")
+	git.run("reset", "--hard", "FETCH_HEAD")
+	git.run("clean", "-ffxd")
+	git.run("-c", "advice.detachedHead=false", "checkout", "FETCH_HEAD")
+
+	// Delete the branch only if it actually exists, otherwise the command fails.
+	if git.read("config", fmt.Sprintf("branch.%s.remote", localBranch)) != "" {
+		git.run("branch", "-D", localBranch)
+	}
+	git.run("new-branch", localBranch)
+
+	return git.err
+}
+
 // prepRepoForProject figures out what directories we need to check out.
 func (r *repo) prepRepoForProject(git *gitRunner, originRef string, proj *configpb.Project, toAdd stringset.Set) error {
 	// Path where generated configs (e.g. project.cfg) are.
