@@ -97,3 +97,13 @@ class Source:
   def upload(self):
     """ upload uploads all the available files to be uploaded if available """
     self._gcs.upload_packages()
+
+  def exists(self, src):
+    """ exists Returns True if the given src exists
+        Args:
+          src: sources.Src proto object representing an artifact
+    """
+    # TODO(anushruth): add support for git and cipd
+    if src and src.WhichOneof('src') == 'gcs_src':
+      return self._gcs.exists(src.gcs_src)
+    return False  # pragma: no cover

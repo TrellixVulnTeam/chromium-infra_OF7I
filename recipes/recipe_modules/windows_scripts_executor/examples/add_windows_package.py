@@ -18,6 +18,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
+    'recipe_engine/raw_io'
 ]
 
 PROPERTIES = wib.Image
@@ -98,7 +99,7 @@ def GenTests(api):
              t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'add pkg',
                          [INSTALL_FILE_ARGS])) +
          # mock all the init and deinit steps
-         t.MOCK_WPE_INIT_DEINIT_FAILURE(api, 'x86', image, customization) +
+         t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, 'x86', image, customization) +
          # mock install file step
          t.INSTALL_FILE(api, 'add cipd', image, customization, success=False) +
          # assert that the install file step was executed with args

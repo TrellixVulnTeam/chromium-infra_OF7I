@@ -68,12 +68,20 @@ class GCSManager:
     ret_code = res.exc_result.retcode
     if ret_code == 0:
       text = res.stdout
+      # return the given url if not pinned
       orig_url = url
       for line in text.split('\n'):
         if 'orig:' in line:
           orig_url = line.replace('orig:', '').strip()
-          return orig_url
+      return orig_url
     return ''
+
+  def exists(self, gcs_src):
+    """ exists returns True if the given ref exists on GCS
+        Args:
+          gcs_src: sources.GCSSrc proto object to check for existence
+    """
+    return not self.get_orig(self.get_gs_url(gcs_src)) == ''
 
   def download_packages(self):
     """ download_packages downloads all the gcs refs """

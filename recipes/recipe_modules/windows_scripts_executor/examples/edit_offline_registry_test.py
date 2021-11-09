@@ -15,6 +15,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
+    'recipe_engine/raw_io',
 ]
 
 PROPERTIES = wib.Image
@@ -54,7 +55,7 @@ def GenTests(api):
                       [EDIT_OFFLINE_REGISTRY_TAMPER_PROTECTION_PROPERTIES])) +
 
       # mock all the init and deinit steps
-      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, arch, image, customization) +
+      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, customization) +
 
       # mock registry edit action
       t.EDIT_REGISTRY(api, 'TamperProtection', image, customization, False) +

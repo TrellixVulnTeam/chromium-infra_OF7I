@@ -89,19 +89,36 @@ def json_res(api, success=True, err_msg='Failed step'):
 
 def MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps """
-  return GEN_WPE_MEDIA(api, arch, image, customization) + MOUNT_WIM(
-      api, arch, image, customization) + UMOUNT_WIM(
-          api, image, customization) + DEINIT_WIM_ADD_CFG_TO_ROOT(
-              api, key, image, customization) + CHECK_UMOUNT_WIM(
-                  api, image, customization)
+  return MOCK_CUST_OUTPUT(api, image,
+                          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+                          False) + \
+        GEN_WPE_MEDIA(api, arch, image, customization) + \
+        MOUNT_WIM(api, arch, image, customization) + \
+        UMOUNT_WIM(api, image, customization) + \
+        DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) + \
+        CHECK_UMOUNT_WIM(api, image, customization)
 
 
-def MOCK_WPE_INIT_DEINIT_FAILURE(api, arch, image, customization):
+def MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps on an action failure """
-  return GEN_WPE_MEDIA(api, arch, image, customization) + MOUNT_WIM(
-      api, arch, image, customization) + UMOUNT_WIM(
-          api, image, customization) + CHECK_UMOUNT_WIM(
-              api, image, customization, save=False)
+  return MOCK_CUST_OUTPUT(api, image,
+                          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+                          False) + \
+         GEN_WPE_MEDIA(api, arch, image, customization) + \
+         MOUNT_WIM(api, arch, image, customization) + \
+         UMOUNT_WIM( api, image, customization) + \
+         CHECK_UMOUNT_WIM(api, image, customization, save=False)
+
+
+def MOCK_CUST_OUTPUT(api, image, url, success=True):
+  retcode = 1
+  if success:
+    retcode = 0
+  return api.step_data(
+      NEST(NEST_CONFIG_STEP(image), 'gsutil stat {}'.format(url)),
+      api.raw_io.stream_output(_gcs_stat.format(url, url)),
+      retcode=retcode,
+  )
 
 
 def GEN_WPE_MEDIA(api, arch, image, customization, success=True):

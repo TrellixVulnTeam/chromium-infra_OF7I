@@ -9,6 +9,7 @@ from . import offline_winpe_customization as offwinpecust
 from . import sources
 from . import helper
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import sources as src_pb
 
 
 class WindowsPSExecutorAPI(recipe_api.RecipeApi):
@@ -170,7 +171,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     """
     with self.m.step.nest('execute config {}'.format(config.name)):
       for cust in self._customizations:
-        cust.execute_customization()
+        output = cust.get_output()
+        if not self._sources.exists(src_pb.Src(gcs_src=output)):
+          # execute the customization if we don't have the output
+          cust.execute_customization()
 
   def upload_wib_artifacts(self):
     """ upload_wib_artifacts uploads all the available artifacts """

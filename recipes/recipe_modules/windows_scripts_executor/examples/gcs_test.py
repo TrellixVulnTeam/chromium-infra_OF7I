@@ -97,7 +97,7 @@ def GenTests(api):
           t.WPE_IMAGE(image, wib.ARCH_X86, customization,
                       'add artifact from gcs', [ACTION_ADD_PING])) +
       # mock all the init and deint steps
-      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, 'x86', image, customization) +
+      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, 'x86', image, customization) +
       # non-existent gcs artifact
       t.GCS_PIN_FILE(api, 'gs://WinTools/net/ping.exe', success=False) +
       # failure adding the file to the image

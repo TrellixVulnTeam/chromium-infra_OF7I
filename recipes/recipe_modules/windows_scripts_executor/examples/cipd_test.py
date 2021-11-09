@@ -18,6 +18,7 @@ DEPS = [
     'recipe_engine/properties',
     'recipe_engine/platform',
     'recipe_engine/json',
+    'recipe_engine/raw_io'
 ]
 
 PROPERTIES = wib.Image

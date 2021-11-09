@@ -83,6 +83,16 @@ class OfflineWinPECustomization(customization.Customization):
       self._canon_cust = cust
     return self._canon_cust
 
+  def get_output(self):
+    """ return the output of executing this config. Doesn't guarantee that the
+        output exists"""
+    if self._key:
+      return sources.GCSSrc(
+          bucket='chrome-gce-images',
+          source='WIB-WIM/{}.wim'.format(self._key),
+      )
+    return None  # pragma: no cover
+
   def execute_customization(self):
     """ execute_customization initializes the winpe image, runs the given
         actions and repackages the image and uploads the result to GCS"""
@@ -149,10 +159,7 @@ class OfflineWinPECustomization(customization.Customization):
           self._scratchpad,
           save=save)
       if save:
-        default_src = sources.GCSSrc(
-            bucket='chrome-gce-images',
-            source='WIB-WIM/{}.wim'.format(self._key),
-        )
+        default_src = self.get_output()
         self._file.copy(
             name='Copy output to destination',
             source=src,
