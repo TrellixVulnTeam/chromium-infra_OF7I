@@ -1,0 +1,28 @@
+{
+    "devices": [
+        {
+            "dut": {
+                "id": {
+                    "value": "your_test_dut"
+                }
+            },
+            "provision_state": {
+                "id": {
+                    "value": "provision-state-id"
+                },
+                "system_image": {
+                    "version": "R99-12345.678.9",
+                    "system_image_path": {
+                        "host_type": 2,
+                        "path": "gs://some_image_path"
+                    }
+                },
+                "prevent_reboot": false
+            }
+        }
+    ],
+    "inventory_server": {
+        "address": "your_local_address",
+        "port": 7151
+    }
+}

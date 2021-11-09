@@ -1,0 +1,32 @@
+{
+    "containers": {
+        "amd64-generic": {
+            "images": {
+                "cros-provision": {
+                    "repository": {
+                        "hostname": "gcr.io",
+                        "project": "chromeos-bot"
+                    },
+                    "name": "cros-provision",
+                    "digest": "sha256:358220b78df907d101ac5aac0c319a14a7c9a2087302e3696a254dfa35f62a22",
+                    "tags": [
+                        "8831746311025430993",
+                        "staging-eve-postsubmit.R97-14318.0.0-8831746311025430993"
+                    ]
+                },
+                "cros-dut": {
+                    "repository": {
+                        "hostname": "gcr.io",
+                        "project": "chromeos-bot"
+                    },
+                    "name": "cros-dut",
+                    "digest": "sha256:63fd77892af8d19d5f90d1c4f1bdc422eb7a806a47e0f5ea8daebed3bc3f0f8d",
+                    "tags": [
+                        "8831746311025430993",
+                        "staging-eve-postsubmit.R97-14318.0.0-8831746311025430993"
+                    ]
+                }
+            }
+        }
+    }
+}

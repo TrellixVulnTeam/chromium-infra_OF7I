@@ -12,11 +12,10 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
-	config_go "go.chromium.org/chromiumos/config/go"
+	build_api "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/test/api"
 	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/luci/auth"
@@ -30,34 +29,25 @@ import (
 	"infra/cros/cmd/cros-tool-runner/internal/provision"
 )
 
-// Run executes the provisioning for requested devices.
-func Run(authOpts auth.Options) *subcommands.Command {
+// Provision executes the provisioning for requested devices.
+func Provision(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
-		UsageLine: "run [-in-json in_path.json] [-out-json out_path.json]",
+		UsageLine: "provision -input input.json -output output.json",
 		ShortDesc: "Run provisioning for ChromeOS devices",
 		LongDesc: `Run provisioning for ChromeOS devices
 
 Tool used to perfrom provisioning OS, components and FW to ChromeOS device specified by ProvisionState.
 
-Supporting two ways to execute provisioning.
-1) Provide ProvisionCliInput as jsonproto structure in JSON file. (provision_cli.proto)
-	Usage: cros-tool-runner run -in-json your_in.json -out-json your_out.json
-2) Provide all required detail in command line interface.
-	Usage: cros-tool-runner run -dut-name your_device_name -cros chrome_os_dir_path [-prevent-reboot] [-dut-service-docker-image repo:tag] [-provision-service-docker-image repo:tag]
+Example:
+cros-tool-runner provision -images docker-images.json -input provision_request.json -output provision_result.json
 `,
 		CommandRun: func() subcommands.CommandRun {
 			c := &runCmd{}
 			c.authFlags.Register(&c.Flags, authOpts)
 			// Used to provide input by files.
-			c.Flags.StringVar(&c.inputPath, "in-json", "", "Path that contains JSON file. Used together with '-out-json'.")
-			c.Flags.StringVar(&c.outputPath, "out-json", "", "Path that will contain JSON file. Used together with '-in-json'.")
-
-			// Used to provide by manually.
-			c.Flags.StringVar(&c.dutName, "dut-name", "", "Name of provisioning device.")
-			c.Flags.StringVar(&c.crosImagePath, "cros", "", "Path for system image directory.")
-			c.Flags.BoolVar(&c.preventReboot, "prevent-reboot", false, "Prevent reboot during install system image.")
-			c.Flags.StringVar(&c.dutServiceDockerImage, "dut-service-docker-image", "", "The name of dut-service docker image. Example: 'gcr.io/chromeos-bot/dutserver:your_version'.")
-			c.Flags.StringVar(&c.provisionServiceDockerImage, "provision-service-docker-image", "", "The name of provision-service docker image. Example: 'gcr.io/chromeos-bot/provisionserver:your_version'.")
+			c.Flags.StringVar(&c.inputPath, "input", "", "The input file contains a jsonproto representation of provision requests (CrosToolRunnerProvisionRequest)")
+			c.Flags.StringVar(&c.outputPath, "output", "", "The output file contains a jsonproto representation of provision responses (CrosToolRunnerProvisionResponse)")
+			c.Flags.StringVar(&c.imagesPath, "images", "", "The input file contains a jsonproto representation of containers metadata (ContainerMetadata)")
 			return c
 		},
 	}
@@ -69,18 +59,31 @@ type runCmd struct {
 
 	inputPath  string
 	outputPath string
+	imagesPath string
 
-	dutName                     string
-	crosImagePath               string
-	preventReboot               bool
-	dutServiceDockerImage       string
-	provisionServiceDockerImage string
+	in                 *api.CrosToolRunnerProvisionRequest
+	crosDutImage       *build_api.ContainerImageInfo
+	crosProvisionImage *build_api.ContainerImageInfo
 }
 
 // Run executes the tool.
 func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 	out, err := c.innerRun(ctx, a, args, env)
+	// Unexpected error will counted as incorrect request data.
+	// all expected cases has to generate responses.
+	if err != nil && len(out.GetResponses()) == 0 {
+		log.Printf("Run: add error to output, %s", err)
+		out.Responses = []*api.CrosProvisionResponse{
+			{
+				Outcome: &api.CrosProvisionResponse_Failure{
+					Failure: &api.InstallFailure{
+						Reason: api.InstallFailure_REASON_INVALID_REQUEST,
+					},
+				},
+			},
+		}
+	}
 	if err := saveOutput(out, c.outputPath); err != nil {
 		log.Printf("Run: %s", err)
 	}
@@ -92,32 +95,36 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 	return 0
 }
 
-func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) (*api.ProvisionCliOutput, error) {
-	var out *api.ProvisionCliOutput
+func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) (*api.CrosToolRunnerProvisionResponse, error) {
+	out := &api.CrosToolRunnerProvisionResponse{}
 	ctx, err := useSystemAuth(ctx, &c.authFlags)
 	if err != nil {
 		return out, errors.Annotate(err, "inner run: read system auth").Err()
 	}
-	localAddr, err := readLocalAddress()
-	if err != nil {
-		return out, errors.Annotate(err, "inner run: read local addr").Err()
-	}
-	req, err := c.newProvisionInput()
+	req, err := readProvisionRequest(c.inputPath)
 	if err != nil {
 		return out, errors.Annotate(err, "inner run").Err()
 	}
 
+	cm, err := readContainersMetadata(c.imagesPath)
+	if err != nil {
+		return out, errors.Annotate(err, "inner run").Err()
+	}
+
+	if isEmptyEndPoint(req.GetInventoryServer()) {
+		return out, errors.Annotate(err, "inner run: inventory service is not provided").Err()
+	}
+
 	// TODO(otabek): Listen signal to cancel execution by client.
 
-	out = &api.ProvisionCliOutput{}
 	// errgroup returns the first error but doesn't stop execution of other goroutines.
 	g, ctx := errgroup.WithContext(ctx)
-	provisionResults := make([]*api.DutOutput, len(req.GetDutInputs()))
+	provisionResults := make([]*api.CrosProvisionResponse, len(req.GetDevices()))
 	// Each DUT will run in parallel execution.
-	for i, dutInfo := range req.GetDutInputs() {
-		i, dutInfo := i, dutInfo
+	for i, device := range req.GetDevices() {
+		i, device := i, device
 		g.Go(func() error {
-			result := provision.Run(ctx, dutInfo, localAddr)
+			result := provision.Run(ctx, device, req.GetInventoryServer(), findContainer(cm, device, "cros-dut"), findContainer(cm, device, "cros-provision"))
 			provisionResults[i] = result.Out
 			return result.Err
 		})
@@ -125,82 +132,53 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 	err = g.Wait()
 	// Read all generated results for the output.
 	for _, result := range provisionResults {
-		out.DutOutputs = append(out.DutOutputs, result)
+		out.Responses = append(out.Responses, result)
 	}
 	return out, errors.Annotate(err, "inner run").Err()
 }
 
-// Read input data to create the input request.
-func (c *runCmd) newProvisionInput() (*api.ProvisionCliInput, error) {
-	if c.inputPath != "" {
-		return readInput(c.inputPath)
+func findContainer(cm *build_api.ContainerMetadata, device *api.CrosToolRunnerProvisionRequest_Device, name string) *build_api.ContainerImageInfo {
+	// TODO: need update logic base on real examples.
+	for _, c := range cm.GetContainers() {
+		for n, i := range c.GetImages() {
+			if n == name {
+				log.Printf("Found %q image %s", name, i)
+				return i
+			}
+		}
 	}
-	return c.createInputRequest()
+	log.Printf("Image %q not found", name)
+	return nil
 }
 
-// TODO(otabek): Add support for other options.
-func (c *runCmd) createInputRequest() (*api.ProvisionCliInput, error) {
-	if c.dutName == "" {
-		return nil, errors.Reason("create input request: dut name is not provided").Err()
-	}
-	return &api.ProvisionCliInput{
-		DutInputs: []*api.DutInput{
-			{
-				Id:               &lab_api.Dut_Id{Value: c.dutName},
-				DutService:       createDockerImage(c.dutServiceDockerImage),
-				ProvisionService: createDockerImage(c.provisionServiceDockerImage),
-				ProvisionState: &api.ProvisionState{
-					SystemImage:   createSystemImage(c.crosImagePath),
-					PreventReboot: c.preventReboot,
-				},
-			},
-		},
-	}, nil
+func isEmptyEndPoint(i *lab_api.IpEndpoint) bool {
+	return i == nil || i.GetAddress() == "" || i.GetPort() <= 0
 }
 
-func createDockerImage(name string) *api.DutInput_DockerImage {
-	if name == "" {
-		return nil
-	}
-	parts := strings.Split(name, ":")
-	r := &api.DutInput_DockerImage{
-		RepositoryPath: parts[0],
-	}
-	if len(parts) > 1 {
-		r.Tag = parts[1]
-	}
-	return r
-}
-
-func createSystemImage(imagePath string) *api.ProvisionState_SystemImage {
-	if imagePath == "" {
-		return nil
-	}
-	pathType := config_go.StoragePath_GS
-	if !strings.HasPrefix(imagePath, "gs://") {
-		pathType = config_go.StoragePath_LOCAL
-	}
-	return &api.ProvisionState_SystemImage{
-		SystemImagePath: &config_go.StoragePath{
-			HostType: pathType,
-			Path:     imagePath,
-		},
-	}
-}
-
-// readInput reads the jsonproto at path input data.
-func readInput(inputPath string) (*api.ProvisionCliInput, error) {
-	in := &api.ProvisionCliInput{}
-	r, err := os.Open(inputPath)
+// readProvisionRequest reads the jsonproto at path input request data.
+func readProvisionRequest(p string) (*api.CrosToolRunnerProvisionRequest, error) {
+	in := &api.CrosToolRunnerProvisionRequest{}
+	r, err := os.Open(p)
 	if err != nil {
-		return nil, errors.Annotate(err, "read input").Err()
+		return nil, errors.Annotate(err, "read provision request %q", p).Err()
 	}
 	err = jsonpb.Unmarshal(r, in)
-	return in, errors.Annotate(err, "read input").Err()
+	return in, errors.Annotate(err, "read provision request %q", p).Err()
+}
+
+// readContainersMetadata reads the jsonproto at path containers metadata file.
+func readContainersMetadata(p string) (*build_api.ContainerMetadata, error) {
+	in := &build_api.ContainerMetadata{}
+	r, err := os.Open(p)
+	if err != nil {
+		return nil, errors.Annotate(err, "read container metadata %q", p).Err()
+	}
+	err = jsonpb.Unmarshal(r, in)
+	return in, errors.Annotate(err, "read container metadata %q", p).Err()
 }
 
 // saveOutput saves output data to the file.
-func saveOutput(out *api.ProvisionCliOutput, outputPath string) error {
+func saveOutput(out *api.CrosToolRunnerProvisionResponse, outputPath string) error {
 	if outputPath != "" && out != nil {
 		dir := filepath.Dir(outputPath)
 		// Create the directory if it doesn't exist.
@@ -223,7 +201,7 @@ func saveOutput(out *api.ProvisionCliOutput, outputPath string) error {
 	return nil
 }
 
-func printOutput(out *api.ProvisionCliOutput, a subcommands.Application) {
+func printOutput(out *api.CrosToolRunnerProvisionResponse, a subcommands.Application) {
 	if out != nil {
 		s, err := json.MarshalIndent(out, "", "\t")
 		if err != nil {
