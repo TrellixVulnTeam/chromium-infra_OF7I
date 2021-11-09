@@ -10,6 +10,7 @@ import (
 	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
 	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/bootstrapper/gitiles"
+	"infra/chromium/bootstrapper/util"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -442,6 +443,19 @@ func TestGetBootstrapConfig(t *testing.T) {
 
 			})
 
+			Convey("for properties-optional bootstrapping", func() {
+				inputOpts := InputOptions{PropertiesOptional: true}
+				delete(build.Input.Properties.Fields, "$bootstrap/properties")
+				input, err := inputOpts.NewInput(build)
+				util.PanicOnError(err)
+
+				config, err := bootstrapper.GetBootstrapConfig(ctx, input)
+
+				So(err, ShouldBeNil)
+				So(config.commit, ShouldBeNil)
+				So(config.change, ShouldBeNil)
+				So(config.builderProperties, ShouldBeNil)
+			})
 		})
 
 	})
@@ -536,5 +550,53 @@ func TestUpdateBuild(t *testing.T) {
 				}
 			}`)
 		})
+
+		Convey("updates build with gitiles commit, $build/chromium_bootstrap module properties and build properties for properties optional bootstrapping", func() {
+			config := &BootstrapConfig{
+				buildProperties: jsonToStruct(`{
+					"foo": "build-foo-value",
+					"bar": "build-bar-value"
+				}`),
+			}
+			exe := &BootstrappedExe{
+				Source: &BootstrappedExe_Cipd{
+					Cipd: &Cipd{
+						Server:           "fake-cipd-server",
+						Package:          "fake-cipd-package",
+						RequestedVersion: "fake-cipd-ref",
+						ActualVersion:    "fake-cipd-instance-id",
+					},
+				},
+				Cmd: []string{"fake-exe"},
+			}
+			build := &buildbucketpb.Build{
+				Input: &buildbucketpb.Build_Input{},
+			}
+
+			err := config.UpdateBuild(build, exe)
+
+			So(err, ShouldBeNil)
+			So(build, ShouldResembleProtoJSON, `{
+				"input": {
+					"properties": {
+						"$build/chromium_bootstrap": {
+							"exe": {
+								"cipd": {
+									"server": "fake-cipd-server",
+									"package": "fake-cipd-package",
+									"requested_version": "fake-cipd-ref",
+									"actual_version": "fake-cipd-instance-id"
+								},
+								"cmd": ["fake-exe"]
+							}
+						},
+						"foo": "build-foo-value",
+						"bar": "build-bar-value"
+					}
+				}
+			}`)
+		})
+
 	})
+
 }

@@ -17,41 +17,59 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+// InputOptions provides options that are inputs to the bootstrapping process.
+type InputOptions struct {
+	// PropertiesOptional changes the bootstrapper's behavior to not fail if
+	// the $bootstrap/properties property is not set or if the identified
+	// file does not exist at the revision being bootstrapped.
+	PropertiesOptional bool
+}
+
 // Input provides the relevant details from the build input to the operations
 // that prepare a bootstrapped executable to run. It is safe to share a single
 // instance between multiple operations that take Input.
 type Input struct {
-	commit          *buildbucketpb.GitilesCommit
-	changes         []*buildbucketpb.GerritChange
-	buildProperties *structpb.Struct
-	propsProperties *BootstrapPropertiesProperties
-	exeProperties   *BootstrapExeProperties
-	casRecipeBundle *apipb.CASReference
+	commit             *buildbucketpb.GitilesCommit
+	changes            []*buildbucketpb.GerritChange
+	buildProperties    *structpb.Struct
+	propertiesOptional bool
+	propsProperties    *BootstrapPropertiesProperties
+	exeProperties      *BootstrapExeProperties
+	casRecipeBundle    *apipb.CASReference
 }
 
-// NewInput creates a new Input, returning an error if the build input fails to
-// validate.
+// NewInput creates a new Input, returning an error if build input fails
+// validation.
 //
 // The build input can fail to validate for the following reasons:
-// * The $bootstrap/properties property is not set.
-// * The $bootstrap/properties property is set, but not to a valid
+// * The $bootstrap/properties property is not set and
+//   o.PropertiesOptional is false.
+// * The $bootstrap/properties is set, but does not contain a valid
 //   BootstrapPropertiesProperties message.
 // * The $bootstrap/exe property is not set.
-// * The $bootstrap/exe property is set, but not to a valid
+// * The $bootstrap/exe property is set, but does not contain a valid
 //   BootstrapExeProperties message.
-func NewInput(build *buildbucketpb.Build) (*Input, error) {
+func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 	properties := build.GetInput().GetProperties()
 	if properties == nil {
 		properties = &structpb.Struct{}
 	}
 
 	// Check for the presence of required properties
-	propsProperties := &BootstrapPropertiesProperties{}
 	exeProperties := &BootstrapExeProperties{}
 	propsToParse := map[string]interface{}{
-		"$bootstrap/properties": propsProperties,
-		"$bootstrap/exe":        exeProperties,
+		"$bootstrap/exe": exeProperties,
 	}
+
+	var propsProperties *BootstrapPropertiesProperties
+	addPropsProperties := func() {
+		propsProperties = &BootstrapPropertiesProperties{}
+		propsToParse["$bootstrap/properties"] = propsProperties
+	}
+	if !o.PropertiesOptional {
+		addPropsProperties()
+	}
+
 	missingProps := make([]string, 0, len(propsToParse))
 	for k := range propsToParse {
 		if _, ok := properties.Fields[k]; !ok {
@@ -63,6 +81,11 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 		return nil, errors.Reason("the following required properties are not set: %s", strings.Join(missingProps, ", ")).Err()
 	}
 
+	if o.PropertiesOptional {
+		if _, ok := propsToParse["$bootstrap/properties"]; ok {
+			addPropsProperties()
+		}
+	}
 	casRecipeBundle := &apipb.CASReference{}
 	propsToParse[ledcmd.CASRecipeBundleProperty] = casRecipeBundle
 
@@ -70,8 +93,10 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 		return nil, errors.Annotate(err, "failed to parse properties").Err()
 	}
 
-	if err := validate(propsProperties, "$bootstrap/properties"); err != nil {
-		return nil, errors.Annotate(err, "failed to validate $bootstrap/properties property").Err()
+	if propsProperties != nil {
+		if err := validate(propsProperties, "$bootstrap/properties"); err != nil {
+			return nil, errors.Annotate(err, "failed to validate $bootstrap/properties property").Err()
+		}
 	}
 	if err := validate(exeProperties, "$bootstrap/exe"); err != nil {
 		return nil, errors.Annotate(err, "failed to validate $bootstrap/exe property").Err()
@@ -97,12 +122,13 @@ func NewInput(build *buildbucketpb.Build) (*Input, error) {
 	delete(properties.Fields, "$bootstrap")
 
 	input := &Input{
-		commit:          commit,
-		changes:         changes,
-		buildProperties: properties,
-		propsProperties: propsProperties,
-		exeProperties:   exeProperties,
-		casRecipeBundle: casRecipeBundle,
+		commit:             commit,
+		changes:            changes,
+		buildProperties:    properties,
+		propertiesOptional: o.PropertiesOptional,
+		propsProperties:    propsProperties,
+		exeProperties:      exeProperties,
+		casRecipeBundle:    casRecipeBundle,
 	}
 	return input, nil
 }

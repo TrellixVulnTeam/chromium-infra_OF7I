@@ -80,25 +80,30 @@ type BootstrapConfig struct {
 // appropriate version of the properties file.
 func (b *BuildBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input) (*BootstrapConfig, error) {
 	var config *BootstrapConfig
-	switch x := input.propsProperties.ConfigProject.(type) {
-	case *BootstrapPropertiesProperties_TopLevelProject_:
-		var err error
-		if config, err = b.getTopLevelConfig(ctx, input, x.TopLevelProject); err != nil {
-			return nil, err
+	if input.propsProperties == nil {
+		config = &BootstrapConfig{}
+	} else {
+		switch x := input.propsProperties.ConfigProject.(type) {
+		case *BootstrapPropertiesProperties_TopLevelProject_:
+			var err error
+			if config, err = b.getTopLevelConfig(ctx, input, x.TopLevelProject); err != nil {
+				return nil, err
+			}
+
+		default:
+			return nil, errors.Reason("config_project handling for type %T is not implemented", x).Err()
 		}
 
-	default:
-		return nil, errors.Reason("config_project handling for type %T is not implemented", x).Err()
-	}
+		if err := b.populateCommitId(ctx, config.commit); err != nil {
+			return nil, errors.Annotate(err, "failed to resolve ID for config commit %s", config.commit).Err()
+		}
 
-	if err := b.populateCommitId(ctx, config.commit); err != nil {
-		return nil, errors.Annotate(err, "failed to resolve ID for config commit %s", config.commit).Err()
+		if err := b.getPropertiesFromFile(ctx, input.propsProperties.PropertiesFile, config); err != nil {
+			return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.propsProperties.PropertiesFile).Err()
+		}
 	}
 
 	config.buildProperties = input.buildProperties
-	if err := b.getPropertiesFromFile(ctx, input.propsProperties.PropertiesFile, config); err != nil {
-		return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.propsProperties.PropertiesFile).Err()
-	}
 
 	return config, nil
 }
@@ -235,10 +240,19 @@ func convertGerritHostToGitilesHost(host string) string {
 //     $bootstrap/exe properties removed. Values specified in the build's
 //     properties override properties in the properties file.
 func (c *BootstrapConfig) UpdateBuild(build *buildbucketpb.Build, bootstrappedExe *BootstrappedExe) error {
-	properties := proto.Clone(c.builderProperties).(*structpb.Struct)
+	var properties *structpb.Struct
+	if c.builderProperties != nil {
+		properties = proto.Clone(c.builderProperties).(*structpb.Struct)
+	} else {
+		properties = &structpb.Struct{}
+	}
 
+	commits := []*buildbucketpb.GitilesCommit{}
+	if c.commit != nil {
+		commits = append(commits, c.commit.GitilesCommit)
+	}
 	modProperties := &ChromiumBootstrapModuleProperties{
-		Commits:             []*buildbucketpb.GitilesCommit{c.commit.GitilesCommit},
+		Commits:             commits,
 		Exe:                 bootstrappedExe,
 		SkipAnalysisReasons: c.skipAnalysisReasons,
 	}
@@ -256,7 +270,9 @@ func (c *BootstrapConfig) UpdateBuild(build *buildbucketpb.Build, bootstrappedEx
 	}
 
 	build.Input.Properties = properties
-	build.Input.GitilesCommit = c.commit.GitilesCommit
+	if c.commit != nil {
+		build.Input.GitilesCommit = c.commit.GitilesCommit
+	}
 
 	return nil
 }

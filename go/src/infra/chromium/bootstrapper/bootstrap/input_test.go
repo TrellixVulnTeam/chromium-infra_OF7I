@@ -23,8 +23,10 @@ func TestInput(t *testing.T) {
 			},
 		}
 
+		opts := InputOptions{}
+
 		Convey("fails if no required bootstrap properties are not set", func() {
-			input, err := NewInput(build)
+			input, err := opts.NewInput(build)
 
 			So(err, ShouldErrLike, "the following required properties are not set: $bootstrap/exe, $bootstrap/properties")
 			So(input, ShouldBeNil)
@@ -42,7 +44,7 @@ func TestInput(t *testing.T) {
 			Convey("for incorrectly typed $bootstrap/properties", func() {
 				setBootstrapPropertiesProperties(build, `{"foo": "bar"}`)
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldErrLike, `unknown field "foo"`)
 				So(input, ShouldBeNil)
@@ -50,7 +52,7 @@ func TestInput(t *testing.T) {
 
 			Convey("for invalid $bootstrap/properties", func() {
 				setBootstrapPropertiesProperties(build, "{}")
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldErrLike, "none of the config_project fields in $bootstrap/properties is set")
 				So(input, ShouldBeNil)
@@ -73,7 +75,7 @@ func TestInput(t *testing.T) {
 			Convey("for incorrectly typed $bootstrap/exe", func() {
 				setBootstrapExeProperties(build, `{"foo": "bar"}`)
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldErrLike, `unknown field "foo"`)
 				So(input, ShouldBeNil)
@@ -82,7 +84,7 @@ func TestInput(t *testing.T) {
 			Convey("for invalid $bootstrap/exe", func() {
 				setBootstrapExeProperties(build, "{}")
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldErrLike, "$bootstrap/exe.exe is not set")
 				So(input, ShouldBeNil)
@@ -111,7 +113,7 @@ func TestInput(t *testing.T) {
 			build.Input.Properties.Fields["foo"] = structpb.NewStringValue("bar")
 
 			Convey("for well-formed properties", func() {
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
 				So(input.commit, ShouldBeNil)
@@ -142,6 +144,16 @@ func TestInput(t *testing.T) {
 				So(build.Input.Properties.Fields, ShouldContainKey, "$bootstrap/exe")
 			})
 
+			Convey("with $bootstrap/properties if PropertiesOptional is set", func() {
+				opts := InputOptions{PropertiesOptional: true}
+				delete(build.Input.Properties.Fields, "$bootstrap/properties")
+
+				input, err := opts.NewInput(build)
+				So(err, ShouldBeNil)
+				So(input.propertiesOptional, ShouldBeTrue)
+				So(input.propsProperties, ShouldBeNil)
+			})
+
 			Convey("with commit set if build has commit", func() {
 				build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
 					Host:    "fake-host",
@@ -150,7 +162,7 @@ func TestInput(t *testing.T) {
 					Id:      "fake-revision",
 				}
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
 				So(input.commit, ShouldResembleProto, build.Input.GitilesCommit)
@@ -174,7 +186,7 @@ func TestInput(t *testing.T) {
 					},
 				}
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
 				So(input.changes, ShouldHaveLength, 2)
@@ -193,7 +205,7 @@ func TestInput(t *testing.T) {
 					}
 				}`))
 
-				input, err := NewInput(build)
+				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
 				So(input.casRecipeBundle, ShouldResembleProtoJSON, `{

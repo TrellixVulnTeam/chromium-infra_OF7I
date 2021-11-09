@@ -47,14 +47,19 @@ func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error
 	return build, nil
 }
 
-func performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutputPath string) (*exec.Cmd, error) {
+type options struct {
+	propertiesOptional bool
+}
+
+func (o options) performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutputPath string) (*exec.Cmd, error) {
 	build, err := getBuild(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
 	logging.Infof(ctx, "creating bootstrap input")
-	bootstrapInput, err := bootstrap.NewInput(build)
+	inputOpts := bootstrap.InputOptions{PropertiesOptional: o.propertiesOptional}
+	bootstrapInput, err := inputOpts.NewInput(build)
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +144,11 @@ func performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutput
 
 func execute(ctx context.Context) error {
 	outputPath := flag.String("output", "", "Path to write the final build.proto state to.")
+	propertiesOptional := flag.Bool("properties-optional", false, "Whether missing $bootstrap/properties property should be allowed")
 	flag.Parse()
 
-	cmd, err := performBootstrap(ctx, os.Stdin, "exe", *outputPath)
+	opts := options{propertiesOptional: *propertiesOptional}
+	cmd, err := opts.performBootstrap(ctx, os.Stdin, "exe", *outputPath)
 	if err != nil {
 		return err
 	}

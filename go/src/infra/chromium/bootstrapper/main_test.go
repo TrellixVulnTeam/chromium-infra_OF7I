@@ -60,6 +60,8 @@ func TestPerformBootstrap(t *testing.T) {
 		Instances: map[string]*fakecipd.PackageInstance{},
 	}
 
+	opts := options{}
+
 	ctx := context.Background()
 
 	ctx = gitiles.UseGitilesClientFactory(ctx, fakegitiles.Factory(map[string]*fakegitiles.Host{
@@ -83,7 +85,7 @@ func TestPerformBootstrap(t *testing.T) {
 				return 0, errors.New("test read failure")
 			}}
 
-			cmd, err := performBootstrap(ctx, input, cipdRoot, "")
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
@@ -92,7 +94,7 @@ func TestPerformBootstrap(t *testing.T) {
 		Convey("fails if unmarshalling build fails", func() {
 			input := strings.NewReader("invalid-proto")
 
-			cmd, err := performBootstrap(ctx, input, cipdRoot, "")
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
@@ -101,7 +103,7 @@ func TestPerformBootstrap(t *testing.T) {
 		Convey("fails if bootstrap fails", func() {
 			input := createInput(`{}`)
 
-			cmd, err := performBootstrap(ctx, input, cipdRoot, "")
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
@@ -142,7 +144,7 @@ func TestPerformBootstrap(t *testing.T) {
 			}
 			pkg.Refs["fake-version"] = ""
 
-			cmd, err := performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
@@ -159,7 +161,7 @@ func TestPerformBootstrap(t *testing.T) {
 			}
 			pkg.Refs["fake-version"] = "fake-instance-id"
 
-			cmd, err := performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
 
 			So(err, ShouldBeNil)
 			So(cmd, ShouldNotBeNil)
@@ -200,6 +202,53 @@ func TestPerformBootstrap(t *testing.T) {
 							}
 						},
 						"foo": "bar"
+					}
+				}
+			}`)
+		})
+
+		Convey("succeeds for properties-optional without $bootstrap/properties", func() {
+			input := createInput(`{
+				"input": {
+					"properties": {
+						"$bootstrap/exe": {
+							"exe": {
+								"cipd_package": "fake-package",
+								"cipd_version": "fake-version",
+								"cmd": ["fake-exe"]
+							}
+						}
+					}
+				}
+			}`)
+			opts := options{propertiesOptional: true}
+
+			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+
+			So(err, ShouldBeNil)
+			So(cmd, ShouldNotBeNil)
+			So(cmd.Args, ShouldResemble, []string{
+				filepath.Join(cipdRoot, "fake-exe"),
+				"--output",
+				"fake-output-path",
+			})
+			contents, _ := ioutil.ReadAll(cmd.Stdin)
+			build := &buildbucketpb.Build{}
+			proto.Unmarshal(contents, build)
+			So(build, ShouldResembleProtoJSON, `{
+				"input": {
+					"properties": {
+						"$build/chromium_bootstrap": {
+							"exe": {
+								"cipd": {
+									"server": "https://chrome-infra-packages.appspot.com",
+									"package": "fake-package",
+									"requested_version": "fake-version",
+									"actual_version": "fake-instance-id"
+								},
+								"cmd": ["fake-exe"]
+							}
+						}
 					}
 				}
 			}`)

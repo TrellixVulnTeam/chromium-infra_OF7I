@@ -46,7 +46,7 @@ func strPtr(s string) *string {
 }
 
 func getInput(build *buildbucketpb.Build) *Input {
-	input, err := NewInput(build)
+	input, err := InputOptions{}.NewInput(build)
 	util.PanicOnError(err)
 	return input
 }
