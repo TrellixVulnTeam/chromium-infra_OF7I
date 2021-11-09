@@ -25,6 +25,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	lucipb "go.chromium.org/luci/common/proto"
 	configpb "go.chromium.org/luci/common/proto/config"
+	"go.chromium.org/luci/common/sync/parallel"
 
 	"infra/tools/migrator"
 )
@@ -98,6 +99,47 @@ func discoverAllRepos(ctx context.Context, dir ProjectDir) ([]*repo, error) {
 	}
 
 	return repos, nil
+}
+
+// visitReposInParallel calls the callback for all checked out repositories.
+//
+// The callback gets a per-repo context with the reports sink configured. The
+// report dump is written into `dumpPath` file and also returned. The callback
+// should communicate errors through the report.
+func visitReposInParallel(ctx context.Context, projectDir ProjectDir, dumpPath string, cb func(ctx context.Context, r *repo)) (*migrator.ReportDump, error) {
+	repos, err := discoverAllRepos(ctx, projectDir)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = InitReportSink(ctx)
+
+	parallel.WorkPool(32, func(ch chan<- func() error) {
+		for _, r := range repos {
+			r := r
+			ch <- func() error {
+				ctx := logging.SetField(ctx, "checkout", r.checkoutID)
+				cb(ctx, r)
+				return nil
+			}
+		}
+	})
+
+	dump := DumpReports(ctx)
+
+	// Write the reports out as CSV.
+	if dumpPath != "" {
+		scanOut, err := os.Create(dumpPath)
+		if err != nil {
+			return nil, err
+		}
+		defer scanOut.Close()
+		if err := dump.WriteToCSV(scanOut); err != nil {
+			return nil, err
+		}
+	}
+
+	return dump, nil
 }
 
 // git returns an object that can execute git commands in the repo.
@@ -290,6 +332,11 @@ func (r *repo) reportID() migrator.ReportID {
 	return migrator.ReportID{Checkout: r.checkoutID}
 }
 
+// report adds a report about this checkout to the sink.
+func (r *repo) report(ctx context.Context, tag, description string, opts ...migrator.ReportOption) {
+	getReportSink(ctx).add(r.reportID(), tag, description, opts...)
+}
+
 // writeProjectsMetadata writes a metadata file with []configpb.Project.
 func writeProjectsMetadata(path string, projects []*configpb.Project) error {
 	blob, err := (prototext.MarshalOptions{Indent: "  "}).Marshal(&configpb.ProjectsCfg{
@@ -447,4 +494,14 @@ func (r *gitRunner) read(args ...string) string {
 	}
 
 	return strings.TrimSpace(buf.String())
+}
+
+func (r *gitRunner) gerritCL() string {
+	if host := r.read("config", fmt.Sprintf("branch.%s.gerritserver", localBranch)); host != "" {
+		issue := r.read("config", fmt.Sprintf("branch.%s.gerritissue", localBranch))
+		if issue != "" {
+			return fmt.Sprintf("%s/c/%s", host, issue)
+		}
+	}
+	return ""
 }

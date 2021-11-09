@@ -31,6 +31,7 @@ will write the following files:
   * .migration/config.cfg - config file for the migration project.
   * _plugin/plugin_main.go - No-op Golang plugin used with the 'scan'
     subcommand. See documentation within this file for more information.
+  * commit-message.txt - the message for CLs prepared by "upload" subcommand.
 
 The project directory will be used to contain checkouts and status information
 of all repos for which scanner returns an 'affected' response, when running
@@ -100,6 +101,10 @@ func (r *cmdInitImpl) execute(ctx context.Context) error {
 		if err := ioutil.WriteFile(outPath, []byte(data), 0666); err != nil {
 			return errors.Annotate(err, "writing %q", outPath).Err()
 		}
+	}
+
+	if err := ioutil.WriteFile(r.path.CommitMessageFile(), templates.CommitMessage(), 0666); err != nil {
+		return errors.Annotate(err, "creating the commit message file").Err()
 	}
 
 	return ioutil.WriteFile(r.path.ConfigFile(), templates.Config(), 0666)

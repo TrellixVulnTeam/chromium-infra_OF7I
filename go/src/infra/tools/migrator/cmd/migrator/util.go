@@ -26,6 +26,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
+	"infra/tools/migrator"
 	"infra/tools/migrator/internal/plugsupport"
 )
 
@@ -76,4 +77,17 @@ func invokePlugin(ctx context.Context, proj plugsupport.ProjectDir, command plug
 
 	defer proj.CleanTrash()
 	return plugsupport.Invoke(ctx, proj, plugFile, command)
+}
+
+func prettyPrintRepoReport(dump *migrator.ReportDump) {
+	dump.PrettyPrint(os.Stdout,
+		[]string{"Checkout", "Status", "CL"},
+		func(r *migrator.Report) []string {
+			cl := "none"
+			if md := r.Metadata["CL"]; len(md) > 0 {
+				cl = md.ToSlice()[0]
+			}
+			return []string{r.Checkout, r.Tag, cl}
+		},
+	)
 }

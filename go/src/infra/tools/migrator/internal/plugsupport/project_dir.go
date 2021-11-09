@@ -40,6 +40,12 @@ func (p ProjectDir) ConfigFile() string {
 	return filepath.Join(p.ConfigDir(), "config.cfg")
 }
 
+// CommitMessageFile is the absolute path to the file with the commit message to
+// use in `upload` subcommand.
+func (p ProjectDir) CommitMessageFile() string {
+	return filepath.Join(string(p), "commit-message.txt")
+}
+
 // TrashDir returns the absolute path of the migrator project's trash
 // directory.
 //
@@ -59,6 +65,12 @@ func (p ProjectDir) ScanReportPath() string {
 // status report file.
 func (p ProjectDir) StatusReportPath() string {
 	return filepath.Join(string(p), "status.csv")
+}
+
+// UploadReportPath returns the absolute path of the migrator project's CSV
+// upload report file.
+func (p ProjectDir) UploadReportPath() string {
+	return filepath.Join(string(p), "upload.csv")
 }
 
 // ProjectLog returns the absolute path of the scan log for a given LUCI

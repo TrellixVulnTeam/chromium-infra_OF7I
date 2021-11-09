@@ -13,6 +13,7 @@ import (
 )
 
 //go:embed _plugin/*
+//go:embed commit-message.txt
 //go:embed default.cfg
 var content embed.FS
 
@@ -39,6 +40,11 @@ func Plugin() map[string][]byte {
 // Config returns a config file template body.
 func Config() []byte {
 	return bodyOf("default.cfg")
+}
+
+// CommitMessage returns a commit message file template body.
+func CommitMessage() []byte {
+	return bodyOf("commit-message.txt")
 }
 
 // bodyOf returns a body of an embedded file (which must exist).

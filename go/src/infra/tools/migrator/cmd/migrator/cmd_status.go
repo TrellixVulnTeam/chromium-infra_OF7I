@@ -6,11 +6,9 @@ package main
 
 import (
 	"context"
-	"os"
 
 	"github.com/maruel/subcommands"
 
-	"infra/tools/migrator"
 	"infra/tools/migrator/internal/plugsupport"
 )
 
@@ -51,18 +49,7 @@ func (r *cmdStatusImpl) execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	dump.PrettyPrint(os.Stdout,
-		[]string{"Checkout", "Status", "CL"},
-		func(r *migrator.Report) []string {
-			cl := "none"
-			if md := r.Metadata["CL"]; len(md) > 0 {
-				cl = md.ToSlice()[0]
-			}
-			return []string{r.Checkout, r.Tag, cl}
-		},
-	)
-
+	prettyPrintRepoReport(dump)
 	return nil
 }
 
