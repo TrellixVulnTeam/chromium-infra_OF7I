@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/appengine/gaetesting"
@@ -27,14 +28,16 @@ func TestCreateAction(t *testing.T) {
 	k := NewKarteFrontend()
 	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
 		Action: &kartepb.Action{
-			Name: "",
-			Kind: "ssh-attempt",
+			Name:       "",
+			Kind:       "ssh-attempt",
+			CreateTime: convertTimeToTimestampPtr(time.Unix(1, 2)),
 		},
 	})
 	expected := &kartepb.Action{
 		// The name is randomly generated. We expect to see the name that we actually saw.
-		Name: resp.GetName(),
-		Kind: "ssh-attempt",
+		Name:       resp.GetName(),
+		Kind:       "ssh-attempt",
+		CreateTime: convertTimeToTimestampPtr(time.Unix(1, 2)),
 	}
 	if err != nil {
 		t.Error(err)
@@ -155,5 +158,49 @@ func TestListObservations(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("expected error to be nil not %s", err)
+	}
+}
+
+// TestMakeRawID tests that MakeRawID makes an ID.
+func TestMakeRawID(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name   string
+		in     time.Time
+		suffix string
+		out    string
+	}{
+		{
+			name:   "good ID",
+			in:     time.Unix(1, 2),
+			suffix: "fdc7abc4-3140-46ed-9446-4d3a826c045e",
+			out:    "001-000000000000000000001-0000000002-fdc7abc4-3140-46ed-9446-4d3a826c045e",
+		},
+		{
+			name:   "no suffix",
+			in:     time.Unix(1, 2),
+			suffix: "",
+			out:    "",
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			id, err := makeRawID(tt.in, tt.suffix)
+			if tt.out != "" {
+				if err != nil {
+					t.Errorf("unexpected error: %s", err)
+				}
+				if diff := cmp.Diff(id, tt.out); diff != "" {
+					t.Errorf("(-want +got): %s", diff)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("test should have failed")
+				}
+			}
+		})
 	}
 }
