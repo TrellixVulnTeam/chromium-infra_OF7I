@@ -13,6 +13,7 @@ import (
 	"github.com/maruel/subcommands"
 
 	igerrit "infra/cros/internal/gerrit"
+	"infra/cros/internal/shared"
 	"infra/cros/internal/testplan"
 	"infra/tools/dirmd"
 	dirmdpb "infra/tools/dirmd/proto"
@@ -115,7 +116,7 @@ func getChangeRevs(ctx context.Context, authedClient *http.Client, rawCLURLs []s
 		}
 
 		changeRev, err := igerrit.GetChangeRev(
-			ctx, authedClient, changeRevKey.ChangeNum, changeRevKey.Revision, changeRevKey.Host,
+			ctx, authedClient, changeRevKey.ChangeNum, changeRevKey.Revision, changeRevKey.Host, shared.DefaultOpts,
 		)
 		if err != nil {
 			return nil, err

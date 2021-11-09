@@ -6,6 +6,7 @@ package gerrit
 import (
 	"context"
 	"fmt"
+	"infra/cros/internal/shared"
 	"net/http"
 	"strings"
 	"testing"
@@ -52,7 +53,7 @@ func TestGetChangeRev_success(t *testing.T) {
 		},
 	}
 
-	actualChRev, err := GetChangeRev(context.Background(), http.DefaultClient, changeNum, revision, host)
+	actualChRev, err := GetChangeRev(context.Background(), http.DefaultClient, changeNum, revision, host, shared.DefaultOpts)
 	if err != nil {
 		t.Error(err)
 	}
@@ -87,7 +88,7 @@ func TestGetChangeRev_missingRevision(t *testing.T) {
 	mockGerrit = gerritMock
 
 	// We're asking for revision 2, but there's only a revision 1.
-	_, err := GetChangeRev(context.Background(), http.DefaultClient, changeNum, 2, host)
+	_, err := GetChangeRev(context.Background(), http.DefaultClient, changeNum, 2, host, shared.DefaultOpts)
 	if err == nil {
 		t.Error("expected an error, got none")
 	}

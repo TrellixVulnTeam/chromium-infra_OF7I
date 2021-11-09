@@ -100,7 +100,7 @@ func ParseCLURL(rawurl string) (*ChangeRevKey, error) {
 }
 
 // GetChangeRev gets details from Gerrit about a change,revision pair.
-func GetChangeRev(ctx context.Context, authedClient *http.Client, changeNum int64, revision int32, host string) (*ChangeRev, error) {
+func GetChangeRev(ctx context.Context, authedClient *http.Client, changeNum int64, revision int32, host string, retryOpts shared.Options) (*ChangeRev, error) {
 	var g gerritpb.GerritClient
 	var err error
 	if mockGerrit != nil {
@@ -113,7 +113,7 @@ func GetChangeRev(ctx context.Context, authedClient *http.Client, changeNum int6
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	ch := make(chan *gerritpb.ChangeInfo, 1)
-	err = shared.DoWithRetry(ctx, shared.DefaultOpts, func() error {
+	err = shared.DoWithRetry(ctx, retryOpts, func() error {
 		// This sets the deadline for the individual API call, while the outer context sets
 		// an overall timeout for all attempts.
 		innerCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -204,9 +204,17 @@ func (crv ChangeRevData) GetChangeRev(host string, changeNum int64, revision int
 // into a ChangeRevData.
 func GetChangeRevData(ctx context.Context, authedClient *http.Client, changeIds []ChangeRevKey) (*ChangeRevData, error) {
 	output := &ChangeRevData{m: make(map[string]*ChangeRev)}
+
+	// If there are a large number of changes, there is a change of exceeding
+	// Gerrit quota. Use longer retry opts in this case.
+	retryOpts := shared.DefaultOpts
+	if len(changeIds) > 20 {
+		retryOpts = shared.LongerOpts
+	}
+
 	for _, c := range changeIds {
 		if _, exists := output.m[c.String()]; !exists {
-			cr, err := GetChangeRev(ctx, authedClient, c.ChangeNum, c.Revision, c.Host)
+			cr, err := GetChangeRev(ctx, authedClient, c.ChangeNum, c.Revision, c.Host, retryOpts)
 			if err != nil {
 				return output, err
 			}
