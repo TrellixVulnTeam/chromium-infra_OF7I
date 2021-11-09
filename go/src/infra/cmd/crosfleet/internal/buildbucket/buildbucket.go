@@ -347,6 +347,9 @@ func (c *Client) GetLatestGreenBuild(ctx context.Context) (*buildbucketpb.Build,
 		Predicate: &buildbucketpb.BuildPredicate{
 			Builder: c.builderID,
 			Status:  buildbucketpb.Status_SUCCESS,
+			Tags: []*buildbucketpb.StringPair{
+				{Key: "relevance", Value: "relevant"},
+			},
 		},
 		Fields: &field_mask.FieldMask{Paths: []string{
 			"builds.*.id",
