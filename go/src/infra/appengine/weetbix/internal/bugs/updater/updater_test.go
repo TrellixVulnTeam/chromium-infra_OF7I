@@ -278,7 +278,7 @@ func makeCluster(uniqifier int) *analysis.ClusterSummary {
 }
 
 func testIDClusterID(testID string) clustering.ClusterID {
-	testAlg, err := algorithms.ByName(testname.AlgorithmName)
+	testAlg, err := algorithms.SuggestingAlgorithm(testname.AlgorithmName)
 	So(err, ShouldBeNil)
 
 	return clustering.ClusterID{
@@ -290,7 +290,7 @@ func testIDClusterID(testID string) clustering.ClusterID {
 }
 
 func reasonClusterID(reason string) clustering.ClusterID {
-	reasonAlg, err := algorithms.ByName(failurereason.AlgorithmName)
+	reasonAlg, err := algorithms.SuggestingAlgorithm(failurereason.AlgorithmName)
 	So(err, ShouldBeNil)
 
 	return clustering.ClusterID{

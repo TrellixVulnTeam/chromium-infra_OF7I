@@ -209,7 +209,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		failure.Reason = &pb.FailureReason{PrimaryErrorMessage: cs.ExampleFailureReason.StringVal}
 	}
 
-	alg, err := algorithms.ByName(cs.ClusterID.Algorithm)
+	alg, err := algorithms.SuggestingAlgorithm(cs.ClusterID.Algorithm)
 	if err == algorithms.ErrAlgorithmNotExist {
 		// The cluster is for an old algorithm that no longer exists, or
 		// for a new algorithm that is not known by us yet.

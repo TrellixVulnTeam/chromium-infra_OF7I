@@ -18,7 +18,9 @@ import (
 // be double this number.
 const MaxClusterIDBytes = 16
 
-const rulesAlgorithmPrefix = "rules-"
+// RulesAlgorithmPrefix is the algorithm name prefix used by all versions
+// of the rules-based clustering algorithm.
+const RulesAlgorithmPrefix = "rules-"
 
 // ClusterID represents the identity of a cluster. The LUCI Project is
 // omitted as it is assumed to be implicit from the context.
@@ -72,5 +74,5 @@ func (c ClusterID) IsEmpty() bool {
 // association rule, and produced by a version of the failure association
 // rule based clustering algorithm.
 func (c ClusterID) IsBugCluster() bool {
-	return strings.HasPrefix(c.Algorithm, rulesAlgorithmPrefix)
+	return strings.HasPrefix(c.Algorithm, RulesAlgorithmPrefix)
 }

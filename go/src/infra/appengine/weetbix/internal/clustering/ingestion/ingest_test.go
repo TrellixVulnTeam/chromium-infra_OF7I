@@ -15,13 +15,16 @@ import (
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
+	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
+	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/testutil"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
+	"go.chromium.org/luci/server/caching"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -33,6 +36,8 @@ import (
 func TestIngest(t *testing.T) {
 	Convey(`With Ingestor`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
+		ctx = caching.WithEmptyProcessCache(ctx) // For rules cache.
+
 		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
 		analysis := analysis.NewClusteringHandler(clusteredFailures)
@@ -77,6 +82,12 @@ func TestIngest(t *testing.T) {
 			}
 		}
 
+		// This rule should match failures used in this test.
+		rule := rules.NewRule(100).WithProject(opts.Project).WithRuleDefinition(`reason LIKE "Failure reason%"`).Build()
+		rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
+			rule,
+		})
+
 		Convey(`Ingest one failure`, func() {
 			const uniqifier = 1
 			const testRunCount = 1
@@ -91,7 +102,9 @@ func TestIngest(t *testing.T) {
 			setRegexpClustered(regexpCF)
 			testnameCF := expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTestRun, resultNum)
 			setTestNameClustered(testnameCF)
-			expectedCFs := []*bqpb.ClusteredFailureRow{regexpCF, testnameCF}
+			ruleCF := expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTestRun, resultNum)
+			setRuleClustered(ruleCF, rule)
+			expectedCFs := []*bqpb.ClusteredFailureRow{regexpCF, testnameCF, ruleCF}
 
 			Convey(`Unexpected failure`, func() {
 				tv.Results[0].Result.Status = rdbpb.TestStatus_FAIL
@@ -139,6 +152,7 @@ func TestIngest(t *testing.T) {
 
 				regexpCF.Variant = nil
 				testnameCF.Variant = nil
+				ruleCF.Variant = nil
 
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Blobs), ShouldEqual, 1)
@@ -147,6 +161,11 @@ func TestIngest(t *testing.T) {
 				// Failures may not have a failure reason.
 				tv.Results[0].Result.FailureReason = nil
 				testnameCF.FailureReason = nil
+
+				// As the test result does not match any rules, the
+				// test result is included in the suggested cluster
+				// with high priority.
+				testnameCF.IsIncludedWithHighPriority = true
 				expectedCFs = []*bqpb.ClusteredFailureRow{testnameCF}
 
 				testIngestion(tvs, expectedCFs)
@@ -156,6 +175,7 @@ func TestIngest(t *testing.T) {
 				opts.PresubmitRunID = nil
 				regexpCF.PresubmitRunId = nil
 				testnameCF.PresubmitRunId = nil
+				ruleCF.PresubmitRunId = nil
 
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Blobs), ShouldEqual, 1)
@@ -173,6 +193,31 @@ func TestIngest(t *testing.T) {
 				}
 				testnameCF.IsExonerated = true
 				regexpCF.IsExonerated = true
+				ruleCF.IsExonerated = true
+
+				testIngestion(tvs, expectedCFs)
+				So(len(chunkStore.Blobs), ShouldEqual, 1)
+			})
+			Convey(`Failure with only suggested clusters`, func() {
+				reason := &pb.FailureReason{
+					PrimaryErrorMessage: "Should not match rule",
+				}
+				tv.Results[0].Result.FailureReason = &rdbpb.FailureReason{
+					PrimaryErrorMessage: "Should not match rule",
+				}
+				testnameCF.FailureReason = reason
+				regexpCF.FailureReason = reason
+
+				// Recompute the cluster ID to reflect the different
+				// failure reason.
+				setRegexpClustered(regexpCF)
+
+				// As the test result does not match any rules, the
+				// test result should be included in the suggested clusters
+				// with high priority.
+				testnameCF.IsIncludedWithHighPriority = true
+				regexpCF.IsIncludedWithHighPriority = true
+				expectedCFs = []*bqpb.ClusteredFailureRow{testnameCF, regexpCF}
 
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Blobs), ShouldEqual, 1)
@@ -194,7 +239,9 @@ func TestIngest(t *testing.T) {
 					setRegexpClustered(regexpCF)
 					testnameCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
 					setTestNameClustered(testnameCF)
-					testRunExp = append(testRunExp, regexpCF, testnameCF)
+					ruleCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
+					setRuleClustered(ruleCF, rule)
+					testRunExp = append(testRunExp, regexpCF, testnameCF, ruleCF)
 				}
 				expectedCFsByTestRun = append(expectedCFsByTestRun, testRunExp)
 				expectedCFs = append(expectedCFs, testRunExp...)
@@ -210,17 +257,22 @@ func TestIngest(t *testing.T) {
 			})
 			Convey(`Some test runs blocked and presubmit run not blocked`, func() {
 				// Let the last retry of the last test run pass.
-				tv.Results[3].Result.Status = rdbpb.TestStatus_PASS
+				tv.Results[testRunsPerVariant*resultsPerTestRun-1].Result.Status = rdbpb.TestStatus_PASS
+				// Drop the expected clustered failures for the last test result.
+				expectedCFs = expectedCFs[0 : (testRunsPerVariant*resultsPerTestRun-1)*3]
+
 				// First test run should be blocked.
 				for _, exp := range expectedCFsByTestRun[0] {
 					exp.IsIngestedInvocationBlocked = false
 					exp.IsTestRunBlocked = true
 				}
-				// Second test run should not be blocked.
-				for _, exp := range expectedCFsByTestRun[1] {
+				// Last test run should not be blocked.
+				for _, exp := range expectedCFsByTestRun[testRunsPerVariant-1] {
 					exp.IsIngestedInvocationBlocked = false
 					exp.IsTestRunBlocked = false
 				}
+				testIngestion(tvs, expectedCFs)
+				So(len(chunkStore.Blobs), ShouldEqual, 1)
 			})
 		})
 		Convey(`Ingest many failures`, func() {
@@ -239,7 +291,9 @@ func TestIngest(t *testing.T) {
 						setRegexpClustered(regexpCF)
 						testnameCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
 						setTestNameClustered(testnameCF)
-						expectedCFs = append(expectedCFs, regexpCF, testnameCF)
+						ruleCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
+						setRuleClustered(ruleCF, rule)
+						expectedCFs = append(expectedCFs, regexpCF, testnameCF, ruleCF)
 					}
 				}
 			}
@@ -260,8 +314,14 @@ func setTestNameClustered(e *bqpb.ClusteredFailureRow) {
 func setRegexpClustered(e *bqpb.ClusteredFailureRow) {
 	e.ClusterAlgorithm = failurereason.AlgorithmName
 	e.ClusterId = hex.EncodeToString((&failurereason.Algorithm{}).Cluster(&clustering.Failure{
-		Reason: &pb.FailureReason{PrimaryErrorMessage: "Failure reason."},
+		Reason: &pb.FailureReason{PrimaryErrorMessage: e.FailureReason.PrimaryErrorMessage},
 	}))
+}
+
+func setRuleClustered(e *bqpb.ClusteredFailureRow, rule *rules.FailureAssociationRule) {
+	e.ClusterAlgorithm = rulesalgorithm.AlgorithmName
+	e.ClusterId = rule.RuleID
+	e.IsIncludedWithHighPriority = true
 }
 
 func sortClusteredFailures(cfs []*bqpb.ClusteredFailureRow) {
@@ -337,7 +397,7 @@ func expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTes
 
 		PartitionTime:              timestamppb.New(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)),
 		IsIncluded:                 true,
-		IsIncludedWithHighPriority: true,
+		IsIncludedWithHighPriority: false,
 
 		ChunkId:    "",
 		ChunkIndex: 0, // To be set by caller as needed.

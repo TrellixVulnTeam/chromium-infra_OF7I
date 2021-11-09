@@ -63,7 +63,7 @@ func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.Cl
 		previousInBugCluster := false
 		for _, pc := range u.PreviousClusters {
 			deleted[pc.Key()] = pc
-			if isBugCluster(pc) {
+			if pc.IsBugCluster() {
 				previousInBugCluster = true
 			}
 		}
@@ -76,7 +76,7 @@ func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.Cl
 			} else {
 				new[key] = nc
 			}
-			if isBugCluster(nc) {
+			if nc.IsBugCluster() {
 				newInBugCluster = true
 			}
 		}
@@ -94,8 +94,8 @@ func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.Cl
 			// it appears in, and if it appears in no bug clusters, it will
 			// appear with high priority in any suggested clusters it appears
 			// in.
-			previousIncludedWithHighPriority := isBugCluster(rc) || !previousInBugCluster
-			newIncludedWithHighPriority := isBugCluster(rc) || !newInBugCluster
+			previousIncludedWithHighPriority := rc.IsBugCluster() || !previousInBugCluster
+			newIncludedWithHighPriority := rc.IsBugCluster() || !newInBugCluster
 			if previousIncludedWithHighPriority == newIncludedWithHighPriority {
 				// The inclusion status of the test result in the cluster has not changed.
 				// For efficiency, do not stream an update.
@@ -111,19 +111,12 @@ func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.Cl
 			// it appears in, and if it appears in no bug clusters, it will
 			// appear with high priority in any suggested clusters it appears
 			// in.
-			isIncludedWithHighPriority := isBugCluster(nc) || !newInBugCluster
+			isIncludedWithHighPriority := nc.IsBugCluster() || !newInBugCluster
 			row := entryFromUpdate(updates.Project, updates.ChunkID, nc, u.TestResult, isIncluded, isIncludedWithHighPriority, commitTime)
 			result = append(result, row)
 		}
 	}
 	return result
-}
-
-func isBugCluster(c *clustering.ClusterID) bool {
-	// TODO(crbug.com/1243174): When failure association rules are implemented,
-	// return whether the clustering algorithm is the failure association rule
-	// clustering algorithm.
-	return false
 }
 
 func entryFromUpdate(project, chunkID string, cluster *clustering.ClusterID, failure *cpb.Failure, included, includedWithHighPriority bool, commitTime time.Time) *bqpb.ClusteredFailureRow {

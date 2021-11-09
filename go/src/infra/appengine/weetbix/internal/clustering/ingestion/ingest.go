@@ -14,12 +14,18 @@ import (
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	"infra/appengine/weetbix/internal/clustering/state"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
+	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
 )
+
+// TODO(crbug.com/1243174). Instrument the size of this cache so that we
+// can monitor it.
+var rulesCache = cache.NewRulesCache(caching.RegisterLRUCache(0))
 
 // Options represents parameters to the ingestion.
 type Options struct {
@@ -182,7 +188,13 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return err
 	}
 
-	clusterResults := algorithms.Cluster(clustering.FailuresFromProtos(chunk.Failures))
+	// Obtain the set of failure association rules to use when clustering.
+	ruleset, err := rulesCache.Ruleset(ctx, i.opts.Project)
+	if err != nil {
+		return err
+	}
+
+	clusterResults := algorithms.Cluster(ruleset, clustering.FailuresFromProtos(chunk.Failures))
 
 	clusterState := &state.Entry{
 		Project:       i.opts.Project,

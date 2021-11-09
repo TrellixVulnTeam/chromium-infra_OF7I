@@ -16,6 +16,7 @@ import (
 
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
+	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
 	_ "go.chromium.org/luci/server/tq/txn/spanner"
@@ -98,6 +99,7 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 func TestIngestTestResults(t *testing.T) {
 	Convey(`TestIngestTestResults`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
+		ctx = caching.WithEmptyProcessCache(ctx) // For failure association rules cache.
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		resultcollector.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()

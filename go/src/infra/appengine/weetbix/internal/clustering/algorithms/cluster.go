@@ -10,12 +10,13 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
+	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
-	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/clustering/rules/cache"
 )
 
-// Algorithm represents the interface that each clustering algorithm must
-// implement.
+// Algorithm represents the interface that each clustering algorithm
+// generating suggested clusters must implement.
 type Algorithm interface {
 	// Name returns the identifier of the clustering algorithm.
 	Name() string
@@ -41,24 +42,33 @@ type Algorithm interface {
 // (I.E. DO NOT simply delete "+ <myalgorithm>.AlgorithmVersion"
 // when deleting an algorithm without rolling its value (plus one)
 // into the constant.)
-const AlgorithmsVersion = 1 + failurereason.AlgorithmVersion + testname.AlgorithmVersion
+const AlgorithmsVersion = 1 + failurereason.AlgorithmVersion +
+	testname.AlgorithmVersion + rulesalgorithm.AlgorithmVersion
 
-// algorithms is the set of clustering algorithms known to Weetbix.
-// When this an algorithm is added or removed from the set,
+// suggestingAlgorithms is the set of clustering algorithms used by
+// Weetbix to generate suggested clusters.
+// When an algorithm is added or removed from the set,
 // or when an algorithm is updated, ensure the AlgorithmsVersion
 // above increments.
-var algorithms = []Algorithm{
+var suggestingAlgorithms = []Algorithm{
 	&failurereason.Algorithm{},
 	&testname.Algorithm{},
 }
 
+// rulesAlgorithm is the rules-based clustering algorithm used by
+// Weetbix. When this algorithm is changed, ensure the AlgorithmsVersion
+// above increments.
+var rulesAlgorithm = rulesalgorithm.Algorithm{}
+
 // Cluster clusters the given test failures using all registered
-// clustering algorithms.
-func Cluster(failures []*clustering.Failure) clustering.ClusterResults {
+// clustering algorithms and the specified set of failure association
+// rules.
+func Cluster(ruleset *cache.Ruleset, failures []*clustering.Failure) clustering.ClusterResults {
 	var result [][]*clustering.ClusterID
 	for _, f := range failures {
 		var ids []*clustering.ClusterID
-		for _, a := range algorithms {
+		// Suggested clusters.
+		for _, a := range suggestingAlgorithms {
 			id := a.Cluster(f)
 			if id == nil {
 				continue
@@ -69,21 +79,23 @@ func Cluster(failures []*clustering.Failure) clustering.ClusterResults {
 			})
 		}
 
+		// Rule-based clusters.
+		ids = append(ids, rulesAlgorithm.Cluster(ruleset, f)...)
+
 		result = append(result, ids)
 	}
 
 	algorithmNames := make(map[string]struct{})
-	for _, a := range algorithms {
+	algorithmNames[rulesalgorithm.AlgorithmName] = struct{}{}
+	for _, a := range suggestingAlgorithms {
 		algorithmNames[a.Name()] = struct{}{}
 	}
 
 	return clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		// TODO(crbug.com/1243174): Update when failure association rules
-		// are implemented.
-		RulesVersion: rules.StartingEpoch,
-		Algorithms:   algorithmNames,
-		Clusters:     result,
+		RulesVersion:      ruleset.RulesVersion,
+		Algorithms:        algorithmNames,
+		Clusters:          result,
 	}
 }
 
@@ -92,10 +104,11 @@ func Cluster(failures []*clustering.Failure) clustering.ClusterResults {
 // is newer or older than the current version.
 var ErrAlgorithmNotExist = errors.New("algorithm does not exist")
 
-// ByName returns the algorithm with the given name. If the algorithm
-// does not exist, ErrAlgorithmNotExist is returned.
-func ByName(algorithm string) (Algorithm, error) {
-	for _, a := range algorithms {
+// SuggestingAlgorithm returns the algorithm for generating
+// suggested clusters with the given name. If the algorithm does
+// not exist, ErrAlgorithmNotExist is returned.
+func SuggestingAlgorithm(algorithm string) (Algorithm, error) {
+	for _, a := range suggestingAlgorithms {
 		if a.Name() == algorithm {
 			return a, nil
 		}
