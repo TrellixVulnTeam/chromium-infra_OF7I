@@ -150,14 +150,19 @@ func ParseSSPDeployShadowConfig(
 			return nil, fmt.Errorf("target path must be absolute (%s)", config.Target)
 		}
 
-		if config.Append {
-			if !filepath.IsAbs(config.Source) {
-				if strings.HasPrefix(config.Source, "~") {
-					return nil, fmt.Errorf("source path may not have '~' (%s)", config.Source)
-				}
-
-				config.Source = filepath.Join(autotestConfig.AutotestDir, config.Source)
+		if !filepath.IsAbs(config.Source) {
+			if strings.HasPrefix(config.Source, "~") {
+				return nil, fmt.Errorf("source path may not have '~' (%s)", config.Source)
 			}
+
+			absPath := filepath.Join(autotestConfig.AutotestDir, config.Source)
+			logging.Infof(
+				ctx,
+				"joining autotest dir (%q) to relative path %q, to form absolute path %q",
+				autotestConfig.AutotestDir, config.Source, absPath,
+			)
+
+			config.Source = absPath
 		}
 
 		if _, err := os.Stat(config.Source); err != nil {

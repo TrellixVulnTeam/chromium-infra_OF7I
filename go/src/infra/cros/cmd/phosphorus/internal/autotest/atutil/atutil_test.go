@@ -248,10 +248,10 @@ func TestParseSSPDeployShadowConfigErrors(t *testing.T) {
 			name: "source non-existent",
 			config: atutil.SSPDeployConfig{
 				Target:      "/tmp/target",
-				Source:      "/tmp/source",
+				Source:      filepath.FromSlash("/tmp/source"),
 				ForceCreate: false,
 			},
-			err: "source /tmp/source does not exist, and forceCreate is not set",
+			err: fmt.Sprintf("source %s does not exist, and forceCreate is not set", filepath.FromSlash("/tmp/source")),
 		},
 	}
 
