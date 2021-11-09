@@ -81,8 +81,8 @@ class GerritActions(object):
     """
     logging.info("Creating revert for culprit %s", culprit.key.id())
     change_info, gerrit_client = self.ChangeInfoAndClientFromCommit(culprit)
-    revert_info = gerrit_client.CreateRevert(
-        reason, change_info['review_change_id'], full_change_info=True)
+    revert_info = gerrit_client.CreateRevert(reason,
+                                             change_info['review_change_id'])
     revert_info['client'] = gerrit_client
     return revert_info
 
@@ -103,7 +103,7 @@ class GerritActions(object):
     client = revert_info['client']
     return bool(
         client.AddReviewers(
-            revert_info['review_change_id'],
+            revert_info['change_id'],
             self.project_api.GetAutoRevertReviewers(),
             message=message))
 
@@ -126,7 +126,7 @@ class GerritActions(object):
       A boolean indicating whether the revert was landed successfully.
     """
     client = revert_info['client']
-    submitted = client.SubmitRevert(revert_info['review_change_id'])
+    submitted = client.SubmitRevert(revert_info['change_id'])
     if submitted:
       return self.RequestReview(revert_info, request_confirmation_message)
     return False

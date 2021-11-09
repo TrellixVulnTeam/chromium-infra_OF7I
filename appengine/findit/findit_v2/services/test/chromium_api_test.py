@@ -586,9 +586,8 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     }
     reason = 'Mock reason for a revert'
     ChromiumProjectAPI().gerrit_actions.CreateRevert(culprit, reason)
-    self.assertEqual(
-        [mock.call('Mock reason for a revert', 1234, full_change_info=True)],
-        mock_gerrit().CreateRevert.call_args_list)
+    self.assertEqual([mock.call('Mock reason for a revert', 1234)],
+                     mock_gerrit().CreateRevert.call_args_list)
 
   @mock.patch.object(gerrit, 'Gerrit')
   @mock.patch.object(git, 'GetCodeReviewInfoForACommit')
@@ -602,7 +601,7 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     }
     reason = 'Mock reason for a revert #2'
     api = ChromiumProjectAPI()
-    mock_gerrit().CreateRevert.return_value = {'review_change_id': 1002345}
+    mock_gerrit().CreateRevert.return_value = {'change_id': 1002345}
     revert_info = api.gerrit_actions.CreateRevert(culprit, reason)
     with mock.patch(
         'findit_v2.services.chromium_api.current_sheriffs',
@@ -624,7 +623,7 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     }
     reason = 'Mock reason for a revert #3'
     api = ChromiumProjectAPI()
-    mock_gerrit().CreateRevert.return_value = {'review_change_id': 1003456}
+    mock_gerrit().CreateRevert.return_value = {'change_id': 1003456}
     revert_info = api.gerrit_actions.CreateRevert(culprit, reason)
     with mock.patch(
         'findit_v2.services.chromium_api.current_sheriffs',
