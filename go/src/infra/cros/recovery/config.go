@@ -218,6 +218,11 @@ const defaultConfig = `
 						"seconds": 120
 					}
 				},
+				"servo_host_servod_init": {
+					"exec_timeout": {
+						"seconds": 120
+					}
+				},
 				"servo_host_info": {
 					"dependencies" : [
 						"has_dut_name"
