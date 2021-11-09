@@ -90,16 +90,16 @@ message FlakeStatistics {
   // Flake verdict rate calculated by the verdicts within the time range.
   float flaky_verdict_rate = 1;
   // Count of verdicts with flaky status.
-  int32 flaky_verdict_count = 2;
+  int64 flaky_verdict_count = 2;
   // Count of total verdicts.
-  int32 total_verdict_count = 3;
+  int64 total_verdict_count = 3;
 
   // Unexpected result rate calculated by the test results within the time range.
   float unexpected_result_rate = 4;
   // Count of unexpected results.
-  int32 unexpected_result_count = 5;
+  int64 unexpected_result_count = 5;
   // Count of total results.
-  int32 total_result_count = 6;
+  int64 total_result_count = 6;
 }
 
 message AnalyzedTestVariant {
