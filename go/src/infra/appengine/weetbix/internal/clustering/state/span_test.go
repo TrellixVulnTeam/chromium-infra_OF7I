@@ -69,33 +69,52 @@ func TestSpanner(t *testing.T) {
 			})
 			Convey(`Rule Version missing`, func() {
 				var t time.Time
-				e.RuleVersion = t
+				e.Clustering.RulesVersion = t
 				err := testCreate(e)
 				So(err, ShouldErrLike, "rule version must be specified")
 			})
 			Convey(`Algorithms Version missing`, func() {
-				e.AlgorithmsVersion = 0
+				e.Clustering.AlgorithmsVersion = 0
 				err := testCreate(e)
 				So(err, ShouldErrLike, "algorithms version must be specified")
 			})
 			Convey(`Clusters missing`, func() {
-				e.Clusters = nil
+				e.Clustering.Clusters = nil
 				err := testCreate(e)
 				So(err, ShouldErrLike, "there must be clustered test results in the chunk")
 			})
+			Convey(`Algorithms invalid`, func() {
+				Convey(`Empty algorithm`, func() {
+					e.Clustering.Algorithms[""] = struct{}{}
+					err := testCreate(e)
+					So(err, ShouldErrLike, `algorithm "" is not valid`)
+				})
+				Convey("Algorithm invalid", func() {
+					e.Clustering.Algorithms["!!!"] = struct{}{}
+					err := testCreate(e)
+					So(err, ShouldErrLike, `algorithm "!!!" is not valid`)
+				})
+			})
 			Convey(`Clusters invalid`, func() {
 				Convey(`Algorithm missing`, func() {
-					e.Clusters[1][1].Algorithm = ""
+					e.Clustering.Clusters[1][1].Algorithm = ""
 					err := testCreate(e)
 					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 				})
 				Convey("Algorithm invalid", func() {
-					e.Clusters[1][1].Algorithm = "!!!"
+					e.Clustering.Clusters[1][1].Algorithm = "!!!"
 					err := testCreate(e)
 					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 				})
+				Convey("Algorithm not in algorithms set", func() {
+					e.Clustering.Algorithms = map[string]struct{}{
+						"alg-extra": {},
+					}
+					err := testCreate(e)
+					So(err, ShouldErrLike, `a test result was clustered with an unregistered algorithm`)
+				})
 				Convey("ID missing", func() {
-					e.Clusters[1][1].ID = ""
+					e.Clustering.Clusters[1][1].ID = ""
 					err := testCreate(e)
 					So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: ID is empty`)
 				})
@@ -106,27 +125,33 @@ func TestSpanner(t *testing.T) {
 
 func newEntry(uniqifier int) *Entry {
 	return &Entry{
-		Project:           fmt.Sprintf("project-%v", uniqifier),
-		ChunkID:           fmt.Sprintf("c%v", uniqifier),
-		PartitionTime:     time.Date(2030, 1, 1, 1, 1, 1, uniqifier, time.UTC),
-		ObjectID:          "abcdef1234567890abcdef1234567890",
-		AlgorithmsVersion: int64(uniqifier),
-		RuleVersion:       time.Date(2025, 1, 1, 1, 1, 1, uniqifier, time.UTC),
-		Clusters: [][]*clustering.ClusterID{
-			{
-				{
-					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        "00112233445566778899aabbccddeeff",
-				},
+		Project:       fmt.Sprintf("project-%v", uniqifier),
+		ChunkID:       fmt.Sprintf("c%v", uniqifier),
+		PartitionTime: time.Date(2030, 1, 1, 1, 1, 1, uniqifier, time.UTC),
+		ObjectID:      "abcdef1234567890abcdef1234567890",
+		Clustering: clustering.ClusterResults{
+			AlgorithmsVersion: int64(uniqifier),
+			RulesVersion:      time.Date(2025, 1, 1, 1, 1, 1, uniqifier, time.UTC),
+			Algorithms: map[string]struct{}{
+				fmt.Sprintf("alg-%v", uniqifier): {},
+				"alg-extra":                      {},
 			},
-			{
+			Clusters: [][]*clustering.ClusterID{
 				{
-					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        "00112233445566778899aabbccddeeff",
+					{
+						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						ID:        "00112233445566778899aabbccddeeff",
+					},
 				},
 				{
-					Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-					ID:        "22",
+					{
+						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						ID:        "00112233445566778899aabbccddeeff",
+					},
+					{
+						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
+						ID:        "22",
+					},
 				},
 			},
 		},

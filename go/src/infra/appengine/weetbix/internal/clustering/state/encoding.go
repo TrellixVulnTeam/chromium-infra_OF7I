@@ -14,24 +14,34 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-// decodeClusters decodes the clusters assigned to each test result from the protobuf representation.
-func decodeClusters(cc *cpb.ChunkClusters) ([][]*clustering.ClusterID, error) {
+// decodeClusters decodes:
+// - the set of algorithms used for clustering, and
+// - the clusters assigned to each test result
+// from the protobuf representation.
+func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]*clustering.ClusterID, error) {
 	if cc == nil {
-		return nil, errors.New("proto must be specified")
+		return nil, nil, errors.New("proto must be specified")
 	}
 	typeCount := int64(len(cc.ClusterTypes))
 	clusterCount := int64(len(cc.ReferencedClusters))
 
-	results := make([][]*clustering.ClusterID, len(cc.ResultClusters))
+	algorithms := make(map[string]struct{})
+	for _, ct := range cc.ClusterTypes {
+		algorithms[ct.Algorithm] = struct{}{}
+	}
+
+	clusterIDs := make([][]*clustering.ClusterID, len(cc.ResultClusters))
 	for i, rc := range cc.ResultClusters {
+		// For each test result.
 		clusters := make([]*clustering.ClusterID, len(rc.ClusterRefs))
 		for j, ref := range rc.ClusterRefs {
+			// Decode each reference to a cluster ID.
 			if ref < 0 || ref >= clusterCount {
-				return nil, fmt.Errorf("reference to non-existent cluster (%v) from result %v; only %v referenced clusters defined", ref, i, clusterCount)
+				return nil, nil, fmt.Errorf("reference to non-existent cluster (%v) from result %v; only %v referenced clusters defined", ref, i, clusterCount)
 			}
 			cluster := cc.ReferencedClusters[ref]
 			if cluster.TypeRef < 0 || cluster.TypeRef >= typeCount {
-				return nil, fmt.Errorf("reference to non-existent type (%v) from referenced cluster %v; only %v types defined", cluster.TypeRef, ref, typeCount)
+				return nil, nil, fmt.Errorf("reference to non-existent type (%v) from referenced cluster %v; only %v types defined", cluster.TypeRef, ref, typeCount)
 			}
 			t := cc.ClusterTypes[cluster.TypeRef]
 			clusters[j] = &clustering.ClusterID{
@@ -39,22 +49,29 @@ func decodeClusters(cc *cpb.ChunkClusters) ([][]*clustering.ClusterID, error) {
 				ID:        hex.EncodeToString(cluster.ClusterId),
 			}
 		}
-		results[i] = clusters
+		clusterIDs[i] = clusters
 	}
-	return results, nil
+	return algorithms, clusterIDs, nil
 }
 
-// encodeClusters encodes the clusters assigned to each test result to the protobuf representation.
-func encodeClusters(clusterRefs [][]*clustering.ClusterID) (*cpb.ChunkClusters, error) {
+// encodeClusters encodes:
+// - the set of algorithms used for clustering, and
+// - the clusters assigned to each test result
+// to the protobuf representation.
+func encodeClusters(algorithms map[string]struct{}, clusterIDs [][]*clustering.ClusterID) (*cpb.ChunkClusters, error) {
 	rb := newRefBuilder()
-	resultClusters := make([]*cpb.TestResultClusters, len(clusterRefs))
-	for i, refs := range clusterRefs {
+	for a := range algorithms {
+		rb.registerClusterType(a)
+	}
+
+	resultClusters := make([]*cpb.TestResultClusters, len(clusterIDs))
+	for i, ids := range clusterIDs {
 		clusters := &cpb.TestResultClusters{}
-		clusters.ClusterRefs = make([]int64, len(refs))
-		for j, r := range refs {
-			clusterRef, err := rb.ReferenceCluster(r)
+		clusters.ClusterRefs = make([]int64, len(ids))
+		for j, id := range ids {
+			clusterRef, err := rb.referenceCluster(id)
 			if err != nil {
-				return nil, errors.Annotate(err, "cluster ID %s/%s is invalid", r.Algorithm, r.ID).Err()
+				return nil, errors.Annotate(err, "cluster ID %s/%s is invalid", id.Algorithm, id.ID).Err()
 			}
 			clusters.ClusterRefs[j] = clusterRef
 		}
@@ -87,7 +104,7 @@ func newRefBuilder() *refBuilder {
 	}
 }
 
-func (rb *refBuilder) ReferenceCluster(ref *clustering.ClusterID) (int64, error) {
+func (rb *refBuilder) referenceCluster(ref *clustering.ClusterID) (int64, error) {
 	refKey := ref.Key()
 	idx, ok := rb.refMap[refKey]
 	if !ok {
@@ -97,8 +114,12 @@ func (rb *refBuilder) ReferenceCluster(ref *clustering.ClusterID) (int64, error)
 		if err != nil {
 			return -1, err
 		}
+		typeRef, err := rb.referenceClusterType(ref.Algorithm)
+		if err != nil {
+			return -1, err
+		}
 		ref := &cpb.ReferencedCluster{
-			TypeRef:   rb.ReferenceClusterType(ref.Algorithm),
+			TypeRef:   typeRef,
 			ClusterId: id,
 		}
 		idx = len(rb.refs)
@@ -108,13 +129,16 @@ func (rb *refBuilder) ReferenceCluster(ref *clustering.ClusterID) (int64, error)
 	return int64(idx), nil
 }
 
-func (rb *refBuilder) ReferenceClusterType(algorithm string) int64 {
+func (rb *refBuilder) referenceClusterType(algorithm string) (int64, error) {
 	idx, ok := rb.typeMap[algorithm]
 	if !ok {
-		// Cluster type does not exist.
-		idx = len(rb.types)
-		rb.typeMap[algorithm] = idx
-		rb.types = append(rb.types, &cpb.ClusterType{Algorithm: algorithm})
+		return -1, fmt.Errorf("a test result was clustered with an unregistered algorithm: %s", algorithm)
 	}
-	return int64(idx)
+	return int64(idx), nil
+}
+
+func (rb *refBuilder) registerClusterType(algorithm string) {
+	idx := len(rb.types)
+	rb.types = append(rb.types, &cpb.ClusterType{Algorithm: algorithm})
+	rb.typeMap[algorithm] = idx
 }

@@ -79,7 +79,7 @@ type Ingestion struct {
 	// buffer is the set of failures which have been queued for ingestion but
 	// not yet written to chunks.
 	buffer []*cpb.Failure
-	// page is the number of the next page to be written out.
+	// page is the number of the next page of failures to be written out.
 	page int
 }
 
@@ -185,13 +185,11 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 	clusterResults := algorithms.Cluster(clustering.FailuresFromProtos(chunk.Failures))
 
 	clusterState := &state.Entry{
-		Project:           i.opts.Project,
-		ChunkID:           id,
-		PartitionTime:     i.opts.PartitionTime,
-		ObjectID:          objectID,
-		AlgorithmsVersion: algorithms.AlgorithmsVersion,
-		RuleVersion:       clusterResults.RuleVersion,
-		Clusters:          clusterResults.Clusters,
+		Project:       i.opts.Project,
+		ChunkID:       id,
+		PartitionTime: i.opts.PartitionTime,
+		ObjectID:      objectID,
+		Clustering:    clusterResults,
 	}
 	f := func(ctx context.Context) error {
 		if err := state.Create(ctx, clusterState); err != nil {
@@ -215,7 +213,7 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 	return nil
 }
 
-func prepareClusterUpdates(chunk *cpb.Chunk, clusterResults *algorithms.ClusterResults) []*clustering.FailureUpdate {
+func prepareClusterUpdates(chunk *cpb.Chunk, clusterResults clustering.ClusterResults) []*clustering.FailureUpdate {
 	var updates []*clustering.FailureUpdate
 	for i, testResult := range chunk.Failures {
 		update := &clustering.FailureUpdate{

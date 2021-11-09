@@ -7,11 +7,11 @@ package algorithms
 import (
 	"encoding/hex"
 	"errors"
-	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
+	"infra/appengine/weetbix/internal/clustering/rules"
 )
 
 // Algorithm represents the interface that each clustering algorithm must
@@ -24,7 +24,7 @@ type Algorithm interface {
 	// at most 16 bytes.
 	Cluster(failure *clustering.Failure) []byte
 	// FailureAssociationRule returns a failure association rule that
-	// captures the definition of cluster containing the given example.
+	// captures the definition of the cluster containing the given example.
 	FailureAssociationRule(example *clustering.Failure) string
 	// ClusterDescription returns a description of the cluster, for use when
 	// filing bugs, with the help of the given example failure.
@@ -52,20 +52,9 @@ var algorithms = []Algorithm{
 	&testname.Algorithm{},
 }
 
-// ClusterResults represents the results of clustering test failures.
-type ClusterResults struct {
-	// RuleVersion is the version of failure association rules used
-	// to cluster test results. This is the Spanner commit timestamp
-	// of the most recent failure association rule used in clustering.
-	RuleVersion time.Time
-	// Clusters each test result is in, one slice of ClusterIDs
-	// for each test result.
-	Clusters [][]*clustering.ClusterID
-}
-
 // Cluster clusters the given test failures using all registered
 // clustering algorithms.
-func Cluster(failures []*clustering.Failure) *ClusterResults {
+func Cluster(failures []*clustering.Failure) clustering.ClusterResults {
 	var result [][]*clustering.ClusterID
 	for _, f := range failures {
 		var ids []*clustering.ClusterID
@@ -79,18 +68,27 @@ func Cluster(failures []*clustering.Failure) *ClusterResults {
 				ID:        hex.EncodeToString(id),
 			})
 		}
+
 		result = append(result, ids)
 	}
-	return &ClusterResults{
-		// TODO(crbug.com/1243174): Set when failure association rules
+
+	algorithmNames := make(map[string]struct{})
+	for _, a := range algorithms {
+		algorithmNames[a.Name()] = struct{}{}
+	}
+
+	return clustering.ClusterResults{
+		AlgorithmsVersion: AlgorithmsVersion,
+		// TODO(crbug.com/1243174): Update when failure association rules
 		// are implemented.
-		RuleVersion: time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC),
-		Clusters:    result,
+		RulesVersion: rules.StartingEpoch,
+		Algorithms:   algorithmNames,
+		Clusters:     result,
 	}
 }
 
-// ErrAlgorithmNotExist is returned if a clusterID is passed whose
-// clustering algorithm is not supported. This may indicate the algorithm
+// ErrAlgorithmNotExist is returned if an algorithm with the given
+// name does not exist. This may indicate the algorithm
 // is newer or older than the current version.
 var ErrAlgorithmNotExist = errors.New("algorithm does not exist")
 
