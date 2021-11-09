@@ -41,8 +41,6 @@ def RunSteps(api):
 
     _step_components_tests(api, changes)
 
-    _step_isolate_tests(api, changes)
-
     _step_client_tests(api, changes)
 
     _step_swarming_bot_tests(api, changes)
@@ -68,8 +66,6 @@ def _check_changes(api):
           _has_changed_files(api, 'appengine/config_service'),
       'components':
           _has_changed_files(api, 'appengine/components'),
-      'isolate':
-          _has_changed_files(api, 'appengine/isolate'),
       'swarming':
           _has_changed_files(
               api, 'appengine/swarming', exclude_dir='appengine/swarming/ui2'),
@@ -164,20 +160,6 @@ def _step_config_tests(api, changes):
   config_dir = api.path['checkout'].join('luci', 'appengine', 'config_service')
   with api.step.nest('config_service'):
     _step_run_py_tests(api, config_dir)
-
-
-def _step_isolate_tests(api, changes):
-  if not api.platform.is_linux:
-    return
-
-  deps = ['isolate', 'client', 'components', 'appengine_third_party']
-  if not any([changes[d] for d in deps]):
-    # skip tests when no changes on the dependencies.
-    return
-
-  isolate_dir = api.path['checkout'].join('luci', 'appengine', 'isolate')
-  with api.step.nest('isolate'):
-    _step_run_py_tests(api, isolate_dir)
 
 
 def _step_client_tests(api, changes):
@@ -280,8 +262,6 @@ def GenTests(api):
                                   ['appengine/config_service/foo.py']) +
          _step_data_changed_files('appengine/components',
                                   ['appengine/components/foo.py']) +
-         _step_data_changed_files('appengine/isolate',
-                                  ['appengine/isolate/foo.py']) +
          _step_data_changed_files('appengine/swarming',
                                   ['appengine/swarming/foo.py']) +
          _step_data_changed_files('appengine/swarming/ui2',
@@ -295,8 +275,6 @@ def GenTests(api):
                                   ['appengine/config_service/foo.py']) +
          _step_data_changed_files('appengine/components',
                                   ['appengine/components/foo.py']) +
-         _step_data_changed_files('appengine/isolate',
-                                  ['appengine/isolate/foo.py']) +
          _step_data_changed_files(
              'appengine/swarming',
              ['appengine/swarming/foo.py', 'appengine/swarming/ui2/bar.js']) +

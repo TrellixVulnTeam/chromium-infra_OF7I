@@ -163,17 +163,16 @@
     "cmd": [],
     "name": "check changes",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
-      "@@@STEP_LOG_LINE@changes@auth_service: True@@@",
-      "@@@STEP_LOG_LINE@changes@vpython3: False@@@",
-      "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
       "@@@STEP_LOG_LINE@changes@appengine_third_party: False@@@",
-      "@@@STEP_LOG_LINE@changes@swarming: True@@@",
-      "@@@STEP_LOG_LINE@changes@isolate: True@@@",
       "@@@STEP_LOG_LINE@changes@client: True@@@",
       "@@@STEP_LOG_LINE@changes@components: True@@@",
+      "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
+      "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
+      "@@@STEP_LOG_LINE@changes@swarming: True@@@",
       "@@@STEP_LOG_LINE@changes@vpython: False@@@",
       "@@@STEP_LOG_LINE@changes@config_service: True@@@",
+      "@@@STEP_LOG_LINE@changes@auth_service: True@@@",
+      "@@@STEP_LOG_LINE@changes@vpython3: False@@@",
       "@@@STEP_LOG_END@changes@@@"
     ]
   },
@@ -374,35 +373,6 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@change list@appengine/components/foo.py@@@",
-      "@@@STEP_LOG_END@change list@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "diff",
-      "--name-only",
-      "--cached",
-      "appengine/isolate"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
-    "infra_step": true,
-    "luci_context": {
-      "realm": {
-        "name": "infra:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "check changes.get change list on appengine/isolate",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@change list@appengine/isolate/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
@@ -616,39 +586,6 @@
       }
     },
     "name": "components.run tests python3",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "isolate"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/isolate/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/isolate",
-    "luci_context": {
-      "realm": {
-        "name": "infra:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "isolate.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
