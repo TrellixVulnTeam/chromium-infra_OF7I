@@ -192,6 +192,26 @@ func ParseSSPDeployShadowConfig(
 	return mounts, nil
 }
 
+// getHostInfoStoreMounts returns Mount objects to mount each host info store
+// path into a Docker container.
+func getHostInfoStoreMounts(autotestArgs *autotest.AutoservArgs) []mount.Mount {
+	var mounts []mount.Mount
+	rootDir := autotestArgs.ResultsDir
+
+	for _, dutName := range append(autotestArgs.Hosts, autotestArgs.PeerDuts...) {
+		hostInfoFilePath := HostInfoFilePath(rootDir, dutName)
+
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Target:   filepath.ToSlash(hostInfoFilePath),
+			Source:   hostInfoFilePath,
+			ReadOnly: false,
+		})
+	}
+
+	return mounts
+}
+
 // runTask runs an autoserv task.
 //
 // Result.TestsFailed is always zero.
@@ -226,6 +246,15 @@ func runTask(ctx context.Context,
 			User:  "chromeos-test",
 		}
 
+		mounts := []mount.Mount{
+			{
+				Type:     mount.TypeBind,
+				Source:   a.ResultsDir,
+				Target:   a.ResultsDir,
+				ReadOnly: false,
+			},
+		}
+
 		sspDeployShadowConfigMounts, err := ParseSSPDeployShadowConfig(
 			ctx, c, filepath.Join(c.AutotestDir, sspDeployShadowConfigFile),
 		)
@@ -233,18 +262,16 @@ func runTask(ctx context.Context,
 			return r, errors.Wrap(err, "failed parsing SSP deploy shadow config")
 		}
 
+		mounts = append(mounts, sspDeployShadowConfigMounts...)
+		mounts = append(mounts, getHostInfoStoreMounts(a)...)
+
 		// The results dir on the host is bound to the same path in the
 		// container. Thus, autoserv will write to a.ResultsDir in the
 		// container, which is bound to a.ResultsDir in the host, so results
 		// are available in the expected location on the host.
 		hostConfig := &container.HostConfig{
 			NetworkMode: "host",
-			Mounts: append(sspDeployShadowConfigMounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   a.ResultsDir,
-				Target:   a.ResultsDir,
-				ReadOnly: false,
-			}),
+			Mounts:      mounts,
 		}
 
 		logging.Infof(ctx, "creating Docker container with command %q", containerConfig.Cmd)

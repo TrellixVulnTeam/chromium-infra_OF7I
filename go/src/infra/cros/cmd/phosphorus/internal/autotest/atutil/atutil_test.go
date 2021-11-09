@@ -62,6 +62,22 @@ func TestRunAutoserv(t *testing.T) {
 		ResultsDir:       resultsDir,
 		RequireSSP:       true,
 		SSPBaseImageName: "testsspname",
+		Hosts:            []string{"host1", "host2"},
+		PeerDuts:         []string{"peerdut1"},
+	}
+
+	if err = os.Mkdir(filepath.Join(resultsDir, "host_info_store"), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, dutName := range append(j.Hosts, j.PeerDuts...) {
+		if err = os.WriteFile(
+			filepath.Join(resultsDir, "host_info_store", fmt.Sprintf("%s.store", dutName)),
+			[]byte{},
+			os.ModePerm,
+		); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	containerImageInfo := &api.ContainerImageInfo{
@@ -90,15 +106,31 @@ func TestRunAutoserv(t *testing.T) {
 		"docker", "run",
 		"--user", "chromeos-test",
 		"--network", "host",
-		fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
 		fmt.Sprintf("--mount=source=%s,target=%s,type=bind", resultsDir, resultsDir),
+		fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
+		fmt.Sprintf(
+			"--mount=source=%s,target=%s/host_info_store/host1.store,type=bind",
+			filepath.Join(resultsDir, "host_info_store", "host1.store"),
+			filepath.ToSlash(resultsDir),
+		),
+		fmt.Sprintf("--mount=source=%s,target=%s/host_info_store/host2.store,type=bind",
+			filepath.Join(resultsDir, "host_info_store", "host2.store"),
+			filepath.ToSlash(resultsDir),
+		),
+		fmt.Sprintf(
+			"--mount=source=%s,target=%s/host_info_store/peerdut1.store,type=bind",
+			filepath.Join(resultsDir, "host_info_store", "peerdut1.store"),
+			filepath.ToSlash(resultsDir),
+		),
 		"gcr.io/testproject/testimage@abc",
 		filepath.Join(autotestDir, "server", "autoserv"),
 		"--args", "test args",
 		"-s",
 		"--host-info-subdir", "host_info_store",
+		"-m", "host1,host2",
 		"--lab", "True",
 		"-n",
+		"-ch", "peerdut1",
 		"-r", resultsDir,
 		"--verify_job_repo_url",
 		"-p",
