@@ -6,16 +6,11 @@ package rules
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"testing"
 	"time"
 
-	"cloud.google.com/go/spanner"
 	"go.chromium.org/luci/server/span"
 
-	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -23,47 +18,101 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-const testProject = "myproject"
-
 func TestSpan(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
-		Convey(`Read`, func() {
-			validateAndClearTimes := func(rules []*FailureAssociationRule) {
-				for _, r := range rules {
-					So(r.CreationTime, ShouldNotBeZeroValue)
-					So(r.LastUpdated, ShouldNotBeZeroValue)
-					So(r.LastUpdated, ShouldEqual, r.CreationTime)
-					// CreationTime and LastUpdated are set by implementation.
-					// Ignore their values when comparing to expected rules.
-					r.LastUpdated = time.Time{}
-					r.CreationTime = time.Time{}
-				}
-			}
+		Convey(`ReadActive`, func() {
 			Convey(`Empty`, func() {
-				setRules(ctx, nil)
+				SetRulesForTesting(ctx, nil)
 
 				rules, err := ReadActive(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
-				validateAndClearTimes(rules)
 				So(rules, ShouldResemble, []*FailureAssociationRule{})
 			})
 			Convey(`Multiple`, func() {
 				rulesToCreate := []*FailureAssociationRule{
-					newRule(0),
-					newRule(1),
-					newRule(2),
+					NewRule(0).Build(),
+					NewRule(1).WithProject("otherproject").Build(),
+					NewRule(2).WithActive(false).Build(),
+					NewRule(3).Build(),
 				}
-				rulesToCreate[1].IsActive = false
-				setRules(ctx, rulesToCreate)
+				SetRulesForTesting(ctx, rulesToCreate)
 
 				rules, err := ReadActive(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
-				validateAndClearTimes(rules)
 				So(rules, ShouldResemble, []*FailureAssociationRule{
-					newRule(0),
-					newRule(2),
+					rulesToCreate[0],
+					rulesToCreate[3],
 				})
+			})
+		})
+		Convey(`ReadDelta`, func() {
+			Convey(`Invalid since time`, func() {
+				_, err := ReadDelta(span.Single(ctx), testProject, time.Time{})
+				So(err, ShouldErrLike, "cannot query rule deltas from before project inception")
+			})
+			Convey(`Empty`, func() {
+				SetRulesForTesting(ctx, nil)
+				rules, err := ReadDelta(span.Single(ctx), testProject, StartingEpoch)
+				So(err, ShouldBeNil)
+				So(rules, ShouldResemble, []*FailureAssociationRule{})
+			})
+			Convey(`Multiple`, func() {
+				reference := time.Date(2020, 1, 2, 3, 4, 5, 6000, time.UTC)
+				rulesToCreate := []*FailureAssociationRule{
+					NewRule(0).WithLastUpdated(reference).Build(),
+					NewRule(1).WithProject("otherproject").WithLastUpdated(reference.Add(time.Minute)).Build(),
+					NewRule(2).WithActive(false).WithLastUpdated(reference.Add(time.Minute)).Build(),
+					NewRule(3).WithLastUpdated(reference.Add(time.Microsecond)).Build(),
+				}
+				SetRulesForTesting(ctx, rulesToCreate)
+
+				rules, err := ReadDelta(span.Single(ctx), testProject, StartingEpoch)
+				So(err, ShouldBeNil)
+				So(rules, ShouldResemble, []*FailureAssociationRule{
+					rulesToCreate[0],
+					rulesToCreate[2],
+					rulesToCreate[3],
+				})
+
+				rules, err = ReadDelta(span.Single(ctx), testProject, reference)
+				So(err, ShouldBeNil)
+				So(rules, ShouldResemble, []*FailureAssociationRule{
+					rulesToCreate[2],
+					rulesToCreate[3],
+				})
+
+				rules, err = ReadDelta(span.Single(ctx), testProject, reference.Add(time.Minute))
+				So(err, ShouldBeNil)
+				So(rules, ShouldResemble, []*FailureAssociationRule{})
+			})
+		})
+		Convey(`ReadLastUpdated`, func() {
+			Convey(`Empty`, func() {
+				SetRulesForTesting(ctx, nil)
+
+				timestamp, err := ReadLastUpdated(span.Single(ctx), testProject)
+				So(err, ShouldBeNil)
+				So(timestamp, ShouldEqual, StartingEpoch)
+			})
+			Convey(`Multiple`, func() {
+				// Spanner commit timestamps are in microsecond
+				// (not nanosecond) granularity. The MAX operator
+				// on timestamps truncates to microseconds. For this
+				// reason, we use microsecond resolution timestamps
+				// when testing.
+				reference := time.Date(2020, 1, 2, 3, 4, 5, 6000, time.UTC)
+				rulesToCreate := []*FailureAssociationRule{
+					NewRule(0).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
+					NewRule(1).WithProject("otherproject").WithLastUpdated(reference.Add(time.Hour)).Build(),
+					NewRule(2).WithActive(false).WithLastUpdated(reference).Build(),
+					NewRule(3).WithLastUpdated(reference.Add(-2 * time.Hour)).Build(),
+				}
+				SetRulesForTesting(ctx, rulesToCreate)
+
+				timestamp, err := ReadLastUpdated(span.Single(ctx), testProject)
+				So(err, ShouldBeNil)
+				So(timestamp, ShouldEqual, reference)
 			})
 		})
 		Convey(`Create`, func() {
@@ -73,21 +122,43 @@ func TestSpan(t *testing.T) {
 				})
 				return err
 			}
-			r := newRule(100)
+			r := NewRule(100).Build()
 			Convey(`Valid`, func() {
+				testExists := func(expectedRule *FailureAssociationRule) {
+					txn, cancel := span.ReadOnlyTransaction(ctx)
+					defer cancel()
+					rules, err := ReadActive(txn, testProject)
+
+					So(err, ShouldBeNil)
+					So(len(rules), ShouldEqual, 1)
+
+					readRule := rules[0]
+					So(readRule.CreationTime, ShouldNotBeZeroValue)
+					So(readRule.LastUpdated, ShouldNotBeZeroValue)
+					So(readRule.LastUpdated, ShouldEqual, readRule.CreationTime)
+					// CreationTime and LastUpdated are set by implementation.
+					// Ignore their values when comparing to expected rules.
+					readRule.LastUpdated = expectedRule.LastUpdated
+					readRule.CreationTime = expectedRule.CreationTime
+					So(readRule, ShouldResemble, expectedRule)
+				}
+
 				Convey(`With Source Cluster`, func() {
 					So(r.SourceCluster.Algorithm, ShouldNotBeEmpty)
 					So(r.SourceCluster.ID, ShouldNotBeNil)
 					err := testCreate(r)
 					So(err, ShouldBeNil)
+
+					testExists(r)
 				})
 				Convey(`Without Source Cluster`, func() {
 					// E.g. in case of a manually created rule.
 					r.SourceCluster = clustering.ClusterID{}
 					err := testCreate(r)
 					So(err, ShouldBeNil)
+
+					testExists(r)
 				})
-				// Create followed by read already tested as part of Read tests.
 			})
 			Convey(`With invalid Project`, func() {
 				Convey(`Missing`, func() {
@@ -119,35 +190,4 @@ func TestSpan(t *testing.T) {
 			})
 		})
 	})
-}
-
-func newRule(uniqifier int) *FailureAssociationRule {
-	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", uniqifier)))
-	return &FailureAssociationRule{
-		Project:        testProject,
-		RuleID:         hex.EncodeToString(ruleIDBytes[0:16]),
-		RuleDefinition: "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
-		Bug:            bugs.BugID{System: "monorail", ID: fmt.Sprintf("project/%v", uniqifier)},
-		IsActive:       true,
-		SourceCluster: clustering.ClusterID{
-			Algorithm: fmt.Sprintf("clusteralg%v", uniqifier),
-			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", uniqifier))),
-		},
-	}
-}
-
-// setRules replaces the set of stored rules to match the given set.
-func setRules(ctx context.Context, rs []*FailureAssociationRule) {
-	testutil.MustApply(ctx,
-		spanner.Delete("FailureAssociationRules", spanner.AllKeys()))
-	// Insert some FailureAssociationRules.
-	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-		for _, bc := range rs {
-			if err := Create(ctx, bc); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	So(err, ShouldBeNil)
 }
