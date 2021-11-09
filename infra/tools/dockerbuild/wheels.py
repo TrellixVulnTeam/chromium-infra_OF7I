@@ -165,6 +165,26 @@ _CFFI_DEPENDENCY = SourceOrPrebuilt(
     packaged=[],
 )
 
+
+# lxml doesn't emmbed dependencies in the repo. Instead it downloads
+# the dependencies' source code in the build script. We use
+# LIBXML2_VERSION and LIBXSLT_VERSION to specify the versions of
+# libxml2 and libxslt.
+def _LxmlEnv():
+  env = {
+      'CFLAGS': '-O2 -g -fPIC',
+      'STATIC_DEPS': 'true',
+      'LIBXML2_VERSION': '2.9.10',
+      'LIBXSLT_VERSION': '1.1.34',
+  }
+  # This is necessary to prevent lxml's build system from forcing
+  # x86_64 on Mac.
+  if sys.platform == 'darwin':
+    env['LDFLAGS'] = ''
+
+  return env
+
+
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'SourceOrPrebuilt',
@@ -482,19 +502,10 @@ SPECS.update({
             ],
             pyversions=['py3'],
         ),
-        # lxml doesn't emmbed dependencies in the repo. Instead it downloads
-        # the dependencies' source code in the build script. We use
-        # LIBXML2_VERSION and LIBXSLT_VERSION to specify the versions of
-        # libxml2 and libxslt.
         SourceOrPrebuilt(
             'lxml',
             '4.6.3',
-            env={
-                'CFLAGS': '-O2 -g -fPIC',
-                'STATIC_DEPS': 'true',
-                'LIBXML2_VERSION': '2.9.10',
-                'LIBXSLT_VERSION': '1.1.34',
-            },
+            env=_LxmlEnv(),
             packaged=[
                 'windows-x86-py3',
                 'windows-x64-py3',
@@ -1595,6 +1606,7 @@ SPECS.update({
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
+            patch_version='chromium.1',
         ),
     )
 })

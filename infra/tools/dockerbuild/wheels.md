@@ -1595,12 +1595,12 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
-### 3.3.1
+### 3.3.1.chromium.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/cryptography/${vpython_platform}"
-  version: "version:3.3.1"
+  version: "version:3.3.1.chromium.1"
 >
 ```
 

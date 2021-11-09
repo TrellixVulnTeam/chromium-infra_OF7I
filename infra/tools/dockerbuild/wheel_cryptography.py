@@ -96,6 +96,7 @@ class Cryptography(Builder):
               'make install',
           ],
           cwd=openssl_dir,
+          env=wheel.plat.env,
       )
 
       py_binary, env = SetupPythonPackages(system, wheel, tdir)
