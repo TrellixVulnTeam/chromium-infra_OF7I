@@ -23,6 +23,8 @@ def get_src_from_action(action):
     return action.add_file.src
   if action.WhichOneof('action') == 'add_windows_package':
     return action.add_windows_package.src
+  if action.WhichOneof('action') == 'add_windows_driver':
+    return action.add_windows_driver.src
 
 
 def get_build_offline_customization(offline_customization):
@@ -90,6 +92,12 @@ def get_build_actions(action):
         add_windows_package=actions.AddWindowsPackage(
             src=action.add_windows_package.src,
             args=action.add_windows_package.args,
+        ))
+  if action.WhichOneof('action') == 'add_windows_driver':
+    return actions.Action(
+        add_windows_driver=actions.AddWindowsDriver(
+            src=action.add_windows_driver.src,
+            args=action.add_windows_driver.args,
         ))
   if action.WhichOneof('action') == 'edit_offline_registry':
     eor = actions.EditOfflineRegistry()

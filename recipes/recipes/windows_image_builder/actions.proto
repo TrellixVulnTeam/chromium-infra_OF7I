@@ -25,6 +25,8 @@ message Action {
     AddWindowsPackage add_windows_package = 2;
     // Edit registry on offline windows image
     EditOfflineRegistry edit_offline_registry = 3;
+    // Adds a driver to offline windows image
+    AddWindowsDriver add_windows_driver = 4;
   }
 }
 
@@ -38,6 +40,7 @@ message AddFile {
   // relative to root of mounted image, e.g. Windows\System32\startnet.cmd
   string dst = 3;
 }
+
 // Add-WindowsPackage calls the command by the same name in powershell. It adds
 // the -PackagePath based on src, -Path based on context, -LogLevel and -LogPath
 // by default. Other arguments can be optionally given by args.
@@ -80,4 +83,19 @@ enum RegPropertyType {
   QWord = 5;
   String = 6;
   Unknown =7;
+}
+
+// AddWindowsDriver calls the command by the same name in powershell. It adds
+// the -Driver based on src and -Path based on context. -LogPath and -LogLevel
+// are added by default. Other args can be optionally specified.
+// https://docs.microsoft.com/en-us/powershell/module/dism/add-windowsdriver?view=windowsserver2019-ps
+message AddWindowsDriver {
+  // Name of the step to be run. Ex: install dell drivers
+  string name = 1;
+
+  // Src of the driver to be installed
+  sources.Src src = 2;
+
+  // Args for the install command. Ex: ['-Recurse', '-ForceUnsigned']
+  repeated string args = 3;
 }

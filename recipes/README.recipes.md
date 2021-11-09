@@ -68,6 +68,7 @@
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline)
+  * [windows_scripts_executor:examples/add_windows_driver](#recipes-windows_scripts_executor_examples_add_windows_driver)
   * [windows_scripts_executor:examples/add_windows_package](#recipes-windows_scripts_executor_examples_add_windows_package)
   * [windows_scripts_executor:examples/cipd_test](#recipes-windows_scripts_executor_examples_cipd_test)
   * [windows_scripts_executor:examples/edit_offline_registry_test](#recipes-windows_scripts_executor_examples_edit_offline_registry_test)
@@ -1549,6 +1550,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#29)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
+### *recipes* / [windows\_scripts\_executor:examples/add\_windows\_driver](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_driver.py)
+
+[DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_driver.py#15): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
+
+PYTHON_VERSION_COMPATIBILITY: PY2
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_driver.py#31)(api, config):**
 ### *recipes* / [windows\_scripts\_executor:examples/add\_windows\_package](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_package.py#15): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]

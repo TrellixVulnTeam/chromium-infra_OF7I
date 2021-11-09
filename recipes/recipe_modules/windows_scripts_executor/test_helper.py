@@ -239,6 +239,15 @@ def INSTALL_FILE(api, name, image, customization, success=True):
       stdout=json_res(api, success))
 
 
+def INSTALL_DRIVER(api, name, image, customization, success=True):
+  """ mock install driver to image step """
+  return api.step_data(
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
+          'PowerShell> Install driver {}'.format(name)),
+      stdout=json_res(api, success))
+
+
 def EDIT_REGISTRY(api, name, image, customization, success=True):
   """ mock registry edit action step"""
   return api.step_data(
@@ -299,6 +308,21 @@ def CHECK_INSTALL_CAB(api, image, customization, action, args=None):
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
           'PowerShell> Install package {}'.format(action)), wild_card)
+
+
+def CHECK_INSTALL_DRIVER(api, image, customization, action, args=None):
+  """
+      Post check for installation
+  """
+  wild_card = ['.*'] * 12
+  if args:
+    wild_card.append(*args)
+  return api.post_process(
+      StepCommandRE,
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
+          'PowerShell> Install driver {}'.format(action)), wild_card)
+
 
 #   Generate proto configs helper functions
 

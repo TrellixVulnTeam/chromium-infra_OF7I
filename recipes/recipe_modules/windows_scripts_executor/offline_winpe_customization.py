@@ -7,6 +7,7 @@ from . import mount_wim
 from . import unmount_wim
 from . import regedit
 from . import add_windows_package
+from . import add_windows_driver
 
 from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
                                                     as winpe)
@@ -188,6 +189,10 @@ class OfflineWinPECustomization(customization.Customization):
       src = self._source.get_local_src(action.add_windows_package.src)
       return self.add_windows_package(action.add_windows_package, src)
 
+    if a == 'add_windows_driver':
+      src = self._source.get_local_src(action.add_windows_driver.src)
+      return self.add_windows_driver(action.add_windows_driver, src)
+
     if a == 'edit_offline_registry':
       return regedit.edit_offline_registry(self._powershell, self._scripts,
                                            action.edit_offline_registry,
@@ -225,3 +230,14 @@ class OfflineWinPECustomization(customization.Customization):
     self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
                         '-Recurse', '-Force', '-Destination',
                         self._workdir.join('mount', af.dst))
+
+  def add_windows_driver(self, awd, src):
+    """ add_windows_driver runs Add-WindowsDriver command in powershell.
+        https://docs.microsoft.com/en-us/powershell/module/dism/add-windowsdriver?view=windowsserver2019-ps
+        Args:
+          awd: actions.AddWindowsDriver proto object
+          src: Path to the driver on bot disk
+    """
+    add_windows_driver.install_driver(self._powershell, awd, src,
+                                      self._workdir.join('mount'),
+                                      self._scratchpad)
