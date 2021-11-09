@@ -576,7 +576,7 @@ wheel: <
   name: "infra/python/wheels/cryptography/${vpython_platform}"
   # NOTE: For Python 2.7, use version:2.9.2 instead to avoid a noisy
   # deprecation warning.
-  version: "version:3.3.1"
+  version: "version:3.3.1.chromium.1"
 >
 wheel: <
   name: "infra/python/wheels/enum34-py2"
