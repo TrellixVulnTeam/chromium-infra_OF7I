@@ -34,6 +34,10 @@ import (
 	"infra/cros/recovery/logger/metrics"
 )
 
+// LuciexeProtocolPassthru should always be set to false in checked-in code.
+// Only set it to true for development purposes.
+const LuciexeProtocolPassthru = false
+
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
@@ -42,23 +46,28 @@ func main() {
 	input := &steps.LabpackInput{}
 	var writeOutputProps func(*steps.LabpackResponse)
 	var mergeOutputProps func(*steps.LabpackResponse)
-	build.Main(input, &writeOutputProps, &mergeOutputProps,
-		func(ctx context.Context, args []string, state *build.State) error {
-			// TODO(otabek@): Add custom logger.
-			lg := logger.NewLogger()
-			log.Printf("Input args: %v", input)
-			res := &steps.LabpackResponse{Success: true}
-			err := internalRun(ctx, input, state, lg)
-			if err != nil {
-				res.Success = false
-				res.FailReason = err.Error()
-				lg.Debug("Finished with err: %s", err)
-			}
-			writeOutputProps(res)
-			// if err is nil then will marked as SUCCESS
-			return err
-		},
-	)
+	if LuciexeProtocolPassthru {
+		log.Printf("Bypassing luciexe.")
+		panic("Bypassing luciexe not yet supported.")
+	} else {
+		build.Main(input, &writeOutputProps, &mergeOutputProps,
+			func(ctx context.Context, args []string, state *build.State) error {
+				// TODO(otabek@): Add custom logger.
+				lg := logger.NewLogger()
+				log.Printf("Input args: %v", input)
+				res := &steps.LabpackResponse{Success: true}
+				err := internalRun(ctx, input, state, lg)
+				if err != nil {
+					res.Success = false
+					res.FailReason = err.Error()
+					lg.Debug("Finished with err: %s", err)
+				}
+				writeOutputProps(res)
+				// if err is nil then will marked as SUCCESS
+				return err
+			},
+		)
+	}
 	log.Printf("Exited successfully")
 }
 
