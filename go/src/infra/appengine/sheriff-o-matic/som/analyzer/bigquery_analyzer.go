@@ -108,6 +108,10 @@ var androidFilterFunc = func(r failureRow) bool {
 		"android-arm64-stable",
 		"android-arm-stable",
 		"android-asan",
+		"android-arm",
+		"android-arm-tests",
+		"android-arm64",
+		"android-arm64-tests",
 	}
 	return sliceContains(validBuilders, r.Builder)
 }
