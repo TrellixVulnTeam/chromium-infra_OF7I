@@ -38,3 +38,9 @@ mv SourceDir/* "$PREFIX/bin"
 rm -vrf "$PREFIX/bin/Scripts"
 
 mv "$PREFIX/bin/python.exe" "$PREFIX/bin/python3.exe"
+
+# Don't distribute __pycache__. Because the file modification times are not
+# preserved in the CIPD package, Python will try to regenerate the compiled
+# code, but will not overwrite an existing read-only file, effectively
+# disabling the compiled code cache.
+find "$PREFIX" -name __pycache__ -exec rm -rf {} +
