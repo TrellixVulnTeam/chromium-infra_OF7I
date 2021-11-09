@@ -113,7 +113,7 @@
       flush( () => {
         let item = element.$$('#test_results');
         assert.isNotNull(item);
-        assert.isTrue(item.children[0].href.endsWith(
+        assert.isTrue(item.children[1].href.endsWith(
                 'dashboards/flakiness_dashboard' +
                 '.html#tests=best_test&testType=webkit_tests'));
         done();
@@ -150,7 +150,7 @@
       flush( () => {
         let item = element.$$('#test_results');
         assert.isNotNull(item);
-        assert.isTrue(item.children[1].href.endsWith('search/?q=best_test'));
+        assert.isTrue(item.children[2].href.endsWith('search/?q=best_test'));
         done();
       });
     });
@@ -195,7 +195,7 @@
       flush( () => {
         let item = element.$$('#test_results');
         assert.isNotNull(item);
-        assert.isTrue(item.children[1].href.endsWith(
+        assert.isTrue(item.children[2].href.endsWith(
             'search/?q=test.foo.bar.TestClass%20' +
             'function%3AtestThatJavaHasTheBestNames'));
         done();

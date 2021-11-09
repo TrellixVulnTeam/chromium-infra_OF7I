@@ -251,6 +251,16 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
         modifiers.join('&');
   }
 
+  _handleCopyDisableCommandToClipboard(evt) {
+    const testName = evt.model.test.test_name;
+    const command = "tools/disable_tests/disable '" + testName + "'";
+
+    navigator.clipboard.writeText(command).then(function() {},
+        function(err) {
+          console.log(err);
+        });
+  }
+
   _linkForCL(cl) {
     return 'https://crrev.com/' + cl;
   }
