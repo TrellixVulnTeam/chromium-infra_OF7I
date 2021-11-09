@@ -9,10 +9,13 @@ import (
 	"net/http"
 
 	"cloud.google.com/go/bigquery"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/retry"
+	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/server/auth"
 )
 
@@ -72,4 +75,38 @@ func (i *Inserter) batch(rows []*bq.Row) [][]*bq.Row {
 		result = append(result, page)
 	}
 	return result
+}
+
+func hasReason(apiErr *googleapi.Error, reason string) bool {
+	for _, e := range apiErr.Errors {
+		if e.Reason == reason {
+			return true
+		}
+	}
+	return false
+}
+
+// PutWithRetries puts rows into BigQuery.
+// Retries on transient errors.
+func (i *Inserter) PutWithRetries(ctx context.Context, rows []*bq.Row) error {
+	return retry.Retry(ctx, transient.Only(retry.Default), func() error {
+		err := i.Put(ctx, rows)
+
+		switch e := err.(type) {
+		case *googleapi.Error:
+			if e.Code == http.StatusForbidden && hasReason(e, "quotaExceeded") {
+				err = transient.Tag.Apply(err)
+			}
+		}
+
+		return err
+	}, retry.LogCallback(ctx, "bigquery_put"))
+}
+
+// FatalError returns true if the error is a known fatal error.
+func FatalError(err error) bool {
+	if apiErr, ok := err.(*googleapi.Error); ok && apiErr.Code == http.StatusForbidden && hasReason(apiErr, "accessDenied") {
+		return true
+	}
+	return false
 }
