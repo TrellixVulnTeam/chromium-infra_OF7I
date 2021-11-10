@@ -248,3 +248,79 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 	}
 	return clusters[0], nil
 }
+
+type ClusterFailure struct {
+	Realm                      bigquery.NullString    `json:"realm"`
+	IngestedInvocationID       bigquery.NullString    `json:"ingestedInvocationID"`
+	TestID                     bigquery.NullString    `json:"testID"`
+	Variant                    []*Variant             `json:"variant"`
+	PresubmitRunID             *PresubmitRunID        `json:"presubmitRunID"`
+	PartitionTime              bigquery.NullTimestamp `json:"partitionTime"`
+	IsIncluded                 bigquery.NullBool      `json:"isIncluded"`
+	IsIncludedWithHighPriority bigquery.NullBool      `json:"isIncludedWithHighPriority"`
+	IsExonerated               bigquery.NullBool      `json:"isExonerated"`
+}
+
+type Variant struct {
+	Key   bigquery.NullString `json:"key"`
+	Value bigquery.NullString `json:"value"`
+}
+
+type PresubmitRunID struct {
+	System bigquery.NullString `json:"system"`
+	ID     bigquery.NullString `json:"id"`
+}
+
+// ReadClusterFailures reads the latest 2000 failures for a single cluster for the last 7 days.
+func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, clusterID clustering.ClusterID) ([]*ClusterFailure, error) {
+	dataset, err := bqutil.DatasetForProject(luciProject)
+	if err != nil {
+		return nil, errors.Annotate(err, "getting dataset").Err()
+	}
+	// TODO(mwarton): change this to read from materialized
+	// table instead of directly from the view for better performance
+	// (from 30 seconds -> 2 seconds).
+	q := c.client.Query(`
+		SELECT
+			realm as Realm,
+			ingested_invocation_id as IngestedInvocationID,
+			test_id as TestID,
+			variant as Variant,
+			presubmit_run_id as PresubmitRunID,
+			partition_time as PartitionTime,
+			is_included as IsIncluded,
+			is_included_with_high_priority as IsIncludedWithHighPriority,
+			is_exonerated as IsExonerated
+		FROM
+			` + dataset + `.clustered_failures_latest_7d
+		WHERE cluster_algorithm = @clusterAlgorithm
+		  AND cluster_id = @clusterID
+		ORDER BY partition_time DESC
+		LIMIT 2000
+	`)
+	q.Parameters = []bigquery.QueryParameter{
+		{Name: "clusterAlgorithm", Value: clusterID.Algorithm},
+		{Name: "clusterID", Value: clusterID.ID},
+	}
+	job, err := q.Run(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "querying cluster failures").Err()
+	}
+	it, err := job.Read(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "obtain result iterator").Err()
+	}
+	failures := []*ClusterFailure{}
+	for {
+		row := &ClusterFailure{}
+		err := it.Next(row)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, errors.Annotate(err, "obtain next cluster failure row").Err()
+		}
+		failures = append(failures, row)
+	}
+	return failures, nil
+}

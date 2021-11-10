@@ -217,6 +217,48 @@ func (hc *handlers) getCluster(ctx *router.Context) {
 	respondWithJSON(ctx, clusters)
 }
 
+func (hc *handlers) getClusterFailures(ctx *router.Context) {
+	projectCfgs, err := config.Projects(ctx.Context)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Obtain project config: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	projectID := ctx.Params.ByName("project")
+	if _, ok := projectCfgs[projectID]; !ok {
+		http.Error(ctx.Writer, "Project does not exist in Weetbix.", http.StatusBadRequest)
+		return
+	}
+	clusterID := clustering.ClusterID{
+		Algorithm: ctx.Params.ByName("algorithm"),
+		ID:        ctx.Params.ByName("id"),
+	}
+	if err := clusterID.Validate(); err != nil {
+		http.Error(ctx.Writer, "Please supply a valid cluster ID.", http.StatusBadRequest)
+		return
+	}
+	ac, err := analysis.NewClient(ctx.Context, hc.cloudProject)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Creating new analysis client: %v", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		if err := ac.Close(); err != nil {
+			logging.Warningf(ctx.Context, "Closing analysis client: %v", err)
+		}
+	}()
+
+	failures, err := ac.ReadClusterFailures(ctx.Context, projectID, clusterID)
+	if err != nil {
+		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+
+	respondWithJSON(ctx, failures)
+}
+
 func (hc *handlers) updateBugs(ctx context.Context) error {
 	cfg, err := config.Get(ctx)
 	if err != nil {
@@ -259,6 +301,7 @@ func main() {
 			cloudProject: srv.Options.CloudProject,
 			prod:         srv.Options.Prod,
 		}
+		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id/failures", mw, handlers.getClusterFailures)
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.getCluster)
 		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.listClusters)
 		srv.Routes.GET("/api/projects/:project/rules", mw, handlers.listRules)
