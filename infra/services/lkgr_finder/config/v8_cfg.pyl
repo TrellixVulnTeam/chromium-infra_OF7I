@@ -64,9 +64,13 @@
         'V8 Android Arm - builder',
         # crbug.com/586088
         # 'V8 Arm',
+        'V8 Linux - arm - sim - builder',
         'V8 Linux - arm - sim',
+        'V8 Linux - arm - sim - debug builder',
         'V8 Linux - arm - sim - debug',
+        'V8 Linux - arm64 - sim - builder',
         'V8 Linux - arm64 - sim',
+        'V8 Linux - arm64 - sim - debug builder',
         'V8 Linux - arm64 - sim - debug',
 
         # client.v8.fyi
