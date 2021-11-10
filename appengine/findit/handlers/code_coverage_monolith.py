@@ -679,7 +679,7 @@ class ServeCodeCoverageData(BaseHandler):
           PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
           PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
-          PostsubmitReport.modifier_id == 0).order(
+          PostsubmitReport.modifier_id == modifier_id).order(
               -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]

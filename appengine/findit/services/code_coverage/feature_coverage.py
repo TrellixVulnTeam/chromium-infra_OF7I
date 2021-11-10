@@ -19,7 +19,9 @@ from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
+from model.code_coverage import SummaryCoverageData
 from services import bigquery_helper
+from services.code_coverage import aggregation_util
 from services.code_coverage import code_coverage_util
 from services.code_coverage import diff_util
 
@@ -220,8 +222,20 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
   return coverage_per_file, files_with_missing_coverage
 
 
+def _FlushEntities(entities, total, last=False):
+  """Creates datastore entities in a batched manner"""
+  if len(entities) < 100 and not (last and entities):
+    return entities, total
+
+  ndb.put_multi(entities)
+  total += len(entities)
+  logging.info('Dumped %d coverage data entities', total)
+
+  return [], total
+
+
 def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
-                                gerrit_hashtag, modifier_id):
+                                modifier_id):
   """Creates file coverage entities corresponding to a modifier.
 
   Args:
@@ -229,21 +243,9 @@ def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
           representing File proto at https://bit.ly/3yry0KR.
     postsubmit_report (PostsubmitReport): Full codebase coverage report from
           which modified reports are derived.
-    gerrit_hashtag (string): Gerrit hashtag corresponding to the feature.
     modifier_id (int): Id of the CoverageReportModifier corresponding to
                           the gerrit hashtag.
   """
-
-  def FlushEntities(entries, total, last=False):
-    # Flush the data in a batch and release memory.
-    if len(entries) < 100 and not (last and entries):
-      return entries, total
-    ndb.put_multi(entries)
-    total += len(entries)
-    logging.info('Dumped %d coverage data entries for feature %s', total,
-                 gerrit_hashtag)
-    return [], total
-
   entities = []
   total = 0
   for file_path in coverage_per_file:
@@ -258,8 +260,35 @@ def _CreateModifiedFileCoverage(coverage_per_file, postsubmit_report,
             builder=postsubmit_report.builder,
             data=coverage_per_file[file_path],
             modifier_id=modifier_id))
-    entities, total = FlushEntities(entities, total, last=False)
-  FlushEntities(entities, total, last=True)
+    entities, total = _FlushEntities(entities, total, last=False)
+  _FlushEntities(entities, total, last=True)
+
+
+def _CreateModifiedDirSummaryCoverage(directories_coverage, postsubmit_report,
+                                      modifier_id):
+  """Exports directory summary coverage entities to datastore.
+
+  Args:
+    directories_coverage(dict): Mapping from directory path to corresponding
+                                coverage data.
+    postsubmit_report(PostsubmitReport): Full codebase report for which
+                                referenced entities are being exported.
+    modifier_id(int): Id of the CoverageReportModifier corresponding to the
+                      reference commit.
+  """
+  entities = []
+  total = 0
+  logging.info("Dumping directory coverage")
+  for path, data in directories_coverage.items():
+    entity = SummaryCoverageData.Create(
+        postsubmit_report.gitiles_commit.server_host,
+        postsubmit_report.gitiles_commit.project,
+        postsubmit_report.gitiles_commit.ref,
+        postsubmit_report.gitiles_commit.revision, 'dirs', path,
+        postsubmit_report.bucket, postsubmit_report.builder, data, modifier_id)
+    entities.append(entity)
+    entities, total = _FlushEntities(entities, total)
+  _FlushEntities(entities, total, last=True)
 
 
 def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
@@ -478,8 +507,28 @@ def ExportFeatureCoverage(modifier_id, run_id):
   for builder, report in builder_to_latest_report.items():
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
         report, interesting_lines_per_builder_per_file[builder])
-    _CreateModifiedFileCoverage(coverage_per_file, report, gerrit_hashtag,
-                                modifier_id)
+    directory_coverage, _ = (
+        aggregation_util.get_aggregated_coverage_data_from_files(
+            coverage_per_file.values()))
+    _CreateModifiedFileCoverage(coverage_per_file, report, modifier_id)
+    _CreateModifiedDirSummaryCoverage(directory_coverage, report, modifier_id)
+    # Create a top level PostsubmitReport entity with visible = True
+    if directory_coverage:
+      modified_report = PostsubmitReport.Create(
+          server_host=report.gitiles_commit.server_host,
+          project=report.gitiles_commit.project,
+          ref=report.gitiles_commit.ref,
+          revision=report.gitiles_commit.revision,
+          bucket=report.bucket,
+          builder=report.builder,
+          commit_timestamp=report.commit_timestamp,
+          manifest=report.manifest,
+          summary_metrics=directory_coverage['//']['summaries'],
+          build_id=report.build_id,
+          visible=True,
+          modifier_id=modifier_id)
+      modified_report.put()
+
     bq_rows = _CreateBigqueryRows(
         report, gerrit_hashtag, run_id, modifier_id, coverage_per_file,
         files_with_missing_coverage,

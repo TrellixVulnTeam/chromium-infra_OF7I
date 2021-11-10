@@ -14,6 +14,7 @@ from waterfall.test.wf_testcase import WaterfallTestCase
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
+from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services.code_coverage import feature_coverage
 from services import bigquery_helper
@@ -249,6 +250,183 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
                                           'code_coverage_summaries',
                                           'feature_coverage')
 
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={'linux-code-coverage': ['.cc']})
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testDirSummaryCoveageGetsCreated(self, mock_merged_changes,
+                                       mock_file_content, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    postsubmit_report = PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True)
+    postsubmit_report.put()
+    file_coverage_data = FileCoverageData.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        path='//a/myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        data={'lines': [{
+            'count': 1,
+            'first': 1,
+            'last': 2
+        }]})
+    file_coverage_data.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'a/myfile.cc')
+    ]
+    commit_to_content = {
+        'p1': '',
+        'c1': 'line1\nline2',
+        'latest': 'line1\nline2'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
+
+    feature_coverage.ExportFeatureCoverage(123, run_id)
+
+    entity1 = SummaryCoverageData.Get(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        data_type='dirs',
+        path='//a/',
+        bucket='ci',
+        builder='linux-code-coverage',
+        modifier_id=123)
+    entity2 = SummaryCoverageData.Get(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        data_type='dirs',
+        path='//',
+        bucket='ci',
+        builder='linux-code-coverage',
+        modifier_id=123)
+    self.assertEqual(
+        entity1.data, {
+            'dirs': [],
+            'path':
+                '//a/',
+            'summaries': [{
+                'covered': 2,
+                'total': 2,
+                'name': 'line'
+            }],
+            'files': [{
+                'path': '//a/myfile.cc',
+                'name': 'myfile.cc',
+                'summaries': [{
+                    'covered': 2,
+                    'total': 2,
+                    'name': 'line'
+                }]
+            }]
+        })
+    self.assertEqual(
+        entity2.data, {
+            'dirs': [{
+                'path': '//a/',
+                'name': 'a/',
+                'summaries': [{
+                    'covered': 2,
+                    'total': 2,
+                    'name': 'line'
+                }]
+            }],
+            'path': '//',
+            'summaries': [{
+                'covered': 2,
+                'total': 2,
+                'name': 'line'
+            }],
+            'files': []
+        })
+
+  @mock.patch.object(
+      feature_coverage,
+      '_GetAllowedBuilders',
+      return_value={'linux-code-coverage': ['.cc']})
+  @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  def testPostsubmitReportGetsCreated(self, mock_merged_changes,
+                                      mock_file_content, *_):
+    CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
+    postsubmit_report = PostsubmitReport.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='linux-code-coverage',
+        commit_timestamp=datetime(2020, 1, 7),
+        manifest=[],
+        summary_metrics={},
+        build_id=2000,
+        visible=True)
+    postsubmit_report.put()
+    file_coverage_data = FileCoverageData.Create(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        path='//a/myfile.cc',
+        bucket='ci',
+        builder='linux-code-coverage',
+        data={'lines': [{
+            'count': 1,
+            'first': 1,
+            'last': 2
+        }]})
+    file_coverage_data.put()
+    mock_merged_changes.return_value = [
+        _CreateMockMergedChange('c1', 'p1', 'a/myfile.cc')
+    ]
+    commit_to_content = {
+        'p1': '',
+        'c1': 'line1\nline2',
+        'latest': 'line1\nline2'
+    }
+    mock_file_content.side_effect = (
+        lambda path, revision: (commit_to_content[revision], 200))
+    run_id = int(time.time())
+
+    feature_coverage.ExportFeatureCoverage(123, run_id)
+
+    entity = PostsubmitReport.Get(
+        server_host='chromium.googlesource.com',
+        project='chromium/src',
+        ref='refs/heads/main',
+        revision='latest',
+        bucket='ci',
+        builder='linux-code-coverage',
+        modifier_id=123)
+    self.assertEqual(entity.summary_metrics, [{
+        'covered': 2,
+        'total': 2,
+        'name': 'line'
+    }])
   # This test tests the case where feature commit adds new lines to an existing
   # file and the file has not changed after that.
   @mock.patch.object(
