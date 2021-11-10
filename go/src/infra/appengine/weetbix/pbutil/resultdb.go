@@ -8,6 +8,7 @@ package pbutil
 import (
 	pb "infra/appengine/weetbix/proto/v1"
 
+	"go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 )
 
@@ -27,6 +28,20 @@ func VariantFromResultDB(v *rdbpb.Variant) *pb.Variant {
 		return &pb.Variant{Def: make(map[string]string)}
 	}
 	return &pb.Variant{Def: v.Def}
+}
+
+// VariantToResultDB returns a ResultDB Variant corresponding to the
+// supplied Weetbix Variant.
+func VariantToResultDB(v *pb.Variant) *rdbpb.Variant {
+	if v == nil {
+		return &rdbpb.Variant{Def: make(map[string]string)}
+	}
+	return &rdbpb.Variant{Def: v.Def}
+}
+
+// VariantHash returns a hash of the variant.
+func VariantHash(v *pb.Variant) string {
+	return pbutil.VariantHash(VariantToResultDB(v))
 }
 
 // FailureReasonFromResultDB returns a Weetbix FailureReason corresponding to the

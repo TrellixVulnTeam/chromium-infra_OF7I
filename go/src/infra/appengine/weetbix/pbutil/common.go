@@ -35,6 +35,17 @@ func MustTimestampProto(t time.Time) *timestamppb.Timestamp {
 	return ts
 }
 
+// AsTime converts a *timestamppb.Timestamp to a time.Time.
+func AsTime(ts *timestamppb.Timestamp) (time.Time, error) {
+	if ts == nil {
+		return time.Time{}, errors.Reason("unspecified").Err()
+	}
+	if err := ts.CheckValid(); err != nil {
+		return time.Time{}, err
+	}
+	return ts.AsTime(), nil
+}
+
 func doesNotMatch(r *regexp.Regexp) error {
 	return errors.Reason("does not match %s", r).Err()
 }
@@ -145,4 +156,19 @@ func VariantToStrings(vr *pb.Variant) []string {
 		pairs[i] = fmt.Sprintf("%s:%s", k, defMap[k])
 	}
 	return pairs
+}
+
+// VariantToStringPairs returns a slice of StringPair derived from *pb.Variant.
+func VariantToStringPairs(vr *pb.Variant) []*pb.StringPair {
+	defMap := vr.GetDef()
+	if len(defMap) == 0 {
+		return nil
+	}
+
+	keys := SortedVariantKeys(vr)
+	sp := make([]*pb.StringPair, len(keys))
+	for i, k := range keys {
+		sp[i] = StringPair(k, defMap[k])
+	}
+	return sp
 }

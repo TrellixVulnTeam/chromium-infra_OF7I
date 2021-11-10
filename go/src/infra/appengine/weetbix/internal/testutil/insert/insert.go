@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 
+	"infra/appengine/weetbix/internal/span"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
@@ -25,12 +26,12 @@ func AnalyzedTestVariant(realm, tId, vHash string, status pb.AnalyzedTestVariant
 		"Realm":            realm,
 		"TestId":           tId,
 		"VariantHash":      vHash,
-		"Status":           int64(status),
+		"Status":           status,
 		"CreateTime":       spanner.CommitTimestamp,
 		"StatusUpdateTime": spanner.CommitTimestamp,
 	}
 	updateDict(values, extraValues)
-	return spanner.InsertMap("AnalyzedTestVariants", values)
+	return span.InsertMap("AnalyzedTestVariants", values)
 }
 
 // Verdict returns a spanner mutation that inserts a Verdicts row.
@@ -40,10 +41,10 @@ func Verdict(realm, tId, vHash, invID string, status pb.VerdictStatus, invTime t
 		"TestId":                 tId,
 		"VariantHash":            vHash,
 		"InvocationId":           invID,
-		"Status":                 int64(status),
+		"Status":                 status,
 		"InvocationCreationTime": invTime,
 		"IngestionTime":          invTime.Add(time.Hour),
 	}
 	updateDict(values, extraValues)
-	return spanner.InsertMap("Verdicts", values)
+	return span.InsertMap("Verdicts", values)
 }
