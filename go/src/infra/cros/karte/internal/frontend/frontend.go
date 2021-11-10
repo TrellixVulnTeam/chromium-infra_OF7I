@@ -93,6 +93,11 @@ func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.Crea
 	return req.GetObservation(), nil
 }
 
+// PersistAction persists a single action.
+func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistActionRequest) (*kartepb.PersistActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "not yet implemented")
+}
+
 // ListActions lists the actions that Karte knows about.
 func (k *karteFrontend) ListActions(ctx context.Context, req *kartepb.ListActionsRequest) (*kartepb.ListActionsResponse, error) {
 	q, err := newActionEntitiesQuery(req.GetPageToken(), req.GetFilter())
