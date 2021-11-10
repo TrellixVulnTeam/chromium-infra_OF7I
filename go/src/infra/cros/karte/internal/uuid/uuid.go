@@ -5,15 +5,18 @@
 package uuid
 
 import (
+	"context"
+
 	"github.com/google/uuid"
+	"go.chromium.org/luci/common/data/rand/mathrand"
 
 	"infra/cros/karte/internal/errors"
 )
 
 // UUID creates a new UUID as a string or returns an error if we failed to
 // produce a UUID.
-func UUID() (string, error) {
-	out, err := uuid.NewRandom()
+func UUID(ctx context.Context) (string, error) {
+	out, err := uuid.NewRandomFromReader(mathrand.Get(ctx))
 	if err != nil {
 		return "", errors.Annotate(err, "uuid").Err()
 	}
