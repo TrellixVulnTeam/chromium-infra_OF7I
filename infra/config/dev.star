@@ -11,7 +11,7 @@ This is also enforced by PRESUBMIT.py script.
 
 load("//lib/infra.star", "infra")
 
-lucicfg.check_version("1.27.0", "Please update depot_tools")
+lucicfg.check_version("1.30.1", "Please update depot_tools")
 
 # Global recipe defaults
 luci.recipe.defaults.cipd_version.set("refs/heads/main")

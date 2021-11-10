@@ -25,7 +25,7 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/infra/testing/expect_tests
 """
 
-lucicfg.check_version("1.28.0", "Please update depot_tools")
+lucicfg.check_version("1.30.1", "Please update depot_tools")
 
 # Enable LUCI Realms support.
 lucicfg.enable_experiment("crbug.com/1085650")
@@ -89,6 +89,12 @@ luci.project(
         acl.entry(
             roles = acl.LOGDOG_WRITER,
             groups = "luci-logdog-chromium-writers",
+        ),
+    ],
+    bindings = [
+        luci.binding(
+            roles = "role/configs.validator",
+            users = "infra-try-builder@chops-service-accounts.iam.gserviceaccount.com",
         ),
     ],
 )
