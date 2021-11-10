@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"runtime/debug"
 	"strings"
 
@@ -266,29 +265,17 @@ func (s *scanner) filterProjects(projs []*configpb.Project) ([]*configpb.Project
 		return projs, nil
 	}
 
-	regs := make([]*regexp.Regexp, len(cfg.ProjectsRe))
-	for i, str := range cfg.ProjectsRe {
-		str = "^(" + str + ")$"
-		regs[i], err = regexp.Compile(str)
-		if err != nil {
-			return nil, errors.Annotate(err, "when compiling %q", str).Err()
-		}
+	filter, err := NewFilter(cfg.ProjectsRe)
+	if err != nil {
+		return nil, errors.Annotate(err, "in projects_re").Err()
 	}
 
 	var filtered []*configpb.Project
 	for _, proj := range projs {
-		match := false
-		for _, reg := range regs {
-			if reg.MatchString(proj.Id) {
-				match = true
-				break
-			}
-		}
-		if match {
+		if filter(proj.Id) {
 			filtered = append(filtered, proj)
 		}
 	}
-
 	return filtered, nil
 }
 

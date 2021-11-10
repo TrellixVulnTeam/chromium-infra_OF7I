@@ -29,8 +29,6 @@ OWNERS files.
 				opts:               opts,
 				discoverProjectDir: true,
 			})
-			ret.Flags.StringVar(&ret.reviewers, "reviewers", "", "Comma-separated list of reviewers (default: repo owners).")
-			ret.Flags.StringVar(&ret.cc, "cc", "", "Comma-separated list of emails to CC (optional).")
 			ret.Flags.BoolVar(&ret.force, "force", false, "Initiate upload even if nothing has changed.")
 			return &ret
 		},
@@ -40,9 +38,7 @@ OWNERS files.
 type cmdUploadImpl struct {
 	cmdBase
 
-	reviewers string
-	cc        string
-	force     bool
+	force bool
 }
 
 func (r *cmdUploadImpl) positionalRange() (min, max int) { return 0, 0 }
@@ -52,11 +48,7 @@ func (r *cmdUploadImpl) validateFlags(ctx context.Context, positionals []string,
 }
 
 func (r *cmdUploadImpl) execute(ctx context.Context) error {
-	dump, err := plugsupport.ExecuteUpload(ctx, r.projectDir, plugsupport.UploadOptions{
-		Reviewers: r.reviewers,
-		CC:        r.cc,
-		Force:     r.force,
-	})
+	dump, err := plugsupport.ExecuteUpload(ctx, r.projectDir, r.force)
 	if err != nil {
 		return err
 	}
