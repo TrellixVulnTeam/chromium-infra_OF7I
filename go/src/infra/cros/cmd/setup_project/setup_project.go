@@ -164,7 +164,7 @@ func (b *setupProject) Run(a subcommands.Application, args []string, env subcomm
 	}
 
 	var gitilesClient gitiles.APIClient
-	if b.buildspec == "" {
+	if b.buildspec == "" || b.allProjects {
 		gitcookiesPath, err := b.resolveGitCookiesPath()
 		if err != nil {
 			LogErr(err.Error())
@@ -335,16 +335,26 @@ func (b *setupProject) setupProject(ctx context.Context, gsClient gs.Client, git
 			errmsg = fmt.Sprintf("error downloading file %s/%s/%s from branch %s",
 				chromeInternalHost, file.project, file.path, file.branch)
 		}
-		if err != nil && programProject != "" && file.project == programProject {
-			// If the program-level buildspec doesn't exist, don't fail.
-			// Unless something is very wrong, the project and program
-			// buildspecs will be generated together.
-			// If the project buildspec doesn't exist, this run will still fail.
-			// If the project buildspec doesn't exist, it must just be that
-			// this particular program doesn't have a local_manifest.xml.
-			if gerrs.Is(err, shared.ErrObjectNotExist) {
-				LogOut("program-level manifest doesn't exist, but this is sometimes expected behavior. continuing...")
-				continue
+		if err != nil {
+			if programProject != "" && file.project == programProject {
+				// If the program-level buildspec doesn't exist, don't fail.
+				// Unless something is very wrong, the project and program
+				// buildspecs will be generated together.
+				// If the project buildspec doesn't exist, this run will still fail.
+				// If the project buildspec doesn't exist, it must just be that
+				// this particular program doesn't have a local_manifest.xml.
+				if gerrs.Is(err, shared.ErrObjectNotExist) {
+					LogOut("program-level manifest doesn't exist, but this is sometimes expected behavior. continuing...")
+					continue
+				}
+			} else if b.allProjects {
+				// If we're running with --all-projects, we don't necessarily want
+				// to fail if a buildspec is missing for one specific project.
+				if gerrs.Is(err, shared.ErrObjectNotExist) {
+					LogOut(fmt.Sprintf("buildspec doesn't exist for %s. continuing with best effort for other projects...",
+						file.project))
+					continue
+				}
 			}
 		}
 
