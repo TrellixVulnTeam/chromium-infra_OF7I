@@ -13,6 +13,7 @@ require (
 	cloud.google.com/go/spanner v1.25.0
 	cloud.google.com/go/storage v1.16.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/StackExchange/wmi v1.2.1
 	github.com/VividCortex/godaemon v1.0.0
 	github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794
