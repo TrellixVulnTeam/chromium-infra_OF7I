@@ -9,6 +9,7 @@
   "dependencies": {
     "@popeindustries/lit-html-server": "^0.13.0",
     "bower-locker": "^1.0.7",
+    "lit": "^2.0.2",
     "lit-html": "^0.13.0",
     "polylint": "^2.9.0",
     "vulcanize": "~1.14.8"
@@ -16,11 +17,16 @@
   "devDependencies": {
     "@chopsui/wct-runner": "0.0.1",
     "bower": "^1.8.8",
+    "esbuild": "^0.13.12",
     "istanbul": "^0.4.4",
+    "typescript": "^4.4.4",
     "web-component-tester": "^5.0.0",
     "web-component-tester-istanbul": "https://github.com/t2ym/web-component-tester-istanbul/tarball/0.10.1"
   },
   "scripts": {
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "build": "esbuild --bundle lit_elements/all.ts --minify --outfile=scripts/bundle.js",
+    "dev": "esbuild --bundle lit_elements/all.ts --minify --sourcemap --outfile=scripts/bundle.js --watch",
     "test": "mocha"
   },
   "author": "",

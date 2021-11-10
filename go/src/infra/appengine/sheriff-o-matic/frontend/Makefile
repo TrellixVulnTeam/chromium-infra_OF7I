@@ -14,16 +14,22 @@ node_deps:
 bower_deps: node_deps
 	npx bower install
 
-format:
-	clang-format -i elements/**/*.js -style=file
-
 lint:
 	polylint -i elements/som-app/som-app.html
 
-build: bower_deps
+build_polymer: bower_deps
 	$(VULCANIZE_PATH) elements/som-app/som-app.html -o elements/som-app/som-app.vulcanized.html --inline-scripts
 
+typecheck: node_deps
+	npm run types
+
+build_lit: node_deps typecheck
+	npm run build
+
+build: build_polymer build_lit
+
 clean:
+	rm scripts/bundle.js*
 	rm elements/som-app/som-app.vulcanized.html
 
 wct: bower_deps

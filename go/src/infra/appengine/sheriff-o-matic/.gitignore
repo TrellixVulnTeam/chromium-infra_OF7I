@@ -4,3 +4,6 @@ bower_components
 node_modules
 som-app.vulcanized.html
 .nyc_output
+tsconfig.tsbuildinfo
+frontend/scripts/bundle.js
+frontend/scripts/bundle.js.map

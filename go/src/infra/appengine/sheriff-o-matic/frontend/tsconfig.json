@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "target": "es2017",
+        "lib": [
+            "es2017",
+            "dom"
+        ],
+        "module": "es2015",
+        "moduleResolution": "node",
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "experimentalDecorators": true,
+    },
+    "include": [
+        "lit_elements/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules/**"
+    ]
+}

@@ -57,7 +57,7 @@ deploy_prod: build
 	$(GAE_PY) upload -A sheriff-o-matic --app-dir . default analyzer
 
 devserver:
-	$(DEVSERVER_PY) frontend/app.yaml backend/app.yaml
+	$(DEVSERVER_PY) frontend/app.yaml backend/service-analyzer.yaml
 
 # The -remote commands expose the app so that it is externally
 # accessible by hostname:port, rather than just localhost:port.
