@@ -18,6 +18,7 @@ import (
 	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/scalars"
 )
 
 // TestCreateAction makes sure that CreateAction returns the action it created and that the action is present in datastore.
@@ -30,14 +31,14 @@ func TestCreateAction(t *testing.T) {
 		Action: &kartepb.Action{
 			Name:       "",
 			Kind:       "ssh-attempt",
-			CreateTime: convertTimeToTimestampPtr(time.Unix(1, 2)),
+			CreateTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 2)),
 		},
 	})
 	expected := &kartepb.Action{
 		// The name is randomly generated. We expect to see the name that we actually saw.
 		Name:       resp.GetName(),
 		Kind:       "ssh-attempt",
-		CreateTime: convertTimeToTimestampPtr(time.Unix(1, 2)),
+		CreateTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 2)),
 	}
 	if err != nil {
 		t.Error(err)

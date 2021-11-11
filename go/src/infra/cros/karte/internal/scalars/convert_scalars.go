@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package frontend
+package scalars
 
 import (
 	"time"
@@ -14,7 +14,7 @@ import (
 
 // ConvertTimestampPtrToTime takes a pointer to a timestamp proto value and
 // converts it to a Go time.Time value, sending nil to zero.
-func convertTimestampPtrToTime(timestamp *timestamppb.Timestamp) time.Time {
+func ConvertTimestampPtrToTime(timestamp *timestamppb.Timestamp) time.Time {
 	var out time.Time
 	if timestamp != nil {
 		out = timestamp.AsTime()
@@ -24,7 +24,7 @@ func convertTimestampPtrToTime(timestamp *timestamppb.Timestamp) time.Time {
 
 // ConvertTimeToTimestampPtr takes a time value and converts it to a timestamp
 // proto value. It sends the zero value for time.Time to a nil pointer.
-func convertTimeToTimestampPtr(t time.Time) *timestamppb.Timestamp {
+func ConvertTimeToTimestampPtr(t time.Time) *timestamppb.Timestamp {
 	if t.IsZero() {
 		return nil
 	}
@@ -33,12 +33,12 @@ func convertTimeToTimestampPtr(t time.Time) *timestamppb.Timestamp {
 
 // ConvertActionStatusToInt32 takes an action status and converts it to an int32.
 // If this function is passed an invalid kartepb.Action_status, the results are undefined.
-func convertActionStatusToInt32(status kartepb.Action_Status) int32 {
+func ConvertActionStatusToInt32(status kartepb.Action_Status) int32 {
 	return int32(status)
 }
 
 // ConvertActionStatusToInt32 takes an int32 and converts it to an action status.
 // If this function is passed a integer that is out of range, the results are undefined.
-func convertInt32ToActionStatus(i int32) kartepb.Action_Status {
+func ConvertInt32ToActionStatus(i int32) kartepb.Action_Status {
 	return kartepb.Action_Status(i)
 }

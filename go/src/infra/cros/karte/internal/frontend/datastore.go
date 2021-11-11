@@ -17,6 +17,7 @@ import (
 	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/filterexp"
+	"infra/cros/karte/internal/scalars"
 )
 
 // DefaultBatchSize is the default size of a batch for a datastore query.
@@ -55,12 +56,12 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		Kind:           e.Kind,
 		SwarmingTaskId: e.SwarmingTaskID,
 		AssetTag:       e.AssetTag,
-		StartTime:      convertTimeToTimestampPtr(e.StartTime),
-		StopTime:       convertTimeToTimestampPtr(e.StopTime),
-		CreateTime:     convertTimeToTimestampPtr(e.CreateTime),
-		Status:         convertInt32ToActionStatus(e.Status),
+		StartTime:      scalars.ConvertTimeToTimestampPtr(e.StartTime),
+		StopTime:       scalars.ConvertTimeToTimestampPtr(e.StopTime),
+		CreateTime:     scalars.ConvertTimeToTimestampPtr(e.CreateTime),
+		Status:         scalars.ConvertInt32ToActionStatus(e.Status),
 		FailReason:     e.FailReason,
-		SealTime:       convertTimeToTimestampPtr(e.SealTime),
+		SealTime:       scalars.ConvertTimeToTimestampPtr(e.SealTime),
 	}
 }
 
@@ -289,12 +290,12 @@ func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		Kind:           action.Kind,
 		SwarmingTaskID: action.SwarmingTaskId,
 		AssetTag:       action.AssetTag,
-		StartTime:      convertTimestampPtrToTime(action.StartTime),
-		StopTime:       convertTimestampPtrToTime(action.StopTime),
-		CreateTime:     convertTimestampPtrToTime(action.CreateTime),
-		Status:         convertActionStatusToInt32(action.Status),
+		StartTime:      scalars.ConvertTimestampPtrToTime(action.StartTime),
+		StopTime:       scalars.ConvertTimestampPtrToTime(action.StopTime),
+		CreateTime:     scalars.ConvertTimestampPtrToTime(action.CreateTime),
+		Status:         scalars.ConvertActionStatusToInt32(action.Status),
 		FailReason:     action.FailReason,
-		SealTime:       convertTimestampPtrToTime(action.SealTime),
+		SealTime:       scalars.ConvertTimestampPtrToTime(action.SealTime),
 	}, nil
 }
 

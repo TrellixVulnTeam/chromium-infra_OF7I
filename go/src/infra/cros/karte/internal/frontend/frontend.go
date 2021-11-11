@@ -17,6 +17,7 @@ import (
 
 	kartepb "infra/cros/karte/api"
 	"infra/cros/karte/internal/errors"
+	"infra/cros/karte/internal/scalars"
 	"infra/cros/karte/internal/uuid"
 )
 
@@ -47,7 +48,7 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 	// Additionally, Karte queries depend on the end_time of the event *as reported by the event*.
 	// Events also have an a priori maximum duration,  which means that we can perform a semantically correct query based on the
 	// end time using IDs whose lexicographic sort order takes the current timestamp into account.
-	name, err := makeID(ctx, convertTimestampPtrToTime(req.GetAction().GetCreateTime()))
+	name, err := makeID(ctx, scalars.ConvertTimestampPtrToTime(req.GetAction().GetCreateTime()))
 	if err != nil {
 		return nil, errors.Annotate(err, "create action").Err()
 	}
