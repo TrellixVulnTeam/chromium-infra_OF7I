@@ -83,8 +83,10 @@ def cnxn_ctor(instance, database):
     else:
       start_time = time.time()
       cnxn = MySQLdb.connect(
-        unix_socket='/cloudsql/' + instance, db=database, user='root',
-        charset='utf8')
+          unix_socket='/cloudsql/' + instance,
+          db=database,
+          user='monorail-mysql',
+          charset='utf8')
     duration = int((time.time() - start_time) * 1000)
     DB_CNXN_LATENCY.add(duration)
     CONNECTION_COUNT.increment({'success': True})
