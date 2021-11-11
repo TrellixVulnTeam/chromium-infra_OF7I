@@ -3968,6 +3968,18 @@ wheel: <
 
 ## **nose2**
 
+### 0.10.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/nose2-py2_py3"
+  version: "version:0.10.0"
+>
+```
+
+
+* *universal*
+
 ### 0.9.1
 
 ```protobuf

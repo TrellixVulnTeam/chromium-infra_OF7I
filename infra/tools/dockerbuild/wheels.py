@@ -1371,6 +1371,7 @@ SPECS.update({
         Universal('nose', '1.3.7', pyversions=['py3']),
         Universal('nose2', '0.9.1'),
         Universal('nose2', '0.9.2'),
+        Universal('nose2', '0.10.0'),
         Universal('oauth2client', '4.0.0'),
         Universal('oauth2client', '4.1.2'),
         Universal('oauth2client', '4.1.3'),
