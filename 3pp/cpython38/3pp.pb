@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.22" }
+  source { patch_version: "chromium.23" }
   package {
     version_file: ".versions/cpython3.cipd_version"
     disable_latest_ref: true
@@ -34,7 +34,6 @@ create {
   platform_re: "mac-.*"
   build {
     dep: "static_libs/bzip2"
-    dep: "static_libs/libffi"
     dep: "static_libs/libuuid"
     dep: "static_libs/ncursesw"
     dep: "static_libs/openssl"

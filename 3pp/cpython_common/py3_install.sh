@@ -38,7 +38,6 @@ SETUP_LOCAL_ATTACH=(
   "$DEPS_PREFIX/lib/liblzma.a"
   "$DEPS_PREFIX/lib/libssl.a"
   "$DEPS_PREFIX/lib/libcrypto.a"
-  "$DEPS_PREFIX/lib/libffi.a"
   "$DEPS_PREFIX/lib/libuuid.a"
 
   # We always use the OSS ncurses headers; on OS X the system headers are weird
@@ -63,6 +62,7 @@ export ac_cv_func_getentropy=0
 
 if [[ $_3PP_PLATFORM == mac* ]]; then
   PYTHONEXE=python.exe
+  USE_SYSTEM_FFI=true
 
   # Instruct Mac to prefer ".a" files in earlier library search paths
   # rather than search all of the paths for a ".dylib" and then, failing
@@ -89,6 +89,7 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   fi
 else
   PYTHONEXE=python
+  USE_SYSTEM_FFI=
 
   EXTRA_CONFIGURE_ARGS="--with-fpectl --with-dbmliborder=bdb:gdbm"
   # NOTE: This can break building on Mac builder, causing it to freeze
@@ -117,7 +118,7 @@ else
   # On Linux, we will statically compile OpenSSL into the binary, since we
   # want to be generally system/library agnostic.
   SETUP_LOCAL_ATTACH+=(
-    "$DEPS_PREFIX/lib/libnsl.a"
+      "$DEPS_PREFIX/lib/libnsl.a"
   )
 
   # On Linux, we need to ensure that most symbols from our static-embedded
@@ -139,6 +140,14 @@ fi
 # configuration.
 export ac_cv_file__dev_ptmx=y
 export ac_cv_file__dev_ptc=n
+
+if [[ $USE_SYSTEM_FFI ]]; then
+  EXTRA_CONFIGURE_ARGS+=" --with-system-ffi"
+  SETUP_LOCAL_ATTACH+=("_ctypes::-lffi")
+else
+  EXTRA_CONFIGURE_ARGS+=" --without-system-ffi"
+  SETUP_LOCAL_ATTACH+=("$DEPS_PREFIX/lib/libffi.a")
+fi
 
 # Python tends to hard-code /usr/include and /usr/local/include in its setup.py
 # file which can end up picking up headers and stuff from wherever.
@@ -166,7 +175,7 @@ export CPPFLAGS
 # We're going to use our bootstrap python interpreter to generate our static
 # module list.
 if ! ./configure --prefix "$PREFIX" --host="$CROSS_TRIPLE" \
-  --disable-shared --without-system-ffi --enable-ipv6 \
+  --disable-shared --enable-ipv6 \
   --enable-py-version-override="$PY_VERSION" \
   --with-openssl="$DEPS_PREFIX" --with-libs="$WITH_LIBS" \
   --without-ensurepip \
@@ -180,10 +189,12 @@ fi
 export LDFLAGS=
 export CPPFLAGS=
 
-# Tweak Makefile to change LIBFFI_INCLUDEDIR=<TAB>path
-sed -i \
-  $'s+^LIBFFI_INCLUDEDIR=\t.*+LIBFFI_INCLUDEDIR=\t'"$DEPS_PREFIX/include+" \
-  Makefile
+if [ ! $USE_SYSTEM_FFI ]; then
+  # Tweak Makefile to change LIBFFI_INCLUDEDIR=<TAB>path
+  sed -i \
+    $'s+^LIBFFI_INCLUDEDIR=\t.*+LIBFFI_INCLUDEDIR=\t'"$DEPS_PREFIX/include+" \
+    Makefile
+fi
 
 # Generate our "pybuilddir.txt" file. This also generates
 # "_sysconfigdata.py" from our current Python, which we need to
