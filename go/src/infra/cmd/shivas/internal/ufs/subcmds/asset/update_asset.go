@@ -185,9 +185,12 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 	var err error
 	asset.Name = c.name
 	asset.Info = &ufspb.AssetInfo{}
-	if c.location == utils.ClearFieldValue || c.location == "" {
+	// Update location can be done either using location flag or parametric
+	// location flags (zone, row, rack ...)
+	if c.location == utils.ClearFieldValue {
+		// Reset the location flag
 		asset.Location = &ufspb.Location{}
-	} else {
+	} else if c.location != "" {
 		asset.Location, err = utils.GetLocation(c.location)
 		if err != nil {
 			return err
@@ -199,45 +202,51 @@ func (c *updateAsset) parseArgs(asset *ufspb.Asset) error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid zone in location %s", c.location)
 		}
 	}
-	if c.zone == utils.ClearFieldValue {
-		asset.GetLocation().Zone = ufsUtil.ToUFSZone("")
-	} else {
-		asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
-	}
-	if c.aisle == utils.ClearFieldValue {
-		asset.GetLocation().Aisle = ""
-	} else {
-		asset.GetLocation().Aisle = c.aisle
-	}
-	if c.row == utils.ClearFieldValue {
-		asset.GetLocation().Row = ""
-	} else {
-		asset.GetLocation().Row = c.row
-	}
-	if c.shelf == utils.ClearFieldValue {
-		asset.GetLocation().Shelf = ""
-	} else {
-		asset.GetLocation().Shelf = c.shelf
-	}
-	if c.rack == utils.ClearFieldValue {
-		asset.GetLocation().Rack = ""
-	} else {
-		asset.GetLocation().Rack = c.rack
-	}
-	if c.racknumber == utils.ClearFieldValue {
-		asset.GetLocation().RackNumber = ""
-	} else {
-		asset.GetLocation().RackNumber = c.racknumber
-	}
-	if c.position == utils.ClearFieldValue {
-		asset.GetLocation().Position = ""
-	} else {
-		asset.GetLocation().Position = c.position
-	}
-	if c.barcode == utils.ClearFieldValue {
-		asset.GetLocation().BarcodeName = ""
-	} else {
-		asset.GetLocation().BarcodeName = c.barcode
+	// If the location flag is not given, attempt to update location using
+	// parametric location flags (zone, row, rack ...)
+	if c.location == "" {
+		// Assign empty location to asset
+		asset.Location = &ufspb.Location{}
+		if c.zone == utils.ClearFieldValue {
+			asset.GetLocation().Zone = ufsUtil.ToUFSZone("")
+		} else {
+			asset.GetLocation().Zone = ufsUtil.ToUFSZone(c.zone)
+		}
+		if c.aisle == utils.ClearFieldValue {
+			asset.GetLocation().Aisle = ""
+		} else {
+			asset.GetLocation().Aisle = c.aisle
+		}
+		if c.row == utils.ClearFieldValue {
+			asset.GetLocation().Row = ""
+		} else {
+			asset.GetLocation().Row = c.row
+		}
+		if c.shelf == utils.ClearFieldValue {
+			asset.GetLocation().Shelf = ""
+		} else {
+			asset.GetLocation().Shelf = c.shelf
+		}
+		if c.rack == utils.ClearFieldValue {
+			asset.GetLocation().Rack = ""
+		} else {
+			asset.GetLocation().Rack = c.rack
+		}
+		if c.racknumber == utils.ClearFieldValue {
+			asset.GetLocation().RackNumber = ""
+		} else {
+			asset.GetLocation().RackNumber = c.racknumber
+		}
+		if c.position == utils.ClearFieldValue {
+			asset.GetLocation().Position = ""
+		} else {
+			asset.GetLocation().Position = c.position
+		}
+		if c.barcode == utils.ClearFieldValue {
+			asset.GetLocation().BarcodeName = ""
+		} else {
+			asset.GetLocation().BarcodeName = c.barcode
+		}
 	}
 	if c.assetType == utils.ClearFieldValue {
 		asset.Type = ufsUtil.ToAssetType("")
@@ -362,6 +371,33 @@ func (c *updateAsset) validateArgs() error {
 		}
 		if c.assetType != "" && !ufsUtil.IsAssetType(c.assetType) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid asset type, please check help info for '-type'.", c.assetType)
+		}
+		if c.location != "" {
+			errFmtStr := "Wrong usage!!\n '-location' is already specified. '%s' cannot be specified at the same time."
+			if c.zone != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-zone"))
+			}
+			if c.aisle != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-aisle"))
+			}
+			if c.row != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-row"))
+			}
+			if c.shelf != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-shelf"))
+			}
+			if c.rack != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-rack"))
+			}
+			if c.racknumber != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-racknumber"))
+			}
+			if c.position != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-position"))
+			}
+			if c.barcode != "" {
+				return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf(errFmtStr, "-barcode"))
+			}
 		}
 	}
 	return nil
