@@ -28,7 +28,7 @@ If you are on Linux you can run the [quicksetup script](quicksetup.sh) (instead 
 
 ```shell
 cd /where/you/want/source/code
-wget -O- "https://chromium.googlesource.com/infra/infra/+/master/go/quicksetup.sh?format=TEXT" | base64 -d | bash
+wget -O- "https://chromium.googlesource.com/infra/infra/+/main/go/quicksetup.sh?format=TEXT" | base64 -d | bash
 ```
 
 This will create a self-contained `cr-infra-go-area` directory and populate it
