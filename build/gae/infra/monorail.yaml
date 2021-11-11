@@ -1,0 +1,10 @@
+name: infra/monorail
+extends: ../base.yaml
+
+contextdir: ../../../appengine/monorail
+
+build:
+  - run: ['make', 'external_deps']
+    cwd: ${contextdir}
+    outputs:
+      - ${contextdir}/static/dist
