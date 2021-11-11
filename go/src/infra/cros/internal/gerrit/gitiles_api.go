@@ -11,6 +11,7 @@ import (
 	gerrs "errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"infra/cros/internal/cmd"
@@ -43,7 +44,23 @@ func NewProdAPIClient(ctx context.Context, host, gitcookiesPath string) (*ProdAP
 	cmd := []string{bareHost, gitcookiesPath}
 	var stdoutBuf, stderrBuf bytes.Buffer
 	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "grep", cmd...); err != nil {
-		return nil, fmt.Errorf("error reading gitcookies from %s: %s", gitcookiesPath, stderrBuf.String())
+		if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == 1 && strings.HasSuffix(host, "googlesource.com") {
+			// grep didn't find a credential for the host.
+			// Try looking for a generic .googlesource credential (if the
+			// host is a googlesource host).
+			stdoutBuf = *bytes.NewBuffer(nil)
+			stderrBuf = *bytes.NewBuffer(nil)
+			cmd = []string{".googlesource.com", gitcookiesPath}
+			if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "grep", cmd...); err != nil {
+				if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == 1 {
+					return nil, fmt.Errorf("error reading gitcookies from %s: couldn't find credential for .googlesource.com", gitcookiesPath)
+				} else {
+					return nil, fmt.Errorf("error reading gitcookies from %s: %s", gitcookiesPath, stderrBuf.String())
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("error reading gitcookies from %s: %s", gitcookiesPath, stderrBuf.String())
+		}
 	}
 	cookie := strings.Fields(stdoutBuf.String())
 	cookieKey := cookie[5]
