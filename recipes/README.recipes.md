@@ -61,8 +61,6 @@
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
   * [recipe_simulation](#recipes-recipe_simulation) &mdash; A continuous builder which runs recipe tests.
   * [recipes_py_continuous](#recipes-recipes_py_continuous)
-  * [snapshots/builder](#recipes-snapshots_builder)
-  * [snapshots/snapshot](#recipes-snapshots_snapshot)
   * [support_3pp:tests/full](#recipes-support_3pp_tests_full)
   * [tricium_infra](#recipes-tricium_infra)
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
@@ -1477,36 +1475,6 @@ A continuous builder which runs recipe tests.
 PYTHON_VERSION_COMPATIBILITY: PY2
 
 &mdash; **def [RunSteps](/recipes/recipes/recipes_py_continuous.py#17)(api):**
-### *recipes* / [snapshots/builder](/recipes/recipes/snapshots/builder.py)
-
-[DEPS](/recipes/recipes/snapshots/builder.py#5): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-PYTHON_VERSION_COMPATIBILITY: PY2
-
-&mdash; **def [RunSteps](/recipes/recipes/snapshots/builder.py#71)(api):**
-
-&mdash; **def [get\_value](/recipes/recipes/snapshots/builder.py#54)(pairs, key):**
-
-Returns a the value for the given key in the given pairs.
-
-Args:
-  pairs: A list of {"key": key, "value": value} dicts.
-  key: A key whose value to get. If the key appears more than once, only
-    the first value is returned.
-
-Returns:
-  The value for the given key.
-### *recipes* / [snapshots/snapshot](/recipes/recipes/snapshots/snapshot.py)
-
-[DEPS](/recipes/recipes/snapshots/snapshot.py#5): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time], [recipe\_engine/url][recipe_engine/recipe_modules/url], [recipe\_engine/uuid][recipe_engine/recipe_modules/uuid]
-
-PYTHON_VERSION_COMPATIBILITY: PY2
-
-&mdash; **def [RunSteps](/recipes/recipes/snapshots/snapshot.py#26)(api):**
-
-&mdash; **def [normalize](/recipes/recipes/snapshots/snapshot.py#18)(s):**
-
-Normalizes a string for use in a resource label.
 ### *recipes* / [support\_3pp:tests/full](/recipes/recipe_modules/support_3pp/tests/full.py)
 
 [DEPS](/recipes/recipe_modules/support_3pp/tests/full.py#10): [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1650,5 +1618,4 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 [recipe_engine/recipe_modules/time]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8c186df1f7def47dc5e9931a8248d46ed000cd18/README.recipes.md#recipe_modules-time
 [recipe_engine/recipe_modules/tricium]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8c186df1f7def47dc5e9931a8248d46ed000cd18/README.recipes.md#recipe_modules-tricium
 [recipe_engine/recipe_modules/url]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8c186df1f7def47dc5e9931a8248d46ed000cd18/README.recipes.md#recipe_modules-url
-[recipe_engine/recipe_modules/uuid]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8c186df1f7def47dc5e9931a8248d46ed000cd18/README.recipes.md#recipe_modules-uuid
 [recipe_engine/wkt/RecipeApi]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/8c186df1f7def47dc5e9931a8248d46ed000cd18/recipe_engine/recipe_api.py#881
