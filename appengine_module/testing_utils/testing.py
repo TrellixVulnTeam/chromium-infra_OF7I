@@ -5,13 +5,16 @@
 from contextlib import contextmanager
 import collections
 import mock
+import six
 import time
 
-# appengine sdk is supposed to be on the path.
-import dev_appserver
-dev_appserver.fix_sys_path()
+if six.PY2:
+  # appengine sdk is supposed to be on the path.
+  import dev_appserver
+  dev_appserver.fix_sys_path()
 
-import endpoints
+  import endpoints
+
 from google.appengine.api import oauth
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb

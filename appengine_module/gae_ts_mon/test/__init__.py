@@ -4,5 +4,8 @@
 
 from __future__ import absolute_import
 
-from .test_support import test_env
-test_env.setup_test_env()
+import six
+
+if six.PY2:  # pragma: no cover
+  from .test_support import test_env
+  test_env.setup_test_env()
