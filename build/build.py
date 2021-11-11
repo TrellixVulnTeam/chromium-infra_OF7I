@@ -238,7 +238,8 @@ class PackageDef(collections.namedtuple(
         for d in self.pkg_def.get('data')
         if d.get('upload_on_change')
     ]
-    pkg_path = render_path(self.pkg_def.get('package'), pkg_vars)
+    pkg_path = render_path(
+        self.pkg_def.get('package'), pkg_vars, replace_sep=False)
     return on_change_tags, pkg_path
 
 # Carries modifications for go-related env vars and cwd.
@@ -293,12 +294,14 @@ class GoEnviron(collections.namedtuple(
       os.chdir(self.cwd)
 
 
-def render_path(p, pkg_vars):
+def render_path(p, pkg_vars, replace_sep=True):
   """Renders ${...} substitutions in paths, converts them to native slash."""
   for k, v in pkg_vars.iteritems():
     assert '${' not in v  # just in case, to avoid recursive expansion
     p = p.replace('${%s}' % k, v)
-  return p.replace('/', os.sep)
+  if replace_sep:
+    return p.replace('/', os.sep)
+  return p
 
 
 def generate_bat_shim(pkg_root, target_rel):
