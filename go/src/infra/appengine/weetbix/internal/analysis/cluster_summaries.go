@@ -64,7 +64,7 @@ type Counts struct {
 	// The statistic value after impact has been reduced by exoneration.
 	Nominal int64 `json:"nominal"`
 	// The statistic value before impact has been reduced by exoneration.
-	PreExononeration int64 `json:"preExoneration"`
+	PreExoneration int64 `json:"preExoneration"`
 	// The statistic value:
 	// - excluding impact already counted under other higher-priority clusters
 	//   (I.E. bug clusters.)
