@@ -194,14 +194,15 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return err
 	}
 
-	clusterResults := algorithms.Cluster(ruleset, clustering.FailuresFromProtos(chunk.Failures))
+	existingClustering := algorithms.NewEmptyClusterResults(len(chunk.Failures))
+	newClustering := algorithms.Cluster(ruleset, existingClustering, clustering.FailuresFromProtos(chunk.Failures))
 
 	clusterState := &state.Entry{
 		Project:       i.opts.Project,
 		ChunkID:       id,
 		PartitionTime: i.opts.PartitionTime,
 		ObjectID:      objectID,
-		Clustering:    clusterResults,
+		Clustering:    newClustering,
 	}
 	f := func(ctx context.Context) error {
 		if err := state.Create(ctx, clusterState); err != nil {
@@ -217,7 +218,7 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 	update := &clustering.Update{
 		Project: i.opts.Project,
 		ChunkID: id,
-		Updates: prepareClusterUpdates(chunk, clusterResults),
+		Updates: prepareClusterUpdates(chunk, newClustering),
 	}
 	if err := i.ingester.analysis.HandleUpdatedClusters(ctx, update, commitTime); err != nil {
 		return err

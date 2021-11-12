@@ -61,47 +61,129 @@ var suggestingAlgorithms = []Algorithm{
 // above increments.
 var rulesAlgorithm = rulesalgorithm.Algorithm{}
 
-// Cluster clusters the given test failures using all registered
-// clustering algorithms and the specified set of failure association
-// rules.
-func Cluster(ruleset *cache.Ruleset, failures []*clustering.Failure) clustering.ClusterResults {
+// The set of all algorithms known by Weetbix.
+var algorithmNames map[string]struct{}
+
+func init() {
+	algorithmNames = make(map[string]struct{})
+	algorithmNames[rulesalgorithm.AlgorithmName] = struct{}{}
+	for _, a := range suggestingAlgorithms {
+		algorithmNames[a.Name()] = struct{}{}
+	}
+}
+
+// Cluster performs (incremental re-)clustering of the given test
+// failures using all registered clustering algorithms and the
+// specified set of failure association rules.
+//
+// If the test results have not been previously clustered, pass
+// an existing ClusterResults of NewEmptyClusterResults(...)
+// to cluster test results from scratch.
+//
+// If the test results have been previously clustered, pass the
+// ClusterResults returned by the last call to Cluster.
+func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failures []*clustering.Failure) clustering.ClusterResults {
+	if existing.AlgorithmsVersion > AlgorithmsVersion {
+		// We are running out-of-date clustering algorithms. Do not
+		// try to improve on the existing clustering. This can
+		// happen if we are rolling out a new version of Weetbix.
+		return existing
+	}
+
+	// For each suggesting algorithm, figure out whether it has already been
+	// run previously and we can retain its results (for efficiency), or
+	// if we need to run it again.
+	var suggestedAlgorithmsToRun []Algorithm
+	suggestedAlgorithmsToRetain := make(map[string]struct{})
+	for _, alg := range suggestingAlgorithms {
+		if _, ok := existing.Algorithms[alg.Name()]; ok {
+			// The algorithm was run previously. Retain its results.
+			suggestedAlgorithmsToRetain[alg.Name()] = struct{}{}
+		} else {
+			// The algorithm was not previously run. Run it now.
+			suggestedAlgorithmsToRun = append(suggestedAlgorithmsToRun, alg)
+		}
+	}
+
+	// For rule-based clustering.
+	_, reuseRuleAlgorithmResults := existing.Algorithms[rulesalgorithm.AlgorithmName]
+	existingRulesVersion := existing.RulesVersion
+	if !reuseRuleAlgorithmResults {
+		// Although we may have previously run rule-based clustering, we did
+		// not run the current version of that algorithm. Invalidate all
+		// previous analysis; match against all rules again.
+		existingRulesVersion = rules.StartingEpoch
+	}
+
 	var result [][]*clustering.ClusterID
-	for _, f := range failures {
-		var ids []*clustering.ClusterID
-		// Suggested clusters.
-		for _, a := range suggestingAlgorithms {
+	for i, f := range failures {
+		var newIDs []*clustering.ClusterID
+		existingRuleIDs := make(map[string]struct{})
+
+		existingIDs := existing.Clusters[i]
+		for _, id := range existingIDs {
+			if _, ok := suggestedAlgorithmsToRetain[id.Algorithm]; ok {
+				// The algorithm was run previously. Retain its results.
+				newIDs = append(newIDs, id)
+			}
+			if reuseRuleAlgorithmResults && id.Algorithm == rulesalgorithm.AlgorithmName {
+				// The rules algorithm was previously run. Record the past results,
+				// but separately. Some previously matched rules may have been
+				// updated or made inactive since, so we need to treat these
+				// separately (and pass them to the rules algorithm to filter
+				// through).
+				existingRuleIDs[id.ID] = struct{}{}
+			}
+		}
+
+		// Run the suggested clustering algorithms.
+		for _, a := range suggestedAlgorithmsToRun {
 			id := a.Cluster(f)
 			if id == nil {
 				continue
 			}
-			ids = append(ids, &clustering.ClusterID{
+			newIDs = append(newIDs, &clustering.ClusterID{
 				Algorithm: a.Name(),
 				ID:        hex.EncodeToString(id),
 			})
 		}
 
-		// Rule-based clusters.
-		ruleIDs := rulesAlgorithm.Cluster(ruleset, rules.StartingEpoch, nil, f)
-		for rID := range ruleIDs {
+		var newRuleIDs map[string]struct{}
+		if ruleset.RulesVersion.After(existingRulesVersion) {
+			// Match against the (incremental) set of rules.
+			newRuleIDs = rulesAlgorithm.Cluster(ruleset, existingRulesVersion, existingRuleIDs, f)
+		} else {
+			// Test results were already clustered with an equal or later
+			// version of rules.
+			// This can happen if our cached ruleset is out of date. Re-use the
+			// existing analysis; don't try to improve on it.
+			newRuleIDs = existingRuleIDs
+		}
+
+		for rID := range newRuleIDs {
 			id := &clustering.ClusterID{
 				Algorithm: rulesalgorithm.AlgorithmName,
 				ID:        rID,
 			}
-			ids = append(ids, id)
+			newIDs = append(newIDs, id)
 		}
 
-		result = append(result, ids)
+		result = append(result, newIDs)
 	}
 
-	algorithmNames := make(map[string]struct{})
-	algorithmNames[rulesalgorithm.AlgorithmName] = struct{}{}
-	for _, a := range suggestingAlgorithms {
-		algorithmNames[a.Name()] = struct{}{}
+	newRulesVersion := ruleset.RulesVersion
+	if existingRulesVersion.After(newRulesVersion) {
+		// If the existing rule-matching is more current than our current
+		// ruleset allows, we will have kept its results, and should keep
+		// its RulesVersion.
+		// This can happen sometimes if our cached ruleset is out of date.
+		// This is normal.
+		newRulesVersion = existingRulesVersion
 	}
 
 	return clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		RulesVersion:      ruleset.RulesVersion,
+		RulesVersion:      newRulesVersion,
 		Algorithms:        algorithmNames,
 		Clusters:          result,
 	}
@@ -124,4 +206,18 @@ func SuggestingAlgorithm(algorithm string) (Algorithm, error) {
 	// We may be running old code, or the caller may be asking
 	// for an old (version of an) algorithm.
 	return nil, ErrAlgorithmNotExist
+}
+
+// NewEmptyClusterResults returns a new ClusterResults for a list of
+// test results of length count. The ClusterResults will indicate the
+// test results have not been clustered.
+func NewEmptyClusterResults(count int) clustering.ClusterResults {
+	return clustering.ClusterResults{
+		// Algorithms version 0 is the empty set of clustering algorithms.
+		AlgorithmsVersion: 0,
+		// The RulesVersion StartingEpoch refers to the empty set of rules.
+		RulesVersion: rules.StartingEpoch,
+		Algorithms:   make(map[string]struct{}),
+		Clusters:     make([][]*clustering.ClusterID, count),
+	}
 }
