@@ -63,7 +63,10 @@ func (s *prodStrategy) IDForAction(ctx context.Context, action *kartepb.Action) 
 }
 
 // IDForObservation takes an action and generates an ID.
-func (s *prodStrategy) IDForObservation(ctx context.Context, observation *kartepb.Observation) (string, error) {
+//
+// Note: The ID for the current observation in question uses the *current time* and no properties of the observation at all.
+// This allows us to avoid running back to datastore to look up information about the action just to insert an observation.
+func (s *prodStrategy) IDForObservation(ctx context.Context, _ *kartepb.Observation) (string, error) {
 	msg, err := makeID(ctx, clock.Now(ctx))
 	return msg, err
 }
