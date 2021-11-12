@@ -209,7 +209,6 @@ const defaultConfig = `
 				"servo_ec_check",
 				"servo_testlab_enabled",
 				"servo_detect_usbkey",
-				"servo_audit_usbkey",
 				"servo_servod_echo_host"
 			],
 			"actions": {
@@ -580,6 +579,7 @@ const defaultConfig = `
 		"bluetooth_peer_repair":{
 			"critical_actions": [
 				"btpeer_state_broken",
+				"cros_ping",
 				"cros_ssh",
 				"btpeer_state_working"
 			],
@@ -600,8 +600,8 @@ const defaultConfig = `
 				"tools_checks",
 				"hardware_audit",
 				"firmware_check"
-            ],
-            "actions": {
+			],
+			"actions": {
 				"cros_ssh":{
 					"dependencies":[
 						"has_dut_name",
@@ -615,7 +615,7 @@ const defaultConfig = `
 						"cros_storage_writing",
 						"cros_storage_file_system",
 						"cros_storage_space_check",
-						"cros_audit_storage_smart"				
+						"cros_audit_storage_smart"
 					],
 					"exec_name":"sample_pass"
 				},
