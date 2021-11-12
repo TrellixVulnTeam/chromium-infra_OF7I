@@ -1,58 +1,24 @@
-# Copyright 2018 The Chromium Authors. All rights reserved.
+# Copyright 2021 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-"""This module is to process the code coverage metadata.
-
-The code coverage data format is defined at:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/appengine/findit/model/proto/code_coverage.proto.
-"""
 
 import collections
-import datetime
-import json
 import logging
 import re
-import time
-import urlparse
-import zlib
 
-import cloudstorage
-
-from google.appengine.api import taskqueue
 from google.appengine.api import users
-from google.appengine.ext import ndb
-from google.appengine.runtime import apiproxy_errors
-from google.protobuf.field_mask_pb2 import FieldMask
-from google.protobuf import json_format
 
-from common import constants
-from common import monitoring
-from common.findit_http_client import FinditHttpClient
-from common.waterfall.buildbucket_client import GetV2Build
-from gae_libs.appengine_util import IsInternalInstance
-from gae_libs.caches import PickledMemCache
-from gae_libs.dashboard_util import GetPagedResults
 from gae_libs.handlers.base_handler import BaseHandler, Permission
-from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from gae_libs.dashboard_util import GetPagedResults
 from handlers.code_coverage import utils
-from libs.cache_decorator import Cached
-from libs.deps import chrome_dependency_fetcher
 from libs.time_util import ConvertUTCToPST
-from model import entity_util
-from model.proto.gen.code_coverage_pb2 import CoverageReport
 from model.code_coverage import CoverageReportModifier
-from model.code_coverage import DependencyRepository
-from model.code_coverage import PostsubmitReport
 from model.code_coverage import FileCoverageData
+from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
-from services.code_coverage import files_absolute_coverage
-from services.code_coverage import referenced_coverage
-from services import bigquery_helper as bq
-from services import test_tag_util
 from waterfall import waterfall_config
-
 
 # The regex to extract the luci project name from the url path.
 _LUCI_PROJECT_REGEX = re.compile(r'^/coverage/p/([^/]+)')
@@ -67,7 +33,7 @@ def _GetPostsubmitDefaultReportConfig(luci_project):
       'chromium': {
         'host': 'chromium.googlesource.com',
         'project': 'chromium/src',
-        'ref': 'refs/heads/master',
+        'ref': 'refs/heads/main',
         'platform': 'linux',
       }
     }
@@ -158,24 +124,6 @@ def _MakePlatformSelect(luci_project, host, project, ref, revision, path,
     result['options'].append(option)
   result['options'].sort(key=lambda x: x['ui_name'])
   return result
-
-
-def _GetActiveReferenceCommit(server_host, project):
-  """Returns commit against which coverage is to be generated.
-
-  Returns id of the CoverageReportModifier corresponding to the active
-  reference commit.
-  """
-  query = CoverageReportModifier.query(
-      CoverageReportModifier.server_host == server_host,
-      CoverageReportModifier.project == project,
-      CoverageReportModifier.is_active == True)
-  modifier_ids = []
-  for x in query.fetch():
-    if x.reference_commit:
-      modifier_ids.append(x.key.id())
-  assert len(modifier_ids) <= 1, "More than one reference commit found"
-  return modifier_ids[0] if modifier_ids else None
 
 
 def _IsServePresubmitCoverageDataEnabled():
@@ -411,7 +359,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('patchset=%d', patchset)
     logging.info('type=%s', data_type)
 
-    configs = utils._GetAllowedGitilesConfigs()
+    configs = utils.GetAllowedGitilesConfigs()
     if project not in configs.get(host.replace('-review', ''), {}):
       return BaseHandler.CreateError(
           error_message='"%s/%s" is not supported.' % (host, project),
@@ -617,7 +565,7 @@ class ServeCodeCoverageData(BaseHandler):
     # If the request is for referenced coverage, find the corresponding
     # CoverageReportModifier and redirect with modifier_id in params
     if self.request.path.endswith('/referenced'):
-      modifier_id = _GetActiveReferenceCommit(host, project)
+      modifier_id = utils.GetActiveReferenceCommit(host, project)
       if not modifier_id:
         return BaseHandler.CreateError(
             'No reference commit found for host %s and project %s' % host,
@@ -648,7 +596,7 @@ class ServeCodeCoverageData(BaseHandler):
     logging.info('test_suite_type=%s' % test_suite_type)
     logging.info('modifier_id=%d' % modifier_id)
 
-    configs = utils._GetAllowedGitilesConfigs()
+    configs = utils.GetAllowedGitilesConfigs()
     if ref not in configs.get(host, {}).get(project, []):
       return BaseHandler.CreateError(
           '"%s/%s/+/%s" is not supported.' % (host, project, ref), 400)
@@ -679,7 +627,7 @@ class ServeCodeCoverageData(BaseHandler):
           PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
           PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
-          PostsubmitReport.modifier_id == modifier_id).order(
+          PostsubmitReport.modifier_id == 0).order(
               -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]
@@ -887,42 +835,3 @@ class ServeCodeCoverageData(BaseHandler):
         },
         'template': template,
     }
-
-class CreateReferencedCoverageMetricsCron(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def _GetSourceBuilders(self):
-    """Returns CI builders for which coverage metrics are to be generated."""
-    return [
-        'linux-code-coverage', 'mac-code-coverage', 'win10-code-coverage',
-        'android-code-coverage', 'android-code-coverage-native',
-        'ios-simulator-code-coverage', 'linux-chromeos-code-coverage',
-        'linux-code-coverage_unit', 'mac-code-coverage_unit',
-        'win10-code-coverage_unit', 'android-code-coverage_unit',
-        'android-code-coverage-native_unit', 'ios-simulator-code-coverage_unit',
-        'linux-chromeos-code-coverage_unit'
-    ]
-
-  def HandleGet(self):
-    modifier_id = _GetActiveReferenceCommit(
-        server_host='chromium.googlesource.com', project='chromium/src')
-    if modifier_id:
-      for builder in self._GetSourceBuilders():
-        url = '/coverage/task/referenced-coverage?modifier_id=%d&builder=%s' % (
-            modifier_id, builder)
-        taskqueue.add(
-            method='GET',
-            queue_name=constants.REFERENCED_COVERAGE_QUEUE,
-            target=constants.CODE_COVERAGE_BACKEND,
-            url=url)
-    return {'return_code': 200}
-
-
-class CreateReferencedCoverageMetrics(BaseHandler):
-  PERMISSION_LEVEL = Permission.APP_SELF
-
-  def HandleGet(self):
-    modifier_id = int(self.request.get('modifier_id'))
-    builder = self.request.get('builder')
-    referenced_coverage.CreateReferencedCoverage(modifier_id, builder)
-    return {'return_code': 200}

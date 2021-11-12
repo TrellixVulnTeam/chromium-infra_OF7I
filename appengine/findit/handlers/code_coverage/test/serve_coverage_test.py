@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2019 The Chromium Authors. All rights reserved.
+# Copyright 2021 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -8,14 +8,8 @@ import json
 import mock
 import webapp2
 
-from google.appengine.ext import ndb
-from google.appengine.api import taskqueue
-
-from gae_libs.handlers.base_handler import BaseHandler
-from gae_libs import token
-from handlers import code_coverage_monolith
+from handlers.code_coverage import serve_coverage
 from handlers.code_coverage import utils
-from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoveragePercentage
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
@@ -24,9 +18,6 @@ from model.code_coverage import PostsubmitReport
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
-from services.code_coverage import feature_coverage
-from services.code_coverage import files_absolute_coverage
-from services.code_coverage import referenced_coverage
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 
@@ -117,31 +108,6 @@ def _CreateSampleDirectoryCoverageData(builder='linux-code-coverage',
       })
 
 
-def _CreateSampleComponentCoverageData(builder='linux-code-coverage'):
-  """Returns a sample component SummaryCoverageData for testing purpose.
-
-  Note: only use this method if the exact values don't matter.
-  """
-  return SummaryCoverageData.Create(
-      server_host='chromium.googlesource.com',
-      project='chromium/src',
-      ref='refs/heads/main',
-      revision='aaaaa',
-      data_type='components',
-      path='Component>Test',
-      bucket='coverage',
-      builder=builder,
-      data={
-          'dirs': [{
-              'path': '//dir/',
-              'name': 'dir/',
-              'summaries': _CreateSampleCoverageSummaryMetric()
-          }],
-          'path': 'Component>Test',
-          'summaries': _CreateSampleCoverageSummaryMetric()
-      })
-
-
 def _CreateSampleFileCoverageData(builder='linux-code-coverage', modifier_id=0):
   """Returns a sample FileCoverageData for testing purpose.
 
@@ -175,11 +141,35 @@ def _CreateSampleFileCoverageData(builder='linux-code-coverage', modifier_id=0):
       })
 
 
+def _CreateSampleComponentCoverageData(builder='linux-code-coverage'):
+  """Returns a sample component SummaryCoverageData for testing purpose.
+
+  Note: only use this method if the exact values don't matter.
+  """
+  return SummaryCoverageData.Create(
+      server_host='chromium.googlesource.com',
+      project='chromium/src',
+      ref='refs/heads/main',
+      revision='aaaaa',
+      data_type='components',
+      path='Component>Test',
+      bucket='coverage',
+      builder=builder,
+      data={
+          'dirs': [{
+              'path': '//dir/',
+              'name': 'dir/',
+              'summaries': _CreateSampleCoverageSummaryMetric()
+          }],
+          'path': 'Component>Test',
+          'summaries': _CreateSampleCoverageSummaryMetric()
+      })
+
+
 class ServeCodeCoverageDataTest(WaterfallTestCase):
   app_module = webapp2.WSGIApplication(
-      [('/coverage/api/coverage-data',
-        code_coverage_monolith.ServeCodeCoverageData),
-       ('/coverage/p/.*', code_coverage_monolith.ServeCodeCoverageData)],
+      [('/coverage/api/coverage-data', serve_coverage.ServeCodeCoverageData),
+       ('/coverage/p/.*', serve_coverage.ServeCodeCoverageData)],
       debug=True)
 
   def setUp(self):
@@ -822,7 +812,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
         'first': 42,
         'last': 43,
     }]
-    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
+    regions = serve_coverage._SplitLineIntoRegions(line, blocks)
     reconstructed_line = ''.join(region['text'] for region in regions)
     self.assertEqual(line, reconstructed_line)
 
@@ -838,7 +828,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
         'first': 20,
         'last': 22,
     }]
-    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
+    regions = serve_coverage._SplitLineIntoRegions(line, blocks)
 
     self.assertEqual('one', regions[0]['text'])
     self.assertEqual('two', regions[1]['text'])
@@ -860,7 +850,7 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
   def testPrefixUncovered(self):
     line = 'NOCOVcov'
     blocks = [{'first': 1, 'last': 5}]
-    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
+    regions = serve_coverage._SplitLineIntoRegions(line, blocks)
     self.assertEqual('NOCOV', regions[0]['text'])
     self.assertEqual('cov', regions[1]['text'])
     self.assertFalse(regions[0]['is_covered'])
@@ -869,47 +859,8 @@ class SplitLineIntoRegionsTest(WaterfallTestCase):
   def testSuffixUncovered(self):
     line = 'covNOCOV'
     blocks = [{'first': 4, 'last': 8}]
-    regions = code_coverage_monolith._SplitLineIntoRegions(line, blocks)
+    regions = serve_coverage._SplitLineIntoRegions(line, blocks)
     self.assertEqual('cov', regions[0]['text'])
     self.assertEqual('NOCOV', regions[1]['text'])
     self.assertTrue(regions[0]['is_covered'])
     self.assertFalse(regions[1]['is_covered'])
-
-
-class CreateReferencedCoverageMetricsCronTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/cron/referenced-coverage',
-       code_coverage_monolith.CreateReferencedCoverageMetricsCron),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(
-      code_coverage_monolith.CreateReferencedCoverageMetricsCron,
-      '_GetSourceBuilders',
-      return_value=['linux-code-coverage', 'linux-code-coverage_unit'])
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  def testTaskAddedToQueue(self, mocked_is_request_from_appself, _):
-    CoverageReportModifier(reference_commit='c1', id=456).put()
-    response = self.test_app.get('/coverage/cron/referenced-coverage')
-    self.assertEqual(200, response.status_int)
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        queue_names='referenced-coverage-queue')
-    self.assertEqual(2, len(tasks))
-    self.assertTrue(mocked_is_request_from_appself.called)
-
-
-class CreateReferencedCoverageMetricsTest(WaterfallTestCase):
-  app_module = webapp2.WSGIApplication([
-      ('/coverage/task/referenced-coverage',
-       code_coverage_monolith.CreateReferencedCoverageMetrics),
-  ],
-                                       debug=True)
-
-  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
-  @mock.patch.object(referenced_coverage, 'CreateReferencedCoverage')
-  def testReferencedCoverageLogicInvoked(self, mock_detect, _):
-    url = ('/coverage/task/referenced-coverage'
-           '?modifier_id=123&builder=linux-code-coverage')
-    response = self.test_app.get(url, status=200)
-    self.assertEqual(1, mock_detect.call_count)
-    self.assertEqual(200, response.status_int)

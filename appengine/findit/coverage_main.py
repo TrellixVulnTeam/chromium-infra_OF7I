@@ -8,11 +8,12 @@ import gae_ts_mon
 
 from gae_libs import appengine_util
 
-from handlers import code_coverage_monolith
+from handlers.code_coverage import create_referenced_coverage
 from handlers.code_coverage import export_absolute_coverage
 from handlers.code_coverage import export_feature_coverage
 from handlers.code_coverage import fetch_source_file
 from handlers.code_coverage import process_coverage
+from handlers.code_coverage import serve_coverage
 from handlers.code_coverage import update_postsubmit_report
 
 # Feaure coverage worker module.
@@ -28,7 +29,7 @@ if appengine_util.IsInProductionApp():
 # Referenced coverage worker module.
 referenced_coverage_worker_handler_mappings = [
     ('.*/coverage/task/referenced-coverage.*',
-     code_coverage_monolith.CreateReferencedCoverageMetrics),
+     create_referenced_coverage.CreateReferencedCoverageMetrics),
 ]
 referenced_coverage_worker_application = webapp2.WSGIApplication(
     referenced_coverage_worker_handler_mappings, debug=False)
@@ -50,7 +51,7 @@ code_coverage_backend_handler_mappings = [
     ('.*/coverage/task/all-feature-coverage',
      export_feature_coverage.ExportAllFeatureCoverageMetrics),
     ('.*/coverage/cron/referenced-coverage',
-     code_coverage_monolith.CreateReferencedCoverageMetricsCron),
+     create_referenced_coverage.CreateReferencedCoverageMetricsCron),
     ('.*/coverage/task/postsubmit-report/update',
      update_postsubmit_report.UpdatePostsubmitReport),
 ]
@@ -62,15 +63,14 @@ if appengine_util.IsInProductionApp():
 # "code-coverage-frontend" module.
 code_coverage_frontend_handler_mappings = [
     # TODO(crbug.com/924573): Migrate to '.*/coverage/api/coverage-data'.
-    ('/coverage/api/coverage-data', code_coverage_monolith.ServeCodeCoverageData
-    ),
+    ('/coverage/api/coverage-data', serve_coverage.ServeCodeCoverageData),
     # These mappings are separated so that ts_mon data (e.g. latency) is
     # groupable by view. (instead of a single entry like /coverage/p/.*)
-    ('/coverage/p/.*/referenced', code_coverage_monolith.ServeCodeCoverageData),
-    ('/coverage/p/.*/component', code_coverage_monolith.ServeCodeCoverageData),
-    ('/coverage/p/.*/dir', code_coverage_monolith.ServeCodeCoverageData),
-    ('/coverage/p/.*/file', code_coverage_monolith.ServeCodeCoverageData),
-    ('/coverage/p/.*', code_coverage_monolith.ServeCodeCoverageData)
+    ('/coverage/p/.*/referenced', serve_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/component', serve_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/dir', serve_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*/file', serve_coverage.ServeCodeCoverageData),
+    ('/coverage/p/.*', serve_coverage.ServeCodeCoverageData)
 ]
 code_coverage_frontend_web_application = webapp2.WSGIApplication(
     code_coverage_frontend_handler_mappings, debug=False)

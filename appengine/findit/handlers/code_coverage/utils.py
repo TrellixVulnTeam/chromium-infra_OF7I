@@ -6,6 +6,7 @@ import cloudstorage
 
 from common.findit_http_client import FinditHttpClient
 from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from model.code_coverage import CoverageReportModifier
 from model.code_coverage import DependencyRepository
 from waterfall import waterfall_config
 
@@ -35,7 +36,7 @@ def GetPostsubmitPlatformInfoMap(luci_project):
       'postsubmit_platform_info_map', {}).get(luci_project, {})
 
 
-def _GetAllowedGitilesConfigs():
+def GetAllowedGitilesConfigs():
   """Returns the set of valid gitiles configurations.
 
   The returned structure contains the tree of valid hosts, projects, and refs.
@@ -74,10 +75,28 @@ def GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
 
   for dep in manifest:
     if file_path.startswith(
-        dep.path) and dep.server_host in _GetAllowedGitilesConfigs():
+        dep.path) and dep.server_host in GetAllowedGitilesConfigs():
       return dep
 
   return None
+
+
+def GetActiveReferenceCommit(server_host, project):
+  """Returns commit against which coverage is to be generated.
+
+  Returns id of the CoverageReportModifier corresponding to the active
+  reference commit.
+  """
+  query = CoverageReportModifier.query(
+      CoverageReportModifier.server_host == server_host,
+      CoverageReportModifier.project == project,
+      CoverageReportModifier.is_active == True)
+  modifier_ids = []
+  for x in query.fetch():
+    if x.reference_commit:
+      modifier_ids.append(x.key.id())
+  assert len(modifier_ids) <= 1, "More than one reference commit found"
+  return modifier_ids[0] if modifier_ids else None
 
 
 def GetFileContentFromGitiles(manifest, file_path,
