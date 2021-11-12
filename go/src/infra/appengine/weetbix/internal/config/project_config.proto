@@ -20,7 +20,7 @@ message ProjectConfig {
   ImpactThreshold bug_filing_threshold = 2;
 
   // Per realm configurations.
-  repeated Realm realms = 3;
+  repeated RealmConfig realms = 3;
 }
 
 // MonorailProject describes the configuration to use when filing bugs
@@ -121,7 +121,7 @@ message ImpactThreshold {
 }
 
 // Configurations per realm.
-message Realm {
+message RealmConfig {
   // Name of the realm.
   //
   // Must match `^[a-z0-9_\.\-/]{1,400}$`.

@@ -8,11 +8,17 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/server/auth/realms"
 	"go.chromium.org/luci/server/tq"
 
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -21,6 +27,9 @@ import (
 const (
 	taskClass = "export-test-variants"
 	queue     = "export-test-variants"
+	// Bq export job runs once per hour, and each row contains the information
+	// of the previous hour.
+	bqExportJobInterval = time.Hour
 )
 
 // RegisterTaskClass registers the task class for tq dispatcher.
@@ -64,4 +73,47 @@ func Schedule(ctx context.Context, realm, cloudProject, dataset, table string, p
 		},
 		DeduplicationKey: key,
 	})
+}
+
+// ScheduleTasks schedules tasks to export test variants to BigQuery.
+// It schedules a task per realm per table.
+func ScheduleTasks(ctx context.Context) error {
+	pjcs, err := config.Projects(ctx)
+	if err != nil {
+		return errors.Annotate(err, "get project configs").Err()
+	}
+
+	// The cron job is scheduled to run at 0:00, 1:00 ..., and to export rows
+	// containing data of the past hour.
+	// In case this is a retry, round the time back to the full hour.
+	latest := clock.Now(ctx).UTC().Truncate(time.Hour)
+	if err != nil {
+		return err
+	}
+	timeRange := &pb.TimeRange{
+		Earliest: timestamppb.New(latest.Add(-bqExportJobInterval)),
+		Latest:   timestamppb.New(latest),
+	}
+
+	var errs []error
+	for pj, cg := range pjcs {
+		for _, rc := range cg.GetRealms() {
+			fullRealm := realms.Join(pj, rc.Name)
+			bqcs := rc.GetTestVariantAnalysis().GetBqExports()
+			for _, bqc := range bqcs {
+				table := bqc.GetTable()
+				if table == nil {
+					continue
+				}
+				err := Schedule(ctx, fullRealm, table.CloudProject, table.Dataset, table.Table, bqc.GetPredicate(), timeRange)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+	if len(errs) > 0 {
+		return errors.NewMultiError(errs...)
+	}
+	return nil
 }

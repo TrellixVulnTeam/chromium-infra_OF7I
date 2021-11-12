@@ -127,7 +127,7 @@ func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *TestVaria
 	}
 }
 
-func validateRealmConfig(ctx *validation.Context, rCfg *Realm) {
+func validateRealmConfig(ctx *validation.Context, rCfg *RealmConfig) {
 	ctx.Enter(fmt.Sprintf("realm %s", rCfg.Name))
 	defer ctx.Exit()
 	if rCfg == nil {

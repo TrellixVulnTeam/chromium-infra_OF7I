@@ -53,7 +53,7 @@ func createProjectConfig() *ProjectConfig {
 		BugFilingThreshold: &ImpactThreshold{
 			UnexpectedFailures_1D: proto.Int64(1000),
 		},
-		Realms: []*Realm{
+		Realms: []*RealmConfig{
 			{
 				Name: "ci",
 				TestVariantAnalysis: &TestVariantAnalysisConfig{

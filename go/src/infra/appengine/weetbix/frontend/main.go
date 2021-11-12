@@ -37,6 +37,7 @@ import (
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
+	"infra/appengine/weetbix/internal/services/testvariantbqexporter"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
 )
 
@@ -312,6 +313,7 @@ func main() {
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
 		cron.RegisterHandler("update-bugs", handlers.updateBugs)
+		cron.RegisterHandler("export-test-variants", testvariantbqexporter.ScheduleTasks)
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
@@ -322,6 +324,7 @@ func main() {
 			return errors.Annotate(err, "register result ingester").Err()
 		}
 		resultcollector.RegisterTaskClass()
+		testvariantbqexporter.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
 		return nil
 	})
