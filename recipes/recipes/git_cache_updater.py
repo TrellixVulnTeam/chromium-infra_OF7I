@@ -32,7 +32,7 @@ DEPS = [
 
 PROPERTIES = git_cache_updater_pb.Inputs
 
-OK, EMPTY, NO_MAIN = range(3)
+OK, EMPTY = range(2)
 
 
 def _list_host_repos(api, host_url):
@@ -130,12 +130,6 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
         summary.status = api.step.FAILURE  # TODO(iannucci): warning
         return EMPTY
 
-      if api.git('rev-parse', '-q', '--verify', 'main', ok_ret='any').retcode:
-        api.step('repo has no main ref; skipping update', cmd=None)
-        summary.step_text = "[no main ref]"
-        summary.status = api.step.FAILURE  # TODO(iannucci): warning
-        return NO_MAIN
-
     gc_aggressive_opt = []
     if gc_aggressive:
       gc_aggressive_opt = ['--gc-aggressive']
@@ -161,8 +155,7 @@ def RunSteps(api, inputs):
     repo_urls = _get_repo_urls(api, inputs)
   except _InvalidInput as e:
     return result_pb.RawResult(
-        status=bb_common_pb.FAILURE,
-        summary_markdown=e.message)
+        status=bb_common_pb.FAILURE, summary_markdown=str(e))
 
   work_dir = api.path['cache'].join('builder', 'w')
   api.file.ensure_directory('ensure work_dir', work_dir)
@@ -189,7 +182,7 @@ def RunSteps(api, inputs):
   total = len(work)
   success = warning = 0
   failed_repos = []
-  empties = mainless = 0
+  empties = 0
   for future in api.futures.iwait(work):
     try:
       status = future.result()
@@ -202,9 +195,6 @@ def RunSteps(api, inputs):
     elif status == EMPTY:
       empties += 1
       warning += 1
-    elif status == NO_MAIN:
-      mainless += 1
-      warning += 1
     else:
       assert False, 'unknown status %r' % (status,)  # pragma: no cover
 
@@ -214,8 +204,6 @@ def RunSteps(api, inputs):
     summary += '\n\nEncountered warnings for %d repos:\n' % (warning,)
     if empties:
       summary += '\n  * empty (repo has no objects): %d' % (empties,)
-    if mainless:
-      summary += '\n  * no main ref: %d' % (mainless,)
   if failed_repos:
     summary += '\n\nEncountered failures for %d repos:\n' % (len(failed_repos),)
     for repo_name in failed_repos:
@@ -267,17 +255,6 @@ def GenTests(api):
                  gc_aggressive=True,
              )) + api.override_step_data(
                  'https://chromium.googlesource.com/fail.populate',
-                 retcode=1,
-             ))
-
-  yield (api.test('one-repo-no-main') + api.runtime(is_experimental=True) +
-         api.properties(
-             git_cache_updater_pb.Inputs(
-                 override_bucket='experimental-gs-bucket',
-                 repo_urls=['https://chromium.googlesource.com/bogus'],
-                 gc_aggressive=True,
-             )) + api.override_step_data(
-                 'https://chromium.googlesource.com/bogus.git rev-parse',
                  retcode=1,
              ))
 

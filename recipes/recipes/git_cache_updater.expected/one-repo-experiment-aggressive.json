@@ -125,35 +125,6 @@
   },
   {
     "cmd": [
-      "git",
-      "rev-parse",
-      "-q",
-      "--verify",
-      "main"
-    ],
-    "cwd": "[CACHE]/builder/w/chromium.googlesource.com/v8/v8",
-    "env": {
-      "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "0",
-      "GIT_HTTP_LOW_SPEED_TIME": "0",
-      "OVERRIDE_BOOTSTRAP_BUCKET": "experimental-gs-bucket"
-    },
-    "env_suffixes": {
-      "DEPOT_TOOLS_UPDATE": [
-        "0"
-      ],
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "infra_step": true,
-    "name": "https://chromium.googlesource.com/v8/v8.git rev-parse",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
       "git_cache.py",
       "update-bootstrap",
       "--skip-populate",

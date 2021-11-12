@@ -1309,7 +1309,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 Updates the Git Cache zip files.
 
-&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#159)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#153)(api, inputs):**
 ### *recipes* / [gsutil\_hello\_world](/recipes/recipes/gsutil_hello_world.py)
 
 [DEPS](/recipes/recipes/gsutil_hello_world.py#8): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/time][recipe_engine/recipe_modules/time]
