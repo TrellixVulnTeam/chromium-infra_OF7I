@@ -18,11 +18,18 @@ import (
 	"infra/cros/recovery/internal/engine"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/loader"
+	"infra/cros/recovery/internal/localtlw/localproxy"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tlw"
+)
+
+const (
+	// Flag to enable create proxy for when running agains device in test
+	// network from workstation. Keep always false when merge it.
+	useProxyForSSHAccess = false
 )
 
 // Run runs the recovery tasks against the provided unit.
@@ -78,6 +85,10 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 			}
 		})()
 	}
+	// Close all created local proxies.
+	defer func() {
+		localproxy.ClosePool()
+	}()
 	// Keep track of failure to run resources.
 	// If one resource fail we still will try to run another one.
 	var errs []error
@@ -237,6 +248,22 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Logger:         args.Logger,
 		ShowSteps:      args.ShowSteps,
 	}
+	// As port 22 to connect to the lab is closed and there is work around to
+	// create proxy fro local execution. Creating proxy for all resources used
+	// for this devices. We need created all of them at the beginning as one
+	// plan can have access to current resource or another one.
+	// Always has to be false fro merge code
+	if useProxyForSSHAccess {
+		for _, planName := range planNames {
+			resources := collectResourcesForPlan(planName, execArgs.DUT)
+			for _, resource := range resources {
+				if err := localproxy.RegHost(ctx, resource); err != nil {
+					return errors.Annotate(err, "run plans: create proxy for %q", resource).Err()
+				}
+			}
+		}
+	}
+
 	// TODO(otabek@): Add closing plan logic.
 	for _, planName := range planNames {
 		log.Info(ctx, "Run plan %q: starting...", planName)

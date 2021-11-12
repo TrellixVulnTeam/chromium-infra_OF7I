@@ -8,8 +8,6 @@ package localtlw
 import (
 	"context"
 	"fmt"
-	"net"
-	"strconv"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
@@ -22,6 +20,7 @@ import (
 
 	"infra/cros/dutstate"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
+	"infra/cros/recovery/internal/localtlw/localproxy"
 	"infra/cros/recovery/internal/localtlw/rpm"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
@@ -96,8 +95,7 @@ func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) er
 
 // Run executes command on device by SSH related to resource name.
 func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *tlw.RunResult {
-	host := net.JoinHostPort(resourceName, strconv.Itoa(22))
-	return ssh.Run(ctx, c.sshPool, host, command)
+	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(resourceName), command)
 }
 
 // InitServod initiates servod daemon on servo-host.
@@ -115,7 +113,7 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
 	}
 	s, err := c.servodPool.Get(
-		net.JoinHostPort(servo.GetServoHostname(), strconv.Itoa(22)),
+		localproxy.BuildAddr(servo.GetServoHostname()),
 		servo.GetServoPort(),
 		func() ([]string, error) {
 			return dutinfo.GenerateServodParams(dd, req.Options)
@@ -144,8 +142,7 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 		log.Debug(ctx, "Stop servod %q: servo is not specified", resourceName)
 		return nil
 	}
-	host := net.JoinHostPort(servo.GetServoHostname(), strconv.Itoa(22))
-	s, err := c.servodPool.Get(host, servo.GetServoPort(), nil)
+	s, err := c.servodPool.Get(localproxy.BuildAddr(servo.GetServoHostname()), servo.GetServoPort(), nil)
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
@@ -183,9 +180,9 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 		log.Debug(ctx, "Call servod %q: servo is not specified", req.Resource)
 		return nil
 	}
-	host := net.JoinHostPort(servo.GetServoHostname(), strconv.Itoa(22))
 	s, err := c.servodPool.Get(
-		host, servo.GetServoPort(), func() ([]string, error) {
+		localproxy.BuildAddr(servo.GetServoHostname()),
+		servo.GetServoPort(), func() ([]string, error) {
 			return dutinfo.GenerateServodParams(dd, req.Options)
 		})
 	if err != nil {

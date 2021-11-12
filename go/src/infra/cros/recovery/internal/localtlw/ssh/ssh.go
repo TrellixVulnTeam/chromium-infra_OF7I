@@ -24,6 +24,7 @@ const (
 	// take quite long (2-3 hours). We need to set timeout limit to
 	// accommodate such tasks.
 	defaultSSHTimeout = time.Hour * 3
+	DefaultPort       = 22
 )
 
 // getSSHConfig provides default config for SSH.

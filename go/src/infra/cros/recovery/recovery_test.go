@@ -292,3 +292,9 @@ func TestRunDUTPlan(t *testing.T) {
 		})
 	})
 }
+
+func TestLocalproxyFlag(t *testing.T) {
+	if useProxyForSSHAccess {
+		t.Errorf("please keep useProxyForSSHAccess as false")
+	}
+}
