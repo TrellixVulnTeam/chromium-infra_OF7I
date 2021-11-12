@@ -207,6 +207,12 @@ SPECS.update({
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
+            'MarkupSafe',
+            '2.0.1',
+            packaged=(),
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'PyYAML',
             '3.12',
             packaged=[
@@ -1142,6 +1148,7 @@ SPECS.update({
         UniversalSource('ink-extensions', '1.0.2'),
         UniversalSource('inotify_simple', '1.1.7'),
         UniversalSource('itsdangerous', '1.1.0'),
+        UniversalSource('itsdangerous', '2.0.1', pyversions=['py3']),
         UniversalSource('libcst', '0.3.19', pyversions=['py3']),
         UniversalSource('libusb1', '1.5.3'),
         UniversalSource('libusb1', '1.7.1'),
@@ -1197,10 +1204,12 @@ SPECS.update({
     s.spec.tag: s for s in assert_sorted('Universal', *[
         Universal('CherryPy', '14.2.0'),
         Universal('Click', '7.0'),
+        Universal('Click', '8.0.3', pyversions=['py3']),
         Universal('Django', '1.9'),
         Universal('GitPython', '2.1.9'),
         Universal('Jinja2', '2.10'),
         Universal('Jinja2', '2.10.1'),
+        Universal('Jinja2', '3.0.2', pyversions=['py3']),
         Universal('Keras-Preprocessing', '1.1.2'),
         Universal('Markdown', '3.0.1'),
         Universal('Markdown', '3.3.4', pyversions=['py3']),
@@ -1276,6 +1285,7 @@ SPECS.update({
         Universal('fasteners', '0.14.1'),
         Universal('filelock', '3.0.12', pyversions=['py3']),
         Universal('flask', '1.0.2'),
+        Universal('flask', '2.0.2', pyversions=['py3']),
         Universal('flatbuffers', '1.12'),
         Universal('frozendict', '2.0.6', pyversions=['py3']),
         Universal('funcsigs', '1.0.2'),

@@ -59,6 +59,20 @@ wheel: <
 
 * *universal*
 
+## **Click-py3**
+
+### 8.0.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/click-py3"
+  version: "version:8.0.3"
+>
+```
+
+
+* *universal*
+
 ## **Django**
 
 ### 1.5.1
@@ -119,6 +133,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/jinja2-py2_py3"
   version: "version:2.10.1"
+>
+```
+
+
+* *universal*
+
+## **Jinja2-py3**
+
+### 3.0.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/jinja2-py3"
+  version: "version:3.0.2"
 >
 ```
 
@@ -214,6 +242,24 @@ wheel: <
 * *windows-x64*
 * *windows-x64-py3*
 * *windows-x86*
+* *windows-x86-py3*
+
+### 2.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/markupsafe/${vpython_platform}"
+  version: "version:2.0.1"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
 * *windows-x86-py3*
 
 ## **MySQL-python**
@@ -1889,6 +1935,20 @@ wheel: <
 
 * *universal*
 
+## **flask-py3**
+
+### 2.0.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/flask-py3"
+  version: "version:2.0.2"
+>
+```
+
+
+* *universal*
+
 ## **flatbuffers**
 
 ### 1.12
@@ -3326,6 +3386,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/itsdangerous-py2_py3"
   version: "version:1.1.0"
+>
+```
+
+
+* *universal*
+
+## **itsdangerous-py3**
+
+### 2.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/itsdangerous-py3"
+  version: "version:2.0.1"
 >
 ```
 
