@@ -236,6 +236,31 @@ CREATE TABLE ClusteringState (
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
 ) PRIMARY KEY (Project, ChunkId);
 
+-- ReclusteringRuns contains details of runs used to re-cluster test results.
+CREATE TABLE ReclusteringRuns (
+  -- The LUCI Project.
+  Project STRING(40) NOT NULL,
+  -- The attempt. This is the timestamp the orchestrator run starts.
+  AttemptTimestamp TIMESTAMP NOT NULL,
+  -- The minimum algorithms version the reclustering run is trying to achieve.
+  -- Chunks with an AlgorithmsVersion less than this value are eligible to be
+  -- re-clustered.
+  AlgorithmsVersion INT64 NOT NULL,
+  -- The minimum rules version the reclustering run is trying to achieve.
+  -- Chunks with a RulesVersion less than this value are eligible to be
+  -- re-clustered.
+  RulesVersion TIMESTAMP NOT NULL,
+  -- The number of shards created for this run (for this LUCI project).
+  ShardCount INT64 NOT NULL,
+  -- The number of shards that have reported progress (at least once).
+  -- When this is equal to ShardCount, readers can have confidence Progress
+  -- is a reasonable reflection of the progress made reclustering
+  -- this project. Until then, it is a loose lower-bound.
+  ShardsReported INT64 NOT NULL,
+  -- The progress. This is a value between 0 and 1000*ShardCount.
+  Progress INT64 NOT NULL,
+) PRIMARY KEY (Project, AttemptTimestamp DESC);
+
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.
 CREATE TABLE TQReminders (
