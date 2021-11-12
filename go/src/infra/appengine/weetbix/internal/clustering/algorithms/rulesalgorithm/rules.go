@@ -2,6 +2,7 @@ package rulesalgorithm
 
 import (
 	"fmt"
+	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
@@ -23,22 +24,40 @@ const AlgorithmVersion = 1
 // of an algorithm has a different name.
 var AlgorithmName = fmt.Sprintf("%sv%v", clustering.RulesAlgorithmPrefix, AlgorithmVersion)
 
-// Cluster clusters the given test failure and returns its cluster IDs.
-func (a *Algorithm) Cluster(ruleset *cache.Ruleset, failure *clustering.Failure) []*clustering.ClusterID {
+// Cluster incrementally (re-)clusters the given test failure, returning the
+// matching cluster IDs. The passed existinRulesVersion and existingIDs
+// should be the ruleset.RulesVersion and cluster IDs of the previous call
+// to Cluster (if any) from which incremental clustering should occur.
+//
+// If clustering has not been performed previously, and clustering is to be
+// performed from scratch, existingRulesVersion should be rules.StartingEpoch
+// and existingIDs should be an empty set.
+func (a *Algorithm) Cluster(ruleset *cache.Ruleset, existingRulesVersion time.Time, existingIDs map[string]struct{}, failure *clustering.Failure) map[string]struct{} {
 	values := map[string]string{
 		"test":   failure.TestID,
 		"reason": failure.Reason.GetPrimaryErrorMessage(),
 	}
 
-	var clusters []*clustering.ClusterID
-	for _, r := range ruleset.Rules {
-		if r.Expr.Evaluate(values) {
-			id := &clustering.ClusterID{
-				Algorithm: AlgorithmName,
-				ID:        r.RuleID,
-			}
-			clusters = append(clusters, id)
+	newIDs := make(map[string]struct{})
+	for id := range existingIDs {
+		// Keep matches with rules that are still active.
+		if ruleset.IsRuleActive(id) {
+			newIDs[id] = struct{}{}
 		}
 	}
-	return clusters
+
+	// For efficiency, only match new/modified rules since the
+	// last call to Cluster(...).
+	newRules := ruleset.ActiveRulesUpdatedSince(existingRulesVersion)
+	for _, r := range newRules {
+		if r.Expr.Evaluate(values) {
+			newIDs[r.RuleID] = struct{}{}
+		} else {
+			// If this is a modified rule (rather than a new rule)
+			// it may have matched previously. Delete any existing
+			// match.
+			delete(newIDs, r.RuleID)
+		}
+	}
+	return newIDs
 }

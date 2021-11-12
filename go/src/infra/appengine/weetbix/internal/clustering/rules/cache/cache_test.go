@@ -33,27 +33,35 @@ func TestRulesCache(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ruleset.RulesVersion, ShouldEqual, expectedVersion)
 
-			actualUpdated := make(map[string]time.Time)
-			expectedUpdated := make(map[string]time.Time)
-			actualRule := make(map[string]string)
-			expectedRule := make(map[string]string)
-
-			for _, a := range ruleset.Rules {
-				actualUpdated[a.RuleID] = a.LastUpdated
-				So(a.Expr, ShouldNotBeNil)
-				// Technically this only gets us back the original rule if it
-				// was in normal formatting. But during testing, we use rules
-				// with normalised formatting.
-				actualRule[a.RuleID] = a.Expr.String()
-			}
+			activeRules := 0
 			for _, e := range expectedRules {
 				if e.IsActive {
-					expectedUpdated[e.RuleID] = e.LastUpdated
-					expectedRule[e.RuleID] = e.RuleDefinition
+					activeRules++
 				}
 			}
-			So(actualUpdated, ShouldResemble, expectedUpdated)
-			So(actualRule, ShouldResemble, expectedRule)
+			So(len(ruleset.ActiveRulesSorted), ShouldEqual, activeRules)
+			So(len(ruleset.ActiveRuleIDs), ShouldEqual, activeRules)
+
+			actualRuleIndex := 0
+			for _, e := range expectedRules {
+				if e.IsActive {
+					a := ruleset.ActiveRulesSorted[actualRuleIndex]
+					So(a.RuleID, ShouldEqual, e.RuleID)
+					So(a.LastUpdated, ShouldEqual, e.LastUpdated)
+					// Technically actualRule.Expr.String() may not get us
+					// back the original rule if RuleDefinition didn't use
+					// normalised formatting. But for this test, we use
+					// normalised formatting, so that is not an issue.
+					So(a.Expr, ShouldNotBeNil)
+					So(a.Expr.String(), ShouldEqual, e.RuleDefinition)
+					actualRuleIndex++
+
+					_, ok := ruleset.ActiveRuleIDs[a.RuleID]
+					So(ok, ShouldBeTrue)
+				}
+			}
+			So(len(ruleset.ActiveRulesUpdatedSince(rules.StartingEpoch)), ShouldEqual, activeRules)
+			So(len(ruleset.ActiveRulesUpdatedSince(time.Date(2100, time.January, 1, 1, 0, 0, 0, time.UTC))), ShouldEqual, 0)
 		}
 
 		Convey(`Initially Empty`, func() {
@@ -79,8 +87,8 @@ func TestRulesCache(t *testing.T) {
 				reference := time.Date(2020, 1, 2, 3, 4, 5, 6000, time.UTC)
 
 				rs := []*rules.FailureAssociationRule{
-					rules.NewRule(100).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
 					rules.NewRule(101).WithActive(false).WithLastUpdated(reference).Build(),
+					rules.NewRule(100).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
 				}
 				err := rules.SetRulesForTesting(ctx, rs)
 				So(err, ShouldBeNil)
@@ -99,8 +107,8 @@ func TestRulesCache(t *testing.T) {
 			reference := time.Date(2020, 1, 2, 3, 4, 5, 6000, time.UTC)
 
 			rs := []*rules.FailureAssociationRule{
-				rules.NewRule(100).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
 				rules.NewRule(101).WithActive(false).WithLastUpdated(reference).Build(),
+				rules.NewRule(100).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
 			}
 			err := rules.SetRulesForTesting(ctx, rs)
 			So(err, ShouldBeNil)
@@ -129,10 +137,10 @@ func TestRulesCache(t *testing.T) {
 				// Make an existing rule inactive, make an existing inactive
 				// rule active, and add an inactive and active new rule.
 				newRules := []*rules.FailureAssociationRule{
+					rules.NewRule(103).WithActive(false).WithLastUpdated(reference.Add(2 * time.Hour)).Build(),
 					rules.NewRule(100).WithActive(false).WithLastUpdated(reference.Add(time.Hour)).Build(),
 					rules.NewRule(101).WithLastUpdated(reference.Add(time.Hour)).Build(),
 					rules.NewRule(102).WithLastUpdated(reference.Add(time.Hour)).Build(),
-					rules.NewRule(103).WithActive(false).WithLastUpdated(reference.Add(2 * time.Hour)).Build(),
 				}
 				err := rules.SetRulesForTesting(ctx, newRules)
 				So(err, ShouldBeNil)

@@ -12,6 +12,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
+	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 )
 
@@ -80,7 +81,14 @@ func Cluster(ruleset *cache.Ruleset, failures []*clustering.Failure) clustering.
 		}
 
 		// Rule-based clusters.
-		ids = append(ids, rulesAlgorithm.Cluster(ruleset, f)...)
+		ruleIDs := rulesAlgorithm.Cluster(ruleset, rules.StartingEpoch, nil, f)
+		for rID := range ruleIDs {
+			id := &clustering.ClusterID{
+				Algorithm: rulesalgorithm.AlgorithmName,
+				ID:        rID,
+			}
+			ids = append(ids, id)
+		}
 
 		result = append(result, ids)
 	}

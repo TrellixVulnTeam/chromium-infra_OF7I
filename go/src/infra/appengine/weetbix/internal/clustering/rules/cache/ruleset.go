@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering/rules"
@@ -47,8 +48,13 @@ func NewCachedRule(rule *rules.FailureAssociationRule) (*CachedRule, error) {
 type Ruleset struct {
 	// The LUCI Project.
 	Project string
-	// Rules is the set of compiled failure association rules.
-	Rules []*CachedRule
+	// ActiveRulesSorted is the set of active failure association rules
+	// (should be used by Weetbix for matching), sorted in descending
+	// LastUpdated time order.
+	ActiveRulesSorted []*CachedRule
+	// ActiveRuleIDs stores the IDs of active failure association
+	// rules.
+	ActiveRuleIDs map[string]struct{}
 	// RulesVersion is the Spanner commit timestamp describing
 	// the version of the ruleset.
 	RulesVersion time.Time
@@ -56,17 +62,55 @@ type Ruleset struct {
 	LastRefresh time.Time
 }
 
-// NewRuleset initialises a new ruleset. This initial ruleset is invalid
-// and must be refreshed before use.
-func NewRuleset(project string) *Ruleset {
+// ActiveRulesUpdatedSince returns the set of rules that are
+// active and have been updated since (but not including) the given time.
+// Rules which have been made inactive since the given time will NOT be
+// returned. To check if a previous rule has been made inactive, consider
+// using IsRuleActive instead.
+// The returned slice must not be mutated.
+func (r *Ruleset) ActiveRulesUpdatedSince(t time.Time) []*CachedRule {
+	// Use the property that ActiveRules is sorted by descending
+	// LastUpdated time.
+	for i, rule := range r.ActiveRulesSorted {
+		if !rule.LastUpdated.After(t) {
+			// This is the first rule that has not been updated since time t.
+			// Return all rules up to (but not including) this rule.
+			return r.ActiveRulesSorted[:i]
+		}
+	}
+	return r.ActiveRulesSorted
+}
+
+// Returns whether the given ruleID is an active rule.
+func (r *Ruleset) IsRuleActive(ruleID string) bool {
+	_, ok := r.ActiveRuleIDs[ruleID]
+	return ok
+}
+
+// newEmptyRuleset initialises a new empty ruleset.
+// This initial ruleset is invalid and must be refreshed before use.
+func newEmptyRuleset(project string) *Ruleset {
 	return &Ruleset{
-		Project: project,
-		Rules:   nil,
+		Project:           project,
+		ActiveRulesSorted: nil,
+		ActiveRuleIDs:     make(map[string]struct{}),
 		// The zero time is not a valid RulesVersion and will be rejected
 		// by clustering state validation if we ever try to save it to
 		// Spanner.
 		RulesVersion: time.Time{},
 		LastRefresh:  time.Time{},
+	}
+}
+
+// NewRuleset creates a new ruleset with the given project,
+// active rules, rules version and last refresh time.
+func NewRuleset(project string, activeRules []*CachedRule, rulesVersion, lastRefresh time.Time) *Ruleset {
+	return &Ruleset{
+		Project:           project,
+		ActiveRulesSorted: sortByDescendingLastUpdated(activeRules),
+		ActiveRuleIDs:     ruleIDs(activeRules),
+		RulesVersion:      rulesVersion,
+		LastRefresh:       lastRefresh,
 	}
 }
 
@@ -83,14 +127,14 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 	txn, cancel := span.ReadOnlyTransaction(ctx)
 	defer cancel()
 
-	var cachedRules []*CachedRule
+	var activeRules []*CachedRule
 	if r.RulesVersion == (time.Time{}) {
 		// On the first refresh, query all active rules.
-		activeRules, err := rules.ReadActive(txn, r.Project)
+		ruleRows, err := rules.ReadActive(txn, r.Project)
 		if err != nil {
 			return nil, err
 		}
-		cachedRules, err = cachedRulesFromActive(activeRules)
+		activeRules, err = cachedRulesFromFullRead(ruleRows)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +144,7 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 		if err != nil {
 			return nil, err
 		}
-		cachedRules, err = cachedRulesFromDelta(r.Rules, delta)
+		activeRules, err = cachedRulesFromDelta(r.ActiveRulesSorted, delta)
 		if err != nil {
 			return nil, err
 		}
@@ -111,22 +155,18 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 	// to the set of rules in the project.
 	// Must occur in the same spanner transaction as ReadActive/ReadDelta.
 	// If the project has no rules, this returns rules.StartingEpoch.
-	lastUpdated, err := rules.ReadLastUpdated(txn, r.Project)
+	rulesVersion, err := rules.ReadLastUpdated(txn, r.Project)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Ruleset{
-		Project:      r.Project,
-		Rules:        cachedRules,
-		RulesVersion: lastUpdated,
-		LastRefresh:  clock.Now(ctx),
-	}, nil
+	lastRefresh := clock.Now(ctx)
+	return NewRuleset(r.Project, activeRules, rulesVersion, lastRefresh), nil
 }
 
-// cachedRulesFromActive obtains a set of cached rules from the given set of
+// cachedRulesFromFullRead obtains a set of cached rules from the given set of
 // active failure association rules.
-func cachedRulesFromActive(activeRules []*rules.FailureAssociationRule) ([]*CachedRule, error) {
+func cachedRulesFromFullRead(activeRules []*rules.FailureAssociationRule) ([]*CachedRule, error) {
 	var result []*CachedRule
 	for _, r := range activeRules {
 		cr, err := NewCachedRule(r)
@@ -168,4 +208,23 @@ func cachedRulesFromDelta(existing []*CachedRule, delta []*rules.FailureAssociat
 		results = append(results, r)
 	}
 	return results, nil
+}
+
+// sortByDescendingLastUpdated sorts the given rules in descending last-updated time order.
+func sortByDescendingLastUpdated(rules []*CachedRule) []*CachedRule {
+	result := make([]*CachedRule, len(rules))
+	copy(result, rules)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].LastUpdated.After(result[j].LastUpdated)
+	})
+	return result
+}
+
+// ruleIDs returns the IDs of the given list of failure association rules.
+func ruleIDs(rules []*CachedRule) map[string]struct{} {
+	result := make(map[string]struct{})
+	for _, r := range rules {
+		result[r.RuleID] = struct{}{}
+	}
+	return result
 }

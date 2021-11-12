@@ -43,7 +43,7 @@ func (c *RulesCache) Ruleset(ctx context.Context, project string) (*Ruleset, err
 				return it
 			}
 		} else {
-			ruleset = NewRuleset(project)
+			ruleset = newEmptyRuleset(project)
 		}
 		ruleset, err = ruleset.refresh(ctx)
 		if err != nil {
