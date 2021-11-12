@@ -18,6 +18,7 @@ import (
 	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/idstrategy"
 	"infra/cros/karte/internal/scalars"
 )
 
@@ -25,6 +26,7 @@ import (
 func TestCreateAction(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContext()
+	ctx = idstrategy.Use(ctx, idstrategy.NewNaive())
 	datastore.GetTestable(ctx).Consistent(true)
 	k := NewKarteFrontend()
 	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
@@ -35,8 +37,7 @@ func TestCreateAction(t *testing.T) {
 		},
 	})
 	expected := &kartepb.Action{
-		// The name is randomly generated. We expect to see the name that we actually saw.
-		Name:       resp.GetName(),
+		Name:       "entity1",
 		Kind:       "ssh-attempt",
 		CreateTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 2)),
 	}
@@ -159,49 +160,5 @@ func TestListObservations(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("expected error to be nil not %s", err)
-	}
-}
-
-// TestMakeRawID tests that MakeRawID makes an ID.
-func TestMakeRawID(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		name   string
-		in     time.Time
-		suffix string
-		out    string
-	}{
-		{
-			name:   "good ID",
-			in:     time.Unix(1, 2),
-			suffix: "fdc7abc4-3140-46ed-9446-4d3a826c045e",
-			out:    "001-000000000000000000001-0000000002-fdc7abc4-3140-46ed-9446-4d3a826c045e",
-		},
-		{
-			name:   "no suffix",
-			in:     time.Unix(1, 2),
-			suffix: "",
-			out:    "",
-		},
-	}
-
-	for _, tt := range cases {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			id, err := makeRawID(tt.in, tt.suffix)
-			if tt.out != "" {
-				if err != nil {
-					t.Errorf("unexpected error: %s", err)
-				}
-				if diff := cmp.Diff(id, tt.out); diff != "" {
-					t.Errorf("(-want +got): %s", diff)
-				}
-			} else {
-				if err == nil {
-					t.Errorf("test should have failed")
-				}
-			}
-		})
 	}
 }
