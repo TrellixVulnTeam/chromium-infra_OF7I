@@ -62,7 +62,7 @@ func Create(ctx context.Context, e *Entry) error {
 		"PartitionTime":     e.PartitionTime,
 		"ObjectID":          e.ObjectID,
 		"AlgorithmsVersion": e.Clustering.AlgorithmsVersion,
-		"RuleVersion":       e.Clustering.RulesVersion,
+		"RulesVersion":      e.Clustering.RulesVersion,
 		"Clusters":          clusters,
 		"LastUpdated":       spanner.CommitTimestamp,
 	})
@@ -76,7 +76,7 @@ func Create(ctx context.Context, e *Entry) error {
 func Read(ctx context.Context, project, chunkID string) (*Entry, error) {
 	columns := []string{
 		"Project", "ChunkId", "PartitionTime",
-		"ObjectId", "AlgorithmsVersion", "RuleVersion",
+		"ObjectId", "AlgorithmsVersion", "RulesVersion",
 		"Clusters", "LastUpdated",
 	}
 	row, err := span.ReadRow(ctx, "ClusteringState", spanner.Key{project, chunkID}, columns)
@@ -117,7 +117,7 @@ func validateEntry(e *Entry) error {
 	case e.Clustering.AlgorithmsVersion <= 0:
 		return errors.New("algorithms version must be specified")
 	case e.Clustering.RulesVersion.IsZero():
-		return errors.New("rule version must be specified")
+		return errors.New("rules version must be specified")
 	default:
 		if err := validateAlgorithms(e.Clustering.Algorithms); err != nil {
 			return errors.Annotate(err, "algorithms").Err()

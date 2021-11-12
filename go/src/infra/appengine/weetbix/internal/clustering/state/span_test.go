@@ -67,11 +67,11 @@ func TestSpanner(t *testing.T) {
 				err := testCreate(e)
 				So(err, ShouldErrLike, "object ID must be specified")
 			})
-			Convey(`Rule Version missing`, func() {
+			Convey(`Rules Version missing`, func() {
 				var t time.Time
 				e.Clustering.RulesVersion = t
 				err := testCreate(e)
-				So(err, ShouldErrLike, "rule version must be specified")
+				So(err, ShouldErrLike, "rules version must be specified")
 			})
 			Convey(`Algorithms Version missing`, func() {
 				e.Clustering.AlgorithmsVersion = 0

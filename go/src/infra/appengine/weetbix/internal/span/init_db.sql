@@ -228,7 +228,7 @@ CREATE TABLE ClusteringState (
   -- results in this chunk. This is the "Last Updated" time of the most
   -- recently updated failure association rule in the snapshot of failure
   -- association rules used to match the test results.
-  RuleVersion TIMESTAMP NOT NULL,
+  RulesVersion TIMESTAMP NOT NULL,
   -- Serialized ChunkClusters proto containing which test result is in which
   -- cluster.
   Clusters BYTES(MAX) NOT NULL,
