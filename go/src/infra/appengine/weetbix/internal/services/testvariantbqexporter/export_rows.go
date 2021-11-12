@@ -57,6 +57,9 @@ type BQExporter struct {
 }
 
 func CreateBQExporter(options *Options) *BQExporter {
+	if options.Predicate == nil {
+		options.Predicate = &pb.AnalyzedTestVariantPredicate{}
+	}
 	return &BQExporter{
 		options:    options,
 		putLimiter: rate.NewLimiter(rateLimit, 1),

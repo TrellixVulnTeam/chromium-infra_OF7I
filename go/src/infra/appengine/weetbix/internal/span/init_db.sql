@@ -34,7 +34,7 @@ CREATE TABLE AnalyzedTestVariants (
   -- Timestamp when the row of a test variant was created.
   CreateTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
 
-  -- Status of the flaky test variant, see AnalyzedTestVariantStatus.
+  -- Status of the analyzed test variant, see AnalyzedTestVariantStatus.
   Status INT64 NOT NULL,
   -- Timestamp when the status field was last updated.
   StatusUpdateTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
