@@ -277,13 +277,16 @@ const defaultConfig = `
 					"exec_name":"sample_pass"
 				},
 				"has_enough_disk_space": {
-					"docs": [
-						"host.check_diskspace('/mnt/stateful_partition', 0.5)"
+					"docs":[
+						"check the stateful partition have enough disk space that is at least 0.5GB. The storage unit is in GB."
 					],
 					"conditions": [
 						"is_not_container"
 					],
-					"exec_name":"sample_pass"
+					"exec_name":"cros_has_enough_storage_space",
+					"exec_extra_args":[
+						"/mnt/stateful_partition:0.5"
+					]
 				},
 				"is_not_container": {
 					"conditions": [
