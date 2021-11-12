@@ -264,6 +264,33 @@ func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	return nil
 }
 
+const (
+	toolPresentCmd = "hash %s"
+)
+
+// isToolPresentExec checks the presence of the tool on the DUT.
+//
+// For example, the tool "dfu-programmer" is checked by running the command:
+// "hash dfu-programmer" on the DUT
+// The actionArgs should be in the format of ["tool:..."]
+func isToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	toolMap := execs.ParseActionArgs(ctx, actionArgs, ":")
+	toolName, existed := toolMap["tool"]
+	if !existed {
+		return errors.Reason("tool present: missing tool information in the argument").Err()
+	}
+	toolName = strings.TrimSpace(toolName)
+	if toolName == "" {
+		return errors.Reason("tool present: tool name given in the argument is empty").Err()
+	}
+	r := args.NewRunner(args.ResourceName)
+	_, err := r(ctx, fmt.Sprintf(toolPresentCmd, toolName))
+	if err != nil {
+		return errors.Annotate(err, "tool present").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -280,4 +307,5 @@ func init() {
 	execs.Register("cros_is_not_virtual_machine", isNotVirtualMachineExec)
 	execs.Register("cros_wait_for_system", waitForSystemExec)
 	execs.Register("cros_is_gsc_tool_present", isGscToolPresentExec)
+	execs.Register("cros_is_tool_present", isToolPresentExec)
 }

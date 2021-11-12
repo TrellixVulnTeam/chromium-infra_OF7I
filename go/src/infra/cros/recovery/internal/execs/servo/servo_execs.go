@@ -293,6 +293,29 @@ func servoFirmwareNeedsUpdateExec(ctx context.Context, args *execs.RunArgs, acti
 	return nil
 }
 
+// servoSetExec sets the command of the servo a specific value using servod.
+// It reads the command and its value from the actionArgs argument.
+//
+// the actionArgs should be in the format of ["command:....", "string_value:...."]
+func servoSetExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	m := execs.ParseActionArgs(ctx, actionArgs, ":")
+	command, existed := m["command"]
+	if !existed {
+		return errors.Reason("servo match state: command not found in the argument").Err()
+	}
+	stringValue, existed := m["string_value"]
+	if !existed {
+		return errors.Reason("servo match state: string value not found in the argument").Err()
+	}
+	command = strings.TrimSpace(command)
+	stringValue = strings.TrimSpace(stringValue)
+	_, err := ServodCallSet(ctx, args, command, stringValue)
+	if err != nil {
+		return errors.Annotate(err, "servo match state").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -303,4 +326,5 @@ func init() {
 	execs.Register("servo_topology_update", servoTopologyUpdateExec)
 	execs.Register("servo_servod_echo_host", servoServodEchoHostExec)
 	execs.Register("servo_fw_need_update", servoFirmwareNeedsUpdateExec)
+	execs.Register("servo_set", servoSetExec)
 }

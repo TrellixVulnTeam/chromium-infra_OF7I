@@ -39,6 +39,29 @@ func setServoStateExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	return nil
 }
 
+// matchStateExec confirms the servo state is the same as the passed in argument from the configuration.
+//
+// format of the actionArgs: ["state:xxx"] where xxx is one of the predefined servo state.
+func matchStateExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	stateMap := execs.ParseActionArgs(ctx, actionArgs, ":")
+	servoStateString, existed := stateMap["state"]
+	if !existed {
+		return errors.Reason("match state: missing servo state information in the argument").Err()
+	}
+	servoStateString = strings.TrimSpace(servoStateString)
+	if servoStateString == "" {
+		return errors.Reason("match state: the servo state string is empty").Err()
+	}
+	if servoStateString != strings.ToUpper(servoStateString) {
+		return errors.Reason("match state: the servo state string is in wrong format").Err()
+	}
+	if args.DUT.ServoHost.Servo.State != tlw.ServoState(servoStateString) {
+		return errors.Reason("match state: servo state mismatch: expected: %q, but got %q", servoStateString, args.DUT.ServoHost.Servo.State).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_set_servo_state", setServoStateExec)
+	execs.Register("servo_match_state", matchStateExec)
 }

@@ -602,7 +602,8 @@ const defaultConfig = `
 				"tpm_info",
 				"tools_checks",
 				"hardware_audit",
-				"firmware_check"
+				"firmware_check",
+				"servo_keyboard"
 			],
 			"actions": {
 				"cros_ssh":{
@@ -689,6 +690,58 @@ const defaultConfig = `
 						"cros_rw_firmware_stable_verion"
 					],
 					"exec_name":"sample_pass"
+				},
+				"servo_keyboard":{
+					"conditions":[
+						"servo_state_is_working",
+						"is_servo_keyboard_image_tool_present"
+					],
+					"dependencies":[
+						"servo_init_usb_keyboard",
+						"lufa_keyboard_found"
+					],
+					"exec_name":"cros_run_shell_command",
+					"exec_extra_args":[
+						"lsusb -vv -d 03eb:2042 |grep \"Remote Wakeup\""
+					],
+					"allow_fail_after_recovery": true
+				},
+				"servo_init_usb_keyboard":{
+					"docs":[
+						"set servo's 'init_usb_keyboard' command to 'on' value."
+					],
+					"exec_name":"servo_set",
+					"exec_extra_args":[
+						"command:init_usb_keyboard",
+						"string_value:on"
+					]
+				},
+				"is_servo_keyboard_image_tool_present":{
+					"docs":[
+						"check if the servo keyboard image specified by the name of dfu-programmer can be found in DUT cli."
+					],
+					"exec_name":"cros_is_tool_present",
+					"exec_extra_args":[
+						"tool:dfu-programmer"
+					]
+				},
+				"lufa_keyboard_found":{
+					"docs":[
+						"check if the lufa keyboard can be found by finding the match of the model information of it."
+					],
+					"exec_name":"cros_run_shell_command",
+					"exec_extra_args":[
+						"lsusb -d 03eb:2042 |grep \"LUFA Keyboard Demo\""
+					]
+				},
+				"servo_state_is_working":{
+					"docs":[
+						"check the servo's state is ServoStateWorking."
+					],
+					"exec_name":"servo_match_state",
+					"exec_extra_args":[
+						"state:WORKING"
+					]
 				},
 				"cros_rw_firmware_stable_verion":{
 					"dependencies":[
