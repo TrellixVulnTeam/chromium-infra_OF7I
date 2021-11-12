@@ -12,6 +12,7 @@ from libs import time_util
 from libs.gitiles.gitiles_repository import GitilesRepository
 from waterfall.test.wf_testcase import WaterfallTestCase
 from model.code_coverage import CoverageReportModifier
+from model.code_coverage import DependencyRepository
 from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import SummaryCoverageData
@@ -45,6 +46,21 @@ def _CreateMockMergedChange(commit, parent_commit, filepath):
 
 class FeatureIncrementalCoverageTest(WaterfallTestCase):
 
+  def setUp(self):
+    super(FeatureIncrementalCoverageTest, self).setUp()
+    self.UpdateUnitTestConfigSettings(
+        'code_coverage_settings', {
+            'allowed_gitiles_configs': {
+                'chromium.googlesource.com': {
+                    'chromium/src': ['refs/heads/main',]
+                }
+            },
+        })
+
+  def tearDown(self):
+    self.UpdateUnitTestConfigSettings('code_coverage_settings', {})
+    super(FeatureIncrementalCoverageTest, self).tearDown()
+
   # This test tests whether modified coverage entities get created in datastore,
   # with coverage data compressed in the right format. The subsequent tests do
   # not test this scenario and only test the export to bigquery.
@@ -69,7 +85,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -184,7 +206,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -269,7 +297,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -381,7 +415,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -449,7 +489,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -525,7 +571,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -601,7 +653,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -661,7 +719,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -703,7 +767,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -782,7 +852,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -866,7 +942,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -925,7 +1007,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -970,7 +1058,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True)
@@ -1060,7 +1154,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         bucket='ci',
         builder='linux-code-coverage',
         commit_timestamp=datetime(2020, 1, 7),
-        manifest=[],
+        manifest=[
+            DependencyRepository(
+                path='//',
+                server_host='chromium.googlesource.com',
+                project='chromium/src.git',
+                revision='latest')
+        ],
         summary_metrics={},
         build_id=2000,
         visible=True).put()

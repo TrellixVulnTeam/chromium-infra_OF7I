@@ -13,7 +13,9 @@ import time
 from google.appengine.ext import ndb
 
 from common.findit_http_client import FinditHttpClient
+from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
 from gae_libs.http import auth_util
+from handlers.code_coverage import utils
 from libs import time_util
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoverageReportModifier
@@ -54,13 +56,12 @@ _SOURCE_BUILDERS = {
 _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
 _CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
-_CHROMIUM_REPO = GitilesRepository(
-    FinditHttpClient(
-        # Don't log 404 as it is expected
-        # e.g. a file can missing at a parent commit.
-        no_error_logging_statuses=[404]),
-    'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
 _EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
+# Http status codes which would not be logged while requesting data from gitiles
+# We do not log 404, because it is a valid scenario e.g. when a file gets added
+# after reference_commit. We don't log 429, because we have exponential backoff
+# mechanism to take care of it
+_NO_ERROR_LOGGING_STATUSES = [404, 429]
 
 
 def _GetFeatureCommits(hashtag):
@@ -362,23 +363,36 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
     })
   return bq_rows
 
-def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
+
+def _FetchFileContentAtCommit(file_path, revision, manifest,
+                              file_content_queue):
   """Fetches lines in a file at the specified revision.
 
   Args:
     file_path (string): chromium/src relative path to file whose content is to
       be fetched. Must start with '//'.
     revision (string): commit hash of the revision.
+    manifest (DependencyRepository): Entity containing mapping from path prefix
+                                     to corresponding repo.
     file_content_queue (Queue): Queue which holds the output.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
-  content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  assert revision, 'A valid revision is required'
+  dependency = utils.GetMatchedDependencyRepository(manifest, file_path)
+  assert dependency, ('%s file does not belong to any dependency repository' %
+                      file_path)
+  # Calculate the relative path to the root of the dependency repository itself.
+  relative_file_path = file_path[len(dependency.path):]
+  repo = CachedGitilesRepository(
+      FinditHttpClient(no_error_logging_statuses=_NO_ERROR_LOGGING_STATUSES),
+      dependency.project_url)
+  content, status = repo.GetSourceAndStatus(relative_file_path, revision)
   wait_sec = 1
   # short term qps exceeded, retry with exponential backoff
   while status == 429 and wait_sec < _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
     wait_sec *= 2
     time.sleep(wait_sec)
-    content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+    content, status = repo.GetSourceAndStatus(relative_file_path, revision)
   if wait_sec >= _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
     logging.warning(
         "Couldn't fetch content for %s at revision %s due to exceeding qps",
@@ -422,7 +436,8 @@ def ExportFeatureCoverage(modifier_id, run_id):
         0).order(-PostsubmitReport.commit_timestamp)
     report = query.fetch(limit=1)[0]
     builder_to_latest_report[builder] = report
-
+  # manifest is supposed to be same across all chromium coverage builders
+  manifest = builder_to_latest_report.values()[0].manifest
   file_content_queue = Queue.Queue()
   files_deleted_at_latest = defaultdict(list)
   interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
@@ -445,7 +460,7 @@ def ExportFeatureCoverage(modifier_id, run_id):
           continue
         builder_to_latest_content_thread[builder] = Thread(
             target=_FetchFileContentAtCommit,
-            args=(file_path, report.gitiles_commit.revision,
+            args=(file_path, report.gitiles_commit.revision, manifest,
                   file_content_queue))
         builder_to_latest_content_thread[builder].start()
 
@@ -458,10 +473,12 @@ def ExportFeatureCoverage(modifier_id, run_id):
       # Fetch content at feature and parent commit
       feature_commit_thread = Thread(
           target=_FetchFileContentAtCommit,
-          args=(file_path, commit['feature_commit'], file_content_queue))
+          args=(file_path, commit['feature_commit'], manifest,
+                file_content_queue))
       parent_commit_thread = Thread(
           target=_FetchFileContentAtCommit,
-          args=(file_path, commit['parent_commit'], file_content_queue))
+          args=(file_path, commit['parent_commit'], manifest,
+                file_content_queue))
       feature_commit_thread.start()
       parent_commit_thread.start()
 
@@ -503,6 +520,7 @@ def ExportFeatureCoverage(modifier_id, run_id):
               | interesting_lines)
         else:
           files_deleted_at_latest[builder].append(file_path)
+    logging.info("process commit %s", commit['feature_commit'])
   # Export feature coverage data to Datastore and Bigquery
   for builder, report in builder_to_latest_report.items():
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(

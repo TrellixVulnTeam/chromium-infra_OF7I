@@ -58,7 +58,7 @@ def _GetAllowedGitilesConfigs():
       'allowed_gitiles_configs', {})
 
 
-def _GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
+def GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
   """Gets the matched dependency in the manifest of the report.
 
   Args:
@@ -95,7 +95,7 @@ def GetFileContentFromGitiles(manifest, file_path,
   assert file_path.startswith('//'), 'All file path should start with "//".'
   assert revision, 'A valid revision is required'
 
-  dependency = _GetMatchedDependencyRepository(manifest, file_path)
+  dependency = GetMatchedDependencyRepository(manifest, file_path)
   assert dependency, ('%s file does not belong to any dependency repository' %
                       file_path)
 
@@ -121,7 +121,7 @@ def ComposeSourceFileGsPath(manifest, file_path, revision):
   assert file_path.startswith('//'), 'All file path should start with "//".'
   assert revision, 'A valid revision is required'
 
-  dependency = _GetMatchedDependencyRepository(manifest, file_path)
+  dependency = GetMatchedDependencyRepository(manifest, file_path)
   assert dependency, ('%s file does not belong to any dependency repository' %
                       file_path)
 

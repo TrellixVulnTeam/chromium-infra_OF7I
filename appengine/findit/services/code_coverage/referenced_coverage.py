@@ -12,6 +12,8 @@ from threading import Thread
 from google.appengine.ext import ndb
 
 from common.findit_http_client import FinditHttpClient
+from gae_libs.gitiles.cached_gitiles_repository import CachedGitilesRepository
+from handlers.code_coverage import utils
 from libs import time_util
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoverageReportModifier
@@ -26,15 +28,13 @@ from services.code_coverage import diff_util
 _PAGE_SIZE = 100
 
 _CHROMIUM_SERVER_HOST = 'chromium.googlesource.com'
-_CHROMIUM_GERRIT_HOST = 'chromium-review.googlesource.com'
 _CHROMIUM_PROJECT = 'chromium/src'
-_CHROMIUM_REPO = GitilesRepository(
-    FinditHttpClient(
-        # Don't log 404 as it is expected
-        # e.g. a file can missing at a parent commit.
-        no_error_logging_statuses=[404]),
-    'https://%s/%s.git' % (_CHROMIUM_SERVER_HOST, _CHROMIUM_PROJECT))
 _EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
+# Http status codes which would not be logged while requesting data from gitiles
+# We do not log 404, because it is a valid scenario e.g. when a file gets added
+# after reference_commit. We don't log 429, because we have exponential backoff
+# mechanism to take care of it
+_NO_ERROR_LOGGING_STATUSES = [404, 429]
 
 
 def _GetModifiedLinesSinceCommit(latest_lines, commit_lines):
@@ -103,23 +103,35 @@ def _GetReferencedFileCoverage(file_coverage, modified_lines):
     return data
 
 
-def _FetchFileContentAtCommit(file_path, revision, file_content_queue):
+def _FetchFileContentAtCommit(file_path, revision, manifest,
+                              file_content_queue):
   """Fetches lines in a file at the specified revision.
 
   Args:
     file_path (string): chromium/src relative path to file whose content is to
       be fetched. Must start with '//'.
     revision (string): commit hash of the revision.
+    manifest (DependencyRepository): Entity containing mapping from path prefix
+                                     to corresponding repo.
     file_content_queue (Queue): Queue which holds the output.
   """
   assert file_path.startswith('//'), 'All file path should start with "//".'
-  content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+  assert revision, 'A valid revision is required'
+  dependency = utils.GetMatchedDependencyRepository(manifest, file_path)
+  assert dependency, ('%s file does not belong to any dependency repository' %
+                      file_path)
+  # Calculate the relative path to the root of the dependency repository itself.
+  relative_file_path = file_path[len(dependency.path):]
+  repo = CachedGitilesRepository(
+      FinditHttpClient(no_error_logging_statuses=_NO_ERROR_LOGGING_STATUSES),
+      dependency.project_url)
+  content, status = repo.GetSourceAndStatus(relative_file_path, revision)
   wait_sec = 1
   # short term qps exceeded, retry with exponential backoff
   while status == 429 and wait_sec < _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
     wait_sec *= 2
     time.sleep(wait_sec)
-    content, status = _CHROMIUM_REPO.GetSourceAndStatus(file_path[2:], revision)
+    content, status = repo.GetSourceAndStatus(relative_file_path, revision)
   if wait_sec >= _EXPONENTIAL_BACKOFF_LIMIT_SECONDS:
     logging.warning(
         "Couldn't fetch content for %s at revision %s due to exceeding qps",
@@ -221,16 +233,18 @@ def _CreateReferencedCoverage(modifier_id, postsubmit_report):
   cursor = None
   referenced_file_coverage = []
   file_content_queue = Queue.Queue()
+  total = 0
   while more:
     results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
     for file_coverage in results:
       content_at_latest_thread = Thread(
           target=_FetchFileContentAtCommit,
           args=(file_coverage.path, file_coverage.gitiles_commit.revision,
-                file_content_queue))
+                postsubmit_report.manifest, file_content_queue))
       content_at_reference_commit_thread = Thread(
           target=_FetchFileContentAtCommit,
-          args=(file_coverage.path, reference_commit, file_content_queue))
+          args=(file_coverage.path, reference_commit,
+                postsubmit_report.manifest, file_content_queue))
       content_at_latest_thread.start()
       content_at_reference_commit_thread.start()
       content_at_latest_thread.join()
@@ -255,6 +269,8 @@ def _CreateReferencedCoverage(modifier_id, postsubmit_report):
               contents[reference_commit]))
       if referenced_coverage:
         referenced_file_coverage.append(referenced_coverage)
+    total += _PAGE_SIZE
+    logging.info("processed %d files", total)
 
   referenced_directory_coverage, _ = (
       aggregation_util.get_aggregated_coverage_data_from_files(
