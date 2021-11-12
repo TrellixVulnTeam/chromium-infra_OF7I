@@ -194,12 +194,24 @@ func ParseSSPDeployShadowConfig(
 
 // getHostInfoStoreMounts returns Mount objects to mount each host info store
 // path into a Docker container.
-func getHostInfoStoreMounts(autotestArgs *autotest.AutoservArgs) []mount.Mount {
+func getHostInfoStoreMounts(ctx context.Context, autotestArgs *autotest.AutoservArgs) []mount.Mount {
 	var mounts []mount.Mount
+
 	rootDir := autotestArgs.ResultsDir
 
 	for _, dutName := range append(autotestArgs.Hosts, autotestArgs.PeerDuts...) {
 		hostInfoFilePath := HostInfoFilePath(rootDir, dutName)
+
+		fileInfo, err := os.Stat(hostInfoFilePath)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				logging.Warningf(ctx, "host info file path %q does not exist: %s", hostInfoFilePath, err)
+			} else {
+				logging.Warningf(ctx, "got error calling Stat on host info file path %q: %s", hostInfoFilePath, err)
+			}
+		} else {
+			logging.Infof(ctx, "result of stat on host info file path: %+v", fileInfo)
+		}
 
 		mounts = append(mounts, mount.Mount{
 			Type:     mount.TypeBind,
@@ -230,6 +242,7 @@ func runTask(ctx context.Context,
 		argsNoSSP := *a
 		argsNoSSP.SSPBaseImageName = ""
 		argsNoSSP.RequireSSP = false
+		argsNoSSP.Verbose = true
 		cmd := autotest.AutoservCommand(c, &argsNoSSP)
 
 		imageName := fmt.Sprintf(
@@ -263,7 +276,7 @@ func runTask(ctx context.Context,
 		}
 
 		mounts = append(mounts, sspDeployShadowConfigMounts...)
-		mounts = append(mounts, getHostInfoStoreMounts(a)...)
+		mounts = append(mounts, getHostInfoStoreMounts(ctx, a)...)
 
 		// The results dir on the host is bound to the same path in the
 		// container. Thus, autoserv will write to a.ResultsDir in the

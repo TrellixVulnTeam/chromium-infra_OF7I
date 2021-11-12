@@ -132,6 +132,7 @@ func TestRunAutoserv(t *testing.T) {
 		"-n",
 		"-ch", "peerdut1",
 		"-r", resultsDir,
+		"--verbose",
 		"--verify_job_repo_url",
 		"-p",
 		"--local-only-host-info", "True",

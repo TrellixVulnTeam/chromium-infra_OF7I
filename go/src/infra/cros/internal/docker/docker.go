@@ -75,5 +75,11 @@ func RunContainer(
 
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
-	return runner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "docker", args...)
+
+	err = runner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "docker", args...)
+
+	logging.Infof(ctx, "stdout from Docker command:\n%s", &stdoutBuf)
+	logging.Infof(ctx, "stderr from Docker command:\n%s", &stderrBuf)
+
+	return err
 }
