@@ -6,9 +6,11 @@ package analyzedtestvariants
 
 import (
 	"testing"
+	"time"
 
 	"cloud.google.com/go/spanner"
 
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/testutil"
@@ -23,11 +25,23 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 		ctx := testutil.SpannerTestContext(t)
 		realm := "chromium:ci"
 		status := pb.AnalyzedTestVariantStatus_FLAKY
+		now := clock.Now(ctx).UTC()
+		ps := []pb.AnalyzedTestVariantStatus{
+			pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED,
+			pb.AnalyzedTestVariantStatus_FLAKY,
+		}
+		puts := []time.Time{
+			now.Add(-24 * time.Hour),
+			now.Add(-240 * time.Hour),
+		}
 		builder := "builder"
 		ms := []*spanner.Mutation{
 			insert.AnalyzedTestVariant(realm, "ninja://test1", "variantHash1", status,
 				map[string]interface{}{
-					"Builder": builder,
+					"Builder":                   builder,
+					"StatusUpdateTime":          now.Add(-time.Hour),
+					"PreviousStatuses":          ps,
+					"PreviousStatusUpdateTimes": puts,
 				}),
 			insert.AnalyzedTestVariant(realm, "ninja://test1", "variantHash2", pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS, map[string]interface{}{
 				"Builder": builder,
@@ -48,20 +62,34 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 		}
 		testutil.MustApply(ctx, ms...)
 
-		Convey(`TestRead`, func() {
+		Convey(`TestReadStatus`, func() {
 			ks := spanner.KeySets(
 				spanner.Key{realm, "ninja://test1", "variantHash1"},
 				spanner.Key{realm, "ninja://test1", "variantHash2"},
 				spanner.Key{realm, "ninja://test-not-exists", "variantHash1"},
 			)
 			atvs := make([]*pb.AnalyzedTestVariant, 0)
-			err := Read(span.Single(ctx), ks, func(atv *pb.AnalyzedTestVariant, _ spanner.NullTime) error {
+			err := ReadStatus(span.Single(ctx), ks, func(atv *pb.AnalyzedTestVariant) error {
 				So(atv.Realm, ShouldEqual, realm)
 				atvs = append(atvs, atv)
 				return nil
 			})
 			So(err, ShouldBeNil)
 			So(len(atvs), ShouldEqual, 2)
+		})
+
+		Convey(`TestReadStatusHistory`, func() {
+			exp := &StatusHistory{
+				Status:                    status,
+				StatusUpdateTime:          now.Add(-time.Hour),
+				PreviousStatuses:          ps,
+				PreviousStatusUpdateTimes: puts,
+			}
+
+			si, enqTime, err := ReadStatusHistory(span.Single(ctx), spanner.Key{realm, "ninja://test1", "variantHash1"})
+			So(err, ShouldBeNil)
+			So(si, ShouldResemble, exp)
+			So(enqTime, ShouldResemble, spanner.NullTime{})
 		})
 
 		Convey(`TestQueryTestVariantsByBuilder`, func() {

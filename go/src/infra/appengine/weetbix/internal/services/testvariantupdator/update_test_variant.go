@@ -87,23 +87,17 @@ func Schedule(ctx context.Context, realm, testID, variantHash string, enqTime ti
 // checkTask checks if the task has the same timestamp as the one saved in the
 // row.
 // Task has a mismatched timestamp will be ignored.
-func checkTask(ctx context.Context, task *taskspb.UpdateTestVariant) (pb.AnalyzedTestVariantStatus, error) {
-	var status pb.AnalyzedTestVariantStatus
-	var enqTime spanner.NullTime
-	err := analyzedtestvariants.Read(ctx, spanner.KeySets(toSpannerKey(task.TestVariantKey)), func(atv *pb.AnalyzedTestVariant, t spanner.NullTime) error {
-		status = atv.Status
-		enqTime = t
-		return nil
-	})
+func checkTask(ctx context.Context, task *taskspb.UpdateTestVariant) (*analyzedtestvariants.StatusHistory, error) {
+	statusHistory, enqTime, err := analyzedtestvariants.ReadStatusHistory(ctx, toSpannerKey(task.TestVariantKey))
 	switch {
 	case err != nil:
-		return pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED, err
+		return &analyzedtestvariants.StatusHistory{}, err
 	case enqTime.IsNull():
-		return status, errShouldNotSchedule
+		return statusHistory, errShouldNotSchedule
 	case enqTime.Time != pbutil.MustTimestamp(task.EnqueueTime):
-		return status, errUnknownTask
+		return statusHistory, errUnknownTask
 	default:
-		return status, nil
+		return statusHistory, nil
 	}
 }
 
@@ -122,7 +116,7 @@ func updateTestVariantStatus(ctx context.Context, task *taskspb.UpdateTestVarian
 	tvKey := task.TestVariantKey
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		// Get the old status, and check the token once again.
-		oldStatus, err := checkTask(ctx, task)
+		statusHistory, err := checkTask(ctx, task)
 		if err != nil {
 			return err
 		}
@@ -135,6 +129,7 @@ func updateTestVariantStatus(ctx context.Context, task *taskspb.UpdateTestVarian
 		}
 		now := clock.Now(ctx)
 
+		oldStatus := statusHistory.Status
 		if oldStatus == newStatus {
 			if newStatus == pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED || newStatus == pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS {
 				// This should never happen. But it doesn't have a huge negative impact,
@@ -144,7 +139,21 @@ func updateTestVariantStatus(ctx context.Context, task *taskspb.UpdateTestVarian
 			}
 			vals["NextUpdateTaskEnqueueTime"] = now
 		} else {
-			vals["Status"] = int64(newStatus)
+			vals["Status"] = newStatus
+
+			if statusHistory.PreviousStatuses == nil {
+				vals["PreviousStatuses"] = []pb.AnalyzedTestVariantStatus{oldStatus}
+				vals["PreviousStatusUpdateTimes"] = []time.Time{statusHistory.StatusUpdateTime}
+			} else {
+				// "Prepend" the old status and update time so the slices are ordered
+				// by status update time in descending order.
+				// Currently all of the status update records are kept, because we don't
+				// expect to update each test variant's status frequently.
+				// In the future we could consider to remove the old records.
+				vals["PreviousStatuses"] = append([]pb.AnalyzedTestVariantStatus{oldStatus}, statusHistory.PreviousStatuses...)
+				vals["PreviousStatusUpdateTimes"] = append([]time.Time{statusHistory.StatusUpdateTime}, statusHistory.PreviousStatusUpdateTimes...)
+			}
+
 			vals["StatusUpdateTime"] = spanner.CommitTimestamp
 			if newStatus != pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED && newStatus != pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS {
 				// Only schedule the next UpdateTestVariant task if the test variant

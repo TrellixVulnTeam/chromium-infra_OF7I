@@ -6,6 +6,8 @@ package analyzedtestvariants
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"cloud.google.com/go/spanner"
 
@@ -15,20 +17,48 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
-// Read reads AnalyzedTestVariant rows by keys.
-func Read(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant, spanner.NullTime) error) error {
-	fields := []string{"Realm", "TestId", "VariantHash", "Status", "NextUpdateTaskEnqueueTime"}
+// ReadStatus reads AnalyzedTestVariant rows by keys.
+func ReadStatus(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant) error) error {
+	fields := []string{"Realm", "TestId", "VariantHash", "Status"}
 	var b spanutil.Buffer
 	return span.Read(ctx, "AnalyzedTestVariants", ks, fields).Do(
 		func(row *spanner.Row) error {
 			tv := &pb.AnalyzedTestVariant{}
-			var t spanner.NullTime
-			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &t); err != nil {
+			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status); err != nil {
 				return err
 			}
-			return f(tv, t)
+			return f(tv)
 		},
 	)
+}
+
+// StatusHistory contains all the information related to a test variant's status changes.
+type StatusHistory struct {
+	Status                    pb.AnalyzedTestVariantStatus
+	StatusUpdateTime          time.Time
+	PreviousStatuses          []pb.AnalyzedTestVariantStatus
+	PreviousStatusUpdateTimes []time.Time
+}
+
+// ReadStatusHistory reads AnalyzedTestVariant rows by keys and returns the test variant's status related info.
+func ReadStatusHistory(ctx context.Context, k spanner.Key) (*StatusHistory, spanner.NullTime, error) {
+	fields := []string{"Status", "StatusUpdateTime", "NextUpdateTaskEnqueueTime", "PreviousStatuses", "PreviousStatusUpdateTimes"}
+	var b spanutil.Buffer
+	si := &StatusHistory{}
+	var enqTime, t spanner.NullTime
+	err := span.Read(ctx, "AnalyzedTestVariants", spanner.KeySets(k), fields).Do(
+		func(row *spanner.Row) error {
+			if err := b.FromSpanner(row, &si.Status, &t, &enqTime, &si.PreviousStatuses, &si.PreviousStatusUpdateTimes); err != nil {
+				return err
+			}
+			if !t.Valid {
+				return fmt.Errorf("invalid status update time")
+			}
+			si.StatusUpdateTime = t.Time
+			return nil
+		},
+	)
+	return si, enqTime, err
 }
 
 // ReadNextUpdateTaskEnqueueTime reads the NextUpdateTaskEnqueueTime from the

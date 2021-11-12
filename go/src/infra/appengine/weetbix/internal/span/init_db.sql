@@ -42,6 +42,16 @@ CREATE TABLE AnalyzedTestVariants (
   -- This timestamp is used as a token to validate an UpdateTestVariant is
   -- expected. A task with unmatched token will be silently ignored.
   NextUpdateTaskEnqueueTime TIMESTAMP,
+  -- Previous statuses of the analyzed test variant.
+  -- If the test variant is a newly detected one, or its status has not changed
+  -- at all, this field is empty.
+  -- With PreviousStatusUpdateTimes, they are used when exporting test variants
+  -- to BigQuery, to determine the time ranges of the rows that happened when
+  -- the test variant's status changed.
+  PreviousStatuses ARRAY<INT64>,
+  -- Previous status update times.
+  -- Must have the same number of elements as PreviousStatuses.
+  PreviousStatusUpdateTimes ARRAY<TIMESTAMP>,
 
   -- Compressed metadata for the test case.
   -- For example, the original test name, test location, etc.

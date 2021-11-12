@@ -52,6 +52,7 @@ type Buffer struct {
 	Int64       int64
 	StringSlice []string
 	ByteSlice   []byte
+	Int64Slice  []int64
 }
 
 // FromSpanner is a shortcut for (&Buffer{}).FromSpanner.
@@ -79,6 +80,7 @@ func (b *Buffer) FromSpanner(row *spanner.Row, ptrs ...interface{}) error {
 func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error {
 	b.StringSlice = b.StringSlice[:0]
 	b.ByteSlice = b.ByteSlice[:0]
+	b.Int64Slice = b.Int64Slice[:0]
 
 	var spanPtr interface{}
 	switch goPtr := goPtr.(type) {
@@ -96,6 +98,8 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 		spanPtr = &b.StringSlice
 	case proto.Message:
 		spanPtr = &b.ByteSlice
+	case *[]pb.AnalyzedTestVariantStatus:
+		spanPtr = &b.Int64Slice
 	case *pb.VerdictStatus:
 		spanPtr = &b.Int64
 	default:
@@ -158,6 +162,12 @@ func (b *Buffer) fromSpanner(row *spanner.Row, col int, goPtr interface{}) error
 
 	case *pb.VerdictStatus:
 		*goPtr = pb.VerdictStatus(b.Int64)
+
+	case *[]pb.AnalyzedTestVariantStatus:
+		*goPtr = make([]pb.AnalyzedTestVariantStatus, len(b.Int64Slice))
+		for i, p := range b.Int64Slice {
+			(*goPtr)[i] = pb.AnalyzedTestVariantStatus(p)
+		}
 
 	default:
 		panic(fmt.Sprintf("impossible %q", goPtr))
@@ -228,6 +238,13 @@ func ToSpanner(v interface{}) interface{} {
 
 	case pb.VerdictStatus:
 		return int64(v)
+
+	case []pb.AnalyzedTestVariantStatus:
+		spanPtr := make([]int64, len(v))
+		for i, s := range v {
+			spanPtr[i] = int64(s)
+		}
+		return spanPtr
 
 	default:
 		return v

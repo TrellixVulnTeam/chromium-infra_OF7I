@@ -132,4 +132,14 @@ func TestTypeConversion(t *testing.T) {
 			So(err, ShouldErrLike, "nil pointer encountered")
 		})
 	})
+
+	Convey(`[]pb.AnalyzedTestVariantStatus`, t, func() {
+		test(
+			[]pb.AnalyzedTestVariantStatus{
+				pb.AnalyzedTestVariantStatus_FLAKY,
+				pb.AnalyzedTestVariantStatus_STATUS_UNSPECIFIED,
+			},
+			[]int64{int64(10), int64(0)},
+		)
+	})
 }

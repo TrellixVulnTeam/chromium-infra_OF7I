@@ -102,41 +102,62 @@ func TestUpdateTestVariantStatus(t *testing.T) {
 	Convey(`updateTestVariant`, t, func() {
 		ctx, skdr := tq.TestingContext(testutil.SpannerTestContext(t), nil)
 		realm := "chromium:ci"
-		tID := "ninja://test"
 		vh := "varianthash"
-		now := clock.Now(ctx)
+		now := clock.Now(ctx).UTC()
+		tID1 := "ninja://test1"
+		tID2 := "ninja://test2"
+		statuses := []pb.AnalyzedTestVariantStatus{
+			pb.AnalyzedTestVariantStatus_FLAKY,
+			pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED,
+		}
+		times := []time.Time{
+			now.Add(-24 * time.Hour),
+			now.Add(-240 * time.Hour),
+		}
 		ms := []*spanner.Mutation{
-			insert.AnalyzedTestVariant(realm, tID, vh, pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED, map[string]interface{}{
+			insert.AnalyzedTestVariant(realm, tID1, vh, pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED, map[string]interface{}{
 				"NextUpdateTaskEnqueueTime": now,
+				"StatusUpdateTime":          now,
 			}),
-			insert.Verdict(realm, tID, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, clock.Now(ctx).UTC().Add(-2*time.Hour), nil),
+			insert.AnalyzedTestVariant(realm, tID2, vh, pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED, map[string]interface{}{
+				"NextUpdateTaskEnqueueTime": now,
+				"StatusUpdateTime":          now,
+				"PreviousStatuses":          statuses,
+				"PreviousStatusUpdateTimes": times,
+			}),
+			insert.Verdict(realm, tID1, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
+			insert.Verdict(realm, tID2, vh, "build-1", pb.VerdictStatus_VERDICT_FLAKY, now.Add(-2*time.Hour), nil),
 		}
 		testutil.MustApply(ctx, ms...)
 
-		task := &taskspb.UpdateTestVariant{
-			TestVariantKey: &taskspb.TestVariantKey{
-				Realm:       realm,
-				TestId:      tID,
-				VariantHash: vh,
-			},
-			EnqueueTime: pbutil.MustTimestampProto(now),
+		test := func(tID string, pStatuses []pb.AnalyzedTestVariantStatus, pUpdateTimes []time.Time, i int) {
+			statusHistory, enqTime, err := analyzedtestvariants.ReadStatusHistory(span.Single(ctx), spanner.Key{realm, tID, vh})
+			So(err, ShouldBeNil)
+			statusUpdateTime := statusHistory.StatusUpdateTime
+
+			task := &taskspb.UpdateTestVariant{
+				TestVariantKey: &taskspb.TestVariantKey{
+					Realm:       realm,
+					TestId:      tID,
+					VariantHash: vh,
+				},
+				EnqueueTime: pbutil.MustTimestampProto(now),
+			}
+			err = updateTestVariant(ctx, task)
+			So(err, ShouldBeNil)
+
+			// Read the test variant to confirm the updates.
+			statusHistory, enqTime, err = analyzedtestvariants.ReadStatusHistory(span.Single(ctx), spanner.Key{realm, tID, vh})
+			So(err, ShouldBeNil)
+			So(statusHistory.Status, ShouldEqual, pb.AnalyzedTestVariantStatus_FLAKY)
+			So(statusHistory.PreviousStatuses, ShouldResemble, append([]pb.AnalyzedTestVariantStatus{pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED}, pStatuses...))
+			So(statusHistory.PreviousStatusUpdateTimes, ShouldResemble, append([]time.Time{statusUpdateTime}, pUpdateTimes...))
+
+			nextTask := skdr.Tasks().Payloads()[i].(*taskspb.UpdateTestVariant)
+			So(pbutil.MustTimestamp(nextTask.EnqueueTime), ShouldEqual, enqTime.Time)
 		}
-		err := updateTestVariant(ctx, task)
-		So(err, ShouldBeNil)
 
-		// Read the test variant to confirm the updates.
-		var status pb.AnalyzedTestVariantStatus
-		var enqTime spanner.NullTime
-		err = analyzedtestvariants.Read(span.Single(ctx), spanner.KeySets(spanner.Key{realm, tID, vh}), func(atv *pb.AnalyzedTestVariant, t spanner.NullTime) error {
-			status = atv.Status
-			enqTime = t
-			return nil
-		})
-		So(err, ShouldBeNil)
-		So(status, ShouldEqual, pb.AnalyzedTestVariantStatus_FLAKY)
-		So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
-		nextTask := skdr.Tasks().Payloads()[0].(*taskspb.UpdateTestVariant)
-		So(pbutil.MustTimestamp(nextTask.EnqueueTime), ShouldEqual, enqTime.Time)
-
+		test(tID1, []pb.AnalyzedTestVariantStatus{}, []time.Time{}, 0)
+		test(tID2, statuses, times, 1)
 	})
 }

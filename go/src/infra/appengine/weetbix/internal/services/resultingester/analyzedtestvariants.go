@@ -64,7 +64,7 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 	ks := testVariantKeySet(realm, tvs)
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		found := make(map[testVariantKey]*pb.AnalyzedTestVariant)
-		err := analyzedtestvariants.Read(ctx, ks, func(atv *pb.AnalyzedTestVariant, _ spanner.NullTime) error {
+		err := analyzedtestvariants.ReadStatus(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {
 			k := testVariantKey{atv.TestId, atv.VariantHash}
 			found[k] = atv
 			return nil
