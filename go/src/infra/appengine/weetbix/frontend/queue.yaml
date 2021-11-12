@@ -12,3 +12,7 @@ queue:
 
 - name: tq-sweep
   rate: 500/s
+
+- name: export-test-variants
+  rate: 1/s
+  max_concurrent_requests: 1
