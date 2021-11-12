@@ -193,7 +193,7 @@ func getBuilderAndResultDBInfo(ctx context.Context, payload *taskspb.IngestTestR
 	case err != nil:
 		return nil, err
 	case b.GetInfra().GetResultdb() == nil || b.Infra.Resultdb.GetInvocation() == "":
-		return nil, errors.Reason("build %s-%d not have ResultDB invocation", bbHost, bId).Err()
+		return nil, tq.Fatal.Apply(errors.Reason("build %s-%d not have ResultDB invocation", bbHost, bId).Err())
 	}
 	return b, nil
 }
