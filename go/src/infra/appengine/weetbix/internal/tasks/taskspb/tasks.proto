@@ -9,6 +9,8 @@ package weetbix.internal.tasks;
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/cv/api/v0/run.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+import "infra/appengine/weetbix/proto/v1/predicate.proto";
 
 option go_package = "infra/appengine/weetbix/internal/tasks/taskspb";
 
@@ -73,4 +75,31 @@ message UpdateTestVariant {
   // The task will run only if this time matches the AnalyzedTestVariants row's
   // NextUpdateTaskEnqueueTime.
   google.protobuf.Timestamp enqueue_time = 2;
+}
+
+
+// Payload of ExportTestVariants task.
+message ExportTestVariants {
+  // LUCI Realm. Test variants in this realm are exported.
+  string realm = 1;
+
+  // BigQuery table to export test variants to.
+  string cloud_project = 2;
+  string dataset = 3;
+  string table = 4;
+
+  // Represents a function Variant -> bool.
+  // Test variants satisfy this predicate are exported.
+  weetbix.v1.AnalyzedTestVariantPredicate predicate = 5;
+
+  // Time range of the task.
+  // The ranges serves 2 purposes:
+  // - Test variants satisfy the predicate within the time_range are exported.
+  // - Each row uses this time_range as their default time range*. Meaning each row
+  //   contains the information of the test variants within the time range,
+  //   especially, the row contains the verdicts that weetbix ingested within
+  //   the range, and compute the flake_statistics using those verdicts.
+  //   * Note that a row can have a narrower time_range, if the test variant's
+  //     status changes within the time_range.
+  weetbix.v1.TimeRange time_range = 6;
 }
