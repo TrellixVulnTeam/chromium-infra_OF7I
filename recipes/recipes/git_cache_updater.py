@@ -14,6 +14,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb
 from PB.recipes.infra import git_cache_updater as git_cache_updater_pb
 
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/context',
@@ -98,14 +100,14 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
         ]+opts,
         cost=api.step.ResourceCost(disk=20))
 
-    repo_path = api.path.abs_to_path(api.step(
-        name='lookup repo_path',
-        cmd=['git_cache.py', 'exists'] + opts,
-        stdout=api.raw_io.output(),
-        step_test_data=lambda: api.raw_io.test_api.stream_output(
-            api.path.join(work_dir, url.strip('https://'))+'\n',
-        ),
-    ).stdout.strip())
+    repo_path = api.path.abs_to_path(
+        api.step(
+            name='lookup repo_path',
+            cmd=['git_cache.py', 'exists'] + opts,
+            stdout=api.raw_io.output(),
+            step_test_data=lambda: api.raw_io.test_api.stream_output(
+                api.path.join(work_dir, url.strip('https://')) + '\n',),
+        ).stdout.decode('utf-8').strip())
 
     with api.context(cwd=repo_path):
       stats = api.git.count_objects(

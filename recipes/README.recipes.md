@@ -39,7 +39,7 @@
   * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
   * [gerrit_hello_world](#recipes-gerrit_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
   * [gerrit_plugins](#recipes-gerrit_plugins) (Python3 ✅)
-  * [git_cache_updater](#recipes-git_cache_updater) &mdash; Updates the Git Cache zip files.
+  * [git_cache_updater](#recipes-git_cache_updater) (Python3 ✅) &mdash; Updates the Git Cache zip files.
   * [gsutil_hello_world](#recipes-gsutil_hello_world) &mdash; Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
   * [images_builder](#recipes-images_builder)
   * [images_pins_roller](#recipes-images_pins_roller)
@@ -1303,13 +1303,13 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 &mdash; **def [RunSteps](/recipes/recipes/gerrit_plugins.py#58)(api):**
 ### *recipes* / [git\_cache\_updater](/recipes/recipes/git_cache_updater.py)
 
-[DEPS](/recipes/recipes/git_cache_updater.py#17): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
+[DEPS](/recipes/recipes/git_cache_updater.py#19): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Updates the Git Cache zip files.
 
-&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#153)(api, inputs):**
+&mdash; **def [RunSteps](/recipes/recipes/git_cache_updater.py#155)(api, inputs):**
 ### *recipes* / [gsutil\_hello\_world](/recipes/recipes/gsutil_hello_world.py)
 
 [DEPS](/recipes/recipes/gsutil_hello_world.py#8): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/time][recipe_engine/recipe_modules/time]
