@@ -22,6 +22,7 @@ def cron(name, recipe, execution_timeout = None):
         service_account = "wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
         schedule = "with 60s interval",
+        experiments = {"luci.recipes.use_python3": 100},
     )
     luci.list_view_entry(
         builder = name,
