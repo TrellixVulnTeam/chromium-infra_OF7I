@@ -117,9 +117,6 @@ func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 	for k := range propsToParse {
 		delete(properties.Fields, k)
 	}
-	// TODO(gbeaty) Remove this once the builders no longer set the
-	// $bootstrap property
-	delete(properties.Fields, "$bootstrap")
 
 	input := &Input{
 		commit:             commit,
