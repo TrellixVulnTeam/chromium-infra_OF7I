@@ -1,0 +1,52 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.internal.admin;
+
+import "google/protobuf/empty.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+
+option go_package = "infra/appengine/weetbix/internal/admin/proto;adminpb";
+
+// Admin ops for Weetbix maintainers only.
+service Admin {
+  // ExportTestVariants triggers ExportTestVariants tasks to export test
+  // variants to the specified table.
+  //
+  // In common cases, bq export should be done automatically by cron job.
+  // This RPC is only used to back fill data that already in Weetbix Spanner to
+  // BigQuery. It doesn't work if the request asks for data before Weetbix
+  // result ingestion started. If such request arises, we need to add another
+  // Admin API for it.
+  rpc ExportTestVariants(ExportTestVariantsRequest) returns (google.protobuf.Empty) {};
+}
+
+message ExportTestVariantsRequest {
+  // LUCI Realm. Test variants in this realm are exported.
+  string realm = 1;
+
+  // BigQuery table to export test variants to.
+  //
+  // This table MUST also be listed in the realm configuration.
+  string cloud_project = 2;
+  string dataset = 3;
+  string table = 4;
+
+  // Note that the predicate field is omitted in this request. Because this
+  // RPC will use the predicate from realm configuration exclusively.
+
+  // Time range of the data to be exported.
+  //
+  // Earliest and Latest should be full hours. I.e. they should be 0:00, 1:00 ...
+  // Otherwise they will be truncated to the full hours.
+  //
+  // Note that each row has a separate time range, which size is controlled by
+  // testvariantbqexporter. As of Nov 2021, each row contains 1 hour worth of data.
+  // If the time range spans longer than 1 hour, the RPC will shard this range
+  // into a list of smaller time_ranges each spans 1 hour and schedule
+  // ExportTestVariants tasks for each of the smaller ones.
+  weetbix.v1.TimeRange time_range = 6;
+}
