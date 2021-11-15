@@ -211,3 +211,24 @@ func validateRun(r *ReclusteringRun) error {
 	}
 	return nil
 }
+
+// reportProgress adds progress to a particular run. To ensure correct
+// usage, this should only be called from ProgressToken.
+func reportProgress(ctx context.Context, projectID string, attemptTimestamp time.Time, firstReport bool, deltaProgress int) error {
+	stmt := spanner.NewStatement(`
+	  UPDATE ReclusteringRuns
+	  SET ShardsReported = ShardsReported + @deltaShardsReported,
+	      Progress = Progress + @deltaProgress
+	  WHERE Project = @projectID AND AttemptTimestamp = @attemptTimestamp
+	`)
+	deltaShardsReported := 0
+	if firstReport {
+		deltaShardsReported = 1
+	}
+	stmt.Params["deltaShardsReported"] = deltaShardsReported
+	stmt.Params["deltaProgress"] = deltaProgress
+	stmt.Params["projectID"] = projectID
+	stmt.Params["attemptTimestamp"] = attemptTimestamp
+	_, err := span.Update(ctx, stmt)
+	return err
+}

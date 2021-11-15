@@ -20,7 +20,8 @@ const testProject = "myproject"
 // RunBuilder provides methods to build a reclustering run
 // for testing.
 type RunBuilder struct {
-	run *ReclusteringRun
+	run         *ReclusteringRun
+	progressSet bool
 }
 
 // NewRun starts building a new Run, for testing.
@@ -34,7 +35,9 @@ func NewRun(uniqifier int) *RunBuilder {
 		ShardsReported:    int64(uniqifier / 2),
 		Progress:          int64(uniqifier) * 500,
 	}
-	return &RunBuilder{run}
+	return &RunBuilder{
+		run: run,
+	}
 }
 
 // WithProject specifies the project to use on the run.
@@ -49,14 +52,39 @@ func (b *RunBuilder) WithAttemptTimestamp(attemptTimestamp time.Time) *RunBuilde
 	return b
 }
 
-func (b *RunBuilder) WithReportedProgress() *RunBuilder {
-	b.run.ShardsReported = b.run.ShardCount
+// WithShardCount specifies the number of shards to use on the run.
+func (b *RunBuilder) WithShardCount(count int64) *RunBuilder {
+	if b.progressSet {
+		panic("Call WithShardCount before setting progress")
+	}
+	b.run.ShardCount = count
+	b.run.Progress = count * 500
 	return b
 }
 
+// WithNoProgress sets that no shards reported and no progress has been made.
+func (b *RunBuilder) WithNoReportedProgress() *RunBuilder {
+	b.run.ShardsReported = 0
+	b.run.Progress = 0
+	b.progressSet = true
+	return b
+}
+
+// WithReportedProgress sets that all shards have reported, and some progress
+// has been made.
+func (b *RunBuilder) WithReportedProgress() *RunBuilder {
+	b.run.ShardsReported = b.run.ShardCount
+	b.run.Progress = b.run.ShardCount * 500
+	b.progressSet = true
+	return b
+}
+
+// WithCompletedProgress sets that all shards have reported, and the run
+// has completed.
 func (b *RunBuilder) WithCompletedProgress() *RunBuilder {
 	b.run.ShardsReported = b.run.ShardCount
 	b.run.Progress = b.run.ShardCount * 1000
+	b.progressSet = true
 	return b
 }
 

@@ -97,6 +97,43 @@ func TestSpan(t *testing.T) {
 				})
 			})
 		})
+		Convey(`Reporting Progress`, func() {
+			reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+			assertProgress := func(shardsReported, progress int64) {
+				run, err := Read(span.Single(ctx), testProject, reference)
+				So(err, ShouldBeNil)
+				So(run.ShardsReported, ShouldEqual, shardsReported)
+				So(run.Progress, ShouldEqual, progress)
+			}
+
+			runs := []*ReclusteringRun{
+				NewRun(0).WithAttemptTimestamp(reference).WithShardCount(2).WithNoReportedProgress().Build(),
+			}
+			err := SetRunsForTesting(ctx, runs)
+			So(err, ShouldBeNil)
+
+			token1 := NewProgressToken(testProject, reference)
+			token2 := NewProgressToken(testProject, reference)
+			assertProgress(0, 0)
+
+			So(token1.ReportProgress(ctx, 0), ShouldBeNil)
+			assertProgress(1, 0)
+
+			So(token1.ReportProgress(ctx, 150), ShouldBeNil)
+			assertProgress(1, 150)
+
+			So(token2.ReportProgress(ctx, 200), ShouldBeNil)
+			assertProgress(2, 350)
+
+			So(token1.ReportProgress(ctx, 200), ShouldBeNil)
+			assertProgress(2, 400)
+
+			So(token2.ReportProgress(ctx, 1000), ShouldBeNil)
+			assertProgress(2, 1200)
+
+			So(token1.ReportProgress(ctx, 1000), ShouldBeNil)
+			assertProgress(2, 2000)
+		})
 		Convey(`Create`, func() {
 			testCreate := func(bc *ReclusteringRun) error {
 				_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
@@ -130,6 +167,11 @@ func TestSpan(t *testing.T) {
 					err := testCreate(r)
 					So(err, ShouldErrLike, "project must be valid")
 				})
+			})
+			Convey(`With invalid Attempt Timestamp`, func() {
+				r.AttemptTimestamp = time.Time{}
+				err := testCreate(r)
+				So(err, ShouldErrLike, "attempt timestamp must be set")
 			})
 			Convey(`With invalid Algorithms Version`, func() {
 				r.AlgorithmsVersion = 0
