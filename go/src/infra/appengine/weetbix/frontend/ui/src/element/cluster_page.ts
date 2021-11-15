@@ -8,7 +8,7 @@ import { RouterLocation } from '@vaadin/router';
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
 export class ClusterPage extends LitElement {
-    @property()
+    @property({ attribute: false })
     location: RouterLocation;
 
     @state()
@@ -29,8 +29,8 @@ export class ClusterPage extends LitElement {
 
         // Take the first parameter value only.
         this.project = typeof this.location.params.project == 'string' ? this.location.params.project : this.location.params.project[0];
-        this.clusterAlgorithm =  typeof this.location.params.algorithm == 'string' ? this.location.params.algorithm : this.location.params.algorithm[0];
-        this.clusterID =  typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
+        this.clusterAlgorithm = typeof this.location.params.algorithm == 'string' ? this.location.params.algorithm : this.location.params.algorithm[0];
+        this.clusterID = typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
 
         fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterID)}`)
             .then(r => r.json())
@@ -178,9 +178,9 @@ interface Cluster {
     failures1d: Counts;
     failures3d: Counts;
     failures7d: Counts;
-    affectedTests1d: SubCluster[];
-    affectedTests3d: SubCluster[];
-    affectedTests7d: SubCluster[];
+    affectedTests1d: SubCluster[] | null;
+    affectedTests3d: SubCluster[] | null;
+    affectedTests7d: SubCluster[] | null;
     exampleFailureReason: string;
     exampleTestId: string;
 }
@@ -213,11 +213,11 @@ interface MergedSubClusters {
 // eg: mergeSubClusters([[{value: "a", numFails: 1}, {value: "b", numFails: 2}], [{value:"a", numFails: 3}]])
 //     =>
 //     [{name: "a", values: [1, 3]}, {name: "b", values: [2, 0]}]
-const mergeSubClusters = (subClusters: Array<SubCluster[]>): MergedSubClusters[] => {
+const mergeSubClusters = (subClusters: Array<SubCluster[] | null>): MergedSubClusters[] => {
     const lookup: { [name: string]: number[] } = {};
     for (let i = 0; i < subClusters.length; i++) {
         const clusters = subClusters[i];
-        for (const entry of clusters) {
+        for (const entry of clusters || []) {
             let values = lookup[entry.value]
             if (!values) {
                 values = new Array(subClusters.length).fill(0);
