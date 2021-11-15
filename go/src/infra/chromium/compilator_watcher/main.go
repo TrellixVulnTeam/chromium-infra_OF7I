@@ -130,7 +130,7 @@ func parseArgs(args []string) (cmdArgs, error) {
 
 var hideCompSteps = stringset.NewFromSlice(
 	"setup_build", "report builders", "use rts: False", "use rts: True",
-	"gclient config", "gerrit fetch current CL info", "bot_update",
+	"gclient config", "gerrit fetch current CL info",
 	"gclient runhooks", "set_output_gitiles_commit", "read test spec",
 	"get compile targets for scripts", "git diff to analyze patch",
 	"create .code-coverage",
