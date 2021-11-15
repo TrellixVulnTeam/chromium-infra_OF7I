@@ -6,6 +6,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -282,4 +283,16 @@ func SetTestProjectConfig(ctx context.Context, cfg map[string]*ProjectConfig) er
 	// entities we just saved.
 	testable.CatchupIndexes()
 	return nil
+}
+
+// Project returns the configurations of the requested project.
+func Project(ctx context.Context, project string) (*ProjectConfig, error) {
+	configs, err := Projects(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if c, ok := configs[project]; ok {
+		return c, nil
+	}
+	return nil, fmt.Errorf("no config found for project %s", project)
 }

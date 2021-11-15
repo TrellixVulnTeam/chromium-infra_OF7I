@@ -219,3 +219,56 @@ func TestProjectConfig(t *testing.T) {
 		})
 	})
 }
+
+func TestProject(t *testing.T) {
+	t.Parallel()
+
+	Convey("Project", t, func() {
+		pjChromium := createProjectConfig()
+		configs := map[string]*ProjectConfig{
+			"chromium": pjChromium,
+		}
+
+		ctx := memory.Use(context.Background())
+		SetTestProjectConfig(ctx, configs)
+
+		Convey("success", func() {
+
+			pj, err := Project(ctx, "chromium")
+			So(err, ShouldBeNil)
+			So(pj, ShouldResembleProto, pjChromium)
+		})
+
+		Convey("not found", func() {
+			pj, err := Project(ctx, "random")
+			So(err, ShouldErrLike, "no config found for project random")
+			So(pj, ShouldBeNil)
+		})
+	})
+}
+
+func TestRealm(t *testing.T) {
+	t.Parallel()
+
+	Convey("Realm", t, func() {
+		pj := createProjectConfig()
+		configs := map[string]*ProjectConfig{
+			"chromium": pj,
+		}
+
+		ctx := memory.Use(context.Background())
+		SetTestProjectConfig(ctx, configs)
+
+		Convey("success", func() {
+			rj, err := Realm(ctx, "chromium:ci")
+			So(err, ShouldBeNil)
+			So(rj, ShouldResembleProto, pj.Realms[0])
+		})
+
+		Convey("not found", func() {
+			rj, err := Realm(ctx, "chromium:random")
+			So(err, ShouldErrLike, "no config found for realm chromium:random")
+			So(rj, ShouldBeNil)
+		})
+	})
+}
