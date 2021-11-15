@@ -51,6 +51,10 @@ const (
 	// This command, when executed from servo host, checks whether the
 	// servod process is responsive.
 	servodHostCheckupCmd = "dut-control -p %d serialname"
+
+	// This is the threshold voltage value, and actual values lower
+	// than this indicate that DUT is not connected.
+	maxPPDut5MVWhenNotConnected = 500
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -316,6 +320,26 @@ func servoSetExec(ctx context.Context, args *execs.RunArgs, actionArgs []string)
 	return nil
 }
 
+// Verify that the DUT is connected to Servo using the 'ppdut5_mv'
+// servod control.
+func servoLowPPDut5Exec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if _, err := ServodCallHas(ctx, args, servodPPDut5Cmd); err != nil {
+		return errors.Annotate(err, "servo low ppdut5 exec").Err()
+	}
+	res, err := ServodCallGet(ctx, args, servodPPDut5Cmd)
+	if err != nil {
+		return errors.Annotate(err, "servo low ppdut5 exec").Err()
+	}
+	voltageValue := res.Value.GetInt()
+	if voltageValue < maxPPDut5MVWhenNotConnected {
+		return errors.Reason("servo low ppdut5 exec: the ppdut5_mv value %d is lower than the threshold %d", voltageValue, maxPPDut5MVWhenNotConnected).Err()
+	}
+	// TODO: (vkjoshi@): add metrics to collect the value of the
+	// servod control ppdut5_mv when it is below a certain threshold.
+	// (ref:http://cs/chromeos_public/src/third_party/labpack/files/server/hosts/servo_repair.py?l=640).
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -327,4 +351,5 @@ func init() {
 	execs.Register("servo_servod_echo_host", servoServodEchoHostExec)
 	execs.Register("servo_fw_need_update", servoFirmwareNeedsUpdateExec)
 	execs.Register("servo_set", servoSetExec)
+	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
 }

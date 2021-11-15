@@ -456,7 +456,7 @@ const defaultConfig = `
 						"is_not_servo_v3",
 						"servo_v4_type_a"
 					],
-					"exec_name":"sample_pass"
+					"exec_name":"servo_low_ppdut5"
 				},
 				"servo_ec_check": {
 					"conditions": [

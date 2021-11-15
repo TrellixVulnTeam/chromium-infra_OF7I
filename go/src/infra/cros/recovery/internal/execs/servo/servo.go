@@ -17,6 +17,12 @@ import (
 	"infra/cros/recovery/internal/log"
 )
 
+const (
+	// This is the servod control for obtaining ppdut5 bus voltage in
+	// millivolts.
+	servodPPDut5Cmd = "ppdut5_mv"
+)
+
 // GetUSBDrivePathOnDut finds and returns the path of USB drive on a DUT.
 func GetUSBDrivePathOnDut(ctx context.Context, args *execs.RunArgs) (string, error) {
 	// switch USB on servo multiplexer to the DUT-side
