@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	kartepb "infra/cros/karte/api"
+	"infra/cros/karte/internal/bigquery"
+	"infra/cros/karte/internal/datastore"
 	"infra/cros/karte/internal/errors"
 	"infra/cros/karte/internal/idstrategy"
 )
@@ -90,9 +92,24 @@ func (k *karteFrontend) CreateObservation(ctx context.Context, req *kartepb.Crea
 	return req.GetObservation(), nil
 }
 
+// TODO(gregorynisbet): Use a project from the context instead of a hardcoded project.
+const bigqueryProject = "chrome-fleet-karte-dev"
+
 // PersistAction persists a single action.
 func (k *karteFrontend) PersistAction(ctx context.Context, req *kartepb.PersistActionRequest) (*kartepb.PersistActionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "not yet implemented")
+	// TODO(gregorynisbet): Use the client to insert something.
+	_ = bigquery.GetClient(ctx)
+	id := req.GetActionId()
+	if id == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "persist action: request ID cannot be empty")
+	}
+	ent := ActionEntity{}
+	ent.ID = id
+	if err := datastore.Get(ctx, &ent); err != nil {
+		return nil, errors.Annotate(err, "persist action").Err()
+	}
+	// Give up if we make it far enough through the API call that we *would* insert into bigquery.
+	return nil, status.Errorf(codes.Unimplemented, "not yet implemented: we give up")
 }
 
 // ListActions lists the actions that Karte knows about.
