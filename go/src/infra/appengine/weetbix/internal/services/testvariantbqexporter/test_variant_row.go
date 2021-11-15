@@ -7,7 +7,6 @@ package testvariantbqexporter
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -387,15 +386,6 @@ func (b *BQExporter) generateTestVariantRows(ctx context.Context, row *spanner.R
 		newTV.Status = str.status.String()
 		b.populateFlakeStatistics(newTV, vs[0], verdicts, str.tr)
 		b.populateVerdictsInRange(newTV, verdicts, str.tr)
-
-		// To debug the "json: unsupported value: NaN" error.
-		// TODO(chanli): remove after debug is done.
-		if _, err := json.Marshal(newTV); err != nil {
-			logging.Errorf(ctx, "failed to marshal test variant row %s/%s - %s", newTV.TestId, newTV.VariantHash, err)
-			fs := newTV.FlakeStatistics
-			logging.Debugf(ctx, "flakiness statistic: %d/%d/%d/%d/%f/%f", fs.FlakyVerdictCount, fs.TotalVerdictCount, fs.UnexpectedResultCount, fs.TotalResultCount, fs.FlakyVerdictRate, fs.UnexpectedResultRate)
-			continue
-		}
 		tvs = append(tvs, newTV)
 	}
 
