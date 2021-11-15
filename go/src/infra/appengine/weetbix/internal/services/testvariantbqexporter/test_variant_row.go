@@ -7,6 +7,7 @@ package testvariantbqexporter
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -18,7 +19,6 @@ import (
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/spanner"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -263,7 +263,7 @@ func (b *BQExporter) populateFlakeStatistics(tv *bqpb.TestVariantRow, res *resul
 		return
 	}
 	zero64 := int64(0)
-	if res.TotalVerdictCount.Valid && res.TotalVerdictCount.Int64 == zero64 {
+	if res.TotalResultCount.Valid && res.TotalResultCount.Int64 == zero64 {
 		tv.FlakeStatistics = zeroFlakyStatistics()
 		return
 	}
@@ -300,7 +300,7 @@ func (b *BQExporter) populateFlakeStatisticsByVerdicts(tv *bqpb.TestVariantRow, 
 		}
 	}
 
-	if totalVerdicts == 0 {
+	if totalResults == 0 {
 		tv.FlakeStatistics = zeroFlakyStatistics()
 		return
 	}
@@ -332,7 +332,7 @@ func deepCopy(tv *bqpb.TestVariantRow) *bqpb.TestVariantRow {
 // For the most cases it should return one row. But if the test variant
 // changes status during the default time range, it may need to export 2 rows
 // for the previous and current statuses with smaller time ranges.
-func (b *BQExporter) generateTestVariantRows(row *spanner.Row, bf spanutil.Buffer) ([]*bqpb.TestVariantRow, error) {
+func (b *BQExporter) generateTestVariantRows(ctx context.Context, row *spanner.Row, bf spanutil.Buffer) ([]*bqpb.TestVariantRow, error) {
 	tv := &bqpb.TestVariantRow{}
 	va := &pb.Variant{}
 	var vs []*result
@@ -387,6 +387,15 @@ func (b *BQExporter) generateTestVariantRows(row *spanner.Row, bf spanutil.Buffe
 		newTV.Status = str.status.String()
 		b.populateFlakeStatistics(newTV, vs[0], verdicts, str.tr)
 		b.populateVerdictsInRange(newTV, verdicts, str.tr)
+
+		// To debug the "json: unsupported value: NaN" error.
+		// TODO(chanli): remove after debug is done.
+		if _, err := json.Marshal(newTV); err != nil {
+			logging.Errorf(ctx, "failed to marshal test variant row %s/%s - %s", newTV.TestId, newTV.VariantHash, err)
+			fs := newTV.FlakeStatistics
+			logging.Debugf(ctx, "flakiness statistic: %d/%d/%d/%d/%f/%f", fs.FlakyVerdictCount, fs.TotalVerdictCount, fs.UnexpectedResultCount, fs.TotalResultCount, fs.FlakyVerdictRate, fs.UnexpectedResultRate)
+			continue
+		}
 		tvs = append(tvs, newTV)
 	}
 
@@ -407,7 +416,7 @@ func (b *BQExporter) query(ctx context.Context, f func(*bqpb.TestVariantRow) err
 	var bf spanutil.Buffer
 	return span.Query(ctx, st).Do(
 		func(row *spanner.Row) error {
-			tvrs, err := b.generateTestVariantRows(row, bf)
+			tvrs, err := b.generateTestVariantRows(ctx, row, bf)
 			if err != nil {
 				return err
 			}
@@ -460,15 +469,6 @@ func (b *BQExporter) queryTestVariantsToExport(ctx context.Context, batchC chan 
 type inserter interface {
 	// PutWithRetries uploads one or more rows to the BigQuery service.
 	PutWithRetries(ctx context.Context, src []*bq.Row) error
-}
-
-func hasReason(apiErr *googleapi.Error, reason string) bool {
-	for _, e := range apiErr.Errors {
-		if e.Reason == reason {
-			return true
-		}
-	}
-	return false
 }
 
 func (b *BQExporter) batchExportRows(ctx context.Context, ins inserter, batchC chan []*bqpb.TestVariantRow) error {
