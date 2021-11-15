@@ -30,3 +30,13 @@ func Annotate(err error, reason string, args ...interface{}) Annotator {
 func Errorf(format string, a ...interface{}) error {
 	return fmt.Errorf(format, a...)
 }
+
+// Inspect gets the message contained in an error.
+// This function is intended to be used for tests only. The specific error message is a somewhat
+// brittle abstraction and it should not be used as a control mechanism in non-test code.
+func Inspect(err error) (string, bool) {
+	if err == nil {
+		return "", false
+	}
+	return err.Error(), true
+}
