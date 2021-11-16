@@ -55,29 +55,29 @@ missing suite arg`,
 	},
 	{ // One error raised
 		testCommonFlags{
-			board:            "sample-board",
-			models:           []string{},
-			repeats:          1,
-			pool:             "sample-pool",
-			image:            "sample-image",
-			secondary_boards: []string{"coral", "eve"},
-			priority:         255,
+			board:           "sample-board",
+			models:          []string{},
+			repeats:         1,
+			pool:            "sample-pool",
+			image:           "sample-image",
+			secondaryBoards: []string{"coral", "eve"},
+			priority:        255,
 		},
 		[]string{"sample-suite-name"},
-		"number of requested secondary_boards: 2 doesn not match with number of provided secondary_images: 0",
+		"number of requested secondary-boards: 2 doesn not match with number of provided secondary-images: 0",
 	},
 	{ // One error raised
 		testCommonFlags{
-			board:            "sample-board",
-			models:           []string{},
-			repeats:          1,
-			pool:             "sample-pool",
-			image:            "sample-image",
-			secondary_models: []string{"babytiger", "eve"},
-			priority:         255,
+			board:           "sample-board",
+			models:          []string{},
+			repeats:         1,
+			pool:            "sample-pool",
+			image:           "sample-image",
+			secondaryModels: []string{"babytiger", "eve"},
+			priority:        255,
 		},
 		[]string{"sample-suite-name"},
-		"number of requested secondary_boards: 0 doesn not match with number of requested secondary_models: 2",
+		"number of requested secondary-boards: 0 doesn not match with number of requested secondary-models: 2",
 	},
 	{ // No errors raised
 		testCommonFlags{
@@ -437,8 +437,8 @@ var testSecondaryDevicesData = []struct {
 }{
 	{ // Test board only request.
 		testCommonFlags{
-			secondary_boards: []string{"board1", "board2"},
-			secondary_images: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
+			secondaryBoards: []string{"board1", "board2"},
+			secondaryImages: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
 		},
 		[]*test_platform.Request_Params_SecondaryDevice{
 			{
@@ -461,9 +461,9 @@ var testSecondaryDevicesData = []struct {
 	},
 	{ // Test with model request.
 		testCommonFlags{
-			secondary_boards: []string{"board1", "board2"},
-			secondary_models: []string{"model1", "model2"},
-			secondary_images: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
+			secondaryBoards: []string{"board1", "board2"},
+			secondaryModels: []string{"model1", "model2"},
+			secondaryImages: []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
 		},
 		[]*test_platform.Request_Params_SecondaryDevice{
 			{
