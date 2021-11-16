@@ -758,39 +758,43 @@ const defaultConfig = `
 					],
 					"exec_name":"sample_pass"
 				},
-				"wifi_audit":{
-					"docs":[
-						"Not yet implemented."
-					],
-					"exec_name":"sample_fail"
-				},
-				"bluetooth_audit":{
-					"docs":[
-						"Not yet implemented."
-					],
-					"exec_name":"sample_fail"
-				},
 				"cros_gsctool":{
 					"exec_name":"sample_pass"
 				},
 				"battery_is_good":{
+					"docs":[
+						"Check battery on the DUT is normal and update battery hardware state accordingly."
+					],
 					"conditions":[
 						"cros_is_battery_expected",
 						"cros_is_not_virtual_machine",
-						"cros_audit_battery"
+						"cros_is_battery_present"
 					],
 					"dependencies":[
 						"cros_storage_writing",
-						"cros_is_battery_present",
 						"cros_is_battery_chargable_or_good_level"
 					],
-					"exec_name":"sample_pass"
+					"exec_name":"cros_audit_battery"
 				},
-				"cros_audit_battery":{
+				"wifi_audit":{
 					"docs":[
-						"Not yet implemented"
+						"Check wifi on the DUT is normal and update wifi hardware state accordingly."
 					],
-					"exec_name":"sample_fail"
+					"dependencies":[
+						"cros_ssh"
+					],
+					"exec_name":"cros_audit_wifi",
+					"allow_fail_after_recovery": true
+				},
+				"bluetooth_audit":{
+					"docs":[
+						"Check bluetooth on the DUT is normal and update bluetooth hardware state accordingly."
+					],
+					"dependencies":[
+						"cros_ssh"
+					],
+					"exec_name":"cros_audit_bluetooth",
+					"allow_fail_after_recovery": true
 				},
 				"cros_tpm_fwver_match":{
 					"dependencies":[
