@@ -74,8 +74,8 @@ message Action {
   google.protobuf.Timestamp seal_time = 11;
 
   // The client is the name of the entity creating the Action entry, e.g. "paris".
-  string client = 12;
+  string client_name = 12;
 
   // The client version is the version of the entity creating the Action entry, e.g. "0.0.1".
-  string version = 13;
+  string client_version = 13;
 }
