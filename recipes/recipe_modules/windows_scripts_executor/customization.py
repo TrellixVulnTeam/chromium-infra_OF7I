@@ -45,12 +45,17 @@ class Customization(object):
     """
     self._key = key
 
-  def execute_script(self, name, command, logs=None, *args):
+  def execute_script(self, name, command, *args, **kwargs):
     """ Executes the windows powershell script
         Args:
           name: string representing step name
           command: string|path representing command to be run
-          logs: list of strings representing log files/folder to be read
           args: args to be passed on to the command
+          kwargs: logs and ret_codes, logs ([]str) are list os paths to watch
+                  and record logs from. ret_codes ([]int) is a list of ints,
+                  these will be treated as success return codes upon execution
     """
-    return self._powershell(name, command, logs=logs, args=list(args))
+    logs = kwargs['logs']
+    ret_codes = kwargs['ret_codes']
+    return self._powershell(
+        name, command, logs=logs, ret_codes=ret_codes, args=list(args))

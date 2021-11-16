@@ -30,6 +30,13 @@ message Action {
   }
 }
 
+// AddFile uses robocopy to copy the file to image mount dir. Due to the way
+// robocopy works, dst needs to be a directory. This means the following
+// behavior can be expected
+// cipd_src:  Copy the contents of '<cipd>/<ref>/<package>/<platform>/'
+//            to dst folder
+// git_src:   Copy '<git>/<ref>/<src_file>' to dst folder
+// gcs_src:   Copy '<gcs>/bucket/<src_file>' to dst folder
 message AddFile {
   // The AddFile action's name, e.g. add_startnet
   string name = 1;
@@ -37,7 +44,7 @@ message AddFile {
   // Src of the file to add
   sources.Src src = 2;
 
-  // relative to root of mounted image, e.g. Windows\System32\startnet.cmd
+  // relative to root of mounted image, e.g. Windows\System32
   string dst = 3;
 }
 

@@ -15,7 +15,8 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.powershell('basic', 'dir', logs=['logs'], args=['/q', '/4'])
+  api.powershell(
+      'basic', 'dir', logs=['logs'], args=['/q', '/4'], ret_codes=[0])
 
 
 def GenTests(api):

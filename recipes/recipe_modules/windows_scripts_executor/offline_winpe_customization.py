@@ -15,7 +15,7 @@ from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 from PB.recipes.infra.windows_image_builder import sources
 
 COPYPE = 'Copy-PE.ps1'
-ADDFILE = 'Copy-Item'
+ADDFILE = 'robocopy'
 
 
 class OfflineWinPECustomization(customization.Customization):
@@ -151,9 +151,14 @@ class OfflineWinPECustomization(customization.Customization):
       if save:
         # copy the config used for building the image
         source = self._configs.join('{}.cfg'.format(self._key))
-        self.execute_script('Add cfg {}'.format(source), 'Copy-Item', None,
-                            '-Path', source, '-Recurse', '-Force',
-                            '-Destination', self._workdir.join('mount'))
+        self.execute_script(
+            'Add cfg {}'.format(source),
+            ADDFILE,
+            self._configs,
+            self._workdir.join('mount'),
+            '{}.cfg'.format(self._key),
+            logs=None,
+            ret_codes=[0])
       unmount_wim.unmount_win_wim(
           self._powershell,
           self._workdir.join('mount'),
@@ -224,12 +229,25 @@ class OfflineWinPECustomization(customization.Customization):
         Args:
           af: actions.AddFile proto object
     """
+    # src contains the path for the src dir
     src = self._source.get_local_src(af.src)
-    if self._path.isdir(src):
-      src.join('*')  # pragma: no cover
-    self.execute_script('Add file {}'.format(src), ADDFILE, None, '-Path', src,
-                        '-Recurse', '-Force', '-Destination',
-                        self._workdir.join('mount', af.dst))
+    # src_file contains the file/dir name to be copied
+    src_file = '*'
+    if not self._path.isdir(src):
+      # if the src is a file then src is the dir name and src_file is filename
+      src_file = self._path.basename(src)
+      src = self._path.dirname(src)
+    # destination to copy the file to
+    dest = self._path.dirname(self._workdir.join('mount', af.dst))
+    self.execute_script(
+        'Add file {}'.format(src.join(src_file)),
+        ADDFILE,
+        src,
+        dest,
+        src_file,
+        '/e',
+        logs=None,
+        ret_codes=[0, 1, 2, 3])
 
   def add_windows_driver(self, awd, src):
     """ add_windows_driver runs Add-WindowsDriver command in powershell.

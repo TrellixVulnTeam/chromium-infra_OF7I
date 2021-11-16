@@ -35,11 +35,15 @@ def RunSteps(api, config):
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
-      '\\infra\\files\\cipd-1\\windows-amd64')
+      '\\infra\\files\\cipd-1\\windows-amd64', 'DIRECTORY')
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
-      '\\infra\\files\\cipd-2\\windows-amd64')
+      '\\infra\\files\\cipd-2\\windows-amd64', 'DIRECTORY')
+  # mock existence of cipd files to avoid failures
+  api.path.mock_add_paths(
+      '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
+      '\\infra\\files\\cipd-3\\windows-amd64', 'DIRECTORY')
   api.windows_scripts_executor.download_available_packages()
   api.windows_scripts_executor.execute_config(config)
 
@@ -65,6 +69,19 @@ def GenTests(api):
           src=sources.Src(
               cipd_src=sources.CIPDSrc(
                   package='infra/files/cipd-2',
+                  refs='latest',
+                  platform='windows-amd64',
+              ),),
+          dst='Windows\\Users\\',
+      ))
+
+  # add file from cipd to winpe image action
+  ACTION_ADD_CIPD_3 = actions.Action(
+      add_file=actions.AddFile(
+          name='add cipd-3',
+          src=sources.Src(
+              cipd_src=sources.CIPDSrc(
+                  package='infra/files/cipd-3',
                   refs='latest',
                   platform='windows-amd64',
               ),),
@@ -109,7 +126,7 @@ def GenTests(api):
       [ACTION_ADD_CIPD_1, ACTION_ADD_CIPD_2])
   cust = CIPD_PACKAGE_MULTIPLE_ACTIONS.customizations[0]
   cust.offline_winpe_customization.offline_customization.append(
-      actions.OfflineAction(name='add cipd pkg', actions=[ACTION_ADD_CIPD_1]))
+      actions.OfflineAction(name='add cipd pkg', actions=[ACTION_ADD_CIPD_3]))
 
   yield (api.test('Test cipd pin and download packages in multiple actions',
                   api.platform('win', 64)) +
@@ -121,8 +138,8 @@ def GenTests(api):
          t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
                          customization) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64 (2)',
-                         image, customization) +
+         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-3', 'windows-amd64', image,
+                         customization) +
          # mock add cipd file step
          t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-2', 'windows-amd64', image,
                          customization) +

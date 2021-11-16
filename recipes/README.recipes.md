@@ -459,7 +459,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 API to execute powershell scripts 
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/powershell/api.py#12)(self, name, command, logs=None, args=None):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/powershell/api.py#12)(self, name, command, logs=None, args=None, ret_codes=None):**
 
 Execute a command through powershell.
 Args:
@@ -468,6 +468,7 @@ Args:
   * logs ([]str) - List of logs to read on completion. Specifying dir reads
       all logs in dir
   * args ([]str) - List of args supplied to the command
+  * ret_codes ([]int) - List of return codes to be treated as success
 Returns:
   Dict containing 'results' as a key
 Raises:

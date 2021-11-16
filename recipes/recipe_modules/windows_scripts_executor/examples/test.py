@@ -36,6 +36,18 @@ def RunSteps(api, config):
   api.windows_scripts_executor.pin_available_sources()
   api.windows_scripts_executor.gen_canonical_configs(config)
   api.windows_scripts_executor.download_available_packages()
+  # mock cipd packages to avoid spooking add_file execution
+  api.path.mock_add_paths(
+      '[CACHE]\\Pkgs\\CIPDPkgs\\' +
+      'resolved-instance_id-of-latest----------\\' +
+      'infra_internal\\labs\\drivers\\microsoft\\' +
+      'windows_adk\\winpe\\winpe-dot3svc\\windows-amd64', 'DIRECTORY')
+  # mock cipd packages to avoid spooking add_file execution
+  api.path.mock_add_paths(
+      '[CACHE]\\Pkgs\\CIPDPkgs\\' +
+      'resolved-instance_id-of-latest----------\\' +
+      'infra_internal\\labs\\drivers\\microsoft\\' +
+      'windows_adk\\winpe\\winpe-wmi\\windows-amd64', 'DIRECTORY')
   api.windows_scripts_executor.execute_config(config)
   # mock existence of customization output to trigger upload
   api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +

@@ -35,9 +35,12 @@ def RunSteps(api, config):
   api.windows_scripts_executor.pin_available_sources()
   api.windows_scripts_executor.gen_canonical_configs(config)
   api.windows_scripts_executor.download_available_packages()
+  api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\WinTools\\net\\ping.exe',
+                          'FILE')
   api.windows_scripts_executor.execute_config(config)
-  api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
-                          'WIB-WIM\\{}.wim'.format(key))
+  api.path.mock_add_paths(
+      '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
+      'WIB-WIM\\{}.wim'.format(key), 'FILE')
   api.windows_scripts_executor.upload_wib_artifacts()
 
 

@@ -58,10 +58,18 @@ def main(argv):
       nargs='*',
       help='log file or dir to watch and return stuff from')
   parser.add_argument(
+      '--ret_codes',
+      required=False,
+      type=int,
+      default=[0],
+      nargs='*',
+      help='return codes to treat as success')
+  parser.add_argument(
       'args', nargs='*', help='optionals args to the powershell command')
 
   iput = parser.parse_args(argv[1:])
-  logs = exec_ps(iput.command, iput.logs, args=iput.args)
+  logs = exec_ps(
+      iput.command, iput.logs, args=iput.args, ret_codes=iput.ret_codes)
   print(json.dumps(logs))
 
 
@@ -75,13 +83,14 @@ def ensure_logs(logs):
       os.makedirs(log)
 
 
-def exec_ps(command, logs, args):
+def exec_ps(command, logs, args, ret_codes):
   """ Executes a power shell command and waits for it to complete.
       Returns all the logs on completion as a json to stdout.
 
       command: path to script/executable/batchfile, powershell command
       logs: list of log files and directories.
       args: optional args to the command
+      ret_codes: optional success return codes
 
       Returns dict containing keys 'results' and every '<log-file>' in logs."""
 
@@ -110,8 +119,9 @@ def exec_ps(command, logs, args):
 
   except subprocess.CalledProcessError as e:
     # Non zero return by the script/cmd run
-    l = gen_result(e.output)
+    l = gen_result(e.output, e.returncode in ret_codes)
     l['results']['Command'] = e.cmd
+    l['results']['ReturnCode'] = e.returncode
     l['stdout_stderr'] = e.output
 
   except Exception as e:

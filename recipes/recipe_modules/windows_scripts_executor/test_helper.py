@@ -220,7 +220,7 @@ def ADD_CIPD_FILE(api, pkg, platform, image, customization, success=True):
   return ADD_FILE(
       api, image, customization,
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
-      '\\{}\\{}'.format(pkg, platform), success)
+      '\\{}\\{}\\*'.format(pkg, platform), success)
 
 
 def ADD_GCS_FILE(api, bucket, path, image, customization, success=True):

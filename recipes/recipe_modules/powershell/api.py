@@ -9,7 +9,7 @@ from recipe_engine.recipe_api import Property
 class PowershellAPI(recipe_api.RecipeApi):
   """ API to execute powershell scripts """
 
-  def __call__(self, name, command, logs=None, args=None):
+  def __call__(self, name, command, logs=None, args=None, ret_codes=None):
     """
     Execute a command through powershell.
     Args:
@@ -18,6 +18,7 @@ class PowershellAPI(recipe_api.RecipeApi):
       * logs ([]str) - List of logs to read on completion. Specifying dir reads
           all logs in dir
       * args ([]str) - List of args supplied to the command
+      * ret_codes ([]int) - List of return codes to be treated as success
     Returns:
       Dict containing 'results' as a key
     Raises:
@@ -27,6 +28,8 @@ class PowershellAPI(recipe_api.RecipeApi):
     cmd_args = ['--command', command]
     if logs:
       cmd_args += ['--logs'] + logs
+    if ret_codes:
+      cmd_args += ['--ret_codes'] + [str(i) for i in ret_codes]
     if args:
       cmd_args += ['--'] + args
     results = self.m.python(
