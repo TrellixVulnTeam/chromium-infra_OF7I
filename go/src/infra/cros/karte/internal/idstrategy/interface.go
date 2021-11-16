@@ -10,12 +10,22 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/data/rand/mathrand"
 
 	kartepb "infra/cros/karte/api"
 	"infra/cros/karte/internal/errors"
+	"infra/cros/karte/internal/idserialize"
 	"infra/cros/karte/internal/scalars"
-	"infra/cros/karte/internal/uuid"
 )
+
+// The IDVersion must be four bytes long. Please record all previously used ID versions here.
+// It must use the character set [A-Z0-9a-z].
+//
+// - zzzz (current)
+// - zzzy (next)
+// - zzzx (next-next)
+//
+const IDVersion = "zzzz"
 
 // Key is an opaque key type for storing things in the context.
 type key string
@@ -100,47 +110,34 @@ func NewNaive() Strategy {
 	return &naiveStrategy{counter: 1}
 }
 
-// This version number identifies the format used for IDs.
-// If you are making an incompatible change, increment the version used here.
-// Since the version is the first number in the ID, this means that future ID versions will necessary sort
-// after older ID versions.
-//
-// 001 has the form 001-%021d-%010d-%s
-//                  version - unix seconds - nanoseconds since beginning of second - uuid disambiguation suffix.
-//
-const idSchemeVersion = 1
-
 // MakeID makes an unambiguous ID for a given entity.
 func makeID(ctx context.Context, t time.Time) (string, error) {
-	suffix, err := uuid.UUID(ctx)
-	if err != nil {
-		return "", errors.Annotate(err, "make id").Err()
-	}
-	return makeRawID(t, suffix)
+	disambiguation := mathrand.Uint32(ctx)
+	return makeRawID(t, disambiguation)
 }
 
-// IDFmt describes how to build an ID string.
-// Maximum value for an int64 is 9,223,372,036,854,775,807.
-// This is 19 bits wide. Use 21 bits for safety.
-// A nanosecond is one second * 10^(-9). Therefore, the maximum value
-// that the nanosecond part can have is 9 digits long.
-// Use 10 for safety.
-const idFmt = "%03d-%021d-%010d-%s"
+// Use 9,223,372,036,854,775,807 as the end of time.
+const endOfTime = 0x7FFFFFFFFFFFFFFF
 
 // MakeRawID makes an ID for a given entity by taking a time (the creation or ingestion time, depending on the kind).
 // The uuidSuffix is a uuid that will be used as a disambiguation suffix.
-func makeRawID(t time.Time, uuidSuffix string) (string, error) {
+func makeRawID(t time.Time, disambiguation uint32) (string, error) {
 	if t.IsZero() {
 		return "", errors.New("make id: timestamp is zero")
 	}
-	if uuidSuffix == "" {
-		return "", errors.New("make id: uuidSuffix is empty")
+
+	// TODO(gregorynisbet): Add support for sub-seconds.
+	offsetCoarse := uint64(endOfTime - t.Unix())
+	offsetFine := uint32(0)
+
+	str, err := (&idserialize.IDInfo{
+		Version:        IDVersion,
+		CoarseTime:     offsetCoarse,
+		FineTime:       offsetFine,
+		Disambiguation: disambiguation,
+	}).Encoded()
+	if err != nil {
+		return "", errors.Annotate(err, "make raw id").Err()
 	}
-	return fmt.Sprintf(
-		idFmt,
-		idSchemeVersion,
-		t.Unix(),
-		(t.UnixNano() % (1000 * 1000 * 1000)),
-		uuidSuffix,
-	), nil
+	return str, nil
 }

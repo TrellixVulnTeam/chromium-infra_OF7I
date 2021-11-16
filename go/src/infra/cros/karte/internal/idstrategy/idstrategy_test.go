@@ -18,20 +18,26 @@ func TestMakeRawID(t *testing.T) {
 	cases := []struct {
 		name   string
 		in     time.Time
-		suffix string
+		suffix uint32
 		out    string
 	}{
 		{
 			name:   "good ID",
 			in:     time.Unix(1, 2),
-			suffix: "fdc7abc4-3140-46ed-9446-4d3a826c045e",
-			out:    "001-000000000000000000001-0000000002-fdc7abc4-3140-46ed-9446-4d3a826c045e",
+			suffix: 1,
+			out:    "zzzz7ffffffffffffffe0000000000000001",
 		},
 		{
 			name:   "no suffix",
 			in:     time.Unix(1, 2),
-			suffix: "",
-			out:    "",
+			suffix: 0,
+			out:    "zzzz7ffffffffffffffe0000000000000000",
+		},
+		{
+			name:   "no suffix",
+			in:     time.Unix(2, 2),
+			suffix: 0,
+			out:    "zzzz7ffffffffffffffd0000000000000000",
 		},
 	}
 
@@ -40,17 +46,11 @@ func TestMakeRawID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			id, err := makeRawID(tt.in, tt.suffix)
-			if tt.out != "" {
-				if err != nil {
-					t.Errorf("unexpected error: %s", err)
-				}
-				if diff := cmp.Diff(id, tt.out); diff != "" {
-					t.Errorf("(-want +got): %s", diff)
-				}
-			} else {
-				if err == nil {
-					t.Errorf("test should have failed")
-				}
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+			if diff := cmp.Diff(id, tt.out); diff != "" {
+				t.Errorf("(-want +got): %s", diff)
 			}
 		})
 	}
