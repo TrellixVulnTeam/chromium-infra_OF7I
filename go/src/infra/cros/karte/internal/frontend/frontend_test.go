@@ -11,6 +11,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/protobuf/testing/protocmp"
 
@@ -90,6 +92,39 @@ func TestRejectActionWithUserDefinedName(t *testing.T) {
 	}
 	if err == nil {
 		t.Errorf("expected response to be rejected")
+	}
+}
+
+// TestCreateActionWithNoTime tests that creating an action without a time succeeds and supplies the current time.
+// See b/206651512 for details.
+func TestCreateActionWithNoTime(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	// Set a test clock to an arbitrary time to make sure that the correct time is supplied.
+	testClock := testclock.New(time.Unix(3, 4))
+	ctx = clock.Set(ctx, testClock)
+	ctx = idstrategy.Use(ctx, idstrategy.NewDefault())
+
+	k := NewKarteFrontend()
+
+	resp, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
+		Action: &kartepb.Action{
+			Name: "",
+			Kind: "ssh-attempt",
+		},
+	})
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if resp == nil {
+		t.Errorf("resp should not be nil")
+	}
+	expected := time.Unix(3, 4)
+	actual := scalars.ConvertTimestampPtrToTime(resp.GetCreateTime())
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("unexpected diff: %s", diff)
 	}
 }
 
