@@ -15,10 +15,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
-	"infra/cmd/mallet/internal/bb"
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
+	"infra/libs/skylab/buildbucket"
 )
 
 // Recovery subcommand: Recovering the devices.
@@ -62,7 +62,7 @@ func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcomma
 func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 
-	bc, err := bb.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, site.BBProject, site.MalletBucket, site.MalletBuilder)
+	bc, err := buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, site.BBProject, site.MalletBucket, site.MalletBuilder)
 	if err != nil {
 		return err
 	}

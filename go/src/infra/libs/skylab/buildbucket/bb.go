@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package bb provides a buildbucket Client with helper methods to schedule the tasks.
-package bb
+// Package buildbucket provides a buildbucket Client with helper methods to schedule the tasks.
+package buildbucket
 
 import (
 	"context"
