@@ -56,4 +56,10 @@ message Action {
 
   // This is the last time that the particular Karte record was updated on the Karte side.
   google.protobuf.Timestamp update_time = 11;
+
+  // The client name is the name of the entity creating the Action entry, e.g. "paris".
+  string client_name = 12;
+
+  // The client version is the version of the entity creating the Action entry, e.g. "0.0.1".
+  string client_version = 13;
 }
