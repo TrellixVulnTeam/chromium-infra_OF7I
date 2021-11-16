@@ -18,8 +18,6 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	structbuilder "google.golang.org/protobuf/types/known/structpb"
-
-	"infra/cmd/mallet/internal/site"
 )
 
 const defaultTaskPriority = 24
@@ -31,7 +29,7 @@ type Client struct {
 }
 
 // NewClient returns a new client to interact with buildbucket builds.
-func NewClient(ctx context.Context, authFlags authcli.Flags) (*Client, error) {
+func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Options, project string, bucket string, builder string) (*Client, error) {
 	hClient, err := newHTTPClient(ctx, &authFlags)
 	if err != nil {
 		return nil, err
@@ -40,15 +38,15 @@ func NewClient(ctx context.Context, authFlags authcli.Flags) (*Client, error) {
 	pClient := &prpc.Client{
 		C:       hClient,
 		Host:    "cr-buildbucket.appspot.com",
-		Options: site.DefaultPRPCOptions,
+		Options: options,
 	}
 
 	return &Client{
 		client: buildbucket_pb.NewBuildsPRPCClient(pClient),
 		builderID: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "labpack",
-			Builder: "labpack",
+			Project: project,
+			Bucket:  bucket,
+			Builder: builder,
 		},
 	}, nil
 }

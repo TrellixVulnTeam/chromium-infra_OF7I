@@ -62,7 +62,7 @@ func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcomma
 func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
 
-	bc, err := bb.NewClient(ctx, c.authFlags)
+	bc, err := bb.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, site.BBProject, site.MalletBucket, site.MalletBuilder)
 	if err != nil {
 		return err
 	}
