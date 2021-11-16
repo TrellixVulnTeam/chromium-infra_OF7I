@@ -7,8 +7,8 @@ package idserialize
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
+	"infra/cros/karte/internal/lex64"
 )
 
 // Further fields may be added after Disambiguation without breaking backward-compatibility.
@@ -44,5 +44,9 @@ func (i *IDInfo) Encoded() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s%s", i.Version, hex.EncodeToString(bytes)), nil
+	encoded, err := lex64.Encode(bytes, false)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s%s", i.Version, encoded), nil
 }

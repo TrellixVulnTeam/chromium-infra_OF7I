@@ -25,19 +25,19 @@ func TestMakeRawID(t *testing.T) {
 			name:   "good ID",
 			in:     time.Unix(1, 2),
 			suffix: 1,
-			out:    "zzzz7ffffffffffffffe0000000000000001",
+			out:    "zzzzUzzzzzzzzzs0000000000F",
 		},
 		{
 			name:   "no suffix",
 			in:     time.Unix(1, 2),
 			suffix: 0,
-			out:    "zzzz7ffffffffffffffe0000000000000000",
+			out:    "zzzzUzzzzzzzzzs00000000000",
 		},
 		{
 			name:   "no suffix",
 			in:     time.Unix(2, 2),
 			suffix: 0,
-			out:    "zzzz7ffffffffffffffd0000000000000000",
+			out:    "zzzzUzzzzzzzzzo00000000000",
 		},
 	}
 
