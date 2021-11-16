@@ -104,33 +104,8 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 
 	c.qualifiedHostname = site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.hostname)
 	c.qualifiedRack = site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.rack)
-	if c.servo == "" {
-		// If no servo configuration is provided, use
-		// the docker_servod configuration
-		c.qualifiedServo = site.MaybePrepend(
-			site.Satlab,
-			dockerHostBoxIdentifier,
-			fmt.Sprintf(
-				"%s-%s",
-				c.hostname,
-				"docker_servod:9999",
-			),
-		)
-		if c.servoDockerContainerName == "" {
-			c.servoDockerContainerName = site.MaybePrepend(
-				site.Satlab,
-				dockerHostBoxIdentifier,
-				fmt.Sprintf(
-					"%s-%s",
-					c.hostname,
-					"docker_servod",
-				),
-			)
-		}
-
-	} else {
-		c.qualifiedServo = site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.servo)
-	}
+	// Fro easy track we check if servo is expected to be supported.
+	hasServo := c.setupServoArguments(dockerHostBoxIdentifier)
 
 	if c.zone == "" {
 		c.zone = site.DefaultZone
@@ -175,16 +150,7 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 		})()
 	}
 
-	// For Satlab,  default we skip certain deployment task such as
-	// downloading image, installing OS and firmware".
-	if !c.fullDeploy {
-		c.deploySkipDownloadImage = true
-		c.deploySkipInstallOS = true
-		c.deploySkipInstallFirmware = true
-		c.deploySkipRecoveryMode = true
-	} else {
-		c.deployActions = append(c.deployActions, "verify-recovery-mode")
-	}
+	c.setDeployActions(hasServo)
 
 	if err := (&shivas.Rack{
 		Name:      c.qualifiedRack,
@@ -218,4 +184,60 @@ func (c *addDUT) innerRun(a subcommands.Application, args []string, env subcomma
 	}
 
 	return nil
+}
+
+// setupServoArguments updates servo-host and container name based on data.
+// Returns flag if servo is count as detected based on data.
+func (c *addDUT) setupServoArguments(dockerHostBoxIdentifier string) bool {
+	// Fro easy track we check if servo is expected to be supported.
+	if c.servo == "" && c.servoSerial == "" {
+		fmt.Fprintf(os.Stderr, "setup is creating without servo.\n")
+		c.qualifiedServo = ""
+		c.servoDockerContainerName = ""
+		return false
+	}
+	if c.servo == "" {
+		// If no servo configuration is provided, use
+		// the docker_servod configuration
+		c.qualifiedServo = site.MaybePrepend(
+			site.Satlab,
+			dockerHostBoxIdentifier,
+			fmt.Sprintf(
+				"%s-%s",
+				c.hostname,
+				"docker_servod:9999",
+			),
+		)
+		if c.servoDockerContainerName == "" {
+			c.servoDockerContainerName = site.MaybePrepend(
+				site.Satlab,
+				dockerHostBoxIdentifier,
+				fmt.Sprintf(
+					"%s-%s",
+					c.hostname,
+					"docker_servod",
+				),
+			)
+		}
+	} else {
+		c.qualifiedServo = site.MaybePrepend(site.Satlab, dockerHostBoxIdentifier, c.servo)
+	}
+	return true
+}
+
+// setDeployActions sets deployment steps or specify if they need to be skipped.
+func (c *addDUT) setDeployActions(hasServo bool) {
+	// For Satlab,  default we skip certain deployment task such as
+	// downloading image, installing OS and firmware".
+	if !c.fullDeploy || !hasServo {
+		c.deploySkipDownloadImage = true
+		c.deploySkipInstallOS = true
+		c.deploySkipInstallFirmware = true
+		c.deploySkipRecoveryMode = true
+		if c.fullDeploy {
+			fmt.Fprintf(os.Stderr, "full deploy is not supported for setup without servo.\n")
+		}
+	} else {
+		c.deployActions = append(c.deployActions, "verify-recovery-mode")
+	}
 }
