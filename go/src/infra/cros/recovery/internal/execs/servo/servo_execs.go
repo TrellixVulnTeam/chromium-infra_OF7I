@@ -379,6 +379,8 @@ func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actio
 			return errors.Reason("servo check servod control exec: for servod control %s, the value %s returned from servod is different from the expected value %s", command, controlValue, expectedValue).Err()
 		}
 		log.Debug(ctx, "Servo Check Servod Control Exec: actual control value matches the expected value")
+	} else {
+		log.Debug(ctx, "Servo Check Servod Control Exec: no expected value was specified, verification concluded upon successful response from servod.")
 	}
 	return nil
 }

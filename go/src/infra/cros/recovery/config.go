@@ -560,7 +560,11 @@ const defaultConfig = `
 					"exec_name":"sample_pass"
 				},
 				"servo_cold_reset_pin": {
-					"exec_name":"sample_pass"
+					"exec_extra_args": [
+						"command:cold_reset",
+						"expected_string_value:off"
+					],
+					"exec_name":"servo_check_servod_control"
 				},
 				"servod_read_servo_type": {
 					"exec_name":"sample_pass"
