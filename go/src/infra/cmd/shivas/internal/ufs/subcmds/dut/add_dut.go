@@ -278,9 +278,6 @@ func (c addDUT) validateArgs() error {
 		if c.asset == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need asset ID to create a DUT")
 		}
-		if c.servo == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Need servo config to create a DUT")
-		}
 		if c.servo != "" {
 			// If the servo is not servo V3. Then servo serial is needed
 			host, _, err := parseServoHostnamePort(c.servo)
@@ -290,6 +287,8 @@ func (c addDUT) validateArgs() error {
 			if !ufsUtil.ServoV3HostnameRegex.MatchString(host) && c.servoSerial == "" {
 				return cmdlib.NewQuietUsageError(c.Flags, "Cannot skip servo serial. Not a servo V3 device.")
 			}
+		} else if c.servoSerial != "" || c.servoSetupType != "" || c.servoDockerContainerName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, fmt.Sprintf("Wrong usage!!\nProvided extra servo details when servo hostname is not provided."))
 		}
 		if c.servoSetupType != "" {
 			if _, ok := chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)]; !ok {
@@ -492,12 +491,14 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 		// command line parameters
 		name = c.hostname
 		var err error
-		servoHost, servoPort, err = parseServoHostnamePort(c.servo)
-		if err != nil {
-			return nil, err
+		if c.servo != "" {
+			servoHost, servoPort, err = parseServoHostnamePort(c.servo)
+			if err != nil {
+				return nil, err
+			}
+			servoSerial = c.servoSerial
+			servoSetup = chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)])
 		}
-		servoSerial = c.servoSerial
-		servoSetup = chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(c.servoSetupType)])
 		rpmHost = c.rpm
 		rpmOutlet = c.rpmOutlet
 		machines = []string{c.asset}
@@ -525,11 +526,14 @@ func (c *addDUT) initializeLSEAndAsset(recMap map[string]string) (*dutDeployUFSP
 	}
 	lse.GetChromeosMachineLse().GetDeviceLse().GetDut().Licenses = licenses
 	peripherals := lse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
-	peripherals.GetServo().ServoHostname = servoHost
-	peripherals.GetServo().ServoPort = servoPort
-	peripherals.GetServo().ServoSerial = servoSerial
-	peripherals.GetServo().ServoSetup = servoSetup
-	peripherals.GetServo().DockerContainerName = c.servoDockerContainerName
+	if servoHost != "" {
+		// if servo-host is not provided then do not set any servo field.
+		peripherals.GetServo().ServoHostname = servoHost
+		peripherals.GetServo().ServoPort = servoPort
+		peripherals.GetServo().ServoSerial = servoSerial
+		peripherals.GetServo().ServoSetup = servoSetup
+		peripherals.GetServo().DockerContainerName = c.servoDockerContainerName
+	}
 	peripherals.GetRpm().PowerunitName = rpmHost
 	peripherals.GetRpm().PowerunitOutlet = rpmOutlet
 	if len(pools) > 0 && pools[0] != "" {
