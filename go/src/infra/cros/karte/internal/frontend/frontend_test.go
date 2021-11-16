@@ -42,7 +42,7 @@ func TestCreateAction(t *testing.T) {
 		},
 	})
 	expected := &kartepb.Action{
-		Name:       "entity1",
+		Name:       "entity001000000000",
 		Kind:       "ssh-attempt",
 		CreateTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 2)),
 	}

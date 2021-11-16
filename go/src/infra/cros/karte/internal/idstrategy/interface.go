@@ -91,23 +91,23 @@ type naiveStrategy struct {
 	counter int64
 }
 
-// IDForAction returns entityn where n is the next number in sequence.
+// IDForAction returns entityn where n is the next lowest number in sequence.
 func (s *naiveStrategy) IDForAction(_ context.Context, _ *kartepb.Action) (string, error) {
-	out := fmt.Sprintf("entity%d", s.counter)
-	s.counter += 1
+	out := fmt.Sprintf("entity%012d", s.counter)
+	s.counter -= 1
 	return out, nil
 }
 
-// IDForObservation returns entityn where n is the next number in sequence.
+// IDForObservation returns entityn where n is the next lowest number in sequence.
 func (s *naiveStrategy) IDForObservation(_ context.Context, _ *kartepb.Observation) (string, error) {
-	out := fmt.Sprintf("entity%d", s.counter)
-	s.counter += 1
+	out := fmt.Sprintf("entity%012d", s.counter)
+	s.counter -= 1
 	return out, nil
 }
 
 // NewNaive creates a new naive strategy.
 func NewNaive() Strategy {
-	return &naiveStrategy{counter: 1}
+	return &naiveStrategy{counter: 1000 * 1000 * 1000}
 }
 
 // MakeID makes an unambiguous ID for a given entity.
