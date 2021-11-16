@@ -302,7 +302,7 @@ func servoFirmwareNeedsUpdateExec(ctx context.Context, args *execs.RunArgs, acti
 //
 // the actionArgs should be in the format of ["command:....", "string_value:...."]
 func servoSetExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	m := execs.ParseActionArgs(ctx, actionArgs, ":")
+	m := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
 	command, existed := m["command"]
 	if !existed {
 		return errors.Reason("servo match state: command not found in the argument").Err()
