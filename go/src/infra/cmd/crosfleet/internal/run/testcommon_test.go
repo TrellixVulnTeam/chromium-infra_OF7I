@@ -64,7 +64,7 @@ missing suite arg`,
 			priority:        255,
 		},
 		[]string{"sample-suite-name"},
-		"number of requested secondary-boards: 2 doesn not match with number of provided secondary-images: 0",
+		"number of requested secondary-boards: 2 does not match with number of requested secondary-images: 0",
 	},
 	{ // One error raised
 		testCommonFlags{
@@ -77,7 +77,20 @@ missing suite arg`,
 			priority:        255,
 		},
 		[]string{"sample-suite-name"},
-		"number of requested secondary-boards: 0 doesn not match with number of requested secondary-models: 2",
+		"number of requested secondary-boards: 0 does not match with number of requested secondary-models: 2",
+	},
+	{ // One error raised
+		testCommonFlags{
+			board:                "sample-board",
+			models:               []string{},
+			repeats:              1,
+			pool:                 "sample-pool",
+			image:                "sample-image",
+			secondaryLacrosPaths: []string{"foo", "bar"},
+			priority:             255,
+		},
+		[]string{"sample-suite-name"},
+		"number of requested secondary-boards: 0 does not match with number of requested secondary-lacros-paths: 2",
 	},
 	{ // No errors raised
 		testCommonFlags{
@@ -482,6 +495,33 @@ var testSecondaryDevicesData = []struct {
 				HardwareAttributes: &test_platform.Request_Params_HardwareAttributes{Model: "model2"},
 				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
 					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board2-release/9999.0.0"}},
+				},
+			},
+		},
+	},
+	{ // Test with lacros provision request.
+		testCommonFlags{
+			secondaryBoards:      []string{"board1", "board2"},
+			secondaryImages:      []string{"board1-release/10000.0.0", "board2-release/9999.0.0"},
+			secondaryLacrosPaths: []string{"path1", "path2"},
+		},
+		[]*test_platform.Request_Params_SecondaryDevice{
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board1"},
+				},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board1-release/10000.0.0"}},
+					{Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: "path1"}},
+				},
+			},
+			{
+				SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
+					BuildTarget: &chromiumos.BuildTarget{Name: "board2"},
+				},
+				SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
+					{Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{ChromeosBuild: "board2-release/9999.0.0"}},
+					{Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: "path2"}},
 				},
 			},
 		},

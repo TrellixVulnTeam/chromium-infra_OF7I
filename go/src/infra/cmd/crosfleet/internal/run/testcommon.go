@@ -53,25 +53,26 @@ const (
 // testCommonFlags contains parameters common to the "run
 // test", "run suite", and "run testplan" subcommands.
 type testCommonFlags struct {
-	board           string
-	secondaryBoards []string
-	models          []string
-	secondaryModels []string
-	pool            string
-	image           string
-	secondaryImages []string
-	release         string
-	qsAccount       string
-	maxRetries      int
-	repeats         int
-	priority        int64
-	timeoutMins     int
-	addedDims       map[string]string
-	provisionLabels map[string]string
-	addedTags       map[string]string
-	keyvals         map[string]string
-	exitEarly       bool
-	lacrosPath      string
+	board                string
+	secondaryBoards      []string
+	models               []string
+	secondaryModels      []string
+	pool                 string
+	image                string
+	secondaryImages      []string
+	release              string
+	qsAccount            string
+	maxRetries           int
+	repeats              int
+	priority             int64
+	timeoutMins          int
+	addedDims            map[string]string
+	provisionLabels      map[string]string
+	addedTags            map[string]string
+	keyvals              map[string]string
+	exitEarly            bool
+	lacrosPath           string
+	secondaryLacrosPaths []string
 }
 
 // Registers run command-specific flags
@@ -106,6 +107,7 @@ If a Quota Scheduler account is specified via -qs-account, this value is not use
 	f.Var(flagx.KeyVals(&c.keyvals), "autotest-keyvals", "Comma-separated Autotest keyvals in same format as -keyval.")
 	f.BoolVar(&c.exitEarly, "exit-early", false, "Exit command as soon as test is scheduled. crosfleet will not notify on test validation failure.")
 	f.StringVar(&c.lacrosPath, "lacros-path", "", "Optional GCS path pointing to a lacros artifact.")
+	f.Var(luciflag.CommaList(&c.secondaryLacrosPaths), "secondary-lacros-paths", "Comma-separated list of lacros paths for secondary DUTs to run tests against, it need to align with boards in secondary-boards args.")
 }
 
 // validateAndAutocompleteFlags returns any errors after validating the CLI
@@ -160,11 +162,16 @@ func (c *testCommonFlags) validateArgs(f *flag.FlagSet, mainArgType string) erro
 	// explicit secondary models request, we need to ensure board info is also
 	// provided and the count matches.
 	if len(c.secondaryModels) > 0 && len(c.secondaryBoards) != len(c.secondaryModels) {
-		errors = append(errors, fmt.Sprintf("number of requested secondary-boards: %d doesn not match with number of requested secondary-models: %d", len(c.secondaryBoards), len(c.secondaryModels)))
+		errors = append(errors, fmt.Sprintf("number of requested secondary-boards: %d does not match with number of requested secondary-models: %d", len(c.secondaryBoards), len(c.secondaryModels)))
 	}
 	// Check if image name provided for each secondary devices.
 	if len(c.secondaryBoards) != len(c.secondaryImages) {
-		errors = append(errors, fmt.Sprintf("number of requested secondary-boards: %d doesn not match with number of provided secondary-images: %d", len(c.secondaryBoards), len(c.secondaryImages)))
+		errors = append(errors, fmt.Sprintf("number of requested secondary-boards: %d does not match with number of requested secondary-images: %d", len(c.secondaryBoards), len(c.secondaryImages)))
+	}
+
+	// If lacros provision required for secondary DUTs, then we require provide a path for each secondary DUT.
+	if len(c.secondaryLacrosPaths) > 0 && len(c.secondaryLacrosPaths) != len(c.secondaryBoards) {
+		errors = append(errors, fmt.Sprintf("number of requested secondary-boards: %d does not match with number of requested secondary-lacros-paths: %d", len(c.secondaryBoards), len(c.secondaryLacrosPaths)))
 	}
 
 	if len(errors) > 0 {
@@ -597,6 +604,11 @@ func (c *testCommonFlags) secondaryDevices() []*test_platform.Request_Params_Sec
 			sd.HardwareAttributes = &test_platform.Request_Params_HardwareAttributes{
 				Model: c.secondaryModels[i],
 			}
+		}
+		if len(c.secondaryLacrosPaths) > 0 {
+			sd.SoftwareDependencies = append(sd.SoftwareDependencies, &test_platform.Request_Params_SoftwareDependency{
+				Dep: &test_platform.Request_Params_SoftwareDependency_LacrosGcsPath{LacrosGcsPath: c.secondaryLacrosPaths[i]},
+			})
 		}
 		secondary_devices = append(secondary_devices, sd)
 	}
