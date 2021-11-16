@@ -55,6 +55,14 @@ const (
 	// This is the threshold voltage value, and actual values lower
 	// than this indicate that DUT is not connected.
 	maxPPDut5MVWhenNotConnected = 500
+
+	// This token represents the command string that can be present in
+	// the extra arguments defined in config.
+	commandToken = "command"
+
+	// This token represents the string in config extra arguments that
+	// conveys the expected string value for a servod command.
+	stringValueExtraArgToken = "expected_string_value"
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -340,6 +348,41 @@ func servoLowPPDut5Exec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	return nil
 }
 
+// Verify that the value of the servod control included in the
+// actionArgs matches the expected value also included in the
+// actionArgs.
+func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	command, ok := argsMap[commandToken]
+	log.Debug(ctx, "Servo Check Servod Control Exec: %s ok :%b", commandToken, ok)
+	if !ok {
+		// It is a failure condition if an action invokes this exec,
+		// and does not specify the servod command.
+		return errors.Reason("servo check servod control exec: no command is mentioned for this action.").Err()
+	}
+	if _, err := ServodCallHas(ctx, args, command); err != nil {
+		// TODO (vkjoshi@): Allow for failure suppression through
+		// config extra args, if the servod does not support a
+		// command.
+		return errors.Annotate(err, "servo check servod control exec").Err()
+	}
+	log.Debug(ctx, "Servo Check Servod Control Exec: Command %s is supported by servod", command)
+	res, err := ServodCallGet(ctx, args, command)
+	if err != nil {
+		return errors.Annotate(err, "servo check servod control exec: could not obtain the value of control %s from servod", command).Err()
+	}
+	if expectedValue, ok := argsMap[stringValueExtraArgToken]; ok {
+		// The value returned from servod in response to the command
+		// is expected to be of type string.
+		controlValue := res.Value.GetString_()
+		if controlValue != expectedValue {
+			return errors.Reason("servo check servod control exec: for servod control %s, the value %s returned from servod is different from the expected value %s", command, controlValue, expectedValue).Err()
+		}
+		log.Debug(ctx, "Servo Check Servod Control Exec: actual control value matches the expected value")
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -352,4 +395,5 @@ func init() {
 	execs.Register("servo_fw_need_update", servoFirmwareNeedsUpdateExec)
 	execs.Register("servo_set", servoSetExec)
 	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
+	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
 }

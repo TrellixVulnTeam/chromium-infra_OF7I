@@ -429,6 +429,13 @@ const defaultConfig = `
 					],
 					"exec_name":"sample_pass"
 				},
+				"cr50_testlab": {
+					"exec_extra_args": [
+						"command:cr50_testlab",
+						"expected_string_value:on"
+					],
+					"exec_name":"servo_check_servod_control"
+				},
 				"servod_dut_controller": {
 					"conditions": [
 						"is_not_servo_v3"
