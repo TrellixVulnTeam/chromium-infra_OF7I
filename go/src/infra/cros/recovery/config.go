@@ -550,8 +550,21 @@ const defaultConfig = `
 					],
 					"exec_name":"sample_pass"
 				},
+				"servo_warm_reset_supported": {
+					"exec_extra_args": [
+						"command:warm_reset"
+					],
+					"exec_name":"servo_check_servod_control"
+				},
 				"servo_warm_reset_pin": {
-					"exec_name":"sample_pass"
+					"conditions": [
+						"servo_warm_reset_supported"
+					],
+					"exec_extra_args": [
+						"command:warm_reset",
+						"expected_string_value:off"
+					],
+					"exec_name":"servo_check_servod_control"
 				},
 				"dut_has_cros_ec": {
 					"exec_name":"sample_pass"

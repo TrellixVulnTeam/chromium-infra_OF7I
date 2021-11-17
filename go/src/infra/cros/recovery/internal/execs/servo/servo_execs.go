@@ -348,22 +348,21 @@ func servoLowPPDut5Exec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	return nil
 }
 
-// Verify that the value of the servod control included in the
-// actionArgs matches the expected value also included in the
-// actionArgs.
+// servoCheckServodControlExec verifies that servod supports the
+// control mentioned in action args. Additionally, if actionArgs
+// includes the expected value, this function will verify that the
+// value returned by servod for this control matches the expected
+// value.
 func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
 	command, ok := argsMap[commandToken]
-	log.Debug(ctx, "Servo Check Servod Control Exec: %s ok :%b", commandToken, ok)
+	log.Debug(ctx, "Servo Check Servod Control Exec: %s ok :%t", commandToken, ok)
 	if !ok {
 		// It is a failure condition if an action invokes this exec,
 		// and does not specify the servod command.
 		return errors.Reason("servo check servod control exec: no command is mentioned for this action.").Err()
 	}
 	if _, err := ServodCallHas(ctx, args, command); err != nil {
-		// TODO (vkjoshi@): Allow for failure suppression through
-		// config extra args, if the servod does not support a
-		// command.
 		return errors.Annotate(err, "servo check servod control exec").Err()
 	}
 	log.Debug(ctx, "Servo Check Servod Control Exec: Command %s is supported by servod", command)
