@@ -618,6 +618,23 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
+  def testServeFullRepoProjectView_WithModifier(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report.put()
+
+    request_url = ('/coverage/p/chromium?host=%s&project=%s&ref=%s&platform=%s'
+                   '&list_reports=true&modifier_id=%d') % (host, project, ref,
+                                                           platform, 123)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
   def testServeFullRepoProjectViewDefaultReportConfig(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     report = _CreateSamplePostsubmitReport()
@@ -648,7 +665,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
-  def testServeFullRepoDirectoryView_WithModifier(self):
+  def testServeFullRepoDirectoryView_WithModifierAndRevision(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
 
     host = 'chromium.googlesource.com'
@@ -658,7 +675,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     path = '//dir/'
     platform = 'linux'
 
-    report = _CreateSamplePostsubmitReport()
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
     report.put()
 
     dir_coverage_data = _CreateSampleDirectoryCoverageData(modifier_id=123)
@@ -668,6 +685,27 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         '/coverage/p/chromium/dir?host=%s&project=%s&ref=%s&revision=%s'
         '&path=%s&platform=%s&modifier_id=%d') % (host, project, ref, revision,
                                                   path, platform, 123)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+
+  def testServeFullRepoDirectoryView_WithModifier_WithoutRevision(self):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    path = '//dir/'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report.put()
+
+    dir_coverage_data = _CreateSampleDirectoryCoverageData(modifier_id=123)
+    dir_coverage_data.put()
+
+    request_url = ('/coverage/p/chromium/dir?host=%s&project=%s&ref=%s'
+                   '&path=%s&platform=%s&modifier_id=%d') % (
+                       host, project, ref, path, platform, 123)
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
 
@@ -745,7 +783,8 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
         'src.git/dir/test.cc/bbbbb')
 
   @mock.patch.object(utils, 'GetFileContentFromGs')
-  def testServeFullRepoFileView_WithModifier(self, mock_get_file_from_gs):
+  def testServeFullRepoFileView_WithModifierAndRevision(self,
+                                                        mock_get_file_from_gs):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
     mock_get_file_from_gs.return_value = 'line one/nline two'
 
@@ -756,7 +795,7 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     path = '//dir/test.cc'
     platform = 'linux'
 
-    report = _CreateSamplePostsubmitReport()
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
     report.put()
 
     file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)
@@ -765,6 +804,33 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
     request_url = ('/coverage/p/chromium/file?host=%s&project=%s&ref=%s'
                    '&revision=%s&path=%s&platform=%s&modifier_id=%d') % (
                        host, project, ref, revision, path, platform, 123)
+    response = self.test_app.get(request_url)
+    self.assertEqual(200, response.status_int)
+    mock_get_file_from_gs.assert_called_with(
+        '/source-files-for-coverage/chromium.googlesource.com/chromium/'
+        'src.git/dir/test.cc/bbbbb')
+
+  @mock.patch.object(utils, 'GetFileContentFromGs')
+  def testServeFullRepoFileView_WithModifier_WithoutRevision(
+      self, mock_get_file_from_gs):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+    mock_get_file_from_gs.return_value = 'line one/nline two'
+
+    host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/main'
+    path = '//dir/test.cc'
+    platform = 'linux'
+
+    report = _CreateSamplePostsubmitReport(modifier_id=123)
+    report.put()
+
+    file_coverage_data = _CreateSampleFileCoverageData(modifier_id=123)
+    file_coverage_data.put()
+
+    request_url = ('/coverage/p/chromium/file?host=%s&project=%s&ref=%s'
+                   '&path=%s&platform=%s&modifier_id=%d') % (
+                       host, project, ref, path, platform, 123)
     response = self.test_app.get(request_url)
     self.assertEqual(200, response.status_int)
     mock_get_file_from_gs.assert_called_with(

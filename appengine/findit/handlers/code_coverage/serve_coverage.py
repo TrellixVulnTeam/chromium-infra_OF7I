@@ -472,7 +472,7 @@ class ServeCodeCoverageData(BaseHandler):
         PostsubmitReport.gitiles_commit.project == project,
         PostsubmitReport.gitiles_commit.server_host == host,
         PostsubmitReport.bucket == bucket, PostsubmitReport.builder == builder,
-        PostsubmitReport.modifier_id == 0)
+        PostsubmitReport.modifier_id == modifier_id)
     order_props = [(PostsubmitReport.commit_timestamp, 'desc')]
     entities, prev_cursor, next_cursor = GetPagedResults(
         query, order_props, cursor, direction, page_size)
@@ -627,7 +627,7 @@ class ServeCodeCoverageData(BaseHandler):
           PostsubmitReport.gitiles_commit.server_host == host,
           PostsubmitReport.bucket == bucket,
           PostsubmitReport.builder == builder, PostsubmitReport.visible == True,
-          PostsubmitReport.modifier_id == 0).order(
+          PostsubmitReport.modifier_id == modifier_id).order(
               -PostsubmitReport.commit_timestamp)
       entities = query.fetch(limit=1)
       report = entities[0]
@@ -641,7 +641,8 @@ class ServeCodeCoverageData(BaseHandler):
           ref=ref,
           revision=revision,
           bucket=bucket,
-          builder=builder)
+          builder=builder,
+          modifier_id=modifier_id)
       if not report:
         return BaseHandler.CreateError('Report record not found', 404)
       else:
@@ -654,7 +655,6 @@ class ServeCodeCoverageData(BaseHandler):
         return 'components'
       else:
         return 'files'
-
     data_type = _GetDataType(path)
     if data_type == 'dirs':
       default_path = '//'
