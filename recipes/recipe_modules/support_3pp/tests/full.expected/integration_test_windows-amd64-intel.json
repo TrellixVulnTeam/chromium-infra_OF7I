@@ -2248,10 +2248,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\bottom_dep_git\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -2282,7 +2284,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building deps/bottom_dep_git.run installation.read SetEnv.x64.json",
+    "name": "building deps/bottom_dep_git.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -3360,10 +3362,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\bottom_dep_url\\windows-amd64\\1.2.3\\checkout",
@@ -3394,7 +3398,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building deps/bottom_dep_url.run installation.read SetEnv.x64.json",
+    "name": "building deps/bottom_dep_url.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -6057,10 +6061,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
@@ -6091,7 +6097,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building tools/pkg_override_and_no_latest.run installation.read SetEnv.x64.json",
+    "name": "building tools/pkg_override_and_no_latest.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -7193,10 +7199,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
@@ -7227,7 +7235,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building tools/windows_experiment.run installation.read SetEnv.x64.json",
+    "name": "building tools/windows_experiment.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -8991,10 +8999,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\git_tool\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -9026,7 +9036,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building build_tools/git_tool.run installation.read SetEnv.x64.json",
+    "name": "building build_tools/git_tool.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -9406,10 +9416,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\git_tool\\windows-amd64\\1.5.0-rc1\\verify",
@@ -9435,7 +9447,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building build_tools/git_tool.run test.read SetEnv.x64.json",
+    "name": "building build_tools/git_tool.run test.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -10867,10 +10879,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\tool\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -10902,7 +10916,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building build_tools/tool.run installation.read SetEnv.x64.json",
+    "name": "building build_tools/tool.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -11282,10 +11296,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\tool\\windows-amd64\\1.5.0-rc1\\verify",
@@ -11311,7 +11327,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building build_tools/tool.run test.read SetEnv.x64.json",
+    "name": "building build_tools/tool.run test.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -12372,10 +12388,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\dep\\windows-amd64\\1.0.0\\checkout",
@@ -12406,7 +12424,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building deps/dep.run installation.read SetEnv.x64.json",
+    "name": "building deps/dep.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -13843,10 +13861,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg\\windows-amd64\\2.0.0\\checkout",
@@ -13877,7 +13897,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building tools/pkg.run installation.read SetEnv.x64.json",
+    "name": "building tools/pkg.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -15267,10 +15287,12 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[CACHE]\\windows_sdk\\win_sdk\\bin\\SetEnv.x64.json",
+      "python3",
+      "RECIPE_MODULE[depot_tools::windows_sdk]\\resources\\find_env_json.py",
+      "--sdk_root",
+      "[CACHE]\\windows_sdk",
+      "--target_arch",
+      "x64",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_checkout\\windows-amd64\\2.0.0\\checkout",
@@ -15301,7 +15323,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building tools/pkg_checkout.run installation.read SetEnv.x64.json",
+    "name": "building tools/pkg_checkout.run installation.read SetEnv json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
