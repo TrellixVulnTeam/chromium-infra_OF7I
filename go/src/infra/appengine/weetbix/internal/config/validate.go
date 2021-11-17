@@ -39,6 +39,27 @@ var (
 	tableRE = regexp.MustCompile(`^[\p{L}\p{M}\p{N}\p{Pc}\p{Pd}\p{Zs}]*$`)
 )
 
+func validateConfig(ctx *validation.Context, cfg *Config) {
+	validateMonorailHostname(ctx, cfg.MonorailHostname)
+	validateStringConfig(ctx, "chunk_gcs_bucket", cfg.ChunkGcsBucket, bucketRE)
+	// Limit to default max_concurrent_requests of 1000.
+	// https://cloud.google.com/appengine/docs/standard/go111/config/queueref
+	validateIntegerConfig(ctx, "reclustering_workers", cfg.ReclusteringWorkers, 1000)
+	// Limit within GAE autoscaling request timeout of 10 minutes.
+	// https://cloud.google.com/appengine/docs/standard/python/how-instances-are-managed
+	validateIntegerConfig(ctx, "reclustering_interval_minutes", cfg.ReclusteringIntervalMinutes, 9)
+}
+
+func validateMonorailHostname(ctx *validation.Context, hostname string) {
+	ctx.Enter("monorail_hostname")
+	if hostname == "" {
+		ctx.Errorf("empty value is not allowed")
+	} else if _, err := url.Parse("https://" + hostname + "/"); err != nil {
+		ctx.Errorf("invalid hostname: %q", hostname)
+	}
+	ctx.Exit()
+}
+
 func validateStringConfig(ctx *validation.Context, name, cfg string, re *regexp.Regexp) {
 	ctx.Enter(name)
 	switch err := pbutil.ValidateWithRe(re, cfg); err {
@@ -50,19 +71,16 @@ func validateStringConfig(ctx *validation.Context, name, cfg string, re *regexp.
 	ctx.Exit()
 }
 
-func validateConfig(ctx *validation.Context, cfg *Config) {
-	validateMonorailHostname(ctx, cfg.MonorailHostname)
-	validateStringConfig(ctx, "chunk_gcs_bucket", cfg.ChunkGcsBucket, bucketRE)
-}
+func validateIntegerConfig(ctx *validation.Context, name string, cfg, max int64) {
+	ctx.Enter(name)
+	defer ctx.Exit()
 
-func validateMonorailHostname(ctx *validation.Context, hostname string) {
-	ctx.Enter("monorail_hostname")
-	if hostname == "" {
-		ctx.Errorf("empty value is not allowed")
-	} else if _, err := url.Parse("https://" + hostname + "/"); err != nil {
-		ctx.Errorf("invalid hostname: %q", hostname)
+	if cfg < 0 {
+		ctx.Errorf("value is less than zero")
 	}
-	ctx.Exit()
+	if cfg >= max {
+		ctx.Errorf("value is greater than %v", max)
+	}
 }
 
 func validateDuration(ctx *validation.Context, name string, du *durationpb.Duration) {

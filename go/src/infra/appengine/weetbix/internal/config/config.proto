@@ -15,4 +15,19 @@ message Config {
 
   // The GCS bucket that chunk contents should be archived to.
   string chunk_gcs_bucket = 2;
+
+  // The number of workers to use when re-clustering. Maximum value is 1000,
+  // which is the default max_concurrent_requests on the reclustering queue:
+  // https://cloud.google.com/appengine/docs/standard/go111/config/queueref.
+  //
+  // If this is unset or zero, re-clustering is disabled.
+  int64 reclustering_workers = 3;
+
+  // The frequency by which to re-cluster. This is specified as a
+  // number of minutes. Maximum value is 9, which is one minute less than
+  // the 10 minute hard request deadline for autoscaled GAE instances:
+  // https://cloud.google.com/appengine/docs/standard/go/how-instances-are-managed.
+  //
+  // If this is unset or zero, re-clustering is disabled.
+  int64 reclustering_interval_minutes = 4;
 }

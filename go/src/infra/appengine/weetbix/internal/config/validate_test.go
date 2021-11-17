@@ -22,6 +22,8 @@ import (
 var sampleConfigStr = `
 	monorail_hostname: "monorail-test.appspot.com"
 	chunk_gcs_bucket: "my-chunk-bucket"
+	reclustering_workers: 50
+	reclustering_interval_minutes: 5
 `
 
 // createConfig returns a new valid Config for testing.
@@ -56,20 +58,19 @@ func TestServiceConfigValidator(t *testing.T) {
 	})
 
 	Convey("monorail hostname", t, func() {
+		cfg := createConfig()
 		Convey("must be specified", func() {
-			cfg := createConfig()
 			cfg.MonorailHostname = ""
 			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
 		})
 		Convey("must be correctly formed", func() {
-			cfg := createConfig()
 			cfg.MonorailHostname = "monorail host"
 			So(validate(cfg), ShouldErrLike, `invalid hostname: "monorail host"`)
 		})
 	})
 	Convey("chunk GCS bucket", t, func() {
+		cfg := createConfig()
 		Convey("must be specified", func() {
-			cfg := createConfig()
 			cfg.ChunkGcsBucket = ""
 			So(validate(cfg), ShouldErrLike, "empty chunk_gcs_bucket is not allowed")
 		})
@@ -77,6 +78,28 @@ func TestServiceConfigValidator(t *testing.T) {
 			cfg := createConfig()
 			cfg.ChunkGcsBucket = "my bucket"
 			So(validate(cfg), ShouldErrLike, `invalid chunk_gcs_bucket: "my bucket"`)
+		})
+	})
+	Convey("reclustering workers", t, func() {
+		cfg := createConfig()
+		Convey("less than zero", func() {
+			cfg.ReclusteringWorkers = -1
+			So(validate(cfg), ShouldErrLike, `value is less than zero`)
+		})
+		Convey("too large", func() {
+			cfg.ReclusteringWorkers = 1001
+			So(validate(cfg), ShouldErrLike, `value is greater than 1000`)
+		})
+	})
+	Convey("reclustering interval", t, func() {
+		cfg := createConfig()
+		Convey("less than zero", func() {
+			cfg.ReclusteringIntervalMinutes = -1
+			So(validate(cfg), ShouldErrLike, `value is less than zero`)
+		})
+		Convey("too large", func() {
+			cfg.ReclusteringIntervalMinutes = 10
+			So(validate(cfg), ShouldErrLike, `value is greater than 9`)
 		})
 	})
 }

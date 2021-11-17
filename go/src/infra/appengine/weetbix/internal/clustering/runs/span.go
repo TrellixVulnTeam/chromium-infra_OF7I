@@ -23,7 +23,7 @@ import (
 type ReclusteringRun struct {
 	// The LUCI Project for which this rule is defined.
 	Project string
-	// The attempt. This is the time the orchestrator run starts.
+	// The attempt. This is the time the orchestrator run ends.
 	AttemptTimestamp time.Time
 	// The minimum algorithms version this reclustering run is trying
 	// to achieve. Chunks with an AlgorithmsVersion less than this

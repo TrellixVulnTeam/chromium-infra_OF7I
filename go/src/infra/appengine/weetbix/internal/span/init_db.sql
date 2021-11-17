@@ -240,7 +240,7 @@ CREATE TABLE ClusteringState (
 CREATE TABLE ReclusteringRuns (
   -- The LUCI Project.
   Project STRING(40) NOT NULL,
-  -- The attempt. This is the timestamp the orchestrator run starts.
+  -- The attempt. This is the timestamp the orchestrator run ends.
   AttemptTimestamp TIMESTAMP NOT NULL,
   -- The minimum algorithms version the reclustering run is trying to achieve.
   -- Chunks with an AlgorithmsVersion less than this value are eligible to be
