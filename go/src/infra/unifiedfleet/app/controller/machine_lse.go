@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -1649,7 +1650,7 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 		if servo := dut.GetPeripherals().GetServo(); servo != nil {
 			servo.ServoType = meta.GetServoType()
 			servo.ServoTopology = meta.GetServoTopology()
-			servo.ServoComponent = extractServoComponentsFromTopology(meta.GetServoTopology())
+			servo.ServoComponent = extractServoComponents(meta.GetServoType())
 		}
 		// Periphrals cannot be nil for valid DUT
 		if dut.GetPeripherals() == nil {
@@ -1669,16 +1670,12 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 	return nil
 }
 
-// extractServoComponentsFromTopology extracts servo components from servo topology.
-func extractServoComponentsFromTopology(topology *chromeosLab.ServoTopology) []string {
-	var servoComponents []string
-	if m := topology.GetMain(); m != nil {
-		servoComponents = append(servoComponents, m.GetType())
-	}
-	for _, v := range topology.GetChildren() {
-		servoComponents = append(servoComponents, v.GetType())
-	}
-	return servoComponents
+// extractServoComponents extracts servo components based on servo_type.
+// TODO(xianuowang): Move this function out of UFS since UFS doesn't have knowledge of
+// how this should works.
+func extractServoComponents(servoType string) []string {
+	reg := regexp.MustCompile("_with_|_and_")
+	return reg.Split(servoType, -1)
 }
 
 // RenameMachineLSE renames the machineLSE to the new hostname.
