@@ -105,6 +105,7 @@ def builder(
         build_numbers = True,
         triggered_by = [triggered_by] if triggered_by else None,
         schedule = schedule,
+        experiments = {"luci.recipes.use_python3": 100},
     )
 
     luci.console_view_entry(
