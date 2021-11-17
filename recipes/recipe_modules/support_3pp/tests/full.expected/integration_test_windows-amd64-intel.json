@@ -2254,6 +2254,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\bottom_dep_git\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -3368,6 +3369,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\bottom_dep_url\\windows-amd64\\1.2.3\\checkout",
@@ -6067,6 +6069,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_override_and_no_latest\\windows-amd64\\1.1.2\\checkout",
@@ -7205,6 +7208,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout",
@@ -9005,6 +9009,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\git_tool\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -9422,6 +9427,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\git_tool\\windows-amd64\\1.5.0-rc1\\verify",
@@ -10885,6 +10891,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\tool\\windows-amd64\\1.5.0-rc1\\checkout",
@@ -11302,6 +11309,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\build_tools\\tool\\windows-amd64\\1.5.0-rc1\\verify",
@@ -12394,6 +12402,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\deps\\dep\\windows-amd64\\1.0.0\\checkout",
@@ -13867,6 +13876,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg\\windows-amd64\\2.0.0\\checkout",
@@ -15293,6 +15303,7 @@
       "[CACHE]\\windows_sdk",
       "--target_arch",
       "x64",
+      "--output_json",
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]\\3pp\\wd\\tools\\pkg_checkout\\windows-amd64\\2.0.0\\checkout",
