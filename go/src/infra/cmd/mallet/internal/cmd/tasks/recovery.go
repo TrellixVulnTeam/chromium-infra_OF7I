@@ -13,12 +13,12 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
 	"infra/libs/skylab/buildbucket"
+	"infra/libs/skylab/buildbucket/labpack"
 )
 
 // Recovery subcommand: Recovering the devices.
@@ -83,22 +83,22 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 	if c.deployTask {
 		task = string(recovery.TaskNameDeploy)
 	}
-	props, err := structbuilder.NewStruct(map[string]interface{}{
-		"unit_name":         unit,
-		"task_name":         task,
-		"enable_recovery":   !c.onlyVerify,
-		"admin_service":     e.AdminService,
-		"inventory_service": e.UFSService,
-		"update_inventory":  c.updateUFS,
-		"no_stepper":        c.noStepper,
-		"no_metrics":        true,
-		"configuration":     configuration,
-	})
-	if err != nil {
-		return errors.Annotate(err, "create recovery task").Err()
-	}
 
-	taskID, err := bc.ScheduleLabpackTask(ctx, unit, props)
+	taskID, err := labpack.ScheduleTask(
+		ctx,
+		bc,
+		&labpack.Params{
+			UnitName:         unit,
+			TaskName:         task,
+			EnableRecovery:   !c.onlyVerify,
+			AdminService:     e.AdminService,
+			InventoryService: e.UFSService,
+			UpdateInventory:  c.updateUFS,
+			NoStepper:        c.noStepper,
+			NoMetrics:        true,
+			Configuration:    configuration,
+		},
+	)
 	if err != nil {
 		return errors.Annotate(err, "create recovery task").Err()
 	}
