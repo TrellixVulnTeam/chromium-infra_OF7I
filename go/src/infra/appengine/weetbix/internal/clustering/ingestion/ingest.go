@@ -11,21 +11,14 @@ import (
 	"fmt"
 	"time"
 
-	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/clustering/algorithms"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
-	"infra/appengine/weetbix/internal/clustering/rules/cache"
+	"infra/appengine/weetbix/internal/clustering/reclustering"
 	"infra/appengine/weetbix/internal/clustering/state"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
-	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
 )
-
-// TODO(crbug.com/1243174). Instrument the size of this cache so that we
-// can monitor it.
-var rulesCache = cache.NewRulesCache(caching.RegisterLRUCache(0))
 
 // Options represents parameters to the ingestion.
 type Options struct {
@@ -42,14 +35,6 @@ type Options struct {
 	PresubmitRunID *pb.PresubmitRunId
 }
 
-// Analysis is the interface for cluster analysis.
-type Analysis interface {
-	// HandleUpdatedClusters handles (re-)clustered test results. It is called
-	// after the spanner transaction effecting the (re-)clustering has
-	// committed. commitTime is the Spanner time the transaction committed.
-	HandleUpdatedClusters(ctx context.Context, updates *clustering.Update, commitTime time.Time) error
-}
-
 // ChunkStore is the interface for the blob store archiving chunks of test
 // results for later re-clustering.
 type ChunkStore interface {
@@ -64,11 +49,11 @@ const ChunkSize = 1000
 // Ingester handles the ingestion of test results for clustering.
 type Ingester struct {
 	chunkStore ChunkStore
-	analysis   Analysis
+	analysis   reclustering.Analysis
 }
 
 // New initialises a new Ingester.
-func New(cs ChunkStore, a Analysis) *Ingester {
+func New(cs ChunkStore, a reclustering.Analysis) *Ingester {
 	return &Ingester{
 		chunkStore: cs,
 		analysis:   a,
@@ -188,54 +173,18 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return err
 	}
 
-	// Obtain the set of failure association rules to use when clustering.
-	ruleset, err := rulesCache.Ruleset(ctx, i.opts.Project)
-	if err != nil {
-		return err
-	}
-
-	existingClustering := algorithms.NewEmptyClusterResults(len(chunk.Failures))
-	newClustering := algorithms.Cluster(ruleset, existingClustering, clustering.FailuresFromProtos(chunk.Failures))
-
 	clusterState := &state.Entry{
 		Project:       i.opts.Project,
 		ChunkID:       id,
 		PartitionTime: i.opts.PartitionTime,
 		ObjectID:      objectID,
-		Clustering:    newClustering,
-	}
-	f := func(ctx context.Context) error {
-		if err := state.Create(ctx, clusterState); err != nil {
-			return err
-		}
-		return nil
-	}
-	commitTime, err := span.ReadWriteTransaction(ctx, f)
-	if err != nil {
-		return err
 	}
 
-	update := &clustering.Update{
-		Project: i.opts.Project,
-		ChunkID: id,
-		Updates: prepareClusterUpdates(chunk, newClustering),
-	}
-	if err := i.ingester.analysis.HandleUpdatedClusters(ctx, update, commitTime); err != nil {
+	// Insert clustering state for the chunk, triggering appropriate analysis.
+	if err := reclustering.Update(ctx, i.ingester.analysis, chunk, clusterState); err != nil {
 		return err
 	}
 	return nil
-}
-
-func prepareClusterUpdates(chunk *cpb.Chunk, clusterResults clustering.ClusterResults) []*clustering.FailureUpdate {
-	var updates []*clustering.FailureUpdate
-	for i, testResult := range chunk.Failures {
-		update := &clustering.FailureUpdate{
-			TestResult:  testResult,
-			NewClusters: clusterResults.Clusters[i],
-		}
-		updates = append(updates, update)
-	}
-	return updates
 }
 
 // chunkID generates an identifier for the chunk deterministically.
