@@ -36,6 +36,7 @@ import (
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
 	"infra/appengine/crosskylabadmin/app/gitstore"
+	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/inventory"
 )
 
@@ -337,7 +338,7 @@ func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, h
 		return nil, errors.Annotate(err, "failed to get stable version info").Err()
 	}
 
-	if looksLikeLabstation(hostname) {
+	if heuristics.LooksLikeLabstation(hostname) {
 		return out, nil
 	}
 	servoHostHostname, err := getServoHostHostname(dut)
@@ -398,11 +399,6 @@ func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventor
 	return dut, nil
 }
 
-// This is a heuristic to check if something is a labstation and might be wrong.
-func looksLikeLabstation(hostname string) bool {
-	return strings.Contains(hostname, "labstation")
-}
-
 // This is a heuristic to check if something is a servo and might be wrong.
 func looksLikeServo(hostname string) bool {
 	return strings.Contains(hostname, "servo")
@@ -425,7 +421,7 @@ func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostna
 		logging.Infof(ctx, "Skipping getting cros version. Servo host hostname is %q", hostname)
 		return "", nil
 	}
-	if looksLikeLabstation(hostname) {
+	if heuristics.LooksLikeLabstation(hostname) {
 		dut, err := getDUT(ctx, ic, hostname)
 		if err != nil {
 			logging.Infof(ctx, "get labstation dut info; %s", err)

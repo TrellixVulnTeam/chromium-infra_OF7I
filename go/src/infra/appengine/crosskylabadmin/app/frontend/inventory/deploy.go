@@ -31,6 +31,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/cros/lab_inventory/utils"
 	protos "infra/libs/fleet/protos"
+	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/inventory"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
@@ -324,7 +325,7 @@ const (
 // The assigned servo port value is unique among all the duts with the same
 // servo host attribute.
 func assignNewServoPort(duts []*inventory.DeviceUnderTest, d *inventory.CommonDeviceSpecs) error {
-	if looksLikeLabstation(d.GetHostname()) {
+	if heuristics.LooksLikeLabstation(d.GetHostname()) {
 		return nil
 	}
 	servoHost, found := getAttributeByKey(d, servoHostAttributeKey)
@@ -547,7 +548,7 @@ func parseAndEnsureDUTSpecs(specs []byte) (*inventory.CommonDeviceSpecs, error) 
 	}
 	// If the host is a labstation, ensure the os_type has correct value.
 	hostname := parsed.GetHostname()
-	if looksLikeLabstation(hostname) && parsed.GetLabels().GetOsType() != inventory.SchedulableLabels_OS_TYPE_LABSTATION {
+	if heuristics.LooksLikeLabstation(hostname) && parsed.GetLabels().GetOsType() != inventory.SchedulableLabels_OS_TYPE_LABSTATION {
 		return nil, errors.Reason("The os_type of %s must be OS_TYPE_LABSTATION (please ensure to use `skylab add-labstation` for labstations deployment)", hostname).Err()
 	}
 	return parsed, nil

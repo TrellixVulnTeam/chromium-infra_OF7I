@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -21,6 +20,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	"infra/cros/lab_inventory/changehistory"
+	"infra/libs/skylab/common/heuristics"
 )
 
 const (
@@ -166,10 +166,6 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 	return labstation, nil
 }
 
-func looksLikeLabstation(hostname string) bool {
-	return strings.Contains(hostname, "labstation")
-}
-
 // When we create/update a DUT, we must also add/update the servo information to the
 // associated labstation. Optionally, we should also assign a servo port to the
 // DUT.
@@ -182,7 +178,7 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 
 	// If the servo host is a servo v3, just assign port 9999 to servo if
 	// required, and do nothing else since one servo host has maximum one servo.
-	if !looksLikeLabstation(servoHostname) {
+	if !heuristics.LooksLikeLabstation(servoHostname) {
 		if assignServoPort && servo.GetServoPort() == 0 {
 			servo.ServoPort = servoPortRangeUpperLimit
 		}
@@ -243,7 +239,7 @@ func (r servoHostRegistry) removeDeviceFromLabstation(ctx context.Context, d *la
 	servoHostname := servo.GetServoHostname()
 
 	// Skip the deleting when the servo host is a servo v3
-	if !looksLikeLabstation(servoHostname) {
+	if !heuristics.LooksLikeLabstation(servoHostname) {
 		return nil
 	}
 

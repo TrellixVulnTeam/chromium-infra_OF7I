@@ -46,6 +46,7 @@ import (
 	"infra/cros/lab_inventory/manufacturingconfig"
 	sv "infra/cros/stableversion"
 	"infra/libs/git"
+	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/inventory"
 )
 
@@ -274,7 +275,7 @@ func (is *ServerImpl) UpdateManufacturingConfig(ctx context.Context, req *fleet.
 
 func updateManufacturingConfig(ctx context.Context, configs map[string]*manufacturing.Config, s *gitstore.InventoryStore) (string, error) {
 	for _, d := range s.Lab.GetDuts() {
-		if looksLikeLabstation(d.GetCommon().GetHostname()) {
+		if heuristics.LooksLikeLabstation(d.GetCommon().GetHostname()) {
 			continue
 		}
 		hwid, err := getHWID(d)
