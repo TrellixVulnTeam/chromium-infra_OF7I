@@ -54,7 +54,13 @@ func main() {
 			func(ctx context.Context, args []string, state *build.State) error {
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
-				log.Printf("Input args: %v", input)
+				// Use the annotation "Labpack" to make diagnostic output from labpack specifically
+				// easier to recognize in swarming output.
+				log.Printf("[Labpack] Input args: %v", input)
+				// Log the args.
+				log.Printf("[Labpack] Positional args: %v", args)
+				// Log the build state.
+				log.Printf("[Labpack] Build state: %v", state)
 				res := &steps.LabpackResponse{Success: true}
 				err := internalRun(ctx, input, state, lg)
 				if err != nil {
