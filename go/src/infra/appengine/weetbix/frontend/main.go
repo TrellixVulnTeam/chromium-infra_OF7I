@@ -30,6 +30,8 @@ import (
 	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
 	"infra/appengine/weetbix/app"
+	"infra/appengine/weetbix/internal/admin"
+	adminpb "infra/appengine/weetbix/internal/admin/proto"
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/clustering"
@@ -326,6 +328,10 @@ func main() {
 		resultcollector.RegisterTaskClass()
 		testvariantbqexporter.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
+
+		// Register pRPC servers.
+		adminpb.RegisterAdminServer(srv.PRPC, admin.CreateServer())
+
 		return nil
 	})
 }

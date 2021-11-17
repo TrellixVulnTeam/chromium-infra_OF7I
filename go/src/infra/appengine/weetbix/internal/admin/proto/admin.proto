@@ -12,6 +12,9 @@ import "infra/appengine/weetbix/proto/v1/common.proto";
 option go_package = "infra/appengine/weetbix/internal/admin/proto;adminpb";
 
 // Admin ops for Weetbix maintainers only.
+// You can call the APIs using RPC Explorer:
+// * https://chops-weetbix-dev.appspot.com/rpcexplorer/services/ for dev
+// * https://chops-weetbix.appspot.com/rpcexplorer/services/ for prod
 service Admin {
   // ExportTestVariants triggers ExportTestVariants tasks to export test
   // variants to the specified table.

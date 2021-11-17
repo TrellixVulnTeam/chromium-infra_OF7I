@@ -27,9 +27,9 @@ import (
 const (
 	taskClass = "export-test-variants"
 	queue     = "export-test-variants"
-	// Bq export job runs once per hour, and each row contains the information
-	// of the previous hour.
-	bqExportJobInterval = time.Hour
+	// BqExportJobInterval is the interval between two bq export cron jobs.
+	// It's also used as the default time range of each row.
+	BqExportJobInterval = time.Hour
 )
 
 // RegisterTaskClass registers the task class for tq dispatcher.
@@ -91,7 +91,7 @@ func ScheduleTasks(ctx context.Context) error {
 		return err
 	}
 	timeRange := &pb.TimeRange{
-		Earliest: timestamppb.New(latest.Add(-bqExportJobInterval)),
+		Earliest: timestamppb.New(latest.Add(-BqExportJobInterval)),
 		Latest:   timestamppb.New(latest),
 	}
 
