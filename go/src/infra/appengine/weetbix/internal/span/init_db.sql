@@ -264,7 +264,14 @@ CREATE TABLE ReclusteringRuns (
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.
 CREATE TABLE TQReminders (
-                             ID STRING(MAX) NOT NULL,
-                             FreshUntil TIMESTAMP NOT NULL,
-                             Payload BYTES(102400) NOT NULL,
+    ID STRING(MAX) NOT NULL,
+    FreshUntil TIMESTAMP NOT NULL,
+    Payload BYTES(102400) NOT NULL,
 ) PRIMARY KEY (ID ASC);
+
+CREATE TABLE TQLeases (
+    SectionID STRING(MAX) NOT NULL,
+    LeaseID INT64 NOT NULL,
+    SerializedParts ARRAY<STRING(MAX)>,
+    ExpiresAt TIMESTAMP NOT NULL,
+) PRIMARY KEY (SectionID ASC, LeaseID ASC);
