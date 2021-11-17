@@ -6,10 +6,6 @@ package state
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
-	"encoding/hex"
-	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -17,7 +13,6 @@ import (
 
 	"go.chromium.org/luci/server/span"
 
-	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -34,7 +29,7 @@ func TestSpanner(t *testing.T) {
 				})
 				return err
 			}
-			e := newEntry(100).build()
+			e := NewEntry(100).Build()
 			Convey(`Valid`, func() {
 				err := testCreate(e)
 				So(err, ShouldBeNil)
@@ -126,30 +121,30 @@ func TestSpanner(t *testing.T) {
 				})
 			})
 		})
-		Convey(`ReadNext`, func() {
+		Convey(`ReadNextN`, func() {
 			targetRulesVersion := time.Date(2024, 1, 1, 1, 1, 1, 0, time.UTC)
 			targetAlgorithmsVersion := 10
 			entries := []*Entry{
 				// Should not be read.
-				newEntry(0).withChunkIDPrefix("11").withAlgorithmVersion(10).withRulesVersion(targetRulesVersion).build(),
+				NewEntry(0).WithChunkIDPrefix("11").WithAlgorithmsVersion(10).WithRulesVersion(targetRulesVersion).Build(),
 
 				// Should be read (rulesVersion < targetRulesVersion).
-				newEntry(1).withChunkIDPrefix("11").withAlgorithmVersion(10).withRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).build(), // Should be read.
-				newEntry(3).withChunkIDPrefix("11").withRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).build(),
+				NewEntry(1).WithChunkIDPrefix("11").WithAlgorithmsVersion(10).WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(), // Should be read.
+				NewEntry(3).WithChunkIDPrefix("11").WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(),
 
 				// Should be read (algorithmsVersion < targetAlgorithmsVersion).
-				newEntry(2).withChunkIDPrefix("11").withAlgorithmVersion(9).withRulesVersion(targetRulesVersion).build(),
-				newEntry(4).withChunkIDPrefix("11").withAlgorithmVersion(2).build(),
+				NewEntry(2).WithChunkIDPrefix("11").WithAlgorithmsVersion(9).WithRulesVersion(targetRulesVersion).Build(),
+				NewEntry(4).WithChunkIDPrefix("11").WithAlgorithmsVersion(2).Build(),
 
 				// Should not be read (other project).
-				newEntry(5).withChunkIDPrefix("11").withAlgorithmVersion(2).withProject("other").build(),
+				NewEntry(5).WithChunkIDPrefix("11").WithAlgorithmsVersion(2).WithProject("other").Build(),
 
 				// Check handling of EndChunkID as an inclusive upper-bound.
-				newEntry(6).withChunkIDPrefix("11" + strings.Repeat("ff", 15)).withAlgorithmVersion(2).build(), // Should be read.
-				newEntry(7).withChunkIDPrefix("12" + strings.Repeat("00", 15)).withAlgorithmVersion(2).build(), // Should not be read.
+				NewEntry(6).WithChunkIDPrefix("11" + strings.Repeat("ff", 15)).WithAlgorithmsVersion(2).Build(), // Should be read.
+				NewEntry(7).WithChunkIDPrefix("12" + strings.Repeat("00", 15)).WithAlgorithmsVersion(2).Build(), // Should not be read.
 			}
 
-			err := createEntries(ctx, entries)
+			err := CreateEntriesForTesting(ctx, entries)
 			So(err, ShouldBeNil)
 
 			expectedEntries := []*Entry{
@@ -197,9 +192,9 @@ func TestSpanner(t *testing.T) {
 			Convey(`At least 100 chunks`, func() {
 				var entries []*Entry
 				for i := 0; i < 200; i++ {
-					entries = append(entries, newEntry(i).build())
+					entries = append(entries, NewEntry(i).Build())
 				}
-				err := createEntries(ctx, entries)
+				err := CreateEntriesForTesting(ctx, entries)
 				So(err, ShouldBeNil)
 
 				count, err := EstimateChunks(span.Single(ctx), testProject)
@@ -229,18 +224,6 @@ func TestSpanner(t *testing.T) {
 	})
 }
 
-func createEntries(ctx context.Context, entries []*Entry) error {
-	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-		for _, e := range entries {
-			if err := Create(ctx, e); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return err
-}
-
 func clearLastUpdatedTimestamps(entries ...*Entry) {
 	for _, e := range entries {
 		// Check the LastUpdated time is set, but ignore it for
@@ -248,77 +231,4 @@ func clearLastUpdatedTimestamps(entries ...*Entry) {
 		So(e.LastUpdated, ShouldNotBeZeroValue)
 		e.LastUpdated = time.Time{}
 	}
-}
-
-const testProject = "myproject"
-
-type EntryBuilder struct {
-	entry *Entry
-}
-
-func newEntry(uniqifier int) *EntryBuilder {
-	// Generate a 128-bit chunkID from the uniqifier.
-	// Using a hash function ensures they will be approximately uniformly
-	// distributed through the keyspace.
-	var b [8]byte
-	binary.BigEndian.PutUint64(b[:], uint64(uniqifier))
-	sum := sha256.Sum256(b[:])
-
-	entry := &Entry{
-		Project:       testProject,
-		ChunkID:       hex.EncodeToString(sum[0:16]),
-		PartitionTime: time.Date(2030, 1, 1, 1, 1, 1, uniqifier, time.UTC),
-		ObjectID:      "abcdef1234567890abcdef1234567890",
-		Clustering: clustering.ClusterResults{
-			AlgorithmsVersion: int64(uniqifier + 1),
-			RulesVersion:      time.Date(2025, 1, 1, 1, 1, 1, uniqifier, time.UTC),
-			Algorithms: map[string]struct{}{
-				fmt.Sprintf("alg-%v", uniqifier): {},
-				"alg-extra":                      {},
-			},
-			Clusters: [][]*clustering.ClusterID{
-				{
-					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-						ID:        "00112233445566778899aabbccddeeff",
-					},
-				},
-				{
-					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-						ID:        "00112233445566778899aabbccddeeff",
-					},
-					{
-						Algorithm: fmt.Sprintf("alg-%v", uniqifier),
-						ID:        "22",
-					},
-				},
-			},
-		},
-	}
-	return &EntryBuilder{entry}
-}
-
-func (b *EntryBuilder) withChunkIDPrefix(prefix string) *EntryBuilder {
-	b.entry.ChunkID = prefix + b.entry.ChunkID[len(prefix):]
-	return b
-}
-
-func (b *EntryBuilder) withProject(project string) *EntryBuilder {
-	b.entry.Project = project
-	return b
-}
-
-func (b *EntryBuilder) withAlgorithmVersion(version int64) *EntryBuilder {
-	b.entry.Clustering.AlgorithmsVersion = version
-	return b
-}
-
-func (b *EntryBuilder) withRulesVersion(version time.Time) *EntryBuilder {
-	b.entry.Clustering.RulesVersion = version
-	return b
-}
-
-func (b *EntryBuilder) build() *Entry {
-	return b.entry
 }
