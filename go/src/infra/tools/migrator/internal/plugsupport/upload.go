@@ -46,24 +46,30 @@ func ExecuteUpload(ctx context.Context, projectDir ProjectDir, force bool) (*mig
 			}
 		}()
 
-		// Check if we have any changes in the index or staging area.
-		if !force {
-			if uncommittedDiff := git.read("diff", "HEAD", "--name-only"); uncommittedDiff == "" {
-				var clMD []migrator.ReportOption
-				if cl := git.gerritCL(); cl != "" {
-					clMD = append(clMD, migrator.MetadataOption("CL", cl))
-				}
-				r.report(ctx, "UNCHANGED", "No new changes", clMD...)
-				return
-			}
+		// Examine the current state of the checkout.
+		uncommittedDiff := git.read("diff", "HEAD", "--name-only")
+		localCommit := git.read("rev-list", "--count", "@{u}..HEAD") != "0"
+		remoteCL := git.gerritCL()
+		if git.err != nil {
+			return
+		}
+
+		// Skip completely untouched checkouts.
+		if uncommittedDiff == "" && !localCommit {
+			return
+		}
+
+		// Skip if the change has already been uploaded.
+		if !force && uncommittedDiff == "" && remoteCL != "" {
+			r.report(ctx, "UNCHANGED", "No new changes", migrator.MetadataOption("CL", remoteCL))
+			return
 		}
 
 		// Prepare the local commit or amend the existing one (if any).
 		commitCmd := []string{
 			"commit", "--quiet", "--all", "--no-edit", "--message", message,
 		}
-		amend := git.read("rev-list", "--count", "@{u}..HEAD") != "0"
-		if amend {
+		if localCommit {
 			commitCmd = append(commitCmd, "--amend")
 		}
 		git.run(commitCmd...)
@@ -73,7 +79,10 @@ func ExecuteUpload(ctx context.Context, projectDir ProjectDir, force bool) (*mig
 
 		// Upload it as a CL.
 		uploadArgs := []string{
-			"cl", "upload", "--force", "--bypass-hooks", "--message", message,
+			"cl", "upload",
+			"--force", "--bypass-hooks",
+			"--message", message,
+			"--title", "migrator change",
 		}
 		if len(reviewers) != 0 {
 			uploadArgs = append(uploadArgs, "--reviewers", strings.Join(reviewers.ToSortedSlice(), ","))
@@ -85,12 +94,14 @@ func ExecuteUpload(ctx context.Context, projectDir ProjectDir, force bool) (*mig
 		}
 		git.run(uploadArgs...)
 
-		// We should have a CL link now.
+		// We should have a CL link now for sure.
 		clMD := migrator.MetadataOption("CL", git.gerritCL())
 
-		if amend {
+		if remoteCL != "" {
+			// We already had a CL and it was updated.
 			r.report(ctx, "UPDATED", "Updated the CL", clMD)
 		} else {
+			// We just created a completely new CL.
 			r.report(ctx, "UPLOADED", "Created the CL", clMD)
 		}
 	})
