@@ -1,0 +1,13 @@
+diff -ur pyobjc-core-6.2.2.orig/setup.py pyobjc-core-6.2.2/setup.py
+--- pyobjc-core-6.2.2.orig/setup.py	2020-03-23 04:36:26.000000000 +1100
++++ pyobjc-core-6.2.2/setup.py	2021-11-17 10:32:46.068178487 +1100
+@@ -549,7 +549,7 @@
+         if self.use_system_libffi:
+ 
+             LIBFFI_INCLUDEDIR = (
+-                get_config_var("LIBFFI_INCLUDEDIR") or "/usr/include/ffi"
++                get_config_var("LIBFFI_INCLUDEDIR") or "=/usr/include/ffi"
+             )
+ 
+             try:
+Only in pyobjc-core-6.2.2: setup.py~

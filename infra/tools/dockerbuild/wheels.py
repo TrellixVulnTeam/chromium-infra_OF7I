@@ -2096,7 +2096,11 @@ SPECS.update({
             '6.2.2',
             ([
                 SourceOrPrebuilt(
-                    name, '6.2.2', pyversions=['py3'], packaged=[])
+                    name,
+                    '6.2.2',
+                    pyversions=['py3'],
+                    packaged=[],
+                    patches=('setup',) if name == 'pyobjc-core' else ())
                 for name in ['pyobjc-core'] + [
                     'pyobjc-framework-%s' % (v,) for v in [
                         'libdispatch',
