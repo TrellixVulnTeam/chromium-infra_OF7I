@@ -9,6 +9,7 @@ package osutil
 var crosEcTypeBoards = []string{
 	"amenia",
 	"atlas",
+	"brya",
 	"caroline",
 	"chell",
 	"cherry",
