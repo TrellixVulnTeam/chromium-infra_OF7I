@@ -100,44 +100,68 @@ func TestRunAutoserv(t *testing.T) {
 		t.Fatalf("Failed to write to stdWriter: %q", err)
 	}
 
-	cmdRunner := cmd.FakeCommandRunner{}
-
-	cmdRunner.ExpectedCmd = []string{
-		"docker", "run",
-		"--user", "chromeos-test",
-		"--network", "host",
-		fmt.Sprintf("--mount=source=%s,target=%s,type=bind", resultsDir, resultsDir),
-		fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
-		fmt.Sprintf(
-			"--mount=source=%s,target=%s/host_info_store/host1.store,type=bind",
-			filepath.Join(resultsDir, "host_info_store", "host1.store"),
-			filepath.ToSlash(resultsDir),
-		),
-		fmt.Sprintf("--mount=source=%s,target=%s/host_info_store/host2.store,type=bind",
-			filepath.Join(resultsDir, "host_info_store", "host2.store"),
-			filepath.ToSlash(resultsDir),
-		),
-		fmt.Sprintf(
-			"--mount=source=%s,target=%s/host_info_store/peerdut1.store,type=bind",
-			filepath.Join(resultsDir, "host_info_store", "peerdut1.store"),
-			filepath.ToSlash(resultsDir),
-		),
-		"gcr.io/testproject/testimage@abc",
-		filepath.Join(autotestDir, "server", "autoserv"),
-		"--args", "test args",
-		"-s",
-		"--host-info-subdir", "host_info_store",
-		"-m", "host1,host2",
-		"--lab", "True",
-		"-n",
-		"-ch", "peerdut1",
-		"-r", resultsDir,
-		"--verbose",
-		"--verify_job_repo_url",
-		"-p",
-		"--local-only-host-info", "True",
-		"",
+	cmdRunner := &cmd.FakeCommandRunnerMulti{
+		CommandRunners: []cmd.FakeCommandRunner{
+			{
+				ExpectedCmd: []string{
+					"gcloud", "auth", "activate-service-account",
+					"--key-file=/creds/service_accounts/skylab-drone.json",
+				},
+			},
+			{
+				ExpectedCmd: []string{
+					"gcloud", "auth", "print-access-token",
+				},
+				Stdout: "abc123",
+			},
+			{
+				ExpectedCmd: []string{
+					"docker", "login", "-u", "oauth2accesstoken",
+					"-p", "abc123", "gcr.io/testproject",
+				},
+			},
+			{
+				ExpectedCmd: []string{
+					"docker", "run",
+					"--user", "chromeos-test",
+					"--network", "host",
+					fmt.Sprintf("--mount=source=%s,target=%s,type=bind", resultsDir, resultsDir),
+					fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
+					fmt.Sprintf(
+						"--mount=source=%s,target=%s/host_info_store/host1.store,type=bind",
+						filepath.Join(resultsDir, "host_info_store", "host1.store"),
+						filepath.ToSlash(resultsDir),
+					),
+					fmt.Sprintf("--mount=source=%s,target=%s/host_info_store/host2.store,type=bind",
+						filepath.Join(resultsDir, "host_info_store", "host2.store"),
+						filepath.ToSlash(resultsDir),
+					),
+					fmt.Sprintf(
+						"--mount=source=%s,target=%s/host_info_store/peerdut1.store,type=bind",
+						filepath.Join(resultsDir, "host_info_store", "peerdut1.store"),
+						filepath.ToSlash(resultsDir),
+					),
+					"gcr.io/testproject/testimage@abc",
+					filepath.Join(autotestDir, "server", "autoserv"),
+					"--args", "test args",
+					"-s",
+					"--host-info-subdir", "host_info_store",
+					"-m", "host1,host2",
+					"--lab", "True",
+					"-n",
+					"-ch", "peerdut1",
+					"-r", resultsDir,
+					"--verbose",
+					"--verify_job_repo_url",
+					"-p",
+					"--local-only-host-info", "True",
+					"",
+				},
+			},
+		},
 	}
+
+	cmdRunner.CommandRunners[0].ExpectedCmd = []string{}
 
 	result, err := atutil.RunAutoserv(
 		ctx, m, j, &w, cmdRunner, containerImageInfo,

@@ -6,9 +6,9 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 
@@ -17,14 +17,14 @@ import (
 
 // CommandRunner is the common interface for this module.
 type CommandRunner interface {
-	RunCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, dir, name string, args ...string) error
+	RunCommand(ctx context.Context, stdoutBuf, stderrBuf io.Writer, dir, name string, args ...string) error
 }
 
 // RealCommandRunner actually runs commands.
 type RealCommandRunner struct{}
 
 // RunCommand runs a command.
-func (c RealCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, dir, name string, args ...string) error {
+func (c RealCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf io.Writer, dir, name string, args ...string) error {
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
@@ -46,9 +46,9 @@ type FakeCommandRunner struct {
 }
 
 // RunCommand runs a command (not actually).
-func (c FakeCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, dir, name string, args ...string) error {
-	stdoutBuf.WriteString(c.Stdout)
-	stderrBuf.WriteString(c.Stderr)
+func (c FakeCommandRunner) RunCommand(ctx context.Context, stdoutBuf, stderrBuf io.Writer, dir, name string, args ...string) error {
+	stdoutBuf.Write([]byte(c.Stdout))
+	stderrBuf.Write([]byte(c.Stderr))
 	cmd := append([]string{name}, args...)
 	if len(c.ExpectedCmd) > 0 && len(c.ExpectedCmdPartial) > 0 {
 		return fmt.Errorf("ExpectedCmd and ExpectedCmdPartial cannot both be set")
@@ -81,7 +81,7 @@ type FakeCommandRunnerMulti struct {
 }
 
 // RunCommand runs a command (not actually).
-func (c *FakeCommandRunnerMulti) RunCommand(ctx context.Context, stdoutBuf, stderrBuf *bytes.Buffer, dir, name string, args ...string) error {
+func (c *FakeCommandRunnerMulti) RunCommand(ctx context.Context, stdoutBuf, stderrBuf io.Writer, dir, name string, args ...string) error {
 	if c.run >= len(c.CommandRunners) {
 		return fmt.Errorf("unexpected cmd")
 	}

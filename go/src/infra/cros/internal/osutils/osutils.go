@@ -6,6 +6,7 @@ package osutils
 
 import (
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -114,4 +115,16 @@ func ResolveHomeRelPath(path string) (string, error) {
 		path = filepath.Join(dir, path[2:])
 	}
 	return path, nil
+}
+
+// RecursiveChmod changes the mode of each file and directory rooted at root,
+// including root.
+func RecursiveChmod(root string, mode fs.FileMode) error {
+	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		return os.Chmod(path, mode)
+	})
 }

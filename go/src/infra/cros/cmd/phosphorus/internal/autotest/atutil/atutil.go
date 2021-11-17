@@ -33,6 +33,7 @@ import (
 	"infra/cros/cmd/phosphorus/internal/osutil"
 	"infra/cros/internal/cmd"
 	"infra/cros/internal/docker"
+	"infra/cros/internal/osutils"
 )
 
 const (
@@ -259,6 +260,12 @@ func runTask(ctx context.Context,
 			User:  "chromeos-test",
 		}
 
+		// The container runs as a different user from the host. Just make the
+		// results dir writable by all, to allow the container to write.
+		if err := osutils.RecursiveChmod(a.ResultsDir, os.ModePerm); err != nil {
+			return r, fmt.Errorf("failed calling chmod on results dir (%q): %w", a.ResultsDir, err)
+		}
+
 		mounts := []mount.Mount{
 			{
 				Type:     mount.TypeBind,
@@ -276,6 +283,9 @@ func runTask(ctx context.Context,
 		}
 
 		mounts = append(mounts, sspDeployShadowConfigMounts...)
+		// TODO(b/201431966): host info store files are inside the results dir,
+		// which is already mounted to the container. Remove this redundant
+		// mount if possible.
 		mounts = append(mounts, getHostInfoStoreMounts(ctx, a)...)
 
 		// The results dir on the host is bound to the same path in the
@@ -289,7 +299,7 @@ func runTask(ctx context.Context,
 
 		logging.Infof(ctx, "creating Docker container with command %q", containerConfig.Cmd)
 
-		err = docker.RunContainer(ctx, dockerCmdRunner, containerConfig, hostConfig)
+		err = docker.RunContainer(ctx, dockerCmdRunner, containerConfig, hostConfig, containerImageInfo)
 		if err != nil {
 			var exErr *exec.ExitError
 			if errors.As(err, &exErr) {
