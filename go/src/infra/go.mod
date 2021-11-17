@@ -32,11 +32,13 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
+	github.com/google/go-containerregistry v0.6.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/subcommands v1.2.0
 	github.com/google/uuid v1.3.0
 	github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/klauspost/compress v1.13.5
@@ -54,7 +56,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shirou/gopsutil v2.20.10-0.20201018091616-3202231bcdbd+incompatible
 	github.com/smartystreets/goconvey v1.7.2
-	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d
 	go.chromium.org/chromiumos/config/go v0.0.0-20211012171127-50826c369fec
 	go.chromium.org/chromiumos/infra/proto/go v0.0.0-00010101000000-000000000000
