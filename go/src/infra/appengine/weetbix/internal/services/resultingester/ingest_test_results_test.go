@@ -12,9 +12,11 @@ import (
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cvv0 "go.chromium.org/luci/cv/api/v0"
+	"go.chromium.org/luci/gae/impl/memory"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
@@ -26,6 +28,7 @@ import (
 	"infra/appengine/weetbix/internal/buildbucket"
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
 	"infra/appengine/weetbix/internal/clustering/ingestion"
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
@@ -96,11 +99,31 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 	})
 }
 
+func createProjectsConfig() map[string]*config.ProjectConfig {
+	return map[string]*config.ProjectConfig{
+		"chromium": {
+			Realms: []*config.RealmConfig{
+				{
+					Name: "ci",
+					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
+						UpdateTestVariantTask: &config.UpdateTestVariantTask{
+							UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
+							TestVariantStatusUpdateDuration: durationpb.New(24 * time.Hour),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestIngestTestResults(t *testing.T) {
 	Convey(`TestIngestTestResults`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx = caching.WithEmptyProcessCache(ctx) // For failure association rules cache.
 		ctx, skdr := tq.TestingContext(ctx, nil)
+		ctx = memory.Use(ctx)
+		config.SetTestProjectConfig(ctx, createProjectsConfig())
 		resultcollector.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
 

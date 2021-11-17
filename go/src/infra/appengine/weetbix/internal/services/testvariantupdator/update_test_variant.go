@@ -12,6 +12,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
@@ -21,6 +22,7 @@ import (
 	_ "go.chromium.org/luci/server/tq/txn/spanner"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
+	"infra/appengine/weetbix/internal/config"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/verdicts"
@@ -69,7 +71,7 @@ func RegisterTaskClass() {
 }
 
 // Schedule enqueues a task to update an AnalyzedTestVariant row.
-func Schedule(ctx context.Context, realm, testID, variantHash string, enqTime time.Time) {
+func Schedule(ctx context.Context, realm, testID, variantHash string, delay *durationpb.Duration, enqTime time.Time) {
 	tq.MustAddTask(ctx, &tq.Task{
 		Title: fmt.Sprintf("%s-%s-%s", realm, url.PathEscape(testID), variantHash),
 		Payload: &taskspb.UpdateTestVariant{
@@ -80,8 +82,24 @@ func Schedule(ctx context.Context, realm, testID, variantHash string, enqTime ti
 			},
 			EnqueueTime: pbutil.MustTimestampProto(enqTime),
 		},
-		Delay: time.Hour,
+		Delay: delay.AsDuration(),
 	})
+}
+
+func configs(ctx context.Context, realm string) (*config.UpdateTestVariantTask, error) {
+	rc, err := config.Realm(ctx, realm)
+	switch {
+	case err != nil:
+		return nil, err
+	case rc.GetTestVariantAnalysis().GetUpdateTestVariantTask() == nil:
+		return nil, fmt.Errorf("no UpdateTestVariantTask config found for realm %s", realm)
+	case rc.TestVariantAnalysis.UpdateTestVariantTask.GetUpdateTestVariantTaskInterval() == nil:
+		return nil, fmt.Errorf("no GetUpdateTestVariantTaskInterval config found for realm %s", realm)
+	case rc.TestVariantAnalysis.UpdateTestVariantTask.GetTestVariantStatusUpdateDuration() == nil:
+		return nil, fmt.Errorf("no GetTestVariantStatusUpdateDuration config found for realm %s", realm)
+	default:
+		return rc.TestVariantAnalysis.UpdateTestVariantTask, nil
+	}
 }
 
 // checkTask checks if the task has the same timestamp as the one saved in the
@@ -102,7 +120,11 @@ func checkTask(ctx context.Context, task *taskspb.UpdateTestVariant) (*analyzedt
 }
 
 func updateTestVariant(ctx context.Context, task *taskspb.UpdateTestVariant) error {
-	status, err := verdicts.ComputeTestVariantStatusFromVerdicts(span.Single(ctx), task.TestVariantKey)
+	rc, err := configs(ctx, task.TestVariantKey.Realm)
+	if err != nil {
+		return err
+	}
+	status, err := verdicts.ComputeTestVariantStatusFromVerdicts(span.Single(ctx), task.TestVariantKey, rc.TestVariantStatusUpdateDuration)
 	if err != nil {
 		return err
 	}
@@ -165,7 +187,13 @@ func updateTestVariantStatus(ctx context.Context, task *taskspb.UpdateTestVarian
 
 		// Enqueue the next task.
 		if _, ok := vals["NextUpdateTaskEnqueueTime"]; ok {
-			Schedule(ctx, tvKey.Realm, tvKey.TestId, tvKey.VariantHash, now)
+			rc, err := configs(ctx, tvKey.Realm)
+			switch {
+			case err != nil:
+				return err
+			default:
+				Schedule(ctx, tvKey.Realm, tvKey.TestId, tvKey.VariantHash, rc.UpdateTestVariantTaskInterval, now)
+			}
 		}
 		return nil
 	})

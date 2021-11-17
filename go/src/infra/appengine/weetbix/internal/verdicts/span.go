@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"google.golang.org/api/iterator"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"go.chromium.org/luci/server/span"
 
@@ -18,24 +19,29 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
+func statusCalculationDuration(du *durationpb.Duration) int {
+	return int(du.AsDuration().Hours())
+}
+
 // ComputeTestVariantStatusFromVerdicts computes the test variant's status based
 // on its verdicts within a time range.
 //
 // Currently the time range is the past one day, but should be configurable.
 // TODO(crbug.com/1259374): Use the value in configurations.
-func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.TestVariantKey) (pb.AnalyzedTestVariantStatus, error) {
+func ComputeTestVariantStatusFromVerdicts(ctx context.Context, tvKey *taskspb.TestVariantKey, du *durationpb.Duration) (pb.AnalyzedTestVariantStatus, error) {
 	st := spanner.NewStatement(`
 		SELECT Status
 		FROM Verdicts@{FORCE_INDEX=VerdictsByKeyAndIngestionTime, spanner_emulator.disable_query_null_filtered_index_check=true}
 		WHERE Realm = @realm
 		AND TestId = @testID
 		AND VariantHash = @variantHash
-		AND IngestionTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day)
+		AND IngestionTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @numHours HOUR)
 	`)
 	st.Params = map[string]interface{}{
 		"realm":       tvKey.Realm,
 		"testID":      tvKey.TestId,
 		"variantHash": tvKey.VariantHash,
+		"numHours":    statusCalculationDuration(du),
 	}
 
 	totalCount := 0

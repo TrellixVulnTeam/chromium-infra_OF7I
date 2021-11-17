@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
+	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/resultdb/pbutil"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
@@ -46,7 +49,7 @@ func TestSchedule(t *testing.T) {
 			EnqueueTime: pbutil.MustTimestampProto(now),
 		}
 		_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-			Schedule(ctx, realm, testID, variantHash, now)
+			Schedule(ctx, realm, testID, variantHash, durationpb.New(time.Hour), now)
 			return nil
 		})
 		So(err, ShouldBeNil)
@@ -98,9 +101,29 @@ func TestCheckTask(t *testing.T) {
 	})
 }
 
+func createProjectsConfig() map[string]*config.ProjectConfig {
+	return map[string]*config.ProjectConfig{
+		"chromium": {
+			Realms: []*config.RealmConfig{
+				{
+					Name: "ci",
+					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
+						UpdateTestVariantTask: &config.UpdateTestVariantTask{
+							UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
+							TestVariantStatusUpdateDuration: durationpb.New(24 * time.Hour),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestUpdateTestVariantStatus(t *testing.T) {
 	Convey(`updateTestVariant`, t, func() {
 		ctx, skdr := tq.TestingContext(testutil.SpannerTestContext(t), nil)
+		ctx = memory.Use(ctx)
+		config.SetTestProjectConfig(ctx, createProjectsConfig())
 		realm := "chromium:ci"
 		vh := "varianthash"
 		now := clock.Now(ctx).UTC()

@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -61,8 +62,16 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 		return nil
 	}
 
+	rc, err := config.Realm(ctx, realm)
+	switch {
+	case err != nil:
+		return err
+	case rc.GetTestVariantAnalysis().GetUpdateTestVariantTask().GetUpdateTestVariantTaskInterval() == nil:
+		return fmt.Errorf("no UpdateTestVariantTask config found for realm %s", realm)
+	}
+
 	ks := testVariantKeySet(realm, tvs)
-	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+	_, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		found := make(map[testVariantKey]*pb.AnalyzedTestVariant)
 		err := analyzedtestvariants.ReadStatus(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {
 			k := testVariantKey{atv.TestId, atv.VariantHash}
@@ -131,7 +140,7 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 		}
 		span.BufferWrite(ctx, ms...)
 		for tvKey, enQTime := range tvToEnQTime {
-			testvariantupdator.Schedule(ctx, realm, tvKey.TestId, tvKey.VariantHash, enQTime)
+			testvariantupdator.Schedule(ctx, realm, tvKey.TestId, tvKey.VariantHash, rc.TestVariantAnalysis.UpdateTestVariantTask.UpdateTestVariantTaskInterval, enQTime)
 		}
 		return nil
 	})

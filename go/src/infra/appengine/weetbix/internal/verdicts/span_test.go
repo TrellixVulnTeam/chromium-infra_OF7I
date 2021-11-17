@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/server/span"
@@ -48,7 +49,7 @@ func TestComputeTestVariantStatusFromVerdicts(t *testing.T) {
 				TestId:      tID,
 				VariantHash: vh,
 			}
-			tvStatus, err := ComputeTestVariantStatusFromVerdicts(ctx, tvKey)
+			tvStatus, err := ComputeTestVariantStatusFromVerdicts(ctx, tvKey, durationpb.New(24*time.Hour))
 			So(err, ShouldBeNil)
 			So(tvStatus, ShouldEqual, expStatus)
 		}
