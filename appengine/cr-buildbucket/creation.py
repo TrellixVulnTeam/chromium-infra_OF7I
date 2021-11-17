@@ -141,7 +141,7 @@ class BuildRequest(_BuildRequestBase):
 
   @ndb.tasklet
   def create_build_proto_async(
-      self, build_id, settings, builder_cfg, created_by, exps, now
+      self, build_id, settings, builder_cfg, created_by, exps, exp_reasons, now
   ):
     """Converts the request to a build_pb2.Build.
 
@@ -170,10 +170,6 @@ class BuildRequest(_BuildRequestBase):
       bp.input.gitiles_commit.CopyFrom(sbr.gitiles_commit)
     bp.input.gerrit_changes.extend(sbr.gerrit_changes)
 
-    # update exps to reflect if we're using bbagent or not, regardless of how
-    # bbagent was reflected.
-    exps[experiments.USE_BBAGENT] = bp.exe.cmd and bp.exe.cmd[0] != 'recipes'
-
     bp.input.experimental = exps[experiments.NON_PROD]
     bp.input.experiments.extend(
         exp for exp, enabled in exps.iteritems() if enabled
@@ -183,6 +179,8 @@ class BuildRequest(_BuildRequestBase):
     # Populate infra fields.
     bp.infra.buildbucket.requested_properties.CopyFrom(sbr.properties)
     bp.infra.buildbucket.requested_dimensions.extend(sbr.dimensions)
+
+    bp.infra.buildbucket.experiment_reasons.update(exp_reasons)
 
     bp.infra.logdog.project = bp.builder.project
     bp.infra.logdog.prefix = 'buildbucket/%s/%s' % (
@@ -255,44 +253,54 @@ class BuildRequest(_BuildRequestBase):
         exp = exp_copy
       global_exps.append(exp)
 
+    er = {}
+    reasons = build_pb2.BuildInfra.Buildbucket.ExperimentReason
+    exps = {}
+
     # 1. populate with defaults
-    exps = {str(exp.name): exp.default_value for exp in global_exps}
+    for exp in global_exps:
+      exps[exp.name] = exp.default_value
+      er[exp.name] = reasons.EXPERIMENT_REASON_GLOBAL_DEFAULT
 
     # 2. overwrite with builder config (if present)
     if builder_cfg:
-      exps.update(builder_cfg.experiments)
+      for experiment, chance in builder_cfg.experiments.iteritems():
+        exps[experiment] = chance
+        er[experiment] = reasons.EXPERIMENT_REASON_BUILDER_CONFIG
 
     # 3. overwrite with minimum global experiment values
     for exp in global_exps:
-      exps[str(exp.name)] = max(exps[str(exp.name)], exp.minimum_value)
+      if exps[str(exp.name)] < exp.minimum_value:
+        exps[str(exp.name)] = exp.minimum_value
+        er[str(exp.name)] = reasons.EXPERIMENT_REASON_GLOBAL_MINIMUM
 
     # 4. set implied experiments from deprecated fields (note that Go does this
     #    differently by normalizing `sbr` ahead of time).
     if sbr.canary != common_pb2.UNSET:
       exps[experiments.CANARY] = 100 if sbr.canary == common_pb2.YES else 0
+      er[experiments.CANARY] = reasons.EXPERIMENT_REASON_REQUESTED
 
     if sbr.experimental != common_pb2.UNSET:
       exps[experiments.NON_PROD
           ] = (100 if sbr.experimental == common_pb2.YES else 0)
+      er[experiments.NON_PROD] = reasons.EXPERIMENT_REASON_REQUESTED
 
     # 4.5. explicit requests have highest precedence
     for name, enabled in sbr.experiments.items():
       exps[name] = 100 if enabled else 0
+      er[name] = reasons.EXPERIMENT_REASON_REQUESTED
 
     # 5. remove all inactive global experiments
     for exp_name in ignored_exps:
       if exp_name in exps:
-        # TODO(crbug.com/854099): If this code still exists in python (heaven
-        # help us), add some sort of warning mechanism to builds so this can
-        # show up in Milo.
-        logging.warning("dropping inactive experiment %r", exp_name)
         del exps[exp_name]
+        er[exp_name] = reasons.EXPERIMENT_REASON_GLOBAL_INACTIVE
 
     # Finally, roll the dice and return the computed experiments.
     return {
         exp_name: _should_enable_experiment(pct)
         for exp_name, pct in exps.items()
-    }
+    }, er
 
   @ndb.tasklet
   def create_build_async(
@@ -303,10 +311,10 @@ class BuildRequest(_BuildRequestBase):
     Assumes self is valid.
     """
     sbr = self.schedule_build_request
-    exps = self.compute_experiments(sbr, builder_cfg, settings)
+    exps, exp_reasons = self.compute_experiments(sbr, builder_cfg, settings)
 
     build_proto = yield self.create_build_proto_async(
-        build_id, settings, builder_cfg, created_by, exps, now
+        build_id, settings, builder_cfg, created_by, exps, exp_reasons, now
     )
     build = model.Build(
         id=build_id,

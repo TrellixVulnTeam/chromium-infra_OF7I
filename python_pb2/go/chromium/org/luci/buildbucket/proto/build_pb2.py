@@ -27,11 +27,56 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n2go.chromium.org/luci/buildbucket/proto/build.proto\x12\x0e\x62uildbucket.v2\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a\x31go.chromium.org/luci/buildbucket/proto/step.proto\x1a\x31go.chromium.org/luci/buildbucket/proto/task.proto\x1a\x36go.chromium.org/luci/swarming/proto/api/swarming.proto\"\xa1\n\n\x05\x42uild\x12\n\n\x02id\x18\x01 \x01(\x03\x12*\n\x07\x62uilder\x18\x02 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\x0e\n\x06number\x18\x03 \x01(\x05\x12\x12\n\ncreated_by\x18\x04 \x01(\t\x12\x13\n\x0b\x63\x61nceled_by\x18\x17 \x01(\t\x12/\n\x0b\x63reate_time\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nstart_time\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12,\n\x08\x65nd_time\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12/\n\x0bupdate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12&\n\x06status\x18\x0c \x01(\x0e\x32\x16.buildbucket.v2.Status\x12\x18\n\x10summary_markdown\x18\x14 \x01(\t\x12)\n\x08\x63ritical\x18\x15 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\x35\n\x0estatus_details\x18\x16 \x01(\x0b\x32\x1d.buildbucket.v2.StatusDetails\x12*\n\x05input\x18\x0f \x01(\x0b\x32\x1b.buildbucket.v2.Build.Input\x12,\n\x06output\x18\x10 \x01(\x0b\x32\x1c.buildbucket.v2.Build.Output\x12#\n\x05steps\x18\x11 \x03(\x0b\x32\x14.buildbucket.v2.Step\x12)\n\x05infra\x18\x12 \x01(\x0b\x32\x1a.buildbucket.v2.BuildInfra\x12(\n\x04tags\x18\x13 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12\'\n\x03\x65xe\x18\x18 \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12\x0e\n\x06\x63\x61nary\x18\x19 \x01(\x08\x12\x35\n\x12scheduling_timeout\x18\x1a \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x34\n\x11\x65xecution_timeout\x18\x1b \x01(\x0b\x32\x19.google.protobuf.Duration\x12/\n\x0cgrace_period\x18\x1d \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x19\n\x11wait_for_capacity\x18\x1c \x01(\x08\x1a\xcc\x01\n\x05Input\x12+\n\nproperties\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x02 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x34\n\x0egerrit_changes\x18\x03 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12\x14\n\x0c\x65xperimental\x18\x05 \x01(\x08\x12\x13\n\x0b\x65xperiments\x18\x06 \x03(\t\x1a\x9b\x01\n\x06Output\x12+\n\nproperties\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x03 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12!\n\x04logs\x18\x05 \x03(\x0b\x32\x13.buildbucket.v2.LogJ\x04\x08\x02\x10\x03J\x04\x08\x04\x10\x05J\x04\x08\x05\x10\x06J\x04\x08\r\x10\x0eJ\x04\x08\x0e\x10\x0f\"\xba\x0c\n\nBuildInfra\x12;\n\x0b\x62uildbucket\x18\x01 \x01(\x0b\x32&.buildbucket.v2.BuildInfra.Buildbucket\x12\x35\n\x08swarming\x18\x02 \x01(\x0b\x32#.buildbucket.v2.BuildInfra.Swarming\x12\x31\n\x06logdog\x18\x03 \x01(\x0b\x32!.buildbucket.v2.BuildInfra.LogDog\x12\x31\n\x06recipe\x18\x04 \x01(\x0b\x32!.buildbucket.v2.BuildInfra.Recipe\x12\x35\n\x08resultdb\x18\x05 \x01(\x0b\x32#.buildbucket.v2.BuildInfra.ResultDB\x12\x33\n\x07\x62\x62\x61gent\x18\x06 \x01(\x0b\x32\".buildbucket.v2.BuildInfra.BBAgent\x12\x33\n\x07\x62\x61\x63kend\x18\x07 \x01(\x0b\x32\".buildbucket.v2.BuildInfra.Backend\x1a\xbf\x01\n\x0b\x42uildbucket\x12\x1f\n\x17service_config_revision\x18\x02 \x01(\t\x12\x35\n\x14requested_properties\x18\x05 \x01(\x0b\x32\x17.google.protobuf.Struct\x12@\n\x14requested_dimensions\x18\x06 \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x10\n\x08hostname\x18\x07 \x01(\tJ\x04\x08\x04\x10\x05\x1a\xc7\x03\n\x08Swarming\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x15\n\rparent_run_id\x18\t \x01(\t\x12\x1c\n\x14task_service_account\x18\x03 \x01(\t\x12\x10\n\x08priority\x18\x04 \x01(\x05\x12;\n\x0ftask_dimensions\x18\x05 \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x32\n\x0e\x62ot_dimensions\x18\x06 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12>\n\x06\x63\x61\x63hes\x18\x07 \x03(\x0b\x32..buildbucket.v2.BuildInfra.Swarming.CacheEntry\x12-\n\x0b\x63ontainment\x18\x08 \x01(\x0b\x32\x18.swarming.v1.Containment\x1aq\n\nCacheEntry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12\x36\n\x13wait_for_warm_cache\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x0f\n\x07\x65nv_var\x18\x04 \x01(\t\x1a;\n\x06LogDog\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x0e\n\x06prefix\x18\x03 \x01(\t\x1a,\n\x06Recipe\x12\x14\n\x0c\x63ipd_package\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x1a\x30\n\x08ResultDB\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\ninvocation\x18\x02 \x01(\t\x1a\xaf\x02\n\x07\x42\x42\x41gent\x12\x14\n\x0cpayload_path\x18\x01 \x01(\t\x12\x11\n\tcache_dir\x18\x02 \x01(\t\x12!\n\x19known_public_gerrit_hosts\x18\x03 \x03(\t\x12\x37\n\x05input\x18\x04 \x01(\x0b\x32(.buildbucket.v2.BuildInfra.BBAgent.Input\x1a\x9e\x01\n\x05Input\x12K\n\rcipd_packages\x18\x01 \x03(\x0b\x32\x34.buildbucket.v2.BuildInfra.BBAgent.Input.CIPDPackage\x1aH\n\x0b\x43IPDPackage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07version\x18\x02 \x01(\t\x12\x0c\n\x04host\x18\x03 \x01(\t\x12\x0c\n\x04path\x18\x04 \x01(\t\x1aV\n\x07\x42\x61\x63kend\x12\'\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\"\n\x04task\x18\x02 \x01(\x0b\x32\x14.buildbucket.v2.TaskB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+  serialized_pb=b'\n2go.chromium.org/luci/buildbucket/proto/build.proto\x12\x0e\x62uildbucket.v2\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x34go.chromium.org/luci/buildbucket/proto/builder.proto\x1a\x33go.chromium.org/luci/buildbucket/proto/common.proto\x1a\x31go.chromium.org/luci/buildbucket/proto/step.proto\x1a\x31go.chromium.org/luci/buildbucket/proto/task.proto\x1a\x36go.chromium.org/luci/swarming/proto/api/swarming.proto\"\xa1\n\n\x05\x42uild\x12\n\n\x02id\x18\x01 \x01(\x03\x12*\n\x07\x62uilder\x18\x02 \x01(\x0b\x32\x19.buildbucket.v2.BuilderID\x12\x0e\n\x06number\x18\x03 \x01(\x05\x12\x12\n\ncreated_by\x18\x04 \x01(\t\x12\x13\n\x0b\x63\x61nceled_by\x18\x17 \x01(\t\x12/\n\x0b\x63reate_time\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nstart_time\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12,\n\x08\x65nd_time\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12/\n\x0bupdate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12&\n\x06status\x18\x0c \x01(\x0e\x32\x16.buildbucket.v2.Status\x12\x18\n\x10summary_markdown\x18\x14 \x01(\t\x12)\n\x08\x63ritical\x18\x15 \x01(\x0e\x32\x17.buildbucket.v2.Trinary\x12\x35\n\x0estatus_details\x18\x16 \x01(\x0b\x32\x1d.buildbucket.v2.StatusDetails\x12*\n\x05input\x18\x0f \x01(\x0b\x32\x1b.buildbucket.v2.Build.Input\x12,\n\x06output\x18\x10 \x01(\x0b\x32\x1c.buildbucket.v2.Build.Output\x12#\n\x05steps\x18\x11 \x03(\x0b\x32\x14.buildbucket.v2.Step\x12)\n\x05infra\x18\x12 \x01(\x0b\x32\x1a.buildbucket.v2.BuildInfra\x12(\n\x04tags\x18\x13 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12\'\n\x03\x65xe\x18\x18 \x01(\x0b\x32\x1a.buildbucket.v2.Executable\x12\x0e\n\x06\x63\x61nary\x18\x19 \x01(\x08\x12\x35\n\x12scheduling_timeout\x18\x1a \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x34\n\x11\x65xecution_timeout\x18\x1b \x01(\x0b\x32\x19.google.protobuf.Duration\x12/\n\x0cgrace_period\x18\x1d \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x19\n\x11wait_for_capacity\x18\x1c \x01(\x08\x1a\xcc\x01\n\x05Input\x12+\n\nproperties\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x02 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12\x34\n\x0egerrit_changes\x18\x03 \x03(\x0b\x32\x1c.buildbucket.v2.GerritChange\x12\x14\n\x0c\x65xperimental\x18\x05 \x01(\x08\x12\x13\n\x0b\x65xperiments\x18\x06 \x03(\t\x1a\x9b\x01\n\x06Output\x12+\n\nproperties\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x35\n\x0egitiles_commit\x18\x03 \x01(\x0b\x32\x1d.buildbucket.v2.GitilesCommit\x12!\n\x04logs\x18\x05 \x03(\x0b\x32\x13.buildbucket.v2.LogJ\x04\x08\x02\x10\x03J\x04\x08\x04\x10\x05J\x04\x08\x05\x10\x06J\x04\x08\r\x10\x0eJ\x04\x08\x0e\x10\x0f\"\xf4\x0f\n\nBuildInfra\x12;\n\x0b\x62uildbucket\x18\x01 \x01(\x0b\x32&.buildbucket.v2.BuildInfra.Buildbucket\x12\x35\n\x08swarming\x18\x02 \x01(\x0b\x32#.buildbucket.v2.BuildInfra.Swarming\x12\x31\n\x06logdog\x18\x03 \x01(\x0b\x32!.buildbucket.v2.BuildInfra.LogDog\x12\x31\n\x06recipe\x18\x04 \x01(\x0b\x32!.buildbucket.v2.BuildInfra.Recipe\x12\x35\n\x08resultdb\x18\x05 \x01(\x0b\x32#.buildbucket.v2.BuildInfra.ResultDB\x12\x33\n\x07\x62\x62\x61gent\x18\x06 \x01(\x0b\x32\".buildbucket.v2.BuildInfra.BBAgent\x12\x33\n\x07\x62\x61\x63kend\x18\x07 \x01(\x0b\x32\".buildbucket.v2.BuildInfra.Backend\x1a\xf9\x04\n\x0b\x42uildbucket\x12\x1f\n\x17service_config_revision\x18\x02 \x01(\t\x12\x35\n\x14requested_properties\x18\x05 \x01(\x0b\x32\x17.google.protobuf.Struct\x12@\n\x14requested_dimensions\x18\x06 \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x10\n\x08hostname\x18\x07 \x01(\t\x12Y\n\x12\x65xperiment_reasons\x18\x08 \x03(\x0b\x32=.buildbucket.v2.BuildInfra.Buildbucket.ExperimentReasonsEntry\x1aq\n\x16\x45xperimentReasonsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x46\n\x05value\x18\x02 \x01(\x0e\x32\x37.buildbucket.v2.BuildInfra.Buildbucket.ExperimentReason:\x02\x38\x01\"\xe9\x01\n\x10\x45xperimentReason\x12\x1b\n\x17\x45XPERIMENT_REASON_UNSET\x10\x00\x12$\n EXPERIMENT_REASON_GLOBAL_DEFAULT\x10\x01\x12$\n EXPERIMENT_REASON_BUILDER_CONFIG\x10\x02\x12$\n EXPERIMENT_REASON_GLOBAL_MINIMUM\x10\x03\x12\x1f\n\x1b\x45XPERIMENT_REASON_REQUESTED\x10\x04\x12%\n!EXPERIMENT_REASON_GLOBAL_INACTIVE\x10\x05J\x04\x08\x04\x10\x05\x1a\xc7\x03\n\x08Swarming\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x15\n\rparent_run_id\x18\t \x01(\t\x12\x1c\n\x14task_service_account\x18\x03 \x01(\t\x12\x10\n\x08priority\x18\x04 \x01(\x05\x12;\n\x0ftask_dimensions\x18\x05 \x03(\x0b\x32\".buildbucket.v2.RequestedDimension\x12\x32\n\x0e\x62ot_dimensions\x18\x06 \x03(\x0b\x32\x1a.buildbucket.v2.StringPair\x12>\n\x06\x63\x61\x63hes\x18\x07 \x03(\x0b\x32..buildbucket.v2.BuildInfra.Swarming.CacheEntry\x12-\n\x0b\x63ontainment\x18\x08 \x01(\x0b\x32\x18.swarming.v1.Containment\x1aq\n\nCacheEntry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12\x36\n\x13wait_for_warm_cache\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x0f\n\x07\x65nv_var\x18\x04 \x01(\t\x1a;\n\x06LogDog\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0f\n\x07project\x18\x02 \x01(\t\x12\x0e\n\x06prefix\x18\x03 \x01(\t\x1a,\n\x06Recipe\x12\x14\n\x0c\x63ipd_package\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x1a\x30\n\x08ResultDB\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\ninvocation\x18\x02 \x01(\t\x1a\xaf\x02\n\x07\x42\x42\x41gent\x12\x14\n\x0cpayload_path\x18\x01 \x01(\t\x12\x11\n\tcache_dir\x18\x02 \x01(\t\x12!\n\x19known_public_gerrit_hosts\x18\x03 \x03(\t\x12\x37\n\x05input\x18\x04 \x01(\x0b\x32(.buildbucket.v2.BuildInfra.BBAgent.Input\x1a\x9e\x01\n\x05Input\x12K\n\rcipd_packages\x18\x01 \x03(\x0b\x32\x34.buildbucket.v2.BuildInfra.BBAgent.Input.CIPDPackage\x1aH\n\x0b\x43IPDPackage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07version\x18\x02 \x01(\t\x12\x0c\n\x04host\x18\x03 \x01(\t\x12\x0c\n\x04path\x18\x04 \x01(\t\x1aV\n\x07\x42\x61\x63kend\x12\'\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\"\n\x04task\x18\x02 \x01(\x0b\x32\x14.buildbucket.v2.TaskB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_builder__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_step__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_task__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_swarming_dot_proto_dot_api_dot_swarming__pb2.DESCRIPTOR,])
 
 
+
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASON = _descriptor.EnumDescriptor(
+  name='ExperimentReason',
+  full_name='buildbucket.v2.BuildInfra.Buildbucket.ExperimentReason',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_UNSET', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_GLOBAL_DEFAULT', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_BUILDER_CONFIG', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_GLOBAL_MINIMUM', index=3, number=3,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_REQUESTED', index=4, number=4,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='EXPERIMENT_REASON_GLOBAL_INACTIVE', index=5, number=5,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=2535,
+  serialized_end=2768,
+)
+_sym_db.RegisterEnumDescriptor(_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASON)
 
 
 _BUILD_INPUT = _descriptor.Descriptor(
@@ -331,6 +376,44 @@ _BUILD = _descriptor.Descriptor(
 )
 
 
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY = _descriptor.Descriptor(
+  name='ExperimentReasonsEntry',
+  full_name='buildbucket.v2.BuildInfra.Buildbucket.ExperimentReasonsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='buildbucket.v2.BuildInfra.Buildbucket.ExperimentReasonsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='buildbucket.v2.BuildInfra.Buildbucket.ExperimentReasonsEntry.value', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2419,
+  serialized_end=2532,
+)
+
 _BUILDINFRA_BUILDBUCKET = _descriptor.Descriptor(
   name='Buildbucket',
   full_name='buildbucket.v2.BuildInfra.Buildbucket',
@@ -367,11 +450,19 @@ _BUILDINFRA_BUILDBUCKET = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='experiment_reasons', full_name='buildbucket.v2.BuildInfra.Buildbucket.experiment_reasons', index=4,
+      number=8, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY, ],
   enum_types=[
+    _BUILDINFRA_BUILDBUCKET_EXPERIMENTREASON,
   ],
   serialized_options=None,
   is_extendable=False,
@@ -380,7 +471,7 @@ _BUILDINFRA_BUILDBUCKET = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=2141,
-  serialized_end=2332,
+  serialized_end=2774,
 )
 
 _BUILDINFRA_SWARMING_CACHEENTRY = _descriptor.Descriptor(
@@ -431,8 +522,8 @@ _BUILDINFRA_SWARMING_CACHEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2677,
-  serialized_end=2790,
+  serialized_start=3119,
+  serialized_end=3232,
 )
 
 _BUILDINFRA_SWARMING = _descriptor.Descriptor(
@@ -518,8 +609,8 @@ _BUILDINFRA_SWARMING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2335,
-  serialized_end=2790,
+  serialized_start=2777,
+  serialized_end=3232,
 )
 
 _BUILDINFRA_LOGDOG = _descriptor.Descriptor(
@@ -563,8 +654,8 @@ _BUILDINFRA_LOGDOG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2792,
-  serialized_end=2851,
+  serialized_start=3234,
+  serialized_end=3293,
 )
 
 _BUILDINFRA_RECIPE = _descriptor.Descriptor(
@@ -601,8 +692,8 @@ _BUILDINFRA_RECIPE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2853,
-  serialized_end=2897,
+  serialized_start=3295,
+  serialized_end=3339,
 )
 
 _BUILDINFRA_RESULTDB = _descriptor.Descriptor(
@@ -639,8 +730,8 @@ _BUILDINFRA_RESULTDB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2899,
-  serialized_end=2947,
+  serialized_start=3341,
+  serialized_end=3389,
 )
 
 _BUILDINFRA_BBAGENT_INPUT_CIPDPACKAGE = _descriptor.Descriptor(
@@ -691,8 +782,8 @@ _BUILDINFRA_BBAGENT_INPUT_CIPDPACKAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3181,
-  serialized_end=3253,
+  serialized_start=3623,
+  serialized_end=3695,
 )
 
 _BUILDINFRA_BBAGENT_INPUT = _descriptor.Descriptor(
@@ -722,8 +813,8 @@ _BUILDINFRA_BBAGENT_INPUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3095,
-  serialized_end=3253,
+  serialized_start=3537,
+  serialized_end=3695,
 )
 
 _BUILDINFRA_BBAGENT = _descriptor.Descriptor(
@@ -774,8 +865,8 @@ _BUILDINFRA_BBAGENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2950,
-  serialized_end=3253,
+  serialized_start=3392,
+  serialized_end=3695,
 )
 
 _BUILDINFRA_BACKEND = _descriptor.Descriptor(
@@ -812,8 +903,8 @@ _BUILDINFRA_BACKEND = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3255,
-  serialized_end=3341,
+  serialized_start=3697,
+  serialized_end=3783,
 )
 
 _BUILDINFRA = _descriptor.Descriptor(
@@ -886,7 +977,7 @@ _BUILDINFRA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1747,
-  serialized_end=3341,
+  serialized_end=3783,
 )
 
 _BUILD_INPUT.fields_by_name['properties'].message_type = google_dot_protobuf_dot_struct__pb2._STRUCT
@@ -914,9 +1005,13 @@ _BUILD.fields_by_name['exe'].message_type = go_dot_chromium_dot_org_dot_luci_dot
 _BUILD.fields_by_name['scheduling_timeout'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _BUILD.fields_by_name['execution_timeout'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _BUILD.fields_by_name['grace_period'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY.fields_by_name['value'].enum_type = _BUILDINFRA_BUILDBUCKET_EXPERIMENTREASON
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY.containing_type = _BUILDINFRA_BUILDBUCKET
 _BUILDINFRA_BUILDBUCKET.fields_by_name['requested_properties'].message_type = google_dot_protobuf_dot_struct__pb2._STRUCT
 _BUILDINFRA_BUILDBUCKET.fields_by_name['requested_dimensions'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2._REQUESTEDDIMENSION
+_BUILDINFRA_BUILDBUCKET.fields_by_name['experiment_reasons'].message_type = _BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY
 _BUILDINFRA_BUILDBUCKET.containing_type = _BUILDINFRA
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASON.containing_type = _BUILDINFRA_BUILDBUCKET
 _BUILDINFRA_SWARMING_CACHEENTRY.fields_by_name['wait_for_warm_cache'].message_type = google_dot_protobuf_dot_duration__pb2._DURATION
 _BUILDINFRA_SWARMING_CACHEENTRY.containing_type = _BUILDINFRA_SWARMING
 _BUILDINFRA_SWARMING.fields_by_name['task_dimensions'].message_type = go_dot_chromium_dot_org_dot_luci_dot_buildbucket_dot_proto_dot_common__pb2._REQUESTEDDIMENSION
@@ -972,6 +1067,13 @@ _sym_db.RegisterMessage(Build.Output)
 BuildInfra = _reflection.GeneratedProtocolMessageType('BuildInfra', (_message.Message,), {
 
   'Buildbucket' : _reflection.GeneratedProtocolMessageType('Buildbucket', (_message.Message,), {
+
+    'ExperimentReasonsEntry' : _reflection.GeneratedProtocolMessageType('ExperimentReasonsEntry', (_message.Message,), {
+      'DESCRIPTOR' : _BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY,
+      '__module__' : 'go.chromium.org.luci.buildbucket.proto.build_pb2'
+      # @@protoc_insertion_point(class_scope:buildbucket.v2.BuildInfra.Buildbucket.ExperimentReasonsEntry)
+      })
+    ,
     'DESCRIPTOR' : _BUILDINFRA_BUILDBUCKET,
     '__module__' : 'go.chromium.org.luci.buildbucket.proto.build_pb2'
     # @@protoc_insertion_point(class_scope:buildbucket.v2.BuildInfra.Buildbucket)
@@ -1046,6 +1148,7 @@ BuildInfra = _reflection.GeneratedProtocolMessageType('BuildInfra', (_message.Me
   })
 _sym_db.RegisterMessage(BuildInfra)
 _sym_db.RegisterMessage(BuildInfra.Buildbucket)
+_sym_db.RegisterMessage(BuildInfra.Buildbucket.ExperimentReasonsEntry)
 _sym_db.RegisterMessage(BuildInfra.Swarming)
 _sym_db.RegisterMessage(BuildInfra.Swarming.CacheEntry)
 _sym_db.RegisterMessage(BuildInfra.LogDog)
@@ -1058,4 +1161,5 @@ _sym_db.RegisterMessage(BuildInfra.Backend)
 
 
 DESCRIPTOR._options = None
+_BUILDINFRA_BUILDBUCKET_EXPERIMENTREASONSENTRY._options = None
 # @@protoc_insertion_point(module_scope)

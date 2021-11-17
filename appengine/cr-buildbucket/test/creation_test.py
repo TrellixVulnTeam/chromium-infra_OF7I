@@ -187,6 +187,8 @@ class CreationTest(testing.AppengineTestCase):
 
     self.patch('search.TagIndex.random_shard_index', return_value=0)
 
+    self.reasons = build_pb2.BuildInfra.Buildbucket.ExperimentReason
+
   @contextlib.contextmanager
   def mutate_builder_cfg(self):
     mutable = self.chromium_try.swarming.builders[0]
@@ -205,6 +207,14 @@ class CreationTest(testing.AppengineTestCase):
   def add(self, *args, **kwargs):
     br = self.build_request(*args, **kwargs)
     return creation.add_async(br).get_result()
+
+  @staticmethod
+  def populate_proto(build):
+    """populates the `build.proto` field with the full proto"""
+    pb = build_pb2.Build()
+    model.builds_to_protos_async([(build, pb)], True, True, True, True,
+                                 True).get_result()
+    build.proto = pb
 
   def test_add(self):
     builder_id = builder_pb2.BuilderID(
@@ -230,10 +240,6 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.builder.bucket, 'try')
     self.assertEqual(build.proto.builder.builder, 'linux')
     self.assertEqual(build.created_by, auth.get_current_identity())
-
-    self.assertEqual(
-        build.proto.input.experiments, [u'luci.buildbucket.use_bbagent']
-    )
 
     infra = model.BuildInfra.key_for(build.key).get().parse()
     self.assertEqual(infra.logdog.hostname, 'logs.example.com')
@@ -283,7 +289,6 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['luciexe', '-custom', '-flags'])
-    self.assertIn(experiments.USE_BBAGENT, build.proto.input.experiments)
 
     in_props = model.BuildInputProperties.key_for(build.key).get()
     actual = in_props.parse()
@@ -423,6 +428,11 @@ class CreationTest(testing.AppengineTestCase):
             '-' + experiments.USE_BBAGENT,
         ]
     )
+    self.populate_proto(build)
+    self.assertEqual(
+        build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
+        self.reasons.EXPERIMENT_REASON_BUILDER_CONFIG,
+    )
 
   def test_schedule_build_request_experiments(self):
     builder_id = builder_pb2.BuilderID(
@@ -445,6 +455,11 @@ class CreationTest(testing.AppengineTestCase):
             '-' + experiments.CANARY,
             '-' + experiments.USE_BBAGENT,
         ]
+    )
+    self.populate_proto(build)
+    self.assertEqual(
+        build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
+        self.reasons.EXPERIMENT_REASON_REQUESTED,
     )
 
   def test_schedule_ignored_experiments(self):
@@ -483,6 +498,54 @@ class CreationTest(testing.AppengineTestCase):
             '-' + experiments.USE_BBAGENT,
             '-unrelated.experiment',
         ]
+    )
+    self.populate_proto(build)
+    self.assertEqual(
+        build.proto.infra.buildbucket.experiment_reasons['luci.use_realms'],
+        self.reasons.EXPERIMENT_REASON_GLOBAL_INACTIVE,
+    )
+
+  def test_schedule_global_experiments(self):
+    exp = self.settings.experiment.experiments.add()
+    exp.name = "luci.global"
+    exp.default_value = 100
+
+    exp = self.settings.experiment.experiments.add()
+    exp.name = "luci.global_min"
+    exp.minimum_value = 100
+
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='mac_exp',
+    )
+    build = self.add({
+        'builder': builder_id, 'experiments': {'unrelated.experiment': False,}
+    })
+    self.assertEqual(
+        build.proto.input.experiments, [
+            'luci.global',
+            'luci.global_min',
+        ]
+    )
+    self.assertEqual(
+        build.experiments, [
+            '+luci.global',
+            '+luci.global_min',
+            '-chromium.exp_foo',
+            '-' + experiments.CANARY,
+            '-' + experiments.USE_BBAGENT,
+            '-unrelated.experiment',
+        ]
+    )
+    self.populate_proto(build)
+    self.assertEqual(
+        build.proto.infra.buildbucket.experiment_reasons['luci.global'],
+        self.reasons.EXPERIMENT_REASON_GLOBAL_DEFAULT,
+    )
+    self.assertEqual(
+        build.proto.infra.buildbucket.experiment_reasons['luci.global_min'],
+        self.reasons.EXPERIMENT_REASON_GLOBAL_MINIMUM,
     )
 
   def test_configured_caches(self):
