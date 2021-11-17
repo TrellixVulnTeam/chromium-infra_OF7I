@@ -6,7 +6,11 @@ package state
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"math"
+	"math/big"
+	"strings"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -17,7 +21,6 @@ import (
 	"cloud.google.com/go/spanner"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/span"
-	"google.golang.org/grpc/codes"
 )
 
 // Entry represents the clustering state of a chunk, consisting of:
@@ -45,6 +48,9 @@ type Entry struct {
 
 // NotFound is the error returned by Read if the row could not be found.
 var NotFound = errors.New("clustering state row not found")
+
+// EndOfTable is the highest possible chunk ID that can be stored.
+var EndOfTable = strings.Repeat("ff", 16)
 
 // Create inserts clustering state for a chunk. Must be
 // called in the context of a Spanner transaction.
@@ -74,34 +80,178 @@ func Create(ctx context.Context, e *Entry) error {
 // called in the context of a Spanner transaction. If no clustering
 // state exists, the method returns the error NotFound.
 func Read(ctx context.Context, project, chunkID string) (*Entry, error) {
-	columns := []string{
-		"Project", "ChunkId", "PartitionTime",
-		"ObjectId", "AlgorithmsVersion", "RulesVersion",
-		"Clusters", "LastUpdated",
-	}
-	row, err := span.ReadRow(ctx, "ClusteringState", spanner.Key{project, chunkID}, columns)
+	whereClause := "ChunkID = @chunkID"
+	params := make(map[string]interface{})
+	params["chunkID"] = chunkID
+
+	limit := 1
+	results, err := readWhere(ctx, project, whereClause, params, limit)
 	if err != nil {
-		if spanner.ErrCode(err) == codes.NotFound {
-			// Row does not exist.
-			return nil, NotFound
-		}
 		return nil, err
 	}
+	if len(results) == 0 {
+		// Row does not exist.
+		return nil, NotFound
+	}
+	return results[0], nil
+}
+
+// ReadNextOptions specifies options for ReadNextN.
+type ReadNextOptions struct {
+	// The exclusive lower bound of the range of ChunkIDs to read.
+	// To read from the start of the table, leave this blank ("").
+	StartChunkID string
+	// The inclusive upper bound of the range of ChunkIDs to read.
+	// To specify the end of the table, use the constant EndOfTable.
+	EndChunkID string
+	// The minimum AlgorithmsVersion that re-clustering wants to achieve.
+	// If a row has an AlgorithmsVersion less than this value, it will
+	// be eligble to be read.
+	AlgorithmsVersion int64
+	// The minimum RulesVersion that re-clustering wants to achieve.
+	// If a row has an RulesVersion less than this value, it will
+	// be eligble to be read.
+	RulesVersion time.Time
+}
+
+// ReadNextN reads the n consecutively next clustering state entries
+// matching ReadNextOptions.
+func ReadNextN(ctx context.Context, project string, opts ReadNextOptions, n int) ([]*Entry, error) {
+	params := make(map[string]interface{})
+	whereClause := `
+		ChunkId > @startChunkID AND ChunkId <= @endChunkID
+		AND (AlgorithmsVersion < @algorithmsVersion OR RulesVersion < @rulesVersion)
+	`
+	params["startChunkID"] = opts.StartChunkID
+	params["endChunkID"] = opts.EndChunkID
+	params["algorithmsVersion"] = opts.AlgorithmsVersion
+	params["rulesVersion"] = opts.RulesVersion
+
+	return readWhere(ctx, project, whereClause, params, n)
+}
+
+func readWhere(ctx context.Context, project, whereClause string, params map[string]interface{}, limit int) ([]*Entry, error) {
+	stmt := spanner.NewStatement(`
+		SELECT
+		  ChunkId, PartitionTime, ObjectId,
+		  AlgorithmsVersion, RulesVersion,
+		  LastUpdated, Clusters
+		FROM ClusteringState
+		WHERE Project = @project AND (` + whereClause + `)
+		ORDER BY ChunkId
+		LIMIT @limit
+	`)
+	for k, v := range params {
+		stmt.Params[k] = v
+	}
+	stmt.Params["project"] = project
+	stmt.Params["limit"] = limit
+
+	it := span.Query(ctx, stmt)
 	var b spanutil.Buffer
-	result := &Entry{}
-	clusters := &cpb.ChunkClusters{}
-	err = b.FromSpanner(row,
-		&result.Project, &result.ChunkID, &result.PartitionTime,
-		&result.ObjectID, &result.Clustering.AlgorithmsVersion, &result.Clustering.RulesVersion,
-		clusters, &result.LastUpdated)
+	results := []*Entry{}
+	err := it.Do(func(r *spanner.Row) error {
+		clusters := &cpb.ChunkClusters{}
+		result := &Entry{Project: project}
+
+		err := b.FromSpanner(r,
+			&result.ChunkID, &result.PartitionTime, &result.ObjectID,
+			&result.Clustering.AlgorithmsVersion, &result.Clustering.RulesVersion,
+			&result.LastUpdated, clusters)
+		if err != nil {
+			return errors.Annotate(err, "read clustering state row").Err()
+		}
+		result.Clustering.Algorithms, result.Clustering.Clusters, err = decodeClusters(clusters)
+		if err != nil {
+			return errors.Annotate(err, "decode clusters").Err()
+		}
+		results = append(results, result)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	result.Clustering.Algorithms, result.Clustering.Clusters, err = decodeClusters(clusters)
+	return results, nil
+}
+
+// EstimateChunks estimates the total number of chunks in the ClusteringState
+// table for the given project.
+func EstimateChunks(ctx context.Context, project string) (int, error) {
+	stmt := spanner.NewStatement(`
+	  SELECT ChunkId
+	  FROM ClusteringState
+	  WHERE Project = @project
+	  ORDER BY ChunkId ASC
+	  LIMIT 1 OFFSET 100
+	`)
+	stmt.Params["project"] = project
+
+	it := span.Query(ctx, stmt)
+	var chunkID string
+	err := it.Do(func(r *spanner.Row) error {
+		if err := r.Columns(&chunkID); err != nil {
+			return errors.Annotate(err, "read ChunkID row").Err()
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return result, nil
+	if chunkID == "" {
+		// There was no 100th chunk ID. There must be less
+		// than 100 chunks in the project.
+		return 99, nil
+	}
+	return estimateChunksFromID(chunkID)
+}
+
+// estimateChunksFromID estimates the number of chunks in a project
+// given the ID of the 100th chunk (in ascending keyspace order) in
+// that project. The maximum estimate that will be returned is one
+// billion. If there is no 100th chunk ID in the project, then
+// there are clearly 99 chunks or less in the project.
+func estimateChunksFromID(chunkID100 string) (int, error) {
+	const MaxEstimate = 1000 * 1000 * 1000
+	// This function uses the property that ChunkIDs are approximately
+	// uniformly distributed. We use the following estimator of the
+	// number of rows:
+	//   100 / (fraction of keyspace used up to 100th row)
+	// where fraction of keyspace used up to 100th row is:
+	//   (ChunkID_100th + 1) / 2^128
+	//
+	// Where ChunkID_100th is the ChunkID of the 100th row (in keyspace
+	// order), as a 128-bit integer (rather than hexadecimal string).
+	//
+	// Rearranging this estimator, we get:
+	//   100 * 2^128 / (ChunkID_100th + 1)
+
+	// numerator = 100 * 2 ^ 128
+	var numerator big.Int
+	numerator.Lsh(big.NewInt(100), 128)
+
+	idBytes, err := hex.DecodeString(chunkID100)
+	if err != nil {
+		return 0, err
+	}
+
+	// denominator = ChunkID_100th + 1. We add one because
+	// the keyspace consumed includes the ID itself.
+	var denominator big.Int
+	denominator.SetBytes(idBytes)
+	denominator.Add(&denominator, big.NewInt(1))
+
+	// estimate = numerator / denominator.
+	var estimate big.Int
+	estimate.Div(&numerator, &denominator)
+
+	result := uint64(math.MaxUint64)
+	if estimate.IsUint64() {
+		result = estimate.Uint64()
+	}
+	if result > MaxEstimate {
+		result = MaxEstimate
+	}
+	return int(result), nil
 }
 
 func validateEntry(e *Entry) error {

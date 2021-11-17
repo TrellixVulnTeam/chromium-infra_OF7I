@@ -128,12 +128,12 @@ func fakeLastRow(projectID string) *ReclusteringRun {
 // substituting params for any SQL parameters used in that clause.
 func readLastWhere(ctx context.Context, projectID string, whereClause string, params map[string]interface{}) (*ReclusteringRun, error) {
 	stmt := spanner.NewStatement(`
-		SELECT Project,
+		SELECT
 		  AttemptTimestamp, RulesVersion,
 		  AlgorithmsVersion, ShardCount, ShardsReported, Progress
 		FROM ReclusteringRuns
 		WHERE Project = @projectID AND (` + whereClause + `)
-		ORDER BY Project, AttemptTimestamp DESC
+		ORDER BY AttemptTimestamp DESC
 		LIMIT 1
 	`)
 	for k, v := range params {
@@ -144,11 +144,9 @@ func readLastWhere(ctx context.Context, projectID string, whereClause string, pa
 	it := span.Query(ctx, stmt)
 	rs := []*ReclusteringRun{}
 	err := it.Do(func(r *spanner.Row) error {
-		var project string
 		var attemptTimestamp, rulesVersion time.Time
 		var algorithmsVersion, shardCount, shardsReported, progress int64
 		err := r.Columns(
-			&project,
 			&attemptTimestamp, &rulesVersion,
 			&algorithmsVersion, &shardCount, &shardsReported, &progress,
 		)
