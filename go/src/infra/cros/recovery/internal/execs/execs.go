@@ -63,7 +63,23 @@ type RunArgs struct {
 	EnableRecovery bool
 }
 
-// CloserFunc is a function that updates an action and is safe to use in a defer block.
+// CloserFunc is a function that updates an action and is NOT safe to use in a defer block WITHOUT CHECKING FOR NIL.
+// The following ways of using a CloserFunc are both correct.
+//
+// `ctx` and `err` are bound by the surrounding context.
+//
+//   action, closer := someFunction(...)
+//   if closer != nil {
+//     defer closer(ctx, err)
+//   }
+//
+//   action, closer := someFunction(...)
+//   defer func() {
+//     if closer != nil {
+//       defer closer(ctx, err)
+//     }
+//   }()
+//
 type CloserFunc = func(context.Context, error)
 
 // NewMetric creates a new metric. Neither the action nor the closer function that NewMetrics returns will
