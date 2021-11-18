@@ -52,19 +52,36 @@ func main() {
 	} else {
 		build.Main(input, &writeOutputProps, &mergeOutputProps,
 			func(ctx context.Context, args []string, state *build.State) error {
-				// TODO(b:202156419) Remove these. We need information on where stdout and stderr drain to.
-				fmt.Fprintf(os.Stdout, "STDOUT PROBE: 85ff0ccd-ceeb-48ce-9826-2f34b9e40b8c\n")
-				fmt.Fprintf(os.Stderr, "STDERR PROBE: 1428a8bf-57fe-4f17-812c-c0dbdf97dcb3\n")
+				// Wrap all experimental code in an `if true { ... }` block to make it easier to identify and remove.
+
+				if true {
+					// TODO(b:202156419) Remove these. We need information on where stdout and stderr drain to.
+					fmt.Fprintf(os.Stdout, "STDOUT PROBE: 85ff0ccd-ceeb-48ce-9826-2f34b9e40b8c\n")
+					fmt.Fprintf(os.Stderr, "STDERR PROBE: 1428a8bf-57fe-4f17-812c-c0dbdf97dcb3\n")
+				}
 
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
-				// Use the annotation "Labpack" to make diagnostic output from labpack specifically
-				// easier to recognize in swarming output.
-				log.Printf("[Labpack] Input args: %v", input)
-				// Log the args.
-				log.Printf("[Labpack] Positional args: %v", args)
-				// Log the build state.
-				log.Printf("[Labpack] Build state: %v", state)
+
+				if true {
+					// Set the log (via the Go standard library's log package) to Stderr, since we know that stderr is collected
+					// for the process as a whole. This will also indirectly influence lg.
+					log.SetOutput(os.Stderr)
+					lg.Debug("DEBUG STDERR PROBE: 64d21592-aff1-41fe-a22d-289348b9495c\n")
+					lg.Info("INFO STDERR PROBE: b89fcc60-884f-419e-a271-62e52d985937\n")
+					lg.Warning("WARNING STDERR PROBE: a17e622a-00bf-4841-94b3-3083d5cb5538\n")
+					lg.Error("ERROR STDERR PROBE: fc4d46eb-98b5-4660-b0bf-201877052c17\n")
+				}
+
+				if true {
+					// Use the annotation "Labpack" to make diagnostic output from labpack specifically
+					// easier to recognize in swarming output.
+					log.Printf("[Labpack] Input args: %v", input)
+					// Log the args.
+					log.Printf("[Labpack] Positional args: %v", args)
+					// Log the build state.
+					log.Printf("[Labpack] Build state: %v", state)
+				}
 				res := &steps.LabpackResponse{Success: true}
 				err := internalRun(ctx, input, state, lg)
 				if err != nil {
