@@ -1,4 +1,10 @@
 {
+  "//:run_torque": {
+    "args": [
+    ],
+    "sources": ["//test.tq"],
+    "outputs": ["//out/Debug/gen/test.tq.h"]
+  },
   "//:test_mojom__generator": {
     "args": [
       "--use_bundled_pylibs",

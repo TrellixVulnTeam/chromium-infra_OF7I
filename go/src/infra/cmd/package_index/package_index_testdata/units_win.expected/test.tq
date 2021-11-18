@@ -1,0 +1,17 @@
+unit {
+    v_name {
+        corpus: "chromium-test"
+        language: "torque"
+    }
+    source_file: "../../test.tq"
+    required_input {
+        v_name {
+            corpus: "chromium-test"
+            path: "src/test.tq"
+        }
+        info {
+            path: "../../test.tq"
+            digest: "37ccf3a455f141c9c0264501ff6c99235b225755c32658fa6059709bd663e8f2"
+        }
+    }
+}

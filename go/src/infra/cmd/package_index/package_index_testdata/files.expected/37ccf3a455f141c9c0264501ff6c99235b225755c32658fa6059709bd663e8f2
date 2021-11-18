@@ -1,0 +1,20 @@
+#include 'test.h'
+
+type atype;
+
+type MyType generates 'TNode<MyType>' constexpr 'MyType';
+
+type Anything = atype | MyType;
+
+extern macro ProcessMyType(MyType): atype;
+
+macro Process(obj: Anything): atype {
+    typeswitch(obj) {
+        case (x: MyType): {
+            return ProcessMyType(x);
+        }
+        case (x: atype): {
+            return x;
+        }
+    }
+}

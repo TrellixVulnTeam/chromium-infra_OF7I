@@ -67,8 +67,9 @@ type GnTargets struct {
 // NewGnTargets returns a GnTargets struct based on JSON file gnTargetsPath.
 func NewGnTargets(gnTargetsPath string) *GnTargets {
 	gn := &GnTargets{
-		filePath:   gnTargetsPath,
-		processors: []processor{protoTargetProcessor, mojomTargetProcessor},
+		filePath: gnTargetsPath,
+		processors: []processor{protoTargetProcessor, mojomTargetProcessor,
+			torqueTargetProcessor},
 	}
 	return gn
 }

@@ -100,9 +100,13 @@ func main() {
 	// Process existing kzips.
 	existingKzipChannel := make(chan string, chanSize)
 	go func() {
-		err := ip.mergeExistingKzips(existingKzipChannel)
-		if err != nil {
-			panic(err)
+		if ip.existingJavaKzipsPath != "" {
+			err := ip.mergeExistingKzips(existingKzipChannel)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			close(existingKzipChannel)
 		}
 	}()
 
