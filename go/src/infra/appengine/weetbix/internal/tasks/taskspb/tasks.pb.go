@@ -517,6 +517,87 @@ func (x *ExportTestVariants) GetTimeRange() *v11.TimeRange {
 	return nil
 }
 
+// Payload of the ReclusterChunks task.
+type ReclusterChunks struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The LUCI Project containing test results to be re-clustered.
+	Project string `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
+	// The attempt time for which this task is. This should be cross-referenced
+	// with the ReclusteringRuns table to identify the reclustering parameters.
+	// This is also the soft deadline for the task.
+	AttemptTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=attempt_time,json=attemptTime,proto3" json:"attempt_time,omitempty"`
+	// The exclusive lower bound defining the range of ChunkIds to
+	// be re-clustered. To define the table start, use the empty string ("").
+	StartChunkId string `protobuf:"bytes,3,opt,name=start_chunk_id,json=startChunkId,proto3" json:"start_chunk_id,omitempty"`
+	// The inclusive upper bound defining the range of ChunkIds to
+	// be re-clustered. To define the table end use "ff" x 16, i.e.
+	// "ffffffffffffffffffffffffffffffff".
+	EndChunkId string `protobuf:"bytes,4,opt,name=end_chunk_id,json=endChunkId,proto3" json:"end_chunk_id,omitempty"`
+}
+
+func (x *ReclusterChunks) Reset() {
+	*x = ReclusterChunks{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReclusterChunks) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReclusterChunks) ProtoMessage() {}
+
+func (x *ReclusterChunks) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReclusterChunks.ProtoReflect.Descriptor instead.
+func (*ReclusterChunks) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ReclusterChunks) GetProject() string {
+	if x != nil {
+		return x.Project
+	}
+	return ""
+}
+
+func (x *ReclusterChunks) GetAttemptTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AttemptTime
+	}
+	return nil
+}
+
+func (x *ReclusterChunks) GetStartChunkId() string {
+	if x != nil {
+		return x.StartChunkId
+	}
+	return ""
+}
+
+func (x *ReclusterChunks) GetEndChunkId() string {
+	if x != nil {
+		return x.EndChunkId
+	}
+	return ""
+}
+
 var File_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto protoreflect.FileDescriptor
 
 var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDesc = []byte{
@@ -605,10 +686,22 @@ var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDesc = []
 	0x0a, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x5f, 0x72, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x06, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e,
 	0x54, 0x69, 0x6d, 0x65, 0x52, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x52,
-	0x61, 0x6e, 0x67, 0x65, 0x42, 0x30, 0x5a, 0x2e, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70,
-	0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f,
-	0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x2f, 0x74,
-	0x61, 0x73, 0x6b, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x6e, 0x67, 0x65, 0x22, 0xb2, 0x01, 0x0a, 0x0f, 0x52, 0x65, 0x63, 0x6c, 0x75, 0x73, 0x74,
+	0x65, 0x72, 0x43, 0x68, 0x75, 0x6e, 0x6b, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x72, 0x6f, 0x6a,
+	0x65, 0x63, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x70, 0x72, 0x6f, 0x6a, 0x65,
+	0x63, 0x74, 0x12, 0x3d, 0x0a, 0x0c, 0x61, 0x74, 0x74, 0x65, 0x6d, 0x70, 0x74, 0x5f, 0x74, 0x69,
+	0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x52, 0x0b, 0x61, 0x74, 0x74, 0x65, 0x6d, 0x70, 0x74, 0x54, 0x69, 0x6d,
+	0x65, 0x12, 0x24, 0x0a, 0x0e, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5f, 0x63, 0x68, 0x75, 0x6e, 0x6b,
+	0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x74, 0x61, 0x72, 0x74,
+	0x43, 0x68, 0x75, 0x6e, 0x6b, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0c, 0x65, 0x6e, 0x64, 0x5f, 0x63,
+	0x68, 0x75, 0x6e, 0x6b, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65,
+	0x6e, 0x64, 0x43, 0x68, 0x75, 0x6e, 0x6b, 0x49, 0x64, 0x42, 0x30, 0x5a, 0x2e, 0x69, 0x6e, 0x66,
+	0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65,
+	0x74, 0x62, 0x69, 0x78, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x74, 0x61,
+	0x73, 0x6b, 0x73, 0x2f, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -623,7 +716,7 @@ func file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDescGZIP
 	return file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDescData
 }
 
-var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_goTypes = []interface{}{
 	(*Build)(nil),                            // 0: weetbix.internal.tasks.Build
 	(*IngestTestResults)(nil),                // 1: weetbix.internal.tasks.IngestTestResults
@@ -632,27 +725,29 @@ var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_goTypes = []
 	(*TestVariantKey)(nil),                   // 4: weetbix.internal.tasks.TestVariantKey
 	(*UpdateTestVariant)(nil),                // 5: weetbix.internal.tasks.UpdateTestVariant
 	(*ExportTestVariants)(nil),               // 6: weetbix.internal.tasks.ExportTestVariants
-	(*v0.Run)(nil),                           // 7: cv.v0.Run
-	(*timestamppb.Timestamp)(nil),            // 8: google.protobuf.Timestamp
-	(*v1.Invocation)(nil),                    // 9: luci.resultdb.v1.Invocation
-	(*v11.AnalyzedTestVariantPredicate)(nil), // 10: weetbix.v1.AnalyzedTestVariantPredicate
-	(*v11.TimeRange)(nil),                    // 11: weetbix.v1.TimeRange
+	(*ReclusterChunks)(nil),                  // 7: weetbix.internal.tasks.ReclusterChunks
+	(*v0.Run)(nil),                           // 8: cv.v0.Run
+	(*timestamppb.Timestamp)(nil),            // 9: google.protobuf.Timestamp
+	(*v1.Invocation)(nil),                    // 10: luci.resultdb.v1.Invocation
+	(*v11.AnalyzedTestVariantPredicate)(nil), // 11: weetbix.v1.AnalyzedTestVariantPredicate
+	(*v11.TimeRange)(nil),                    // 12: weetbix.v1.TimeRange
 }
 var file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_depIdxs = []int32{
-	7,  // 0: weetbix.internal.tasks.IngestTestResults.cv_run:type_name -> cv.v0.Run
+	8,  // 0: weetbix.internal.tasks.IngestTestResults.cv_run:type_name -> cv.v0.Run
 	0,  // 1: weetbix.internal.tasks.IngestTestResults.build:type_name -> weetbix.internal.tasks.Build
-	8,  // 2: weetbix.internal.tasks.IngestTestResults.partition_time:type_name -> google.protobuf.Timestamp
-	9,  // 3: weetbix.internal.tasks.ResultDB.invocation:type_name -> luci.resultdb.v1.Invocation
+	9,  // 2: weetbix.internal.tasks.IngestTestResults.partition_time:type_name -> google.protobuf.Timestamp
+	10, // 3: weetbix.internal.tasks.ResultDB.invocation:type_name -> luci.resultdb.v1.Invocation
 	2,  // 4: weetbix.internal.tasks.CollectTestResults.resultdb:type_name -> weetbix.internal.tasks.ResultDB
 	4,  // 5: weetbix.internal.tasks.UpdateTestVariant.test_variant_key:type_name -> weetbix.internal.tasks.TestVariantKey
-	8,  // 6: weetbix.internal.tasks.UpdateTestVariant.enqueue_time:type_name -> google.protobuf.Timestamp
-	10, // 7: weetbix.internal.tasks.ExportTestVariants.predicate:type_name -> weetbix.v1.AnalyzedTestVariantPredicate
-	11, // 8: weetbix.internal.tasks.ExportTestVariants.time_range:type_name -> weetbix.v1.TimeRange
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	9,  // 6: weetbix.internal.tasks.UpdateTestVariant.enqueue_time:type_name -> google.protobuf.Timestamp
+	11, // 7: weetbix.internal.tasks.ExportTestVariants.predicate:type_name -> weetbix.v1.AnalyzedTestVariantPredicate
+	12, // 8: weetbix.internal.tasks.ExportTestVariants.time_range:type_name -> weetbix.v1.TimeRange
+	9,  // 9: weetbix.internal.tasks.ReclusterChunks.attempt_time:type_name -> google.protobuf.Timestamp
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_init() }
@@ -745,6 +840,18 @@ func file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_init() {
 				return nil
 			}
 		}
+		file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReclusterChunks); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -752,7 +859,7 @@ func file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_weetbix_internal_tasks_taskspb_tasks_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

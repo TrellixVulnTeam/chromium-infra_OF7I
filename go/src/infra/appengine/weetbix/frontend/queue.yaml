@@ -16,3 +16,11 @@ queue:
 - name: export-test-variants
   rate: 1/s
   max_concurrent_requests: 1
+
+- name: reclustering
+  rate: 500/s
+  retry_parameters:
+    # Never retry tasks if they fail. If this is changed, reclustering run
+    # progress reporting should be modified to handle shards being started
+    # more than once.
+    task_retry_limit: 0

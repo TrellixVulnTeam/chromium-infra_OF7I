@@ -103,3 +103,23 @@ message ExportTestVariants {
   //     status changes within the time_range.
   weetbix.v1.TimeRange time_range = 6;
 }
+
+// Payload of the ReclusterChunks task.
+message ReclusterChunks {
+  // The LUCI Project containing test results to be re-clustered.
+  string project = 1;
+
+  // The attempt time for which this task is. This should be cross-referenced
+  // with the ReclusteringRuns table to identify the reclustering parameters.
+  // This is also the soft deadline for the task.
+  google.protobuf.Timestamp attempt_time = 2;
+
+  // The exclusive lower bound defining the range of ChunkIds to
+  // be re-clustered. To define the table start, use the empty string ("").
+  string start_chunk_id = 3;
+
+  // The inclusive upper bound defining the range of ChunkIds to
+  // be re-clustered. To define the table end use "ff" x 16, i.e.
+  // "ffffffffffffffffffffffffffffffff".
+  string end_chunk_id = 4;
+}
