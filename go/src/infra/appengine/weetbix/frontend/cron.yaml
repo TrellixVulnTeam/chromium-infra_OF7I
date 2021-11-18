@@ -17,3 +17,8 @@ cron:
   retry_parameters:
     # Do not retry after 55 minutes.
     job_age_limit: 55m
+- description: "Orchestrate re-clustering of test results."
+  url: /internal/cron/reclustering
+  # The actual reclustering interval is specified in the system config
+  # as reclustering_interval_minutes. This just triggers the orchestrator.
+  schedule: every 1 minutes synchronized
