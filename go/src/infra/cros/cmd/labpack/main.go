@@ -52,6 +52,10 @@ func main() {
 	} else {
 		build.Main(input, &writeOutputProps, &mergeOutputProps,
 			func(ctx context.Context, args []string, state *build.State) error {
+				// TODO(b:202156419) Remove these. We need information on where stdout and stderr drain to.
+				fmt.Fprintf(os.Stdout, "STDOUT PROBE: 85ff0ccd-ceeb-48ce-9826-2f34b9e40b8c\n")
+				fmt.Fprintf(os.Stderr, "STDERR PROBE: 1428a8bf-57fe-4f17-812c-c0dbdf97dcb3\n")
+
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
 				// Use the annotation "Labpack" to make diagnostic output from labpack specifically
