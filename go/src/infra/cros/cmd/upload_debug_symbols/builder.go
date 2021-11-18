@@ -149,7 +149,9 @@ func retrieveApiKey() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not read key from file")
 	}
-	return string(apiKey), nil
+
+	// Trimming off any white space found attached to the key.
+	return strings.TrimSpace(string(apiKey)), nil
 }
 
 // cleanErrorMessage searches the error message for the secret api key and
