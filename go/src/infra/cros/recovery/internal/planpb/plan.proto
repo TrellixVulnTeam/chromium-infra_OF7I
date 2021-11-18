@@ -54,6 +54,8 @@ message Action {
   bool allow_fail_after_recovery = 7;
   // Controls how and when the action can be rerun throughout the plan.
   RunControl run_control = 8;
+  // Documentation to describe detail of the action.
+  repeated string docs = 9;
 }
 
 // RunControl describe when and how often an action runs per plan execution.
