@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"regexp"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/proto"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/grpc/appstatus"
 	rdbbutil "go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server"
@@ -98,6 +101,12 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return err
 	}
 	b, err := getBuilderAndResultDBInfo(ctx, payload)
+	st, ok := appstatus.Get(err)
+	if ok && st.Code() == codes.NotFound {
+		// Build not found, end the task gracefully.
+		logging.Warningf(ctx, "Buildbucket build %d not found (or Weetbix does not have access to read it).", payload.Build.Id)
+		return nil
+	}
 	if err != nil {
 		return err
 	}
