@@ -117,7 +117,7 @@ hooks = [
   {
     "pattern": ".",
     "action": [
-      "python", "-u", "./infra/bootstrap/remove_orphaned_pycs.py",
+      "python3", "-u", "./infra/bootstrap/remove_orphaned_pycs.py",
     ],
   },
 
