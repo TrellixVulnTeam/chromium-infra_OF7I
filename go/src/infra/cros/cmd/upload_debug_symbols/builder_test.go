@@ -370,3 +370,27 @@ func TestUploadSymbols(t *testing.T) {
 		t.Errorf("error: recieved non-zero retcode %d", retcode)
 	}
 }
+
+// TestCleanErrorMessage tests to make sure we won't accidentally expose the api
+// key.
+func TestCleanErrorMessage(t *testing.T) {
+	mockKey := "abcde12345!@#$"
+	mockErr := fmt.Errorf("could not connect to www.google.com/secret?key=%s&v1=1&v2=test", mockKey)
+
+	cleanedErrMessage := cleanErrorMessage(mockErr.Error(), mockKey)
+
+	if strings.Contains(cleanedErrMessage, mockKey) {
+		t.Error("error: secret key found in error response")
+	}
+
+	if !strings.Contains(cleanedErrMessage, "-HIDDEN-KEY-") {
+		t.Error("error: replaced key not found")
+	}
+
+	mockErr = fmt.Errorf("nil http repsonse was recieved")
+	cleanedErrMessage = cleanErrorMessage(mockErr.Error(), mockKey)
+
+	if strings.Contains(cleanedErrMessage, "-HIDDEN-KEY-") {
+		t.Error("error: non-existant key was fouind in error")
+	}
+}

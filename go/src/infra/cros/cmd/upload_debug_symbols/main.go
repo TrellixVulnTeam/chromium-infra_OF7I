@@ -37,28 +37,6 @@ func getApplication(authOpts auth.Options) *subcommands.DefaultApplication {
 	}
 }
 
-// LogOut logs to stdout.
-func LogOut(format string, a ...interface{}) {
-	if StdoutLog != nil {
-		StdoutLog.Printf(format, a...)
-	}
-}
-
-// LogOutNoFlags logs to stdout without any flags. Specifically this is used
-// when uploading symbols to eliminate flag doubling.
-func LogOutNoFlags(format string, a ...interface{}) {
-	if StdoutLogNoFlags != nil {
-		StdoutLogNoFlags.Printf(format, a...)
-	}
-}
-
-// LogErr logs to stderr.
-func LogErr(format string, a ...interface{}) {
-	if StderrLog != nil {
-		StderrLog.Printf(format, a...)
-	}
-}
-
 func SetUp(c uploadDebugSymbolsCommand, a subcommands.Application, args []string, env subcommands.Env) int {
 	StdoutLog = a.(*uploadDebugSymbolsApplication).stdoutLog
 	StdoutLogNoFlags = a.(*uploadDebugSymbolsApplication).StdoutLogNoFlags
@@ -66,7 +44,7 @@ func SetUp(c uploadDebugSymbolsCommand, a subcommands.Application, args []string
 
 	// Validate flags/arguments.
 	if err := c.validate(); err != nil {
-		LogErr(err.Error())
+		LogErr(nil, err.Error())
 		return 1
 	}
 	return 0

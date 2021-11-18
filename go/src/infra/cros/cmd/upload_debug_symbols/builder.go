@@ -106,6 +106,34 @@ type crashClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// TODO(b/197010274): add function to strip CFI lines if file is too large
+
+// LogOut logs to stdout.
+func LogOut(format string, a ...interface{}) {
+	if StdoutLog != nil {
+		StdoutLog.Printf(format, a...)
+	}
+}
+
+// LogOutNoFlags logs to stdout without any flags. Specifically this is used
+// when uploading symbols to eliminate flag doubling.
+func LogOutNoFlags(format string, a ...interface{}) {
+	if StdoutLogNoFlags != nil {
+		StdoutLogNoFlags.Printf(format, a...)
+	}
+}
+
+// LogErr logs to stderr.
+func LogErr(crash *crashConnectionInfo, format string, a ...interface{}) {
+	if crash != nil {
+		format = cleanErrorMessage(format, crash.key)
+	}
+
+	if StderrLog != nil {
+		StderrLog.Printf(format, a...)
+	}
+}
+
 // retrieveApiKey fetches the crash API key stored in the local keystore.
 func retrieveApiKey() (string, error) {
 	if _, err := os.Stat(keyPath); err != nil {
@@ -114,17 +142,27 @@ func retrieveApiKey() (string, error) {
 
 	file, err := os.Open(keyPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not open file containing the API key")
 	}
 	defer file.Close()
 	apiKey, err := ioutil.ReadAll(file)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not read key from file")
 	}
 	return string(apiKey), nil
 }
 
-// TODO(b/197010274): add function to strip CFI lines if file is too large
+// cleanErrorMessage searches the error message for the secret api key and
+// removes any usage if found.
+func cleanErrorMessage(err string, apikey string) string {
+	// Return error without the api key.
+	if strings.Contains(err, apikey) {
+		return strings.ReplaceAll(err, apikey, "-HIDDEN-KEY-")
+	}
+
+	// No secret key found in the error message.
+	return err
+}
 
 // httpRequest  builds the http request and executes it using the globally
 // defined Client variable.
@@ -197,7 +235,7 @@ func crashUploadSymbol(symbolPath, uploadUrl string, crash crashConnectionInfo) 
 
 // crashSubmitSymbolUpload confirms the upload with the crash service.
 func crashSubmitSymbolUpload(uploadKey string, task taskConfig, crash crashConnectionInfo) error {
-	// Crash endpoints with and without the keys obsfusicated.
+	// Crash endpoints with and without the keys hidden.
 	requestUrlWithoutKey := crash.url + "/uploads/"
 	requestUrlWithKey := fmt.Sprintf("%s%s:complete?key=%s", requestUrlWithoutKey, uploadKey, crash.key)
 
@@ -255,21 +293,21 @@ func upload(task *taskConfig, crash crashConnectionInfo) bool {
 	var uploadInfo crashUploadInformation
 	err := crashRetrieveUploadInformation(&uploadInfo, crash)
 	if err != nil {
-		LogOut("error: %s", err.Error())
+		LogErr(&crash, "error: %s", err.Error())
 		return false
 	}
 	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
 
 	err = crashUploadSymbol(task.symbolPath, uploadInfo.UploadUrl, crash)
 	if err != nil {
-		LogOut("error: %s", err.Error())
+		LogErr(&crash, "error: %s", err.Error())
 		return false
 	}
 	uploadLogger.Printf("%s: SUCCESS\n", "https://storage.googleapis.com/crashsymboldropzone/")
 
 	err = crashSubmitSymbolUpload(uploadInfo.UploadKey, *task, crash)
 	if err != nil {
-		LogOut("error: %s", err.Error())
+		LogErr(&crash, "error: %s", err.Error())
 		return false
 	}
 	uploadLogger.Printf("%s: SUCCESS\n", crash.url)
@@ -515,7 +553,6 @@ func filterTasksAlreadyUploaded(tasks []taskConfig, dryRun bool, crash crashConn
 	}
 	postBody, err := json.Marshal(symbols)
 	if err != nil {
-		LogErr(err.Error())
 		return nil, err
 	}
 
@@ -701,7 +738,7 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 	var crash crashConnectionInfo
 	err := initCrashConnectionInfo(&crash, b.staging)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 
@@ -709,24 +746,24 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 	ctx := context.Background()
 	authOpts, err := b.authFlags.Options()
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 	authClient, err := generateClient(ctx, authOpts)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 	// Create local dir and file for tarball to live in.
 	workDir, err := ioutil.TempDir("", "tarball")
 	LogOut("Creating working folder at %s", workDir)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 	symbolDir, err := ioutil.TempDir(workDir, "symbols")
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 
@@ -735,30 +772,30 @@ func (b *uploadDebugSymbols) Run(a subcommands.Application, args []string, env s
 
 	zippedSymbolsPath, err := downloadZippedSymbols(authClient, b.gsPath, workDir)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 	err = unzipSymbols(zippedSymbolsPath, tarbalPath)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 
 	symbolFiles, err := unpackTarball(tarbalPath, symbolDir)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 
 	tasks, err := generateConfigs(symbolFiles, b.retryQuota, b.dryRun, crash)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 
 	retcode, err := uploadSymbols(tasks, b.workerCount, b.retryQuota, b.staging, crash)
 	if err != nil {
-		LogErr(err.Error())
+		LogErr(&crash, err.Error())
 		return 1
 	}
 	LogOut("Exiting with retcode: %d", retcode)
