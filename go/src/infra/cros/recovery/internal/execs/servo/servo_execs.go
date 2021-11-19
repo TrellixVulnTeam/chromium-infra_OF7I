@@ -384,6 +384,24 @@ func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actio
 	return nil
 }
 
+const (
+	labstationKeyWord = "labstation"
+)
+
+// servoHostIsLabstationExec confirms the servo host is a labstation
+// TODO (yunzhiyu@): Revisit when we onboard dockers.
+func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.NewRunner(args.DUT.ServoHost.Name)
+	board, err := cros.ReleaseBoard(ctx, r)
+	if err != nil {
+		return errors.Annotate(err, "servo host is labstation").Err()
+	}
+	if !strings.Contains(board, labstationKeyWord) {
+		return errors.Reason("servo host is not labstation").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -397,4 +415,5 @@ func init() {
 	execs.Register("servo_set", servoSetExec)
 	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
 	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
+	execs.Register("servo_host_is_labstation", servoHostIsLabstationExec)
 }

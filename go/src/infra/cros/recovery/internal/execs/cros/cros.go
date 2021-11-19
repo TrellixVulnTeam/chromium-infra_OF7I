@@ -47,6 +47,29 @@ func releaseBuildPath(ctx context.Context, resource string, args *execs.RunArgs)
 	return strings.TrimSpace(parts[1]), nil
 }
 
+const (
+	extactReleaseBoardCommand = "cat /etc/lsb-release | grep CHROMEOS_RELEASE_BOARD"
+	releaseBoardRegexp        = `CHROMEOS_RELEASE_BOARD=(\S+)`
+)
+
+// ReleaseBoard reads release board info from lsb-release.
+func ReleaseBoard(ctx context.Context, r execs.Runner) (string, error) {
+	output, err := r(ctx, extactReleaseBoardCommand)
+	if err != nil {
+		return "", errors.Annotate(err, "release board").Err()
+	}
+	compiledRegexp, err := regexp.Compile(releaseBoardRegexp)
+	if err != nil {
+		return "", errors.Annotate(err, "release board").Err()
+	}
+	matches := compiledRegexp.FindStringSubmatch(output)
+	if len(matches) != 2 {
+		return "", errors.Reason("release board: cannot find chromeos releease board information").Err()
+	}
+	board := matches[1]
+	return board, nil
+}
+
 // uptime returns uptime of resource.
 func uptime(ctx context.Context, resource string, args *execs.RunArgs) (*time.Duration, error) {
 	// Received value represent two parts where the first value represents the total number
