@@ -73,6 +73,17 @@ func main() {
 					lg.Error("ERROR STDERR PROBE: fc4d46eb-98b5-4660-b0bf-201877052c17\n")
 				}
 
+				// Log the infra stuff.
+				if true {
+					infraPB := state.Infra()
+					marsh := jsonpb.Marshaler{Indent: "  "}
+					str, err := marsh.MarshalToString(infraPB)
+					if err != nil {
+						lg.Error("%s\n", err.Error())
+					}
+					lg.Debug("%s\n", str)
+				}
+
 				if true {
 					// Use the annotation "Labpack" to make diagnostic output from labpack specifically
 					// easier to recognize in swarming output.
