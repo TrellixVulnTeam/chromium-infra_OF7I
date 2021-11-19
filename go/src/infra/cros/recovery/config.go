@@ -522,7 +522,10 @@ const defaultConfig = `
 					"exec_name":"sample_pass"
 				},
 				"is_not_servo_v3": {
-					"exec_name":"sample_pass"
+					"conditions":[
+						"servo_is_v3"
+					],
+					"exec_name":"sample_fail"
 				},
 				"servo_v4_type_a": {
 					"exec_name":"sample_pass"
