@@ -19,6 +19,12 @@ CBH_VERSION = 'git_revision:3ac10131e8f5c39a1e909ae8c748446e589b72a4'
 class CloudBuildHelperApi(recipe_api.RecipeApi):
   """API for calling 'cloudbuildhelper' tool."""
 
+  # Describes (potentially) multi-repo checkout on disk.
+  CheckoutMetadata = namedtuple('CheckoutMetadata', [
+      'root',  # a Path to the checkout root
+      'repos', # a dict {"rel/path": {"repository": ..., "revision": ..."}}
+  ])
+
   # Reference to a docker image uploaded to a registry.
   Image = namedtuple('Image', [
       'image',          # <registry>/<name>
@@ -123,7 +129,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * infra (str) - what section to pick from 'infra' field in the YAML.
       * labels ({str: str}) - labels to attach to the docker image.
       * tags ([str]) - tags to unconditionally push the image to.
-      * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
+      * checkout_metadata (CheckoutMetadata) - to get revisions.
       * step_test_image (Image) - image to produce in training mode.
 
     Returns:
@@ -326,7 +332,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * canonical_tag (str) - tag to apply to a tarball if we built a new one.
       * build_id (str) - identifier of the CI build to put into metadata.
       * infra (str) - what section to pick from 'infra' field in the YAML.
-      * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
+      * checkout_metadata (CheckoutMetadata) - to get revisions.
       * step_test_tarball (Tarball) - tarball to produce in training mode.
 
     Returns:

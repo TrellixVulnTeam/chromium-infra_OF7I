@@ -91,7 +91,7 @@ See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#108)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#114)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -102,7 +102,7 @@ Args:
   * infra (str) - what section to pick from 'infra' field in the YAML.
   * labels ({str: str}) - labels to attach to the docker image.
   * tags ([str]) - tags to unconditionally push the image to.
-  * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
+  * checkout_metadata (CheckoutMetadata) - to get revisions.
   * step_test_image (Image) - image to produce in training mode.
 
 Returns:
@@ -111,11 +111,11 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#83)(self, val):**
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#89)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#431)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#437)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -127,7 +127,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#451)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#457)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -144,14 +144,14 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#88)(self):**
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#94)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#407)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#413)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -164,7 +164,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#315)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#321)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -173,7 +173,7 @@ Args:
   * canonical_tag (str) - tag to apply to a tarball if we built a new one.
   * build_id (str) - identifier of the CI build to put into metadata.
   * infra (str) - what section to pick from 'infra' field in the YAML.
-  * checkout_metadata (infra_checkout.CheckoutMetadata) - to get revisions.
+  * checkout_metadata (CheckoutMetadata) - to get revisions.
   * step_test_tarball (Tarball) - tarball to produce in training mode.
 
 Returns:
@@ -344,7 +344,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Stateless API for using public infra gclient checkout.
 
-&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#24)(self, gclient_config_name, patch_root=None, path=None, internal=False, named_cache=None, generate_env_with_system_python=False, go_version_variant=None, \*\*kwargs):**
+&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#18)(self, gclient_config_name, patch_root=None, path=None, internal=False, named_cache=None, generate_env_with_system_python=False, go_version_variant=None, \*\*kwargs):**
 
 Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -1213,17 +1213,17 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#13)(api):**
 ### *recipes* / [cloudbuildhelper:examples/full](/recipes/recipe_modules/cloudbuildhelper/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#16)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#15)(api):**
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#46)(api):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#45)(api):**
 
-&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#30)(api):**
+&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#29)(api):**
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#127)(api):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#126)(api):**
 ### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
@@ -1285,7 +1285,7 @@ Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#38)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#39)(api, properties):**
 ### *recipes* / [gerrit\_hello\_world](/recipes/recipes/gerrit_hello_world.py)
 
 [DEPS](/recipes/recipes/gerrit_hello_world.py#8): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1326,7 +1326,7 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#43)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/images_builder.py#44)(api, properties):**
 ### *recipes* / [images\_pins\_roller](/recipes/recipes/images_pins_roller.py)
 
 [DEPS](/recipes/recipes/images_pins_roller.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]

@@ -24,7 +24,6 @@ def RunSteps(api):
       go_version_variant=api.properties.get('go_version_variant'))
   co.gclient_runhooks()
   _ = co.bot_update_step  # coverage...
-  _ = co.metadata  # coverage...
   with co.go_env():
     api.step('go test', ['go', 'test', 'infra/...'])
   with co.go_env():  # for coverage

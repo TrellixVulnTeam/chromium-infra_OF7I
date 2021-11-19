@@ -33,6 +33,7 @@ Metadata = namedtuple('Metadata', [
     'canonical_tag',  # str or None
     'labels',         # {str: str}
     'tags',           # [str]
+    'checkout',       # cloudbuildhelper.CheckoutMetadata
 ])
 
 
@@ -83,7 +84,7 @@ def RunSteps(api, properties):
           infra=properties.infra,
           labels=meta.labels,
           tags=meta.tags,
-          checkout_metadata=co.metadata)
+          checkout_metadata=meta.checkout)
       futures[fut] = m
 
   # Wait until all builds complete.
@@ -190,7 +191,11 @@ def _checkout_committed(api, mode, project):
           'org.opencontainers.image.source': repo_url,
           'org.opencontainers.image.revision': rev,
       },
-      tags=['latest'])
+      tags=['latest'],
+      checkout=api.cloudbuildhelper.CheckoutMetadata(
+          root=co.path,
+          repos=co.bot_update_step.json.output['manifest'],
+      ))
 
 
 def _checkout_pending(api, project):
@@ -251,7 +256,11 @@ def _checkout_pending(api, project):
           # intentionally simple, so that developers can "guess" it just knowing
           # the CL number.
           'cl-%d' % cl.change,
-      ])
+      ],
+      checkout=api.cloudbuildhelper.CheckoutMetadata(
+          root=co.path,
+          repos=co.bot_update_step.json.output['manifest'],
+      ))
 
 
 def _date(api):

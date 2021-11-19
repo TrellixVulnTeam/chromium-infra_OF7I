@@ -6,7 +6,6 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'cloudbuildhelper',
-  'infra_checkout',
   'recipe_engine/json',
   'recipe_engine/path',
   'recipe_engine/step',
@@ -28,7 +27,7 @@ def RunSteps(api):
 
 
 def repo_checkout_metadata(api):
-  return api.infra_checkout.CheckoutMetadata(
+  return api.cloudbuildhelper.CheckoutMetadata(
       root=api.path['start_dir'],
       repos={
           'a': {

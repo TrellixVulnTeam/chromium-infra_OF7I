@@ -32,6 +32,7 @@ Metadata = namedtuple('Metadata', [
     'repo_url',       # "https://..."
     'revision',       # "abcdefacbdf..."
     'canonical_tag',  # derived from the git revision and commit position
+    'checkout',       # cloudbuildhelper.CheckoutMetadata
 ])
 
 
@@ -68,7 +69,7 @@ def RunSteps(api, properties):
           canonical_tag=meta.canonical_tag,
           build_id=api.buildbucket.build_url(),
           infra=properties.infra,
-          checkout_metadata=co.metadata)
+          checkout_metadata=meta.checkout)
       futures[fut] = m
 
   # Wait until all uploads complete.
@@ -141,7 +142,11 @@ def _checkout(api, project):
   return co, Metadata(
       repo_url=repo_url,
       revision=co.bot_update_step.presentation.properties['got_revision'],
-      canonical_tag=co.get_commit_label())
+      canonical_tag=co.get_commit_label(),
+      checkout=api.cloudbuildhelper.CheckoutMetadata(
+          root=co.path,
+          repos=co.bot_update_step.json.output['manifest'],
+      ))
 
 
 def _roll_built_tarballs(api, spec, tarballs, meta):
