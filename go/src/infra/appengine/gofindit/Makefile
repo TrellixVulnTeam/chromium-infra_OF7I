@@ -10,7 +10,7 @@ format:
 	gofmt -s -w .
 
 test:
-	go test
+	go test ./...
 
 deploy:
 	$(GAE_PY) upload -A gofindit-dev
