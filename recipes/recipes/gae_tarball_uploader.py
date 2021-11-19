@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from collections import namedtuple
+from contextlib import contextmanager
 from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto.common import FAILURE, SUCCESS
@@ -43,21 +44,16 @@ def RunSteps(api, properties):
     raise recipe_api.InfraFailure('Bad input properties: %s' % exc)
 
   # Checkout the code.
-  co, meta = _checkout(api, properties.project)
-  co.gclient_runhooks()
+  meta, build_env = _checkout(api, properties.project)
 
   # Discover what *.yaml manifests (full paths to them) we need to build.
   manifests = api.cloudbuildhelper.discover_manifests(
-      co.path, properties.manifests)
+      meta.checkout.root, properties.manifests)
   if not manifests:  # pragma: no cover
     raise recipe_api.InfraFailure('Found no manifests to build')
 
-  with co.go_env():
-    # Use 'cloudbuildhelper' that comes with the infra checkout (it's in PATH),
-    # to make sure builders use same version as developers.
-    api.cloudbuildhelper.command = 'cloudbuildhelper'
-
-    # Report the exact version we picked up from the infra checkout.
+  with build_env(api):
+    # Report the exact version we going to use.
     api.cloudbuildhelper.report_version()
 
     # Build and upload corresponding tarballs (in parallel).
@@ -119,7 +115,7 @@ def _checkout(api, project):
     project: PROPERTIES.Project enum.
 
   Returns:
-    (infra_checkout.Checkout, Metadata).
+    (Metadata, build environment context manager).
   """
   conf, internal, repo_url = {
     PROPERTIES.PROJECT_INFRA: (
@@ -138,15 +134,24 @@ def _checkout(api, project):
       gclient_config_name=conf,
       internal=internal,
       go_version_variant='bleeding_edge')
+  co.gclient_runhooks()
 
-  return co, Metadata(
+  @contextmanager
+  def build_environ(api):
+    with co.go_env():
+      # Use 'cloudbuildhelper' that comes with the infra checkout (it's in
+      # PATH), to make sure builders use the same version as developers.
+      api.cloudbuildhelper.command = 'cloudbuildhelper'
+      yield
+
+  return Metadata(
       repo_url=repo_url,
       revision=co.bot_update_step.presentation.properties['got_revision'],
       canonical_tag=co.get_commit_label(),
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
           repos=co.bot_update_step.json.output['manifest'],
-      ))
+      )), build_environ
 
 
 def _roll_built_tarballs(api, spec, tarballs, meta):

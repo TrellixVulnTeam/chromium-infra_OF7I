@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from contextlib import contextmanager
 from collections import defaultdict, namedtuple
 from hashlib import sha256
 from recipe_engine import recipe_api
@@ -51,26 +52,22 @@ def RunSteps(api, properties):
   # This also calculates metadata (labels, tags) to apply to images built from
   # this code.
   if properties.mode in (PROPERTIES.MODE_CI, PROPERTIES.MODE_TS):
-    co, meta = _checkout_committed(api, properties.mode, properties.project)
+    meta, build_env = _checkout_committed(
+        api, properties.mode, properties.project)
   elif properties.mode == PROPERTIES.MODE_CL:
-    co, meta = _checkout_pending(api, properties.project)
+    meta, build_env = _checkout_pending(api, properties.project)
   else:  # pragma: no cover
     raise recipe_api.InfraFailure(
         'Unknown mode %s' % PROPERTIES.Mode.Name(properties.mode))
-  co.gclient_runhooks()
 
   # Discover what *.yaml manifests (full paths to them) we need to build.
   manifests = api.cloudbuildhelper.discover_manifests(
-      co.path, properties.manifests)
+      meta.checkout.root, properties.manifests)
   if not manifests:  # pragma: no cover
     raise recipe_api.InfraFailure('Found no manifests to build')
 
-  with co.go_env():
-    # Use 'cloudbuildhelper' that comes with the infra checkout (it's in PATH),
-    # to make sure builders use same version as developers.
-    api.cloudbuildhelper.command = 'cloudbuildhelper'
-
-    # Report the exact version we picked up from the infra checkout.
+  with build_env(api):
+    # Report the exact version we going to use.
     api.cloudbuildhelper.report_version()
 
     # Build, tag and upload corresponding images (in parallel).
@@ -154,7 +151,7 @@ def _checkout_committed(api, mode, project):
     project: PROPERTIES.Project enum.
 
   Returns:
-    (infra_checkout.Checkout, Metadata).
+    (Metadata, build environment context manager).
   """
   conf, internal, repo_url = {
     PROPERTIES.PROJECT_INFRA: (
@@ -173,6 +170,7 @@ def _checkout_committed(api, mode, project):
       gclient_config_name=conf,
       internal=internal,
       go_version_variant=GO_VERSION_VARIANT)
+  co.gclient_runhooks()
 
   canonical_tag = None
   if mode == PROPERTIES.MODE_CI:
@@ -185,7 +183,7 @@ def _checkout_committed(api, mode, project):
     raise AssertionError('Impossible')  # pragma: no cover
 
   rev = co.bot_update_step.presentation.properties['got_revision']
-  return co, Metadata(
+  return Metadata(
       canonical_tag=canonical_tag,
       labels={
           'org.opencontainers.image.source': repo_url,
@@ -195,7 +193,7 @@ def _checkout_committed(api, mode, project):
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
           repos=co.bot_update_step.json.output['manifest'],
-      ))
+      )), lambda api: _infra_checkout_build_environ(co, api)
 
 
 def _checkout_pending(api, project):
@@ -206,7 +204,7 @@ def _checkout_pending(api, project):
     project: PROPERTIES.Project enum.
 
   Returns:
-    (infra_checkout.Checkout, Metadata).
+    (Metadata, build environment context manager).
   """
   conf, patch_root, internal = {
     PROPERTIES.PROJECT_INFRA: (
@@ -232,6 +230,7 @@ def _checkout_pending(api, project):
       internal=internal,
       go_version_variant=GO_VERSION_VARIANT)
   co.commit_change()
+  co.gclient_runhooks()
 
   # Grab information about this CL (in particular who wrote it).
   cl = api.buildbucket.build.input.gerrit_changes[0]
@@ -239,7 +238,7 @@ def _checkout_pending(api, project):
   rev_info = api.gerrit.get_revision_info(repo_url, cl.change, cl.patchset)
   author = rev_info['commit']['author']['email']
 
-  return co, Metadata(
+  return Metadata(
       # ':inputs-hash' essentially tells cloudbuildhelper to skip the build if
       # there's already an image built from the exact same inputs.
       canonical_tag=':inputs-hash',
@@ -260,7 +259,16 @@ def _checkout_pending(api, project):
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
           repos=co.bot_update_step.json.output['manifest'],
-      ))
+      )), lambda api: _infra_checkout_build_environ(co, api)
+
+
+@contextmanager
+def _infra_checkout_build_environ(co, api):
+  with co.go_env():
+    # Use 'cloudbuildhelper' that comes with the infra checkout (it's in PATH),
+    # to make sure builders use the same version as developers.
+    api.cloudbuildhelper.command = 'cloudbuildhelper'
+    yield
 
 
 def _date(api):
