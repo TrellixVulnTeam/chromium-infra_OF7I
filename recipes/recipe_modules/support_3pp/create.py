@@ -9,6 +9,8 @@ and uploading a ResolvedSpec.
 """
 import re
 
+import six
+
 from . import source
 from . import build
 from . import resolved_spec
@@ -51,7 +53,7 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       cache[k] = spec
     return spec
 
-  with api.step.nest('building %s' % (spec.cipd_pkg_name.encode('utf-8'),)):
+  with api.step.nest('building %s' % (spec.cipd_pkg_name,)):
     env = {
       '_3PP_PLATFORM': spec.platform,
       '_3PP_TOOL_PLATFORM': spec.tool_platform,

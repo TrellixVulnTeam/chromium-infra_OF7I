@@ -2,9 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from past.builtins import cmp as past_cmp
+import functools
 import re
 
+import six
 
 # The epoch is prepended to the version when constructing the version: tag
 # for both the source package and the final built package. It must be
@@ -23,7 +24,7 @@ def parse_name_version(name_version):
     name, version = name_version.split('@')
   else:
     name, version = name_version, 'latest'
-  return name, version
+  return six.ensure_text(name), six.ensure_text(version)
 
 
 def platform_for_host(api):
@@ -292,23 +293,16 @@ class ResolvedSpec(object):
       id(self),
     )
 
-  def __cmp__(self, other):
-    """This allows ResolvedSpec's to be sorted.
+  # Support sorting of ResolvedSpecs.
+  # ResolvedSpecs which depend on another ResolvedSpec will sort after it.
+  def __eq__(self, other):  # pragma: no cover
+    return self is other or self._sort_tuple == other._sort_tuple
 
-    ResolvedSpec's which depend on another ResolvedSpec will sort after it.
-    """
-    if self is other: # pragma: no cover
-      return 0
-
+  def __lt__(self, other):  # pragma: no cover
     # self < other if other depends on self, OR
     #              if other uses self as a tool
-    if self in other.all_possible_deps_and_tools:
-      return -1
+    return (self in other.all_possible_deps_and_tools or
+            self._sort_tuple < other._sort_tuple)
 
-    # self > other if self depends on other, OR
-    #              if self uses other as a tool
-    if other in self.all_possible_deps_and_tools:
-      return 1
-
-    # Otherwise sort by #deps and package name.
-    return past_cmp(self._sort_tuple, other._sort_tuple)
+  def __hash__(self):  # pragma: no cover
+    return hash(self._sort_tuple)

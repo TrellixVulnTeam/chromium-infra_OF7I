@@ -301,6 +301,8 @@ This module uses the following named caches:
 import hashlib
 import re
 
+import six
+
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
@@ -415,7 +417,7 @@ class Support3ppApi(recipe_api.RecipeApi):
 
   def initialize(self):
     self._cipd_spec_pool = cipd_spec.CIPDSpecPool(self.m)
-    self._infra_3pp_hash.update(self._self_hash())
+    self._infra_3pp_hash.update(six.ensure_binary(self._self_hash()))
     self._experimental = self.m.runtime.is_experimental
 
   def package_prefix(self, experimental=False):
@@ -633,9 +635,11 @@ class Support3ppApi(recipe_api.RecipeApi):
             raise DuplicatePackage(cipd_pkg_name)
         else:
           # Add package hash each time recipe loads a new package
-          self._infra_3pp_hash.update(self.m.file.compute_hash(
-              'Compute hash for %r' % cipd_pkg_name, [pkg_dir],
-              self.m.path['start_dir'], 'deadbeef'))
+          self._infra_3pp_hash.update(
+              six.ensure_binary(
+                  self.m.file.compute_hash(
+                      'Compute hash for %r' % cipd_pkg_name, [pkg_dir],
+                      self.m.path['start_dir'], 'deadbeef')))
           self._loaded_specs[cipd_pkg_name] = (pkg_dir, pkg_spec)
 
         discovered.add(cipd_pkg_name)
@@ -702,11 +706,11 @@ class Support3ppApi(recipe_api.RecipeApi):
     for pkg in packages:
       cipd_pkg_name, version = parse_name_version(pkg)
       try:
-        resolved = self._resolve_for(unicode(cipd_pkg_name), platform)
+        resolved = self._resolve_for(cipd_pkg_name, platform)
       except UnsupportedPackagePlatform:
         unsupported.add(pkg)
         continue
-      explicit_build_plan.append((resolved, unicode(version)))
+      explicit_build_plan.append((resolved, version))
 
     expanded_build_plan = set()
     for spec, version in explicit_build_plan:

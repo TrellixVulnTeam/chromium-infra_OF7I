@@ -7,6 +7,8 @@ from recipe_engine.recipe_api import Property
 
 from RECIPE_MODULES.infra.support_3pp.resolved_spec import PACKAGE_EPOCH
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',
