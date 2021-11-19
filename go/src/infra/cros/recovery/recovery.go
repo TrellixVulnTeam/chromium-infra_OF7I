@@ -74,9 +74,11 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 			_, err := args.Metrics.Create(
 				ctx,
 				&metrics.Action{
-					ActionKind: "run_recovery",
-					StartTime:  start,
-					StopTime:   stop,
+					ActionKind:     "run_recovery",
+					StartTime:      start,
+					StopTime:       stop,
+					SwarmingTaskID: args.SwarmingTaskID,
+					BuildbucketID:  args.BuildbucketID,
 					// TODO(gregorynisbet): add status and FailReason.
 				},
 			)
@@ -380,6 +382,10 @@ type RunArgs struct {
 	EnableRecovery bool
 	// EnableUpdateInventory tells if update inventory after finishing the plans is enabled.
 	EnableUpdateInventory bool
+	// SwarmingTaskID is the ID of the swarming task.
+	SwarmingTaskID string
+	// BuildbucketID is the ID of the buildbucket build
+	BuildbucketID string
 }
 
 // verify verifies input arguments.

@@ -25,6 +25,7 @@ func TestNewMetrics(t *testing.T) {
 			`    "Name": "",`,
 			`    "ActionKind": "b",`,
 			`    "SwarmingTaskID": "a",`,
+			`    "BuildbucketID": "",`,
 			`    "AssetTag": "",`,
 			`    "StartTime": "0001-01-01T00:00:00Z",`,
 			`    "StopTime": "0001-01-01T00:00:00Z",`,
