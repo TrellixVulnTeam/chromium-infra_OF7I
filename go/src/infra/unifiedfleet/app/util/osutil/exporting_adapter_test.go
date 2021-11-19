@@ -47,6 +47,7 @@ var servoInV2 = chromeosLab.Servo{
 			},
 		},
 	},
+	ServoComponent: []string{"servo_v4", "servo_micro"},
 }
 
 var machine = ufspb.Machine{
@@ -449,6 +450,8 @@ common {
 			camerabox_facing: CAMERABOX_FACING_BACK
 			camerabox_light: CAMERABOX_LIGHT_LED
 			servo: true
+			servo_component: "servo_v4"
+			servo_component: "servo_micro"
 			servo_topology: {
 				main: {
 					usb_hub_port: "6.4.1"

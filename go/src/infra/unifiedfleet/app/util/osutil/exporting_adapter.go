@@ -165,6 +165,7 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *chromeosLab.Perip
 	if servo := d.GetServo(); servo != nil {
 		servoType := servo.GetServoType()
 		p.ServoType = &servoType
+		p.ServoComponent = servo.GetServoComponent()
 		setServoTopology(p, servo.GetServoTopology())
 	}
 
