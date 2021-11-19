@@ -351,7 +351,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.43.0"
+      "[START_DIR]/cipd_tool/infra/3pp/tools/golangci-lint/version%3A2%401.43.0"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {
@@ -392,7 +392,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.43.0",
+      "[START_DIR]/cipd_tool/infra/3pp/tools/golangci-lint/version%3A2%401.43.0",
       "-ensure-file",
       "infra/3pp/tools/golangci-lint/${platform} version:2@1.43.0",
       "-max-threads",
@@ -447,7 +447,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/3pp/tools/golangci-lint/version%3A2%401.43.0/golangci-lint",
+      "[START_DIR]/cipd_tool/infra/3pp/tools/golangci-lint/version%3A2%401.43.0/golangci-lint",
       "run",
       "--out-format=json",
       "--issues-exit-code=0",

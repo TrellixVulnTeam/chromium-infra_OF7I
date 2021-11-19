@@ -13,7 +13,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4"
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4"
     ],
     "infra_step": true,
     "name": "install infra/tools/cloudbuildhelper.ensure package directory",
@@ -26,7 +26,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4",
       "-ensure-file",
       "infra/tools/cloudbuildhelper/${platform} git_revision:3ac10131e8f5c39a1e909ae8c748446e589b72a4",
       "-max-threads",
@@ -53,7 +53,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "version"
     ],
     "name": "cloudbuildhelper version",
@@ -63,7 +63,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -104,7 +104,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "another.yaml",
       "-json-output",
@@ -143,7 +143,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "a.yaml",
       "-tag",
@@ -172,7 +172,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "b.yaml",
       "-canonical-tag",
@@ -201,7 +201,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "third.yaml",
       "-json-output",
@@ -221,7 +221,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "fail_maybe.yaml",
       "-json-output",
@@ -241,7 +241,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -271,7 +271,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "another.yaml",
       "-canonical-tag",
@@ -302,7 +302,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "fail_maybe.yaml",
       "-canonical-tag",
