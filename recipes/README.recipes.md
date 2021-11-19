@@ -87,11 +87,11 @@ API for calling 'cloudbuildhelper' tool.
 
 See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
-#### **class [CloudBuildHelperApi](/recipes/recipe_modules/cloudbuildhelper/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [CloudBuildHelperApi](/recipes/recipe_modules/cloudbuildhelper/api.py#19)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#107)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#108)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -111,11 +111,11 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#82)(self, val):**
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#83)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#430)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#431)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -127,7 +127,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#450)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#451)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -144,14 +144,14 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#87)(self):**
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#88)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#406)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#407)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -164,7 +164,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#314)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#315)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 

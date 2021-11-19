@@ -12,6 +12,10 @@ from collections import namedtuple
 from recipe_engine import recipe_api
 
 
+# Version of `cloudbuildhelper` to use by default.
+CBH_VERSION = 'git_revision:3ac10131e8f5c39a1e909ae8c748446e589b72a4'
+
+
 class CloudBuildHelperApi(recipe_api.RecipeApi):
   """API for calling 'cloudbuildhelper' tool."""
 
@@ -72,11 +76,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     part of the checkout already).
     """
     if self._cbh_bin is None:
-      cbh_dir = self.m.path['start_dir'].join('cbh')
-      ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/cloudbuildhelper/${platform}', 'latest')
-      self.m.cipd.ensure(cbh_dir, ensure_file)
-      self._cbh_bin = cbh_dir.join('cloudbuildhelper')
+      self._cbh_bin = self.m.cipd.ensure_tool(
+          'infra/tools/cloudbuildhelper/${platform}', CBH_VERSION)
     return self._cbh_bin
 
   @command.setter

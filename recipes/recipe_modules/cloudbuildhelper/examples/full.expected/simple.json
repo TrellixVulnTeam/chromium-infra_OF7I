@@ -1,24 +1,48 @@
 [
   {
+    "cmd": [],
+    "name": "install infra/tools/cloudbuildhelper"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4"
+    ],
+    "infra_step": true,
+    "name": "install infra/tools/cloudbuildhelper.ensure package directory",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
     "cmd": [
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/cbh",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4",
       "-ensure-file",
-      "infra/tools/cloudbuildhelper/${platform} latest",
+      "infra/tools/cloudbuildhelper/${platform} git_revision:3ac10131e8f5c39a1e909ae8c748446e589b72a4",
       "-max-threads",
       "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "name": "ensure_installed",
+    "infra_step": true,
+    "name": "install infra/tools/cloudbuildhelper.ensure_installed",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:3ac\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/cloudbuildhelper/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -29,7 +53,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "version"
     ],
     "name": "cloudbuildhelper version",
@@ -39,7 +63,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -80,7 +104,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "another.yaml",
       "-json-output",
@@ -119,7 +143,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "a.yaml",
       "-tag",
@@ -148,7 +172,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "b.yaml",
       "-canonical-tag",
@@ -177,7 +201,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "third.yaml",
       "-json-output",
@@ -197,7 +221,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "build",
       "fail_maybe.yaml",
       "-json-output",
@@ -224,7 +248,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -254,7 +278,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "another.yaml",
       "-canonical-tag",
@@ -285,7 +309,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cbh/cloudbuildhelper",
+      "[CACHE]/cipd/infra/tools/cloudbuildhelper/git_revision%3A3ac10131e8f5c39a1e909ae8c748446e589b72a4/cloudbuildhelper",
       "upload",
       "fail_maybe.yaml",
       "-canonical-tag",
