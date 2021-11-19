@@ -62,4 +62,7 @@ message Action {
 
   // The client version is the version of the entity creating the Action entry, e.g. "0.0.1".
   string client_version = 13;
+
+  // The buildbucket ID is the ID of the buildbucket build associated with the event in question.
+  string buildbucket_id = 14;
 }

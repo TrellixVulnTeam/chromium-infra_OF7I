@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -125,6 +126,52 @@ func TestCreateActionWithNoTime(t *testing.T) {
 	actual := scalars.ConvertTimestampPtrToTime(resp.GetCreateTime())
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Errorf("unexpected diff: %s", diff)
+	}
+}
+
+// TestCreateActionWithSwarmingAndBuildbucketID tests creating a new action with an swarming ID and a buildbucket ID and reading it back.
+func TestCreateActionWithSwarmingAndBuildbucketID(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	testClock := testclock.New(time.Unix(3, 4))
+	ctx = clock.Set(ctx, testClock)
+	ctx = idstrategy.Use(ctx, idstrategy.NewNaive())
+
+	k := NewKarteFrontend()
+
+	expected := []*kartepb.Action{
+		{
+			Name:           fmt.Sprintf(idstrategy.NaiveIDFmt, idstrategy.NaiveFirstID),
+			Kind:           "ssh-attempt",
+			SwarmingTaskId: "a",
+			BuildbucketId:  "b",
+			CreateTime:     scalars.ConvertTimeToTimestampPtr(time.Unix(3, 0)),
+		},
+	}
+
+	_, err := k.CreateAction(ctx, &kartepb.CreateActionRequest{
+		Action: &kartepb.Action{
+			Name:           "",
+			Kind:           "ssh-attempt",
+			SwarmingTaskId: "a",
+			BuildbucketId:  "b",
+		},
+	})
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	resp, err := k.ListActions(ctx, &kartepb.ListActionsRequest{
+		Filter: `kind == "ssh-attempt"`,
+	})
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	actual := resp.GetActions()
+
+	if diff := cmp.Diff(expected, actual, protocmp.Transform()); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", diff)
 	}
 }
 

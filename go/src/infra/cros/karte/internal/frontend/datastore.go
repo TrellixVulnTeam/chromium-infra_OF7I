@@ -35,6 +35,7 @@ type ActionEntity struct {
 	ID             string    `gae:"$id"`
 	Kind           string    `gae:"kind"`
 	SwarmingTaskID string    `gae:"swarming_task_id"`
+	BuildbucketID  string    `gae:"buildbucket_id"`
 	AssetTag       string    `gae:"asset_tag"`
 	StartTime      time.Time `gae:"start_time"`
 	StopTime       time.Time `gae:"stop_time"`
@@ -55,6 +56,7 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		Name:           e.ID,
 		Kind:           e.Kind,
 		SwarmingTaskId: e.SwarmingTaskID,
+		BuildbucketId:  e.BuildbucketID,
 		AssetTag:       e.AssetTag,
 		StartTime:      scalars.ConvertTimeToTimestampPtr(e.StartTime),
 		StopTime:       scalars.ConvertTimeToTimestampPtr(e.StopTime),
@@ -289,6 +291,7 @@ func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		ID:             action.GetName(),
 		Kind:           action.Kind,
 		SwarmingTaskID: action.SwarmingTaskId,
+		BuildbucketID:  action.BuildbucketId,
 		AssetTag:       action.AssetTag,
 		StartTime:      scalars.ConvertTimestampPtrToTime(action.StartTime),
 		StopTime:       scalars.ConvertTimestampPtrToTime(action.StopTime),
