@@ -136,6 +136,8 @@ def _checkout(api, project):
       go_version_variant='bleeding_edge')
   co.gclient_runhooks()
 
+  props = co.bot_update_step.presentation.properties
+
   @contextmanager
   def build_environ(api):
     with co.go_env():
@@ -146,8 +148,12 @@ def _checkout(api, project):
 
   return Metadata(
       repo_url=repo_url,
-      revision=co.bot_update_step.presentation.properties['got_revision'],
-      canonical_tag=co.get_commit_label(),
+      revision=props['got_revision'],
+      canonical_tag=api.cloudbuildhelper.get_commit_label(
+          path=co.path.join('infra_internal' if internal else 'infra'),
+          revision=props['got_revision'],
+          commit_position=props.get('got_revision_cp'),
+      ),
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
           repos=co.bot_update_step.json.output['manifest'],

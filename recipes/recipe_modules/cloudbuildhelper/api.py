@@ -518,3 +518,35 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       # fail due to merge conflicts).
 
       return out['issue'], out['issue_url']
+
+  def get_commit_label(self, path, revision, commit_position=None):
+    """Computes `<number>-<revision>` string identifying a commit.
+
+    Either uses `Cr-Commit-Position` footer, if available, or falls back
+    to `git number <rev>`.
+
+    This label is used as part of a version name for artifacts produced based on
+    this checked out commit.
+
+    Args:
+      * path (Path) - path to the git checkout root.
+      * revision (str) - checked out revision.
+      * commit_position (str) - `Cr-Commit-Position` footer value if available.
+
+    Returns:
+      A `<number>-<revision>` string.
+    """
+    if commit_position:
+      _, cp_num = self.m.commit_position.parse(commit_position)
+    else:
+      with self.m.context(cwd=path, env={'CHROME_HEADLESS': '1'}):
+        with self.m.depot_tools.on_path():
+          result = self.m.git(
+              'number', revision,
+              name='get commit label',
+              stdout=self.m.raw_io.output(),
+              step_test_data=(
+                  lambda: self.m.raw_io.test_api.stream_output('11112\n')))
+      cp_num = int(result.stdout.strip())
+
+    return '%d-%s' % (cp_num, revision[:7])

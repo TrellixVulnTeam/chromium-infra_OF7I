@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "45448-abcdefa"
+    ],
+    "name": "label"
+  },
+  {
+    "name": "$result"
+  }
+]

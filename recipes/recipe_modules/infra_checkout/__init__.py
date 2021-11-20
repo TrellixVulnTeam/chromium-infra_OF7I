@@ -6,7 +6,6 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'recipe_engine/buildbucket',
-    'recipe_engine/commit_position',
     'recipe_engine/context',
     'recipe_engine/file',
     'recipe_engine/json',
@@ -17,7 +16,6 @@ DEPS = [
     'recipe_engine/step',
 
     'depot_tools/bot_update',
-    'depot_tools/depot_tools',
     'depot_tools/gclient',
     'depot_tools/git',
     'depot_tools/presubmit',

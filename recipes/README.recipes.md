@@ -27,6 +27,7 @@
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
   * [build_wheels](#recipes-build_wheels)
   * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) (Python3 ✅) &mdash; This recipe verifies importing of chromium bootstrap protos.
+  * [cloudbuildhelper:examples/commit_label](#recipes-cloudbuildhelper_examples_commit_label) (Python3 ✅)
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover) (Python3 ✅)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll) (Python3 ✅)
@@ -44,7 +45,6 @@
   * [images_builder](#recipes-images_builder)
   * [images_pins_roller](#recipes-images_pins_roller)
   * [infra_checkout:examples/ci](#recipes-infra_checkout_examples_ci) (Python3 ✅)
-  * [infra_checkout:examples/commit_label](#recipes-infra_checkout_examples_commit_label) (Python3 ✅)
   * [infra_checkout:examples/try](#recipes-infra_checkout_examples_try) (Python3 ✅)
   * [infra_cipd:examples/usage](#recipes-infra_cipd_examples_usage) (Python3 ✅)
   * [infra_continuous](#recipes-infra_continuous)
@@ -79,7 +79,7 @@
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -143,6 +143,24 @@ Args:
 Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
+
+&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#522)(self, path, revision, commit_position=None):**
+
+Computes `<number>-<revision>` string identifying a commit.
+
+Either uses `Cr-Commit-Position` footer, if available, or falls back
+to `git number <rev>`.
+
+This label is used as part of a version name for artifacts produced based on
+this checked out commit.
+
+Args:
+  * path (Path) - path to the git checkout root.
+  * revision (str) - checked out revision.
+  * commit_position (str) - `Cr-Commit-Position` footer value if available.
+
+Returns:
+  A `<number>-<revision>` string.
 
 &mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#94)(self):**
 
@@ -336,7 +354,7 @@ Args:
       docker host. Read more https://docs.docker.com/network/host/.
 ### *recipe_modules* / [infra\_checkout](/recipes/recipe_modules/infra_checkout)
 
-[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/infra_checkout/__init__.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/presubmit][depot_tools/recipe_modules/presubmit], [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -1204,6 +1222,13 @@ The protos are exported via a symlink in
 //recipe/recipe_proto/infra/chromium.
 
 &mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#16)(api):**
+### *recipes* / [cloudbuildhelper:examples/commit\_label](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py)
+
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py#23)(api, commit_position):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
@@ -1341,13 +1366,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/ci.py#19)(api):**
-### *recipes* / [infra\_checkout:examples/commit\_label](/recipes/recipe_modules/infra_checkout/examples/commit_label.py)
-
-[DEPS](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/infra_checkout/examples/commit_label.py#18)(api):**
 ### *recipes* / [infra\_checkout:examples/try](/recipes/recipe_modules/infra_checkout/examples/try.py)
 
 [DEPS](/recipes/recipe_modules/infra_checkout/examples/try.py#7): [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]

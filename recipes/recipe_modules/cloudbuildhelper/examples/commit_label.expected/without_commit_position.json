@@ -1,0 +1,33 @@
+[
+  {
+    "cmd": [
+      "git",
+      "number",
+      "abcdefabcdef63ad814cd1dfffe2fcfc9f81299c"
+    ],
+    "cwd": "None",
+    "env": {
+      "CHROME_HEADLESS": "1"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "get commit label"
+  },
+  {
+    "cmd": [
+      "echo",
+      "11112-abcdefa"
+    ],
+    "name": "label"
+  },
+  {
+    "name": "$result"
+  }
+]

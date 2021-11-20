@@ -172,22 +172,29 @@ def _checkout_committed(api, mode, project):
       go_version_variant=GO_VERSION_VARIANT)
   co.gclient_runhooks()
 
+  props = co.bot_update_step.presentation.properties
+
   canonical_tag = None
   if mode == PROPERTIES.MODE_CI:
+    # E.g. "41861-d008a93".
+    commit_label = api.cloudbuildhelper.get_commit_label(
+          path=co.path.join('infra_internal' if internal else 'infra'),
+          revision=props['got_revision'],
+          commit_position=props.get('got_revision_cp'),
+    )
     # E.g. "ci-2021.06.23-41861-d008a93".
-    canonical_tag = 'ci-%s-%s' % (_date(api), co.get_commit_label())
+    canonical_tag = 'ci-%s-%s' % (_date(api), commit_label)
   elif mode == PROPERTIES.MODE_TS:
     # E.g. "ts-2021.06.23-113234"
     canonical_tag = 'ts-%s-%d' % (_date(api), api.buildbucket.build.number)
   else:
     raise AssertionError('Impossible')  # pragma: no cover
 
-  rev = co.bot_update_step.presentation.properties['got_revision']
   return Metadata(
       canonical_tag=canonical_tag,
       labels={
           'org.opencontainers.image.source': repo_url,
-          'org.opencontainers.image.revision': rev,
+          'org.opencontainers.image.revision': props['got_revision'],
       },
       tags=['latest'],
       checkout=api.cloudbuildhelper.CheckoutMetadata(
