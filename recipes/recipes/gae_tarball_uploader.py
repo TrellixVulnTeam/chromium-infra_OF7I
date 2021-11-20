@@ -12,8 +12,12 @@ from PB.recipe_engine.result import RawResult
 from PB.recipes.infra import gae_tarball_uploader as pb
 
 DEPS = [
+    'depot_tools/git',
+
     'recipe_engine/buildbucket',
+    'recipe_engine/file',
     'recipe_engine/futures',
+    'recipe_engine/golang',
     'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/properties',
@@ -44,7 +48,7 @@ def RunSteps(api, properties):
     raise recipe_api.InfraFailure('Bad input properties: %s' % exc)
 
   # Checkout the code.
-  meta, build_env = _checkout(api, properties.project)
+  meta, build_env = _checkout(api, properties)
 
   # Discover what *.yaml manifests (full paths to them) we need to build.
   manifests = api.cloudbuildhelper.discover_manifests(
@@ -101,14 +105,40 @@ def RunSteps(api, properties):
 def _validate_props(p):  # pragma: no cover
   if p.project == PROPERTIES.PROJECT_UNDEFINED:
     raise ValueError('"project" is required')
+  if p.project == PROPERTIES.PROJECT_GIT_REPO and not p.HasField('git_repo'):
+    raise ValueError('"git_repo" is required when using PROJECT_GIT_REPO')
+  if p.project != PROPERTIES.PROJECT_GIT_REPO and p.HasField('git_repo'):
+    raise ValueError('"git_repo" can only be set when using PROJECT_GIT_REPO')
   if not p.infra:
     raise ValueError('"infra" is required')
   if not p.manifests:
     raise ValueError('"manifests" is required')
 
 
-def _checkout(api, project):
+def _checkout(api, p):
   """Checks out some committed revision (based on Buildbucket properties).
+
+  Args:
+    api: recipes API.
+    p: PROPERTIES proto.
+
+  Returns:
+    (Metadata, build environment context manager).
+  """
+  with api.step.nest('checkout'):
+    if p.project in (
+          PROPERTIES.PROJECT_INFRA,
+          PROPERTIES.PROJECT_INFRA_INTERNAL,
+      ):
+      return _checkout_gclient(api, p.project)
+    elif p.project == PROPERTIES.PROJECT_GIT_REPO:
+      return _checkout_git(api, p.git_repo)
+    else:  # pragma: no cover
+      raise AssertionError('Should not happen, validated props already')
+
+
+def _checkout_gclient(api, project):
+  """Checks out an infra or infra_internal gclient solution.
 
   Args:
     api: recipes API.
@@ -157,6 +187,51 @@ def _checkout(api, project):
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
           repos=co.bot_update_step.json.output['manifest'],
+      )), build_environ
+
+
+def _checkout_git(api, repo):
+  """Checks out a standalone Git repository.
+
+  Checks out the commit passed via Buildbucket inputs or `refs/heads/main`.
+
+  Args:
+    api: recipes API.
+    repo: PROPERTIES.GitRepo proto.
+
+  Returns:
+    (Metadata, build environment context manager).
+  """
+  path = api.path['cache'].join('builder', 'repo')
+
+  revision = api.git.checkout(
+      url=repo.url,
+      ref=api.buildbucket.gitiles_commit.id or 'refs/heads/main',
+      dir_path=path,
+      submodules=False)
+
+  @contextmanager
+  def build_environ(api):
+    if repo.go_version_file:
+      version = api.file.read_text(
+          'read %s' % repo.go_version_file,
+          path.join(repo.go_version_file),
+          test_data='6.6.6\n').strip()
+      with api.golang(version, path=api.path['cache'].join('go%s' % version)):
+        yield
+    else:
+      yield
+
+  return Metadata(
+      repo_url=repo.url,
+      revision=revision,
+      canonical_tag=api.cloudbuildhelper.get_commit_label(
+          path=path,
+          revision=revision,
+      ),
+      checkout=api.cloudbuildhelper.CheckoutMetadata(
+          root=path,
+          repos={'.': {'repository': repo.url, 'revision': revision}},
       )), build_environ
 
 
@@ -317,6 +392,44 @@ def GenTests(api):
           },
       ) +
       api.step_data('upload roll CL.git diff', retcode=1)
+  )
+
+  yield (
+      api.test('ci-git-repo') +
+      api.properties(
+          project=PROPERTIES.PROJECT_GIT_REPO,
+          infra='prod',
+          manifests=['build/gae'],
+          git_repo=PROPERTIES.GitRepo(
+              url='https://git.example.com/repo',
+          ),
+      )
+  )
+
+  yield (
+      api.test('ci-git-repo-go') +
+      api.properties(
+          project=PROPERTIES.PROJECT_GIT_REPO,
+          infra='prod',
+          manifests=['build/gae'],
+          git_repo=PROPERTIES.GitRepo(
+              url='https://git.example.com/repo',
+              go_version_file='build/GO_VERSION',
+          ),
+      )
+  )
+
+  yield (
+      api.test('ci-git-repo-with-bb') +
+      api.buildbucket.ci_build() +
+      api.properties(
+          project=PROPERTIES.PROJECT_GIT_REPO,
+          infra='prod',
+          manifests=['build/gae'],
+          git_repo=PROPERTIES.GitRepo(
+              url='https://git.example.com/repo',
+          ),
+      )
   )
 
   yield (

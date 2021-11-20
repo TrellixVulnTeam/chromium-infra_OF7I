@@ -8,16 +8,24 @@ package recipes.infra.gae_tarball_uploader;
 
 // Input properties recognized by 'infra/gae_tarball_uploader' recipe.
 message Inputs {
-  // Project describes what gclient solution to checkout.
+  // Project describes what code to checkout.
   enum Project {
     PROJECT_UNDEFINED = 0;
 
     PROJECT_INFRA = 1;           // checkout infra solution
     PROJECT_INFRA_INTERNAL = 2;  // checkout infra_internal solution
+    PROJECT_GIT_REPO = 3;        // checkout a standalone git repository
   }
 
-  // Project with the source code. Required.
+  // Project with the source code to checkout. Required.
   Project project = 1;
+
+  // Describes a standalone git repo to checkout when using PROJECT_GIT_REPO.
+  message GitRepo {
+    string url = 1;              // https:// git repo URL
+    string go_version_file = 2;  // path to a file with Go version to bootstrap
+  }
+  GitRepo git_repo = 5;
 
   // What instance of infrastructure to use, e.g. dev or prod.
   //
@@ -27,7 +35,7 @@ message Inputs {
   // Required.
   string infra = 2;
 
-  // A path(s) within the gclient solution to a directory with *.yaml files to
+  // A path(s) within the checkout to a directory with *.yaml files to
   // discover and build, e.g. 'infra/build/gae/luci-py'. Will be listed
   // recursively.
   //
