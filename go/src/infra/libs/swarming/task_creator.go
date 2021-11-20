@@ -158,8 +158,8 @@ func (tc *TaskCreator) setDUTStateRequest(serviceAccount, host, user, taskName, 
 	}
 }
 
-// RepairTask creates admin_repair task for particular DUT
-func (tc *TaskCreator) RepairTask(ctx context.Context, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) (*TaskInfo, error) {
+// LegacyRepairTask creates admin_repair task for particular DUT
+func (tc *TaskCreator) LegacyRepairTask(ctx context.Context, serviceAccount, host string, expirationSec int, cmd []string, logDogURL string) (*TaskInfo, error) {
 	return tc.schedule(ctx, tc.repairVerifyTaskRequest("admin_repair", "repair", serviceAccount, host, expirationSec, 90*60, cmd, logDogURL))
 }
 

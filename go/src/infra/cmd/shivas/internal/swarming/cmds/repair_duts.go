@@ -73,7 +73,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 		if c.onlyVerify {
 			task, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
 		} else {
-			task, err = creator.RepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+			task, err = creator.LegacyRepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
 		}
 		if err != nil {
 			errorMap[host] = err
