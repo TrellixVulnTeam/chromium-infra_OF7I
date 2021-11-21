@@ -15,6 +15,7 @@ import argparse
 import collections
 import contextlib
 import copy
+import errno
 import glob
 import hashlib
 import json
@@ -165,19 +166,21 @@ class PackageDef(collections.namedtuple(
       return not is_cross_compiling()
     return get_package_vars()['platform'] in platforms
 
-  def preprocess(self, pkg_vars):
+  def preprocess(self, build_root, pkg_vars):
     """Parses the definition and filters/extends it before passing to CIPD.
 
     This process may generate additional files that are put into the package.
 
     Args:
+      build_root: root directory for building cipd package.
       pkg_vars: dict with variables passed to cipd as -pkg-var.
 
     Returns:
-      (Path to filtered package definition YAML, list of generated files).
+      Path to filtered package definition YAML.
     """
     pkg_def = copy.deepcopy(self.pkg_def)
-    gen_files = []
+
+    pkg_def['root'] = build_root
 
     bat_files = [
       d['file'] for d in pkg_def['data'] if d.get('generate_bat_shim')
@@ -187,49 +190,48 @@ class PackageDef(collections.namedtuple(
       plat = cp.get('platforms')
       if plat and pkg_vars['platform'] not in plat:
         continue
-      dst = os.path.join(self.pkg_root, render_path(cp['dst'], pkg_vars))
+      dst = os.path.join(build_root, render_path(cp['dst'], pkg_vars))
       shutil.copy(os.path.join(self.pkg_root, render_path(cp['src'], pkg_vars)),
                   dst)
-      pkg_def['data'].append({
-        'file': os.path.relpath(dst, self.pkg_root).replace(os.sep, '/')
-      })
+      pkg_def['data'].append(
+          {'file': os.path.relpath(dst, build_root).replace(os.sep, '/')})
       if cp.get('generate_bat_shim'):
         bat_files.append(cp['dst'])
-      gen_files.append(dst)
+
+    # Copy all included files into temp root if not existed. This must be after
+    # steps generating files and before any steps referring a symbolic link.
+    for d in self.pkg_def['data']:
+      path = d.get('file') or d.get('dir')
+      if path:
+        copy_if_not_exist(self.pkg_root, build_root, path, pkg_vars)
 
     if not is_targeting_windows(pkg_vars):
       for sym in pkg_def.get('posix_symlinks', ()):
-        dst = os.path.join(self.pkg_root, render_path(sym['dst'], pkg_vars))
+        dst = os.path.join(build_root, render_path(sym['dst'], pkg_vars))
         try:
           os.remove(dst)
         except OSError:
           pass
         os.symlink(
-            os.path.join(self.pkg_root, render_path(sym['src'], pkg_vars)),
-            dst)
-        pkg_def['data'].append({
-          'file': os.path.relpath(dst, self.pkg_root).replace(os.sep, '/')
-        })
-        gen_files.append(dst)
+            os.path.join(build_root, render_path(sym['src'], pkg_vars)), dst)
+        pkg_def['data'].append(
+            {'file': os.path.relpath(dst, build_root).replace(os.sep, '/')})
 
     # Generate *.bat shims when targeting Windows.
     if is_targeting_windows(pkg_vars):
       for f in bat_files:
         # Generate actual *.bat.
-        bat_abs = generate_bat_shim(self.pkg_root, render_path(f, pkg_vars))
+        bat_abs = generate_bat_shim(build_root, render_path(f, pkg_vars))
         # Make it part of the package definition (use slash paths there).
-        pkg_def['data'].append({
-          'file': os.path.relpath(bat_abs, self.pkg_root).replace(os.sep, '/')
-        })
+        pkg_def['data'].append(
+            {'file': os.path.relpath(bat_abs, build_root).replace(os.sep, '/')})
         # Stage it for cleanup.
-        gen_files.append(bat_abs)
 
     # Keep generated yaml in the same directory to avoid rewriting paths.
-    out_path = os.path.join(
-        os.path.dirname(self.path), self.name + '.processed_yaml')
+    out_path = os.path.join(build_root, self.name + '.processed_yaml')
     with open(out_path, 'w') as f:
       json.dump(pkg_def, f)
-    return out_path, gen_files
+    return out_path
 
   def on_change_info(self, pkg_vars):
     """Returns tags and path to check package changed."""
@@ -302,6 +304,39 @@ def render_path(p, pkg_vars, replace_sep=True):
   if replace_sep:
     return p.replace('/', os.sep)
   return p
+
+
+def copy_if_not_exist(src_root, dst_root, path, pkg_vars):
+  """Copies a file from src_root to dst_root if it doesn't exist there."""
+  file_path = render_path(path, pkg_vars)
+  src = os.path.join(src_root, file_path)
+  dst = os.path.join(dst_root, file_path)
+  if os.path.exists(dst):
+    return
+
+  try:
+    os.makedirs(os.path.dirname(dst))
+  except OSError as e:
+    if e.errno != errno.EEXIST:
+      raise
+
+  copy_tree(src_root, src, dst)
+
+
+def copy_tree(src_root, src, dst):
+  """Copies a directory from src to dst. If it's a symlink, convert it pointing
+  to relative path."""
+  if os.path.islink(src):
+    linkto = os.readlink(src)
+    if os.path.commonprefix([src_root, linkto]) == src_root:
+      linkto = os.path.relpath(linkto, os.path.dirname(src))
+    os.symlink(linkto, dst)
+  elif os.path.isdir(src):
+    os.mkdir(dst)
+    for name in os.listdir(src):
+      copy_tree(src_root, os.path.join(src, name), os.path.join(dst, name))
+  else:
+    shutil.copy(src, dst)
 
 
 def generate_bat_shim(pkg_root, target_rel):
@@ -905,12 +940,13 @@ def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
   if os.path.isfile(out_file):
     os.remove(out_file)
 
-  # Parse the definition and filter/extend it before passing to CIPD. This
-  # process may generate additional files that are put into the package. We
-  # delete them afterwards to avoid polluting GOBIN.
-  processed_yaml, tmp_files = pkg_def.preprocess(package_vars)
-
   try:
+    build_root = tempfile.mkdtemp(prefix="build_py")
+
+    # Parse the definition and filter/extend it before passing to CIPD. This
+    # process may generate additional files that are put into the package.
+    processed_yaml = pkg_def.preprocess(build_root, package_vars)
+
     # Build the package.
     args = ['-pkg-def', processed_yaml]
     for k, v in sorted(package_vars.items()):
@@ -928,8 +964,7 @@ def build_pkg(cipd_exe, pkg_def, out_file, package_vars):
     print '%s %s' % (info['package'], info['instance_id'])
     return info
   finally:
-    for f in [processed_yaml] + tmp_files:
-      os.remove(f)
+    shutil.rmtree(build_root, ignore_errors=True)
 
 
 def upload_pkg(cipd_exe, pkg_file, service_url, tags, update_latest_ref,
