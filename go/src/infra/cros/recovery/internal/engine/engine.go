@@ -62,7 +62,11 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
 		)
-		defer func() { closer(ctx, err) }()
+		defer func() {
+			if closer != nil {
+				closer(ctx, err)
+			}
+		}()
 	}
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
