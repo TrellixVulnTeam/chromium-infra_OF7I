@@ -68,16 +68,20 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 			}
 		}()
 	}
+	restartTally := 0
+	forgivenFailureTally := 0
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
 				log.Info(ctx, "Plan %q for %s: received request to start over.", r.planName, r.args.ResourceName)
 				r.resetCacheAfterSuccessfulRecoveryAction()
+				restartTally++
 				continue
 			}
 			if r.plan.GetAllowFail() {
 				log.Info(ctx, "Plan %q for %s: failed with error: %s.", r.planName, r.args.ResourceName, err)
 				log.Info(ctx, "Plan %q for %s: is allowed to fail, continue.", r.planName, r.args.ResourceName)
+				forgivenFailureTally++
 				return nil
 			}
 			return errors.Annotate(err, "run plan %q", r.planName).Err()
@@ -85,6 +89,8 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 		break
 	}
 	log.Info(ctx, "Plan %q: finished successfully.", r.planName)
+	log.Info(ctx, "Plan %q: recorded %d restarts during execution.", r.planName, restartTally)
+	log.Info(ctx, "Plan %q: recorded %d forgiven failures during execution.", r.planName, forgivenFailureTally)
 	return nil
 }
 
