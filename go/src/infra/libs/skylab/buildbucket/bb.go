@@ -23,13 +23,21 @@ import (
 const defaultTaskPriority = 24
 
 // Client provides helper methods to interact with buildbucket builds.
-type Client struct {
+type Client interface {
+	// ScheduleLabpackTask schedules a labpack task.
+	ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error)
+	// BuildURL constructs the URL to a build with the given ID.
+	BuildURL(buildID int64) string
+}
+
+// ClientImpl is the implementation of the Client interface.
+type clientImpl struct {
 	client    buildbucket_pb.BuildsClient
 	builderID *buildbucket_pb.BuilderID
 }
 
 // NewClient returns a new client to interact with buildbucket builds.
-func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Options, project string, bucket string, builder string) (*Client, error) {
+func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Options, project string, bucket string, builder string) (Client, error) {
 	hClient, err := newHTTPClient(ctx, &authFlags)
 	if err != nil {
 		return nil, err
@@ -41,7 +49,7 @@ func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Optio
 		Options: options,
 	}
 
-	return &Client{
+	return &clientImpl{
 		client: buildbucket_pb.NewBuildsPRPCClient(pClient),
 		builderID: &buildbucket_pb.BuilderID{
 			Project: project,
@@ -66,7 +74,7 @@ func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 }
 
 // ScheduleLabpackTask creates new task in build bucket with labpack.
-func (c *Client) ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error) {
+func (c *clientImpl) ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error) {
 	dims := make(map[string]string)
 	dims["id"] = "crossk-" + unit
 
@@ -97,10 +105,12 @@ func (c *Client) ScheduleLabpackTask(ctx context.Context, unit string, props *st
 	return build.Id, nil
 }
 
+// BuildURLFmt is the format of a build URL.
+const BuildURLFmt = "https://ci.chromium.org/p/%s/builders/%s/%s/b%d"
+
 // BuildURL constructs the URL to a build with the given ID.
-func (c *Client) BuildURL(buildID int64) string {
-	return fmt.Sprintf("https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
-		c.builderID.Project, c.builderID.Bucket, c.builderID.Builder, buildID)
+func (c *clientImpl) BuildURL(buildID int64) string {
+	return fmt.Sprintf(BuildURLFmt, c.builderID.Project, c.builderID.Bucket, c.builderID.Builder, buildID)
 }
 
 func splitTagPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {

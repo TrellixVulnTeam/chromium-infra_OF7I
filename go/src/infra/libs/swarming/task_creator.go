@@ -271,7 +271,9 @@ func (tc *TaskCreator) PrintResults(wr io.Writer, successMap map[string]*TaskInf
 		}
 	}
 	if len(successMap) > 0 {
-		fmt.Fprintf(wr, "\n### Successful created Swarming tasks - %d ###\n", len(successMap))
+		// We say "successfully created tasks" instead of "successfully created swarming tasks" because
+		// some tasks are buildbucket tasks.
+		fmt.Fprintf(wr, "\n### Successfully created tasks - %d ###\n", len(successMap))
 		for host, task := range successMap {
 			fmt.Fprintf(wr, "%s: %s\n", host, task.TaskURL)
 		}

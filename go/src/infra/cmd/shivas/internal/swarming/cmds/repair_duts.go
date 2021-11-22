@@ -5,6 +5,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -15,6 +16,7 @@ import (
 
 	"infra/cmd/shivas/site"
 	"infra/libs/skylab/buildbucket"
+	"infra/libs/skylab/buildbucket/labpack"
 	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/worker"
 	"infra/libs/swarming"
@@ -69,34 +71,40 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	creator.LogdogService = e.LogdogService
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
+	var bc buildbucket.Client
 	if c.paris {
 		var err error
 		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair (labstations only)\n")
-		_, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+		bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
 		if err != nil {
 			return err
 		}
 	}
 	for _, host := range args {
 		creator.GenerateLogdogTaskCode()
+
 		cmd := &worker.Command{TaskName: c.taskName()}
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
-		var task *swarming.TaskInfo
+		var taskInfo *swarming.TaskInfo
+		var err error
 		if c.paris && heuristics.LooksLikeLabstation(host) {
+			// Use PARIS.
 			fmt.Fprintf(a.GetErr(), "Using PARIS for labstation %q\n", host)
-			continue
+			taskInfo, err = scheduleRepairBuilder(ctx, bc, e, host)
 		} else {
+			// Legacy Flow, no PARIS.
 			if c.onlyVerify {
-				task, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+				taskInfo, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
 			} else {
-				task, err = creator.LegacyRepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+				taskInfo, err = creator.LegacyRepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
 			}
 		}
 		if err != nil {
 			errorMap[host] = err
 		} else {
-			successMap[host] = task
+			successMap[host] = taskInfo
 		}
+
 	}
 	creator.PrintResults(a.GetOut(), successMap, errorMap)
 	return nil
@@ -107,4 +115,34 @@ func (c *repairDuts) taskName() string {
 		return "admin_verify"
 	}
 	return "admin_repair"
+}
+
+// ScheduleRepairBuilder schedules a labpack Buildbucket builder/recipe with the necessary arguments to run repair.
+func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string) (*swarming.TaskInfo, error) {
+	if !heuristics.LooksLikeLabstation(host) {
+		return nil, fmt.Errorf("cannot run paris repair on non-labstation %q", host)
+	}
+	p := &labpack.Params{
+		UnitName:       host,
+		TaskName:       "repair",
+		EnableRecovery: true,
+		AdminService:   e.AdminService,
+		// NOTE: We use the UFS service, not the Inventory service here.
+		InventoryService: e.UnifiedFleetService,
+		NoStepper:        false,
+		NoMetrics:        false,
+		// TODO(gregorynisbet): Pass config file to labpack task.
+		Configuration: "",
+	}
+	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	if err != nil {
+		return nil, err
+	}
+	taskInfo := &swarming.TaskInfo{
+		// Use an ID format that makes it extremely obvious that we're dealing with a
+		// buildbucket invocation number rather than a swarming task.
+		ID:      fmt.Sprintf("buildbucket:%d", taskID),
+		TaskURL: bc.BuildURL(taskID),
+	}
+	return taskInfo, nil
 }

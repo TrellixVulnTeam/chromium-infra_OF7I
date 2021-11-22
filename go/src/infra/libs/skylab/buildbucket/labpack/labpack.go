@@ -51,7 +51,7 @@ func (p *Params) AsMap() map[string]interface{} {
 }
 
 // ScheduleTask schedules a buildbucket task.
-func ScheduleTask(ctx context.Context, client *buildbucket.Client, params *Params) (int64, error) {
+func ScheduleTask(ctx context.Context, client buildbucket.Client, params *Params) (int64, error) {
 	props, err := structbuilder.NewStruct(params.AsMap())
 	if err != nil {
 		return 0, err
