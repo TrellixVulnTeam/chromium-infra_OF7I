@@ -451,6 +451,9 @@ func setHardwareState(s chromeosLab.HardwareState) *inventory.HardwareState {
 }
 
 func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
+	if s == nil || l == nil || l.GetPeripherals() == nil {
+		return
+	}
 	p := l.Peripherals
 	p.ServoState = setPeripheralState(s.GetServo())
 	p.Servo = setDutStateHelper(s.GetServo())
@@ -664,6 +667,7 @@ func adaptV2LabstationToV1DutSpec(data *ufspb.ChromeOSDeviceData) (*inventory.De
 		UseLid:          &falseValue,
 	}
 	setHwidData(labels, data.GetHwidData())
+	setDutState(labels, data.GetDutState())
 	labels.Variant = nil
 	setDutPools(labels, l.GetPools())
 	id := machine.GetName()

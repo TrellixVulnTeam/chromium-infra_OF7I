@@ -504,7 +504,7 @@ common {
 }
 `
 
-const labstationProtoFromV2 = `
+const labstationProtoFromV2WithDutState = `
 common {
 	attributes {
 		key: "HWID",
@@ -553,8 +553,8 @@ common {
           touchpad: false
           touchscreen: false
         }
-        cr50_phase: CR50_PHASE_INVALID
-        cr50_ro_keyid: ""
+        cr50_phase: CR50_PHASE_PVT
+        cr50_ro_keyid: "prod"
         cr50_ro_version: ""
         cr50_rw_keyid: ""
         cr50_rw_version: ""
@@ -564,18 +564,25 @@ common {
           audio_board: false
           audio_box: false
           audio_loopback_dongle: false
-          chameleon: false
+          chameleon: true
           chameleon_type: CHAMELEON_TYPE_INVALID
           conductive: false
           huddly: false
           mimo: false
-          servo: false
-          servo_state: UNKNOWN
+          servo: true
+          servo_state: BROKEN
           smart_usbhub: false
           stylus: false
           camerabox: false
           wificell: false
           router_802_11ax: false
+		  working_bluetooth_btpeer: 3
+          storage_state: HARDWARE_NORMAL
+          servo_usb_state: HARDWARE_NEED_REPLACEMENT
+          battery_state: HARDWARE_UNKNOWN
+          wifi_state: HARDWARE_ACCEPTABLE
+          bluetooth_state: HARDWARE_NORMAL
+          rpm_state: WORKING
 		}
 		platform:""
         test_coverage_hints {
@@ -715,27 +722,46 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 	})
 
 	Convey("Verify labstation v2 => v1", t, func() {
-		var labstation inventory.DeviceUnderTest
-		err := proto.UnmarshalText(labstationProtoFromV2, &labstation)
-		So(err, ShouldBeNil)
-
-		extLabstaion := ufspb.ChromeOSDeviceData{
-			LabConfig:           &labstationLSE,
-			Machine:             &labstationMachine,
-			DeviceConfig:        &labstationDevConfig,
-			ManufacturingConfig: &labstationManufacturingconfig,
-		}
-		d, err := AdaptToV1DutSpec(&extLabstaion)
-		So(err, ShouldBeNil)
-
-		s, err := inventory.WriteLabToString(&inventory.Lab{
-			Duts: []*inventory.DeviceUnderTest{d},
+		Convey("DutState is not set", func() {
+			extLabstaion := ufspb.ChromeOSDeviceData{
+				LabConfig:           &labstationLSE,
+				Machine:             &labstationMachine,
+				DeviceConfig:        &labstationDevConfig,
+				ManufacturingConfig: &labstationManufacturingconfig,
+				DutState:            nil,
+			}
+			d, err := AdaptToV1DutSpec(&extLabstaion)
+			So(err, ShouldBeNil)
+			So(d.GetCommon().GetLabels().GetPeripherals().GetServo(), ShouldEqual, false)
+			So(d.GetCommon().GetLabels().GetPeripherals().GetServoState(), ShouldEqual, invServoStateUnknown)
+			So(d.GetCommon().GetLabels().GetPeripherals().GetWifiState(), ShouldEqual, inventory.HardwareState_HARDWARE_UNKNOWN)
+			So(d.GetCommon().GetLabels().GetCr50Phase(), ShouldEqual, inventory.SchedulableLabels_CR50_PHASE_INVALID)
 		})
-		So(err, ShouldBeNil)
-		strLabstation, err := inventory.WriteLabToString(&inventory.Lab{
-			Duts: []*inventory.DeviceUnderTest{&labstation},
+
+		Convey("happy path", func() {
+			var labstation inventory.DeviceUnderTest
+			err := proto.UnmarshalText(labstationProtoFromV2WithDutState, &labstation)
+			So(err, ShouldBeNil)
+
+			extLabstaion := ufspb.ChromeOSDeviceData{
+				LabConfig:           &labstationLSE,
+				Machine:             &labstationMachine,
+				DeviceConfig:        &labstationDevConfig,
+				ManufacturingConfig: &labstationManufacturingconfig,
+				DutState:            &devUFSState,
+			}
+			d, err := AdaptToV1DutSpec(&extLabstaion)
+			So(err, ShouldBeNil)
+
+			s, err := inventory.WriteLabToString(&inventory.Lab{
+				Duts: []*inventory.DeviceUnderTest{d},
+			})
+			So(err, ShouldBeNil)
+			strLabstation, err := inventory.WriteLabToString(&inventory.Lab{
+				Duts: []*inventory.DeviceUnderTest{&labstation},
+			})
+			So(err, ShouldBeNil)
+			So(s, ShouldEqual, strLabstation)
 		})
-		So(err, ShouldBeNil)
-		So(s, ShouldEqual, strLabstation)
 	})
 }
