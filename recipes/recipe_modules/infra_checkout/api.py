@@ -128,7 +128,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
               name='commit git patch')
         self._committed = True
 
-      def get_changed_files(self):
+      def get_changed_files(self, diff_filter=None):
         """Lists files changed in the patch.
 
         This assumes that commit_change() has been called.
@@ -140,11 +140,12 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         assert patch_root
         assert self._committed
         # Grab a list of changed files.
+        git_args = ['diff', '--name-only', 'HEAD', 'HEAD~']
+        if diff_filter:
+          git_args.extend(['--diff-filter', diff_filter])
         with self.m.context(cwd=path.join(patch_root)):
           result = self.m.git(
-              'diff', '--name-only', 'HEAD', 'HEAD~',
-              name='get change list',
-              stdout=self.m.raw_io.output())
+              *git_args, name='get change list', stdout=self.m.raw_io.output())
         files = result.stdout.splitlines()
         if len(files) < 50:
           result.presentation.logs['change list'] = sorted(files)

@@ -1424,7 +1424,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/luci_go.py#106)(api, GOARCH, go_version_variant, run_integration_tests, run_lint):**
+&mdash; **def [RunSteps](/recipes/recipes/luci_go.py#108)(api, GOARCH, go_version_variant, run_integration_tests, run_lint):**
 
 &mdash; **def [apply\_golangci\_lint](/recipes/recipes/luci_go.py#46)(api, co):**
 ### *recipes* / [luci\_py](/recipes/recipes/luci_py.py)

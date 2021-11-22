@@ -47,7 +47,9 @@ def apply_golangci_lint(api, co):
   go_files = sorted(
       set([
           api.path.dirname(f) + '/...'
-          for f in co.get_changed_files()
+          # Set --diff-filter to exclude deleted/renamed files.
+          # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-filterACDMRTUXB82308203
+          for f in co.get_changed_files(diff_filter='ACMT')
           if f.endswith('.go')
       ]))
 

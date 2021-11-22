@@ -298,7 +298,9 @@
       "diff",
       "--name-only",
       "HEAD",
-      "HEAD~"
+      "HEAD~",
+      "--diff-filter",
+      "ACMT"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
     "env": {

@@ -253,6 +253,35 @@
     ]
   },
   {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "HEAD",
+      "HEAD~",
+      "--diff-filter",
+      "A"
+    ],
+    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "get change list (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

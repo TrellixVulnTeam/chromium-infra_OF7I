@@ -16,6 +16,7 @@ def RunSteps(api):
       gclient_config_name='infra', patch_root='infra')
   co.commit_change()
   co.get_changed_files()
+  co.get_changed_files(diff_filter='A')
   if api.platform.is_linux:
     with co.go_env():
       co.run_presubmit()
