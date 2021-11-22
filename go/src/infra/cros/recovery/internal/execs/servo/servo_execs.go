@@ -402,6 +402,24 @@ func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionA
 	return nil
 }
 
+// servodHasExec verifies whether servod supports the command
+// mentioned in action args.
+func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	command, ok := argsMap[commandToken]
+	log.Debug(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
+	if !ok {
+		// It is a failure condition if an action invokes this exec,
+		// and does not specify the servod command.
+		return errors.Reason("servod has exec: no command is mentioned for this action.").Err()
+	}
+	if _, err := ServodCallHas(ctx, args, command); err != nil {
+		return errors.Annotate(err, "servod has exec").Err()
+	}
+	log.Debug(ctx, "Servod Has Exec: Command %s is supported by servod", command)
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -416,4 +434,5 @@ func init() {
 	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
 	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
 	execs.Register("servo_host_is_labstation", servoHostIsLabstationExec)
+	execs.Register("servod_has", servodHasExec)
 }
