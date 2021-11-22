@@ -47,7 +47,11 @@ type Entry struct {
 }
 
 // NotFound is the error returned by Read if the row could not be found.
-var NotFound = errors.New("clustering state row not found")
+var NotFoundErr = errors.New("clustering state row not found")
+
+// UpdateRaceErr is the error returned by UpdateClustering if a concurrent
+// modification (or deletion) of a chunk is detected.
+var UpdateRaceErr = errors.New("concurrent modification to cluster")
 
 // EndOfTable is the highest possible chunk ID that can be stored.
 var EndOfTable = strings.Repeat("ff", 16)
@@ -76,6 +80,58 @@ func Create(ctx context.Context, e *Entry) error {
 	return nil
 }
 
+// UpdateClustering updates the clustering results on a chunk. The update
+// implements optimistic concurrency control by validating the chunk
+// has not changed from the previous entry before modifying it, returning
+// an error otherwise. This allows detection of update races.
+//
+// The update also uses the previous entry to avoid writing cluster data
+// if it has not changed, which optimises the performance of minor
+// reclusterings.
+func UpdateClustering(ctx context.Context, previous *Entry, update *clustering.ClusterResults) error {
+	if err := validateClusterResults(update); err != nil {
+		return err
+	}
+
+	params := make(map[string]interface{})
+	var extraSetClause string
+	if !clustering.AlgorithmsAndClustersEqual(&previous.Clustering, update) {
+		// Clusters is a field that may be many kilobytes in size.
+		// For efficiency, only write it to Spanner if it is changed.
+		extraSetClause = `Clusters = @clusters,`
+		clusters, err := encodeClusters(update.Algorithms, update.Clusters)
+		if err != nil {
+			return err
+		}
+		params["clusters"] = clusters
+	}
+
+	stmt := spanner.NewStatement(`
+	  UPDATE ClusteringState
+	  SET AlgorithmsVersion = @algorithmsVersion,
+	      RulesVersion = @rulesVersion,
+	      ` + extraSetClause + `
+	      LastUpdated = PENDING_COMMIT_TIMESTAMP()
+	  WHERE Project = @project AND ChunkID = @chunkID AND LastUpdated = @lastUpdated
+	`)
+	params["algorithmsVersion"] = update.AlgorithmsVersion
+	params["rulesVersion"] = update.RulesVersion
+	params["project"] = previous.Project
+	params["chunkID"] = previous.ChunkID
+	params["lastUpdated"] = previous.LastUpdated
+	stmt.Params = spanutil.ToSpannerMap(params)
+
+	rowCount, err := span.Update(ctx, stmt)
+	if err != nil {
+		return err
+	}
+	if rowCount != 1 {
+		// Row was modified (or deleted) since it was last read.
+		return UpdateRaceErr
+	}
+	return nil
+}
+
 // Read reads clustering state for a chunk. Must be
 // called in the context of a Spanner transaction. If no clustering
 // state exists, the method returns the error NotFound.
@@ -91,7 +147,7 @@ func Read(ctx context.Context, project, chunkID string) (*Entry, error) {
 	}
 	if len(results) == 0 {
 		// Row does not exist.
-		return nil, NotFound
+		return nil, NotFoundErr
 	}
 	return results[0], nil
 }
@@ -264,15 +320,25 @@ func validateEntry(e *Entry) error {
 		return errors.New("partition time must be specified")
 	case e.ObjectID == "":
 		return errors.New("object ID must be specified")
-	case e.Clustering.AlgorithmsVersion <= 0:
+	default:
+		if err := validateClusterResults(&e.Clustering); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func validateClusterResults(c *clustering.ClusterResults) error {
+	switch {
+	case c.AlgorithmsVersion <= 0:
 		return errors.New("algorithms version must be specified")
-	case e.Clustering.RulesVersion.IsZero():
+	case c.RulesVersion.IsZero():
 		return errors.New("rules version must be specified")
 	default:
-		if err := validateAlgorithms(e.Clustering.Algorithms); err != nil {
+		if err := validateAlgorithms(c.Algorithms); err != nil {
 			return errors.Annotate(err, "algorithms").Err()
 		}
-		if err := validateClusters(e.Clustering.Clusters); err != nil {
+		if err := validateClusters(c.Clusters); err != nil {
 			return errors.Annotate(err, "clusters").Err()
 		}
 		return nil

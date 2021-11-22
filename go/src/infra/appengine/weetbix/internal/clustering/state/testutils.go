@@ -25,6 +25,8 @@ type EntryBuilder struct {
 }
 
 // NewEntry creates a new entry builder with the given uniqifier.
+// The uniqifier affects the ChunkID, AlgorithmVersion, RulesVersion
+// and Algorithms.
 func NewEntry(uniqifier int) *EntryBuilder {
 	// Generate a 128-bit chunkID from the uniqifier.
 	// Using a hash function ensures they will be approximately uniformly
@@ -99,8 +101,8 @@ func (b *EntryBuilder) Build() *Entry {
 }
 
 // CreateEntriesForTesting creates the given entries, for testing.
-func CreateEntriesForTesting(ctx context.Context, entries []*Entry) error {
-	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+func CreateEntriesForTesting(ctx context.Context, entries []*Entry) (commitTimestamp time.Time, err error) {
+	return span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		for _, e := range entries {
 			if err := Create(ctx, e); err != nil {
 				return err
@@ -108,5 +110,4 @@ func CreateEntriesForTesting(ctx context.Context, entries []*Entry) error {
 		}
 		return nil
 	})
-	return err
 }

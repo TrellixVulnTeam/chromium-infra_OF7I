@@ -6,7 +6,7 @@ package reclustering
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering"
@@ -34,14 +34,23 @@ type Analysis interface {
 // Update will (re-)cluster the specific chunk of test results,
 // committing the updated state to Spanner and exporting analysis.
 //
-// If the chunk does not not exist in Spanner, pass a *state.Entry
+// If the chunk does not exist in Spanner, pass a *state.Entry
 // with project, chunkID, objectID and partitionTime set
 // but with LastUpdated set to its zero value. The chunk will be
-// clustered for the first time.
+// clustered for the first time and saved to Spanner.
 //
 // If the chunk does exist in Spanner, pass the state.Entry read
 // from Spanner, along with the test results. The chunk will be
-// re-clustered.
+// re-clustered and updated.
+//
+// In case of an update race, the chunk will not be modified, and
+// the method returns state.UpdateRaceErr. The method should be retried
+// with a more recent version of the chunk in this case.
+//
+// In case of a create conflicting with another create, the method
+// will also fail (with spanner.ErrCode(err) == codes.AlreadyExists)
+// but there is no need to retry as the chunk will have already been
+// inserted.
 func Update(ctx context.Context, analysis Analysis, chunk *cpb.Chunk, existingState *state.Entry) error {
 	// Obtain the set of failure association rules to use when clustering.
 	ruleset, err := rulesCache.Ruleset(ctx, existingState.Project)
@@ -54,22 +63,33 @@ func Update(ctx context.Context, analysis Analysis, chunk *cpb.Chunk, existingSt
 	if !exists {
 		existingClustering = algorithms.NewEmptyClusterResults(len(chunk.Failures))
 	} else {
-		// TODO(crbug.com/1243174) Implement reclustering.
-		return errors.New("reclustering is not yet supported")
+		if len(existingState.Clustering.Clusters) != len(chunk.Failures) {
+			return fmt.Errorf("existing clustering does not match chunk; got clusters for %v test results, want %v", len(existingClustering.Clusters), len(chunk.Failures))
+		}
+		existingClustering = existingState.Clustering
 	}
 
 	newClustering := algorithms.Cluster(ruleset, existingClustering, clustering.FailuresFromProtos(chunk.Failures))
 
 	f := func(ctx context.Context) error {
-		clusterState := &state.Entry{
-			Project:       existingState.Project,
-			ChunkID:       existingState.ChunkID,
-			PartitionTime: existingState.PartitionTime,
-			ObjectID:      existingState.ObjectID,
-			Clustering:    newClustering,
-		}
-		if err := state.Create(ctx, clusterState); err != nil {
-			return err
+		if !exists {
+			clusterState := &state.Entry{
+				Project:       existingState.Project,
+				ChunkID:       existingState.ChunkID,
+				PartitionTime: existingState.PartitionTime,
+				ObjectID:      existingState.ObjectID,
+				Clustering:    newClustering,
+			}
+			// In case the row already exists, the enclosing ReadWriteTransaction
+			// returns an err with spanner.ErrCode(err) == codes.AlreadyExists.
+			if err := state.Create(ctx, clusterState); err != nil {
+				return err
+			}
+		} else {
+			// If an update race is detected, returns state.UpdateRaceErr.
+			if err := state.UpdateClustering(ctx, existingState, &newClustering); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -78,25 +98,34 @@ func Update(ctx context.Context, analysis Analysis, chunk *cpb.Chunk, existingSt
 		return err
 	}
 
-	update := &clustering.Update{
-		Project: existingState.Project,
-		ChunkID: existingState.ChunkID,
-		Updates: prepareClusterUpdates(chunk, newClustering),
-	}
-	if err := analysis.HandleUpdatedClusters(ctx, update, commitTime); err != nil {
-		return err
+	updates := prepareClusterUpdates(chunk, existingClustering, newClustering)
+	if len(updates) > 0 {
+		update := &clustering.Update{
+			Project: existingState.Project,
+			ChunkID: existingState.ChunkID,
+			Updates: updates,
+		}
+		if err := analysis.HandleUpdatedClusters(ctx, update, commitTime); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func prepareClusterUpdates(chunk *cpb.Chunk, clusterResults clustering.ClusterResults) []*clustering.FailureUpdate {
+func prepareClusterUpdates(chunk *cpb.Chunk, previousClustering clustering.ClusterResults, newClustering clustering.ClusterResults) []*clustering.FailureUpdate {
 	var updates []*clustering.FailureUpdate
 	for i, testResult := range chunk.Failures {
-		update := &clustering.FailureUpdate{
-			TestResult:  testResult,
-			NewClusters: clusterResults.Clusters[i],
+		previousClusters := previousClustering.Clusters[i]
+		newClusters := newClustering.Clusters[i]
+
+		if !clustering.ClusterSetsEqual(previousClusters, newClusters) {
+			update := &clustering.FailureUpdate{
+				TestResult:       testResult,
+				PreviousClusters: previousClusters,
+				NewClusters:      newClusters,
+			}
+			updates = append(updates, update)
 		}
-		updates = append(updates, update)
 	}
 	return updates
 }

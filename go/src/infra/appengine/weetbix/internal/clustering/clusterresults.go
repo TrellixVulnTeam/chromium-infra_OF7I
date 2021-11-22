@@ -4,7 +4,9 @@
 
 package clustering
 
-import "time"
+import (
+	"time"
+)
 
 // ClusterResults represents the results of clustering a list of
 // test failures.
@@ -29,4 +31,55 @@ type ClusterResults struct {
 	// Clusters records the clusters each test result is in;
 	// one slice of ClusterIDs for each test result.
 	Clusters [][]*ClusterID
+}
+
+// AlgorithmsAndClustersEqual returns whether the algorithms and clusters of
+// two cluster results are equivalent.
+func AlgorithmsAndClustersEqual(a *ClusterResults, b *ClusterResults) bool {
+	if !setsEqual(a.Algorithms, b.Algorithms) {
+		return false
+	}
+	if len(a.Clusters) != len(b.Clusters) {
+		return false
+	}
+	for i, aClusters := range a.Clusters {
+		bClusters := b.Clusters[i]
+		if !ClusterSetsEqual(aClusters, bClusters) {
+			return false
+		}
+	}
+	return true
+}
+
+// ClusterSetsEqual returns whether the the set of clusters represented
+// by the slice `as` is equivalent to the set of clusters represented
+// by the slice `bs`.
+// Order of the slices is not considered. Each cluster in as and bs
+// should be unique.
+func ClusterSetsEqual(as []*ClusterID, bs []*ClusterID) bool {
+	if len(as) != len(bs) {
+		return false
+	}
+	aKeys := make(map[string]struct{})
+	for _, a := range as {
+		aKeys[a.Key()] = struct{}{}
+	}
+	bKeys := make(map[string]struct{})
+	for _, b := range bs {
+		bKeys[b.Key()] = struct{}{}
+	}
+	return setsEqual(aKeys, bKeys)
+}
+
+// setsEqual returns whether two sets are equal.
+func setsEqual(a map[string]struct{}, b map[string]struct{}) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key := range a {
+		if _, ok := b[key]; !ok {
+			return false
+		}
+	}
+	return true
 }

@@ -16,7 +16,8 @@ type Update struct {
 	// ChunkID is the identity of the chunk which is being (re-)clustered.
 	ChunkID string
 	// Updates describes how each failure in the cluster was (re)clustered.
-	// It contains one entry for each failure in the cluster.
+	// It contains one entry for each failure in the cluster that has
+	// had its clusters changed.
 	Updates []*FailureUpdate
 }
 

@@ -161,7 +161,7 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		// Do not attempt to ingest again.
 		return nil
 	}
-	if err != state.NotFound {
+	if err != state.NotFoundErr {
 		return err
 	}
 

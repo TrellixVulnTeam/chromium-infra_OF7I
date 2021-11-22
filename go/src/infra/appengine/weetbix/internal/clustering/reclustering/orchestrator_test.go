@@ -87,7 +87,7 @@ func TestOrchestrator(t *testing.T) {
 			for i := 0; i < 450; i++ {
 				entries = append(entries, state.NewEntry(i).WithProject("project-b").Build())
 			}
-			err := state.CreateEntriesForTesting(ctx, entries)
+			_, err := state.CreateEntriesForTesting(ctx, entries)
 			So(err, ShouldBeNil)
 
 			rulesVersionB := time.Date(2020, time.January, 10, 9, 8, 7, 0, time.UTC)

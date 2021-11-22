@@ -11,8 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/spanner"
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal/clustering"
+	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -121,6 +124,103 @@ func TestSpanner(t *testing.T) {
 				})
 			})
 		})
+		Convey(`UpdateClustering`, func() {
+			Convey(`Valid`, func() {
+				entries := []*Entry{
+					// Should not be read.
+					NewEntry(0).Build(),
+				}
+				commitTime, err := CreateEntriesForTesting(ctx, entries)
+				So(err, ShouldBeNil)
+				// Set LastUpdated on the entry as UpdateClustering() needs
+				// this.
+				entries[0].LastUpdated = commitTime
+
+				// Prepare an update.
+				newClustering := &NewEntry(1).Build().Clustering
+
+				Convey(`Normal`, func() {
+					expected := NewEntry(0).Build()
+					expected.Clustering = *newClustering
+
+					test := func() {
+						// Apply the update.
+						commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+							err := UpdateClustering(ctx, entries[0], newClustering)
+							return err
+						})
+						So(err, ShouldEqual, nil)
+
+						// Assert the update was applied.
+						actual, err := Read(span.Single(ctx), expected.Project, expected.ChunkID)
+						So(err, ShouldBeNil)
+						// ShouldResemble compares time.Time objects using
+						// reflect.DeepEqual rather than the Time.Equal method,
+						// which leads to failed comparisons even though the
+						// represented time is the same. Therefore, compare
+						// time separately.
+						So(actual.LastUpdated, ShouldEqual, commitTime)
+						clearLastUpdatedTimestamps(actual)
+						So(actual, ShouldResemble, expected)
+					}
+					Convey(`Full update`, func() {
+						So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeFalse)
+						test()
+					})
+					Convey(`Minor update`, func() {
+						newClustering = &NewEntry(0).Build().Clustering
+						newClustering.AlgorithmsVersion = 10
+						newClustering.RulesVersion = time.Date(2024, time.June, 5, 4, 3, 2, 1000, time.UTC)
+						expected.Clustering = *newClustering
+						So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeTrue)
+						test()
+					})
+					Convey(`No-op update`, func() {
+						newClustering = &NewEntry(0).Build().Clustering
+						expected.Clustering = *newClustering
+						test()
+					})
+				})
+				Convey(`Update race`, func() {
+					// Simulate an update was applied between our last read
+					// and the update.
+					commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+						ms := spanutil.UpdateMap("ClusteringState", map[string]interface{}{
+							"Project":     entries[0].Project,
+							"ChunkID":     entries[0].ChunkID,
+							"LastUpdated": spanner.CommitTimestamp,
+						})
+						span.BufferWrite(ctx, ms)
+						return nil
+					})
+					So(err, ShouldEqual, nil)
+
+					// Apply the update.
+					commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+						err := UpdateClustering(ctx, entries[0], newClustering)
+						return err
+					})
+
+					// Verify the race was detected.
+					So(err, ShouldEqual, UpdateRaceErr)
+				})
+			})
+			Convey(`Invalid`, func() {
+				originalEntry := NewEntry(0).Build()
+				newClustering := &NewEntry(0).Build().Clustering
+
+				// Try an invalid algorithm. We do not repeat all the same
+				// validation test cases as create, as the underlying
+				// implementation is the same.
+				newClustering.Algorithms["!!!"] = struct{}{}
+
+				_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+					err := UpdateClustering(ctx, originalEntry, newClustering)
+					return err
+				})
+				So(err, ShouldErrLike, `algorithm "!!!" is not valid`)
+			})
+		})
 		Convey(`ReadNextN`, func() {
 			targetRulesVersion := time.Date(2024, 1, 1, 1, 1, 1, 0, time.UTC)
 			targetAlgorithmsVersion := 10
@@ -144,7 +244,7 @@ func TestSpanner(t *testing.T) {
 				NewEntry(7).WithChunkIDPrefix("12" + strings.Repeat("00", 15)).WithAlgorithmsVersion(2).Build(), // Should not be read.
 			}
 
-			err := CreateEntriesForTesting(ctx, entries)
+			_, err := CreateEntriesForTesting(ctx, entries)
 			So(err, ShouldBeNil)
 
 			expectedEntries := []*Entry{
@@ -194,7 +294,7 @@ func TestSpanner(t *testing.T) {
 				for i := 0; i < 200; i++ {
 					entries = append(entries, NewEntry(i).Build())
 				}
-				err := CreateEntriesForTesting(ctx, entries)
+				_, err := CreateEntriesForTesting(ctx, entries)
 				So(err, ShouldBeNil)
 
 				count, err := EstimateChunks(span.Single(ctx), testProject)
