@@ -14,6 +14,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/shivas/site"
+	"infra/libs/skylab/buildbucket"
+	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/worker"
 	"infra/libs/swarming"
 )
@@ -24,6 +26,7 @@ type repairDuts struct {
 	envFlags       site.EnvFlags
 	expirationMins int
 	onlyVerify     bool
+	paris          bool
 }
 
 // RepairDutsCmd contains repair-duts command specification
@@ -39,6 +42,7 @@ var RepairDutsCmd = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.onlyVerify, "verify", false, "Run only verify actions.")
 		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
+		c.Flags.BoolVar(&c.paris, "paris", false, "Use PARIS rather than legacy flow (dogfood).")
 		return c
 	},
 }
@@ -65,15 +69,28 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	creator.LogdogService = e.LogdogService
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
+	if c.paris {
+		var err error
+		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair (labstations only)\n")
+		_, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+		if err != nil {
+			return err
+		}
+	}
 	for _, host := range args {
 		creator.GenerateLogdogTaskCode()
 		cmd := &worker.Command{TaskName: c.taskName()}
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
 		var task *swarming.TaskInfo
-		if c.onlyVerify {
-			task, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+		if c.paris && heuristics.LooksLikeLabstation(host) {
+			fmt.Fprintf(a.GetErr(), "Using PARIS for labstation %q\n", host)
+			continue
 		} else {
-			task, err = creator.LegacyRepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+			if c.onlyVerify {
+				task, err = creator.VerifyTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+			} else {
+				task, err = creator.LegacyRepairTask(ctx, e.SwarmingServiceAccount, host, c.expirationMins*60, cmd.Args(), cmd.LogDogAnnotationURL)
+			}
 		}
 		if err != nil {
 			errorMap[host] = err
