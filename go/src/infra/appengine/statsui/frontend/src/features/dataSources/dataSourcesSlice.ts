@@ -214,6 +214,12 @@ const initialState: DataSourcesState = populateMaps({
           color: colorGradient(MetricOptionColorType.DeltaPercentage, 0.2),
         },
         {
+          name: 'Count Tests',
+          unit: Unit.Number,
+          hasSubsections: true,
+          description: `How many times the test suite ran.`,
+        },
+        {
           name: 'P50 Slow Tests',
           unit: Unit.Duration,
           hasSubsections: true,
@@ -238,13 +244,6 @@ const initialState: DataSourcesState = populateMaps({
           color: colorGradient(MetricOptionColorType.DeltaAbsolute, 10 * 60, {
             emptyValue: 0,
           }),
-        },
-        {
-          name: 'Count Slow Tests',
-          unit: Unit.Number,
-          hasSubsections: true,
-          description: `How many builds had a shard that ran longer than 5
-          minutes`,
         },
       ],
       periods: [
