@@ -8,35 +8,34 @@ import os
 import sys
 import unittest
 
+import logging
 import mock
 
-from services.code_coverage import aggregation_util
+from services.code_coverage import summary_coverage_aggregator
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 
-class AggregationUtilTest(WaterfallTestCase):
+class SummaryCoverageAggregatorTest(WaterfallTestCase):
 
   def testBasic(self):
-    files_coverage_data = [
-        {
-            'path': '//dir/file.cc',
-            'lines': [{
-                'first': 1,
-                'last': 1,
-                'count': 1,
-            }],
-            'summaries': [{
-                'name': 'line',
-                'covered': 1,
-                'total': 1,
-            }],
-        },
-    ]
+    file_coverage_data = {
+        'path': '//dir/file.cc',
+        'lines': [{
+            'first': 1,
+            'last': 1,
+            'count': 1,
+        }],
+        'summaries': [{
+            'name': 'line',
+            'covered': 1,
+            'total': 1,
+        }],
+    }
 
-    dir_to_component = {'dir': 'Test>Component'}
-    per_directory_data, per_component_data = (
-        aggregation_util.get_aggregated_coverage_data_from_files(
-            files_coverage_data, dir_to_component))
+    aggregator = summary_coverage_aggregator.SummaryCoverageAggregator(
+        metrics=['line'])
+    aggregator.consume_file_coverage(file_coverage_data)
+    per_directory_data = aggregator.produce_summary_coverage()
 
     expected_per_directory_data = {
         '//': {
@@ -77,29 +76,7 @@ class AggregationUtilTest(WaterfallTestCase):
         }
     }
 
-    expected_per_component_data = {
-        'Test>Component': {
-            'dirs': [{
-                'name': 'dir/',
-                'path': '//dir/',
-                'summaries': [{
-                    'name': 'line',
-                    'covered': 1,
-                    'total': 1,
-                }]
-            }],
-            'path': 'Test>Component',
-            'summaries': [{
-                'name': 'line',
-                'covered': 1,
-                'total': 1,
-            }]
-        }
-    }
-
-    self.maxDiff = None
     self.assertDictEqual(expected_per_directory_data, per_directory_data)
-    self.assertDictEqual(expected_per_component_data, per_component_data)
 
   def testAvoidComponentDoubleCounting(self):
     files_coverage_data = [
@@ -131,10 +108,12 @@ class AggregationUtilTest(WaterfallTestCase):
         },
     ]
 
-    dir_to_component = {'dir': 'Test>Component', 'dir/subdir': 'Test>Component'}
-    per_directory_data, per_component_data = (
-        aggregation_util.get_aggregated_coverage_data_from_files(
-            files_coverage_data, dir_to_component))
+    aggregator = summary_coverage_aggregator.SummaryCoverageAggregator(
+        metrics=['line'])
+    aggregator.consume_file_coverage(files_coverage_data[0])
+    aggregator.consume_file_coverage(files_coverage_data[1])
+    per_directory_data = aggregator.produce_summary_coverage()
+    logging.info(per_directory_data)
 
     expected_per_directory_data = {
         '//': {
@@ -201,26 +180,4 @@ class AggregationUtilTest(WaterfallTestCase):
         }
     }
 
-    expected_per_component_data = {
-        'Test>Component': {
-            'dirs': [{
-                'name': 'dir/',
-                'path': '//dir/',
-                'summaries': [{
-                    'name': 'line',
-                    'covered': 3,
-                    'total': 3
-                }]
-            }],
-            'path': 'Test>Component',
-            'summaries': [{
-                'name': 'line',
-                'covered': 3,
-                'total': 3
-            }]
-        }
-    }
-
-    self.maxDiff = None
     self.assertDictEqual(expected_per_directory_data, per_directory_data)
-    self.assertDictEqual(expected_per_component_data, per_component_data)

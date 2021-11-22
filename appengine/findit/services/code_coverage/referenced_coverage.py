@@ -21,9 +21,9 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import SummaryCoverageData
 from services import bigquery_helper
-from services.code_coverage import aggregation_util
 from services.code_coverage import code_coverage_util
 from services.code_coverage import diff_util
+from services.code_coverage import summary_coverage_aggregator
 
 _PAGE_SIZE = 100
 
@@ -151,33 +151,6 @@ def _FlushEntities(entities, total, last=False):
   return [], total
 
 
-def _ExportFileCoverage(files_coverage, postsubmit_report, modifier_id):
-  """Exports file coverage entities to datastore.
-
-  Args:
-    files_coverage(dict): Mapping from file path to corresponding
-                                coverage data.
-    postsubmit_report(PostsubmitReport): Full codebase report for which
-                                referenced entities are being exported.
-    modifier_id(int): Id of the CoverageReportModifier corresponding to the
-                      reference commit.
-  """
-  entities = []
-  total = 0
-  logging.info("Dumping file coverage")
-  for i in range(0, len(files_coverage)):
-    data = files_coverage[i]
-    entity = FileCoverageData.Create(
-        postsubmit_report.gitiles_commit.server_host,
-        postsubmit_report.gitiles_commit.project,
-        postsubmit_report.gitiles_commit.ref,
-        postsubmit_report.gitiles_commit.revision, data['path'],
-        postsubmit_report.bucket, postsubmit_report.builder, data, modifier_id)
-    entities.append(entity)
-    entities, total = _FlushEntities(entities, total)
-  _FlushEntities(entities, total, last=True)
-
-
 def _ExportDirSummaryCoverage(directories_coverage, postsubmit_report,
                               modifier_id):
   """Exports directory summary coverage entities to datastore.
@@ -231,51 +204,66 @@ def _CreateReferencedCoverage(modifier_id, postsubmit_report):
       FileCoverageData.modifier_id == 0)
   more = True
   cursor = None
-  referenced_file_coverage = []
+  referenced_file_coverage_entities = []
+  aggregator = summary_coverage_aggregator.SummaryCoverageAggregator(
+      metrics=['line'])
   file_content_queue = Queue.Queue()
   total = 0
   while more:
     results, cursor, more = query.fetch_page(_PAGE_SIZE, start_cursor=cursor)
     for file_coverage in results:
-      content_at_latest_thread = Thread(
-          target=_FetchFileContentAtCommit,
-          args=(file_coverage.path, file_coverage.gitiles_commit.revision,
-                postsubmit_report.manifest, file_content_queue))
-      content_at_reference_commit_thread = Thread(
-          target=_FetchFileContentAtCommit,
-          args=(file_coverage.path, reference_commit,
-                postsubmit_report.manifest, file_content_queue))
-      content_at_latest_thread.start()
-      content_at_reference_commit_thread.start()
-      content_at_latest_thread.join()
-      content_at_reference_commit_thread.join()
+      try:
+        content_at_latest_thread = Thread(
+            target=_FetchFileContentAtCommit,
+            args=(file_coverage.path, file_coverage.gitiles_commit.revision,
+                  postsubmit_report.manifest, file_content_queue))
+        content_at_reference_commit_thread = Thread(
+            target=_FetchFileContentAtCommit,
+            args=(file_coverage.path, reference_commit,
+                  postsubmit_report.manifest, file_content_queue))
+        content_at_latest_thread.start()
+        content_at_reference_commit_thread.start()
+        content_at_latest_thread.join()
+        content_at_reference_commit_thread.join()
 
-      # Consume content from all threads
-      contents = defaultdict(list)
-      while not file_content_queue.empty():
-        # It's correct to do block=False as all threads have been joined before.
-        k, v = file_content_queue.get(block=False)
-        contents[k] = v
-      if not contents[file_coverage.gitiles_commit.revision]:
-        logging.warning("File Content not found for path %s at commit %s",
-                        file_coverage.path,
-                        file_coverage.gitiles_commit.revision)
-        continue
+        # Consume content from all threads
+        contents = defaultdict(list)
+        while not file_content_queue.empty():
+          # It's correct to do block=False as all threads have been joined.
+          k, v = file_content_queue.get(block=False)
+          contents[k] = v
+        if not contents[file_coverage.gitiles_commit.revision]:
+          logging.warning("File Content not found for path %s at commit %s",
+                          file_coverage.path,
+                          file_coverage.gitiles_commit.revision)
+          continue
+        referenced_file_coverage = _GetReferencedFileCoverage(
+            file_coverage,
+            _GetModifiedLinesSinceCommit(
+                contents[file_coverage.gitiles_commit.revision],
+                contents[reference_commit]))
+        if referenced_file_coverage:
+          # Create corresponding FileCoverageData entity and process it towards
+          # summary coverage
+          entity = FileCoverageData.Create(
+              postsubmit_report.gitiles_commit.server_host,
+              postsubmit_report.gitiles_commit.project,
+              postsubmit_report.gitiles_commit.ref,
+              postsubmit_report.gitiles_commit.revision,
+              referenced_file_coverage['path'], postsubmit_report.bucket,
+              postsubmit_report.builder, referenced_file_coverage, modifier_id)
+          total += 1
+          referenced_file_coverage_entities.append(entity)
+          referenced_file_coverage_entities, total = _FlushEntities(
+              referenced_file_coverage_entities, total)
+          aggregator.consume_file_coverage(referenced_file_coverage)
+      except Exception as e:
+        logging.error("Error while generating coverage for file %s: %s",
+                      file_coverage.path, str(e))
+  # Create remaining FileCoverageData entities
+  _FlushEntities(referenced_file_coverage_entities, total, last=True)
 
-      referenced_coverage = _GetReferencedFileCoverage(
-          file_coverage,
-          _GetModifiedLinesSinceCommit(
-              contents[file_coverage.gitiles_commit.revision],
-              contents[reference_commit]))
-      if referenced_coverage:
-        referenced_file_coverage.append(referenced_coverage)
-    total += _PAGE_SIZE
-    logging.info("processed %d files", total)
-
-  referenced_directory_coverage, _ = (
-      aggregation_util.get_aggregated_coverage_data_from_files(
-          referenced_file_coverage))
-  _ExportFileCoverage(referenced_file_coverage, postsubmit_report, modifier_id)
+  referenced_directory_coverage = aggregator.produce_summary_coverage()
   _ExportDirSummaryCoverage(referenced_directory_coverage, postsubmit_report,
                             modifier_id)
   # Create a top level PostsubmitReport entity with visible = True

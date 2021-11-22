@@ -23,9 +23,9 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import SummaryCoverageData
 from services import bigquery_helper
-from services.code_coverage import aggregation_util
 from services.code_coverage import code_coverage_util
 from services.code_coverage import diff_util
+from services.code_coverage import summary_coverage_aggregator
 
 _PAGE_SIZE = 100
 
@@ -442,6 +442,8 @@ def ExportFeatureCoverage(modifier_id, run_id):
   files_deleted_at_latest = defaultdict(list)
   interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
   commits = _GetFeatureCommits(gerrit_hashtag)
+  aggregator = summary_coverage_aggregator.SummaryCoverageAggregator(
+      metrics=['line'])
   for commit in commits:
     for file_path in commit['files']:
       file_path = '//' + file_path
@@ -525,10 +527,10 @@ def ExportFeatureCoverage(modifier_id, run_id):
   for builder, report in builder_to_latest_report.items():
     coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
         report, interesting_lines_per_builder_per_file[builder])
-    directory_coverage, _ = (
-        aggregation_util.get_aggregated_coverage_data_from_files(
-            coverage_per_file.values()))
     _CreateModifiedFileCoverage(coverage_per_file, report, modifier_id)
+    for file_coverage in coverage_per_file.values():
+      aggregator.consume_file_coverage(file_coverage)
+    directory_coverage = aggregator.produce_summary_coverage()
     _CreateModifiedDirSummaryCoverage(directory_coverage, report, modifier_id)
     # Create a top level PostsubmitReport entity with visible = True
     if directory_coverage:
