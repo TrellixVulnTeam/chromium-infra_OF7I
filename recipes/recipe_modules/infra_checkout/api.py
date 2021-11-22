@@ -140,7 +140,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         assert patch_root
         assert self._committed
         # Grab a list of changed files.
-        git_args = ['diff', '--name-only', 'HEAD', 'HEAD~']
+        git_args = ['diff', '--name-only', 'HEAD~', 'HEAD']
         if diff_filter:
           git_args.extend(['--diff-filter', diff_filter])
         with self.m.context(cwd=path.join(patch_root)):

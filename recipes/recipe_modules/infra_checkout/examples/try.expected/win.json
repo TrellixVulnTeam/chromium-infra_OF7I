@@ -228,8 +228,8 @@
       "git",
       "diff",
       "--name-only",
-      "HEAD",
-      "HEAD~"
+      "HEAD~",
+      "HEAD"
     ],
     "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
     "infra_step": true,
@@ -257,8 +257,8 @@
       "git",
       "diff",
       "--name-only",
-      "HEAD",
       "HEAD~",
+      "HEAD",
       "--diff-filter",
       "A"
     ],

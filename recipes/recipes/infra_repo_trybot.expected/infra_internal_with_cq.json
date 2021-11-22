@@ -237,8 +237,8 @@
       "git",
       "diff",
       "--name-only",
-      "HEAD",
-      "HEAD~"
+      "HEAD~",
+      "HEAD"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
     "infra_step": true,

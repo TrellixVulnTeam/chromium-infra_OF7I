@@ -49,7 +49,7 @@ def apply_golangci_lint(api, co):
           api.path.dirname(f) + '/...'
           # Set --diff-filter to exclude deleted/renamed files.
           # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-filterACDMRTUXB82308203
-          for f in co.get_changed_files(diff_filter='ACMT')
+          for f in co.get_changed_files(diff_filter='ACMTR')
           if f.endswith('.go')
       ]))
 
