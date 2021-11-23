@@ -1407,6 +1407,32 @@ func TestUpdateLabMeta(t *testing.T) {
 			So(peri.Servo.GetServoTopology(), ShouldResembleProto, topology)
 			So(peri.Servo.GetServoComponent(), ShouldResemble, []string{"fake-type", "foo", "bar"})
 		})
+
+		Convey("Update a OS machine lse - with no servo_type", func() {
+			machineLSE := mockDutMachineLSE("machinelse-labmeta-6")
+			machineLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = &chromeosLab.Peripherals{
+				Servo: &chromeosLab.Servo{},
+			}
+			req, err := inventory.CreateMachineLSE(ctx, machineLSE)
+			So(err, ShouldBeNil)
+			So(req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeFalse)
+
+			topology := &chromeosLab.ServoTopology{}
+			err = UpdateLabMeta(ctx, &ufspb.LabMeta{
+				ChromeosDeviceId: "machine-labmeta1",
+				Hostname:         "machinelse-labmeta-6",
+				SmartUsbhub:      true,
+				ServoTopology:    topology,
+			})
+			So(err, ShouldBeNil)
+			req, err = inventory.GetMachineLSE(ctx, "machinelse-labmeta-6")
+			So(err, ShouldBeNil)
+			peri := req.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+			So(peri.GetSmartUsbhub(), ShouldBeTrue)
+			So(peri.Servo.GetServoType(), ShouldEqual, "")
+			So(peri.Servo.GetServoTopology(), ShouldResembleProto, topology)
+			So(len(peri.Servo.GetServoComponent()), ShouldEqual, 0)
+		})
 	})
 }
 

@@ -1674,8 +1674,15 @@ func UpdateLabMeta(ctx context.Context, meta *ufspb.LabMeta) error {
 // TODO(xianuowang): Move this function out of UFS since UFS doesn't have knowledge of
 // how this should works.
 func extractServoComponents(servoType string) []string {
+	var servoComponents []string
 	reg := regexp.MustCompile("_with_|_and_")
-	return reg.Split(servoType, -1)
+	for _, c := range reg.Split(servoType, -1) {
+		// Sanitize empty string in case of servoType is empty or invalid.
+		if len(c) > 0 {
+			servoComponents = append(servoComponents, c)
+		}
+	}
+	return servoComponents
 }
 
 // RenameMachineLSE renames the machineLSE to the new hostname.
