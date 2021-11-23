@@ -886,6 +886,20 @@ wheel: <
 
 * *universal*
 
+## **auditwheel-py3**
+
+### 5.0.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/auditwheel-py3"
+  version: "version:5.0.0"
+>
+```
+
+
+* *universal*
+
 ## **backport_ipaddress-py2**
 
 ### 0.1
