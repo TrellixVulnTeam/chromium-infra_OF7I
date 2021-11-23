@@ -17,6 +17,7 @@ import (
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/planpb"
+	"infra/cros/recovery/logger/metrics"
 )
 
 // recoveryEngine holds info required for running a recovery plan.
@@ -57,19 +58,29 @@ func (r *recoveryEngine) close() {
 func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 	newCtx := ctx
 	log.Info(newCtx, "Plan %q: started", r.planName)
+
+	var metricAction *metrics.Action
+	var restartTally int64
+	var forgivenFailureTally int64
+
 	if r.args != nil && r.args.Metrics != nil {
-		_, closer := r.args.NewMetric(
+		var closer execs.CloserFunc
+		metricAction, closer = r.args.NewMetric(
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
 		)
 		defer func() {
 			if closer != nil {
+				metricAction.Observations = append(
+					metricAction.Observations,
+					metrics.NewInt64Observation("restarts", restartTally),
+					metrics.NewInt64Observation("forgiven_failures", forgivenFailureTally),
+				)
 				closer(ctx, err)
 			}
 		}()
 	}
-	restartTally := 0
-	forgivenFailureTally := 0
+
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
