@@ -141,7 +141,7 @@ func (args *RunArgs) NewRunner(host string) Runner {
 		r := args.Access.Run(ctx, host, cmd)
 		exitCode := r.ExitCode
 		if exitCode != 0 {
-			errAnnotator := errors.Reason("runner: command %q completed with exit code %q", cmd, r.ExitCode)
+			errAnnotator := errors.Reason("runner: command %q completed with exit code %d", cmd, r.ExitCode)
 			// different kinds of internal errors
 			if exitCode < 0 {
 				errAnnotator.Tag(SSHErrorInternal)
