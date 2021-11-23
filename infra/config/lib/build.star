@@ -29,7 +29,7 @@ def recipe(name, use_python3 = False):
         name = name,
         recipe = name,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromium/tools/build",
-        cipd_version = "refs/heads/master",
+        cipd_version = "refs/heads/main",
         use_python3 = use_python3,
     )
 
