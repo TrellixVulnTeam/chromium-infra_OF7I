@@ -112,21 +112,21 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 4) Run action exec function. Fail if any fail.
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
 	newCtx := ctx
-	if r.args != nil && r.args.Metrics != nil {
-		log.Debug(ctx, "Recording metrics for action %q", actionName)
-		_, closer := r.args.NewMetric(
-			newCtx,
-			// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
-			//                      assigned to an action by recoverylib.
-			fmt.Sprintf("action:%s", actionName),
-		)
-		defer func() {
-			closer(ctx, err)
-		}()
-	} else {
-		log.Debug(ctx, "Skipping metrics for action %q", actionName)
-	}
 	if r.args != nil {
+		if r.args.Metrics != nil {
+			log.Debug(ctx, "Recording metrics for action %q", actionName)
+			_, closer := r.args.NewMetric(
+				newCtx,
+				// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
+				//                      assigned to an action by recoverylib.
+				fmt.Sprintf("action:%s", actionName),
+			)
+			defer func() {
+				closer(ctx, err)
+			}()
+		} else {
+			log.Debug(ctx, "Skipping metrics for action %q", actionName)
+		}
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, fmt.Sprintf("Run %s", actionName))
