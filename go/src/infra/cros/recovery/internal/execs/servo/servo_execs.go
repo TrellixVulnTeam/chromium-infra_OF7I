@@ -63,6 +63,18 @@ const (
 	// This token represents the string in config extra arguments that
 	// conveys the expected string value for a servod command.
 	stringValueExtraArgToken = "expected_string_value"
+
+	// This token represents the string in config extra arguments that
+	// conveys the expected int value for a servod command.
+	intValueExtraArgToken = "expected_int_value"
+
+	// This token represents the string in config extra arguments that
+	// conveys the expected floating-point value for a servod command.
+	floatValueExtraArgToken = "expected_float_value"
+
+	// This token represents the string in config extra arguments that
+	// conveys the expected boolean value for a servod command.
+	boolValueExtraArgToken = "expected_bool_value"
 )
 
 // NOTE: That is just fake execs for local testing during developing.
@@ -361,25 +373,85 @@ func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actio
 		// It is a failure condition if an action invokes this exec,
 		// and does not specify the servod command.
 		return errors.Reason("servo check servod control exec: no command is mentioned for this action.").Err()
+	} else if len(command) == 0 {
+		return errors.Reason("servo check servod control exec: malformed (empty) command.").Err()
 	}
-	if _, err := ServodCallHas(ctx, args, command); err != nil {
-		return errors.Annotate(err, "servo check servod control exec").Err()
-	}
-	log.Debug(ctx, "Servo Check Servod Control Exec: Command %s is supported by servod", command)
-	res, err := ServodCallGet(ctx, args, command)
-	if err != nil {
-		return errors.Annotate(err, "servo check servod control exec: could not obtain the value of control %s from servod", command).Err()
-	}
-	if expectedValue, ok := argsMap[stringValueExtraArgToken]; ok {
-		// The value returned from servod in response to the command
-		// is expected to be of type string.
-		controlValue := res.Value.GetString_()
-		if controlValue != expectedValue {
-			return errors.Reason("servo check servod control exec: for servod control %s, the value %s returned from servod is different from the expected value %s", command, controlValue, expectedValue).Err()
+	var expectedValue string
+	var compare func(ctx context.Context) error
+	// TODO (vkjoshi@): revisit the logic of implementations of the
+	// function 'compare', e.g., will it make sense to use a helper
+	// function for this?
+	if expectedValue, ok = argsMap[stringValueExtraArgToken]; ok {
+		controlValue, err := servodGetString(ctx, args, command)
+		if err != nil {
+			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
-		log.Debug(ctx, "Servo Check Servod Control Exec: actual control value matches the expected value")
-	} else {
-		log.Debug(ctx, "Servo Check Servod Control Exec: no expected value was specified, verification concluded upon successful response from servod.")
+		compare = func(ctx context.Context) error {
+			log.Debug(ctx, "Compare (String), expected value %q, actual value %q", expectedValue, controlValue)
+			if controlValue != expectedValue {
+				log.Debug(ctx, "Compare (String), expected value %q, actual value %q do not match.", expectedValue, controlValue)
+				return errors.Reason("compare (string): expected value %q, actual value %q do not match.", expectedValue, controlValue).Err()
+			}
+			return nil
+		}
+	} else if expectedValue, ok = argsMap[intValueExtraArgToken]; ok {
+		controlValue, err := servodGetInt(ctx, args, command)
+		if err != nil {
+			return errors.Annotate(err, "servo check servod control exec").Err()
+		}
+		compare = func(ctx context.Context) error {
+			log.Debug(ctx, "Compare (Int), expected value %s, actual value %d", expectedValue, controlValue)
+			expectedInt, err := strconv.Atoi(expectedValue)
+			if err != nil {
+				return errors.Annotate(err, "compare (int32)").Err()
+			}
+			if controlValue != int32(expectedInt) {
+				return errors.Reason("compare: expected value %d, actual value %d do not match", int32(expectedInt), controlValue).Err()
+			}
+			return nil
+		}
+	} else if expectedValue, ok = argsMap[floatValueExtraArgToken]; ok {
+		controlValue, err := servodGetDouble(ctx, args, command)
+		if err != nil {
+			return errors.Annotate(err, "servo check servod control exec").Err()
+		}
+		compare = func(ctx context.Context) error {
+			log.Debug(ctx, "Compare (Double), expected value %s, actual value %f", expectedValue, controlValue)
+			expectedDouble, err := strconv.ParseFloat(expectedValue, 64)
+			if err != nil {
+				return errors.Annotate(err, "compare (float64)").Err()
+			}
+			if controlValue != expectedDouble {
+				return errors.Reason("compare: expected value %f, actual value %f do not match", expectedDouble, controlValue).Err()
+			}
+			return nil
+		}
+	} else if expectedValue, ok = argsMap[boolValueExtraArgToken]; ok {
+		controlValue, err := servodGetBool(ctx, args, command)
+		if err != nil {
+			return errors.Annotate(err, "servo check servod control exec").Err()
+		}
+		compare = func(ctx context.Context) error {
+			log.Debug(ctx, "Compare (Bool), expected value %s, actual value %t", expectedValue, controlValue)
+			expectedBool, err := strconv.ParseBool(expectedValue)
+			if err != nil {
+				return errors.Annotate(err, "compare (int32)").Err()
+			}
+			if controlValue != expectedBool {
+				return errors.Reason("compare: expected value %t, actual value %t do not match", expectedBool, controlValue).Err()
+			}
+			return nil
+		}
+	}
+	if compare == nil {
+		log.Info(ctx, "Servo Check Servod Control Exec: expected value type not specified in config, or did not match any known types.")
+		controlValue, err := servodGetString(ctx, args, command)
+		if err != nil {
+			return errors.Annotate(err, "Servo Check Servod Control Exec").Err()
+		}
+		log.Info(ctx, "Servo Check Servod Control Exec: for command %q, read the value %q from servod.", command, controlValue)
+	} else if err := compare(ctx); err != nil {
+		return errors.Annotate(err, "servo check servod control exec").Err()
 	}
 	return nil
 }

@@ -122,3 +122,44 @@ func packToXMLRPCValues(values ...interface{}) []*xmlrpc.Value {
 	}
 	return r
 }
+
+// servodGetString retrieves from servod the value of servod command
+// passed as an argument, and returns it as a string.
+func servodGetString(ctx context.Context, args *execs.RunArgs, command string) (string, error) {
+	res, err := ServodCallGet(ctx, args, command)
+	if err != nil {
+		return "", errors.Annotate(err, "servod get").Err()
+	}
+	return res.Value.GetString_(), nil
+}
+
+// servodGetInt retrieves from servod the value of servod command
+// passed as an argument, and returns it as a 32-bit integer.
+func servodGetInt(ctx context.Context, args *execs.RunArgs, command string) (int32, error) {
+	res, err := ServodCallGet(ctx, args, command)
+	if err != nil {
+		return 0, errors.Annotate(err, "servod get").Err()
+	}
+	return res.Value.GetInt(), nil
+}
+
+// servodGetBool retrieves from servod the value of servod command
+// passed as an argument, and returns it as boolean.
+func servodGetBool(ctx context.Context, args *execs.RunArgs, command string) (bool, error) {
+	res, err := ServodCallGet(ctx, args, command)
+	if err != nil {
+		return false, errors.Annotate(err, "servod get").Err()
+	}
+	return res.Value.GetBoolean(), nil
+}
+
+// servodGetDouble retrieves from servod the value of servod command
+// passed as an argument, and returns it as 64-bit floating point
+// value.
+func servodGetDouble(ctx context.Context, args *execs.RunArgs, command string) (float64, error) {
+	res, err := ServodCallGet(ctx, args, command)
+	if err != nil {
+		return 0.0, errors.Annotate(err, "servod get").Err()
+	}
+	return res.Value.GetDouble(), nil
+}
