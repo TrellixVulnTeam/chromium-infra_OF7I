@@ -302,7 +302,7 @@ def render_path(p, pkg_vars, replace_sep=True):
     assert '${' not in v  # just in case, to avoid recursive expansion
     p = p.replace('${%s}' % k, v)
   if replace_sep:
-    return p.replace('/', os.sep)
+    return os.path.normpath(p.replace('/', os.sep))
   return p
 
 
