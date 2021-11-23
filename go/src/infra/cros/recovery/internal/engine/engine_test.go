@@ -692,12 +692,23 @@ func TestCallMetricsInSimplePlan(t *testing.T) {
 	r := &recoveryEngine{
 		planName: "2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
 	}
+	// NOTE: This is a bit subtle, but there really should be TWO records here. The fake implementation service always appends new records,
+	// regardless of whether Karte would create a new record or update one in place. This is good for unit tests because it means that every
+	// intermediate state is visible, so we really are testing the entire interaction.
 	expected := []*metrics.Action{
 		{
 			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+			Observations: []*metrics.Observation{
+				{MetricKind: "restarts", ValueType: "number", Value: "0"},
+				{MetricKind: "forgiven_failures", ValueType: "number", Value: "0"},
+			},
 		},
 		{
 			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+			Observations: []*metrics.Observation{
+				{MetricKind: "restarts", ValueType: "number", Value: "0"},
+				{MetricKind: "forgiven_failures", ValueType: "number", Value: "0"},
+			},
 		},
 	}
 	r.plan = &planpb.Plan{

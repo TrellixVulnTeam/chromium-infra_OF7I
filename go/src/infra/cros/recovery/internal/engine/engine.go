@@ -17,6 +17,7 @@ import (
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/planpb"
+	"infra/cros/recovery/logger/metrics"
 )
 
 // recoveryEngine holds info required for running a recovery plan.
@@ -57,8 +58,12 @@ func (r *recoveryEngine) close() {
 func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 	newCtx := ctx
 	log.Info(newCtx, "Plan %q: started", r.planName)
+
+	var metricAction *metrics.Action
+
 	if r.args != nil && r.args.Metrics != nil {
-		_, closer := r.args.NewMetric(
+		var closer execs.CloserFunc
+		metricAction, closer = r.args.NewMetric(
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
 		)
@@ -68,8 +73,9 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 			}
 		}()
 	}
-	restartTally := 0
-	forgivenFailureTally := 0
+	// Record the number of restarts and the number of forgiven failures.
+	restartTally := int64(0)
+	forgivenFailureTally := int64(0)
 	for {
 		if err := r.runActions(ctx, r.plan.GetCriticalActions(), r.args.EnableRecovery); err != nil {
 			if startOverTag.In(err) {
@@ -88,6 +94,20 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 		}
 		break
 	}
+
+	// Attach metrics to Observation.
+	if metricAction != nil {
+		for name, value := range map[string]int64{
+			"restarts":          restartTally,
+			"forgiven_failures": forgivenFailureTally,
+		} {
+			metricAction.Observations = append(
+				metricAction.Observations,
+				metrics.NewInt64Observation(name, value),
+			)
+		}
+	}
+
 	log.Info(ctx, "Plan %q: finished successfully.", r.planName)
 	log.Info(ctx, "Plan %q: recorded %d restarts during execution.", r.planName, restartTally)
 	log.Info(ctx, "Plan %q: recorded %d forgiven failures during execution.", r.planName, forgivenFailureTally)
