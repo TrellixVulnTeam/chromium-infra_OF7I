@@ -161,7 +161,7 @@ from .builder import BuildDependencies
 _CFFI_DEPENDENCY = SourceOrPrebuilt(
     'cffi',
     '1.14.5',
-    patch_version='chromium.4',
+    patch_version='chromium.5',
     packaged=[],
 )
 
@@ -220,11 +220,13 @@ SPECS.update({
                 'windows-x64',
             ],
             pyversions=['py2'],
+            skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
             'PyYAML',
             '5.4.1',
             packaged=(),
+            skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
             'SQLAlchemy',
@@ -296,7 +298,7 @@ SPECS.update({
             pyversions=['py2', 'py3'],
             # patch_version is incremented to force a rebuild when fixes are
             # made to the build environment.
-            patch_version='chromium.4',
+            patch_version='chromium.5',
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -347,6 +349,7 @@ SPECS.update({
             '2.2.0',
             packaged=(),
             pyversions=['py3'],
+            skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
             'gevent',
@@ -396,6 +399,7 @@ SPECS.update({
             # Other platforms not yet tested.
             only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
             pyversions=['py3'],
+            skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
             'greenlet',
@@ -638,7 +642,7 @@ SPECS.update({
             skip_plat=[
                 'linux-arm64-py3',
             ],
-            patch_version='chromium.1',
+            patch_version='chromium.2',
             pyversions=['py3'],
             src_filter=lambda path: not _OPENCV_SRC_RE.match(path),
         ),
@@ -849,6 +853,7 @@ SPECS.update({
                 'windows-x64',
             ],
             pyversions=['py2'],
+            skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
             'scandir',
@@ -1663,6 +1668,7 @@ SPECS.update({
                     '0.70.11.1',
                     packaged=[],
                     pyversions=['py2', 'py3'],
+                    skip_auditwheel=True,
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),
@@ -1702,6 +1708,7 @@ SPECS.update({
                     '0.70.11.1',
                     packaged=[],
                     pyversions=['py2', 'py3'],
+                    skip_auditwheel=True,
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),
@@ -1741,6 +1748,7 @@ SPECS.update({
                     '0.70.11.1',
                     packaged=[],
                     pyversions=['py2', 'py3'],
+                    skip_auditwheel=True,
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),
@@ -1778,6 +1786,7 @@ SPECS.update({
                     '0.70.11.1',
                     packaged=[],
                     pyversions=['py2', 'py3'],
+                    skip_auditwheel=True,
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),

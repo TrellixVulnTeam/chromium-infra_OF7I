@@ -203,16 +203,21 @@ class Builder(object):
     return built_wheels
 
 
+def _FindWheelInDirectory(wheel_dir):
+  """Finds the single wheel in wheel_dir and returns its full path."""
+  # Find the wheel in "wheel_dir". We scan expecting exactly one wheel.
+  wheels = glob.glob(os.path.join(wheel_dir, '*.whl'))
+  assert len(wheels) == 1, 'Unexpected wheels: %s' % (wheels,)
+  return wheels[0]
+
+
 def StageWheelForPackage(system, wheel_dir, wheel):
   """Finds the single wheel in wheel_dir and copies it to the filename indicated
   by wheel.filename. Returns the name of the wheel we found.
   """
-  # Find the wheel in "wheel_dir". We scan expecting exactly one wheel.
-  wheels = glob.glob(os.path.join(wheel_dir, '*.whl'))
-  assert len(wheels) == 1, 'Unexpected wheels: %s' % (wheels,)
   dst = os.path.join(system.wheel_dir, wheel.filename)
 
-  source_path = wheels[0]
+  source_path = _FindWheelInDirectory(wheel_dir)
   util.LOGGER.debug('Identified source wheel: %s', source_path)
   with concurrency.PROCESS_SPAWN_LOCK.shared():
     shutil.copy(source_path, dst)
@@ -428,7 +433,8 @@ def BuildPackageFromSource(system,
                            src_filter=None,
                            deps=None,
                            tpp_libs=None,
-                           env=None):
+                           env=None,
+                           skip_auditwheel=False):
   """Creates Python wheel from src.
 
   Args:
@@ -441,6 +447,7 @@ def BuildPackageFromSource(system,
       build environment. The list items are (package name, version).
     env (Dict[str, str]|None): Additional envvars to set while building the
       wheel.
+    skip_auditwheel (bool): See SourceOrPrebuilt documentation.
   """
   dx = system.dockcross_image(wheel.plat)
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
@@ -497,6 +504,25 @@ def BuildPackageFromSource(system,
       ]
 
       util.check_run(system, dx, tdir, cmd, cwd=build_dir, env=extra_env)
+
+    output_dir = tdir
+    if not skip_auditwheel and wheel.plat.wheel_plat[0].startswith('manylinux'):
+      output_dir = os.path.join(tdir, 'auditwheel-out')
+      util.check_run(
+          system,
+          dx,
+          tdir, [
+              'auditwheel',
+              'repair',
+              '--no-update-tags',
+              '--plat',
+              wheel.plat.wheel_plat[0],
+              '-w',
+              output_dir,
+              _FindWheelInDirectory(tdir),
+          ],
+          cwd=tdir,
+          env=env)
 
     StageWheelForPackage(system, tdir, wheel)
 

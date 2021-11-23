@@ -71,6 +71,7 @@ class SourceOrPrebuilt(Builder):
                build_deps=None,
                tpp_libs=None,
                src_filter=None,
+               skip_auditwheel=False,
                **kwargs):
     """General-purpose wheel builder.
 
@@ -97,6 +98,10 @@ class SourceOrPrebuilt(Builder):
       src_filter (Callable[[str], bool]): Filtering files from the source. This
           is a workaround for python < 3.6 on Windows to prevent failure caused
           by 260 path length limit.
+      skip_auditwheel (bool): If True, do not run 'auditwheel' tool to fix up
+          manylinux wheel library dependencies. This option may be necessary
+          if the generated wheel does not contain any compiled code, since
+          this causes a hard error from auditwheel.
       packaged (iterable or None): The names of platforms that have this wheel
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
@@ -112,6 +117,7 @@ class SourceOrPrebuilt(Builder):
     self._build_deps = build_deps
     self._tpp_libs = tpp_libs
     self._src_filter = src_filter
+    self._skip_auditwheel = skip_auditwheel
     self._env = kwargs.pop('env', None)
     version_suffix = '.' + patch_version if patch_version else None
 
@@ -129,7 +135,8 @@ class SourceOrPrebuilt(Builder):
       return BuildPackageFromPyPiWheel(system, wheel)
     return BuildPackageFromSource(system, wheel, self._pypi_src,
                                   self._src_filter, self._build_deps,
-                                  self._tpp_libs, self._env)
+                                  self._tpp_libs, self._env,
+                                  self._skip_auditwheel)
 
 
 class MultiWheel(Builder):

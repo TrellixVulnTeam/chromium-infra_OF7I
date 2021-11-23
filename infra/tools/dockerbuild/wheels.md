@@ -1271,12 +1271,12 @@ wheel: <
 * *windows-x86*
 * *windows-x86-py3*
 
-### 1.14.5.chromium.4
+### 1.14.5.chromium.5
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/cffi/${vpython_platform}"
-  version: "version:1.14.5.chromium.4"
+  version: "version:1.14.5.chromium.5"
 >
 ```
 
@@ -4336,12 +4336,12 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 4.5.3.56.chromium.1
+### 4.5.3.56.chromium.2
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/opencv_python/${vpython_platform}"
-  version: "version:4.5.3.56.chromium.1"
+  version: "version:4.5.3.56.chromium.2"
 >
 ```
 
