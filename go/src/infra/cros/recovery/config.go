@@ -405,6 +405,13 @@ const defaultConfig = `
 					],
 					"exec_name":"sample_pass"
 				},
+				"servo_is_sbu_voltage_issue": {
+					"exec_extra_args": [
+						"command:dut_sbu_voltage_float_fault",
+						"expected_string_value:on"
+					],
+					"exec_name":"servo_check_servod_control"
+				},
 				"servo_cr50_enumerated": {
 					"docs": [
 						"prev name servo_cr50_off"
