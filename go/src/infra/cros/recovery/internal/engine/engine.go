@@ -113,6 +113,7 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
 	newCtx := ctx
 	if r.args != nil && r.args.Metrics != nil {
+		log.Debug(ctx, "Recording metrics for action %q", actionName)
 		_, closer := r.args.NewMetric(
 			newCtx,
 			// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
@@ -122,6 +123,8 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		defer func() {
 			closer(ctx, err)
 		}()
+	} else {
+		log.Debug(ctx, "Skipping metrics for action %q", actionName)
 	}
 	if r.args != nil {
 		if r.args.ShowSteps {
