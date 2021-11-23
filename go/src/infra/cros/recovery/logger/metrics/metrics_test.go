@@ -13,6 +13,20 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// TestNewInt64Observation tests creating a new int64 observation.
+func TestNewInt64Observation(t *testing.T) {
+	t.Parallel()
+	expected := &Observation{
+		MetricKind: "ssh-attempt",
+		Value:      "7",
+		ValueType:  ValueTypeNumber,
+	}
+	actual := NewInt64Observation("ssh-attempt", 7)
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", diff)
+	}
+}
+
 // TestNewMetrics verifies that the default metrics logger writes a serialized message to
 // the provided logger at the debug level.
 //

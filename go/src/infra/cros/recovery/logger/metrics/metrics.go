@@ -81,6 +81,15 @@ func NewFloat64Observation(kind string, value float64) *Observation {
 	}
 }
 
+// NewInt64Observation produces a new int-valued observation of the given kind.
+func NewInt64Observation(kind string, value int64) *Observation {
+	return &Observation{
+		MetricKind: kind,
+		ValueType:  ValueTypeNumber,
+		Value:      fmt.Sprintf("%d", value),
+	}
+}
+
 // NewStringObservation produces a new string-valued observation of the given kind.
 func NewStringObservation(kind string, value string) *Observation {
 	return &Observation{
