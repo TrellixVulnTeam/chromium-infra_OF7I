@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	"google.golang.org/api/iterator"
@@ -95,6 +96,40 @@ type Client struct {
 // Close releases any resources held by the client.
 func (c *Client) Close() error {
 	return c.client.Close()
+}
+
+// RebuildAnalysis re-builds the cluster summaries analysis from
+// clustered test results.
+func (c *Client) RebuildAnalysis(ctx context.Context, project string) error {
+	datasetID, err := bqutil.DatasetForProject(project)
+	if err != nil {
+		return errors.Annotate(err, "getting dataset").Err()
+	}
+	dataset := c.client.Dataset(datasetID)
+
+	dstTable := dataset.Table("cluster_summaries")
+
+	q := c.client.Query(clusterSummariesAnalysis)
+	q.DefaultDatasetID = dataset.DatasetID
+	q.Dst = dstTable
+	q.CreateDisposition = bigquery.CreateIfNeeded
+	q.WriteDisposition = bigquery.WriteTruncate
+	job, err := q.Run(ctx)
+	if err != nil {
+		return errors.Annotate(err, "starting cluster summary analysis").Err()
+	}
+
+	waitCtx, cancel := context.WithTimeout(ctx, time.Minute*5)
+	defer cancel()
+
+	js, err := job.Wait(waitCtx)
+	if err != nil {
+		return errors.Annotate(err, "waiting for cluster summary analysis to complete").Err()
+	}
+	if js.Err() != nil {
+		return errors.Annotate(err, "cluster summary analysis failed").Err()
+	}
+	return nil
 }
 
 // ReadImpactfulClusters reads clusters exceeding specified impact metrics, or are otherwise

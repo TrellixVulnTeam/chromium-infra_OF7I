@@ -25,8 +25,14 @@ cd frontend
 go run main.go \
  -cloud-project chops-weetbix-dev \
  -spanner-database projects/chops-spanner-testing/instances/testing/databases/chops-weetbix-dev \
+ -default-request-timeout 10m0s \
  -config-local-dir ../configs
 ```
+
+`-default-request-timeout` is needed if exercising cron jobs through the admin
+portal as cron jobs run through the /admin/ endpoint attract the default
+timeout of 1 minute, instead of the 10 minute timeout of the /internal/ endpoint
+(hit by GAE cron jobs when they are actually executing).
 
 Note that `-config-local-dir` is required only if you plan on modifying config
 and loading it into Cloud Datastore via the read-config cron job accessible via

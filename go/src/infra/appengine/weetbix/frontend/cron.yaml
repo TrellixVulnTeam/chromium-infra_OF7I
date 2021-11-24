@@ -2,9 +2,9 @@ cron:
 - description: "Read configs from LUCI-config"
   url: /internal/cron/read-config
   schedule: every 10 minutes
-- description: "Create and update bugs for high-impact clusters"
-  url: /internal/cron/update-bugs
-  schedule: every 60 minutes
+- description: "Update analysis and create/update bugs for high-impact clusters"
+  url: /internal/cron/update-analysis-and-bugs
+  schedule: every 15 minutes synchronized
 - description: "Sweeper job for transactional tasks."
   url: /internal/tasks/c/sweep
   schedule: every 1 minutes

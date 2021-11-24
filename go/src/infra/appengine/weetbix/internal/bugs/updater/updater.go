@@ -25,13 +25,6 @@ import (
 	"go.chromium.org/luci/server/span"
 )
 
-// ClusterClient is an interface for accessing cluster analysis.
-type ClusterClient interface {
-	// ReadImpactfulClusters reads analysis for clusters matching the
-	// specified criteria.
-	ReadImpactfulClusters(ctx context.Context, opts analysis.ImpactfulClusterReadOptions) ([]*analysis.ClusterSummary, error)
-}
-
 // BugManager implements bug creation and bug updates for a bug-tracking
 // system. The BugManager determines bug content and priority given a
 // cluster.
@@ -48,8 +41,8 @@ type BugManager interface {
 type BugUpdater struct {
 	// project is the LUCI project to act on behalf of.
 	project string
-	// clusterClient provides access to cluster analysis.
-	clusterClient ClusterClient
+	// analysisClient provides access to cluster analysis.
+	analysisClient AnalysisClient
 	// managers stores the manager responsible for updating bugs for each
 	// bug tracking system (monorail, buganizer, etc.).
 	managers map[string]BugManager
@@ -62,11 +55,11 @@ type BugUpdater struct {
 
 // NewBugUpdater initialises a new BugUpdater. The specified impact thresholds are used
 // when determining whether to a file a bug.
-func NewBugUpdater(project string, mgrs map[string]BugManager, cc ClusterClient, bugFilingThreshold *config.ImpactThreshold) *BugUpdater {
+func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient, bugFilingThreshold *config.ImpactThreshold) *BugUpdater {
 	return &BugUpdater{
 		project:            project,
 		managers:           mgrs,
-		clusterClient:      cc,
+		analysisClient:     ac,
 		bugFilingThreshold: bugFilingThreshold,
 		MaxBugsFiledPerRun: 1, // Default value.
 	}
@@ -75,11 +68,9 @@ func NewBugUpdater(project string, mgrs map[string]BugManager, cc ClusterClient,
 // Run updates files/updates bugs to match high-impact clusters as
 // identified by analysis. Each bug has a corresponding failure association
 // rule.
-func (b *BugUpdater) Run(ctx context.Context) error {
-	progress, err := runs.ReadReclusteringProgress(ctx, b.project)
-	if err != nil {
-		return errors.Annotate(err, "read re-clustering progress").Err()
-	}
+// The passed progress should reflect the progress of re-clustering as captured
+// in the latest analysis.
+func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgress) error {
 	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion() {
 		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running old algorithms version %v (want %v).",
 			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion())
@@ -123,7 +114,7 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 	// - Impactful Suggested Clusters: if any suggested clusters have
 	//    reached the threshold to file a new bug for, we want to read
 	//    them, so we can file a bug.
-	clusterSummaries, err := b.clusterClient.ReadImpactfulClusters(ctx, analysis.ImpactfulClusterReadOptions{
+	clusterSummaries, err := b.analysisClient.ReadImpactfulClusters(ctx, analysis.ImpactfulClusterReadOptions{
 		Project:       b.project,
 		Thresholds:    b.bugFilingThreshold,
 		AlwaysInclude: bugClusterIDs,

@@ -264,13 +264,13 @@ func (hc *handlers) getClusterFailures(ctx *router.Context) {
 	respondWithJSON(ctx, failures)
 }
 
-func (hc *handlers) updateBugs(ctx context.Context) error {
+func (hc *handlers) updateAnalysisAndBugs(ctx context.Context) error {
 	cfg, err := config.Get(ctx)
 	if err != nil {
 		return errors.Annotate(err, "get config").Err()
 	}
 	simulate := !hc.prod
-	err = updater.UpdateBugs(ctx, cfg.MonorailHostname, hc.cloudProject, simulate)
+	err = updater.UpdateAnalysisAndBugs(ctx, cfg.MonorailHostname, hc.cloudProject, simulate)
 	if err != nil {
 		return errors.Annotate(err, "update bugs").Err()
 	}
@@ -316,7 +316,7 @@ func main() {
 
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
-		cron.RegisterHandler("update-bugs", handlers.updateBugs)
+		cron.RegisterHandler("update-analysis-and-bugs", handlers.updateAnalysisAndBugs)
 		cron.RegisterHandler("export-test-variants", testvariantbqexporter.ScheduleTasks)
 		cron.RegisterHandler("reclustering", orchestrator.CronHandler)
 

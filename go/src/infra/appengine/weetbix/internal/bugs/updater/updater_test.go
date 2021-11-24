@@ -7,6 +7,7 @@ package updater
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -50,21 +51,30 @@ func TestRun(t *testing.T) {
 			makeSuggestedCluster(2),
 			makeSuggestedCluster(3),
 		}
-		cc := &fakeClusterClient{
+		ac := &fakeAnalysisClient{
 			clusters: suggestedClusters,
 		}
 
 		project := "chromium"
-		mgrs := make(map[string]BugManager)
 		monorailCfg := monorail.ChromiumTestConfig()
-		mgrs[bugs.MonorailSystem] = monorail.NewBugManager(mc, monorailCfg)
-
 		thres := &config.ImpactThreshold{
 			// Should be more onerous than the "keep-open" thresholds
 			// configured for each individual bug manager.
 			UnexpectedFailures_1D: proto.Int64(100),
 			UnexpectedFailures_3D: proto.Int64(300),
 			UnexpectedFailures_7D: proto.Int64(700),
+		}
+		projectCfg := &config.ProjectConfig{
+			Monorail:           monorailCfg,
+			BugFilingThreshold: thres,
+		}
+
+		opts := updateOptions{
+			project:            project,
+			analysisClient:     ac,
+			monorailClient:     mc,
+			projectConfig:      projectCfg,
+			maxBugsFiledPerRun: 1,
 		}
 
 		// Unless otherwise specified, assume re-clustering has caught up to
@@ -80,16 +90,12 @@ func TestRun(t *testing.T) {
 
 		Convey("Configuration used for testing is valid", func() {
 			c := validation.Context{Context: context.Background()}
-			projectCfg := &config.ProjectConfig{
-				Monorail:           monorailCfg,
-				BugFilingThreshold: thres,
-			}
+
 			config.ValidateProjectConfig(&c, projectCfg)
 			So(c.Finalize(), ShouldBeNil)
 		})
 		Convey("With no impactful clusters", func() {
-			bu := NewBugUpdater(project, mgrs, cc, thres)
-			err = bu.Run(ctx)
+			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 
 			// No failure association rules.
@@ -109,8 +115,7 @@ func TestRun(t *testing.T) {
 			expectCreate := true
 
 			test := func() {
-				bu := NewBugUpdater(project, mgrs, cc, thres)
-				err = bu.Run(ctx)
+				err = updateAnalysisAndBugsForProject(ctx, opts)
 				So(err, ShouldBeNil)
 
 				rs, err := rules.ReadActive(span.Single(ctx), project)
@@ -237,20 +242,19 @@ func TestRun(t *testing.T) {
 			suggestedClusters[2].Failures3d.Residual = 300
 			suggestedClusters[3].Failures7d.Residual = 700
 
-			bu := NewBugUpdater(project, mgrs, cc, thres)
 			// Limit to one bug filed each time, so that
 			// we test change throttling.
-			bu.MaxBugsFiledPerRun = 1
+			opts.maxBugsFiledPerRun = 1
 
-			err = bu.Run(ctx)
+			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 			expectBugClusters(1)
 
-			err = bu.Run(ctx)
+			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 			expectBugClusters(2)
 
-			err = bu.Run(ctx)
+			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 
 			expectFinalBugClusters := func() {
@@ -296,7 +300,7 @@ func TestRun(t *testing.T) {
 
 			// Further updates do nothing.
 			originalIssues := monorail.CopyIssuesStore(f)
-			err = bu.Run(ctx)
+			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 			So(f, monorail.ShouldResembleIssuesStore, originalIssues)
 			expectFinalBugClusters()
@@ -311,7 +315,7 @@ func TestRun(t *testing.T) {
 			}
 
 			Convey("Re-clustering in progress", func() {
-				cc.clusters = append(suggestedClusters, bugClusters...)
+				ac.clusters = append(suggestedClusters, bugClusters...)
 
 				Convey("Negligable cluster impact does not affect issue priority or status", func() {
 					issue := f.Issues[0].Issue
@@ -321,7 +325,7 @@ func TestRun(t *testing.T) {
 					So(originalStatus, ShouldNotEqual, monorail.VerifiedStatus)
 
 					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumClosureImpact())
-					err = bu.Run(ctx)
+					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
 					So(len(f.Issues), ShouldEqual, 3)
@@ -334,7 +338,7 @@ func TestRun(t *testing.T) {
 				})
 			})
 			Convey("Re-clustering complete", func() {
-				cc.clusters = append(suggestedClusters, bugClusters...)
+				ac.clusters = append(suggestedClusters, bugClusters...)
 
 				// Copy impact from suggested clusters to new bug clusters.
 				bugClusters[0].Failures1d = suggestedClusters[1].Failures1d
@@ -362,7 +366,7 @@ func TestRun(t *testing.T) {
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "0")
 
 					bugs.SetResidualImpact(bugClusters[2], monorail.ChromiumP0Impact())
-					err = bu.Run(ctx)
+					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
 					So(len(f.Issues), ShouldEqual, 3)
@@ -378,7 +382,7 @@ func TestRun(t *testing.T) {
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "3")
 
 					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumP3Impact())
-					err = bu.Run(ctx)
+					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
 					So(len(f.Issues), ShouldEqual, 3)
@@ -396,8 +400,8 @@ func TestRun(t *testing.T) {
 
 					// Drop the bug cluster at index 0.
 					bugClusters = bugClusters[1:]
-					cc.clusters = append(suggestedClusters, bugClusters...)
-					err = bu.Run(ctx)
+					ac.clusters = append(suggestedClusters, bugClusters...)
+					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
 					So(len(f.Issues), ShouldEqual, 3)
@@ -462,11 +466,20 @@ func bugClusterID(ruleID string) clustering.ClusterID {
 	}
 }
 
-type fakeClusterClient struct {
-	clusters []*analysis.ClusterSummary
+type fakeAnalysisClient struct {
+	analysisBuilt bool
+	clusters      []*analysis.ClusterSummary
 }
 
-func (f *fakeClusterClient) ReadImpactfulClusters(ctx context.Context, opts analysis.ImpactfulClusterReadOptions) ([]*analysis.ClusterSummary, error) {
+func (f *fakeAnalysisClient) RebuildAnalysis(ctx context.Context, project string) error {
+	f.analysisBuilt = true
+	return nil
+}
+
+func (f *fakeAnalysisClient) ReadImpactfulClusters(ctx context.Context, opts analysis.ImpactfulClusterReadOptions) ([]*analysis.ClusterSummary, error) {
+	if !f.analysisBuilt {
+		return nil, errors.New("cluster_summaries does not exist")
+	}
 	var results []*analysis.ClusterSummary
 	for _, c := range f.clusters {
 		include := containsValue(opts.AlwaysInclude, c.ClusterID) ||
