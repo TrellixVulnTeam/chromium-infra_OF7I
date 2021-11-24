@@ -20,5 +20,26 @@ func TestDefaultConfig(t *testing.T) {
 	if p == nil {
 		t.Errorf("default config is empty")
 	}
-	// TODO(otabek@): Add other config verifications.
+}
+
+func TestLabstationRepairConfig(t *testing.T) {
+	ctx := context.Background()
+	p, err := loader.LoadConfiguration(ctx, LabstationRepairConfig())
+	if err != nil {
+		t.Errorf("expected to pass by failed with error: %s", err)
+	}
+	if p == nil {
+		t.Errorf("default config is empty")
+	}
+}
+
+func TestLabstationDeployConfig(t *testing.T) {
+	ctx := context.Background()
+	p, err := loader.LoadConfiguration(ctx, LabstationDeployConfig())
+	if err != nil {
+		t.Errorf("expected to pass by failed with error: %s", err)
+	}
+	if p == nil {
+		t.Errorf("default config is empty")
+	}
 }
