@@ -524,7 +524,7 @@ def BuildPackageFromSource(system,
           cwd=tdir,
           env=env)
 
-    StageWheelForPackage(system, tdir, wheel)
+    StageWheelForPackage(system, output_dir, wheel)
 
 
 def PrepareBuildDependenciesCmd(system, wheel, build_dir, deps_dir, deps):

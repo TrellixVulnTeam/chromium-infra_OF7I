@@ -161,7 +161,7 @@ from .builder import BuildDependencies
 _CFFI_DEPENDENCY = SourceOrPrebuilt(
     'cffi',
     '1.14.5',
-    patch_version='chromium.5',
+    patch_version='chromium.6',
     packaged=[],
 )
 
@@ -298,7 +298,7 @@ SPECS.update({
             pyversions=['py2', 'py3'],
             # patch_version is incremented to force a rebuild when fixes are
             # made to the build environment.
-            patch_version='chromium.5',
+            patch_version='chromium.6',
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -642,7 +642,7 @@ SPECS.update({
             skip_plat=[
                 'linux-arm64-py3',
             ],
-            patch_version='chromium.2',
+            patch_version='chromium.3',
             pyversions=['py3'],
             src_filter=lambda path: not _OPENCV_SRC_RE.match(path),
         ),
