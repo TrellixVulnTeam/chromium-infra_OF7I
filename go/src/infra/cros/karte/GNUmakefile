@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+GOTESTFLAGS ?= -count 20
+
 .PHONY: default
 default: build
 
@@ -9,18 +11,18 @@ default: build
 build:
 	@gofmt -s -w .
 	@go vet ./...
-	@go test ./...
+	@go test $(GOTESTFLAGS) ./...
 	go build -o ./cmd/karte/karte             ./cmd/karte
 	go build -o ./cmd/karteserver/karteserver ./cmd/karteserver
 
 .PHONY: check
 check:
 	go vet ./...
-	go test ./...
+	go test $(GOTESTFLAGS) ./...
 
 .PHONY: test
 test:
-	go test ./...
+	go test $(GOTESTFLAGS) ./...
 
 .PHONY: gen
 gen:
