@@ -17,8 +17,10 @@ import (
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
+	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -42,14 +44,14 @@ func TestRun(t *testing.T) {
 		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f, user), "myhost")
 		So(err, ShouldBeNil)
 
-		clusters := []*analysis.ClusterSummary{
-			makeCluster(0),
-			makeCluster(1),
-			makeCluster(2),
-			makeCluster(3),
+		suggestedClusters := []*analysis.ClusterSummary{
+			makeSuggestedCluster(0),
+			makeSuggestedCluster(1),
+			makeSuggestedCluster(2),
+			makeSuggestedCluster(3),
 		}
 		cc := &fakeClusterClient{
-			clusters: clusters,
+			clusters: suggestedClusters,
 		}
 
 		project := "chromium"
@@ -64,6 +66,17 @@ func TestRun(t *testing.T) {
 			UnexpectedFailures_3D: proto.Int64(300),
 			UnexpectedFailures_7D: proto.Int64(700),
 		}
+
+		// Unless otherwise specified, assume re-clustering has caught up to
+		// the latest version of algorithms.
+		err = runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
+			runs.NewRun(0).
+				WithProject(project).
+				WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+				WithRulesVersion(rules.StartingEpoch).
+				WithCompletedProgress().Build(),
+		})
+		So(err, ShouldBeNil)
 
 		Convey("Configuration used for testing is valid", func() {
 			c := validation.Context{Context: context.Background()}
@@ -87,10 +100,13 @@ func TestRun(t *testing.T) {
 			// No monorail issues.
 			So(f.Issues, ShouldBeNil)
 		})
-		Convey("With a cluster above impact thresold", func() {
+		Convey("With a suggested cluster above impact thresold", func() {
 			sourceClusterID := reasonClusterID("Failed to connect to 100.1.1.99.")
-			clusters[1].ClusterID = sourceClusterID
-			clusters[1].ExampleFailureReason = bigquery.NullString{StringVal: "Failed to connect to 100.1.1.105.", Valid: true}
+			suggestedClusters[1].ClusterID = sourceClusterID
+			suggestedClusters[1].ExampleFailureReason = bigquery.NullString{StringVal: "Failed to connect to 100.1.1.105.", Valid: true}
+
+			ignoreRuleID := ""
+			expectCreate := true
 
 			test := func() {
 				bu := NewBugUpdater(project, mgrs, cc, thres)
@@ -100,8 +116,20 @@ func TestRun(t *testing.T) {
 				rs, err := rules.ReadActive(span.Single(ctx), project)
 				So(err, ShouldBeNil)
 
-				So(len(rs), ShouldEqual, 1)
-				rule := rs[0]
+				var cleanedRules []*rules.FailureAssociationRule
+				for _, r := range rs {
+					if r.RuleID != ignoreRuleID {
+						cleanedRules = append(cleanedRules, r)
+					}
+				}
+
+				if !expectCreate {
+					So(len(cleanedRules), ShouldEqual, 0)
+					return
+				}
+
+				So(len(cleanedRules), ShouldEqual, 1)
+				rule := cleanedRules[0]
 
 				expected := &rules.FailureAssociationRule{
 					Project:        "chromium",
@@ -126,29 +154,88 @@ func TestRun(t *testing.T) {
 				So(f.Issues[0].Issue.Name, ShouldEqual, "projects/chromium/issues/100")
 				So(f.Issues[0].Issue.Summary, ShouldContainSubstring, "Failed to connect to 100.1.1.105.")
 			}
+
 			Convey("1d unexpected failures", func() {
-				clusters[1].Failures1d.Residual = 100
+				suggestedClusters[1].Failures1d.Residual = 100
+				test()
+
+				// Further updates do nothing.
 				test()
 			})
 			Convey("3d unexpected failures", func() {
-				clusters[1].Failures3d.Residual = 300
+				suggestedClusters[1].Failures3d.Residual = 300
+				test()
+
+				// Further updates do nothing.
 				test()
 			})
 			Convey("7d unexpected failures", func() {
-				clusters[1].Failures7d.Residual = 700
+				suggestedClusters[1].Failures7d.Residual = 700
+				test()
+
+				// Further updates do nothing.
+				test()
+			})
+			Convey("With existing rule filed", func() {
+				suggestedClusters[1].Failures1d.Residual = 100
+
+				createTime := time.Date(2021, time.January, 5, 12, 30, 0, 0, time.UTC)
+				rule := rules.NewRule(0).
+					WithProject(project).
+					WithCreationTime(createTime).
+					WithLastUpdated(createTime.Add(1 * time.Hour)).
+					WithSourceCluster(sourceClusterID).Build()
+				err := rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
+					rule,
+				})
+				So(err, ShouldBeNil)
+				ignoreRuleID = rule.RuleID
+
+				// Initially do not expect a new bug to be filed.
+				expectCreate = false
+				test()
+
+				// Once re-clustering has incorporated the version of rules
+				// that included this new rule, it is OK to file another bug
+				// for the suggested cluster if sufficient impact remains.
+				// This should only happen when the rule definition has been
+				// manually narrowed in some way from the originally filed bug.
+				err = runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
+					runs.NewRun(0).
+						WithProject(project).
+						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+						WithRulesVersion(createTime).
+						WithCompletedProgress().Build(),
+				})
+				So(err, ShouldBeNil)
+
+				expectCreate = true
+				test()
+			})
+			Convey("Without re-clustering caught up to latest algorithms", func() {
+				err = runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
+					runs.NewRun(0).
+						WithProject(project).
+						WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).
+						WithRulesVersion(rules.StartingEpoch).
+						WithCompletedProgress().Build(),
+				})
+				So(err, ShouldBeNil)
+
+				expectCreate = false
 				test()
 			})
 		})
-		Convey("With multiple clusters above impact thresold", func() {
+		Convey("With multiple suggested clusters above impact thresold", func() {
 			expectBugClusters := func(count int) {
 				bugClusters, err := rules.ReadActive(span.Single(ctx), project)
 				So(err, ShouldBeNil)
 				So(len(bugClusters), ShouldEqual, count)
 				So(len(f.Issues), ShouldEqual, count)
 			}
-			clusters[1].Failures1d.Residual = 200
-			clusters[2].Failures3d.Residual = 300
-			clusters[3].Failures7d.Residual = 700
+			suggestedClusters[1].Failures1d.Residual = 200
+			suggestedClusters[2].Failures3d.Residual = 300
+			suggestedClusters[3].Failures7d.Residual = 700
 
 			bu := NewBugUpdater(project, mgrs, cc, thres)
 			// Limit to one bug filed each time, so that
@@ -214,59 +301,116 @@ func TestRun(t *testing.T) {
 			So(f, monorail.ShouldResembleIssuesStore, originalIssues)
 			expectFinalBugClusters()
 
-			Convey("Increasing cluster impact increases issue priority", func() {
-				issue := f.Issues[2].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "0")
+			rs, err := rules.ReadActive(span.Single(ctx), project)
+			So(err, ShouldBeNil)
 
-				bugs.SetResidualImpact(clusters[3], monorail.ChromiumP0Impact())
-				err = bu.Run(ctx)
-				So(err, ShouldBeNil)
+			bugClusters := []*analysis.ClusterSummary{
+				makeBugCluster(rs[0].RuleID),
+				makeBugCluster(rs[1].RuleID),
+				makeBugCluster(rs[2].RuleID),
+			}
 
-				So(len(f.Issues), ShouldEqual, 3)
-				issue = f.Issues[2].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "0")
+			Convey("Re-clustering in progress", func() {
+				cc.clusters = append(suggestedClusters, bugClusters...)
 
-				expectFinalBugClusters()
+				Convey("Negligable cluster impact does not affect issue priority or status", func() {
+					issue := f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					originalPriority := monorail.ChromiumTestIssuePriority(issue)
+					originalStatus := issue.Status.Status
+					So(originalStatus, ShouldNotEqual, monorail.VerifiedStatus)
+
+					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumClosureImpact())
+					err = bu.Run(ctx)
+					So(err, ShouldBeNil)
+
+					So(len(f.Issues), ShouldEqual, 3)
+					issue = f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, originalPriority)
+					So(issue.Status.Status, ShouldEqual, originalStatus)
+
+					expectFinalBugClusters()
+				})
 			})
-			Convey("Decreasing cluster impact decreases issue priority", func() {
-				issue := f.Issues[0].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "3")
+			Convey("Re-clustering complete", func() {
+				cc.clusters = append(suggestedClusters, bugClusters...)
 
-				bugs.SetResidualImpact(clusters[1], monorail.ChromiumP3Impact())
-				err = bu.Run(ctx)
+				// Copy impact from suggested clusters to new bug clusters.
+				bugClusters[0].Failures1d = suggestedClusters[1].Failures1d
+				bugClusters[1].Failures3d = suggestedClusters[2].Failures3d
+				bugClusters[2].Failures7d = suggestedClusters[3].Failures7d
+
+				// Clear residual impact on suggested clusters
+				suggestedClusters[1].Failures1d.Residual = 0
+				suggestedClusters[2].Failures3d.Residual = 0
+				suggestedClusters[3].Failures7d.Residual = 0
+
+				// Mark reclustering complete.
+				err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
+					runs.NewRun(0).
+						WithProject(project).
+						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+						WithRulesVersion(rs[2].LastUpdated).
+						WithCompletedProgress().Build(),
+				})
 				So(err, ShouldBeNil)
 
-				So(len(f.Issues), ShouldEqual, 3)
-				issue = f.Issues[0].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
-				So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "3")
+				Convey("Increasing cluster impact increases issue priority", func() {
+					issue := f.Issues[2].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "0")
 
-				expectFinalBugClusters()
-			})
-			Convey("Deleting cluster closes issue", func() {
-				issue := f.Issues[0].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
+					bugs.SetResidualImpact(bugClusters[2], monorail.ChromiumP0Impact())
+					err = bu.Run(ctx)
+					So(err, ShouldBeNil)
 
-				// Drop the cluster at index 1.
-				cc.clusters = []*analysis.ClusterSummary{cc.clusters[0], cc.clusters[2], cc.clusters[3]}
-				err = bu.Run(ctx)
-				So(err, ShouldBeNil)
+					So(len(f.Issues), ShouldEqual, 3)
+					issue = f.Issues[2].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "0")
 
-				So(len(f.Issues), ShouldEqual, 3)
-				issue = f.Issues[0].Issue
-				So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
-				So(issue.Status.Status, ShouldEqual, monorail.VerifiedStatus)
+					expectFinalBugClusters()
+				})
+				Convey("Decreasing cluster impact decreases issue priority", func() {
+					issue := f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "3")
+
+					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumP3Impact())
+					err = bu.Run(ctx)
+					So(err, ShouldBeNil)
+
+					So(len(f.Issues), ShouldEqual, 3)
+					issue = f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "3")
+
+					expectFinalBugClusters()
+				})
+				Convey("Deleting cluster closes issue", func() {
+					issue := f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
+
+					// Drop the bug cluster at index 0.
+					bugClusters = bugClusters[1:]
+					cc.clusters = append(suggestedClusters, bugClusters...)
+					err = bu.Run(ctx)
+					So(err, ShouldBeNil)
+
+					So(len(f.Issues), ShouldEqual, 3)
+					issue = f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(issue.Status.Status, ShouldEqual, monorail.VerifiedStatus)
+				})
 			})
 		})
 	})
 }
 
-func makeCluster(uniqifier int) *analysis.ClusterSummary {
+func makeSuggestedCluster(uniqifier int) *analysis.ClusterSummary {
 	testID := fmt.Sprintf("testname-%v", uniqifier)
 	return &analysis.ClusterSummary{
 		ClusterID:     testIDClusterID(testID),
@@ -274,6 +418,16 @@ func makeCluster(uniqifier int) *analysis.ClusterSummary {
 		Failures3d:    analysis.Counts{Residual: 29},
 		Failures7d:    analysis.Counts{Residual: 69},
 		ExampleTestID: testID,
+	}
+}
+
+func makeBugCluster(ruleID string) *analysis.ClusterSummary {
+	return &analysis.ClusterSummary{
+		ClusterID:     bugClusterID(ruleID),
+		Failures1d:    analysis.Counts{Residual: 9},
+		Failures3d:    analysis.Counts{Residual: 29},
+		Failures7d:    analysis.Counts{Residual: 69},
+		ExampleTestID: "testname-0",
 	}
 }
 
@@ -298,6 +452,13 @@ func reasonClusterID(reason string) clustering.ClusterID {
 		ID: hex.EncodeToString(reasonAlg.Cluster(&clustering.Failure{
 			Reason: &pb.FailureReason{PrimaryErrorMessage: reason},
 		})),
+	}
+}
+
+func bugClusterID(ruleID string) clustering.ClusterID {
+	return clustering.ClusterID{
+		Algorithm: rulesalgorithm.AlgorithmName,
+		ID:        ruleID,
 	}
 }
 

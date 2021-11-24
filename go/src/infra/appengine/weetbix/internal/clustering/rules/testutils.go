@@ -25,21 +25,28 @@ const testProject = "myproject"
 // RuleBuilder provides methods to build a failure asociation rule
 // for testing.
 type RuleBuilder struct {
-	uniqifier   int
-	project     string
-	active      bool
-	definition  string
-	lastUpdated time.Time
+	uniqifier     int
+	project       string
+	active        bool
+	definition    string
+	creationTime  time.Time
+	lastUpdated   time.Time
+	sourceCluster clustering.ClusterID
 }
 
 // NewRule starts building a new Rule.
 func NewRule(uniqifier int) *RuleBuilder {
 	return &RuleBuilder{
-		project:     testProject,
-		uniqifier:   uniqifier,
-		active:      true,
-		definition:  "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
-		lastUpdated: time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		project:      testProject,
+		uniqifier:    uniqifier,
+		active:       true,
+		definition:   "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
+		creationTime: time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		lastUpdated:  time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		sourceCluster: clustering.ClusterID{
+			Algorithm: fmt.Sprintf("clusteralg%v", uniqifier),
+			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", uniqifier))),
+		},
 	}
 }
 
@@ -55,14 +62,28 @@ func (b *RuleBuilder) WithActive(active bool) *RuleBuilder {
 	return b
 }
 
-// WithActive specifies the LastUpdated time on the rule.
+// WithCreationTime specifies the creation time of the rule.
+func (b *RuleBuilder) WithCreationTime(value time.Time) *RuleBuilder {
+	b.creationTime = value
+	return b
+}
+
+// WithLastUpdated specifies the LastUpdated time on the rule.
 func (b *RuleBuilder) WithLastUpdated(lastUpdated time.Time) *RuleBuilder {
 	b.lastUpdated = lastUpdated
 	return b
 }
 
+// WithRuleDefinition specifies the definition of the rule.
 func (b *RuleBuilder) WithRuleDefinition(definition string) *RuleBuilder {
 	b.definition = definition
+	return b
+}
+
+// WithSourceCluster specifies the source suggested cluster that triggered the
+// creation of the rule.
+func (b *RuleBuilder) WithSourceCluster(value clustering.ClusterID) *RuleBuilder {
+	b.sourceCluster = value
 	return b
 }
 
@@ -72,14 +93,11 @@ func (b *RuleBuilder) Build() *FailureAssociationRule {
 		Project:        b.project,
 		RuleID:         hex.EncodeToString(ruleIDBytes[0:16]),
 		RuleDefinition: b.definition,
-		Bug:            bugs.BugID{System: "monorail", ID: fmt.Sprintf("project/%v", b.uniqifier)},
+		Bug:            bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", b.uniqifier)},
 		IsActive:       b.active,
-		CreationTime:   time.Date(1900, 1, 2, 3, 4, 5, b.uniqifier, time.UTC),
+		CreationTime:   b.creationTime,
 		LastUpdated:    b.lastUpdated,
-		SourceCluster: clustering.ClusterID{
-			Algorithm: fmt.Sprintf("clusteralg%v", b.uniqifier),
-			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", b.uniqifier))),
-		},
+		SourceCluster:  b.sourceCluster,
 	}
 }
 

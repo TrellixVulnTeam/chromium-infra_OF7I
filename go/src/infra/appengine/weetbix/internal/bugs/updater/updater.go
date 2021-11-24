@@ -13,8 +13,10 @@ import (
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms"
+	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
+	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
 	pb "infra/appengine/weetbix/proto/v1"
 
@@ -74,28 +76,57 @@ func NewBugUpdater(project string, mgrs map[string]BugManager, cc ClusterClient,
 // identified by analysis. Each bug has a corresponding failure association
 // rule.
 func (b *BugUpdater) Run(ctx context.Context) error {
+	progress, err := runs.ReadReclusteringProgress(ctx, b.project)
+	if err != nil {
+		return errors.Annotate(err, "read re-clustering progress").Err()
+	}
+	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion() {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running old algorithms version %v (want %v).",
+			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion())
+		return nil
+	}
+	if progress.ProgressToLatestAlgorithmsVersion() != runs.ProgressComplete {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new algorithms is in progress (%v/1000).",
+			b.project, progress.ProgressToLatestAlgorithmsVersion())
+		return nil
+	}
+
 	ruleByID, err := b.readActiveFailureAssociationRules(ctx)
 	if err != nil {
 		return errors.Annotate(err, "read active failure association rules").Err()
 	}
-	var sourceClusterIDs []clustering.ClusterID
-	ruleIDBySourceClusterID := make(map[string]string)
+	var bugClusterIDs []clustering.ClusterID
+
+	// blockedSourceClusterIDs is the set of source cluster IDs for which
+	// filing new bugs should be suspended.
+	blockedSourceClusterIDs := make(map[string]struct{})
 	for _, r := range ruleByID {
-		ruleIDBySourceClusterID[r.SourceCluster.Key()] = r.RuleID
-		sourceClusterIDs = append(sourceClusterIDs, r.SourceCluster)
+		if progress.ProgressToRulesVersion(r.CreationTime) != runs.ProgressComplete {
+			// If a bug cluster was recently filed for a source cluster, and
+			// re-clustering and analysis is not yet complete (to move the
+			// impact from the source cluster to the bug cluster), do not file
+			// another bug for the source cluster.
+			// (Of course, if a bug cluster was filed for a source cluster,
+			// but the bug cluster's failure association rule was subsequently
+			// modified (e.g. narrowed), it is allowed to file another bug
+			// if the residual impact justifies it.)
+			blockedSourceClusterIDs[r.SourceCluster.Key()] = struct{}{}
+		}
+		bugClusterIDs = append(bugClusterIDs, clustering.ClusterID{
+			Algorithm: rulesalgorithm.AlgorithmName,
+			ID:        r.RuleID,
+		})
 	}
 
-	// We want to read analysis for three categories of clusters:
-	// - Source (Suggested) Clusters: analysis on bug clusters does
-	//    not exist yet. For now, we rely on the impact of the
-	//    suggested cluster the bug was automatically filed for (if any).
+	// We want to read analysis for two categories of clusters:
+	// - Bug Clusters: to update the priority of filed bugs.
 	// - Impactful Suggested Clusters: if any suggested clusters have
 	//    reached the threshold to file a new bug for, we want to read
 	//    them, so we can file a bug.
 	clusterSummaries, err := b.clusterClient.ReadImpactfulClusters(ctx, analysis.ImpactfulClusterReadOptions{
 		Project:       b.project,
 		Thresholds:    b.bugFilingThreshold,
-		AlwaysInclude: sourceClusterIDs,
+		AlwaysInclude: bugClusterIDs,
 	})
 	if err != nil {
 		return errors.Annotate(err, "read impactful clusters").Err()
@@ -104,31 +135,22 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 	impactByRuleID := make(map[string]*bugs.ClusterImpact)
 	for _, clusterSummary := range clusterSummaries {
 		if clusterSummary.ClusterID.IsBugCluster() {
-			// Never create further bugs for bug clusters.
-			// TODO(meiring): When we start having accurate analysis for
-			// bug clusters, we should use that analysis instead of the
-			// source suggested cluster.
+			if clusterSummary.ClusterID.Algorithm == rulesalgorithm.AlgorithmName {
+				// Use only impact from latest algorithm version.
+				ruleID := clusterSummary.ClusterID.ID
+				impactByRuleID[ruleID] = bugs.ExtractResidualImpact(clusterSummary)
+			}
+			// Never file another bug for a bug cluster.
 			continue
 		}
 
-		// Was a bug filed for this source cluster?
+		// Was a bug recently filed for this source cluster?
 		// We want to avoid race conditions whereby we file multiple bug
 		// clusters for the same source cluster, because re-clustering and
 		// re-analysis has not yet run and moved residual impact from the
 		// source (suggested) cluster to the bug cluster.
-		// (Of course, if a bug cluster was filed for a source cluster,
-		// but the bug cluster's failure association rule was subsequently
-		// modified (e.g. narrowed), it is allowed to file another bug
-		// if the residual impact justifies it.)
-		//
-		// TODO(crbug.com/1243174): Only prevent a new bug cluster being
-		// filed for a suggested cluster until a full re-clustering and
-		// analysis pass has finished.
-		ruleID, ok := ruleIDBySourceClusterID[clusterSummary.ClusterID.Key()]
+		_, ok := blockedSourceClusterIDs[clusterSummary.ClusterID.Key()]
 		if ok {
-			// Currently re-clustering is not implemented, so we
-			// must derive the bug's impact from the source cluster.
-			impactByRuleID[ruleID] = bugs.ExtractResidualImpact(clusterSummary)
 			// Do not file a bug.
 			continue
 		}
@@ -160,16 +182,18 @@ func (b *BugUpdater) Run(ctx context.Context) error {
 	// Iterate over all active bug clusters (except those we just created).
 	bugUpdatesBySystem := make(map[string][]*bugs.BugToUpdate)
 	for id, r := range ruleByID {
-		// TODO(crbug.com/1243174): Once re-clustering is implemented,
-		// pause bug updates between when a rule is created or updated
-		// and when re-clustering has completed again. This will avoid
-		// bugs getting erroneous priority changes while impact information
-		// is incomplete.
 		impact, ok := impactByRuleID[id]
 		if !ok {
 			// If there is no analysis, this usually means the cluster is
 			// empty, so we should use empty impact.
 			impact = &bugs.ClusterImpact{}
+		}
+
+		// Only update the bug if re-clustering and analysis ran on the latest
+		// version of this failure association rule. This avoids bugs getting
+		// erroneous priority changes while impact information is incomplete.
+		if progress.ProgressToRulesVersion(r.LastUpdated) != runs.ProgressComplete {
+			continue
 		}
 
 		bugUpdates := bugUpdatesBySystem[r.Bug.System]
