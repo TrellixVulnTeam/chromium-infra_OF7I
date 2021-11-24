@@ -15,10 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/maruel/subcommands"
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/auth/client/authcli"
-	lgs "go.chromium.org/luci/common/gcloud/gs"
 	"infra/cros/internal/gs"
 	"io"
 	"io/ioutil"
@@ -31,6 +27,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	lgs "go.chromium.org/luci/common/gcloud/gs"
 )
 
 const (
@@ -158,7 +159,7 @@ func retrieveApiKey() (string, error) {
 // removes any usage if found.
 func cleanErrorMessage(err string, apikey string) string {
 	// Return error without the api key.
-	if strings.Contains(err, apikey) {
+	if strings.Contains(err, apikey) && apikey != "" {
 		return strings.ReplaceAll(err, apikey, "-HIDDEN-KEY-")
 	}
 
