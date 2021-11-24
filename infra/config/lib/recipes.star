@@ -106,7 +106,7 @@ def led_recipes_tester(name, cq_group, repo_name):
     luci.builder(
         name = name,
         bucket = "try",
-        executable = build.recipe("led_recipes_tester", use_python3 = True),
+        executable = build.recipe("led_recipes_tester"),
         properties = {"repo_name": repo_name},
         dimensions = {
             "os": "Ubuntu-18.04",

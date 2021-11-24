@@ -15,12 +15,11 @@ def poller():
         refs = ["refs/heads/main"],
     )
 
-def recipe(name, use_python3 = False):
+def recipe(name):
     """Defines a recipe hosted in the build.git recipe bundle.
 
     Args:
       name: name of the recipe.
-      use_python3: a boolean to use python3 to run the recipe.
 
     Returns:
       A luci.recipe(...) object.
@@ -30,7 +29,6 @@ def recipe(name, use_python3 = False):
         recipe = name,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromium/tools/build",
         cipd_version = "refs/heads/main",
-        use_python3 = use_python3,
     )
 
 def presubmit(
