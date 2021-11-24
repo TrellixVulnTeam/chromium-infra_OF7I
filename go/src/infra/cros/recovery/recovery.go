@@ -123,6 +123,9 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 	if err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
+	if len(config.GetPlanNames()) == 0 {
+		config.PlanNames = dutPlans(dut, args)
+	}
 	if err := runDUTPlans(ctx, dut, config, args); err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
@@ -238,7 +241,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		defer args.Logger.DedentLogging()
 	}
 	log.Info(ctx, "Run DUT %q: starting...", dut.Name)
-	planNames := dutPlans(dut, args)
+	planNames := config.GetPlanNames()
 	log.Debug(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
 	for _, planName := range planNames {
 		if _, ok := config.GetPlans()[planName]; !ok {
@@ -269,28 +272,51 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 			}
 		}
 	}
-
-	// TODO(otabek@): Add closing plan logic.
-	for _, planName := range planNames {
-		log.Info(ctx, "Run plan %q: starting...", planName)
-		resources := collectResourcesForPlan(planName, execArgs.DUT)
-		if len(resources) == 0 {
-			log.Info(ctx, "Run plan %q: no resources found.", planName)
-			continue
-		}
-		plan := config.GetPlans()[planName]
-		for _, resource := range resources {
-			if err := runDUTPlanPerResource(ctx, resource, planName, plan, execArgs); err != nil {
-				log.Info(ctx, "Run %q plan for %s: finished with error: %s.", planName, resource, err)
-				if plan.GetAllowFail() {
-					log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
-				} else {
-					return errors.Annotate(err, "run plan %q", planName).Err()
-				}
+	defer func() {
+		plan, ok := config.GetPlans()[PlanClosing]
+		if !ok {
+			log.Info(ctx, "Run plans: plan %q not found in configuration.", PlanClosing)
+		} else {
+			// Closing plan always allowed to fail.
+			plan.AllowFail = true
+			if err := runSinglePlan(ctx, PlanClosing, plan, execArgs); err != nil {
+				log.Debug(ctx, "Run plans: plan %q for %q finished with error: %s", PlanClosing, dut.Name, err)
+			} else {
+				log.Debug(ctx, "Run plans: plan %q for %q finished successfully", PlanClosing, dut.Name)
 			}
+		}
+	}()
+	for _, planName := range planNames {
+		plan, ok := config.GetPlans()[planName]
+		if !ok {
+			return errors.Reason("run plans: plan %q: not found in configuration", planName).Err()
+		}
+		if err := runSinglePlan(ctx, planName, plan, execArgs); err != nil {
+			return errors.Annotate(err, "run plans").Err()
 		}
 	}
 	log.Info(ctx, "Run DUT %q plans: finished successfully.", dut.Name)
+	return nil
+}
+
+// runSinglePlan run single plan for all resources associated with plan.
+func runSinglePlan(ctx context.Context, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) error {
+	log.Info(ctx, "Run plan %q: starting...", planName)
+	resources := collectResourcesForPlan(planName, execArgs.DUT)
+	if len(resources) == 0 {
+		log.Info(ctx, "Run plan %q: no resources found.", planName)
+		return nil
+	}
+	for _, resource := range resources {
+		if err := runDUTPlanPerResource(ctx, resource, planName, plan, execArgs); err != nil {
+			log.Info(ctx, "Run %q plan for %s: finished with error: %s.", planName, resource, err)
+			if plan.GetAllowFail() {
+				log.Debug(ctx, "Run plan %q for %q: ignore error as allowed to fail.", planName, resource)
+			} else {
+				return errors.Annotate(err, "run plan %q", planName).Err()
+			}
+		}
+	}
 	return nil
 }
 
@@ -339,6 +365,8 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 		if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
 			return []string{dut.ChameleonHost.Name}
 		}
+	case PlanClosing:
+		return []string{"Nothing"}
 	}
 	return nil
 }
@@ -414,6 +442,10 @@ const (
 	PlanServoRepair         = "servo_repair"
 	PlanChameleonRepair     = "chameleon_repair"
 	PlanBluetoothPeerRepair = "bluetooth_peer_repair"
+	// That is final plan which will run always if present in configuration.
+	// The goal is execution final step to clean up stages if something left
+	// over in the devices.
+	PlanClosing = "close"
 )
 
 // dutPlans creates list of plans for DUT.
