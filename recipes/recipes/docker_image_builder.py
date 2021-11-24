@@ -82,7 +82,7 @@ def RunSteps(api, arch_type):
   upload_step = api.docker(
       'push',
       registry_image_name,
-      stdout=api.raw_io.output(),
+      stdout=api.raw_io.output_text(),
       step_test_data=lambda: api.raw_io.test_api.stream_output_text(
           '1-2-3: digest: sha256:deadbeef size:123'))
   image_spec = 'unknown'
