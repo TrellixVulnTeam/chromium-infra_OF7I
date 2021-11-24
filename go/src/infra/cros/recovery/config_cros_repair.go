@@ -18,7 +18,8 @@ const crosRepairPlanBody = `
 	"tools_checks",
 	"hardware_audit",
 	"firmware_check",
-	"servo_keyboard"
+	"servo_keyboard",
+	"servo_mac_address"
 ],
 "actions": {
 	"cros_ssh":{
@@ -120,6 +121,26 @@ const crosRepairPlanBody = `
 			"lsusb -vv -d 03eb:2042 |grep \"Remote Wakeup\""
 		],
 		"allow_fail_after_recovery": true
+	},
+	"servo_mac_address":{
+		"conditions":[
+			"is_not_servo_v3",
+			"servod_control_exist_for_mac_address"
+		],
+		"exec_name":"servo_audit_nic_mac_address",
+		"allow_fail_after_recovery": true
+	},
+	"is_not_servo_v3": {
+		"conditions":[
+			"servo_is_v3"
+		],
+		"exec_name":"sample_fail"
+	},
+	"servod_control_exist_for_mac_address":{
+		"exec_name":"servo_check_servod_control",
+		"exec_extra_args":[
+			"command:macaddr"
+		]
 	},
 	"servo_init_usb_keyboard":{
 		"docs":[
