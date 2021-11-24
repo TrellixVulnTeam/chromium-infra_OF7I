@@ -20,13 +20,14 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
-	"go.chromium.org/luci/gae/service/taskqueue"
+
+	"infra/appengine/crosskylabadmin/internal/tq"
 )
 
 func TestSuccessfulPushDuts(t *testing.T) {
 	Convey("success", t, func() {
 		ctx := gaetesting.TestingContext()
-		tqt := taskqueue.GetTestable(ctx)
+		tqt := tq.GetTestable(ctx)
 		qn := "repair-bots"
 		tqt.CreateQueue(qn)
 		hosts := []string{"host1", "host2"}
@@ -52,7 +53,7 @@ func TestSuccessfulPushDuts(t *testing.T) {
 func TestSuccessfulPushLabstations(t *testing.T) {
 	Convey("success", t, func() {
 		ctx := gaetesting.TestingContext()
-		tqt := taskqueue.GetTestable(ctx)
+		tqt := tq.GetTestable(ctx)
 		qn := "repair-labstations"
 		tqt.CreateQueue(qn)
 		hosts := []string{"host1", "host2"}
@@ -78,7 +79,7 @@ func TestSuccessfulPushLabstations(t *testing.T) {
 func TestSuccessfulPushAuditTasks(t *testing.T) {
 	Convey("success", t, func() {
 		ctx := gaetesting.TestingContext()
-		tqt := taskqueue.GetTestable(ctx)
+		tqt := tq.GetTestable(ctx)
 		qn := "audit-bots"
 		tqt.CreateQueue(qn)
 		hosts := []string{"host1", "host2"}
@@ -105,7 +106,7 @@ func TestSuccessfulPushAuditTasks(t *testing.T) {
 func TestUnknownQueuePush(t *testing.T) {
 	Convey("no taskqueue", t, func() {
 		ctx := gaetesting.TestingContext()
-		tqt := taskqueue.GetTestable(ctx)
+		tqt := tq.GetTestable(ctx)
 		tqt.CreateQueue("no-repair-bots")
 		err := PushRepairDUTs(ctx, []string{"host1", "host2"}, "some_state")
 		So(err, ShouldNotBeNil)

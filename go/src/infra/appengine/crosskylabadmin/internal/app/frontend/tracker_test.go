@@ -24,12 +24,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	swarming "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/strpair"
-	"go.chromium.org/luci/gae/service/taskqueue"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/clients"
 	"infra/appengine/crosskylabadmin/internal/app/config"
 	"infra/appengine/crosskylabadmin/internal/app/frontend/test"
+	"infra/appengine/crosskylabadmin/internal/tq"
 )
 
 const repairQ = "repair-bots"
@@ -96,13 +96,13 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 		bot5 := test.BotForDUT("dut_5", "needs_replacement", "label-os_type:OS_TYPE_JETSTREAM;id:id5")
 		bot1LabStation := test.BotForDUT("dut_1l", "needs_repair", "label-os_type:OS_TYPE_LABSTATION;id:lab_id1")
 		bot1SchedulingUnit := test.BotForDUT("dut1su", "needs_repair", "id:su_id1")
-		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
+		appendPaths := func(paths map[string]*tq.Task) (arr []string) {
 			for _, v := range paths {
 				arr = append(arr, v.Path)
 			}
 			return arr
 		}
-		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey string, qPath string, botIDs []string) {
+		validateTasksInQueue := func(tasks tq.QueueData, qKey string, qPath string, botIDs []string) {
 			fmt.Println(tasks)
 			repairTasks, ok := tasks[qKey]
 			So(ok, ShouldBeTrue)
@@ -117,7 +117,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 		}
 		tf, validate := newTestFixture(t)
 		defer validate()
-		tqt := taskqueue.GetTestable(tf.C)
+		tqt := tq.GetTestable(tf.C)
 		tqt.CreateQueue(repairQ)
 
 		Convey("run needs_repair status", func() {
@@ -205,13 +205,13 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		bot7 := test.BotForDUT("dut_7", "needs_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id7")
 		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
 		bot1SchedulingUnit := test.BotForDUT("dut1su", "ready", "id:su_id1")
-		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
+		appendPaths := func(paths map[string]*tq.Task) (arr []string) {
 			for _, v := range paths {
 				arr = append(arr, v.Path)
 			}
 			return arr
 		}
-		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey, qPath string, botIDs, actions []string) {
+		validateTasksInQueue := func(tasks tq.QueueData, qKey, qPath string, botIDs, actions []string) {
 			fmt.Println(tasks)
 			repairTasks, ok := tasks[qKey]
 			So(ok, ShouldBeTrue)
@@ -227,7 +227,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		}
 		tf, validate := newTestFixture(t)
 		defer validate()
-		tqt := taskqueue.GetTestable(tf.C)
+		tqt := tq.GetTestable(tf.C)
 		tqt.CreateQueue(auditQ)
 
 		Convey("fail to run when actions is not specified", func() {
@@ -262,7 +262,7 @@ func TestPushLabstationsForRepair(t *testing.T) {
 	Convey("Handling labstation bots", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
-		tqt := taskqueue.GetTestable(tf.C)
+		tqt := tq.GetTestable(tf.C)
 		tqt.CreateQueue(repairLabstationQ)
 		bot1 := test.BotForDUT("dut_1", "needs_repair", "label-os_type:OS_TYPE_LABSTATION;label-pool:labstation_main;id:lab_1")
 		bot2 := test.BotForDUT("dut_2", "ready", "label-os_type:OS_TYPE_LABSTATION;label-pool:servo_verification;id:lab_2")

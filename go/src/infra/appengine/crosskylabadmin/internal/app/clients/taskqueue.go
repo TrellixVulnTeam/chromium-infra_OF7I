@@ -21,7 +21,8 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/gae/service/taskqueue"
+
+	"infra/appengine/crosskylabadmin/internal/tq"
 )
 
 const repairBotsQueue = "repair-bots"
@@ -44,44 +45,44 @@ func PushRepairDUTs(ctx context.Context, botIDs []string, expectedState string) 
 func PushAuditDUTs(ctx context.Context, botIDs, actions []string, taskname string) error {
 	actionsCSV := strings.Join(actions, ",")
 	actionsStr := strings.Join(actions, "-")
-	tasks := make([]*taskqueue.Task, 0, len(botIDs))
+	tasks := make([]*tq.Task, 0, len(botIDs))
 	for _, id := range botIDs {
 		tasks = append(tasks, crosAuditTask(id, taskname, actionsCSV, actionsStr))
 	}
 	return pushDUTs(ctx, auditBotsQueue, tasks)
 }
 
-func crosRepairTask(botID, expectedState string) *taskqueue.Task {
+func crosRepairTask(botID, expectedState string) *tq.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
 	values.Set("expectedState", expectedState)
-	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/cros_repair/%s", botID), values)
+	return tq.NewPOSTTask(fmt.Sprintf("/internal/task/cros_repair/%s", botID), values)
 }
 
-func labstationRepairTask(botID, expectedState string) *taskqueue.Task {
+func labstationRepairTask(botID, expectedState string) *tq.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
-	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/labstation_repair/%s", botID), values)
+	return tq.NewPOSTTask(fmt.Sprintf("/internal/task/labstation_repair/%s", botID), values)
 }
 
-func crosAuditTask(botID, taskname, actionsCSV, actionsStr string) *taskqueue.Task {
+func crosAuditTask(botID, taskname, actionsCSV, actionsStr string) *tq.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
 	values.Set("taskname", taskname)
 	values.Set("actions", actionsCSV)
-	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s/%s", botID, actionsStr), values)
+	return tq.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s/%s", botID, actionsStr), values)
 }
 
-func createTasks(botIDs []string, expectedState string, taskGenerator func(string, string) *taskqueue.Task) []*taskqueue.Task {
-	tasks := make([]*taskqueue.Task, 0, len(botIDs))
+func createTasks(botIDs []string, expectedState string, taskGenerator func(string, string) *tq.Task) []*tq.Task {
+	tasks := make([]*tq.Task, 0, len(botIDs))
 	for _, id := range botIDs {
 		tasks = append(tasks, taskGenerator(id, expectedState))
 	}
 	return tasks
 }
 
-func pushDUTs(ctx context.Context, queueName string, tasks []*taskqueue.Task) error {
-	if err := taskqueue.Add(ctx, queueName, tasks...); err != nil {
+func pushDUTs(ctx context.Context, queueName string, tasks []*tq.Task) error {
+	if err := tq.Add(ctx, queueName, tasks...); err != nil {
 		return err
 	}
 	logging.Infof(ctx, "enqueued %d tasks", len(tasks))
