@@ -266,7 +266,7 @@ const crosRepairPlanBody = `
 	},
 	"cros_storage_space_check":{
 		"dependencies":[
-			"cros_stateful_partition_has_enough_inodes", 
+			"cros_stateful_partition_has_enough_inodes",
 			"cros_stateful_partition_has_enough_storage_space",
 			"cros_encrypted_stateful_partition_has_enough_storage_space"
 		],
