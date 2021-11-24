@@ -83,6 +83,7 @@ http {
     error_log             /var/log/nginx/gs-cache.error.log;
     location / {
       proxy_cache_lock on;
+      proxy_cache_lock_age 900s;
       proxy_cache_lock_timeout 900s;
       proxy_cache_bypass $http_x_no_cache;
       expires max;
