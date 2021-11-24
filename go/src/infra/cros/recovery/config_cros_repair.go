@@ -18,6 +18,7 @@ const crosRepairPlanBody = `
 	"tools_checks",
 	"hardware_audit",
 	"firmware_check",
+	"rw_vpd",
 	"servo_keyboard",
 	"servo_mac_address"
 ],
@@ -106,6 +107,13 @@ const crosRepairPlanBody = `
 			"cros_rw_firmware_stable_verion"
 		],
 		"exec_name":"sample_pass"
+	},
+	"rw_vpd":{
+		"docs":[
+			"Verify that keys: 'should_send_rlz_ping', 'gbind_attribute', 'ubind_attribute' are present in vpd RW_VPD partition."
+		],
+		"exec_name":"cros_are_required_rw_vpd_keys_present",
+		"allow_fail_after_recovery": true
 	},
 	"servo_keyboard":{
 		"conditions":[
