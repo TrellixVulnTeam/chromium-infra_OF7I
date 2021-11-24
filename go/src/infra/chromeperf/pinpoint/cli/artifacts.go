@@ -28,19 +28,14 @@ import (
 	"sync"
 
 	"infra/chromeperf/pinpoint"
-	"infra/chromeperf/pinpoint/cli/identify"
 	"infra/chromeperf/pinpoint/proto"
 
 	"github.com/bazelbuild/remote-apis-sdks/go/pkg/digest"
 	"github.com/bazelbuild/remote-apis-sdks/go/pkg/filemetadata"
 
 	"go.chromium.org/luci/client/casclient"
-	"go.chromium.org/luci/client/downloader"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/isolated"
-	"go.chromium.org/luci/common/isolatedclient"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 	"gopkg.in/yaml.v2"
 )
@@ -104,15 +99,6 @@ type telemetryExperimentArtifactsManifest struct {
 	Experiment changeConfig `yaml:"experiment"`
 }
 
-// TODO(crbug/1143122): Remove this after the transition is complete.
-func isCas(urls abExperimentURLs) bool {
-	// We are assuming all artifacts in a job are either CAS or Isolate.
-	for _, url := range urls {
-		return strings.Contains(url, "cas-viewer")
-	}
-	return false
-}
-
 func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Context, w io.Writer, httpClient *http.Client, workDir string, job *proto.Job) error {
 	id, err := pinpoint.LegacyJobID(job.Name)
 	if err != nil {
@@ -140,15 +126,8 @@ func (dam *downloadArtifactsMixin) downloadExperimentArtifacts(ctx context.Conte
 		return errors.Annotate(err, "failed creating temporary directory").Err()
 	}
 	defer os.RemoveAll(tmp)
-	if isCas(urls) {
-		if err := downloadCasURLs(ctx, tmp, urls); err != nil {
-			return err
-		}
-	} else {
-		isolatedclients := newIsolatedClientsCache(httpClient)
-		if err := downloadIsolatedURLs(ctx, isolatedclients, tmp, urls); err != nil {
-			return err
-		}
+	if err := downloadCasURLs(ctx, tmp, urls); err != nil {
+		return err
 	}
 
 	// At this point we'll emit the manifest file into the temporary directory,
@@ -238,85 +217,6 @@ func downloadCasURLs(ctx context.Context, base string, urls map[string]string) e
 		return nil
 	}
 	return res
-}
-
-func downloadIsolatedURLs(ctx context.Context, clients *isolatedClientsCache, base string, urls map[string]string) errors.MultiError {
-	g := sync.WaitGroup{}
-	errs := make(chan error)
-	// Extract a downloader function which we'll run in a goroutine.
-	downloader := func(path, u string, errs chan error, g *sync.WaitGroup) {
-		logging.Debugf(ctx, "Downloading %q", u)
-		defer logging.Debugf(ctx, "Done: %q", u)
-		defer g.Done()
-		obj, err := fromIsolatedURL(u)
-		if err != nil {
-			errs <- errors.Annotate(err, "failed parsing isolated url: %s", u).Err()
-			return
-		}
-		dst := filepath.Join(base, path)
-		if err := os.MkdirAll(dst, 0700); err != nil {
-			errs <- errors.Annotate(err, "failed creating directory: %s", dst).Err()
-			return
-		}
-		d := downloader.New(ctx, clients.Get(obj), isolated.HexDigest(obj.digest), dst, nil)
-		d.Start()
-		if err := d.Wait(); err != nil {
-			errs <- errors.Annotate(err, "failed downloading artifacts from isolated: %s", u).Err()
-			return
-		}
-		logging.Debugf(ctx, "Downloaded artifacts from %q", u)
-		return
-	}
-	for path, u := range urls {
-		g.Add(1)
-		go downloader(path, u, errs, &g)
-	}
-
-	// Wait for all the downloader goroutines to finish, then close the errors channel.
-	go func() {
-		g.Wait()
-		close(errs)
-	}()
-
-	// Handle all the errors from the channel until it's closed.
-	res := errors.MultiError{}
-	for err := range errs {
-		res = append(res, err)
-	}
-
-	if len(res) == 0 {
-		return nil
-	}
-	return res
-}
-
-type isolatedClientsCache struct {
-	httpclient *http.Client
-	clients    map[string]*isolatedclient.Client
-	mu         sync.Mutex
-}
-
-func newIsolatedClientsCache(client *http.Client) *isolatedClientsCache {
-	return &isolatedClientsCache{
-		httpclient: client,
-		clients:    make(map[string]*isolatedclient.Client),
-	}
-}
-
-func (c *isolatedClientsCache) Get(obj *isolatedObject) *isolatedclient.Client {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if clt, ok := c.clients[obj.clientKey()]; ok {
-		return clt
-	}
-	clt := isolatedclient.NewClient(
-		obj.host,
-		isolatedclient.WithNamespace(obj.namespace),
-		isolatedclient.WithAuthClient(c.httpclient),
-		isolatedclient.WithUserAgent(identify.UserAgent),
-	)
-	c.clients[obj.clientKey()] = clt
-	return clt
 }
 
 type abExperimentURLs map[string]string
@@ -462,28 +362,4 @@ func (urls abExperimentURLs) fromJob(j *proto.Job, selector string) (*telemetryE
 		}
 	}
 	return res, nil
-}
-
-type isolatedObject struct {
-	host, namespace, digest string
-}
-
-func (o *isolatedObject) clientKey() string {
-	return fmt.Sprintf("%s/%s", o.host, o.namespace)
-}
-
-func fromIsolatedURL(u string) (*isolatedObject, error) {
-	uu, err := url.Parse(u)
-	if err != nil {
-		return nil, err
-	}
-	namespace := uu.Query().Get("namespace")
-	if namespace == "" {
-		namespace = "default-gzip"
-	}
-	return &isolatedObject{
-		host:      fmt.Sprintf("%s://%s", uu.Scheme, uu.Host),
-		namespace: namespace,
-		digest:    uu.Query().Get("digest"),
-	}, nil
 }
