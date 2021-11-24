@@ -102,7 +102,9 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if !in.GetNoMetrics() {
 		var err error
 		metrics, err = karte.NewMetrics(ctx, kclient.DevConfig(auth.Options{}))
-		if err != nil {
+		if err == nil {
+			lg.Info("internal run: metrics client successfully created.")
+		} else {
 			// TODO(gregorynisbet): Make this error end the current function.
 			lg.Error("internal run: failed to instantiate karte client: %s", err)
 		}

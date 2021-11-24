@@ -66,7 +66,10 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
 		defer func() { step.End(err) }()
 	}
-	if args.Metrics != nil {
+	if args.Metrics == nil {
+		log.Debug(ctx, "run: metrics is nil")
+	} else {
+		log.Debug(ctx, "run: metrics is non-nil")
 		start := time.Now()
 		// TODO(gregorynisbet): Create a helper function to make this more compact.
 		defer (func() {
