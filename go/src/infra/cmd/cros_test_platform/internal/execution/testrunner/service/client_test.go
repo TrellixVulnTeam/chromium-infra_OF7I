@@ -226,6 +226,31 @@ func TestFetchRequest(t *testing.T) {
 	})
 }
 
+func TestFetchRequestBuildBuckerFailure(t *testing.T) {
+	Convey("When a task is launched and BB GetBuild Fails", t, func() {
+		tf, cleanup := newTestFixture(t)
+		defer cleanup()
+
+		tf.bb.EXPECT().ScheduleBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&buildbucket_pb.Build{Id: 42}, nil)
+
+		tf.bb.EXPECT().GetBuild(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.Reason("Transient failure").Err())
+
+		task, err := tf.skylab.LaunchTask(tf.ctx, newArgs())
+		So(err, ShouldBeNil)
+		Convey("as the results are fetched", func() {
+			resp, err := tf.skylab.FetchResults(tf.ctx, task)
+			So(err, ShouldNotBeNil)
+			So(resp.BuildBucketTransientFailure, ShouldBeTrue)
+		})
+	})
+}
+
 func TestCompletedTask(t *testing.T) {
 	Convey("When a task is launched and completes", t, func() {
 		tf, cleanup := newTestFixture(t)

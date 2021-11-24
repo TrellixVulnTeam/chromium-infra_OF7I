@@ -44,8 +44,9 @@ func NewTaskReference() TaskReference {
 // FetchResultsResponse is an implementation-independent container for
 // information about running and finished tasks.
 type FetchResultsResponse struct {
-	Result    *skylab_test_runner.Result
-	LifeCycle test_platform.TaskState_LifeCycle
+	Result                      *skylab_test_runner.Result
+	LifeCycle                   test_platform.TaskState_LifeCycle
+	BuildBucketTransientFailure bool
 }
 
 // Client defines an interface used to interact with test_runner as a service.
@@ -236,7 +237,11 @@ func (c *clientImpl) FetchResults(ctx context.Context, t TaskReference) (*FetchR
 	}
 	b, err := c.bbClient.GetBuild(ctx, req)
 	if err != nil {
-		return nil, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
+		return &FetchResultsResponse{
+			nil,
+			test_platform.TaskState_LIFE_CYCLE_ABORTED,
+			true,
+		}, errors.Annotate(err, "fetch results for build %d", task.bbID).Err()
 	}
 
 	task.swarmingTaskID = b.GetInfra().GetSwarming().GetTaskId()

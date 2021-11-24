@@ -10,6 +10,7 @@ package execution_test
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution/testrunner"
 	"regexp"
 	"strings"
 	"testing"
@@ -24,6 +25,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/luciexe/exe"
 )
 
@@ -268,6 +270,48 @@ func TestBuildUpdatesWithRetries(t *testing.T) {
 
 			So(oneRetryUpdateCount, ShouldBeGreaterThan, noRetryUpdateCount)
 		})
+	})
+}
+
+type transientBBErrorClient struct {
+	trservice.StubClient
+}
+
+type nonTransientBBErrorClient struct {
+	trservice.StubClient
+}
+
+// FetchResults implements Client interface.
+func (c transientBBErrorClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
+	return &trservice.FetchResultsResponse{BuildBucketTransientFailure: true}, errors.Reason("simulated error from fake client").Err()
+}
+
+// FetchResults implements Client interface.
+func (c nonTransientBBErrorClient) FetchResults(context.Context, trservice.TaskReference) (*trservice.FetchResultsResponse, error) {
+	return &trservice.FetchResultsResponse{BuildBucketTransientFailure: false}, errors.Reason("simulated error from fake client").Err()
+}
+
+func TestRefreshWithTransientBuildBuckerError(t *testing.T) {
+	Convey("For a refresh call with build bucket errors", t, func() {
+		err := testrunner.NewBuildForTesting("task1", "url1").Refresh(
+			context.Background(),
+			transientBBErrorClient{},
+		)
+		// Test that the error is swallowed because BuildBucketTransientFailure is
+		// true.
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestRefreshWithNonTransientBuildBuckerError(t *testing.T) {
+	Convey("For a refresh call without build bucket errors", t, func() {
+		err := testrunner.NewBuildForTesting("task1", "url1").Refresh(
+			context.Background(),
+			nonTransientBBErrorClient{},
+		)
+		// Test that the error is swallowed because BuildBucketTransientFailure is
+		// true.
+		So(err, ShouldNotBeNil)
 	})
 }
 

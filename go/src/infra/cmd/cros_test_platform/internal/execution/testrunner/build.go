@@ -105,6 +105,9 @@ func (b *Build) name() string {
 }
 
 func (b *Build) autotestResult() *skylab_test_runner.Result_Autotest {
+	if b.result == nil {
+		return nil
+	}
 	return b.result.GetAutotestResult()
 }
 
@@ -154,7 +157,9 @@ func (b *Build) verdict() test_platform.TaskState_Verdict {
 func (b *Build) Refresh(ctx context.Context, c trservice.Client) error {
 	resp, err := c.FetchResults(ctx, b.taskReference)
 
-	if err != nil {
+	// If BuildBucketTransientFailure is true, this will fall through to below and
+	// be considered as an "Incomplete" build.
+	if err != nil && (resp == nil || !resp.BuildBucketTransientFailure) {
 		return errors.Annotate(err, "refresh task").Err()
 	}
 
