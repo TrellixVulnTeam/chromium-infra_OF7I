@@ -63,11 +63,11 @@ type servod struct {
 // If servod is running: do nothing.
 // If servod is not running: start servod.
 func (s *servod) Prepare(ctx context.Context, pool *sshpool.Pool) error {
-	status, err := s.getStatus(ctx, pool)
+	stat, err := s.getStatus(ctx, pool)
 	if err != nil {
 		return errors.Annotate(err, "prepare servod").Err()
 	}
-	switch status {
+	switch stat {
 	case servodNotRunning:
 		err = s.start(ctx, pool)
 		if err != nil {

@@ -79,9 +79,9 @@ func ReadFirmwareManifest(ctx context.Context, r execs.Runner, dutModel string) 
 	if err := json.Unmarshal([]byte(rawOutput), &firmwareUpdateResultMap); err != nil {
 		return nil, errors.Annotate(err, "read firmware manifest").Err()
 	}
-	modelFirmware, ok := firmwareUpdateResultMap[dutModel]
+	modelFw, ok := firmwareUpdateResultMap[dutModel]
 	if !ok {
 		return nil, errors.Reason("read firmware manifest: model %q is not present in manifest", dutModel).Err()
 	}
-	return &modelFirmware, nil
+	return &modelFw, nil
 }
