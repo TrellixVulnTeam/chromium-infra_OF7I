@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package reclustering
+package orchestrator
 
 import (
 	"context"
@@ -23,7 +23,6 @@ import (
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
 	"infra/appengine/weetbix/internal/config"
-	"infra/appengine/weetbix/internal/services/reclustering"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -33,8 +32,6 @@ import (
 )
 
 func TestOrchestrator(t *testing.T) {
-	reclustering.RegisterTaskClass()
-
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 

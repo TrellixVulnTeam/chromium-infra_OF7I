@@ -7,6 +7,7 @@ package clustering
 import (
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -75,4 +76,15 @@ func (c ClusterID) IsEmpty() bool {
 // rule based clustering algorithm.
 func (c ClusterID) IsBugCluster() bool {
 	return strings.HasPrefix(c.Algorithm, RulesAlgorithmPrefix)
+}
+
+// SortClusters sorts the given clusters in ascending algorithm and then ID
+// order.
+func SortClusters(cs []*ClusterID) {
+	sort.Slice(cs, func(i, j int) bool {
+		if cs[i].Algorithm == cs[j].Algorithm {
+			return cs[i].ID < cs[j].ID
+		}
+		return cs[i].Algorithm < cs[j].Algorithm
+	})
 }

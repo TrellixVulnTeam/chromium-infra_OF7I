@@ -43,6 +43,10 @@ func (p *ProgressToken) ReportProgress(ctx context.Context, value int) error {
 	if value < 0 || value > 1000 {
 		return errors.New("progress value must be between 0 and 1000")
 	}
+	if p.reportedOnce && p.lastReportedProgress == value {
+		// Progress did not change, nothing to do.
+		return nil
+	}
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		deltaProgress := value - p.lastReportedProgress
 		err := reportProgress(ctx, p.project, p.attemptTimestamp, !p.reportedOnce, deltaProgress)

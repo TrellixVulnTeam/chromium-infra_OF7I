@@ -35,10 +35,10 @@ import (
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/clustering/reclustering"
+	"infra/appengine/weetbix/internal/clustering/reclustering/orchestrator"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
-	reclusteringsrv "infra/appengine/weetbix/internal/services/reclustering"
+	"infra/appengine/weetbix/internal/services/reclustering"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/services/testvariantbqexporter"
@@ -318,15 +318,17 @@ func main() {
 		cron.RegisterHandler("read-config", config.Update)
 		cron.RegisterHandler("update-bugs", handlers.updateBugs)
 		cron.RegisterHandler("export-test-variants", testvariantbqexporter.ScheduleTasks)
-		cron.RegisterHandler("reclustering", reclustering.CronHandler)
+		cron.RegisterHandler("reclustering", orchestrator.CronHandler)
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)
 		srv.Routes.POST("/_ah/push-handlers/cvrun", nil, app.CVRunPubSubHandler)
 
 		// Register task queue tasks.
-		reclusteringsrv.RegisterTaskClass()
-		if err := resultingester.RegisterTaskClass(srv); err != nil {
+		if err := reclustering.RegisterTaskHandler(srv); err != nil {
+			return errors.Annotate(err, "register reclustering").Err()
+		}
+		if err := resultingester.RegisterTaskHandler(srv); err != nil {
 			return errors.Annotate(err, "register result ingester").Err()
 		}
 		resultcollector.RegisterTaskClass()

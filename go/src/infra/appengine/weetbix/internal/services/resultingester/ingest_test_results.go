@@ -56,8 +56,8 @@ var resultIngestion = tq.RegisterTaskClass(tq.TaskClass{
 // realmProjectRe extracts the LUCI project name from a LUCI Realm.
 var realmProjectRe = regexp.MustCompile(`^([a-z0-9\-_]{1,40}):.+$`)
 
-// RegisterTaskClass registers the handler for result ingestion tasks.
-func RegisterTaskClass(srv *server.Server) error {
+// RegisterTaskHandler registers the handler for result ingestion tasks.
+func RegisterTaskHandler(srv *server.Server) error {
 	ctx := srv.Context
 	cfg, err := config.Get(ctx)
 	if err != nil {

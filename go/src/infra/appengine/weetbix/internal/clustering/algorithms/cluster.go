@@ -168,6 +168,9 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 			newIDs = append(newIDs, id)
 		}
 
+		// Keep the output deterministic by sorting the clusters in the
+		// output.
+		clustering.SortClusters(newIDs)
 		result = append(result, newIDs)
 	}
 

@@ -26,99 +26,94 @@ func TestSpanner(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		Convey(`Create`, func() {
-			testCreate := func(e *Entry) error {
-				_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+			testCreate := func(e *Entry) (time.Time, error) {
+				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 					return Create(ctx, e)
 				})
-				return err
+				return commitTime, err
 			}
 			e := NewEntry(100).Build()
 			Convey(`Valid`, func() {
-				err := testCreate(e)
+				commitTime, err := testCreate(e)
 				So(err, ShouldBeNil)
+				e.LastUpdated = commitTime.In(time.UTC)
 
 				txn := span.Single(ctx)
 				actual, err := Read(txn, e.Project, e.ChunkID)
-				So(err, ShouldBeNil)
-
-				// Check the LastUpdated time is set, but ignore it for
-				// further comparisons.
-				clearLastUpdatedTimestamps(actual)
-
 				So(err, ShouldBeNil)
 				So(actual, ShouldResemble, e)
 			})
 			Convey(`Invalid`, func() {
 				Convey(`Project missing`, func() {
 					e.Project = ""
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, `project "" is not valid`)
 				})
 				Convey(`Chunk ID missing`, func() {
 					e.ChunkID = ""
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, `chunk ID "" is not valid`)
 				})
 				Convey(`Partition Time missing`, func() {
 					var t time.Time
 					e.PartitionTime = t
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, "partition time must be specified")
 				})
 				Convey(`Object ID missing`, func() {
 					e.ObjectID = ""
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, "object ID must be specified")
 				})
 				Convey(`Rules Version missing`, func() {
 					var t time.Time
 					e.Clustering.RulesVersion = t
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, "rules version must be specified")
 				})
 				Convey(`Algorithms Version missing`, func() {
 					e.Clustering.AlgorithmsVersion = 0
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, "algorithms version must be specified")
 				})
 				Convey(`Clusters missing`, func() {
 					e.Clustering.Clusters = nil
-					err := testCreate(e)
+					_, err := testCreate(e)
 					So(err, ShouldErrLike, "there must be clustered test results in the chunk")
 				})
 				Convey(`Algorithms invalid`, func() {
 					Convey(`Empty algorithm`, func() {
 						e.Clustering.Algorithms[""] = struct{}{}
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `algorithm "" is not valid`)
 					})
 					Convey("Algorithm invalid", func() {
 						e.Clustering.Algorithms["!!!"] = struct{}{}
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `algorithm "!!!" is not valid`)
 					})
 				})
 				Convey(`Clusters invalid`, func() {
 					Convey(`Algorithm missing`, func() {
 						e.Clustering.Clusters[1][1].Algorithm = ""
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 					})
 					Convey("Algorithm invalid", func() {
 						e.Clustering.Clusters[1][1].Algorithm = "!!!"
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
 					})
 					Convey("Algorithm not in algorithms set", func() {
 						e.Clustering.Algorithms = map[string]struct{}{
 							"alg-extra": {},
 						}
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `a test result was clustered with an unregistered algorithm`)
 					})
 					Convey("ID missing", func() {
 						e.Clustering.Clusters[1][1].ID = ""
-						err := testCreate(e)
+						_, err := testCreate(e)
 						So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: ID is empty`)
 					})
 				})
@@ -132,9 +127,7 @@ func TestSpanner(t *testing.T) {
 				}
 				commitTime, err := CreateEntriesForTesting(ctx, entries)
 				So(err, ShouldBeNil)
-				// Set LastUpdated on the entry as UpdateClustering() needs
-				// this.
-				entries[0].LastUpdated = commitTime
+				entries[0].LastUpdated = commitTime.In(time.UTC)
 
 				// Prepare an update.
 				newClustering := &NewEntry(1).Build().Clustering
@@ -150,17 +143,11 @@ func TestSpanner(t *testing.T) {
 							return err
 						})
 						So(err, ShouldEqual, nil)
+						expected.LastUpdated = commitTime.In(time.UTC)
 
 						// Assert the update was applied.
 						actual, err := Read(span.Single(ctx), expected.Project, expected.ChunkID)
 						So(err, ShouldBeNil)
-						// ShouldResemble compares time.Time objects using
-						// reflect.DeepEqual rather than the Time.Equal method,
-						// which leads to failed comparisons even though the
-						// represented time is the same. Therefore, compare
-						// time separately.
-						So(actual.LastUpdated, ShouldEqual, commitTime)
-						clearLastUpdatedTimestamps(actual)
 						So(actual, ShouldResemble, expected)
 					}
 					Convey(`Full update`, func() {
@@ -244,7 +231,10 @@ func TestSpanner(t *testing.T) {
 				NewEntry(7).WithChunkIDPrefix("12" + strings.Repeat("00", 15)).WithAlgorithmsVersion(2).Build(), // Should not be read.
 			}
 
-			_, err := CreateEntriesForTesting(ctx, entries)
+			commitTime, err := CreateEntriesForTesting(ctx, entries)
+			for _, e := range entries {
+				e.LastUpdated = commitTime.In(time.UTC)
+			}
 			So(err, ShouldBeNil)
 
 			expectedEntries := []*Entry{
@@ -267,14 +257,12 @@ func TestSpanner(t *testing.T) {
 			// Reads first page.
 			rows, err := ReadNextN(span.Single(ctx), testProject, readOpts, 3)
 			So(err, ShouldBeNil)
-			clearLastUpdatedTimestamps(rows...)
 			So(rows, ShouldResemble, expectedEntries[0:3])
 
 			// Read second page.
 			readOpts.StartChunkID = rows[2].ChunkID
 			rows, err = ReadNextN(span.Single(ctx), testProject, readOpts, 3)
 			So(err, ShouldBeNil)
-			clearLastUpdatedTimestamps(rows...)
 			So(rows, ShouldResemble, expectedEntries[3:])
 
 			// Read empty last page.
@@ -322,13 +310,4 @@ func TestSpanner(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(count, ShouldEqual, 100)
 	})
-}
-
-func clearLastUpdatedTimestamps(entries ...*Entry) {
-	for _, e := range entries {
-		// Check the LastUpdated time is set, but ignore it for
-		// further comparisons.
-		So(e.LastUpdated, ShouldNotBeZeroValue)
-		e.LastUpdated = time.Time{}
-	}
 }

@@ -111,3 +111,9 @@ func CreateEntriesForTesting(ctx context.Context, entries []*Entry) (commitTimes
 		return nil
 	})
 }
+
+// ReadAllForTesting reads all state entries in the given project
+// (up to 1 million records) for testing.
+func ReadAllForTesting(ctx context.Context, project string) ([]*Entry, error) {
+	return readWhere(span.Single(ctx), project, "TRUE", nil, 1000*1000)
+}
