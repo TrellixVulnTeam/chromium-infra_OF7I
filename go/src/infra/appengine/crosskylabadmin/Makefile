@@ -6,25 +6,25 @@ mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 projdir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 dev:
-	gae.py devserver -A dev --app-dir $(projdir)/app/appengine -- --host 0.0.0.0 --port 8082 --admin_port 7999 --log_level debug
+	gae.py devserver -A dev --app-dir $(projdir)/internal/app/appengine -- --host 0.0.0.0 --port 8082 --admin_port 7999 --log_level debug
 
 up-prod:
-	gae.py upload -A chromeos-skylab-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py upload -A chromeos-skylab-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 switch-prod:
-	gae.py switch -A chromeos-skylab-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py switch -A chromeos-skylab-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 versions-cleanup-prod:
-	gae.py cleanup -A chromeos-skylab-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py cleanup -A chromeos-skylab-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 up-staging:
-	gae.py upload -A skylab-staging-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py upload -A skylab-staging-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 switch-staging:
-	gae.py switch -A skylab-staging-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py switch -A skylab-staging-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 versions-cleanup-staging:
-	gae.py cleanup -A skylab-staging-bot-fleet --app-dir $(projdir)/app/appengine
+	gae.py cleanup -A skylab-staging-bot-fleet --app-dir $(projdir)/internal/app/appengine
 
 test:
 	go test ./...
