@@ -11,6 +11,7 @@ import (
 
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -28,8 +29,8 @@ func TestSpan(t *testing.T) {
 				NewRun(0).WithProject("otherproject").WithAttemptTimestamp(reference).WithCompletedProgress().Build(),
 				NewRun(1).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).Build(),
 				NewRun(2).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).Build(),
-				NewRun(3).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithReportedProgress().Build(),
-				NewRun(4).WithAttemptTimestamp(reference.Add(-30 * time.Minute)).WithReportedProgress().Build(),
+				NewRun(3).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithReportedProgress(500).Build(),
+				NewRun(4).WithAttemptTimestamp(reference.Add(-30 * time.Minute)).WithReportedProgress(500).Build(),
 				NewRun(5).WithAttemptTimestamp(reference.Add(-40 * time.Minute)).WithCompletedProgress().Build(),
 				NewRun(6).WithAttemptTimestamp(reference.Add(-50 * time.Minute)).WithCompletedProgress().Build(),
 			}
@@ -95,6 +96,77 @@ func TestSpan(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(run, ShouldResemble, runs[5])
 				})
+			})
+		})
+		Convey(`Query Progress`, func() {
+			Convey(`Rule Progress`, func() {
+				rulesVersion := time.Date(2021, time.January, 1, 1, 0, 0, 0, time.UTC)
+
+				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+				runs := []*ReclusteringRun{
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithRulesVersion(rulesVersion).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithRulesVersion(rulesVersion).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithRulesVersion(rulesVersion.Add(-1 * time.Hour)).WithCompletedProgress().Build(),
+				}
+				err := SetRunsForTesting(ctx, runs)
+				So(err, ShouldBeNil)
+
+				progress, err := ReadReclusteringProgress(ctx, testProject)
+				So(err, ShouldBeNil)
+
+				So(progress.ProgressToRulesVersion(rulesVersion.Add(1*time.Hour)), ShouldEqual, 150)
+				So(progress.ProgressToRulesVersion(rulesVersion), ShouldEqual, 650)
+				So(progress.ProgressToRulesVersion(rulesVersion.Add(-1*time.Minute)), ShouldEqual, 650)
+				So(progress.ProgressToRulesVersion(rulesVersion.Add(-1*time.Hour)), ShouldEqual, 1000)
+				So(progress.ProgressToRulesVersion(rulesVersion.Add(-2*time.Hour)), ShouldEqual, 1000)
+			})
+			Convey(`Algorithms Upgrading (started)`, func() {
+				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+				runs := []*ReclusteringRun{
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion + 1).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion + 1).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithCompletedProgress().Build(),
+				}
+				err := SetRunsForTesting(ctx, runs)
+				So(err, ShouldBeNil)
+
+				progress, err := ReadReclusteringProgress(ctx, testProject)
+				So(err, ShouldBeNil)
+
+				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion+1)
+				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 650)
+			})
+			Convey(`Algorithms Upgrading (not yet started)`, func() {
+				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+				runs := []*ReclusteringRun{
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithCompletedProgress().Build(),
+				}
+				err := SetRunsForTesting(ctx, runs)
+				So(err, ShouldBeNil)
+
+				progress, err := ReadReclusteringProgress(ctx, testProject)
+				So(err, ShouldBeNil)
+
+				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion)
+				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 150)
+			})
+			Convey(`Algorithms Stable`, func() {
+				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+				runs := []*ReclusteringRun{
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithCompletedProgress().Build(),
+				}
+				err := SetRunsForTesting(ctx, runs)
+				So(err, ShouldBeNil)
+
+				progress, err := ReadReclusteringProgress(ctx, testProject)
+				So(err, ShouldBeNil)
+
+				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion)
+				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 1000)
 			})
 		})
 		Convey(`Reporting Progress`, func() {

@@ -52,6 +52,18 @@ func (b *RunBuilder) WithAttemptTimestamp(attemptTimestamp time.Time) *RunBuilde
 	return b
 }
 
+// WithRulesVersion specifies the rules version to use on the run.
+func (b *RunBuilder) WithRulesVersion(value time.Time) *RunBuilder {
+	b.run.RulesVersion = value
+	return b
+}
+
+// WithAlgorithmsVersion specifies the algorithms version to use on the run.
+func (b *RunBuilder) WithAlgorithmsVersion(value int64) *RunBuilder {
+	b.run.AlgorithmsVersion = value
+	return b
+}
+
 // WithShardCount specifies the number of shards to use on the run.
 func (b *RunBuilder) WithShardCount(count int64) *RunBuilder {
 	if b.progressSet {
@@ -71,10 +83,11 @@ func (b *RunBuilder) WithNoReportedProgress() *RunBuilder {
 }
 
 // WithReportedProgress sets that all shards have reported, and some progress
-// has been made.
-func (b *RunBuilder) WithReportedProgress() *RunBuilder {
+// has been made. (progress is a value out of 1000 that is scaled to the
+// number of shards).
+func (b *RunBuilder) WithReportedProgress(progress int) *RunBuilder {
 	b.run.ShardsReported = b.run.ShardCount
-	b.run.Progress = b.run.ShardCount * 500
+	b.run.Progress = b.run.ShardCount * int64(progress)
 	b.progressSet = true
 	return b
 }
