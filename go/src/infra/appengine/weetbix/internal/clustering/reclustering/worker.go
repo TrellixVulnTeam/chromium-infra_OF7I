@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"infra/appengine/weetbix/internal/clustering/algorithms"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
@@ -63,6 +64,11 @@ func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks) error {
 	run, err := runs.Read(span.Single(ctx), task.Project, attemptTime)
 	if err != nil {
 		return errors.Annotate(err, "read run for task").Err()
+	}
+
+	if run.AlgorithmsVersion > algorithms.AlgorithmsVersion {
+		return fmt.Errorf("running out-of-date algorithms version (task requires %v, worker running %v)",
+			run.AlgorithmsVersion, algorithms.AlgorithmsVersion)
 	}
 
 	pt := runs.NewProgressToken(task.Project, attemptTime)
@@ -133,9 +139,15 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 			return false, errors.Annotate(err, "read chunk").Err()
 		}
 
+		// Obtain a recent ruleset of at least RulesVersion.
+		ruleset, err := Ruleset(ctx, t.task.Project, t.run.RulesVersion)
+		if err != nil {
+			return false, errors.Annotate(err, "obtain ruleset").Err()
+		}
+
 		// Re-cluster the test results in spanner, then export
 		// the re-clustering to BigQuery for analysis.
-		err = Update(ctx, t.worker.analysis, chunk, entry)
+		err = Update(ctx, ruleset, t.worker.analysis, chunk, entry)
 		if err != nil {
 			if err == state.UpdateRaceErr {
 				// Our update raced with another update (or a delete).

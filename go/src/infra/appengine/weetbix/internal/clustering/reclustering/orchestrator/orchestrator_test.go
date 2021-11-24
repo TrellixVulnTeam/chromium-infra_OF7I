@@ -165,7 +165,7 @@ func TestOrchestrator(t *testing.T) {
 				actualRuns := readRuns(ctx, testProjects)
 				So(actualRuns, ShouldResemble, expectedRuns)
 			})
-			Convey("Schedules successfully with an existing complete run", func() {
+			Convey("Schedules successfully with an existing run", func() {
 				runB := &runs.ReclusteringRun{
 					Project: "project-b",
 					// So as not to overlap with the run that should be created.
@@ -174,52 +174,60 @@ func TestOrchestrator(t *testing.T) {
 					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
 					ShardCount:        10,
 					ShardsReported:    10,
-					Progress:          10 * 1000,
+					// Complete.
+					Progress: 10 * 1000,
 				}
-				err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
-				So(err, ShouldBeNil)
 
-				// A run scheduled after an existing complete run should
-				// use the latest algorithms and rules available. So our
-				// expectations are unchanged.
-				err = CronHandler(ctx)
-				So(err, ShouldBeNil)
+				test := func() {
+					err = CronHandler(ctx)
+					So(err, ShouldBeNil)
 
-				actualTasks := tasks(skdr)
-				So(actualTasks, ShouldResembleProto, expectedTasks)
+					actualTasks := tasks(skdr)
+					So(actualTasks, ShouldResembleProto, expectedTasks)
 
-				actualRuns := readRuns(ctx, testProjects)
-				So(actualRuns, ShouldResemble, expectedRuns)
-			})
-			Convey("Schedules successfully with an existing incomplete run", func() {
-				runB := &runs.ReclusteringRun{
-					Project: "project-b",
-					// So as not to overlap with the run that should be created.
-					AttemptTimestamp:  expectedAttemptTime.Add(-5 * time.Minute),
-					AlgorithmsVersion: 1,
-					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
-					ShardCount:        10,
-					ShardsReported:    10,
-					Progress:          500,
+					actualRuns := readRuns(ctx, testProjects)
+					So(actualRuns, ShouldResemble, expectedRuns)
 				}
-				err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
-				So(err, ShouldBeNil)
 
-				// Expect the same algorithms and rules version to be used as
-				// the previous run, to ensure forward progress (if new rules
-				// are being constantly created, we don't want to be
-				// reclustering only the beginning of the workers' keyspaces).
-				expectedRunB.AlgorithmsVersion = runB.AlgorithmsVersion
-				expectedRunB.RulesVersion = runB.RulesVersion
+				Convey("existing complete run", func() {
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					So(err, ShouldBeNil)
 
-				err = CronHandler(ctx)
-				So(err, ShouldBeNil)
+					// A run scheduled after an existing complete run should
+					// use the latest algorithms and rules available. So our
+					// expectations are unchanged.
+					test()
+				})
+				Convey("existing incomplete run", func() {
+					runB.Progress = 500
 
-				actualTasks := tasks(skdr)
-				So(actualTasks, ShouldResembleProto, expectedTasks)
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					So(err, ShouldBeNil)
 
-				actualRuns := readRuns(ctx, testProjects)
-				So(actualRuns, ShouldResemble, expectedRuns)
+					// Expect the same algorithms and rules version to be used as
+					// the previous run, to ensure forward progress (if new rules
+					// are being constantly created, we don't want to be
+					// reclustering only the beginning of the workers' keyspaces).
+					expectedRunB.AlgorithmsVersion = runB.AlgorithmsVersion
+					expectedRunB.RulesVersion = runB.RulesVersion
+					test()
+				})
+				Convey("existing complete run with later algorithms version", func() {
+					runB.AlgorithmsVersion = algorithms.AlgorithmsVersion + 5
+
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					So(err, ShouldBeNil)
+
+					// If new algorithms are being rolled out, some GAE instances
+					// may be running old code. This includes the instance that
+					// runs the orchestrator.
+					// To simplify reasoning about re-clustering runs, and ensure
+					// correctness of re-clustering progress logic, we require
+					// the algorithms version of subsequent runs to always be
+					// non-decreasing.
+					expectedRunB.AlgorithmsVersion = runB.AlgorithmsVersion
+					test()
+				})
 			})
 			Convey("Does not schedule with an overlapping run", func() {
 				// This can occur if the reclustering interval changes.

@@ -314,6 +314,14 @@ func TestIngest(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(actualRun.Progress, ShouldEqual, 1000)
 		})
+		Convey(`Worker running out of date algorithms`, func() {
+			run.AlgorithmsVersion = algorithms.AlgorithmsVersion + 1
+			run.RulesVersion = rules.StartingEpoch
+			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
+
+			err := worker.Do(ctx, task)
+			So(err, ShouldErrLike, "running out-of-date algorithms version")
+		})
 	})
 }
 

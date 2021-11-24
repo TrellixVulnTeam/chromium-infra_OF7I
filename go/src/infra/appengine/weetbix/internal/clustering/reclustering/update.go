@@ -23,6 +23,17 @@ import (
 // can monitor it.
 var rulesCache = cache.NewRulesCache(caching.RegisterLRUCache(0))
 
+// Ruleset returns the cached ruleset for the given project. If a minimum
+// rules version is required, pass it as the minimumVersion. (Or otherwise,
+// use time.Time{}).
+func Ruleset(ctx context.Context, project string, minimumVersion time.Time) (*cache.Ruleset, error) {
+	ruleset, err := rulesCache.Ruleset(ctx, project, minimumVersion)
+	if err != nil {
+		return nil, err
+	}
+	return ruleset, nil
+}
+
 // Analysis is the interface for cluster analysis.
 type Analysis interface {
 	// HandleUpdatedClusters handles (re-)clustered test results. It is called
@@ -51,13 +62,7 @@ type Analysis interface {
 // will also fail (with spanner.ErrCode(err) == codes.AlreadyExists)
 // but there is no need to retry as the chunk will have already been
 // inserted.
-func Update(ctx context.Context, analysis Analysis, chunk *cpb.Chunk, existingState *state.Entry) error {
-	// Obtain the set of failure association rules to use when clustering.
-	ruleset, err := rulesCache.Ruleset(ctx, existingState.Project)
-	if err != nil {
-		return err
-	}
-
+func Update(ctx context.Context, ruleset *cache.Ruleset, analysis Analysis, chunk *cpb.Chunk, existingState *state.Entry) error {
 	exists := !existingState.LastUpdated.IsZero()
 	var existingClustering clustering.ClusterResults
 	if !exists {

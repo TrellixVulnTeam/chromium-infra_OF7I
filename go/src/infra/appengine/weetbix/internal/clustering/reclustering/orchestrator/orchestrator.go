@@ -236,6 +236,11 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 		}
 		newRun.RulesVersion = rulesVersion
 		newRun.AlgorithmsVersion = algorithms.AlgorithmsVersion
+		if lastRun.AlgorithmsVersion > newRun.AlgorithmsVersion {
+			// Never roll back to an earlier algorithms version. Assume
+			// this orchestrator is running old code.
+			newRun.AlgorithmsVersion = lastRun.AlgorithmsVersion
+		}
 	} else {
 		// It is foreseeable that re-clustering rules could have changed
 		// every time the orchestrator runs. If we update the rules and

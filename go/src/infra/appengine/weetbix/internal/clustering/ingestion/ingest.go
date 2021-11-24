@@ -13,9 +13,11 @@ import (
 
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/reclustering"
+	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/state"
 	pb "infra/appengine/weetbix/proto/v1"
 
+	"go.chromium.org/luci/common/errors"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 )
@@ -180,8 +182,13 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		ObjectID:      objectID,
 	}
 
+	ruleset, err := reclustering.Ruleset(ctx, i.opts.Project, rules.StartingEpoch)
+	if err != nil {
+		return errors.Annotate(err, "obtain ruleset").Err()
+	}
+
 	// Insert clustering state for the chunk, triggering appropriate analysis.
-	if err := reclustering.Update(ctx, i.ingester.analysis, chunk, clusterState); err != nil {
+	if err := reclustering.Update(ctx, ruleset, i.ingester.analysis, chunk, clusterState); err != nil {
 		return err
 	}
 	return nil

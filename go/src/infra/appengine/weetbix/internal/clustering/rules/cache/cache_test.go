@@ -27,9 +27,9 @@ func TestRulesCache(t *testing.T) {
 		rc := NewRulesCache(cache)
 		rules.SetRulesForTesting(ctx, nil)
 
-		test := func(expectedRules []*rules.FailureAssociationRule, expectedVersion time.Time) {
+		test := func(minimumRulesVerison time.Time, expectedRules []*rules.FailureAssociationRule, expectedVersion time.Time) {
 			// Tests the content of the cache is as expected.
-			ruleset, err := rc.Ruleset(ctx, "myproject")
+			ruleset, err := rc.Ruleset(ctx, "myproject", minimumRulesVerison)
 			So(err, ShouldBeNil)
 			So(ruleset.RulesVersion, ShouldEqual, expectedVersion)
 
@@ -67,16 +67,16 @@ func TestRulesCache(t *testing.T) {
 		Convey(`Initially Empty`, func() {
 			err := rules.SetRulesForTesting(ctx, nil)
 			So(err, ShouldBeNil)
-			test(nil, rules.StartingEpoch)
+			test(rules.StartingEpoch, nil, rules.StartingEpoch)
 
 			Convey(`Then Empty`, func() {
 				// Test cache.
-				test(nil, rules.StartingEpoch)
+				test(rules.StartingEpoch, nil, rules.StartingEpoch)
 
 				tc.Add(refreshInterval)
 
-				test(nil, rules.StartingEpoch)
-				test(nil, rules.StartingEpoch)
+				test(rules.StartingEpoch, nil, rules.StartingEpoch)
+				test(rules.StartingEpoch, nil, rules.StartingEpoch)
 			})
 			Convey(`Then Non-Empty`, func() {
 				// Spanner commit timestamps are in microsecond
@@ -93,14 +93,19 @@ func TestRulesCache(t *testing.T) {
 				err := rules.SetRulesForTesting(ctx, rs)
 				So(err, ShouldBeNil)
 
-				// Test cache is working and still returning the old value.
-				tc.Add(refreshInterval / 2)
-				test(nil, rules.StartingEpoch)
+				Convey(`By Forced Eviction`, func() {
+					test(reference, rs, reference)
+				})
+				Convey(`By Cache Expiry`, func() {
+					// Test cache is working and still returning the old value.
+					tc.Add(refreshInterval / 2)
+					test(rules.StartingEpoch, nil, rules.StartingEpoch)
 
-				tc.Add(refreshInterval)
+					tc.Add(refreshInterval)
 
-				test(rs, reference)
-				test(rs, reference)
+					test(rules.StartingEpoch, rs, reference)
+					test(rules.StartingEpoch, rs, reference)
+				})
 			})
 		})
 		Convey(`Initially Non-Empty`, func() {
@@ -113,7 +118,7 @@ func TestRulesCache(t *testing.T) {
 			err := rules.SetRulesForTesting(ctx, rs)
 			So(err, ShouldBeNil)
 
-			test(rs, reference)
+			test(rules.StartingEpoch, rs, reference)
 
 			Convey(`Then Empty`, func() {
 				// Mark all rules inactive.
@@ -124,14 +129,19 @@ func TestRulesCache(t *testing.T) {
 				err := rules.SetRulesForTesting(ctx, newRules)
 				So(err, ShouldBeNil)
 
-				// Test cache is working and still returning the old value.
-				tc.Add(refreshInterval / 2)
-				test(rs, reference)
+				Convey(`By Forced Eviction`, func() {
+					test(reference.Add(time.Hour), newRules, reference.Add(time.Hour))
+				})
+				Convey(`By Cache Expiry`, func() {
+					// Test cache is working and still returning the old value.
+					tc.Add(refreshInterval / 2)
+					test(rules.StartingEpoch, rs, reference)
 
-				tc.Add(refreshInterval)
+					tc.Add(refreshInterval)
 
-				test(newRules, reference.Add(time.Hour))
-				test(newRules, reference.Add(time.Hour))
+					test(rules.StartingEpoch, newRules, reference.Add(time.Hour))
+					test(rules.StartingEpoch, newRules, reference.Add(time.Hour))
+				})
 			})
 			Convey(`Then Non-Empty`, func() {
 				// Make an existing rule inactive, make an existing inactive
@@ -145,14 +155,19 @@ func TestRulesCache(t *testing.T) {
 				err := rules.SetRulesForTesting(ctx, newRules)
 				So(err, ShouldBeNil)
 
-				// Test cache is working and still returning the old value.
-				tc.Add(refreshInterval / 2)
-				test(rs, reference)
+				Convey(`By Forced Eviction`, func() {
+					test(reference.Add(2*time.Hour), newRules, reference.Add(2*time.Hour))
+				})
+				Convey(`By Cache Expiry`, func() {
+					// Test cache is working and still returning the old value.
+					tc.Add(refreshInterval / 2)
+					test(rules.StartingEpoch, rs, reference)
 
-				tc.Add(refreshInterval)
+					tc.Add(refreshInterval)
 
-				test(newRules, reference.Add(2*time.Hour))
-				test(newRules, reference.Add(2*time.Hour))
+					test(rules.StartingEpoch, newRules, reference.Add(2*time.Hour))
+					test(rules.StartingEpoch, newRules, reference.Add(2*time.Hour))
+				})
 			})
 		})
 	})
