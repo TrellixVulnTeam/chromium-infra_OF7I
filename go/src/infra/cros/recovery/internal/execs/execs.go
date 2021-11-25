@@ -61,6 +61,8 @@ type RunArgs struct {
 	Metrics metrics.Metrics
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
+	// SwarmingTaskID is the ID of the swarming task we're running under.
+	SwarmingTaskID string
 }
 
 // CloserFunc is a function that updates an action and is NOT safe to use in a defer block WITHOUT CHECKING FOR NIL.
@@ -88,8 +90,9 @@ type CloserFunc = func(context.Context, error)
 func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, CloserFunc) {
 	startTime := time.Now()
 	action := &metrics.Action{
-		ActionKind: kind,
-		StartTime:  startTime,
+		ActionKind:     kind,
+		StartTime:      startTime,
+		SwarmingTaskID: a.SwarmingTaskID,
 	}
 	return createMetric(ctx, a.Metrics, action)
 }

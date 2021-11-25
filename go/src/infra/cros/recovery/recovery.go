@@ -256,6 +256,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Logger:         args.Logger,
 		ShowSteps:      args.ShowSteps,
 		Metrics:        args.Metrics,
+		SwarmingTaskID: args.SwarmingTaskID,
 	}
 	// As port 22 to connect to the lab is closed and there is work around to
 	// create proxy fro local execution. Creating proxy for all resources used
