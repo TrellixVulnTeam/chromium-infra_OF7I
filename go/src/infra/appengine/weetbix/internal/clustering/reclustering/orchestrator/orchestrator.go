@@ -169,10 +169,11 @@ func projectWorkerCounts(ctx context.Context, projects []string, workers int) (m
 
 	result := make(map[string]int)
 	for _, project := range projects {
-		var additionalWorkers int
 
 		projectChunks := chunksByProject[project]
-		additionalWorkers = int((projectChunks * int64(freeWorkers)) / totalChunks)
+		// Equiv. to math.Round((projectChunks / totalChunks) * freeWorkers)
+		// without floating-point precision issues.
+		additionalWorkers := int((projectChunks*int64(freeWorkers) + (totalChunks / 2)) / totalChunks)
 
 		totalChunks -= projectChunks
 		freeWorkers -= additionalWorkers
