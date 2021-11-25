@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
+	"infra/appengine/weetbix/internal/clustering/chunkstore"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
@@ -63,8 +63,8 @@ type scenario struct {
 	// rules are the failure association rules.
 	rules []*rules.FailureAssociationRule
 	// testResults are the actual test failures ingested by Weetbix,
-	// organised in chunks by chunk ID.
-	testResultsByChunkID map[string]*cpb.Chunk
+	// organised in chunks by object ID.
+	testResultsByObjectID map[string]*cpb.Chunk
 }
 
 func TestIngest(t *testing.T) {
@@ -73,9 +73,7 @@ func TestIngest(t *testing.T) {
 		ctx, tc := testclock.UseTime(ctx, testclock.TestRecentTimeUTC)
 		ctx = caching.WithEmptyProcessCache(ctx) // For rules cache.
 
-		chunkStore := &fakeChunkStore{
-			chunksByID: make(map[string]*cpb.Chunk),
-		}
+		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
 		analysis := analysis.NewClusteringHandler(clusteredFailures)
 
@@ -107,7 +105,9 @@ func TestIngest(t *testing.T) {
 			So(rules.SetRulesForTesting(ctx, s.rules), ShouldBeNil)
 
 			// Set stored test result chunks.
-			chunkStore.chunksByID = s.testResultsByChunkID
+			for objectID, chunk := range s.testResultsByObjectID {
+				chunkStore.Contents[chunkstore.FileName(testProject, objectID)] = chunk
+			}
 
 			// Set stored clustering state.
 			commitTime, err := state.CreateEntriesForTesting(ctx, s.clusteringState)
@@ -261,7 +261,7 @@ func TestIngest(t *testing.T) {
 			for _, state := range s.clusteringState {
 				chunkIDByObjectID[state.ObjectID] = state.ChunkID
 			}
-			chunkStore.cb = func(objectID string) {
+			chunkStore.GetCallack = func(objectID string) {
 				chunkID, ok := chunkIDByObjectID[objectID]
 
 				// Only simulate the update/update race once per chunk.
@@ -746,7 +746,7 @@ func (b *scenarioBuilder) build() *scenario {
 	ruleset := cache.NewRuleset(b.project, activeRules, rulesVersion, time.Time{})
 
 	var state []*state.Entry
-	testResultsByChunkID := make(map[string]*cpb.Chunk)
+	testResultsByObjectID := make(map[string]*cpb.Chunk)
 	var bqExports []*bqpb.ClusteredFailureRow
 	for i := 0; i < b.chunkCount; i++ {
 		trOne := newTestResult(i * 2).withFailureReason(&pb.FailureReason{
@@ -764,16 +764,16 @@ func (b *scenarioBuilder) build() *scenario {
 		s := cb.buildState()
 		state = append(state, s)
 		bqExports = append(bqExports, cb.buildBQExport()...)
-		testResultsByChunkID[s.ObjectID] = cb.buildTestResults()
+		testResultsByObjectID[s.ObjectID] = cb.buildTestResults()
 	}
 	sortState(state)
 	sortBQExport(bqExports)
 	return &scenario{
-		rulesVersion:         rulesVersion,
-		rules:                rs,
-		testResultsByChunkID: testResultsByChunkID,
-		clusteringState:      state,
-		netBQExports:         bqExports,
+		rulesVersion:          rulesVersion,
+		rules:                 rs,
+		testResultsByObjectID: testResultsByObjectID,
+		clusteringState:       state,
+		netBQExports:          bqExports,
 	}
 }
 
@@ -789,26 +789,4 @@ func sortBQExport(rows []*bqpb.ClusteredFailureRow) {
 	sort.Slice(rows, func(i, j int) bool {
 		return bigQueryKey(rows[i]) < bigQueryKey(rows[j])
 	})
-}
-
-// fakeChunkStore is a fake implementation of chunk store, for testing.
-type fakeChunkStore struct {
-	// The content of the store, by object ID.
-	chunksByID map[string]*cpb.Chunk
-	// A callback function to be called during Get(...). This allows
-	// the test to change the environment during the processing of
-	// a particular chunk.
-	cb func(objectID string)
-}
-
-func (cs *fakeChunkStore) Get(ctx context.Context, project, objectID string) (*cpb.Chunk, error) {
-	object := cs.chunksByID[objectID]
-	if object == nil || project != testProject {
-		return nil, errors.New("does not exist")
-	}
-	if cs.cb != nil {
-		cs.cb(objectID)
-	}
-
-	return proto.Clone(object).(*cpb.Chunk), nil
 }

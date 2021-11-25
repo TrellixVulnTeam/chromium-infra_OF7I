@@ -55,7 +55,7 @@ var (
 func CronHandler(ctx context.Context) error {
 	err := orchestrate(ctx)
 	if err != nil {
-		logging.Errorf(ctx, "Reclustering orchestrator encountered errors: ", err)
+		logging.Errorf(ctx, "Reclustering orchestrator encountered errors: %s", err)
 		return err
 	}
 	return nil

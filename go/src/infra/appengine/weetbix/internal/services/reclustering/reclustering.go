@@ -73,7 +73,7 @@ func Schedule(ctx context.Context, title string, task *taskspb.ReclusterChunks) 
 func reclusterTestResults(ctx context.Context, worker *reclustering.Worker, task *taskspb.ReclusterChunks) error {
 	err := worker.Do(ctx, task)
 	if err != nil {
-		logging.Errorf(ctx, "Error re-clustering: ", err)
+		logging.Errorf(ctx, "Error re-clustering: %s", err)
 		return err
 	}
 	return nil

@@ -83,7 +83,7 @@ func (c *Client) Put(ctx context.Context, project string, content *cpb.Chunk) (s
 		return "", err
 	}
 
-	name := fileName(project, objID)
+	name := FileName(project, objID)
 	doesNotExist := storage.Conditions{
 		DoesNotExist: true,
 	}
@@ -119,7 +119,7 @@ func (c *Client) Get(ctx context.Context, project, objectID string) (*cpb.Chunk,
 	if err := validateObjectID(objectID); err != nil {
 		return nil, err
 	}
-	name := fileName(project, objectID)
+	name := FileName(project, objectID)
 	obj := c.client.Bucket(c.bucket).Object(name)
 	r, err := obj.NewReader(ctx)
 	if err != nil {
@@ -144,7 +144,7 @@ func validateProject(project string) error {
 }
 
 func validateObjectID(id string) error {
-	if objectRe.MatchString(id) {
+	if !objectRe.MatchString(id) {
 		return fmt.Errorf("object ID %q is not a valid", id)
 	}
 	return nil
@@ -161,6 +161,8 @@ func generateObjectID() (string, error) {
 	return hex.EncodeToString(randomBytes), nil
 }
 
-func fileName(project, objectID string) string {
+// FileName returns the file path in GCS for the object with the
+// given project and objectID. Exposed for testing only.
+func FileName(project, objectID string) string {
 	return fmt.Sprintf("/projects/%s/chunks/%s.binarypb", project, objectID)
 }

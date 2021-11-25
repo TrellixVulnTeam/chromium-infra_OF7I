@@ -111,7 +111,7 @@ func TestIngest(t *testing.T) {
 				tv.Results[0].Result.Expected = false
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Expected failure`, func() {
 				tv.Results[0].Result.Status = rdbpb.TestStatus_FAIL
@@ -122,7 +122,7 @@ func TestIngest(t *testing.T) {
 				expectedCFs = nil
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 0)
+				So(len(chunkStore.Contents), ShouldEqual, 0)
 			})
 			Convey(`Unexpected pass`, func() {
 				tv.Results[0].Result.Status = rdbpb.TestStatus_PASS
@@ -132,7 +132,7 @@ func TestIngest(t *testing.T) {
 				// (even if unexpected).
 				expectedCFs = nil
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 0)
+				So(len(chunkStore.Contents), ShouldEqual, 0)
 			})
 			Convey(`Unexpected skip`, func() {
 				tv.Results[0].Result.Status = rdbpb.TestStatus_SKIP
@@ -143,7 +143,7 @@ func TestIngest(t *testing.T) {
 				expectedCFs = nil
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 0)
+				So(len(chunkStore.Contents), ShouldEqual, 0)
 			})
 			Convey(`Failure without variant`, func() {
 				// Tests are allowed to have no variant.
@@ -155,7 +155,7 @@ func TestIngest(t *testing.T) {
 				ruleCF.Variant = nil
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Failure without failure reason`, func() {
 				// Failures may not have a failure reason.
@@ -169,7 +169,7 @@ func TestIngest(t *testing.T) {
 				expectedCFs = []*bqpb.ClusteredFailureRow{testnameCF}
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Failure without presubmit run`, func() {
 				opts.PresubmitRunID = nil
@@ -178,7 +178,7 @@ func TestIngest(t *testing.T) {
 				ruleCF.PresubmitRunId = nil
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Failure with exoneration`, func() {
 				tv.Exonerations = []*rdbpb.TestExoneration{
@@ -196,7 +196,7 @@ func TestIngest(t *testing.T) {
 				ruleCF.IsExonerated = true
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Failure with only suggested clusters`, func() {
 				reason := &pb.FailureReason{
@@ -220,7 +220,7 @@ func TestIngest(t *testing.T) {
 				expectedCFs = []*bqpb.ClusteredFailureRow{testnameCF, regexpCF}
 
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 		})
 		Convey(`Ingest multiple failures`, func() {
@@ -253,7 +253,7 @@ func TestIngest(t *testing.T) {
 					exp.IsTestRunBlocked = true
 				}
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 			Convey(`Some test runs blocked and presubmit run not blocked`, func() {
 				// Let the last retry of the last test run pass.
@@ -272,7 +272,7 @@ func TestIngest(t *testing.T) {
 					exp.IsTestRunBlocked = false
 				}
 				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Blobs), ShouldEqual, 1)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
 		})
 		Convey(`Ingest many failures`, func() {
@@ -299,7 +299,7 @@ func TestIngest(t *testing.T) {
 			}
 			// Verify more than one chunk is ingested.
 			testIngestion(tvs, expectedCFs)
-			So(len(chunkStore.Blobs), ShouldBeGreaterThan, 1)
+			So(len(chunkStore.Contents), ShouldBeGreaterThan, 1)
 		})
 	})
 }

@@ -279,7 +279,7 @@ func TestIngestTestResults(t *testing.T) {
 			So(actTestIDsWithTasks, ShouldResemble, testIDsWithNextTask)
 
 			// Confirm chunks have been written to GCS.
-			So(len(chunkStore.Blobs), ShouldEqual, 1)
+			So(len(chunkStore.Contents), ShouldEqual, 1)
 
 			// Confirm clustering has occurred, with each test result in at
 			// least one cluster.

@@ -15,16 +15,23 @@ import (
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 )
 
-// FakeClient provides a fake implementation of a blob store, for testing.
-// Data blobs are stored in-memory.
+// FakeClient provides a fake implementation of a chunk store, for testing.
+// Chunks are stored in-memory.
 type FakeClient struct {
-	Blobs map[string][]byte
+	// Contents are the chunk stored in the store, by their file name.
+	// File names can be obtained using the FileName method.
+	Contents map[string]*cpb.Chunk
+
+	// A callback function to be called during Get(...). This allows
+	// the test to change the environment during the processing of
+	// a particular chunk.
+	GetCallack func(objectID string)
 }
 
 // NewFakeClient initialises a new FakeClient.
 func NewFakeClient() *FakeClient {
 	return &FakeClient{
-		Blobs: make(map[string][]byte),
+		Contents: make(map[string]*cpb.Chunk),
 	}
 }
 
@@ -34,7 +41,7 @@ func (fc *FakeClient) Put(ctx context.Context, project string, content *cpb.Chun
 	if err := validateProject(project); err != nil {
 		return "", err
 	}
-	b, err := proto.Marshal(content)
+	_, err := proto.Marshal(content)
 	if err != nil {
 		return "", errors.Annotate(err, "marhsalling chunk").Err()
 	}
@@ -42,12 +49,12 @@ func (fc *FakeClient) Put(ctx context.Context, project string, content *cpb.Chun
 	if err != nil {
 		return "", err
 	}
-	name := fileName(project, objID)
-	if _, ok := fc.Blobs[name]; ok {
+	name := FileName(project, objID)
+	if _, ok := fc.Contents[name]; ok {
 		// Indicates a test with poorly seeded randomness.
 		return "", errors.New("file already exists")
 	}
-	fc.Blobs[name] = b
+	fc.Contents[name] = proto.Clone(content).(*cpb.Chunk)
 	return objID, nil
 }
 
@@ -59,14 +66,13 @@ func (fc *FakeClient) Get(ctx context.Context, project, objectID string) (*cpb.C
 	if err := validateObjectID(objectID); err != nil {
 		return nil, err
 	}
-	name := fileName(project, objectID)
-	b, ok := fc.Blobs[name]
+	name := FileName(project, objectID)
+	content, ok := fc.Contents[name]
 	if !ok {
 		return nil, fmt.Errorf("blob does not exist: %q", name)
 	}
-	content := &cpb.Chunk{}
-	if err := proto.Unmarshal(b, content); err != nil {
-		return nil, errors.Annotate(err, "unmarshal chunk").Err()
+	if fc.GetCallack != nil {
+		fc.GetCallack(objectID)
 	}
-	return content, nil
+	return proto.Clone(content).(*cpb.Chunk), nil
 }
