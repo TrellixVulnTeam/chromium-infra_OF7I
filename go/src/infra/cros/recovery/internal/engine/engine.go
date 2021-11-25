@@ -55,7 +55,7 @@ func (r *recoveryEngine) close() {
 }
 
 // runPlan executes recovery plan with critical-actions.
-func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
+func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	newCtx := ctx
 	log.Info(newCtx, "Plan %q: started", r.planName)
 
@@ -76,7 +76,7 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (err error) {
 					metrics.NewInt64Observation("restarts", restartTally),
 					metrics.NewInt64Observation("forgiven_failures", forgivenFailureTally),
 				)
-				closer(ctx, err)
+				closer(ctx, rErr)
 			}
 		}()
 	}
@@ -121,7 +121,7 @@ func (r *recoveryEngine) runActions(ctx context.Context, actions []string, enabl
 // 2) Check if the action is applicable based on conditions. Skip if any fail.
 // 3) Run dependencies of the action. Fail if any fails.
 // 4) Run action exec function. Fail if any fail.
-func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (err error) {
+func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enableRecovery bool) (rErr error) {
 	newCtx := ctx
 	if r.args != nil {
 		if r.args.Metrics != nil {
@@ -133,7 +133,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 				fmt.Sprintf("action:%s", actionName),
 			)
 			defer func() {
-				closer(ctx, err)
+				closer(ctx, rErr)
 			}()
 		} else {
 			log.Debug(ctx, "Skipping metrics for action %q", actionName)
@@ -141,7 +141,7 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, fmt.Sprintf("Run %s", actionName))
-			defer func() { step.End(err) }()
+			defer func() { step.End(rErr) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
@@ -149,20 +149,20 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		}
 	}
 	log.Info(ctx, "Action %q: started.", actionName)
-	if err, ok := r.actionResultFromCache(actionName); ok {
-		if err == nil {
+	if aErr, ok := r.actionResultFromCache(actionName); ok {
+		if aErr == nil {
 			log.Info(ctx, "Action %q: pass (cached).", actionName)
 			// Return nil error so we can continue execution of next actions...
 			return nil
 		}
 		a := r.getAction(actionName)
 		if a.GetAllowFailAfterRecovery() {
-			log.Info(ctx, "Action %q: fail (cached). Error: %s", actionName, err)
+			log.Info(ctx, "Action %q: fail (cached). Error: %s", actionName, aErr)
 			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
 			// Return nil error so we can continue execution of next actions...
 			return nil
 		}
-		return errors.Annotate(err, "run action %q: (cached)", actionName).Err()
+		return errors.Annotate(aErr, "run action %q: (cached)", actionName).Err()
 	}
 	conditionName, err := r.runActionConditions(ctx, actionName)
 	if err != nil {
@@ -274,7 +274,7 @@ func (r *recoveryEngine) runActionConditions(ctx context.Context, actionName str
 }
 
 // runDependencies runs action's dependencies.
-func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) (err error) {
+func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string, enableRecovery bool) (rErr error) {
 	a := r.getAction(actionName)
 	if len(a.GetDependencies()) == 0 {
 		return nil
@@ -283,14 +283,14 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, "Run dependencies")
-			defer func() { step.End(err) }()
+			defer func() { step.End(rErr) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()
 			defer func() { r.args.Logger.DedentLogging() }()
 		}
 	}
-	err = r.runActions(ctx, a.GetDependencies(), enableRecovery)
+	err := r.runActions(ctx, a.GetDependencies(), enableRecovery)
 	return errors.Annotate(err, "run dependencies").Err()
 }
 
@@ -299,7 +299,7 @@ func (r *recoveryEngine) runDependencies(ctx context.Context, actionName string,
 // Finishes with nil if no recovery action provided or nether succeeded.
 // Finishes with start-over request if any recovery succeeded.
 // Recovery action will skip if used before.
-func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (err error) {
+func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (rErr error) {
 	a := r.getAction(actionName)
 	if len(a.GetRecoveryActions()) == 0 {
 		return nil
@@ -308,7 +308,7 @@ func (r *recoveryEngine) runRecoveries(ctx context.Context, actionName string) (
 		if r.args.ShowSteps {
 			var step *build.Step
 			step, ctx = build.StartStep(ctx, "Run recoveries")
-			defer func() { step.End(err) }()
+			defer func() { step.End(rErr) }()
 		}
 		if r.args.Logger != nil {
 			r.args.Logger.IndentLogging()

@@ -130,8 +130,8 @@ func copyToHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyRequest)
 	if err != nil {
 		return errors.Annotate(err, "copy to helper: could not obtain the stdout pipe").Err()
 	}
-	if err := createTarCmd.Start(); err != nil {
-		return errors.Annotate(err, "copy to helper: could not execute local command %q", createTarCmd).Err()
+	if tErr := createTarCmd.Start(); tErr != nil {
+		return errors.Annotate(tErr, "copy to helper: could not execute local command %q", createTarCmd).Err()
 	}
 	defer func() { createTarCmd.Wait() }()
 	remotePipe, err2 := session.StdinPipe()
@@ -231,8 +231,8 @@ func copyFromHelper(ctx context.Context, pool *sshpool.Pool, req *tlw.CopyReques
 	if err != nil {
 		return errors.Annotate(err, "copy from helper: error with obtaining the stdout pipe").Err()
 	}
-	if err := session.Start(rCmd); err != nil {
-		return errors.Annotate(err, "copy from helper: error with starting the remote command %q", rCmd).Err()
+	if sErr := session.Start(rCmd); sErr != nil {
+		return errors.Annotate(sErr, "copy from helper: error with starting the remote command %q", rCmd).Err()
 	}
 
 	destFileName := filepath.Join(req.PathDestination, remoteFileName)
@@ -311,8 +311,8 @@ func ensureDirExists(ctx context.Context, dirPath string, createDir bool) error 
 		if os.IsNotExist(err) {
 			log.Debug(ctx, "Ensure directory exists: creating directory %q.", dirPath)
 			if createDir {
-				if err := os.MkdirAll(dirPath, dirPermission); err != nil {
-					return errors.Annotate(err, "ensure directory exists: cannot create %q", dirPath).Err()
+				if mErr := os.MkdirAll(dirPath, dirPermission); mErr != nil {
+					return errors.Annotate(mErr, "ensure directory exists: cannot create %q", dirPath).Err()
 				}
 				return nil
 			}

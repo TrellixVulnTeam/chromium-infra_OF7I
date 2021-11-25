@@ -39,7 +39,7 @@ const (
 //   - Collect DUTs info.
 //   - Load execution plan for required task with verification.
 //   - Send DUTs info to inventory.
-func Run(ctx context.Context, args *RunArgs) (err error) {
+func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if err := args.verify(); err != nil {
 		return errors.Annotate(err, "run recovery: verify input").Err()
 	}
@@ -112,12 +112,12 @@ func Run(ctx context.Context, args *RunArgs) (err error) {
 }
 
 // runResource run single resource.
-func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs) (err error) {
+func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs) (rErr error) {
 	log.Info(ctx, "Resource %q: started", resource)
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Resource %q", resource))
-		defer func() { step.End(err) }()
+		defer func() { step.End(rErr) }()
 	}
 	dut, err := readInventory(ctx, resource, args)
 	if err != nil {
@@ -203,10 +203,10 @@ func readInventory(ctx context.Context, resource string, args *RunArgs) (dut *tl
 // updateInventory updates updated DUT info back to inventory.
 //
 // Skip update if not enabled.
-func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (err error) {
+func updateInventory(ctx context.Context, dut *tlw.Dut, args *RunArgs) (rErr error) {
 	if args.ShowSteps {
 		step, _ := build.StartStep(ctx, "Update inventory")
-		defer func() { step.End(err) }()
+		defer func() { step.End(rErr) }()
 	}
 	if args.Logger != nil {
 		args.Logger.IndentLogging()
@@ -322,19 +322,19 @@ func runSinglePlan(ctx context.Context, planName string, plan *planpb.Plan, exec
 }
 
 // runDUTPlanPerResource runs a plan against the single resource of the DUT.
-func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) (err error) {
+func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan *planpb.Plan, execArgs *execs.RunArgs) (rErr error) {
 	log.Info(ctx, "Run plan %q for %q: started", planName, resource)
 	if execArgs.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Run plan %q for %q", planName, resource))
-		defer func() { step.End(err) }()
+		defer func() { step.End(rErr) }()
 	}
 	if execArgs.Logger != nil {
 		execArgs.Logger.IndentLogging()
 		defer func() { execArgs.Logger.DedentLogging() }()
 	}
 	execArgs.ResourceName = resource
-	if err = engine.Run(ctx, planName, plan, execArgs); err != nil {
+	if err := engine.Run(ctx, planName, plan, execArgs); err != nil {
 		return errors.Annotate(err, "run plan %q for %q", planName, execArgs.ResourceName).Err()
 	}
 	log.Info(ctx, "Run plan %q for %s: finished successfully.", planName, execArgs.ResourceName)

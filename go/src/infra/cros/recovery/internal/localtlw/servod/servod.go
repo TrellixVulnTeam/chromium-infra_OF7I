@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	xmlrpc_value "go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
 
-	xmlrpc_value "go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/localtlw/xmlrpc"
 	"infra/cros/recovery/internal/log"
@@ -128,7 +128,7 @@ func (s *servod) Stop(ctx context.Context, pool *sshpool.Pool) error {
 }
 
 // Call performs execution commands by servod daemon by XMLRPC connection.
-func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, req *tlw.CallServodRequest) (r *tlw.CallServodResponse, err error) {
+func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, req *tlw.CallServodRequest) (r *tlw.CallServodResponse, rErr error) {
 	if s.proxy == nil {
 		p, err := newProxy(pool, s.host, s.port)
 		if err != nil {

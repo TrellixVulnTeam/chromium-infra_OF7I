@@ -80,12 +80,12 @@ func IsKernelPriorityChanged(ctx context.Context, resource string, a tlw.Access)
 	log.Debug(ctx, "Next kernel:%s , partition %d.", nextKernel.name, nextKernel.kernelPartition)
 	// Help function to read boot priority for kernel.
 	getKernelBootPriority := func(k *kernelInfo) (int, error) {
-		v, err := runCmd(fmt.Sprintf("cgpt show -n -i %d -P %s", k.kernelPartition, diskBlockResult))
-		if err != nil {
+		v, kErr := runCmd(fmt.Sprintf("cgpt show -n -i %d -P %s", k.kernelPartition, diskBlockResult))
+		if kErr != nil {
 			return 0, errors.Annotate(err, "kernel boot priority %q", k.name).Err()
 		}
-		p, err := strconv.ParseInt(v, 10, 32)
-		if err != nil {
+		p, kErr := strconv.ParseInt(v, 10, 32)
+		if kErr != nil {
 			return 0, errors.Annotate(err, "kernel boot priority %q: parse %q", k.name, v).Err()
 		}
 		return int(p), nil
