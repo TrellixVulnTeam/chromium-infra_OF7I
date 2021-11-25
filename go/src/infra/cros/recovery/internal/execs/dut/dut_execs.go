@@ -40,8 +40,19 @@ func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	return errors.Reason("dut model name is empty").Err()
 }
 
+// hasDutDeviceSkuActionExec verifies that DUT has the device sku label.
+func hasDutDeviceSkuActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	deviceSkuLabel := args.DUT.DeviceSku
+	if deviceSkuLabel == "" {
+		return errors.Reason("dut device sku label is empty").Err()
+	}
+	log.Debug(ctx, "dut device sku label: %s.", deviceSkuLabel)
+	return nil
+}
+
 func init() {
 	execs.Register("has_dut_name", hasDutNameActionExec)
 	execs.Register("has_dut_board_name", hasDutBoardActionExec)
 	execs.Register("has_dut_model_name", hasDutModelActionExec)
+	execs.Register("has_dut_device_sku", hasDutDeviceSkuActionExec)
 }

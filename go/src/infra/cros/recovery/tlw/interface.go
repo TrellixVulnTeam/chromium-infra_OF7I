@@ -252,6 +252,8 @@ type Dut struct {
 	Cr50KeyEnv Cr50KeyEnv
 	// Audio loopback dongle is plugged in.
 	AudioLoopbackState AudioLoopbackState
+	// Stock-keeping unit of the DUT.
+	DeviceSku string
 	// State of the DUT.
 	State dutstate.State
 

@@ -181,6 +181,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		Cr50Phase:          convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:         convertCr50KeyEnv(ds.GetCr50KeyEnv()),
 		AudioLoopbackState: convertAudioLoopbackState(ds.GetAudioLoopbackDongle()),
+		DeviceSku:          machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
 			"pool": dut.GetPools(),
 		},
@@ -207,6 +208,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 		RPMOutlet:       createRPMOutlet(l.GetRpm(), ds),
 		Cr50Phase:       convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:      convertCr50KeyEnv(ds.GetCr50KeyEnv()),
+		DeviceSku:       machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
 			"pool": l.GetPools(),
 		},
@@ -293,8 +295,8 @@ func getUFSDutMetaFromSpecs(dutID string, dut *tlw.Dut) *ufspb.DutMeta {
 	if dut.Hwid != "" {
 		dutMeta.HwID = dut.Hwid
 	}
-	// blocked by b/184391605
-	// dutMeta.DeviceSku = specs.GetLabels().GetSku()
+	// TODO: update logic if required by b/184391605
+	dutMeta.DeviceSku = dut.DeviceSku
 	return dutMeta
 }
 
