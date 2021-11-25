@@ -50,11 +50,13 @@ func TestResultDB(t *testing.T) {
 				},
 			}
 			mc.QueryTestVariants(req, res)
+
+			maxPages := 1
 			var tvs []*rdbpb.TestVariant
 			err := rc.QueryTestVariants(mc.Ctx, inv, func(res []*rdbpb.TestVariant) error {
 				tvs = append(tvs, res...)
 				return nil
-			})
+			}, maxPages)
 			So(err, ShouldBeNil)
 			So(len(tvs), ShouldEqual, 2)
 		})

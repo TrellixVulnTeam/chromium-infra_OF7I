@@ -10,12 +10,12 @@ import (
 	"regexp"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/grpc/appstatus"
 	rdbbutil "go.chromium.org/luci/resultdb/pbutil"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server"
@@ -37,6 +37,10 @@ const (
 	resultIngestionTaskClass = "result-ingestion"
 	resultIngestionQueue     = "result-ingestion"
 )
+
+// maxResultDBPages is the maximum number of pages of results to ingest from
+// ResultDB, per build. The page size is 1000 results.
+const maxResultDBPages = 10
 
 // Options configures test result ingestion.
 type Options struct {
@@ -100,9 +104,10 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	if err := validateRequest(payload); err != nil {
 		return err
 	}
-	b, err := getBuilderAndResultDBInfo(ctx, payload)
-	st, ok := appstatus.Get(err)
-	if ok && st.Code() == codes.NotFound {
+
+	b, err := builderAndResultDBInfo(ctx, payload)
+	code := status.Code(err)
+	if code == codes.NotFound {
 		// Build not found, end the task gracefully.
 		logging.Warningf(ctx, "Buildbucket build %d not found (or Weetbix does not have access to read it).", payload.Build.Id)
 		return nil
@@ -144,7 +149,7 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	// AnalyzedTestVariant rows.
 	// We read test variants from ResultDB in pages, and the func will be called
 	// once per page of test variants.
-	err = rc.QueryTestVariants(ctx, invName, func(tvs []*rdbpb.TestVariant) error {
+	f := func(tvs []*rdbpb.TestVariant) error {
 		if shouldIngestForTestVariants(payload) {
 			if err := createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
 				return errors.Annotate(err, "ingesting for test variant analysis").Err()
@@ -158,7 +163,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 			return errors.Annotate(err, "ingesting for clustering").Err()
 		}
 		return nil
-	})
+	}
+	err = rc.QueryTestVariants(ctx, invName, f, maxResultDBPages)
 	if err != nil {
 		return err
 	}
@@ -190,7 +196,7 @@ func projectFromRealm(realm string) string {
 	return ""
 }
 
-func getBuilderAndResultDBInfo(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {
+func builderAndResultDBInfo(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {
 	bbHost := payload.Build.Host
 	bId := payload.Build.Id
 	bc, err := buildbucket.NewClient(ctx, bbHost)

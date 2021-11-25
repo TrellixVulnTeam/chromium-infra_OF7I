@@ -55,10 +55,10 @@ func NewClient(ctx context.Context, host string) (*Client, error) {
 // QueryTestVariants queries test variants with any unexpected results.
 //
 // f is called once per page of test variants.
-func (c *Client) QueryTestVariants(ctx context.Context, invName string, f func([]*rdbpb.TestVariant) error) error {
+func (c *Client) QueryTestVariants(ctx context.Context, invName string, f func([]*rdbpb.TestVariant) error, maxPages int) error {
 	pageToken := ""
 
-	for {
+	for page := 0; page < maxPages; page++ {
 		rsp, err := c.client.QueryTestVariants(ctx, &rdbpb.QueryTestVariantsRequest{
 			Invocations: []string{invName},
 			Predicate: &rdbpb.TestVariantPredicate{
