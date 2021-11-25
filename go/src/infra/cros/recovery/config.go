@@ -5,47 +5,69 @@
 package recovery
 
 import (
+	"fmt"
 	"io"
 	"strings"
 )
 
-// Default cobfiguration with all planes supported by engine.
-// WHen you change or add new plan please be sure that is working
-// and predictable.
-// TODO(otabek@): Add plan for labstation.
-// TODO(vkjoshi@): Add plans for Servo and DUT.
-const defaultConfig = `
-{
-	"plans":{
-		"labstation_repair":{
-			` + labstationRepairPlanBody + `
-		},
-		"servo_repair":{
-			` + servoRepairPlanBody + `
-			,"allow_fail": true
-		},
-		"chameleon_repair":{
-			` + chameleonPlanBody + `
-			,"allow_fail": true
-		},
-		"bluetooth_peer_repair":{
-			` + btpeerRepairPlanBody + `
-			,"allow_fail": true
-		},
-		"cros_repair":{
-			` + crosRepairPlanBody + `
-		},
-		"labstation_deploy":{
-			` + labstationDeployPlanBody + `
-		},
-		"cros_deploy":{
-			` + crosDeployPlanBody + `
-		}
-	}
-}
- `
-
 // DefaultConfig provides default config for recovery engine.
+// Plan is planing to be deprecated with new flow.
 func DefaultConfig() io.Reader {
-	return strings.NewReader(defaultConfig)
+	// Do not use set plans as plans created for this configuration on fly for backward compatibility.
+	return strings.NewReader(`
+	{
+		"plans":{
+			"labstation_repair":{
+				` + labstationRepairPlanBody + `
+			},
+			"servo_repair":{
+				` + servoRepairPlanBody + `
+				,"allow_fail": true
+			},
+			"chameleon_repair":{
+				` + chameleonPlanBody + `
+				,"allow_fail": true
+			},
+			"bluetooth_peer_repair":{
+				` + btpeerRepairPlanBody + `
+				,"allow_fail": true
+			},
+			"cros_repair":{
+				` + crosRepairPlanBody + `
+			},
+			"labstation_deploy":{
+				` + labstationDeployPlanBody + `
+			},
+			"cros_deploy":{
+				` + crosDeployPlanBody + `
+			}
+		}
+	}`)
+}
+
+// configPlan holders for plans used for configuration.
+// Order of the plan specified the execution order.
+type configPlan struct {
+	name      string
+	body      string
+	allowFail bool
+}
+
+// createConfiguration creates configuration plan based on provided plan data.
+func createConfiguration(plans []configPlan) string {
+	if len(plans) == 0 {
+		return ""
+	}
+	planNames := ""
+	planBodies := ""
+	for i, p := range plans {
+		if i > 0 {
+			planNames += ","
+			planBodies += ","
+		}
+		planNames += fmt.Sprintf("%q", p.name)
+		planBodies += fmt.Sprintf(`%q:{%s, "allow_fail":%v}`, p.name, p.body, p.allowFail)
+	}
+
+	return fmt.Sprintf(`{"plan_names":[%s],"plans": {%s}}`, planNames, planBodies)
 }

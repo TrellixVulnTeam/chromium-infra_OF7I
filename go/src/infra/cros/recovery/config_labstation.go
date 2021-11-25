@@ -258,30 +258,22 @@ const labstationDeployPlanBody = `
 
 // LabstationRepairConfig provides config for repair labstation task.
 func LabstationRepairConfig() io.Reader {
-	return strings.NewReader(`
-	{
-		"plan_names":[
-			"cros"
-		],
-		"plans": {
-			"cros":{
-				` + labstationRepairPlanBody + `
-			}
-		}
-	}`)
+	return strings.NewReader(createConfiguration([]configPlan{
+		{
+			name:      "cros",
+			body:      labstationRepairPlanBody,
+			allowFail: false,
+		},
+	}))
 }
 
 // LabstationDeployConfig provides config for deploy labstation task.
 func LabstationDeployConfig() io.Reader {
-	return strings.NewReader(`
-	{
-		"plan_names":[
-			"cros"
-		],
-		"plans": {
-			"cros":{
-				` + labstationDeployPlanBody + `
-			}
-		}
-	}`)
+	return strings.NewReader(createConfiguration([]configPlan{
+		{
+			name:      "cros",
+			body:      labstationDeployPlanBody,
+			allowFail: false,
+		},
+	}))
 }
