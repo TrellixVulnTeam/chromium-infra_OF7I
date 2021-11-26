@@ -9,6 +9,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"math/rand"
+	"time"
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
@@ -21,6 +23,15 @@ import (
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/server/span"
+	"golang.org/x/time/rate"
+)
+
+const (
+	// batchSize is the number of chunks to read from Spanner at a time.
+	batchSize = 10
+	// progressIntervalSeconds is the number of seconds between progress
+	// updates.
+	progressIntervalSeconds = 30
 )
 
 // ChunkStore is the interface for the blob store archiving chunks of test
@@ -52,8 +63,13 @@ type taskContext struct {
 	task          *taskspb.ReclusterChunks
 	run           *runs.ReclusteringRun
 	progressToken *runs.ProgressToken
-	// The exclusive lower bound defining the range of ChunkIds
-	// still to cluster.
+	// firstReport is the time at which the first progress update is
+	// permitted.
+	firstReport time.Time
+	// reportRate limits the frequency at which progress is reported.
+	reportRate *rate.Limiter
+	// currentChunkID is the exclusive lower bound of the range
+	// of ChunkIds still to re-cluster.
 	currentChunkID string
 }
 
@@ -71,13 +87,23 @@ func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks) error {
 			run.AlgorithmsVersion, algorithms.AlgorithmsVersion)
 	}
 
-	pt := runs.NewProgressToken(task.Project, attemptTime)
+	// Start reporting progress at a random time interval
+	// [0,progressIntervalSeconds) into the task.
+	offsetMillis := rand.Intn(progressIntervalSeconds * 1000)
+	firstReport := clock.Now(ctx).Add(time.Duration(offsetMillis) * time.Millisecond)
 
+	// Report progress at a rate of 1.0/progressIntervalSeconds. This is a
+	// token bucket-type rate limiter with a capacity of 1.
+	reportRate := rate.NewLimiter(rate.Limit(1.0/float64(progressIntervalSeconds)), 1)
+
+	pt := runs.NewProgressToken(task.Project, attemptTime)
 	tctx := &taskContext{
 		worker:         w,
 		task:           task,
 		run:            run,
 		progressToken:  pt,
+		firstReport:    firstReport,
+		reportRate:     reportRate,
 		currentChunkID: task.StartChunkId,
 	}
 
@@ -103,7 +129,6 @@ func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks) error {
 // as it succeeds. It returns 'true' if all chunks to be re-clustered by
 // the reclustering task were completed.
 func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
-	const batchSize = 10
 	readOpts := state.ReadNextOptions{
 		StartChunkID:      t.currentChunkID,
 		EndChunkID:        t.task.EndChunkId,
@@ -123,14 +148,18 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 		return true, nil
 	}
 	for _, entry := range entries {
-		progress, err := calculateProgress(t.task, entry.ChunkID)
-		if err != nil {
-			return false, errors.Annotate(err, "calculate progress").Err()
-		}
+		// Manage contention on the ReclusteringRun row by only periodically
+		// reporting progress.
+		if clock.Now(ctx).After(t.firstReport) && t.reportRate.Allow() {
+			progress, err := calculateProgress(t.task, entry.ChunkID)
+			if err != nil {
+				return false, errors.Annotate(err, "calculate progress").Err()
+			}
 
-		err = t.progressToken.ReportProgress(ctx, progress)
-		if err != nil {
-			return false, errors.Annotate(err, "report progress").Err()
+			err = t.progressToken.ReportProgress(ctx, progress)
+			if err != nil {
+				return false, errors.Annotate(err, "report progress").Err()
+			}
 		}
 
 		// Read the test results from GCS.
