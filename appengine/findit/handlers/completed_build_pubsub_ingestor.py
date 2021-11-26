@@ -79,11 +79,6 @@ class CompletedBuildPubsubIngestor(BaseHandler):
                                        int(build_id), build_result)
         if project == 'chromium':
           # Only ingests chromium builds.
-
-          # TODO (crbug.com/966982): Remove when v2 for chromium is working.
-          _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name,
-                                                     int(build_id),
-                                                     build_result)
           return _IngestProto(int(build_id))
     # We don't care about pending or non-supported builds, so we accept the
     # notification by returning 200, and prevent pubsub from retrying it.
