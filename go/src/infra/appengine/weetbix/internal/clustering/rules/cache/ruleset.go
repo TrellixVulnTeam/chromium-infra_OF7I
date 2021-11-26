@@ -210,11 +210,16 @@ func cachedRulesFromDelta(existing []*CachedRule, delta []*rules.FailureAssociat
 	return results, nil
 }
 
-// sortByDescendingLastUpdated sorts the given rules in descending last-updated time order.
+// sortByDescendingLastUpdated sorts the given rules in descending last-updated
+// time order. If two rules have the same LastUpdated time, they are sorted
+// in RuleID order.
 func sortByDescendingLastUpdated(rules []*CachedRule) []*CachedRule {
 	result := make([]*CachedRule, len(rules))
 	copy(result, rules)
 	sort.Slice(result, func(i, j int) bool {
+		if result[i].LastUpdated.Equal(result[j].LastUpdated) {
+			return result[i].RuleID < result[j].RuleID
+		}
 		return result[i].LastUpdated.After(result[j].LastUpdated)
 	})
 	return result
