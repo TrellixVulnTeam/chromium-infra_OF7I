@@ -66,7 +66,7 @@ class AsyncActionTest(testing.AppengineTestCase):
         'request_confirmation_message': 'message',
         'revert_description': 'revert description',
     }
-    revert_info = {'id': revert_id}
+    revert_info = {'id': 'id', '_number': revert_id}
     mock_create.return_value = revert_info
     error = async_action.AsyncAction()._RunAction(payload)
     self.assertIsNone(error)
@@ -91,7 +91,7 @@ class AsyncActionTest(testing.AppengineTestCase):
         'request_review_message': 'message',
         'revert_description': 'revert description',
     }
-    revert_info = {'id': revert_id}
+    revert_info = {'id': 'id', '_number': revert_id}
     mock_create.return_value = revert_info
     error = async_action.AsyncAction()._RunAction(payload)
     self.assertIsNone(error)

@@ -62,7 +62,16 @@ class AsyncAction(BaseHandler):
         revert, task_args['request_review_message'])
     if not success:
       raise RuntimeError('Requesting revert review failed')
-    self._Save(culprit, revert, False)
+    # At this stage, the revert CL was created. If there are any errors after,
+    # let's just log it. Otherwise, the task will be retried and another CL
+    # will get created
+    try:
+      self._Save(culprit, revert, False)
+    except Exception as e:
+      logging.error(
+          "Got exception when saving Culprit Action: %s."
+          "ignoring error so that the task will not be retried "
+          "and no duplicate CL will be created", e.message)
 
   def _CommitRevert(self, project_api, task_args, culprit):
     revert = project_api.gerrit_actions.CreateRevert(
@@ -81,11 +90,11 @@ class AsyncAction(BaseHandler):
   def _Save(self, culprit, revert, committed):
     action = CulpritAction.CreateKey(culprit).get()
     if not action.revert_change:
-      action.revert_change = revert['id']
+      action.revert_change = revert.get('_number', 0)
       action.revert_committed = committed
       action.put()
     else:
       logging.warning(
-          'Possible duplicate revert for culrpit %s.'
+          'Possible duplicate revert for culprit %s.'
           'We created %s, but datastore says %s already exists.', culprit,
           revert['id'], action.revert_change)
