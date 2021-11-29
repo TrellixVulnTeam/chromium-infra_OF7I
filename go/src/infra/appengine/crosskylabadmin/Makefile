@@ -5,6 +5,11 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 projdir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
+build:
+	go vet   $(projdir)/...
+	go test  $(projdir)/...
+	go build -o $(projdir)/gaev2/crosadm/crosadm $(projdir)/gaev2/crosadm
+
 dev:
 	gae.py devserver -A dev --app-dir $(projdir)/internal/app/appengine -- --host 0.0.0.0 --port 8082 --admin_port 7999 --log_level debug
 
