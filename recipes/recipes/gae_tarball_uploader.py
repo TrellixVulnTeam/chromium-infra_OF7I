@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import re
+
 from collections import namedtuple
 from contextlib import contextmanager
 from recipe_engine import recipe_api
@@ -217,7 +219,10 @@ def _checkout_git(api, repo):
           'read %s' % repo.go_version_file,
           path.join(repo.go_version_file),
           test_data='6.6.6\n').strip()
-      with api.golang(version, path=api.path['cache'].join('go%s' % version)):
+      if not re.match(r'^\d+\.\d+\.\d+$', version):  # pragma: no cover
+        raise ValueError('Bad Go version number %r' % version)
+      cache_path = api.path['cache'].join('go%s' % version.replace('.', '_'))
+      with api.golang(version, path=cache_path):
         yield
     else:
       yield

@@ -144,7 +144,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/go6.6.6",
+      "[CACHE]/go6_6_6",
       "-ensure-file",
       "infra/3pp/tools/go/${platform} version:2@6.6.6",
       "-max-threads",
@@ -193,11 +193,11 @@
       "GOPATH": null,
       "GOPRIVATE": "*.googlesource.com,*.google.com",
       "GOPROXY": null,
-      "GOROOT": "[CACHE]/go6.6.6"
+      "GOROOT": "[CACHE]/go6_6_6"
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]/go6.6.6/bin"
+        "[CACHE]/go6_6_6/bin"
       ]
     },
     "env_suffixes": {
@@ -233,11 +233,11 @@
       "GOPATH": null,
       "GOPRIVATE": "*.googlesource.com,*.google.com",
       "GOPROXY": null,
-      "GOROOT": "[CACHE]/go6.6.6"
+      "GOROOT": "[CACHE]/go6_6_6"
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]/go6.6.6/bin"
+        "[CACHE]/go6_6_6/bin"
       ]
     },
     "env_suffixes": {
@@ -276,11 +276,11 @@
       "GOPATH": null,
       "GOPRIVATE": "*.googlesource.com,*.google.com",
       "GOPROXY": null,
-      "GOROOT": "[CACHE]/go6.6.6"
+      "GOROOT": "[CACHE]/go6_6_6"
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]/go6.6.6/bin"
+        "[CACHE]/go6_6_6/bin"
       ]
     },
     "env_suffixes": {
@@ -316,11 +316,11 @@
       "GOPATH": null,
       "GOPRIVATE": "*.googlesource.com,*.google.com",
       "GOPROXY": null,
-      "GOROOT": "[CACHE]/go6.6.6"
+      "GOROOT": "[CACHE]/go6_6_6"
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]/go6.6.6/bin"
+        "[CACHE]/go6_6_6/bin"
       ]
     },
     "env_suffixes": {
