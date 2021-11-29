@@ -63,6 +63,8 @@ type RunArgs struct {
 	EnableRecovery bool
 	// SwarmingTaskID is the ID of the swarming task we're running under.
 	SwarmingTaskID string
+	// BuildbucketID is the ID of the buildbucket build we're running under.
+	BuildbucketID string
 }
 
 // CloserFunc is a function that updates an action and is NOT safe to use in a defer block WITHOUT CHECKING FOR NIL.
@@ -93,6 +95,7 @@ func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, 
 		ActionKind:     kind,
 		StartTime:      startTime,
 		SwarmingTaskID: a.SwarmingTaskID,
+		BuildbucketID:  a.BuildbucketID,
 	}
 	return createMetric(ctx, a.Metrics, action)
 }
