@@ -111,7 +111,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
 
     with api.context(cwd=repo_path):
       stats = api.git.count_objects(
-          can_fail_build=True,
+          raise_on_failure=True,
           # TODO(iannucci): ugh, the test mock for this is horrendous.
           #   1) it should default to something automatically
           #   2) test_api.count_objects_output should return a TestData, not
