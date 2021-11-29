@@ -45,6 +45,12 @@ func Sanitize(dims Dimensions, r ReportFunc) {
 			continue
 		}
 		sanitizeDimensionValues(dims, r, k)
+		// Ensure that values are not empty as swarming doesn't like it, it's
+		// also important to do this check after sanitizeDimensionValues as values
+		// slice may change in sanitizeDimensionValues.
+		if len(dims[k]) == 0 {
+			delete(dims, k)
+		}
 	}
 }
 

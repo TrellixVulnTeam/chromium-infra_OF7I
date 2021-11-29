@@ -72,6 +72,12 @@ func TestSanitize(t *testing.T) {
 			input: Dimensions{"key123": {"essex"}},
 			want:  Dimensions{"key123": {"essex"}},
 		},
+		{
+			name:  "Test Sanitize key with empty values",
+			input: Dimensions{"key1": {"value1"}, "key2": {""}},
+			want:  Dimensions{"key1": {"value1"}},
+			errs:  []error{ErrEmptyValue{Key: "key2"}},
+		},
 	}
 	for _, c := range cases {
 		c := c
