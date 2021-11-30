@@ -105,6 +105,7 @@ http {
     # A CQ build URL is like "/download/chromeos-image-archive/coral-cq/R92-13913.0.0-46943-8850024658050820208/...".
     location ~ ^/[^/]+/[^/]+/\S+-cq/ {
       proxy_cache_lock on;
+      proxy_cache_lock_age 900s;
       proxy_cache_lock_timeout 900s;
       proxy_cache_bypass $http_x_no_cache;
       expires max;
