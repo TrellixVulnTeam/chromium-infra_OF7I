@@ -167,7 +167,7 @@ func execute(ctx context.Context) error {
 	return err
 }
 
-func reportBootstrapFailure(ctx context.Context, bootstrapErr error) error {
+func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error) {
 	// If the error has the ExeFailure tag, then that indicates that we were
 	// able to bootstrap the executable and that it failed. In that case, it
 	// should have populated the build proto with steps and a result, so we
@@ -188,6 +188,16 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		closeErr := stream.Close()
+		if closeErr != nil {
+			if err != nil {
+				logging.Errorf(ctx, closeErr.Error())
+			} else {
+				err = closeErr
+			}
+		}
+	}()
 
 	build := &buildbucketpb.Build{}
 	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", bootstrapErr.Error())
@@ -198,9 +208,15 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error) error {
 
 	outputData, err := proto.Marshal(build)
 	if err != nil {
-		return errors.Annotate(err, "failed to marshal output build.proto").Err()
+		err = errors.Annotate(err, "failed to marshal output build.proto").Err()
+		return
 	}
-	return stream.WriteDatagram(outputData)
+	err = stream.WriteDatagram(outputData)
+	if err != nil {
+		err = errors.Annotate(err, "failed to write modified build").Err()
+		return
+	}
+	return
 }
 
 func main() {
