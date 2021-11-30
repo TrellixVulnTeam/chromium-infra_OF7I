@@ -98,7 +98,9 @@ class CloudBuildHelperTestApi(recipe_test_api.RecipeTestApi):
   def _derive_sources_for_json(expected_output, checkout_metadata):
     # Build a reverse map: repo URL => checkout directory.
     repo_paths = {
-        entry['repository']: checkout_metadata.root.join(path)
+        entry['repository']:
+            checkout_metadata.root.join(path)
+            if path != '.' else checkout_metadata.root
         for path, entry in checkout_metadata.repos.items()
     }
 

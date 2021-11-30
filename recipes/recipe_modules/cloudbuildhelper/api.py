@@ -241,10 +241,14 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     if not sources or not checkout_metadata:
       return []
 
+    # Helper to convert Path to str. Note that join('.') is not allowed, so
+    # we need to special-case it.
+    render_path = lambda root, p: str(root.join(p) if p != '.' else root)
+
     # Build full paths to repos in the gclient checkout, ordering them by
     # "most nested first".
     checkout_paths = [
-        (str(checkout_metadata.root.join(p)), e['repository'], e['revision'])
+        (render_path(checkout_metadata.root, p), e['repository'], e['revision'])
         for p, e in checkout_metadata.repos.items()
     ]
     checkout_paths.sort(key=lambda e: len(e[0]), reverse=True)

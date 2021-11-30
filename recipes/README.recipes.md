@@ -115,7 +115,7 @@ Raises:
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#437)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#441)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -127,7 +127,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#457)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#461)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -144,7 +144,7 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#522)(self, path, revision, commit_position=None):**
+&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#526)(self, path, revision, commit_position=None):**
 
 Computes `<number>-<revision>` string identifying a commit.
 
@@ -169,7 +169,7 @@ Reports the version of cloudbuildhelper tool via the step text.
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#413)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#417)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -182,7 +182,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#321)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#325)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -1244,11 +1244,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#15)(api):**
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#45)(api):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#49)(api):**
 
 &mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#29)(api):**
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#126)(api):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#130)(api):**
 ### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]

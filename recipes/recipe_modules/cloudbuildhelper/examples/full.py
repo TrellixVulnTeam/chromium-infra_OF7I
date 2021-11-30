@@ -30,6 +30,10 @@ def repo_checkout_metadata(api):
   return api.cloudbuildhelper.CheckoutMetadata(
       root=api.path['start_dir'],
       repos={
+          '.': {
+              'repository': 'https://root.example.com',
+              'revision': 'ffff',
+          },
           'a': {
               'repository': 'https://a.example.com',
               'revision': 'aaaa',
