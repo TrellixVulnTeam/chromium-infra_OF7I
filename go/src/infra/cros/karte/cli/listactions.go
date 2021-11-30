@@ -61,6 +61,9 @@ func (c *listActionsRun) innerRun(ctx context.Context, a subcommands.Application
 		return errors.Annotate(err, "inner run").Err()
 	}
 	kClient, err := client.NewClient(ctx, client.DevConfig(authOptions))
+	if err != nil {
+		return errors.Annotate(err, "inner run").Err()
+	}
 	res, err := kClient.ListActions(ctx, &kartepb.ListActionsRequest{
 		PageSize: defaultPageSize,
 		Filter:   c.filter,
