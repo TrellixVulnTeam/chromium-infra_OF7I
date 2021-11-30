@@ -10,9 +10,6 @@ create {
     script { name: "fetch.py" }
     unpack_archive: true
   }
-  package {
-    disable_latest_ref: true
-  }
 }
 
 upload {
