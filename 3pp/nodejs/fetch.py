@@ -20,7 +20,7 @@ urllib._urlopener = urllib.FancyURLopener(
     context=ssl.create_default_context(cafile=certifi.where()))
 
 
-def do_latest():
+def _do_latest():
   data = json.load(urllib.urlopen(BASE_URL + 'index.json'))
   max_version, max_string = parse_version('0'), '0'
   for release in data:
@@ -31,6 +31,11 @@ def do_latest():
       max_string = s
 
   print str(max_string)
+
+
+# TODO(vadimsh): Temporary hack to build the latest LTS version.
+def do_latest():
+  print '16.13.0'
 
 
 def get_download_url(version, platform):
