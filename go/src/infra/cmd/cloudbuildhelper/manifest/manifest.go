@@ -191,16 +191,32 @@ type Infra struct {
 	// Notify indicates what downstream services to notify once the image is
 	// built.
 	//
-	// It is not interpreted by cloudbuildhelper itself, just passed as is to
-	// the JSON output of `build` command. Callers (usually the images_builder
-	// recipe) know meaning of this field.
+	// It is not interpreted by cloudbuildhelper itself (just validated), and
+	// passed to the JSON output of `build` and `upload` commands. Callers
+	// (usually the recipes) know the meaning of this field and implement the
+	// actual notification logic.
 	Notify []NotifyConfig `yaml:"notify"`
 }
 
 // NotifyConfig is a single item in `notify` list.
-//
-// It is just an arbitrary YAML dict not interpreted by the cloudbuildhelper.
-type NotifyConfig map[string]interface{}
+type NotifyConfig struct {
+	// Kind indicates a kind of service to notify.
+	//
+	// The only supported value now is "git", meaning to checkout a git repo and
+	// invoke a script there with results of the build. Note that the actual
+	// logic to do that is implemented in recipes that call cloudbuildhelper.
+	Kind string `yaml:"kind"`
+
+	// Repo is a git repo to checkout (as "https://..." URL).
+	//
+	// Effective only for "git" notifiers.
+	Repo string `yaml:"repo"`
+
+	// Script is a path to the script inside the repo to invoke.
+	//
+	// Effective only for "git" notifiers.
+	Script string `yaml:"script"`
+}
 
 // rebaseOnTop implements "extends" logic.
 func (i *Infra) rebaseOnTop(b Infra) {
@@ -628,6 +644,30 @@ func validateInfra(i Infra) error {
 		case url.Host == "":
 			return errors.Reason("bad storage %q, bucket name is missing", i.Storage).Err()
 		}
+	}
+
+	for idx, notify := range i.Notify {
+		if err := validateNotify(notify); err != nil {
+			return errors.Annotate(err, "bad notify config #%d", idx+1).Err()
+		}
+	}
+
+	return nil
+}
+
+func validateNotify(n NotifyConfig) error {
+	if n.Kind != "git" {
+		return errors.Reason("unsupported notify kind %q", n.Kind).Err()
+	}
+	if !strings.HasPrefix(n.Repo, "https://") {
+		return errors.Reason("`repo` should be an https:// URL, not %q", n.Repo).Err()
+	}
+	if path.Clean(filepath.ToSlash(n.Script)) != n.Script {
+		return errors.Reason("bad `script` %q, should be a normalized slash-separate path", n.Script).Err()
+	}
+	if n.Script == "." || n.Script == ".." ||
+		strings.HasPrefix(n.Script, "../") || strings.HasPrefix(n.Script, "/") {
+		return errors.Reason("bad `script` %q, not a path inside the repo", n.Script).Err()
 	}
 	return nil
 }

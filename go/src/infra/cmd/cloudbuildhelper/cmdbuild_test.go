@@ -39,7 +39,10 @@ var _true = true // for *bool
 var testBaseOutput = &baseOutput{
 	Name:    testTargetName,
 	Sources: []string{"a", "b"},
-	Notify:  []manifest.NotifyConfig{{"a": 1}, {"b": 1}},
+	Notify: []manifest.NotifyConfig{
+		{Kind: "git", Repo: "https://a.example.com", Script: "a"},
+		{Kind: "git", Repo: "https://b.example.com", Script: "b"},
+	},
 }
 
 func TestBuild(t *testing.T) {

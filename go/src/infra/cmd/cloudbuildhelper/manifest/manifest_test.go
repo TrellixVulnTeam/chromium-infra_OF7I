@@ -5,6 +5,7 @@
 package manifest
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -143,12 +144,32 @@ func TestManifest(t *testing.T) {
 
 	Convey("Good infra", t, func() {
 		m, err := load(`{"name": "zzz", "contextdir": ".", "infra": {
-			"infra1": {"storage": "gs://bucket"},
-			"infra2": {"storage": "gs://bucket/path"}
+			"infra1": {
+				"storage": "gs://bucket",
+				"notify": [
+					{
+						"kind": "git",
+						"repo": "https://repo.example.com",
+						"script": "some/script.py"
+					}
+				]
+			},
+			"infra2": {
+				"storage": "gs://bucket/path"
+			}
 		}}`, "root/1/2/3/4")
 		So(err, ShouldBeNil)
 		So(m.Infra, ShouldResemble, map[string]Infra{
-			"infra1": {Storage: "gs://bucket"},
+			"infra1": {
+				Storage: "gs://bucket",
+				Notify: []NotifyConfig{
+					{
+						Kind:   "git",
+						Repo:   "https://repo.example.com",
+						Script: "some/script.py",
+					},
+				},
+			},
 			"infra2": {Storage: "gs://bucket/path"},
 		})
 	})
@@ -165,6 +186,38 @@ func TestManifest(t *testing.T) {
 			"infra1": {"storage": "gs:///zzz"}
 		}}`, "root/1/2/3/4")
 		So(err, ShouldErrLike, `in infra section "infra1": bad storage "gs:///zzz", bucket name is missing`)
+	})
+
+	Convey("Bad notify", t, func() {
+		check := func(notify string) error {
+			_, err := load(fmt.Sprintf(`{"name": "zzz", "contextdir": ".", "infra": {
+			"infra1": {"notify": [%s]}
+		}}`, notify), "root/1/2/3/4")
+			return err
+		}
+
+		Convey("Bad kind", func() {
+			So(check(`{"kind": "bad"}`), ShouldErrLike, `unsupported notify kind`)
+		})
+
+		Convey("Bad repo", func() {
+			So(check(`{"kind": "git", "repo": "ftp://zzz"}`),
+				ShouldErrLike, `should be an https:// URL`)
+		})
+
+		Convey("Bad script path", func() {
+			for _, p := range []string{"a/../b", "", "a/./b"} {
+				So(check(fmt.Sprintf(`{"kind": "git", "repo": "https://zzz", "script": "%s"}`, p)),
+					ShouldErrLike, `should be a normalized slash-separate path`)
+			}
+		})
+
+		Convey("Not relative path", func() {
+			for _, p := range []string{"/", "/a/b"} {
+				So(check(fmt.Sprintf(`{"kind": "git", "repo": "https://zzz", "script": "%s"}`, p)),
+					ShouldErrLike, `not a path inside the repo`)
+			}
+		})
 	})
 }
 
@@ -193,8 +246,16 @@ func TestExtends(t *testing.T) {
 		Convey("Works", func() {
 			var falseVal = false
 
-			notifyBase := NotifyConfig{"base": 1}
-			notifyMid := NotifyConfig{"mid": 1}
+			notifyBase := NotifyConfig{
+				Kind:   "git",
+				Repo:   "https://base.example.com",
+				Script: "base",
+			}
+			notifyMid := NotifyConfig{
+				Kind:   "git",
+				Repo:   "https://mid.example.com",
+				Script: "mid",
+			}
 
 			write("base.yaml", Manifest{
 				Name:      "base",

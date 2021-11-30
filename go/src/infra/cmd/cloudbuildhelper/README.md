@@ -346,9 +346,10 @@ infra:
 
     # What systems to notify when the image is built (or rebuilt).
     #
-    # This section is *not* interpreted by cloudbuildhelper, just passed through
-    # to its `-json-output ...` where whoever called cloudbuildhelper can decide
-    # how to deal with it. Normally it is images_builder.py recipe.
+    # This section is *not* interpreted by cloudbuildhelper, just validated and
+    # passed through to its `-json-output ...` where whoever called
+    # cloudbuildhelper can decide how to deal with it. Normally it is
+    # images_builder.py recipe.
     notify:
       # Checkout example.googlesource.com/repo and call a script there to
       # update this checkout based on produced images.
