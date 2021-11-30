@@ -27,6 +27,7 @@ build.presubmit(
     name = "Build Presubmit",
     cq_group = "build",
     repo_name = "build",
+    timeout_s = 600,
 )
 
 # Trybot that launches a task via 'led' to verify updated recipes work.
