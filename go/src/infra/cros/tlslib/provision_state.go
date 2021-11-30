@@ -233,7 +233,7 @@ func (p *provisionState) installStateful(ctx context.Context) error {
 	}
 	return runCmd(p.c, strings.Join([]string{
 		fmt.Sprintf("rm -rf %[1]s %[2]s/var_new %[2]s/dev_image_new", updateStatefulFilePath, statefulPath),
-		fmt.Sprintf("curl -v -# -C - --retry 3 --retry-delay 60 %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
+		fmt.Sprintf("curl -S -s -v -# -C - --retry 3 --retry-delay 60 %s | tar --ignore-command-error --overwrite --directory=%s -xzf -", url, statefulPath),
 		fmt.Sprintf("echo -n clobber > %s", updateStatefulFilePath),
 	}, " && "))
 }
@@ -333,7 +333,7 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 
 	dlcOutputSlotDir := path.Join(dlcOutputDir, string(slot))
 	dlcOutputImage := path.Join(dlcOutputSlotDir, dlcImage)
-	dlcCmd := fmt.Sprintf(`mkdir -p %[1]s && curl -v -# -C - --retry 3 --retry-delay 60 --output %[2]s %[3]s`,
+	dlcCmd := fmt.Sprintf(`mkdir -p %[1]s && curl -S -s -v -# -C - --retry 3 --retry-delay 60 --output %[2]s %[3]s`,
 		dlcOutputSlotDir, dlcOutputImage, url)
 	if err := runCmd(p.c, dlcCmd); err != nil {
 		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
