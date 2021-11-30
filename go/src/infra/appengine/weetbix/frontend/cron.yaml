@@ -17,6 +17,9 @@ cron:
   retry_parameters:
     # Do not retry after 55 minutes.
     job_age_limit: 55m
+- description: "Purge test variants that have been consistently expected or no new results for over a month."
+    url: /internal/cron/purge-test-variants
+    schedule: every 60 minutes
 - description: "Orchestrate re-clustering of test results."
   url: /internal/cron/reclustering
   # The actual reclustering interval is specified in the system config

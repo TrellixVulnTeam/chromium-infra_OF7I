@@ -33,6 +33,7 @@ import (
 	"infra/appengine/weetbix/internal/admin"
 	adminpb "infra/appengine/weetbix/internal/admin/proto"
 	"infra/appengine/weetbix/internal/analysis"
+	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/reclustering/orchestrator"
@@ -318,6 +319,7 @@ func main() {
 		cron.RegisterHandler("read-config", config.Update)
 		cron.RegisterHandler("update-analysis-and-bugs", handlers.updateAnalysisAndBugs)
 		cron.RegisterHandler("export-test-variants", testvariantbqexporter.ScheduleTasks)
+		cron.RegisterHandler("purge-test-variants", analyzedtestvariants.Purge)
 		cron.RegisterHandler("reclustering", orchestrator.CronHandler)
 
 		// Pub/Sub subscription endpoints.
