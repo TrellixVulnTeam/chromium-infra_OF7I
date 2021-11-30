@@ -23,7 +23,7 @@ const (
 	invalidKeyErr = "could not select value, invalid key"
 )
 
-var labelMarshaler = jsonpb.Marshaler{
+var LabelMarshaler = jsonpb.Marshaler{
 	EnumsAsInts:  false,
 	EmitDefaults: true,
 	Indent:       "  ",
@@ -32,68 +32,68 @@ var labelMarshaler = jsonpb.Marshaler{
 
 // ConvertAll converts one DutAttribute label to multiple Swarming labels.
 //
-// The converted labels are returned in the form of `${label_prefix}:val1,val2`
-// in an array. Each label value is comma-separated. Label prefixes are the
+// The converted labels are returned in the form of `${label_name}:val1,val2`
+// in an array. Each label value is comma-separated. Label labelNames are the
 // DutAttribute ID and the aliases listed.
-func ConvertAll(dutAttr *api.DutAttribute, bundle *payload.FlatConfig) ([]string, error) {
-	var prefixes []string
-	labelPrefix := dutAttr.GetId().GetValue()
-	if labelPrefix == "" {
-		return prefixes, status.Errorf(codes.Internal, "DutAttribute has no ID")
+func ConvertAll(dutAttr *api.DutAttribute, flatConfig *payload.FlatConfig) ([]string, error) {
+	labelNames, err := GetLabelNames(dutAttr)
+	if err != nil {
+		return nil, err
 	}
-	prefixes = append(prefixes, labelPrefix)
-
-	aliases := dutAttr.GetAliases()
-	prefixes = append(prefixes, aliases...)
-
-	var labels []string
-	for _, p := range prefixes {
-		v, err := convertSingle(p, dutAttr, bundle)
-		if err != nil || v == "" {
-			continue
-		}
-		labels = append(labels, v)
-	}
-
-	return labels, nil
-}
-
-// convertSingle converts one DutAttribute label to one Swarming label.
-//
-// The converted label is returned in the form of `${label_prefix}:val1,val2`.
-// Each label value is comma-separated.
-func convertSingle(labelPrefix string, dutAttr *api.DutAttribute, bundle *payload.FlatConfig) (string, error) {
-	var values string
-	var err error
 
 	// Construct and try each path defined in DutAttribute. Tried in order. First
 	// path to return a value will be used.
 	jsonPaths, err := ConstructJsonPaths(dutAttr)
 	if err != nil {
-		return "", err
-	}
-	for _, p := range jsonPaths {
-		values, err = getLabelValues(p, bundle)
-		if err != nil || values == "" {
-			continue
-		}
-		break
+		return nil, err
 	}
 
-	// Exhausted all possible paths defined in DutAttribute. If values is empty,
-	// then no values found.
-	if values == "" {
-		return "", status.Errorf(codes.NotFound, "No supported config source found")
+	for _, p := range jsonPaths {
+		valuesStr, err := GetFlatConfigLabelValuesStr(p, flatConfig)
+		if err == nil && valuesStr != "" {
+			return formLabels(labelNames, valuesStr)
+		}
 	}
-	return fmt.Sprintf("%s:%s", labelPrefix, values), nil
+	return nil, errors.Reason("No supported config source found").Err()
 }
 
-// getLabelValues takes a path and returns the corresponding FlatConfig value.
+// formLabels pairs label names with the label values `${label_name}:val1,val2`.
+func formLabels(labelNames []string, valuesStr string) ([]string, error) {
+	// Exhausted all possible paths defined in DutAttribute. If valuesStr is empty,
+	// then no values found.
+	if valuesStr == "" {
+		return nil, status.Errorf(codes.NotFound, "No label values found in config source found")
+	}
+
+	var labels []string
+	for _, n := range labelNames {
+		labels = append(labels, fmt.Sprintf("%s:%s", n, valuesStr))
+	}
+	if len(labels) == 0 {
+		return nil, errors.New("No labels can be generated")
+	}
+	return labels, nil
+}
+
+// GetLabelNames extracts all possible label names from a DutAttribute.
+//
+// For each DutAttribute, the main label name is defined by its ID value. In
+// addition, users can define other aliases. GetLabelNames will return all as
+// valid label names.
+func GetLabelNames(dutAttr *api.DutAttribute) ([]string, error) {
+	name := dutAttr.GetId().GetValue()
+	if name == "" {
+		return nil, errors.New("DutAttribute has no ID")
+	}
+	return append([]string{name}, dutAttr.GetAliases()...), nil
+}
+
+// GetFlatConfigLabelValuesStr takes a path and returns the FlatConfig value.
 //
 // It uses a jsonpath string to try to find corresponding values in a
 // FlatConfig. It returns a comma-separated string of the values found.
-func getLabelValues(jsonGetPath string, bundle *payload.FlatConfig) (string, error) {
-	js, err := labelMarshaler.MarshalToString(bundle)
+func GetFlatConfigLabelValuesStr(jsonGetPath string, flatConfig *payload.FlatConfig) (string, error) {
+	js, err := LabelMarshaler.MarshalToString(flatConfig)
 	if err != nil {
 		return "", err
 	}
@@ -108,15 +108,15 @@ func getLabelValues(jsonGetPath string, bundle *payload.FlatConfig) (string, err
 	if err != nil {
 		return "", err
 	}
-	return constructLabelValuesString(labelVals), nil
+	return ConstructLabelValuesString(labelVals), nil
 }
 
-// constructLabelValuesString takes label values and returns them as a string.
+// ConstructLabelValuesString takes label values and returns them as a string.
 //
 // It takes an interface of label values parsed from a json object and returns a
 // comma-separated string of the values. The interfaces supported are primitive
 // types and iterable interfaces.
-func constructLabelValuesString(labelVals interface{}) string {
+func ConstructLabelValuesString(labelVals interface{}) string {
 	var rsp string
 	switch x := labelVals.(type) {
 	case []interface{}:

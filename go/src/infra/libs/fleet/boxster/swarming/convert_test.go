@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/go-cmp/cmp"
+	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/config/go/test/api"
 )
@@ -89,8 +90,8 @@ func TestConvertAll(t *testing.T) {
     }`
 		da := parseDutAttribute(t, daText)
 		got, err := ConvertAll(&da, &fc)
-		if err != nil {
-			t.Fatalf("ConvertAll failed: %s", err)
+		if err == nil {
+			t.Fatalf("ConvertAll passed without failures")
 		}
 		if diff := cmp.Diff([]string(nil), got); diff != "" {
 			t.Errorf("ConvertAll returned unexpected diff (-want +got):\n%s", diff)
@@ -174,11 +175,74 @@ func TestConvertAll(t *testing.T) {
 		}`
 		da := parseDutAttribute(t, daText)
 		got, err := ConvertAll(&da, &fc)
-		if err != nil {
-			t.Fatalf("ConvertAll failed: %s", err)
+		if err == nil {
+			t.Fatalf("ConvertAll passed without failures")
 		}
-		if diff := cmp.Diff([]string(nil), got); diff != "" {
-			t.Errorf("ConvertAll returned unexpected diff (-want +got):\n%s", diff)
+		if got != nil {
+			t.Errorf("The response is not nil: %s", got)
 		}
+	})
+}
+
+func TestGetLabelNames(t *testing.T) {
+	t.Parallel()
+
+	daText := `{
+		"id": {
+			"value": "attr-design"
+		},
+		"aliases": [
+			"attr-model",
+			"label-model"
+		],
+		"flatConfigSource": {
+			"fields": [
+				{
+					"path": "hw_design.id.value"
+				}
+			]
+		}
+	}`
+
+	Convey("TestGetLabelNames", t, func() {
+		Convey("get label names from a normal DutAttribute", func() {
+			da := parseDutAttribute(t, daText)
+			got, err := GetLabelNames(&da)
+			So(err, ShouldBeNil)
+			So(got, ShouldNotBeNil)
+			So(got, ShouldResemble, []string{"attr-design", "attr-model", "label-model"})
+		})
+
+		Convey("get label names from a DutAttribute with no ID", func() {
+			da := parseDutAttribute(t, daText)
+			da.Id.Value = ""
+			got, err := GetLabelNames(&da)
+			So(err, ShouldNotBeNil)
+			So(got, ShouldBeNil)
+		})
+	})
+}
+
+func TestGetFlatConfigLabelValuesStr(t *testing.T) {
+	t.Parallel()
+
+	b, err := ioutil.ReadFile("test_flat_config.cfg")
+	if err != nil {
+		t.Fatalf("Error reading test FlatConfig: %s", err)
+	}
+
+	var fc payload.FlatConfig
+	unmarshaller := &jsonpb.Unmarshaler{AllowUnknownFields: false}
+	if err = unmarshaller.Unmarshal(bytes.NewBuffer(b), &fc); err != nil {
+		t.Fatalf("Error unmarshalling test FlatConfig: %s", err)
+	}
+
+	Convey("GetFlatConfigLabelValuesStr", t, func() {
+		Convey("convert label with existing correct field path - single value", func() {
+			got, err := GetFlatConfigLabelValuesStr("$.hw_design.id.value", &fc)
+			So(err, ShouldBeNil)
+			So(got, ShouldNotBeNil)
+			So(got, ShouldEqual, "Test")
+		})
 	})
 }
