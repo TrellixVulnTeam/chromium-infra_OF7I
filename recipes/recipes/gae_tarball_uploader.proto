@@ -22,8 +22,9 @@ message Inputs {
 
   // Describes a standalone git repo to checkout when using PROJECT_GIT_REPO.
   message GitRepo {
-    string url = 1;              // https:// git repo URL
-    string go_version_file = 2;  // path to a file with Go version to bootstrap
+    string url = 1;                  // https:// git repo URL
+    string go_version_file = 2;      // path to a file with Go version
+    string nodejs_version_file = 3;  // path to a file with Node.js version
   }
   GitRepo git_repo = 5;
 

@@ -1,0 +1,180 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/GO_VERSION",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read GO_VERSION",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@GO_VERSION@6.6.6@@@",
+      "@@@STEP_LOG_END@GO_VERSION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/go6_6_6",
+      "-ensure-file",
+      "infra/3pp/tools/go/${platform} version:2@6.6.6",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@6.6.6-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/go/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/NODEJS_VERSION",
+      "/path/to/tmp/"
+    ],
+    "env": {
+      "GO111MODULE": "on",
+      "GOBIN": "[CACHE]/gocache/bin",
+      "GOCACHE": "[CACHE]/gocache/cache",
+      "GOMODCACHE": "[CACHE]/gocache/modcache",
+      "GOPACKAGESDRIVER": "off",
+      "GOPATH": null,
+      "GOPRIVATE": "*.googlesource.com,*.google.com",
+      "GOPROXY": null,
+      "GOROOT": "[CACHE]/go6_6_6"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/go6_6_6/bin"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/gocache/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "read NODEJS_VERSION",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@NODEJS_VERSION@6.6.6@@@",
+      "@@@STEP_LOG_END@NODEJS_VERSION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/nodejs6_6_6",
+      "-ensure-file",
+      "infra/3pp/tools/nodejs/${platform} version:2@6.6.6",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "GO111MODULE": "on",
+      "GOBIN": "[CACHE]/gocache/bin",
+      "GOCACHE": "[CACHE]/gocache/cache",
+      "GOMODCACHE": "[CACHE]/gocache/modcache",
+      "GOPACKAGESDRIVER": "off",
+      "GOPATH": null,
+      "GOPRIVATE": "*.googlesource.com,*.google.com",
+      "GOPROXY": null,
+      "GOROOT": "[CACHE]/go6_6_6"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/go6_6_6/bin"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/gocache/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "ensure_installed (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@6.6.6-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/nodejs/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "env": {
+      "GO111MODULE": "on",
+      "GOBIN": "[CACHE]/gocache/bin",
+      "GOCACHE": "[CACHE]/gocache/cache",
+      "GOMODCACHE": "[CACHE]/gocache/modcache",
+      "GOPACKAGESDRIVER": "off",
+      "GOPATH": null,
+      "GOPRIVATE": "*.googlesource.com,*.google.com",
+      "GOPROXY": null,
+      "GOROOT": "[CACHE]/go6_6_6",
+      "npm_config_cache": "[CACHE]/npmcache/npm",
+      "npm_config_prefix": "[CACHE]/npmcache/pfx"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/npmcache/pfx/bin",
+        "[CACHE]/nodejs6_6_6/bin",
+        "[CACHE]/go6_6_6/bin"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/gocache/bin"
+      ]
+    },
+    "name": "full env"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "name": "empty env"
+  },
+  {
+    "name": "$result"
+  }
+]

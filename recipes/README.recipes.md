@@ -27,6 +27,7 @@
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
   * [build_wheels](#recipes-build_wheels)
   * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) (Python3 ✅) &mdash; This recipe verifies importing of chromium bootstrap protos.
+  * [cloudbuildhelper:examples/build_env](#recipes-cloudbuildhelper_examples_build_env) (Python3 ✅)
   * [cloudbuildhelper:examples/commit_label](#recipes-cloudbuildhelper_examples_commit_label) (Python3 ✅)
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover) (Python3 ✅)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
@@ -79,7 +80,7 @@
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/golang][recipe_engine/recipe_modules/golang], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/nodejs][recipe_engine/recipe_modules/nodejs], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -87,11 +88,11 @@ API for calling 'cloudbuildhelper' tool.
 
 See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
-#### **class [CloudBuildHelperApi](/recipes/recipe_modules/cloudbuildhelper/api.py#19)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [CloudBuildHelperApi](/recipes/recipe_modules/cloudbuildhelper/api.py#22)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#114)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#117)(self, manifest, canonical_tag=None, build_id=None, infra=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -111,11 +112,50 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#89)(self, val):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [build\_environment](/recipes/recipe_modules/cloudbuildhelper/api.py#566)(self, root, go_version_file=None, nodejs_version_file=None):**
+
+A context manager that activates the build environment.
+
+Used to build code in a standalone git repositories that don't have Go
+or Node.js available via some other mechanism (like via gclient DEPS).
+
+It reads the Golang version from `<root>/<go_version_file>` and Node.js
+version from `<root>/<nodejs_version_file>`, bootstraps the corresponding
+versions in cache directories, adjusts PATH and other environment variables
+and yields to the user code.
+
+Let's assume the requested Go version is '1.16.10' and Node.js version
+is '16.13.0', then this call will use following cache directories:
+  * `go1_16_10`: to install Go under.
+  * `gocache`: for Go cache directories.
+  * `nodejs16_13_0`: to install Node.js under.
+  * `npmcache`: for NPM cache directories.
+
+For best performance the builder must map these directories as named
+caches using e.g.
+
+    luci.builder(
+        ...
+        caches = [
+            swarming.cache("go1_16_10"),
+            swarming.cache("gocache"),
+            swarming.cache("nodejs16_13_0"),
+            swarming.cache("npmcache"),
+        ],
+    )
+
+Args:
+  root (Path) - path to the checkout root.
+  go_version_file (str) - path within the checkout to a text file with Go
+      version to bootstrap or None to skip bootstrapping Go.
+  nodejs_version_file (str) - path within the checkout to a text file with
+      Node.js version to bootstrap or None to skip bootstrapping Node.js.
+
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#92)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#441)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#444)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -127,7 +167,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#461)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#464)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -144,7 +184,7 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#531)(self, path, revision, commit_position=None):**
+&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#534)(self, path, revision, commit_position=None):**
 
 Computes `<number>-<revision>` string identifying a commit.
 
@@ -162,14 +202,14 @@ Args:
 Returns:
   A `<number>-<revision>` string.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#94)(self):**
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#97)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#417)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#420)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -182,7 +222,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#325)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#328)(self, manifest, canonical_tag, build_id=None, infra=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -1215,6 +1255,13 @@ The protos are exported via a symlink in
 //recipe/recipe_proto/infra/chromium.
 
 &mdash; **def [RunSteps](/recipes/recipes/chromium_bootstrap/test.py#16)(api):**
+### *recipes* / [cloudbuildhelper:examples/build\_env](/recipes/recipe_modules/cloudbuildhelper/examples/build_env.py)
+
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/build_env.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/build_env.py#15)(api):**
 ### *recipes* / [cloudbuildhelper:examples/commit\_label](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1299,11 +1346,11 @@ Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
 &mdash; **def [RunSteps](/recipes/recipes/fleet_systems/dhcp.py#126)(api):**
 ### *recipes* / [gae\_tarball\_uploader](/recipes/recipes/gae_tarball_uploader.py)
 
-[DEPS](/recipes/recipes/gae_tarball_uploader.py#16): [depot\_tools/git][depot_tools/recipe_modules/git], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/golang][recipe_engine/recipe_modules/golang], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/gae_tarball_uploader.py#16): [depot\_tools/git][depot_tools/recipe_modules/git], [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [infra\_checkout](#recipe_modules-infra_checkout), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/futures][recipe_engine/recipe_modules/futures], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#46)(api, properties):**
+&mdash; **def [RunSteps](/recipes/recipes/gae_tarball_uploader.py#45)(api, properties):**
 ### *recipes* / [gerrit\_hello\_world](/recipes/recipes/gerrit_hello_world.py)
 
 [DEPS](/recipes/recipes/gerrit_hello_world.py#8): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
@@ -1617,6 +1664,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 [recipe_engine/recipe_modules/futures]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-futures
 [recipe_engine/recipe_modules/golang]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-golang
 [recipe_engine/recipe_modules/json]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-json
+[recipe_engine/recipe_modules/nodejs]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-nodejs
 [recipe_engine/recipe_modules/path]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-path
 [recipe_engine/recipe_modules/platform]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-platform
 [recipe_engine/recipe_modules/properties]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/346c0ea55f67794598b8e5b264411c05ed565918/README.recipes.md#recipe_modules-properties

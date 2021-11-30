@@ -19,7 +19,6 @@ DEPS = [
     'recipe_engine/buildbucket',
     'recipe_engine/file',
     'recipe_engine/futures',
-    'recipe_engine/golang',
     'recipe_engine/json',
     'recipe_engine/path',
     'recipe_engine/properties',
@@ -214,17 +213,8 @@ def _checkout_git(api, repo):
 
   @contextmanager
   def build_environ(api):
-    if repo.go_version_file:
-      version = api.file.read_text(
-          'read %s' % repo.go_version_file,
-          path.join(repo.go_version_file),
-          test_data='6.6.6\n').strip()
-      if not re.match(r'^\d+\.\d+\.\d+$', version):  # pragma: no cover
-        raise ValueError('Bad Go version number %r' % version)
-      cache_path = api.path['cache'].join('go%s' % version.replace('.', '_'))
-      with api.golang(version, path=cache_path):
-        yield
-    else:
+    with api.cloudbuildhelper.build_environment(
+        path, repo.go_version_file, repo.nodejs_version_file):
       yield
 
   return Metadata(
@@ -420,6 +410,7 @@ def GenTests(api):
           git_repo=PROPERTIES.GitRepo(
               url='https://git.example.com/repo',
               go_version_file='build/GO_VERSION',
+              nodejs_version_file='build/NODEJS_VERSION',
           ),
       )
   )
