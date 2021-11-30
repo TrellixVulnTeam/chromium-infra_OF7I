@@ -192,21 +192,6 @@ func importCrimson(ctx context.Context) (err error) {
 	return nil
 }
 
-func importCrosInventory(ctx context.Context, crosInventoryHost string) error {
-	logging.Infof(ctx, "Querying host %s", crosInventoryHost)
-	sv := &frontend.FleetServerImpl{}
-	logging.Infof(ctx, "Importing ChromeOS inventory")
-	_, err := sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
-		Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
-			MachineDbSource: &api.MachineDBSource{
-				Host: crosInventoryHost,
-			},
-		},
-	})
-	logging.Infof(ctx, "Finshed Importing ChromeOS inventory(labconfig+dutstates)")
-	return err
-}
-
 func importCrosNetwork(ctx context.Context) error {
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing ChromeOS networks")

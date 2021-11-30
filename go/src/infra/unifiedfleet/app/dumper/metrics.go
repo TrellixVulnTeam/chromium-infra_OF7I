@@ -34,12 +34,6 @@ var (
 		nil,
 		field.Bool("success"),
 	)
-	dumpCrosInventoryTick = metric.NewCounter(
-		"chromeos/ufs/dumper/import_cros_inventory",
-		"import cros inventory attempt",
-		nil,
-		field.Bool("success"),
-	)
 	dumpCrosNetworkTick = metric.NewCounter(
 		"chromeos/ufs/dumper/import_cros_network",
 		"import cros network attempt",

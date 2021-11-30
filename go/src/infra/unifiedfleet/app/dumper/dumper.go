@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	bqlib "infra/cros/lab_inventory/bq"
-	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/cron"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
@@ -30,13 +29,6 @@ var Jobs = []*cron.CronTab{
 		Time:     20 * time.Minute,
 		TrigType: cron.DAILY,
 		Job:      dump,
-	},
-	{
-		// Import inventory from IV2
-		Name:     "ufs.cros_inventory.dump",
-		Time:     60 * time.Minute,
-		TrigType: cron.EVERY,
-		Job:      dumpCrosInventory,
 	},
 	{
 		// Dump change events to BQ
@@ -180,38 +172,6 @@ func dumpChangeSnapshots(ctx context.Context) (err error) {
 	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Debugf(ctx, "Dumping change snapshots to BQ")
 	return exportToBQ(ctx, dumpChangeSnapshotHelper)
-}
-
-func dumpCrosInventory(ctx context.Context) (err error) {
-	defer func() {
-		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
-	}()
-	// In UFS write to 'os' namespace
-	// The below codes also use the ctx with OS namespace to query Inventory V2 and
-	// is able to get response. As namespaces are datastore concepts, grpc knows nothing
-	// about them and they generally do not apply to all APIs.
-	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-	if err != nil {
-		return err
-	}
-	ctx = logging.SetLevel(ctx, logging.Info)
-	crosInventoryHost := config.Get(ctx).CrosInventoryHost
-	if crosInventoryHost == "" {
-		crosInventoryHost = "cros-lab-inventory.appspot.com"
-	}
-
-	logging.Infof(ctx, "Comparing inventory V2 with UFS before importing")
-	if err := compareInventoryV2(ctx, crosInventoryHost); err != nil {
-		logging.Warningf(ctx, "Fail to generate sync diff: %s", err.Error())
-	}
-	logging.Infof(ctx, "Finish exporting diff from Inventory V2 to UFS to Google Storage")
-
-	// UFS migration done, skip the import.
-	if config.Get(ctx).GetDisableInv2Sync() {
-		logging.Infof(ctx, "UFS migration done, skipping the InvV2 to UFS MachineLSE/DutState sync")
-		return nil
-	}
-	return importCrosInventory(ctx, crosInventoryHost)
 }
 
 func dumpCrosNetwork(ctx context.Context) (err error) {
