@@ -4,19 +4,27 @@
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
+from recipe_engine.recipe_api import Property
+
 DEPS = [
   'cloudbuildhelper',
   'recipe_engine/path',
+  'recipe_engine/properties',
 ]
 
 
-def RunSteps(api):
+PROPERTIES = {
+    'commit': Property(kind=bool, default=True),
+}
+
+
+def RunSteps(api, commit):
   def roll_cb(_):
     return api.cloudbuildhelper.RollCL(
         message='Title\n\nBody',
         cc=['a@cc.com', 'b@cc.com'],
         tbr=['a@tbr.com', 'b@tbr.com'],
-        commit=True)
+        commit=commit)
 
   api.cloudbuildhelper.do_roll(
       'https://repo.example.com', api.path['cache'].join('roll'), roll_cb)
@@ -27,5 +35,11 @@ def GenTests(api):
 
   yield (
       api.test('dirty') +
+      api.step_data('git diff', retcode=1)
+  )
+
+  yield (
+      api.test('no_commit') +
+      api.properties(commit=False) +
       api.step_data('git diff', retcode=1)
   )

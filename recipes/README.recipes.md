@@ -144,7 +144,7 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#526)(self, path, revision, commit_position=None):**
+&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#531)(self, path, revision, commit_position=None):**
 
 Computes `<number>-<revision>` string identifying a commit.
 
@@ -1251,11 +1251,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#130)(api):**
 ### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#9): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#13)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#21)(api, commit):**
 ### *recipes* / [cloudkms:examples/usage](/recipes/recipe_modules/cloudkms/examples/usage.py)
 
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#7): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]

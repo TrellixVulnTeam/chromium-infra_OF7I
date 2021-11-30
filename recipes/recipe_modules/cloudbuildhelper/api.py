@@ -493,8 +493,13 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       if diff_check.retcode == 0:  # pragma: no cover
         return None, None
 
-      # Upload a CL.
       self.m.git('commit', '-m', verdict.message)
+
+      # Skip uploading if in the dry run mode.
+      if not verdict.commit:
+        return None, None
+
+      # Upload as a CL.
       self.m.git_cl.upload(verdict.message, name='git cl upload', upload_args=[
           '--force',        # skip asking for description, we already set it
           '--bypass-hooks', # we may not have the full checkout
