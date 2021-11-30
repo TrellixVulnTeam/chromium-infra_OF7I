@@ -17,9 +17,6 @@ lucicfg.check_version("1.30.1", "Please update depot_tools")
 luci.recipe.defaults.cipd_version.set("refs/heads/main")
 luci.recipe.defaults.use_bbagent.set(True)
 
-# Enable LUCI Realms support.
-lucicfg.enable_experiment("crbug.com/1085650")
-
 # Enable v2 bucket names in LUCI Scheduler config.
 lucicfg.enable_experiment("crbug.com/1182002")
 
