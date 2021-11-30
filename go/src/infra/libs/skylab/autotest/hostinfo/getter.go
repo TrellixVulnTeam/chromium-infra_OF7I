@@ -11,14 +11,14 @@ import (
 	grpc "google.golang.org/grpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-
-	"infra/libs/skylab/inventory"
+	models "infra/unifiedfleet/api/v1/models"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
-// InventoryClient is a client that knows how to resolve a DUT hostname to information about the DUT.
-// Its prototypical implementation is inventoryclient.InventoryClientV2.
+// InventoryClient is a client that knows how to resolve a ChromeosDeviceDataRequest contains hostname
+// to ChromeOSDeviceData that contains information about the DUT V1.
 type InventoryClient interface {
-	GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error)
+	GetChromeOSDeviceData(context.Context, *ufsAPI.GetChromeOSDeviceDataRequest, ...grpc.CallOption) (*models.ChromeOSDeviceData, error)
 }
 
 // AdminClient is a client that knows how to respond to the GetStableVersion RPC call.
@@ -56,24 +56,22 @@ func (g *Getter) GetContentsForHostname(ctx context.Context, hostname string) (s
 	if g.ac == nil {
 		return "", fmt.Errorf("no Inventory client for stable version")
 	}
-
-	di, err := g.ic.GetDutInfo(ctx, hostname, true)
+	req := &ufsAPI.GetChromeOSDeviceDataRequest{}
+	req.Hostname = hostname
+	crosDeviceData, err := g.ic.GetChromeOSDeviceData(ctx, req)
 	if err != nil {
 		return "", err
 	}
-
+	di := crosDeviceData.GetDutV1()
 	hi := ConvertDut(di)
-
 	hi.StableVersions, err = g.GetStableVersionForHostname(ctx, hostname)
 	if err != nil {
 		return "", err
 	}
-
 	bytes, err := MarshalIndent(hi)
 	if err != nil {
 		return "", err
 	}
-
 	return string(bytes), nil
 }
 

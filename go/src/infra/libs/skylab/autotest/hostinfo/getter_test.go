@@ -14,6 +14,8 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/inventory"
+	models "infra/unifiedfleet/api/v1/models"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
 const fullResponse = `{
@@ -76,15 +78,13 @@ const fullResponse = `{
 
 type FakeGetDutInfo struct {
 	hostname string
-	response *inventory.DeviceUnderTest
+	response *models.ChromeOSDeviceData
 }
 
-func (f *FakeGetDutInfo) GetDutInfo(ctx context.Context, id string, byHostname bool) (*inventory.DeviceUnderTest, error) {
-	if !byHostname {
+// GetChromeOSDeviceData retrieves requested Chrome OS device data from the UFS and inventoryV2.
+func (f *FakeGetDutInfo) GetChromeOSDeviceData(ctx context.Context, req *ufsAPI.GetChromeOSDeviceDataRequest, opts ...grpc.CallOption) (*models.ChromeOSDeviceData, error) {
+	if req.Hostname == "" {
 		return nil, fmt.Errorf("by hostname not provided")
-	}
-	if id != f.hostname {
-		return nil, fmt.Errorf("bad hostname")
 	}
 	return f.response, nil
 }
@@ -129,131 +129,133 @@ func TestGetContentsForHostname(t *testing.T) {
 
 	g := NewGetter(
 		&FakeGetDutInfo{
-			hostname,
-			&inventory.DeviceUnderTest{
-				Common: &inventory.CommonDeviceSpecs{
-					Attributes: []*inventory.KeyValue{
-						{
-							Key:   s("HWID"),
-							Value: s("FAKE-HWID"),
-						},
-						{
-							Key:   s("powerunit_hostname"),
-							Value: s("FAKE-POWERUNIT-HOSTNAME"),
-						},
-						{
-							Key:   s("powerunit_outlet"),
-							Value: s("AA6"),
-						},
-						{
-							Key:   s("serial_number"),
-							Value: s("FAKE-SERIAL-NUMBER"),
-						},
-						{
-							Key:   s("servo_host"),
-							Value: s("FAKE-SERVO-HOST"),
-						},
-						{
-							Key:   s("servo_port"),
-							Value: s("FAKE-SERVO-PORT"),
-						},
-						{
-							Key:   s("servo_setup"),
-							Value: s("REGULAR"),
-						},
-						{
-							Key:   s("servo_serial"),
-							Value: s("FAKE-SERVO-SERIAL"),
-						},
-						{
-							Key:   s("servo_type"),
-							Value: s("servo_v4_with_ccd_cr50"),
-						},
-					},
-					Labels: &inventory.SchedulableLabels{
-						Arc:   b(true),
-						Board: s("FAKE-BOARD"),
-						Brand: nil,
-						Capabilities: &inventory.HardwareCapabilities{
-							Atrus:           nil,
-							Bluetooth:       b(true),
-							Carrier:         nil,
-							Fingerprint:     b(true),
-							GpuFamily:       nil,
-							Graphics:        nil,
-							InternalDisplay: b(true),
-							Power:           s("battery"),
-							Storage:         s("nvme"),
-							Touchpad:        b(true),
-							VideoAcceleration: []inventory.HardwareCapabilities_VideoAcceleration{
-								inventory.HardwareCapabilities_VIDEO_ACCELERATION_H264,
+			hostname: hostname,
+			response: &models.ChromeOSDeviceData{
+				DutV1: &inventory.DeviceUnderTest{
+					Common: &inventory.CommonDeviceSpecs{
+						Attributes: []*inventory.KeyValue{
+							{
+								Key:   s("HWID"),
+								Value: s("FAKE-HWID"),
+							},
+							{
+								Key:   s("powerunit_hostname"),
+								Value: s("FAKE-POWERUNIT-HOSTNAME"),
+							},
+							{
+								Key:   s("powerunit_outlet"),
+								Value: s("AA6"),
+							},
+							{
+								Key:   s("serial_number"),
+								Value: s("FAKE-SERIAL-NUMBER"),
+							},
+							{
+								Key:   s("servo_host"),
+								Value: s("FAKE-SERVO-HOST"),
+							},
+							{
+								Key:   s("servo_port"),
+								Value: s("FAKE-SERVO-PORT"),
+							},
+							{
+								Key:   s("servo_setup"),
+								Value: s("REGULAR"),
+							},
+							{
+								Key:   s("servo_serial"),
+								Value: s("FAKE-SERVO-SERIAL"),
+							},
+							{
+								Key:   s("servo_type"),
+								Value: s("servo_v4_with_ccd_cr50"),
 							},
 						},
-						Cr50Phase:   cr50(inventory.SchedulableLabels_CR50_PHASE_PREPVT),
-						Cr50RoKeyid: s("prod"),
-						CtsAbi: []inventory.SchedulableLabels_CTSABI{
-							inventory.SchedulableLabels_CTS_ABI_X86,
-						},
-						CtsCpu: []inventory.SchedulableLabels_CTSCPU{
-							inventory.SchedulableLabels_CTS_CPU_X86,
-						},
-						EcType: ectype(inventory.SchedulableLabels_EC_TYPE_CHROME_OS),
-						HwidComponent: []string{
-							"FAKE-BATTERY",
-							"FAKE-DISPLAY",
-						},
-						HwidSku: s("FAKE-SKU"),
-						Model:   s("FAKE-MODEL"),
-						Sku:     s("FAKE-DEVICE-SKU"),
-						OsType:  ostype(inventory.SchedulableLabels_OS_TYPE_CROS),
-						Peripherals: &inventory.Peripherals{
-							AudioBoard:          nil,
-							AudioBox:            nil,
-							AudioCable:          nil,
-							AudioLoopbackDongle: b(true),
-							Chameleon:           nil,
-							Conductive:          nil,
-							Huddly:              nil,
-							Mimo:                nil,
-							Servo:               b(true),
-							ServoComponent:      []string{"servo_v4", "ccd_cr50"},
-							ServoState:          peripheralState(inventory.PeripheralState_WORKING),
-							ServoType:           s("servo_v4_with_ccd_cr50"),
-							ServoTopology: &inventory.ServoTopology{
-								Main: &inventory.ServoTopologyItem{
-									Type:         s("servo_v4"),
-									SysfsProduct: s("Servo V4"),
-									Serial:       s("FAKE-SERVO-SERIAL"),
-									UsbHubPort:   s("FAKE-SERVO-USB-HUB-PORT"),
+						Labels: &inventory.SchedulableLabels{
+							Arc:   b(true),
+							Board: s("FAKE-BOARD"),
+							Brand: nil,
+							Capabilities: &inventory.HardwareCapabilities{
+								Atrus:           nil,
+								Bluetooth:       b(true),
+								Carrier:         nil,
+								Fingerprint:     b(true),
+								GpuFamily:       nil,
+								Graphics:        nil,
+								InternalDisplay: b(true),
+								Power:           s("battery"),
+								Storage:         s("nvme"),
+								Touchpad:        b(true),
+								VideoAcceleration: []inventory.HardwareCapabilities_VideoAcceleration{
+									inventory.HardwareCapabilities_VIDEO_ACCELERATION_H264,
 								},
-								Children: []*inventory.ServoTopologyItem{
-									{
-										Type:         s("ccd_cr50"),
-										SysfsProduct: s("Cr50"),
-										Serial:       s("FAKE-TOPOLOGY-ITEM"),
-										UsbHubPort:   s("FAKE-USB-HUB-PORT"),
+							},
+							Cr50Phase:   cr50(inventory.SchedulableLabels_CR50_PHASE_PREPVT),
+							Cr50RoKeyid: s("prod"),
+							CtsAbi: []inventory.SchedulableLabels_CTSABI{
+								inventory.SchedulableLabels_CTS_ABI_X86,
+							},
+							CtsCpu: []inventory.SchedulableLabels_CTSCPU{
+								inventory.SchedulableLabels_CTS_CPU_X86,
+							},
+							EcType: ectype(inventory.SchedulableLabels_EC_TYPE_CHROME_OS),
+							HwidComponent: []string{
+								"FAKE-BATTERY",
+								"FAKE-DISPLAY",
+							},
+							HwidSku: s("FAKE-SKU"),
+							Model:   s("FAKE-MODEL"),
+							Sku:     s("FAKE-DEVICE-SKU"),
+							OsType:  ostype(inventory.SchedulableLabels_OS_TYPE_CROS),
+							Peripherals: &inventory.Peripherals{
+								AudioBoard:          nil,
+								AudioBox:            nil,
+								AudioCable:          nil,
+								AudioLoopbackDongle: b(true),
+								Chameleon:           nil,
+								Conductive:          nil,
+								Huddly:              nil,
+								Mimo:                nil,
+								Servo:               b(true),
+								ServoComponent:      []string{"servo_v4", "ccd_cr50"},
+								ServoState:          peripheralState(inventory.PeripheralState_WORKING),
+								ServoType:           s("servo_v4_with_ccd_cr50"),
+								ServoTopology: &inventory.ServoTopology{
+									Main: &inventory.ServoTopologyItem{
+										Type:         s("servo_v4"),
+										SysfsProduct: s("Servo V4"),
+										Serial:       s("FAKE-SERVO-SERIAL"),
+										UsbHubPort:   s("FAKE-SERVO-USB-HUB-PORT"),
+									},
+									Children: []*inventory.ServoTopologyItem{
+										{
+											Type:         s("ccd_cr50"),
+											SysfsProduct: s("Cr50"),
+											Serial:       s("FAKE-TOPOLOGY-ITEM"),
+											UsbHubPort:   s("FAKE-USB-HUB-PORT"),
+										},
 									},
 								},
+								SmartUsbhub:     nil,
+								Camerabox:       nil,
+								Wificell:        nil,
+								Router_802_11Ax: nil,
+								StorageState:    hardwarestate(inventory.HardwareState_HARDWARE_NORMAL),
+								ServoUsbState:   hardwarestate(inventory.HardwareState_HARDWARE_NORMAL),
 							},
-							SmartUsbhub:     nil,
-							Camerabox:       nil,
-							Wificell:        nil,
-							Router_802_11Ax: nil,
-							StorageState:    hardwarestate(inventory.HardwareState_HARDWARE_NORMAL),
-							ServoUsbState:   hardwarestate(inventory.HardwareState_HARDWARE_NORMAL),
+							Phase:    phase(inventory.SchedulableLabels_PHASE_DVT),
+							Platform: s("FAKE-PLATFORM"),
+							SelfServePools: []string{
+								"faft-test",
+							},
+							TestCoverageHints: &inventory.TestCoverageHints{
+								ChaosDut: nil,
+							},
+							Variant: []string{
+								"FAKE-VARIANT",
+							},
+							WifiChip: s("FAKE-CHIP"),
 						},
-						Phase:    phase(inventory.SchedulableLabels_PHASE_DVT),
-						Platform: s("FAKE-PLATFORM"),
-						SelfServePools: []string{
-							"faft-test",
-						},
-						TestCoverageHints: &inventory.TestCoverageHints{
-							ChaosDut: nil,
-						},
-						Variant: []string{
-							"FAKE-VARIANT",
-						},
-						WifiChip: s("FAKE-CHIP"),
 					},
 				},
 			},

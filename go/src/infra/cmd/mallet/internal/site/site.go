@@ -101,12 +101,12 @@ var Dev = Environment{
 	SwarmingService:    "https://chromium-swarm-dev.appspot.com/",
 	LogDogHost:         "luci-logdog-dev.appspot.com",
 	InventoryService:   "cros-lab-inventory-dev.appspot.com",
-	AdminService:       "skylab-staging-bot-fleet.appspot.com",
+	AdminService:       "chromeos-skylab-bot-fleet.appspot.com",
 	QueenService:       "drone-queen-dev.appspot.com",
 	QueenDroneHostname: "drone-queen-ENVIRONMENT_STAGING",
 	ServiceAccount:     "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 
-	UFSService: "staging.ufs.api.cr.dev",
+	UFSService: "ufs.api.cr.dev",
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.

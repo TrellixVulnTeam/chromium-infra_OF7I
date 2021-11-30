@@ -22,7 +22,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/autotest/hostinfo"
-	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -93,7 +93,7 @@ func (c *repair) innerRun(a subcommands.Application, args []string, env subcomma
 			hostnames:        args,
 			controlDir:       "/tr",
 			adminService:     e.AdminService,
-			inventoryService: e.InventoryService,
+			inventoryService: e.UFSService,
 			autoservDir:      c.autoservDir,
 			jobname:          c.jobname,
 		},
@@ -166,13 +166,13 @@ func doRepair(ctx context.Context, r repairParams) error {
 		},
 	)
 
-	invC := inventoryclient.NewInventoryClient(
-		r.hc,
-		r.inventoryService,
-		nil,
-	)
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       r.hc,
+		Host:    r.inventoryService,
+		Options: site.UFSPRPCOptions,
+	})
 
-	g := hostinfo.NewGetter(invC, invWithSVClient)
+	g := hostinfo.NewGetter(ic, invWithSVClient)
 	hiContents, err := g.GetContentsForHostname(ctx, hostname)
 	if err != nil {
 		return err

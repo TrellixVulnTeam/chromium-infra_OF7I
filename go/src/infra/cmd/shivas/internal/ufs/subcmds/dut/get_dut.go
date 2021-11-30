@@ -7,7 +7,6 @@ package dut
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
@@ -18,7 +17,6 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/autotest/hostinfo"
-	inventoryclient "infra/libs/skylab/inventory/inventoryclient"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/internal/ufs/subcmds/host"
@@ -121,7 +119,14 @@ func (c *getDut) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	if c.wantHostInfoStore {
-		return c.getHostInfoStore(ctx, hc, e.InventoryService, e.AdminService, args)
+		invWithSVClient := fleet.NewInventoryPRPCClient(
+			&prpc.Client{
+				C:       hc,
+				Host:    e.AdminService,
+				Options: site.DefaultPRPCOptions,
+			},
+		)
+		return c.getHostInfoStore(ctx, invWithSVClient, ic, args)
 	}
 
 	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
@@ -139,22 +144,9 @@ func (c *getDut) innerRun(a subcommands.Application, args []string, env subcomma
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getDut) getHostInfoStore(ctx context.Context, hc *http.Client, inventoryService string, adminService string, hostnames []string) error {
-	invWithSVClient := fleet.NewInventoryPRPCClient(
-		&prpc.Client{
-			C:       hc,
-			Host:    adminService,
-			Options: site.DefaultPRPCOptions,
-		},
-	)
-
-	invC := inventoryclient.NewInventoryClient(
-		hc,
-		inventoryService,
-		nil,
-	)
-
-	g := hostinfo.NewGetter(invC, invWithSVClient)
+// getHostInfoStore gets the host-info-store file content from the ufsAPT.FleetClient and print it out.
+func (c *getDut) getHostInfoStore(ctx context.Context, invWithSVClient fleet.InventoryClient, ic ufsAPI.FleetClient, hostnames []string) error {
+	g := hostinfo.NewGetter(ic, invWithSVClient)
 	for _, hostname := range hostnames {
 		contents, err := g.GetContentsForHostname(ctx, hostname)
 		if err != nil {
