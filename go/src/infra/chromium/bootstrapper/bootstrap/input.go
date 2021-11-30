@@ -82,7 +82,7 @@ func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 	}
 
 	if o.PropertiesOptional {
-		if _, ok := propsToParse["$bootstrap/properties"]; ok {
+		if _, ok := properties.Fields["$bootstrap/properties"]; ok {
 			addPropsProperties()
 		}
 	}

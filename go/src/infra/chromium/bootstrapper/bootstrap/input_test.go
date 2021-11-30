@@ -144,14 +144,34 @@ func TestInput(t *testing.T) {
 				So(build.Input.Properties.Fields, ShouldContainKey, "$bootstrap/exe")
 			})
 
-			Convey("with $bootstrap/properties if PropertiesOptional is set", func() {
+			Convey("without $bootstrap/properties if PropertiesOptional is set", func() {
 				opts := InputOptions{PropertiesOptional: true}
 				delete(build.Input.Properties.Fields, "$bootstrap/properties")
 
 				input, err := opts.NewInput(build)
+
 				So(err, ShouldBeNil)
 				So(input.propertiesOptional, ShouldBeTrue)
 				So(input.propsProperties, ShouldBeNil)
+			})
+
+			Convey("with $bootstrap/properties if PropertiesOptional is set", func() {
+				opts := InputOptions{PropertiesOptional: true}
+
+				input, err := opts.NewInput(build)
+
+				So(err, ShouldBeNil)
+				So(input.propertiesOptional, ShouldBeTrue)
+				So(input.propsProperties, ShouldResembleProtoJSON, `{
+					"top_level_project": {
+						"repo": {
+							"host": "chromium.googlesource.com",
+							"project": "top/level"
+						},
+						"ref": "refs/heads/top-level"
+					},
+					"properties_file": "infra/config/fake-bucket/fake-builder/properties.textpb"
+				}`)
 			})
 
 			Convey("with commit set if build has commit", func() {
