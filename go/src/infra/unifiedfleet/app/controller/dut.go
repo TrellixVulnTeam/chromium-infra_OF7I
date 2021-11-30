@@ -764,6 +764,8 @@ func processUpdateMachineLSEServoMask(oldServo, newServo *chromeosLab.Servo, pat
 		oldServo.ServoSerial = newServo.GetServoSerial()
 	case "dut.servo.type":
 		oldServo.ServoType = newServo.GetServoType()
+	case "dut.servo.setup":
+		oldServo.ServoSetup = newServo.GetServoSetup()
 	case "dut.servo.topology":
 		oldServo.ServoTopology = newServo.GetServoTopology()
 	case "dut.servo.fwchannel":

@@ -2572,6 +2572,37 @@ func TestUpdateDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 		})
+		Convey("UpdateDUT - Change servo type", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-108",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "test",
+						Model:       "test",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			dut1 := mockDUT("dut-42", "machine-108", "host-x", "serial-x", "dut-42-power-1", ".A1", 9988, nil, "docker-1")
+			_, err = inventory.CreateMachineLSE(ctx, dut1)
+			So(err, ShouldBeNil)
+			// Update the servo setup type
+			dut1.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo().ServoSetup = chromeosLab.ServoSetupType_SERVO_SETUP_DUAL_V4
+			_, err = UpdateDUT(ctx, dut1, mockFieldMask("dut.servo.setup"))
+			So(err, ShouldBeNil)
+			// Check the servo changes were recorded.
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/dut-42")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			// Verify that the changes were recorded by the history.
+			So(changes[0].OldValue, ShouldEqual, "SERVO_SETUP_REGULAR")
+			So(changes[0].NewValue, ShouldEqual, "SERVO_SETUP_DUAL_V4")
+			// One snapshot at registration
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/dut-42")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+		})
 	})
 }
 

@@ -859,7 +859,7 @@ func generateServoWithMask(servo, servoSetup, servoSerial, servoFwChannel, servo
 
 	if servoSetup != "" {
 		paths = append(paths, servoSetupPath)
-		sst := chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[appendServoSetupPrefix(servoSetup)])
+		sst := chromeosLab.ServoSetupType(chromeosLab.ServoSetupType_value[servoSetup])
 		newServo.ServoSetup = sst
 	}
 
