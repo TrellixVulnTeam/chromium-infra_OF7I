@@ -11,7 +11,7 @@
 
 # TODO: Move to native cipd gclient support:
 /cipd/*
-!/cipd/README.md
+!/cipd/README.infra.md
 
 # Used by "infra/tools/dockerbuild".
 .dockerbuild
