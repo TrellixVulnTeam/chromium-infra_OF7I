@@ -17,7 +17,7 @@ var Backfill = &subcommands.Command{
 	ShortDesc: `backfill a swarming task`,
 	LongDesc:  `Take a swarming task ID and backfill its device health profile.`,
 	CommandRun: func() subcommands.CommandRun {
-		r := &checkServerRun{}
+		r := &backfillRun{}
 		r.authFlags.Register(&r.Flags, site.DefaultAuthOptions)
 		// TODO(gregorynisbet): add envFlags
 		return r
