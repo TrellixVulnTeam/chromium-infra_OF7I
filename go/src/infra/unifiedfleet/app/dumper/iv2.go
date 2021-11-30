@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -12,19 +11,15 @@ import (
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	invlab "go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/grpc/prpc"
-	"go.chromium.org/luci/server/auth"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	invapibq "infra/appengine/cros/lab_inventory/api/bigquery"
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	invufs "infra/appengine/cros/lab_inventory/app/external/ufs"
 	invbqlib "infra/cros/lab_inventory/bq"
 	iv2ds "infra/cros/lab_inventory/datastore"
@@ -53,128 +48,6 @@ var assetCmpIgnoreFields = []protoreflect.Name{
 	protoreflect.Name("update_time"),
 	// Don't care about info, We can update it from HaRT directly
 	protoreflect.Name("info"),
-}
-
-// SyncAssetsFromIV2 updates assets table in UFS using data from IV2
-func SyncAssetsFromIV2(ctx context.Context) error {
-	// UFS migration done, skip this job.
-	if config.Get(ctx).GetDisableInv2Sync() {
-		logging.Infof(ctx, "UFS migration done, skipping the InvV2 to UFS Assets sync")
-		return nil
-	}
-	logging.Infof(ctx, "SyncAssetsFromIV2: InvV2 to UFS Assets sync")
-	ut := ptypes.TimestampNow()
-	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
-	client, err := datastore.NewClient(ctx, host)
-	if err != nil {
-		return err
-	}
-	// BQ Client to get asset tag to hostname mapping
-	bqClient := ctx.Value(contextKey).(*bigquery.Client)
-
-	assets, err := GetAllAssets(ctx, client)
-	if err != nil {
-		return err
-	}
-	assetInfos, err := GetAllAssetInfo(ctx, client)
-	if err != nil {
-		return err
-	}
-	assetsToHostname, err := GetAssetToHostnameMap(ctx, bqClient)
-	if err != nil {
-		logging.Warningf(ctx, "Unable to get hostnames [%v], will"+
-			"continue sync ignoring hostnames", err)
-	}
-
-	// In UFS write to 'os' namespace
-	ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-	if err != nil {
-		return err
-	}
-
-	// Add all assets from inventory V2's asset table
-	assetsToUpdate := make([]*ufspb.Asset, 0, len(assets))
-	for _, asset := range assets {
-		var iv2Asset *ufspb.Asset
-		ufsAsset, err := registration.GetAsset(ctx, asset.GetId())
-		iv2Asset, convErr := createAssetsFromChopsAsset(asset, assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
-		if convErr != nil {
-			logging.Warningf(ctx, "Unable to create asset %v: %v", asset, convErr)
-			continue
-		}
-		if err != nil {
-			// Create rack when creating assets if rack is missing
-			if err := checkRackExists(ctx, iv2Asset.GetLocation().GetRack()); err != nil {
-				if err := registerRacksForAsset(ctx, iv2Asset); err != nil {
-					logging.Warningf(ctx, "Unable to create rack %s (asset %s): %s", iv2Asset.GetLocation().GetRack(), iv2Asset.GetName(), err.Error())
-					continue
-				}
-			}
-			iv2Asset.UpdateTime = ut
-			_, err := controller.AssetRegistration(ctx, iv2Asset)
-			if err != nil {
-				logging.Warningf(ctx, "Failed to register asset %v: %v", asset, err)
-			}
-			continue
-		}
-		if !Cmp(iv2Asset, ufsAsset) {
-			// Avoid updating assetinfo from IV2. It will be updated directly
-			iv2Asset.Info = ufsAsset.Info
-			iv2Asset.UpdateTime = ut
-			assetsToUpdate = append(assetsToUpdate, iv2Asset)
-		}
-	}
-	logging.Infof(ctx, "Updating: %v", assetsToUpdate)
-	_, err = registration.BatchUpdateAssets(ctx, assetsToUpdate)
-	if err != nil {
-		return err
-	}
-
-	// Reference all assets based on inventory V2's device (lab config) table
-	return updateAssetsFromInventoryV2(ctx)
-}
-
-func updateAssetsFromInventoryV2(ctx context.Context) error {
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
-	if err != nil {
-		return err
-	}
-	inv2Client := invV2Api.NewInventoryPRPCClient(&prpc.Client{
-		C:    &http.Client{Transport: t},
-		Host: config.Get(ctx).CrosInventoryHost,
-	})
-	resp, err := inv2Client.ListCrosDevicesLabConfig(ctx, &invV2Api.ListCrosDevicesLabConfigRequest{})
-	if err != nil {
-		return err
-	}
-
-	assets, err := registration.GetAllAssets(ctx)
-	if err != nil {
-		return err
-	}
-	existingAssetMap := make(map[string]*ufspb.Asset, 0)
-	for _, a := range assets {
-		existingAssetMap[a.GetName()] = a
-	}
-	assetsToUpdate := util.ToOSAssets(resp.GetLabConfigs(), existingAssetMap)
-
-	logging.Infof(ctx, "UFS already contains %d assets", len(assets))
-	logging.Infof(ctx, "Inventory V2 contains %d machines", len(resp.GetLabConfigs()))
-	logging.Infof(ctx, "Updating %d assets based on inventory", len(assetsToUpdate))
-
-	pageSize := 500
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(assetsToUpdate))
-		_, err = registration.BatchUpdateAssets(ctx, assetsToUpdate[i:end])
-		if err != nil {
-			return err
-		}
-		if i+pageSize >= len(assetsToUpdate) {
-			break
-		}
-	}
-	logging.Infof(ctx, "Successfully updated %d assets", len(assetsToUpdate))
-	return nil
 }
 
 func checkRackExists(ctx context.Context, rack string) error {

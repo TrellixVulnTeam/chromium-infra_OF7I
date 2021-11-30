@@ -58,13 +58,6 @@ var Jobs = []*cron.CronTab{
 		Job:      SyncAssetInfoFromHaRT,
 	},
 	{
-		// Sync assets from IV2
-		Name:     "ufs.sync_assets.sync",
-		Time:     5 * time.Minute,
-		TrigType: cron.HOURLY,
-		Job:      SyncAssetsFromIV2,
-	},
-	{
 		// Push changes to dron queen
 		Name:     "ufs.push_to_drone_queen",
 		Time:     10 * time.Minute,
