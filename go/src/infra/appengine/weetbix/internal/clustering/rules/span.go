@@ -28,6 +28,14 @@ var Identifiers = []string{"test", "reason"}
 // RuleIDRe matches validly formed rule IDs.
 var RuleIDRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
+// UserRe matches valid users. These are email addresses or the special
+// value "weetbix".
+var UserRe = regexp.MustCompile(`^weetbix|([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)$`)
+
+// WeetbixSystem is the special user that identifies changes made by the
+// Weetbix system itself in audit fields.
+const WeetbixSystem = "weetbix"
+
 // StartingEpoch is the rule version used for projects that have no rules
 // (even inactive rules). It is deliberately different from the timestamp
 // zero value to be discernible from "timestamp not populated" programming
@@ -48,8 +56,12 @@ type FailureAssociationRule struct {
 	RuleDefinition string `json:"ruleDefinition"`
 	// The time the rule was created. Output only.
 	CreationTime time.Time `json:"creationTime"`
+	// The user which created the rule. Output only.
+	CreationUser string `json:"creationUser"`
 	// The time the rule was last updated. Output only.
 	LastUpdated time.Time `json:"lastUpdated"`
+	// The user which last updated the rule. Output only.
+	LastUpdatedUser string `json:"lastUpdatedUser"`
 	// Bug is the identifier of the bug that the failures are
 	// associated with.
 	Bug bugs.BugID `json:"bug"`
@@ -63,12 +75,28 @@ type FailureAssociationRule struct {
 	SourceCluster clustering.ClusterID `json:"sourceCluster"`
 }
 
+// Read reads the failure association rule with the given rule ID.
+func Read(ctx context.Context, project string, id string) (*FailureAssociationRule, error) {
+	whereClause := `RuleId = @ruleId`
+	params := map[string]interface{}{
+		"ruleId": id,
+	}
+	rs, err := readWhere(ctx, project, whereClause, params)
+	if err != nil {
+		return nil, errors.Annotate(err, "query rule by id").Err()
+	}
+	if len(rs) == 0 {
+		return nil, errors.New("no matching rule exists")
+	}
+	return rs[0], nil
+}
+
 // ReadActive reads all active Weetbix failure association rules in the given LUCI project.
 func ReadActive(ctx context.Context, projectID string) ([]*FailureAssociationRule, error) {
 	whereClause := `IsActive`
 	rs, err := readWhere(ctx, projectID, whereClause, nil)
 	if err != nil {
-		return nil, errors.Annotate(err, "query rules since").Err()
+		return nil, errors.Annotate(err, "query active rules").Err()
 	}
 	return rs, nil
 }
@@ -96,6 +124,7 @@ func readWhere(ctx context.Context, projectID string, whereClause string, params
 	stmt := spanner.NewStatement(`
 		SELECT RuleId, RuleDefinition, BugSystem, BugId,
 		  CreationTime, LastUpdated,
+		  CreationUser, LastUpdatedUser,
 		  IsActive,
 		  SourceClusterAlgorithm, SourceClusterId
 		FROM FailureAssociationRules
@@ -113,11 +142,13 @@ func readWhere(ctx context.Context, projectID string, whereClause string, params
 	err := it.Do(func(r *spanner.Row) error {
 		var ruleID, ruleDefinition, bugSystem, bugID string
 		var creationTime, lastUpdated time.Time
+		var creationUser, lastUpdatedUser string
 		var isActive spanner.NullBool
 		var sourceClusterAlgorithm, sourceClusterID string
 		err := r.Columns(
 			&ruleID, &ruleDefinition, &bugSystem, &bugID,
 			&creationTime, &lastUpdated,
+			&creationUser, &lastUpdatedUser,
 			&isActive,
 			&sourceClusterAlgorithm, &sourceClusterID,
 		)
@@ -126,13 +157,15 @@ func readWhere(ctx context.Context, projectID string, whereClause string, params
 		}
 
 		rule := &FailureAssociationRule{
-			Project:        projectID,
-			RuleID:         ruleID,
-			RuleDefinition: ruleDefinition,
-			CreationTime:   creationTime,
-			LastUpdated:    lastUpdated,
-			Bug:            bugs.BugID{System: bugSystem, ID: bugID},
-			IsActive:       isActive.Valid && isActive.Bool,
+			Project:         projectID,
+			RuleID:          ruleID,
+			RuleDefinition:  ruleDefinition,
+			CreationTime:    creationTime,
+			CreationUser:    creationUser,
+			LastUpdated:     lastUpdated,
+			LastUpdatedUser: lastUpdatedUser,
+			Bug:             bugs.BugID{System: bugSystem, ID: bugID},
+			IsActive:        isActive.Valid && isActive.Bool,
 			SourceCluster: clustering.ClusterID{
 				Algorithm: sourceClusterAlgorithm,
 				ID:        sourceClusterID,
@@ -184,18 +217,49 @@ func ReadLastUpdated(ctx context.Context, projectID string) (time.Time, error) {
 }
 
 // Create inserts a new failure association rule with the specified details.
-func Create(ctx context.Context, r *FailureAssociationRule) error {
+func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 	if err := validateRule(r); err != nil {
 		return err
 	}
+	if err := validateUser(user); err != nil {
+		return err
+	}
 	ms := spanutil.InsertMap("FailureAssociationRules", map[string]interface{}{
-		"Project":        r.Project,
-		"RuleId":         r.RuleID,
-		"RuleDefinition": r.RuleDefinition,
-		"CreationTime":   spanner.CommitTimestamp,
-		"LastUpdated":    spanner.CommitTimestamp,
-		"BugSystem":      r.Bug.System,
-		"BugID":          r.Bug.ID,
+		"Project":         r.Project,
+		"RuleId":          r.RuleID,
+		"RuleDefinition":  r.RuleDefinition,
+		"CreationTime":    spanner.CommitTimestamp,
+		"CreationUser":    user,
+		"LastUpdated":     spanner.CommitTimestamp,
+		"LastUpdatedUser": user,
+		"BugSystem":       r.Bug.System,
+		"BugId":           r.Bug.ID,
+		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
+		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
+		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
+		"SourceClusterId":        r.SourceCluster.ID,
+	})
+	span.BufferWrite(ctx, ms)
+	return nil
+}
+
+// Update updates an existing failure association rule to have the specified
+// details.
+func Update(ctx context.Context, r *FailureAssociationRule, user string) error {
+	if err := validateRule(r); err != nil {
+		return err
+	}
+	if err := validateUser(user); err != nil {
+		return err
+	}
+	ms := spanutil.UpdateMap("FailureAssociationRules", map[string]interface{}{
+		"Project":         r.Project,
+		"RuleId":          r.RuleID,
+		"RuleDefinition":  r.RuleDefinition,
+		"LastUpdated":     spanner.CommitTimestamp,
+		"LastUpdatedUser": user,
+		"BugSystem":       r.Bug.System,
+		"BugId":           r.Bug.ID,
 		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
@@ -219,6 +283,13 @@ func validateRule(r *FailureAssociationRule) error {
 	_, err := lang.Parse(r.RuleDefinition, Identifiers...)
 	if err != nil {
 		return errors.Annotate(err, "rule definition is not valid").Err()
+	}
+	return nil
+}
+
+func validateUser(u string) error {
+	if !UserRe.MatchString(u) {
+		return errors.New("user must be valid")
 	}
 	return nil
 }

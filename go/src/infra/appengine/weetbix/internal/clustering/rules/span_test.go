@@ -11,6 +11,7 @@ import (
 
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -21,6 +22,15 @@ import (
 func TestSpan(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
+		Convey(`Read`, func() {
+			expectedRule := NewRule(100).Build()
+			err := SetRulesForTesting(ctx, []*FailureAssociationRule{expectedRule})
+			So(err, ShouldBeNil)
+
+			rule, err := Read(span.Single(ctx), testProject, expectedRule.RuleID)
+			So(err, ShouldBeNil)
+			So(rule, ShouldResemble, expectedRule)
+		})
 		Convey(`ReadActive`, func() {
 			Convey(`Empty`, func() {
 				SetRulesForTesting(ctx, nil)
@@ -116,13 +126,16 @@ func TestSpan(t *testing.T) {
 			})
 		})
 		Convey(`Create`, func() {
-			testCreate := func(bc *FailureAssociationRule) error {
+			testCreate := func(bc *FailureAssociationRule, user string) error {
 				_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-					return Create(ctx, bc)
+					return Create(ctx, bc, user)
 				})
 				return err
 			}
 			r := NewRule(100).Build()
+			r.CreationUser = WeetbixSystem
+			r.LastUpdatedUser = WeetbixSystem
+
 			Convey(`Valid`, func() {
 				testExists := func(expectedRule *FailureAssociationRule) {
 					txn, cancel := span.ReadOnlyTransaction(ctx)
@@ -146,7 +159,7 @@ func TestSpan(t *testing.T) {
 				Convey(`With Source Cluster`, func() {
 					So(r.SourceCluster.Algorithm, ShouldNotBeEmpty)
 					So(r.SourceCluster.ID, ShouldNotBeNil)
-					err := testCreate(r)
+					err := testCreate(r, WeetbixSystem)
 					So(err, ShouldBeNil)
 
 					testExists(r)
@@ -154,7 +167,9 @@ func TestSpan(t *testing.T) {
 				Convey(`Without Source Cluster`, func() {
 					// E.g. in case of a manually created rule.
 					r.SourceCluster = clustering.ClusterID{}
-					err := testCreate(r)
+					r.CreationUser = "user@google.com"
+					r.LastUpdatedUser = "user@google.com"
+					err := testCreate(r, "user@google.com")
 					So(err, ShouldBeNil)
 
 					testExists(r)
@@ -163,30 +178,88 @@ func TestSpan(t *testing.T) {
 			Convey(`With invalid Project`, func() {
 				Convey(`Missing`, func() {
 					r.Project = ""
-					err := testCreate(r)
+					err := testCreate(r, WeetbixSystem)
 					So(err, ShouldErrLike, "project must be valid")
 				})
 				Convey(`Invalid`, func() {
 					r.Project = "!"
-					err := testCreate(r)
+					err := testCreate(r, WeetbixSystem)
 					So(err, ShouldErrLike, "project must be valid")
 				})
 			})
 			Convey(`With invalid Rule Definition`, func() {
 				r.RuleDefinition = "invalid"
-				err := testCreate(r)
+				err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "rule definition is not valid")
 			})
 			Convey(`With invalid Bug`, func() {
 				r.Bug.System = ""
-				err := testCreate(r)
+				err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "bug is not valid")
 			})
 			Convey(`With invalid Source Cluster`, func() {
 				So(r.SourceCluster.ID, ShouldNotBeNil)
 				r.SourceCluster.Algorithm = ""
-				err := testCreate(r)
+				err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "source cluster ID is not valid")
+			})
+			Convey(`With invalid User`, func() {
+				err := testCreate(r, "")
+				So(err, ShouldErrLike, "user must be valid")
+			})
+		})
+		Convey(`Update`, func() {
+			testExists := func(expectedRule *FailureAssociationRule) {
+				txn, cancel := span.ReadOnlyTransaction(ctx)
+				defer cancel()
+				rule, err := Read(txn, expectedRule.Project, expectedRule.RuleID)
+				So(err, ShouldBeNil)
+				So(rule, ShouldResemble, expectedRule)
+			}
+			testUpdate := func(bc *FailureAssociationRule, user string) (time.Time, error) {
+				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+					return Update(ctx, bc, user)
+				})
+				return commitTime.In(time.UTC), err
+			}
+			r := NewRule(100).Build()
+			err := SetRulesForTesting(ctx, []*FailureAssociationRule{r})
+			So(err, ShouldBeNil)
+
+			Convey(`Valid`, func() {
+				r.RuleDefinition = `test = "UpdateTest"`
+				r.Bug = bugs.BugID{System: "monorail", ID: "chromium/651234"}
+				r.IsActive = false
+				r.SourceCluster = clustering.ClusterID{Algorithm: "testname-v1", ID: "00112233445566778899aabbccddeeff"}
+				commitTime, err := testUpdate(r, "testuser@google.com")
+				So(err, ShouldBeNil)
+
+				expectedRule := *r
+				expectedRule.LastUpdated = commitTime
+				expectedRule.LastUpdatedUser = "testuser@google.com"
+				testExists(&expectedRule)
+			})
+			Convey(`Invalid`, func() {
+				Convey(`With invalid User`, func() {
+					_, err := testUpdate(r, "")
+					So(err, ShouldErrLike, "user must be valid")
+				})
+				Convey(`With invalid Rule Definition`, func() {
+					r.RuleDefinition = "invalid"
+					_, err := testUpdate(r, WeetbixSystem)
+					So(err, ShouldErrLike, "rule definition is not valid")
+				})
+				Convey(`With invalid Bug`, func() {
+					r.Bug.System = ""
+					_, err := testUpdate(r, WeetbixSystem)
+					So(err, ShouldErrLike, "bug is not valid")
+				})
+				Convey(`With invalid Source Cluster`, func() {
+					So(r.SourceCluster.ID, ShouldNotBeNil)
+					r.SourceCluster.Algorithm = ""
+					_, err := testUpdate(r, WeetbixSystem)
+					So(err, ShouldErrLike, "source cluster ID is not valid")
+				})
 			})
 		})
 	})

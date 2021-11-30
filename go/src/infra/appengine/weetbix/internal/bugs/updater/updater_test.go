@@ -137,11 +137,13 @@ func TestRun(t *testing.T) {
 				rule := cleanedRules[0]
 
 				expected := &rules.FailureAssociationRule{
-					Project:        "chromium",
-					RuleDefinition: `reason LIKE "Failed to connect to %.%.%.%."`,
-					Bug:            bugs.BugID{System: "monorail", ID: "chromium/100"},
-					IsActive:       true,
-					SourceCluster:  sourceClusterID,
+					Project:         "chromium",
+					RuleDefinition:  `reason LIKE "Failed to connect to %.%.%.%."`,
+					Bug:             bugs.BugID{System: "monorail", ID: "chromium/100"},
+					IsActive:        true,
+					SourceCluster:   sourceClusterID,
+					CreationUser:    rules.WeetbixSystem,
+					LastUpdatedUser: rules.WeetbixSystem,
 				}
 
 				// Accept whatever bug cluster ID has been generated.
@@ -273,25 +275,31 @@ func TestRun(t *testing.T) {
 
 				So(rs, ShouldResemble, []*rules.FailureAssociationRule{
 					{
-						Project:        "chromium",
-						RuleDefinition: `test = "testname-1"`,
-						Bug:            bugs.BugID{System: "monorail", ID: "chromium/100"},
-						SourceCluster:  testIDClusterID("testname-1"),
-						IsActive:       true,
+						Project:         "chromium",
+						RuleDefinition:  `test = "testname-1"`,
+						Bug:             bugs.BugID{System: "monorail", ID: "chromium/100"},
+						SourceCluster:   testIDClusterID("testname-1"),
+						IsActive:        true,
+						CreationUser:    rules.WeetbixSystem,
+						LastUpdatedUser: rules.WeetbixSystem,
 					},
 					{
-						Project:        "chromium",
-						RuleDefinition: `test = "testname-2"`,
-						Bug:            bugs.BugID{System: "monorail", ID: "chromium/101"},
-						SourceCluster:  testIDClusterID("testname-2"),
-						IsActive:       true,
+						Project:         "chromium",
+						RuleDefinition:  `test = "testname-2"`,
+						Bug:             bugs.BugID{System: "monorail", ID: "chromium/101"},
+						SourceCluster:   testIDClusterID("testname-2"),
+						IsActive:        true,
+						CreationUser:    rules.WeetbixSystem,
+						LastUpdatedUser: rules.WeetbixSystem,
 					},
 					{
-						Project:        "chromium",
-						RuleDefinition: `test = "testname-3"`,
-						Bug:            bugs.BugID{System: "monorail", ID: "chromium/102"},
-						SourceCluster:  testIDClusterID("testname-3"),
-						IsActive:       true,
+						Project:         "chromium",
+						RuleDefinition:  `test = "testname-3"`,
+						Bug:             bugs.BugID{System: "monorail", ID: "chromium/102"},
+						SourceCluster:   testIDClusterID("testname-3"),
+						IsActive:        true,
+						CreationUser:    rules.WeetbixSystem,
+						LastUpdatedUser: rules.WeetbixSystem,
 					},
 				})
 				So(len(f.Issues), ShouldEqual, 3)

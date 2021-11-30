@@ -272,7 +272,8 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		SourceCluster:  cs.ClusterID,
 	}
 	create := func(ctx context.Context) error {
-		return rules.Create(ctx, r)
+		user := rules.WeetbixSystem
+		return rules.Create(ctx, r, user)
 	}
 	if _, err := span.ReadWriteTransaction(ctx, create); err != nil {
 		return false, errors.Annotate(err, "create bug cluster").Err()

@@ -90,14 +90,16 @@ func (b *RuleBuilder) WithSourceCluster(value clustering.ClusterID) *RuleBuilder
 func (b *RuleBuilder) Build() *FailureAssociationRule {
 	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", b.uniqifier)))
 	return &FailureAssociationRule{
-		Project:        b.project,
-		RuleID:         hex.EncodeToString(ruleIDBytes[0:16]),
-		RuleDefinition: b.definition,
-		Bug:            bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", b.uniqifier)},
-		IsActive:       b.active,
-		CreationTime:   b.creationTime,
-		LastUpdated:    b.lastUpdated,
-		SourceCluster:  b.sourceCluster,
+		Project:         b.project,
+		RuleID:          hex.EncodeToString(ruleIDBytes[0:16]),
+		RuleDefinition:  b.definition,
+		Bug:             bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", b.uniqifier)},
+		IsActive:        b.active,
+		CreationTime:    b.creationTime,
+		CreationUser:    WeetbixSystem,
+		LastUpdated:     b.lastUpdated,
+		LastUpdatedUser: "user@google.com",
+		SourceCluster:   b.sourceCluster,
 	}
 }
 
@@ -109,13 +111,15 @@ func SetRulesForTesting(ctx context.Context, rs []*FailureAssociationRule) error
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		for _, r := range rs {
 			ms := spanutil.InsertMap("FailureAssociationRules", map[string]interface{}{
-				"Project":        r.Project,
-				"RuleId":         r.RuleID,
-				"RuleDefinition": r.RuleDefinition,
-				"CreationTime":   r.CreationTime,
-				"LastUpdated":    r.LastUpdated,
-				"BugSystem":      r.Bug.System,
-				"BugID":          r.Bug.ID,
+				"Project":         r.Project,
+				"RuleId":          r.RuleID,
+				"RuleDefinition":  r.RuleDefinition,
+				"CreationTime":    r.CreationTime,
+				"CreationUser":    r.CreationUser,
+				"LastUpdated":     r.LastUpdated,
+				"LastUpdatedUser": r.LastUpdatedUser,
+				"BugSystem":       r.Bug.System,
+				"BugID":           r.Bug.ID,
 				// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 				"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 				"SourceClusterAlgorithm": r.SourceCluster.Algorithm,

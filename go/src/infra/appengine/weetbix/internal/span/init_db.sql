@@ -164,8 +164,18 @@ CREATE TABLE FailureAssociationRules (
   RuleDefinition STRING(4096) NOT NULL,
   -- The time the rule was created.
   CreationTime TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+  -- The user which created the rule. If this was auto-filed by Weetbix
+  -- itself, this is the special value 'weetbix'. Otherwise, it is
+  -- an email address.
+  -- 320 is the maximum length of an email address (64 for local part,
+  -- 1 for the '@', and 255 for the domain part).
+  CreationUser STRING(320) NOT NULL,
   -- The last time the rule was updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+  -- The user which last updated this rule. If this was Weetbix itself,
+  -- (e.g. in case of an auto-filed bug which was created and never
+  -- modified) this is 'weetbix'. Otherwise, it is an email address.
+  LastUpdatedUser STRING(320) NOT NULL,
   -- The bug the failures are associated with (part 1). This is the
   -- bug tracking system containing the bug the failures are associated
   -- with. The only supported values are 'monorail' and 'buganizer'.
