@@ -9,7 +9,7 @@
 infra/3pp/tools/protoc/${platform} version:2@3.17.3
 
 # Node.js deployment.
-infra/3pp/tools/nodejs/mac-amd64 version:2@17.2.0
+infra/nodejs/nodejs/mac-amd64   node_version:12.13.0
 
 # LogDog tool.
 infra/tools/luci/logdog/logdog/mac-amd64  git_revision:5cf65fdf804a9b3f3023f79d5b3cab2a88ccd09e
