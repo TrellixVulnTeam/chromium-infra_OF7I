@@ -109,6 +109,7 @@ var defaultGitRetryRegexpSource = []string{
 	`fatal: expected flush after ref listing`,
 	`fatal: expected response end packet after ref listing`,
 	`error: .* did not send all necessary objects`,
+	`fatal: .*: OpenSSL SSL_read: SSL_ERROR_SYSCALL, errno`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
