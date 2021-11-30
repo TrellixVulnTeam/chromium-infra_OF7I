@@ -154,12 +154,11 @@ func (c *addAsset) innerRun(a subcommands.Application, args []string, env subcom
 			fmt.Printf("Failed to add asset %s. Tags field contains invalidate characters.\n", r.Asset.GetName())
 			continue
 		}
-		res, err := ic.CreateAsset(ctx, r)
+		res, err := c.addAssetToUFS(ctx, ic, r)
 		if err != nil {
 			fmt.Printf("Failed to add asset %s. %s\n", r.Asset.GetName(), err)
 			continue
 		}
-		res.Name = ufsUtil.RemovePrefix(res.Name)
 		utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 		fmt.Println("Successfully added the asset: ", res.GetName())
 	}
@@ -172,13 +171,14 @@ func (c *addAsset) validateArgs() error {
 		if c.name == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need asset name to create an asset")
 		}
-		if c.location == "" && c.zone == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Need zone to create an asset")
-		}
 		if c.location == "" && c.rack == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Need rack to create an asset")
 		}
-		if c.location == "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {
+		if c.location == "" && c.rack == "" && c.zone == "" {
+			// Zone is either derived from location, rack or specified explicitly
+			return cmdlib.NewQuietUsageError(c.Flags, "Cannot determine zone from inputs")
+		}
+		if c.zone != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zone)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Invalid zone %s", c.zone)
 		}
 		if c.assetType == "" {
@@ -215,20 +215,29 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		if err != nil {
 			return nil, err
 		}
-		if asset.Location.Rack == "" {
-			return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid input, rack required but not found in location %s", c.location)
-		}
-		if asset.Location.Zone == ufspb.Zone_ZONE_UNSPECIFIED {
-			return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid zone in location %s", c.location)
-		}
 	} else {
-		asset.Location = &ufspb.Location{}
+		if utils.IsRack(c.rack) {
+			asset.Location, err = utils.GetLocation(c.rack)
+			if err != nil {
+				// rack is not specified. Should not happen, see validateArgs
+				return nil, err
+			}
+		} else {
+			// In case rack has a non standard name
+			asset.Location = &ufspb.Location{
+				Rack: c.rack,
+			}
+		}
+		// Update row and zone if explicitly specified
+		if c.row != "" {
+			asset.Location.Row = c.row
+		}
+		if c.zone != "" {
+			asset.Location.Zone = ufsUtil.ToUFSZone(c.zone)
+		}
 		asset.Location.Aisle = c.aisle
-		asset.Location.Row = c.row
-		asset.Location.Rack = c.rack
 		asset.Location.Shelf = c.shelf
 		asset.Location.Position = c.position
-		asset.Location.Zone = ufsUtil.ToUFSZone(c.zone)
 	}
 	asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
 	asset.Tags = utils.GetStringSlice(c.tags)
@@ -318,7 +327,7 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 			continue
 		}
 		// Attempt to update location
-		if utils.IsLocation(token) {
+		if utils.IsLocation(token) || utils.IsRack(token) {
 			l, err := utils.GetLocation(token)
 			if err != nil || l.GetRack() == "" {
 				fmt.Fprintf(w, "Cannot determine rack for the location %s. %s\n", token, err.Error())
@@ -331,16 +340,15 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 
 		if location != nil {
 			// Create and add asset
-			asset := &ufspb.Asset{
-				Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
-				Location: location,
-				Type:     assetType,
+			req := &ufsAPI.CreateAssetRequest{
+				Asset: &ufspb.Asset{
+					Name:     ufsUtil.AddPrefix(ufsUtil.AssetCollection, token),
+					Location: location,
+					Type:     assetType,
+				},
 			}
 
-			_, err := ic.CreateAsset(ctx, &ufsAPI.CreateAssetRequest{
-				Asset: asset,
-			})
-
+			_, err := c.addAssetToUFS(ctx, ic, req)
 			if err != nil {
 				fmt.Fprintf(w, "Failed to add asset %s to UFS. %s \n", token, err.Error())
 			} else {
@@ -350,6 +358,28 @@ func (c *addAsset) scanAndAddAsset(ctx context.Context, ic ufsAPI.FleetClient, w
 		prompt(w, location.GetRack())
 	}
 	return nil
+}
+
+// addAssetToUFS attempts to add given asset to UFS. Returns updated asset and error if any
+func (c *addAsset) addAssetToUFS(ctx context.Context, ic ufsAPI.FleetClient, req *ufsAPI.CreateAssetRequest) (*ufspb.Asset, error) {
+	if req.Asset == nil {
+		return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid input, Missing asset to add")
+	}
+	if req.Asset.Location == nil {
+		return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid input, Missing any location information")
+	}
+	if req.Asset.Location.Rack == "" {
+		return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid input, Missing rack")
+	}
+	if req.Asset.Location.Zone == ufspb.Zone_ZONE_UNSPECIFIED {
+		return nil, cmdlib.NewQuietUsageError(c.Flags, "Invalid zone")
+	}
+	ufsAsset, err := ic.CreateAsset(ctx, req)
+	if ufsAsset != nil {
+		// Remove the prefix from the asset returned by UFS
+		ufsAsset.Name = ufsUtil.RemovePrefix(ufsAsset.Name)
+	}
+	return ufsAsset, err
 }
 
 // deriveLocation Attempts to get location from all the possible inputs to the command.

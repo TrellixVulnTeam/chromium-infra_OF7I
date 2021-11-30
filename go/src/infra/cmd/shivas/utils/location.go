@@ -66,6 +66,16 @@ func IsLocation(iput string) bool {
 	return false
 }
 
+// IsRack determines if the given input string describes a rack in ChromeOS lab
+func IsRack(iput string) bool {
+	for _, exp := range racks {
+		if exp.MatchString(iput) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetLocation returns Location proto from barcode name
 func GetLocation(input string) (*ufspb.Location, error) {
 	if input == "" {
