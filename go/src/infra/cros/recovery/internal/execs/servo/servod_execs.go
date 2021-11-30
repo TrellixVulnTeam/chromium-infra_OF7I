@@ -100,10 +100,29 @@ func servodDUTColdResetActionExec(ctx context.Context, args *execs.RunArgs, acti
 	}, "servod cold_reset dut: check ping access")
 }
 
+// servodHasExec verifies whether servod supports the command
+// mentioned in action args.
+func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	command, ok := argsMap[commandToken]
+	log.Debug(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
+	if !ok {
+		// It is a failure condition if an action invokes this exec,
+		// and does not specify the servod command.
+		return errors.Reason("servod has exec: no command is mentioned for this action.").Err()
+	}
+	if _, err := ServodCallHas(ctx, args, command); err != nil {
+		return errors.Annotate(err, "servod has exec").Err()
+	}
+	log.Debug(ctx, "Servod Has Exec: Command %s is supported by servod", command)
+	return nil
+}
+
 func init() {
 	execs.Register("servod_echo", servodEchoActionExec)
 	execs.Register("servod_lidopen", servodLidopenActionExec)
 	execs.Register("servod_lidopen_recover", servodLidopenRecoveryActionExec)
 	execs.Register("servod_dut_rec_mode", servodDUTBootRecoveryModeActionExec)
 	execs.Register("servod_dut_cold_reset", servodDUTColdResetActionExec)
+	execs.Register("servod_has", servodHasExec)
 }
