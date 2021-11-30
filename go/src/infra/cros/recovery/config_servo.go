@@ -236,9 +236,10 @@ const servoRepairPlanBody = `
 		],
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_type_c"
+			"servo_type_c",
+			"servo_is_sbu_voltage_issue"
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"sample_fail"
 	},
 	"servo_cr50_console": {
 		"conditions": [

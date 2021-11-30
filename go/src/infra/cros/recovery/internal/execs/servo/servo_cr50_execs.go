@@ -36,6 +36,25 @@ func servoCR50LowSBUExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// servoCR50EnumeratedExec verifies whether CR50 cannot be enumerated
+// despite the voltage being higher than a threshold (2500 mV). This
+// can happen when CR50 is in deep sleep.
+//
+// Please use condition to verify that 'dut_sbu_voltage_float_fault'
+// has the value 'on'.
+func servoCR50EnumeratedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	sbuValue, err := MaximalAvgSbuValue(ctx, args, sbuVoltageTotalCheckCount)
+	if err != nil {
+		return errors.Reason("servo CR50 enumerated exec: could not compute the average SBU voltage value.").Err()
+	}
+	log.Debug(ctx, "Servo CR50 Enumerated Exec: avg SBU value is %f", sbuValue)
+	if sbuValue > sbuThreshold {
+		return errors.Reason("servo CR50 enumerated exec: CR50 SBU voltage is greater than the threshold").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_cr50_low_sbu", servoCR50LowSBUExec)
+	execs.Register("servo_cr50_enumerated", servoCR50EnumeratedExec)
 }
