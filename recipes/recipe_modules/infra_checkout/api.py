@@ -10,16 +10,10 @@ from recipe_engine import recipe_api
 class InfraCheckoutApi(recipe_api.RecipeApi):
   """Stateless API for using public infra gclient checkout."""
 
-  # Named cache shared across builders using public infra gclient checkout.
-  PUBLIC_NAMED_CACHE = 'infra_gclient_with_go'
-  # Ditto but for builders which use internal gclient checkout.
-  INTERNAL_NAMED_CACHE = 'infra_internal_gclient_with_go'
-
   def checkout(self, gclient_config_name,
                patch_root=None,
                path=None,
                internal=False,
-               named_cache=None,
                generate_env_with_system_python=False,
                go_version_variant=None,
                **kwargs):
@@ -36,13 +30,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
           layout is assumed, else infra_internal.
           This has an effect on named_cache default and inside which repo's
           go corner the ./go/env.py command is run.
-      * named_cache - if path is None, this allows to customize the name of the
-        cache. Defaults to PUBLIC_NAMED_CACHE or INTERNAL_NAMED_CACHE, depending
-        on `internal` argument value.
-        Note: your cr-buildbucket.cfg should specify named_cache for swarming to
-          prioritize bots which actually have this cache populated by prior
-          runs. Otherwise, using named cache isn't particularly useful, unless
-          your pool of builders is very small.
       * generate_env_with_system_python uses the bot "infra_system" python to
         generate infra.git's ENV. This is needed for bots which build the
         "infra/infra_python/${platform}" CIPD packages because they incorporate
@@ -68,10 +55,7 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
         self.m.git(
             'config', '--global', 'core.symlinks', 'true', name='set symlinks')
 
-    if named_cache is None:
-      named_cache = (self.INTERNAL_NAMED_CACHE if internal else
-                     self.PUBLIC_NAMED_CACHE)
-    path = path or self.m.path['cache'].join(named_cache)
+    path = path or self.m.path['cache'].join('builder')
     self.m.file.ensure_directory('ensure builder dir', path)
 
     # arm64 bots don't have this system python stuff

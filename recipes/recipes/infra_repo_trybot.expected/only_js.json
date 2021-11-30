@@ -9,7 +9,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/infra_gclient_with_go"
+      "[CACHE]/builder"
     ],
     "infra_step": true,
     "luci_context": {
@@ -45,7 +45,7 @@
       "-o",
       "DOWNLOAD_COMMANDS"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
@@ -106,7 +106,7 @@
       "--refs",
       "refs/heads/main"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/generic tester/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
@@ -184,7 +184,7 @@
       "-m",
       "Committed patch"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "cwd": "[CACHE]/builder/infra",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -207,7 +207,7 @@
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/generic tester/8945511751514863184",
       "GOFLAGS": "-mod=readonly",
@@ -240,7 +240,7 @@
       "HEAD~",
       "HEAD"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "cwd": "[CACHE]/builder/infra",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -268,7 +268,7 @@
       "test",
       "--verbose"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra",
+    "cwd": "[CACHE]/builder/infra",
     "luci_context": {
       "realm": {
         "name": "infra:try"
@@ -287,7 +287,7 @@
     "cmd": [
       "python",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
+      "[CACHE]/builder/infra/recipes/recipes.py",
       "test",
       "run"
     ],
@@ -309,7 +309,7 @@
     "cmd": [
       "python",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/recipes/recipes.py",
+      "[CACHE]/builder/infra/recipes/recipes.py",
       "lint"
     ],
     "luci_context": {

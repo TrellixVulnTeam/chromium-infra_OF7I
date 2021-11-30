@@ -32,7 +32,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]\\infra_gclient_with_go"
+      "[CACHE]\\builder"
     ],
     "infra_step": true,
     "luci_context": {
@@ -68,7 +68,7 @@
       "-o",
       "DOWNLOAD_COMMANDS"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go",
+    "cwd": "[CACHE]\\builder",
     "env": {
       "PATH": "<PATH>;RECIPE_REPO[depot_tools]"
     },
@@ -129,7 +129,7 @@
       "--refs",
       "refs/heads/main"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go",
+    "cwd": "[CACHE]\\builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/presubmit/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
@@ -207,7 +207,7 @@
       "-m",
       "Committed patch"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
+    "cwd": "[CACHE]\\builder\\infra",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -231,7 +231,7 @@
       "HEAD~",
       "HEAD"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
+    "cwd": "[CACHE]\\builder\\infra",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -262,7 +262,7 @@
       "--diff-filter",
       "A"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
+    "cwd": "[CACHE]\\builder\\infra",
     "infra_step": true,
     "luci_context": {
       "realm": {

@@ -362,7 +362,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Stateless API for using public infra gclient checkout.
 
-&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#18)(self, gclient_config_name, patch_root=None, path=None, internal=False, named_cache=None, generate_env_with_system_python=False, go_version_variant=None, \*\*kwargs):**
+&mdash; **def [checkout](/recipes/recipe_modules/infra_checkout/api.py#13)(self, gclient_config_name, patch_root=None, path=None, internal=False, generate_env_with_system_python=False, go_version_variant=None, \*\*kwargs):**
 
 Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -377,13 +377,6 @@ Arguments:
       layout is assumed, else infra_internal.
       This has an effect on named_cache default and inside which repo's
       go corner the ./go/env.py command is run.
-  * named_cache - if path is None, this allows to customize the name of the
-    cache. Defaults to PUBLIC_NAMED_CACHE or INTERNAL_NAMED_CACHE, depending
-    on `internal` argument value.
-    Note: your cr-buildbucket.cfg should specify named_cache for swarming to
-      prioritize bots which actually have this cache populated by prior
-      runs. Otherwise, using named cache isn't particularly useful, unless
-      your pool of builders is very small.
   * generate_env_with_system_python uses the bot "infra_system" python to
     generate infra.git's ENV. This is needed for bots which build the
     "infra/infra_python/${platform}" CIPD packages because they incorporate

@@ -9,7 +9,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/infra_gclient_with_go"
+      "[CACHE]/builder"
     ],
     "infra_step": true,
     "luci_context": {
@@ -45,7 +45,7 @@
       "-o",
       "DOWNLOAD_COMMANDS"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
@@ -108,7 +108,7 @@
       "--refs",
       "refs/heads/main"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/builder/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
@@ -192,7 +192,7 @@
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/builder/8945511751514863184",
       "GOFLAGS": "-mod=readonly",
@@ -242,7 +242,7 @@
       "--cached",
       "DEPS"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -270,7 +270,7 @@
       "--cached",
       ".vpython"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -298,7 +298,7 @@
       "--cached",
       ".vpython3"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -326,7 +326,7 @@
       "--cached",
       "client"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -355,7 +355,7 @@
       "--cached",
       "appengine/auth_service"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -383,7 +383,7 @@
       "--cached",
       "appengine/config_service"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -411,7 +411,7 @@
       "--cached",
       "appengine/components"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -439,7 +439,7 @@
       "--cached",
       "appengine/swarming"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -467,7 +467,7 @@
       "--cached",
       "appengine/swarming/ui2"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -495,7 +495,7 @@
       "--cached",
       "appengine/third_party"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "cwd": "[CACHE]/builder/infra/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -523,14 +523,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
+      "[CACHE]/builder/infra/luci/.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
+      "[CACHE]/builder/infra/luci/client/unittest.cfg"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
+    "cwd": "[CACHE]/builder/infra/luci/client",
     "luci_context": {
       "realm": {
         "name": "infra:try"
@@ -552,14 +552,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython3",
+      "[CACHE]/builder/infra/luci/.vpython3",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
+      "[CACHE]/builder/infra/luci/client/unittest.cfg"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
+    "cwd": "[CACHE]/builder/infra/luci/client",
     "luci_context": {
       "realm": {
         "name": "infra:try"
@@ -585,14 +585,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
+      "[CACHE]/builder/infra/luci/.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
+      "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot",
     "luci_context": {
       "realm": {
         "name": "infra:try"
@@ -614,14 +614,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython3",
+      "[CACHE]/builder/infra/luci/.vpython3",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
+      "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot",
     "luci_context": {
       "realm": {
         "name": "infra:try"

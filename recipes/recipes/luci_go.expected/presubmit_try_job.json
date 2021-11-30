@@ -9,7 +9,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/infra_gclient_with_go"
+      "[CACHE]/builder"
     ],
     "infra_step": true,
     "luci_context": {
@@ -45,7 +45,7 @@
       "-o",
       "DOWNLOAD_COMMANDS"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
@@ -108,7 +108,7 @@
       "--refs",
       "refs/heads/main"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/Luci-go Presubmit/8945511751514863184",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
@@ -197,7 +197,7 @@
       "-m",
       "Committed patch"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
+    "cwd": "[CACHE]/builder/infra/go/src/go.chromium.org/luci",
     "infra_step": true,
     "luci_context": {
       "realm": {
@@ -220,7 +220,7 @@
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "infra/try/Luci-go Presubmit/8945511751514863184",
       "GOFLAGS": "-mod=readonly",
@@ -249,10 +249,10 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/go/bootstrap.py",
+      "[CACHE]/builder/infra/go/bootstrap.py",
       "/path/to/tmp/json"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go",
+    "cwd": "[CACHE]/builder",
     "env": {
       "GOFLAGS": "-mod=readonly",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1"
@@ -275,16 +275,16 @@
       "@@@STEP_TEXT@Using go 1.66.6@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"env\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"GOROOT\": \"[CACHE]/builder/golang/go\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"env_prefixes\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/golang/go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/builder/golang/go\"@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"env_suffixes\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"PATH\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/infra_gclient_with_go/infra/go/bin\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"[CACHE]/builder/infra/go/bin\"@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"go_version\": \"1.66.6\"@@@",
@@ -298,7 +298,7 @@
       "-u",
       "RECIPE_REPO[depot_tools]/presubmit_support.py",
       "--root",
-      "[CACHE]/infra_gclient_with_go/infra/go/src/go.chromium.org/luci",
+      "[CACHE]/builder/infra/go/src/go.chromium.org/luci",
       "--commit",
       "--verbose",
       "--verbose",
@@ -314,21 +314,21 @@
       "--skip_canned",
       "CheckTreeIsOpen"
     ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/go/src/infra",
+    "cwd": "[CACHE]/builder/infra/go/src/infra",
     "env": {
       "GOFLAGS": "-mod=readonly",
-      "GOROOT": "[CACHE]/infra_gclient_with_go/golang/go",
+      "GOROOT": "[CACHE]/builder/golang/go",
       "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
       "PRESUBMIT_BUILDER": "1"
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]/infra_gclient_with_go/golang/go"
+        "[CACHE]/builder/golang/go"
       ]
     },
     "env_suffixes": {
       "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/go/bin"
+        "[CACHE]/builder/infra/go/bin"
       ]
     },
     "luci_context": {
