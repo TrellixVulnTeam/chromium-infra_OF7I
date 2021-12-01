@@ -124,18 +124,12 @@ class ChromiumProjectAPI(ProjectAPI):
         })
     return dimension_dicts
 
-  def GetCompileRerunBuildInputProperties(self, failed_targets,
-                                          analyzed_build_id):
-    all_targets = set()
-    for step, targets in failed_targets.iteritems():
-      # Assume the step is a compile step.
-      assert step == 'compile'
-      all_targets |= set(targets)
-
-    properties = {}
+  def _GetCommonRerunBuildInputProperties(self, analyzed_build_id):
     build = buildbucket_client.GetV2Build(
         analyzed_build_id,
         fields=FieldMask(paths=['input.properties', 'builder']))
+
+    properties = {}
     # The recipe depends on the builder_group being set.
     # TODO(crbug.com/1008119): Fix the recipe so that it populates this property
     # based on target_builder.
@@ -145,20 +139,27 @@ class ChromiumProjectAPI(ProjectAPI):
         'group': builder_group,
         'builder': build.builder.builder
     }
+    if '$bootstrap/properties' in build.input.properties:
+      properties['$bootstrap/properties'] = (
+          build.input.properties['$bootstrap/properties'])
+    return properties
+
+  def GetCompileRerunBuildInputProperties(self, failed_targets,
+                                          analyzed_build_id):
+    properties = self._GetCommonRerunBuildInputProperties(analyzed_build_id)
+
+    all_targets = set()
+    for step, targets in failed_targets.iteritems():
+      # Assume the step is a compile step.
+      assert step == 'compile'
+      all_targets |= set(targets)
     properties['compile_targets'] = list(all_targets)
+
     return properties
 
   def GetTestRerunBuildInputProperties(self, tests, analyzed_build_id):
-    properties = {}
-    build = buildbucket_client.GetV2Build(
-        analyzed_build_id,
-        fields=FieldMask(paths=['input.properties', 'builder']))
-    builder_group = build.input.properties['builder_group']
-    properties['builder_group'] = builder_group
-    properties['target_builder'] = {
-        'group': builder_group,
-        'builder': build.builder.builder
-    }
+    properties = self._GetCommonRerunBuildInputProperties(analyzed_build_id)
+
     properties['tests'] = {
         s: [t['name'] for t in tests_in_suite['tests']
            ] for s, tests_in_suite in tests.iteritems()

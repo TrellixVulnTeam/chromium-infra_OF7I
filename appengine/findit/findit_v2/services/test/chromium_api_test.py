@@ -8,6 +8,7 @@ import mock
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
 from go.chromium.org.luci.buildbucket.proto.common_pb2 import Log
 from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
+from google.protobuf.struct_pb2 import Struct, Value
 from common.waterfall import buildbucket_client
 from findit_v2.model.gitiles_commit import Culprit
 from findit_v2.services.chromium_api import ChromiumProjectAPI
@@ -236,6 +237,7 @@ class ChromiumProjectAPITest(WaterfallTestCase):
       build_number,
       master='master',
       builder='builder',
+      bootstrap_prop=None,
       dimensions=None,
   ):
     build = Build(id=build_id, number=build_number)
@@ -244,6 +246,8 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     build.input.gitiles_commit.ref = 'ref/heads/master'
     build.input.gitiles_commit.id = 'git_sha'
     build.input.properties['builder_group'] = master
+    if bootstrap_prop is not None:
+      build.input.properties['$bootstrap/properties'] = bootstrap_prop
     build.builder.builder = builder
     for d in (dimensions or []):
       new_d = build.infra.swarming.task_dimensions.add()
@@ -495,6 +499,27 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         'builder': 'Linux Builder'
     })
     self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertNotIn('$bootstrap/properties', props)
+    self.assertEqual(
+        sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
+
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  def testGetCompileRerunBuildInputPropertiesBootstrapped(self, mock_bb):
+    bootstrap_prop = Struct(fields={'foo': Value(string_value='bar')})
+    mock_bb.return_value = self._CreateBuildbucketBuild(
+        800000001234,
+        1234,
+        'chromium.linux',
+        'Linux Builder',
+        bootstrap_prop=bootstrap_prop)
+    props = ChromiumProjectAPI().GetCompileRerunBuildInputProperties(
+        {'compile': ['bad_target1', 'bad_tests']}, 800000001234)
+    self.assertEqual(props['target_builder'], {
+        'group': 'chromium.linux',
+        'builder': 'Linux Builder'
+    })
+    self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertEqual(props['$bootstrap/properties'], bootstrap_prop)
     self.assertEqual(
         sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
 
@@ -528,6 +553,48 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         'builder': 'Linux Tests'
     })
     self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertNotIn('$bootstrap/properties', props)
+    self.assertEqual(props['tests'], {
+        'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
+    })
+
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  def testGetTestRerunBuildInputPropertiesBootstrapped(self, mock_bb):
+    bootstrap_prop = Struct(fields={'foo': Value(string_value='bar')})
+    mock_bb.return_value = self._CreateBuildbucketBuild(
+        800000009999,
+        9999,
+        'chromium.linux',
+        'Linux Tests',
+        bootstrap_prop=bootstrap_prop)
+    props = ChromiumProjectAPI().GetTestRerunBuildInputProperties(
+        {
+            'complexitor_tests': {
+                'tests': [
+                    {
+                        'name': 'TestTrueNatureOf42',
+                        'properties': {
+                            'ignored': 'at the moment'
+                        }
+                    },
+                    {
+                        'name': 'ValidateFTLCommunication',
+                        'properties': {
+                            'ignored': 'also'
+                        }
+                    },
+                ],
+                'properties': {
+                    'this is': 'ignored',
+                },
+            },
+        }, 800000009999)
+    self.assertEqual(props['target_builder'], {
+        'group': 'chromium.linux',
+        'builder': 'Linux Tests'
+    })
+    self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertEqual(props['$bootstrap/properties'], bootstrap_prop)
     self.assertEqual(props['tests'], {
         'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
     })
