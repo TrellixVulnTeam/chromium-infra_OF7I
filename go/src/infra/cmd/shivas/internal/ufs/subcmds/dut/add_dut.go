@@ -190,6 +190,13 @@ var mcsvFields = []string{
 	"pools",
 }
 
+var servoRequiredDeployActions = map[string]bool{
+	"stage-usb":            true,
+	"install-test-image":   true,
+	"install-firmware":     true,
+	"verify-recovery-mode": true,
+}
+
 // dutDeployUFSParams contains all the data that are needed for deployment of a single DUT
 // Asset and its update paths are required here to update location, model and board for the DUT
 // See: crbug.com/1188488 for why model and board need to be updated.
@@ -422,7 +429,16 @@ func (c *addDUT) addDutToUFS(ctx context.Context, ic ufsAPI.FleetClient, param *
 }
 
 func (c *addDUT) deployDutToSwarming(ctx context.Context, tc *swarming.TaskCreator, lse *ufspb.MachineLSE) error {
-	task, err := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
+	deployActions := c.deployActions
+	if !isUsingServo(lse) {
+
+		deployActions = getServolessFilteredDeployActions(deployActions)
+		if c.commonFlags.Verbose() {
+			fmt.Printf("Host %q use servoless deployment\n", lse.Name)
+			fmt.Printf("New deploy actions %s\n", deployActions)
+		}
+	}
+	task, err := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, deployActions, c.deployTags, nil)
 	if err != nil {
 		fmt.Printf("Failed to trigger Deploy task for DUT %s. Deploy failed %s\n", lse.GetName(), err)
 		return err
@@ -641,4 +657,26 @@ func (c *addDUT) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetClient, as
 		UpdateMask: mask,
 	})
 	return err
+}
+
+// isUsingServo returns true if both servoHostName and servoSerial are defined in peripherals.servo
+func isUsingServo(dutLSE *ufspb.MachineLSE) bool {
+	peripherals := dutLSE.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+	if peripherals.GetServo().GetServoSerial() == "" && peripherals.GetServo().GetServoHostname() == "" {
+		return false
+	}
+	return true
+}
+
+// getServolessFilteredDeployActions: since using servoless option, servo related actions are not needed
+// this func takes deployActions as input and returns the newDeployActions
+// newDeployActions = deployActions - servoRelatedActions
+func getServolessFilteredDeployActions(deployActions []string) []string {
+	newDeployActions := make([]string, 0, len(deployActions))
+	for _, v := range deployActions {
+		if servoRequiredDeployActions[v] == false {
+			newDeployActions = append(newDeployActions, v)
+		}
+	}
+	return newDeployActions
 }
