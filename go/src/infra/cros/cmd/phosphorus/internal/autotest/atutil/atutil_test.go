@@ -100,32 +100,43 @@ func TestRunAutoserv(t *testing.T) {
 		t.Fatalf("Failed to write to stdWriter: %q", err)
 	}
 
+	internalRSAPath, err := filepath.Abs(
+		filepath.Join("/home", "chromeos-test", ".ssh", "autotest_internal_rsa"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cmdRunner := &cmd.FakeCommandRunnerMulti{
 		CommandRunners: []cmd.FakeCommandRunner{
 			{
 				ExpectedCmd: []string{
-					"gcloud", "auth", "activate-service-account",
+					"sudo", "gcloud", "auth", "activate-service-account",
 					"--key-file=/creds/service_accounts/skylab-drone.json",
 				},
 			},
 			{
 				ExpectedCmd: []string{
-					"gcloud", "auth", "print-access-token",
+					"sudo", "gcloud", "auth", "print-access-token",
 				},
 				Stdout: "abc123",
 			},
 			{
 				ExpectedCmd: []string{
-					"docker", "login", "-u", "oauth2accesstoken",
+					"sudo", "docker", "login", "-u", "oauth2accesstoken",
 					"-p", "abc123", "gcr.io/testproject",
 				},
 			},
 			{
 				ExpectedCmd: []string{
-					"docker", "run",
+					"sudo", "docker", "run",
 					"--user", "chromeos-test",
 					"--network", "host",
 					fmt.Sprintf("--mount=source=%s,target=%s,type=bind", resultsDir, resultsDir),
+					fmt.Sprintf(
+						"--mount=source=%s,target=%s,type=bind,readonly",
+						internalRSAPath, filepath.ToSlash(internalRSAPath),
+					),
 					fmt.Sprintf("--mount=source=%s,target=/etc/nonexistingdir,type=bind", filepath.Join(autotestDir, "nonexistingdir")),
 					fmt.Sprintf(
 						"--mount=source=%s,target=%s/host_info_store/host1.store,type=bind",

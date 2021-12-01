@@ -54,7 +54,7 @@ func generateMountArgs(mounts []mount.Mount) ([]string, error) {
 func dockerLogin(ctx context.Context, runner cmd.CommandRunner, registry string) error {
 	if err := runner.RunCommand(
 		ctx, os.Stdout, os.Stderr, "",
-		"gcloud", "auth", "activate-service-account",
+		"sudo", "gcloud", "auth", "activate-service-account",
 		"--key-file=/creds/service_accounts/skylab-drone.json",
 	); err != nil {
 		return errors.Wrap(err, "failed running 'gcloud auth activate-service-account'")
@@ -64,7 +64,7 @@ func dockerLogin(ctx context.Context, runner cmd.CommandRunner, registry string)
 
 	err := runner.RunCommand(
 		ctx, &stdoutBuf, os.Stderr, "",
-		"gcloud", "auth", "print-access-token",
+		"sudo", "gcloud", "auth", "print-access-token",
 	)
 
 	if err != nil {
@@ -75,7 +75,7 @@ func dockerLogin(ctx context.Context, runner cmd.CommandRunner, registry string)
 
 	err = runner.RunCommand(
 		ctx, os.Stdout, os.Stderr, "",
-		"docker", "login", "-u", "oauth2accesstoken",
+		"sudo", "docker", "login", "-u", "oauth2accesstoken",
 		"-p", accessToken, registry,
 	)
 
@@ -87,6 +87,9 @@ func dockerLogin(ctx context.Context, runner cmd.CommandRunner, registry string)
 }
 
 // RunContainer runs a container with `docker run`.
+//
+// Note that `docker run` and all required `gcloud auth` commands are run as
+// root.
 func RunContainer(
 	ctx context.Context,
 	runner cmd.CommandRunner,
@@ -126,13 +129,7 @@ func RunContainer(
 
 	logging.Infof(ctx, "Running docker cmd: %q", args)
 
-	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
-
-	err = runner.RunCommand(ctx, &stdoutBuf, &stderrBuf, "", "docker", args...)
-
-	logging.Infof(ctx, "stdout from Docker command:\n%s", &stdoutBuf)
-	logging.Infof(ctx, "stderr from Docker command:\n%s", &stderrBuf)
+	err = runner.RunCommand(ctx, os.Stdout, os.Stderr, "", "sudo", append([]string{"docker"}, args...)...)
 
 	return err
 }

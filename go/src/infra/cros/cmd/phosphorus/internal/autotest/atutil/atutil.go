@@ -266,12 +266,26 @@ func runTask(ctx context.Context,
 			return r, fmt.Errorf("failed calling chmod on results dir (%q): %w", a.ResultsDir, err)
 		}
 
+		// Mount required ssh keys. Note that we don't mount the entire .ssh
+		// dir, because we don't want to overwrite the .ssh/config in the
+		// container.
+		internalSSHKeyPath, err := filepath.Abs(filepath.Join("/home", containerConfig.User, ".ssh", "autotest_internal_rsa"))
+		if err != nil {
+			return r, errors.Wrap(err, "failed creating ssh filepath")
+		}
+
 		mounts := []mount.Mount{
 			{
 				Type:     mount.TypeBind,
 				Source:   a.ResultsDir,
 				Target:   a.ResultsDir,
 				ReadOnly: false,
+			},
+			{
+				Type:     mount.TypeBind,
+				Source:   internalSSHKeyPath,
+				Target:   filepath.ToSlash(internalSSHKeyPath),
+				ReadOnly: true,
 			},
 		}
 

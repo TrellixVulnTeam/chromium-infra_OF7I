@@ -51,25 +51,25 @@ func TestRunContainer(t *testing.T) {
 		CommandRunners: []cmd.FakeCommandRunner{
 			{
 				ExpectedCmd: []string{
-					"gcloud", "auth", "activate-service-account",
+					"sudo", "gcloud", "auth", "activate-service-account",
 					"--key-file=/creds/service_accounts/skylab-drone.json",
 				},
 			},
 			{
 				ExpectedCmd: []string{
-					"gcloud", "auth", "print-access-token",
+					"sudo", "gcloud", "auth", "print-access-token",
 				},
 				Stdout: "abc123",
 			},
 			{
 				ExpectedCmd: []string{
-					"docker", "login", "-u", "oauth2accesstoken",
+					"sudo", "docker", "login", "-u", "oauth2accesstoken",
 					"-p", "abc123", "gcr.io/testproject",
 				},
 			},
 			{
 				ExpectedCmd: []string{
-					"docker", "run",
+					"sudo", "docker", "run",
 					"--user", "testuser",
 					"--network", "host",
 					"--mount=source=/tmp/hostdir,target=/usr/local/containerdir,type=bind",
