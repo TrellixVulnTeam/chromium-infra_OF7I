@@ -19,10 +19,10 @@ import (
 
 // Test cases for TestDUTPlans
 var dutPlansCases = []struct {
-	name      string
-	setupType tlw.DUTSetupType
-	taskName  TaskName
-	exp       []string
+	name         string
+	setupType    tlw.DUTSetupType
+	taskName     TaskName
+	expPlanNames []string
 }{
 	{
 		"default no task",
@@ -40,6 +40,12 @@ var dutPlansCases = []struct {
 		"default deploy",
 		tlw.DUTSetupTypeDefault,
 		TaskNameDeploy,
+		nil,
+	},
+	{
+		"default custom",
+		tlw.DUTSetupTypeDefault,
+		TaskNameCustom,
 		nil,
 	},
 	{
@@ -61,6 +67,12 @@ var dutPlansCases = []struct {
 		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
 	},
 	{
+		"cros custom",
+		tlw.DUTSetupTypeCros,
+		TaskNameCustom,
+		nil,
+	},
+	{
 		"labstation no task",
 		tlw.DUTSetupTypeCros,
 		TaskName(""),
@@ -77,6 +89,12 @@ var dutPlansCases = []struct {
 		tlw.DUTSetupTypeLabstation,
 		TaskNameDeploy,
 		[]string{"cros"},
+	},
+	{
+		"labstation custom",
+		tlw.DUTSetupTypeLabstation,
+		TaskNameCustom,
+		nil,
 	},
 }
 
@@ -97,15 +115,17 @@ func TestLoadConfiguration(t *testing.T) {
 				args.TaskName = c.taskName
 			}
 			dut := &tlw.Dut{SetupType: c.setupType}
-			got, _ := loadConfiguration(ctx, dut, args)
-			if len(cs.exp) == 0 {
-				if len(got.GetPlanNames()) != 0 {
-					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+			got, err := loadConfiguration(ctx, dut, args)
+			if len(cs.expPlanNames) == 0 {
+				if err == nil {
+					t.Errorf("%q -> expected to finish with error but passed", cs.name)
 				}
-
+				if len(got.GetPlanNames()) != 0 {
+					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.expPlanNames, got.GetPlanNames())
+				}
 			} else {
-				if !cmp.Equal(got.GetPlanNames(), cs.exp) {
-					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				if !cmp.Equal(got.GetPlanNames(), cs.expPlanNames) {
+					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.expPlanNames, got.GetPlanNames())
 				}
 			}
 		})
@@ -124,15 +144,17 @@ func TestParsedDefaultConfiguration(t *testing.T) {
 		cs := c
 		t.Run(cs.name, func(t *testing.T) {
 			ctx := context.Background()
-			got, _ := ParsedDefaultConfiguration(ctx, c.taskName, c.setupType)
-			if len(cs.exp) == 0 {
-				if len(got.GetPlanNames()) != 0 {
-					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+			got, err := ParsedDefaultConfiguration(ctx, c.taskName, c.setupType)
+			if len(cs.expPlanNames) == 0 {
+				if err == nil {
+					t.Errorf("%q -> expected to finish with error but passed", cs.name)
 				}
-
+				if len(got.GetPlanNames()) != 0 {
+					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.expPlanNames, got.GetPlanNames())
+				}
 			} else {
-				if !cmp.Equal(got.GetPlanNames(), cs.exp) {
-					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				if !cmp.Equal(got.GetPlanNames(), cs.expPlanNames) {
+					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.expPlanNames, got.GetPlanNames())
 				}
 			}
 		})

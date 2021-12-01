@@ -50,7 +50,6 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if !args.EnableRecovery {
 		log.Info(ctx, "Recovery actions is blocker by run arguments.")
 	}
-	args.TaskName = getTaskName(args.TaskName)
 	log.Info(ctx, "Run recovery for %q", args.UnitName)
 	resources, err := retrieveResources(ctx, args)
 	if err != nil {
@@ -161,6 +160,9 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 	}
 	cr := args.ConfigReader
 	if cr == nil {
+		if args.TaskName == TaskNameCustom {
+			return nil, errors.Reason("load configuration: expected config to be provided for custom tasks").Err()
+		}
 		// Get default configuration if not provided.
 		cr, err = defaultConfiguration(args.TaskName, dut.SetupType)
 		if err != nil {
@@ -217,6 +219,8 @@ func defaultConfiguration(tn TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
+	case TaskNameCustom:
+		return nil, errors.Reason("Setup type: %q does not have default configuration for custom tasks", ds).Err()
 	default:
 		return nil, errors.Reason("TaskName: %q is not supported..", tn).Err()
 	}
@@ -422,22 +426,13 @@ type TaskName string
 
 const (
 	// Task used to run auto recovery/repair flow in the lab.
-	// This task is default task used by the engine.
 	TaskNameRecovery TaskName = "recovery"
 	// Task used to prepare device to be used in the lab.
 	TaskNameDeploy TaskName = "deploy"
+	// Task used to execute custom plans.
+	// Configuration has to be provided by the user.
+	TaskNameCustom TaskName = "custom"
 )
-
-// getTaskName always returns task name.
-// If task name is not provided then returns TaskNameRecovery as default.
-func getTaskName(t TaskName) TaskName {
-	switch t {
-	case TaskNameRecovery, TaskNameDeploy:
-		return t
-	default:
-		return TaskNameRecovery
-	}
-}
 
 // RunArgs holds input arguments for recovery process.
 type RunArgs struct {
@@ -479,7 +474,6 @@ func (a *RunArgs) verify() error {
 }
 
 // List of predefined plans.
-// TODO(otabek@): Update list of plans and mapping with final version.
 const (
 	PlanCrOS          = "cros"
 	PlanServo         = "servo"
