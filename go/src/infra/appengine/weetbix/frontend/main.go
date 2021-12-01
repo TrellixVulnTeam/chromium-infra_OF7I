@@ -131,6 +131,8 @@ func main() {
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.GetCluster)
 		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.ListClusters)
 		srv.Routes.GET("/api/projects/:project/rules", mw, handlers.ListRules)
+		srv.Routes.GET("/api/projects/:project/rules/:id", mw, handlers.GetRule)
+		srv.Routes.PATCH("/api/projects/:project/rules/:id", mw, handlers.PatchRule)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
 		// Anything that is not found, serve app html and let the client side router handle it.
 		srv.Routes.NotFound(mw, handlers.IndexPage)
