@@ -248,7 +248,13 @@ func (s *Set) Materialize(root string) error {
 // ToTar dumps all files in this set into a tar.Writer.
 func (s *Set) ToTar(w *tar.Writer) error {
 	buf := make([]byte, 64*1024)
-	return s.Enumerate(func(f File) error {
+	return s.Enumerate(func(f File) (err error) {
+		defer func() {
+			if err != nil {
+				err = errors.Annotate(err, "when tarring %q", f.Path).Err()
+			}
+		}()
+
 		switch {
 		case f.Directory:
 			return w.WriteHeader(&tar.Header{
@@ -265,7 +271,7 @@ func (s *Set) ToTar(w *tar.Writer) error {
 			})
 		}
 
-		err := w.WriteHeader(&tar.Header{
+		err = w.WriteHeader(&tar.Header{
 			Typeflag: tar.TypeReg,
 			Name:     f.Path,
 			Size:     f.Size,
