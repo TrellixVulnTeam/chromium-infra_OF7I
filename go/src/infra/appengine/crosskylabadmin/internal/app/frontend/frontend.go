@@ -55,11 +55,11 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	}
 	fleet.RegisterTrackerServer(&api, &fleet.DecoratedTracker{
 		Service: &TrackerServerImpl{},
-		Prelude: checkAccess,
+		Prelude: CheckAccess,
 	})
 	fleet.RegisterInventoryServer(&api, &fleet.DecoratedInventory{
-		Service: &inventory.ServerImpl{TrackerFactory: trackerFactory},
-		Prelude: checkAccess,
+		Service: &inventory.ServerImpl{TrackerFactory: TrackerFactory},
+		Prelude: CheckAccess,
 	})
 
 	discovery.Enable(&api)
@@ -70,7 +70,7 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 //
 // Servers should use checkAccess as a Prelude while handling requests to
 // uniformly check access across the API.
-func checkAccess(c context.Context, _ string, _ proto.Message) (context.Context, error) {
+func CheckAccess(c context.Context, _ string, _ proto.Message) (context.Context, error) {
 	switch allow, err := auth.IsMember(c, config.Get(c).AccessGroup); {
 	case err != nil:
 		return c, status.Errorf(codes.Internal, "can't check ACL - %s", err)
@@ -82,7 +82,7 @@ func checkAccess(c context.Context, _ string, _ proto.Message) (context.Context,
 
 var cachedTracker fleet.TrackerServer
 
-func trackerFactory() fleet.TrackerServer {
+func TrackerFactory() fleet.TrackerServer {
 	if cachedTracker == nil {
 		cachedTracker = &TrackerServerImpl{}
 	}
