@@ -9,7 +9,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 
-	invAPI "go.chromium.org/chromiumos/config/go/test/lab/api"
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 // InventoryService represents an InventoryServiceClient and the connection it uses
 type InventoryService struct {
-	Client invAPI.InventoryServiceClient
+	Client labapi.InventoryServiceClient
 	conn   *grpc.ClientConn
 }
 
@@ -29,7 +29,7 @@ func NewClient() (*InventoryService, error) {
 		return nil, errors.Annotate(err, "Dial").Err()
 	}
 
-	cl := invAPI.NewInventoryServiceClient(conn)
+	cl := labapi.NewInventoryServiceClient(conn)
 
 	return &InventoryService{
 		Client: cl,

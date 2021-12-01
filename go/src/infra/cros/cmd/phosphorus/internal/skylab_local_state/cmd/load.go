@@ -269,7 +269,8 @@ func getDUTTopology(ctx context.Context, dut *inventory.DeviceUnderTest) (*labap
 	if err != nil {
 		return nil, errors.Annotate(err, "Start InventoryServer client").Err()
 	}
-	stream, err := invService.Client.GetDutTopology(ctx, &labapi.GetDutTopologyRequest{})
+	dutid := &labapi.DutTopology_Id{Value: *dut.GetCommon().Hostname}
+	stream, err := invService.Client.GetDutTopology(ctx, &labapi.GetDutTopologyRequest{Id: dutid})
 	if err != nil {
 		return nil, errors.Annotate(err, "InventoryServer.GetDutTopology").Err()
 	}
