@@ -18,11 +18,16 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "@material/mwc-button": "^0.25.3",
     "@material/mwc-checkbox": "^0.25.3",
+    "@material/mwc-dialog": "^0.25.3",
     "@material/mwc-formfield": "^0.25.3",
     "@material/mwc-icon": "^0.25.3",
     "@material/mwc-list": "^0.25.3",
     "@material/mwc-select": "^0.25.3",
+    "@material/mwc-snackbar": "^0.25.3",
+    "@material/mwc-textarea": "^0.25.3",
+    "@material/mwc-textfield": "^0.25.3",
     "@vaadin/router": "^1.7.4",
     "lit-element": "^2.5.1"
   }

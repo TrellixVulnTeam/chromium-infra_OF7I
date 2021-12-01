@@ -4,6 +4,7 @@
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
 import { RouterLocation } from '@vaadin/router';
+import './rule_section.ts';
 
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
@@ -21,7 +22,7 @@ export class ClusterPage extends LitElement {
     clusterAlgorithm: string;
 
     @property()
-    clusterID: string;
+    clusterId: string;
 
 
     connectedCallback() {
@@ -30,18 +31,16 @@ export class ClusterPage extends LitElement {
         // Take the first parameter value only.
         this.project = typeof this.location.params.project == 'string' ? this.location.params.project : this.location.params.project[0];
         this.clusterAlgorithm = typeof this.location.params.algorithm == 'string' ? this.location.params.algorithm : this.location.params.algorithm[0];
-        this.clusterID = typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
+        this.clusterId = typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
 
-        fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterID)}`)
+        fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterId)}`)
             .then(r => r.json())
             .then(cluster => this.cluster = cluster);
     }
 
     render() {
-        if (this.cluster === undefined) {
-            return html`Loading...`;
-        }
-        const clusterDescription = (cluster: Cluster): string => {
+        const c = this.cluster;
+        const clusterCriteriaValue = (cluster: Cluster): string => {
             if (cluster.clusterId.algorithm.startsWith("testname-")) {
                 return cluster.exampleTestId;
             } else if (cluster.clusterId.algorithm.startsWith("failurereason-")) {
@@ -52,14 +51,40 @@ export class ClusterPage extends LitElement {
         const metric = (counts: Counts): number => {
             return counts.nominal;
         }
-        const c = this.cluster;
-        const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
-        return html`
-        <div id="container">
-            <h1>Cluster <span class="cluster-id">${c.clusterId.algorithm}/${c.clusterId.id}</span></h1>
-            <h2>Cluster Definition</h2>
-            <pre class="failure-reason">${clusterDescription(c)}</pre>
-            <h2>Impact</h2>
+
+        var definitionSection = html`Loading...`;
+        if (this.clusterAlgorithm.startsWith("rules-")) {
+            definitionSection = html`<rule-section project="${this.project}" ruleId="${this.clusterId}"></rule-section>`;
+        } else if (c !== undefined) {
+            var criteriaName = ""
+            if (this.clusterAlgorithm.startsWith("testname-")) {
+                criteriaName = "Test name-based clustering";
+            } else if (this.clusterAlgorithm.startsWith("failurereason-")) {
+                criteriaName = "Failure reason-based clustering";
+            }
+
+            definitionSection = html`
+            <div class="definition-box-container">
+                <pre class="definition-box">${clusterCriteriaValue(c)}</pre>
+            </div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Type</th>
+                        <td>Suggested</td>
+                    </tr>
+                    <tr>
+                        <th>Algorithm</th>
+                        <td>${criteriaName}</td>
+                    </tr>
+                </tbody>
+            </table>
+            `
+        }
+
+        var impactTable = html`Loading...`;
+        if (c !== undefined) {
+            impactTable = html`
             <table>
                 <thead>
                     <tr>
@@ -69,7 +94,7 @@ export class ClusterPage extends LitElement {
                         <th>7 days</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="data">
                     <tr>
                         <th>Presubmit Runs Failed</th>
                         <td class="number">${metric(c.presubmitRejects1d)}</td>
@@ -89,8 +114,13 @@ export class ClusterPage extends LitElement {
                         <td class="number">${metric(c.failures7d)}</td>
                     </tr>
                 </tbody>
-            </table>
-            <h2>Breakdown</h2>
+            </table>`;
+        }
+
+        var breakdownTable = html`Loading...`;
+        if  (c !== undefined) {
+            const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
+            breakdownTable = html`
             <table>
                 <thead>
                     <tr>
@@ -100,14 +130,24 @@ export class ClusterPage extends LitElement {
                         <th>7 days</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="data">
                     ${merged.map(entry => html`
                     <tr>
                         <td class="test-id">${entry.name}</td>
                         ${entry.values.map(v => html`<td class="number">${v}</td>`)}
                     </tr>`)}
                 </tbody>
-            </table>
+            </table>`;
+        }
+
+        return html`
+        <div id="container">
+            <h1>Cluster <span class="cluster-id">${this.clusterAlgorithm}/${this.clusterId}</span></h1>
+            ${definitionSection}
+            <h2>Impact</h2>
+            ${impactTable}
+            <h2>Breakdown</h2>
+            ${breakdownTable}
         </div>
         `;
     }
@@ -132,13 +172,17 @@ export class ClusterPage extends LitElement {
             border-radius: 20px;
             padding: 2px 8px;
         }
-        .failure-reason {
+        .definition-box-container {
+            margin-bottom: 20px;
+        }
+        .definition-box {
             border: solid 1px var(--divider-color);
             background-color: var(--block-background-color);
-            margin: 20px 14px;
             padding: 20px 14px;
-            overflow-x: auto;
-            font-size: var(--font-size-small);
+            margin: 0px;
+            display: inline-block;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
         }
         table {
             border-collapse: collapse;
@@ -156,7 +200,7 @@ export class ClusterPage extends LitElement {
         td.number {
             text-align: right;
         }
-        tbody tr:hover {
+        tbody.data tr:hover {
             background-color: var(--light-active-color);
         }
         .test-id {
