@@ -111,6 +111,7 @@ capabilities {
 }
 board: "boardval"
 arc: true
+callbox: true
 licenses: {
   type: 2
   identifier: ""
@@ -253,6 +254,7 @@ capabilities {
 }
 board: "boardval"
 arc: true
+callbox: true
 licenses: {
   type: 2
   identifier: ""
@@ -308,6 +310,7 @@ var fullDimensions = Dimensions{
 	"label-audio_loopback_dongle": {"True"},
 	"label-bluetooth":             {"True"},
 	"label-board":                 {"boardval"},
+	"label-callbox":               {"True"},
 	"label-camerabox":             {"True"},
 	"label-camerabox_facing":      {"CAMERABOX_FACING_BACK"},
 	"label-camerabox_light":       {"CAMERABOX_LIGHT_LED"},

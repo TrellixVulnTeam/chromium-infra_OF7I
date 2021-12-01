@@ -130,6 +130,7 @@ capabilities {
 }
 board: "boardval"
 arc: true
+callbox: true
 licenses: {
   type: 2
   identifier: ""
@@ -158,6 +159,7 @@ var fullLabels = []string{
 	"bluetooth_state:NEED_REPLACEMENT",
 	"board:boardval",
 	"brand-code:HOMH",
+	"callbox",
 	"camerabox",
 	"camerabox_facing:back",
 	"camerabox_light:led",
@@ -587,6 +589,7 @@ capabilities {
 }
 board: "boardval"
 arc: true
+callbox: true
 licenses: {
   type: 2
   identifier: ""
@@ -616,6 +619,7 @@ var fullLabelsSpecial = []string{
 	"bluetooth",
 	"board:boardval",
 	"brand-code:HOMH",
+	"callbox",
 	"camerabox",
 	"camerabox_facing:back",
 	"camerabox_light:led",

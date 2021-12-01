@@ -143,7 +143,7 @@ message Shard {
 //
 // Keep sorted by field name.
 //
-// NEXT TAG: 38
+// NEXT TAG: 39
 message SchedulableLabels {
   // Whether this device supports ARC execution environment.
   optional bool arc = 20;
@@ -154,6 +154,9 @@ message SchedulableLabels {
 
   // This matches the brand id in chromiumos/infra/proto/src/device/brand_id.proto
   optional string brand = 26;
+
+  // Whether this device is connected to a CallBox.
+  optional bool callbox = 38;
 
   optional HardwareCapabilities capabilities = 5;
 

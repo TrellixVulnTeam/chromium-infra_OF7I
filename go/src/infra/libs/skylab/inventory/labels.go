@@ -7,9 +7,10 @@ package inventory
 // NewSchedulableLabels returns a new zero value instance of SchedulableLabels.
 func NewSchedulableLabels() *SchedulableLabels {
 	return &SchedulableLabels{
-		Arc:   new(bool),
-		Board: new(string),
-		Brand: new(string),
+		Arc:     new(bool),
+		Board:   new(string),
+		Brand:   new(string),
+		Callbox: new(bool),
 		Capabilities: &HardwareCapabilities{
 			Atrus:           new(bool),
 			Bluetooth:       new(bool),
