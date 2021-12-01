@@ -81,6 +81,10 @@ type BootstrapConfig struct {
 func (b *BuildBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input) (*BootstrapConfig, error) {
 	var config *BootstrapConfig
 	if input.propsProperties == nil {
+		if !input.propertiesOptional {
+			panic("invalid state: propsProperties is nil and propertiesOptional is not true")
+		}
+		logging.Infof(ctx, "skipping properties bootstrapping: $bootstrap/properties wasn't set while using properties optional bootstrapping")
 		config = &BootstrapConfig{}
 	} else {
 		switch x := input.propsProperties.ConfigProject.(type) {
