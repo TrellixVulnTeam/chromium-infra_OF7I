@@ -190,6 +190,8 @@ const (
 	DUTSetupTypeLabstation DUTSetupType = "LABSTATION"
 	// Special setup for routers.
 	DUTSetupTypeJetstream DUTSetupType = "JETSTREAM"
+	// Special setup for ChromeOS devices.
+	DUTSetupTypeCros DUTSetupType = "CROS"
 )
 
 // PowerSupplyType describes different power supply types for a DUT.

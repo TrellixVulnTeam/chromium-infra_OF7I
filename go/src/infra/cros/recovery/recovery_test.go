@@ -19,122 +19,121 @@ import (
 
 // Test cases for TestDUTPlans
 var dutPlansCases = []struct {
-	name     string
-	dut      *tlw.Dut
-	exp      []string
-	taskName TaskName
+	name      string
+	setupType tlw.DUTSetupType
+	taskName  TaskName
+	exp       []string
 }{
 	{
-		"default no servo",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeDefault,
-			ServoHost:          &tlw.ServoHost{},
-			ChameleonHost:      &tlw.ChameleonHost{},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"cros_repair"},
-		"",
+		"default no task",
+		tlw.DUTSetupTypeDefault,
+		TaskName(""),
+		nil,
 	},
 	{
-		"default with servo",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeDefault,
-			ServoHost:          &tlw.ServoHost{Name: "Servo"},
-			ChameleonHost:      &tlw.ChameleonHost{},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"servo_repair", "cros_repair"},
-		"",
+		"default recovery",
+		tlw.DUTSetupTypeDefault,
+		TaskNameRecovery,
+		nil,
 	},
 	{
-		"default with servo and chameleon",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeDefault,
-			ServoHost:          &tlw.ServoHost{Name: "Servo"},
-			ChameleonHost:      &tlw.ChameleonHost{Name: "Chameleon"},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"servo_repair", "chameleon_repair", "cros_repair"},
-		"",
-	},
-	{
-		"default with servo,chameleon and bluetoothPeer",
-		&tlw.Dut{
-			SetupType:     tlw.DUTSetupTypeDefault,
-			ServoHost:     &tlw.ServoHost{Name: "Servo"},
-			ChameleonHost: &tlw.ChameleonHost{Name: "Chameleon"},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{
-				{
-					Name: "bp",
-				},
-			},
-		},
-		[]string{"servo_repair", "chameleon_repair", "bluetooth_peer_repair", "cros_repair"},
-		"",
-	},
-	{
-		"labstation",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeLabstation,
-			ServoHost:          &tlw.ServoHost{},
-			ChameleonHost:      &tlw.ChameleonHost{},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"labstation_repair"},
-		"",
-	},
-	{
-		"deploy default no servo",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeDefault,
-			ServoHost:          &tlw.ServoHost{},
-			ChameleonHost:      &tlw.ChameleonHost{},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"cros_deploy"},
+		"default deploy",
+		tlw.DUTSetupTypeDefault,
 		TaskNameDeploy,
+		nil,
 	},
 	{
-		"default with servo",
-		&tlw.Dut{
-			SetupType:     tlw.DUTSetupTypeDefault,
-			ServoHost:     &tlw.ServoHost{Name: "Servo"},
-			ChameleonHost: &tlw.ChameleonHost{Name: "Chameleon"},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{
-				{
-					Name: "bp",
-				},
-			},
-		},
-		[]string{"servo_repair", "cros_deploy"},
-		TaskNameDeploy,
+		"cros no task",
+		tlw.DUTSetupTypeCros,
+		TaskName(""),
+		nil,
 	},
 	{
-		"deploy labstation",
-		&tlw.Dut{
-			SetupType:          tlw.DUTSetupTypeLabstation,
-			ServoHost:          &tlw.ServoHost{},
-			ChameleonHost:      &tlw.ChameleonHost{},
-			BluetoothPeerHosts: []*tlw.BluetoothPeerHost{},
-		},
-		[]string{"labstation_deploy"},
+		"cros recovery",
+		tlw.DUTSetupTypeCros,
+		TaskNameRecovery,
+		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
+	},
+	{
+		"cros deploy",
+		tlw.DUTSetupTypeCros,
 		TaskNameDeploy,
+		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
+	},
+	{
+		"labstation no task",
+		tlw.DUTSetupTypeCros,
+		TaskName(""),
+		nil,
+	},
+	{
+		"labstation recovery",
+		tlw.DUTSetupTypeLabstation,
+		TaskNameRecovery,
+		[]string{"cros"},
+	},
+	{
+		"labstation deploy",
+		tlw.DUTSetupTypeLabstation,
+		TaskNameDeploy,
+		[]string{"cros"},
 	},
 }
 
-// Testing dutPlans method
-func TestDUTPlans(t *testing.T) {
+// TestLoadConfiguration tests default configuration used for recovery flow is loading right and parsibale without any issue.
+//
+// Goals:
+//  1) Parsed without any issue
+//  2) plan using only existing execs
+//  3) configuration contain all required plans in order.
+func TestLoadConfiguration(t *testing.T) {
 	t.Parallel()
 	for _, c := range dutPlansCases {
 		cs := c
 		t.Run(cs.name, func(t *testing.T) {
+			ctx := context.Background()
 			args := &RunArgs{}
 			if c.taskName != "" {
 				args.TaskName = c.taskName
 			}
-			got := dutPlans(cs.dut, args)
-			if !cmp.Equal(got, cs.exp) {
-				t.Errorf("got: %v\nwant: %v", got, cs.exp)
+			dut := &tlw.Dut{SetupType: c.setupType}
+			got, _ := loadConfiguration(ctx, dut, args)
+			if len(cs.exp) == 0 {
+				if len(got.GetPlanNames()) != 0 {
+					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				}
+
+			} else {
+				if !cmp.Equal(got.GetPlanNames(), cs.exp) {
+					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				}
+			}
+		})
+	}
+}
+
+// TestParsedDefaultConfiguration tests default configurations are loading right and parsibale without any issue.
+//
+// Goals:
+//  1) Parsed without any issue
+//  2) plan using only existing execs
+//  3) configuration contain all required plans in order.
+func TestParsedDefaultConfiguration(t *testing.T) {
+	t.Parallel()
+	for _, c := range dutPlansCases {
+		cs := c
+		t.Run(cs.name, func(t *testing.T) {
+			ctx := context.Background()
+			got, _ := ParsedDefaultConfiguration(ctx, c.taskName, c.setupType)
+			if len(cs.exp) == 0 {
+				if len(got.GetPlanNames()) != 0 {
+					t.Errorf("%q -> want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				}
+
+			} else {
+				if !cmp.Equal(got.GetPlanNames(), cs.exp) {
+					t.Errorf("%q ->want: %v\n got: %v", cs.name, cs.exp, got.GetPlanNames())
+				}
 			}
 		})
 	}
@@ -173,7 +172,7 @@ func TestRunDUTPlan(t *testing.T) {
 		})
 		Convey("fail when one plan fail of plans fail", func() {
 			config.Plans = map[string]*planpb.Plan{
-				PlanServoRepair: {
+				PlanServo: {
 					CriticalActions: []string{"sample_fail"},
 					Actions: map[string]*planpb.Action{
 						"sample_fail": {
@@ -181,7 +180,7 @@ func TestRunDUTPlan(t *testing.T) {
 						},
 					},
 				},
-				PlanCrOSRepair: {
+				PlanCrOS: {
 					CriticalActions: []string{"sample_pass"},
 					Actions: map[string]*planpb.Action{
 						"sample_pass": {
@@ -190,12 +189,12 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			config.PlanNames = []string{PlanServoRepair, PlanCrOSRepair}
+			config.PlanNames = []string{PlanServo, PlanCrOS}
 			err := runDUTPlans(ctx, dut, config, args)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			} else {
-				So(err.Error(), ShouldContainSubstring, "run plan \"servo_repair\" for \"servo_host\":")
+				So(err.Error(), ShouldContainSubstring, "run plan \"servo\" for \"servo_host\":")
 				So(err.Error(), ShouldContainSubstring, "failed")
 			}
 		})
@@ -208,11 +207,11 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			err := runDUTPlanPerResource(ctx, "test_dut", PlanCrOSRepair, plan, execArgs)
+			err := runDUTPlanPerResource(ctx, "test_dut", PlanCrOS, plan, execArgs)
 			if err == nil {
 				t.Errorf("Expected fail but passed")
 			} else {
-				So(err.Error(), ShouldContainSubstring, "run plan \"cros_repair\" for \"test_dut\":")
+				So(err.Error(), ShouldContainSubstring, "run plan \"cros\" for \"test_dut\":")
 				So(err.Error(), ShouldContainSubstring, ": failed")
 			}
 		})
@@ -240,14 +239,14 @@ func TestRunDUTPlan(t *testing.T) {
 					},
 				},
 			}
-			if err := runDUTPlanPerResource(ctx, "DUT3", PlanCrOSRepair, plan, execArgs); err != nil {
+			if err := runDUTPlanPerResource(ctx, "DUT3", PlanCrOS, plan, execArgs); err != nil {
 				t.Errorf("Expected pass but failed: %s", err)
 			}
 		})
 		Convey("Run all good plans", func() {
 			config := &planpb.Configuration{
 				Plans: map[string]*planpb.Plan{
-					PlanCrOSRepair: {
+					PlanCrOS: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*planpb.Action{
 							"sample_pass": {
@@ -255,7 +254,7 @@ func TestRunDUTPlan(t *testing.T) {
 							},
 						},
 					},
-					PlanServoRepair: {
+					PlanServo: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*planpb.Action{
 							"sample_pass": {
@@ -272,7 +271,7 @@ func TestRunDUTPlan(t *testing.T) {
 		Convey("Run all plans even one allow to fail", func() {
 			config := &planpb.Configuration{
 				Plans: map[string]*planpb.Plan{
-					PlanCrOSRepair: {
+					PlanCrOS: {
 						CriticalActions: []string{"sample_fail"},
 						Actions: map[string]*planpb.Action{
 							"sample_fail": {
@@ -281,7 +280,7 @@ func TestRunDUTPlan(t *testing.T) {
 						},
 						AllowFail: true,
 					},
-					PlanServoRepair: {
+					PlanServo: {
 						CriticalActions: []string{"sample_pass"},
 						Actions: map[string]*planpb.Action{
 							"sample_pass": {
@@ -298,10 +297,10 @@ func TestRunDUTPlan(t *testing.T) {
 		Convey("Do not fail even if closing plan failed", func() {
 			config := &planpb.Configuration{
 				Plans: map[string]*planpb.Plan{
-					PlanCrOSRepair: {
+					PlanCrOS: {
 						CriticalActions: []string{},
 					},
-					PlanServoRepair: {
+					PlanServo: {
 						CriticalActions: []string{},
 					},
 					PlanClosing: {

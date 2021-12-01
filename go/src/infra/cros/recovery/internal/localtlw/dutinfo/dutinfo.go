@@ -137,7 +137,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 			supplyType = tlw.PowerSupplyTypeACOnly
 		}
 	}
-	setup := tlw.DUTSetupTypeDefault
+	setup := tlw.DUTSetupTypeCros
 	if strings.Contains(name, "jetstream") {
 		setup = tlw.DUTSetupTypeJetstream
 	}

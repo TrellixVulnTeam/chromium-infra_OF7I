@@ -56,11 +56,6 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 	if err != nil {
 		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
 	}
-	// Load Configuration.
-	config, err := loadConfiguration(ctx, args)
-	if err != nil {
-		return errors.Annotate(err, "run recovery %q", args.UnitName).Err()
-	}
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, fmt.Sprintf("Start %s", args.TaskName))
@@ -101,7 +96,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 		if ir != 0 {
 			log.Debug(ctx, "Continue to the next resource.")
 		}
-		if err := runResource(ctx, resource, config, args); err != nil {
+		if err := runResource(ctx, resource, args); err != nil {
 			errs = append(errs, errors.Annotate(err, "run recovery %q", resource).Err())
 		}
 	}
@@ -112,7 +107,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 }
 
 // runResource run single resource.
-func runResource(ctx context.Context, resource string, config *planpb.Configuration, args *RunArgs) (rErr error) {
+func runResource(ctx context.Context, resource string, args *RunArgs) (rErr error) {
 	log.Info(ctx, "Resource %q: started", resource)
 	if args.ShowSteps {
 		var step *build.Step
@@ -123,8 +118,10 @@ func runResource(ctx context.Context, resource string, config *planpb.Configurat
 	if err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
 	}
-	if len(config.GetPlanNames()) == 0 {
-		config.PlanNames = dutPlans(dut, args)
+	// Load Configuration.
+	config, err := loadConfiguration(ctx, dut, args)
+	if err != nil {
+		return errors.Annotate(err, "run resource %q", args.UnitName).Err()
 	}
 	if err := runDUTPlans(ctx, dut, config, args); err != nil {
 		return errors.Annotate(err, "run resource %q", resource).Err()
@@ -152,7 +149,7 @@ func retrieveResources(ctx context.Context, args *RunArgs) (resources []string, 
 
 // loadConfiguration loads and verifies a configuration.
 // If configuration is not provided by args then default is used.
-func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Configuration, err error) {
+func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config *planpb.Configuration, err error) {
 	if args.ShowSteps {
 		var step *build.Step
 		step, ctx = build.StartStep(ctx, "Load configuration")
@@ -165,15 +162,64 @@ func loadConfiguration(ctx context.Context, args *RunArgs) (config *planpb.Confi
 	cr := args.ConfigReader
 	if cr == nil {
 		// Get default configuration if not provided.
-		cr = DefaultConfig()
+		cr, err = defaultConfiguration(args.TaskName, dut.SetupType)
+		if err != nil {
+			return nil, errors.Annotate(err, "load configuration").Err()
+		}
 	}
-	if config, err = loader.LoadConfiguration(ctx, cr); err != nil {
+	if c, err := parseConfiguration(ctx, cr); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
+	} else {
+		return c, nil
 	}
-	if len(config.GetPlans()) == 0 {
+}
+
+// ParsedDefaultConfiguration returns parsed default configuration for requested task and setup.
+func ParsedDefaultConfiguration(ctx context.Context, tn TaskName, ds tlw.DUTSetupType) (*planpb.Configuration, error) {
+	if cr, err := defaultConfiguration(tn, ds); err != nil {
+		return nil, errors.Annotate(err, "load configuration").Err()
+	} else if c, err := parseConfiguration(ctx, cr); err != nil {
+		return nil, errors.Annotate(err, "load configuration").Err()
+	} else {
+		return c, nil
+	}
+}
+
+// parseConfiguration parses configuration to configuration proto instance.
+func parseConfiguration(ctx context.Context, cr io.Reader) (config *planpb.Configuration, err error) {
+	if c, err := loader.LoadConfiguration(ctx, cr); err != nil {
+		return c, errors.Annotate(err, "parse configuration").Err()
+	} else if len(c.GetPlans()) == 0 {
 		return nil, errors.Reason("load configuration: no plans provided by configuration").Err()
+	} else {
+		return c, nil
 	}
-	return config, nil
+}
+
+// defaultConfiguration provides configuration based on type of setup and task name.
+func defaultConfiguration(tn TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
+	switch tn {
+	case TaskNameRecovery:
+		switch ds {
+		case tlw.DUTSetupTypeCros:
+			return CrosRepairConfig(), nil
+		case tlw.DUTSetupTypeLabstation:
+			return LabstationRepairConfig(), nil
+		default:
+			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
+		}
+	case TaskNameDeploy:
+		switch ds {
+		case tlw.DUTSetupTypeCros:
+			return CrosDeployConfig(), nil
+		case tlw.DUTSetupTypeLabstation:
+			return LabstationDeployConfig(), nil
+		default:
+			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
+		}
+	default:
+		return nil, errors.Reason("TaskName: %q is not supported..", tn).Err()
+	}
 }
 
 // readInventory reads single resource info from inventory.
@@ -347,24 +393,22 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 // resources and then we will run the same plan for each resource.
 func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	switch planName {
-	case PlanCrOSRepair, PlanCrOSDeploy, PlanLabstationRepair, PlanLabstationDeploy:
+	case PlanCrOS:
 		if dut.Name != "" {
 			return []string{dut.Name}
 		}
-	case PlanServoRepair:
-		if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+	case PlanServo:
+		if dut.ServoHost != nil {
 			return []string{dut.ServoHost.Name}
 		}
-	case PlanBluetoothPeerRepair:
+	case PlanBluetoothPeer:
 		var resources []string
 		for _, bp := range dut.BluetoothPeerHosts {
-			if bp.Name != "" {
-				resources = append(resources, bp.Name)
-			}
+			resources = append(resources, bp.Name)
 		}
 		return resources
-	case PlanChameleonRepair:
-		if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
+	case PlanChameleon:
+		if dut.ChameleonHost != nil {
 			return []string{dut.ChameleonHost.Name}
 		}
 	case PlanClosing:
@@ -437,52 +481,12 @@ func (a *RunArgs) verify() error {
 // List of predefined plans.
 // TODO(otabek@): Update list of plans and mapping with final version.
 const (
-	PlanCrOSRepair          = "cros_repair"
-	PlanCrOSDeploy          = "cros_deploy"
-	PlanLabstationRepair    = "labstation_repair"
-	PlanLabstationDeploy    = "labstation_deploy"
-	PlanServoRepair         = "servo_repair"
-	PlanChameleonRepair     = "chameleon_repair"
-	PlanBluetoothPeerRepair = "bluetooth_peer_repair"
+	PlanCrOS          = "cros"
+	PlanServo         = "servo"
+	PlanChameleon     = "chameleon"
+	PlanBluetoothPeer = "bluetooth_peer"
 	// That is final plan which will run always if present in configuration.
 	// The goal is execution final step to clean up stages if something left
 	// over in the devices.
 	PlanClosing = "close"
 )
-
-// dutPlans creates list of plans for DUT.
-// TODO(otabek@): Update list of plans and mapping with final version.
-// Plans will chosen based on:
-// 1) SetupType of DUT.
-// 2) Peripherals information.
-func dutPlans(dut *tlw.Dut, args *RunArgs) []string {
-	// TODO(otabek@): Add logic to run simple action by request.
-	// If the task was provide then use recovery as default task.
-	var plans []string
-	switch dut.SetupType {
-	case tlw.DUTSetupTypeLabstation:
-		switch args.TaskName {
-		case TaskNameDeploy:
-			plans = append(plans, PlanLabstationDeploy)
-		default:
-			plans = append(plans, PlanLabstationRepair)
-		}
-	default:
-		if dut.ServoHost != nil && dut.ServoHost.Name != "" {
-			plans = append(plans, PlanServoRepair)
-		}
-		switch args.TaskName {
-		case TaskNameDeploy:
-			plans = append(plans, PlanCrOSDeploy)
-		default:
-			if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
-				plans = append(plans, PlanChameleonRepair)
-			}
-			if len(dut.BluetoothPeerHosts) > 0 {
-				plans = append(plans, PlanBluetoothPeerRepair)
-			}
-			plans = append(plans, PlanCrOSRepair)
-		}
-	}
-	return plans
-}
