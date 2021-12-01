@@ -309,7 +309,9 @@ func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.Auto
 func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
 	useDutTopo := os.Getenv("USE_DUT_TOPO")
 	if strings.ToLower(useDutTopo) == "true" {
-		_, err := getDUTTopology(ctx, dut)
+		dutTopo, err := getDUTTopology(ctx, dut)
+		// Output dutTopo to stdout during development
+		fmt.Println(dutTopo)
 		if err != nil {
 			// Output error to stdout during testing
 			fmt.Println("Error getting DUT topology: ", err.Error())

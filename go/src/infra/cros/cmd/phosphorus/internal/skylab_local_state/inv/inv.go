@@ -6,8 +6,6 @@
 package inv
 
 import (
-	"net"
-
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc"
 
@@ -15,7 +13,7 @@ import (
 )
 
 const (
-	inventoryServicePort = "1485"
+	inventoryServicePort = ":1485"
 )
 
 // InventoryService represents an InventoryServiceClient and the connection it uses
@@ -26,12 +24,7 @@ type InventoryService struct {
 
 // NewClient initialize and return new client to work with Inventory server service.
 func NewClient() (*InventoryService, error) {
-	l, err := net.Listen("tcp", ":"+inventoryServicePort)
-	if err != nil {
-		return nil, errors.Annotate(err, "Create a net listener").Err()
-	}
-
-	conn, err := grpc.Dial(l.Addr().String(), grpc.WithInsecure())
+	conn, err := grpc.Dial(inventoryServicePort, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Annotate(err, "Dial").Err()
 	}
