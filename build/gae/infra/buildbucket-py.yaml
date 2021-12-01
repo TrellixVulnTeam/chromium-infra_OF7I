@@ -1,4 +1,4 @@
-name: luci-py/buildbucket-py
+name: infra/buildbucket-py
 extends: ../base.yaml
 
 contextdir: ../../../appengine/cr-buildbucket
