@@ -31,12 +31,6 @@ func verifyConfig(t *testing.T, c io.Reader) {
 	}
 }
 
-// TestDefaultConfig verifies the default configuration.
-func TestDefaultConfig(t *testing.T) {
-	t.Parallel()
-	verifyConfig(t, DefaultConfig())
-}
-
 // TestLabstationRepairConfig verifies the labstation repair configuration.
 func TestLabstationRepairConfig(t *testing.T) {
 	t.Parallel()

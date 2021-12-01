@@ -12,6 +12,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/grpc/metadata"
 
@@ -23,9 +25,6 @@ import (
 	rlogger "infra/cros/recovery/logger"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
-
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/logging/gologger"
 )
 
 // LocalRecovery subcommand: Running verify/recovery against the DUT from local environment.
