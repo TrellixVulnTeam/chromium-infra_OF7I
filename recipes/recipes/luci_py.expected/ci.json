@@ -598,35 +598,6 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[CACHE]/builder/infra/luci/.vpython",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/builder/infra/luci/client/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/builder/infra/luci/client",
-    "luci_context": {
-      "realm": {
-        "name": "infra:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "client.run tests python2",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
       "[CACHE]/builder/infra/luci/.vpython3",
       "-u",
       "test.py",
@@ -655,35 +626,6 @@
   {
     "cmd": [],
     "name": "swarming bot"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[CACHE]/builder/infra/luci/.vpython",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/builder/infra/luci/appengine/swarming/swarming_bot",
-    "luci_context": {
-      "realm": {
-        "name": "infra:ci"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
-    "name": "swarming bot.run tests python2",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
   },
   {
     "cmd": [
