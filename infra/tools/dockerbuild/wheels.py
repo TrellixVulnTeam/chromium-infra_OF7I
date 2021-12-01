@@ -1164,6 +1164,7 @@ SPECS.update({
         UniversalSource('libcst', '0.3.19', pyversions=['py3']),
         UniversalSource('libusb1', '1.5.3'),
         UniversalSource('libusb1', '1.7.1'),
+        UniversalSource('lit', '13.0.0', pyversions=['py3']),
         UniversalSource('mox', '0.5.3'),
         UniversalSource('mozinfo', '0.10'),
         UniversalSource('mozinfo', '1.1.0'),

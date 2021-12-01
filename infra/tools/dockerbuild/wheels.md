@@ -3592,6 +3592,20 @@ wheel: <
 
 * *universal*
 
+## **lit-py3**
+
+### 13.0.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/lit-py3"
+  version: "version:13.0.0"
+>
+```
+
+
+* *universal*
+
 ## **lxml**
 
 ### 4.2.5
