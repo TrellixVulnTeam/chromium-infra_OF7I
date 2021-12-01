@@ -6,7 +6,7 @@ package heuristics
 
 import "strings"
 
-// LooksLikeLabstation returns whether a hostname appears to be a labstation or not.
+// LooksLikeLabstation returns whether a hostname or botID appears to be a labstation or not.
 // This function exists so that we always use the same heuristic everywhere when identifying labstations.
 func LooksLikeLabstation(hostname string) bool {
 	return strings.Contains(hostname, "labstation")
