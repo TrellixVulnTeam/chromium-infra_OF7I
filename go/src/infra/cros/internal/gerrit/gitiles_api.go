@@ -63,6 +63,13 @@ func NewProdAPIClient(ctx context.Context, host, gitcookiesPath string) (*ProdAP
 		}
 	}
 	cookie := strings.Fields(stdoutBuf.String())
+	// Tokenizing on whitespace failed, try commas
+	if len(cookie) == 1 {
+		cookie = strings.Split(strings.TrimSpace(stdoutBuf.String()), ",")
+		if len(cookie) == 1 {
+			return nil, fmt.Errorf("failed to tokenize gitcookies from %s, expected whitespace-separated or comma-separated fields", gitcookiesPath)
+		}
+	}
 	cookieKey := cookie[5]
 	cookieValue := cookie[6]
 
