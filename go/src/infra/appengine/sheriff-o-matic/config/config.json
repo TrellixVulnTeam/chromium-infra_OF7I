@@ -46,6 +46,11 @@
         "Oreo Phone Tester"
       ]
     },
+    "chromium.chromiumos": {
+      "excluded_builders": [
+        "linux-ash-chromium-generator-rel"
+      ]
+    },
     "chromium.gpu": {
       "excluded_builders": [
         "GPU Linux Builder (dbg)",
