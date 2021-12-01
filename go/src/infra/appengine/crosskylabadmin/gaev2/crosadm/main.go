@@ -37,5 +37,6 @@ func main() {
 func installServices(r prpc.Registrar) {
 	fleet.RegisterTrackerServer(r, &fleet.DecoratedTracker{
 		Service: &frontend.TrackerServerImpl{},
+		Prelude: frontend.CheckAccess,
 	})
 }

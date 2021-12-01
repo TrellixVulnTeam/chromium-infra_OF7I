@@ -66,7 +66,7 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	api.InstallHandlers(r, mwBase)
 }
 
-// checkAccess verifies that the request is from an authorized user.
+// CheckAccess verifies that the request is from an authorized user.
 //
 // Servers should use checkAccess as a Prelude while handling requests to
 // uniformly check access across the API.
