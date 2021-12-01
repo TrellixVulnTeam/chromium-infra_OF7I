@@ -47,6 +47,7 @@ func getApplication() *cli.Application {
 			f20.Tlw,
 			tasks.LocalRecovery,
 			tasks.RecoveryConfig,
+			tasks.CustomProvision,
 		},
 	}
 }
