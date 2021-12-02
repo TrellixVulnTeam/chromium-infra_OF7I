@@ -225,14 +225,6 @@ BUILD_COUNT_EXPERIMENTAL = gae_ts_mon.GaugeMetric(
     _build_fields('bucket', 'builder', 'status')
 )
 
-MAX_AGE_SCHEDULED = gae_ts_mon.FloatMetric(
-    'buildbucket/builds/max_age_scheduled',
-    'Age of the oldest SCHEDULED build.', (
-        _build_fields('bucket', 'builder') +
-        [gae_ts_mon.BooleanField('must_be_never_leased')]
-    ),
-    units=gae_ts_mon.MetricsDataUnits.SECONDS
-)
 SEQUENCE_NUMBER_GEN_DURATION_MS = gae_ts_mon.CumulativeDistributionMetric(
     'buildbucket/sequence_number/gen_duration',
     'Duration of a sequence number generation in ms',
@@ -281,38 +273,8 @@ def set_build_count_metric_async(
   metric.set(value, fields=fields, target_fields=GLOBAL_TARGET_FIELDS)
 
 
-@ndb.tasklet
-def set_build_latency(bucket_id, bucket_field, builder, must_be_never_leased):
-  q = model.Build.query(
-      model.Build.bucket_id == bucket_id,
-      model.Build.tags == 'builder:%s' % builder,
-      model.Build.status == common_pb2.SCHEDULED,
-      model.Build.experimental == False,
-  )
-  if must_be_never_leased:
-    q = q.filter(model.Build.never_leased == True)
-  else:
-    # Reuse the index that has never_leased
-    q = q.filter(model.Build.never_leased.IN((True, False)))
-
-  q = q.order(model.Build.create_time)
-  oldest_build = yield q.fetch_async(1, projection=[model.Build.create_time])
-
-  if oldest_build:
-    max_age = (utils.utcnow() - oldest_build[0].create_time).total_seconds()
-  else:
-    max_age = 0
-  fields = {
-      'bucket': bucket_field,
-      'builder': builder,
-      'must_be_never_leased': must_be_never_leased,
-  }
-  MAX_AGE_SCHEDULED.set(max_age, fields, target_fields=GLOBAL_TARGET_FIELDS)
-
-
 # Metrics that are per-app rather than per-instance.
 GLOBAL_METRICS = [
-    MAX_AGE_SCHEDULED,
     BUILD_COUNT_PROD,
     BUILD_COUNT_EXPERIMENTAL,
 ]
@@ -338,34 +300,26 @@ def update_global_metrics():
       if cfg and config.is_swarming_config(cfg)
   }
 
-  # Collect a list of counting/latency queries.
+  # Collect a list of counting queries.
   count_query_queue = []
-  latency_query_queue = []
   # TODO(crbug.com/851036): join with the loop above and remove builder_ids set.
   for bucket_id, builder in builder_ids:
     legacy_bucket_name = api_common.legacy_bucket_name(
         bucket_id, bucket_id in all_luci_bucket_ids
     )
-    latency_query_queue.extend([
-        (bucket_id, legacy_bucket_name, builder, True),
-        (bucket_id, legacy_bucket_name, builder, False),
-    ])
     for status in (common_pb2.SCHEDULED, common_pb2.STARTED):
       for experimental in (False, True):
         count_query_queue.append(
             (bucket_id, legacy_bucket_name, builder, status, experimental)
         )
 
-  # Process counting/latency queries with _CONCURRENT_QUERY_LIMIT workers.
+  # Process counting queries with _CONCURRENT_QUERY_LIMIT workers.
 
   @ndb.tasklet
   def worker():
     while count_query_queue:
       item = count_query_queue.pop()
       yield set_build_count_metric_async(*item)
-    while latency_query_queue:
-      item = latency_query_queue.pop()
-      yield set_build_latency(*item)
 
   for w in [worker() for _ in xrange(_CONCURRENT_QUERY_LIMIT)]:
     w.check_success()

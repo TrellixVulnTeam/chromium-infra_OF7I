@@ -57,95 +57,9 @@ class MetricsTest(testing.AppengineTestCase):
                                      target_fields=metrics.GLOBAL_TARGET_FIELDS)
     )
 
-  @mock.patch('components.utils.utcnow', autospec=True)
-  def test_set_build_lease_latency(self, utcnow):
-    utcnow.return_value = datetime.datetime(2015, 1, 4)
-
-    def mkbuild(
-        create_time,
-        never_leased,
-        bucket='try',
-        status=common_pb2.SCHEDULED,
-        experimental=False
-    ):
-      build = test_util.build(
-          builder=dict(project='chromium', bucket=bucket, builder='release'),
-          status=status,
-          create_time=test_util.dt2ts(create_time),
-          input=dict(experimental=experimental),
-      )
-      build.never_leased = never_leased
-      build.put()
-
-    mkbuild(datetime.datetime(2014, 12, 31), False)  # oldest
-    mkbuild(datetime.datetime(2015, 1, 1), True)  # oldest never leased
-    mkbuild(datetime.datetime(2015, 1, 3), True)
-    mkbuild(datetime.datetime(2014, 1, 1), True, experimental=True)
-    mkbuild(
-        datetime.datetime(2015, 1, 3), True, status=common_pb2.INFRA_FAILURE
-    )
-    # never_leased is None, so this should be ignored by both metrics.
-    mkbuild(datetime.datetime(2014, 1, 3), None)
-    mkbuild(datetime.datetime(2015, 1, 3), True, bucket='ci')
-
-    metrics.set_build_latency(
-        'chromium/try', 'luci.chromium.try', 'release', True
-    ).get_result()
-    metrics.set_build_latency(
-        'chromium/try', 'luci.chromium.try', 'release', False
-    ).get_result()
-    max_lease = metrics.MAX_AGE_SCHEDULED.get(
-        {
-            'bucket': 'luci.chromium.try',
-            'builder': 'release',
-            'must_be_never_leased': True,
-        },
-        target_fields=metrics.GLOBAL_TARGET_FIELDS,
-    )
-    self.assertEqual(max_lease, 3 * 24 * 3600)
-    max_start = metrics.MAX_AGE_SCHEDULED.get(
-        {
-            'bucket': 'luci.chromium.try',
-            'builder': 'release',
-            'must_be_never_leased': False,
-        },
-        target_fields=metrics.GLOBAL_TARGET_FIELDS,
-    )
-    self.assertEqual(max_start, 4 * 24 * 3600)
-
-  def test_set_build_lease_latency_no_pending_builds(self):
-    metrics.set_build_latency(
-        'chromium/try', 'luci.chromium.try', 'release', True
-    ).get_result()
-    metrics.set_build_latency(
-        'chromium/try', 'luci.chromium.try', 'release', False
-    ).get_result()
-    max_lease = metrics.MAX_AGE_SCHEDULED.get(
-        {
-            'bucket': 'luci.chromium.try',
-            'builder': 'release',
-            'must_be_never_leased': True,
-        },
-        target_fields=metrics.GLOBAL_TARGET_FIELDS,
-    )
-    self.assertEqual(max_lease, 0)
-    max_start = metrics.MAX_AGE_SCHEDULED.get(
-        {
-            'bucket': 'luci.chromium.try',
-            'builder': 'release',
-            'must_be_never_leased': False,
-        },
-        target_fields=metrics.GLOBAL_TARGET_FIELDS,
-    )
-    self.assertEqual(max_start, 0)
-
-  @mock.patch('metrics.set_build_latency', autospec=True)
   @mock.patch('metrics.set_build_count_metric_async', autospec=True)
-  def test_update_global_metrics(
-      self, set_build_count_metric_async, set_build_latency
-  ):
+  def test_update_global_metrics(self, set_build_count_metric_async):
     set_build_count_metric_async.return_value = future(None)
-    set_build_latency.return_value = future(None)
 
     model.Builder(id='chromium:luci.chromium.try:release').put()
     model.Builder(id='chromium:luci.chromium.try:debug').put()
@@ -164,20 +78,6 @@ class MetricsTest(testing.AppengineTestCase):
     )
 
     metrics.update_global_metrics()
-
-    set_build_latency.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'release', True
-    )
-    set_build_latency.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'release', False
-    )
-    set_build_latency.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'debug', True
-    )
-    set_build_latency.assert_any_call(
-        'chromium/try', 'luci.chromium.try', 'debug', False
-    )
-
     set_build_count_metric_async.assert_any_call(
         'chromium/try', 'luci.chromium.try', 'release', common_pb2.SCHEDULED,
         False
