@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/gae/service/datastore"
@@ -534,6 +535,49 @@ func TestGetStableVersion(t *testing.T) {
 		So(err, ShouldNotBeNil)
 		So(resp, ShouldBeNil)
 	})
+}
+
+// TestLooksLikeServo tests that looks like servo heuristic.
+func TestLooksLikeServo(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name     string
+		hostname string
+		isServo  bool
+	}{
+		{
+			name:     "empty string",
+			hostname: "",
+			isServo:  false,
+		},
+		{
+			name:     "a servo",
+			hostname: "chromeos32-servo",
+			isServo:  true,
+		},
+		{
+			name:     "servov4p1 is *DUT* not servo",
+			hostname: "servo-servo4p1",
+			isServo:  false,
+		},
+		{
+			name:     "legitimate-seeming DUT hostname",
+			hostname: "chromeos100-row100-rack100-host100",
+			isServo:  false,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			expected := tt.isServo
+			actual := looksLikeServo(tt.hostname)
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
 }
 
 func withDutInfoCacheValidity(ctx context.Context, v time.Duration) context.Context {
