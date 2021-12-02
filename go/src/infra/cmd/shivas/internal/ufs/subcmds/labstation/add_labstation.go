@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -283,7 +284,7 @@ func (c *addLabstation) parseMCSV() ([]*labstationDeployUFSParams, error) {
 	var deployParams []*labstationDeployUFSParams
 	for i, rec := range records {
 		// if i is 1, determine whether this is a header
-		if i == 0 && utils.LooksLikeHeader(rec) {
+		if i == 0 && heuristics.LooksLikeHeader(rec) {
 			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
 				return nil, err
 			}

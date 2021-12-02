@@ -33,15 +33,6 @@ func ParseMCSVFile(specsFile string) ([][]string, error) {
 	return csvReader.ReadAll()
 }
 
-// LooksLikeHeader heuristically determines whether a CSV line looks like
-// a CSV header for the MCSV format.
-func LooksLikeHeader(rec []string) bool {
-	if len(rec) == 0 {
-		return false
-	}
-	return strings.EqualFold(rec[0], "name")
-}
-
 // ValidateSameStringArray validates if 2 strings slice are same
 func ValidateSameStringArray(expected []string, actual []string) error {
 	if len(expected) != len(actual) {

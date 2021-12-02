@@ -24,6 +24,7 @@ import (
 	"infra/cmd/shivas/utils"
 	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -516,7 +517,7 @@ func (c *updateDUT) parseMCSV() ([]*ufsAPI.UpdateMachineLSERequest, error) {
 	}
 	var requests []*ufsAPI.UpdateMachineLSERequest
 	for i, rec := range records {
-		if i == 0 && utils.LooksLikeHeader(rec) {
+		if i == 0 && heuristics.LooksLikeHeader(rec) {
 			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
 				return nil, err
 			}

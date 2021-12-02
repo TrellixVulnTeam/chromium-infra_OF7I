@@ -19,6 +19,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/common/heuristics"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -203,7 +204,7 @@ func (c *addSwitch) parseMCSV() ([]*ufspb.Switch, error) {
 	var switches []*ufspb.Switch
 	for i, rec := range records {
 		// if i is 0, determine whether this is a header
-		if i == 0 && utils.LooksLikeHeader(rec) {
+		if i == 0 && heuristics.LooksLikeHeader(rec) {
 			if err := utils.ValidateSameStringArray(mcsvFields, rec); err != nil {
 				return nil, err
 			}

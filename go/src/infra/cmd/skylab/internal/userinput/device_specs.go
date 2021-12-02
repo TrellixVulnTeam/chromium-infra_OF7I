@@ -7,6 +7,7 @@ package userinput
 import (
 	"encoding/csv"
 	"fmt"
+	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/inventory"
 	"io"
 	"io/ioutil"
@@ -16,11 +17,6 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/errors"
 )
-
-// looksLikeValidPool heuristically checks a string to see if it looks like a valid pool.
-// A heuristically valid pool name contains only a-z, A-Z, 0-9, -, and _ .
-// A pool name cannot begin with - and 0-9 .
-var looksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][-A-za-z0-9_]*\z`).MatchString
 
 const defaultCriticalPool = "DUT_POOL_QUOTA"
 
@@ -213,7 +209,7 @@ func parseMCSV(text string) ([]*inventory.DeviceUnderTest, error) {
 			return nil, e
 		}
 		// if linum is 1, determine whether this is a header
-		if linum == 1 && looksLikeHeader(rec) {
+		if linum == 1 && heuristics.LooksLikeHeader(rec) {
 			if err := validateSameStringArray(mcsvFields, rec); err != nil {
 				return nil, err
 			}
@@ -235,15 +231,6 @@ func parseMCSV(text string) ([]*inventory.DeviceUnderTest, error) {
 	}
 
 	return out, nil
-}
-
-// looksLikeHeader heuristically determines whether a CSV line looks like
-// a CSV header for the MCSV format.
-func looksLikeHeader(rec []string) bool {
-	if len(rec) == 0 {
-		return false
-	}
-	return strings.EqualFold(rec[0], "host")
 }
 
 // parseMcsvRecord takes a row of a csv file and inflates it into a mcsvRecord
@@ -557,7 +544,7 @@ func splitPoolList(pools ...string) (criticalPools []string, selfServePools []st
 		if pool == "" {
 			return nil, nil, fmt.Errorf("splitPoolList: empty pool is invalid")
 		}
-		if !looksLikeValidPool(pool) {
+		if !heuristics.LooksLikeValidPool(pool) {
 			return nil, nil, fmt.Errorf("splitPoolList: pool (%s) does not conform to [a-zA-Z_][-a-zA-Z0-9_]*", pool)
 		}
 		_, isCriticalPool := inventory.SchedulableLabels_DUTPool_value[pool]
