@@ -76,8 +76,15 @@ func mainImpl() error {
 
 	// Construct the command args and invoke Pylint on the given paths.
 	cmdName := filepath.Join(exPath, pythonPath)
+	absPylintPath := filepath.Join(exPath, pylintPath)
+	if _, err := os.Stat(absPylintPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("pylint executable does not exist at %s", absPylintPath)
+		}
+		return fmt.Errorf("failed to check if pylint executable exists: %w", err)
+	}
 	cmdArgs := []string{
-		filepath.Join(exPath, pylintPath),
+		absPylintPath,
 		"--rcfile", filepath.Join(exPath, "pylintrc"),
 		"--msg-template", msgTemplate,
 	}
@@ -118,9 +125,16 @@ func mainImpl() error {
 	scanPylintOutput(scanner, output)
 
 	// A non-zero exit status for Pylint doesn't mean that an error occurred,
-	// it just means that warnings were found, so we don't need to look at the
-	// error returned by Wait.
-	cmd.Wait()
+	// it just means that warnings were found, so we can ignore the error as
+	// long as it's an ExitError.
+	if err := cmd.Wait(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			log.Printf("pylint produced non-zero exit code %d", exitErr.ExitCode())
+		} else {
+			return fmt.Errorf("error running pylint: %w", err)
+		}
+	}
 
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
