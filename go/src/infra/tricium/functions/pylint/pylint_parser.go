@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -33,6 +34,13 @@ const (
 )
 
 func main() {
+	if err := mainImpl(); err != nil {
+		fmt.Fprintf(os.Stderr, "pylint_parser: %s\n", err)
+		os.Exit(1)
+	}
+}
+
+func mainImpl() error {
 	inputDir := flag.String("input", "", "Path to root of Tricium input")
 	outputDir := flag.String("output", "", "Path to root of Tricium output")
 	disable := flag.String("disable", "", "Comma-separated list of checks "+
@@ -42,13 +50,13 @@ func main() {
 		"The enable list overrides the disable list.")
 	flag.Parse()
 	if flag.NArg() != 0 {
-		log.Panicf("Unexpected argument.")
+		return errors.New("unexpected argument")
 	}
 
 	// Retrieve the path name for the executable that started the current process.
 	ex, err := os.Executable()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	exPath := filepath.Dir(ex)
 	log.Printf("Using executable path %q.", exPath)
@@ -56,14 +64,14 @@ func main() {
 	// Read Tricium input FILES data.
 	input := &tricium.Data_Files{}
 	if err = tricium.ReadDataType(*inputDir, input); err != nil {
-		log.Panicf("Failed to read FILES data: %v", err)
+		return fmt.Errorf("failed to read FILES data: %w", err)
 	}
 	log.Printf("Read FILES data.")
 
 	// Filter the files to include only .py files.
 	files, err := tricium.FilterFiles(input.Files, "*.py")
 	if err != nil {
-		log.Panicf("Failed to filter files: %v", err)
+		return fmt.Errorf("failed to filter files: %w", err)
 	}
 
 	// Construct the command args and invoke Pylint on the given paths.
@@ -99,13 +107,11 @@ func main() {
 
 	stdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
-		os.Exit(1)
+		return fmt.Errorf("error creating StdoutPipe for cmd: %w", err)
 	}
 
-	if err = cmd.Start(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting Cmd.", err)
-		os.Exit(1)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("error starting cmd: %w", err)
 	}
 	scanner := bufio.NewScanner(stdoutReader)
 	output := &tricium.Data_Results{}
@@ -119,13 +125,14 @@ func main() {
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
 	if err != nil {
-		log.Panicf("Failed to write RESULTS data: %v", err)
+		return fmt.Errorf("failed to write RESULTS data: %w", err)
 	}
 	log.Printf("Wrote RESULTS data to path %q.", path)
+	return nil
 }
 
 // scanPylintOutput reads Pylint output line by line and populates results.
-func scanPylintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) {
+func scanPylintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) error {
 	// Read line by line, adding comments to the output.
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -139,8 +146,9 @@ func scanPylintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Panicf("Failed to read file: %v", err)
+		return fmt.Errorf("failed to read file: %w", err)
 	}
+	return nil
 }
 
 // parsePylintLine parses one line of Pylint output to produce a comment.
