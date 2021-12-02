@@ -13,6 +13,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
 
@@ -20,6 +21,8 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/skylab/buildbucket"
+	"infra/libs/skylab/buildbucket/labpack"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -72,6 +75,7 @@ var AddLabstationCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.model, "model", "", "model name of the device")
 		c.Flags.StringVar(&c.board, "board", "", "board the device is based on")
 		c.Flags.StringVar(&c.rack, "rack", "", "rack that the labstation is on")
+		c.Flags.BoolVar(&c.paris, "paris", false, "use paris for deployment")
 		return c
 	},
 }
@@ -96,6 +100,7 @@ type addLabstation struct {
 	tags              []string
 	state             string
 	description       string
+	paris             bool
 
 	// Asset related params
 	model string
@@ -166,6 +171,15 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 		Options: site.DefaultPRPCOptions,
 	})
 
+	var bbClient buildbucket.Client
+	if c.paris {
+		var cErr error
+		bbClient, cErr = c.createBBClient(ctx)
+		if cErr != nil {
+			return cErr
+		}
+	}
+
 	for _, params := range deployParams {
 		if len(params.Labstation.GetMachines()) == 0 {
 			fmt.Printf("Failed to add Labstation %s to UFS. It is not linked to any Asset(Machine).\n", params.Labstation.GetName())
@@ -175,7 +189,8 @@ func (c *addLabstation) innerRun(a subcommands.Application, args []string, env s
 		resTable.RecordResult(ufsOp, params.Labstation.GetHostname(), err)
 		if err == nil {
 			// Deploy and record result.
-			resTable.RecordResult(swarmingOp, params.Labstation.GetHostname(), c.deployLabstationToSwarming(ctx, tc, params.Labstation))
+			dErr := c.createLabstationDeployTask(ctx, tc, bbClient, params.Labstation, e, params.Labstation.GetHostname())
+			resTable.RecordResult(swarmingOp, params.Labstation.GetHostname(), dErr)
 		} else {
 			// Record deploy task skip.
 			resTable.RecordSkip(swarmingOp, params.Labstation.GetHostname(), "")
@@ -321,14 +336,33 @@ func (c *addLabstation) addLabstationToUFS(ctx context.Context, ic ufsAPI.FleetC
 	return nil
 }
 
-// deployLabstationToSwarming starts a deploy task for the given labstation.
-func (c *addLabstation) deployLabstationToSwarming(ctx context.Context, tc *swarming.TaskCreator, lse *ufspb.MachineLSE) error {
-	task, err := tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
-	if err != nil {
-		return err
+// CreateLabstationDeployTask creates a task using either the paris or legacy flow to deploy a labstation.
+func (c *addLabstation) createLabstationDeployTask(ctx context.Context, tc *swarming.TaskCreator, bbClient buildbucket.Client, lse *ufspb.MachineLSE, e site.Environment, host string) error {
+	var task *swarming.TaskInfo
+	var dErr error
+	if c.paris {
+		task, dErr = scheduleDeployBuilder(ctx, bbClient, e, host)
+		if dErr != nil {
+			return errors.Annotate(dErr, "deploy labstation").Err()
+		}
+		fmt.Printf("Triggered Deploy task for Labstation %s. Follow the deploy job at %s\n", lse.GetName(), task.TaskURL)
+	} else {
+		task, dErr = tc.DeployDut(ctx, lse.Name, lse.GetMachines()[0], defaultSwarmingPool, c.deployTaskTimeout, c.deployActions, c.deployTags, nil)
+		if dErr != nil {
+			return errors.Annotate(dErr, "deploy labstation").Err()
+		}
+		fmt.Printf("Triggered Deploy task for Labstation %s. Follow the deploy job at %s\n", lse.GetName(), task.TaskURL)
 	}
-	fmt.Printf("Triggered Deploy task for Labstation %s. Follow the deploy job at %s\n", lse.GetName(), task.TaskURL)
 	return nil
+}
+
+// EnsureBBClient creates a buildbucket client if permitted.
+func (c *addLabstation) createBBClient(ctx context.Context) (buildbucket.Client, error) {
+	bc, err := buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+	if err != nil {
+		return nil, errors.Annotate(err, "ensure bb client").Err()
+	}
+	return bc, nil
 }
 
 func (c *addLabstation) initializeLSEAndAsset(recMap map[string]string) (*labstationDeployUFSParams, error) {
@@ -422,4 +456,31 @@ func (c *addLabstation) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetCli
 		UpdateMask: mask,
 	})
 	return err
+}
+
+// ScheduleDeployBuilder schedules a labpack deploy builder. It returns a description of the buildbucket task and an error value.
+func scheduleDeployBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string) (*swarming.TaskInfo, error) {
+	p := &labpack.Params{
+		UnitName:       host,
+		TaskName:       "deploy",
+		EnableRecovery: true,
+		AdminService:   e.AdminService,
+		// NOTE: We use the UFS service, not the Inventory service here.
+		InventoryService: e.UnifiedFleetService,
+		NoStepper:        false,
+		NoMetrics:        false,
+		// TODO(gregorynisbet): Pass config file to labpack task.
+		Configuration: "",
+	}
+	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	if err != nil {
+		return nil, err
+	}
+	taskInfo := &swarming.TaskInfo{
+		// Use an ID format that makes it extremely obvious that we're dealing with a
+		// buildbucket invocation number rather than a swarming task.
+		ID:      fmt.Sprintf("buildbucket:%d", taskID),
+		TaskURL: bc.BuildURL(taskID),
+	}
+	return taskInfo, nil
 }
