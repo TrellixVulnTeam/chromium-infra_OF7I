@@ -31,13 +31,14 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 	// Check whether the current revision made any file changes compared with
 	// the initial revision.
 	if t.RevisionsCount > 1 {
-		resp, err := gc.ListFiles(ctx, &gerritpb.ListFilesRequest{
+		listReq := &gerritpb.ListFilesRequest{
 			Number:     t.Number,
 			RevisionId: t.Revision,
 			Base:       "1",
-		})
+		}
+		resp, err := gc.ListFiles(ctx, listReq)
 		if err != nil {
-			return "", fmt.Errorf("gerrit ListFiles rpc call failed with error: %v", err)
+			return "", fmt.Errorf("gerrit ListFiles rpc call failed with error: request %+v, error %v", listReq, err)
 		}
 
 		var invalidFiles []string
@@ -57,12 +58,13 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 	}
 
 	// Check whether the change is in a configured time window.
-	originalClInfo, err := gc.GetChange(ctx, &gerritpb.GetChangeRequest{
+	getChangeReq := &gerritpb.GetChangeRequest{
 		Number:  t.CherryPickOfChange,
 		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
-	})
+	}
+	originalClInfo, err := gc.GetChange(ctx, getChangeReq)
 	if err != nil {
-		return "", fmt.Errorf("gerrit GetChange rpc call failed with error: %v", err)
+		return "", fmt.Errorf("gerrit GetChange rpc call failed with error: request %+v, error %v", getChangeReq, err)
 	}
 	tw := cfg.DefaultTimeWindow
 	if hostCfg.CleanCherryPickTimeWindow != "" {
@@ -101,14 +103,15 @@ func reviewCleanCherryPick(ctx context.Context, cfg *config.Config, gc gerrit.Cl
 		}
 	}
 
-	// Check whether the change is mergable.
-	mi, err := gc.GetMergeable(ctx, &gerritpb.GetMergeableRequest{
+	// Check whether the change is mergeable.
+	getMergeableReq := &gerritpb.GetMergeableRequest{
 		Number:     t.Number,
 		Project:    t.Repo,
 		RevisionId: t.Revision,
-	})
+	}
+	mi, err := gc.GetMergeable(ctx, getMergeableReq)
 	if err != nil {
-		return "", fmt.Errorf("gerrit GetMergeable rpc call failed with error: %v", err)
+		return "", fmt.Errorf("gerrit GetMergeable rpc call failed with error: request %+v, error %v", getMergeableReq, err)
 	}
 	if !mi.Mergeable {
 		return "The change is not mergeable.", nil

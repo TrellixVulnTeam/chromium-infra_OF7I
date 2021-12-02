@@ -47,12 +47,13 @@ func reviewCleanRevert(ctx context.Context, cfg *config.Config, gc gerrit.Client
 	}
 
 	// Check gerrit GetPureRevert api.
-	resp, err := gc.GetPureRevert(ctx, &gerritpb.GetPureRevertRequest{
+	getPureRevertReq := &gerritpb.GetPureRevertRequest{
 		Number:  t.Number,
 		Project: t.Repo,
-	})
+	}
+	resp, err := gc.GetPureRevert(ctx, getPureRevertReq)
 	if err != nil {
-		return "", fmt.Errorf("gerrit GetPureRevert rpc call failed with error: %v", err)
+		return "", fmt.Errorf("gerrit GetPureRevert rpc call failed with error: request %+v, error %v", getPureRevertReq, err)
 	}
 	if !resp.IsPureRevert {
 		return "Gerrit GetPureRevert API does not mark this CL as a pure revert.", nil
@@ -70,12 +71,13 @@ func reviewCleanRevert(ctx context.Context, cfg *config.Config, gc gerrit.Client
 	if err != nil {
 		return "", err
 	}
-	originalClInfo, err := gc.GetChange(ctx, &gerritpb.GetChangeRequest{
+	getChangeReq := &gerritpb.GetChangeRequest{
 		Number:  t.RevertOf,
 		Options: []gerritpb.QueryOption{gerritpb.QueryOption_CURRENT_REVISION},
-	})
+	}
+	originalClInfo, err := gc.GetChange(ctx, getChangeReq)
 	if err != nil {
-		return "", fmt.Errorf("gerrit GetChange rpc call failed with error: %v", err)
+		return "", fmt.Errorf("gerrit GetChange rpc call failed with error: request %+v, error %v", getChangeReq, err)
 	}
 	if originalClInfo.Revisions[originalClInfo.CurrentRevision].Created.AsTime().Before(validTime) {
 		return fmt.Sprintf("The change is not in the configured time window. Rubber Stamper is only allowed to review reverts within %s %s.", tw[:len(tw)-1], timeWindowToStr[tw[len(tw)-1:]]), nil
@@ -115,7 +117,7 @@ func checkExcludedFiles(ctx context.Context, excludedPaths []string, gc gerrit.C
 	}
 	resp, err := gc.ListFiles(ctx, listReq)
 	if err != nil {
-		return nil, fmt.Errorf("gerrit ListFiles rpc call failed with error: %v", err)
+		return nil, fmt.Errorf("gerrit ListFiles rpc call failed with error: request %+v, error %v", listReq, err)
 	}
 
 	var patterns []gitignore.Pattern

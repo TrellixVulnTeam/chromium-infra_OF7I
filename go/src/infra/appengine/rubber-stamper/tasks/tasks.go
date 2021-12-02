@@ -29,7 +29,7 @@ func init() {
 			if err := reviewer.ReviewChange(ctx, t); err != nil {
 				info := tq.TaskExecutionInfo(ctx)
 				if info != nil && info.ExecutionCount >= 2 {
-					util.SendErrorReport(ctx, fmt.Errorf("task (host %s, cl %d, revision %s) failed for at least 3 times", t.Host, t.Number, t.Revision))
+					util.SendErrorReport(ctx, fmt.Errorf("task (host %s, cl %d, revision %s) failed for at least 3 times; last error %v", t.Host, t.Number, t.Revision, err))
 				}
 
 				return fmt.Errorf("failed to review change for host %s, cl %d, revision %s: %v", t.Host, t.Number, t.Revision, err.Error())
