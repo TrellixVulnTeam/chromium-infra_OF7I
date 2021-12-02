@@ -906,6 +906,17 @@ class WorkEnv(object):
       next_start = end
     return ListResult(config.component_defs[start:end], next_start)
 
+  def GetComponentDef(self, project_id, component_id):
+    # type: (int, int) -> ComponentDef
+    """Returns component def for component id that belongs to the project."""
+    if component_id < 0:
+      raise exceptions.InputException(
+        'Invalid `component_id`: %d' % component_id)
+
+    config = self.GetProjectConfig(project_id)
+    return tracker_bizobj.FindComponentDefByID(component_id, config)
+
+
   def CreateComponentDef(
       self, project_id, path, description, admin_ids, cc_ids, labels):
     # type: (int, str, str, Collection[int], Collection[int], Collection[str])

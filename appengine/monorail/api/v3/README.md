@@ -30,3 +30,8 @@ files, run this command:
 ```bash
 $ make prpc_proto_v3
 ```
+
+If you run into issues with `cproto`, you might need to run this command first:
+```bash
+eval `../../go/env.py`
+```

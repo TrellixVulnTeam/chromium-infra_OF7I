@@ -49,6 +49,29 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
         templates=self.converter.ConvertIssueTemplates(project_id, templates))
 
   @monorail_servicer.PRPCMethod
+  def GetComponentDef(self, mc, request):
+    # type: (MonorailContext, GetComponentDefRequest) ->
+    #   ComponentDef
+    """pRPC API method that implements GetComponentDef.
+
+      Raises:
+        InputException if the request.parent is invalid.
+        NoSuchProjectException if the parent project is not found.
+    """
+    project_id, component_id = rnc.IngestComponentDefNames(
+        mc.cnxn, [request.name], self.services)[0]
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProject(project_id)
+      mc.LookupLoggedInUserPerms(project)
+
+      component_def = we.GetComponentDef(project_id, component_id)
+      api_component_def = self.converter.ConvertComponentDef(component_def)
+
+    return api_component_def
+
+  @monorail_servicer.PRPCMethod
   def ListComponentDefs(self, mc, request):
     # type: (MonorailContext, ListComponentDefsRequest) ->
     #   ListComponentDefsResponse

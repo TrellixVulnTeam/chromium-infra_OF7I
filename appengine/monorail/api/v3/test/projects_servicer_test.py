@@ -224,6 +224,25 @@ class ProjectsServicerTest(unittest.TestCase):
 
     self.assertEqual(config.component_defs, [])
 
+  def testGetComponentDef(self):
+    user_1 = self.services.user.TestAddUser('achilles@test.com', 981)
+    project = self.services.project.TestAddProject(
+        'chicken', project_id=987, owner_ids=[user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    component_def = fake.MakeTestComponentDef(
+        project.project_id, 1, path='Chickens>Dickens')
+    config.component_defs = [component_def]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    request = projects_pb2.GetComponentDefRequest(
+        name='projects/chicken/componentDefs/1')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=user_1.email)
+    actual = self.CallWrapped(
+        self.projects_svcr.GetComponentDef, mc, request)
+    expected_cd = self.converter.ConvertComponentDef(component_def)
+    self.assertEqual(actual, expected_cd)
+
   @mock.patch('project.project_helpers.GetThumbnailUrl')
   def testListProjects(self, mock_GetThumbnailUrl):
     mock_GetThumbnailUrl.return_value = 'xyz'
