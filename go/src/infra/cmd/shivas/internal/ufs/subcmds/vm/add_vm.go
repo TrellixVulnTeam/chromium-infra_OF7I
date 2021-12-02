@@ -53,6 +53,7 @@ Add a VM by parameters.`,
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -73,6 +74,7 @@ type addVM struct {
 	vlanName         string
 	ip               string
 	deploymentTicket string
+	state            string
 }
 
 func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -160,6 +162,7 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 	}
 	vm.Tags = utils.GetStringSlice(c.tags)
 	vm.DeploymentTicket = c.deploymentTicket
+	vm.ResourceState = ufsUtil.ToUFSState(c.state)
 }
 
 func (c *addVM) parseNetworkOpt() *ufsAPI.NetworkOption {
@@ -202,12 +205,18 @@ func (c *addVM) validateArgs() error {
 		if c.deploymentTicket != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-ticket' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-state' cannot be specified at the same time.")
+		}
 	} else {
 		if c.hostName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
 		}
 		if c.vmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil
