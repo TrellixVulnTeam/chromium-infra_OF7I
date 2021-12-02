@@ -19,6 +19,7 @@ import (
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -175,6 +176,10 @@ func TestCreateDrac(t *testing.T) {
 			resp, err := CreateDrac(ctx, drac2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac2)
+
+			s, err := state.GetStateRecord(ctx, "dracs/drac-2")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
 
 		Convey("Create new drac - Permission denied: same realm and no create permission", func() {
@@ -810,6 +815,32 @@ func TestUpdateDrac(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetMachine(), ShouldEqual, "machine-23")
 		})
+
+		Convey("Update drac with new resource state", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-24",
+			}
+			registration.CreateMachine(ctx, machine1)
+			drac := &ufspb.Drac{
+				Name:    "drac-24",
+				Machine: "machine-24",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-24",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:          "drac-24",
+				ResourceState: ufspb.State_STATE_SERVING,
+			}
+			resp, err := UpdateDrac(ctx, drac1, &field_mask.FieldMask{Paths: []string{"resourceState"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
+		})
 	})
 }
 
@@ -838,6 +869,13 @@ func TestDeleteDrac(t *testing.T) {
 			drac.Machine = "machine-2"
 			_, err := registration.CreateDrac(ctx, drac)
 			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "dracs/drac-2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
 
 			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsDelete, util.AtlLabAdminRealm)
 			err = DeleteDrac(ctx, "drac-2")
@@ -846,6 +884,9 @@ func TestDeleteDrac(t *testing.T) {
 			resp, err := registration.GetDrac(ctx, "drac-2")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = state.GetStateRecord(ctx, "dracs/drac-2")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")

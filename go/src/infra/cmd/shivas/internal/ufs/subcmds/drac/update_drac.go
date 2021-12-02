@@ -46,6 +46,7 @@ var UpdateDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -68,6 +69,7 @@ type updateDrac struct {
 	vlanName    string
 	deleteVlan  bool
 	ip          string
+	state       string
 }
 
 func (c *updateDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -136,6 +138,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			"switch":      "switch",
 			"switch-port": "portName",
 			"tags":        "tags",
+			"state":       "resourceState",
 		}),
 	})
 	if err != nil {
@@ -161,6 +164,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	drac.Name = c.dracName
+	drac.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.macAddress == utils.ClearFieldValue {
 		drac.MacAddress = ""
 	} else {
@@ -208,6 +212,9 @@ func (c *updateDrac) validateArgs() error {
 		if c.machineName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-machine' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.dracName == "" {
@@ -215,8 +222,11 @@ func (c *updateDrac) validateArgs() error {
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
 			c.machineName == "" && c.switchName == "" && c.switchPort == "" &&
-			c.macAddress == "" && c.tags == "" {
+			c.macAddress == "" && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil

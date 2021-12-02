@@ -29,7 +29,7 @@ import (
 // in the system before creating a new Drac
 func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
-		hc := &HistoryClient{}
+		hc := getDracHistoryClient(drac)
 		hc.LogDracChanges(nil, drac)
 
 		// Get browser machine to associate the drac
@@ -46,6 +46,7 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 		// Fill the rack/zone to drac OUTPUT only fields for drac table indexing
 		drac.Rack = machine.GetLocation().GetRack()
 		drac.Zone = machine.GetLocation().GetZone().String()
+		drac.ResourceState = ufspb.State_STATE_SERVING
 
 		// Create a drac entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -53,6 +54,11 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 		// nested transactions.
 		if _, err = registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
 			return errors.Annotate(err, "CreateDrac - unable to batch update drac %s", drac.Name).Err()
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
+			return err
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -69,7 +75,7 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 // in the system before updating a Drac
 func UpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
-		hc := &HistoryClient{}
+		hc := getDracHistoryClient(drac)
 
 		// Get old/existing drac
 		oldDrac, err := registration.GetDrac(ctx, drac.GetName())
@@ -125,6 +131,11 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMas
 				drac.Rack = machine.GetLocation().GetRack()
 				drac.Zone = machine.GetLocation().GetZone().String()
 			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, drac.GetResourceState()); err != nil {
+			return errors.Annotate(err, "UpdateDrac - Failed to update state of drac %s", drac.GetName()).Err()
 		}
 
 		// Update drac entry
@@ -197,6 +208,8 @@ func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb
 			}
 		case "tags":
 			oldDrac.Tags = mergeTags(oldDrac.GetTags(), drac.GetTags())
+		case "resourceState":
+			oldDrac.ResourceState = drac.GetResourceState()
 		}
 	}
 	// For partial update, validate switch interface just before updating in case
@@ -288,6 +301,7 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 		}
 	}
 	filterMap = resetZoneFilter(filterMap)
+	filterMap = resetStateFilter(filterMap)
 	return registration.ListDracs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
@@ -320,6 +334,10 @@ func deleteDracHelper(ctx context.Context, id string, inTransaction bool) error 
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return errors.Annotate(err, "DeleteDrac - unable to delete ip configs for drac %s", id).Err()
 		}
+
+		// Update state
+		hc.stUdt.deleteStateHelper(ctx)
+
 		hc.LogDracChanges(drac, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -504,6 +522,8 @@ func validateDracUpdateMask(ctx context.Context, drac *ufspb.Drac, mask *field_m
 				}
 			case "tags":
 				// valid fields, nothing to validate.
+			case "resourceState":
+				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateDracUpdateMask - unsupported update mask path %q", path)
 			}
@@ -516,6 +536,9 @@ func getDracHistoryClient(m *ufspb.Drac) *HistoryClient {
 	return &HistoryClient{
 		netUdt: &networkUpdater{
 			Hostname: m.Name,
+		},
+		stUdt: &stateUpdater{
+			ResourceName: ufsUtil.AddPrefix(ufsUtil.DracCollection, m.Name),
 		},
 	}
 }
