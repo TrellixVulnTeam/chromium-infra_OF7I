@@ -65,13 +65,6 @@ var Jobs = []*cron.CronTab{
 		Job:      pushToDroneQueen,
 	},
 	{
-		// Dump assets to IV2
-		Name:     "ufs.dump_to_invv2_devices",
-		Time:     10 * time.Minute,
-		TrigType: cron.DAILY,
-		Job:      DumpToInventoryDeviceSnapshot,
-	},
-	{
 		// Dump dut states to IV2
 		Name:     "ufs.dump_to_invv2_dutstates",
 		Time:     15 * time.Minute,

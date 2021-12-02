@@ -28,7 +28,6 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
@@ -345,67 +344,6 @@ func DumpToInventoryDutStateSnapshot(ctx context.Context) error {
 		return nil
 	}
 	logging.Infof(ctx, "UFS migration NOT done: skipping DumpToInventoryDutStateSnapshot")
-	return nil
-}
-
-// DumpToInventoryDeviceSnapshot dump UFS MachineLSE to InvV2 labconfig BQ
-func DumpToInventoryDeviceSnapshot(ctx context.Context) error {
-	// UFS migration done, run this job.
-	if config.Get(ctx).GetEnableLabStateconfigPush() {
-		logging.Infof(ctx, "UFS migration done: Start DumpToInventoryDeviceSnapshot")
-		var err error
-		ctx, err = util.SetupDatastoreNamespace(ctx, util.OSNamespace)
-		if err != nil {
-			return err
-		}
-		machines, err := registration.ListAllMachines(ctx, false)
-		if err != nil {
-			return err
-		}
-		idToMachine := make(map[string]*ufspb.Machine, 0)
-		for _, machine := range machines {
-			idToMachine[machine.GetName()] = machine
-		}
-		lses, err := inventory.ListAllMachineLSEs(ctx, false)
-		if err != nil {
-			return err
-		}
-		var devicesData []*DeviceData
-		for _, lse := range lses {
-			if len(lse.GetMachines()) == 0 {
-				logging.Errorf(ctx, "no Machine in LSE %s", lse.GetName())
-				continue
-			}
-			if machine, found := idToMachine[lse.GetMachines()[0]]; found {
-				deviceData := &DeviceData{
-					Device:     invufs.ConstructInvV2Device(machine, lse),
-					UpdateTime: lse.GetUpdateTime(),
-				}
-				devicesData = append(devicesData, deviceData)
-				continue
-			}
-			logging.Errorf(ctx, "no Machine found %s", lse.GetMachines()[0])
-		}
-		labconfigs := DeviceDataToBQDeviceMsgs(ctx, devicesData)
-
-		project := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
-		dataset := "inventory"
-		curTimeStr := invbqlib.GetPSTTimeStamp(time.Now())
-		client, err := bigquery.NewClient(ctx, project)
-		if err != nil {
-			return fmt.Errorf("bq client: %s", err)
-		}
-		labconfigUploader := invbqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
-		if len(labconfigs) > 0 {
-			logging.Debugf(ctx, "uploading %d lab configs(UFS) to bigquery dataset(InvV2) (%s) table (lab)", len(labconfigs), dataset)
-			if err := labconfigUploader.Put(ctx, labconfigs...); err != nil {
-				return fmt.Errorf("labconfig put(UFS to InvV2): %s", err)
-			}
-		}
-		logging.Debugf(ctx, "successfully uploaded Devices(UFS) to bigquery(InvV2)")
-		return nil
-	}
-	logging.Infof(ctx, "UFS migration NOT done: skipping DumpToInventoryDeviceSnapshot")
 	return nil
 }
 
