@@ -7,6 +7,8 @@ syntax = "proto3";
 package recipes.infra.gae_tarball_uploader;
 
 // Input properties recognized by 'infra/gae_tarball_uploader' recipe.
+//
+// Next id: 7.
 message Inputs {
   // Project describes what code to checkout.
   enum Project {
@@ -61,4 +63,16 @@ message Inputs {
     bool commit = 3;
   }
   RollInto roll_into = 4;
+
+  // Restrictions limit what infrastructure can be targeted by manifests.
+  //
+  // This is useful when the builder operates over partially untrusted repos
+  // to limit what they can reach.
+  //
+  // If some particular set is empty, the corresponding property is considered
+  // unrestricted.
+  message Restrictions {
+    repeated string storage = 1;
+  }
+  Restrictions restrictions = 6;
 }

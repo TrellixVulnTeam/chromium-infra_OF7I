@@ -313,6 +313,12 @@
       "https://cr-buildbucket.appspot.com/build/8945511751514863184",
       "-infra",
       "prod",
+      "-restrict-container-registry",
+      "should-not-be-used",
+      "-restrict-cloud-build",
+      "should-not-be-used",
+      "-restrict-notifications",
+      "should-not-be-used",
       "-json-output",
       "/path/to/tmp/json"
     ],

@@ -65,6 +65,16 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       'commit',   # if True, submit to CQ, if False, trigger CQ dry run only
   ])
 
+  # A set of restrictions on what the manifest can target.
+  #
+  # All fields are lists of strings. Empty lists means "do not restrict".
+  Restrictions = namedtuple('Restrictions', [
+      'storage',             # prefixes of allowed tarball destinations
+      'container_registry',  # allowed Container Registries
+      'cloud_build',         # allowed Cloud Build projects
+      'notifications',       # prefixes of allowed notification destinations
+  ])
+
   # Used in place of Image to indicate that the image builds successfully, but
   # it wasn't uploaded anywhere.
   #
@@ -119,6 +129,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
             canonical_tag=None,
             build_id=None,
             infra=None,
+            restrictions=None,
             labels=None,
             tags=None,
             checkout_metadata=None,
@@ -130,6 +141,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * canonical_tag (str) - tag to push the image to if we built a new image.
       * build_id (str) - identifier of the CI build to put into metadata.
       * infra (str) - what section to pick from 'infra' field in the YAML.
+      * restrictions (Restrictions) - restrictions to apply to manifests.
       * labels ({str: str}) - labels to attach to the docker image.
       * tags ([str]) - tags to unconditionally push the image to.
       * checkout_metadata (CheckoutMetadata) - to get revisions.
@@ -150,6 +162,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       cmd += ['-build-id', build_id]
     if infra:
       cmd += ['-infra', infra]
+    if restrictions:
+      cmd += self._restriction_args(restrictions)
     for k in sorted(labels or {}):
       cmd += ['-label', '%s=%s' % (k, labels[k])]
     for t in (tags or []):
@@ -207,6 +221,19 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
         repo=cfg['repo'],
         script=cfg['script'],
     )
+
+  @staticmethod
+  def _restriction_args(r):
+    out = []
+    for s in sorted(r.storage or []):
+      out.extend(['-restrict-storage', s])
+    for s in sorted(r.container_registry or []):
+      out.extend(['-restrict-container-registry', s])
+    for s in sorted(r.cloud_build or []):
+      out.extend(['-restrict-cloud-build', s])
+    for s in sorted(r.notifications or []):
+      out.extend(['-restrict-notifications', s])
+    return out
 
   def _process_sources(self, sources, checkout_metadata):
     """Joins `sources` from -json-output with gclient checkout spec.
@@ -330,6 +357,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
              canonical_tag,
              build_id=None,
              infra=None,
+             restrictions=None,
              checkout_metadata=None,
              step_test_tarball=None):
     """Calls `cloudbuildhelper upload <manifest>` interpreting the result.
@@ -339,6 +367,7 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       * canonical_tag (str) - tag to apply to a tarball if we built a new one.
       * build_id (str) - identifier of the CI build to put into metadata.
       * infra (str) - what section to pick from 'infra' field in the YAML.
+      * restrictions (Restrictions) - restrictions to apply to manifests.
       * checkout_metadata (CheckoutMetadata) - to get revisions.
       * step_test_tarball (Tarball) - tarball to produce in training mode.
 
@@ -355,6 +384,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
       cmd += ['-build-id', build_id]
     if infra:
       cmd += ['-infra', infra]
+    if restrictions:
+      cmd += self._restriction_args(restrictions)
     cmd += ['-json-output', self.m.json.output()]
 
     # Expected JSON output (may be produced even on failures).

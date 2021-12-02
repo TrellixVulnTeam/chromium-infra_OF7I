@@ -26,6 +26,15 @@ def RunSteps(api):
   assert api.cloudbuildhelper.update_pins('some/pins.yaml')
 
 
+def restrictions(api):
+  return api.cloudbuildhelper.Restrictions(
+      storage=['gs://something'],
+      container_registry=['gcr.io/something'],
+      cloud_build=['some-project'],
+      notifications=['b', 'a'],
+  )
+
+
 def repo_checkout_metadata(api):
   return api.cloudbuildhelper.CheckoutMetadata(
       root=api.path['start_dir'],
@@ -53,6 +62,7 @@ def build(api):
       canonical_tag='123_456',
       build_id='bid',
       infra='dev',
+      restrictions=restrictions(api),
       labels={'l1': 'v1', 'l2': 'v2'},
       tags=['latest', 'another'],
   )
@@ -134,6 +144,7 @@ def upload(api):
       canonical_tag='123_456',
       build_id='bid',
       infra='dev',
+      restrictions=restrictions(api),
   )
   expected = api.cloudbuildhelper.Tarball(
       name='example/target',

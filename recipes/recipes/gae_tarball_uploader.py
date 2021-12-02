@@ -70,6 +70,13 @@ def RunSteps(api, properties):
           canonical_tag=meta.canonical_tag,
           build_id=api.buildbucket.build_url(),
           infra=properties.infra,
+          restrictions=api.cloudbuildhelper.Restrictions(
+              storage=properties.restrictions.storage,
+              # GAE tarball builders should not use any of this infra. Restrict
+              # it to some phony values as a precaution.
+              container_registry=['should-not-be-used'],
+              cloud_build=['should-not-be-used'],
+              notifications=['should-not-be-used']),
           checkout_metadata=meta.checkout)
       futures[fut] = m
 
@@ -397,6 +404,9 @@ def GenTests(api):
           manifests=['build/gae'],
           git_repo=PROPERTIES.GitRepo(
               url='https://git.example.com/repo',
+          ),
+          restrictions=PROPERTIES.Restrictions(
+              storage=['gs://something'],
           ),
       )
   )
