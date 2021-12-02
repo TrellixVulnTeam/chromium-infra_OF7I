@@ -200,6 +200,12 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 		results := &tricium.Data_Results{}
 		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
 		So(results.Comments, ShouldBeEmpty)
+
+		// The same applies for "smart quote" apostrophes; from crbug.com/1238795.
+		fileContent = "... wasn’t ..."
+		results = &tricium.Data_Results{}
+		analyzeFile(bufio.NewScanner(strings.NewReader(fileContent)), "test.txt", true, cp[".txt"], results)
+		So(results.Comments, ShouldBeEmpty)
 	})
 
 	Convey("Words in the ignore list are ignored.", t, func() {

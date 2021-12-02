@@ -125,7 +125,7 @@ var (
 	// inside English words and also won't appear in the dictionary of English
 	// misspellings.
 	// See https://golang.org/s/re2syntax for the regexp syntax reference.
-	justWord = regexp.MustCompile(`[\p{L}\d'_-]+`)
+	justWord = regexp.MustCompile(`[\p{L}\d'’_-]+`)
 
 	// Patterns that indicate we don't want to flag misspellings. To prevent
 	// false positives, we also match when there are prefixes or suffixes.
