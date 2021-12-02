@@ -114,11 +114,11 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.ProgressToRulesVersion(rulesVersion.Add(1*time.Hour)), ShouldEqual, 150)
-				So(progress.ProgressToRulesVersion(rulesVersion), ShouldEqual, 650)
-				So(progress.ProgressToRulesVersion(rulesVersion.Add(-1*time.Minute)), ShouldEqual, 650)
-				So(progress.ProgressToRulesVersion(rulesVersion.Add(-1*time.Hour)), ShouldEqual, 1000)
-				So(progress.ProgressToRulesVersion(rulesVersion.Add(-2*time.Hour)), ShouldEqual, 1000)
+				So(progress.IncorporatesRulesVersion(rulesVersion.Add(1*time.Hour)), ShouldBeFalse)
+				So(progress.IncorporatesRulesVersion(rulesVersion), ShouldBeFalse)
+				So(progress.IncorporatesRulesVersion(rulesVersion.Add(-1*time.Minute)), ShouldBeFalse)
+				So(progress.IncorporatesRulesVersion(rulesVersion.Add(-1*time.Hour)), ShouldBeTrue)
+				So(progress.IncorporatesRulesVersion(rulesVersion.Add(-2*time.Hour)), ShouldBeTrue)
 			})
 			Convey(`Algorithms Upgrading (started)`, func() {
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
@@ -133,8 +133,8 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion+1)
-				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 650)
+				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion+1)
+				So(progress.IncorporatesLatestAlgorithms(), ShouldBeFalse)
 			})
 			Convey(`Algorithms Upgrading (not yet started)`, func() {
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
@@ -149,8 +149,8 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion)
-				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 150)
+				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion)
+				So(progress.IncorporatesLatestAlgorithms(), ShouldBeFalse)
 			})
 			Convey(`Algorithms Stable`, func() {
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
@@ -165,8 +165,8 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.LatestAlgorithmsVersion(), ShouldEqual, algorithms.AlgorithmsVersion)
-				So(progress.ProgressToLatestAlgorithmsVersion(), ShouldEqual, 1000)
+				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion)
+				So(progress.IncorporatesLatestAlgorithms(), ShouldBeTrue)
 			})
 		})
 		Convey(`Reporting Progress`, func() {

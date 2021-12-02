@@ -12,17 +12,32 @@ import (
 	"go.chromium.org/luci/server/span"
 )
 
-// ProgressComplete is the maximum progress value returned by
-// ProgressToRulesVersion and ProgressToLatestAlgorithmsVersion.
-const ProgressComplete = 1000
+// ReclusteringTarget captures the rules and algorithms a re-clustering run
+// is re-clustering to.
+type ReclusteringTarget struct {
+	// RulesVersion is the rules version the re-clustering run is attempting
+	// to achieve.
+	RulesVersion time.Time `json:"rulesVersion"`
+	// AlgorithmsVersion is the algorithms version the re-clustering run is
+	// attempting to achieve.
+	AlgorithmsVersion int64 `json:"algorithmsVersion"`
+}
 
 // ReclusteringProgress captures the progress re-clustering a
 // given LUCI project's test results using specific rules
 // versions or algorithms versions.
 type ReclusteringProgress struct {
-	lastCompleted    *ReclusteringRun
-	lastWithProgress *ReclusteringRun
-	last             *ReclusteringRun
+	// ProgressPerMille is the progress of the current re-clustering run,
+	// measured in thousandths (per mille).
+	ProgressPerMille int `json:"progressPerMille"`
+	// LatestAlgorithmsVersion is the latest version of algorithms known to
+	// Weetbix.
+	LatestAlgorithmsVersion int64 `json:"latestAlgorithmsVersion"`
+	// Next is the goal of the current re-clustering run. (For which
+	// ProgressPerMille is specified.)
+	Next ReclusteringTarget `json:"next"`
+	// Last is the goal of the last completed re-clustering run.
+	Last ReclusteringTarget `json:"last"`
 }
 
 // ReadReclusteringProgress reads the re-clustering progress for
@@ -46,70 +61,43 @@ func ReadReclusteringProgress(ctx context.Context, project string) (*Reclusterin
 		return nil, err
 	}
 
-	return &ReclusteringProgress{
-		lastCompleted:    lastCompleted,
-		lastWithProgress: lastWithProgress,
-		last:             last,
-	}, nil
-}
+	// Scale run progress to being from 0 to 1000.
+	runProgress := int(lastWithProgress.Progress / lastWithProgress.ShardCount)
 
-// LatestAlgorithmsVersion returns the latest algorithms version
-// in-use for the given project.
-func (p *ReclusteringProgress) LatestAlgorithmsVersion() int64 {
-	algorithmsVersion := int64(algorithms.AlgorithmsVersion)
-	if p.last.AlgorithmsVersion > algorithmsVersion {
+	latestAlgorithmsVersion := int64(algorithms.AlgorithmsVersion)
+	if last.AlgorithmsVersion > latestAlgorithmsVersion {
 		// This GAE instance is running old code, use the
 		// algorithms version on the last re-clustering run instead.
 		// Note that the AlgorithmsVersion in each subsequent
 		// re-clustering run is guaranteed to be non-decreasing, so
 		// the AlgorithmsVersion in the latest run is guaranteed
 		// to be the highest of all runs so far.
-		algorithmsVersion = p.last.AlgorithmsVersion
+		latestAlgorithmsVersion = last.AlgorithmsVersion
 	}
-	return algorithmsVersion
+
+	return &ReclusteringProgress{
+		ProgressPerMille:        runProgress,
+		LatestAlgorithmsVersion: latestAlgorithmsVersion,
+		Next: ReclusteringTarget{
+			RulesVersion:      lastWithProgress.RulesVersion,
+			AlgorithmsVersion: lastWithProgress.AlgorithmsVersion,
+		},
+		Last: ReclusteringTarget{
+			RulesVersion:      lastCompleted.RulesVersion,
+			AlgorithmsVersion: lastCompleted.AlgorithmsVersion,
+		},
+	}, nil
 }
 
-// ProgressToRulesVersion returns progress towards using only the latest
-// algorithms in Weetbix's clustering output. The returned value is
-// between 0 (0.0%) and 1000 (100.0%).
-func (p *ReclusteringProgress) ProgressToLatestAlgorithmsVersion() int {
-	algorithmsVersion := p.LatestAlgorithmsVersion()
-	return p.progressTo(func(r *ReclusteringRun) bool {
-		return r.AlgorithmsVersion >= algorithmsVersion
-	})
+// IncorporatesLatestAlgorithms returns whether only the latest
+// algorithms are in Weetbix's clustering output.
+func (p *ReclusteringProgress) IncorporatesLatestAlgorithms() bool {
+	return p.Last.AlgorithmsVersion >= p.LatestAlgorithmsVersion
 }
 
-// ProgressToRulesVersion returns progress towards using only rules
-// of at least the given rules version in Weetbix's clustering output.
-// The returned value is between 0 (0.0%) and 1000 (100.0%).
-func (p *ReclusteringProgress) ProgressToRulesVersion(rulesVersion time.Time) int {
-	return p.progressTo(func(r *ReclusteringRun) bool {
-		// run RulesVersion is after, or equal to, rulesVersion.
-		return !rulesVersion.After(r.RulesVersion)
-	})
-}
-
-// progressTo returns progress towards completing a re-clustering run
-// satisfying the given predicate.
-func (p *ReclusteringProgress) progressTo(predicate func(r *ReclusteringRun) bool) int {
-	if predicate(p.lastCompleted) {
-		// Completed.
-		return 1000
-	}
-	if predicate(p.lastWithProgress) {
-		// Scale run progress to being from 0 to 1000.
-		runProgress := p.lastWithProgress.Progress / p.lastWithProgress.ShardCount
-
-		// Starting a re-clustering run that will complete re-clustering
-		// to the satisfaction of the specified predicate is 30% of the
-		// work done. Finishing it is the other 70%.
-		return int(300 + ((runProgress * 7) / 10))
-	}
-	// Scale run progress to being from 0 to 1000.
-	runProgress := p.lastWithProgress.Progress / p.lastWithProgress.ShardCount
-
-	// Finishing the current re-clustering goal is 30% of the
-	// work, as it will enable the next reclustering runs to set
-	// a goal that satisfies the specified predicate.
-	return int(((runProgress * 3) / 10))
+// IncorporatesRulesVersion returns returns whether only rules
+// of at least the given rules version are used in Weetbix's clustering
+// output.
+func (p *ReclusteringProgress) IncorporatesRulesVersion(rulesVersion time.Time) bool {
+	return !rulesVersion.After(p.Last.RulesVersion)
 }

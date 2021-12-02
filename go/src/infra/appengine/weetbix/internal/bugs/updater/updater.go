@@ -71,14 +71,13 @@ func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient
 // The passed progress should reflect the progress of re-clustering as captured
 // in the latest analysis.
 func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgress) error {
-	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion() {
+	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion {
 		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running old algorithms version %v (want %v).",
-			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion())
+			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion)
 		return nil
 	}
-	if progress.ProgressToLatestAlgorithmsVersion() != runs.ProgressComplete {
-		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new algorithms is in progress (%v/1000).",
-			b.project, progress.ProgressToLatestAlgorithmsVersion())
+	if !progress.IncorporatesLatestAlgorithms() {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new algorithms is in progress.", b.project)
 		return nil
 	}
 
@@ -92,7 +91,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 	// filing new bugs should be suspended.
 	blockedSourceClusterIDs := make(map[string]struct{})
 	for _, r := range ruleByID {
-		if progress.ProgressToRulesVersion(r.CreationTime) != runs.ProgressComplete {
+		if !progress.IncorporatesRulesVersion(r.CreationTime) {
 			// If a bug cluster was recently filed for a source cluster, and
 			// re-clustering and analysis is not yet complete (to move the
 			// impact from the source cluster to the bug cluster), do not file
@@ -183,7 +182,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 		// Only update the bug if re-clustering and analysis ran on the latest
 		// version of this failure association rule. This avoids bugs getting
 		// erroneous priority changes while impact information is incomplete.
-		if progress.ProgressToRulesVersion(r.LastUpdated) != runs.ProgressComplete {
+		if !progress.IncorporatesRulesVersion(r.LastUpdated) {
 			continue
 		}
 
@@ -232,6 +231,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		// algorithm version changes.
 		return false, nil
 	}
+
 	// Double-check the failure matches the cluster. Generating a
 	// failure association rule that does not match the suggested cluster
 	// could result in indefinite creation of new bugs, as the system

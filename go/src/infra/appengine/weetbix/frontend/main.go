@@ -130,6 +130,7 @@ func main() {
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id/failures", mw, handlers.GetClusterFailures)
 		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.GetCluster)
 		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.ListClusters)
+		srv.Routes.GET("/api/projects/:project/reclusteringProgress", mw, handlers.GetReclusteringProgress)
 		srv.Routes.GET("/api/projects/:project/rules", mw, handlers.ListRules)
 		srv.Routes.GET("/api/projects/:project/rules/:id", mw, handlers.GetRule)
 		srv.Routes.PATCH("/api/projects/:project/rules/:id", mw, handlers.PatchRule)
