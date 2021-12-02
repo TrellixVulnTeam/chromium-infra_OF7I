@@ -202,23 +202,25 @@ type Infra struct {
 }
 
 // NotifyConfig is a single item in `notify` list.
+//
+// It is read from the YAML manifest and ends up in the -json-output.
 type NotifyConfig struct {
 	// Kind indicates a kind of service to notify.
 	//
 	// The only supported value now is "git", meaning to checkout a git repo and
 	// invoke a script there with results of the build. Note that the actual
 	// logic to do that is implemented in recipes that call cloudbuildhelper.
-	Kind string `yaml:"kind"`
+	Kind string `yaml:"kind" json:"kind"`
 
 	// Repo is a git repo to checkout (as "https://..." URL).
 	//
 	// Effective only for "git" notifiers.
-	Repo string `yaml:"repo"`
+	Repo string `yaml:"repo" json:"repo"`
 
 	// Script is a path to the script inside the repo to invoke.
 	//
 	// Effective only for "git" notifiers.
-	Script string `yaml:"script"`
+	Script string `yaml:"script" json:"script"`
 }
 
 // DestinationID identifies the destination of the notification for the purpose
