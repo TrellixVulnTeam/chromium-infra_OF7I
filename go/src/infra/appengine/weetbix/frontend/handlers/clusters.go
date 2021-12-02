@@ -10,12 +10,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 
-	// Store auth sessions in the datastore.
-	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
-
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/config"
 )
 
 // ListClusters serves a GET request for /api/projects/:project/clusters.
@@ -31,21 +27,12 @@ func (h *Handlers) ListClusters(ctx *router.Context) {
 			logging.Warningf(ctx.Context, "Closing analysis client: %v", err)
 		}
 	}()
-	projectCfgs, err := config.Projects(ctx.Context)
-	if err != nil {
-		logging.Errorf(ctx.Context, "Obtain project config: %v", err)
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+	projectID, projectCfg, ok := obtainProjectConfigOrError(ctx)
+	if !ok {
 		return
 	}
-	projectCfg := projectCfgs["chromium"]
-	if projectCfg == nil {
-		logging.Errorf(ctx.Context, "No config exists for project: chromium")
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-
 	opts := analysis.ImpactfulClusterReadOptions{
-		Project:    "chromium",
+		Project:    projectID,
 		Thresholds: projectCfg.BugFilingThreshold,
 	}
 	clusters, err := ac.ReadImpactfulClusters(ctx.Context, opts)
@@ -54,7 +41,6 @@ func (h *Handlers) ListClusters(ctx *router.Context) {
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-
 	respondWithJSON(ctx, clusters)
 }
 

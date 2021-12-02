@@ -9,9 +9,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	// Store auth sessions in the datastore.
-	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
-
 	"infra/appengine/weetbix/internal/bugs/updater"
 	"infra/appengine/weetbix/internal/config"
 )

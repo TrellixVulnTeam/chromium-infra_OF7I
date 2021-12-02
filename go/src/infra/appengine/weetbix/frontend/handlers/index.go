@@ -7,9 +7,6 @@ package handlers
 import (
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-
-	// Store auth sessions in the datastore.
-	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 )
 
 // IndexPage serves a GET request for the index page.
