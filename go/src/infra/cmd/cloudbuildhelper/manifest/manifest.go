@@ -164,6 +164,9 @@ type Manifest struct {
 
 // Infra contains configuration of build infrastructure to use: Google Storage
 // bucket, Cloud Build project, etc.
+//
+// Note: when adding new fields here, check if they need to have matching
+// restrictions in restrictions.go.
 type Infra struct {
 	// Storage specifies Google Storage location to store *.tar.gz tarballs
 	// produced after executing all local build steps.
@@ -216,6 +219,17 @@ type NotifyConfig struct {
 	//
 	// Effective only for "git" notifiers.
 	Script string `yaml:"script"`
+}
+
+// DestinationID identifies the destination of the notification for the purpose
+// of checking it against -restrict-notifications flags in restrictions.go.
+func (n *NotifyConfig) DestinationID() string {
+	switch n.Kind {
+	case "git":
+		return fmt.Sprintf("git:%s/%s", n.Repo, n.Script)
+	default:
+		return "unknown"
+	}
 }
 
 // rebaseOnTop implements "extends" logic.

@@ -105,7 +105,7 @@ func (c *cmdBuildRun) init() {
 }
 
 func (c *cmdBuildRun) exec(ctx context.Context) error {
-	m, infra, output, err := c.loadManifest(c.targetManifest, true, true)
+	m, infra, output, err := c.loadManifest(ctx, c.targetManifest, true, true)
 	if err != nil {
 		return err
 	}

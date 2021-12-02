@@ -41,15 +41,16 @@ type commandBase struct {
 	extraFlags extraFlags // set in init
 	posArgs    []*string  // will be filled in by positional arguments
 
-	minVersion     string              // -cloudbuildhelper-min-version
-	logConfig      logging.Config      // -log-* flags
-	authFlags      authcli.Flags       // -auth-* flags
-	infra          string              // -infra flag
-	canonicalTag   string              // -canonical-tag flag
-	labels         stringmapflag.Value // -label flags
-	buildID        string              // -build-id flag
-	jsonOutput     string              // -json-output flag
-	renderToStdout string              // -render-to-stdout flag
+	minVersion     string                // -cloudbuildhelper-min-version
+	logConfig      logging.Config        // -log-* flags
+	authFlags      authcli.Flags         // -auth-* flags
+	infra          string                // -infra flag
+	restrictions   manifest.Restrictions // -restrict-* flags
+	canonicalTag   string                // -canonical-tag flag
+	labels         stringmapflag.Value   // -label flags
+	buildID        string                // -build-id flag
+	jsonOutput     string                // -json-output flag
+	renderToStdout string                // -render-to-stdout flag
 
 	tempDirs []string // directories created via newTempDir
 }
@@ -57,7 +58,7 @@ type commandBase struct {
 // extraFlags tells `commandBase.init` what additional CLI flags to register.
 type extraFlags struct {
 	auth         bool // -auth-* flags
-	infra        bool // -infra flag
+	infra        bool // -infra flag and -restrict-* flags
 	canonicalTag bool // -canonical-tag flag
 	labels       bool // -label flags
 	buildID      bool // -build-id flag
@@ -81,7 +82,7 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags, posArgs []*string
 
 	c.Flags.StringVar(
 		&c.minVersion, "cloudbuildhelper-min-version", "",
-		"Min expected version of cloudbuildhelper tool")
+		"Min expected version of cloudbuildhelper tool.")
 
 	c.logConfig.Level = logging.Info // default logging level
 	c.logConfig.AddFlags(&c.Flags)
@@ -91,6 +92,7 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags, posArgs []*string
 	}
 	if c.extraFlags.infra {
 		c.Flags.StringVar(&c.infra, "infra", "dev", "What section to pick from 'infra' field in the manifest YAML.")
+		c.restrictions.AddFlags(&c.Flags)
 	}
 	if c.extraFlags.canonicalTag {
 		c.Flags.StringVar(&c.canonicalTag, "canonical-tag", "", "Tag to apply to an artifact if it's the first time we built it.")
@@ -118,6 +120,13 @@ func (c *commandBase) ModifyContext(ctx context.Context) context.Context {
 func (c *commandBase) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
 
+	logging.Infof(ctx, "Starting %s", UserAgent)
+	if c.minVersion != "" {
+		if err := checkVersion(c.minVersion); err != nil {
+			return handleErr(ctx, err)
+		}
+	}
+
 	if len(args) != len(c.posArgs) {
 		if len(c.posArgs) == 0 {
 			return handleErr(ctx, errors.Reason("unexpected positional arguments %q", args).Tag(isCLIError).Err())
@@ -140,13 +149,6 @@ func (c *commandBase) Run(a subcommands.Application, args []string, env subcomma
 			return handleErr(ctx, errors.Reason("-render-to-stdout and -json-output='-' can't be used together").Tag(isCLIError).Err())
 		}
 	}
-
-	if c.minVersion != "" {
-		if err := checkVersion(c.minVersion); err != nil {
-			return handleErr(ctx, err)
-		}
-	}
-	logging.Infof(ctx, "Starting %s", UserAgent)
 
 	ctx, cancel := context.WithCancel(ctx)
 	signals.HandleInterrupt(cancel)
@@ -183,8 +185,9 @@ func (c *commandBase) newTempDir() (string, error) {
 //
 // If the command requires `-infra` flag (as indicated by extraFlags in init),
 // checks it was passed and picks the corresponding infra section from the
-// manifest.
-func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, output *baseOutput, err error) {
+// manifest and checks it doesn't violate any of the restrictions supplied by
+// `-restrict-*` flags.
+func (c *commandBase) loadManifest(ctx context.Context, path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, output *baseOutput, err error) {
 	m, err = manifest.Load(path)
 	if err != nil {
 		return nil, nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
@@ -215,6 +218,12 @@ func (c *commandBase) loadManifest(path string, needStorage, needCloudBuild bool
 			return nil, nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
 		case needCloudBuild && section.CloudBuild.Project == "":
 			return nil, nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
+		}
+		if violations := c.restrictions.CheckInfra(&section); len(violations) != 0 {
+			for _, msg := range violations {
+				logging.Errorf(ctx, "Restriction violation: %s", msg)
+			}
+			return nil, nil, nil, errors.Reason("restrictions violation detected, see logs").Err()
 		}
 		infra = &section
 	}

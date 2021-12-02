@@ -78,7 +78,7 @@ func (c *cmdUploadRun) init() {
 }
 
 func (c *cmdUploadRun) exec(ctx context.Context) error {
-	m, infra, output, err := c.loadManifest(c.targetManifest, true, false)
+	m, infra, output, err := c.loadManifest(ctx, c.targetManifest, true, false)
 	if err != nil {
 		return err
 	}

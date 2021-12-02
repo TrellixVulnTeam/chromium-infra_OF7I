@@ -91,7 +91,7 @@ func (c *cmdStageRun) exec(ctx context.Context) error {
 		panic("impossible")
 	}
 
-	m, _, _, err := c.loadManifest(c.targetManifest, false, false)
+	m, _, _, err := c.loadManifest(ctx, c.targetManifest, false, false)
 	if err != nil {
 		return err
 	}
