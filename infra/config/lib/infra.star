@@ -122,7 +122,7 @@ def builder(
     else:
         fail("unknown bucket")
 
-    caches = [infra.cache_gclient_with_go]
+    caches = []
     if os.startswith("Mac"):
         caches.append(infra.cache_osx_sdk)
 
@@ -196,9 +196,6 @@ infra = struct(
     # Note: try account is also used by all presubmit builders in this project.
     SERVICE_ACCOUNT_TRY = "infra-try-builder@chops-service-accounts.iam.gserviceaccount.com",
     SERVICE_ACCOUNT_CI = "infra-ci-builder@chops-service-accounts.iam.gserviceaccount.com",
-
-    # TODO(crbug.com/1090666): remove this.
-    cache_gclient_with_go = swarming.cache("infra_gclient_with_go"),
     cache_osx_sdk = swarming.cache("osx_sdk"),
     poller = poller,
     recipe = recipe,
