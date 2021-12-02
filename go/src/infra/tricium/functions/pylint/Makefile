@@ -18,7 +18,7 @@ python:
 			cipd ensure -ensure-file - -root python
 
 pylint:
-	pip install --ignore-installed --root pylint --no-compile pylint
+	pip install --ignore-installed --target pylint --no-compile pylint
 
 clean:
 	rm -rf pylint_parser pylint python out
