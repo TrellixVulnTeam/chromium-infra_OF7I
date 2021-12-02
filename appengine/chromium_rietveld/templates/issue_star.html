@@ -1,9 +1,0 @@
-<span id="issue-star-{{issue.key.id}}">
-  {%if issue.is_starred%}
-    <img src="{{media_url}}star-lite.gif" width="15" height="15" border="0">
-  {%else%}
-    {%if request.user%}
-      <img src="{{media_url}}star-dark.gif" width="15" height="15" border="0">
-    {%endif%}
-  {%endif%}
-</span>
