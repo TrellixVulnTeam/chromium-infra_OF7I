@@ -135,7 +135,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A2b72803a9cdd7aff59c9ba1df4941a1c36c25082"
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Ab41a9cdf220ff45b285d81bd4201a0cfe8ca7f98"
     ],
     "infra_step": true,
     "name": "install infra/tools/cloudbuildhelper.ensure package directory",
@@ -148,9 +148,9 @@
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A2b72803a9cdd7aff59c9ba1df4941a1c36c25082",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Ab41a9cdf220ff45b285d81bd4201a0cfe8ca7f98",
       "-ensure-file",
-      "infra/tools/cloudbuildhelper/${platform} git_revision:2b72803a9cdd7aff59c9ba1df4941a1c36c25082",
+      "infra/tools/cloudbuildhelper/${platform} git_revision:b41a9cdf220ff45b285d81bd4201a0cfe8ca7f98",
       "-max-threads",
       "0",
       "-json-output",
@@ -164,7 +164,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:2b7\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:b41\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/cloudbuildhelper/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -175,7 +175,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A2b72803a9cdd7aff59c9ba1df4941a1c36c25082/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Ab41a9cdf220ff45b285d81bd4201a0cfe8ca7f98/cloudbuildhelper",
       "version"
     ],
     "name": "cloudbuildhelper version",
@@ -185,7 +185,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A2b72803a9cdd7aff59c9ba1df4941a1c36c25082/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Ab41a9cdf220ff45b285d81bd4201a0cfe8ca7f98/cloudbuildhelper",
       "upload",
       "[CACHE]/builder/repo/build/gae/target.yaml",
       "-canonical-tag",
