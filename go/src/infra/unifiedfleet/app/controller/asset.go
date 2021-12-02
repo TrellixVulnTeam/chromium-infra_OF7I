@@ -362,14 +362,14 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				fallthrough
 			case "location.zone":
 				if asset.GetLocation() == nil || asset.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid location")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Zone is unspecified so cannot be updated")
 				}
 			case "location.rack":
 				if asset.GetLocation() == nil {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid location")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Rack is unset so cannot be updated")
 				}
 				if asset.GetLocation().GetRack() == "" {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, cannot clear rack")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Rack is empty so cannot be updated")
 				}
 				var errMsg strings.Builder
 				errMsg.WriteString("validateAssetUpdateMask - ")
@@ -386,15 +386,15 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				fallthrough
 			case "location.barcode_name":
 				if asset.GetLocation() == nil {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid location")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Barcode name is unset so cannot be updated")
 				}
 			case "type":
 				if asset.GetType() == ufspb.AssetType_UNDEFINED {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, no type given")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Type is undefined so cannot be updated")
 				}
 			case "model":
 				if asset.GetModel() == "" {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid update, no model given")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Model is unset so cannot be updated")
 				}
 			case "info.cost_center":
 				fallthrough
@@ -408,7 +408,7 @@ func validateAssetUpdateMask(ctx context.Context, asset *ufspb.Asset, mask *fiel
 				fallthrough
 			case "info.phase":
 				if asset.GetInfo() == nil {
-					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Invalid asset info")
+					return status.Error(codes.InvalidArgument, "validateAssetUpdateMask - Phase is unset so cannot be updated")
 				}
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateAssetUpdateMask - unsupported mask %s", path)
