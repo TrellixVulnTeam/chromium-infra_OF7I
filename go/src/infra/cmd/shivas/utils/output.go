@@ -513,9 +513,9 @@ func switchOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		fmt.Sprintf("%d", m.GetCapacityPort()),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		ts,
 	}
 }
@@ -562,8 +562,8 @@ func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
 		fmt.Sprintf("%d", kvm.GetCapacityPort()),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
-		kvm.GetResourceState().String(),
-		kvm.GetZone(),
+		ufsUtil.RemoveStatePrefix(kvm.GetResourceState().String()),
+		ufsUtil.RemoveZonePrefix(kvm.GetZone()),
 		kvm.GetRack(),
 		ts,
 	}
@@ -604,9 +604,9 @@ func kvmOutputStrs(pm proto.Message) []string {
 		m.GetMacAddress(),
 		m.GetChromePlatform(),
 		fmt.Sprintf("%d", m.GetCapacityPort()),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		ts,
 	}
 }
@@ -663,9 +663,9 @@ func rpmOutputStrs(pm proto.Message) []string {
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetMacAddress(),
 		fmt.Sprintf("%d", m.GetCapacityPort()),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		ts,
 	}
 }
@@ -713,7 +713,7 @@ func dracFullOutputStrs(m *ufspb.Drac, dhcp *ufspb.DHCPConfig) []string {
 		dhcp.GetHostname(),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
 		m.GetMachine(),
 		ts,
@@ -757,7 +757,7 @@ func dracOutputStrs(pm proto.Message) []string {
 		m.GetSwitchInterface().GetSwitch(),
 		m.GetSwitchInterface().GetPortName(),
 		m.GetPassword(),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
 		m.GetMachine(),
 		ts,
@@ -817,7 +817,7 @@ func nicOutputStrs(pm proto.Message) []string {
 		m.GetMacAddress(),
 		m.GetSwitchInterface().GetSwitch(),
 		m.GetSwitchInterface().GetPortName(),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetRack(),
 		m.GetMachine(),
 		ts,
@@ -862,7 +862,7 @@ func assetOutputStrs(pm proto.Message) []string {
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
-		m.GetLocation().GetZone().String(),
+		ufsUtil.RemoveZonePrefix(m.GetLocation().GetZone().String()),
 		m.GetLocation().GetRack(),
 		m.GetLocation().GetBarcodeName(),
 		m.GetInfo().GetSerialNumber(),
@@ -930,21 +930,21 @@ func machineOutputStrs(pm proto.Message) []string {
 		return []string{
 			ufsUtil.RemovePrefix(m.GetName()),
 			m.GetSerialNumber(),
-			m.GetLocation().GetZone().String(),
+			ufsUtil.RemoveZonePrefix(m.GetLocation().GetZone().String()),
 			m.GetLocation().GetRack(),
 			m.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
 			m.GetChromeBrowserMachine().GetKvmInterface().GetPortName(),
 			m.GetChromeBrowserMachine().GetChromePlatform(),
 			m.GetChromeBrowserMachine().GetDeploymentTicket(),
 			m.GetChromeBrowserMachine().GetDescription(),
-			m.GetResourceState().String(),
+			ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 			m.GetRealm(),
 			ts,
 		}
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
-		m.GetLocation().GetZone().String(),
+		ufsUtil.RemoveZonePrefix(m.GetLocation().GetZone().String()),
 		m.GetLocation().GetRack(),
 		m.GetLocation().GetBarcodeName(),
 		m.GetChromeosMachine().GetHwid(),
@@ -954,7 +954,7 @@ func machineOutputStrs(pm proto.Message) []string {
 		m.GetChromeosMachine().GetSku(),
 		m.GetChromeosMachine().GetPhase(),
 		m.GetChromeosMachine().GetBuildTarget(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		m.GetRealm(),
 		ts,
 	}
@@ -1168,7 +1168,7 @@ func vlanOutputStrs(pm proto.Message) []string {
 	}
 	zones := make([]string, len(m.GetZones()))
 	for i, z := range m.GetZones() {
-		zones[i] = z.String()
+		zones[i] = ufsUtil.RemoveZonePrefix(z.String())
 	}
 	var dhcpRange string
 	if m.GetFreeStartIpv4Str() != "" {
@@ -1180,7 +1180,7 @@ func vlanOutputStrs(pm proto.Message) []string {
 		fmt.Sprintf("%d", m.GetCapacityIp()),
 		dhcpRange,
 		m.GetDescription(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		strSlicesToStr(zones),
 		strSlicesToStr(m.GetReservedIps()),
 		ts,
@@ -1281,7 +1281,7 @@ func PrintDutsFull(duts []*ufspb.MachineLSE, machineMap map[string]*ufspb.Machin
 		fmt.Fprintf(tw, "ReferenceDesign:\t%s\n", m.GetChromeosMachine().GetReferenceBoard())
 		fmt.Fprintf(tw, "Variant:\t%s\n", m.GetChromeosMachine().GetSku())
 		fmt.Fprintf(tw, "HWID:\t%s\n", m.GetChromeosMachine().GetHwid())
-		fmt.Fprintf(tw, "State:\t%s\n", m.GetResourceState().String())
+		fmt.Fprintf(tw, "State:\t%s\n", ufsUtil.RemoveStatePrefix(m.GetResourceState().String()))
 		fmt.Fprintf(tw, "Last Updated: \t%s\n", ts)
 
 		servo := dut.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
@@ -1383,14 +1383,14 @@ func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) []s
 		lse.GetChromeBrowserMachineLse().GetOsVersion().GetImage(),
 		lse.GetManufacturer(),
 		strSlicesToStr(lse.GetMachines()),
-		lse.GetZone(),
+		ufsUtil.RemoveZonePrefix(lse.GetZone()),
 		lse.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		lse.GetRack(),
 		lse.GetNic(),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
 		dhcp.GetMacAddress(),
-		lse.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(lse.GetResourceState().String()),
 		fmt.Sprintf("%d", lse.GetChromeBrowserMachineLse().GetVmCapacity()),
 		lse.GetDescription(),
 		ts,
@@ -1439,14 +1439,14 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
 		m.GetChromeBrowserMachineLse().GetOsVersion().GetImage(),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		m.GetRack(),
 		machine,
 		m.GetNic(),
 		m.GetVlan(),
 		m.GetIp(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
 		m.GetDeploymentTicket(),
 		m.GetDescription(),
@@ -1489,11 +1489,11 @@ func vmOutputStrs(pm proto.Message) []string {
 		m.GetOsVersion().GetValue(),
 		m.GetOsVersion().GetImage(),
 		m.GetMacAddress(),
-		m.GetZone(),
+		ufsUtil.RemoveZonePrefix(m.GetZone()),
 		m.GetMachineLseId(),
 		m.GetVlan(),
 		m.GetIp(),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		m.GetDeploymentTicket(),
 		m.GetDescription(),
 		ts,
@@ -1550,9 +1550,9 @@ func rackOutputStrs(pm proto.Message) []string {
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
-		m.GetLocation().GetZone().String(),
+		ufsUtil.RemoveZonePrefix(m.GetLocation().GetZone().String()),
 		fmt.Sprintf("%d", m.GetCapacityRu()),
-		m.GetResourceState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),
 		m.GetRealm(),
 		ts,
 	}
@@ -1613,7 +1613,7 @@ func cachingServiceOutputStrs(pm proto.Message) []string {
 		strSlicesToStr(m.GetServingSubnets()),
 		m.GetPrimaryNode(),
 		m.GetSecondaryNode(),
-		m.GetState().String(),
+		ufsUtil.RemoveStatePrefix(m.GetState().String()),
 		m.GetDescription(),
 		ts,
 	}
