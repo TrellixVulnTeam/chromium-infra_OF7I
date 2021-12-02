@@ -168,7 +168,11 @@
               Legend:
               <div class="color-sample covered-code"> Covered </div>
               <div class="color-sample uncovered-code"> Not Covered </div>
-              <div class="color-sample incoverable-code"> Not-Compiled/Not-Instrumented </div>
+              {% if modifier_id == 0 %}
+                <div class="color-sample incoverable-code"> Not Compiled/Not Instrumented</div>
+              {% else %}
+                <div class="color-sample incoverable-code"> Not Compiled/Not Instrumented/Not In Scope</div>  
+              {% endif %}
             </div>
           </th>
         </tr>
