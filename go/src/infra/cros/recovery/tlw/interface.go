@@ -524,6 +524,8 @@ const (
 	ServoStateServoHostIssue ServoState = "SERVO_HOST_ISSUE"
 	// Issue related to servo_updater on the servo-host.
 	ServoStateServoUpdaterIssue ServoState = "SERVO_UPDATER_ISSUE"
+	// Issue related to power button pin on the servo host.
+	ServoStateServodDutControllerMissing ServoState = "SERVOD_DUT_CONTROLLER_MISSING"
 )
 
 // ServoFirmwareChannel describes the state of setup/communication issue related to servo functionality provided by servo.
