@@ -43,6 +43,7 @@ type ActionEntity struct {
 	Status         int32     `gae:"status"`
 	FailReason     string    `gae:"fail_reason"`
 	SealTime       time.Time `gae:"seal_time"` // After the seal time has passed, no further modifications may be made.
+	Hostname       string    `gae:"hostname"`
 	// Deprecated fields!
 	ErrorReason string `gae:"error_reason"` // succeeded by "fail_reason'.
 }
@@ -64,6 +65,7 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		Status:         scalars.ConvertInt32ToActionStatus(e.Status),
 		FailReason:     e.FailReason,
 		SealTime:       scalars.ConvertTimeToTimestampPtr(e.SealTime),
+		Hostname:       e.Hostname,
 	}
 }
 
@@ -299,6 +301,7 @@ func convertActionToActionEntity(action *kartepb.Action) (*ActionEntity, error) 
 		Status:         scalars.ConvertActionStatusToInt32(action.Status),
 		FailReason:     action.FailReason,
 		SealTime:       scalars.ConvertTimestampPtrToTime(action.SealTime),
+		Hostname:       action.Hostname,
 	}, nil
 }
 

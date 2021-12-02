@@ -43,6 +43,7 @@ func TestConvertActionEntityToActionNilAction(t *testing.T) {
 }
 
 // TestConvertActionEntityToAction tests converting an action entity to an action.
+// This test, additionally, tests that the conversion round trip.
 func TestConvertActionEntityToAction(t *testing.T) {
 	cases := []struct {
 		name string
@@ -70,6 +71,15 @@ func TestConvertActionEntityToAction(t *testing.T) {
 			},
 			out: &kartepb.Action{
 				FailReason: "aaaa",
+			},
+		},
+		{
+			name: "error reason",
+			in: &ActionEntity{
+				Hostname: "foo",
+			},
+			out: &kartepb.Action{
+				Hostname: "foo",
 			},
 		},
 	}
