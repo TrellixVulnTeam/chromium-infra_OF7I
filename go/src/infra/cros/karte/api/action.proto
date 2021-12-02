@@ -81,4 +81,7 @@ message Action {
 
   // The buildbucket ID is the ID of the buildbucket build associated with the event in question.
   string buildbucket_id = 14;
+
+  // The hostname is the hostname of the DUT in question.
+  string hostname = 15;
 }
