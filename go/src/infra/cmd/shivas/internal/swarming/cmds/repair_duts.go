@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/shivas/site"
+	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
 	"infra/libs/skylab/common/heuristics"
@@ -124,7 +125,7 @@ func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.En
 	}
 	p := &labpack.Params{
 		UnitName:       host,
-		TaskName:       "repair",
+		TaskName:       string(tasknames.Recovery),
 		EnableRecovery: true,
 		AdminService:   e.AdminService,
 		// NOTE: We use the UFS service, not the Inventory service here.
