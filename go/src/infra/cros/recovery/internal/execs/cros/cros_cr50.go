@@ -24,8 +24,10 @@ const (
 )
 
 const (
-	// findFWVersionRegexp is the regular expression for finding the RW/RO version from the output
+	// findFWVersionRegexp is the regular expression for finding the RW/RO version from the output.
 	findFWVersionRegexp = `%s (\d+\.\d+\.\d+)`
+	// findFWKeyIdRegexp is the regular expression for finding the RW/RO fw keyid from the output.
+	findFWKeyIdRegexp = `keyids:.*%s (\S+)`
 )
 
 // GetCr50FwVersion gets the cr 50 firmware RO/RW version based on the region parameter.
@@ -35,8 +37,15 @@ func GetCr50FwVersion(ctx context.Context, r execs.Runner, region CR50Region) (s
 	return fwVersion, errors.Annotate(err, "get cr50 fw version").Err()
 }
 
+// GetCr50FwKeyID gets the cr 50 firmware RO/RW key id based on the region parameter.
+// @param region: "RW" or "RO"
+func GetCr50FwKeyID(ctx context.Context, r execs.Runner, region CR50Region) (string, error) {
+	fwVersion, err := cr50FWComponent(ctx, r, region, findFWKeyIdRegexp)
+	return fwVersion, errors.Annotate(err, "get cr 50 fw key id").Err()
+}
+
 const (
-	// gsctool version command that used to check the RW and RO version
+	// gsctool version command that used to check the RW and RO version.
 	cr50FWCmd = "gsctool -a -f"
 )
 

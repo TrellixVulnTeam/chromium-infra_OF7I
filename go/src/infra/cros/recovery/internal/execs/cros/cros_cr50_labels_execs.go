@@ -51,6 +51,36 @@ func updateCr50LabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// updateCr50KeyIdLabelExec will update the DUT's Cr50KeyEnv state into the corresponding Cr50 key id state.
+func updateCr50KeyIdLabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.NewRunner(args.ResourceName)
+	roKeyIDString, err := GetCr50FwKeyID(ctx, r, CR50RegionRO)
+	if err != nil {
+		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
+		return errors.Annotate(err, "update cr50 key id").Err()
+	}
+	// Trim "," due to the remaining of the regular expression.
+	// Trim "0x" due to the restriction of golang's ParseInt only taking the hex number without "0x".
+	// Ex:
+	// Before Trim: "0xffffff,"
+	// After Trim: "ffffff"
+	roKeyIDString = strings.Trim(roKeyIDString, ",0x")
+	roKeyID, err := strconv.ParseInt(roKeyIDString, 16, 64)
+	if err != nil {
+		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
+		return errors.Annotate(err, "update cr50 key id").Err()
+	}
+	if roKeyID&(1<<2) != 0 {
+		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvProd
+		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvProd)
+	} else {
+		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvDev
+		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvDev)
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_update_cr50_label", updateCr50LabelExec)
+	execs.Register("cros_update_cr50_key_id_label", updateCr50KeyIdLabelExec)
 }

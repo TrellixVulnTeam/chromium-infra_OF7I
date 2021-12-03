@@ -331,9 +331,33 @@ const crosRepairPlanBody = `
 	},
 	"device_labels":{
 		"dependencies":[
-			"device_sku"
+			"device_sku",
+			"cr50_labels"
 		 ],
 		 "exec_name":"sample_pass"
+	},
+	"cr50_labels":{
+		"docs":[
+			"Update the cr50 label on the cros Device."
+		],
+		"conditions":[
+			"cros_is_cr50_firmware_exist"
+		],
+		"dependencies":[
+			"cros_update_cr50_label",
+			"cros_update_cr50_key_id_label"
+		 ],
+		"exec_name":"sample_pass",
+		"allow_fail_after_recovery": true
+	},
+	"cros_is_cr50_firmware_exist":{
+		"docs":[
+			"Checks if the cr 50 firmware exists on the DUT by running the gsctool version command."
+		],
+		"exec_name":"cros_run_shell_command",
+		"exec_extra_args":[
+			"gsctool -a -f"
+		]
 	},
 	"device_sku":{
 		"docs":[
