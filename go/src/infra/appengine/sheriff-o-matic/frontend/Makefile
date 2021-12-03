@@ -21,7 +21,7 @@ build_polymer: bower_deps
 	$(VULCANIZE_PATH) elements/som-app/som-app.html -o elements/som-app/som-app.vulcanized.html --inline-scripts
 
 typecheck: node_deps
-	npm run types
+	npm run typecheck
 
 build_lit: node_deps typecheck
 	npm run build
