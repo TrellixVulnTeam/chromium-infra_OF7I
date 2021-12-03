@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -45,7 +46,7 @@ var UpdateDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the drac to add."+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
@@ -65,7 +66,7 @@ type updateDrac struct {
 	macAddress  string
 	switchName  string
 	switchPort  string
-	tags        string
+	tags        []string
 	vlanName    string
 	deleteVlan  bool
 	ip          string
@@ -137,7 +138,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			"mac":         "macAddress",
 			"switch":      "switch",
 			"switch-port": "portName",
-			"tags":        "tags",
+			"tag":         "tags",
 			"state":       "resourceState",
 		}),
 	})
@@ -182,10 +183,10 @@ func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	} else {
 		drac.GetSwitchInterface().PortName = c.switchPort
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		drac.Tags = nil
 	} else {
-		drac.Tags = utils.GetStringSlice(c.tags)
+		drac.Tags = c.tags
 	}
 }
 
@@ -206,8 +207,8 @@ func (c *updateDrac) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.machineName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-machine' cannot be specified at the same time.")
@@ -222,7 +223,7 @@ func (c *updateDrac) validateArgs() error {
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
 			c.machineName == "" && c.switchName == "" && c.switchPort == "" &&
-			c.macAddress == "" && c.tags == "" && c.state == "" {
+			c.macAddress == "" && len(c.tags) == 0 && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -41,7 +42,7 @@ var AddDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the drac to add")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to")
 		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -60,7 +61,7 @@ type addDrac struct {
 	macAddress  string
 	switchName  string
 	switchPort  string
-	tags        string
+	tags        []string
 }
 
 func (c *addDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -134,7 +135,7 @@ func (c *addDrac) parseArgs(drac *ufspb.Drac) {
 		Switch:   c.switchName,
 		PortName: c.switchPort,
 	}
-	drac.Tags = utils.GetStringSlice(c.tags)
+	drac.Tags = c.tags
 }
 
 func (c *addDrac) validateArgs() error {
@@ -154,7 +155,7 @@ func (c *addDrac) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
+		if len(c.tags) > 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.machineName != "" {
