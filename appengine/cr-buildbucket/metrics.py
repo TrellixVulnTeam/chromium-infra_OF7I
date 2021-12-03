@@ -3,26 +3,13 @@
 # found in the LICENSE file.
 
 import collections
-import logging
 
-from google.appengine.ext import ndb
-
-from components import utils
 import gae_ts_mon
-
-from go.chromium.org.luci.buildbucket.proto import common_pb2
 
 from legacy import api_common
 import buildtags
 import config
-import model
 
-# Override default target fields for app-global metrics.
-GLOBAL_TARGET_FIELDS = {
-    'job_name': '',  # module name
-    'hostname': '',  # version
-    'task_num': 0,  # instance ID
-}
 
 BuildMetricField = collections.namedtuple(
     'BuildMetricField',
@@ -70,9 +57,6 @@ _BUILD_FIELDS = {
 }
 _METRIC_PREFIX_PROD = 'buildbucket/builds/'
 _METRIC_PREFIX_EXPERIMENTAL = 'buildbucket/builds-experimental/'
-
-# Maximum number of concurrent counting/latency queries.
-_CONCURRENT_QUERY_LIMIT = 100
 
 BUCKETER_24_HR = gae_ts_mon.GeometricBucketer(growth_factor=10**0.05)
 BUCKETER_48_HR = gae_ts_mon.GeometricBucketer(growth_factor=10**0.053)
@@ -214,17 +198,6 @@ add_build_run_duration = _duration_adder(  # pragma: no branch
 add_build_scheduling_duration = _duration_adder(  # pragma: no branch
     'scheduling_durations', 'Duration between build creation and start',
     lambda b: _ts_delta_sec(b.create_time, b.start_time))
-
-BUILD_COUNT_PROD = gae_ts_mon.GaugeMetric(
-    _METRIC_PREFIX_PROD + 'count', 'Number of pending/running prod builds',
-    _build_fields('bucket', 'builder', 'status')
-)
-BUILD_COUNT_EXPERIMENTAL = gae_ts_mon.GaugeMetric(
-    _METRIC_PREFIX_EXPERIMENTAL + 'count',
-    'Number of pending/running experimental builds',
-    _build_fields('bucket', 'builder', 'status')
-)
-
 SEQUENCE_NUMBER_GEN_DURATION_MS = gae_ts_mon.CumulativeDistributionMetric(
     'buildbucket/sequence_number/gen_duration',
     'Duration of a sequence number generation in ms',
@@ -247,81 +220,3 @@ TAG_INDEX_SEARCH_SKIPPED_BUILDS = gae_ts_mon.NonCumulativeDistributionMetric(
     # We can't have more than 1000 entries in a tag index.
     bucketer=BUCKETER_1K
 )
-
-
-@ndb.tasklet
-def set_build_count_metric_async(
-    bucket_id, bucket_field, builder, status, experimental
-):
-  q = model.Build.query(
-      model.Build.bucket_id == bucket_id,
-      model.Build.tags == 'builder:%s' % builder,
-      model.Build.status == status,
-      model.Build.experimental == experimental,
-  )
-  try:
-    value = yield q.count_async()
-  except Exception:  # pragma: no cover
-    logging.exception('failed to count builds with query %s', q)
-    return
-  fields = {
-      'bucket': bucket_field,
-      'builder': builder,
-      'status': common_pb2.Status.Name(status),
-  }
-  metric = BUILD_COUNT_EXPERIMENTAL if experimental else BUILD_COUNT_PROD
-  metric.set(value, fields=fields, target_fields=GLOBAL_TARGET_FIELDS)
-
-
-# Metrics that are per-app rather than per-instance.
-GLOBAL_METRICS = [
-    BUILD_COUNT_PROD,
-    BUILD_COUNT_EXPERIMENTAL,
-]
-
-
-def update_global_metrics():
-  """Updates the metrics in GLOBAL_METRICS."""
-  start = utils.utcnow()
-
-  builder_ids = set()  # {(bucket_id, builder)}
-  for key in model.Builder.query().iter(keys_only=True):
-    project_id, bucket, builder = key.id().split(':', 2)
-    bucket_id = (
-        # TODO(crbug.com/851036): remove parse_luci_bucket call
-        # once we don't have Builder entities with legacy bucket names.
-        api_common.parse_luci_bucket(bucket) or
-        config.format_bucket_id(project_id, bucket)
-    )
-    builder_ids.add((bucket_id, builder))
-
-  all_luci_bucket_ids = {
-      bid for bid, cfg in config.get_buckets_async().get_result().iteritems()
-      if cfg and config.is_swarming_config(cfg)
-  }
-
-  # Collect a list of counting queries.
-  count_query_queue = []
-  # TODO(crbug.com/851036): join with the loop above and remove builder_ids set.
-  for bucket_id, builder in builder_ids:
-    legacy_bucket_name = api_common.legacy_bucket_name(
-        bucket_id, bucket_id in all_luci_bucket_ids
-    )
-    for status in (common_pb2.SCHEDULED, common_pb2.STARTED):
-      for experimental in (False, True):
-        count_query_queue.append(
-            (bucket_id, legacy_bucket_name, builder, status, experimental)
-        )
-
-  # Process counting queries with _CONCURRENT_QUERY_LIMIT workers.
-
-  @ndb.tasklet
-  def worker():
-    while count_query_queue:
-      item = count_query_queue.pop()
-      yield set_build_count_metric_async(*item)
-
-  for w in [worker() for _ in xrange(_CONCURRENT_QUERY_LIMIT)]:
-    w.check_success()
-
-  logging.info('global metric computation took %s', utils.utcnow() - start)
