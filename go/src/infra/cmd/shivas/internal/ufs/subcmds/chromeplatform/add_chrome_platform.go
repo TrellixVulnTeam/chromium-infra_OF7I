@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -37,7 +38,7 @@ var AddChromePlatformCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.name, "name", "", "name of the platform")
 		c.Flags.StringVar(&c.manufacturer, "manufacturer", "", "manufacturer name")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		c.Flags.StringVar(&c.description, "desc", "", "description for the platform")
 		return c
 	},
@@ -54,7 +55,7 @@ type addChromePlatform struct {
 
 	name         string
 	manufacturer string
-	tags         string
+	tags         []string
 	description  string
 }
 
@@ -120,7 +121,7 @@ func (c *addChromePlatform) innerRun(a subcommands.Application, args []string, e
 func (c *addChromePlatform) parseArgs(chromePlatform *ufspb.ChromePlatform) {
 	chromePlatform.Name = c.name
 	chromePlatform.Manufacturer = c.manufacturer
-	chromePlatform.Tags = utils.GetStringSlice(c.tags)
+	chromePlatform.Tags = c.tags
 	chromePlatform.Description = c.description
 }
 
@@ -135,8 +136,8 @@ func (c *addChromePlatform) validateArgs() error {
 		if c.manufacturer != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-manufacturer' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-description' cannot be specified at the same time.")
