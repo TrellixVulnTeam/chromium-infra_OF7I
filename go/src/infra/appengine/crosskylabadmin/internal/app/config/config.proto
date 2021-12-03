@@ -43,6 +43,9 @@ message Config {
   // InventoryProvider contains configuration of inventory provider, e.g.
   // inventory v2 service.
   InventoryProvider inventory_provider = 9;
+
+  // Paris is the configuration settings for paris (the new repair &c flow).
+  Paris paris = 10;
 }
 
 // Swarming contains information about the Swarming instance that hosts the bots
@@ -278,4 +281,34 @@ message InventoryProvider{
 
   // The flag to control if we write to inventory v1.
   bool inventory_v2_only = 7;
+}
+
+// Paris controls whether the Paris is enabled for tasks like repair and audit.
+// It also supports slow rollouts.
+//
+// Note that there are a few levels of checks before we actually use the Paris flow.
+// For example, if we are considering repairing a labstation with Paris, we will consult
+// the configuration in the following way.
+//
+// 1) Is recovery enabled for labstations in the first place? If not, use the old flow.
+// 2) Did we opt the particular labstation in question in to the new flow? If not, use the old flow.
+//        This step requires checking both `optin_all_labstations` and `optin_labstation_prefix`.
+// 3) With probability p, use the new flow, where p is determined from the config file.
+message Paris {
+  // Enable_labstation_recovery is set to true when recovery is enabled for labstations at all.
+  // Merely setting this value to true does *not* use Paris to recover labstations by itself.
+  // However, setting this value to false will *prevent* Paris from being used for this purpose.
+  bool enable_labstation_recovery = 1;
+
+  // Optin_all_labstations opts in every labstation (regardless of optin_labstation_prefix) if set to true.
+  bool optin_all_labstations = 2;
+
+  // Optin_labstation_pools are the pools that contain labstations that are allowed to run the new flow.
+  repeated string optin_labstation_pool = 3;
+
+  // Labstation_recovery_permille is the probability (out of 1000) that we use the new flow for a labstation if
+  // we are permitted to repair the labstation in question by the other settings in the config file.
+  //
+  // The smallest permissible value is 0. The largest is 1000.
+  int32 labstation_recovery_permille = 4;
 }
