@@ -526,6 +526,12 @@ const (
 	ServoStateServoUpdaterIssue ServoState = "SERVO_UPDATER_ISSUE"
 	// Issue related to power button pin on the servo host.
 	ServoStateServodDutControllerMissing ServoState = "SERVOD_DUT_CONTROLLER_MISSING"
+	// Issue related to cold reset pin on the DUT.
+	ServoStateColdResetPinIssue ServoState = "COLD_RESET_PIN_ISSUE"
+	// Issue related to warm reset pin on the DUT.
+	ServoStateWarmResetPinIssue ServoState = "WARM_RESET_PIN_ISSUE"
+	// Issue related to power button pin on the DUT.
+	ServoStatePowerButtonPinIssue ServoState = "POWER_BUTTON_PIN_ISSUE"
 )
 
 // ServoFirmwareChannel describes the state of setup/communication issue related to servo functionality provided by servo.

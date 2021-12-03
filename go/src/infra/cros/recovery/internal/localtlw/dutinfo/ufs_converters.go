@@ -96,6 +96,9 @@ var servoStates = map[ufslab.PeripheralState]tlw.ServoState{
 	ufslab.PeripheralState_SERVO_HOST_ISSUE:              tlw.ServoStateServoHostIssue,
 	ufslab.PeripheralState_SERVO_UPDATER_ISSUE:           tlw.ServoStateServoUpdaterIssue,
 	ufslab.PeripheralState_SERVOD_DUT_CONTROLLER_MISSING: tlw.ServoStateServodDutControllerMissing,
+	ufslab.PeripheralState_COLD_RESET_PIN_ISSUE:          tlw.ServoStateColdResetPinIssue,
+	ufslab.PeripheralState_WARM_RESET_PIN_ISSUE:          tlw.ServoStateWarmResetPinIssue,
+	ufslab.PeripheralState_POWER_BUTTON_PIN_ISSUE:        tlw.ServoStatePowerButtonPinIssue,
 }
 
 func convertServoState(s ufslab.PeripheralState) tlw.ServoState {
