@@ -221,7 +221,11 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
         goos, goarch = plat.split('-', 1)
 
       with api.infra_cipd.context(api.path['checkout'], goos, goarch):
-        api.infra_cipd.build_without_env_refresh()
+        if api.platform.is_mac:
+          api.infra_cipd.build_without_env_refresh(
+              api.properties.get('signing_identity'))
+        else:
+          api.infra_cipd.build_without_env_refresh()
         if 'test' in options:
           api.infra_cipd.test()
         if is_packager:
@@ -271,6 +275,9 @@ def GenTests(api):
   yield test('public-packager-mac_experimental', 'infra-packager-mac-64',
              PUBLIC_REPO, 'infra', 'prod', 'mac',
              is_experimental=True)
+  yield test('public-packager-mac_codesign', 'infra-packager-mac-64',
+             PUBLIC_REPO, 'infra', 'prod', 'mac') + api.properties(
+                 signing_identity='AAAAAAAAAAAAABBBBBBBBBBBBBXXXXXXXXXXXXXX')
 
   yield test('internal-packager-linux', 'infra-internal-packager-linux-64',
              INTERNAL_REPO, 'infra-internal', 'prod', 'linux')

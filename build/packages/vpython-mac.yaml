@@ -1,0 +1,42 @@
+package: infra/experimental/vpython/${platform}
+description: vpython is a VirtualEnv Python bootstrap tool.
+platforms:
+  - mac-amd64
+  - mac-arm64
+go_build_environ:
+  CGO_ENABLED:
+    darwin:  1  # native Go DNS resolved is buggy on OSX (crbug.com/803673)
+go_packages:
+  - infra/tools/vpython
+root: ../../go/bin
+upload_on_change:
+  - file: vpython
+mac_bundle:
+  name: vpython.app
+  info: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+            <key>CFBundleExecutable</key>
+            <string>vpython</string>
+            <key>CFBundleIdentifier</key>
+            <string>org.chromium.infra.vpython</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>Chrome Infra Vpython</string>
+    </dict>
+    </plist>
+  data:
+    - file: vpython
+      path: ./
+  codesign:
+    requirements: designated => identifier "org.chromium.infra.vpython" and anchor trusted
+posix_symlinks:
+  - src: vpython.app/Contents/MacOS/vpython
+    dst: vpython
+  - src: vpython.app/Contents/MacOS/vpython
+    dst: vpython3
+data:
+  - version_file: .versions/vpython.cipd_version

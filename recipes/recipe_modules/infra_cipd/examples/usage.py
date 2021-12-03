@@ -9,16 +9,16 @@ from recipe_engine import post_process
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'recipe_engine/assertions',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/step',
-
-  'infra_cipd',
+    'recipe_engine/assertions',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/step',
+    'infra_cipd',
 ]
 
 
@@ -31,7 +31,11 @@ def RunSteps(api):
       path_to_repo=path,
       goos=api.properties.get('goos'),
       goarch=api.properties.get('goarch')):
-    api.infra_cipd.build_without_env_refresh()
+    if api.platform.is_mac:
+      api.infra_cipd.build_without_env_refresh(
+          api.properties.get('signing_identity'))
+    else:
+      api.infra_cipd.build_without_env_refresh()
     api.infra_cipd.test()
     if not api.properties.get('no_buildnumbers'):
       api.infra_cipd.upload(api.infra_cipd.tags(url, rev))
@@ -43,6 +47,11 @@ def RunSteps(api):
 def GenTests(api):
   yield (api.test('luci-native') + api.buildbucket.ci_build(
       'infra-internal', 'ci', 'native', build_number=5))
+  yield (api.test('luci-native_codesign') + api.platform.name('mac') +
+         api.properties(
+             signing_identity='AAAAAAAAAAAAABBBBBBBBBBBBBXXXXXXXXXXXXXX') +
+         api.buildbucket.ci_build(
+             'infra-internal', 'ci', 'native', build_number=5))
   yield (api.test('luci-cross') + api.properties(
       goos='linux',
       goarch='arm64',
