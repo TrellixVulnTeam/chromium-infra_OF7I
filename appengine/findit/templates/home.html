@@ -45,47 +45,16 @@
       <br>
       <br>
       <br>
+      <div><span style="color:RED"><b>Findit currently only supports compile failure analysis via automatic triggering. Manual triggering is not supported.</b></span></div>
+      <br>
+      <br>
       <div>
         <div><span style="color:GREEN"><b>Flaky test</b> (Gtest, Layout tests, or Android Instrument)</span>: (<a href="/p/chromium/flake-portal/analysis">previous analyses</a>)</div>
-        <form id="flake" action="/p/chromium/flake-portal/analysis/analyze" method="POST">
-          <input type="hidden" name="xsrf_token" value="{{xsrf_token}}"/>
-          <table>
-            <tr>
-              <td style="text-align:right">Build URL</td>
-              <td><input required id="flake-build-url" type="url" name="url" size="120" placeholder="URL to the build cycle of the flaky test, like https://luci-milo.appspot.com/buildbot/chromium.mac/Mac10.11%20Tests/6472"/></td>
-            <tr>
-            <tr>
-              <td style="text-align:right">Step Name</td>
-              <td><input required type="text" name="step_name" id="step-name" size="120" placeholder="Full step name like 'browser_tests on Mac-10.11'"/></td>
-            </tr>
-            <tr>
-              <td style="text-align:right">Test Name</td>
-              <td>
-                <input required type="text" name="test_name" id="test-name" size="120" placeholder="PasswordManagerBrowserTestBase.InFrameNavigationDoesNotClearPopupState"/>
-              </td>
-            </tr>
-            <tr id="test-name-warning" style="color:RED;display:none">
-              <td></td>
-              <td>Should the test name be "<span id="decoded-test-name"></span>" instead?</td>
-            </tr>
-            <tr>
-              <td style="text-align:right"><a id="crbug-link" href="https://crbug.com" target="_blank">Monorail</a> Bug Id</td>
-              <td><input type="text" name="bug_id" id="bug-id" size="120" placeholder="123456 (Optional to get automatic notification of analysis result)"/><td>
-            </tr>
-          </table>
-          <input type="submit" value="Analyze flake"/>
-        </form>
       </div>
-      <br>
       <br>
       <br>
       <div>
         <div><span style="color:GREEN"><b>Compile/test</b> failures on CI Waterfall:</span> (<a href="/waterfall/list-failures">previous analyses</a>)</div>
-        <form id="failure" action="/waterfall/failure" method="POST">
-          <input type="hidden" name="xsrf_token" value="{{xsrf_token}}"/>
-          <label for="build-url">URL</label> <input required id="build-url" type="url" name="url" size="130" placeholder="Press ENTER after pasting the URL to the build cycle like https://luci-milo.appspot.com/buildbot/chromium.linux/Linux%20Tests/44306"/><br>
-          <input type="submit" value="Analyze failure"/>
-        </form>
       </div>
     </div>
   </cats-app>
