@@ -21,8 +21,8 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	"infra/libs/skylab/buildbucket"
-	"infra/libs/skylab/buildbucket/labpack"
+	"infra/cros/recovery/buildbucket"
+	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/common/heuristics"
 	swarming "infra/libs/swarming"
 	ufspb "infra/unifiedfleet/api/v1/models"
@@ -356,9 +356,9 @@ func (c *addLabstation) createLabstationDeployTask(ctx context.Context, tc *swar
 	return nil
 }
 
-// EnsureBBClient creates a buildbucket client if permitted.
+// CreateBBClient creates a buildbucket client if permitted.
 func (c *addLabstation) createBBClient(ctx context.Context) (buildbucket.Client, error) {
-	bc, err := buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+	bc, err := buildbucket.NewLabpackClient(ctx, c.authFlags, site.DefaultPRPCOptions)
 	if err != nil {
 		return nil, errors.Annotate(err, "ensure bb client").Err()
 	}
@@ -460,19 +460,7 @@ func (c *addLabstation) updateAssetToUFS(ctx context.Context, ic ufsAPI.FleetCli
 
 // ScheduleDeployBuilder schedules a labpack deploy builder. It returns a description of the buildbucket task and an error value.
 func scheduleDeployBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string) (*swarming.TaskInfo, error) {
-	p := &labpack.Params{
-		UnitName:       host,
-		TaskName:       "deploy",
-		EnableRecovery: true,
-		AdminService:   e.AdminService,
-		// NOTE: We use the UFS service, not the Inventory service here.
-		InventoryService: e.UnifiedFleetService,
-		NoStepper:        false,
-		NoMetrics:        false,
-		// TODO(gregorynisbet): Pass config file to labpack task.
-		Configuration: "",
-	}
-	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	taskID, err := buildbucket.ScheduleBuilder(ctx, bc, host, tasknames.Deploy, e.AdminService, e.UnifiedFleetService)
 	if err != nil {
 		return nil, err
 	}
