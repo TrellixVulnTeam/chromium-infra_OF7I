@@ -455,7 +455,7 @@ enum ServoFwChannel {
 }
 
 // copy of enum from dut_state.proto
-// Next Tag: 23
+// Next Tag: 26
 enum PeripheralState {
   // Please keep for all unknown states.
   UNKNOWN = 0;
@@ -505,6 +505,12 @@ enum PeripheralState {
   SERVO_UPDATER_ISSUE = 21;
   // Issue detected in servod and reported by dut_controller_missing_fault control.
   SERVOD_DUT_CONTROLLER_MISSING = 22;
+  // Issue related to cold reset pin on the DUT.
+  COLD_RESET_PIN_ISSUE = 23;
+  // Issue related to warm reset pin on the DUT.
+  WARM_RESET_PIN_ISSUE = 24;
+  // Issue related to power button pin on the DUT.
+  POWER_BUTTON_PIN_ISSUE = 25;
 }
 
 // copy of enum from dut_state.proto
