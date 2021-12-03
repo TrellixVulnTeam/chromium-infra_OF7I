@@ -174,8 +174,8 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 	expectedReads := map[string][]byte{}
 	expectedWrites := map[string][]byte{}
 	for buildspec := range tc.buildspecs {
-		expectedReads[string(lgs.MakePath(externalBuildspecBucket, buildspec))] = []byte("")
-		expectedReads[string(lgs.MakePath(internalBuildspecBucket, buildspec))] = []byte(buildspecXML)
+		expectedReads[string(lgs.MakePath(externalBuildspecsGSBucketDefault, buildspec))] = []byte("")
+		expectedReads[string(lgs.MakePath(internalBuildspecsGSBucketDefault, buildspec))] = []byte(buildspecXML)
 	}
 
 	expectedBucketLists := make(map[string][]string)
@@ -202,13 +202,13 @@ func (tc *testConfig) setUpPPBTest(t *testing.T) (*gs.FakeClient, *gerrit.Client
 		expectedWrites = make(map[string][]byte)
 	}
 	// Set up gs.List expectations.
-	expectedLists[externalBuildspecBucket] = map[string][]string{}
-	expectedLists[internalBuildspecBucket] = map[string][]string{}
+	expectedLists[externalBuildspecsGSBucketDefault] = map[string][]string{}
+	expectedLists[internalBuildspecsGSBucketDefault] = map[string][]string{}
 
 	if tc.watchPaths != nil {
 		for prefix, files := range tc.watchPaths {
-			expectedLists[externalBuildspecBucket][prefix] = files
-			expectedLists[internalBuildspecBucket][prefix] = files
+			expectedLists[externalBuildspecsGSBucketDefault][prefix] = files
+			expectedLists[internalBuildspecsGSBucketDefault][prefix] = files
 		}
 	}
 
@@ -242,9 +242,11 @@ func TestCreateProjectBuildspec(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{"galaxy/milkyway"},
-		ttl:       ttl,
+		buildspec:                  "full/buildspecs/93/13811.0.0.xml",
+		projects:                   []string{"galaxy/milkyway"},
+		ttl:                        ttl,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -263,9 +265,11 @@ func TestCreateProjectBuildspecDryRun(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{"galaxy/milkyway"},
-		push:      false,
+		buildspec:                  "full/buildspecs/93/13811.0.0.xml",
+		projects:                   []string{"galaxy/milkyway"},
+		push:                       false,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -286,9 +290,11 @@ func TestCreateProjectBuildspecToT(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: "full/buildspecs/96/13811.0.0-rc2.xml",
-		projects:  []string{"galaxy/milkyway"},
-		push:      true,
+		buildspec:                  "full/buildspecs/96/13811.0.0-rc2.xml",
+		projects:                   []string{"galaxy/milkyway"},
+		push:                       true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -308,10 +314,12 @@ func TestCreateProjectBuildspecForce(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{"galaxy/milkyway"},
-		force:     true,
-		push:      true,
+		buildspec:                  "full/buildspecs/93/13811.0.0.xml",
+		projects:                   []string{"galaxy/milkyway"},
+		force:                      true,
+		push:                       true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -331,10 +339,12 @@ func TestCreateProjectBuildspecExistsNoForce(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec: "full/buildspecs/93/13811.0.0.xml",
-		projects:  []string{"galaxy/milkyway"},
-		force:     false,
-		push:      true,
+		buildspec:                  "full/buildspecs/93/13811.0.0.xml",
+		projects:                   []string{"galaxy/milkyway"},
+		force:                      false,
+		push:                       true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -369,10 +379,12 @@ func TestCreateProjectBuildspecMultiple(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
-		minMilestone: 94,
-		projects:     []string{"galaxy/milkyway"},
-		push:         true,
+		watchPaths:                 []string{"full/buildspecs/", "buildspecs/"},
+		minMilestone:               94,
+		projects:                   []string{"galaxy/milkyway"},
+		push:                       true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -418,10 +430,12 @@ func TestCreateProjectBuildspecMultipleProgram(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		watchPaths:   []string{"full/buildspecs/", "buildspecs/"},
-		minMilestone: 94,
-		projects:     []string{"galaxy/*"},
-		push:         true,
+		watchPaths:                 []string{"full/buildspecs/", "buildspecs/"},
+		minMilestone:               94,
+		projects:                   []string{"galaxy/*"},
+		push:                       true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }
@@ -441,9 +455,11 @@ func TestCreateProjectBuildspecOtherRepos(t *testing.T) {
 	f, gc := tc.setUpPPBTest(t)
 
 	b := projectBuildspec{
-		buildspec:  "full/buildspecs/93/13811.0.0.xml",
-		otherRepos: []string{"chromeos-vendor-qti-camx"},
-		projects:   []string{"galaxy/milkyway"},
+		buildspec:                  "full/buildspecs/93/13811.0.0.xml",
+		otherRepos:                 []string{"chromeos-vendor-qti-camx"},
+		projects:                   []string{"galaxy/milkyway"},
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreateBuildspecs(f, gc))
 }

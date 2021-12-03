@@ -93,8 +93,10 @@ func TestPublicBuildspec(t *testing.T) {
 		ExpectedWrites: expectedWrites,
 	}
 	b := publicBuildspec{
-		push:       true,
-		watchPaths: []string{"test/"},
+		push:                       true,
+		watchPaths:                 []string{"test/"},
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, nil))
 }
@@ -119,8 +121,10 @@ func TestPublicBuildspecDryRun(t *testing.T) {
 		ExpectedWrites: map[string][]byte{},
 	}
 	b := publicBuildspec{
-		push:       false,
-		watchPaths: []string{"test/"},
+		push:                       false,
+		watchPaths:                 []string{"test/"},
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, nil))
 }
@@ -170,8 +174,10 @@ func TestPublicBuildspecNoAnnotations(t *testing.T) {
 	gc := gerrit.NewTestClient(mockMap)
 
 	b := publicBuildspec{
-		push:       true,
-		watchPaths: []string{"test/"},
+		push:                       true,
+		watchPaths:                 []string{"test/"},
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
 
@@ -218,8 +224,10 @@ func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
 	gc := gerrit.NewTestClient(mockMap)
 
 	b := publicBuildspec{
-		push:       true,
-		watchPaths: []string{"test/"},
+		push:                       true,
+		watchPaths:                 []string{"test/"},
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.ErrorContains(t, b.CreatePublicBuildspecs(context.Background(), f, gc), "could not get public status")
 }
@@ -276,9 +284,11 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 		ExpectedWrites: expectedWrites,
 	}
 	b := publicBuildspec{
-		push:                     true,
-		watchPaths:               []string{"test/"},
-		readFromManifestVersions: true,
+		push:                       true,
+		watchPaths:                 []string{"test/"},
+		readFromManifestVersions:   true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
 	}
 	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
 }

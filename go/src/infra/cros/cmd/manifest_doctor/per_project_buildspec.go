@@ -31,10 +31,8 @@ import (
 )
 
 const (
-	chromeosProgramPrefix   = "chromeos/program/"
-	chromeosProjectPrefix   = "chromeos/project/"
-	externalBuildspecBucket = "buildspecs-external"
-	internalBuildspecBucket = "buildspecs-internal"
+	chromeosProgramPrefix = "chromeos/program/"
+	chromeosProjectPrefix = "chromeos/project/"
 )
 
 var (
@@ -57,15 +55,17 @@ func (e MissingLocalManifestError) Is(target error) bool {
 
 type projectBuildspec struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	buildspec    string
-	watchPaths   []string
-	minMilestone int
-	projects     []string
-	otherRepos   []string
-	force        bool
-	ttl          int
-	push         bool
+	authFlags                  authcli.Flags
+	buildspec                  string
+	watchPaths                 []string
+	minMilestone               int
+	projects                   []string
+	otherRepos                 []string
+	force                      bool
+	ttl                        int
+	push                       bool
+	internalBuildspecsGSBucket string
+	externalBuildspecsGSBucket string
 }
 
 func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
@@ -100,6 +100,12 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 					"gs://chromeos-vendor-qti-camx.")
 			b.Flags.IntVar(&b.ttl, "ttl", -1,
 				"TTL (in days) of newly generated buildspecs. If not set, no TTL will be set.")
+			b.Flags.StringVar(&b.internalBuildspecsGSBucket, "internal-bucket",
+				internalBuildspecsGSBucketDefault,
+				fmt.Sprintf("Internal buildspec bucket. Defaults to %s.", internalBuildspecsGSBucketDefault))
+			b.Flags.StringVar(&b.externalBuildspecsGSBucket, "external-bucket",
+				externalBuildspecsGSBucketDefault,
+				fmt.Sprintf("External buildspec bucket. Defaults to %s.", externalBuildspecsGSBucketDefault))
 			return b
 		}}
 }
@@ -238,9 +244,9 @@ func (b *projectBuildspec) findBuildspecs(ctx context.Context, gsClient gs.Clien
 	var errs []error
 	var buildspecs []string
 	for _, watchPath := range b.watchPaths {
-		files, err := gsClient.List(ctx, externalBuildspecBucket, watchPath)
+		files, err := gsClient.List(ctx, b.externalBuildspecsGSBucket, watchPath)
 		if err != nil {
-			fullPath := fmt.Sprintf("gs://%s/%s", externalBuildspecBucket, watchPath)
+			fullPath := fmt.Sprintf("gs://%s/%s", b.externalBuildspecsGSBucket, watchPath)
 			LogErr("failed to list %s, skipping...", fullPath)
 			errs = append(errs, errors.Annotate(err, "failed to list %s", fullPath).Err())
 			continue
@@ -305,7 +311,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 		}
 	}
 
-	if err := CreateProjectBuildspecs(projectConfig, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+	if err := b.CreateProjectBuildspecs(projectConfig, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
 		// If the projects were not all explicitly specified (i.e. some
 		// projects were selected with a wildcard) we shouldn't fail if
 		// some project does not have a local manifest.
@@ -324,7 +330,7 @@ func (b *projectBuildspec) CreateBuildspecs(gsClient gs.Client, gerritClient *ge
 			optional:   false,
 		}
 	}
-	if err := CreateProjectBuildspecs(otherProjects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
+	if err := b.CreateProjectBuildspecs(otherProjects, buildspecs, b.push, b.force, b.ttl, gsClient, gerritClient); err != nil {
 		errs = append(errs, err)
 	}
 	if len(errs) == 0 {
@@ -343,7 +349,7 @@ type projectBuildspecConfig struct {
 // outlined in go/per-project-buildspecs.
 // Projects is a map between project name and config, e.g.
 // chromeos/project/galaxy/milkyway : {gs://chromeos-galaxy-milkyway/, true}
-func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
+func (b *projectBuildspec) CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildspecs []string, push, force bool, ttl int, gsClient gs.Client, gerritClient *gerrit.Client) error {
 	// Aggregate buildspecs by milestone.
 	buildspecsByMilestone := make(map[int][]string)
 	for _, buildspec := range buildspecs {
@@ -420,7 +426,7 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 		}
 
 		for _, buildspec := range buildspecs {
-			publicBuildspecPath := lgs.MakePath(externalBuildspecBucket, buildspec)
+			publicBuildspecPath := lgs.MakePath(b.externalBuildspecsGSBucket, buildspec)
 
 			_, err = gsClient.Read(publicBuildspecPath)
 			if err != nil {
@@ -433,7 +439,7 @@ func CreateProjectBuildspecs(projects map[string]projectBuildspecConfig, buildsp
 			}
 
 			// Load the internal buildspec.
-			privateBuildspecPath := lgs.MakePath(internalBuildspecBucket, buildspec)
+			privateBuildspecPath := lgs.MakePath(b.internalBuildspecsGSBucket, buildspec)
 			buildspecManifest, err := manifestutil.LoadManifestFromGS(ctx, gsClient, privateBuildspecPath)
 			if err != nil {
 				return errors.Annotate(err, "error loading buildspec manifest").Err()

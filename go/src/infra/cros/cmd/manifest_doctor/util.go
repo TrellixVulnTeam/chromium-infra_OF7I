@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	chromeExternalHost              = "chromium.googlesource.com"
-	chromeInternalHost              = "chrome-internal.googlesource.com"
-	manifestInternalProject         = "chromeos/manifest-internal"
-	internalManifestVersionsProject = "chromeos/manifest-versions"
-	externalManifestVersionsProject = "chromiumos/manifest-versions"
+	chromeExternalHost                = "chromium.googlesource.com"
+	chromeInternalHost                = "chrome-internal.googlesource.com"
+	manifestInternalProject           = "chromeos/manifest-internal"
+	internalManifestVersionsProject   = "chromeos/manifest-versions"
+	externalManifestVersionsProject   = "chromiumos/manifest-versions"
+	internalBuildspecsGSBucketDefault = "buildspecs-internal"
+	externalBuildspecsGSBucketDefault = "buildspecs-external"
 )
 
 // CreateProjectBuildspec creates a public buildspec as outlined in go/per-project-buildspecs.
