@@ -75,10 +75,6 @@ CREATE TABLE AnalyzedTestVariants (
 CREATE NULL_FILTERED INDEX AnalyzedTestVariantsByBuilderAndStatus
 ON AnalyzedTestVariants (Realm, Builder, Status);
 
--- Used by finding test variants to export to BigQuery.
-CREATE INDEX AnalyzedTestVariantsByRealmAndStatus
-ON AnalyzedTestVariants (Realm, Status);
-
 -- Stores results of a test variant in one invocation.
 CREATE TABLE Verdicts (
   -- Primary Key of the parent AnalyzedTestVariants.
@@ -133,17 +129,9 @@ CREATE TABLE Verdicts (
 ) PRIMARY KEY (Realm, TestId, VariantHash, InvocationId),
 INTERLEAVE IN PARENT AnalyzedTestVariants ON DELETE CASCADE;
 
--- Used by finding most recent verdicts to calculate flakiness statistics.
-CREATE NULL_FILTERED INDEX VerdictsByTInvocationCreationTime
- ON Verdicts (Realm, TestId, VariantHash, InvocationCreationTime DESC);
-
 -- Used by finding most recent verdicts of a test variant to calculate status.
 CREATE NULL_FILTERED INDEX VerdictsByKeyAndIngestionTime
  ON Verdicts (Realm, TestId, VariantHash, IngestionTime DESC);
-
--- Used by finding most recent verdicts to construct test variant rows to export.
-CREATE NULL_FILTERED INDEX VerdictsByIngestionTime
- ON Verdicts (Realm, IngestionTime DESC);
 
 -- FailureAssociationRules associate failures with bugs. When a rule
 -- is used to match incoming test failures, the resultant cluster is
