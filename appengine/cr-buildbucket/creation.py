@@ -39,6 +39,9 @@ import swarming
 import swarmingcfg
 import tq
 
+# TODO(crbug.com/1254504): re-enable experiment_reasons when BQ export is in Go
+EXPERIMENT_REASONS_ENABLED = False
+
 # Default value of Build.infra.swarming.priority.
 _DEFAULT_SWARMING_PRIORITY = 30
 # Default value of Build.scheduling_timeout.
@@ -180,7 +183,8 @@ class BuildRequest(_BuildRequestBase):
     bp.infra.buildbucket.requested_properties.CopyFrom(sbr.properties)
     bp.infra.buildbucket.requested_dimensions.extend(sbr.dimensions)
 
-    bp.infra.buildbucket.experiment_reasons.update(exp_reasons)
+    if EXPERIMENT_REASONS_ENABLED:  # pragma: no cover
+      bp.infra.buildbucket.experiment_reasons.update(exp_reasons)
 
     bp.infra.logdog.project = bp.builder.project
     bp.infra.logdog.prefix = 'buildbucket/%s/%s' % (

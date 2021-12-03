@@ -429,10 +429,11 @@ class CreationTest(testing.AppengineTestCase):
         ]
     )
     self.populate_proto(build)
-    self.assertEqual(
-        build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
-        self.reasons.EXPERIMENT_REASON_BUILDER_CONFIG,
-    )
+    if creation.EXPERIMENT_REASONS_ENABLED:  # pragma: no cover
+      self.assertEqual(
+          build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
+          self.reasons.EXPERIMENT_REASON_BUILDER_CONFIG,
+      )
 
   def test_schedule_build_request_experiments(self):
     builder_id = builder_pb2.BuilderID(
@@ -457,10 +458,11 @@ class CreationTest(testing.AppengineTestCase):
         ]
     )
     self.populate_proto(build)
-    self.assertEqual(
-        build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
-        self.reasons.EXPERIMENT_REASON_REQUESTED,
-    )
+    if creation.EXPERIMENT_REASONS_ENABLED:  # pragma: no cover
+      self.assertEqual(
+          build.proto.infra.buildbucket.experiment_reasons['chromium.exp_foo'],
+          self.reasons.EXPERIMENT_REASON_REQUESTED,
+      )
 
   def test_schedule_ignored_experiments(self):
     exp = self.settings.experiment.experiments.add()
@@ -500,10 +502,11 @@ class CreationTest(testing.AppengineTestCase):
         ]
     )
     self.populate_proto(build)
-    self.assertEqual(
-        build.proto.infra.buildbucket.experiment_reasons['luci.use_realms'],
-        self.reasons.EXPERIMENT_REASON_GLOBAL_INACTIVE,
-    )
+    if creation.EXPERIMENT_REASONS_ENABLED:  # pragma: no cover
+      self.assertEqual(
+          build.proto.infra.buildbucket.experiment_reasons['luci.use_realms'],
+          self.reasons.EXPERIMENT_REASON_GLOBAL_INACTIVE,
+      )
 
   def test_schedule_global_experiments(self):
     exp = self.settings.experiment.experiments.add()
@@ -539,14 +542,15 @@ class CreationTest(testing.AppengineTestCase):
         ]
     )
     self.populate_proto(build)
-    self.assertEqual(
-        build.proto.infra.buildbucket.experiment_reasons['luci.global'],
-        self.reasons.EXPERIMENT_REASON_GLOBAL_DEFAULT,
-    )
-    self.assertEqual(
-        build.proto.infra.buildbucket.experiment_reasons['luci.global_min'],
-        self.reasons.EXPERIMENT_REASON_GLOBAL_MINIMUM,
-    )
+    if creation.EXPERIMENT_REASONS_ENABLED:  # pragma: no cover
+      self.assertEqual(
+          build.proto.infra.buildbucket.experiment_reasons['luci.global'],
+          self.reasons.EXPERIMENT_REASON_GLOBAL_DEFAULT,
+      )
+      self.assertEqual(
+          build.proto.infra.buildbucket.experiment_reasons['luci.global_min'],
+          self.reasons.EXPERIMENT_REASON_GLOBAL_MINIMUM,
+      )
 
   def test_configured_caches(self):
     with self.mutate_builder_cfg() as cfg:
