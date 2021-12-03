@@ -16,7 +16,7 @@ import (
 
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"infra/cros/recovery"
+	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
 )
@@ -79,9 +79,9 @@ func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env sub
 		}
 		configuration = b64.StdEncoding.EncodeToString(b)
 	}
-	task := string(recovery.TaskNameRecovery)
+	task := string(tasknames.Recovery)
 	if c.deployTask {
-		task = string(recovery.TaskNameDeploy)
+		task = string(tasknames.Deploy)
 	}
 
 	taskID, err := labpack.ScheduleTask(

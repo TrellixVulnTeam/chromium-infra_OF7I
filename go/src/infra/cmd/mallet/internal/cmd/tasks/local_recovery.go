@@ -23,6 +23,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
 	rlogger "infra/cros/recovery/logger"
+	"infra/cros/recovery/tasknames"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -88,9 +89,9 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		ctx = logging.SetLevel(ctx, logging.Debug)
 	}
 
-	tn := recovery.TaskNameRecovery
+	tn := tasknames.Recovery
 	if c.deployTask {
-		tn = recovery.TaskNameDeploy
+		tn = tasknames.Deploy
 	}
 	ctx, logger := createLogger(ctx)
 	ctx = setupContextNamespace(ctx, ufsUtil.OSNamespace)

@@ -15,7 +15,7 @@ import (
 
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
-	"infra/cros/recovery"
+	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
 )
@@ -70,7 +70,7 @@ func (c *customProvisionRun) innerRun(a subcommands.Application, args []string, 
 		bc,
 		&labpack.Params{
 			UnitName:         unit,
-			TaskName:         string(recovery.TaskNameCustom),
+			TaskName:         string(tasknames.Custom),
 			AdminService:     e.AdminService,
 			InventoryService: e.UFSService,
 			NoMetrics:        true,

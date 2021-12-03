@@ -14,6 +14,7 @@ import (
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
+	"infra/cros/recovery/tasknames"
 	"infra/cros/recovery/tlw"
 )
 
@@ -21,79 +22,79 @@ import (
 var dutPlansCases = []struct {
 	name         string
 	setupType    tlw.DUTSetupType
-	taskName     TaskName
+	taskName     tasknames.TaskName
 	expPlanNames []string
 }{
 	{
 		"default no task",
 		tlw.DUTSetupTypeDefault,
-		TaskName(""),
+		tasknames.TaskName(""),
 		nil,
 	},
 	{
 		"default recovery",
 		tlw.DUTSetupTypeDefault,
-		TaskNameRecovery,
+		tasknames.Recovery,
 		nil,
 	},
 	{
 		"default deploy",
 		tlw.DUTSetupTypeDefault,
-		TaskNameDeploy,
+		tasknames.Deploy,
 		nil,
 	},
 	{
 		"default custom",
 		tlw.DUTSetupTypeDefault,
-		TaskNameCustom,
+		tasknames.Custom,
 		nil,
 	},
 	{
 		"cros no task",
 		tlw.DUTSetupTypeCros,
-		TaskName(""),
+		tasknames.TaskName(""),
 		nil,
 	},
 	{
 		"cros recovery",
 		tlw.DUTSetupTypeCros,
-		TaskNameRecovery,
+		tasknames.Recovery,
 		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
 	},
 	{
 		"cros deploy",
 		tlw.DUTSetupTypeCros,
-		TaskNameDeploy,
+		tasknames.Deploy,
 		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
 	},
 	{
 		"cros custom",
 		tlw.DUTSetupTypeCros,
-		TaskNameCustom,
+		tasknames.Custom,
 		nil,
 	},
 	{
 		"labstation no task",
 		tlw.DUTSetupTypeCros,
-		TaskName(""),
+		tasknames.TaskName(""),
 		nil,
 	},
 	{
 		"labstation recovery",
 		tlw.DUTSetupTypeLabstation,
-		TaskNameRecovery,
+		tasknames.Recovery,
 		[]string{"cros"},
 	},
 	{
 		"labstation deploy",
 		tlw.DUTSetupTypeLabstation,
-		TaskNameDeploy,
+		tasknames.Deploy,
 		[]string{"cros"},
 	},
 	{
 		"labstation custom",
 		tlw.DUTSetupTypeLabstation,
-		TaskNameCustom,
+		tasknames.Custom,
 		nil,
 	},
 }

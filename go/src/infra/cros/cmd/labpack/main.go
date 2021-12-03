@@ -32,6 +32,7 @@ import (
 	"infra/cros/recovery/karte"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
+	"infra/cros/recovery/tasknames"
 )
 
 // LuciexeProtocolPassthru should always be set to false in checked-in code.
@@ -94,7 +95,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	}
 	defer access.Close()
 
-	task := recovery.TaskNameRecovery
+	task := tasknames.Recovery
 	if t, ok := supportedTasks[in.TaskName]; ok {
 		task = t
 	}
@@ -149,9 +150,9 @@ func getConfiguration(config string, lg logger.Logger) (io.Reader, error) {
 }
 
 // Mapping of all supported tasks.
-var supportedTasks = map[string]recovery.TaskName{
-	string(recovery.TaskNameDeploy):   recovery.TaskNameDeploy,
-	string(recovery.TaskNameRecovery): recovery.TaskNameRecovery,
+var supportedTasks = map[string]tasknames.TaskName{
+	string(tasknames.Deploy):   tasknames.Deploy,
+	string(tasknames.Recovery): tasknames.Recovery,
 }
 
 // printInputs prints input params.

@@ -15,6 +15,7 @@ import (
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
+	"infra/cros/recovery/tasknames"
 	"infra/cros/recovery/tlw"
 )
 
@@ -54,9 +55,9 @@ func (c *printConfigRun) Run(a subcommands.Application, args []string, env subco
 // innerRun executes internal logic of output file content.
 func (c *printConfigRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	tn := recovery.TaskNameRecovery
+	tn := tasknames.Recovery
 	if c.deployTask {
-		tn = recovery.TaskNameDeploy
+		tn = tasknames.Deploy
 	}
 	var dsl []tlw.DUTSetupType
 	if c.cros {

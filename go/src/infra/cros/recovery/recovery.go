@@ -23,6 +23,7 @@ import (
 	"infra/cros/recovery/internal/planpb"
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
+	"infra/cros/recovery/tasknames"
 	"infra/cros/recovery/tlw"
 )
 
@@ -160,7 +161,7 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 	}
 	cr := args.ConfigReader
 	if cr == nil {
-		if args.TaskName == TaskNameCustom {
+		if args.TaskName == tasknames.Custom {
 			return nil, errors.Reason("load configuration: expected config to be provided for custom tasks").Err()
 		}
 		// Get default configuration if not provided.
@@ -177,7 +178,7 @@ func loadConfiguration(ctx context.Context, dut *tlw.Dut, args *RunArgs) (config
 }
 
 // ParsedDefaultConfiguration returns parsed default configuration for requested task and setup.
-func ParsedDefaultConfiguration(ctx context.Context, tn TaskName, ds tlw.DUTSetupType) (*planpb.Configuration, error) {
+func ParsedDefaultConfiguration(ctx context.Context, tn tasknames.TaskName, ds tlw.DUTSetupType) (*planpb.Configuration, error) {
 	if cr, err := defaultConfiguration(tn, ds); err != nil {
 		return nil, errors.Annotate(err, "load configuration").Err()
 	} else if c, err := parseConfiguration(ctx, cr); err != nil {
@@ -199,9 +200,9 @@ func parseConfiguration(ctx context.Context, cr io.Reader) (config *planpb.Confi
 }
 
 // defaultConfiguration provides configuration based on type of setup and task name.
-func defaultConfiguration(tn TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
+func defaultConfiguration(tn tasknames.TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
 	switch tn {
-	case TaskNameRecovery:
+	case tasknames.Recovery:
 		switch ds {
 		case tlw.DUTSetupTypeCros:
 			return CrosRepairConfig(), nil
@@ -210,7 +211,7 @@ func defaultConfiguration(tn TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
-	case TaskNameDeploy:
+	case tasknames.Deploy:
 		switch ds {
 		case tlw.DUTSetupTypeCros:
 			return CrosDeployConfig(), nil
@@ -219,7 +220,7 @@ func defaultConfiguration(tn TaskName, ds tlw.DUTSetupType) (io.Reader, error) {
 		default:
 			return nil, errors.Reason("Setup type: %q is not supported for task: %q!", ds, tn).Err()
 		}
-	case TaskNameCustom:
+	case tasknames.Custom:
 		return nil, errors.Reason("Setup type: %q does not have default configuration for custom tasks", ds).Err()
 	default:
 		return nil, errors.Reason("TaskName: %q is not supported..", tn).Err()
@@ -421,19 +422,6 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	return nil
 }
 
-// TaskName describes which flow/plans will be involved in the process.
-type TaskName string
-
-const (
-	// Task used to run auto recovery/repair flow in the lab.
-	TaskNameRecovery TaskName = "recovery"
-	// Task used to prepare device to be used in the lab.
-	TaskNameDeploy TaskName = "deploy"
-	// Task used to execute custom plans.
-	// Configuration has to be provided by the user.
-	TaskNameCustom TaskName = "custom"
-)
-
 // RunArgs holds input arguments for recovery process.
 type RunArgs struct {
 	// Access to the lab TLW layer.
@@ -450,7 +438,7 @@ type RunArgs struct {
 	// Metrics is the metrics sink and event search API.
 	Metrics metrics.Metrics
 	// TaskName used to drive the recovery process.
-	TaskName TaskName
+	TaskName tasknames.TaskName
 	// EnableRecovery tells if recovery actions are enabled.
 	EnableRecovery bool
 	// EnableUpdateInventory tells if update inventory after finishing the plans is enabled.
