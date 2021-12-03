@@ -11,6 +11,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -48,7 +49,7 @@ var AddAssetCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.model, "model", "", "model of the asset")
 		c.Flags.StringVar(&c.board, "board", "", "board/build target of the device")
 		c.Flags.StringVar(&c.assetType, "type", "", "Type of asset. "+cmdhelp.AssetTypesHelpText)
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -74,7 +75,7 @@ type addAsset struct {
 	assetType string
 	model     string
 	board     string
-	tags      string
+	tags      []string
 }
 
 var mcsvFields = []string{
@@ -241,7 +242,7 @@ func (c *addAsset) parseArgs() (*ufspb.Asset, error) {
 		asset.Location.Position = c.position
 	}
 	asset.Realm = ufsUtil.ToUFSRealm(asset.GetLocation().GetZone().String())
-	asset.Tags = utils.GetStringSlice(c.tags)
+	asset.Tags = c.tags
 	return asset, nil
 }
 
