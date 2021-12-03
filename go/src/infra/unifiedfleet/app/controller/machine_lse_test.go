@@ -638,6 +638,28 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
+		Convey("Update machineLSE DUT with Pool Names", func() {
+			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
+			dutMachinelse3.Machines = []string{"machine-22"}
+			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = []string{"pool1", "pool2"}
+			dutMachinelse3.ResourceState = ufspb.State_STATE_SERVING
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, dutMachinelse3)
+		})
+
+		Convey("Update machineLSE DUT with Invalid Pool Names", func() {
+			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
+			dutMachinelse3.Machines = []string{"machine-22"}
+			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Pools = []string{"\"pool1", "pool2"}
+			dutMachinelse3.ResourceState = ufspb.State_STATE_SERVING
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid Pool Name")
+		})
+
 	})
 }
 
@@ -704,6 +726,46 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-11")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Update machineLSE Labstation with Pool Names", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-12",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-12")
+			labstationMachinelse1.Machines = []string{"machine-12"}
+			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
+
+			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-12")
+			labstationMachinelse2.Machines = []string{"machine-12"}
+			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"pool1", "pool2"}
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, labstationMachinelse2)
+		})
+
+		Convey("Update machineLSE Labstation with invalid Pool Names", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-13",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-13")
+			labstationMachinelse1.Machines = []string{"machine-13"}
+			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
+
+			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-13")
+			labstationMachinelse2.Machines = []string{"machine-13"}
+			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Pools = []string{"-pool1", "pool2"}
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid Pool Name")
 		})
 	})
 }

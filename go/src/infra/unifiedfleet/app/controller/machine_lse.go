@@ -153,6 +153,13 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 	// MachineLSEs name and hostname must always be the same
 	// Overwrite the hostname with name as partial updates get only name
 	machinelse.Hostname = machinelse.GetName()
+	var err error
+
+	// Validate Pool Names
+	err = validateUpdateMachineLSEPoolNames(ctx, machinelse)
+	if err != nil {
+		return nil, err
+	}
 
 	// If its a labstation, make the Hostname of the Labstation same as the machinelse name
 	// Labstation hostname must be same as the machinelse hostname
@@ -169,7 +176,6 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 	}
 
 	var oldMachinelse *ufspb.MachineLSE
-	var err error
 	// If its a Chrome browser host, ChromeOS server or a ChormeOS labstation
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
@@ -1267,6 +1273,27 @@ func validateUpdateMachineLSEHost(ctx context.Context, machinelse *ufspb.Machine
 	}
 	// Check if resources does not exist
 	return ResourceExist(ctx, resourcesNotFound, nil)
+}
+
+// validateUpdateMachineLSEPoolNames validates if a pool name can be assigned to the MachineLSE
+func validateUpdateMachineLSEPoolNames(ctx context.Context, machinelse *ufspb.MachineLSE) error {
+	var pools []string
+	// If its a LabStation
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		pools = machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetPools()
+	}
+
+	// If its a DUT
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+		pools = machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools()
+	}
+
+	for _, poolName := range pools {
+		if poolName != "" && !util.PoolNameRegex.MatchString(poolName) {
+			return status.Errorf(codes.InvalidArgument, "Invalid Pool Name %s", poolName)
+		}
+	}
+	return nil
 }
 
 // DeleteMachineLSEHost deletes the dhcp/ip of a machinelse in datastore.
