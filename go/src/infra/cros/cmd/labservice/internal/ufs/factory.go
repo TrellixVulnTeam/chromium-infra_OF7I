@@ -11,7 +11,7 @@ import (
 )
 
 // Used for UFS RPC calls.
-const userAgent = "labservice/0.1.0"
+const userAgent = "labservice/3.0.0"
 
 // A ClientFactory is used to create UFS clients.
 // The client needs a context which is request specific, so the client
