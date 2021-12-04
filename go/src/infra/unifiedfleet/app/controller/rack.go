@@ -218,6 +218,8 @@ func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb
 			oldRack.Realm = rack.GetRealm()
 		case "capacity":
 			oldRack.CapacityRu = rack.GetCapacityRu()
+		case "bbnum":
+			oldRack.Bbnum = rack.GetBbnum()
 		case "tags":
 			oldRack.Tags = mergeTags(oldRack.GetTags(), rack.GetTags())
 		case "resourceState":
@@ -569,7 +571,7 @@ func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
 	return nil
 }
 
-func validateRackBbnum(ctx context.Context, bbnum int32) error {
+func validateRackBbnum(ctx context.Context, rackName string, bbnum int32) error {
 	if bbnum == 0 {
 		// Won't verify bbnum's uniqueness if it's not set
 		return nil
@@ -578,7 +580,7 @@ func validateRackBbnum(ctx context.Context, bbnum int32) error {
 	if err != nil {
 		return errors.Annotate(err, "validateRackBbnum - failed to query rack for bbnum %d", bbnum).Err()
 	}
-	if len(racks) > 0 {
+	if len(racks) > 0 && racks[0].GetName() != rackName {
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("validateRackBbnum - Rack %s already has bbnum %d.\n", racks[0].GetName(), bbnum))
 	}
 	return nil
@@ -595,7 +597,7 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
 		return err
 	}
-	if err := validateRackBbnum(ctx, rack.GetBbnum()); err != nil {
+	if err := validateRackBbnum(ctx, rack.GetName(), rack.GetBbnum()); err != nil {
 		return err
 	}
 	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
@@ -675,11 +677,16 @@ func validateUpdateRack(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb.Ra
 			return err
 		}
 	}
-	return validateRackUpdateMask(rack, mask)
+	if mask == nil {
+		if err := validateRackBbnum(ctx, rack.GetName(), rack.GetBbnum()); err != nil {
+			return err
+		}
+	}
+	return validateRackUpdateMask(ctx, rack, mask)
 }
 
 // validateRackUpdateMask validates the update mask for Rack update
-func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error {
+func validateRackUpdateMask(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -691,6 +698,10 @@ func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error 
 			case "zone":
 				if rack.GetLocation() == nil {
 					return status.Error(codes.InvalidArgument, "validateUpdateRack - location cannot be empty/nil.")
+				}
+			case "bbnum":
+				if err := validateRackBbnum(ctx, rack.GetName(), rack.GetBbnum()); err != nil {
+					return err
 				}
 			case "capacity":
 			case "tags":

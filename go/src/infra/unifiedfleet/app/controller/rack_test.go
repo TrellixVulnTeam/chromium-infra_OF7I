@@ -170,7 +170,8 @@ func TestUpdateRack(t *testing.T) {
 
 		Convey("Update existing rack", func() {
 			rack := &ufspb.Rack{
-				Name: "rack-2",
+				Name:  "rack-2",
+				Bbnum: 100,
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
@@ -180,8 +181,9 @@ func TestUpdateRack(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			rack = &ufspb.Rack{
-				Name: "rack-2",
-				Tags: []string{"tag-1"},
+				Name:  "rack-2",
+				Bbnum: 200,
+				Tags:  []string{"tag-1"},
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
@@ -196,6 +198,42 @@ func TestUpdateRack(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
+		})
+
+		Convey("Update existing rack - valid/invalid bbnum", func() {
+			rack1 := &ufspb.Rack{
+				Name:  "rack-bbnum1",
+				Bbnum: 101,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+			rack2 := &ufspb.Rack{
+				Name:  "rack-bbnum2",
+				Bbnum: 102,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err = registration.CreateRack(ctx, rack2)
+			So(err, ShouldBeNil)
+
+			rackToUpdate := &ufspb.Rack{
+				Name:  "rack-bbnum1",
+				Bbnum: 101,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err = UpdateRack(ctx, rackToUpdate, nil)
+			So(err, ShouldBeNil)
+
+			rackToUpdate.Bbnum = 102
+			_, err = UpdateRack(ctx, rackToUpdate, nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "already has bbnum 102")
 		})
 
 		Convey("Update existing rack with nil rack/browser machine", func() {
@@ -220,6 +258,7 @@ func TestUpdateRack(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name:       "rack-4",
 				CapacityRu: 55,
+				Bbnum:      155,
 				Tags:       []string{"atl", "megarack"},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -228,12 +267,45 @@ func TestUpdateRack(t *testing.T) {
 			rack1 := &ufspb.Rack{
 				Name:       "rack-4",
 				CapacityRu: 100,
+				Bbnum:      255,
 			}
-			resp, err := UpdateRack(ctx, rack1, &field_mask.FieldMask{Paths: []string{"capacity"}})
+			resp, err := UpdateRack(ctx, rack1, &field_mask.FieldMask{Paths: []string{"capacity", "bbnum"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetCapacityRu(), ShouldEqual, 100)
+			So(resp.GetBbnum(), ShouldEqual, 255)
 			So(resp.GetTags(), ShouldResemble, []string{"atl", "megarack"})
+		})
+
+		Convey("Partial Update rack - invalid bbnum", func() {
+			rack1 := &ufspb.Rack{
+				Name:  "rack-4-bbnum1",
+				Bbnum: 155,
+				Tags:  []string{"atl", "megarack"},
+			}
+			_, err := registration.CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
+			rack2 := &ufspb.Rack{
+				Name:  "rack-4-bbnum2",
+				Bbnum: 156,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err = registration.CreateRack(ctx, rack2)
+			So(err, ShouldBeNil)
+
+			rackToUpdate := &ufspb.Rack{
+				Name:  "rack-4-bbnum1",
+				Bbnum: 156,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+
+			_, err = UpdateRack(ctx, rackToUpdate, &field_mask.FieldMask{Paths: []string{"bbnum"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "already has bbnum 156")
 		})
 
 		Convey("Update rack - permission denied: same realm and no update permission", func() {
