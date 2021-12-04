@@ -834,6 +834,11 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *ufsAPI.CreateDra
 	if err != nil {
 		return nil, err
 	}
+	if req.GetNetworkOption() != nil && (req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
+		if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption()); err != nil {
+			return nil, err
+		}
+	}
 	// https://aip.dev/122 - as per AIP guideline
 	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err

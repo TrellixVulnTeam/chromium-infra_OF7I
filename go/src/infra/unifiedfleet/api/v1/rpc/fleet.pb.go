@@ -5680,7 +5680,8 @@ type CreateDracRequest struct {
 	//
 	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
-	DracId string `protobuf:"bytes,2,opt,name=drac_id,json=dracId,proto3" json:"drac_id,omitempty"`
+	DracId        string         `protobuf:"bytes,2,opt,name=drac_id,json=dracId,proto3" json:"drac_id,omitempty"`
+	NetworkOption *NetworkOption `protobuf:"bytes,4,opt,name=network_option,json=networkOption,proto3" json:"network_option,omitempty"`
 }
 
 func (x *CreateDracRequest) Reset() {
@@ -5727,6 +5728,13 @@ func (x *CreateDracRequest) GetDracId() string {
 		return x.DracId
 	}
 	return ""
+}
+
+func (x *CreateDracRequest) GetNetworkOption() *NetworkOption {
+	if x != nil {
+		return x.NetworkOption
+	}
+	return nil
 }
 
 type UpdateDracRequest struct {
@@ -11145,14 +11153,19 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_rawDesc = []byte{
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2c, 0xe0, 0x41, 0x02, 0xfa, 0x41, 0x26, 0x0a, 0x24,
 	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x2d, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2d, 0x73, 0x79,
 	0x73, 0x74, 0x65, 0x6d, 0x2e, 0x61, 0x70, 0x70, 0x73, 0x70, 0x6f, 0x74, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x52, 0x50, 0x4d, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x76, 0x0a, 0x11, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x39, 0x0a, 0x04, 0x64, 0x72, 0x61, 0x63, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e,
-	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63, 0x42,
-	0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x64, 0x72, 0x61, 0x63, 0x12, 0x17, 0x0a, 0x07, 0x64, 0x72,
-	0x61, 0x63, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x64, 0x72, 0x61,
-	0x63, 0x49, 0x64, 0x4a, 0x04, 0x08, 0x03, 0x10, 0x04, 0x52, 0x07, 0x6d, 0x61, 0x63, 0x68, 0x69,
+	0x2f, 0x52, 0x50, 0x4d, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0xc5, 0x01, 0x0a, 0x11, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x39, 0x0a, 0x04, 0x64, 0x72, 0x61, 0x63, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20,
+	0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x2e, 0x44, 0x72, 0x61, 0x63,
+	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x64, 0x72, 0x61, 0x63, 0x12, 0x17, 0x0a, 0x07, 0x64,
+	0x72, 0x61, 0x63, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x64, 0x72,
+	0x61, 0x63, 0x49, 0x64, 0x12, 0x4d, 0x0a, 0x0e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x5f,
+	0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x75,
+	0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x66, 0x6c, 0x65, 0x65, 0x74, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x4f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0d, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x4f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x4a, 0x04, 0x08, 0x03, 0x10, 0x04, 0x52, 0x07, 0x6d, 0x61, 0x63, 0x68, 0x69,
 	0x6e, 0x65, 0x22, 0xe9, 0x01, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x72, 0x61,
 	0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x39, 0x0a, 0x04, 0x64, 0x72, 0x61, 0x63,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
@@ -12864,321 +12877,322 @@ var file_infra_unifiedfleet_api_v1_rpc_fleet_proto_depIdxs = []int32{
 	120, // 72: unifiedfleet.api.v1.rpc.UpdateRPMRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
 	185, // 73: unifiedfleet.api.v1.rpc.ListRPMsResponse.RPMs:type_name -> unifiedfleet.api.v1.models.RPM
 	186, // 74: unifiedfleet.api.v1.rpc.CreateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
-	186, // 75: unifiedfleet.api.v1.rpc.UpdateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
-	173, // 76: unifiedfleet.api.v1.rpc.UpdateDracRequest.update_mask:type_name -> google.protobuf.FieldMask
-	120, // 77: unifiedfleet.api.v1.rpc.UpdateDracRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	186, // 78: unifiedfleet.api.v1.rpc.ListDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
-	187, // 79: unifiedfleet.api.v1.rpc.CreateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
-	187, // 80: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
-	173, // 81: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.update_mask:type_name -> google.protobuf.FieldMask
-	187, // 82: unifiedfleet.api.v1.rpc.ListSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
-	188, // 83: unifiedfleet.api.v1.rpc.CreateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
-	188, // 84: unifiedfleet.api.v1.rpc.UpdateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
-	173, // 85: unifiedfleet.api.v1.rpc.UpdateVlanRequest.update_mask:type_name -> google.protobuf.FieldMask
-	188, // 86: unifiedfleet.api.v1.rpc.ListVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
-	47,  // 87: unifiedfleet.api.v1.rpc.ImportVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
-	48,  // 88: unifiedfleet.api.v1.rpc.ImportVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	47,  // 89: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
-	48,  // 90: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	47,  // 91: unifiedfleet.api.v1.rpc.ImportStatesRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
-	48,  // 92: unifiedfleet.api.v1.rpc.ImportStatesRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
-	189, // 93: unifiedfleet.api.v1.rpc.ListDutStatesResponse.dut_states:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DutState
-	190, // 94: unifiedfleet.api.v1.rpc.UpdateStateRequest.state:type_name -> unifiedfleet.api.v1.models.StateRecord
-	173, // 95: unifiedfleet.api.v1.rpc.UpdateStateRequest.update_mask:type_name -> google.protobuf.FieldMask
-	189, // 96: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.dut_state:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DutState
-	173, // 97: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.update_mask:type_name -> google.protobuf.FieldMask
-	191, // 98: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.dut_meta:type_name -> unifiedfleet.api.v1.models.DutMeta
-	192, // 99: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.lab_meta:type_name -> unifiedfleet.api.v1.models.LabMeta
-	180, // 100: unifiedfleet.api.v1.rpc.RackRegistrationRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
-	193, // 101: unifiedfleet.api.v1.rpc.CreateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
-	193, // 102: unifiedfleet.api.v1.rpc.UpdateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
-	173, // 103: unifiedfleet.api.v1.rpc.UpdateAssetRequest.update_mask:type_name -> google.protobuf.FieldMask
-	193, // 104: unifiedfleet.api.v1.rpc.ListAssetsResponse.assets:type_name -> unifiedfleet.api.v1.models.asset
-	184, // 105: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
-	194, // 106: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse.dhcp_configs:type_name -> unifiedfleet.api.v1.models.DHCPConfig
-	181, // 107: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse.machine_lses:type_name -> unifiedfleet.api.v1.models.MachineLSE
-	179, // 108: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
-	187, // 109: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
-	185, // 110: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse.rpms:type_name -> unifiedfleet.api.v1.models.RPM
-	186, // 111: unifiedfleet.api.v1.rpc.BatchGetDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
-	183, // 112: unifiedfleet.api.v1.rpc.BatchGetNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
-	174, // 113: unifiedfleet.api.v1.rpc.BatchGetVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
-	188, // 114: unifiedfleet.api.v1.rpc.BatchGetVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
-	180, // 115: unifiedfleet.api.v1.rpc.BatchGetRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
-	175, // 116: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse.chrome_platforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
-	177, // 117: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse.machine_lse_prototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	178, // 118: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse.rack_lse_prototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
-	195, // 119: unifiedfleet.api.v1.rpc.CreateCachingServiceRequest.cachingService:type_name -> unifiedfleet.api.v1.models.CachingService
-	195, // 120: unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest.cachingService:type_name -> unifiedfleet.api.v1.models.CachingService
-	173, // 121: unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest.update_mask:type_name -> google.protobuf.FieldMask
-	195, // 122: unifiedfleet.api.v1.rpc.ListCachingServicesResponse.cachingServices:type_name -> unifiedfleet.api.v1.models.CachingService
-	196, // 123: unifiedfleet.api.v1.rpc.CreateSchedulingUnitRequest.scheduling_unit:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
-	196, // 124: unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest.scheduling_unit:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
-	173, // 125: unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest.update_mask:type_name -> google.protobuf.FieldMask
-	196, // 126: unifiedfleet.api.v1.rpc.ListSchedulingUnitsResponse.scheduling_units:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
-	173, // 127: unifiedfleet.api.v1.rpc.UpdateConfigBundleRequest.update_mask:type_name -> google.protobuf.FieldMask
-	120, // 128: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry.value:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
-	15,  // 129: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.CreateChromePlatformRequest
-	16,  // 130: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest
-	17,  // 131: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:input_type -> unifiedfleet.api.v1.rpc.GetChromePlatformRequest
-	18,  // 132: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsRequest
-	20,  // 133: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:input_type -> unifiedfleet.api.v1.rpc.DeleteChromePlatformRequest
-	21,  // 134: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest
-	25,  // 135: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:input_type -> unifiedfleet.api.v1.rpc.ListOSVersionsRequest
-	24,  // 136: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:input_type -> unifiedfleet.api.v1.rpc.ImportOSVersionsRequest
-	27,  // 137: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.CreateMachineLSEPrototypeRequest
-	28,  // 138: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest
-	29,  // 139: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSEPrototypeRequest
-	30,  // 140: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesRequest
-	32,  // 141: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineLSEPrototypeRequest
-	33,  // 142: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.CreateRackLSEPrototypeRequest
-	34,  // 143: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest
-	35,  // 144: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.GetRackLSEPrototypeRequest
-	36,  // 145: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesRequest
-	38,  // 146: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.DeleteRackLSEPrototypeRequest
-	39,  // 147: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:input_type -> unifiedfleet.api.v1.rpc.MachineRegistrationRequest
-	40,  // 148: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineRequest
-	41,  // 149: unifiedfleet.api.v1.rpc.Fleet.GetMachine:input_type -> unifiedfleet.api.v1.rpc.GetMachineRequest
-	42,  // 150: unifiedfleet.api.v1.rpc.Fleet.ListMachines:input_type -> unifiedfleet.api.v1.rpc.ListMachinesRequest
-	44,  // 151: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineRequest
-	45,  // 152: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:input_type -> unifiedfleet.api.v1.rpc.ImportMachinesRequest
-	46,  // 153: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:input_type -> unifiedfleet.api.v1.rpc.RenameMachineRequest
-	119, // 154: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:input_type -> unifiedfleet.api.v1.rpc.RackRegistrationRequest
-	50,  // 155: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:input_type -> unifiedfleet.api.v1.rpc.UpdateRackRequest
-	51,  // 156: unifiedfleet.api.v1.rpc.Fleet.GetRack:input_type -> unifiedfleet.api.v1.rpc.GetRackRequest
-	52,  // 157: unifiedfleet.api.v1.rpc.Fleet.ListRacks:input_type -> unifiedfleet.api.v1.rpc.ListRacksRequest
-	54,  // 158: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:input_type -> unifiedfleet.api.v1.rpc.DeleteRackRequest
-	55,  // 159: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:input_type -> unifiedfleet.api.v1.rpc.CreateMachineLSERequest
-	56,  // 160: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSERequest
-	57,  // 161: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSERequest
-	58,  // 162: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsRequest
-	60,  // 163: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineLSERequest
-	61,  // 164: unifiedfleet.api.v1.rpc.Fleet.RenameMachineLSE:input_type -> unifiedfleet.api.v1.rpc.RenameMachineLSERequest
-	62,  // 165: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ImportMachineLSEsRequest
-	63,  // 166: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ImportOSMachineLSEsRequest
-	64,  // 167: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:input_type -> unifiedfleet.api.v1.rpc.CreateRackLSERequest
-	65,  // 168: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:input_type -> unifiedfleet.api.v1.rpc.UpdateRackLSERequest
-	66,  // 169: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:input_type -> unifiedfleet.api.v1.rpc.GetRackLSERequest
-	67,  // 170: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:input_type -> unifiedfleet.api.v1.rpc.ListRackLSEsRequest
-	69,  // 171: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:input_type -> unifiedfleet.api.v1.rpc.DeleteRackLSERequest
-	70,  // 172: unifiedfleet.api.v1.rpc.Fleet.CreateNic:input_type -> unifiedfleet.api.v1.rpc.CreateNicRequest
-	71,  // 173: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:input_type -> unifiedfleet.api.v1.rpc.UpdateNicRequest
-	72,  // 174: unifiedfleet.api.v1.rpc.Fleet.GetNic:input_type -> unifiedfleet.api.v1.rpc.GetNicRequest
-	73,  // 175: unifiedfleet.api.v1.rpc.Fleet.ListNics:input_type -> unifiedfleet.api.v1.rpc.ListNicsRequest
-	75,  // 176: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:input_type -> unifiedfleet.api.v1.rpc.DeleteNicRequest
-	76,  // 177: unifiedfleet.api.v1.rpc.Fleet.ImportNics:input_type -> unifiedfleet.api.v1.rpc.ImportNicsRequest
-	77,  // 178: unifiedfleet.api.v1.rpc.Fleet.RenameNic:input_type -> unifiedfleet.api.v1.rpc.RenameNicRequest
-	79,  // 179: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:input_type -> unifiedfleet.api.v1.rpc.ImportDatacentersRequest
-	80,  // 180: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:input_type -> unifiedfleet.api.v1.rpc.CreateKVMRequest
-	81,  // 181: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:input_type -> unifiedfleet.api.v1.rpc.UpdateKVMRequest
-	82,  // 182: unifiedfleet.api.v1.rpc.Fleet.GetKVM:input_type -> unifiedfleet.api.v1.rpc.GetKVMRequest
-	83,  // 183: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:input_type -> unifiedfleet.api.v1.rpc.ListKVMsRequest
-	85,  // 184: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:input_type -> unifiedfleet.api.v1.rpc.DeleteKVMRequest
-	86,  // 185: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:input_type -> unifiedfleet.api.v1.rpc.CreateRPMRequest
-	87,  // 186: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:input_type -> unifiedfleet.api.v1.rpc.UpdateRPMRequest
-	88,  // 187: unifiedfleet.api.v1.rpc.Fleet.GetRPM:input_type -> unifiedfleet.api.v1.rpc.GetRPMRequest
-	89,  // 188: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:input_type -> unifiedfleet.api.v1.rpc.ListRPMsRequest
-	91,  // 189: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:input_type -> unifiedfleet.api.v1.rpc.DeleteRPMRequest
-	92,  // 190: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:input_type -> unifiedfleet.api.v1.rpc.CreateDracRequest
-	93,  // 191: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:input_type -> unifiedfleet.api.v1.rpc.UpdateDracRequest
-	94,  // 192: unifiedfleet.api.v1.rpc.Fleet.GetDrac:input_type -> unifiedfleet.api.v1.rpc.GetDracRequest
-	95,  // 193: unifiedfleet.api.v1.rpc.Fleet.ListDracs:input_type -> unifiedfleet.api.v1.rpc.ListDracsRequest
-	97,  // 194: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:input_type -> unifiedfleet.api.v1.rpc.DeleteDracRequest
-	98,  // 195: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:input_type -> unifiedfleet.api.v1.rpc.CreateSwitchRequest
-	99,  // 196: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:input_type -> unifiedfleet.api.v1.rpc.UpdateSwitchRequest
-	100, // 197: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:input_type -> unifiedfleet.api.v1.rpc.GetSwitchRequest
-	101, // 198: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:input_type -> unifiedfleet.api.v1.rpc.ListSwitchesRequest
-	103, // 199: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:input_type -> unifiedfleet.api.v1.rpc.DeleteSwitchRequest
-	78,  // 200: unifiedfleet.api.v1.rpc.Fleet.RenameSwitch:input_type -> unifiedfleet.api.v1.rpc.RenameSwitchRequest
-	104, // 201: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:input_type -> unifiedfleet.api.v1.rpc.CreateVlanRequest
-	105, // 202: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:input_type -> unifiedfleet.api.v1.rpc.UpdateVlanRequest
-	106, // 203: unifiedfleet.api.v1.rpc.Fleet.GetVlan:input_type -> unifiedfleet.api.v1.rpc.GetVlanRequest
-	107, // 204: unifiedfleet.api.v1.rpc.Fleet.ListVlans:input_type -> unifiedfleet.api.v1.rpc.ListVlansRequest
-	109, // 205: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:input_type -> unifiedfleet.api.v1.rpc.DeleteVlanRequest
-	110, // 206: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:input_type -> unifiedfleet.api.v1.rpc.ImportVlansRequest
-	111, // 207: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:input_type -> unifiedfleet.api.v1.rpc.ImportOSVlansRequest
-	112, // 208: unifiedfleet.api.v1.rpc.Fleet.ImportStates:input_type -> unifiedfleet.api.v1.rpc.ImportStatesRequest
-	117, // 209: unifiedfleet.api.v1.rpc.Fleet.UpdateState:input_type -> unifiedfleet.api.v1.rpc.UpdateStateRequest
-	113, // 210: unifiedfleet.api.v1.rpc.Fleet.GetState:input_type -> unifiedfleet.api.v1.rpc.GetStateRequest
-	114, // 211: unifiedfleet.api.v1.rpc.Fleet.GetDutState:input_type -> unifiedfleet.api.v1.rpc.GetDutStateRequest
-	115, // 212: unifiedfleet.api.v1.rpc.Fleet.ListDutStates:input_type -> unifiedfleet.api.v1.rpc.ListDutStatesRequest
-	118, // 213: unifiedfleet.api.v1.rpc.Fleet.UpdateDutState:input_type -> unifiedfleet.api.v1.rpc.UpdateDutStateRequest
-	14,  // 214: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:input_type -> unifiedfleet.api.v1.rpc.GetDHCPConfigRequest
-	8,   // 215: unifiedfleet.api.v1.rpc.Fleet.CreateVM:input_type -> unifiedfleet.api.v1.rpc.CreateVMRequest
-	9,   // 216: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:input_type -> unifiedfleet.api.v1.rpc.UpdateVMRequest
-	11,  // 217: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:input_type -> unifiedfleet.api.v1.rpc.DeleteVMRequest
-	10,  // 218: unifiedfleet.api.v1.rpc.Fleet.GetVM:input_type -> unifiedfleet.api.v1.rpc.GetVMRequest
-	12,  // 219: unifiedfleet.api.v1.rpc.Fleet.ListVMs:input_type -> unifiedfleet.api.v1.rpc.ListVMsRequest
-	121, // 220: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:input_type -> unifiedfleet.api.v1.rpc.CreateAssetRequest
-	122, // 221: unifiedfleet.api.v1.rpc.Fleet.UpdateAsset:input_type -> unifiedfleet.api.v1.rpc.UpdateAssetRequest
-	123, // 222: unifiedfleet.api.v1.rpc.Fleet.GetAsset:input_type -> unifiedfleet.api.v1.rpc.GetAssetRequest
-	124, // 223: unifiedfleet.api.v1.rpc.Fleet.ListAssets:input_type -> unifiedfleet.api.v1.rpc.ListAssetsRequest
-	126, // 224: unifiedfleet.api.v1.rpc.Fleet.DeleteAsset:input_type -> unifiedfleet.api.v1.rpc.DeleteAssetRequest
-	127, // 225: unifiedfleet.api.v1.rpc.Fleet.RenameAsset:input_type -> unifiedfleet.api.v1.rpc.RenameAssetRequest
-	128, // 226: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
-	130, // 227: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
-	132, // 228: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
-	134, // 229: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
-	136, // 230: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:input_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
-	138, // 231: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
-	140, // 232: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDracsRequest
-	142, // 233: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:input_type -> unifiedfleet.api.v1.rpc.BatchGetNicsRequest
-	144, // 234: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetVMsRequest
-	146, // 235: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:input_type -> unifiedfleet.api.v1.rpc.BatchGetVlansRequest
-	148, // 236: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:input_type -> unifiedfleet.api.v1.rpc.BatchGetRacksRequest
-	150, // 237: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
-	152, // 238: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
-	154, // 239: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
-	156, // 240: unifiedfleet.api.v1.rpc.Fleet.GetChromeOSDeviceData:input_type -> unifiedfleet.api.v1.rpc.GetChromeOSDeviceDataRequest
-	157, // 241: unifiedfleet.api.v1.rpc.Fleet.CreateCachingService:input_type -> unifiedfleet.api.v1.rpc.CreateCachingServiceRequest
-	158, // 242: unifiedfleet.api.v1.rpc.Fleet.UpdateCachingService:input_type -> unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest
-	159, // 243: unifiedfleet.api.v1.rpc.Fleet.GetCachingService:input_type -> unifiedfleet.api.v1.rpc.GetCachingServiceRequest
-	160, // 244: unifiedfleet.api.v1.rpc.Fleet.ListCachingServices:input_type -> unifiedfleet.api.v1.rpc.ListCachingServicesRequest
-	162, // 245: unifiedfleet.api.v1.rpc.Fleet.DeleteCachingService:input_type -> unifiedfleet.api.v1.rpc.DeleteCachingServiceRequest
-	0,   // 246: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSEDeploymentRequest
-	1,   // 247: unifiedfleet.api.v1.rpc.Fleet.BatchUpdateMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.BatchUpdateMachineLSEDeploymentRequest
-	3,   // 248: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSEDeploymentRequest
-	4,   // 249: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEDeployments:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEDeploymentsRequest
-	6,   // 250: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEDeployments:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEDeploymentsRequest
-	163, // 251: unifiedfleet.api.v1.rpc.Fleet.CreateSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.CreateSchedulingUnitRequest
-	164, // 252: unifiedfleet.api.v1.rpc.Fleet.UpdateSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest
-	165, // 253: unifiedfleet.api.v1.rpc.Fleet.GetSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.GetSchedulingUnitRequest
-	166, // 254: unifiedfleet.api.v1.rpc.Fleet.ListSchedulingUnits:input_type -> unifiedfleet.api.v1.rpc.ListSchedulingUnitsRequest
-	168, // 255: unifiedfleet.api.v1.rpc.Fleet.DeleteSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.DeleteSchedulingUnitRequest
-	169, // 256: unifiedfleet.api.v1.rpc.Fleet.UpdateConfigBundle:input_type -> unifiedfleet.api.v1.rpc.UpdateConfigBundleRequest
-	175, // 257: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	175, // 258: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	175, // 259: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
-	19,  // 260: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsResponse
-	197, // 261: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:output_type -> google.protobuf.Empty
-	198, // 262: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:output_type -> google.rpc.Status
-	26,  // 263: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:output_type -> unifiedfleet.api.v1.rpc.ListOSVersionsResponse
-	198, // 264: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:output_type -> google.rpc.Status
-	177, // 265: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	177, // 266: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	177, // 267: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
-	31,  // 268: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse
-	197, // 269: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:output_type -> google.protobuf.Empty
-	178, // 270: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	178, // 271: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	178, // 272: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
-	37,  // 273: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse
-	197, // 274: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:output_type -> google.protobuf.Empty
-	179, // 275: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:output_type -> unifiedfleet.api.v1.models.Machine
-	179, // 276: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	179, // 277: unifiedfleet.api.v1.rpc.Fleet.GetMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	43,  // 278: unifiedfleet.api.v1.rpc.Fleet.ListMachines:output_type -> unifiedfleet.api.v1.rpc.ListMachinesResponse
-	197, // 279: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:output_type -> google.protobuf.Empty
-	198, // 280: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:output_type -> google.rpc.Status
-	179, // 281: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:output_type -> unifiedfleet.api.v1.models.Machine
-	180, // 282: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:output_type -> unifiedfleet.api.v1.models.Rack
-	180, // 283: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:output_type -> unifiedfleet.api.v1.models.Rack
-	180, // 284: unifiedfleet.api.v1.rpc.Fleet.GetRack:output_type -> unifiedfleet.api.v1.models.Rack
-	53,  // 285: unifiedfleet.api.v1.rpc.Fleet.ListRacks:output_type -> unifiedfleet.api.v1.rpc.ListRacksResponse
-	197, // 286: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:output_type -> google.protobuf.Empty
-	181, // 287: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	181, // 288: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	181, // 289: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	59,  // 290: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsResponse
-	197, // 291: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:output_type -> google.protobuf.Empty
-	181, // 292: unifiedfleet.api.v1.rpc.Fleet.RenameMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
-	198, // 293: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:output_type -> google.rpc.Status
-	198, // 294: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:output_type -> google.rpc.Status
-	182, // 295: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	182, // 296: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	182, // 297: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
-	68,  // 298: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEsResponse
-	197, // 299: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:output_type -> google.protobuf.Empty
-	183, // 300: unifiedfleet.api.v1.rpc.Fleet.CreateNic:output_type -> unifiedfleet.api.v1.models.Nic
-	183, // 301: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:output_type -> unifiedfleet.api.v1.models.Nic
-	183, // 302: unifiedfleet.api.v1.rpc.Fleet.GetNic:output_type -> unifiedfleet.api.v1.models.Nic
-	74,  // 303: unifiedfleet.api.v1.rpc.Fleet.ListNics:output_type -> unifiedfleet.api.v1.rpc.ListNicsResponse
-	197, // 304: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:output_type -> google.protobuf.Empty
-	198, // 305: unifiedfleet.api.v1.rpc.Fleet.ImportNics:output_type -> google.rpc.Status
-	183, // 306: unifiedfleet.api.v1.rpc.Fleet.RenameNic:output_type -> unifiedfleet.api.v1.models.Nic
-	198, // 307: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:output_type -> google.rpc.Status
-	184, // 308: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	184, // 309: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	184, // 310: unifiedfleet.api.v1.rpc.Fleet.GetKVM:output_type -> unifiedfleet.api.v1.models.KVM
-	84,  // 311: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:output_type -> unifiedfleet.api.v1.rpc.ListKVMsResponse
-	197, // 312: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:output_type -> google.protobuf.Empty
-	185, // 313: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	185, // 314: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	185, // 315: unifiedfleet.api.v1.rpc.Fleet.GetRPM:output_type -> unifiedfleet.api.v1.models.RPM
-	90,  // 316: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:output_type -> unifiedfleet.api.v1.rpc.ListRPMsResponse
-	197, // 317: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:output_type -> google.protobuf.Empty
-	186, // 318: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	186, // 319: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	186, // 320: unifiedfleet.api.v1.rpc.Fleet.GetDrac:output_type -> unifiedfleet.api.v1.models.Drac
-	96,  // 321: unifiedfleet.api.v1.rpc.Fleet.ListDracs:output_type -> unifiedfleet.api.v1.rpc.ListDracsResponse
-	197, // 322: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:output_type -> google.protobuf.Empty
-	187, // 323: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	187, // 324: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	187, // 325: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	102, // 326: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:output_type -> unifiedfleet.api.v1.rpc.ListSwitchesResponse
-	197, // 327: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:output_type -> google.protobuf.Empty
-	187, // 328: unifiedfleet.api.v1.rpc.Fleet.RenameSwitch:output_type -> unifiedfleet.api.v1.models.Switch
-	188, // 329: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	188, // 330: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	188, // 331: unifiedfleet.api.v1.rpc.Fleet.GetVlan:output_type -> unifiedfleet.api.v1.models.Vlan
-	108, // 332: unifiedfleet.api.v1.rpc.Fleet.ListVlans:output_type -> unifiedfleet.api.v1.rpc.ListVlansResponse
-	197, // 333: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:output_type -> google.protobuf.Empty
-	198, // 334: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:output_type -> google.rpc.Status
-	198, // 335: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:output_type -> google.rpc.Status
-	198, // 336: unifiedfleet.api.v1.rpc.Fleet.ImportStates:output_type -> google.rpc.Status
-	190, // 337: unifiedfleet.api.v1.rpc.Fleet.UpdateState:output_type -> unifiedfleet.api.v1.models.StateRecord
-	190, // 338: unifiedfleet.api.v1.rpc.Fleet.GetState:output_type -> unifiedfleet.api.v1.models.StateRecord
-	189, // 339: unifiedfleet.api.v1.rpc.Fleet.GetDutState:output_type -> unifiedfleet.api.v1.models.chromeos.lab.DutState
-	116, // 340: unifiedfleet.api.v1.rpc.Fleet.ListDutStates:output_type -> unifiedfleet.api.v1.rpc.ListDutStatesResponse
-	189, // 341: unifiedfleet.api.v1.rpc.Fleet.UpdateDutState:output_type -> unifiedfleet.api.v1.models.chromeos.lab.DutState
-	194, // 342: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:output_type -> unifiedfleet.api.v1.models.DHCPConfig
-	174, // 343: unifiedfleet.api.v1.rpc.Fleet.CreateVM:output_type -> unifiedfleet.api.v1.models.VM
-	174, // 344: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:output_type -> unifiedfleet.api.v1.models.VM
-	197, // 345: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:output_type -> google.protobuf.Empty
-	174, // 346: unifiedfleet.api.v1.rpc.Fleet.GetVM:output_type -> unifiedfleet.api.v1.models.VM
-	13,  // 347: unifiedfleet.api.v1.rpc.Fleet.ListVMs:output_type -> unifiedfleet.api.v1.rpc.ListVMsResponse
-	193, // 348: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:output_type -> unifiedfleet.api.v1.models.asset
-	193, // 349: unifiedfleet.api.v1.rpc.Fleet.UpdateAsset:output_type -> unifiedfleet.api.v1.models.asset
-	193, // 350: unifiedfleet.api.v1.rpc.Fleet.GetAsset:output_type -> unifiedfleet.api.v1.models.asset
-	125, // 351: unifiedfleet.api.v1.rpc.Fleet.ListAssets:output_type -> unifiedfleet.api.v1.rpc.ListAssetsResponse
-	197, // 352: unifiedfleet.api.v1.rpc.Fleet.DeleteAsset:output_type -> google.protobuf.Empty
-	193, // 353: unifiedfleet.api.v1.rpc.Fleet.RenameAsset:output_type -> unifiedfleet.api.v1.models.asset
-	129, // 354: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
-	131, // 355: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
-	133, // 356: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
-	135, // 357: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
-	137, // 358: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:output_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
-	139, // 359: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
-	141, // 360: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDracsResponse
-	143, // 361: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:output_type -> unifiedfleet.api.v1.rpc.BatchGetNicsResponse
-	145, // 362: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetVMsResponse
-	147, // 363: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:output_type -> unifiedfleet.api.v1.rpc.BatchGetVlansResponse
-	149, // 364: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:output_type -> unifiedfleet.api.v1.rpc.BatchGetRacksResponse
-	151, // 365: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
-	153, // 366: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
-	155, // 367: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
-	199, // 368: unifiedfleet.api.v1.rpc.Fleet.GetChromeOSDeviceData:output_type -> unifiedfleet.api.v1.models.ChromeOSDeviceData
-	195, // 369: unifiedfleet.api.v1.rpc.Fleet.CreateCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
-	195, // 370: unifiedfleet.api.v1.rpc.Fleet.UpdateCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
-	195, // 371: unifiedfleet.api.v1.rpc.Fleet.GetCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
-	161, // 372: unifiedfleet.api.v1.rpc.Fleet.ListCachingServices:output_type -> unifiedfleet.api.v1.rpc.ListCachingServicesResponse
-	197, // 373: unifiedfleet.api.v1.rpc.Fleet.DeleteCachingService:output_type -> google.protobuf.Empty
-	172, // 374: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEDeployment:output_type -> unifiedfleet.api.v1.models.MachineLSEDeployment
-	2,   // 375: unifiedfleet.api.v1.rpc.Fleet.BatchUpdateMachineLSEDeployment:output_type -> unifiedfleet.api.v1.rpc.BatchUpdateMachineLSEDeploymentResponse
-	172, // 376: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEDeployment:output_type -> unifiedfleet.api.v1.models.MachineLSEDeployment
-	5,   // 377: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEDeployments:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEDeploymentsResponse
-	7,   // 378: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEDeployments:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEDeploymentsResponse
-	196, // 379: unifiedfleet.api.v1.rpc.Fleet.CreateSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
-	196, // 380: unifiedfleet.api.v1.rpc.Fleet.UpdateSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
-	196, // 381: unifiedfleet.api.v1.rpc.Fleet.GetSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
-	167, // 382: unifiedfleet.api.v1.rpc.Fleet.ListSchedulingUnits:output_type -> unifiedfleet.api.v1.rpc.ListSchedulingUnitsResponse
-	197, // 383: unifiedfleet.api.v1.rpc.Fleet.DeleteSchedulingUnit:output_type -> google.protobuf.Empty
-	170, // 384: unifiedfleet.api.v1.rpc.Fleet.UpdateConfigBundle:output_type -> unifiedfleet.api.v1.rpc.UpdateConfigBundleResponse
-	257, // [257:385] is the sub-list for method output_type
-	129, // [129:257] is the sub-list for method input_type
-	129, // [129:129] is the sub-list for extension type_name
-	129, // [129:129] is the sub-list for extension extendee
-	0,   // [0:129] is the sub-list for field type_name
+	120, // 75: unifiedfleet.api.v1.rpc.CreateDracRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	186, // 76: unifiedfleet.api.v1.rpc.UpdateDracRequest.drac:type_name -> unifiedfleet.api.v1.models.Drac
+	173, // 77: unifiedfleet.api.v1.rpc.UpdateDracRequest.update_mask:type_name -> google.protobuf.FieldMask
+	120, // 78: unifiedfleet.api.v1.rpc.UpdateDracRequest.network_option:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	186, // 79: unifiedfleet.api.v1.rpc.ListDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
+	187, // 80: unifiedfleet.api.v1.rpc.CreateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
+	187, // 81: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.switch:type_name -> unifiedfleet.api.v1.models.Switch
+	173, // 82: unifiedfleet.api.v1.rpc.UpdateSwitchRequest.update_mask:type_name -> google.protobuf.FieldMask
+	187, // 83: unifiedfleet.api.v1.rpc.ListSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
+	188, // 84: unifiedfleet.api.v1.rpc.CreateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
+	188, // 85: unifiedfleet.api.v1.rpc.UpdateVlanRequest.vlan:type_name -> unifiedfleet.api.v1.models.Vlan
+	173, // 86: unifiedfleet.api.v1.rpc.UpdateVlanRequest.update_mask:type_name -> google.protobuf.FieldMask
+	188, // 87: unifiedfleet.api.v1.rpc.ListVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
+	47,  // 88: unifiedfleet.api.v1.rpc.ImportVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
+	48,  // 89: unifiedfleet.api.v1.rpc.ImportVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
+	47,  // 90: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
+	48,  // 91: unifiedfleet.api.v1.rpc.ImportOSVlansRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
+	47,  // 92: unifiedfleet.api.v1.rpc.ImportStatesRequest.machine_db_source:type_name -> unifiedfleet.api.v1.rpc.MachineDBSource
+	48,  // 93: unifiedfleet.api.v1.rpc.ImportStatesRequest.config_source:type_name -> unifiedfleet.api.v1.rpc.ConfigSource
+	189, // 94: unifiedfleet.api.v1.rpc.ListDutStatesResponse.dut_states:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DutState
+	190, // 95: unifiedfleet.api.v1.rpc.UpdateStateRequest.state:type_name -> unifiedfleet.api.v1.models.StateRecord
+	173, // 96: unifiedfleet.api.v1.rpc.UpdateStateRequest.update_mask:type_name -> google.protobuf.FieldMask
+	189, // 97: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.dut_state:type_name -> unifiedfleet.api.v1.models.chromeos.lab.DutState
+	173, // 98: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.update_mask:type_name -> google.protobuf.FieldMask
+	191, // 99: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.dut_meta:type_name -> unifiedfleet.api.v1.models.DutMeta
+	192, // 100: unifiedfleet.api.v1.rpc.UpdateDutStateRequest.lab_meta:type_name -> unifiedfleet.api.v1.models.LabMeta
+	180, // 101: unifiedfleet.api.v1.rpc.RackRegistrationRequest.rack:type_name -> unifiedfleet.api.v1.models.Rack
+	193, // 102: unifiedfleet.api.v1.rpc.CreateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
+	193, // 103: unifiedfleet.api.v1.rpc.UpdateAssetRequest.asset:type_name -> unifiedfleet.api.v1.models.asset
+	173, // 104: unifiedfleet.api.v1.rpc.UpdateAssetRequest.update_mask:type_name -> google.protobuf.FieldMask
+	193, // 105: unifiedfleet.api.v1.rpc.ListAssetsResponse.assets:type_name -> unifiedfleet.api.v1.models.asset
+	184, // 106: unifiedfleet.api.v1.rpc.BatchGetKVMsResponse.KVMs:type_name -> unifiedfleet.api.v1.models.KVM
+	194, // 107: unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse.dhcp_configs:type_name -> unifiedfleet.api.v1.models.DHCPConfig
+	181, // 108: unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse.machine_lses:type_name -> unifiedfleet.api.v1.models.MachineLSE
+	179, // 109: unifiedfleet.api.v1.rpc.BatchGetMachinesResponse.machines:type_name -> unifiedfleet.api.v1.models.Machine
+	187, // 110: unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse.switches:type_name -> unifiedfleet.api.v1.models.Switch
+	185, // 111: unifiedfleet.api.v1.rpc.BatchGetRPMsResponse.rpms:type_name -> unifiedfleet.api.v1.models.RPM
+	186, // 112: unifiedfleet.api.v1.rpc.BatchGetDracsResponse.dracs:type_name -> unifiedfleet.api.v1.models.Drac
+	183, // 113: unifiedfleet.api.v1.rpc.BatchGetNicsResponse.nics:type_name -> unifiedfleet.api.v1.models.Nic
+	174, // 114: unifiedfleet.api.v1.rpc.BatchGetVMsResponse.vms:type_name -> unifiedfleet.api.v1.models.VM
+	188, // 115: unifiedfleet.api.v1.rpc.BatchGetVlansResponse.vlans:type_name -> unifiedfleet.api.v1.models.Vlan
+	180, // 116: unifiedfleet.api.v1.rpc.BatchGetRacksResponse.racks:type_name -> unifiedfleet.api.v1.models.Rack
+	175, // 117: unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse.chrome_platforms:type_name -> unifiedfleet.api.v1.models.ChromePlatform
+	177, // 118: unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse.machine_lse_prototypes:type_name -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	178, // 119: unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse.rack_lse_prototypes:type_name -> unifiedfleet.api.v1.models.RackLSEPrototype
+	195, // 120: unifiedfleet.api.v1.rpc.CreateCachingServiceRequest.cachingService:type_name -> unifiedfleet.api.v1.models.CachingService
+	195, // 121: unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest.cachingService:type_name -> unifiedfleet.api.v1.models.CachingService
+	173, // 122: unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest.update_mask:type_name -> google.protobuf.FieldMask
+	195, // 123: unifiedfleet.api.v1.rpc.ListCachingServicesResponse.cachingServices:type_name -> unifiedfleet.api.v1.models.CachingService
+	196, // 124: unifiedfleet.api.v1.rpc.CreateSchedulingUnitRequest.scheduling_unit:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
+	196, // 125: unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest.scheduling_unit:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
+	173, // 126: unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest.update_mask:type_name -> google.protobuf.FieldMask
+	196, // 127: unifiedfleet.api.v1.rpc.ListSchedulingUnitsResponse.scheduling_units:type_name -> unifiedfleet.api.v1.models.SchedulingUnit
+	173, // 128: unifiedfleet.api.v1.rpc.UpdateConfigBundleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	120, // 129: unifiedfleet.api.v1.rpc.UpdateMachineLSERequest.NetworkOptionsEntry.value:type_name -> unifiedfleet.api.v1.rpc.NetworkOption
+	15,  // 130: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.CreateChromePlatformRequest
+	16,  // 131: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:input_type -> unifiedfleet.api.v1.rpc.UpdateChromePlatformRequest
+	17,  // 132: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:input_type -> unifiedfleet.api.v1.rpc.GetChromePlatformRequest
+	18,  // 133: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsRequest
+	20,  // 134: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:input_type -> unifiedfleet.api.v1.rpc.DeleteChromePlatformRequest
+	21,  // 135: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.ImportChromePlatformsRequest
+	25,  // 136: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:input_type -> unifiedfleet.api.v1.rpc.ListOSVersionsRequest
+	24,  // 137: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:input_type -> unifiedfleet.api.v1.rpc.ImportOSVersionsRequest
+	27,  // 138: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.CreateMachineLSEPrototypeRequest
+	28,  // 139: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSEPrototypeRequest
+	29,  // 140: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSEPrototypeRequest
+	30,  // 141: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesRequest
+	32,  // 142: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineLSEPrototypeRequest
+	33,  // 143: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.CreateRackLSEPrototypeRequest
+	34,  // 144: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.UpdateRackLSEPrototypeRequest
+	35,  // 145: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.GetRackLSEPrototypeRequest
+	36,  // 146: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesRequest
+	38,  // 147: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:input_type -> unifiedfleet.api.v1.rpc.DeleteRackLSEPrototypeRequest
+	39,  // 148: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:input_type -> unifiedfleet.api.v1.rpc.MachineRegistrationRequest
+	40,  // 149: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineRequest
+	41,  // 150: unifiedfleet.api.v1.rpc.Fleet.GetMachine:input_type -> unifiedfleet.api.v1.rpc.GetMachineRequest
+	42,  // 151: unifiedfleet.api.v1.rpc.Fleet.ListMachines:input_type -> unifiedfleet.api.v1.rpc.ListMachinesRequest
+	44,  // 152: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineRequest
+	45,  // 153: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:input_type -> unifiedfleet.api.v1.rpc.ImportMachinesRequest
+	46,  // 154: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:input_type -> unifiedfleet.api.v1.rpc.RenameMachineRequest
+	119, // 155: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:input_type -> unifiedfleet.api.v1.rpc.RackRegistrationRequest
+	50,  // 156: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:input_type -> unifiedfleet.api.v1.rpc.UpdateRackRequest
+	51,  // 157: unifiedfleet.api.v1.rpc.Fleet.GetRack:input_type -> unifiedfleet.api.v1.rpc.GetRackRequest
+	52,  // 158: unifiedfleet.api.v1.rpc.Fleet.ListRacks:input_type -> unifiedfleet.api.v1.rpc.ListRacksRequest
+	54,  // 159: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:input_type -> unifiedfleet.api.v1.rpc.DeleteRackRequest
+	55,  // 160: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:input_type -> unifiedfleet.api.v1.rpc.CreateMachineLSERequest
+	56,  // 161: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSERequest
+	57,  // 162: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSERequest
+	58,  // 163: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsRequest
+	60,  // 164: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:input_type -> unifiedfleet.api.v1.rpc.DeleteMachineLSERequest
+	61,  // 165: unifiedfleet.api.v1.rpc.Fleet.RenameMachineLSE:input_type -> unifiedfleet.api.v1.rpc.RenameMachineLSERequest
+	62,  // 166: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ImportMachineLSEsRequest
+	63,  // 167: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.ImportOSMachineLSEsRequest
+	64,  // 168: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:input_type -> unifiedfleet.api.v1.rpc.CreateRackLSERequest
+	65,  // 169: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:input_type -> unifiedfleet.api.v1.rpc.UpdateRackLSERequest
+	66,  // 170: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:input_type -> unifiedfleet.api.v1.rpc.GetRackLSERequest
+	67,  // 171: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:input_type -> unifiedfleet.api.v1.rpc.ListRackLSEsRequest
+	69,  // 172: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:input_type -> unifiedfleet.api.v1.rpc.DeleteRackLSERequest
+	70,  // 173: unifiedfleet.api.v1.rpc.Fleet.CreateNic:input_type -> unifiedfleet.api.v1.rpc.CreateNicRequest
+	71,  // 174: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:input_type -> unifiedfleet.api.v1.rpc.UpdateNicRequest
+	72,  // 175: unifiedfleet.api.v1.rpc.Fleet.GetNic:input_type -> unifiedfleet.api.v1.rpc.GetNicRequest
+	73,  // 176: unifiedfleet.api.v1.rpc.Fleet.ListNics:input_type -> unifiedfleet.api.v1.rpc.ListNicsRequest
+	75,  // 177: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:input_type -> unifiedfleet.api.v1.rpc.DeleteNicRequest
+	76,  // 178: unifiedfleet.api.v1.rpc.Fleet.ImportNics:input_type -> unifiedfleet.api.v1.rpc.ImportNicsRequest
+	77,  // 179: unifiedfleet.api.v1.rpc.Fleet.RenameNic:input_type -> unifiedfleet.api.v1.rpc.RenameNicRequest
+	79,  // 180: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:input_type -> unifiedfleet.api.v1.rpc.ImportDatacentersRequest
+	80,  // 181: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:input_type -> unifiedfleet.api.v1.rpc.CreateKVMRequest
+	81,  // 182: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:input_type -> unifiedfleet.api.v1.rpc.UpdateKVMRequest
+	82,  // 183: unifiedfleet.api.v1.rpc.Fleet.GetKVM:input_type -> unifiedfleet.api.v1.rpc.GetKVMRequest
+	83,  // 184: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:input_type -> unifiedfleet.api.v1.rpc.ListKVMsRequest
+	85,  // 185: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:input_type -> unifiedfleet.api.v1.rpc.DeleteKVMRequest
+	86,  // 186: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:input_type -> unifiedfleet.api.v1.rpc.CreateRPMRequest
+	87,  // 187: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:input_type -> unifiedfleet.api.v1.rpc.UpdateRPMRequest
+	88,  // 188: unifiedfleet.api.v1.rpc.Fleet.GetRPM:input_type -> unifiedfleet.api.v1.rpc.GetRPMRequest
+	89,  // 189: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:input_type -> unifiedfleet.api.v1.rpc.ListRPMsRequest
+	91,  // 190: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:input_type -> unifiedfleet.api.v1.rpc.DeleteRPMRequest
+	92,  // 191: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:input_type -> unifiedfleet.api.v1.rpc.CreateDracRequest
+	93,  // 192: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:input_type -> unifiedfleet.api.v1.rpc.UpdateDracRequest
+	94,  // 193: unifiedfleet.api.v1.rpc.Fleet.GetDrac:input_type -> unifiedfleet.api.v1.rpc.GetDracRequest
+	95,  // 194: unifiedfleet.api.v1.rpc.Fleet.ListDracs:input_type -> unifiedfleet.api.v1.rpc.ListDracsRequest
+	97,  // 195: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:input_type -> unifiedfleet.api.v1.rpc.DeleteDracRequest
+	98,  // 196: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:input_type -> unifiedfleet.api.v1.rpc.CreateSwitchRequest
+	99,  // 197: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:input_type -> unifiedfleet.api.v1.rpc.UpdateSwitchRequest
+	100, // 198: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:input_type -> unifiedfleet.api.v1.rpc.GetSwitchRequest
+	101, // 199: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:input_type -> unifiedfleet.api.v1.rpc.ListSwitchesRequest
+	103, // 200: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:input_type -> unifiedfleet.api.v1.rpc.DeleteSwitchRequest
+	78,  // 201: unifiedfleet.api.v1.rpc.Fleet.RenameSwitch:input_type -> unifiedfleet.api.v1.rpc.RenameSwitchRequest
+	104, // 202: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:input_type -> unifiedfleet.api.v1.rpc.CreateVlanRequest
+	105, // 203: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:input_type -> unifiedfleet.api.v1.rpc.UpdateVlanRequest
+	106, // 204: unifiedfleet.api.v1.rpc.Fleet.GetVlan:input_type -> unifiedfleet.api.v1.rpc.GetVlanRequest
+	107, // 205: unifiedfleet.api.v1.rpc.Fleet.ListVlans:input_type -> unifiedfleet.api.v1.rpc.ListVlansRequest
+	109, // 206: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:input_type -> unifiedfleet.api.v1.rpc.DeleteVlanRequest
+	110, // 207: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:input_type -> unifiedfleet.api.v1.rpc.ImportVlansRequest
+	111, // 208: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:input_type -> unifiedfleet.api.v1.rpc.ImportOSVlansRequest
+	112, // 209: unifiedfleet.api.v1.rpc.Fleet.ImportStates:input_type -> unifiedfleet.api.v1.rpc.ImportStatesRequest
+	117, // 210: unifiedfleet.api.v1.rpc.Fleet.UpdateState:input_type -> unifiedfleet.api.v1.rpc.UpdateStateRequest
+	113, // 211: unifiedfleet.api.v1.rpc.Fleet.GetState:input_type -> unifiedfleet.api.v1.rpc.GetStateRequest
+	114, // 212: unifiedfleet.api.v1.rpc.Fleet.GetDutState:input_type -> unifiedfleet.api.v1.rpc.GetDutStateRequest
+	115, // 213: unifiedfleet.api.v1.rpc.Fleet.ListDutStates:input_type -> unifiedfleet.api.v1.rpc.ListDutStatesRequest
+	118, // 214: unifiedfleet.api.v1.rpc.Fleet.UpdateDutState:input_type -> unifiedfleet.api.v1.rpc.UpdateDutStateRequest
+	14,  // 215: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:input_type -> unifiedfleet.api.v1.rpc.GetDHCPConfigRequest
+	8,   // 216: unifiedfleet.api.v1.rpc.Fleet.CreateVM:input_type -> unifiedfleet.api.v1.rpc.CreateVMRequest
+	9,   // 217: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:input_type -> unifiedfleet.api.v1.rpc.UpdateVMRequest
+	11,  // 218: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:input_type -> unifiedfleet.api.v1.rpc.DeleteVMRequest
+	10,  // 219: unifiedfleet.api.v1.rpc.Fleet.GetVM:input_type -> unifiedfleet.api.v1.rpc.GetVMRequest
+	12,  // 220: unifiedfleet.api.v1.rpc.Fleet.ListVMs:input_type -> unifiedfleet.api.v1.rpc.ListVMsRequest
+	121, // 221: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:input_type -> unifiedfleet.api.v1.rpc.CreateAssetRequest
+	122, // 222: unifiedfleet.api.v1.rpc.Fleet.UpdateAsset:input_type -> unifiedfleet.api.v1.rpc.UpdateAssetRequest
+	123, // 223: unifiedfleet.api.v1.rpc.Fleet.GetAsset:input_type -> unifiedfleet.api.v1.rpc.GetAssetRequest
+	124, // 224: unifiedfleet.api.v1.rpc.Fleet.ListAssets:input_type -> unifiedfleet.api.v1.rpc.ListAssetsRequest
+	126, // 225: unifiedfleet.api.v1.rpc.Fleet.DeleteAsset:input_type -> unifiedfleet.api.v1.rpc.DeleteAssetRequest
+	127, // 226: unifiedfleet.api.v1.rpc.Fleet.RenameAsset:input_type -> unifiedfleet.api.v1.rpc.RenameAssetRequest
+	128, // 227: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsRequest
+	130, // 228: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsRequest
+	132, // 229: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsRequest
+	134, // 230: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesRequest
+	136, // 231: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:input_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesRequest
+	138, // 232: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsRequest
+	140, // 233: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:input_type -> unifiedfleet.api.v1.rpc.BatchGetDracsRequest
+	142, // 234: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:input_type -> unifiedfleet.api.v1.rpc.BatchGetNicsRequest
+	144, // 235: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:input_type -> unifiedfleet.api.v1.rpc.BatchGetVMsRequest
+	146, // 236: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:input_type -> unifiedfleet.api.v1.rpc.BatchGetVlansRequest
+	148, // 237: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:input_type -> unifiedfleet.api.v1.rpc.BatchGetRacksRequest
+	150, // 238: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:input_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsRequest
+	152, // 239: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesRequest
+	154, // 240: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:input_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesRequest
+	156, // 241: unifiedfleet.api.v1.rpc.Fleet.GetChromeOSDeviceData:input_type -> unifiedfleet.api.v1.rpc.GetChromeOSDeviceDataRequest
+	157, // 242: unifiedfleet.api.v1.rpc.Fleet.CreateCachingService:input_type -> unifiedfleet.api.v1.rpc.CreateCachingServiceRequest
+	158, // 243: unifiedfleet.api.v1.rpc.Fleet.UpdateCachingService:input_type -> unifiedfleet.api.v1.rpc.UpdateCachingServiceRequest
+	159, // 244: unifiedfleet.api.v1.rpc.Fleet.GetCachingService:input_type -> unifiedfleet.api.v1.rpc.GetCachingServiceRequest
+	160, // 245: unifiedfleet.api.v1.rpc.Fleet.ListCachingServices:input_type -> unifiedfleet.api.v1.rpc.ListCachingServicesRequest
+	162, // 246: unifiedfleet.api.v1.rpc.Fleet.DeleteCachingService:input_type -> unifiedfleet.api.v1.rpc.DeleteCachingServiceRequest
+	0,   // 247: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.UpdateMachineLSEDeploymentRequest
+	1,   // 248: unifiedfleet.api.v1.rpc.Fleet.BatchUpdateMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.BatchUpdateMachineLSEDeploymentRequest
+	3,   // 249: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEDeployment:input_type -> unifiedfleet.api.v1.rpc.GetMachineLSEDeploymentRequest
+	4,   // 250: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEDeployments:input_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEDeploymentsRequest
+	6,   // 251: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEDeployments:input_type -> unifiedfleet.api.v1.rpc.ListMachineLSEDeploymentsRequest
+	163, // 252: unifiedfleet.api.v1.rpc.Fleet.CreateSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.CreateSchedulingUnitRequest
+	164, // 253: unifiedfleet.api.v1.rpc.Fleet.UpdateSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.UpdateSchedulingUnitRequest
+	165, // 254: unifiedfleet.api.v1.rpc.Fleet.GetSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.GetSchedulingUnitRequest
+	166, // 255: unifiedfleet.api.v1.rpc.Fleet.ListSchedulingUnits:input_type -> unifiedfleet.api.v1.rpc.ListSchedulingUnitsRequest
+	168, // 256: unifiedfleet.api.v1.rpc.Fleet.DeleteSchedulingUnit:input_type -> unifiedfleet.api.v1.rpc.DeleteSchedulingUnitRequest
+	169, // 257: unifiedfleet.api.v1.rpc.Fleet.UpdateConfigBundle:input_type -> unifiedfleet.api.v1.rpc.UpdateConfigBundleRequest
+	175, // 258: unifiedfleet.api.v1.rpc.Fleet.CreateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	175, // 259: unifiedfleet.api.v1.rpc.Fleet.UpdateChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	175, // 260: unifiedfleet.api.v1.rpc.Fleet.GetChromePlatform:output_type -> unifiedfleet.api.v1.models.ChromePlatform
+	19,  // 261: unifiedfleet.api.v1.rpc.Fleet.ListChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.ListChromePlatformsResponse
+	197, // 262: unifiedfleet.api.v1.rpc.Fleet.DeleteChromePlatform:output_type -> google.protobuf.Empty
+	198, // 263: unifiedfleet.api.v1.rpc.Fleet.ImportChromePlatforms:output_type -> google.rpc.Status
+	26,  // 264: unifiedfleet.api.v1.rpc.Fleet.ListOSVersions:output_type -> unifiedfleet.api.v1.rpc.ListOSVersionsResponse
+	198, // 265: unifiedfleet.api.v1.rpc.Fleet.ImportOSVersions:output_type -> google.rpc.Status
+	177, // 266: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	177, // 267: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	177, // 268: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEPrototype:output_type -> unifiedfleet.api.v1.models.MachineLSEPrototype
+	31,  // 269: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEPrototypesResponse
+	197, // 270: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSEPrototype:output_type -> google.protobuf.Empty
+	178, // 271: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	178, // 272: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	178, // 273: unifiedfleet.api.v1.rpc.Fleet.GetRackLSEPrototype:output_type -> unifiedfleet.api.v1.models.RackLSEPrototype
+	37,  // 274: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEPrototypesResponse
+	197, // 275: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSEPrototype:output_type -> google.protobuf.Empty
+	179, // 276: unifiedfleet.api.v1.rpc.Fleet.MachineRegistration:output_type -> unifiedfleet.api.v1.models.Machine
+	179, // 277: unifiedfleet.api.v1.rpc.Fleet.UpdateMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	179, // 278: unifiedfleet.api.v1.rpc.Fleet.GetMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	43,  // 279: unifiedfleet.api.v1.rpc.Fleet.ListMachines:output_type -> unifiedfleet.api.v1.rpc.ListMachinesResponse
+	197, // 280: unifiedfleet.api.v1.rpc.Fleet.DeleteMachine:output_type -> google.protobuf.Empty
+	198, // 281: unifiedfleet.api.v1.rpc.Fleet.ImportMachines:output_type -> google.rpc.Status
+	179, // 282: unifiedfleet.api.v1.rpc.Fleet.RenameMachine:output_type -> unifiedfleet.api.v1.models.Machine
+	180, // 283: unifiedfleet.api.v1.rpc.Fleet.RackRegistration:output_type -> unifiedfleet.api.v1.models.Rack
+	180, // 284: unifiedfleet.api.v1.rpc.Fleet.UpdateRack:output_type -> unifiedfleet.api.v1.models.Rack
+	180, // 285: unifiedfleet.api.v1.rpc.Fleet.GetRack:output_type -> unifiedfleet.api.v1.models.Rack
+	53,  // 286: unifiedfleet.api.v1.rpc.Fleet.ListRacks:output_type -> unifiedfleet.api.v1.rpc.ListRacksResponse
+	197, // 287: unifiedfleet.api.v1.rpc.Fleet.DeleteRack:output_type -> google.protobuf.Empty
+	181, // 288: unifiedfleet.api.v1.rpc.Fleet.CreateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	181, // 289: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	181, // 290: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	59,  // 291: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEsResponse
+	197, // 292: unifiedfleet.api.v1.rpc.Fleet.DeleteMachineLSE:output_type -> google.protobuf.Empty
+	181, // 293: unifiedfleet.api.v1.rpc.Fleet.RenameMachineLSE:output_type -> unifiedfleet.api.v1.models.MachineLSE
+	198, // 294: unifiedfleet.api.v1.rpc.Fleet.ImportMachineLSEs:output_type -> google.rpc.Status
+	198, // 295: unifiedfleet.api.v1.rpc.Fleet.ImportOSMachineLSEs:output_type -> google.rpc.Status
+	182, // 296: unifiedfleet.api.v1.rpc.Fleet.CreateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	182, // 297: unifiedfleet.api.v1.rpc.Fleet.UpdateRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	182, // 298: unifiedfleet.api.v1.rpc.Fleet.GetRackLSE:output_type -> unifiedfleet.api.v1.models.RackLSE
+	68,  // 299: unifiedfleet.api.v1.rpc.Fleet.ListRackLSEs:output_type -> unifiedfleet.api.v1.rpc.ListRackLSEsResponse
+	197, // 300: unifiedfleet.api.v1.rpc.Fleet.DeleteRackLSE:output_type -> google.protobuf.Empty
+	183, // 301: unifiedfleet.api.v1.rpc.Fleet.CreateNic:output_type -> unifiedfleet.api.v1.models.Nic
+	183, // 302: unifiedfleet.api.v1.rpc.Fleet.UpdateNic:output_type -> unifiedfleet.api.v1.models.Nic
+	183, // 303: unifiedfleet.api.v1.rpc.Fleet.GetNic:output_type -> unifiedfleet.api.v1.models.Nic
+	74,  // 304: unifiedfleet.api.v1.rpc.Fleet.ListNics:output_type -> unifiedfleet.api.v1.rpc.ListNicsResponse
+	197, // 305: unifiedfleet.api.v1.rpc.Fleet.DeleteNic:output_type -> google.protobuf.Empty
+	198, // 306: unifiedfleet.api.v1.rpc.Fleet.ImportNics:output_type -> google.rpc.Status
+	183, // 307: unifiedfleet.api.v1.rpc.Fleet.RenameNic:output_type -> unifiedfleet.api.v1.models.Nic
+	198, // 308: unifiedfleet.api.v1.rpc.Fleet.ImportDatacenters:output_type -> google.rpc.Status
+	184, // 309: unifiedfleet.api.v1.rpc.Fleet.CreateKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	184, // 310: unifiedfleet.api.v1.rpc.Fleet.UpdateKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	184, // 311: unifiedfleet.api.v1.rpc.Fleet.GetKVM:output_type -> unifiedfleet.api.v1.models.KVM
+	84,  // 312: unifiedfleet.api.v1.rpc.Fleet.ListKVMs:output_type -> unifiedfleet.api.v1.rpc.ListKVMsResponse
+	197, // 313: unifiedfleet.api.v1.rpc.Fleet.DeleteKVM:output_type -> google.protobuf.Empty
+	185, // 314: unifiedfleet.api.v1.rpc.Fleet.CreateRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	185, // 315: unifiedfleet.api.v1.rpc.Fleet.UpdateRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	185, // 316: unifiedfleet.api.v1.rpc.Fleet.GetRPM:output_type -> unifiedfleet.api.v1.models.RPM
+	90,  // 317: unifiedfleet.api.v1.rpc.Fleet.ListRPMs:output_type -> unifiedfleet.api.v1.rpc.ListRPMsResponse
+	197, // 318: unifiedfleet.api.v1.rpc.Fleet.DeleteRPM:output_type -> google.protobuf.Empty
+	186, // 319: unifiedfleet.api.v1.rpc.Fleet.CreateDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	186, // 320: unifiedfleet.api.v1.rpc.Fleet.UpdateDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	186, // 321: unifiedfleet.api.v1.rpc.Fleet.GetDrac:output_type -> unifiedfleet.api.v1.models.Drac
+	96,  // 322: unifiedfleet.api.v1.rpc.Fleet.ListDracs:output_type -> unifiedfleet.api.v1.rpc.ListDracsResponse
+	197, // 323: unifiedfleet.api.v1.rpc.Fleet.DeleteDrac:output_type -> google.protobuf.Empty
+	187, // 324: unifiedfleet.api.v1.rpc.Fleet.CreateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	187, // 325: unifiedfleet.api.v1.rpc.Fleet.UpdateSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	187, // 326: unifiedfleet.api.v1.rpc.Fleet.GetSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	102, // 327: unifiedfleet.api.v1.rpc.Fleet.ListSwitches:output_type -> unifiedfleet.api.v1.rpc.ListSwitchesResponse
+	197, // 328: unifiedfleet.api.v1.rpc.Fleet.DeleteSwitch:output_type -> google.protobuf.Empty
+	187, // 329: unifiedfleet.api.v1.rpc.Fleet.RenameSwitch:output_type -> unifiedfleet.api.v1.models.Switch
+	188, // 330: unifiedfleet.api.v1.rpc.Fleet.CreateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	188, // 331: unifiedfleet.api.v1.rpc.Fleet.UpdateVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	188, // 332: unifiedfleet.api.v1.rpc.Fleet.GetVlan:output_type -> unifiedfleet.api.v1.models.Vlan
+	108, // 333: unifiedfleet.api.v1.rpc.Fleet.ListVlans:output_type -> unifiedfleet.api.v1.rpc.ListVlansResponse
+	197, // 334: unifiedfleet.api.v1.rpc.Fleet.DeleteVlan:output_type -> google.protobuf.Empty
+	198, // 335: unifiedfleet.api.v1.rpc.Fleet.ImportVlans:output_type -> google.rpc.Status
+	198, // 336: unifiedfleet.api.v1.rpc.Fleet.ImportOSVlans:output_type -> google.rpc.Status
+	198, // 337: unifiedfleet.api.v1.rpc.Fleet.ImportStates:output_type -> google.rpc.Status
+	190, // 338: unifiedfleet.api.v1.rpc.Fleet.UpdateState:output_type -> unifiedfleet.api.v1.models.StateRecord
+	190, // 339: unifiedfleet.api.v1.rpc.Fleet.GetState:output_type -> unifiedfleet.api.v1.models.StateRecord
+	189, // 340: unifiedfleet.api.v1.rpc.Fleet.GetDutState:output_type -> unifiedfleet.api.v1.models.chromeos.lab.DutState
+	116, // 341: unifiedfleet.api.v1.rpc.Fleet.ListDutStates:output_type -> unifiedfleet.api.v1.rpc.ListDutStatesResponse
+	189, // 342: unifiedfleet.api.v1.rpc.Fleet.UpdateDutState:output_type -> unifiedfleet.api.v1.models.chromeos.lab.DutState
+	194, // 343: unifiedfleet.api.v1.rpc.Fleet.GetDHCPConfig:output_type -> unifiedfleet.api.v1.models.DHCPConfig
+	174, // 344: unifiedfleet.api.v1.rpc.Fleet.CreateVM:output_type -> unifiedfleet.api.v1.models.VM
+	174, // 345: unifiedfleet.api.v1.rpc.Fleet.UpdateVM:output_type -> unifiedfleet.api.v1.models.VM
+	197, // 346: unifiedfleet.api.v1.rpc.Fleet.DeleteVM:output_type -> google.protobuf.Empty
+	174, // 347: unifiedfleet.api.v1.rpc.Fleet.GetVM:output_type -> unifiedfleet.api.v1.models.VM
+	13,  // 348: unifiedfleet.api.v1.rpc.Fleet.ListVMs:output_type -> unifiedfleet.api.v1.rpc.ListVMsResponse
+	193, // 349: unifiedfleet.api.v1.rpc.Fleet.CreateAsset:output_type -> unifiedfleet.api.v1.models.asset
+	193, // 350: unifiedfleet.api.v1.rpc.Fleet.UpdateAsset:output_type -> unifiedfleet.api.v1.models.asset
+	193, // 351: unifiedfleet.api.v1.rpc.Fleet.GetAsset:output_type -> unifiedfleet.api.v1.models.asset
+	125, // 352: unifiedfleet.api.v1.rpc.Fleet.ListAssets:output_type -> unifiedfleet.api.v1.rpc.ListAssetsResponse
+	197, // 353: unifiedfleet.api.v1.rpc.Fleet.DeleteAsset:output_type -> google.protobuf.Empty
+	193, // 354: unifiedfleet.api.v1.rpc.Fleet.RenameAsset:output_type -> unifiedfleet.api.v1.models.asset
+	129, // 355: unifiedfleet.api.v1.rpc.Fleet.BatchGetKVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetKVMsResponse
+	131, // 356: unifiedfleet.api.v1.rpc.Fleet.BatchGetDHCPConfigs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDHCPConfigsResponse
+	133, // 357: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEs:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEsResponse
+	135, // 358: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachines:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachinesResponse
+	137, // 359: unifiedfleet.api.v1.rpc.Fleet.BatchGetSwitches:output_type -> unifiedfleet.api.v1.rpc.BatchGetSwitchesResponse
+	139, // 360: unifiedfleet.api.v1.rpc.Fleet.BatchGetRPMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetRPMsResponse
+	141, // 361: unifiedfleet.api.v1.rpc.Fleet.BatchGetDracs:output_type -> unifiedfleet.api.v1.rpc.BatchGetDracsResponse
+	143, // 362: unifiedfleet.api.v1.rpc.Fleet.BatchGetNics:output_type -> unifiedfleet.api.v1.rpc.BatchGetNicsResponse
+	145, // 363: unifiedfleet.api.v1.rpc.Fleet.BatchGetVMs:output_type -> unifiedfleet.api.v1.rpc.BatchGetVMsResponse
+	147, // 364: unifiedfleet.api.v1.rpc.Fleet.BatchGetVlans:output_type -> unifiedfleet.api.v1.rpc.BatchGetVlansResponse
+	149, // 365: unifiedfleet.api.v1.rpc.Fleet.BatchGetRacks:output_type -> unifiedfleet.api.v1.rpc.BatchGetRacksResponse
+	151, // 366: unifiedfleet.api.v1.rpc.Fleet.BatchGetChromePlatforms:output_type -> unifiedfleet.api.v1.rpc.BatchGetChromePlatformsResponse
+	153, // 367: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEPrototypesResponse
+	155, // 368: unifiedfleet.api.v1.rpc.Fleet.BatchGetRackLSEPrototypes:output_type -> unifiedfleet.api.v1.rpc.BatchGetRackLSEPrototypesResponse
+	199, // 369: unifiedfleet.api.v1.rpc.Fleet.GetChromeOSDeviceData:output_type -> unifiedfleet.api.v1.models.ChromeOSDeviceData
+	195, // 370: unifiedfleet.api.v1.rpc.Fleet.CreateCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
+	195, // 371: unifiedfleet.api.v1.rpc.Fleet.UpdateCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
+	195, // 372: unifiedfleet.api.v1.rpc.Fleet.GetCachingService:output_type -> unifiedfleet.api.v1.models.CachingService
+	161, // 373: unifiedfleet.api.v1.rpc.Fleet.ListCachingServices:output_type -> unifiedfleet.api.v1.rpc.ListCachingServicesResponse
+	197, // 374: unifiedfleet.api.v1.rpc.Fleet.DeleteCachingService:output_type -> google.protobuf.Empty
+	172, // 375: unifiedfleet.api.v1.rpc.Fleet.UpdateMachineLSEDeployment:output_type -> unifiedfleet.api.v1.models.MachineLSEDeployment
+	2,   // 376: unifiedfleet.api.v1.rpc.Fleet.BatchUpdateMachineLSEDeployment:output_type -> unifiedfleet.api.v1.rpc.BatchUpdateMachineLSEDeploymentResponse
+	172, // 377: unifiedfleet.api.v1.rpc.Fleet.GetMachineLSEDeployment:output_type -> unifiedfleet.api.v1.models.MachineLSEDeployment
+	5,   // 378: unifiedfleet.api.v1.rpc.Fleet.BatchGetMachineLSEDeployments:output_type -> unifiedfleet.api.v1.rpc.BatchGetMachineLSEDeploymentsResponse
+	7,   // 379: unifiedfleet.api.v1.rpc.Fleet.ListMachineLSEDeployments:output_type -> unifiedfleet.api.v1.rpc.ListMachineLSEDeploymentsResponse
+	196, // 380: unifiedfleet.api.v1.rpc.Fleet.CreateSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
+	196, // 381: unifiedfleet.api.v1.rpc.Fleet.UpdateSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
+	196, // 382: unifiedfleet.api.v1.rpc.Fleet.GetSchedulingUnit:output_type -> unifiedfleet.api.v1.models.SchedulingUnit
+	167, // 383: unifiedfleet.api.v1.rpc.Fleet.ListSchedulingUnits:output_type -> unifiedfleet.api.v1.rpc.ListSchedulingUnitsResponse
+	197, // 384: unifiedfleet.api.v1.rpc.Fleet.DeleteSchedulingUnit:output_type -> google.protobuf.Empty
+	170, // 385: unifiedfleet.api.v1.rpc.Fleet.UpdateConfigBundle:output_type -> unifiedfleet.api.v1.rpc.UpdateConfigBundleResponse
+	258, // [258:386] is the sub-list for method output_type
+	130, // [130:258] is the sub-list for method input_type
+	130, // [130:130] is the sub-list for extension type_name
+	130, // [130:130] is the sub-list for extension extendee
+	0,   // [0:130] is the sub-list for field type_name
 }
 
 func init() { file_infra_unifiedfleet_api_v1_rpc_fleet_proto_init() }

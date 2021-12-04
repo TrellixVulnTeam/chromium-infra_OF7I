@@ -1829,16 +1829,30 @@ func TestCreateDrac(t *testing.T) {
 		CapacityPort: 100,
 	})
 	Convey("CreateDrac", t, func() {
-		Convey("Create new drac with drac_id", func() {
+		Convey("Create new drac - Happy path", func() {
+			setupTestVlan(ctx)
 			drac := mockDrac("")
 			drac.Machine = "machine-1"
 			req := &ufsAPI.CreateDracRequest{
 				Drac:   drac,
-				DracId: "Drac-1",
+				DracId: "drac-1",
+				NetworkOption: &ufsAPI.NetworkOption{
+					Ip: "192.168.40.10",
+				},
 			}
 			resp, err := tf.Fleet.CreateDrac(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac)
+
+			// Verify network settings
+			dhcp, err := configuration.GetDHCPConfig(ctx, "drac-1")
+			So(err, ShouldBeNil)
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.10")
+			So(dhcp.GetVlan(), ShouldEqual, "vlan-1")
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.10"})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeTrue)
 		})
 
 		Convey("Create new drac - Invalid input nil", func() {

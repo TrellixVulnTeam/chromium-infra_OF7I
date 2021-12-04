@@ -37,6 +37,9 @@ var AddDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DracFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
+		c.Flags.StringVar(&c.ip, "ip", "", "ip to assign to the drac")
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "vlan to assign to the drac")
+
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the drac")
 		c.Flags.StringVar(&c.dracName, "name", "", "the name of the drac to add")
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the drac to add")
@@ -62,6 +65,8 @@ type addDrac struct {
 	switchName  string
 	switchPort  string
 	tags        []string
+	ip          string
+	vlanName    string
 }
 
 func (c *addDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -117,8 +122,13 @@ func (c *addDrac) innerRun(a subcommands.Application, args []string, env subcomm
 	res, err := ic.CreateDrac(ctx, &ufsAPI.CreateDracRequest{
 		Drac:   &drac,
 		DracId: drac.GetName(),
+		NetworkOption: &ufsAPI.NetworkOption{
+			Ip:   c.ip,
+			Vlan: c.vlanName,
+		},
 	})
 	if err != nil {
+		fmt.Printf("If the error is only related to Vlan/IP set up, the drac is already created. Please use `shivas update drac` to update network settings")
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
