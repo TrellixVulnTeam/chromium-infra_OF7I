@@ -126,6 +126,32 @@ func TestRackRegistration(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
+
+		Convey("Create new rack - duplicated bbnum", func() {
+			fmt.Println("duplicated bbnum")
+			rack := &ufspb.Rack{
+				Name:  "rack-14",
+				Bbnum: 14,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			ctx := initializeFakeAuthDB(ctx, "user:user@example.com", util.RegistrationsCreate, util.BrowserLabAdminRealm)
+			_, err := RackRegistration(ctx, rack)
+			So(err, ShouldBeNil)
+			rack2 := &ufspb.Rack{
+				Name:  "rack-14-duplicated",
+				Bbnum: 14,
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+				Realm: util.BrowserLabAdminRealm,
+			}
+			_, err = RackRegistration(ctx, rack2)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "already has bbnum 14")
+		})
 	})
 }
 

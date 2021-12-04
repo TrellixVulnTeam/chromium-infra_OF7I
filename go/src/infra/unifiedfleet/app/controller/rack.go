@@ -569,6 +569,21 @@ func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
 	return nil
 }
 
+func validateRackBbnum(ctx context.Context, bbnum int32) error {
+	if bbnum == 0 {
+		// Won't verify bbnum's uniqueness if it's not set
+		return nil
+	}
+	racks, err := registration.QueryRackByPropertyName(ctx, "bbnum", bbnum, true)
+	if err != nil {
+		return errors.Annotate(err, "validateRackBbnum - failed to query rack for bbnum %d", bbnum).Err()
+	}
+	if len(racks) > 0 {
+		return status.Error(codes.InvalidArgument, fmt.Sprintf("validateRackBbnum - Rack %s already has bbnum %d.\n", racks[0].GetName(), bbnum))
+	}
+	return nil
+}
+
 // validateRackRegistration validates if a rack, switches, kvms and rpms can be created in the datastore.
 //
 // checks if the resources rack/switches/kvms/rpms already exists in the system.
@@ -578,6 +593,9 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 		return errors.New("rack cannot be empty")
 	}
 	if err := ufsUtil.CheckPermission(ctx, ufsUtil.RegistrationsCreate, rack.GetRealm()); err != nil {
+		return err
+	}
+	if err := validateRackBbnum(ctx, rack.GetBbnum()); err != nil {
 		return err
 	}
 	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {

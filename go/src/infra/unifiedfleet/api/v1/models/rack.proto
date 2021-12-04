@@ -26,6 +26,11 @@ message Rack {
    // Unique (fake probably) asset tag
    // The format will be racks/XXX
    string name = 1;
+
+   // The Breadboard Number for rack.
+   // Reference: https://moma.corp.google.com/glossary?q=bbnum
+   int32 bbnum = 13;
+
    Location location = 2;
    // Indicates the Rack Unit capacity of the rack.
    int32 capacity_ru = 3;

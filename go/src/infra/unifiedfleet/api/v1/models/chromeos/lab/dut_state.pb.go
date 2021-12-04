@@ -77,11 +77,11 @@ const (
 	PeripheralState_SERVO_UPDATER_ISSUE PeripheralState = 21
 	// Issue detected in servod and reported by dut_controller_missing_fault control.
 	PeripheralState_SERVOD_DUT_CONTROLLER_MISSING PeripheralState = 22
-	// Issue related to cold reset pin on the servo host.
+	// Issue related to cold reset pin on the DUT.
 	PeripheralState_COLD_RESET_PIN_ISSUE PeripheralState = 23
-	// Issue related to warm reset pin on the servo host.
+	// Issue related to warm reset pin on the DUT.
 	PeripheralState_WARM_RESET_PIN_ISSUE PeripheralState = 24
-	// Issue related to power button pin on the servo host.
+	// Issue related to power button pin on the DUT.
 	PeripheralState_POWER_BUTTON_PIN_ISSUE PeripheralState = 25
 )
 

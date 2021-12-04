@@ -28,6 +28,7 @@ const RackKind string = "Rack"
 type RackEntity struct {
 	_kind     string   `gae:"$kind,Rack"`
 	ID        string   `gae:"$id"`
+	Bbnum     int32    `gae:"bbnum"`
 	SwitchIDs []string `gae:"switch_ids"` // deprecated. Do not use.
 	KVMIDs    []string `gae:"kvm_ids"`    // deprecated. Do not use.
 	RPMIDs    []string `gae:"rpm_ids"`    // deprecated. Do not use.
@@ -59,6 +60,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	}
 	return &RackEntity{
 		ID:    p.GetName(),
+		Bbnum: p.GetBbnum(),
 		Zone:  p.GetLocation().GetZone().String(),
 		Tags:  p.GetTags(),
 		Rack:  rack,
@@ -69,7 +71,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 // QueryRackByPropertyName queries Rack Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned racks
-func QueryRackByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Rack, error) {
+func QueryRackByPropertyName(ctx context.Context, propertyName string, id interface{}, keysOnly bool) ([]*ufspb.Rack, error) {
 	q := datastore.NewQuery(RackKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*RackEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
