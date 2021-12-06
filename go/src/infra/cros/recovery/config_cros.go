@@ -74,6 +74,7 @@ func CrosDeployConfig() io.Reader {
 // crosClosePlanBody provides plan to close cros repair/deploy tasks.
 const crosClosePlanBody = `
 "critical_actions": [
+	"Remove in-use flag on servo-host",
 	"Remove request to reboot is servo is good"
 ],
 "actions": {
@@ -91,6 +92,10 @@ const crosClosePlanBody = `
 			"servo_state_is_working"
 		],
 		"exec_name":"cros_remove_reboot_request",
+		"allow_fail_after_recovery": true
+	},
+	"Remove in-use flag on servo-host":{
+		"exec_name":"cros_remove_servo_in_use",
 		"allow_fail_after_recovery": true
 	}
 }
