@@ -294,7 +294,12 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 	log.Info(ctx, "Run DUT %q: starting...", dut.Name)
 	planNames := config.GetPlanNames()
 	log.Debug(ctx, "Run DUT %q plans: will use %s.", dut.Name, planNames)
+	hasClosingPlan := false
 	for _, planName := range planNames {
+		if planName == PlanClosing {
+			// The Closing plan will be added by default and it i sok if it missed.
+			hasClosingPlan = true
+		}
 		if _, ok := config.GetPlans()[planName]; !ok {
 			return errors.Reason("run dut %q plans: plan %q not found in configuration", dut.Name, planName).Err()
 		}
@@ -326,16 +331,19 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		}
 	}
 	defer func() {
-		plan, ok := config.GetPlans()[PlanClosing]
-		if !ok {
-			log.Info(ctx, "Run plans: plan %q not found in configuration.", PlanClosing)
-		} else {
-			// Closing plan always allowed to fail.
-			plan.AllowFail = true
-			if err := runSinglePlan(ctx, PlanClosing, plan, execArgs); err != nil {
-				log.Debug(ctx, "Run plans: plan %q for %q finished with error: %s", PlanClosing, dut.Name, err)
+		// If closing plan provided by configuration then we do not need run it here.
+		if !hasClosingPlan {
+			plan, ok := config.GetPlans()[PlanClosing]
+			if !ok {
+				log.Info(ctx, "Run plans: plan %q not found in configuration.", PlanClosing)
 			} else {
-				log.Debug(ctx, "Run plans: plan %q for %q finished successfully", PlanClosing, dut.Name)
+				// Closing plan always allowed to fail.
+				plan.AllowFail = true
+				if err := runSinglePlan(ctx, PlanClosing, plan, execArgs); err != nil {
+					log.Debug(ctx, "Run plans: plan %q for %q finished with error: %s", PlanClosing, dut.Name, err)
+				} else {
+					log.Debug(ctx, "Run plans: plan %q for %q finished successfully", PlanClosing, dut.Name)
+				}
 			}
 		}
 	}()
@@ -398,7 +406,7 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 // resources and then we will run the same plan for each resource.
 func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	switch planName {
-	case PlanCrOS:
+	case PlanCrOS, PlanClosing:
 		if dut.Name != "" {
 			return []string{dut.Name}
 		}
@@ -416,8 +424,6 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 		if dut.ChameleonHost != nil {
 			return []string{dut.ChameleonHost.Name}
 		}
-	case PlanClosing:
-		return []string{"Nothing"}
 	}
 	return nil
 }
