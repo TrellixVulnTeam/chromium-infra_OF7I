@@ -18,10 +18,7 @@ queue:
   max_concurrent_requests: 1
 
 - name: reclustering
-  # Gradually start new tasks, so auto-scaling has time to catch-up.
-  # At time of writing, ~50 workers are configured, so this ramps tasks
-  # over 10 seconds.
-  rate: 5/s
+  rate: 500/s
   retry_parameters:
     # Never retry tasks if they fail. If this is changed, reclustering run
     # progress reporting should be modified to handle shards being started
