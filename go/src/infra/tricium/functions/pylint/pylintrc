@@ -31,6 +31,7 @@ disable=
   bad-indentation,
   bad-inline-option,
   broad-except,
+  consider-using-f-string, # py3-specific.
   deprecated-module,
   duplicate-code,
   exec-used,
@@ -46,9 +47,11 @@ disable=
   missing-return-type-doc, # Noisy return type warning from docparams plugin.
   no-self-use,
   protected-access,
+  raise-missing-from, # py3-specific.
   reimported,
   relative-beyond-top-level,
   star-args,
+  super-with-arguments, # py3-specific.
   superfluous-parens,  # Disabled to prevent firing when linting Python3 code.
   too-few-public-methods,
   too-many-ancestors,
@@ -61,6 +64,7 @@ disable=
   too-many-return-statements,
   too-many-statements,
   trailing-whitespace, # Overlap with Spacey analyzer.
+  useless-object-inheritance, # py3-specific.
   wrong-import-order,
   wrong-import-position,
 
