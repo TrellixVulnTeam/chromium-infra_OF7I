@@ -14,6 +14,8 @@ const (
 	partitionNumKernelB = "4"
 	partitionNumRootA   = "3"
 	partitionNumRootB   = "5"
+	partitionNumMiniOSA = "9"
+	partitionNumMiniOSB = "10"
 )
 
 // partitionsInfo holds active/inactive root + kernel partition information.
@@ -24,6 +26,9 @@ type partitionInfo struct {
 	// The active + inactive root device partitions (e.g. /dev/nvme0n1p3).
 	activeRoot   string
 	inactiveRoot string
+	// The A + B miniOS device partitions.
+	miniOSA string
+	miniOSB string
 }
 
 func getPartitionInfo(r rootDev) partitionInfo {
@@ -36,6 +41,8 @@ func getPartitionInfo(r rootDev) partitionInfo {
 			inactiveKernel: rootDiskPartDelim + partitionNumKernelB,
 			activeRoot:     rootDiskPartDelim + partitionNumRootA,
 			inactiveRoot:   rootDiskPartDelim + partitionNumRootB,
+			miniOSA:        rootDiskPartDelim + partitionNumMiniOSA,
+			miniOSB:        rootDiskPartDelim + partitionNumMiniOSB,
 		}
 	case partitionNumRootB:
 		return partitionInfo{
@@ -43,6 +50,8 @@ func getPartitionInfo(r rootDev) partitionInfo {
 			inactiveKernel: rootDiskPartDelim + partitionNumKernelA,
 			activeRoot:     rootDiskPartDelim + partitionNumRootB,
 			inactiveRoot:   rootDiskPartDelim + partitionNumRootA,
+			miniOSA:        rootDiskPartDelim + partitionNumMiniOSA,
+			miniOSB:        rootDiskPartDelim + partitionNumMiniOSB,
 		}
 	default:
 		panic(fmt.Sprintf("Unexpected root partition number of %s", r.partNum))

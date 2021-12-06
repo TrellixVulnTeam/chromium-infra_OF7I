@@ -220,6 +220,22 @@ func (p *provisionState) installRoot(ctx context.Context, pi partitionInfo) erro
 	return runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
 }
 
+// installMiniOS updates miniOS Partitions on disk.
+func (p *provisionState) installMiniOS(ctx context.Context, pi partitionInfo) error {
+	url, err := p.s.cacheForDut(ctx, path.Join(p.imagePath, "full_dev_part_MINIOS.bin.gz"), p.dutName)
+	if err != nil {
+		return fmt.Errorf("install miniOS: failed to get GS Cache URL, %s", err)
+	}
+	// Write to both A + B miniOS partitions.
+	if err := runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSA)); err != nil {
+		return fmt.Errorf("install miniOS: failed to write to A partition, %s", err)
+	}
+	if err := runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSB)); err != nil {
+		return fmt.Errorf("install miniOS: failed to write to B partition, %s", err)
+	}
+	return nil
+}
+
 const (
 	statefulPath           = "/mnt/stateful_partition"
 	updateStatefulFilePath = statefulPath + "/.update_available"
@@ -337,6 +353,36 @@ func (p *provisionState) installDLC(ctx context.Context, spec *tls.ProvisionDutR
 		dlcOutputSlotDir, dlcOutputImage, url)
 	if err := runCmd(p.c, dlcCmd); err != nil {
 		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
+	}
+	return nil
+}
+
+func (p *provisionState) provisionMiniOS(ctx context.Context) error {
+	log.Printf("provision MiniOS: started")
+	defer log.Printf("provision MiniOS: finished")
+
+	r, err := getRootDev(p.c)
+	if err != nil {
+		return fmt.Errorf("provision MiniOS: failed to get root device from DUT, %s", err)
+	}
+
+	// Check if the device has miniOS partitions.
+	for _, part := range []string{"9", "10"} {
+		out, err := runCmdOutput(p.c, fmt.Sprintf("cgpt show -t %s -i %s", r.disk, part))
+		if err != nil {
+			return fmt.Errorf("provision MiniOS: failed to get partition type, %s", err)
+		}
+		out = strings.TrimSpace(out)
+		// Check against miniOS GUID type.
+		if out != "09845860-705F-4BB5-B16C-8A8A099CAF52" {
+			log.Printf("Skipping miniOS provision as device doesn't support miniOS")
+			return nil
+		}
+	}
+
+	log.Printf("provision MiniOS: continuing to provision miniOS partitions")
+	if err := p.installMiniOS(ctx, getPartitionInfo(r)); err != nil {
+		return fmt.Errorf("provision MiniOS: failed to install miniOS, %s", err)
 	}
 	return nil
 }

@@ -244,6 +244,22 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 		return
 	}
 
+	// Provision miniOS.
+	select {
+	case <-ctx.Done():
+		setError(newOperationError(
+			codes.DeadlineExceeded,
+			"provision: timed out before provisioning miniOS",
+			tls.ProvisionDutResponse_REASON_PROVISIONING_TIMEDOUT.String()))
+		return
+	default:
+	}
+	if err := p.provisionMiniOS(ctx); err != nil {
+		// Initially failing to provision miniOS partitions isn't a failure.
+		log.Printf("provision: failed to provision miniOS partitions, check partition table, %s", err)
+	}
+
+	// Finish provisioning.
 	if err := s.lroMgr.SetResult(opName, &tls.ProvisionDutResponse{}); err != nil {
 		log.Printf("provision: failed to set Operation result, %s", err)
 	}
@@ -253,7 +269,6 @@ func (s *Server) provision(req *tls.ProvisionDutRequest, opName string) {
 	if err := runCmd(p.c, "rm "+provisionFailed); err != nil {
 		log.Printf("Failed to remove provisionFailed file, %s", err)
 	}
-
 }
 
 func (s *Server) provisionLacros(req *tls.ProvisionLacrosRequest, opName string) {
