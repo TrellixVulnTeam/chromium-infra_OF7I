@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cipd"
 	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
 	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
@@ -23,6 +24,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -252,6 +254,117 @@ func TestPerformBootstrap(t *testing.T) {
 					}
 				}
 			}`)
+		})
+
+	})
+}
+
+type testLogdogBuildStream struct {
+	datagram []byte
+	writeErr error
+	closeErr error
+}
+
+func (s *testLogdogBuildStream) WriteDatagram(dg []byte) error {
+	if s.writeErr != nil {
+		return s.writeErr
+	}
+	s.datagram = dg
+	return nil
+}
+
+func (s *testLogdogBuildStream) Close() error {
+	return s.closeErr
+}
+
+func testBuildStreamFactory() (*testLogdogBuildStream, logdogBuildStreamFactory) {
+	stream := &testLogdogBuildStream{}
+	return stream, func(ctx context.Context) (streamclient.DatagramStream, error) {
+		return stream, nil
+	}
+}
+
+func TestReportBootstrapFailure(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	Convey("reportBootstrapFailure", t, func() {
+		bootstrapErr := errors.New("test error")
+		stream, streamFactory := testBuildStreamFactory()
+
+		Convey("does not modify build for exe failure", func() {
+			bootstrapErr := bootstrap.ExeFailure.Apply(bootstrapErr)
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldBeNil)
+			So(stream.datagram, ShouldBeNil)
+		})
+
+		Convey("fails if getting stream fails", func() {
+			streamFactoryErr := errors.New("test stream factory error")
+			streamFactory := func(ctx context.Context) (streamclient.DatagramStream, error) {
+				return nil, streamFactoryErr
+			}
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldErrLike, streamFactoryErr)
+		})
+
+		Convey("fails if writing to stream fails", func() {
+			streamWriteErr := errors.New("test stream write error")
+			stream.writeErr = streamWriteErr
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldErrLike, streamWriteErr)
+		})
+
+		Convey("writes build proto", func() {
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldBeNil)
+			So(stream.datagram, ShouldNotBeNil)
+			build := &buildbucketpb.Build{}
+			PanicOnError(proto.Unmarshal(stream.datagram, build))
+			So(build.Status, ShouldEqual, buildbucketpb.Status_INFRA_FAILURE)
+			So(build.SummaryMarkdown, ShouldEqual, "<pre>test error</pre>")
+		})
+
+		Convey("sets failure type for patch failure", func() {
+			bootstrapErr := bootstrap.PatchRejected.Apply(bootstrapErr)
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldBeNil)
+			So(stream.datagram, ShouldNotBeNil)
+			build := &buildbucketpb.Build{}
+			PanicOnError(proto.Unmarshal(stream.datagram, build))
+			So(build.Output.Properties, ShouldResembleProtoJSON, `{
+				"failure_type": "PATCH_FAILURE"
+			}`)
+		})
+
+		Convey("fails if closing stream fails", func() {
+			streamCloseErr := errors.New("test stream close error")
+			stream.closeErr = streamCloseErr
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldErrLike, streamCloseErr)
+		})
+
+		Convey("reports prior error if closing stream fails during another error", func() {
+			streamWriteErr := errors.New("test stream write error")
+			stream.writeErr = streamWriteErr
+			streamCloseErr := errors.New("test stream close error")
+			stream.closeErr = streamCloseErr
+
+			err := reportBootstrapFailure(ctx, bootstrapErr, streamFactory)
+
+			So(err, ShouldErrLike, streamWriteErr)
 		})
 
 	})
