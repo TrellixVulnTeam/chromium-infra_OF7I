@@ -1,0 +1,22 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.infra.windows_image_builder.dest;
+
+import  "recipes/infra/windows_image_builder/sources.proto";
+
+message Dest {
+  // dest is where to upload the image to
+  oneof dest {
+    // CIPD src refers to a cipd instance
+    sources.CIPDSrc cipd_src = 1;
+    // gcs_src refers to a file in cloud storage
+    sources.GCSSrc gcs_src = 2;
+  }
+  // optional tags to tag this artifact to. Ex: win_version:10
+  // This will be added as tags in cipd or metadata in GCS
+  map<string, string> tags = 3;
+}

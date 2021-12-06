@@ -12,7 +12,8 @@ from . import add_windows_driver
 from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
                                                     as winpe)
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
-from PB.recipes.infra.windows_image_builder import sources
+from PB.recipes.infra.windows_image_builder import sources as src_pb
+from PB.recipes.infra.windows_image_builder import dest as dest_pb
 
 COPYPE = 'Copy-PE.ps1'
 ADDFILE = 'robocopy'
@@ -55,7 +56,7 @@ class OfflineWinPECustomization(customization.Customization):
               offline_winpe_customization: OfflineWinPECustomization{
                 name: "winpe_gce_vanilla"
                 image_src: Src{...}
-                image_dest: GCSSrc{...}
+                image_dests: [...]
                 offline_customization: [...]
               }
             }
@@ -64,7 +65,6 @@ class OfflineWinPECustomization(customization.Customization):
               offline_winpe_customization: OfflineWinPECustomization{
                 name: ""
                 image_src: Src{...}
-                image_dest: GCSSrc{...}
                 offline_customization: [...]
               }
             }
@@ -88,10 +88,10 @@ class OfflineWinPECustomization(customization.Customization):
     """ return the output of executing this config. Doesn't guarantee that the
         output exists"""
     if self._key:
-      return sources.GCSSrc(
-          bucket='chrome-gce-images',
-          source='WIB-WIM/{}.wim'.format(self._key),
-      )
+      return dest_pb.Dest(
+          gcs_src=src_pb.GCSSrc(
+              bucket='chrome-gce-images',
+              source='WIB-WIM/{}.wim'.format(self._key)),)
     return None  # pragma: no cover
 
   def execute_customization(self):
@@ -165,20 +165,15 @@ class OfflineWinPECustomization(customization.Customization):
           self._scratchpad,
           save=save)
       if save:
-        default_src = self.get_output()
-        self._file.copy(
-            name='Copy output to destination',
-            source=src,
-            # use the expected destination in the GCS cache
-            dest=self._source.get_local_src(sources.Src(gcs_src=default_src)))
+        def_dest = self.get_output()
         # upload the output to default bucket for offline_winpe_customization
-        self._source.record_upload(default_src)
+        self._source.record_upload(def_dest, src)
         # upload to any custom destinations that might be given
         cust = self._customization.offline_winpe_customization
-        custom_destination = cust.image_dest
-        if custom_destination.bucket and custom_destination.source:
-          self._source.record_upload(custom_destination,
-                                     self._source.get_url(default_src))
+        for image_dest in cust.image_dests:
+          # update the link to the original upload.
+          image_dest.tags['orig'] = def_dest.tags['orig']
+          self._source.record_upload(image_dest, src)
 
   def perform_winpe_action(self, action):
     """ perform_winpe_action Performs the given action
@@ -238,7 +233,7 @@ class OfflineWinPECustomization(customization.Customization):
       src_file = self._path.basename(src)
       src = self._path.dirname(src)
     # destination to copy the file to
-    dest = self._path.dirname(self._workdir.join('mount', af.dst))
+    dest = self._workdir.join('mount', af.dst)
     self.execute_script(
         'Add file {}'.format(src.join(src_file)),
         ADDFILE,

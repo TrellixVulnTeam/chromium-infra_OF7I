@@ -172,7 +172,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     with self.m.step.nest('execute config {}'.format(config.name)):
       for cust in self._customizations:
         output = cust.get_output()
-        if not self._sources.exists(src_pb.Src(gcs_src=output)):
+        if not self._sources.exists(src_pb.Src(gcs_src=output.gcs_src)):
           # execute the customization if we don't have the output
           cust.execute_customization()
 

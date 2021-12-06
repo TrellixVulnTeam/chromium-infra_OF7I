@@ -69,11 +69,11 @@ def NEST_DOWNLOAD_ALL_SRC():
 
 def NEST_UPLOAD_ALL_SRC():
   """ Upload all gcs artifacts step name"""
-  return 'Upload all pending gcs artifacts'
+  return 'Upload all available packages'
 
 
 def json_res(api, success=True, err_msg='Failed step'):
-  """ generate a api.json object to moxk outputs """
+  """ generate a api.json object to mock outputs """
   if success:
     return api.json.output({'results': {'Success': success,}})
   return api.json.output({
@@ -324,10 +324,36 @@ def CHECK_INSTALL_DRIVER(api, image, customization, action, args=None):
           'PowerShell> Install driver {}'.format(action)), wild_card)
 
 
+def CHECK_CIPD_UPLOAD(api, dest):
+  """
+      Post check the upload to GCS
+  """
+  # Wildcard args for everything + tags
+  args = ['.*'] * (12 + len(dest.tags) * 2)
+  # ref arg check
+  args[7] = dest.cipd_src.refs  # check for correct refs
+  # tags added in reverse order
+  idx = 9 + len(dest.tags) * 2
+  for tag, value in dest.tags.items():
+    args[idx] = '{}:{}'.format(tag, value)
+    idx -= 2
+  package = dest.cipd_src.package
+  platform = dest.cipd_src.platform
+  return api.post_process(
+      StepCommandRE,
+      NEST(NEST_UPLOAD_ALL_SRC(), 'create {}/{}'.format(package, platform)),
+      args)
+
+
 #   Generate proto configs helper functions
 
 
-def WPE_IMAGE(image, arch, customization, sub_customization, action_list):
+def WPE_IMAGE(image,
+              arch,
+              customization,
+              sub_customization,
+              action_list,
+              up_dests=None):
   """ generates a winpe customization image """
   return wib.Image(
       name=image,
@@ -336,6 +362,7 @@ def WPE_IMAGE(image, arch, customization, sub_customization, action_list):
           wib.Customization(
               offline_winpe_customization=winpe.OfflineWinPECustomization(
                   name=customization,
+                  image_dests=up_dests,
                   offline_customization=[
                       actions.OfflineAction(
                           name=sub_customization, actions=action_list)

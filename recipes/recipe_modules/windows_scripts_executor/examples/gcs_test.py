@@ -6,6 +6,7 @@ from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
                                                     as winpe)
 from PB.recipes.infra.windows_image_builder import sources as sources
+from PB.recipes.infra.windows_image_builder import dest as dest
 from PB.recipes.infra.windows_image_builder import (windows_image_builder as
                                                     wib)
 
@@ -37,10 +38,14 @@ def RunSteps(api, config):
   api.windows_scripts_executor.download_available_packages()
   api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\WinTools\\net\\ping.exe',
                           'FILE')
-  api.windows_scripts_executor.execute_config(config)
+  # mock existence of the image pulled from GCS
   api.path.mock_add_paths(
-      '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
-      'WIB-WIM\\{}.wim'.format(key), 'FILE')
+      '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM\\ffaa037563.wim',
+      'FILE')
+  api.windows_scripts_executor.execute_config(config)
+  # mock existence of image created using copype
+  api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(customization) +
+                          'media\\sources\\boot.wim')
   api.windows_scripts_executor.upload_wib_artifacts()
 
 
@@ -67,9 +72,11 @@ def GenTests(api):
   WPE_IMAGE_WITH_DEST = t.WPE_IMAGE(image, wib.ARCH_X86, customization,
                                     'no-action', [])
   tmp_customization = WPE_IMAGE_WITH_DEST.customizations[0]
-  tmp_customization.offline_winpe_customization.image_dest.CopyFrom(
-      sources.GCSSrc(
-          bucket='chrome-gce-images', source='WIB-OUT/intermediate-winpe.wim'))
+  tmp_customization.offline_winpe_customization.image_dests.append(
+      dest.Dest(
+          gcs_src=sources.GCSSrc(
+              bucket='chrome-gce-images',
+              source='WIB-OUT/intermediate-winpe.wim')))
 
   # add unpinned artifact from gcs
   yield (
@@ -87,8 +94,8 @@ def GenTests(api):
       t.ADD_GCS_FILE(api, 'WinTools', 'net\\ping.exe', image, customization) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-          '\\\\WIB-WIM\\\\{}.wim'.format(key),
+          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
+          '\\\\sources\\\\boot.wim',
           'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))
@@ -115,38 +122,44 @@ def GenTests(api):
   yield (
       api.test('Add customization src image', api.platform('win', 64)) +
       api.properties(WPE_IMAGE_WITH_SRC) +
-      # mock all the init and deint steps
-      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
+      # mock check for customization output existence
+      t.MOCK_CUST_OUTPUT(
+          api, image, 'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+          False) + t.MOUNT_WIM(api, 'x86', image, customization) +
+      t.UMOUNT_WIM(api, image, customization) +
+      t.DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) +
+      t.CHECK_UMOUNT_WIM(api, image, customization) +
       # Pin the given file to another gcs artifact
-      t.GCS_PIN_FILE(
-          api, 'gs://chrome-gce-images/WIB-OUT/' + 'intermediate-winpe.wim',
-          'gs://chrome-gce-images/WIB-WIM/ffaa037563.wim') +
+      t.GCS_PIN_FILE(api,
+                     'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.wim',
+                     'gs://chrome-gce-images/WIB-WIM/ffaa037563.wim') +
       # download the artifact from it's original link
       t.GCS_DOWNLOAD_FILE(api, 'chrome-gce-images', 'WIB-WIM/ffaa037563.wim') +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-          '\\\\WIB-WIM\\\\{}.wim'.format(key),
-          'gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +
+          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images\\\\' +
+          'WIB-WIM\\\\ffaa037563.wim',
+          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))
 
   # Test using GCSSrc as an output destination.
-  yield (api.test('Add custom gcs destination', api.platform('win', 64)) +
-         api.properties(WPE_IMAGE_WITH_DEST) +
-         # mock all the init and deint steps
-         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
-         # assert that the generated image was uploaded
-         t.CHECK_GCS_UPLOAD(
-             api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-             '\\\\WIB-WIM\\\\{}.wim'.format(key),
-             'gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +
-         # assert that the generated image was uploaded
-         t.CHECK_GCS_UPLOAD(
-             api,
-             '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-             '\\\\WIB-WIM\\\\{}.wim'.format(key),
-             'gs://chrome-gce-images/WIB-OUT/' + 'intermediate-winpe.wim',
-             orig='gs://chrome-gce-images/' + 'WIB-WIM/{}.wim'.format(key)) +
-         api.post_process(StatusSuccess) +  # recipe should pass
-         api.post_process(DropExpectation))
+  yield (
+      api.test('Add custom gcs destination', api.platform('win', 64)) +
+      api.properties(WPE_IMAGE_WITH_DEST) +
+      # mock all the init and deint steps
+      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
+      # assert that the generated image was uploaded
+      t.CHECK_GCS_UPLOAD(
+          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
+          '\\\\sources\\\\boot.wim',
+          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+      # assert that the generated image was uploaded
+      t.CHECK_GCS_UPLOAD(
+          api,
+          '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
+          '\\\\sources\\\\boot.wim',
+          'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.wim',
+          orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+      api.post_process(StatusSuccess) +  # recipe should pass
+      api.post_process(DropExpectation))

@@ -8,6 +8,7 @@ package recipes.infra.windows_image_builder.offline_winpe_customization;
 
 import  "recipes/infra/windows_image_builder/actions.proto";
 import  "recipes/infra/windows_image_builder/sources.proto";
+import  "recipes/infra/windows_image_builder/dest.proto";
 
 /* OfflineWinPECustomization generates a WinPE wim and mounts it to
  * '[MOUNT_DIR]/<name>/mount'. It performs the given customizations and stores
@@ -23,8 +24,8 @@ message OfflineWinPECustomization {
   // The source image to modify
   sources.Src image_src = 2;
 
-  // Optional destination to  upload the image to
-  sources.GCSSrc image_dest = 3;
+  // Optional destinations to upload the output image to
+  repeated dest.Dest image_dests = 3;
 
   // List of OfflineActions to be executed for this customization
   repeated actions.OfflineAction offline_customization = 4;

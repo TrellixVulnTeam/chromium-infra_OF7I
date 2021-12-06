@@ -109,15 +109,6 @@ class GCSManager:
     """
     return 'gs://{}/{}'.format(gcs_src.bucket, gcs_src.source)
 
-  def get_local_path_from_gs_url(self, url):
-    """ get_local_path_from_gs_url returns path on the disk for the given
-        gcs url artifact
-        Args:
-          url: gcs url representing a file on GCS
-    """
-    path = url.replace('gs://', '')
-    return helper.conv_to_win_path(str(self._cache.join(path)))
-
   def get_bucket_source(self, url):
     """ get_bucket_source returns bucket and source given gcs url
         Args:
@@ -129,37 +120,39 @@ class GCSManager:
     source = bs.replace(bucket + '/', '')
     return bucket, source
 
-  def record_upload(self, gcs_src, orig_url=''):
+  def record_upload(self, up_dest, source):
     """ record_upload records the upload to be made on upload_packages
         Args:
-          gcs_src: sources.GCSSrc proto object representing a file on GCS
-          orig_url: gs:// url of the original location for gcs_src. If orig_url
-          is not specified metadata will contain link to the same object.
+          up_dest: dest.Dest proto object representing a file to be created on
+                   GCS.
+          source: local path for the file to be uploaded
     """
-    if orig_url == '':
-      # if link to the original is not given
-      orig_url = self.get_gs_url(gcs_src)
-    if orig_url in self._pending_uploads.keys():
-      # add to list of srcs to upload
-      self._pending_uploads[orig_url].append(gcs_src)
-    else:
-      self._pending_uploads[orig_url] = [gcs_src]
+    if up_dest and up_dest.WhichOneof('dest') == 'gcs_src':
+      if 'orig' not in up_dest.tags:
+        # Add orig tag to self if not given.
+        up_dest.tags['orig'] = self.get_gs_url(up_dest.gcs_src)
+      if source in self._pending_uploads.keys():
+        self._pending_uploads[source].append(up_dest)
+      else:
+        self._pending_uploads[source] = [up_dest]
 
   def upload_packages(self):
     """ upload_packages uploads all the packages that were recorded by
         record_upload """
-    with self._step.nest('Upload all pending gcs artifacts'):
-      for pkg_url, pkgs in self._pending_uploads.items():
-        for pkg in pkgs:
-          local_path = self.get_local_path_from_gs_url(pkg_url)
-          # check if the package is available for upload
-          if self._path.exists(local_path):
-            self._gsutil.upload(
-                local_path,
-                pkg.bucket,
-                pkg.source,
-                # add metadata to the artifact to indicate the original src for
-                # the artifact
-                metadata={'orig': pkg_url},
-                name='upload gs://{}/{}'.format(pkg.bucket, pkg.source))
-        del self._pending_uploads[pkg_url]
+    failed_uploads = {}
+    for source, uploads in self._pending_uploads.items():
+      # check if the file exists before uploading
+      if self._path.exists(source):
+        for upload in uploads:
+          pkg = upload.gcs_src
+          self._gsutil.upload(
+              source,
+              pkg.bucket,
+              pkg.source,
+              metadata=upload.tags,
+              name='upload gs://{}/{}'.format(pkg.bucket, pkg.source))
+      else:
+        # cannot upload this as the file is currently not available
+        failed_uploads[source] = uploads  # pragma: nocover
+    # update the pending uploads map
+    self._pending_uploads = failed_uploads

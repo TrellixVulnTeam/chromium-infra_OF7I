@@ -7,6 +7,7 @@ from PB.recipes.infra.windows_image_builder import (offline_winpe_customization
                                                     as winpe)
 from PB.recipes.infra.windows_image_builder import actions
 from PB.recipes.infra.windows_image_builder import sources
+from PB.recipes.infra.windows_image_builder import dest
 
 from recipe_engine.post_process import DropExpectation, StatusFailure
 from recipe_engine.post_process import StatusSuccess, StepCommandRE
@@ -50,8 +51,8 @@ def RunSteps(api, config):
       'windows_adk\\winpe\\winpe-wmi\\windows-amd64', 'DIRECTORY')
   api.windows_scripts_executor.execute_config(config)
   # mock existence of customization output to trigger upload
-  api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\' +
-                          'WIB-WIM\\{}.wim'.format(key))
+  api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(cust_name) +
+                          'media\\sources\\boot.wim')
   api.windows_scripts_executor.upload_wib_artifacts()
 
 
@@ -102,9 +103,12 @@ def GenTests(api):
                                  'network_setup',
                                  [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])
   HAPPY_PATH_IMAGE.customizations[
-      0].offline_winpe_customization.image_dest.bucket = 'test-bucket'
-  HAPPY_PATH_IMAGE.customizations[
-      0].offline_winpe_customization.image_dest.source = 'out/gce_winpe_rel.wim'
+      0].offline_winpe_customization.image_dests.append(
+          dest.Dest(
+              gcs_src=sources.GCSSrc(
+                  bucket='test-bucket',
+                  source='out/gce_winpe_rel.wim',
+              )))
 
   # Fail the step to gen winpe media folder using copy-pe
   # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/copype-command-line-options
@@ -230,14 +234,14 @@ def GenTests(api):
              cust_name) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
-             api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-             '\\\\WIB-WIM\\\\{}.wim'.format(key),
+             api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(cust_name) +
+             '\\\\sources\\\\boot.wim',
              'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
          # assert that the generated image was uploaded to custom dest
          t.CHECK_GCS_UPLOAD(
              api,
-             '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images' +
-             '\\\\WIB-WIM\\\\{}.wim'.format(key),
+             '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(cust_name) +
+             '\\\\sources\\\\boot.wim',
              'gs://test-bucket/out/gce_winpe_rel.wim',
              orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
          # recipe should pass successfully

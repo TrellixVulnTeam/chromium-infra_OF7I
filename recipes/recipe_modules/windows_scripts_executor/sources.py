@@ -43,6 +43,7 @@ class Source:
                                        gcs_dir)
     self._git = git_manager.GITManager(step, gitiles, git, m_file, path,
                                        git_dir)
+    self._step = step
 
   def record_download(self, src):
     """ record_download records src for pinning and downloading purposes
@@ -65,13 +66,16 @@ class Source:
     self._git.download_packages()
     self._cipd.download_packages()
 
-  def record_upload(self, gcs_src, orig=''):
+  def record_upload(self, dest, source):
     """ record_upload records an upload that is pending to be performed
         Args:
-          gcs_src: sources.GCSSrc proto object that refs a file to be uploaded
-          orig: url representing the static ref for this upload
+          dest: dest.Dest proto object that refs a file to be uploaded
+          source: local_path to the file to be uploaded
     """
-    self._gcs.record_upload(gcs_src, orig)
+    if dest and dest.WhichOneof('dest') == 'gcs_src':
+      self._gcs.record_upload(dest, source)
+    if dest and dest.WhichOneof('dest') == 'cipd_src':
+      self._cipd.record_upload(dest, source)
 
   def get_local_src(self, src):
     """ get_local_src returns path on the disk that points to the given src ref
@@ -92,11 +96,16 @@ class Source:
         Args:
           src: sources.Src proto object that contains ref to an artifact
     """
-    return self._gcs.get_gs_url(src)
+    if src and src.WhichOneof('src') == 'gcs_src':  # pragma: no cover
+      return self._gcs.get_gs_url(src)
+    if src and src.WhichOneof('src') == 'cipd_src':  # pragma: no cover
+      return self._cipd.get_cipd_url(src)
 
   def upload(self):
     """ upload uploads all the available files to be uploaded if available """
-    self._gcs.upload_packages()
+    with self._step.nest('Upload all available packages'):
+      self._gcs.upload_packages()
+      self._cipd.upload_packages()
 
   def exists(self, src):
     """ exists Returns True if the given src exists

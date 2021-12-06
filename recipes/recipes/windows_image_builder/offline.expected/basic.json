@@ -338,7 +338,7 @@
   },
   {
     "cmd": [],
-    "name": "Upload all pending gcs artifacts"
+    "name": "Upload all available packages"
   },
   {
     "name": "$result"
