@@ -143,7 +143,7 @@ export class RuleSection extends LitElement {
         this.editing = false;
     }
 
-    save() {
+    async save() {
         const ruleDefinition = this.shadowRoot.getElementById("rule-definition") as TextArea;
         if (ruleDefinition.value == this.rule.ruleDefinition) {
             this.editing = false;
@@ -160,13 +160,17 @@ export class RuleSection extends LitElement {
                 paths: ["ruleDefinition"],
             },
         }
-        const validationError = (message : string) : void => {
-            this.validationMessage = message;
+        try {
+            const validationError = await this.applyUpdate(request);
+            if (validationError != null) {
+                this.validationMessage = validationError;
+            }
+        } catch (err) {
+            this.showSnackbar(err);
         }
-        this.sendUpdate(request, validationError)
     }
 
-    toggleActive() {
+    async toggleActive() {
         const request : RuleUpdateRequest = {
             rule: {
                 isActive: !this.rule.isActive,
@@ -175,37 +179,42 @@ export class RuleSection extends LitElement {
                 paths: ["isActive"],
             },
         }
-        const validationError = (message : string) : void => {
-            this.showSnackbar(message);
-        }
-        this.sendUpdate(request, validationError)
-    }
 
-    async sendUpdate(request : RuleUpdateRequest, validationError : (message: string) => void) {
         try {
-            const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`, {
-                method: "PATCH",
-                headers: {
-                    "If-Match": this.etag,
-                },
-                body: JSON.stringify(request),
-            });
-            if (response.ok) {
-                const rule = await response.json();
-                this.rule = rule;
-                this.etag = response.headers.get("ETag");
-                this.editing = false;
-            } else {
-                const err = await response.text();
-                // Bad request.
-                if (response.status == 400) {
-                    validationError(err)
-                } else {
-                    this.showSnackbar(err)
-                }
+            const validationError = await this.applyUpdate(request);
+            if (validationError != null) {
+                throw validationError;
             }
         } catch (err) {
-            this.showSnackbar(err)
+            this.showSnackbar(err);
+        }
+    }
+
+    // applyUpdate tries to apply the given update to the rule. If the
+    // update succeeds, this method returns nil. If a validation error
+    // occurs, the validation message is returned.
+    async applyUpdate(request : RuleUpdateRequest) : Promise<string> {
+        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`, {
+            method: "PATCH",
+            headers: {
+                "If-Match": this.etag,
+            },
+            body: JSON.stringify(request),
+        });
+        if (response.ok) {
+            const rule = await response.json();
+            this.rule = rule;
+            this.etag = response.headers.get("ETag");
+            this.editing = false;
+            return null;
+        } else {
+            const err = await response.text();
+            // 400 = Bad request.
+            if (response.status == 400) {
+                return err;
+            } else {
+                throw err;
+            }
         }
     }
 
