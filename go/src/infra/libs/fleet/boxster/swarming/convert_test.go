@@ -237,9 +237,9 @@ func TestGetFlatConfigLabelValuesStr(t *testing.T) {
 		t.Fatalf("Error unmarshalling test FlatConfig: %s", err)
 	}
 
-	Convey("GetFlatConfigLabelValuesStr", t, func() {
+	Convey("GetLabelValuesStr", t, func() {
 		Convey("convert label with existing correct field path - single value", func() {
-			got, err := GetFlatConfigLabelValuesStr("$.hw_design.id.value", &fc)
+			got, err := GetLabelValuesStr("$.hw_design.id.value", &fc)
 			So(err, ShouldBeNil)
 			So(got, ShouldNotBeNil)
 			So(got, ShouldEqual, "Test")

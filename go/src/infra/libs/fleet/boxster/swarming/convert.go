@@ -7,10 +7,12 @@ package swarming
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
@@ -49,16 +51,16 @@ func ConvertAll(dutAttr *api.DutAttribute, flatConfig *payload.FlatConfig) ([]st
 	}
 
 	for _, p := range jsonPaths {
-		valuesStr, err := GetFlatConfigLabelValuesStr(p, flatConfig)
+		valuesStr, err := GetLabelValuesStr(p, flatConfig)
 		if err == nil && valuesStr != "" {
-			return formLabels(labelNames, valuesStr)
+			return FormLabels(labelNames, valuesStr)
 		}
 	}
 	return nil, errors.Reason("No supported config source found").Err()
 }
 
-// formLabels pairs label names with the label values `${label_name}:val1,val2`.
-func formLabels(labelNames []string, valuesStr string) ([]string, error) {
+// FormLabels pairs label names with the label values `${label_name}:val1,val2`.
+func FormLabels(labelNames []string, valuesStr string) ([]string, error) {
 	// Exhausted all possible paths defined in DutAttribute. If valuesStr is empty,
 	// then no values found.
 	if valuesStr == "" {
@@ -79,7 +81,8 @@ func formLabels(labelNames []string, valuesStr string) ([]string, error) {
 //
 // For each DutAttribute, the main label name is defined by its ID value. In
 // addition, users can define other aliases. GetLabelNames will return all as
-// valid label names.
+// valid label names. The first label is always the main label as defined by the
+// ID value.
 func GetLabelNames(dutAttr *api.DutAttribute) ([]string, error) {
 	name := dutAttr.GetId().GetValue()
 	if name == "" {
@@ -88,23 +91,23 @@ func GetLabelNames(dutAttr *api.DutAttribute) ([]string, error) {
 	return append([]string{name}, dutAttr.GetAliases()...), nil
 }
 
-// GetFlatConfigLabelValuesStr takes a path and returns the FlatConfig value.
+// GetLabelValuesStr takes a path and returns the proto value.
 //
-// It uses a jsonpath string to try to find corresponding values in a
-// FlatConfig. It returns a comma-separated string of the values found.
-func GetFlatConfigLabelValuesStr(jsonGetPath string, flatConfig *payload.FlatConfig) (string, error) {
-	js, err := LabelMarshaler.MarshalToString(flatConfig)
+// It uses a jsonpath string to try to find corresponding values in a proto. It
+// returns a comma-separated string of the values found.
+func GetLabelValuesStr(jsonGetPath string, pm proto.Message) (string, error) {
+	js, err := LabelMarshaler.MarshalToString(pm)
 	if err != nil {
 		return "", err
 	}
 
-	fc := interface{}(nil)
-	err = json.Unmarshal([]byte(js), &fc)
+	pmJson := interface{}(nil)
+	err = json.Unmarshal([]byte(js), &pmJson)
 	if err != nil {
 		return "", err
 	}
 
-	labelVals, err := jsonpath.Get(jsonGetPath, fc)
+	labelVals, err := jsonpath.Get(jsonGetPath, pmJson)
 	if err != nil {
 		return "", err
 	}
@@ -125,6 +128,10 @@ func ConstructLabelValuesString(labelVals interface{}) string {
 			valsArr = append(valsArr, i.(string))
 		}
 		rsp = strings.Join(valsArr, ",")
+	case bool:
+		rsp = strconv.FormatBool(labelVals.(bool))
+	case float64:
+		rsp = strconv.FormatFloat(labelVals.(float64), 'f', -1, 64)
 	default:
 		rsp = labelVals.(string)
 	}
