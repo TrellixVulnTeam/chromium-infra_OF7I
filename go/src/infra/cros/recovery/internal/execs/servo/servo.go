@@ -52,3 +52,20 @@ func GetUSBDrivePathOnDut(ctx context.Context, args *execs.RunArgs) (string, err
 	}
 	return "", errors.Reason("get usb drive path on dut: did not find any USB Drive connected to the DUT as we checked that DUT is up").Err()
 }
+
+const (
+	// servoTypeCmd is the servod command for getting the servo type information.
+	servoTypeCmd = "servo_type"
+)
+
+// GetServoType finds and returns the servo type of the DUT's servo.
+func GetServoType(ctx context.Context, args *execs.RunArgs) (string, error) {
+	servoType, err := servodGetString(ctx, args, servoTypeCmd)
+	if err != nil {
+		return "", errors.Annotate(err, "get servo type").Err()
+	}
+	if servoType == "" {
+		return "", errors.Reason("get servo type: servo type is empty").Err()
+	}
+	return servoType, nil
+}

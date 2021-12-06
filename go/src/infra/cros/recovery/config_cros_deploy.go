@@ -11,9 +11,17 @@ const crosDeployPlanBody = `
 "actions": {
 	"device_labels":{
 		"dependencies":[
-			"device_sku"
+			"device_sku",
+			"servo_type_label"
 		 ],
 		 "exec_name":"sample_pass"
+	},
+	"servo_type_label":{
+		"docs":[
+			"Update the servo type label for the DUT info."
+		],
+		"exec_name":"servo_update_servo_type_label",
+		"allow_fail_after_recovery": true
 	},
 	"device_sku":{
 		"docs":[
