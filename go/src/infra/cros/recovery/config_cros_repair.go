@@ -332,9 +332,29 @@ const crosRepairPlanBody = `
 	"device_labels":{
 		"dependencies":[
 			"device_sku",
-			"cr50_labels"
+			"cr50_labels",
+			"audio_loop_back_label"
 		 ],
 		 "exec_name":"sample_pass"
+	},
+	"audio_loop_back_label":{
+		"docs":[
+			"Update the audio_loop_back label on the cros Device."
+		],
+		"conditions":[
+			"dut_audio_loop_back_state_not_working"
+		],
+		"exec_name":"cros_update_audio_loopback_state_label",
+		"allow_fail_after_recovery": true
+	},
+	"dut_audio_loop_back_state_not_working":{
+		"docs":[
+			"Confirm that the DUT's audio loopback state is in not working state"
+		],
+		"conditions":[
+			"cros_is_audio_loopback_state_working"
+		],
+		"exec_name":"sample_fail"
 	},
 	"cr50_labels":{
 		"docs":[
