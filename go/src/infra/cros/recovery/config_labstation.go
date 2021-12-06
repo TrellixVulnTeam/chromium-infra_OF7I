@@ -108,14 +108,14 @@ const labstationRepairPlanBody = `
 		]
 	},
 	"remove_reboot_requests":{
-		"exec_name":"cros_remove_reboot_request",
+		"exec_name":"cros_remove_all_reboot_request",
 		"allow_fail_after_recovery": true
 	},
 	"reboot_by_request":{
 		"docs":[
 			"Some DUTs can request reboot labstation if they has issue with servo-nic or other issues with servo-host."
 		],
-		"exec_name": "cros_remove_reboot_request",
+		"exec_name": "cros_remove_all_reboot_request",
 		"conditions": [
 			"cros_has_reboot_request",
 			"cros_has_no_servo_in_use",
@@ -231,7 +231,7 @@ const labstationDeployPlanBody = `
 		"docs":[
 			"Remove reboot request flag files."
 		],
-		"exec_name":"cros_remove_reboot_request",
+		"exec_name":"cros_remove_all_reboot_request",
 		"allow_fail_after_recovery": true
 	},
 	"update_provisioned_info":{

@@ -42,33 +42,6 @@ func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return errors.Reason("has no servo is in-use: found flags\n%s", v).Err()
 }
 
-const (
-	// Filter used to find reboot request flags files.
-	// Examples: '/var/lib/servod/somebody_reboot'
-	rebootFlagFileFilter = "/var/lib/servod/*_reboot"
-)
-
-// hasRebootRequestExec checks presence of reboot request flag on the host.
-func hasRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf("find %s", rebootFlagFileFilter))
-	// Print finish result as we treat failure as no results.
-	log.Debug(ctx, "Has reboot requests: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
-	rr := strings.TrimSpace(r.Stdout)
-	if rr == "" {
-		return errors.Reason("has reboot request: not request found").Err()
-	}
-	log.Info(ctx, "Found reboot requests:\n%s", rr)
-	return nil
-}
-
-// removeRebootRequestsExec removes reboot flag file requests.
-func removeRebootRequestsExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf("rm %s", rebootFlagFileFilter))
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Has reboot requests: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
-	return nil
-}
-
 // cleanTmpOwnerRequestExec cleans tpm owner requests.
 func cleanTmpOwnerRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.Access.Run(ctx, args.ResourceName, "crossystem clear_tpm_owner_request=1")
@@ -120,8 +93,6 @@ func allowedRebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 
 func init() {
 	execs.Register("cros_has_no_servo_in_use", hasNoServoInUseExec)
-	execs.Register("cros_remove_reboot_request", removeRebootRequestsExec)
-	execs.Register("cros_has_reboot_request", hasRebootRequestExec)
 	execs.Register("cros_clean_tmp_owner_request", cleanTmpOwnerRequestExec)
 	execs.Register("cros_validate_uptime", validateUptime)
 	execs.Register("cros_allowed_reboot", allowedRebootExec)
