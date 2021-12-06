@@ -34,7 +34,7 @@ mac_bundle:
     - file: vpython
       path: ./
   codesign:
-    requirements: designated => identifier "org.chromium.infra.vpython" and anchor trusted
+    requirements: =designated => identifier "org.chromium.infra.vpython" and anchor trusted
 posix_symlinks:
   - src: vpython.app/Contents/MacOS/vpython
     dst: vpython
