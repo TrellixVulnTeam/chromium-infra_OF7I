@@ -30,23 +30,51 @@ type CreateRequest struct {
 // ClusterImpact captures details of a cluster's impact, as needed
 // to control the priority and verified status of bugs.
 type ClusterImpact struct {
-	Failures1d int64
-	Failures3d int64
-	Failures7d int64
+	TestResultsFailed   MetricImpact
+	TestRunsFailed      MetricImpact
+	PresubmitRunsFailed MetricImpact
+}
+
+// MetricImpact captures impact measurements for one metric, over
+// different timescales.
+type MetricImpact struct {
+	OneDay   int64
+	ThreeDay int64
+	SevenDay int64
 }
 
 // ExtractResidualImpact extracts the residual impact from a cluster summary.
 func ExtractResidualImpact(cs *analysis.ClusterSummary) *ClusterImpact {
 	return &ClusterImpact{
-		Failures1d: cs.Failures1d.Residual,
-		Failures3d: cs.Failures3d.Residual,
-		Failures7d: cs.Failures7d.Residual,
+		TestResultsFailed: MetricImpact{
+			OneDay:   cs.Failures1d.Residual,
+			ThreeDay: cs.Failures3d.Residual,
+			SevenDay: cs.Failures7d.Residual,
+		},
+		TestRunsFailed: MetricImpact{
+			OneDay:   cs.TestRunFails1d.Residual,
+			ThreeDay: cs.TestRunFails3d.Residual,
+			SevenDay: cs.TestRunFails7d.Residual,
+		},
+		PresubmitRunsFailed: MetricImpact{
+			OneDay:   cs.PresubmitRejects1d.Residual,
+			ThreeDay: cs.PresubmitRejects3d.Residual,
+			SevenDay: cs.PresubmitRejects7d.Residual,
+		},
 	}
 }
 
 // SetResidualImpact sets the residual impact on a cluster summary.
 func SetResidualImpact(cs *analysis.ClusterSummary, impact *ClusterImpact) {
-	cs.Failures1d.Residual = impact.Failures1d
-	cs.Failures3d.Residual = impact.Failures3d
-	cs.Failures7d.Residual = impact.Failures7d
+	cs.Failures1d.Residual = impact.TestResultsFailed.OneDay
+	cs.Failures3d.Residual = impact.TestResultsFailed.ThreeDay
+	cs.Failures7d.Residual = impact.TestResultsFailed.SevenDay
+
+	cs.TestRunFails1d.Residual = impact.TestRunsFailed.OneDay
+	cs.TestRunFails3d.Residual = impact.TestRunsFailed.ThreeDay
+	cs.TestRunFails7d.Residual = impact.TestRunsFailed.SevenDay
+
+	cs.PresubmitRejects1d.Residual = impact.PresubmitRunsFailed.OneDay
+	cs.PresubmitRejects3d.Residual = impact.PresubmitRunsFailed.ThreeDay
+	cs.PresubmitRejects7d.Residual = impact.PresubmitRunsFailed.SevenDay
 }

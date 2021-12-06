@@ -100,7 +100,9 @@ func createProjectsConfig() map[string]*config.ProjectConfig {
 		},
 		"project_no_realms": {
 			BugFilingThreshold: &config.ImpactThreshold{
-				UnexpectedFailures_1D: proto.Int64(1000),
+				TestResultsFailed: &config.MetricThreshold{
+					OneDay: proto.Int64(1000),
+				},
 			},
 		},
 		"project_no_bq": {

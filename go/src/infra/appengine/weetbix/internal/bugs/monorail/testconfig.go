@@ -36,19 +36,25 @@ func ChromiumTestConfig() *config.MonorailProject {
 			{
 				Priority: "0",
 				Threshold: &config.ImpactThreshold{
-					UnexpectedFailures_1D: proto.Int64(1000),
+					TestResultsFailed: &config.MetricThreshold{
+						OneDay: proto.Int64(1000),
+					},
 				},
 			},
 			{
 				Priority: "1",
 				Threshold: &config.ImpactThreshold{
-					UnexpectedFailures_1D: proto.Int64(500),
+					TestResultsFailed: &config.MetricThreshold{
+						OneDay: proto.Int64(500),
+					},
 				},
 			},
 			{
 				Priority: "2",
 				Threshold: &config.ImpactThreshold{
-					UnexpectedFailures_1D: proto.Int64(100),
+					TestResultsFailed: &config.MetricThreshold{
+						OneDay: proto.Int64(100),
+					},
 				},
 			},
 			{
@@ -57,9 +63,11 @@ func ChromiumTestConfig() *config.MonorailProject {
 				// used in BugUpdater tests, to avoid bugs that were filed
 				// from being immediately closed.
 				Threshold: &config.ImpactThreshold{
-					UnexpectedFailures_1D: proto.Int64(50),
-					UnexpectedFailures_3D: proto.Int64(300),
-					UnexpectedFailures_7D: proto.Int64(700),
+					TestResultsFailed: &config.MetricThreshold{
+						OneDay:   proto.Int64(50),
+						ThreeDay: proto.Int64(300),
+						SevenDay: proto.Int64(700),
+					},
 				},
 			},
 		},
@@ -71,14 +79,18 @@ func ChromiumTestConfig() *config.MonorailProject {
 // ChromiumP0Impact returns cluster impact that is consistent with a P0 bug.
 func ChromiumP0Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		Failures1d: 1500,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 1500,
+		},
 	}
 }
 
 // ChromiumP1Impact returns cluster impact that is consistent with a P1 bug.
 func ChromiumP1Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		Failures1d: 750,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 750,
+		},
 	}
 }
 
@@ -87,14 +99,18 @@ func ChromiumP1Impact() *bugs.ClusterImpact {
 func ChromiumLowP0Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
 		// (1000 * (1.0 + PriorityHysteresisPercent / 100.0)) - 1
-		Failures1d: 1099,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 1099,
+		},
 	}
 }
 
 // ChromiumP2Impact returns cluster impact that is consistent with a P2 bug.
 func ChromiumP2Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		Failures1d: 300,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 300,
+		},
 	}
 }
 
@@ -103,14 +119,18 @@ func ChromiumP2Impact() *bugs.ClusterImpact {
 func ChromiumHighP2Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
 		// (500 / (1.0 + PriorityHysteresisPercent / 100.0)) + 1
-		Failures1d: 455,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 455,
+		},
 	}
 }
 
 // ChromiumP3Impact returns cluster impact that is consistent with a P3 bug.
 func ChromiumP3Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		Failures1d: 75,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 75,
+		},
 	}
 }
 
@@ -120,7 +140,9 @@ func ChromiumP3Impact() *bugs.ClusterImpact {
 func ChromiumP3LowImpact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
 		// (50 * (1.0 + PriorityHysteresisPercent / 100.0)) - 1
-		Failures1d: 54,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 54,
+		},
 	}
 }
 
@@ -130,7 +152,9 @@ func ChromiumP3LowImpact() *bugs.ClusterImpact {
 func ChromiumClosureHighImpact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
 		// (50 / (1.0 + PriorityHysteresisPercent / 100.0)) + 1
-		Failures1d: 46,
+		TestResultsFailed: bugs.MetricImpact{
+			OneDay: 46,
+		},
 	}
 }
 

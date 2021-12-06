@@ -144,6 +144,10 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		return nil, errors.Annotate(err, "getting dataset").Err()
 	}
 
+	whereFailures, failuresParams := whereThresholdsExceeded("failures", opts.Thresholds.TestResultsFailed)
+	whereTestRuns, testRunsParams := whereThresholdsExceeded("test_run_fails", opts.Thresholds.TestRunsFailed)
+	wherePresubmits, presubmitParams := whereThresholdsExceeded("presubmit_rejects", opts.Thresholds.PresubmitRunsFailed)
+
 	q := c.client.Query(`
 		SELECT
 			STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) as ClusterID,` +
@@ -159,33 +163,25 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 			example_failure_reason.primary_error_message as ExampleFailureReason,
 			example_test_id as ExampleTestID
 		FROM ` + dataset + `.cluster_summaries
-		WHERE (failures_residual_1d > @unexpFailThreshold1d
-			OR failures_residual_3d > @unexpFailThreshold3d
-			OR failures_residual_7d > @unexpFailThreshold7d)
+		WHERE (` + whereFailures + `) OR (` + whereTestRuns + `) OR (` + wherePresubmits + `)
 			OR STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) IN UNNEST(@alwaysInclude)
 		ORDER BY
-			failures_residual_1d DESC,
-			failures_residual_3d DESC,
-			failures_residual_7d DESC
+			presubmit_rejects_residual_1d DESC,
+			test_run_fails_residual_1d DESC,
+			failures_residual_1d DESC
 	`)
-	q.Parameters = []bigquery.QueryParameter{
-		{
-			Name:  "unexpFailThreshold1d",
-			Value: valueOrDefault(opts.Thresholds.UnexpectedFailures_1D, math.MaxInt64),
-		},
-		{
-			Name:  "unexpFailThreshold3d",
-			Value: valueOrDefault(opts.Thresholds.UnexpectedFailures_3D, math.MaxInt64),
-		},
-		{
-			Name:  "unexpFailThreshold7d",
-			Value: valueOrDefault(opts.Thresholds.UnexpectedFailures_7D, math.MaxInt64),
-		},
+
+	params := []bigquery.QueryParameter{
 		{
 			Name:  "alwaysInclude",
 			Value: opts.AlwaysInclude,
 		},
 	}
+	params = append(params, failuresParams...)
+	params = append(params, testRunsParams...)
+	params = append(params, presubmitParams...)
+	q.Parameters = params
+
 	job, err := q.Run(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "querying cluster summaries").Err()
@@ -224,6 +220,32 @@ func selectCounts(sqlPrefix, fieldPrefix, suffix string) string {
 		sqlPrefix + `_residual_` + suffix + ` AS Residual,` +
 		sqlPrefix + `_residual_pre_exon_` + suffix + ` AS ResidualPreExoneration` +
 		`) AS ` + fieldPrefix + suffix + `,`
+}
+
+// whereThresholdsExceeded generates a SQL Where clause to query
+// where a particular metric exceeds a given threshold.
+func whereThresholdsExceeded(sqlPrefix string, threshold *config.MetricThreshold) (string, []bigquery.QueryParameter) {
+	if threshold == nil {
+		threshold = &config.MetricThreshold{}
+	}
+	sql := sqlPrefix + "_residual_1d > @" + sqlPrefix + "_1d OR" +
+		sqlPrefix + "_residual_3d > @" + sqlPrefix + "_3d OR" +
+		sqlPrefix + "_residual_7d > @" + sqlPrefix + "_7d"
+	parameters := []bigquery.QueryParameter{
+		{
+			Name:  sqlPrefix + "_1d",
+			Value: valueOrDefault(threshold.OneDay, math.MaxInt64),
+		},
+		{
+			Name:  sqlPrefix + "_3d",
+			Value: valueOrDefault(threshold.ThreeDay, math.MaxInt64),
+		},
+		{
+			Name:  sqlPrefix + "_7d",
+			Value: valueOrDefault(threshold.SevenDay, math.MaxInt64),
+		},
+	}
+	return sql, parameters
 }
 
 // ReadCluster reads information about a single cluster.

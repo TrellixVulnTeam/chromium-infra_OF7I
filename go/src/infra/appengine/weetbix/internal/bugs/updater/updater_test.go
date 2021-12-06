@@ -60,9 +60,11 @@ func TestRun(t *testing.T) {
 		thres := &config.ImpactThreshold{
 			// Should be more onerous than the "keep-open" thresholds
 			// configured for each individual bug manager.
-			UnexpectedFailures_1D: proto.Int64(100),
-			UnexpectedFailures_3D: proto.Int64(300),
-			UnexpectedFailures_7D: proto.Int64(700),
+			TestResultsFailed: &config.MetricThreshold{
+				OneDay:   proto.Int64(100),
+				ThreeDay: proto.Int64(300),
+				SevenDay: proto.Int64(700),
+			},
 		}
 		projectCfg := &config.ProjectConfig{
 			Monorail:           monorailCfg,
@@ -490,15 +492,35 @@ func (f *fakeAnalysisClient) ReadImpactfulClusters(ctx context.Context, opts ana
 	}
 	var results []*analysis.ClusterSummary
 	for _, c := range f.clusters {
-		include := containsValue(opts.AlwaysInclude, c.ClusterID) ||
-			(opts.Thresholds.UnexpectedFailures_1D != nil && int64(c.Failures1d.Residual) >= *opts.Thresholds.UnexpectedFailures_1D) ||
-			(opts.Thresholds.UnexpectedFailures_3D != nil && int64(c.Failures3d.Residual) >= *opts.Thresholds.UnexpectedFailures_3D) ||
-			(opts.Thresholds.UnexpectedFailures_7D != nil && int64(c.Failures7d.Residual) >= *opts.Thresholds.UnexpectedFailures_7D)
+		include := containsValue(opts.AlwaysInclude, c.ClusterID)
+		if opts.Thresholds.TestResultsFailed != nil {
+			include = include ||
+				exceedsThreshold(c.Failures1d.Residual, opts.Thresholds.TestResultsFailed.OneDay) ||
+				exceedsThreshold(c.Failures3d.Residual, opts.Thresholds.TestResultsFailed.ThreeDay) ||
+				exceedsThreshold(c.Failures7d.Residual, opts.Thresholds.TestResultsFailed.SevenDay)
+		}
+		if opts.Thresholds.TestRunsFailed != nil {
+			include = include ||
+				exceedsThreshold(c.TestRunFails1d.Residual, opts.Thresholds.TestRunsFailed.OneDay) ||
+				exceedsThreshold(c.TestRunFails3d.Residual, opts.Thresholds.TestRunsFailed.ThreeDay) ||
+				exceedsThreshold(c.TestRunFails7d.Residual, opts.Thresholds.TestRunsFailed.SevenDay)
+		}
+		if opts.Thresholds.PresubmitRunsFailed != nil {
+			include = include ||
+				exceedsThreshold(c.PresubmitRejects1d.Residual, opts.Thresholds.PresubmitRunsFailed.OneDay) ||
+				exceedsThreshold(c.PresubmitRejects3d.Residual, opts.Thresholds.PresubmitRunsFailed.ThreeDay) ||
+				exceedsThreshold(c.PresubmitRejects7d.Residual, opts.Thresholds.PresubmitRunsFailed.SevenDay)
+		}
 		if include {
 			results = append(results, c)
 		}
 	}
 	return results, nil
+}
+
+func exceedsThreshold(value int64, threshold *int64) bool {
+	// threshold == nil is treated as an unsatisfiable threshold.
+	return threshold != nil && value >= *threshold
 }
 
 func containsValue(values []clustering.ClusterID, value clustering.ClusterID) bool {

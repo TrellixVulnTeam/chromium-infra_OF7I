@@ -25,13 +25,29 @@ func (c *ClusterImpact) MeetsThreshold(t *config.ImpactThreshold) bool {
 // original threshold being used, inflationPercent of -100 would result in a
 // threshold that is 50% of the original.
 func (c *ClusterImpact) MeetsInflatedThreshold(t *config.ImpactThreshold, inflationPercent int64) bool {
-	if meetsInflatedThreshold(c.Failures1d, t.UnexpectedFailures_1D, inflationPercent) {
+	if c.TestResultsFailed.meetsInflatedThreshold(t.TestResultsFailed, inflationPercent) {
 		return true
 	}
-	if meetsInflatedThreshold(c.Failures3d, t.UnexpectedFailures_3D, inflationPercent) {
+	if c.TestRunsFailed.meetsInflatedThreshold(t.TestRunsFailed, inflationPercent) {
 		return true
 	}
-	if meetsInflatedThreshold(c.Failures7d, t.UnexpectedFailures_7D, inflationPercent) {
+	if c.PresubmitRunsFailed.meetsInflatedThreshold(t.PresubmitRunsFailed, inflationPercent) {
+		return true
+	}
+	return false
+}
+
+func (m MetricImpact) meetsInflatedThreshold(t *config.MetricThreshold, inflationPercent int64) bool {
+	if t == nil {
+		t = &config.MetricThreshold{}
+	}
+	if meetsInflatedThreshold(m.OneDay, t.OneDay, inflationPercent) {
+		return true
+	}
+	if meetsInflatedThreshold(m.ThreeDay, t.ThreeDay, inflationPercent) {
+		return true
+	}
+	if meetsInflatedThreshold(m.SevenDay, t.SevenDay, inflationPercent) {
 		return true
 	}
 	return false
