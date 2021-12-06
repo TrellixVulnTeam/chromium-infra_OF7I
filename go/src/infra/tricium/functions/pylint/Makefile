@@ -14,8 +14,8 @@ test: pylint_parser
 	./pylint_parser -input=test -output=out
 
 python:
-	echo "infra/python/cpython/linux-amd64 version:2.7.17.chromium.21.3pp" | \
-			cipd ensure -ensure-file - -root python
+	echo "infra/python/cpython3/linux-amd64 version:3.8.0b1.chromium.1" | \
+		cipd ensure -ensure-file - -root python
 
 pylint:
 	pip install --ignore-installed --target pylint --no-compile pylint

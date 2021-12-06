@@ -28,9 +28,9 @@ var msgRegex = regexp.MustCompile(`^(.+?):([0-9]+):([0-9]+) \[(.+)/(.+)\] (.+)$`
 
 // Paths to the required resources relative to the executable directory.
 const (
-	pythonPath        = "python/bin/python"
+	pythonPath        = "python/bin/python3"
 	pylintPath        = "pylint/bin/pylint"
-	pylintPackagePath = "pylint/lib/python2.7/site-packages"
+	pylintPackagePath = "pylint/"
 )
 
 func main() {
@@ -77,6 +77,7 @@ func mainImpl() error {
 	// Construct the command args and invoke Pylint on the given paths.
 	cmdName := filepath.Join(exPath, pythonPath)
 	absPylintPath := filepath.Join(exPath, pylintPath)
+	absPylintPackagePath := filepath.Join(exPath, pylintPackagePath)
 	if _, err := os.Stat(absPylintPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("pylint executable does not exist at %s", absPylintPath)
@@ -109,7 +110,7 @@ func mainImpl() error {
 	// Set PYTHONPATH for the command to run so that the bundled version of
 	// pylint and its dependencies are used.
 	env := os.Environ()
-	env = append(env, fmt.Sprintf("PYTHONPATH=%s", pylintPackagePath))
+	env = append(env, fmt.Sprintf("PYTHONPATH=%s", absPylintPackagePath))
 	cmd.Env = env
 
 	stdoutReader, err := cmd.StdoutPipe()
