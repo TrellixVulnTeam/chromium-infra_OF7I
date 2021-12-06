@@ -240,11 +240,15 @@ func runTask(ctx context.Context,
 	if containerImageInfo.GetName() != "" {
 		// SSP args should not be specified when autoserv is run in a Docker
 		// container.
-		argsNoSSP := *a
-		argsNoSSP.SSPBaseImageName = ""
-		argsNoSSP.RequireSSP = false
-		argsNoSSP.Verbose = true
-		cmd := autotest.AutoservCommand(c, &argsNoSSP)
+		containerAutoservArgs := *a
+		containerAutoservArgs.SSPBaseImageName = ""
+		containerAutoservArgs.RequireSSP = false
+		containerAutoservArgs.Verbose = true
+		containerAutoservArgs.VerifyJobRepoURL = false
+		containerAutoservArgs.NoUsePackage = true
+		containerAutoservArgs.Lab = false
+		containerAutoservArgs.PyThree = true
+		cmd := autotest.AutoservCommand(c, &containerAutoservArgs)
 
 		imageName := fmt.Sprintf(
 			"%s/%s/%s@%s",

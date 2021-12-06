@@ -37,9 +37,11 @@ type AutoservArgs struct {
 	JobOwner           string
 	Lab                bool
 	NoTee              bool
+	NoUsePackage       bool
 	ParentJobID        int
 	PeerDuts           []string
 	Provision          bool
+	PyThree            bool
 	Repair             bool
 	RequireSSP         bool
 	Reset              bool
@@ -150,6 +152,12 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if cmd.WritePidfile {
 		args = append(args, "-p")
+	}
+	if cmd.PyThree {
+		args = append(args, "--py_version=3")
+	}
+	if cmd.NoUsePackage {
+		args = append(args, "--no_use_packaging")
 	}
 
 	// autoserv bool args require values.
