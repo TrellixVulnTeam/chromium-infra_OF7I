@@ -167,30 +167,24 @@ func execute(ctx context.Context) error {
 	return err
 }
 
-type logdogBuildStreamFactory func(ctx context.Context) (streamclient.DatagramStream, error)
-
-func newBuildStream(ctx context.Context) (streamclient.DatagramStream, error) {
-	logdog, err := logdogbootstrap.Get()
-	if err != nil {
-		return nil, err
-	}
-	return logdog.Client.NewDatagramStream(
-		ctx,
-		luciexe.BuildProtoStreamSuffix,
-		streamclient.WithContentType(luciexe.BuildProtoContentType),
-	)
-}
-
-func reportBootstrapFailure(ctx context.Context, bootstrapErr error, buildStreamFactory logdogBuildStreamFactory) (err error) {
+func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error) {
 	// If the error has the ExeFailure tag, then that indicates that we were
 	// able to bootstrap the executable and that it failed. In that case, it
 	// should have populated the build proto with steps and a result, so we
 	// should not modify the build proto.
-	if bootstrap.ExeFailure.In(bootstrapErr) {
+	if !bootstrap.ExeFailure.In(bootstrapErr) {
 		return nil
 	}
 
-	stream, err := buildStreamFactory(ctx)
+	logdog, err := logdogbootstrap.Get()
+	if err != nil {
+		return err
+	}
+	stream, err := logdog.Client.NewDatagramStream(
+		ctx,
+		luciexe.BuildProtoStreamSuffix,
+		streamclient.WithContentType(luciexe.BuildProtoContentType),
+	)
 	if err != nil {
 		return err
 	}
@@ -209,13 +203,7 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error, buildStream
 	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", bootstrapErr.Error())
 	build.Status = buildbucketpb.Status_INFRA_FAILURE
 	if bootstrap.PatchRejected.In(bootstrapErr) {
-		build.Output = &buildbucketpb.Build_Output{
-			Properties: &structpb.Struct{
-				Fields: map[string]*structpb.Value{
-					"failure_type": structpb.NewStringValue("PATCH_FAILURE"),
-				},
-			},
-		}
+		build.Output.Properties.Fields["failure_type"] = structpb.NewStringValue("PATCH_FAILURE")
 	}
 
 	outputData, err := proto.Marshal(build)
@@ -237,7 +225,7 @@ func main() {
 
 	if err := execute(ctx); err != nil {
 		logging.Errorf(ctx, err.Error())
-		reportErr := reportBootstrapFailure(ctx, err, newBuildStream)
+		reportErr := reportBootstrapFailure(ctx, err)
 		if reportErr != nil {
 			logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
 		}
