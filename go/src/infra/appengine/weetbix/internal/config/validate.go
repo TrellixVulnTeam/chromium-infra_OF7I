@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"regexp"
 
-	protov1 "github.com/golang/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	luciproto "go.chromium.org/luci/common/proto"
@@ -112,6 +111,7 @@ func validateBigQueryTable(ctx *validation.Context, tCfg *BigQueryExport_BigQuer
 	defer ctx.Exit()
 	if tCfg == nil {
 		ctx.Errorf("empty bigquery table is not allowed")
+		return
 	}
 	validateStringConfig(ctx, "cloud_project", tCfg.CloudProject, cloudProjectRE)
 	validateStringConfig(ctx, "dataset", tCfg.Dataset, datasetRE)
@@ -148,9 +148,7 @@ func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *TestVaria
 func validateRealmConfig(ctx *validation.Context, rCfg *RealmConfig) {
 	ctx.Enter(fmt.Sprintf("realm %s", rCfg.Name))
 	defer ctx.Exit()
-	if rCfg == nil {
-		return
-	}
+
 	validateStringConfig(ctx, "realm_name", rCfg.Name, realmRE)
 	validateTestVariantAnalysisConfig(ctx, rCfg.TestVariantAnalysis)
 }
@@ -159,7 +157,7 @@ func validateRealmConfig(ctx *validation.Context, rCfg *RealmConfig) {
 // and passes it through the validator.
 func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectConfig {
 	msg := &ProjectConfig{}
-	if err := luciproto.UnmarshalTextML(content, protov1.MessageV1(msg)); err != nil {
+	if err := luciproto.UnmarshalTextML(content, msg); err != nil {
 		ctx.Errorf("failed to unmarshal as text proto: %s", err)
 		return nil
 	}
@@ -247,9 +245,9 @@ func validatePrioritySatisfiedByBugFilingThreshold(ctx *validation.Context, p *M
 		// are already reported as errors elsewhere.
 		return
 	}
-	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_1D, bugFilingThres.UnexpectedFailures_1D, "unexpected_failures_1d")
-	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_3D, bugFilingThres.UnexpectedFailures_3D, "unexpected_failures_3d")
-	validateBugFilingThresholdSatisfiesFailureCountThresold(ctx, t.UnexpectedFailures_7D, bugFilingThres.UnexpectedFailures_7D, "unexpected_failures_7d")
+	validateBugFilingThresholdSatisfiesMetricThresold(ctx, t.TestResultsFailed, bugFilingThres.TestResultsFailed, "test_results_failed")
+	validateBugFilingThresholdSatisfiesMetricThresold(ctx, t.TestRunsFailed, bugFilingThres.TestRunsFailed, "test_runs_failed")
+	validateBugFilingThresholdSatisfiesMetricThresold(ctx, t.PresubmitRunsFailed, bugFilingThres.PresubmitRunsFailed, "presubmit_runs_failed")
 }
 
 func validatePriorityValue(ctx *validation.Context, value string) {
@@ -273,9 +271,23 @@ func validateImpactThreshold(ctx *validation.Context, t *ImpactThreshold, fieldN
 		return
 	}
 
-	validateFailureCountThresold(ctx, t.UnexpectedFailures_1D, "unexpected_failures_1d")
-	validateFailureCountThresold(ctx, t.UnexpectedFailures_3D, "unexpected_failures_3d")
-	validateFailureCountThresold(ctx, t.UnexpectedFailures_7D, "unexpected_failures_7d")
+	validateMetricThreshold(ctx, t.TestResultsFailed, "test_results_failed")
+	validateMetricThreshold(ctx, t.TestRunsFailed, "test_runs_failed")
+	validateMetricThreshold(ctx, t.PresubmitRunsFailed, "presubmit_runs_failed")
+}
+
+func validateMetricThreshold(ctx *validation.Context, t *MetricThreshold, fieldName string) {
+	ctx.Enter(fieldName)
+	defer ctx.Exit()
+
+	if t == nil {
+		// Not specified.
+		return
+	}
+
+	validateNonNegative(ctx, t.OneDay, "one_day")
+	validateNonNegative(ctx, t.ThreeDay, "three_day")
+	validateNonNegative(ctx, t.SevenDay, "seven_day")
 }
 
 func validatePriorityHysteresisPercent(ctx *validation.Context, value int64) {
@@ -289,15 +301,32 @@ func validatePriorityHysteresisPercent(ctx *validation.Context, value int64) {
 	ctx.Exit()
 }
 
-func validateFailureCountThresold(ctx *validation.Context, threshold *int64, fieldName string) {
+func validateNonNegative(ctx *validation.Context, value *int64, fieldName string) {
 	ctx.Enter(fieldName)
-	if threshold != nil && *threshold < 0 {
+	if value != nil && *value < 0 {
 		ctx.Errorf("value must be non-negative")
 	}
 	ctx.Exit()
 }
 
-func validateBugFilingThresholdSatisfiesFailureCountThresold(ctx *validation.Context, threshold *int64, bugFilingThres *int64, fieldName string) {
+func validateBugFilingThresholdSatisfiesMetricThresold(ctx *validation.Context, threshold *MetricThreshold, bugFilingThres *MetricThreshold, fieldName string) {
+	ctx.Enter(fieldName)
+	defer ctx.Exit()
+	if threshold == nil {
+		threshold = &MetricThreshold{}
+	}
+	if bugFilingThres == nil {
+		// Bugs are not filed based on this metric. So
+		// we do not need to check that bugs filed
+		// based on this metric will stay open.
+		return
+	}
+	validateBugFilingThresholdSatisfiesThresold(ctx, threshold.OneDay, bugFilingThres.OneDay, "one_day")
+	validateBugFilingThresholdSatisfiesThresold(ctx, threshold.ThreeDay, bugFilingThres.ThreeDay, "three_day")
+	validateBugFilingThresholdSatisfiesThresold(ctx, threshold.SevenDay, bugFilingThres.SevenDay, "seven_day")
+}
+
+func validateBugFilingThresholdSatisfiesThresold(ctx *validation.Context, threshold *int64, bugFilingThres *int64, fieldName string) {
 	ctx.Enter(fieldName)
 	defer ctx.Exit()
 	if bugFilingThres == nil {

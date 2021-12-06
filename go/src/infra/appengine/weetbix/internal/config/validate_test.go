@@ -178,31 +178,59 @@ func TestProjectConfigValidator(t *testing.T) {
 				So(validate(cfg), ShouldErrLike, "impact thresolds must be specified")
 			})
 
-			Convey("last priority", func() {
+			Convey("last priority thresholds must be satisfied by the bug-filing threshold", func() {
 				lastPriority := priorities[len(priorities)-1]
 				bugFilingThres := cfg.BugFilingThreshold
-				Convey("unexpected failures 1d must be set if set on bug-filing threshold", func() {
-					bugFilingThres.UnexpectedFailures_1D = proto.Int64(100)
-					lastPriority.Threshold.UnexpectedFailures_1D = nil
-					So(validate(cfg), ShouldErrLike, "unexpected_failures_1d threshold must be set, with a value of at most 100")
+
+				// Test validation applies to all metrics.
+				Convey("test results failed", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = nil
+					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
 				})
 
-				Convey("unexpected failures 1d must be satisfied by the bug-filing threshold", func() {
-					bugFilingThres.UnexpectedFailures_1D = proto.Int64(100)
-					lastPriority.Threshold.UnexpectedFailures_1D = proto.Int64(101)
-					So(validate(cfg), ShouldErrLike, "value must be at most 100")
+				Convey("test runs failed", func() {
+					bugFilingThres.TestRunsFailed = &MetricThreshold{OneDay: proto.Int64(50)}
+					lastPriority.Threshold.TestRunsFailed = nil
+					So(validate(cfg), ShouldErrLike, "test_runs_failed / one_day): one_day threshold must be set, with a value of at most 50")
 				})
 
-				Convey("unexpected failures 3d must be satisfied by the bug-filing threshold", func() {
-					bugFilingThres.UnexpectedFailures_3D = proto.Int64(300)
-					lastPriority.Threshold.UnexpectedFailures_3D = proto.Int64(301)
-					So(validate(cfg), ShouldErrLike, "value must be at most 300")
+				Convey("presubmit runs failed", func() {
+					bugFilingThres.PresubmitRunsFailed = &MetricThreshold{OneDay: proto.Int64(10)}
+					lastPriority.Threshold.PresubmitRunsFailed = nil
+					So(validate(cfg), ShouldErrLike, "presubmit_runs_failed / one_day): one_day threshold must be set, with a value of at most 10")
 				})
 
-				Convey("unexpected failures 7d must be satisfied by the bug-filing threshold", func() {
-					bugFilingThres.UnexpectedFailures_7D = proto.Int64(700)
-					lastPriority.Threshold.UnexpectedFailures_7D = proto.Int64(701)
-					So(validate(cfg), ShouldErrLike, "value must be at most 700")
+				// The following properties should hold for all metrics. We test
+				// on one metric as the code is re-used for all metrics.
+				Convey("one day threshold", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(101)}
+					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): value must be at most 100")
+				})
+
+				Convey("three day threshold", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(300)}
+					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(301)}
+					So(validate(cfg), ShouldErrLike, "test_results_failed / three_day): value must be at most 300")
+				})
+
+				Convey("seven day threshold", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(700)}
+					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(701)}
+					So(validate(cfg), ShouldErrLike, "test_results_failed / seven_day): value must be at most 700")
+				})
+
+				Convey("metric threshold nil", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = nil
+					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
+				})
+
+				Convey("metric threshold not set", func() {
+					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{}
+					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
 				})
 			})
 			// Other thresholding validation cases tested under bug-filing threshold and are
@@ -230,19 +258,46 @@ func TestProjectConfigValidator(t *testing.T) {
 			So(validate(cfg), ShouldErrLike, "impact thresolds must be specified")
 		})
 
-		Convey("unexpected failures 1d is negative", func() {
-			threshold.UnexpectedFailures_1D = proto.Int64(-1)
-			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+		Convey("handles unset metric thresholds", func() {
+			threshold := cfg.BugFilingThreshold
+			threshold.TestResultsFailed = nil
+			threshold.TestRunsFailed = nil
+			threshold.PresubmitRunsFailed = nil
+			So(threshold, ShouldNotBeNil)
 		})
 
-		Convey("unexpected failures 3d is negative", func() {
-			threshold.UnexpectedFailures_3D = proto.Int64(-1)
-			So(validate(cfg), ShouldErrLike, "value must be non-negative")
-		})
+		Convey("metric values are not negative", func() {
+			// Test by threshold period.
+			Convey("one day", func() {
+				threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
 
-		Convey("unexpected failures 7d is negative", func() {
-			threshold.UnexpectedFailures_7D = proto.Int64(-1)
-			So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			Convey("three day", func() {
+				threshold.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
+
+			Convey("seven day", func() {
+				threshold.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
+
+			// Test by metric.
+			Convey("test results failed", func() {
+				threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
+
+			Convey("test runs failed", func() {
+				threshold.TestRunsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
+
+			Convey("presubmit runs failed", func() {
+				threshold.PresubmitRunsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				So(validate(cfg), ShouldErrLike, "value must be non-negative")
+			})
 		})
 	})
 

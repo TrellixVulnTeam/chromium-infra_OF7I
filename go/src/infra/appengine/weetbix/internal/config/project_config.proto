@@ -106,18 +106,50 @@ message MonorailPriority {
 
 // ImpactThreshold specifies a condition on a cluster's impact metrics.
 // The threshold is considered satisfied if any of the individual metric
-// thresholds is satisfied (i.e. if multiple thresholds are set, they are
-// combined using an OR-semantic). If no threshold is set on any individual
+// thresholds is met or exceeded (i.e. if multiple thresholds are set, they
+// are combined using an OR-semantic). If no threshold is set on any individual
 // metric, the threshold as a whole is unsatisfiable.
 message ImpactThreshold {
-  // The minimum number of unexpected failures that should occur in 1 day.
+  // The number of test results that were unexpected failures.
+  MetricThreshold test_results_failed = 4;
+
+  // The number of test runs that failed.
+  // A test run (also known as a 'shard' (chromium) or 'task' (Chrome OS))
+  // is considered failed if all tries of test(s) in it unexpectedly failed.
+  // The failed test run is attributed to the last failure of each of the
+  // test(s) that failed on all tries.
+  MetricThreshold test_runs_failed = 5;
+
+  // The number of presubmit runs that failed.
+  MetricThreshold presubmit_runs_failed = 6;
+
+  // Deprecated. No longer has any effect. Retained for textproto
+  // compatibility only.
   optional int64 unexpected_failures_1d = 1;
 
-  // The minimum number of unexpected failures that should occur in 3 days.
+  // Deprecated. No longer has any effect. Retained for textproto
+  // compatibility only.
   optional int64 unexpected_failures_3d = 2;
 
-  // The minimum number of unexpected failures that should occur in 7 days.
+  // Deprecated. No longer has any effect. Retained for textproto
+  // compatibility only.
   optional int64 unexpected_failures_7d = 3;
+}
+
+// MetricThreshold specifies thresholds for a particular metric.
+// The threshold is considered satisfied if any of the individual metric
+// thresholds is met or exceeded (i.e. if multiple thresholds are set, they
+// are combined using an OR-semantic). If no threshold is set, the threshold
+// as a whole is unsatisfiable.
+message MetricThreshold {
+  // The threshold for one day.
+  optional int64 one_day = 1;
+
+  // The threshold for three day.
+  optional int64 three_day = 2;
+
+  // The threshold for seven days.
+  optional int64 seven_day = 3;
 }
 
 // Configurations per realm.

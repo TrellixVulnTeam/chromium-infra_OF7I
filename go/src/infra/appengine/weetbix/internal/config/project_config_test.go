@@ -39,19 +39,25 @@ func createProjectConfig() *ProjectConfig {
 				{
 					Priority: "0",
 					Threshold: &ImpactThreshold{
-						UnexpectedFailures_1D: proto.Int64(1500),
+						TestResultsFailed: &MetricThreshold{
+							OneDay: proto.Int64(1500),
+						},
 					},
 				},
 				{
 					Priority: "1",
 					Threshold: &ImpactThreshold{
-						UnexpectedFailures_1D: proto.Int64(500),
+						TestResultsFailed: &MetricThreshold{
+							OneDay: proto.Int64(500),
+						},
 					},
 				},
 			},
 		},
 		BugFilingThreshold: &ImpactThreshold{
-			UnexpectedFailures_1D: proto.Int64(1000),
+			TestResultsFailed: &MetricThreshold{
+				OneDay: proto.Int64(1000),
+			},
 		},
 		Realms: []*RealmConfig{
 			{

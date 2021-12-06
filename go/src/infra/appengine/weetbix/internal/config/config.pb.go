@@ -34,12 +34,18 @@ type Config struct {
 	MonorailHostname string `protobuf:"bytes,1,opt,name=monorail_hostname,json=monorailHostname,proto3" json:"monorail_hostname,omitempty"`
 	// The GCS bucket that chunk contents should be archived to.
 	ChunkGcsBucket string `protobuf:"bytes,2,opt,name=chunk_gcs_bucket,json=chunkGcsBucket,proto3" json:"chunk_gcs_bucket,omitempty"`
-	// The number of workers to use when re-clustering. If this is unset
-	// or zero, reclustering is disabled.
+	// The number of workers to use when re-clustering. Maximum value is 1000,
+	// which is the default max_concurrent_requests on the reclustering queue:
+	// https://cloud.google.com/appengine/docs/standard/go111/config/queueref.
+	//
+	// If this is unset or zero, re-clustering is disabled.
 	ReclusteringWorkers int64 `protobuf:"varint,3,opt,name=reclustering_workers,json=reclusteringWorkers,proto3" json:"reclustering_workers,omitempty"`
 	// The frequency by which to re-cluster. This is specified as a
-	// number of minutes. Leaving this unset or zero disables
-	// re-clustering.
+	// number of minutes. Maximum value is 9, which is one minute less than
+	// the 10 minute hard request deadline for autoscaled GAE instances:
+	// https://cloud.google.com/appengine/docs/standard/go/how-instances-are-managed.
+	//
+	// If this is unset or zero, re-clustering is disabled.
 	ReclusteringIntervalMinutes int64 `protobuf:"varint,4,opt,name=reclustering_interval_minutes,json=reclusteringIntervalMinutes,proto3" json:"reclustering_interval_minutes,omitempty"`
 }
 
