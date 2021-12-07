@@ -11,6 +11,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -44,7 +45,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.kvmPort, "kvm-port", "", "the port of the kvm that this machine uses"+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine. "+cmdhelp.ClearFieldHelpText)
 
@@ -68,7 +69,7 @@ type updateMachine struct {
 	kvm              string
 	kvmPort          string
 	deploymentTicket string
-	tags             string
+	tags             []string
 	serialNumber     string
 	state            string
 	description      string
@@ -148,7 +149,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"kvm":      "kvm",
 			"kvm-port": "kvmport",
 			"ticket":   "deploymentTicket",
-			"tags":     "tags",
+			"tag":      "tags",
 			"serial":   "serialNumber",
 			"state":    "resourceState",
 			"desc":     "description",
@@ -177,10 +178,10 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 	} else {
 		machine.GetLocation().Rack = c.rackName
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		machine.Tags = nil
 	} else {
-		machine.Tags = utils.GetStringSlice(c.tags)
+		machine.Tags = c.tags
 	}
 	if c.serialNumber == utils.ClearFieldValue {
 		machine.SerialNumber = ""
@@ -250,8 +251,8 @@ func (c *updateMachine) validateArgs() error {
 		if c.serialNumber != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-serial' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.state != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
@@ -265,7 +266,7 @@ func (c *updateMachine) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.zoneName == "" && c.rackName == "" && c.state == "" &&
-			c.tags == "" && c.platform == "" && c.deploymentTicket == "" &&
+			len(c.tags) == 0 && c.platform == "" && c.deploymentTicket == "" &&
 			c.kvm == "" && c.kvmPort == "" && c.serialNumber == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}

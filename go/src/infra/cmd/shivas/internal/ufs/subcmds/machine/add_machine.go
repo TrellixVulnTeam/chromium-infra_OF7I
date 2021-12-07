@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -42,7 +43,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.kvmPort, "kvm-port", "", "the port of the kvm that this machine uses")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine")
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -62,7 +63,7 @@ type addMachine struct {
 	kvm              string
 	kvmPort          string
 	deploymentTicket string
-	tags             string
+	tags             []string
 	serialNumber     string
 }
 
@@ -131,7 +132,7 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 			Rack: c.rackName,
 		},
 		Realm:        ufsUtil.ToUFSRealm(c.zoneName),
-		Tags:         utils.GetStringSlice(c.tags),
+		Tags:         c.tags,
 		SerialNumber: c.serialNumber,
 	}
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
@@ -177,7 +178,7 @@ func (c *addMachine) validateArgs() error {
 		if c.serialNumber != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-serial' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
+		if len(c.tags) > 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	} else {
