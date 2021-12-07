@@ -192,6 +192,8 @@ def _export_builds(
     # TODO(iannucci): Re-enable these once BQ export correctly handles maps.
     proto.infra.buildbucket.ClearField('experiment_reasons')
     proto.infra.buildbucket.agent.source.cipd.ClearField('resolved_instances')
+    proto.infra.buildbucket.agent.input.ClearField('data')
+    proto.infra.buildbucket.agent.output.ClearField('resolved_data')
 
     for s in proto.steps:
       s.summary_markdown = ''
