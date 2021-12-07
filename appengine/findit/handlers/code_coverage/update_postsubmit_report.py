@@ -18,8 +18,13 @@ class UpdatePostsubmitReport(BaseHandler):
     if platform not in platform_info_map:
       return BaseHandler.CreateError('Platform: %s is not supported' % platform,
                                      400)
+    test_suite_type = self.request.get('test_suite_type', 'all')
+    modifier_id = int(self.request.get('modifier_id', '0'))
     bucket = platform_info_map[platform]['bucket']
+
     builder = platform_info_map[platform]['builder']
+    if test_suite_type == 'unit':
+      builder += '_unit'
 
     project = self.request.get('project')
     host = self.request.get('host')
@@ -32,7 +37,8 @@ class UpdatePostsubmitReport(BaseHandler):
         ref=ref,
         revision=revision,
         bucket=bucket,
-        builder=builder)
+        builder=builder,
+        modifier_id=modifier_id)
 
     if not report:
       return BaseHandler.CreateError('Report record not found', 404)

@@ -40,7 +40,7 @@
     });
 
 
-    function togglePostSubmitReportVisibility(luci_project, platform, project, host, ref, revision, e) {
+    function togglePostSubmitReportVisibility(luci_project, platform, project, host, ref, revision, test_suite_type, modifier_id, e) {
       var parameters = {
         'format': 'json',
         'luci_project': luci_project,
@@ -49,6 +49,8 @@
         'host': host,
         'ref': ref,
         'revision': revision,
+        'test_suite_type': test_suite_type,
+        'modifier_id': modifier_id,
         'visible': e.checked,
       };
       $.post('/coverage/task/postsubmit-report/update', parameters, function(data) {
@@ -152,11 +154,11 @@
                     <input type="checkbox"
                       id="inline"
                       checked={{datum.visible}}
-                      onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", this)'>
+                      onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", "{{test_suite_type}}", "{{modifier_id}}", this)'>
                   {% else %}
                   <input type="checkbox"
                     id="inline"
-                    onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", this)'>
+                    onChange = 'togglePostSubmitReportVisibility("{{luci_project}}","{{platform}}","{{datum.gitiles_commit.project}}", "{{datum.gitiles_commit.server_host}}", "{{datum.gitiles_commit.ref}}", "{{datum.gitiles_commit.revision}}", "{{test_suite_type}}", "{{modifier_id}}", this)'>
                   {% endif %}
                 </td>
               {% endif %}
