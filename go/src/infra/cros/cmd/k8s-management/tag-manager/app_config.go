@@ -52,7 +52,7 @@ func (a *appConfig) apply(repo ImageRepo) error {
 	defer cancel()
 	t, err := repo.List(ctx)
 	if err != nil {
-		return fmt.Errorf("apply %q: %s", repo, err)
+		return fmt.Errorf("apply %q: %s", repo.Name(), err)
 	}
 	img := image.NewList(repo.Name(), t.Manifests)
 	oImg := &image.OfficialList{

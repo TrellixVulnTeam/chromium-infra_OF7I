@@ -88,8 +88,8 @@ func innerMain() error {
 			defer wg.Done()
 
 			if err := a.apply(r); err != nil {
-				log.Printf("%q: Apply config failed: %s", r, err)
-				ch <- fmt.Sprintf("%q", r)
+				log.Printf("%q: Apply config failed: %s", r.Name(), err)
+				ch <- fmt.Sprintf("%q", r.Name())
 			}
 		}(d.app, d.repo)
 	}
