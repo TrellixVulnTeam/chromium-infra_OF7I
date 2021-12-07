@@ -5,4 +5,6 @@ contextdir: ../../../appengine/cr-buildbucket
 
 sources:
   - ../../../appengine/cr-buildbucket
+  - ../../../infra/libs/buildbucket
   - ../../../luci/appengine/components/components
+  - ../../../packages/infra_libs/infra_libs
