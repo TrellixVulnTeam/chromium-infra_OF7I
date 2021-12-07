@@ -64,7 +64,7 @@ message Inputs {
   }
   RollInto roll_into = 4;
 
-  // Restrictions limit what infrastructure can be targeted by manifests.
+  // Restrictions limit what can be targeted by manifests.
   //
   // This is useful when the builder operates over partially untrusted repos
   // to limit what they can reach.
@@ -72,7 +72,9 @@ message Inputs {
   // If some particular set is empty, the corresponding property is considered
   // unrestricted.
   message Restrictions {
-    repeated string storage = 1;
+    repeated string targets = 1;      // prefixes of allowed target names
+    repeated string build_steps = 2;  // kinds of allowed build steps
+    repeated string storage = 3;      // prefixes of allowed gs:// destinations
   }
   Restrictions restrictions = 6;
 }

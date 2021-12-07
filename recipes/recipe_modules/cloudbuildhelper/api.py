@@ -69,6 +69,8 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
   #
   # All fields are lists of strings. Empty lists means "do not restrict".
   Restrictions = namedtuple('Restrictions', [
+      'targets',             # prefixes of allowed target names
+      'build_steps',         # allowed kinds of build steps
       'storage',             # prefixes of allowed tarball destinations
       'container_registry',  # allowed Container Registries
       'cloud_build',         # allowed Cloud Build projects
@@ -225,6 +227,10 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
   @staticmethod
   def _restriction_args(r):
     out = []
+    for s in sorted(r.targets or []):
+      out.extend(['-restrict-targets', s])
+    for s in sorted(r.build_steps or []):
+      out.extend(['-restrict-build-steps', s])
     for s in sorted(r.storage or []):
       out.extend(['-restrict-storage', s])
     for s in sorted(r.container_registry or []):

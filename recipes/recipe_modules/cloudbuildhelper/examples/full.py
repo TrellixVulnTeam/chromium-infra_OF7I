@@ -28,6 +28,8 @@ def RunSteps(api):
 
 def restrictions(api):
   return api.cloudbuildhelper.Restrictions(
+      targets=['some-target/'],
+      build_steps=['copy', 'go_gae_bundle'],
       storage=['gs://something'],
       container_registry=['gcr.io/something'],
       cloud_build=['some-project'],

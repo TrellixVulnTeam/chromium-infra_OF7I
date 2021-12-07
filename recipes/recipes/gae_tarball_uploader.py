@@ -71,6 +71,8 @@ def RunSteps(api, properties):
           build_id=api.buildbucket.build_url(),
           infra=properties.infra,
           restrictions=api.cloudbuildhelper.Restrictions(
+              targets=properties.restrictions.targets,
+              build_steps=properties.restrictions.build_steps,
               storage=properties.restrictions.storage,
               # GAE tarball builders should not use any of this infra. Restrict
               # it to some phony values as a precaution.
@@ -406,6 +408,8 @@ def GenTests(api):
               url='https://git.example.com/repo',
           ),
           restrictions=PROPERTIES.Restrictions(
+              targets=['some-target-prefix/'],
+              build_steps=['copy', 'go_gae_bundle'],
               storage=['gs://something'],
           ),
       )

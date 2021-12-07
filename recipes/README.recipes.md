@@ -92,7 +92,7 @@ See https://chromium.googlesource.com/infra/infra/+/main/build/images/.
 
 API for calling 'cloudbuildhelper' tool.
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#127)(self, manifest, canonical_tag=None, build_id=None, infra=None, restrictions=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/api.py#129)(self, manifest, canonical_tag=None, build_id=None, infra=None, restrictions=None, labels=None, tags=None, checkout_metadata=None, step_test_image=None):**
 
 Calls `cloudbuildhelper build <manifest>` interpreting the result.
 
@@ -113,7 +113,7 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [build\_environment](/recipes/recipe_modules/cloudbuildhelper/api.py#597)(self, root, go_version_file=None, nodejs_version_file=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [build\_environment](/recipes/recipe_modules/cloudbuildhelper/api.py#603)(self, root, go_version_file=None, nodejs_version_file=None):**
 
 A context manager that activates the build environment.
 
@@ -152,11 +152,11 @@ Args:
   nodejs_version_file (str) - path within the checkout to a text file with
       Node.js version to bootstrap or None to skip bootstrapping Node.js.
 
-&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#102)(self, val):**
+&emsp; **@command.setter**<br>&mdash; **def [command](/recipes/recipe_modules/cloudbuildhelper/api.py#104)(self, val):**
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#475)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#481)(self, root, dirs, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
@@ -168,7 +168,7 @@ Args:
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#495)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#501)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -185,7 +185,7 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#565)(self, path, revision, commit_position=None):**
+&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#571)(self, path, revision, commit_position=None):**
 
 Computes `<number>-<revision>` string identifying a commit.
 
@@ -203,14 +203,14 @@ Args:
 Returns:
   A `<number>-<revision>` string.
 
-&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#107)(self):**
+&mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#109)(self):**
 
 Reports the version of cloudbuildhelper tool via the step text.
 
 Returns:
   None.
 
-&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#451)(self, path):**
+&mdash; **def [update\_pins](/recipes/recipe_modules/cloudbuildhelper/api.py#457)(self, path):**
 
 Calls `cloudbuildhelper pins-update <path>`.
 
@@ -223,7 +223,7 @@ Args:
 Returns:
   List of strings with updated "<image>:<tag>" pairs, if any.
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#355)(self, manifest, canonical_tag, build_id=None, infra=None, restrictions=None, checkout_metadata=None, step_test_tarball=None):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/api.py#361)(self, manifest, canonical_tag, build_id=None, infra=None, restrictions=None, checkout_metadata=None, step_test_tarball=None):**
 
 Calls `cloudbuildhelper upload <manifest>` interpreting the result.
 
@@ -1286,13 +1286,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#15)(api):**
 
-&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#58)(api):**
+&mdash; **def [build](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#60)(api):**
 
-&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#38)(api):**
+&mdash; **def [repo\_checkout\_metadata](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#40)(api):**
 
 &mdash; **def [restrictions](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#29)(api):**
 
-&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#140)(api):**
+&mdash; **def [upload](/recipes/recipe_modules/cloudbuildhelper/examples/full.py#142)(api):**
 ### *recipes* / [cloudbuildhelper:examples/roll](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#9): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
