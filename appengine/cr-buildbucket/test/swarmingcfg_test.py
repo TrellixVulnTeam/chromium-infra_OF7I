@@ -484,22 +484,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
         ],
     )
 
-    self.cfg_test(
-        '''
-          builders {
-            name: "b"
-            swarming_host: "swarming.example.com"
-            expiration_secs: 158400  # 44h
-            execution_timeout_secs: 14400  # 4h
-          }
-        ''',
-        '',
-        [
-            'builder b: expiration_secs + execution_timeout_secs '
-            'must be at most 47h'
-        ],
-    )
-
   @parameterized.expand([
       (['a:b'], ''),
       (['a:b1', 'a:b2', '60:a:b3'], ''),
