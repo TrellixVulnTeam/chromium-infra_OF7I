@@ -1,0 +1,11 @@
+---
+name: fleet-k8s-management/tag-manager
+extends: ../../base.yaml
+
+dockerfile: ../../../../go/src/infra/cros/cmd/k8s-management/tag-manager/docker/Dockerfile
+deterministic: true
+
+build:
+  - go_binary: infra/cros/cmd/k8s-management/tag-manager
+    # ContextDir defaults to the directory with Dockerfile
+    dest: ${contextdir}/tag-manager
