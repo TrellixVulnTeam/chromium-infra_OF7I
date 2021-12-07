@@ -102,7 +102,7 @@ func mainImpl() error {
 	// In the output, we want relative paths from the repository root, which
 	// will be the same as relative paths from the input directory root.
 	for _, file := range files {
-		cmdArgs = append(cmdArgs, filepath.Join(*inputDir, file.Path))
+		cmdArgs = append(cmdArgs, file.Path)
 	}
 	cmd := exec.Command(cmdName, cmdArgs...)
 	log.Printf("Command: %s", cmd.Args)
@@ -112,6 +112,7 @@ func mainImpl() error {
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("PYTHONPATH=%s", absPylintPackagePath))
 	cmd.Env = env
+	cmd.Dir = *inputDir
 
 	stdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
