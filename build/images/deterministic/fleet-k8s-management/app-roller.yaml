@@ -1,0 +1,11 @@
+---
+name: fleet-k8s-management/app-roller
+extends: ../../base.yaml
+
+dockerfile: ../../../../go/src/infra/cros/cmd/k8s-management/app-roller/docker/Dockerfile
+deterministic: true
+
+build:
+  - go_binary: infra/cros/cmd/k8s-management/app-roller
+    # ContextDir defaults to the directory with Dockerfile
+    dest: ${contextdir}/app-roller
