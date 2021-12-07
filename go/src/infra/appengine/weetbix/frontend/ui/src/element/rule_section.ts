@@ -129,6 +129,7 @@ export class RuleSection extends LitElement {
 
         this.etag = r.headers.get("ETag");
         this.rule = rule;
+        this.fireRuleChanged();
     }
 
     edit() {
@@ -206,6 +207,7 @@ export class RuleSection extends LitElement {
             this.rule = rule;
             this.etag = response.headers.get("ETag");
             this.editing = false;
+            this.fireRuleChanged();
             return null;
         } else {
             const err = await response.text();
@@ -224,6 +226,18 @@ export class RuleSection extends LitElement {
         // Let the snackbar manage its own closure after a delay.
         const snackbar = this.shadowRoot.getElementById("error-snackbar") as Snackbar;
         snackbar.show();
+    }
+
+    fireRuleChanged() {
+        if (this.rule === undefined) {
+            return;
+        }
+        const event = new CustomEvent<RuleChangedEvent>('rulechanged', {
+            detail: {
+                lastUpdated: this.rule.lastUpdated
+            },
+        });
+        this.dispatchEvent(event)
     }
 
     static styles = [css`
@@ -285,6 +299,10 @@ export class RuleSection extends LitElement {
             color: var(--greyed-out-text-color);
         }
     `];
+}
+
+export interface RuleChangedEvent {
+    lastUpdated: string; // RFC 3339 encoded date/time.
 }
 
 // RuleUpdateRequest is the data expected the server in a PATCH request

@@ -28,6 +28,7 @@ describe('Rule Section', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-textbox]').get('textarea').type('{selectall}test = "cypress test 2"')
         cy.get('rule-section').get('[data-cy=rule-definition-save]').click()
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 2"');
+        cy.get('reclustering-progress-indicator').get('[data-cy=reclustering-progress-description]').contains('Weetbix is re-clustering test results')
     })
     it('validation error while editing rule definition', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-edit]').click()

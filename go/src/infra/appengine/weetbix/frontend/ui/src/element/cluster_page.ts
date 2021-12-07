@@ -3,17 +3,16 @@
 // found in the LICENSE file.
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
-import { RouterLocation } from '@vaadin/router';
+import { BeforeEnterObserver, RouterLocation } from '@vaadin/router';
 import './rule_section.ts';
+import { RuleChangedEvent } from './rule_section';
+import './reclustering_progress_indicator.ts';
 
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
-export class ClusterPage extends LitElement {
+export class ClusterPage extends LitElement implements BeforeEnterObserver {
     @property({ attribute: false })
     location: RouterLocation;
-
-    @state()
-    cluster: Cluster | undefined;
 
     @property()
     project: string;
@@ -24,18 +23,27 @@ export class ClusterPage extends LitElement {
     @property()
     clusterId: string;
 
+    @state()
+    cluster: Cluster | undefined;
+
+    @state()
+    // When the displayed rule (if any) was last updated. This is provided to
+    // the reclustering progress indicator to show the correct re-clustering
+    // status.
+    ruleLastUpdated: string;
+
+    onBeforeEnter(location: RouterLocation) {
+        // Take the first parameter value only.
+        this.project = typeof location.params.project == 'string' ? location.params.project : location.params.project[0];
+        this.clusterAlgorithm = typeof location.params.algorithm == 'string' ? location.params.algorithm : location.params.algorithm[0];
+        this.clusterId = typeof location.params.id == 'string' ? location.params.id : location.params.id[0];
+    }
 
     connectedCallback() {
-        super.connectedCallback()
+        super.connectedCallback();
 
-        // Take the first parameter value only.
-        this.project = typeof this.location.params.project == 'string' ? this.location.params.project : this.location.params.project[0];
-        this.clusterAlgorithm = typeof this.location.params.algorithm == 'string' ? this.location.params.algorithm : this.location.params.algorithm[0];
-        this.clusterId = typeof this.location.params.id == 'string' ? this.location.params.id : this.location.params.id[0];
-
-        fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterId)}`)
-            .then(r => r.json())
-            .then(cluster => this.cluster = cluster);
+        this.ruleLastUpdated = "";
+        this.refreshAnalysis();
     }
 
     render() {
@@ -54,7 +62,13 @@ export class ClusterPage extends LitElement {
 
         var definitionSection = html`Loading...`;
         if (this.clusterAlgorithm.startsWith("rules-")) {
-            definitionSection = html`<rule-section project="${this.project}" ruleId="${this.clusterId}"></rule-section>`;
+            definitionSection = html`
+                <rule-section
+                    project=${this.project}
+                    ruleId=${this.clusterId}
+                    @rulechanged=${this.ruleChanged}>
+                </rule-section>
+            `;
         } else if (c !== undefined) {
             var criteriaName = ""
             if (this.clusterAlgorithm.startsWith("testname-")) {
@@ -141,6 +155,12 @@ export class ClusterPage extends LitElement {
         }
 
         return html`
+        <reclustering-progress-indicator
+            project=${this.project}
+            hasRule=${this.clusterAlgorithm.startsWith("rules-")}
+            ruleLastUpdated=${this.ruleLastUpdated}
+            @refreshanalysis=${this.refreshAnalysis}>
+        </reclustering-progress-indicator>
         <div id="container">
             <h1>Cluster <span class="cluster-id">${this.clusterAlgorithm}/${this.clusterId}</span></h1>
             ${definitionSection}
@@ -151,6 +171,24 @@ export class ClusterPage extends LitElement {
         </div>
         `;
     }
+
+    // Called when the rule displayed in the rule section is loaded
+    // for the first time, or updated.
+    ruleChanged(e: CustomEvent<RuleChangedEvent>) {
+        this.ruleLastUpdated = e.detail.lastUpdated;
+    }
+
+    // (Re-)loads cluster impact analysis. Called on page load or
+    // if the refresh button on the reclustering progress indicator
+    // is clicked at completion of re-clustering.
+    async refreshAnalysis() {
+        this.cluster = undefined;
+
+        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(this.clusterAlgorithm)}/${encodeURIComponent(this.clusterId)}`);
+        const cluster = await response.json();
+        this.cluster = cluster;
+    }
+
     static styles = [css`
         #container {
             margin: 20px 14px;
