@@ -13,6 +13,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
 
@@ -68,7 +69,7 @@ var UpdateLabstationCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.rpm, "rpm", "", "rpm assigned to the Labstation. Clearing this field will delete rpm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.rpmOutlet, "rpm-outlet", "", "rpm outlet used for the Labstation.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags. You can only append new tags or delete all of them. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine. "+cmdhelp.ClearFieldHelpText)
 
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")

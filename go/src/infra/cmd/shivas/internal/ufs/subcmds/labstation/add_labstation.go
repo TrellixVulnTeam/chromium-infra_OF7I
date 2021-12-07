@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/genproto/protobuf/field_mask"
 
@@ -70,7 +71,7 @@ var AddLabstationCmd = &subcommands.Command{
 		c.Flags.Int64Var(&c.deployTaskTimeout, "deploy-timeout", swarming.DeployTaskExecutionTimeout, "execution timeout for deploy task in seconds.")
 		c.Flags.Var(utils.CSVString(&c.deployTags), "deploy-tags", "comma seperated tags for deployment task.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine.")
-		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags for the Labstation.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		c.Flags.StringVar(&c.description, "desc", "", "description for the machine.")
 		c.Flags.StringVar(&c.model, "model", "", "model name of the device")
 		c.Flags.StringVar(&c.board, "board", "", "board the device is based on")
@@ -239,7 +240,7 @@ func (c addLabstation) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
 		if len(c.tags) > 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe MCSV/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" {
