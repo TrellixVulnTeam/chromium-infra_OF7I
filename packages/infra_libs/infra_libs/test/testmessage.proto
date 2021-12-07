@@ -37,6 +37,10 @@ message TestMessage {
     // i.e. we don't send empty arrays.
     RepeatedContainer repeated_container = 15;
     google.protobuf.Duration duration = 16;
+
+    map<string, E> enum_map = 17;
+    map<string, int32> scalar_map = 18;
+    map<string, NestedMessage> message_map = 19;
 }
 
 message NestedMessage {

@@ -87,6 +87,9 @@ class TestBigQueryHelper(unittest.TestCase):
     dur = duration_pb2.Duration()
     dur.FromTimedelta(datetime.timedelta(seconds=2, microseconds=3))
 
+    mmap_hello=testmessage_pb2.NestedMessage(num=100)
+    mmap_world=testmessage_pb2.NestedMessage(str='yo.')
+
     msg = testmessage_pb2.TestMessage(
         str='a',
         strs=['a', 'b'],
@@ -114,6 +117,13 @@ class TestBigQueryHelper(unittest.TestCase):
 
         repeated_container=testmessage_pb2.RepeatedContainer(nums=[1, 2]),
         duration=dur,
+
+        enum_map={
+          'hello': testmessage_pb2.E1,
+          'world': testmessage_pb2.E2,
+        },
+        scalar_map={'hello': 1, 'world': 2},
+        message_map={'hello': mmap_hello, 'world': mmap_world},
     )
     row = bqh.message_to_dict(msg)
 
@@ -148,6 +158,19 @@ class TestBigQueryHelper(unittest.TestCase):
             'nums': [1, 2]
         },
         'duration': 2.000003,
+
+        'enum_map': [
+          {'key': u'hello', 'value': 'E1'},
+          {'key': u'world', 'value': 'E2'},
+        ],
+        'scalar_map': [
+          {'key': u'hello', 'value': 1},
+          {'key': u'world', 'value': 2},
+        ],
+        'message_map': [
+          {'key': u'hello', 'value': {'num': 100, 'str': u''}},
+          {'key': u'world', 'value': {'num': 0, 'str': u'yo.'}},
+        ],
     }
 
     # compare structs as JSON values, not strings.
