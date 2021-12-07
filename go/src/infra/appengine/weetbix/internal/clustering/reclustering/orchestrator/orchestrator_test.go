@@ -92,31 +92,48 @@ func TestOrchestrator(t *testing.T) {
 			err = rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{rule})
 			So(err, ShouldBeNil)
 
-			expectedAttemptTime := tc.Now().Truncate(5 * time.Minute).Add(5 * time.Minute)
+			expectedAttemptStartTime := tc.Now().Truncate(5 * time.Minute)
+			expectedAttemptTime := expectedAttemptStartTime.Add(5 * time.Minute)
 			expectedTasks := []*taskspb.ReclusterChunks{
 				{
 					Project:      "project-a",
 					AttemptTime:  timestamppb.New(expectedAttemptTime),
 					StartChunkId: "",
 					EndChunkId:   state.EndOfTable,
+					State: &taskspb.ReclusterChunkState{
+						CurrentChunkId: "",
+						NextReportDue:  timestamppb.New(expectedAttemptStartTime),
+					},
 				},
 				{
 					Project:      "project-b",
 					AttemptTime:  timestamppb.New(expectedAttemptTime),
 					StartChunkId: "",
 					EndChunkId:   strings.Repeat("55", 15) + "54",
+					State: &taskspb.ReclusterChunkState{
+						CurrentChunkId: "",
+						NextReportDue:  timestamppb.New(expectedAttemptStartTime),
+					},
 				},
 				{
 					Project:      "project-b",
 					AttemptTime:  timestamppb.New(expectedAttemptTime),
 					StartChunkId: strings.Repeat("55", 15) + "54",
 					EndChunkId:   strings.Repeat("aa", 15) + "a9",
+					State: &taskspb.ReclusterChunkState{
+						CurrentChunkId: strings.Repeat("55", 15) + "54",
+						NextReportDue:  timestamppb.New(expectedAttemptStartTime.Add(10 * time.Second)),
+					},
 				},
 				{
 					Project:      "project-b",
 					AttemptTime:  timestamppb.New(expectedAttemptTime),
 					StartChunkId: strings.Repeat("aa", 15) + "a9",
 					EndChunkId:   state.EndOfTable,
+					State: &taskspb.ReclusterChunkState{
+						CurrentChunkId: strings.Repeat("aa", 15) + "a9",
+						NextReportDue:  timestamppb.New(expectedAttemptStartTime.Add(20 * time.Second)),
+					},
 				},
 			}
 			expectedRunA := &runs.ReclusteringRun{
@@ -274,6 +291,8 @@ func TestOrchestrator(t *testing.T) {
 				expectedAttemptTime = expectedAttemptTime.Add(5 * time.Minute)
 				for _, task := range expectedTasks {
 					task.AttemptTime = timestamppb.New(expectedAttemptTime)
+					task.State.NextReportDue = timestamppb.New(
+						task.State.NextReportDue.AsTime().Add(5 * time.Minute))
 				}
 				expectedRunA.AttemptTimestamp = expectedAttemptTime
 				expectedRunB.AttemptTimestamp = expectedAttemptTime

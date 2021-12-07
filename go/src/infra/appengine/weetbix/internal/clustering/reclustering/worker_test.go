@@ -94,6 +94,12 @@ func TestReclustering(t *testing.T) {
 			AttemptTime:  timestamppb.New(attemptTime),
 			StartChunkId: "",
 			EndChunkId:   state.EndOfTable,
+			State: &taskspb.ReclusterChunkState{
+				CurrentChunkId:       "",
+				NextReportDue:        timestamppb.New(tc.Now()),
+				ReportedOnce:         false,
+				LastReportedProgress: 0,
+			},
 		}
 
 		setupScenario := func(s *scenario) {
@@ -123,8 +129,9 @@ func TestReclustering(t *testing.T) {
 			setupScenario(s)
 
 			// Run the task.
-			err := worker.Do(ctx, task)
+			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 			So(err, ShouldBeNil)
+			So(continuation, ShouldBeNil)
 
 			// Final clustering state should be equal starting state.
 			actualState, err := state.ReadAllForTesting(ctx, testProject)
@@ -149,8 +156,9 @@ func TestReclustering(t *testing.T) {
 			setupScenario(s)
 
 			// Run the task.
-			err := worker.Do(ctx, task)
+			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 			So(err, ShouldBeNil)
+			So(continuation, ShouldBeNil)
 
 			// Final clustering state should be equal expected state.
 			actualState, err := state.ReadAllForTesting(ctx, testProject)
@@ -191,8 +199,9 @@ func TestReclustering(t *testing.T) {
 			setupScenario(s)
 
 			// Run the task.
-			err := worker.Do(ctx, task)
+			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 			So(err, ShouldBeNil)
+			So(continuation, ShouldBeNil)
 
 			// Final clustering state should be equal starting state,
 			// except that RulesVersion should now be later (and
@@ -230,8 +239,9 @@ func TestReclustering(t *testing.T) {
 			So(tc.Now(), ShouldHappenAfter, run.AttemptTimestamp)
 
 			// Run the task.
-			err := worker.Do(ctx, task)
+			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 			So(err, ShouldBeNil)
+			So(continuation, ShouldBeNil)
 
 			// Clustering state should be same as the initial state.
 			actualState, err := state.ReadAllForTesting(ctx, testProject)
@@ -285,11 +295,13 @@ func TestReclustering(t *testing.T) {
 				So(err, ShouldBeNil)
 			}
 
-			// Run the worker with time advancing, as the transaction retry
-			// logic sets timers which must be triggered.
+			// Run the worker with time advancing at 100 times speed,
+			// as the transaction retry logic sets timers which must be
+			// triggered.
 			runWithTimeAdvancing(tc, func() {
-				err := worker.Do(ctx, task)
+				continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 				So(err, ShouldBeNil)
+				So(continuation, ShouldBeNil)
 			})
 
 			// Because of update races, none of the chunks should have been
@@ -319,8 +331,20 @@ func TestReclustering(t *testing.T) {
 			run.RulesVersion = rules.StartingEpoch
 			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
 
-			err := worker.Do(ctx, task)
+			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
 			So(err, ShouldErrLike, "running out-of-date algorithms version")
+			So(continuation, ShouldBeNil)
+		})
+		Convey(`Continuation correctly scheduled`, func() {
+			run.RulesVersion = rules.StartingEpoch
+			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
+
+			// Leave no time for the task to run.
+			continuation, err := worker.Do(ctx, task, 0*time.Second)
+			So(err, ShouldBeNil)
+
+			// Continuation should be scheduled, matching original task.
+			So(continuation, ShouldResembleProto, task)
 		})
 	})
 }

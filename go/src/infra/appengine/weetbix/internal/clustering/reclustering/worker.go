@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"time"
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
@@ -24,15 +23,31 @@ import (
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/common/trace"
 	"go.chromium.org/luci/server/span"
-	"golang.org/x/time/rate"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
 	// batchSize is the number of chunks to read from Spanner at a time.
 	batchSize = 10
-	// progressIntervalSeconds is the number of seconds between progress
+
+	// TargetTaskDuration is the desired duration of a re-clustering task.
+	// If a task completes before the reclustering run has completed, a
+	// continuation task will be scheduled.
+	//
+	// Longer durations will incur lower task queuing/re-queueing overhead,
+	// but limit the ability of autoscaling to move tasks between instances
+	// in response to load.
+	TargetTaskDuration = 2 * time.Second
+
+	// ProgressIntervalSeconds is the number of seconds between progress
 	// updates.
-	progressIntervalSeconds = 30
+	//
+	// Note that this is the frequency at which updates should
+	// be reported for a shard of work; individual tasks are usually
+	// much shorter lived and consequently most will not report any progress
+	// (unless it is time for the shard to report progress again).
+	ProgressIntervalSeconds = 30
 )
 
 // ChunkStore is the interface for the blob store archiving chunks of test
@@ -64,66 +79,91 @@ type taskContext struct {
 	task          *taskspb.ReclusterChunks
 	run           *runs.ReclusteringRun
 	progressToken *runs.ProgressToken
-	// firstReport is the time at which the first progress update is
-	// permitted.
-	firstReport time.Time
-	// reportRate limits the frequency at which progress is reported.
-	reportRate *rate.Limiter
+	// nextReportDue is the time at which the next progress update is
+	// due.
+	nextReportDue time.Time
 	// currentChunkID is the exclusive lower bound of the range
 	// of ChunkIds still to re-cluster.
 	currentChunkID string
 }
 
-// Do handles a re-clustering task.
-func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks) error {
+// Do works on a re-clustering task for approximately duration, returning a
+// continuation task (if the attempt end time has not been reached).
+//
+// Continuation tasks are used to better integrate with GAE autoscaling,
+// autoscaling work best when tasks are relatively small (so that work
+// can be moved between instances in real time).
+func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks, duration time.Duration) (*taskspb.ReclusterChunks, error) {
+	if task.State == nil {
+		return nil, errors.New("task does not have state")
+	}
+
 	attemptTime := task.AttemptTime.AsTime()
 
 	run, err := runs.Read(span.Single(ctx), task.Project, attemptTime)
 	if err != nil {
-		return errors.Annotate(err, "read run for task").Err()
+		return nil, errors.Annotate(err, "read run for task").Err()
 	}
 
 	if run.AlgorithmsVersion > algorithms.AlgorithmsVersion {
-		return fmt.Errorf("running out-of-date algorithms version (task requires %v, worker running %v)",
+		return nil, fmt.Errorf("running out-of-date algorithms version (task requires %v, worker running %v)",
 			run.AlgorithmsVersion, algorithms.AlgorithmsVersion)
 	}
 
-	// Start reporting progress at a random time interval
-	// [0,progressIntervalSeconds) into the task.
-	offsetMillis := rand.Intn(progressIntervalSeconds * 1000)
-	firstReport := clock.Now(ctx).Add(time.Duration(offsetMillis) * time.Millisecond)
+	progressState := &runs.ProgressState{
+		ReportedOnce:         task.State.ReportedOnce,
+		LastReportedProgress: int(task.State.LastReportedProgress),
+	}
 
-	// Report progress at a rate of 1.0/progressIntervalSeconds. This is a
-	// token bucket-type rate limiter with a capacity of 1.
-	reportRate := rate.NewLimiter(rate.Limit(1.0/float64(progressIntervalSeconds)), 1)
-
-	pt := runs.NewProgressToken(task.Project, attemptTime)
+	pt := runs.NewProgressToken(task.Project, attemptTime, progressState)
 	tctx := &taskContext{
 		worker:         w,
 		task:           task,
 		run:            run,
 		progressToken:  pt,
-		firstReport:    firstReport,
-		reportRate:     reportRate,
-		currentChunkID: task.StartChunkId,
+		nextReportDue:  task.State.NextReportDue.AsTime(),
+		currentChunkID: task.State.CurrentChunkId,
 	}
 
-	// attemptTime is the (soft) deadline for the run.
-	for clock.Now(ctx).Before(attemptTime) {
-		var done bool
+	// finishTime is the (soft) deadline for the run.
+	finishTime := clock.Now(ctx).Add(duration)
+	if attemptTime.Before(finishTime) {
+		// Stop by the attempt time.
+		finishTime = attemptTime
+	}
+
+	var done bool
+	for clock.Now(ctx).Before(finishTime) && !done {
 		err := retry.Retry(ctx, transient.Only(retry.Default), func() error {
 			var err error
 			done, err = tctx.recluster(ctx)
 			return err
 		}, nil)
 		if err != nil {
-			return err
-		}
-		if done {
-			break
+			return nil, err
 		}
 	}
-	return nil
+
+	var continuation *taskspb.ReclusterChunks
+	if finishTime.Before(attemptTime) && !done {
+		ps, err := pt.ExportState()
+		if err != nil {
+			return nil, err
+		}
+		continuation = &taskspb.ReclusterChunks{
+			Project:      task.Project,
+			AttemptTime:  task.AttemptTime,
+			StartChunkId: task.StartChunkId,
+			EndChunkId:   task.EndChunkId,
+			State: &taskspb.ReclusterChunkState{
+				CurrentChunkId:       tctx.currentChunkID,
+				NextReportDue:        timestamppb.New(tctx.nextReportDue),
+				ReportedOnce:         ps.ReportedOnce,
+				LastReportedProgress: int64(ps.LastReportedProgress),
+			},
+		}
+	}
+	return continuation, nil
 }
 
 // recluster tries to reclusters some chunks, advancing currentChunkID
@@ -208,7 +248,7 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 func (t *taskContext) reportProgress(ctx context.Context) error {
 	// Manage contention on the ReclusteringRun row by only periodically
 	// reporting progress.
-	if clock.Now(ctx).After(t.firstReport) && t.reportRate.Allow() {
+	if clock.Now(ctx).After(t.nextReportDue) {
 		progress, err := calculateProgress(t.task, t.currentChunkID)
 		if err != nil {
 			return errors.Annotate(err, "calculate progress").Err()
@@ -218,6 +258,7 @@ func (t *taskContext) reportProgress(ctx context.Context) error {
 		if err != nil {
 			return errors.Annotate(err, "report progress").Err()
 		}
+		t.nextReportDue = t.nextReportDue.Add(TargetTaskDuration * time.Second)
 	}
 	return nil
 }

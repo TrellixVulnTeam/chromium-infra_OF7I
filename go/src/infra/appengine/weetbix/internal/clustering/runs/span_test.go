@@ -184,27 +184,53 @@ func TestSpan(t *testing.T) {
 			err := SetRunsForTesting(ctx, runs)
 			So(err, ShouldBeNil)
 
-			token1 := NewProgressToken(testProject, reference)
-			token2 := NewProgressToken(testProject, reference)
-			assertProgress(0, 0)
+			Convey(`Concurrent`, func() {
+				token1 := NewProgressToken(testProject, reference, &ProgressState{})
+				token2 := NewProgressToken(testProject, reference, &ProgressState{})
+				assertProgress(0, 0)
 
-			So(token1.ReportProgress(ctx, 0), ShouldBeNil)
-			assertProgress(1, 0)
+				So(token1.ReportProgress(ctx, 0), ShouldBeNil)
+				assertProgress(1, 0)
 
-			So(token1.ReportProgress(ctx, 150), ShouldBeNil)
-			assertProgress(1, 150)
+				So(token1.ReportProgress(ctx, 150), ShouldBeNil)
+				assertProgress(1, 150)
 
-			So(token2.ReportProgress(ctx, 200), ShouldBeNil)
-			assertProgress(2, 350)
+				So(token2.ReportProgress(ctx, 200), ShouldBeNil)
+				assertProgress(2, 350)
 
-			So(token1.ReportProgress(ctx, 200), ShouldBeNil)
-			assertProgress(2, 400)
+				So(token1.ReportProgress(ctx, 200), ShouldBeNil)
+				assertProgress(2, 400)
 
-			So(token2.ReportProgress(ctx, 1000), ShouldBeNil)
-			assertProgress(2, 1200)
+				So(token2.ReportProgress(ctx, 1000), ShouldBeNil)
+				assertProgress(2, 1200)
 
-			So(token1.ReportProgress(ctx, 1000), ShouldBeNil)
-			assertProgress(2, 2000)
+				So(token1.ReportProgress(ctx, 1000), ShouldBeNil)
+				assertProgress(2, 2000)
+			})
+			Convey(`Export State`, func() {
+				token := NewProgressToken(testProject, reference, &ProgressState{})
+				assertProgress(0, 0)
+
+				state, err := token.ExportState()
+				So(err, ShouldBeNil)
+				So(state, ShouldResemble, &ProgressState{ReportedOnce: false, LastReportedProgress: 0})
+
+				token = NewProgressToken(testProject, reference, state)
+				So(token.ReportProgress(ctx, 150), ShouldBeNil)
+				assertProgress(1, 150)
+
+				state, err = token.ExportState()
+				So(err, ShouldBeNil)
+				So(state, ShouldResemble, &ProgressState{ReportedOnce: true, LastReportedProgress: 150})
+
+				token = NewProgressToken(testProject, reference, state)
+				So(token.ReportProgress(ctx, 1000), ShouldBeNil)
+				assertProgress(1, 1000)
+
+				state, err = token.ExportState()
+				So(err, ShouldBeNil)
+				So(state, ShouldResemble, &ProgressState{ReportedOnce: true, LastReportedProgress: 1000})
+			})
 		})
 		Convey(`Create`, func() {
 			testCreate := func(bc *ReclusteringRun) error {

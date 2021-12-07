@@ -114,12 +114,34 @@ message ReclusterChunks {
   // This is also the soft deadline for the task.
   google.protobuf.Timestamp attempt_time = 2;
 
-  // The exclusive lower bound defining the range of ChunkIds to
+  // The exclusive lower bound defining the range of Chunk IDs to
   // be re-clustered. To define the table start, use the empty string ("").
   string start_chunk_id = 3;
 
-  // The inclusive upper bound defining the range of ChunkIds to
+  // The inclusive upper bound defining the range of Chunk IDs to
   // be re-clustered. To define the table end use "ff" x 16, i.e.
   // "ffffffffffffffffffffffffffffffff".
   string end_chunk_id = 4;
+
+  // State to be passed from one execution of the task to the next.
+  // To fit with autoscaling, each task aims to execute only for a short time
+  // before enqueuing another task to act as its continuation.
+  // Must be populated on all tasks, even on the initial task.
+  ReclusterChunkState state = 5;
+}
+
+// ReclusterChunkState captures state passed from one execution of a
+// ReclusterChunks task to the next.
+message ReclusterChunkState {
+  // The exclusive lower bound of Chunk IDs processed to date.
+  string current_chunk_id = 1;
+
+  // The next time a progress report should be made.
+  google.protobuf.Timestamp next_report_due = 2;
+
+  // Whether progress has been reported at least once.
+  bool reported_once = 3;
+
+  // The last progress value which was reported.
+  int64 last_reported_progress = 4;
 }

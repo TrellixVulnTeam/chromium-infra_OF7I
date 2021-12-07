@@ -33,7 +33,7 @@ func TestSchedule(t *testing.T) {
 			EndChunkId:   strings.Repeat("ff", 16),
 		}
 		expected := proto.Clone(task).(*taskspb.ReclusterChunks)
-		So(Schedule(ctx, "chromium-20250101-120000-shard-1-of-1", task), ShouldBeNil)
+		So(Schedule(ctx, task), ShouldBeNil)
 		So(skdr.Tasks().Payloads()[0], ShouldResembleProto, expected)
 	})
 }

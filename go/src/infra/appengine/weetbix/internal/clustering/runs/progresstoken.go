@@ -12,9 +12,9 @@ import (
 	"go.chromium.org/luci/server/span"
 )
 
-// ProgressToken is used to report the progress reported for a shard. Only
-// one progress token should ever be created in the lifetime of a shard,
-// to avoid double-reporting progress.
+// ProgressToken is used to report the progress reported for a shard.
+// To avoid double-counting progress, the progress state must be
+// saved and restored between tasks that report for the shard.
 type ProgressToken struct {
 	project              string
 	attemptTimestamp     time.Time
@@ -23,13 +23,39 @@ type ProgressToken struct {
 	invalid              bool
 }
 
+// ProgressState encapsulates the reporting state of a progress token.
+// The reporting state avoids a shard double-reporting progress.
+type ProgressState struct {
+	// ReportedOnce is whether any progress has been reported for
+	// the shard.
+	ReportedOnce bool
+	// LastReportedProgress is the last reported progress for the
+	// shard.
+	LastReportedProgress int
+}
+
 // NewProgressToken initialises a new progress token with the given LUCI
-// project ID and attempt key.
-func NewProgressToken(project string, attemptTimestamp time.Time) *ProgressToken {
+// project ID, attempt key and state.
+func NewProgressToken(project string, attemptTimestamp time.Time, state *ProgressState) *ProgressToken {
 	return &ProgressToken{
-		project:          project,
-		attemptTimestamp: attemptTimestamp,
+		project:              project,
+		attemptTimestamp:     attemptTimestamp,
+		reportedOnce:         state.ReportedOnce,
+		lastReportedProgress: state.LastReportedProgress,
 	}
+}
+
+// ExportState exports the state of the progress token. After the export,
+// the token is invalidated and cannot be used to report progress anymore.
+func (p *ProgressToken) ExportState() (*ProgressState, error) {
+	if p.invalid {
+		return nil, errors.New("state cannot be exported; token is invalid")
+	}
+	p.invalid = true
+	return &ProgressState{
+		ReportedOnce:         p.reportedOnce,
+		LastReportedProgress: p.lastReportedProgress,
+	}, nil
 }
 
 // ReportProgress reports the progress for the current shard. Progress ranges

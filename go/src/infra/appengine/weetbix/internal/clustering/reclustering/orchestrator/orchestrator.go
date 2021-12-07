@@ -6,7 +6,6 @@ package orchestrator
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"sort"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
+	worker "infra/appengine/weetbix/internal/clustering/reclustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
@@ -202,7 +202,7 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 	if err != nil {
 		return errors.Annotate(err, "create run").Err()
 	}
-	err = scheduleWorkers(ctx, project, attemptEnd, workers)
+	err = scheduleWorkers(ctx, project, attemptStart, attemptEnd, workers)
 	if err != nil {
 		return errors.Annotate(err, "schedule workers").Err()
 	}
@@ -263,19 +263,30 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 // scheduleWorkers creates reclustering tasks for the given project
 // and attempt. Workers are each assigned an equally large slice
 // of the keyspace to recluster.
-func scheduleWorkers(ctx context.Context, project string, attemptEnd time.Time, count int) error {
+func scheduleWorkers(ctx context.Context, project string, attemptStart time.Time, attemptEnd time.Time, count int) error {
 	splits := workerSplits(count)
 	for i := 0; i < count; i++ {
 		start := splits[i]
 		end := splits[i+1]
+
+		// Space out the initial progress reporting of each task in the range
+		// [0,progressIntervalSeconds).
+		// This avoids creating contention on the ReclusteringRuns row.
+		reportOffsetMillis := (worker.ProgressIntervalSeconds * int64(i) * 1000) / int64(count)
+
 		task := &taskspb.ReclusterChunks{
 			Project:      project,
 			AttemptTime:  timestamppb.New(attemptEnd),
 			StartChunkId: start,
 			EndChunkId:   end,
+			State: &taskspb.ReclusterChunkState{
+				CurrentChunkId:       start,
+				NextReportDue:        timestamppb.New(attemptStart.Add(time.Duration(reportOffsetMillis) * time.Millisecond)),
+				ReportedOnce:         false,
+				LastReportedProgress: 0,
+			},
 		}
-		title := fmt.Sprintf("%s-%s-shard-%v", project, attemptEnd.Format("20060102-150405"), (i + 1))
-		err := reclustering.Schedule(ctx, title, task)
+		err := reclustering.Schedule(ctx, task)
 		if err != nil {
 			return err
 		}

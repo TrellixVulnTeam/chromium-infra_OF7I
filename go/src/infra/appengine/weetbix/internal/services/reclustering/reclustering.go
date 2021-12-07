@@ -6,6 +6,7 @@ package reclustering
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/protobuf/proto"
 
@@ -61,7 +62,8 @@ func RegisterTaskHandler(srv *server.Server) error {
 
 // Schedule enqueues a task to recluster a range of chunks in a LUCI
 // Project.
-func Schedule(ctx context.Context, title string, task *taskspb.ReclusterChunks) error {
+func Schedule(ctx context.Context, task *taskspb.ReclusterChunks) error {
+	title := fmt.Sprintf("%s-%s-shard-%v", task.Project, task.AttemptTime.AsTime().Format("20060102-150405"), task.EndChunkId)
 	return tq.AddTask(ctx, &tq.Task{
 		Title: title,
 		// Copy the task to avoid the caller retaining an alias to
@@ -71,10 +73,16 @@ func Schedule(ctx context.Context, title string, task *taskspb.ReclusterChunks) 
 }
 
 func reclusterTestResults(ctx context.Context, worker *reclustering.Worker, task *taskspb.ReclusterChunks) error {
-	err := worker.Do(ctx, task)
+	next, err := worker.Do(ctx, task, reclustering.TargetTaskDuration)
 	if err != nil {
 		logging.Errorf(ctx, "Error re-clustering: %s", err)
 		return err
+	}
+	if next != nil {
+		if err := Schedule(ctx, next); err != nil {
+			logging.Errorf(ctx, "Error scheduling continuation: %s", err)
+			return err
+		}
 	}
 	return nil
 }
