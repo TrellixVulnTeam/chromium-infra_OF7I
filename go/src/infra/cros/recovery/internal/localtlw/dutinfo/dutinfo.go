@@ -244,6 +244,7 @@ func createServoHost(p *ufslab.Peripherals, ds *ufslab.DutState) *tlw.ServoHost 
 		},
 		SmartUsbhubPresent: p.GetSmartUsbhub(),
 		ServoTopology:      convertServoTopologyFromUFS(p.GetServo().GetServoTopology()),
+		ContainerName:      p.GetServo().GetDockerContainerName(),
 	}
 }
 

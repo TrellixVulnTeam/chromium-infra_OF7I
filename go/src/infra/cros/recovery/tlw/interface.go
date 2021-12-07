@@ -447,6 +447,8 @@ type ServoHost struct {
 	SmartUsbhubPresent bool
 	// Servo Topology of servo devices.
 	ServoTopology *ServoTopology
+	// Name of the servod container if the servo uses a servod-container.
+	ContainerName string
 }
 
 // ServoTopology describes servo devices used to provide servo functionality.

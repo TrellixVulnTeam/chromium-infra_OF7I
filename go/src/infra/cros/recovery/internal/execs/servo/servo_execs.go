@@ -474,6 +474,16 @@ func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionA
 	return nil
 }
 
+// servoUsesServodContainerExec checks if the servo uses a servod-container.
+func servoUsesServodContainerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	servodContainerName := args.DUT.ServoHost.ContainerName
+	if servodContainerName == "" {
+		return errors.Reason("servo not using servod container").Err()
+	}
+	log.Info(ctx, "Servo uses servod container with the name: %s", servodContainerName)
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -488,4 +498,5 @@ func init() {
 	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
 	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
 	execs.Register("servo_host_is_labstation", servoHostIsLabstationExec)
+	execs.Register("servo_uses_servod_container", servoUsesServodContainerExec)
 }
