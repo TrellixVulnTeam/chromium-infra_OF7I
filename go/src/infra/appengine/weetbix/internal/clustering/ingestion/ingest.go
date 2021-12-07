@@ -187,8 +187,14 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return errors.Annotate(err, "obtain ruleset").Err()
 	}
 
-	// Insert clustering state for the chunk, triggering appropriate analysis.
-	if err := reclustering.Update(ctx, ruleset, i.ingester.analysis, chunk, clusterState); err != nil {
+	update, err := reclustering.PrepareUpdate(ctx, ruleset, chunk, clusterState)
+	if err != nil {
+		return err
+	}
+
+	updates := reclustering.NewPendingUpdates(ctx)
+	updates.Add(update)
+	if err := updates.Apply(ctx, i.ingester.analysis); err != nil {
 		return err
 	}
 	return nil

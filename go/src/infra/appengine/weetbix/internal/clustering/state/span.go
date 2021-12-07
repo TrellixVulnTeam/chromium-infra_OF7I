@@ -49,10 +49,6 @@ type Entry struct {
 // NotFound is the error returned by Read if the row could not be found.
 var NotFoundErr = errors.New("clustering state row not found")
 
-// UpdateRaceErr is the error returned by UpdateClustering if a concurrent
-// modification (or deletion) of a chunk is detected.
-var UpdateRaceErr = errors.New("concurrent modification to cluster")
-
 // EndOfTable is the highest possible chunk ID that can be stored.
 var EndOfTable = strings.Repeat("ff", 16)
 
@@ -80,12 +76,63 @@ func Create(ctx context.Context, e *Entry) error {
 	return nil
 }
 
-// UpdateClustering updates the clustering results on a chunk. The update
-// implements optimistic concurrency control by validating the chunk
-// has not changed from the previous entry before modifying it, returning
-// an error otherwise. This allows detection of update races.
+// ChunkKey represents the identify of a chunk.
+type ChunkKey struct {
+	Project string
+	ChunkID string
+}
+
+// String returns a string representation of the key, for use in
+// dictionaries.
+func (k ChunkKey) String() string {
+	return fmt.Sprintf("%q/%q", k.Project, k.ChunkID)
+}
+
+// ReadLastUpdated reads the last updated time of the specified chunks.
+// If the chunk does not exist, the zero time value time.Time{} is returned.
+// Unless an error is returned, the returned slice will be of the same length
+// as chunkIDs. The i-th LastUpdated time returned will correspond
+// to the i-th chunk ID requested.
+func ReadLastUpdated(ctx context.Context, keys []ChunkKey) ([]time.Time, error) {
+	var ks []spanner.Key
+	for _, key := range keys {
+		ks = append(ks, spanner.Key{key.Project, key.ChunkID})
+	}
+
+	results := make(map[string]time.Time)
+	columns := []string{"Project", "ChunkID", "LastUpdated"}
+	it := span.Read(ctx, "ClusteringState", spanner.KeySetFromKeys(ks...), columns)
+	err := it.Do(func(r *spanner.Row) error {
+		var project string
+		var chunkID string
+		var lastUpdated time.Time
+		if err := r.Columns(&project, &chunkID, &lastUpdated); err != nil {
+			return errors.Annotate(err, "read clustering state row").Err()
+		}
+		key := ChunkKey{project, chunkID}
+		results[key.String()] = lastUpdated
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]time.Time, len(keys))
+	for i, key := range keys {
+		// If an entry does not exist in results, this will set the
+		// default value for *time.Time, which is nil.
+		result[i] = results[key.String()]
+	}
+	return result, nil
+}
+
+// UpdateClustering updates the clustering results on a chunk.
 //
-// The update also uses the previous entry to avoid writing cluster data
+// To avoid clobbering other concurrent updates, the caller should read
+// the LastUpdated time of the chunk in the same transaction as it is
+// updated (i.e. using ReadLastUpdated) and verify it matches the previous
+// entry passed.
+//
+// The update uses the previous entry to avoid writing cluster data
 // if it has not changed, which optimises the performance of minor
 // reclusterings.
 func UpdateClustering(ctx context.Context, previous *Entry, update *clustering.ClusterResults) error {
@@ -93,42 +140,24 @@ func UpdateClustering(ctx context.Context, previous *Entry, update *clustering.C
 		return err
 	}
 
-	params := make(map[string]interface{})
-	var extraSetClause string
+	upd := make(map[string]interface{})
+	upd["Project"] = previous.Project
+	upd["ChunkID"] = previous.ChunkID
+	upd["LastUpdated"] = spanner.CommitTimestamp
+	upd["AlgorithmsVersion"] = update.AlgorithmsVersion
+	upd["RulesVersion"] = update.RulesVersion
+
 	if !clustering.AlgorithmsAndClustersEqual(&previous.Clustering, update) {
 		// Clusters is a field that may be many kilobytes in size.
 		// For efficiency, only write it to Spanner if it is changed.
-		extraSetClause = `Clusters = @clusters,`
 		clusters, err := encodeClusters(update.Algorithms, update.Clusters)
 		if err != nil {
 			return err
 		}
-		params["clusters"] = clusters
+		upd["Clusters"] = clusters
 	}
 
-	stmt := spanner.NewStatement(`
-	  UPDATE ClusteringState
-	  SET AlgorithmsVersion = @algorithmsVersion,
-	      RulesVersion = @rulesVersion,
-	      ` + extraSetClause + `
-	      LastUpdated = PENDING_COMMIT_TIMESTAMP()
-	  WHERE Project = @project AND ChunkID = @chunkID AND LastUpdated = @lastUpdated
-	`)
-	params["algorithmsVersion"] = update.AlgorithmsVersion
-	params["rulesVersion"] = update.RulesVersion
-	params["project"] = previous.Project
-	params["chunkID"] = previous.ChunkID
-	params["lastUpdated"] = previous.LastUpdated
-	stmt.Params = spanutil.ToSpannerMap(params)
-
-	rowCount, err := span.Update(ctx, stmt)
-	if err != nil {
-		return err
-	}
-	if rowCount != 1 {
-		// Row was modified (or deleted) since it was last read.
-		return UpdateRaceErr
-	}
+	span.BufferWrite(ctx, spanutil.UpdateMap("ClusteringState", upd))
 	return nil
 }
 

@@ -67,7 +67,7 @@ type scenario struct {
 	testResultsByObjectID map[string]*cpb.Chunk
 }
 
-func TestIngest(t *testing.T) {
+func TestReclustering(t *testing.T) {
 	Convey(`With Worker`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx, tc := testclock.UseTime(ctx, testclock.TestRecentTimeUTC)

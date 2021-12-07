@@ -22,6 +22,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
+	"go.chromium.org/luci/common/trace"
 	"go.chromium.org/luci/server/span"
 	"golang.org/x/time/rate"
 )
@@ -129,6 +130,11 @@ func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks) error {
 // as it succeeds. It returns 'true' if all chunks to be re-clustered by
 // the reclustering task were completed.
 func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
+	ctx, s := trace.StartSpan(ctx, "infra/appengine/weetbix/internal/clustering/reclustering.recluster")
+	s.Attribute("project", t.task.Project)
+	s.Attribute("currentChunkID", t.currentChunkID)
+	defer func() { s.End(err) }()
+
 	readOpts := state.ReadNextOptions{
 		StartChunkID:      t.currentChunkID,
 		EndChunkID:        t.task.EndChunkId,
@@ -147,21 +153,10 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 		}
 		return true, nil
 	}
-	for _, entry := range entries {
-		// Manage contention on the ReclusteringRun row by only periodically
-		// reporting progress.
-		if clock.Now(ctx).After(t.firstReport) && t.reportRate.Allow() {
-			progress, err := calculateProgress(t.task, entry.ChunkID)
-			if err != nil {
-				return false, errors.Annotate(err, "calculate progress").Err()
-			}
 
-			err = t.progressToken.ReportProgress(ctx, progress)
-			if err != nil {
-				return false, errors.Annotate(err, "report progress").Err()
-			}
-		}
+	pendingUpdates := NewPendingUpdates(ctx)
 
+	for i, entry := range entries {
 		// Read the test results from GCS.
 		chunk, err := t.worker.chunkStore.Get(ctx, t.task.Project, entry.ObjectID)
 		if err != nil {
@@ -176,22 +171,55 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 
 		// Re-cluster the test results in spanner, then export
 		// the re-clustering to BigQuery for analysis.
-		err = Update(ctx, ruleset, t.worker.analysis, chunk, entry)
+		update, err := PrepareUpdate(ctx, ruleset, chunk, entry)
 		if err != nil {
-			if err == state.UpdateRaceErr {
-				// Our update raced with another update (or a delete).
-				// This is retriable if we re-read the chunk again.
-				err = transient.Tag.Apply(err)
-			}
 			return false, errors.Annotate(err, "re-cluster chunk").Err()
 		}
 
-		// Advance our position.
-		t.currentChunkID = entry.ChunkID
+		pendingUpdates.Add(update)
+
+		if pendingUpdates.ShouldApply(ctx) || (i == len(entries)-1) {
+			if err := pendingUpdates.Apply(ctx, t.worker.analysis); err != nil {
+				if err == UpdateRaceErr {
+					// Our update raced with another update.
+					// This is retriable if we re-read the chunk again.
+					err = transient.Tag.Apply(err)
+				}
+				return false, err
+			}
+			pendingUpdates = NewPendingUpdates(ctx)
+
+			// Advance our position only on successful commit.
+			t.currentChunkID = entry.ChunkID
+
+			if err := t.reportProgress(ctx); err != nil {
+				return false, err
+			}
+		}
 	}
 
 	// More to do.
 	return false, nil
+}
+
+// reportProgress reports progress on the task, based on the current value
+// of t.currentChunkID. It can only be used to report interim progress (it
+// will never report a progress value of 1000).
+func (t *taskContext) reportProgress(ctx context.Context) error {
+	// Manage contention on the ReclusteringRun row by only periodically
+	// reporting progress.
+	if clock.Now(ctx).After(t.firstReport) && t.reportRate.Allow() {
+		progress, err := calculateProgress(t.task, t.currentChunkID)
+		if err != nil {
+			return errors.Annotate(err, "calculate progress").Err()
+		}
+
+		err = t.progressToken.ReportProgress(ctx, progress)
+		if err != nil {
+			return errors.Annotate(err, "report progress").Err()
+		}
+	}
+	return nil
 }
 
 // calculateProgress calculates the progress of the worker through the task.

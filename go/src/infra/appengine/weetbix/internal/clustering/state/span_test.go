@@ -11,11 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"cloud.google.com/go/spanner"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/clustering"
-	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -132,64 +130,40 @@ func TestSpanner(t *testing.T) {
 				// Prepare an update.
 				newClustering := &NewEntry(1).Build().Clustering
 
-				Convey(`Normal`, func() {
-					expected := NewEntry(0).Build()
-					expected.Clustering = *newClustering
+				// Convey(`Normal`, func() {
+				expected := NewEntry(0).Build()
+				expected.Clustering = *newClustering
 
-					test := func() {
-						// Apply the update.
-						commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-							err := UpdateClustering(ctx, entries[0], newClustering)
-							return err
-						})
-						So(err, ShouldEqual, nil)
-						expected.LastUpdated = commitTime.In(time.UTC)
-
-						// Assert the update was applied.
-						actual, err := Read(span.Single(ctx), expected.Project, expected.ChunkID)
-						So(err, ShouldBeNil)
-						So(actual, ShouldResemble, expected)
-					}
-					Convey(`Full update`, func() {
-						So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeFalse)
-						test()
-					})
-					Convey(`Minor update`, func() {
-						newClustering = &NewEntry(0).Build().Clustering
-						newClustering.AlgorithmsVersion = 10
-						newClustering.RulesVersion = time.Date(2024, time.June, 5, 4, 3, 2, 1000, time.UTC)
-						expected.Clustering = *newClustering
-						So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeTrue)
-						test()
-					})
-					Convey(`No-op update`, func() {
-						newClustering = &NewEntry(0).Build().Clustering
-						expected.Clustering = *newClustering
-						test()
-					})
-				})
-				Convey(`Update race`, func() {
-					// Simulate an update was applied between our last read
-					// and the update.
-					commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-						ms := spanutil.UpdateMap("ClusteringState", map[string]interface{}{
-							"Project":     entries[0].Project,
-							"ChunkID":     entries[0].ChunkID,
-							"LastUpdated": spanner.CommitTimestamp,
-						})
-						span.BufferWrite(ctx, ms)
-						return nil
-					})
-					So(err, ShouldEqual, nil)
-
+				test := func() {
 					// Apply the update.
 					commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 						err := UpdateClustering(ctx, entries[0], newClustering)
 						return err
 					})
+					So(err, ShouldEqual, nil)
+					expected.LastUpdated = commitTime.In(time.UTC)
 
-					// Verify the race was detected.
-					So(err, ShouldEqual, UpdateRaceErr)
+					// Assert the update was applied.
+					actual, err := Read(span.Single(ctx), expected.Project, expected.ChunkID)
+					So(err, ShouldBeNil)
+					So(actual, ShouldResemble, expected)
+				}
+				Convey(`Full update`, func() {
+					So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeFalse)
+					test()
+				})
+				Convey(`Minor update`, func() {
+					newClustering = &NewEntry(0).Build().Clustering
+					newClustering.AlgorithmsVersion = 10
+					newClustering.RulesVersion = time.Date(2024, time.June, 5, 4, 3, 2, 1000, time.UTC)
+					expected.Clustering = *newClustering
+					So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeTrue)
+					test()
+				})
+				Convey(`No-op update`, func() {
+					newClustering = &NewEntry(0).Build().Clustering
+					expected.Clustering = *newClustering
+					test()
 				})
 			})
 			Convey(`Invalid`, func() {
@@ -207,6 +181,31 @@ func TestSpanner(t *testing.T) {
 				})
 				So(err, ShouldErrLike, `algorithm "!!!" is not valid`)
 			})
+		})
+		Convey(`ReadLastUpdated`, func() {
+			// Create two entries at different times to give them different LastUpdated times.
+			entryOne := NewEntry(0).Build()
+			lastUpdatedOne, err := CreateEntriesForTesting(ctx, []*Entry{entryOne})
+			So(err, ShouldBeNil)
+
+			entryTwo := NewEntry(1).Build()
+			lastUpdatedTwo, err := CreateEntriesForTesting(ctx, []*Entry{entryTwo})
+			So(err, ShouldBeNil)
+
+			chunkKeys := []ChunkKey{
+				{Project: testProject, ChunkID: entryOne.ChunkID},
+				{Project: "otherproject", ChunkID: entryOne.ChunkID},
+				{Project: testProject, ChunkID: "1234567890abcdef1234567890abcdef"},
+				{Project: testProject, ChunkID: entryTwo.ChunkID},
+			}
+
+			actual, err := ReadLastUpdated(span.Single(ctx), chunkKeys)
+			So(err, ShouldBeNil)
+			So(len(actual), ShouldEqual, len(chunkKeys))
+			So(actual[0], ShouldEqual, lastUpdatedOne)
+			So(actual[1], ShouldEqual, time.Time{})
+			So(actual[2], ShouldEqual, time.Time{})
+			So(actual[3], ShouldEqual, lastUpdatedTwo)
 		})
 		Convey(`ReadNextN`, func() {
 			targetRulesVersion := time.Date(2024, 1, 1, 1, 1, 1, 0, time.UTC)
