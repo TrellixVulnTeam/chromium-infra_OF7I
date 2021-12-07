@@ -27,7 +27,8 @@ const servoRepairPlanBody = `
 	"servo_ec_check",
 	"servo_testlab_enabled",
 	"servo_detect_usbkey",
-	"servo_servod_echo_host"
+	"servo_servod_echo_host",
+	"update_servo_type_label"
 ],
 "actions": {
 	"servo_host_servod_restart": {
@@ -438,5 +439,11 @@ const servoRepairPlanBody = `
 	},
 	"servod_echo": {
 		"dependencies" : ["servo_servod_echo_host"]
+	},
+	"update_servo_type_label":{
+		"docs":[
+			"Update the servo type label for the DUT info."
+		],
+		"exec_name":"servo_update_servo_type_label"
 	}
 }`
