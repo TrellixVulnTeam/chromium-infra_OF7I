@@ -112,6 +112,20 @@
   </script>
 </head>
 
+{% macro HumanReadableCount(count) -%}
+  {%- if count >= 1000000000000 -%}
+    {{'{0:.1f}'.format(count/1000000000000.0)}}T
+  {%- elif count >= 1000000000 -%}
+    {{'{0:.1f}'.format(count/1000000000.0)}}G
+  {%- elif count >= 1000000 -%}
+    {{'{0:.1f}'.format(count/1000000.0)}}M
+  {%- elif count >= 1000 -%}
+    {{'{0:.1f}'.format(count/1000.0)}}K
+  {%- else -%}
+    {{count}}
+  {%- endif %}
+{%- endmacro %}
+
 <body>
   <cats-app id="app" components="Infra>Test>CodeCoverage" page-header="Code Coverage: summary by {{data_type}} ({{gitiles_commit.project}} project on {{platform_ui_name}} platform)">
     <coverage-documentation></coverage-documentation>
@@ -236,7 +250,7 @@
                   {% endif %}
                   <td class="{{css_class}}">
                     {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
-                    ({{ metric.covered }}/{{ metric.total }})
+                    ({{HumanReadableCount(metric.covered)}}/{{HumanReadableCount(metric.total)}})
                   </td>
                 {% endif %}
               {% endfor %}
@@ -287,7 +301,7 @@
                   {% endif %}
                   <td class="{{css_class}}">
                      {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
-                     ({{ metric.covered }}/{{ metric.total }})
+                     ({{HumanReadableCount(metric.covered)}}/{{HumanReadableCount(metric.total)}})
                   </td>
                 {% endif %}
               {% endfor %}
