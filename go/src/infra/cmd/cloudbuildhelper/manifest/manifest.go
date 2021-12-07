@@ -305,6 +305,7 @@ type BuildStep struct {
 
 // ConcreteBuildStep is implemented by various *BuildStep structs.
 type ConcreteBuildStep interface {
+	Kind() string   // used by -restrict-build-steps
 	String() string // used for human logs only, doesn't have to encode all details
 
 	isEmpty() bool                                        // true if the struct is not populated
@@ -329,6 +330,8 @@ type CopyBuildStep struct {
 	// (i.e. we copy Copy into the root of the context dir).
 	Copy string `yaml:"copy,omitempty"`
 }
+
+func (s *CopyBuildStep) Kind() string { return "copy" }
 
 func (s *CopyBuildStep) String() string { return fmt.Sprintf("copy %q", s.Copy) }
 
@@ -363,6 +366,8 @@ type GoBuildStep struct {
 	// It is set to "${contextdir}/<go package name>" by default.
 	GoBinary string `yaml:"go_binary,omitempty"`
 }
+
+func (s *GoBuildStep) Kind() string { return "go_binary" }
 
 func (s *GoBuildStep) String() string { return fmt.Sprintf("go build %q", s.GoBinary) }
 
@@ -403,6 +408,8 @@ type RunBuildStep struct {
 	// explicitly.
 	Outputs []string
 }
+
+func (s *RunBuildStep) Kind() string { return "run" }
 
 func (s *RunBuildStep) String() string { return fmt.Sprintf("run %q", s.Run) }
 
@@ -455,6 +462,8 @@ type GoGAEBundleBuildStep struct {
 	// GoGAEBundle is path to GAE module YAML.
 	GoGAEBundle string `yaml:"go_gae_bundle,omitempty"`
 }
+
+func (s *GoGAEBundleBuildStep) Kind() string { return "go_gae_bundle" }
 
 func (s *GoGAEBundleBuildStep) String() string { return fmt.Sprintf("go gae bundle %q", s.GoGAEBundle) }
 

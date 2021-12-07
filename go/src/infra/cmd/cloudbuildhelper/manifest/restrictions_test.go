@@ -13,7 +13,59 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestRestrictions(t *testing.T) {
+func TestCheckTargetName(t *testing.T) {
+	t.Parallel()
+
+	Convey("Unrestricted", t, func() {
+		r := Restrictions{}
+		So(r.CheckTargetName("blah"), ShouldBeNil)
+	})
+
+	Convey("Restricted", t, func() {
+		r := Restrictions{
+			targets: stringsetflag.Flag{Data: stringset.NewFromSlice("some-prefix/")},
+		}
+		So(r.CheckTargetName("some-prefix/zzz"), ShouldBeNil)
+		So(r.CheckTargetName("another"), ShouldResemble, []string{
+			`forbidden target name "another" (allowed prefixes are ["some-prefix/"])`,
+		})
+	})
+}
+
+func TestCheckBuildSteps(t *testing.T) {
+	t.Parallel()
+
+	Convey("Unrestricted", t, func() {
+		r := Restrictions{}
+		So(r.CheckBuildSteps([]*BuildStep{
+			{concrete: &CopyBuildStep{}},
+			{concrete: &GoBuildStep{}},
+			{concrete: &RunBuildStep{}},
+			{concrete: &GoGAEBundleBuildStep{}},
+		}), ShouldBeNil)
+	})
+
+	Convey("Restricted", t, func() {
+		r := Restrictions{
+			steps: stringsetflag.Flag{Data: stringset.NewFromSlice("copy", "go_gae_bundle")},
+		}
+		So(r.CheckBuildSteps([]*BuildStep{
+			{concrete: &CopyBuildStep{}},
+			{concrete: &GoGAEBundleBuildStep{}},
+		}), ShouldBeNil)
+		So(r.CheckBuildSteps([]*BuildStep{
+			{concrete: &CopyBuildStep{}},
+			{concrete: &GoBuildStep{}},
+			{concrete: &RunBuildStep{}},
+			{concrete: &GoGAEBundleBuildStep{}},
+		}), ShouldResemble, []string{
+			`forbidden build step kind "go_binary" (allowed values are ["copy" "go_gae_bundle"])`,
+			`forbidden build step kind "run" (allowed values are ["copy" "go_gae_bundle"])`,
+		})
+	})
+}
+
+func TestCheckInfra(t *testing.T) {
 	t.Parallel()
 
 	call := func(infra Infra, storage, registry, build, notifications []string) []string {

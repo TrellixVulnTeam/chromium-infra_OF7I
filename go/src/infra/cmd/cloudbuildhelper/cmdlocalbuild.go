@@ -45,7 +45,7 @@ type cmdLocalBuildRun struct {
 }
 
 func (c *cmdLocalBuildRun) init() {
-	c.commandBase.init(c.exec, extraFlags{labels: true}, []*string{
+	c.commandBase.init(c.exec, extraFlags{labels: true, restrictions: true}, []*string{
 		&c.targetManifest,
 	})
 }

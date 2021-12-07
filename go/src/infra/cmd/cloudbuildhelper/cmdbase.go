@@ -58,7 +58,8 @@ type commandBase struct {
 // extraFlags tells `commandBase.init` what additional CLI flags to register.
 type extraFlags struct {
 	auth         bool // -auth-* flags
-	infra        bool // -infra flag and -restrict-* flags
+	infra        bool // -infra flag
+	restrictions bool // -restrict-* flags
 	canonicalTag bool // -canonical-tag flag
 	labels       bool // -label flags
 	buildID      bool // -build-id flag
@@ -92,6 +93,8 @@ func (c *commandBase) init(exec execCb, extraFlags extraFlags, posArgs []*string
 	}
 	if c.extraFlags.infra {
 		c.Flags.StringVar(&c.infra, "infra", "dev", "What section to pick from 'infra' field in the manifest YAML.")
+	}
+	if c.extraFlags.restrictions {
 		c.restrictions.AddFlags(&c.Flags)
 	}
 	if c.extraFlags.canonicalTag {
@@ -219,13 +222,23 @@ func (c *commandBase) loadManifest(ctx context.Context, path string, needStorage
 		case needCloudBuild && section.CloudBuild.Project == "":
 			return nil, nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
 		}
-		if violations := c.restrictions.CheckInfra(&section); len(violations) != 0 {
+		infra = &section
+	}
+
+	// Enforce restrictions specified via -restrict-* flags.
+	if c.extraFlags.restrictions {
+		var violations []string
+		violations = append(violations, c.restrictions.CheckTargetName(m.Name)...)
+		violations = append(violations, c.restrictions.CheckBuildSteps(m.Build)...)
+		if c.extraFlags.infra {
+			violations = append(violations, c.restrictions.CheckInfra(infra)...)
+		}
+		if len(violations) != 0 {
 			for _, msg := range violations {
 				logging.Errorf(ctx, "Restriction violation: %s", msg)
 			}
 			return nil, nil, nil, errors.Reason("restrictions violation detected, see logs").Err()
 		}
-		infra = &section
 	}
 
 	// Prepare -json-output portion that depends on the manifest.

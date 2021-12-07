@@ -67,6 +67,7 @@ func (c *cmdUploadRun) init() {
 		extraFlags{
 			auth:         true,
 			infra:        true,
+			restrictions: true,
 			canonicalTag: true,
 			buildID:      true,
 			jsonOutput:   true,
