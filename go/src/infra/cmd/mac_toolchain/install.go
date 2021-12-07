@@ -221,9 +221,10 @@ func installXcode(ctx context.Context, args InstallArgs) error {
 		return err
 	}
 	simulatorDirPath := filepath.Join(args.xcodeAppPath, XcodeIOSSimulatorRuntimeRelPath)
-	_, statErr := os.Stat(simulatorDirPath)
+	simulatorFilePath := filepath.Join(simulatorDirPath, XcodeIOSSimulatorRuntimeFilename)
+	_, statErr := os.Stat(simulatorFilePath)
 	// Only install the default runtime when |withRuntime| arg is true and the
-	// Xcode package installed doesn't have runtime folder (backwards
+	// Xcode package installed doesn't have runtime file (backwards
 	// compatibility for former Xcode packages).
 	if args.withRuntime && os.IsNotExist(statErr) {
 		runtimeInstallArgs := RuntimeInstallArgs{
