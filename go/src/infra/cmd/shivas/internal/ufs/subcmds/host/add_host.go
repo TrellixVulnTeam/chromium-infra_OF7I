@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -45,7 +46,7 @@ var AddHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host")
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only)")
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only)")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this host")
 		return c
 	},
@@ -68,7 +69,7 @@ type addHost struct {
 	prototype        string
 	osVersion        string
 	vmCapacity       int
-	tags             string
+	tags             []string
 	deploymentTicket string
 }
 
@@ -164,7 +165,7 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 	lse.Hostname = c.hostName
 	lse.Name = c.hostName
 	lse.MachineLsePrototype = c.prototype
-	lse.Tags = utils.GetStringSlice(c.tags)
+	lse.Tags = c.tags
 	lse.Machines = []string{c.machineName}
 	lse.DeploymentTicket = c.deploymentTicket
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
@@ -216,8 +217,8 @@ func (c *addHost) validateArgs() error {
 		if c.prototype != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.vmCapacity != 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-vm-capacity' cannot be specified at the same time.")

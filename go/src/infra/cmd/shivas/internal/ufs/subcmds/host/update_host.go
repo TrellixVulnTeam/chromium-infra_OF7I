@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -43,7 +44,7 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osImage, "os-image", "", "name of the os image of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this host. "+cmdhelp.ClearFieldHelpText)
 
@@ -77,7 +78,7 @@ type updateHost struct {
 	osVersion        string
 	osImage          string
 	vmCapacity       int
-	tags             string
+	tags             []string
 	description      string
 	deploymentTicket string
 }
@@ -159,7 +160,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 			"os":          "osVersion",
 			"os-image":    "osImage",
 			"vm-capacity": "vmCapacity",
-			"tags":        "tags",
+			"tag":         "tags",
 			"state":       "resourceState",
 			"desc":        "description",
 			"ticket":      "deploymentTicket",
@@ -197,10 +198,10 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 	lse.MachineLsePrototype = c.prototype
 	lse.ResourceState = ufsUtil.ToUFSState(c.state)
 	lse.Machines = []string{c.machineName}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		lse.Tags = nil
 	} else {
-		lse.Tags = utils.GetStringSlice(c.tags)
+		lse.Tags = c.tags
 	}
 	if c.deploymentTicket == utils.ClearFieldValue {
 		lse.DeploymentTicket = ""
@@ -266,8 +267,8 @@ func (c *updateHost) validateArgs() error {
 		if c.prototype != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.vmCapacity != 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-vm-capacity' cannot be specified at the same time.")
@@ -293,7 +294,7 @@ func (c *updateHost) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.nicName == "" && c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
-			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 && c.description == "" && c.machineName == "" && c.osImage == "" {
+			c.osVersion == "" && c.prototype == "" && c.tags == nil && c.vmCapacity == 0 && c.description == "" && c.machineName == "" && c.osImage == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
