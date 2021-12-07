@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
+import { DateTime } from 'luxon';
 import '@material/mwc-button';
 import '@material/mwc-circular-progress';
 
@@ -30,7 +31,7 @@ export class ReclusteringProgressIndicator extends LitElement {
     progress : ReclusteringProgress | undefined;
 
     @state()
-    lastRefreshed : Date | undefined;
+    lastRefreshed : DateTime | undefined;
 
     @state()
     // Whether the indicator should be displayed. If re-clustering
@@ -110,7 +111,7 @@ export class ReclusteringProgressIndicator extends LitElement {
             <span class="progress-description" data-cy="reclustering-progress-description">
                 Weetbix is re-clustering test results to reflect ${reclusteringTarget} (${progressText}). Cluster impact may be out-of-date.
                 <span class="last-updated">
-                    Last update ${this.lastRefreshed.toLocaleTimeString()}.
+                    Last update ${this.lastRefreshed.toLocaleString(DateTime.TIME_WITH_SECONDS)}.
                 </span>
             <span>`
         } else {
@@ -138,7 +139,7 @@ export class ReclusteringProgressIndicator extends LitElement {
         const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/reclusteringProgress`);
         const progress = await response.json();
 
-        this.lastRefreshed = new Date();
+        this.lastRefreshed = DateTime.now();
         this.progress = progress;
     }
 
@@ -162,9 +163,9 @@ export class ReclusteringProgressIndicator extends LitElement {
     }
 
     progressToRulesVersion(p : ReclusteringProgress, rulesVersion : string) : number {
-        const d = new Date(rulesVersion)
+        const d = DateTime.fromISO(rulesVersion)
         return this.progressTo(p, (t : ReclusteringTarget) => {
-            return new Date(t.rulesVersion) >= d
+            return DateTime.fromISO(t.rulesVersion) >= d
         });
     }
 

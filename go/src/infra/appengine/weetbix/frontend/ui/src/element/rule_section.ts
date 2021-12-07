@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
+import { DateTime } from 'luxon';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import '@material/mwc-textfield';
@@ -53,16 +54,30 @@ export class RuleSection extends LitElement {
         }
         const r = this.rule;
         const formatTime = (time : string) : string => {
-            return new Date(time).toLocaleString();
+            let t = DateTime.fromISO(time);
+            let d = DateTime.now().diff(t);
+            if (d.as('seconds') < 60) {
+                return "just now";
+            }
+            if (d.as('hours') < 24) {
+                return t.toRelative().toLocaleLowerCase();
+            }
+            return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_SHORT);
+        }
+        const formatTooltipTime = (time : string) : string => {
+            // Format date/time with full month name, e.g. "January" and Timezone,
+            // to disambiguate date/time even if the user's locale has been set
+            // incorrectly.
+            return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS);
         }
         const formatUser = (user : string) : TemplateResult => {
             if (user == 'weetbix') {
-                return html`Weetbix`
+                return html`Weetbix`;
             } else if (user.endsWith("@google.com")) {
                 var ldap = user.substr(0, user.length - "@google.com".length)
-                return html`<a href="http://who/${ldap}">${ldap}</a>`
+                return html`<a href="http://who/${ldap}">${ldap}</a>`;
             } else {
-                return html`${user}`
+                return html`${user}`;
             }
         }
         return html`
@@ -104,8 +119,8 @@ export class RuleSection extends LitElement {
             </table>
             <div class="audit">
                 ${(r.lastUpdated != r.creationTime) ?
-                    html`Last updated by <span class="user">${formatUser(r.lastUpdatedUser)}</span> at <span class="time">${formatTime(r.lastUpdated)}</span>.` : html``}
-                Created by <span class="user">${formatUser(r.creationUser)}</span> at <span class="time">${formatTime(r.creationTime)}</span>.
+                    html`Last updated by <span class="user">${formatUser(r.lastUpdatedUser)}</span> <span class="time" title="${formatTooltipTime(r.lastUpdated)}">${formatTime(r.lastUpdated)}</span>.` : html``}
+                Created by <span class="user">${formatUser(r.creationUser)}</span> <span class="time" title="${formatTooltipTime(r.creationTime)}">${formatTime(r.creationTime)}</span>.
             </div>
         </div>
         <mwc-dialog class="rule-edit-dialog" ?open="${this.editing}" @closed="${this.editClosed}">
@@ -237,7 +252,7 @@ export class RuleSection extends LitElement {
                 lastUpdated: this.rule.lastUpdated
             },
         });
-        this.dispatchEvent(event)
+        this.dispatchEvent(event);
     }
 
     static styles = [css`
