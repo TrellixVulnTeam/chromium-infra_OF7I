@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -40,7 +41,7 @@ var AddKVMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to add")
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the kvm to add")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to add")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -58,7 +59,7 @@ type addKVM struct {
 	kvmName    string
 	macAddress string
 	platform   string
-	tags       string
+	tags       []string
 }
 
 func (c *addKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -128,7 +129,7 @@ func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.Name = c.kvmName
 	kvm.ChromePlatform = c.platform
 	kvm.MacAddress = c.macAddress
-	kvm.Tags = utils.GetStringSlice(c.tags)
+	kvm.Tags = c.tags
 	kvm.Rack = c.rackName
 }
 
@@ -146,8 +147,8 @@ func (c *addKVM) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
