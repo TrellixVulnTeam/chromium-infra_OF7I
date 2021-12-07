@@ -228,8 +228,8 @@ func whereThresholdsExceeded(sqlPrefix string, threshold *config.MetricThreshold
 	if threshold == nil {
 		threshold = &config.MetricThreshold{}
 	}
-	sql := sqlPrefix + "_residual_1d > @" + sqlPrefix + "_1d OR" +
-		sqlPrefix + "_residual_3d > @" + sqlPrefix + "_3d OR" +
+	sql := sqlPrefix + "_residual_1d > @" + sqlPrefix + "_1d OR " +
+		sqlPrefix + "_residual_3d > @" + sqlPrefix + "_3d OR " +
 		sqlPrefix + "_residual_7d > @" + sqlPrefix + "_7d"
 	parameters := []bigquery.QueryParameter{
 		{
