@@ -188,11 +188,6 @@ def _export_builds(
   #
   for proto in build_protos:
     proto.infra.buildbucket.hostname = ''
-
-    # TODO(iannucci): Re-enable these once BQ export correctly handles maps.
-    proto.infra.buildbucket.ClearField('experiment_reasons')
-    proto.infra.buildbucket.agent.source.cipd.ClearField('resolved_instances')
-
     for s in proto.steps:
       s.summary_markdown = ''
 
