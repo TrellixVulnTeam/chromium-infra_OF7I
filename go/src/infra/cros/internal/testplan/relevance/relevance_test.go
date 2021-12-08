@@ -39,8 +39,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "hwkv.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "hwkv.star",
 				},
 			},
 		}
@@ -50,8 +51,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "vmkv.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "vmkv.star",
 				},
 			},
 		}
@@ -61,8 +63,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "vmsoc.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "vmsoc.star",
 				},
 			},
 		}
@@ -72,8 +75,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "vmsoc.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "vmsoc.star",
 				},
 			},
 			PathRegexps: []string{`.*\.c`, `.*\.h`},
@@ -84,8 +88,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "vmsoc.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "vmsoc.star",
 				},
 			},
 			PathRegexps: []string{`.*\.py`},
@@ -96,8 +101,9 @@ func TestSourceTestPlans(t *testing.T) {
 		return &plan.SourceTestPlan{
 			TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 				{
-					Repo: "testrepo",
-					Path: "vmsoc.star",
+					Host:    "chromium.googlesource.com",
+					Project: "testrepo",
+					Path:    "vmsoc.star",
 				},
 			},
 			PathRegexpExcludes: []string{`.*\.md`, `.*/README`},

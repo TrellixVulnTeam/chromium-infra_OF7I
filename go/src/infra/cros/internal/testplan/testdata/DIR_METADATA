@@ -2,11 +2,13 @@ chromeos {
     cq {
         source_test_plans {
             test_plan_starlark_files {
-                repo: "repo1"
+                host: "chromium.googlesource.com"
+                project: "repo1"
                 path: "test1.star"
             }
             test_plan_starlark_files {
-                repo: "repo2"
+                host: "chromium.googlesource.com"
+                project: "repo2"
                 path: "test2.star"
             }
         }

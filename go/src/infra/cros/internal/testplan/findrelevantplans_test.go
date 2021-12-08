@@ -68,12 +68,14 @@ func TestFindRelevantPlans(t *testing.T) {
 	expectedPlan := &plan.SourceTestPlan{
 		TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 			{
-				Repo: "repo1",
-				Path: "test1.star",
+				Host:    "chromium.googlesource.com",
+				Project: "repo1",
+				Path:    "test1.star",
 			},
 			{
-				Repo: "repo2",
-				Path: "test2.star",
+				Host:    "chromium.googlesource.com",
+				Project: "repo2",
+				Path:    "test2.star",
 			},
 		},
 	}

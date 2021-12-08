@@ -38,8 +38,9 @@ func TestValidateMapping(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "test/repo",
-												Path: "a/b/c/text.txt",
+												Host:    "chromium.googlesource.com",
+												Project: "test/repo",
+												Path:    "a/b/c/text.txt",
 											},
 										},
 									},
@@ -62,12 +63,14 @@ func TestValidateMapping(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "test/repo1",
-												Path: "a/b/c/test.star",
+												Host:    "chromium.googlesource.com",
+												Project: "test/repo1",
+												Path:    "a/b/c/test.star",
 											},
 											{
-												Repo: "test/repo2",
-												Path: "test2.star",
+												Host:    "chromium.googlesource.com",
+												Project: "test/repo2",
+												Path:    "test2.star",
 											},
 										},
 									},
@@ -90,8 +93,9 @@ func TestValidateMapping(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "test/repo",
-												Path: "a/b/c/text.txt",
+												Host:    "chromium.googlesource.com",
+												Project: "test/repo",
+												Path:    "a/b/c/text.txt",
 											},
 										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
@@ -116,8 +120,9 @@ func TestValidateMapping(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "test/repo",
-												Path: "a/b/c/text.txt",
+												Host:    "chromium.googlesource.com",
+												Project: "test/repo",
+												Path:    "a/b/c/text.txt",
 											},
 										},
 										PathRegexps:        []string{"a/b/c/d/.*"},
@@ -177,8 +182,9 @@ func TestValidateMappingErrors(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "testrepo",
-												Path: "testfile",
+												Host:    "chromium.googlesource.com",
+												Project: "testrepo",
+												Path:    "testfile",
 											},
 										},
 										PathRegexps: []string{"a/b/c/d/["},
@@ -203,8 +209,9 @@ func TestValidateMappingErrors(t *testing.T) {
 									{
 										TestPlanStarlarkFiles: []*plan.SourceTestPlan_TestPlanStarlarkFile{
 											{
-												Repo: "testrepo",
-												Path: "testfile",
+												Host:    "chromium.googlesource.com",
+												Project: "testrepo",
+												Path:    "testfile",
 											},
 										},
 										PathRegexps: []string{`a/b/e/.*\.txt`},
