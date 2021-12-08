@@ -70,21 +70,21 @@ const servoRepairPlanBody = `
 	},
 	"is_labstation": {
 		"docs": [
-			"condition to check is name contains labstation word"
+			"Condition to check if the servohost is a labstation."
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servo_host_is_labstation"
 	},
 	"is_container": {
 		"docs": [
-			"condition to check is name contains labstation word"
+			"Condition to check if servo uses servod container."
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servo_uses_servod_container"
 	},
 	"is_servo_v3": {
 		"docs": [
-			"Revers from labstation and docker"
+			"Condition to check if the servo is v3."
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servo_is_v3"
 	},
 	"lock_labstation": {
 		"docs": [
