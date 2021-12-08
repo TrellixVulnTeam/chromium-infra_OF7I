@@ -40,14 +40,13 @@ const (
 	// in response to load.
 	TargetTaskDuration = 2 * time.Second
 
-	// ProgressIntervalSeconds is the number of seconds between progress
-	// updates.
+	// ProgressInterval is the amount of time between progress updates.
 	//
 	// Note that this is the frequency at which updates should
 	// be reported for a shard of work; individual tasks are usually
 	// much shorter lived and consequently most will not report any progress
 	// (unless it is time for the shard to report progress again).
-	ProgressIntervalSeconds = 30
+	ProgressInterval = 30 * time.Second
 )
 
 // ChunkStore is the interface for the blob store archiving chunks of test
@@ -258,7 +257,7 @@ func (t *taskContext) reportProgress(ctx context.Context) error {
 		if err != nil {
 			return errors.Annotate(err, "report progress").Err()
 		}
-		t.nextReportDue = t.nextReportDue.Add(TargetTaskDuration * time.Second)
+		t.nextReportDue = t.nextReportDue.Add(ProgressInterval)
 	}
 	return nil
 }

@@ -272,7 +272,7 @@ func scheduleWorkers(ctx context.Context, project string, attemptStart time.Time
 		// Space out the initial progress reporting of each task in the range
 		// [0,progressIntervalSeconds).
 		// This avoids creating contention on the ReclusteringRuns row.
-		reportOffsetMillis := (worker.ProgressIntervalSeconds * int64(i) * 1000) / int64(count)
+		reportOffset := time.Duration((int64(worker.ProgressInterval) / int64(count)) * int64(i))
 
 		task := &taskspb.ReclusterChunks{
 			Project:      project,
@@ -281,7 +281,7 @@ func scheduleWorkers(ctx context.Context, project string, attemptStart time.Time
 			EndChunkId:   end,
 			State: &taskspb.ReclusterChunkState{
 				CurrentChunkId:       start,
-				NextReportDue:        timestamppb.New(attemptStart.Add(time.Duration(reportOffsetMillis) * time.Millisecond)),
+				NextReportDue:        timestamppb.New(attemptStart.Add(reportOffset)),
 				ReportedOnce:         false,
 				LastReportedProgress: 0,
 			},
