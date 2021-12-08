@@ -177,14 +177,21 @@ func (args *RunArgs) NewRunner(host string) Runner {
 func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) map[string]string {
 	argsMap := make(map[string]string)
 	for _, a := range actionArgs {
-		actionArg := strings.Split(a, splitter)
+		a := strings.TrimSpace(a)
+		if a == "" {
+			continue
+		}
 		log.Debug(ctx, "Parse Action Args: action arg %q", a)
-		if len(actionArg) != 2 {
+		i := strings.Index(a, splitter)
+		// Separator has to be at least second letter in the string to provide one letter key.
+		if i < 1 {
 			log.Debug(ctx, "Parse Action Args: malformed action arg %q", a)
-			argsMap[actionArg[0]] = ""
+			argsMap[a] = ""
 		} else {
-			log.Debug(ctx, "Parse Action Args: k: %q, v: %q", actionArg[0], actionArg[1])
-			argsMap[actionArg[0]] = actionArg[1]
+			k := strings.TrimSpace(a[:i])
+			v := strings.TrimSpace(a[i+1:])
+			log.Debug(ctx, "Parse Action Args: k: %q, v: %q", k, v)
+			argsMap[k] = v
 		}
 	}
 	return argsMap
