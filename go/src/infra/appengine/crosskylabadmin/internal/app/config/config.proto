@@ -46,6 +46,9 @@ message Config {
 
   // Paris is the configuration settings for paris (the new repair &c flow).
   Paris paris = 10;
+
+  // UFS is the configuration settings for UFS.
+  UFSConfig UFS = 11;
 }
 
 // Swarming contains information about the Swarming instance that hosts the bots
@@ -311,4 +314,14 @@ message Paris {
   //
   // The smallest permissible value is 0. The largest is 1000.
   int32 labstation_recovery_permille = 4;
+}
+
+// UFSConfig contains information about UFS, such as its hostname.
+message UFSConfig {
+  // Host is the host of the UFS service.
+  //
+  // Sample values:
+  //  - "ufs.api.cr.dev"
+  //  - "staging.ufs.api.cr.dev",
+  string host = 1;
 }
