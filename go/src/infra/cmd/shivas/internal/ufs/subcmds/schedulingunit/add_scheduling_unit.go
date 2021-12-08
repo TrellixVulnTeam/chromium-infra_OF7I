@@ -11,6 +11,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -43,7 +44,7 @@ var AddSchedulingUnitCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.name, "name", "", "name of the SchedulingUnit")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "comma separated pools")
 		c.Flags.Var(utils.CSVString(&c.duts), "duts", "comma separated DUTs")
-		c.Flags.Var(utils.CSVString(&c.tags), "tags", "comma separated tags.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		c.Flags.StringVar(&c.schedulingUnitType, "type", "all", "Type of SchedulingUnit. "+cmdhelp.SchedulingUnitTypesHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the SchedulingUnit")
 		return c

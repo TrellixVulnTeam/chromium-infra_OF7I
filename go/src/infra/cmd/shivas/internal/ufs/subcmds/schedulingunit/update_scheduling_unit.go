@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -44,10 +45,10 @@ var UpdateSchedulingUnitCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.name, "name", "", "name of the SchedulingUnit")
 		c.Flags.Var(utils.CSVString(&c.pools), "pools", "append/clear comma separated pools. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.Var(utils.CSVString(&c.duts), "duts", "append/clear comma separated DUTs. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.Var(utils.CSVString(&c.tags), "tags", "append/clear comma separated tags. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.Var(utils.CSVString(&c.removePools), "pools-to-remove", "remove comma separated pools.")
 		c.Flags.Var(utils.CSVString(&c.removeDuts), "duts-to-remove", "remove comma separated DUTs.")
-		c.Flags.Var(utils.CSVString(&c.removeTags), "tags-to-remove", "remove comma separated tags.")
+		c.Flags.Var(flag.StringSlice(&c.removeTags), "tag-to-remove", "Name(s) of tag(s) to be removed. Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.schedulingUnitType, "type", "", "Type of SchedulingUnit. "+cmdhelp.SchedulingUnitTypesHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the SchedulingUnit")
 		return c
@@ -178,7 +179,7 @@ func (c *updateSchedulingUnit) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-duts' cannot be specified at the same time.")
 		}
 		if len(c.tags) != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if len(c.removePools) != 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-pools-to-remove' cannot be specified at the same time.")
@@ -187,7 +188,7 @@ func (c *updateSchedulingUnit) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-duts-to-remove' cannot be specified at the same time.")
 		}
 		if len(c.removeTags) != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-tags-to-remove' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-tag-to-remove' cannot be specified at the same time.")
 		}
 		if c.schedulingUnitType != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe file mode is specified. '-type' cannot be specified at the same time.")
@@ -210,7 +211,7 @@ func (c *updateSchedulingUnit) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-pools' and '-pools-to-remove' cannot be specified at the same time.")
 		}
 		if len(c.tags) != 0 && len(c.removeTags) != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-tags' and '-tags-to-remove' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-tag' and '-tag-to-remove' cannot be specified at the same time.")
 		}
 		if c.name == "" && c.schedulingUnitType == "" && c.description == "" && len(c.duts) == 0 && len(c.removeDuts) == 0 &&
 			len(c.tags) == 0 && len(c.removeTags) == 0 && len(c.pools) == 0 && len(c.removePools) == 0 {
