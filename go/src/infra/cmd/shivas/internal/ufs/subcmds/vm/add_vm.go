@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -48,7 +49,7 @@ Add a VM by parameters.`,
 		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
 		c.Flags.StringVar(&c.macAddress, "mac", "", "mac address of the VM")
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this vm")
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
@@ -70,7 +71,7 @@ type addVM struct {
 	vmName           string
 	macAddress       string
 	osVersion        string
-	tags             string
+	tags             []string
 	vlanName         string
 	ip               string
 	deploymentTicket string
@@ -160,7 +161,7 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 	vm.OsVersion = &ufspb.OSVersion{
 		Value: c.osVersion,
 	}
-	vm.Tags = utils.GetStringSlice(c.tags)
+	vm.Tags = c.tags
 	vm.DeploymentTicket = c.deploymentTicket
 	vm.ResourceState = ufsUtil.ToUFSState(c.state)
 }
@@ -193,8 +194,8 @@ func (c *addVM) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.osVersion != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")

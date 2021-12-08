@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -50,7 +51,7 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.macAddress, "mac", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osImage, "os-image", "", "the os image of the VM. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this vm. "+cmdhelp.ClearFieldHelpText)
 
@@ -79,7 +80,7 @@ type updateVM struct {
 	macAddress       string
 	osVersion        string
 	osImage          string
-	tags             string
+	tags             []string
 	description      string
 	deploymentTicket string
 }
@@ -153,7 +154,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 			"mac":      "macAddress",
 			"os":       "osVersion",
 			"os-image": "osImage",
-			"tags":     "tags",
+			"tag":      "tags",
 			"desc":     "description",
 			"ticket":   "deploymentTicket",
 		}),
@@ -204,10 +205,10 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	} else {
 		vm.GetOsVersion().Image = c.osImage
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		vm.Tags = nil
 	} else {
-		vm.Tags = utils.GetStringSlice(c.tags)
+		vm.Tags = c.tags
 	}
 	if c.description == utils.ClearFieldValue {
 		vm.Description = ""
@@ -227,7 +228,7 @@ func (c *updateVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
-			c.hostName == "" && c.osVersion == "" && c.osImage == "" && c.macAddress == "" && c.tags == "" && c.description == "" {
+			c.hostName == "" && c.osVersion == "" && c.osImage == "" && c.macAddress == "" && len(c.tags) == 0 && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
@@ -243,8 +244,8 @@ func (c *updateVM) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.osVersion != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
