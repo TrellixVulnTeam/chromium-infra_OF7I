@@ -24,6 +24,10 @@ const (
 	// This character separates the name and values for extra
 	// arguments defined for actions.
 	DefaultSplitter = ":"
+
+	// This character demarcates the individual values among
+	// multi-valued extra arguments defined for actions.
+	MultiValueSplitter = ","
 )
 
 // exec represents an execution function of the action.
@@ -176,7 +180,7 @@ func (args *RunArgs) NewRunner(host string) Runner {
 // configuration.
 type ParsedArgs map[string]string
 
-// AsBool returns the value for the passwd key as a boolean. If the
+// AsBool returns the value for the passed key as a boolean. If the
 // key does not exist in the parsed arguments, a default value of
 // false is returned.
 func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string) bool {
@@ -185,10 +189,23 @@ func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string) bool {
 		if boolVal, err := strconv.ParseBool(value); err == nil {
 			return boolVal
 		}
-		log.Debug(ctx, "parsed args as bool: value %s for key %s is not a valid boolean, returning default value %t.", value, key, defaultValue)
+		log.Debug(ctx, "Parsed Args As Bool: value %q for key %q is not a valid boolean, returning default value %t.", value, key, defaultValue)
 	} else {
-		log.Debug(ctx, "parsed args as bool: key %s does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
+		log.Debug(ctx, "Parsed Args As Bool: key %q does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
 	}
+	return defaultValue
+}
+
+// AsString returns the value for the passed key as a string. If the
+// key does not exist in the parsed arguments, a default value of
+// empty string is returned.
+func (parsedArgs ParsedArgs) AsString(ctx context.Context, key string) string {
+	defaultValue := ""
+	if value, ok := parsedArgs[key]; ok {
+		log.Debug(ctx, "Parsed Args As String: value %q found for key %q", value, key)
+		return value
+	}
+	log.Debug(ctx, "Parsed Args As String: key %q not found, default value of empty string returned")
 	return defaultValue
 }
 
