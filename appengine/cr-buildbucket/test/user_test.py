@@ -41,16 +41,6 @@ class UserTest(testing.AppengineTestCase):
     user.clear_request_cache()
 
     self.patch('components.auth.is_admin', autospec=True, return_value=False)
-    self.patch(
-        'components.auth.should_enforce_realm_acl',
-        autospec=True,
-        return_value=False
-    )
-    self.patch(
-        'components.auth.has_permission_dryrun',
-        autospec=True,
-        return_value=None
-    )
 
     self.perms = {}  # realm -> [(group|identity, set of permissions it has)]
 
@@ -154,16 +144,11 @@ class UserTest(testing.AppengineTestCase):
     self.assertEqual(self.get_role('p3/c'), Acl.READER)  # via explicit ACL
 
   @parameterized.expand([
-      (user.PERM_BUILDS_GET, False, ['a-readers'], {'p1/a', 'p3/c'}),
-      (user.PERM_BUILDS_ADD, False, ['b-writers'], {'p2/b'}),
-      (user.PERM_BUILDS_GET, True, ['a-readers'], {'p1/a', 'p3/c'}),
-      (user.PERM_BUILDS_ADD, True, ['b-writers'], {'p2/b'}),
+      (user.PERM_BUILDS_GET, ['a-readers'], {'p1/a', 'p3/c'}),
+      (user.PERM_BUILDS_ADD, ['b-writers'], {'p2/b'}),
   ])
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_buckets_by_perm_async(
-      self, perm, use_realms, groups, expected, is_group_member
-  ):
-    auth.should_enforce_realm_acl.return_value = use_realms
+  def test_buckets_by_perm_async(self, perm, groups, expected, is_group_member):
     is_group_member.side_effect = lambda g, _=None: g in groups
 
     # Cold caches.
@@ -179,13 +164,8 @@ class UserTest(testing.AppengineTestCase):
     buckets = user.buckets_by_perm_async(perm).get_result()
     self.assertEqual(buckets, expected)
 
-  @parameterized.expand([
-      (False,),
-      (True,),
-  ])
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_buckets_by_perm_async_for_project(self, use_realms, is_group_member):
-    auth.should_enforce_realm_acl.return_value = use_realms
+  def test_buckets_by_perm_async_for_project(self, is_group_member):
     is_group_member.side_effect = lambda g, _=None: False
     self.current_identity = auth.Identity.from_bytes('project:p1')
 
@@ -205,14 +185,6 @@ class UserTest(testing.AppengineTestCase):
     self.mock_role(Acl.READER)
 
     self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'proj/bucket'))
-    auth.has_permission_dryrun.assert_called_with(
-        user.PERM_BUILDS_GET,
-        ['proj:bucket'],
-        expected_result=True,
-        admin_group=auth.ADMIN_GROUP,
-        tracking_bug='crbug.com/1091604',
-    )
-
     self.assertFalse(user.has_perm(user.PERM_BUILDS_CANCEL, 'proj/bucket'))
     self.assertFalse(user.has_perm(user.PERM_BUILDERS_SET_NUM, 'proj/bucket'))
 
@@ -226,14 +198,12 @@ class UserTest(testing.AppengineTestCase):
 
   @mock.patch('components.auth.is_group_member', autospec=True)
   def test_has_perm(self, is_group_member):
-    auth.should_enforce_realm_acl.return_value = True
-
-    is_group_member.side_effect = lambda g: g == 'a-readers'
+    is_group_member.side_effect = lambda g, _=None: g == 'a-readers'
     self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
     self.assertFalse(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
     self.assertFalse(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))
 
-    is_group_member.side_effect = lambda g: g == 'a-writers'
+    is_group_member.side_effect = lambda g, _=None: g == 'a-writers'
     self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
     self.assertTrue(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
     self.assertFalse(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))

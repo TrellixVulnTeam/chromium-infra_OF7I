@@ -114,41 +114,36 @@ def has_perm_async(perm, bucket_id):
   project, bucket = config.parse_bucket_id(bucket_id)
   realm = '%s:%s' % (project, bucket)
 
-  # In buckets that have realm ACLs configured, enforce them.
-  if auth.should_enforce_realm_acl(realm):
-    logging.info('crbug.com/1091604: enforcing realm ACLs for %r', realm)
-    if auth.has_permission(perm, [realm]):
-      raise ndb.Return(True)
+  # Check realm ACLs first.
+  if auth.has_permission(perm, [realm]):
+    raise ndb.Return(True)
 
-    # For compatibility with legacy ALCs, administrators have implicit access to
-    # everything. Log when this rule is invoked, since it's surprising and it
-    # something we might want to get rid of after everything is migrated to
-    # Realms.
-    if auth.is_admin():
-      logging.warning(
-          'ADMIN_ACCESS: %r does not have permission %r in bucket %r, '
-          'but they are in %r group and are allowed to proceed',
-          auth.get_current_identity().to_bytes(), perm, bucket_id,
-          auth.ADMIN_GROUP
-      )
-      raise ndb.Return(True)
+  # For compatibility with legacy ALCs, administrators have implicit access to
+  # everything. Log when this rule is invoked, since it's surprising and it
+  # something we might want to get rid of after everything is migrated to
+  # Realms.
+  if auth.is_admin():
+    logging.warning(
+        'ADMIN_FALLBACK: perm=%r bucket=%r caller=%r',
+        perm,
+        bucket_id,
+        auth.get_current_identity().to_bytes(),
+    )
+    raise ndb.Return(True)
 
-    raise ndb.Return(False)
-
-  # Get the result of the legacy ACL check.
+  # Fallback to the legacy ACL check.
   role = yield get_role_async_deprecated(bucket_id)
   outcome = role is not None and role >= PERM_TO_MIN_ROLE[perm]
 
-  # Compare it to realm ACLs, logs the difference.
-  auth.has_permission_dryrun(
-      perm,
-      [realm],
-      expected_result=outcome,
-      admin_group=auth.ADMIN_GROUP,
-      tracking_bug='crbug.com/1091604',
-  )
+  # Log if we had to rely on legacy ACLs.
+  if outcome:
+    logging.warning(
+        'LEGACY_FALLBACK: perm=%r bucket=%r caller=%r',
+        perm,
+        bucket_id,
+        auth.get_current_identity().to_bytes(),
+    )
 
-  # But still use legacy ACLs.
   raise ndb.Return(outcome)
 
 
