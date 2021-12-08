@@ -158,7 +158,7 @@ class OfflineWinPECustomization(customization.Customization):
             self._workdir.join('mount'),
             '{}.cfg'.format(self._key),
             logs=None,
-            ret_codes=[0])
+            ret_codes=[0, 1])
       unmount_wim.unmount_win_wim(
           self._powershell,
           self._workdir.join('mount'),
