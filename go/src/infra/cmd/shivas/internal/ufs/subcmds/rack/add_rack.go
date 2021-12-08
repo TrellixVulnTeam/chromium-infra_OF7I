@@ -12,6 +12,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -41,7 +42,7 @@ var AddRackCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
 		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity_ru", 0, "indicate the size of the rack in rack units (U).")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -58,7 +59,7 @@ type addRack struct {
 	rackName string
 	zoneName string
 	capacity int
-	tags     string
+	tags     []string
 }
 
 var mcsvFields = []string{
@@ -151,7 +152,7 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 		},
 		CapacityRu: int32(c.capacity),
 		Realm:      ufsUtil.ToUFSRealm(c.zoneName),
-		Tags:       utils.GetStringSlice(c.tags),
+		Tags:       c.tags,
 	}
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		req.Rack.Rack = &ufspb.Rack_ChromeBrowserRack{
@@ -178,8 +179,8 @@ func (c *addRack) validateArgs() error {
 		if c.capacity != 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-capacity_ru' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
