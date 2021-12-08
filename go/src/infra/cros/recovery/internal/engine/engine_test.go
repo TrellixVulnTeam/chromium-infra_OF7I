@@ -156,6 +156,40 @@ var planTestCases = []struct {
 		},
 		true,
 	},
+	{
+		"skip fail action when allowed to fail",
+		&planpb.Plan{
+			CriticalActions: []string{
+				"a1",
+			},
+			Actions: map[string]*planpb.Action{
+				"a1": {
+					ExecName:               exec_fail,
+					AllowFailAfterRecovery: true,
+				},
+			},
+		},
+		true,
+	},
+	{
+		"skip fail action by dependencies when allowed to fail",
+		&planpb.Plan{
+			CriticalActions: []string{
+				"a1",
+			},
+			Actions: map[string]*planpb.Action{
+				"a1": {
+					ExecName:               exec_pass,
+					Dependencies:           []string{"d1"},
+					AllowFailAfterRecovery: true,
+				},
+				"d1": {
+					ExecName: exec_fail,
+				},
+			},
+		},
+		true,
+	},
 }
 
 func TestRun(t *testing.T) {

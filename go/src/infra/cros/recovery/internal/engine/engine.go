@@ -149,13 +149,13 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		}
 	}
 	log.Info(ctx, "Action %q: started.", actionName)
+	a := r.getAction(actionName)
 	if aErr, ok := r.actionResultFromCache(actionName); ok {
 		if aErr == nil {
 			log.Info(ctx, "Action %q: pass (cached).", actionName)
 			// Return nil error so we can continue execution of next actions...
 			return nil
 		}
-		a := r.getAction(actionName)
 		if a.GetAllowFailAfterRecovery() {
 			log.Info(ctx, "Action %q: fail (cached). Error: %s", actionName, aErr)
 			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
@@ -172,13 +172,21 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		return nil
 	}
 	if err := r.runDependencies(ctx, actionName, enableRecovery); err != nil {
-		return errors.Annotate(err, "run action %q", actionName).Err()
+		if startOverTag.In(err) {
+			return errors.Annotate(err, "run action %q", actionName).Err()
+		}
+		if a.GetAllowFailAfterRecovery() {
+			log.Info(ctx, "Action %q: one of dependencies fail. Error: %s", actionName, err)
+			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
+			return nil
+		} else {
+			return errors.Annotate(err, "run action %q", actionName).Err()
+		}
 	}
 	if err := r.runActionExec(ctx, actionName, enableRecovery); err != nil {
 		if startOverTag.In(err) {
 			return errors.Annotate(err, "run action %q", actionName).Err()
 		}
-		a := r.getAction(actionName)
 		if a.GetAllowFailAfterRecovery() {
 			log.Info(ctx, "Action %q: fail. Error: %s", actionName, err)
 			log.Debug(ctx, "Action %q: error ignored as action is allowed to fail.", actionName)
