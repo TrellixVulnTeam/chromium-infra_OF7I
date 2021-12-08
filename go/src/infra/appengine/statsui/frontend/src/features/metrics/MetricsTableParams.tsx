@@ -15,7 +15,7 @@ import {
 } from './metricsSlice';
 
 interface Props {
-  orderBy: number;
+  orderCol: number;
   order: string;
   filter: string;
 }
@@ -25,7 +25,7 @@ interface Props {
   easily linkable by copying the current address in the URL bar.
 */
 const MetricsTableParams: React.FunctionComponent<Props> = ({
-  orderBy,
+  orderCol,
   order,
   filter,
 }: Props) => {
@@ -49,7 +49,7 @@ const MetricsTableParams: React.FunctionComponent<Props> = ({
     metrics.forEach((metric) => {
       params += '&metric=' + encodeURIComponent(metric);
     });
-    params += `&orderBy=${orderBy}&order=${order}`;
+    params += `&orderCol=${orderCol}&order=${order}`;
     return params;
   };
   // This might be a bit of a hack.  History seems to cause re-renders

@@ -2,7 +2,6 @@
 
 ### Bugs
 
-* Sort by subsection metrics if main section has no metrics
 * Various resize issues
   * Table container should not be able to be smaller than table
   * Sometimes period selector gets wrapped or as strange spacing issues
@@ -12,14 +11,13 @@
 * Show deltas
   * vs baseline
 * Add Google Analytics
-* External linking for metrics
 * Add day of week to day aggregation display
 * Add support for percentile (distribution) metrics
 * Charting
   * Show trends
   * Show distributions
 * Move catalog to backend
-* Table row virtualization
+* Table row virtualization (if needed)
 * Add retry and no patch phases into phase metric
 
 ### Milestone 4 (Done)

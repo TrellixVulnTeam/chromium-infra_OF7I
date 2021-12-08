@@ -38,7 +38,7 @@ const MetricsPage: React.FunctionComponent<Props> = ({
   dispatch(setCurrent(match.params.dataSource, params));
 
   const filter = params.get('filter');
-  const orderBy = params.get('orderBy');
+  const orderCol = params.get('orderCol') || params.get('orderBy');
   const order = params.get('order');
 
   return (
@@ -47,7 +47,7 @@ const MetricsPage: React.FunctionComponent<Props> = ({
         <Grid item xs={12}>
           <MetricsTable
             initialFilter={filter || undefined}
-            initialOrderBy={orderBy ? Number.parseInt(orderBy) : undefined}
+            initialOrderCol={orderCol ? Number.parseInt(orderCol) : undefined}
             initialOrder={order || undefined}
           />
         </Grid>

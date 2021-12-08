@@ -76,7 +76,6 @@ export interface SectionMetric {
 function generateSections(
   source: DataSource,
   data: MetricsData,
-  dates: string[],
   metrics: string[]
 ): Section[] {
   const ret: Section[] = [];
@@ -129,6 +128,19 @@ function generateSections(
   return ret;
 }
 
+/*
+  compareSections compares two sections and returns the sort order between the
+  two. It will either sort lexically by the section (and subsection) name, or it
+  will sort by the value of the first metric for a given section, or if there
+  are no metrics in the top-level section, by the first metric in the first
+  subsection.
+  @param a first section to compare.
+  @param b second section to compare.
+  @param orderBy the data to sort by. If it's the value 'section' then it
+         sorts by section name. Otherwise, it is usually a date in the form of
+         YYYY-MM-DD and sorts by value for the date.
+  @param order Whether 'asc' for ascending or 'desc' for descending.
+*/
 function compareSections(
   a: Section,
   b: Section,
@@ -137,8 +149,6 @@ function compareSections(
 ): number {
   const invert = order === 'asc' ? 1 : -1;
   switch (orderBy) {
-    case '':
-      return 0;
     case OrderBySection:
       if (a.name > b.name) {
         return 1 * invert;
@@ -147,16 +157,31 @@ function compareSections(
         return -1 * invert;
       }
       return 0;
-    default:
-      if (a.metrics.length === 0 || b.metrics.length === 0) {
-        // This should never happen
-        return 0;
-      }
-      if (orderBy in a.metrics[0].data && orderBy in b.metrics[0].data) {
+    case orderBy?.match(/^\d{4}-\d{2}-\d{2}$/)?.input:
+      if (
+        a.metrics.length > 0 &&
+        orderBy in a.metrics[0].data &&
+        b.metrics.length > 0 &&
+        orderBy in b.metrics[0].data
+      ) {
+        // If we have a metric at the top level to show
         return (
           (a.metrics[0].data[orderBy].value -
             b.metrics[0].data[orderBy].value) *
           invert
+        );
+      } else if (
+        a.metrics.length === 0 &&
+        a.subSections.length > 0 &&
+        b.metrics.length === 0 &&
+        b.subSections.length > 0
+      ) {
+        // If the only metric we have is a subsection metric
+        return compareSections(
+          a.subSections[0],
+          b.subSections[0],
+          orderBy,
+          order
         );
       }
       if (orderBy in a.metrics[0].data) {
@@ -165,11 +190,18 @@ function compareSections(
       }
       // Always put missing data at the bottom
       return 1;
+    default:
+      return 0;
   }
   return 0;
 }
 
 function sortSections(sections: Section[], orderBy: string, order: Order) {
+  // Sort the subsections first since we may use the subsection values to sort
+  // the sections.
+  sections.forEach((section) => {
+    sortSections(section.subSections, orderBy, order);
+  });
   sections.sort((a, b) => {
     let res = compareSections(a, b, orderBy, order);
     if (orderBy !== OrderBySection && res === 0) {
@@ -178,14 +210,11 @@ function sortSections(sections: Section[], orderBy: string, order: Order) {
     }
     return res;
   });
-  sections.forEach((section) => {
-    sortSections(section.subSections, orderBy, order);
-  });
 }
 
 interface Props {
   initialFilter?: string;
-  initialOrderBy?: number;
+  initialOrderCol?: number;
   initialOrder?: string;
 }
 
@@ -206,35 +235,35 @@ const MetricsTable: React.FunctionComponent<Props> = (props: Props) => {
   const [filter, setFilter] = React.useState<string>(
     props.initialFilter === undefined ? '' : props.initialFilter
   );
-  const [orderBy, setOrderBy] = React.useState<number>(
-    props.initialOrderBy === undefined ? -1 : props.initialOrderBy
+  const [orderCol, setOrderCol] = React.useState<number>(
+    props.initialOrderCol === undefined ? -1 : props.initialOrderCol
   );
   const [order, setOrder] = React.useState<Order>(
     props.initialOrder === undefined ? 'desc' : (props.initialOrder as Order)
   );
 
-  // If using default orderBy, set it to the most recent date available
-  if (orderBy === -1 && dates.length > 0) {
-    setOrderBy(dates.length + 1);
+  // If using default orderCol, set it to the most recent date available
+  if (orderCol === -1 && dates.length > 0) {
+    setOrderCol(dates.length + 1);
   }
 
   const createSortHandler = (column: number) => {
     return () => {
-      setOrderBy(column);
+      setOrderCol(column);
       // Reset the order to default if switching columns
       setOrder(
-        orderBy === column ? (order === 'asc' ? 'desc' : 'asc') : 'desc'
+        orderCol === column ? (order === 'asc' ? 'desc' : 'asc') : 'desc'
       );
       return;
     };
   };
 
-  let sections: Section[] = generateSections(dataSource, data, dates, metrics);
-  sortSections(
-    sections,
-    orderBy === 0 ? OrderBySection : dates[orderBy - 2],
-    order
-  );
+  let sections: Section[] = generateSections(dataSource, data, metrics);
+  // orderCol is the column to order by. The UI has the section name as column
+  // 0, the metric name as column 1, and the dates as column 2+. Thus
+  // to get the date to use for the orderBy, we use orderCol - 2.
+  const orderBy = orderCol === 0 ? OrderBySection : dates[orderCol - 2];
+  sortSections(sections, orderBy, order);
   // Set a rank number because filtering makes row number unreliable
   sections.forEach((section, i) => (section.rank = i + 1));
 
@@ -254,11 +283,15 @@ const MetricsTable: React.FunctionComponent<Props> = (props: Props) => {
       (section) =>
         section.subSections.length > 0 || search(section.name, filter)
     );
+    // Do another sort after filtering. This handles a very specific case
+    // where you're only looking at subsection metrics and the filter changes
+    // which subsection metric is used in the sorting.
+    sortSections(sections, orderBy, order);
   }
 
   return (
     <TableContainer component={Paper} className={styles.metrics}>
-      <MetricsTableParams orderBy={orderBy} order={order} filter={filter} />
+      <MetricsTableParams orderCol={orderCol} order={order} filter={filter} />
       <LinearProgress
         className={showLoading ? '' : styles.hidden}
         data-testid="metrics-table-loading"
@@ -273,8 +306,8 @@ const MetricsTable: React.FunctionComponent<Props> = (props: Props) => {
             <TableCell className={styles.rank}>#</TableCell>
             <TableCell className={styles.section}>
               <TableSortLabel
-                active={orderBy === 0}
-                direction={orderBy === 0 ? order : 'desc'}
+                active={orderCol === 0}
+                direction={orderCol === 0 ? order : 'desc'}
                 onClick={createSortHandler(0)}
                 data-testid="mt-sortby-section"
               >
@@ -296,8 +329,8 @@ const MetricsTable: React.FunctionComponent<Props> = (props: Props) => {
                 )}
                 {/* Label to sort by date */}
                 <TableSortLabel
-                  active={orderBy === i + 2}
-                  direction={orderBy === i + 2 ? order : 'desc'}
+                  active={orderCol === i + 2}
+                  direction={orderCol === i + 2 ? order : 'desc'}
                   onClick={createSortHandler(i + 2)}
                   data-testid="mt-sortby-date"
                 >

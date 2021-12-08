@@ -173,6 +173,93 @@ describe('when sorting MetricsTable data', () => {
   });
 });
 
+describe('when sorting MetricsTable data with subsections', () => {
+  it('default sort should sort by subsection value', () => {
+    renderWithRedux(<MetricsTable />, {
+      dataSources: initDataSourceWithMetrics('test-ds', '', {
+        name: 'M1',
+        unit: Unit.Number,
+      }),
+      metrics: initMetricsState({
+        visibleDates: ['2021-01-02'],
+        visibleMetrics: ['M1'],
+        visibleData: {
+          A: {
+            M1: {
+              name: 'M1',
+              sections: {
+                S1: {
+                  '2021-01-02': { value: 2 },
+                },
+              },
+            },
+          },
+          B: {
+            M1: {
+              name: 'M1',
+              sections: {
+                S2: {
+                  '2021-01-02': { value: 1 },
+                },
+              },
+            },
+          },
+        },
+      }),
+    });
+    const rows = screen.getAllByTestId('mt-row');
+    expect(rows).toHaveLength(4);
+    expect(getByTestId(rows[0], 'mt-row-section-name')).toHaveTextContent('A');
+    expect(getByTestId(rows[1], 'mt-row-section-name')).toHaveTextContent('S1');
+    expect(getByTestId(rows[2], 'mt-row-section-name')).toHaveTextContent('B');
+    expect(getByTestId(rows[3], 'mt-row-section-name')).toHaveTextContent('S2');
+  });
+
+  it('filtering should sort by non-filtered subsection values', () => {
+    renderWithRedux(<MetricsTable initialFilter="S1" />, {
+      dataSources: initDataSourceWithMetrics('test-ds', '', {
+        name: 'M1',
+        unit: Unit.Number,
+      }),
+      metrics: initMetricsState({
+        visibleDates: ['2021-01-02'],
+        visibleMetrics: ['M1'],
+        visibleData: {
+          A: {
+            M1: {
+              name: 'M1',
+              sections: {
+                S1: {
+                  '2021-01-02': { value: 2 },
+                },
+              },
+            },
+          },
+          B: {
+            M1: {
+              name: 'M1',
+              sections: {
+                S1: {
+                  '2021-01-02': { value: 1 },
+                },
+                S2: {
+                  '2021-01-02': { value: 3 },
+                },
+              },
+            },
+          },
+        },
+      }),
+    });
+    const rows = screen.getAllByTestId('mt-row');
+    expect(rows).toHaveLength(4);
+    expect(getByTestId(rows[0], 'mt-row-section-name')).toHaveTextContent('A');
+    expect(getByTestId(rows[1], 'mt-row-section-name')).toHaveTextContent('S1');
+    expect(getByTestId(rows[2], 'mt-row-section-name')).toHaveTextContent('B');
+    expect(getByTestId(rows[3], 'mt-row-section-name')).toHaveTextContent('S1');
+  });
+});
+
 describe('when filtering MetricsTable data', () => {
   it('should show only the filtered section', () => {
     renderWithRedux(<MetricsTable initialFilter="A" />, {
