@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -39,7 +40,7 @@ var UpdateSwitchCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to update")
 		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to update ."+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support. "+"To clear this field set it to -1.")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
@@ -57,7 +58,7 @@ type updateSwitch struct {
 	switchName  string
 	description string
 	capacity    int
-	tags        string
+	tags        []string
 	state       string
 }
 
@@ -115,7 +116,7 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"rack":     "rack",
 			"capacity": "capacity",
-			"tags":     "tags",
+			"tag":      "tags",
 			"desc":     "description",
 			"state":    "resourceState",
 		}),
@@ -144,10 +145,10 @@ func (c *updateSwitch) parseArgs(s *ufspb.Switch) {
 	} else {
 		s.CapacityPort = int32(c.capacity)
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		s.Tags = nil
 	} else {
-		s.Tags = utils.GetStringSlice(c.tags)
+		s.Tags = c.tags
 	}
 }
 
@@ -162,7 +163,7 @@ func (c *updateSwitch) validateArgs() error {
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
+		if len(c.tags) > 0 {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
@@ -176,7 +177,7 @@ func (c *updateSwitch) validateArgs() error {
 		if c.switchName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if c.rackName == "" && c.capacity == 0 && c.description == "" && c.tags == "" && c.state == "" {
+		if c.rackName == "" && c.capacity == 0 && c.description == "" && len(c.tags) == 0 && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

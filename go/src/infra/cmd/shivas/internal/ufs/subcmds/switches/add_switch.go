@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -43,7 +44,7 @@ var AddSwitchCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to add")
 		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to add")
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -61,7 +62,7 @@ type addSwitch struct {
 	switchName  string
 	description string
 	capacity    int
-	tags        string
+	tags        []string
 }
 
 var mcsvFields = []string{
@@ -157,7 +158,7 @@ func (c *addSwitch) parseArgs(s *ufspb.Switch) {
 	s.Rack = c.rackName
 	s.Description = c.description
 	s.CapacityPort = int32(c.capacity)
-	s.Tags = utils.GetStringSlice(c.tags)
+	s.Tags = c.tags
 }
 
 func (c *addSwitch) validateArgs() error {
@@ -174,8 +175,8 @@ func (c *addSwitch) validateArgs() error {
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-desc' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-rack' cannot be specified at the same time.")
