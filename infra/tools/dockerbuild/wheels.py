@@ -922,6 +922,8 @@ SPECS.update({
                 'windows-x64-py3',
             ],
             pyversions=['py3']),
+        SourceOrPrebuilt(
+            'zstandard', '0.16.0', packaged=(), pyversions=['py3']),
     )
 })
 

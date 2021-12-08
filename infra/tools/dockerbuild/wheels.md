@@ -7392,6 +7392,26 @@ wheel: <
 
 * *universal*
 
+## **zstandard**
+
+### 0.16.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/zstandard/${vpython_platform}"
+  version: "version:0.16.0"
+>
+```
+
+
+* *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 
 # Contact
 
