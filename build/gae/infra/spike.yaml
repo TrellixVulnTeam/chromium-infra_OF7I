@@ -1,0 +1,8 @@
+name: infra/spike
+extends: ../base.yaml
+
+inputsdir: ../../../go/src/infra/appengine/spike
+
+build:
+  - go_gae_bundle: ${inputsdir}/appengine/app.yaml
+    dest: ${contextdir}/appengine
