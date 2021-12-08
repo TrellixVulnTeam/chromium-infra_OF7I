@@ -91,7 +91,7 @@ var parseActionArgsCases = []struct {
 	name     string
 	args     []string
 	splitter string
-	expected map[string]string
+	expected ParsedArgs
 }{
 	{
 		"empty",

@@ -8,6 +8,7 @@ package execs
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -171,11 +172,32 @@ func (args *RunArgs) NewRunner(host string) Runner {
 	return runner
 }
 
+// The map representing key-value pairs parsed from extra args in the
+// configuration.
+type ParsedArgs map[string]string
+
+// AsBool returns the value for the passwd key as a boolean. If the
+// key does not exist in the parsed arguments, a default value of
+// false is returned.
+func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string) bool {
+	defaultValue := false
+	if value, ok := parsedArgs[key]; ok {
+		if boolVal, err := strconv.ParseBool(value); err == nil {
+			return boolVal
+		}
+		log.Debug(ctx, "parsed args as bool: value %s for key %s is not a valid boolean, returning default value %t.", value, key, defaultValue)
+	} else {
+		log.Debug(ctx, "parsed args as bool: key %s does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
+	}
+	return defaultValue
+}
+
 // ParseActionArgs parses the action arguments using the splitter, and
-// returns a map of the key and values. If any mal-formed action
-// arguments are found their value is set to empty string in the map.
-func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) map[string]string {
-	argsMap := make(map[string]string)
+// returns ParsedArgs object containing key and values in the action
+// arguments. If any mal-formed action arguments are found their value
+// is set to empty string.
+func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) ParsedArgs {
+	argsMap := ParsedArgs(make(map[string]string))
 	for _, a := range actionArgs {
 		a := strings.TrimSpace(a)
 		if a == "" {
