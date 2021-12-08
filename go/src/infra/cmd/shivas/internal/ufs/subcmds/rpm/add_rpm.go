@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -44,7 +45,7 @@ var AddRPMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the rpm to add")
 		c.Flags.StringVar(&c.description, "desc", "", "the description of the rpm to add")
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this rpm support")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -63,7 +64,7 @@ type addRPM struct {
 	macAddress  string
 	description string
 	capacity    int
-	tags        string
+	tags        []string
 }
 
 var mcsvFields = []string{
@@ -157,7 +158,7 @@ func (c *addRPM) innerRun(a subcommands.Application, args []string, env subcomma
 func (c *addRPM) parseArgs(rpm *ufspb.RPM) {
 	rpm.Name = c.rpmName
 	rpm.MacAddress = c.macAddress
-	rpm.Tags = utils.GetStringSlice(c.tags)
+	rpm.Tags = c.tags
 	rpm.Description = c.description
 	rpm.CapacityPort = int32(c.capacity)
 	rpm.Rack = c.rackName
@@ -174,8 +175,8 @@ func (c *addRPM) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/file mode is specified. '-rack' cannot be specified at the same time.")

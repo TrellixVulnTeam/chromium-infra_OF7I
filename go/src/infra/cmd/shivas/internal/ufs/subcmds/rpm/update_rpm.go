@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -44,7 +45,7 @@ var UpdateRPMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the rpm to update"+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to update ."+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support. "+"To clear this field set it to -1.")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 
 		return c
@@ -67,7 +68,7 @@ type updateRPM struct {
 	macAddress  string
 	description string
 	capacity    int
-	tags        string
+	tags        []string
 	state       string
 }
 
@@ -131,7 +132,7 @@ func (c *updateRPM) innerRun(a subcommands.Application, args []string, env subco
 			"rack":     "rack",
 			"mac":      "macAddress",
 			"capacity": "capacity",
-			"tags":     "tags",
+			"tag":      "tags",
 			"desc":     "description",
 			"state":    "resourceState",
 		}),
@@ -176,10 +177,10 @@ func (c *updateRPM) parseArgs(rpm *ufspb.RPM) {
 	} else {
 		rpm.CapacityPort = int32(c.capacity)
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		rpm.Tags = nil
 	} else {
-		rpm.Tags = utils.GetStringSlice(c.tags)
+		rpm.Tags = c.tags
 	}
 }
 
@@ -191,8 +192,8 @@ func (c *updateRPM) validateArgs() error {
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
-		if c.tags != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
+		if len(c.tags) > 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tag' cannot be specified at the same time.")
 		}
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-rack' cannot be specified at the same time.")
@@ -212,7 +213,7 @@ func (c *updateRPM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
-			c.rackName == "" && c.macAddress == "" && c.tags == "" &&
+			c.rackName == "" && c.macAddress == "" && len(c.tags) == 0 &&
 			c.state == "" && c.capacity == 0 && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
