@@ -95,19 +95,9 @@ const customProvisionPlanStart = `
 		"cros": {
 			"critical_actions": [
 				"cros_ssh",
-				"cros_default_boot",
 				"Custom provision"
 			],
 			"actions": {
-				"cros_default_boot": {
-					"dependencies": [
-						"cros_storage_writing"
-					],
-					"exec_name": "cros_is_default_boot_from_disk"
-				},
-				"cros_ping": {
-					"exec_name": "cros_ping"
-				},
 				"cros_ssh": {
 					"dependencies": [
 						"has_dut_name",
@@ -116,12 +106,6 @@ const customProvisionPlanStart = `
 						"cros_ping"
 					],
 					"exec_name": "cros_ssh"
-				},
-				"cros_storage_writing": {
-					"dependencies": [
-						"cros_ssh"
-					],
-					"exec_name": "cros_is_file_system_writable"
 				},
 				"Custom provision":{
 					"docs":[
@@ -146,6 +130,8 @@ func (c *customProvisionRun) createPlan() string {
 		customArg = fmt.Sprintf("os_image_path:%s", c.osPath)
 	} else if c.osName != "" {
 		customArg = fmt.Sprintf("os_name:%s", c.osName)
+	} else {
+		return customProvisionPlanStart + customProvisionPlanTail
 	}
-	return customProvisionPlanStart + customArg + customProvisionPlanTail
+	return fmt.Sprintf("%s%q%s", customProvisionPlanStart, customArg, customProvisionPlanTail)
 }
