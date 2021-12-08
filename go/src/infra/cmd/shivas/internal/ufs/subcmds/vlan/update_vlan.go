@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -39,7 +40,7 @@ var UpdateVlanCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.reservedIPs, "reserved_ips", "", "comma separated ips. You can only append/add new ips here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.freeStartIP, "start-ip", "", "the start IPv4 string of the vlan's free DHCP range. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.freeEndIP, "end-ip", "", "the end IPv4 string of the vlan's free DHCP range. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
@@ -57,7 +58,7 @@ type updateVlan struct {
 	zones       string
 	freeStartIP string
 	freeEndIP   string
-	tags        string
+	tags        []string
 }
 
 func (c *updateVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -110,7 +111,7 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 			"zone":         "zones",
 			"start-ip":     "free_start_ip",
 			"end-ip":       "free_end_ip",
-			"tags":         "tags",
+			"tag":          "tags",
 		}),
 	})
 	if err != nil {
@@ -156,10 +157,10 @@ func (c *updateVlan) parseArgs(vlan *ufspb.Vlan) {
 	} else {
 		vlan.FreeEndIpv4Str = c.freeEndIP
 	}
-	if c.tags == utils.ClearFieldValue {
+	if ufsUtil.ContainsAnyStrings(c.tags, utils.ClearFieldValue) {
 		vlan.Tags = nil
 	} else {
-		vlan.Tags = utils.GetStringSlice(c.tags)
+		vlan.Tags = c.tags
 	}
 }
 
@@ -167,7 +168,7 @@ func (c *updateVlan) validateArgs() error {
 	if c.name == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 	}
-	if c.state == "" && c.description == "" && c.reservedIPs == "" && c.zones == "" && c.freeEndIP == "" && c.freeStartIP == "" && c.tags == "" {
+	if c.state == "" && c.description == "" && c.reservedIPs == "" && c.zones == "" && c.freeEndIP == "" && c.freeStartIP == "" && len(c.tags) == 0 {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

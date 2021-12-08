@@ -39,7 +39,7 @@ var AddVlanCmd = &subcommands.Command{
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "zone of the vlan, can be specified multiple times."+cmdhelp.ZoneHelpText)
 		c.Flags.StringVar(&c.freeStartIP, "start-ip", "", "the start IPv4 string of the vlan's free DHCP range")
 		c.Flags.StringVar(&c.freeEndIP, "end-ip", "", "the end IPv4 string of the vlan's free DHCP range")
-		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of tag(s). Can be specified multiple times.")
 		return c
 	},
 }
@@ -56,7 +56,7 @@ type addVlan struct {
 	zones       []string
 	freeStartIP string
 	freeEndIP   string
-	tags        string
+	tags        []string
 }
 
 func (c *addVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -119,7 +119,7 @@ func (c *addVlan) parseArgs(vlan *ufspb.Vlan) {
 	vlan.Zones = ufsZones
 	vlan.FreeStartIpv4Str = c.freeStartIP
 	vlan.FreeEndIpv4Str = c.freeEndIP
-	vlan.Tags = utils.GetStringSlice(c.tags)
+	vlan.Tags = c.tags
 }
 
 func (c *addVlan) validateArgs() error {
