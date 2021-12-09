@@ -209,6 +209,17 @@ func (parsedArgs ParsedArgs) AsString(ctx context.Context, key string) string {
 	return defaultValue
 }
 
+// AsStringSlice returns the value for the passed key as a slice of
+// string. If the key does not exist in the parsed arguments, an empty
+// slice.
+func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []string {
+	key = strings.TrimSpace(key)
+	if len(key) > 0 {
+		return strings.Split(parsedArgs.AsString(ctx, key), MultiValueSplitter)
+	}
+	return make([]string, 0)
+}
+
 // ParseActionArgs parses the action arguments using the splitter, and
 // returns ParsedArgs object containing key and values in the action
 // arguments. If any mal-formed action arguments are found their value
