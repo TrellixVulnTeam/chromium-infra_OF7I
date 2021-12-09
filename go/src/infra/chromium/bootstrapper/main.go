@@ -33,6 +33,18 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+type getOptionsFn func() options
+
+func parseFlags() options {
+	outputPath := flag.String("output", "", "Path to write the final build.proto state to.")
+	propertiesOptional := flag.Bool("properties-optional", false, "Whether missing $bootstrap/properties property should be allowed")
+	return options{
+		outputPath:         *outputPath,
+		exeRoot:            "exe",
+		propertiesOptional: *propertiesOptional,
+	}
+}
+
 func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error) {
 	logging.Infof(ctx, "reading build input")
 	data, err := ioutil.ReadAll(input)
@@ -48,20 +60,24 @@ func getBuild(ctx context.Context, input io.Reader) (*buildbucketpb.Build, error
 }
 
 type options struct {
+	outputPath         string
+	exeRoot            string
 	propertiesOptional bool
 }
 
-func (o options) performBootstrap(ctx context.Context, input io.Reader, exeRoot, buildOutputPath string) (*exec.Cmd, error) {
+type bootstrapFn func(ctx context.Context, input io.Reader, opts options) ([]string, []byte, error)
+
+func performBootstrap(ctx context.Context, input io.Reader, opts options) ([]string, []byte, error) {
 	build, err := getBuild(ctx, input)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	logging.Infof(ctx, "creating bootstrap input")
-	inputOpts := bootstrap.InputOptions{PropertiesOptional: o.propertiesOptional}
+	inputOpts := bootstrap.InputOptions{PropertiesOptional: opts.propertiesOptional}
 	bootstrapInput, err := inputOpts.NewInput(build)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var recipeInput []byte
@@ -77,12 +93,12 @@ func (o options) performBootstrap(ctx context.Context, input io.Reader, exeRoot,
 		// Get the arguments for the command
 		group.Go(func() error {
 			logging.Infof(ctx, "creating CIPD client")
-			cipdClient, err := cipd.NewClient(ctx, exeRoot)
+			cipdClient, err := cipd.NewClient(ctx, opts.exeRoot)
 			if err != nil {
 				return err
 			}
 
-			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient, cas.NewClient(ctx, exeRoot))
+			bootstrapper := bootstrap.NewExeBootstrapper(cipdClient, cas.NewClient(ctx, opts.exeRoot))
 
 			logging.Infof(ctx, "determining bootstrapped executable")
 			exe, err := bootstrapper.GetBootstrappedExeInfo(ctx, bootstrapInput)
@@ -97,8 +113,8 @@ func (o options) performBootstrap(ctx context.Context, input io.Reader, exeRoot,
 				return err
 			}
 
-			if buildOutputPath != "" {
-				cmd = append(cmd, "--output", buildOutputPath)
+			if opts.outputPath != "" {
+				cmd = append(cmd, "--output", opts.outputPath)
 			}
 
 			return nil
@@ -133,52 +149,34 @@ func (o options) performBootstrap(ctx context.Context, input io.Reader, exeRoot,
 		})
 
 		if err := group.Wait(); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
+	return cmd, recipeInput, nil
+}
+
+type executeCmdFn func(ctx context.Context, cmd []string, input []byte) error
+
+func executeCmd(ctx context.Context, cmd []string, input []byte) error {
 	cmdCtx := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
-	cmdCtx.Stdin = bytes.NewBuffer(recipeInput)
-	return cmdCtx, nil
+	cmdCtx.Stdin = bytes.NewBuffer(input)
+	cmdCtx.Stdout = os.Stdout
+	cmdCtx.Stderr = os.Stderr
+	return cmdCtx.Run()
 }
 
-func execute(ctx context.Context) error {
-	outputPath := flag.String("output", "", "Path to write the final build.proto state to.")
-	propertiesOptional := flag.Bool("properties-optional", false, "Whether missing $bootstrap/properties property should be allowed")
-	flag.Parse()
+type updateBuildFn func(ctx context.Context, build *buildbucketpb.Build) error
 
-	opts := options{propertiesOptional: *propertiesOptional}
-	cmd, err := opts.performBootstrap(ctx, os.Stdin, "exe", *outputPath)
+func updateBuild(ctx context.Context, build *buildbucketpb.Build) (err error) {
+	outputData, err := proto.Marshal(build)
 	if err != nil {
-		return err
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	logging.Infof(ctx, "executing %s", cmd.Args)
-	err = cmd.Run()
-	// An ExitError indicates that we were able to bootstrap the executable
-	// and that it failed, as opposed to being unable to launch the
-	// bootstrapped executable
-	var exitErr *exec.ExitError
-	if !stderrors.As(err, &exitErr) {
-		return bootstrap.ExeFailure.Apply(err)
-	}
-	return err
-}
-
-func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error) {
-	// If the error has the ExeFailure tag, then that indicates that we were
-	// able to bootstrap the executable and that it failed. In that case, it
-	// should have populated the build proto with steps and a result, so we
-	// should not modify the build proto.
-	if !bootstrap.ExeFailure.In(bootstrapErr) {
-		return nil
+		return errors.Annotate(err, "failed to marshal output build.proto").Err()
 	}
 
 	logdog, err := logdogbootstrap.Get()
 	if err != nil {
-		return err
+		return errors.Annotate(err, "failed to get logdog bootstrap instance").Err()
 	}
 	stream, err := logdog.Client.NewDatagramStream(
 		ctx,
@@ -186,7 +184,7 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error)
 		streamclient.WithContentType(luciexe.BuildProtoContentType),
 	)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "failed to get datagram stream").Err()
 	}
 	defer func() {
 		closeErr := stream.Close()
@@ -199,18 +197,6 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error)
 		}
 	}()
 
-	build := &buildbucketpb.Build{}
-	build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", bootstrapErr.Error())
-	build.Status = buildbucketpb.Status_INFRA_FAILURE
-	if bootstrap.PatchRejected.In(bootstrapErr) {
-		build.Output.Properties.Fields["failure_type"] = structpb.NewStringValue("PATCH_FAILURE")
-	}
-
-	outputData, err := proto.Marshal(build)
-	if err != nil {
-		err = errors.Annotate(err, "failed to marshal output build.proto").Err()
-		return
-	}
 	err = stream.WriteDatagram(outputData)
 	if err != nil {
 		err = errors.Annotate(err, "failed to write modified build").Err()
@@ -219,16 +205,48 @@ func reportBootstrapFailure(ctx context.Context, bootstrapErr error) (err error)
 	return
 }
 
+func bootstrapMain(ctx context.Context, getOpts getOptionsFn, performBootstrap bootstrapFn, executeCmd executeCmdFn, updateBuild updateBuildFn) error {
+	opts := getOpts()
+	cmd, input, err := performBootstrap(ctx, os.Stdin, opts)
+	if err == nil {
+		logging.Infof(ctx, "executing %s", cmd)
+		err = executeCmd(ctx, cmd, input)
+	}
+
+	if err != nil {
+		logging.Errorf(ctx, err.Error())
+		// An ExitError indicates that we were able to bootstrap the
+		// executable and that it failed, as opposed to being unable to
+		// launch the bootstrapped executable
+		var exitErr *exec.ExitError
+		if !stderrors.As(err, &exitErr) {
+			build := &buildbucketpb.Build{}
+			build.SummaryMarkdown = fmt.Sprintf("<pre>%s</pre>", err)
+			build.Status = buildbucketpb.Status_INFRA_FAILURE
+			if bootstrap.PatchRejected.In(err) {
+				build.Output = &buildbucketpb.Build_Output{
+					Properties: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"failure_type": structpb.NewStringValue("PATCH_FAILURE"),
+						},
+					},
+				}
+			}
+			if err := updateBuild(ctx, build); err != nil {
+				logging.Errorf(ctx, errors.Annotate(err, "failed to update build with failure details").Err().Error())
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	ctx := context.Background()
 	ctx = gologger.StdConfig.Use(ctx)
 
-	if err := execute(ctx); err != nil {
-		logging.Errorf(ctx, err.Error())
-		reportErr := reportBootstrapFailure(ctx, err)
-		if reportErr != nil {
-			logging.Errorf(ctx, errors.Annotate(err, "failed to report bootstrap failure").Err().Error())
-		}
+	if err := bootstrapMain(ctx, parseFlags, performBootstrap, executeCmd, updateBuild); err != nil {
 		os.Exit(1)
 	}
 }

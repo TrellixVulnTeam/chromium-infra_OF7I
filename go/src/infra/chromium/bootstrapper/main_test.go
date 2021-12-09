@@ -9,11 +9,13 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cipd"
 	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
 	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
@@ -60,7 +62,10 @@ func TestPerformBootstrap(t *testing.T) {
 		Instances: map[string]*fakecipd.PackageInstance{},
 	}
 
-	opts := options{}
+	opts := options{
+		outputPath: "fake-output-path",
+		exeRoot:    "fake-exe-root",
+	}
 
 	ctx := context.Background()
 
@@ -78,35 +83,36 @@ func TestPerformBootstrap(t *testing.T) {
 
 	Convey("performBootstrap", t, func() {
 
-		cipdRoot := t.TempDir()
-
 		Convey("fails if reading input fails", func() {
 			input := reader{func(p []byte) (int, error) {
 				return 0, errors.New("test read failure")
 			}}
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
+			So(exeInput, ShouldBeNil)
 		})
 
 		Convey("fails if unmarshalling build fails", func() {
 			input := strings.NewReader("invalid-proto")
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
+			So(exeInput, ShouldBeNil)
 		})
 
 		Convey("fails if bootstrap fails", func() {
 			input := createInput(`{}`)
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
+			So(exeInput, ShouldBeNil)
 		})
 
 		input := createInput(`{
@@ -144,10 +150,11 @@ func TestPerformBootstrap(t *testing.T) {
 			}
 			pkg.Refs["fake-version"] = ""
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldNotBeNil)
 			So(cmd, ShouldBeNil)
+			So(exeInput, ShouldBeNil)
 		})
 
 		Convey("succeeds for valid input", func() {
@@ -161,18 +168,16 @@ func TestPerformBootstrap(t *testing.T) {
 			}
 			pkg.Refs["fake-version"] = "fake-instance-id"
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldBeNil)
-			So(cmd, ShouldNotBeNil)
-			So(cmd.Args, ShouldResemble, []string{
-				filepath.Join(cipdRoot, "fake-exe"),
+			So(cmd, ShouldResemble, []string{
+				filepath.Join(opts.exeRoot, "fake-exe"),
 				"--output",
-				"fake-output-path",
+				opts.outputPath,
 			})
-			contents, _ := ioutil.ReadAll(cmd.Stdin)
 			build := &buildbucketpb.Build{}
-			proto.Unmarshal(contents, build)
+			proto.Unmarshal(exeInput, build)
 			So(build, ShouldResembleProtoJSON, `{
 				"input": {
 					"gitiles_commit": {
@@ -221,20 +226,18 @@ func TestPerformBootstrap(t *testing.T) {
 					}
 				}
 			}`)
-			opts := options{propertiesOptional: true}
+			opts.propertiesOptional = true
 
-			cmd, err := opts.performBootstrap(ctx, input, cipdRoot, "fake-output-path")
+			cmd, exeInput, err := performBootstrap(ctx, input, opts)
 
 			So(err, ShouldBeNil)
-			So(cmd, ShouldNotBeNil)
-			So(cmd.Args, ShouldResemble, []string{
-				filepath.Join(cipdRoot, "fake-exe"),
+			So(cmd, ShouldResemble, []string{
+				filepath.Join(opts.exeRoot, "fake-exe"),
 				"--output",
-				"fake-output-path",
+				opts.outputPath,
 			})
-			contents, _ := ioutil.ReadAll(cmd.Stdin)
 			build := &buildbucketpb.Build{}
-			proto.Unmarshal(contents, build)
+			proto.Unmarshal(exeInput, build)
 			So(build, ShouldResembleProtoJSON, `{
 				"input": {
 					"properties": {
@@ -252,6 +255,130 @@ func TestPerformBootstrap(t *testing.T) {
 					}
 				}
 			}`)
+		})
+
+	})
+}
+
+func testBootstrapFn(bootstrapErr error) bootstrapFn {
+	return func(ctx context.Context, input io.Reader, opts options) ([]string, []byte, error) {
+		if bootstrapErr != nil {
+			return nil, nil, bootstrapErr
+		}
+		return []string{"fake", "command"}, []byte("fake-contents"), nil
+	}
+}
+
+func testExecuteCmdFn(cmdErr error) executeCmdFn {
+	return func(ctx context.Context, cmd []string, input []byte) error {
+		if cmdErr != nil {
+			return cmdErr
+		}
+		return nil
+	}
+}
+
+type buildUpdateRecord struct {
+	build *buildbucketpb.Build
+}
+
+func testUpdateBuildFn(updateErr error) (*buildUpdateRecord, updateBuildFn) {
+	update := &buildUpdateRecord{}
+	return update, func(ctx context.Context, build *buildbucketpb.Build) error {
+		update.build = build
+		if updateErr != nil {
+			return updateErr
+		}
+		return nil
+	}
+}
+
+func TestBootstrapMain(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	Convey("bootstrapMain", t, func() {
+
+		getOptions := func() options { return options{} }
+		performBootstrap := testBootstrapFn(nil)
+		execute := testExecuteCmdFn(nil)
+		record, updateBuild := testUpdateBuildFn(nil)
+
+		Convey("does not update build on success", func() {
+			err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+			So(err, ShouldBeNil)
+			So(record.build, ShouldBeNil)
+		})
+
+		Convey("does not update build on exe failure", func() {
+			cmdErr := &exec.ExitError{
+				ProcessState: &os.ProcessState{},
+				Stderr:       []byte("test cmd failure"),
+			}
+			execute := testExecuteCmdFn(cmdErr)
+
+			err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+			So(err, ShouldErrLike, cmdErr)
+			So(record.build, ShouldBeNil)
+		})
+
+		Convey("updates build when failing to execute cmd", func() {
+			cmdErr := errors.New("test cmd execution failure")
+			execute := testExecuteCmdFn(cmdErr)
+
+			err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+			So(err, ShouldErrLike, cmdErr)
+			So(record.build, ShouldResembleProtoJSON, `{
+				"status": "INFRA_FAILURE",
+				"summary_markdown": "<pre>test cmd execution failure</pre>"
+			}`)
+		})
+
+		Convey("updates build for bootstrap failure", func() {
+			bootstrapErr := errors.New("test bootstrap failure")
+			performBootstrap := testBootstrapFn(bootstrapErr)
+
+			err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+			So(err, ShouldErrLike, bootstrapErr)
+			So(record.build, ShouldResembleProtoJSON, `{
+				"status": "INFRA_FAILURE",
+				"summary_markdown": "<pre>test bootstrap failure</pre>"
+			}`)
+
+			Convey("with failure_type set for patch rejected failure", func() {
+				bootstrapErr := bootstrap.PatchRejected.Apply(bootstrapErr)
+				performBootstrap := testBootstrapFn(bootstrapErr)
+
+				err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+				So(err, ShouldErrLike, bootstrapErr)
+				So(record.build, ShouldResembleProtoJSON, `{
+					"status": "INFRA_FAILURE",
+					"summary_markdown": "<pre>test bootstrap failure</pre>",
+					"output": {
+						"properties": {
+							"failure_type": "PATCH_FAILURE"
+						}
+					}
+				}`)
+			})
+
+		})
+
+		Convey("returns original error if updating build fails", func() {
+			bootstrapErr := errors.New("test bootstrap failure")
+			performBootstrap := testBootstrapFn(bootstrapErr)
+			updateBuildErr := errors.New("test update build failure")
+			_, updateBuild := testUpdateBuildFn(updateBuildErr)
+
+			err := bootstrapMain(ctx, getOptions, performBootstrap, execute, updateBuild)
+
+			So(err, ShouldErrLike, bootstrapErr)
 		})
 
 	})
