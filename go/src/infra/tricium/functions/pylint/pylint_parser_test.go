@@ -5,6 +5,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -155,4 +157,38 @@ func TestPylintParsing(t *testing.T) {
 			So(comments, ShouldResemble, expected)
 		})
 	})
+
+	Convey("isFatalPylintError", t, func() {
+		Convey("Returns false for nil error", func() {
+			So(isFatalPylintError(nil), ShouldBeFalse)
+		})
+
+		Convey("Returns true for non-exit error", func() {
+			So(isFatalPylintError(os.ErrNotExist), ShouldBeTrue)
+		})
+
+		Convey("Returns false for non-fatal exit errors", func() {
+			So(isFatalPylintError(fakeExitError{2}), ShouldBeFalse)
+			So(isFatalPylintError(fakeExitError{4}), ShouldBeFalse)
+			So(isFatalPylintError(fakeExitError{8}), ShouldBeFalse)
+			So(isFatalPylintError(fakeExitError{16}), ShouldBeFalse)
+		})
+
+		Convey("Returns true for fatal exit errors", func() {
+			So(isFatalPylintError(fakeExitError{1}), ShouldBeTrue)
+			So(isFatalPylintError(fakeExitError{32}), ShouldBeTrue)
+		})
+	})
+}
+
+type fakeExitError struct {
+	exitCode int
+}
+
+func (e fakeExitError) Error() string {
+	return fmt.Sprintf("exit status %d", e.exitCode)
+}
+
+func (e fakeExitError) ExitCode() int {
+	return e.exitCode
 }

@@ -122,16 +122,11 @@ func mainImpl() error {
 	cmd.Stdout = stdout
 	cmd.Stderr = os.Stderr
 
-	// A non-zero exit status for Pylint doesn't mean that an error occurred,
-	// it just means that warnings were found, so we can ignore the error as
-	// long as it's an ExitError.
 	if err := cmd.Run(); err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			log.Printf("pylint produced non-zero exit code %d", exitErr.ExitCode())
-		} else {
+		if isFatalPylintError(err) {
 			return fmt.Errorf("error running pylint: %w", err)
 		}
+		log.Printf("ignoring non-fatal error from pylint: %s", err)
 	}
 
 	log.Printf("pylint output: %s", stdout.String())
@@ -176,4 +171,37 @@ func parsePylintOutput(stdout []byte) ([]*tricium.Data_Comment, error) {
 		})
 	}
 	return comments, nil
+}
+
+// execExitError is an interface used to check whether an error is an
+// exec.ExitError while still enabling testability, since it's not possible to
+// construct an exec.ExitError in-memory.
+type execExitError interface {
+	ExitCode() int
+}
+
+// Statically assert that exec.ExitError satisfies the execExitError interface.
+var _ execExitError = (*exec.ExitError)(nil)
+
+func isFatalPylintError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// If pylint produces one of these exit codes it means it successfully
+	// emitted messages about the code being analyzed. All other exit codes are
+	// assumed to represent unexpected errors that should cause the parser to
+	// fail, as pylint likely didn't produce valid results.
+	// https://docs.pylint.org/en/1.6.0/run.html#exit-codes
+	nonFatalPylintExitCodes := []int{2, 4, 8, 16}
+
+	var exitErr execExitError
+	if errors.As(err, &exitErr) {
+		for _, code := range nonFatalPylintExitCodes {
+			if code == exitErr.ExitCode() {
+				return false
+			}
+		}
+	}
+	return true
 }
