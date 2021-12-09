@@ -5,7 +5,8 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,18 +14,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
-	"strconv"
 
 	tricium "infra/tricium/api/v1"
 )
-
-// The pylint output format specification.
-// See: https://docs.pylint.org/en/1.6.0/output.html
-const msgTemplate = "{path}:{line}:{column} [{category}/{symbol}] {msg}"
-
-// The related regexp for parsing the above output format.
-var msgRegex = regexp.MustCompile(`^(.+?):([0-9]+):([0-9]+) \[(.+)/(.+)\] (.+)$`)
 
 // Paths to the required resources relative to the executable directory.
 const (
@@ -32,6 +24,18 @@ const (
 	pylintPath        = "pylint/bin/pylint"
 	pylintPackagePath = "pylint/"
 )
+
+// pylintResult corresponds to each element of pylint's JSON output.
+type pylintResult struct {
+	Line   int32  `json:"line"`
+	Column int32  `json:"column"`
+	Path   string `json:"path"`
+	// E.g. "warning" or "convention".
+	Type string `json:"type"`
+	// E.g. "unused-argument".
+	Symbol  string `json:"symbol"`
+	Message string `json:"message"`
+}
 
 func main() {
 	if err := mainImpl(); err != nil {
@@ -87,7 +91,7 @@ func mainImpl() error {
 	cmdArgs := []string{
 		absPylintPath,
 		"--rcfile", filepath.Join(exPath, "pylintrc"),
-		"--msg-template", msgTemplate,
+		"--output-format", "json",
 	}
 	// With Pylint, the order of the disable and enable command line flags is
 	// important; the later flags override previous flags. But for this
@@ -107,29 +111,21 @@ func mainImpl() error {
 	cmd := exec.Command(cmdName, cmdArgs...)
 	log.Printf("Command: %s", cmd.Args)
 
+	stdout := &bytes.Buffer{}
+
 	// Set PYTHONPATH for the command to run so that the bundled version of
 	// pylint and its dependencies are used.
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("PYTHONPATH=%s", absPylintPackagePath))
 	cmd.Env = env
 	cmd.Dir = *inputDir
-
-	stdoutReader, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("error creating StdoutPipe for cmd: %w", err)
-	}
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("error starting cmd: %w", err)
-	}
-	scanner := bufio.NewScanner(stdoutReader)
-	output := &tricium.Data_Results{}
-	scanPylintOutput(scanner, output)
+	cmd.Stdout = stdout
+	cmd.Stderr = os.Stderr
 
 	// A non-zero exit status for Pylint doesn't mean that an error occurred,
 	// it just means that warnings were found, so we can ignore the error as
 	// long as it's an ExitError.
-	if err := cmd.Wait(); err != nil {
+	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
 			log.Printf("pylint produced non-zero exit code %d", exitErr.ExitCode())
@@ -137,6 +133,14 @@ func mainImpl() error {
 			return fmt.Errorf("error running pylint: %w", err)
 		}
 	}
+
+	log.Printf("pylint output: %s", stdout.String())
+	comments, err := parsePylintOutput(stdout.Bytes())
+	if err != nil {
+		return err
+	}
+	output := &tricium.Data_Results{}
+	output.Comments = comments
 
 	// Write Tricium RESULTS data.
 	path, err := tricium.WriteDataType(*outputDir, output)
@@ -147,54 +151,29 @@ func mainImpl() error {
 	return nil
 }
 
-// scanPylintOutput reads Pylint output line by line and populates results.
-func scanPylintOutput(scanner *bufio.Scanner, results *tricium.Data_Results) error {
-	// Read line by line, adding comments to the output.
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		comment := parsePylintLine(line)
-		if comment == nil {
-			log.Printf("SKIPPING %q", line)
-		} else {
-			log.Printf("ADDING   %q", line)
-			results.Comments = append(results.Comments, comment)
+// parsePylintOutput reads populates results from pylint JSON output.
+func parsePylintOutput(stdout []byte) ([]*tricium.Data_Comment, error) {
+	var results []pylintResult
+	if err := json.Unmarshal(stdout, &results); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal pylint output: %w", err)
+	}
+	var comments []*tricium.Data_Comment
+	for _, r := range results {
+		msg := r.Message
+		if r.Symbol == "undefined-variable" {
+			msg = (msg + ".\n" +
+				"This check could give false positives when there are wildcard imports\n" +
+				"(from module import *). It is recommended to avoid wildcard imports; see\n" +
+				"https://www.python.org/dev/peps/pep-0008/#imports")
 		}
+		comments = append(comments, &tricium.Data_Comment{
+			Path: r.Path,
+			Message: fmt.Sprintf(
+				"%s.\nTo disable, add: # pylint: disable=%s", msg, r.Symbol),
+			Category:  fmt.Sprintf("Pylint/%s/%s", r.Type, r.Symbol),
+			StartLine: r.Line,
+			StartChar: r.Column,
+		})
 	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
-	return nil
-}
-
-// parsePylintLine parses one line of Pylint output to produce a comment.
-//
-// Returns nil if the given line doesn't match the expected pattern.
-func parsePylintLine(line string) *tricium.Data_Comment {
-	match := msgRegex.FindStringSubmatch(line)
-	if match == nil {
-		return nil
-	}
-	lineno, err := strconv.Atoi(match[2])
-	if err != nil {
-		return nil
-	}
-	column, err := strconv.Atoi(match[3])
-	if err != nil {
-		return nil
-	}
-	category, symbol, message := match[4], match[5], match[6]
-	if symbol == "undefined-variable" {
-		message = (message + ".\n" +
-			"This check could give false positives when there are wildcard imports\n" +
-			"(from module import *). It is recommended to avoid wildcard imports; see\n" +
-			"https://www.python.org/dev/peps/pep-0008/#imports")
-	}
-	return &tricium.Data_Comment{
-		Path:      match[1],
-		Message:   fmt.Sprintf("%s.\nTo disable, add: # pylint: disable=%s", message, symbol),
-		Category:  fmt.Sprintf("Pylint/%s/%s", category, symbol),
-		StartLine: int32(lineno),
-		StartChar: int32(column),
-	}
+	return comments, nil
 }
