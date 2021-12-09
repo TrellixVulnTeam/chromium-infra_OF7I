@@ -296,11 +296,29 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"sample_pass"
 	},
-	"servo_pwr_button_pin": {
-		"exec_extra_args": [
-			"except:board1,board2"
+	"pwr_button_supported_models": {
+		"docs": [
+			"power button check is not applicable for these models"
 		],
-		"exec_name":"sample_pass"
+		"exec_extra_args": [
+			"string_values:arkham,gale,mistral,storm,whirlwind",
+			"invert_result:true"
+		],
+		"exec_name":"dut_check_model"
+	},
+	"servo_pwr_button_pin": {
+		"conditions": [
+			"pwr_button_supported_models"
+		],
+		"dependencies": [
+			"has_dut_model_name"
+		],
+		"exec_extra_args": [
+			"command:pwr_button",
+			"expected_string_value:release"
+		],
+		"exec_name":"servo_check_servod_control",
+		"allow_fail_after_recovery": true
 	},
 	"servo_ppdut5": {
 		"conditions": [
