@@ -129,11 +129,16 @@ class CIPDManager:
     for source, up_dests in self._pending_uploads.items():
       if self._path.exists(source):
         for up_dest in up_dests:
+          root, filename = self._path.split(source)
           name = '{}/{}'.format(up_dest.cipd_src.package,
                                 up_dest.cipd_src.platform)
-          pkg = self._cipd.PackageDefinition(name, self._path.dirname(source))
+          pkg = self._cipd.PackageDefinition(name, root)
+          pkg.add_file(root.join(filename))
           self._cipd.create_from_pkg(
-              pkg, refs=[up_dest.cipd_src.refs], tags=up_dest.tags)
+              pkg,
+              refs=[up_dest.cipd_src.refs],
+              tags=up_dest.tags,
+              compression_level=0)
       else:
         failed_uploads[source] = up_dests  # pragma: no cover
     self._pending_uploads = failed_uploads
