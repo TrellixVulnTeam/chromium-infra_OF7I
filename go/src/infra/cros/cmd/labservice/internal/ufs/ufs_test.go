@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
+	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
@@ -27,6 +28,48 @@ func TestGetDutTopology_single(t *testing.T) {
 		ChromeOSDeviceData: &ufspb.ChromeOSDeviceData{
 			LabConfig: &ufspb.MachineLSE{
 				Hostname: "mary",
+				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
+					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
+						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
+							DeviceLse: &ufspb.ChromeOSDeviceLSE{
+								Device: &ufspb.ChromeOSDeviceLSE_Dut{
+									Dut: &lab.DeviceUnderTest{
+										Peripherals: &lab.Peripherals{
+											Audio: &lab.Audio{
+												AudioBox: true,
+												Atrus:    true,
+											},
+											Chameleon: &lab.Chameleon{
+												AudioBoard:           true,
+												ChameleonPeripherals: []lab.ChameleonType{lab.ChameleonType_CHAMELEON_TYPE_DP},
+											},
+											Servo: &lab.Servo{
+												ServoHostname: "servo_host",
+												ServoPort:     33,
+											},
+											Wifi: &lab.Wifi{
+												Wificell:    true,
+												AntennaConn: lab.Wifi_CONN_CONDUCTIVE,
+											},
+											Touch: &lab.Touch{
+												Mimo: true,
+											},
+											Camerabox: true,
+											CameraboxInfo: &lab.Camerabox{
+												Facing: lab.Camerabox_FACING_FRONT,
+											},
+											Cable: []*lab.Cable{
+												{
+													Type: lab.CableType_CABLE_AUDIOJACK,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -42,9 +85,40 @@ func TestGetDutTopology_single(t *testing.T) {
 				Id: &labapi.Dut_Id{Value: "mary"},
 				DutType: &labapi.Dut_Chromeos{
 					Chromeos: &labapi.Dut_ChromeOS{
+						Audio: &labapi.Audio{
+							AudioBox: true,
+							Atrus:    true,
+						},
+						Chameleon: &labapi.Chameleon{
+							AudioBoard:  true,
+							Peripherals: []labapi.Chameleon_Peripheral{labapi.Chameleon_DP},
+						},
+						Servo: &labapi.Servo{
+							ServodAddress: &labapi.IpEndpoint{
+								Address: "servo_host",
+								Port:    33,
+							},
+						},
 						Ssh: &labapi.IpEndpoint{
 							Address: "mary",
 							Port:    22,
+						},
+						Wifi: &labapi.Wifi{
+							Environment: labapi.Wifi_WIFI_CELL,
+							Antenna: &labapi.WifiAntenna{
+								Connection: labapi.WifiAntenna_CONDUCTIVE,
+							},
+						},
+						Touch: &labapi.Touch{
+							Mimo: true,
+						},
+						Camerabox: &labapi.Camerabox{
+							Facing: labapi.Camerabox_FRONT,
+						},
+						Cables: []*labapi.Cable{
+							{
+								Type: labapi.Cable_AUDIOJACK,
+							},
 						},
 					},
 				},
