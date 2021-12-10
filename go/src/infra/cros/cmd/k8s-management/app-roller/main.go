@@ -57,7 +57,7 @@ func innerMain() error {
 	var (
 		serviceAccountJSON = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
 		netrcPath          = flag.String("netrc", "", "Path to .netrc file used to access the gerrit server")
-		appsYaml           = flag.String("apps-yaml", "", "Path to a yaml file which includes all applications data")
+		appsYAMLURL        = flag.String("apps-yaml-url", "", "URL to a yaml file which includes all applications data")
 	)
 	flag.Parse()
 
@@ -67,10 +67,6 @@ func innerMain() error {
 	}
 	auth := google.NewJSONKeyAuthenticator(string(content))
 
-	apps, err := loadApps(*appsYaml)
-	if err != nil {
-		return fmt.Errorf("load apps yaml %q: %s", *appsYaml, err)
-	}
 	var nr *netrc.Netrc
 	if *netrcPath == "" {
 		log.Printf("No netrc specified, continue without authorization against the source server")
@@ -80,6 +76,11 @@ func innerMain() error {
 			return fmt.Errorf("parse netrc %q: %s", *netrcPath, err)
 		}
 	}
+	downloader := &netrcClient{nr}
+	apps, err := loadApps(downloader, *appsYAMLURL)
+	if err != nil {
+		return fmt.Errorf("load apps yaml %q: %s", *appsYAMLURL, err)
+	}
 
 	ch := make(chan string, len(apps))
 	var wg sync.WaitGroup
@@ -87,7 +88,7 @@ func innerMain() error {
 		wg.Add(1)
 		go func(a app) {
 			defer wg.Done()
-			if err := rolloutApp(a, auth, &netrcClient{nr}); err != nil {
+			if err := rolloutApp(a, auth, downloader); err != nil {
 				log.Printf("Apply %q: %s", a, err)
 				ch <- fmt.Sprintf("%q", a)
 			}
@@ -107,14 +108,15 @@ func innerMain() error {
 }
 
 // loadApps load applications data from a yaml file.
-func loadApps(path string) ([]app, error) {
-	content, err := os.ReadFile(path)
+func loadApps(d downloader, fileURL string) ([]app, error) {
+	log.Printf("Download the applications config file from %q", fileURL)
+	content, err := d.download(fileURL)
 	if err != nil {
-		return nil, fmt.Errorf("load apps from %q: %s", path, err)
+		return nil, fmt.Errorf("load apps from %q: %s", fileURL, err)
 	}
 	var apps []app
 	if err := yaml.Unmarshal([]byte(content), &apps); err != nil {
-		return nil, fmt.Errorf("load apps from %q: %s", path, err)
+		return nil, fmt.Errorf("load apps from %q: %s", fileURL, err)
 	}
 	return apps, nil
 }
