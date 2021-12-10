@@ -69,6 +69,14 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 		// TODO(gregorynisbet): Create a helper function to make this more compact.
 		defer (func() {
 			stop := time.Now()
+			status := metrics.ActionStatusUnspecified
+			failReason := ""
+			if rErr == nil {
+				status = metrics.ActionStatusFail
+			} else {
+				status = metrics.ActionStatusSuccess
+				failReason = rErr.Error()
+			}
 			_, err := args.Metrics.Create(
 				ctx,
 				&metrics.Action{
@@ -78,6 +86,8 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 					SwarmingTaskID: args.SwarmingTaskID,
 					BuildbucketID:  args.BuildbucketID,
 					// TODO(gregorynisbet): add status and FailReason.
+					Status:     status,
+					FailReason: failReason,
 				},
 			)
 			if err != nil {

@@ -732,6 +732,7 @@ func TestCallMetricsInSimplePlan(t *testing.T) {
 	expected := []*metrics.Action{
 		{
 			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+			Status:     "success",
 			Observations: []*metrics.Observation{
 				{MetricKind: "restarts", ValueType: "number", Value: "0"},
 				{MetricKind: "forgiven_failures", ValueType: "number", Value: "0"},
@@ -739,6 +740,7 @@ func TestCallMetricsInSimplePlan(t *testing.T) {
 		},
 		{
 			ActionKind: "plan:2e9aa66a-5fa1-4eaa-933c-eee8e4337823",
+			Status:     "success",
 			Observations: []*metrics.Observation{
 				{MetricKind: "restarts", ValueType: "number", Value: "0"},
 				{MetricKind: "forgiven_failures", ValueType: "number", Value: "0"},

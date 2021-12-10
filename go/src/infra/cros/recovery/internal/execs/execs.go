@@ -279,11 +279,14 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 		if a == nil {
 			return
 		}
+		a.Status = metrics.ActionStatusUnspecified
 		// TODO(gregorynisbet): Consider strategies for multiple fail reasons.
 		if e != nil {
 			log.Debug(ctx, "Updating action %q of kind %q during close failed with reason %q", action.Name, action.ActionKind, e.Error())
+			a.Status = metrics.ActionStatusFail
 			a.FailReason = e.Error()
 		} else {
+			a.Status = metrics.ActionStatusSuccess
 			log.Debug(ctx, "Updating action %q of kind %q during close was successful", action.Name, action.ActionKind)
 		}
 		_, err := m.Update(ctx, a)
