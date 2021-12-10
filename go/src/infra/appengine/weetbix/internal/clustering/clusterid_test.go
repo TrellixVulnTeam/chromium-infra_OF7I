@@ -36,12 +36,12 @@ func TestValidate(t *testing.T) {
 		Convey("ID invalid", func() {
 			id.ID = "!!!"
 			err := id.Validate()
-			So(err, ShouldErrLike, `ID is not valid hexadecimal`)
+			So(err, ShouldErrLike, `ID is not valid lowercase hexadecimal bytes`)
 		})
 		Convey("ID not lowercase", func() {
 			id.ID = "AA"
 			err := id.Validate()
-			So(err, ShouldErrLike, `ID must be in lowercase`)
+			So(err, ShouldErrLike, `ID is not valid lowercase hexadecimal bytes`)
 		})
 		Convey("ID too long", func() {
 			id.ID = hex.EncodeToString([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17})

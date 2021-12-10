@@ -92,22 +92,10 @@ func TestSpanner(t *testing.T) {
 					})
 				})
 				Convey(`Clusters invalid`, func() {
-					Convey(`Algorithm missing`, func() {
-						e.Clustering.Clusters[1][1].Algorithm = ""
-						_, err := testCreate(e)
-						So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
-					})
-					Convey("Algorithm invalid", func() {
-						e.Clustering.Clusters[1][1].Algorithm = "!!!"
-						_, err := testCreate(e)
-						So(err, ShouldErrLike, `clusters: test result 1: cluster 1: cluster ID is not valid: algorithm not valid`)
-					})
 					Convey("Algorithm not in algorithms set", func() {
-						e.Clustering.Algorithms = map[string]struct{}{
-							"alg-extra": {},
-						}
+						e.Clustering.Algorithms = map[string]struct{}{}
 						_, err := testCreate(e)
-						So(err, ShouldErrLike, `a test result was clustered with an unregistered algorithm`)
+						So(err, ShouldErrLike, `clusters: test result 0: cluster 0: algorithm not in algorithms list`)
 					})
 					Convey("ID missing", func() {
 						e.Clustering.Clusters[1][1].ID = ""

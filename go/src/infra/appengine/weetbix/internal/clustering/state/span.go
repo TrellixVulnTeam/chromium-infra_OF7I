@@ -367,7 +367,7 @@ func validateClusterResults(c *clustering.ClusterResults) error {
 		if err := validateAlgorithms(c.Algorithms); err != nil {
 			return errors.Annotate(err, "algorithms").Err()
 		}
-		if err := validateClusters(c.Clusters); err != nil {
+		if err := validateClusters(c.Clusters, c.Algorithms); err != nil {
 			return errors.Annotate(err, "clusters").Err()
 		}
 		return nil
@@ -383,7 +383,7 @@ func validateAlgorithms(algorithms map[string]struct{}) error {
 	return nil
 }
 
-func validateClusters(clusters [][]*clustering.ClusterID) error {
+func validateClusters(clusters [][]*clustering.ClusterID, algorithms map[string]struct{}) error {
 	if len(clusters) == 0 {
 		// Each chunk must have at least one test result, even
 		// if that test result is in no clusters.
@@ -393,9 +393,15 @@ func validateClusters(clusters [][]*clustering.ClusterID) error {
 	for i, tr := range clusters {
 		// Inner slice has the list of clusters per test result.
 		for j, c := range tr {
-			if err := c.Validate(); err != nil {
+			if _, ok := algorithms[c.Algorithm]; !ok {
+				return fmt.Errorf("test result %v: cluster %v: algorithm not in algorithms list: %q", i, j, c.Algorithm)
+			}
+			if err := c.ValidateIDPart(); err != nil {
 				return errors.Annotate(err, "test result %v: cluster %v: cluster ID is not valid", i, j).Err()
 			}
+		}
+		if !clustering.ClustersAreSortedNoDuplicates(tr) {
+			return fmt.Errorf("test result %v: clusters are not sorted, or there are duplicates: %v", i, tr)
 		}
 	}
 	return nil

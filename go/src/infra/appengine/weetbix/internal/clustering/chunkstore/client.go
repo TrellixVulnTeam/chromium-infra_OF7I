@@ -9,7 +9,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 
 	"cloud.google.com/go/storage"
@@ -125,8 +125,11 @@ func (c *Client) Get(ctx context.Context, project, objectID string) (*cpb.Chunk,
 	if err != nil {
 		return nil, errors.Annotate(err, "creating reader %q", name).Err()
 	}
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
+
+	// Allocate a buffer of the correct size and use io.ReadFull instead of
+	// io.ReadAll to avoid needlessly reallocating slices.
+	b := make([]byte, r.Attrs.Size)
+	if _, err := io.ReadFull(r, b); err != nil {
 		return nil, errors.Annotate(err, "read object %q", name).Err()
 	}
 	content := &cpb.Chunk{}

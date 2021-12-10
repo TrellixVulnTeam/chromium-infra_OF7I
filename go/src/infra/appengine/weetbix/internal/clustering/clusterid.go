@@ -5,7 +5,6 @@
 package clustering
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -42,24 +41,41 @@ func (c ClusterID) Key() string {
 	return fmt.Sprintf("%s:%s", c.Algorithm, c.ID)
 }
 
-// Validate validates the cluster ID is valid.
+// String returns a string-representation of the cluster, for debugging.
+func (c ClusterID) String() string {
+	return c.Key()
+}
+
+// Validate validates the algorithm and ID parts
+// of the cluster ID are valid.
 func (c ClusterID) Validate() error {
 	if !AlgorithmRe.MatchString(c.Algorithm) {
 		return errors.New("algorithm not valid")
 	}
-	b, err := hex.DecodeString(c.ID)
-	if err != nil {
-		return errors.New("ID is not valid hexadecimal")
+	if err := c.ValidateIDPart(); err != nil {
+		return err
 	}
-	// ID must be always be stored in lowercase, so that string equality can
-	// be used to determine if IDs are the same.
-	if c.ID != strings.ToLower(c.ID) {
-		return errors.New("ID must be in lowercase")
+	return nil
+}
+
+// ValidateIDPart validates that the ID part of the cluster ID is valid.
+func (c ClusterID) ValidateIDPart() error {
+	valid := true
+	for _, r := range c.ID {
+		// ID must be always be stored in lowercase, so that string equality can
+		// be used to determine if IDs are the same.
+		if !(('0' <= r && r <= '9') || ('a' <= r && r <= 'f')) {
+			valid = false
+		}
 	}
-	if len(b) > MaxClusterIDBytes {
-		return fmt.Errorf("ID is too long (got %v bytes, want at most %v bytes)", len(b), MaxClusterIDBytes)
+	if !valid || (len(c.ID)%2 != 0) {
+		return errors.New("ID is not valid lowercase hexadecimal bytes")
 	}
-	if len(b) == 0 {
+	bytes := len(c.ID) / 2
+	if bytes > MaxClusterIDBytes {
+		return fmt.Errorf("ID is too long (got %v bytes, want at most %v bytes)", bytes, MaxClusterIDBytes)
+	}
+	if bytes == 0 {
 		return errors.New("ID is empty")
 	}
 	return nil
@@ -81,10 +97,29 @@ func (c ClusterID) IsBugCluster() bool {
 // SortClusters sorts the given clusters in ascending algorithm and then ID
 // order.
 func SortClusters(cs []*ClusterID) {
-	sort.Slice(cs, func(i, j int) bool {
-		if cs[i].Algorithm == cs[j].Algorithm {
-			return cs[i].ID < cs[j].ID
+	sort.Sort(ClusterIDSlice(cs))
+}
+
+type ClusterIDSlice []*ClusterID
+
+func (c ClusterIDSlice) Len() int           { return len(c) }
+func (c ClusterIDSlice) Less(i, j int) bool { return isClusterLess(c[i], c[j]) }
+func (c ClusterIDSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+
+// ClustersAreSortedNoDuplicates verifies that clusters are in sorted order
+// and there are no duplicate clusters.
+func ClustersAreSortedNoDuplicates(cs []*ClusterID) bool {
+	for i := 0; i < len(cs)-1; i++ {
+		if !isClusterLess(cs[i], cs[i+1]) {
+			return false
 		}
-		return cs[i].Algorithm < cs[j].Algorithm
-	})
+	}
+	return true
+}
+
+func isClusterLess(a *ClusterID, b *ClusterID) bool {
+	if a.Algorithm == b.Algorithm {
+		return a.ID < b.ID
+	}
+	return a.Algorithm < b.Algorithm
 }

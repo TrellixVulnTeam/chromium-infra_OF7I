@@ -29,7 +29,8 @@ type ClusterResults struct {
 	// the new algorithms to be run when re-clustering (for efficiency).
 	Algorithms map[string]struct{}
 	// Clusters records the clusters each test result is in;
-	// one slice of ClusterIDs for each test result.
+	// one slice of ClusterIDs for each test result. For each test result,
+	// clusters must be in sorted order, with no duplicates.
 	Clusters [][]*ClusterID
 }
 
@@ -44,31 +45,31 @@ func AlgorithmsAndClustersEqual(a *ClusterResults, b *ClusterResults) bool {
 	}
 	for i, aClusters := range a.Clusters {
 		bClusters := b.Clusters[i]
-		if !ClusterSetsEqual(aClusters, bClusters) {
+		if !ClustersEqual(aClusters, bClusters) {
 			return false
 		}
 	}
 	return true
 }
 
-// ClusterSetsEqual returns whether the the set of clusters represented
-// by the slice `as` is equivalent to the set of clusters represented
-// by the slice `bs`.
-// Order of the slices is not considered. Each cluster in as and bs
-// should be unique.
-func ClusterSetsEqual(as []*ClusterID, bs []*ClusterID) bool {
+// ClustersEqual returns whether the clusters in `as` are element-wise
+// equal to those in `bs`.
+// To test set-wise cluster equality, this method is called with
+// clusters in sorted order, and no duplicates.
+func ClustersEqual(as []*ClusterID, bs []*ClusterID) bool {
 	if len(as) != len(bs) {
 		return false
 	}
-	aKeys := make(map[string]struct{})
-	for _, a := range as {
-		aKeys[a.Key()] = struct{}{}
+	for i, a := range as {
+		b := bs[i]
+		if a.Algorithm != b.Algorithm {
+			return false
+		}
+		if a.ID != b.ID {
+			return false
+		}
 	}
-	bKeys := make(map[string]struct{})
-	for _, b := range bs {
-		bKeys[b.Key()] = struct{}{}
-	}
-	return setsEqual(aKeys, bKeys)
+	return true
 }
 
 // setsEqual returns whether two sets are equal.

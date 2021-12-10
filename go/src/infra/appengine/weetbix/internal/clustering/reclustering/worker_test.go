@@ -678,6 +678,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 					ID:        "12341234123412341234123412341234",
 				},
 			}
+			clustering.SortClusters(cs)
 			clusters = append(clusters, cs)
 		}
 		crs = clustering.ClusterResults{

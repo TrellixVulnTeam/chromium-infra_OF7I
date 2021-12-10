@@ -173,7 +173,7 @@ func prepareClusterUpdates(chunk *cpb.Chunk, previousClustering clustering.Clust
 		previousClusters := previousClustering.Clusters[i]
 		newClusters := newClustering.Clusters[i]
 
-		if !clustering.ClusterSetsEqual(previousClusters, newClusters) {
+		if !clustering.ClustersEqual(previousClusters, newClusters) {
 			update := &clustering.FailureUpdate{
 				TestResult:       testResult,
 				PreviousClusters: previousClusters,
