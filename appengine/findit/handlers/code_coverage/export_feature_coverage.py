@@ -53,6 +53,7 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
     more = True
     cursor = None
     page_size = 100
+    make_inactive = []
     while more:
       results, cursor, more = query.fetch_page(
           page_size,
@@ -60,7 +61,15 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
           config=ndb.ContextOptions(use_cache=False))
       for x in results:
         if x.gerrit_hashtag:
-          yield x.key.id(), x.gerrit_hashtag
+          # To prevent bloating up of feature coverage pipeline, we do not
+          # generate coverage metrics for features which are older than 90 days.
+          if x.update_timestamp + datetime.timedelta(
+              days=90) < datetime.datetime.now():
+            x.is_active = False
+            make_inactive.append(x)
+          else:
+            yield x.key.id(), x.gerrit_hashtag
+    ndb.put_multi(make_inactive)
 
   def HandleGet(self):
     # Spawn a sub task for each active feature
