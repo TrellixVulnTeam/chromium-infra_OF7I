@@ -9,6 +9,10 @@
 //
 // - name: my_cool_app
 //   source: https://chrome.googlesource.com/path/to/the/app/yaml/template
+//   # clusters lists the K8s cluster which will run this app. When not
+//   # specified, the app will run on all clusters.
+//   clusters:
+//   - <API_server_IP:API_server_port>
 //   images:
 //   - name: my_cool_image1
 //     repo: gcr.io/project/image1
@@ -44,6 +48,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/jdxcode/netrc"
 	"gopkg.in/yaml.v2"
+	k8sMetaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 func main() {
@@ -82,9 +89,18 @@ func innerMain() error {
 		return fmt.Errorf("load apps yaml %q: %s", *appsYAMLURL, err)
 	}
 
+	cluster, err := getClusterName()
+	if err != nil {
+		return err
+	}
 	ch := make(chan string, len(apps))
 	var wg sync.WaitGroup
 	for _, a := range apps {
+		if len(a.Clusters) > 0 && !stringInSlice(cluster, a.Clusters) {
+			log.Printf("Skip the rolling of %q to %q", a, cluster)
+			continue
+		}
+
 		wg.Add(1)
 		go func(a app) {
 			defer wg.Done()
@@ -105,6 +121,16 @@ func innerMain() error {
 		return fmt.Errorf("failed to roll-out: %s", strings.Join(names, ", "))
 	}
 	return nil
+}
+
+// stringInSlice returns true if a string in a slice, otherwise false.
+func stringInSlice(s string, slice []string) bool {
+	for _, ss := range slice {
+		if s == ss {
+			return true
+		}
+	}
+	return false
 }
 
 // loadApps load applications data from a yaml file.
@@ -177,9 +203,10 @@ func genAppYaml(yamlTemplate string, imageMap map[string]string) (string, error)
 // app is an application which has a configuration template downloading from a
 // remote source server and a series of container images.
 type app struct {
-	Name   string
-	Source string
-	Images []image `yaml:"images"`
+	Name     string
+	Source   string
+	Clusters []string
+	Images   []image `yaml:"images"`
 }
 
 func (a app) String() string { return a.Name }
@@ -362,4 +389,30 @@ func applyToK8s(generatedYAML string) error {
 		return fmt.Errorf("apply to k8s: %s", err)
 	}
 	return nil
+}
+
+// getClusterName gets the name of current K8s cluster.
+func getClusterName() (string, error) {
+	k8sConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return "", fmt.Errorf("get cluster name: %s", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		return "", fmt.Errorf("get cluster name: %s", err)
+	}
+	// We use the API server info (i.e. 'IP:port') as the cluster name.
+	// See https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/client-go/discovery/discovery_client.go#L160
+	// for how to get the API server info.
+	v := &k8sMetaV1.APIVersions{}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := clientset.RESTClient().Get().AbsPath(clientset.LegacyPrefix).Do(ctx).Into(v); err != nil {
+		return "", fmt.Errorf("get cluster name: %s", err)
+	}
+	if len(v.ServerAddressByClientCIDRs) == 0 {
+		return "", fmt.Errorf("no data in ServerAddressByClientCIDRs")
+	}
+	return v.ServerAddressByClientCIDRs[0].ServerAddress, nil
 }
