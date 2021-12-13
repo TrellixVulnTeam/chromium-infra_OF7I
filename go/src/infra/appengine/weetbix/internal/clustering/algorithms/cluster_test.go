@@ -24,191 +24,302 @@ import (
 
 func TestCluster(t *testing.T) {
 	Convey(`Cluster`, t, func() {
-		rulesVersion := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+		Convey(`From scratch`, func() {
+			s := fromScratchScenario(1)
 
-		rule1, err := cache.NewCachedRule(
-			rules.NewRule(100).
-				WithRuleDefinition(`test = "ninja://test_name_two/"`).
-				WithLastUpdated(rulesVersion.Add(-1 * time.Hour)).Build())
-		So(err, ShouldBeNil)
-		rule2, err := cache.NewCachedRule(
-			rules.NewRule(101).
-				WithRuleDefinition(`reason LIKE "failed to connect to %.%.%.%"`).
-				WithLastUpdated(rulesVersion).Build())
-		So(err, ShouldBeNil)
+			results := Cluster(s.ruleset, s.existing, s.failures)
 
-		lastUpdated := time.Now()
-		rules := []*cache.CachedRule{rule1, rule2}
-		ruleset := cache.NewRuleset("myproject", rules, rulesVersion, lastUpdated)
+			So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+			So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+			So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+			So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+		})
+		Convey(`Incrementally`, func() {
+			Convey(`From already up-to-date clustering`, func() {
+				s := upToDateScenario(1)
 
-		failures := []*clustering.Failure{
-			{
-				TestID: "ninja://test_name_one/",
-			},
-			{
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+
+			Convey(`From older suggested clustering algorithm`, func() {
+				s := fromOlderSuggestedClusteringScenario()
+
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from older rule-based clustering`, func() {
+				s := fromOlderRuleClusteringScenario()
+
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from later clustering algorithms`, func() {
+				s := fromLaterAlgorithmsScenario()
+
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from older rules version`, func() {
+				s := fromOlderRulesVersionScenario(1)
+
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from newer rules version`, func() {
+				s := fromNewerRulesVersionScenario()
+
+				results := Cluster(s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+		})
+	})
+}
+
+func BenchmarkClusteringFromScratch(b *testing.B) {
+	b.StopTimer()
+	s := fromScratchScenario(1000)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = Cluster(s.ruleset, s.existing, s.failures)
+	}
+}
+
+func BenchmarkClusteringFromOlderRules(b *testing.B) {
+	b.StopTimer()
+	s := fromOlderRulesVersionScenario(1000)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = Cluster(s.ruleset, s.existing, s.failures)
+	}
+}
+
+func BenchmarkClusteringUpToDate(b *testing.B) {
+	b.StopTimer()
+	s := upToDateScenario(1000)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = Cluster(s.ruleset, s.existing, s.failures)
+	}
+}
+
+type scenario struct {
+	failures []*clustering.Failure
+	rules    []*cache.CachedRule
+	ruleset  *cache.Ruleset
+	existing clustering.ClusterResults
+	expected clustering.ClusterResults
+}
+
+func upToDateScenario(size int) *scenario {
+	rulesVersion := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+
+	rule1, err := cache.NewCachedRule(
+		rules.NewRule(100).
+			WithRuleDefinition(`test = "ninja://test_name_two/"`).
+			WithLastUpdated(rulesVersion.Add(-1 * time.Hour)).Build())
+	if err != nil {
+		panic(err)
+	}
+
+	rule2, err := cache.NewCachedRule(
+		rules.NewRule(101).
+			WithRuleDefinition(`reason LIKE "failed to connect to %.%.%.%"`).
+			WithLastUpdated(rulesVersion).Build())
+	if err != nil {
+		panic(err)
+	}
+
+	lastUpdated := time.Now()
+	rules := []*cache.CachedRule{rule1, rule2}
+	ruleset := cache.NewRuleset("myproject", rules, rulesVersion, lastUpdated)
+
+	failures := []*clustering.Failure{
+		{
+			TestID: "ninja://test_name_one/",
+		},
+	}
+	for i := 0; i < size; i++ {
+		failures = append(failures,
+			&clustering.Failure{
 				TestID: "ninja://test_name_two/",
 				Reason: &pb.FailureReason{
 					PrimaryErrorMessage: "failed to connect to 192.168.0.1",
 				},
-			},
-		}
+			})
+	}
 
-		expectedAlgorithms := map[string]struct{}{
+	// This is an up-to-date clustering of the test results.
+	existing := clustering.ClusterResults{
+		AlgorithmsVersion: AlgorithmsVersion,
+		RulesVersion:      rulesVersion,
+		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
 			rulesalgorithm.AlgorithmName: {},
 			testname.AlgorithmName:       {},
-		}
-		expectedClusters := [][]*clustering.ClusterID{
+		},
+		Clusters: [][]*clustering.ClusterID{
 			{
 				testNameClusterID(failures[0]),
 			},
-			{
-				failureReasonClusterID(failures[1]),
-				testNameClusterID(failures[1]),
-				ruleClusterID(rule1.RuleID),
-				ruleClusterID(rule2.RuleID),
-			},
+		},
+	}
+	for i := 0; i < size; i++ {
+		clusters := []*clustering.ClusterID{
+			failureReasonClusterID(failures[1]),
+			testNameClusterID(failures[1]),
+			ruleClusterID(rule1.RuleID),
+			ruleClusterID(rule2.RuleID),
 		}
+		clustering.SortClusters(clusters)
+		existing.Clusters = append(existing.Clusters, clusters)
+	}
 
-		Convey(`From scratch`, func() {
-			existing := NewEmptyClusterResults(len(failures))
+	// Same as existing, a deep copy as the other methods
+	// may modify this scenario and we don't want to run into
+	// unexpected aliasing issues.
+	expected := clustering.ClusterResults{
+		AlgorithmsVersion: AlgorithmsVersion,
+		RulesVersion:      rulesVersion,
+		Algorithms: map[string]struct{}{
+			failurereason.AlgorithmName:  {},
+			rulesalgorithm.AlgorithmName: {},
+			testname.AlgorithmName:       {},
+		},
+		Clusters: [][]*clustering.ClusterID{
+			{
+				testNameClusterID(failures[0]),
+			},
+		},
+	}
+	for i := 0; i < size; i++ {
+		clusters := []*clustering.ClusterID{
+			failureReasonClusterID(failures[1]),
+			testNameClusterID(failures[1]),
+			ruleClusterID(rule1.RuleID),
+			ruleClusterID(rule2.RuleID),
+		}
+		clustering.SortClusters(clusters)
+		expected.Clusters = append(expected.Clusters, clusters)
+	}
 
-			results := Cluster(ruleset, existing, failures)
+	return &scenario{
+		failures: failures,
+		rules:    rules,
+		ruleset:  ruleset,
+		expected: expected,
+		existing: existing,
+	}
+}
 
-			So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-			So(results.RulesVersion, ShouldEqual, rulesVersion)
-			So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-			So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-		})
-		Convey(`Incrementally`, func() {
-			// This is an up-to-date clustering of the test results.
-			existing := clustering.ClusterResults{
-				AlgorithmsVersion: AlgorithmsVersion,
-				RulesVersion:      rulesVersion,
-				Algorithms: map[string]struct{}{
-					failurereason.AlgorithmName:  {},
-					rulesalgorithm.AlgorithmName: {},
-					testname.AlgorithmName:       {},
-				},
-				Clusters: [][]*clustering.ClusterID{
-					{
-						testNameClusterID(failures[0]),
-					},
-					{
-						failureReasonClusterID(failures[1]),
-						testNameClusterID(failures[1]),
-						ruleClusterID(rule1.RuleID),
-						ruleClusterID(rule2.RuleID),
-					},
-				},
-			}
+func fromOlderSuggestedClusteringScenario() *scenario {
+	s := upToDateScenario(1)
+	s.existing.AlgorithmsVersion--
+	delete(s.existing.Algorithms, failurereason.AlgorithmName)
+	s.existing.Algorithms["failurereason-v1"] = struct{}{}
+	s.existing.Clusters[1][0] = &clustering.ClusterID{
+		Algorithm: "failurereason-v1",
+		ID:        "old-failure-reason-cluster-id",
+	}
+	clustering.SortClusters(s.existing.Clusters[1])
+	return s
+}
 
-			Convey(`From already up-to-date clustering`, func() {
-				results := Cluster(ruleset, existing, failures)
+func fromOlderRuleClusteringScenario() *scenario {
+	s := upToDateScenario(1)
+	s.existing.AlgorithmsVersion--
+	delete(s.existing.Algorithms, rulesalgorithm.AlgorithmName)
+	s.existing.Algorithms["rules-v0"] = struct{}{}
+	s.existing.Clusters[1] = []*clustering.ClusterID{
+		failureReasonClusterID(s.failures[1]),
+		testNameClusterID(s.failures[1]),
+		{Algorithm: "rules-v0", ID: s.rules[0].RuleID},
+		{Algorithm: "rules-v0", ID: "rule-no-longer-matched-with-v1"},
+	}
+	clustering.SortClusters(s.existing.Clusters[1])
+	return s
+}
 
-				// Should not change the clustering.
-				So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-				So(results.RulesVersion, ShouldEqual, rulesVersion)
-				So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-				So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-			})
+func fromLaterAlgorithmsScenario() *scenario {
+	s := upToDateScenario(1)
+	s.existing.AlgorithmsVersion = AlgorithmsVersion + 1
+	s.existing.Algorithms = map[string]struct{}{
+		"futurealgorithm-v1": {},
+	}
+	s.existing.Clusters = [][]*clustering.ClusterID{
+		{
+			{Algorithm: "futurealgorithm-v1", ID: "aa"},
+		},
+		{
+			{Algorithm: "futurealgorithm-v1", ID: "bb"},
+		},
+	}
+	// As the algorithms version is later, the clustering
+	// should be left completely untouched.
+	s.expected = s.existing
+	return s
+}
 
-			Convey(`From older suggested clustering algorithm`, func() {
-				existing.AlgorithmsVersion--
-				delete(existing.Algorithms, failurereason.AlgorithmName)
-				existing.Algorithms["failurereason-v1"] = struct{}{}
-				existing.Clusters[1][0] = &clustering.ClusterID{
-					Algorithm: "failurereason-v1",
-					ID:        "old-failure-reason-cluster-id",
-				}
+func fromOlderRulesVersionScenario(size int) *scenario {
+	s := upToDateScenario(size)
+	s.existing.RulesVersion = s.existing.RulesVersion.Add(-1 * time.Hour)
+	for i := 1; i <= size; i++ {
+		s.existing.Clusters[i] = []*clustering.ClusterID{
+			failureReasonClusterID(s.failures[i]),
+			testNameClusterID(s.failures[i]),
+			ruleClusterID(s.rules[0].RuleID),
+			ruleClusterID("now-deleted-rule-id"),
+		}
+		clustering.SortClusters(s.existing.Clusters[i])
+	}
+	return s
+}
 
-				results := Cluster(ruleset, existing, failures)
+func fromNewerRulesVersionScenario() *scenario {
+	s := upToDateScenario(1)
+	s.existing.RulesVersion = s.existing.RulesVersion.Add(1 * time.Hour)
+	s.existing.Clusters[1] = []*clustering.ClusterID{
+		failureReasonClusterID(s.failures[1]),
+		testNameClusterID(s.failures[1]),
+		ruleClusterID(s.rules[0].RuleID),
+		ruleClusterID("later-added-rule-id"),
+	}
+	clustering.SortClusters(s.existing.Clusters[1])
 
-				// Should produce the same clustering as clustering
-				// from scratch.
-				So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-				So(results.RulesVersion, ShouldEqual, rulesVersion)
-				So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-				So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-			})
-			Convey(`Incrementally from older rule-based clustering`, func() {
-				existing.AlgorithmsVersion--
-				delete(existing.Algorithms, rulesalgorithm.AlgorithmName)
-				existing.Algorithms["rules-v0"] = struct{}{}
-				existing.Clusters[1] = []*clustering.ClusterID{
-					failureReasonClusterID(failures[1]),
-					testNameClusterID(failures[1]),
-					{Algorithm: "rules-v0", ID: rule1.RuleID},
-					{Algorithm: "rules-v0", ID: "rule-no-longer-matched-with-v1"},
-				}
+	s.expected.RulesVersion = s.expected.RulesVersion.Add(1 * time.Hour)
+	// Should keep existing rule clusters, as they are newer.
+	s.expected.Clusters = s.existing.Clusters
+	return s
+}
 
-				results := Cluster(ruleset, existing, failures)
-
-				// Should produce the same clustering as clustering
-				// from scratch.
-				So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-				So(results.RulesVersion, ShouldEqual, rulesVersion)
-				So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-				So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-			})
-			Convey(`Incrementally from later clustering algorithms`, func() {
-				existing.AlgorithmsVersion = AlgorithmsVersion + 1
-				existing.Algorithms = map[string]struct{}{
-					"futurealgorithm-v1": {},
-				}
-				existing.Clusters = [][]*clustering.ClusterID{
-					{
-						{Algorithm: "futurealgorithm-v1", ID: "aa"},
-					},
-					{
-						{Algorithm: "futurealgorithm-v1", ID: "bb"},
-					},
-				}
-
-				results := Cluster(ruleset, existing, failures)
-
-				// As the algorithms version is later, the clustering
-				// should be left completely untouched.
-				So(results, ShouldResemble, existing)
-			})
-			Convey(`Incrementally from older rules version`, func() {
-				existing.RulesVersion = rulesVersion.Add(-1 * time.Hour)
-				existing.Clusters[1] = []*clustering.ClusterID{
-					failureReasonClusterID(failures[1]),
-					testNameClusterID(failures[1]),
-					ruleClusterID(rule1.RuleID),
-					ruleClusterID("now-deleted-rule-id"),
-				}
-
-				results := Cluster(ruleset, existing, failures)
-
-				// Should produce the same clustering as clustering
-				// from scratch.
-				So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-				So(results.RulesVersion, ShouldEqual, rulesVersion)
-				So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-				So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-			})
-			Convey(`Incrementally from newer rules version`, func() {
-				existing.RulesVersion = rulesVersion.Add(1 * time.Hour)
-				existing.Clusters[1] = []*clustering.ClusterID{
-					failureReasonClusterID(failures[1]),
-					testNameClusterID(failures[1]),
-					ruleClusterID(rule1.RuleID),
-					ruleClusterID("later-added-rule-id"),
-				}
-
-				results := Cluster(ruleset, existing, failures)
-
-				// Should keep existing rule clusters, as they are newer.
-				expectedClusters = existing.Clusters
-				So(results.AlgorithmsVersion, ShouldEqual, AlgorithmsVersion)
-				So(results.RulesVersion, ShouldEqual, rulesVersion.Add(1*time.Hour))
-				So(results.Algorithms, ShouldResemble, expectedAlgorithms)
-				So(diffClusters(results.Clusters, expectedClusters), ShouldBeBlank)
-			})
-		})
-	})
+func fromScratchScenario(size int) *scenario {
+	s := upToDateScenario(size)
+	s.existing = NewEmptyClusterResults(len(s.failures))
+	return s
 }
 
 func testNameClusterID(failure *clustering.Failure) *clustering.ClusterID {
