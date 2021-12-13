@@ -37,6 +37,7 @@ SELECT
   Bucket,
   Builder,
   BuilderGroup,
+  SheriffRotations,
   StepName,
   TestNamesFingerprint,
   TestNamesTrunc,
@@ -184,10 +185,6 @@ var iosFilterFunc = func(r failureRow) bool {
 	return false
 }
 
-var chromeBrowserReleaseFilterFunc = func(r failureRow) bool {
-	return strings.HasPrefix(r.Project, "chromium-m") && r.Project != "chromium-m90" && r.Bucket == "ci"
-}
-
 var chromiumClangFilterFunc = func(r failureRow) bool {
 	if strings.Contains(r.Builder, "bisect") {
 		return false
@@ -199,12 +196,19 @@ var chromiumClangFilterFunc = func(r failureRow) bool {
 	return (r.Project == "chromium.clang" || r.BuilderGroup.String() == "chromium.clang") && (!r.BuilderGroup.Valid || !strings.HasSuffix(r.BuilderGroup.String(), ".fyi"))
 }
 
+func chromeBrowserFilterFunc(tree string) func(r failureRow) bool {
+	return func(r failureRow) bool {
+		return sliceContains(r.SheriffRotations, tree)
+	}
+}
+
 type failureRow struct {
 	TestNamesFingerprint bigquery.NullInt64
 	TestNamesTrunc       bigquery.NullString
 	NumTests             bigquery.NullInt64
 	StepName             string
 	BuilderGroup         bigquery.NullString
+	SheriffRotations     []string
 	Builder              string
 	Bucket               string
 	Project              string
@@ -353,7 +357,7 @@ func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
 	case "ios":
 		return iosFilterFunc, nil
 	case "chrome_browser_release":
-		return chromeBrowserReleaseFilterFunc, nil
+		return chromeBrowserFilterFunc(tree), nil
 	case "chromium.clang":
 		return chromiumClangFilterFunc, nil
 	default:
