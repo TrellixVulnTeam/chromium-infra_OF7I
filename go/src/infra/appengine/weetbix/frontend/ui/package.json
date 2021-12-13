@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "webpack --config webpack.config.js",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "mwarton@google.com",

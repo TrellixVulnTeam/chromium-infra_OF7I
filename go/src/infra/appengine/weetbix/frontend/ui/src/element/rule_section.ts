@@ -19,24 +19,24 @@ import { Snackbar } from '@material/mwc-snackbar';
 @customElement('rule-section')
 export class RuleSection extends LitElement {
     @property()
-    project: string;
+    project = '';
 
     @property()
-    ruleId: string;
+    ruleId = '';
 
     @state()
-    rule: Rule | undefined;
+    rule: Rule | null = null;
 
-    etag: string | undefined;
-
-    @state()
-    editing: boolean;
+    etag: string | null = null;
 
     @state()
-    validationMessage: string;
+    editing = false;
 
     @state()
-    snackbarError: string;
+    validationMessage = '';
+
+    @state()
+    snackbarError = '';
 
     connectedCallback() {
         super.connectedCallback();
@@ -49,28 +49,28 @@ export class RuleSection extends LitElement {
     }
 
     render() {
-        if (this.rule === undefined) {
+        if (!this.rule) {
             return html`Loading...`;
         }
         const r = this.rule;
-        const formatTime = (time : string) : string => {
+        const formatTime = (time: string): string => {
             let t = DateTime.fromISO(time);
             let d = DateTime.now().diff(t);
             if (d.as('seconds') < 60) {
                 return "just now";
             }
             if (d.as('hours') < 24) {
-                return t.toRelative().toLocaleLowerCase();
+                return t.toRelative()?.toLocaleLowerCase() || '';
             }
             return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_SHORT);
         }
-        const formatTooltipTime = (time : string) : string => {
+        const formatTooltipTime = (time: string): string => {
             // Format date/time with full month name, e.g. "January" and Timezone,
             // to disambiguate date/time even if the user's locale has been set
             // incorrectly.
             return DateTime.fromISO(time).toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS);
         }
-        const formatUser = (user : string) : TemplateResult => {
+        const formatUser = (user: string): TemplateResult => {
             if (user == 'weetbix') {
                 return html`Weetbix`;
             } else if (user.endsWith("@google.com")) {
@@ -119,13 +119,13 @@ export class RuleSection extends LitElement {
             </table>
             <div class="audit">
                 ${(r.lastUpdated != r.creationTime) ?
-                    html`Last updated by <span class="user">${formatUser(r.lastUpdatedUser)}</span> <span class="time" title="${formatTooltipTime(r.lastUpdated)}">${formatTime(r.lastUpdated)}</span>.` : html``}
+                html`Last updated by <span class="user">${formatUser(r.lastUpdatedUser)}</span> <span class="time" title="${formatTooltipTime(r.lastUpdated)}">${formatTime(r.lastUpdated)}</span>.` : html``}
                 Created by <span class="user">${formatUser(r.creationUser)}</span> <span class="time" title="${formatTooltipTime(r.creationTime)}">${formatTime(r.creationTime)}</span>.
             </div>
         </div>
         <mwc-dialog class="rule-edit-dialog" ?open="${this.editing}" @closed="${this.editClosed}">
             <div class="edit-title">Edit Rule Definition <mwc-icon class="inline-icon" title="Weetbix rule definitions describe the failures associated with a bug. Rules follow a subset of BigQuery Standard SQL's boolean expression syntax.">help_outline</mwc-icon></div>
-            <mwc-textarea id="rule-definition" label="Rule Definition" maxLength="4096" required="true" data-cy="rule-definition-textbox"></mwc-textarea>
+            <mwc-textarea id="rule-definition" label="Rule Definition" maxLength="4096" required data-cy="rule-definition-textbox"></mwc-textarea>
             <div>
                 Supported is AND, OR, =, <>, NOT, IN, LIKE, parentheses and <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#regexp_contains">REGEXP_CONTAINS</a>.
                 Valid identifiers are <em>test</em> and <em>reason</em>.
@@ -139,16 +139,22 @@ export class RuleSection extends LitElement {
     }
 
     async fetch() {
+        if (!this.ruleId) {
+            throw new Error('rule-section element ruleID property is required');
+        }
         const r = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`);
         const rule = await r.json();
 
         this.etag = r.headers.get("ETag");
-        this.rule = rule;
+        this.rule = rule || null;
         this.fireRuleChanged();
     }
 
     edit() {
-        const ruleDefinition = this.shadowRoot.getElementById("rule-definition") as TextArea;
+        if (!this.rule) {
+            throw new Error('invariant violated: edit cannot be called before rule is loaded');
+        }
+        const ruleDefinition = this.shadowRoot!.getElementById("rule-definition") as TextArea;
         ruleDefinition.value = this.rule.ruleDefinition;
 
         this.editing = true;
@@ -160,7 +166,10 @@ export class RuleSection extends LitElement {
     }
 
     async save() {
-        const ruleDefinition = this.shadowRoot.getElementById("rule-definition") as TextArea;
+        if (!this.rule) {
+            throw new Error('invariant violated: save cannot be called before rule is loaded');
+        }
+        const ruleDefinition = this.shadowRoot!.getElementById("rule-definition") as TextArea;
         if (ruleDefinition.value == this.rule.ruleDefinition) {
             this.editing = false;
             return;
@@ -168,7 +177,7 @@ export class RuleSection extends LitElement {
 
         this.validationMessage = "";
 
-        const request : RuleUpdateRequest = {
+        const request: RuleUpdateRequest = {
             rule: {
                 ruleDefinition: ruleDefinition.value,
             },
@@ -182,12 +191,15 @@ export class RuleSection extends LitElement {
                 this.validationMessage = validationError;
             }
         } catch (err) {
-            this.showSnackbar(err);
+            this.showSnackbar(err as string);
         }
     }
 
     async toggleActive() {
-        const request : RuleUpdateRequest = {
+        if (!this.rule) {
+            throw new Error('invariant violated: toggleActive cannot be called before rule is loaded');
+        }
+        const request: RuleUpdateRequest = {
             rule: {
                 isActive: !this.rule.isActive,
             },
@@ -202,19 +214,20 @@ export class RuleSection extends LitElement {
                 throw validationError;
             }
         } catch (err) {
-            this.showSnackbar(err);
+            this.showSnackbar(err as string);
         }
     }
 
     // applyUpdate tries to apply the given update to the rule. If the
     // update succeeds, this method returns nil. If a validation error
     // occurs, the validation message is returned.
-    async applyUpdate(request : RuleUpdateRequest) : Promise<string> {
+    async applyUpdate(request: RuleUpdateRequest): Promise<string | null> {
+        if (!this.etag) {
+            throw new Error('invariant violated: applyUpdate cannot be called if etag is not set (should be set during rule fetch)');
+        }
         const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`, {
             method: "PATCH",
-            headers: {
-                "If-Match": this.etag,
-            },
+            headers: { "If-Match": this.etag },
             body: JSON.stringify(request),
         });
         if (response.ok) {
@@ -235,17 +248,17 @@ export class RuleSection extends LitElement {
         }
     }
 
-    showSnackbar(error : string) {
+    showSnackbar(error: string) {
         this.snackbarError = "Updating rule: " + error;
 
         // Let the snackbar manage its own closure after a delay.
-        const snackbar = this.shadowRoot.getElementById("error-snackbar") as Snackbar;
+        const snackbar = this.shadowRoot!.getElementById("error-snackbar") as Snackbar;
         snackbar.show();
     }
 
     fireRuleChanged() {
-        if (this.rule === undefined) {
-            return;
+        if (!this.rule) {
+            throw new Error('invariant violated: fireRuleChanged cannot be called before rule is loaded');
         }
         const event = new CustomEvent<RuleChangedEvent>('rulechanged', {
             detail: {

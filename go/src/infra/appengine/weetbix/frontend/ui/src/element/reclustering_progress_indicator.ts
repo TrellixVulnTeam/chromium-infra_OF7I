@@ -15,9 +15,9 @@ import '@material/mwc-circular-progress';
 @customElement('reclustering-progress-indicator')
 export class ReclusteringProgressIndicator extends LitElement {
     @property()
-    project: string;
+    project = '';
 
-    @property()
+    @property({ type: Boolean })
     // Whether the cluster for which the indicator is being shown is
     // defined by a failure association rule.
     hasRule: boolean | undefined;
@@ -28,24 +28,24 @@ export class ReclusteringProgressIndicator extends LitElement {
     ruleLastUpdated: string | undefined;
 
     @state()
-    progress : ReclusteringProgress | undefined;
+    progress: ReclusteringProgress | undefined;
 
     @state()
-    lastRefreshed : DateTime | undefined;
+    lastRefreshed: DateTime | undefined;
 
     @state()
     // Whether the indicator should be displayed. If re-clustering
     // is not complete, this will be set to true. It will only ever
     // be set to false if re-clustering is complete and the user
     // reloads cluster analysis.
-    show: boolean;
+    show = false;
 
     // The last progress shown on the UI.
-    progressPerMille: number;
+    progressPerMille = 0;
 
     // The ID returned by window.setInterval. Used to manage the timer
     // used to periodically poll for status updates.
-    interval: number;
+    interval: number | undefined;
 
     connectedCallback() {
         super.connectedCallback();
@@ -61,7 +61,9 @@ export class ReclusteringProgressIndicator extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        window.clearInterval(this.interval);
+        if (this.interval !== undefined) {
+            window.clearInterval(this.interval);
+        }
     }
 
     // tickerTick is called periodically. Its purpose is to obtain the
@@ -84,7 +86,7 @@ export class ReclusteringProgressIndicator extends LitElement {
 
         let reclusteringTarget = "updated clustering algorithms";
         let progressPerMille = this.progressToLatestAlgorithms(this.progress);
-        if (this.hasRule) {
+        if (this.hasRule && this.ruleLastUpdated) {
             const ruleProgress = this.progressToRulesVersion(this.progress, this.ruleLastUpdated);
             if (ruleProgress < progressPerMille) {
                 reclusteringTarget = "the latest rule definition";
@@ -111,9 +113,9 @@ export class ReclusteringProgressIndicator extends LitElement {
             <span class="progress-description" data-cy="reclustering-progress-description">
                 Weetbix is re-clustering test results to reflect ${reclusteringTarget} (${progressText}). Cluster impact may be out-of-date.
                 <span class="last-updated">
-                    Last update ${this.lastRefreshed.toLocaleString(DateTime.TIME_WITH_SECONDS)}.
+                    Last update ${this.lastRefreshed?.toLocaleString(DateTime.TIME_WITH_SECONDS)}.
                 </span>
-            <span>`
+            </span>`
         } else {
             content = html`
             <span class="progress-description" data-cy="reclustering-progress-description">
@@ -127,8 +129,8 @@ export class ReclusteringProgressIndicator extends LitElement {
         return html`
         <div class="progress-box">
             <mwc-circular-progress
-                ?indeterminate=${progressPerMille<0}
-                progress="${Math.max(0, progressPerMille/1000)}">
+                ?indeterminate=${progressPerMille < 0}
+                progress="${Math.max(0, progressPerMille / 1000)}">
             </mwc-circular-progress>
             ${content}
         </div>
@@ -156,15 +158,15 @@ export class ReclusteringProgressIndicator extends LitElement {
         this.dispatchEvent(event)
     }
 
-    progressToLatestAlgorithms(p : ReclusteringProgress) : number {
-        return this.progressTo(p, (t : ReclusteringTarget) => {
-            return t.algorithmsVersion >= this.progress.latestAlgorithmsVersion
+    progressToLatestAlgorithms(p: ReclusteringProgress): number {
+        return this.progressTo(p, (t: ReclusteringTarget) => {
+            return t.algorithmsVersion >= p.latestAlgorithmsVersion
         });
     }
 
-    progressToRulesVersion(p : ReclusteringProgress, rulesVersion : string) : number {
+    progressToRulesVersion(p: ReclusteringProgress, rulesVersion: string): number {
         const d = DateTime.fromISO(rulesVersion)
-        return this.progressTo(p, (t : ReclusteringTarget) => {
+        return this.progressTo(p, (t: ReclusteringTarget) => {
             return DateTime.fromISO(t.rulesVersion) >= d
         });
     }
@@ -173,7 +175,7 @@ export class ReclusteringProgressIndicator extends LitElement {
     // satisfying the given re-clustering target, expressed as a predicate.
     // If re-clustering has started, the returned value is value from 0 to
     // 1000. If the run is pending, the value -1 is returned.
-    progressTo(p : ReclusteringProgress, predicate : (t : ReclusteringTarget) => boolean) : number {
+    progressTo(p: ReclusteringProgress, predicate: (t: ReclusteringTarget) => boolean): number {
         if (predicate(p.last)) {
             // Completed
             return 1000;

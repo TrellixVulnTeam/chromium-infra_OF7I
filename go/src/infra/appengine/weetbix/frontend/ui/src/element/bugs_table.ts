@@ -8,14 +8,13 @@ import { LitElement, html, customElement, property, state } from 'lit-element';
 @customElement('bugs-table')
 export class BugsTable extends LitElement {
     @property()
-    project: string;
+    project = 'chromium';
 
     @state()
     rules: FailureAssociationRule[] | undefined;
 
     connectedCallback() {
         super.connectedCallback()
-        this.project = "chromium";
         fetch(`/api/projects/${encodeURIComponent(this.project)}/rules`).then(r => r.json()).then(rules => this.rules = rules);
     }
 

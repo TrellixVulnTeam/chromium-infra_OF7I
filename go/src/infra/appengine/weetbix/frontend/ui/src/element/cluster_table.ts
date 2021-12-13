@@ -14,13 +14,13 @@ import '@material/mwc-select';
 @customElement('cluster-table')
 export class ClusterTable extends LitElement {
     @property()
-    project: string;
+    project: string = 'chromium';
 
     @property({ type: Number })
     days: number = 1;
 
     @property({ type: Boolean })
-    preexoneration: boolean;
+    preexoneration: boolean = false;
 
     @property({ type: Boolean })
     residual: boolean = true;
@@ -36,14 +36,13 @@ export class ClusterTable extends LitElement {
 
     connectedCallback() {
         super.connectedCallback()
-        this.project = "chromium";
         fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters`).then(r => r.json()).then(clusters => this.clusters = clusters);
     }
 
     onDaysChanged() {
-        const item = this.shadowRoot.querySelector('#days [selected]');
+        const item = this.shadowRoot!.querySelector('#days [selected]');
         if (item) {
-            this.days = parseInt(item.getAttribute('value'));
+            this.days = parseInt(item.getAttribute('value') || '1');
         }
     }
 

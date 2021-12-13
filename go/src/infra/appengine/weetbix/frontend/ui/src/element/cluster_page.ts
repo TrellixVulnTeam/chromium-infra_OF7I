@@ -12,16 +12,16 @@ import './reclustering_progress_indicator.ts';
 @customElement('cluster-page')
 export class ClusterPage extends LitElement implements BeforeEnterObserver {
     @property({ attribute: false })
-    location: RouterLocation;
+    location!: RouterLocation;
 
     @property()
-    project: string;
+    project: string = '';
 
     @property()
-    clusterAlgorithm: string;
+    clusterAlgorithm: string = '';
 
     @property()
-    clusterId: string;
+    clusterId: string = '';
 
     @state()
     cluster: Cluster | undefined;
@@ -30,7 +30,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     // When the displayed rule (if any) was last updated. This is provided to
     // the reclustering progress indicator to show the correct re-clustering
     // status.
-    ruleLastUpdated: string;
+    ruleLastUpdated: string = '';
 
     onBeforeEnter(location: RouterLocation) {
         // Take the first parameter value only.
@@ -132,7 +132,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         }
 
         var breakdownTable = html`Loading...`;
-        if  (c !== undefined) {
+        if (c !== undefined) {
             const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
             breakdownTable = html`
             <table>
@@ -157,7 +157,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         return html`
         <reclustering-progress-indicator
             project=${this.project}
-            hasRule=${this.clusterAlgorithm.startsWith("rules-")}
+            ?hasrule=${this.clusterAlgorithm.startsWith("rules-")}
             ruleLastUpdated=${this.ruleLastUpdated}
             @refreshanalysis=${this.refreshAnalysis}>
         </reclustering-progress-indicator>
