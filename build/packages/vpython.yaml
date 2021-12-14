@@ -11,7 +11,8 @@ platforms:
   - linux-ppc64
   - linux-ppc64le
   - linux-s390x
-  - mac-amd64
+  # TODO(crbug.com/1211921): Move to vpython-mac.yaml instead of cross compile
+  # on Linux.
   - mac-arm64
   - windows-386
   - windows-amd64

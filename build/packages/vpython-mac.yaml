@@ -1,9 +1,9 @@
-package: infra/experimental/vpython/${platform}
+package: infra/tools/luci/vpython/${platform}
 description: vpython is a VirtualEnv Python bootstrap tool.
 platforms:
   - mac-amd64
-  # TODO(fancl): Enable mac-arm64 later after we no longer cross compile it
-  # from linux
+  # TODO(crbug.com/1211921): Enable mac-arm64 later after we no longer cross
+  # compile it from linux.
   # - mac-arm64
 go_build_environ:
   CGO_ENABLED:
