@@ -7,9 +7,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -312,7 +314,7 @@ func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutSta
 	if strings.ToLower(useDutTopo) == "true" {
 		dutTopo, err := getDUTTopology(ctx, dut)
 		// Output dutTopo to stdout during development
-		fmt.Println(dutTopo)
+		log.Printf(proto.MarshalTextString(dutTopo))
 		if err != nil {
 			// Output error to stdout during testing
 			fmt.Println("Error getting DUT topology: ", err.Error())
