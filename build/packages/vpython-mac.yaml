@@ -41,4 +41,4 @@ posix_symlinks:
   - src: vpython.app/Contents/MacOS/vpython
     dst: vpython3
 data:
-  - version_file: .versions/vpython.cipd_version
+  - version_file: vpython.app/Contents/MacOS/.versions/vpython.cipd_version
