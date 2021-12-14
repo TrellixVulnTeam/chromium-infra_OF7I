@@ -124,6 +124,7 @@ luci.notifier_template(
 
 ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 ci_builder(name = "infra-continuous-win10-64", os = "Windows-10")
+ci_builder(name = "infra-continuous-win11-64", os = "Windows-11")
 
 def adhoc_builder(
         name,

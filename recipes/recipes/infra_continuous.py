@@ -55,100 +55,96 @@ DEPS = [
 # TODO(iannucci): remove this dict and put this all configuration as explicit
 #    property inputs to the recipe :)
 CIPD_PACKAGE_BUILDERS = {
-  # trusty-64 is the primary builder for linux-amd64, and the rest just
-  # cross-compile to different platforms (to speed up the overall cycle time by
-  # doing stuff in parallel).
-  'infra-continuous-trusty-64': [
-    'native:test',
-    'linux-386',
-  ],
-  'infra-continuous-xenial-64': [
-    'linux-arm64',
-    'linux-mips64',
-    'linux-mips64le',
-  ],
-  'infra-continuous-bionic-64': [
-    'linux-mipsle',
-    'linux-ppc64',
-    'linux-s390x',
-  ],
+    # trusty-64 is the primary builder for linux-amd64, and the rest just
+    # cross-compile to different platforms (to speed up the overall cycle time
+    # by doing stuff in parallel).
+    'infra-continuous-trusty-64': [
+        'native:test',
+        'linux-386',
+    ],
+    'infra-continuous-xenial-64': [
+        'linux-arm64',
+        'linux-mips64',
+        'linux-mips64le',
+    ],
+    'infra-continuous-bionic-64': [
+        'linux-mipsle',
+        'linux-ppc64',
+        'linux-s390x',
+    ],
 
-  # 10.13 is the primary builder for darwin-amd64.
-  'infra-continuous-mac-10.13-64': [
-    'native:test:legacy',
-  ],
-  'infra-continuous-mac-10.14-64': [
-  ],
-  'infra-continuous-mac-10.15-64': [
-    'darwin-arm64',
-  ],
+    # 10.13 is the primary builder for darwin-amd64.
+    'infra-continuous-mac-10.13-64': ['native:test:legacy',],
+    'infra-continuous-mac-10.14-64': [],
+    'infra-continuous-mac-10.15-64': ['darwin-arm64',],
 
-  # Windows 64 bit builder runs and tests for both 64 && 32 bit.
-  'infra-continuous-win10-64': [
-    'native:test',
-    'windows-386:test',
-  ],
+    # Windows 64 bit builder runs and tests for both 64 && 32 bit.
+    'infra-continuous-win10-64': [
+        'native:test',
+        'windows-386:test',
+    ],
+    'infra-continuous-win11-64': [
+        'native:test',
+        'windows-386:test',
+    ],
 
-  # Internal builders, they use exact same recipe.
-  'infra-internal-continuous-trusty-64': [
-    'native:test',
-    'linux-arm',
-  ],
-  'infra-internal-continuous-xenial-64': [
-    'linux-arm64',
-    'darwin-arm64', # note: can't do it on mac-10.15 since we need >=go1.16
-  ],
-  'infra-internal-continuous-win-64': [
-    'native:test',
-    'windows-386:test',
-  ],
-  'infra-internal-continuous-mac-11-64': [
-    'native:test:legacy',
-  ],
+    # Internal builders, they use exact same recipe.
+    'infra-internal-continuous-trusty-64': [
+        'native:test',
+        'linux-arm',
+    ],
+    'infra-internal-continuous-xenial-64': [
+        'linux-arm64',
+        'darwin-arm64',  # note: can't do it on mac-10.15 since we need >=go1.16
+    ],
+    'infra-internal-continuous-win-64': [
+        'native:test',
+        'windows-386:test',
+    ],
+    'infra-internal-continuous-mac-11-64': ['native:test:legacy',],
 
-  # Builders that upload CIPD packages.
-  #
-  # In comments is approximate runtime for building and testing packages, per
-  # platform (as of Feb 23 2021). We try to balance xc1 and xc2.
-  'infra-packager-linux-64': [
-    'native',            # ~120 sec
-    'darwin-arm64',      # ~60 sec
-  ],
-  'infra-packager-linux-xc1': [
-    'linux-386',         # ~60 sec
-    'linux-arm',         # ~60 sec
-    'linux-arm64',       # ~60 sec
-  ],
-  'infra-packager-linux-xc2': [
-    'linux-mips64',      # ~40 sec
-    'linux-mips64le',    # ~40 sec
-    'linux-mipsle',      # ~40 sec
-    'linux-ppc64',       # ~40 sec
-    'linux-ppc64le',     # ~40 sec
-    'linux-s390x',       # ~40 sec
-    'aix-ppc64',         # ~5 sec
-  ],
-  'infra-packager-mac-64': [
-    'native:legacy',     # ~150 sec
-  ],
-  'infra-packager-win-64': [
-    'native',            # ~60 sec
-    'windows-386',       # ~100 sec
-  ],
-
-  'infra-internal-packager-linux-64': [
-    'native',        # ~60 sec
-    'linux-arm',     # ~30 sec
-    'linux-arm64',   # ~30 sec
-    'darwin-arm64',  # ~30 sec (note: need go 1.16)
-  ],
-  'infra-internal-packager-mac-64': [
-    'native:legacy',  # ~40 sec
-  ],
-  'infra-internal-packager-win-64': [
-    'native',        # ~60 sec
-    'windows-386',   # ~40 sec
-  ],
+    # Builders that upload CIPD packages.
+    #
+    # In comments is approximate runtime for building and testing packages, per
+    # platform (as of Feb 23 2021). We try to balance xc1 and xc2.
+    'infra-packager-linux-64': [
+        'native',  # ~120 sec
+        'darwin-arm64',  # ~60 sec
+    ],
+    'infra-packager-linux-xc1': [
+        'linux-386',  # ~60 sec
+        'linux-arm',  # ~60 sec
+        'linux-arm64',  # ~60 sec
+    ],
+    'infra-packager-linux-xc2': [
+        'linux-mips64',  # ~40 sec
+        'linux-mips64le',  # ~40 sec
+        'linux-mipsle',  # ~40 sec
+        'linux-ppc64',  # ~40 sec
+        'linux-ppc64le',  # ~40 sec
+        'linux-s390x',  # ~40 sec
+        'aix-ppc64',  # ~5 sec
+    ],
+    'infra-packager-mac-64': [
+        'native:legacy',  # ~150 sec
+    ],
+    'infra-packager-win-64': [
+        'native',  # ~60 sec
+        'windows-386',  # ~100 sec
+    ],
+    'infra-internal-packager-linux-64': [
+        'native',  # ~60 sec
+        'linux-arm',  # ~30 sec
+        'linux-arm64',  # ~30 sec
+        'darwin-arm64',  # ~30 sec (note: need go 1.16)
+    ],
+    'infra-internal-packager-mac-64': [
+        'native:legacy',  # ~40 sec
+    ],
+    'infra-internal-packager-win-64': [
+        'native',  # ~60 sec
+        'windows-386',  # ~40 sec
+    ],
 }
 
 
