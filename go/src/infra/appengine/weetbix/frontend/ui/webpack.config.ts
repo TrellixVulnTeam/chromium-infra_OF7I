@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-module.exports = {
+import { Configuration } from 'webpack';
+
+const config: Configuration = {
     entry: './src/index.ts',
     mode: 'development',
     module: {
@@ -12,3 +14,5 @@ module.exports = {
         ],
     },
 };
+
+export default config;
