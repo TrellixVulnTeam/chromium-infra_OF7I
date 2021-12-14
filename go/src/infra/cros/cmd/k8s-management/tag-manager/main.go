@@ -14,11 +14,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 )
 
 var (
-	serviceAccountJSON = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
+	serviceAccountJSON = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use (Default is to use GCP env auth)")
 )
 
 func main() {
@@ -54,11 +55,21 @@ var (
 
 func innerMain() error {
 	flag.Parse()
-	content, err := os.ReadFile(*serviceAccountJSON)
-	if err != nil {
-		return fmt.Errorf("read credential %q: %s", *serviceAccountJSON, err)
+	var auth authn.Authenticator
+	if *serviceAccountJSON != "" {
+		content, err := os.ReadFile(*serviceAccountJSON)
+		if err != nil {
+			return fmt.Errorf("read credential %q: %s", *serviceAccountJSON, err)
+		}
+		auth = google.NewJSONKeyAuthenticator(string(content))
+	} else {
+		log.Printf("No service account key specified, will use the GCP env auth")
+		var err error
+		auth, err = google.NewEnvAuthenticator()
+		if err != nil {
+			return fmt.Errorf("get GCP env auth: %s", err)
+		}
 	}
-	auth := google.NewJSONKeyAuthenticator(string(content))
 
 	// Please ensure the official tag regex matches the whole tag, i.e. starting
 	// with '^' and ending with '$'.
