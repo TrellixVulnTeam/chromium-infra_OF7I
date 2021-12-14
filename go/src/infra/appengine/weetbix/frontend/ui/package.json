@@ -4,7 +4,7 @@
   "description": "Weetbix UI",
   "private": true,
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.config.ts",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "test": "karma start --single-run"
   },
