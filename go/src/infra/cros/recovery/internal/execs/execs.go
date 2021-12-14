@@ -211,11 +211,11 @@ func (parsedArgs ParsedArgs) AsString(ctx context.Context, key string) string {
 
 // AsStringSlice returns the value for the passed key as a slice of
 // string. If the key does not exist in the parsed arguments, an empty
-// slice.
+// slice is returned.
 func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []string {
-	key = strings.TrimSpace(key)
-	if len(key) > 0 {
-		return strings.Split(parsedArgs.AsString(ctx, key), MultiValueSplitter)
+	value := parsedArgs.AsString(ctx, key)
+	if len(value) > 0 {
+		return strings.Split(value, MultiValueSplitter)
 	}
 	return make([]string, 0)
 }
@@ -225,7 +225,7 @@ func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []st
 // arguments. If any mal-formed action arguments are found their value
 // is set to empty string.
 func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) ParsedArgs {
-	argsMap := ParsedArgs(make(map[string]string))
+	parsedArgs := ParsedArgs(make(map[string]string))
 	for _, a := range actionArgs {
 		a := strings.TrimSpace(a)
 		if a == "" {
@@ -236,15 +236,15 @@ func ParseActionArgs(ctx context.Context, actionArgs []string, splitter string) 
 		// Separator has to be at least second letter in the string to provide one letter key.
 		if i < 1 {
 			log.Debug(ctx, "Parse Action Args: malformed action arg %q", a)
-			argsMap[a] = ""
+			parsedArgs[a] = ""
 		} else {
 			k := strings.TrimSpace(a[:i])
 			v := strings.TrimSpace(a[i+1:])
 			log.Debug(ctx, "Parse Action Args: k: %q, v: %q", k, v)
-			argsMap[k] = v
+			parsedArgs[k] = v
 		}
 	}
-	return argsMap
+	return parsedArgs
 }
 
 // CreateMetric creates a metric with an actionKind, and a startTime.

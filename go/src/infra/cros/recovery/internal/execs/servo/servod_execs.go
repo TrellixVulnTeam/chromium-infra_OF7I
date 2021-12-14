@@ -118,6 +118,50 @@ func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string
 	return nil
 }
 
+// servodCanReadAllExec verifies whether servod supports the list of
+// commands mentioned in action args. The check can require all the
+// commands be supported, or any one of them can be supported. This
+// behavior is controlled by the value of 'any_one' extra arg in the
+// config.
+func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	// The string 'commands' here is the token from config that
+	// signifies the list of commands that servod may need to support.
+	// TODO (vkjoshi@): if more execs need this token, consider
+	// extracting this out and creating a constant out of it.
+	commands := argsMap.AsStringSlice(ctx, "commands")
+	// This token controls whether all the loaded servod commands need
+	// to succeed, or can we greedily return as soon as any one
+	// command succeeds.
+	anyOne := argsMap.AsBool(ctx, "any_one")
+	log.Debug(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
+	for _, c := range commands {
+		if _, err := ServodCallHas(ctx, args, c); err != nil {
+			log.Debug(ctx, "Servod Can Read All Exec: control %q is not loaded, skipping this.", c)
+			if !anyOne {
+				return errors.Annotate(err, "servod can read all exec").Err()
+			}
+		} else {
+			log.Debug(ctx, "Servod Can Read All Exec: control %q is loaded.", c)
+			if _, err = ServodCallGet(ctx, args, c); err != nil {
+				log.Debug(ctx, "Servod Can Read All Exec: could not read the control %q.", c)
+				if !anyOne {
+					return errors.Annotate(err, "servod can read all exec").Err()
+				}
+			} else {
+				log.Debug(ctx, "Servod Can Read All Exec: %q was read successfully.", c)
+				if anyOne {
+					return nil
+				}
+			}
+		}
+	}
+	if anyOne {
+		return errors.Reason("servod can read all exec: no control could be read.").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servod_echo", servodEchoActionExec)
 	execs.Register("servod_lidopen", servodLidopenActionExec)
@@ -125,4 +169,5 @@ func init() {
 	execs.Register("servod_dut_rec_mode", servodDUTBootRecoveryModeActionExec)
 	execs.Register("servod_dut_cold_reset", servodDUTColdResetActionExec)
 	execs.Register("servod_has", servodHasExec)
+	execs.Register("servod_can_read_all", servodCanReadAllExec)
 }

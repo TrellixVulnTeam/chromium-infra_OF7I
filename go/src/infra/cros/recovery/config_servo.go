@@ -267,11 +267,10 @@ const servoRepairPlanBody = `
 			"servod_dut_controller"
 		],
 		"exec_extra_args": [
-			"cr50_ccd_level",
-			"cr50_testlab",
-			"cr50_ccd_state_flags"
+			"commands:cr50_ccd_level,cr50_testlab,cr50_ccd_state_flags",
+			"any_one:true"
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servod_can_read_all"
 	},
 	"cr50_testlab": {
 		"exec_extra_args": [
