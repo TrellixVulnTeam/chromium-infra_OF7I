@@ -31,7 +31,7 @@ type ClusterResults struct {
 	// Clusters records the clusters each test result is in;
 	// one slice of ClusterIDs for each test result. For each test result,
 	// clusters must be in sorted order, with no duplicates.
-	Clusters [][]*ClusterID
+	Clusters [][]ClusterID
 }
 
 // AlgorithmsAndClustersEqual returns whether the algorithms and clusters of
@@ -56,7 +56,7 @@ func AlgorithmsAndClustersEqual(a *ClusterResults, b *ClusterResults) bool {
 // equal to those in `bs`.
 // To test set-wise cluster equality, this method is called with
 // clusters in sorted order, and no duplicates.
-func ClustersEqual(as []*ClusterID, bs []*ClusterID) bool {
+func ClustersEqual(as []ClusterID, bs []ClusterID) bool {
 	if len(as) != len(bs) {
 		return false
 	}

@@ -53,11 +53,9 @@ func TestAlgorithm(t *testing.T) {
 			So(rule, ShouldEqual, expectedRule)
 
 			// Test the rule is valid syntax and matches at least the example failure.
-			expr, err := lang.Parse(rule, "test")
+			expr, err := lang.Parse(rule)
 			So(err, ShouldBeNil)
-			So(expr.Evaluate(map[string]string{
-				"test": failure.TestID,
-			}), ShouldBeTrue)
+			So(expr.Evaluate(failure), ShouldBeTrue)
 		}
 		Convey(`ninja Test ID`, func() {
 			failure := &clustering.Failure{

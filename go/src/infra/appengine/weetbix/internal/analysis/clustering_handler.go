@@ -56,9 +56,9 @@ func (r *ClusteringHandler) HandleUpdatedClusters(ctx context.Context, updates *
 func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.ClusteredFailureRow {
 	var result []*bqpb.ClusteredFailureRow
 	for _, u := range updates.Updates {
-		deleted := make(map[string]*clustering.ClusterID)
-		retained := make(map[string]*clustering.ClusterID)
-		new := make(map[string]*clustering.ClusterID)
+		deleted := make(map[string]clustering.ClusterID)
+		retained := make(map[string]clustering.ClusterID)
+		new := make(map[string]clustering.ClusterID)
 
 		previousInBugCluster := false
 		for _, pc := range u.PreviousClusters {
@@ -119,7 +119,7 @@ func prepareInserts(updates *clustering.Update, commitTime time.Time) []*bqpb.Cl
 	return result
 }
 
-func entryFromUpdate(project, chunkID string, cluster *clustering.ClusterID, failure *cpb.Failure, included, includedWithHighPriority bool, commitTime time.Time) *bqpb.ClusteredFailureRow {
+func entryFromUpdate(project, chunkID string, cluster clustering.ClusterID, failure *cpb.Failure, included, includedWithHighPriority bool, commitTime time.Time) *bqpb.ClusteredFailureRow {
 	// Copy the failure, to ensure the returned ClusteredFailure does not
 	// alias any of the original failure's nested message protos.
 	failure = proto.Clone(failure).(*cpb.Failure)

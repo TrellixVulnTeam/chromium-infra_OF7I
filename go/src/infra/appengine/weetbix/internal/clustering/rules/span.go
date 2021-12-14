@@ -21,10 +21,6 @@ import (
 	spanutil "infra/appengine/weetbix/internal/span"
 )
 
-// Identifiers is the set of identifiers that are permitted in failure
-// association rules.
-var Identifiers = []string{"test", "reason"}
-
 // RuleIDRe matches validly formed rule IDs.
 var RuleIDRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
@@ -280,7 +276,7 @@ func validateRule(r *FailureAssociationRule) error {
 	case r.SourceCluster.Validate() != nil && !r.SourceCluster.IsEmpty():
 		return errors.Annotate(r.SourceCluster.Validate(), "source cluster ID is not valid").Err()
 	}
-	_, err := lang.Parse(r.RuleDefinition, Identifiers...)
+	_, err := lang.Parse(r.RuleDefinition)
 	if err != nil {
 		return errors.Annotate(err, "rule definition is not valid").Err()
 	}

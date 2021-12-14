@@ -182,14 +182,14 @@ func upToDateScenario(size int) *scenario {
 			rulesalgorithm.AlgorithmName: {},
 			testname.AlgorithmName:       {},
 		},
-		Clusters: [][]*clustering.ClusterID{
+		Clusters: [][]clustering.ClusterID{
 			{
 				testNameClusterID(failures[0]),
 			},
 		},
 	}
 	for i := 0; i < size; i++ {
-		clusters := []*clustering.ClusterID{
+		clusters := []clustering.ClusterID{
 			failureReasonClusterID(failures[1]),
 			testNameClusterID(failures[1]),
 			ruleClusterID(rule1.RuleID),
@@ -210,14 +210,14 @@ func upToDateScenario(size int) *scenario {
 			rulesalgorithm.AlgorithmName: {},
 			testname.AlgorithmName:       {},
 		},
-		Clusters: [][]*clustering.ClusterID{
+		Clusters: [][]clustering.ClusterID{
 			{
 				testNameClusterID(failures[0]),
 			},
 		},
 	}
 	for i := 0; i < size; i++ {
-		clusters := []*clustering.ClusterID{
+		clusters := []clustering.ClusterID{
 			failureReasonClusterID(failures[1]),
 			testNameClusterID(failures[1]),
 			ruleClusterID(rule1.RuleID),
@@ -241,7 +241,7 @@ func fromOlderSuggestedClusteringScenario() *scenario {
 	s.existing.AlgorithmsVersion--
 	delete(s.existing.Algorithms, failurereason.AlgorithmName)
 	s.existing.Algorithms["failurereason-v1"] = struct{}{}
-	s.existing.Clusters[1][0] = &clustering.ClusterID{
+	s.existing.Clusters[1][0] = clustering.ClusterID{
 		Algorithm: "failurereason-v1",
 		ID:        "old-failure-reason-cluster-id",
 	}
@@ -254,7 +254,7 @@ func fromOlderRuleClusteringScenario() *scenario {
 	s.existing.AlgorithmsVersion--
 	delete(s.existing.Algorithms, rulesalgorithm.AlgorithmName)
 	s.existing.Algorithms["rules-v0"] = struct{}{}
-	s.existing.Clusters[1] = []*clustering.ClusterID{
+	s.existing.Clusters[1] = []clustering.ClusterID{
 		failureReasonClusterID(s.failures[1]),
 		testNameClusterID(s.failures[1]),
 		{Algorithm: "rules-v0", ID: s.rules[0].RuleID},
@@ -270,7 +270,7 @@ func fromLaterAlgorithmsScenario() *scenario {
 	s.existing.Algorithms = map[string]struct{}{
 		"futurealgorithm-v1": {},
 	}
-	s.existing.Clusters = [][]*clustering.ClusterID{
+	s.existing.Clusters = [][]clustering.ClusterID{
 		{
 			{Algorithm: "futurealgorithm-v1", ID: "aa"},
 		},
@@ -288,7 +288,7 @@ func fromOlderRulesVersionScenario(size int) *scenario {
 	s := upToDateScenario(size)
 	s.existing.RulesVersion = s.existing.RulesVersion.Add(-1 * time.Hour)
 	for i := 1; i <= size; i++ {
-		s.existing.Clusters[i] = []*clustering.ClusterID{
+		s.existing.Clusters[i] = []clustering.ClusterID{
 			failureReasonClusterID(s.failures[i]),
 			testNameClusterID(s.failures[i]),
 			ruleClusterID(s.rules[0].RuleID),
@@ -302,7 +302,7 @@ func fromOlderRulesVersionScenario(size int) *scenario {
 func fromNewerRulesVersionScenario() *scenario {
 	s := upToDateScenario(1)
 	s.existing.RulesVersion = s.existing.RulesVersion.Add(1 * time.Hour)
-	s.existing.Clusters[1] = []*clustering.ClusterID{
+	s.existing.Clusters[1] = []clustering.ClusterID{
 		failureReasonClusterID(s.failures[1]),
 		testNameClusterID(s.failures[1]),
 		ruleClusterID(s.rules[0].RuleID),
@@ -322,24 +322,24 @@ func fromScratchScenario(size int) *scenario {
 	return s
 }
 
-func testNameClusterID(failure *clustering.Failure) *clustering.ClusterID {
+func testNameClusterID(failure *clustering.Failure) clustering.ClusterID {
 	alg := &testname.Algorithm{}
-	return &clustering.ClusterID{
+	return clustering.ClusterID{
 		Algorithm: testname.AlgorithmName,
 		ID:        hex.EncodeToString(alg.Cluster(failure)),
 	}
 }
 
-func failureReasonClusterID(failure *clustering.Failure) *clustering.ClusterID {
+func failureReasonClusterID(failure *clustering.Failure) clustering.ClusterID {
 	alg := &failurereason.Algorithm{}
-	return &clustering.ClusterID{
+	return clustering.ClusterID{
 		Algorithm: failurereason.AlgorithmName,
 		ID:        hex.EncodeToString(alg.Cluster(failure)),
 	}
 }
 
-func ruleClusterID(ruleID string) *clustering.ClusterID {
-	return &clustering.ClusterID{
+func ruleClusterID(ruleID string) clustering.ClusterID {
+	return clustering.ClusterID{
 		Algorithm: rulesalgorithm.AlgorithmName,
 		ID:        ruleID,
 	}
@@ -348,7 +348,7 @@ func ruleClusterID(ruleID string) *clustering.ClusterID {
 // diffClusters checks actual and expected clusters are equivalent (after
 // accounting for ordering differences). If not, a message explaining
 // the differences is returned.
-func diffClusters(actual [][]*clustering.ClusterID, expected [][]*clustering.ClusterID) string {
+func diffClusters(actual [][]clustering.ClusterID, expected [][]clustering.ClusterID) string {
 	if len(actual) != len(expected) {
 		return fmt.Sprintf("got clusters for %v test results; want %v", len(actual), len(expected))
 	}

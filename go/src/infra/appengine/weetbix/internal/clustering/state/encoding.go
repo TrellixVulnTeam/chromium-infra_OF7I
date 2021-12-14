@@ -18,7 +18,7 @@ import (
 // - the set of algorithms used for clustering, and
 // - the clusters assigned to each test result
 // from the protobuf representation.
-func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]*clustering.ClusterID, error) {
+func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]clustering.ClusterID, error) {
 	if cc == nil {
 		return nil, nil, errors.New("proto must be specified")
 	}
@@ -30,10 +30,10 @@ func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]*clustering
 		algorithms[ct.Algorithm] = struct{}{}
 	}
 
-	clusterIDs := make([][]*clustering.ClusterID, len(cc.ResultClusters))
+	clusterIDs := make([][]clustering.ClusterID, len(cc.ResultClusters))
 	for i, rc := range cc.ResultClusters {
 		// For each test result.
-		clusters := make([]*clustering.ClusterID, len(rc.ClusterRefs))
+		clusters := make([]clustering.ClusterID, len(rc.ClusterRefs))
 		for j, ref := range rc.ClusterRefs {
 			// Decode each reference to a cluster ID.
 			if ref < 0 || ref >= clusterCount {
@@ -44,7 +44,7 @@ func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]*clustering
 				return nil, nil, fmt.Errorf("reference to non-existent type (%v) from referenced cluster %v; only %v types defined", cluster.TypeRef, ref, typeCount)
 			}
 			t := cc.ClusterTypes[cluster.TypeRef]
-			clusters[j] = &clustering.ClusterID{
+			clusters[j] = clustering.ClusterID{
 				Algorithm: t.Algorithm,
 				ID:        hex.EncodeToString(cluster.ClusterId),
 			}
@@ -58,7 +58,7 @@ func decodeClusters(cc *cpb.ChunkClusters) (map[string]struct{}, [][]*clustering
 // - the set of algorithms used for clustering, and
 // - the clusters assigned to each test result
 // to the protobuf representation.
-func encodeClusters(algorithms map[string]struct{}, clusterIDs [][]*clustering.ClusterID) (*cpb.ChunkClusters, error) {
+func encodeClusters(algorithms map[string]struct{}, clusterIDs [][]clustering.ClusterID) (*cpb.ChunkClusters, error) {
 	rb := newRefBuilder()
 	for a := range algorithms {
 		rb.registerClusterType(a)
@@ -104,7 +104,7 @@ func newRefBuilder() *refBuilder {
 	}
 }
 
-func (rb *refBuilder) referenceCluster(ref *clustering.ClusterID) (int64, error) {
+func (rb *refBuilder) referenceCluster(ref clustering.ClusterID) (int64, error) {
 	refKey := ref.Key()
 	idx, ok := rb.refMap[refKey]
 	if !ok {

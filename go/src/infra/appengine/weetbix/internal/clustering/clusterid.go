@@ -6,7 +6,6 @@ package clustering
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -96,19 +95,27 @@ func (c ClusterID) IsBugCluster() bool {
 
 // SortClusters sorts the given clusters in ascending algorithm and then ID
 // order.
-func SortClusters(cs []*ClusterID) {
-	sort.Sort(ClusterIDSlice(cs))
+func SortClusters(cs []ClusterID) {
+	// There are almost always a tiny number of clusters per test result,
+	// so a bubble-sort is surpringly faster than the built-in quicksort
+	// which has to make memory allocations.
+	for {
+		done := true
+		for i := 0; i < len(cs)-1; i++ {
+			if isClusterLess(cs[i+1], cs[i]) {
+				cs[i+1], cs[i] = cs[i], cs[i+1]
+				done = false
+			}
+		}
+		if done {
+			break
+		}
+	}
 }
-
-type ClusterIDSlice []*ClusterID
-
-func (c ClusterIDSlice) Len() int           { return len(c) }
-func (c ClusterIDSlice) Less(i, j int) bool { return isClusterLess(c[i], c[j]) }
-func (c ClusterIDSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 
 // ClustersAreSortedNoDuplicates verifies that clusters are in sorted order
 // and there are no duplicate clusters.
-func ClustersAreSortedNoDuplicates(cs []*ClusterID) bool {
+func ClustersAreSortedNoDuplicates(cs []ClusterID) bool {
 	for i := 0; i < len(cs)-1; i++ {
 		if !isClusterLess(cs[i], cs[i+1]) {
 			return false
@@ -117,7 +124,7 @@ func ClustersAreSortedNoDuplicates(cs []*ClusterID) bool {
 	return true
 }
 
-func isClusterLess(a *ClusterID, b *ClusterID) bool {
+func isClusterLess(a ClusterID, b ClusterID) bool {
 	if a.Algorithm == b.Algorithm {
 		return a.ID < b.ID
 	}

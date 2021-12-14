@@ -504,7 +504,7 @@ func (b *testResultBuilder) buildFailure() *cpb.Failure {
 // would appear in BigQuery, if the test result was in the given clusters.
 // Note that deletions are not returned; these are simply the 'net' rows that
 // would be expected.
-func (b *testResultBuilder) buildBQExport(clusterIDs []*clustering.ClusterID) []*bqpb.ClusteredFailureRow {
+func (b *testResultBuilder) buildBQExport(clusterIDs []clustering.ClusterID) []*bqpb.ClusteredFailureRow {
 	keyHash := sha256.Sum256([]byte("variantkey:value\n"))
 	var inBugCluster bool
 	for _, cID := range clusterIDs {
@@ -565,31 +565,31 @@ func (b *testResultBuilder) buildBQExport(clusterIDs []*clustering.ClusterID) []
 
 // buildClusters returns the clusters that would be expected for this test
 // result, if current clustering algorithms were used.
-func (b *testResultBuilder) buildClusters(rules *cache.Ruleset) []*clustering.ClusterID {
-	var clusters []*clustering.ClusterID
+func (b *testResultBuilder) buildClusters(rules *cache.Ruleset) []clustering.ClusterID {
+	var clusters []clustering.ClusterID
 	failure := &clustering.Failure{
 		TestID: b.testName,
 		Reason: b.failureReason,
 	}
 	testNameAlg := &testname.Algorithm{}
-	clusters = append(clusters, &clustering.ClusterID{
+	clusters = append(clusters, clustering.ClusterID{
 		Algorithm: testNameAlg.Name(),
 		ID:        hex.EncodeToString(testNameAlg.Cluster(failure)),
 	})
 	if b.failureReason != nil && b.failureReason.PrimaryErrorMessage != "" {
 		failureReasonAlg := &failurereason.Algorithm{}
-		clusters = append(clusters, &clustering.ClusterID{
+		clusters = append(clusters, clustering.ClusterID{
 			Algorithm: failureReasonAlg.Name(),
 			ID:        hex.EncodeToString(failureReasonAlg.Cluster(failure)),
 		})
 	}
-	vals := map[string]string{
-		"test":   b.testName,
-		"reason": b.failureReason.GetPrimaryErrorMessage(),
+	vals := &clustering.Failure{
+		TestID: b.testName,
+		Reason: &pb.FailureReason{PrimaryErrorMessage: b.failureReason.GetPrimaryErrorMessage()},
 	}
 	for _, rule := range rules.ActiveRulesSorted {
 		if rule.Expr.Evaluate(vals) {
-			clusters = append(clusters, &clustering.ClusterID{
+			clusters = append(clusters, clustering.ClusterID{
 				Algorithm: rulesalgorithm.AlgorithmName,
 				ID:        rule.RuleID,
 			})
@@ -666,9 +666,9 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		algs := make(map[string]struct{})
 		algs["testname-v0"] = struct{}{}
 		algs["rules-v0"] = struct{}{}
-		var clusters [][]*clustering.ClusterID
+		var clusters [][]clustering.ClusterID
 		for range b.testResults {
-			cs := []*clustering.ClusterID{
+			cs := []clustering.ClusterID{
 				{
 					Algorithm: "testname-v0",
 					ID:        "01dc151e01dc151e01dc151e01dc151e",
@@ -692,7 +692,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		algs[testname.AlgorithmName] = struct{}{}
 		algs[failurereason.AlgorithmName] = struct{}{}
 		algs[rulesalgorithm.AlgorithmName] = struct{}{}
-		var clusters [][]*clustering.ClusterID
+		var clusters [][]clustering.ClusterID
 		for _, tr := range b.testResults {
 			clusters = append(clusters, tr.buildClusters(b.ruleset))
 		}

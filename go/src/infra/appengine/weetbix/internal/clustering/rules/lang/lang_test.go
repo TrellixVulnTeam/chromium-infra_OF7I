@@ -6,6 +6,8 @@ package lang
 
 import (
 	"fmt"
+	"infra/appengine/weetbix/internal/clustering"
+	weetbixpb "infra/appengine/weetbix/proto/v1"
 	"strings"
 	"testing"
 
@@ -15,8 +17,7 @@ import (
 func TestRules(t *testing.T) {
 	Convey(`Syntax Parsing`, t, func() {
 		parse := func(input string) error {
-			idents := []string{"test", "reason"}
-			expr, err := Parse(input, idents...)
+			expr, err := Parse(input)
 			if err != nil {
 				So(expr, ShouldBeNil)
 			} else {
@@ -76,26 +77,25 @@ func TestRules(t *testing.T) {
 		})
 	})
 	Convey(`Semantics`, t, func() {
-		idents := []string{"test", "reason"}
-		eval := func(input string, vars map[string]string) bool {
-			eval, err := Parse(input, idents...)
+		eval := func(input string, failure *clustering.Failure) bool {
+			eval, err := Parse(input)
 			So(err, ShouldBeNil)
-			return eval.eval(vars)
+			return eval.eval(failure)
 		}
-		boot := map[string]string{
-			"test":   "tast.arc.Boot",
-			"reason": "annotation 1: annotation 2: failure",
+		boot := &clustering.Failure{
+			TestID: "tast.arc.Boot",
+			Reason: &weetbixpb.FailureReason{PrimaryErrorMessage: "annotation 1: annotation 2: failure"},
 		}
-		dbus := map[string]string{
-			"test":   "tast.example.DBus",
-			"reason": "true was not true",
+		dbus := &clustering.Failure{
+			TestID: "tast.example.DBus",
+			Reason: &weetbixpb.FailureReason{PrimaryErrorMessage: "true was not true"},
 		}
 		Convey(`String Expression`, func() {
 			So(eval(`test = "tast.arc.Boot"`, boot), ShouldBeTrue)
 			So(eval(`test = "tast.arc.Boot"`, dbus), ShouldBeFalse)
 			So(eval(`test = test`, dbus), ShouldBeTrue)
-			escaping := map[string]string{
-				"test": "\a\b\f\n\r\t\v\"\101\x42\u0042\U00000042",
+			escaping := &clustering.Failure{
+				TestID: "\a\b\f\n\r\t\v\"\101\x42\u0042\U00000042",
 			}
 			So(eval(`test = "\a\b\f\n\r\t\v\"\101\x42\u0042\U00000042"`, escaping), ShouldBeTrue)
 		})
@@ -132,8 +132,8 @@ func TestRules(t *testing.T) {
 				So(eval(`test LIKE "%.Boot"`, boot), ShouldBeTrue)
 				So(eval(`test LIKE "tast.%.Boot"`, boot), ShouldBeTrue)
 
-				escapeTest := map[string]string{
-					"test": "a\\.+*?()|[]{}^$a",
+				escapeTest := &clustering.Failure{
+					TestID: "a\\.+*?()|[]{}^$a",
 				}
 				So(eval(`test LIKE "\\\\.+*?()|[]{}^$a"`, escapeTest), ShouldBeFalse)
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$"`, escapeTest), ShouldBeFalse)
@@ -141,14 +141,14 @@ func TestRules(t *testing.T) {
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$_"`, escapeTest), ShouldBeTrue)
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$%"`, escapeTest), ShouldBeTrue)
 
-				escapeTest2 := map[string]string{
-					"test": "a\\.+*?()|[]{}^$_",
+				escapeTest2 := &clustering.Failure{
+					TestID: "a\\.+*?()|[]{}^$_",
 				}
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\_"`, escapeTest), ShouldBeFalse)
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\_"`, escapeTest2), ShouldBeTrue)
 
-				escapeTest3 := map[string]string{
-					"test": "a\\.+*?()|[]{}^$%",
+				escapeTest3 := &clustering.Failure{
+					TestID: "a\\.+*?()|[]{}^$%",
 				}
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\%"`, escapeTest), ShouldBeFalse)
 				So(eval(`test LIKE "a\\\\.+*?()|[]{}^$\\%"`, escapeTest3), ShouldBeTrue)
@@ -182,9 +182,8 @@ func TestRules(t *testing.T) {
 		})
 	})
 	Convey(`Formatting`, t, func() {
-		idents := []string{"test", "reason"}
 		roundtrip := func(input string) string {
-			eval, err := Parse(input, idents...)
+			eval, err := Parse(input)
 			So(err, ShouldBeNil)
 			return eval.String()
 		}
@@ -222,11 +221,10 @@ func TestRules(t *testing.T) {
 // BenchmarkRules-48    	      51	  22406568 ns/op	     481 B/op	       0 allocs/op
 func BenchmarkRules(b *testing.B) {
 	// Setup 1000 rules.
-	idents := []string{"test", "reason"}
 	var rules []*Expr
 	for i := 0; i < 1000; i++ {
 		rule := `test LIKE "%arc.Boot` + fmt.Sprintf("%v", i) + `.%" AND reason LIKE "%failed` + fmt.Sprintf("%v", i) + `.%"`
-		expr, err := Parse(rule, idents...)
+		expr, err := Parse(rule)
 		if err != nil {
 			b.Error(err)
 		}
@@ -244,9 +242,9 @@ func BenchmarkRules(b *testing.B) {
 		testText.WriteString("blah")
 		reasonText.WriteString("blah")
 	}
-	data := map[string]string{
-		"test":   testText.String(),
-		"reason": reasonText.String(),
+	data := &clustering.Failure{
+		TestID: testText.String(),
+		Reason: &weetbixpb.FailureReason{PrimaryErrorMessage: reasonText.String()},
 	}
 
 	// Start benchmark.

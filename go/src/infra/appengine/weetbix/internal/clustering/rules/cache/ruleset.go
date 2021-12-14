@@ -30,7 +30,7 @@ type CachedRule struct {
 // NewCachedRule initialises a new CachedRule from the given failure
 // association rule.
 func NewCachedRule(rule *rules.FailureAssociationRule) (*CachedRule, error) {
-	expr, err := lang.Parse(rule.RuleDefinition, rules.Identifiers...)
+	expr, err := lang.Parse(rule.RuleDefinition)
 	if err != nil {
 		return nil, err
 	}

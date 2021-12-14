@@ -165,7 +165,7 @@ func validateUpdate(update *ruleUpdateRequest) string {
 	for _, path := range update.UpdateMask.Paths {
 		switch path {
 		case "ruleDefinition":
-			_, err := lang.Parse(update.Rule.RuleDefinition, rules.Identifiers...)
+			_, err := lang.Parse(update.Rule.RuleDefinition)
 			if err != nil {
 				return fmt.Sprintf("Rule definition is not valid: %s", err)
 			}

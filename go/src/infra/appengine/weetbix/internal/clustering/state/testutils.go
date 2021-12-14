@@ -47,7 +47,7 @@ func NewEntry(uniqifier int) *EntryBuilder {
 				fmt.Sprintf("alg-%v", uniqifier): {},
 				"alg-extra":                      {},
 			},
-			Clusters: [][]*clustering.ClusterID{
+			Clusters: [][]clustering.ClusterID{
 				{
 					{
 						Algorithm: fmt.Sprintf("alg-%v", uniqifier),

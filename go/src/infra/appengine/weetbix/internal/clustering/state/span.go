@@ -383,7 +383,7 @@ func validateAlgorithms(algorithms map[string]struct{}) error {
 	return nil
 }
 
-func validateClusters(clusters [][]*clustering.ClusterID, algorithms map[string]struct{}) error {
+func validateClusters(clusters [][]clustering.ClusterID, algorithms map[string]struct{}) error {
 	if len(clusters) == 0 {
 		// Each chunk must have at least one test result, even
 		// if that test result is in no clusters.

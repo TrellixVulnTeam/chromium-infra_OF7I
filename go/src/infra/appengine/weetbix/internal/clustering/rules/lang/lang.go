@@ -45,6 +45,7 @@ package lang
 import (
 	"bytes"
 	"fmt"
+	"infra/appengine/weetbix/internal/clustering"
 	"io"
 	"regexp"
 	"strings"
@@ -55,26 +56,11 @@ import (
 )
 
 type validator struct {
-	identifierSet map[string]struct{}
-	errors        []error
+	errors []error
 }
 
-func newValidator(allowedIdentifiers []string) *validator {
-	identifierSet := make(map[string]struct{})
-	for _, ident := range allowedIdentifiers {
-		identifierSet[ident] = struct{}{}
-	}
-	return &validator{
-		identifierSet: identifierSet,
-	}
-}
-
-// useIdentifier asserts that the expression uses the specified identifier.
-// If it is not a declared (allowed) identifier, an error is reported.
-func (v *validator) useIdentifier(identifier string) {
-	if _, ok := v.identifierSet[identifier]; !ok {
-		v.reportError(fmt.Errorf("undeclared identifier %q", identifier))
-	}
+func newValidator() *validator {
+	return &validator{}
 }
 
 // ReportError reports a validation error.
@@ -90,10 +76,10 @@ func (v *validator) error() error {
 	return nil
 }
 
-type varAccessor map[string]string
-type boolEval func(varAccessor) bool
-type stringEval func(varAccessor) string
-type predicateEval func(varAccessor, string) bool
+type failure *clustering.Failure
+type boolEval func(failure) bool
+type stringEval func(failure) string
+type predicateEval func(failure, string) bool
 
 // Expr represents a predicate for a failure association rule.
 type Expr struct {
@@ -110,8 +96,8 @@ func (e *Expr) String() string {
 
 // Evaluate evaluates the given expression, using the given values
 // for variables used in the expression.
-func (e *Expr) Evaluate(vals map[string]string) bool {
-	return e.eval(vals)
+func (e *Expr) Evaluate(failure *clustering.Failure) bool {
+	return e.eval(failure)
 }
 
 type boolExpr struct {
@@ -135,9 +121,9 @@ func (e *boolExpr) evaluator(v *validator) boolEval {
 	if len(termEvals) == 1 {
 		return termEvals[0]
 	}
-	return func(va varAccessor) bool {
+	return func(f failure) bool {
 		for _, termEval := range termEvals {
-			if termEval(va) {
+			if termEval(f) {
 				return true
 			}
 		}
@@ -166,9 +152,9 @@ func (t *boolTerm) evaluator(v *validator) boolEval {
 	if len(factorEvals) == 1 {
 		return factorEvals[0]
 	}
-	return func(va varAccessor) bool {
+	return func(f failure) bool {
 		for _, factorEval := range factorEvals {
-			if !factorEval(va) {
+			if !factorEval(f) {
 				return false
 			}
 		}
@@ -191,8 +177,8 @@ func (f *boolFactor) format(w io.Writer) {
 func (f *boolFactor) evaluator(v *validator) boolEval {
 	predicate := f.Primary.evaluator(v)
 	if f.Not {
-		return func(va varAccessor) bool {
-			return !predicate(va)
+		return func(f failure) bool {
+			return !predicate(f)
 		}
 	}
 	return predicate
@@ -262,7 +248,7 @@ func (c *boolConst) format(w io.Writer) {
 
 func (c *boolConst) evaluator(v *validator) boolEval {
 	value := c.Value == "TRUE"
-	return func(va varAccessor) bool {
+	return func(f failure) bool {
 		return value
 	}
 }
@@ -305,8 +291,8 @@ func (f *boolFunction) evaluator(v *validator) boolEval {
 			return nil
 		}
 
-		return func(va varAccessor) bool {
-			value := valueEval(va)
+		return func(f failure) bool {
+			value := valueEval(f)
 			return re.MatchString(value)
 		}
 	default:
@@ -328,8 +314,8 @@ func (t *boolPredicate) format(w io.Writer) {
 func (t *boolPredicate) evaluator(v *validator) boolEval {
 	value := t.Value.evaluator(v)
 	test := t.Test.evaluator(v)
-	return func(va varAccessor) bool {
-		return test(va, value(va))
+	return func(f failure) bool {
+		return test(f, value(f))
 	}
 }
 
@@ -381,8 +367,8 @@ func (p *negatablePredicate) evaluator(v *validator) predicateEval {
 		predicate = p.Like.evaluator(v)
 	}
 	if p.Not {
-		return func(va varAccessor, s string) bool {
-			return !predicate(va, s)
+		return func(f failure, s string) bool {
+			return !predicate(f, s)
 		}
 	}
 	return predicate
@@ -402,12 +388,12 @@ func (p *compPredicate) evaluator(v *validator) predicateEval {
 	val := p.Value.evaluator(v)
 	switch p.Op {
 	case "=":
-		return func(va varAccessor, s string) bool {
-			return s == val(va)
+		return func(f failure, s string) bool {
+			return s == val(f)
 		}
 	case "!=", "<>":
-		return func(va varAccessor, s string) bool {
-			return s != val(va)
+		return func(f failure, s string) bool {
+			return s != val(f)
 		}
 	default:
 		panic("invalid op")
@@ -434,9 +420,9 @@ func (p *inPredicate) evaluator(v *validator) predicateEval {
 	for _, item := range p.List {
 		list = append(list, item.evaluator(v))
 	}
-	return func(va varAccessor, s string) bool {
+	return func(f failure, s string) bool {
 		for _, item := range list {
-			if item(va) == s {
+			if item(f) == s {
 				return true
 			}
 		}
@@ -472,7 +458,7 @@ func (p *likePredicate) evaluator(v *validator) predicateEval {
 		v.reportError(fmt.Errorf("invalid LIKE expression: %s", likePattern))
 		return nil
 	}
-	return func(va varAccessor, s string) bool {
+	return func(f failure, s string) bool {
 		return re.MatchString(s)
 	}
 }
@@ -513,12 +499,24 @@ func (e *stringExpr) evaluator(v *validator) stringEval {
 			v.reportError(err)
 			return nil
 		}
-		return func(a varAccessor) string { return literal }
+		return func(f failure) string { return literal }
 	}
 	if e.Ident != nil {
 		varName := *e.Ident
-		v.useIdentifier(varName)
-		return func(a varAccessor) string { return a[varName] }
+		var accessor func(c *clustering.Failure) string
+		switch varName {
+		case "test":
+			accessor = func(f *clustering.Failure) string {
+				return f.TestID
+			}
+		case "reason":
+			accessor = func(f *clustering.Failure) string {
+				return f.Reason.GetPrimaryErrorMessage()
+			}
+		default:
+			v.reportError(fmt.Errorf("undeclared identifier %q", varName))
+		}
+		return func(f failure) string { return accessor(f) }
 	}
 	return nil
 }
@@ -547,13 +545,13 @@ func lowerMapper(token lexer.Token) (lexer.Token, error) {
 
 // Parse parses a failure association rule from the specified text.
 // idents is the set of identifiers that are recognised by the application.
-func Parse(text string, idents ...string) (*Expr, error) {
+func Parse(text string) (*Expr, error) {
 	expr := &boolExpr{}
 	if err := parser.ParseString("", text, expr); err != nil {
 		return nil, errors.Annotate(err, "syntax error").Err()
 	}
 
-	v := newValidator(idents)
+	v := newValidator()
 	eval := expr.evaluator(v)
 	if err := v.error(); err != nil {
 		return nil, err

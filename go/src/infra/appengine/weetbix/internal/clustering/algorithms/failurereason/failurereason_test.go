@@ -55,11 +55,9 @@ func TestAlgorithm(t *testing.T) {
 			So(rule, ShouldEqual, expectedRule)
 
 			// Test the rule is valid syntax and matches at least the example failure.
-			expr, err := lang.Parse(rule, "reason")
+			expr, err := lang.Parse(rule)
 			So(err, ShouldBeNil)
-			So(expr.Evaluate(map[string]string{
-				"reason": failure.Reason.PrimaryErrorMessage,
-			}), ShouldBeTrue)
+			So(expr.Evaluate(failure), ShouldBeTrue)
 		}
 		Convey(`Hexadecimal`, func() {
 			failure := &clustering.Failure{

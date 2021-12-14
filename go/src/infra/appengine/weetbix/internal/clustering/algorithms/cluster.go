@@ -115,10 +115,10 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 		existingRulesVersion = rules.StartingEpoch
 	}
 
-	var result [][]*clustering.ClusterID
+	result := make([][]clustering.ClusterID, len(failures))
 	for i, f := range failures {
-		var newIDs []*clustering.ClusterID
-		existingRuleIDs := make(map[string]struct{})
+		newIDs := make([]clustering.ClusterID, 0, len(suggestingAlgorithms)+2)
+		ruleIDs := make(map[string]struct{})
 
 		existingIDs := existing.Clusters[i]
 		for _, id := range existingIDs {
@@ -132,7 +132,7 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 				// updated or made inactive since, so we need to treat these
 				// separately (and pass them to the rules algorithm to filter
 				// through).
-				existingRuleIDs[id.ID] = struct{}{}
+				ruleIDs[id.ID] = struct{}{}
 			}
 		}
 
@@ -142,26 +142,22 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 			if id == nil {
 				continue
 			}
-			newIDs = append(newIDs, &clustering.ClusterID{
+			newIDs = append(newIDs, clustering.ClusterID{
 				Algorithm: a.Name(),
 				ID:        hex.EncodeToString(id),
 			})
 		}
 
-		var newRuleIDs map[string]struct{}
 		if ruleset.RulesVersion.After(existingRulesVersion) {
 			// Match against the (incremental) set of rules.
-			newRuleIDs = rulesAlgorithm.Cluster(ruleset, existingRulesVersion, existingRuleIDs, f)
-		} else {
-			// Test results were already clustered with an equal or later
-			// version of rules.
-			// This can happen if our cached ruleset is out of date. Re-use the
-			// existing analysis; don't try to improve on it.
-			newRuleIDs = existingRuleIDs
+			rulesAlgorithm.Cluster(ruleset, existingRulesVersion, ruleIDs, f)
 		}
+		// Otherwise test results were already clustered with an equal or later
+		// version of rules. This can happen if our cached ruleset is out of date.
+		// Re-use the existing analysis in this case; don't try to improve on it.
 
-		for rID := range newRuleIDs {
-			id := &clustering.ClusterID{
+		for rID := range ruleIDs {
+			id := clustering.ClusterID{
 				Algorithm: rulesalgorithm.AlgorithmName,
 				ID:        rID,
 			}
@@ -171,7 +167,7 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 		// Keep the output deterministic by sorting the clusters in the
 		// output.
 		clustering.SortClusters(newIDs)
-		result = append(result, newIDs)
+		result[i] = newIDs
 	}
 
 	newRulesVersion := ruleset.RulesVersion
@@ -221,6 +217,6 @@ func NewEmptyClusterResults(count int) clustering.ClusterResults {
 		// The RulesVersion StartingEpoch refers to the empty set of rules.
 		RulesVersion: rules.StartingEpoch,
 		Algorithms:   make(map[string]struct{}),
-		Clusters:     make([][]*clustering.ClusterID, count),
+		Clusters:     make([][]clustering.ClusterID, count),
 	}
 }

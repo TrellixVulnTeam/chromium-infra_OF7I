@@ -27,7 +27,7 @@ type FailureUpdate struct {
 	// TestResult is the failure that was re-clustered.
 	TestResult *cpb.Failure
 	// PreviousClusters are the clusters the failure was previously in.
-	PreviousClusters []*ClusterID
+	PreviousClusters []ClusterID
 	// PreviousClusters are the clusters the failure is now in.
-	NewClusters []*ClusterID
+	NewClusters []ClusterID
 }

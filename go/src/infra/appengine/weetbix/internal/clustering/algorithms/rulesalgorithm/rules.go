@@ -24,25 +24,23 @@ const AlgorithmVersion = 1
 // of an algorithm has a different name.
 var AlgorithmName = fmt.Sprintf("%sv%v", clustering.RulesAlgorithmPrefix, AlgorithmVersion)
 
-// Cluster incrementally (re-)clusters the given test failure, returning the
-// matching cluster IDs. The passed existinRulesVersion and existingIDs
+// Cluster incrementally (re-)clusters the given test failure, updating the
+// matched cluster IDs. The passed existingRulesVersion and ruleIDs
 // should be the ruleset.RulesVersion and cluster IDs of the previous call
 // to Cluster (if any) from which incremental clustering should occur.
 //
 // If clustering has not been performed previously, and clustering is to be
 // performed from scratch, existingRulesVersion should be rules.StartingEpoch
-// and existingIDs should be an empty set.
-func (a *Algorithm) Cluster(ruleset *cache.Ruleset, existingRulesVersion time.Time, existingIDs map[string]struct{}, failure *clustering.Failure) map[string]struct{} {
-	values := map[string]string{
-		"test":   failure.TestID,
-		"reason": failure.Reason.GetPrimaryErrorMessage(),
-	}
-
-	newIDs := make(map[string]struct{})
-	for id := range existingIDs {
-		// Keep matches with rules that are still active.
-		if ruleset.IsRuleActive(id) {
-			newIDs[id] = struct{}{}
+// and ruleIDs should be an empty list.
+//
+// This method is on the performance-critical path for re-clustering.
+//
+// To avoid unnecessary allocations, the method will modify the passed ruleIDs.
+func (a *Algorithm) Cluster(ruleset *cache.Ruleset, existingRulesVersion time.Time, ruleIDs map[string]struct{}, failure *clustering.Failure) {
+	for id := range ruleIDs {
+		// Remove matches with rules that are no longer active.
+		if !ruleset.IsRuleActive(id) {
+			delete(ruleIDs, id)
 		}
 	}
 
@@ -50,14 +48,13 @@ func (a *Algorithm) Cluster(ruleset *cache.Ruleset, existingRulesVersion time.Ti
 	// last call to Cluster(...).
 	newRules := ruleset.ActiveRulesUpdatedSince(existingRulesVersion)
 	for _, r := range newRules {
-		if r.Expr.Evaluate(values) {
-			newIDs[r.RuleID] = struct{}{}
+		if r.Expr.Evaluate(failure) {
+			ruleIDs[r.RuleID] = struct{}{}
 		} else {
 			// If this is a modified rule (rather than a new rule)
 			// it may have matched previously. Delete any existing
 			// match.
-			delete(newIDs, r.RuleID)
+			delete(ruleIDs, r.RuleID)
 		}
 	}
-	return newIDs
 }

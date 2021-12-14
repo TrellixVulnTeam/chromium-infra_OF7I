@@ -5,6 +5,7 @@
 package rulesalgorithm
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -20,10 +21,10 @@ func TestAlgorithm(t *testing.T) {
 	Convey(`Cluster from scratch`, t, func() {
 		a := &Algorithm{}
 		existingRulesVersion := rules.StartingEpoch
-		existingIDs := make(map[string]struct{})
+		ids := make(map[string]struct{})
 		Convey(`Empty Rules`, func() {
 			ruleset := &cache.Ruleset{}
-			ids := a.Cluster(ruleset, existingRulesVersion, existingIDs, &clustering.Failure{
+			a.Cluster(ruleset, existingRulesVersion, ids, &clustering.Failure{
 				Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
 			})
 			So(ids, ShouldBeEmpty)
@@ -46,20 +47,23 @@ func TestAlgorithm(t *testing.T) {
 			ruleset := cache.NewRuleset("myproject", rules, rulesVersion, lastUpdated)
 
 			Convey(`Without failure reason`, func() {
-				ids := a.Cluster(ruleset, existingRulesVersion, existingIDs, &clustering.Failure{
-					TestID: "ninja://test_name_one/",
+				Convey(`Matching`, func() {
+					a.Cluster(ruleset, existingRulesVersion, ids, &clustering.Failure{
+						TestID: "ninja://test_name_one/",
+					})
+					So(ids, ShouldResemble, map[string]struct{}{
+						rule1.RuleID: {},
+					})
 				})
-				So(ids, ShouldResemble, map[string]struct{}{
-					rule1.RuleID: {},
+				Convey(`Non-matcing`, func() {
+					a.Cluster(ruleset, existingRulesVersion, ids, &clustering.Failure{
+						TestID: "ninja://test_name_two/",
+					})
+					So(ids, ShouldBeEmpty)
 				})
-
-				ids = a.Cluster(ruleset, existingRulesVersion, existingIDs, &clustering.Failure{
-					TestID: "ninja://test_name_two/",
-				})
-				So(ids, ShouldBeEmpty)
 			})
 			Convey(`Matches one`, func() {
-				ids := a.Cluster(ruleset, existingRulesVersion, existingIDs, &clustering.Failure{
+				a.Cluster(ruleset, existingRulesVersion, ids, &clustering.Failure{
 					TestID: "ninja://test_name_three/",
 					Reason: &pb.FailureReason{
 						PrimaryErrorMessage: "failed to connect to 192.168.0.1",
@@ -70,12 +74,14 @@ func TestAlgorithm(t *testing.T) {
 				})
 			})
 			Convey(`Matches multiple`, func() {
-				ids := a.Cluster(ruleset, existingRulesVersion, existingIDs, &clustering.Failure{
+				a.Cluster(ruleset, existingRulesVersion, ids, &clustering.Failure{
 					TestID: "ninja://test_name_one/",
 					Reason: &pb.FailureReason{
 						PrimaryErrorMessage: "failed to connect to 192.168.0.1",
 					},
 				})
+				expectedIDs := []string{rule1.RuleID, rule2.RuleID}
+				sort.Strings(expectedIDs)
 				So(ids, ShouldResemble, map[string]struct{}{
 					rule1.RuleID: {},
 					rule2.RuleID: {},
@@ -112,15 +118,15 @@ func TestAlgorithm(t *testing.T) {
 		lastUpdated := time.Now()
 		secondRuleset := cache.NewRuleset("myproject", rules, newRulesVersion, lastUpdated)
 
-		firstIDs := map[string]struct{}{
+		ids := map[string]struct{}{
 			rule1.RuleID: {},
 			"rule2-id":   {},
 		}
 
 		// Test incrementally clustering leads to the correct outcome,
 		// matching rule 3 and unmatching rule 2.
-		secondIDs := a.Cluster(secondRuleset, originalRulesVersion, firstIDs, testFailure)
-		So(secondIDs, ShouldResemble, map[string]struct{}{
+		a.Cluster(secondRuleset, originalRulesVersion, ids, testFailure)
+		So(ids, ShouldResemble, map[string]struct{}{
 			rule1.RuleID: {},
 			rule3.RuleID: {},
 		})
