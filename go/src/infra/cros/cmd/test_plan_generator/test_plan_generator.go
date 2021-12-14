@@ -12,7 +12,9 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
+	"infra/cros/internal/cmd"
 	"infra/cros/internal/generator"
 	igerrit "infra/cros/internal/gerrit"
 	"infra/cros/internal/manifestutil"
@@ -55,6 +57,7 @@ type getTestPlanRun struct {
 	targetTestRequirementsPath string
 	manifestFile               string
 	localConfigDir             string
+	targetTestReqsRepo         string
 }
 
 func cmdGenTestPlan(authOpts auth.Options) *subcommands.Command {
@@ -78,6 +81,10 @@ func cmdGenTestPlan(authOpts auth.Options) *subcommands.Command {
 				targetTestRequirementsPathDefault, "Path to the target test requirements input proto")
 			c.Flags.StringVar(&c.manifestFile, "manifest_file", "", "Path to local manifest file. If given, will be used instead of default snapshot.xml")
 			c.Flags.StringVar(&c.localConfigDir, "local_config_dir", "", "Path to a config checkout, to be used rather than gitiles")
+			c.Flags.StringVar(&c.targetTestReqsRepo, "target_test_requirements_repo", "",
+				"Path to src/config-internal checkout. If set, target test requirements will be generated from this directory using "+
+					"./board_config/generate_test_config instead of fetching an already-generated file from Gitiles. Takes precendent "+
+					"over all other flags (e.g. -target_test_requirements).")
 			return c
 		}}
 }
@@ -89,6 +96,12 @@ func (c *getTestPlanRun) Run(a subcommands.Application, args []string, env subco
 	if err != nil {
 		log.Print(err)
 		return 1
+	}
+
+	bbBuilds, err := readBuildbucketBuilds(req.BuildbucketProtos)
+	if err != nil {
+		log.Print(err)
+		return 3
 	}
 
 	var boardPriorityList *testplans.BoardPriorityList
@@ -104,10 +117,16 @@ func (c *getTestPlanRun) Run(a subcommands.Application, args []string, env subco
 		return 2
 	}
 
-	bbBuilds, err := readBuildbucketBuilds(req.BuildbucketProtos)
+	if c.targetTestReqsRepo != "" {
+		builderNames := []string{}
+		for _, builder := range bbBuilds {
+			builderNames = append(builderNames, builder.Builder.Builder)
+		}
+		testReqsConfig, err = c.genTargetTestRequirements(builderNames)
+	}
 	if err != nil {
 		log.Print(err)
-		return 3
+		return 10
 	}
 
 	gerritChanges, err := readGerritChanges(req.GerritChanges)
@@ -260,6 +279,24 @@ func (c *getTestPlanRun) readLocalConfigFiles() (*testplans.BoardPriorityList, *
 	log.Printf("Read local config:\n%s\n\n%s\n\n%s", proto.MarshalTextString(boardPriorityList),
 		proto.MarshalTextString(sourceTreeConfig), proto.MarshalTextString(testReqsConfig))
 	return boardPriorityList, sourceTreeConfig, testReqsConfig, nil
+}
+
+func (c *getTestPlanRun) genTargetTestRequirements(builderNames []string) (*testplans.TargetTestRequirementsCfg, error) {
+	cmdRunner := cmd.RealCommandRunner{}
+
+	ctx := context.Background()
+	var stdoutBuf bytes.Buffer
+	cmd := []string{strings.Join(builderNames, ",")}
+	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, nil, c.targetTestReqsRepo, "./board_config/generate_test_config", cmd...); err != nil {
+		return nil, err
+	}
+
+	testReqsConfig := &testplans.TargetTestRequirementsCfg{}
+	if err := unmarshaler.Unmarshal(bytes.NewReader(stdoutBuf.Bytes()), testReqsConfig); err != nil {
+		return nil, fmt.Errorf("couldn't decode file as TargetTestRequirementsCfg: %v", err)
+	}
+	log.Printf("Overriding target test config with directly generated config:\n%s", proto.MarshalTextString(testReqsConfig))
+	return testReqsConfig, nil
 }
 
 func readBuildbucketBuilds(bbBuildsBytes []*testplans.ProtoBytes) ([]*bbproto.Build, error) {
