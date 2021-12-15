@@ -328,6 +328,52 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/builder/infra/build/build.py",
+      "--no-freshen-python-env",
+      "--builder",
+      "infra-packager-mac-64"
+    ],
+    "cwd": "[CACHE]/builder/infra/go/src/infra",
+    "env": {
+      "GOARCH": "arm64",
+      "GOFLAGS": "-mod=readonly",
+      "GOOS": "darwin",
+      "GOROOT": "[CACHE]/builder/golang/go",
+      "INFRA_GO_SKIP_TOOLS_INSTALL": "1",
+      "INFRA_GO_VERSION_VARIANT": "legacy"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/builder/golang/go"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]/builder/infra/go/bin"
+      ]
+    },
+    "luci_context": {
+      "realm": {
+        "name": "infra:prod"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "[GOOS:darwin GOARCH:arm64]cipd - build packages"
+  },
+  {
+    "cmd": [],
+    "name": "no CIPD package upload in experimental mode (2)"
+  },
+  {
+    "cmd": [
       "sudo",
       "xcode-select",
       "--reset"

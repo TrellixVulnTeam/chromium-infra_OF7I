@@ -106,7 +106,6 @@ CIPD_PACKAGE_BUILDERS = {
     # platform (as of Feb 23 2021). We try to balance xc1 and xc2.
     'infra-packager-linux-64': [
         'native',  # ~120 sec
-        'darwin-arm64',  # ~60 sec
     ],
     'infra-packager-linux-xc1': [
         'linux-386',  # ~60 sec
@@ -124,6 +123,7 @@ CIPD_PACKAGE_BUILDERS = {
     ],
     'infra-packager-mac-64': [
         'native:legacy',  # ~150 sec
+        'darwin-arm64',  # ~60 sec
     ],
     'infra-packager-win-64': [
         'native',  # ~60 sec
