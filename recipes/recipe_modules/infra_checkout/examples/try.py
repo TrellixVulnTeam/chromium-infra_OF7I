@@ -24,8 +24,8 @@ def RunSteps(api):
 
 def GenTests(api):
   def diff(*files):
-    return api.step_data(
-        'get change list', api.raw_io.stream_output('\n'.join(files)))
+    return api.step_data('get change list',
+                         api.raw_io.stream_output_text('\n'.join(files)))
 
   for plat in ('linux', 'mac', 'win'):
     yield (

@@ -48,9 +48,9 @@
   * [infra_checkout:examples/ci](#recipes-infra_checkout_examples_ci) (Python3 ✅)
   * [infra_checkout:examples/try](#recipes-infra_checkout_examples_try) (Python3 ✅)
   * [infra_cipd:examples/usage](#recipes-infra_cipd_examples_usage) (Python3 ✅)
-  * [infra_continuous](#recipes-infra_continuous)
-  * [infra_frontend_tester](#recipes-infra_frontend_tester)
-  * [infra_repo_trybot](#recipes-infra_repo_trybot)
+  * [infra_continuous](#recipes-infra_continuous) (Python3 ✅)
+  * [infra_frontend_tester](#recipes-infra_frontend_tester) (Python3 ✅)
+  * [infra_repo_trybot](#recipes-infra_repo_trybot) (Python3 ✅)
   * [infra_system:examples/full](#recipes-infra_system_examples_full) (Python3 ✅)
   * [luci_go](#recipes-luci_go)
   * [luci_py](#recipes-luci_py)
@@ -1428,35 +1428,35 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/recipe_modules/infra_cipd/examples/usage.py#25)(api):**
 ### *recipes* / [infra\_continuous](/recipes/recipes/infra_continuous.py)
 
-[DEPS](/recipes/recipes/infra_continuous.py#10): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/infra_continuous.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_cipd](#recipe_modules-infra_cipd), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#155)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_continuous.py#152)(api):**
 
-&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#191)(api, checkout, buildername, project_name, repo_url, rev):**
+&mdash; **def [build\_main](/recipes/recipes/infra_continuous.py#188)(api, checkout, buildername, project_name, repo_url, rev):**
 
-&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#234)(api, project_name):**
+&mdash; **def [run\_python\_tests](/recipes/recipes/infra_continuous.py#231)(api, project_name):**
 ### *recipes* / [infra\_frontend\_tester](/recipes/recipes/infra_frontend_tester.py)
 
-[DEPS](/recipes/recipes/infra_frontend_tester.py#5): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/infra_frontend_tester.py#7): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunFrontendTests](/recipes/recipes/infra_frontend_tester.py#88)(api, env, cwd, app_name):**
+&mdash; **def [RunFrontendTests](/recipes/recipes/infra_frontend_tester.py#90)(api, env, cwd, app_name):**
 
-&mdash; **def [RunInfraFrontendTests](/recipes/recipes/infra_frontend_tester.py#55)(api, env):**
+&mdash; **def [RunInfraFrontendTests](/recipes/recipes/infra_frontend_tester.py#57)(api, env):**
 
-&mdash; **def [RunInfraInternalFrontendTests](/recipes/recipes/infra_frontend_tester.py#45)(api, env):**
+&mdash; **def [RunInfraInternalFrontendTests](/recipes/recipes/infra_frontend_tester.py#47)(api, env):**
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_frontend_tester.py#18)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_frontend_tester.py#20)(api):**
 ### *recipes* / [infra\_repo\_trybot](/recipes/recipes/infra_repo_trybot.py)
 
-[DEPS](/recipes/recipes/infra_repo_trybot.py#7): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/infra_repo_trybot.py#9): [depot\_tools/osx\_sdk][depot_tools/recipe_modules/osx_sdk], [infra\_checkout](#recipe_modules-infra_checkout), [infra\_system](#recipe_modules-infra_system), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipes/infra_repo_trybot.py#33)(api, go_version_variant):**
+&mdash; **def [RunSteps](/recipes/recipes/infra_repo_trybot.py#35)(api, go_version_variant):**
 ### *recipes* / [infra\_system:examples/full](/recipes/recipe_modules/infra_system/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/infra_system/examples/full.py#7): [infra\_system](#recipe_modules-infra_system), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]

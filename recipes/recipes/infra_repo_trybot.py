@@ -4,6 +4,8 @@
 
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'depot_tools/osx_sdk',
     'infra_checkout',
@@ -118,8 +120,8 @@ def RunSteps(api, go_version_variant):
 
 def GenTests(api):
   def diff(*files):
-    return api.step_data(
-        'get change list', api.raw_io.stream_output('\n'.join(files)))
+    return api.step_data('get change list',
+                         api.raw_io.stream_output_text('\n'.join(files)))
 
   def test(name, internal=False, buildername='generic tester'):
     return (

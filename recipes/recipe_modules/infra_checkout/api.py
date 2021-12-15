@@ -129,7 +129,9 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
           git_args.extend(['--diff-filter', diff_filter])
         with self.m.context(cwd=path.join(patch_root)):
           result = self.m.git(
-              *git_args, name='get change list', stdout=self.m.raw_io.output())
+              *git_args,
+              name='get change list',
+              stdout=self.m.raw_io.output_text())
         files = result.stdout.splitlines()
         if len(files) < 50:
           result.presentation.logs['change list'] = sorted(files)

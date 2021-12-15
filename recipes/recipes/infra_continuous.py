@@ -2,10 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import contextlib
-import json
-
-from recipe_engine.recipe_api import Property
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
 
 DEPS = [
     'depot_tools/bot_update',
