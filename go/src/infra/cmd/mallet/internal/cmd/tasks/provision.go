@@ -100,9 +100,9 @@ const customProvisionPlanStart = `
 			"actions": {
 				"cros_ssh": {
 					"dependencies": [
-						"has_dut_name",
-						"has_dut_board_name",
-						"has_dut_model_name",
+						"dut_has_name",
+						"dut_has_board_name",
+						"dut_has_model_name",
 						"cros_ping"
 					],
 					"exec_name": "cros_ssh"

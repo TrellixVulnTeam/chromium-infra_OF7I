@@ -26,9 +26,9 @@ const crosRepairPlanBody = `
 "actions": {
 	"cros_ssh":{
 		"dependencies":[
-			"has_dut_name",
-			"has_dut_board_name",
-			"has_dut_model_name",
+			"dut_has_name",
+			"dut_has_board_name",
+			"dut_has_model_name",
 			"cros_ping"
 		]
 	},
@@ -394,7 +394,7 @@ const crosRepairPlanBody = `
 			"Confirm that the DUT itself does not have device_sku label."
 		],
 		"conditions":[
-			"has_dut_device_sku"
+			"dut_has_device_sku"
 		],
 		"exec_name":"sample_fail"
 	}

@@ -95,10 +95,10 @@ func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 }
 
 func init() {
-	execs.Register("has_dut_name", hasDutNameActionExec)
-	execs.Register("has_dut_board_name", hasDutBoardActionExec)
-	execs.Register("has_dut_model_name", hasDutModelActionExec)
-	execs.Register("has_dut_device_sku", hasDutDeviceSkuActionExec)
+	execs.Register("dut_has_name", hasDutNameActionExec)
+	execs.Register("dut_has_board_name", hasDutBoardActionExec)
+	execs.Register("dut_has_model_name", hasDutModelActionExec)
+	execs.Register("dut_has_device_sku", hasDutDeviceSkuActionExec)
 	execs.Register("dut_check_model", dutCheckModelExec)
 	execs.Register("dut_servoless", dutServolessExec)
 }

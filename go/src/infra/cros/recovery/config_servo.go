@@ -43,7 +43,7 @@ const servoRepairPlanBody = `
 	},
 	"servo_host_info": {
 		"dependencies" : [
-			"has_dut_name"
+			"dut_has_name"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -310,7 +310,7 @@ const servoRepairPlanBody = `
 			"pwr_button_supported_models"
 		],
 		"dependencies": [
-			"has_dut_model_name"
+			"dut_has_model_name"
 		],
 		"exec_extra_args": [
 			"command:pwr_button",

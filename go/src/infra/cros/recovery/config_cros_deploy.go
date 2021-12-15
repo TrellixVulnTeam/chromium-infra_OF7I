@@ -38,7 +38,7 @@ const crosDeployPlanBody = `
 			"Confirm that the DUT itself does not have device_sku label."
 		],
 		"conditions":[
-			"has_dut_device_sku"
+			"dut_has_device_sku"
 		],
 		"exec_name":"sample_fail"
 	}

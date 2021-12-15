@@ -31,9 +31,9 @@ const labstationRepairPlanBody = `
 		],
 		"exec_name": "sample_pass",
 		"dependencies":[
-			"has_dut_name",
-			"has_dut_board_name",
-			"has_dut_model_name"
+			"dut_has_name",
+			"dut_has_board_name",
+			"dut_has_model_name"
 		]
 	},
 	"cros_is_on_stable_version":{
@@ -198,9 +198,9 @@ const labstationDeployPlanBody = `
 		],
 		"exec_name": "sample_pass",
 		"dependencies":[
-			"has_dut_name",
-			"has_dut_board_name",
-			"has_dut_model_name"
+			"dut_has_name",
+			"dut_has_board_name",
+			"dut_has_model_name"
 		]
 	},
 	"update_inv_info":{
