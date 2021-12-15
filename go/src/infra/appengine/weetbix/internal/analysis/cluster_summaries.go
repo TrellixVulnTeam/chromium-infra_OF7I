@@ -98,6 +98,27 @@ func (c *Client) Close() error {
 	return c.client.Close()
 }
 
+// ProjectsWithDataset returns the set of LUCI projects which have
+// a BigQuery dataset created.
+func (c *Client) ProjectsWithDataset(ctx context.Context) (map[string]struct{}, error) {
+	result := make(map[string]struct{})
+	di := c.client.Datasets(ctx)
+	for {
+		d, err := di.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		project, err := bqutil.ProjectForDataset(d.DatasetID)
+		if err != nil {
+			return nil, err
+		}
+		result[project] = struct{}{}
+	}
+	return result, nil
+}
+
 // RebuildAnalysis re-builds the cluster summaries analysis from
 // clustered test results.
 func (c *Client) RebuildAnalysis(ctx context.Context, project string) error {

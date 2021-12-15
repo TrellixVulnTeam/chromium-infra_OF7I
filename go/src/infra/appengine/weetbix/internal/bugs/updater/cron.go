@@ -48,10 +48,20 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, 
 	if err != nil {
 		return err
 	}
+	projectsWithDataset, err := ac.ProjectsWithDataset(ctx)
+	if err != nil {
+		return errors.Annotate(err, "querying projects with dataset").Err()
+	}
+
 	var errs []error
 	// In future, the 10 minute GAE request limit may mean we need to
 	// parallelise these tasks or fan them out as separate tasks.
 	for project, cfg := range projectCfg {
+		if _, ok := projectsWithDataset[project]; !ok {
+			// Dataset not provisioned for project.
+			continue
+		}
+
 		opts := updateOptions{
 			project:            project,
 			analysisClient:     ac,

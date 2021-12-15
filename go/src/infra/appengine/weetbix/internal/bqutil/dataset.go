@@ -26,3 +26,15 @@ func DatasetForProject(luciProject string) (string, error) {
 	// [2]: https://cloud.google.com/bigquery/docs/datasets#dataset-naming
 	return strings.ReplaceAll(luciProject, "-", "_"), nil
 }
+
+// ProjectForDataset returns the name of the LUCI Project that corresponds
+// to the given BigQuery dataset.
+func ProjectForDataset(dataset string) (string, error) {
+	project := strings.ReplaceAll(dataset, "_", "-")
+
+	if !config.ProjectRe.MatchString(project) {
+		return "", errors.New("invalid LUCI Project")
+	}
+
+	return project, nil
+}
