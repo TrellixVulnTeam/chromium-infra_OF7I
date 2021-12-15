@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 
 	"infra/chromium/bootstrapper/bootstrap"
 	"infra/chromium/bootstrapper/cas"
@@ -27,6 +28,7 @@ import (
 	"go.chromium.org/luci/common/logging/gologger"
 	logdogbootstrap "go.chromium.org/luci/logdog/client/butlerlib/bootstrap"
 	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
+	"go.chromium.org/luci/lucictx"
 	"go.chromium.org/luci/luciexe"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
@@ -245,6 +247,13 @@ func bootstrapMain(ctx context.Context, getOpts getOptionsFn, performBootstrap b
 func main() {
 	ctx := context.Background()
 	ctx = gologger.StdConfig.Use(ctx)
+
+	// Tracking soft deadline and calling shutdown causes the bootstrapper
+	// to participate in the termination protocol. No explicit action is
+	// necessary to terminate the bootstrapped executable, the signal will
+	// be propagated to the entire process/console group.
+	ctx, shutdown := lucictx.TrackSoftDeadline(ctx, 500*time.Millisecond)
+	defer shutdown()
 
 	if err := bootstrapMain(ctx, parseFlags, performBootstrap, executeCmd, updateBuild); err != nil {
 		os.Exit(1)
