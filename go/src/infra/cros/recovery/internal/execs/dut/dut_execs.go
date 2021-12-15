@@ -42,6 +42,15 @@ func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	return errors.Reason("dut model name is empty").Err()
 }
 
+// dutServolessExec verifies that setup is servoless.
+func dutServolessExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if args.DUT.ServoHost == nil || (args.DUT.ServoHost.Name == "" && args.DUT.ServoHost.ContainerName == "") {
+		log.Debug(ctx, "DUT servoless confirmed!")
+		return nil
+	}
+	return errors.Reason("dut is servoless").Err()
+}
+
 // hasDutDeviceSkuActionExec verifies that DUT has the device sku label.
 func hasDutDeviceSkuActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	deviceSkuLabel := args.DUT.DeviceSku
@@ -91,4 +100,5 @@ func init() {
 	execs.Register("has_dut_model_name", hasDutModelActionExec)
 	execs.Register("has_dut_device_sku", hasDutDeviceSkuActionExec)
 	execs.Register("dut_check_model", dutCheckModelExec)
+	execs.Register("dut_servoless", dutServolessExec)
 }
