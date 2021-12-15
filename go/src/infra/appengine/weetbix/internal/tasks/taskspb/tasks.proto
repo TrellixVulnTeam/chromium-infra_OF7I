@@ -7,7 +7,6 @@ syntax = "proto3";
 package weetbix.internal.tasks;
 
 import "google/protobuf/timestamp.proto";
-import "go.chromium.org/luci/cv/api/v0/run.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 import "infra/appengine/weetbix/proto/v1/common.proto";
 import "infra/appengine/weetbix/proto/v1/predicate.proto";
@@ -26,9 +25,7 @@ message Build {
 
 // Payload of IngestTestResults task.
 message IngestTestResults {
-  // Information of a CV managed CQ run.
-  // If the task is not for a CQ run, this field will be empty.
-  cv.v0.Run cv_run = 1;
+  reserved 1;
 
   // Information of a Buildbucket build.
   Build build = 2;
@@ -38,6 +35,14 @@ message IngestTestResults {
   // ingested for one CV run, the partition_time used for all
   // builds must be the same.
   google.protobuf.Timestamp partition_time = 3;
+
+  // The identity of the presubmit run. If the ingestion does not relate to test
+  // results obtained in a presubmit run, this field will be empty.
+  weetbix.v1.PresubmitRunId presubmit_run_id = 4;
+
+  // Whether the presubmit run succeeded. This field should be ignored if
+  // presubmit_run_id is not set.
+  bool presubmit_run_succeeded = 5;
 }
 
 // ResultDB-specific information.

@@ -30,7 +30,6 @@ import (
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
-	pb "infra/appengine/weetbix/proto/v1"
 )
 
 const (
@@ -140,8 +139,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		PartitionTime: payload.PartitionTime.AsTime(),
 		Realm:         inv.Realm,
 	}
-	if payload.CvRun != nil {
-		opts.PresubmitRunID = &pb.PresubmitRunId{System: "luci-cv", Id: payload.CvRun.Id}
+	if payload.PresubmitRunId != nil {
+		opts.PresubmitRunID = payload.PresubmitRunId
 	}
 	clusterIngestion := i.clustering.Open(opts)
 

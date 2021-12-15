@@ -7,6 +7,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -21,6 +22,7 @@ import (
 	"infra/appengine/weetbix/internal/cv"
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
+	pb "infra/appengine/weetbix/proto/v1"
 )
 
 const (
@@ -39,7 +41,7 @@ var (
 		// "success", "transient-failure" or "permanent-failure".
 		field.String("status"))
 
-	runIDRe = regexp.MustCompile(`^projects/(.*)/runs/.*$`)
+	runIDRe = regexp.MustCompile(`^projects/(.*)/runs/(.*)$`)
 )
 
 // CVRunPubSubHandler accepts and processes CV Pub/Sub messages.
@@ -69,11 +71,13 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 	if err != nil {
 		return false, errors.Annotate(err, "failed to extract run").Err()
 	}
-	shouldProcess, err := shouldProcessRun(psRun)
-	switch {
-	case err != nil:
-		return false, errors.Annotate(err, "failed to extract run project").Err()
-	case !shouldProcess:
+
+	project, runID, err := parseRunID(psRun.Id)
+	if err != nil {
+		return false, errors.Annotate(err, "failed to extract run").Err()
+	}
+	if project != chromiumProject {
+		// Received a non-chromium run, ignore it.
 		return false, nil
 	}
 
@@ -99,12 +103,16 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 			continue
 		}
 		task := &taskspb.IngestTestResults{
-			CvRun: run,
 			Build: &taskspb.Build{
 				Id:   b.Id,
 				Host: bbHost,
 			},
 			PartitionTime: run.CreateTime,
+			PresubmitRunId: &pb.PresubmitRunId{
+				System: "luci-cv",
+				Id:     fmt.Sprintf("%s/%s", project, runID),
+			},
+			PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
 		}
 		if err := resultingester.Schedule(ctx, task); err != nil {
 			errs = append(errs, err)
@@ -141,25 +149,12 @@ func extractPubSubRun(r *http.Request) (*cvv1.PubSubRun, error) {
 	return &run, nil
 }
 
-func shouldProcessRun(run *cvv1.PubSubRun) (shouldProcess bool, err error) {
-	project, err := projectFromRunID(run.Id)
-	switch {
-	case err != nil:
-		return false, errors.Annotate(err, "failed to extract run").Err()
-	case project != chromiumProject:
-		// Received a non-chromium run, ignore it.
-		return false, nil
-	default:
-		return true, nil
-	}
-}
-
-func projectFromRunID(runID string) (string, error) {
+func parseRunID(runID string) (project string, run string, err error) {
 	m := runIDRe.FindStringSubmatch(runID)
 	if m == nil {
-		return "", errors.Reason("run ID does not match %s", runIDRe).Err()
+		return "", "", errors.Reason("run ID does not match %s", runIDRe).Err()
 	}
-	return m[1], nil
+	return m[1], m[2], nil
 }
 
 // getRun gets the full Run message by make a GetRun RPC to CV.

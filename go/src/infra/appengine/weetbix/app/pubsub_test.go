@@ -10,10 +10,12 @@ import (
 	"io"
 	"io/ioutil"
 	"sort"
+	"strings"
 
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 
 	"infra/appengine/weetbix/internal/tasks/taskspb"
+	pb "infra/appengine/weetbix/proto/v1"
 
 	// Needed to ensure task class is registered.
 	_ "infra/appengine/weetbix/internal/services/resultingester"
@@ -37,12 +39,16 @@ func expectedTasks(run *cvv0.Run) []*taskspb.IngestTestResults {
 			continue
 		}
 		t := &taskspb.IngestTestResults{
-			CvRun: run,
 			Build: &taskspb.Build{
 				Host: bbHost,
 				Id:   tj.GetResult().GetBuildbucket().GetId(),
 			},
 			PartitionTime: run.CreateTime,
+			PresubmitRunId: &pb.PresubmitRunId{
+				System: "luci-cv",
+				Id:     chromiumProject + "/" + strings.Split(run.Id, "/")[3],
+			},
+			PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
 		}
 		res = append(res, t)
 	}

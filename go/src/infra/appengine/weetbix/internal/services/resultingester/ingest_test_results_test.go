@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	cvv0 "go.chromium.org/luci/cv/api/v0"
 	"go.chromium.org/luci/gae/impl/memory"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/caching"
@@ -72,9 +71,11 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 
 	Convey(`successful cq run`, t, func() {
 		payload := &taskspb.IngestTestResults{
-			CvRun: &cvv0.Run{
-				Status: cvv0.Run_SUCCEEDED,
+			PresubmitRunId: &pb.PresubmitRunId{
+				System: "luci-cv",
+				Id:     "chromium/1111111111111-1-1111111111111111",
 			},
+			PresubmitRunSucceeded: true,
 			Build: &taskspb.Build{
 				Host: "host",
 				Id:   int64(2),
@@ -86,9 +87,11 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 
 	Convey(`failed cq run`, t, func() {
 		payload := &taskspb.IngestTestResults{
-			CvRun: &cvv0.Run{
-				Status: cvv0.Run_FAILED,
+			PresubmitRunId: &pb.PresubmitRunId{
+				System: "luci-cv",
+				Id:     "chromium/1111111111111-1-1111111111111111",
 			},
+			PresubmitRunSucceeded: false,
 			Build: &taskspb.Build{
 				Host: "host",
 				Id:   int64(3),

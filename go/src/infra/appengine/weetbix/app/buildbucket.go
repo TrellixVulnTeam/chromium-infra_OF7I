@@ -69,7 +69,6 @@ func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) error {
 
 	default:
 		task := &taskspb.IngestTestResults{
-			CvRun:         nil,
 			Build:         build,
 			PartitionTime: timestamppb.New(createTime),
 		}

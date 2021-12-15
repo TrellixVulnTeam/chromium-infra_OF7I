@@ -14,7 +14,6 @@ import (
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
-	cvv0 "go.chromium.org/luci/cv/api/v0"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
 
@@ -41,18 +40,10 @@ var locBasedTagKeys = map[string]struct{}{
 }
 
 func shouldIngestForTestVariants(task *taskspb.IngestTestResults) bool {
-	switch {
-	case task.CvRun == nil:
-		return true
-	case task.CvRun.Status == cvv0.Run_SUCCEEDED:
-		// Only ingest test variants for successful CV (full) runs.
-		// Note that this is only true for Chromium, but since Weetbix test variant
-		// analysis only supports Chromium at the moment so it's fine.
-		// TODO(crbug.com/1259374): Update this after we have per project configs.
-		return true
-	default:
-		return false
-	}
+	// Ingest results from CI.
+	return task.PresubmitRunId == nil ||
+		// And presubmit results, where the presubmit run succeeded.
+		(task.PresubmitRunId != nil && task.PresubmitRunSucceeded)
 }
 
 // createOrUpdateAnalyzedTestVariants looks for new analyzed test variants or
