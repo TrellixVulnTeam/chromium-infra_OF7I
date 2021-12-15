@@ -371,6 +371,11 @@ func (e *experimentTelemetryRun) Run(ctx context.Context, a subcommands.Applicat
 		return fmt.Errorf("Preset must be a telemetry_batch_experiment or telemetry_experiment")
 	}
 
+	if (e.baseCommit == "HEAD" || e.expCommit == "HEAD") &&
+		(len(e.configurations) > 1 || len(e.stories) > 1 || p.TelemetryBatchExperiment != nil) {
+		return fmt.Errorf("--base-commit and --exp-commit must be explicitly defined to be something other than HEAD when running a batch of jobs.")
+	}
+
 	batch_experiments, err := getTelemetryBatchExperiments(e, ctx, p)
 	if err != nil {
 		return err
