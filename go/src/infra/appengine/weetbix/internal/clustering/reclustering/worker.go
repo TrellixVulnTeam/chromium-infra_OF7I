@@ -134,6 +134,12 @@ func (w *Worker) Do(ctx context.Context, task *taskspb.ReclusterChunks, duration
 	var done bool
 	for clock.Now(ctx).Before(finishTime) && !done {
 		err := retry.Retry(ctx, transient.Only(retry.Default), func() error {
+			// Stop harder if retrying after the attemptTime, to avoid
+			// getting stuck in a retry loop if we are running in
+			// parallel with another worker.
+			if !clock.Now(ctx).Before(attemptTime) {
+				return nil
+			}
 			var err error
 			done, err = tctx.recluster(ctx)
 			return err
