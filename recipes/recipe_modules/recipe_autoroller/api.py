@@ -64,6 +64,7 @@ More info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.
 
 COMMIT_MESSAGE_FOOTER = ("""
 Recipe-Tryjob-Bypass-Reason: Autoroller
+Ignore-Freeze: Autoroller
 Bugdroid-Send-Email: False
 """)
 
