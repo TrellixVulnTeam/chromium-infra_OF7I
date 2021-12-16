@@ -1,0 +1,40 @@
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.internal.ingestion.control;
+
+import "google/protobuf/timestamp.proto";
+import "infra/appengine/weetbix/proto/v1/common.proto";
+
+option go_package = "infra/appengine/weetbix/internal/ingestion/control/proto;controlpb";
+
+// BuildResult represents the result from the buildbucket pub/sub
+// that should be passed to the result ingestion task.
+message BuildResult {
+  // Buildbucket build ID, unique per Buildbucket instance.
+  int64 id = 1;
+
+  // Buildbucket host, e.g. "cr-buildbucket.appspot.com".
+  string host = 2;
+
+  // The time the build was created.
+  google.protobuf.Timestamp creation_time = 3;
+}
+
+// PresubmitResult represents the result from the presubmit pub/sub
+// that should be passed to the result ingestion task.
+message PresubmitResult {
+  // The identity of the presubmit run. If the ingestion does not relate to test
+  // results obtained in a presubmit run, this field should not be set.
+  weetbix.v1.PresubmitRunId presubmit_run_id = 1;
+
+  // Whether the presubmit run succeeded. This field should be ignored if
+  // presubmit_run_id is not set.
+  bool presubmit_run_succeeded = 2;
+
+  // The time the presubmit was created.
+  google.protobuf.Timestamp creation_time = 3;
+}

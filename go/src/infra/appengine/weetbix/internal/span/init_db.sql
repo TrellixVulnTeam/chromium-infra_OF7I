@@ -259,6 +259,31 @@ CREATE TABLE ReclusteringRuns (
   Progress INT64 NOT NULL,
 ) PRIMARY KEY (Project, AttemptTimestamp DESC);
 
+-- IngestionControl is used to synchronise and deduplicate the ingestion
+-- of test results which require data from one or more sources.
+--
+-- Ingestion may only start after two events are received:
+-- 1. The build has completed.
+-- 2. The presubmit run has completed.
+-- These events may occur in either order (e.g. 2 can occur before 1 if the
+-- presubmit run fails before all builds are complete).
+CREATE TABLE IngestionControl (
+  -- The LUCI Project to which the ingestion relates.
+  Project STRING(40) NOT NULL,
+  -- The unique key for the ingestion. The current scheme is:
+  -- {buildbucket host name}/{build id}.
+  BuildId STRING(1024) NOT NULL,
+  -- The build result.
+  BuildResult BYTES(MAX),
+  -- Is the build part of a presubmit run? If yes, then ingestion should
+  -- wait for the presubmit result to be populated before commencing ingestion.
+  IsPresubmit BOOL NOT NULL,
+  -- The presubmit result.
+  PresubmitResult BYTES(MAX),
+  -- The Spanner commit timestamp of when the row was last updated.
+  LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+) PRIMARY KEY (Project, BuildId);
+
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.
 CREATE TABLE TQReminders (
