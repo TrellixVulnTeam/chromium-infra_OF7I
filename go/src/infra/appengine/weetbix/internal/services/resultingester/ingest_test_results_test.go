@@ -40,6 +40,7 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/clock"
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
@@ -128,14 +129,15 @@ func createProjectsConfig() map[string]*config.ProjectConfig {
 }
 
 func TestIngestTestResults(t *testing.T) {
+	resultcollector.RegisterTaskClass()
+	testvariantupdator.RegisterTaskClass()
+
 	Convey(`TestIngestTestResults`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx = caching.WithEmptyProcessCache(ctx) // For failure association rules cache.
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		ctx = memory.Use(ctx)
 		config.SetTestProjectConfig(ctx, createProjectsConfig())
-		resultcollector.RegisterTaskClass()
-		testvariantupdator.RegisterTaskClass()
 
 		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
@@ -144,57 +146,76 @@ func TestIngestTestResults(t *testing.T) {
 			clustering: ingestion.New(chunkStore, analysis),
 		}
 
-		ctl := gomock.NewController(t)
-		defer ctl.Finish()
-
-		mrc := resultdb.NewMockedClient(ctx, ctl)
-		mbc := buildbucket.NewMockedClient(mrc.Ctx, ctl)
-		ctx = mbc.Ctx
-
-		bID := int64(87654321)
-		inv := "invocations/build-87654321"
-		realm := "chromium:ci"
-
-		mbc.GetBuildWithBuilderAndRDBInfo(bID, mockedGetBuildRsp(inv))
-
-		invReq := &rdbpb.GetInvocationRequest{
-			Name: inv,
-		}
-		invRes := &rdbpb.Invocation{
-			Name:  inv,
-			Realm: realm,
-		}
-		mrc.GetInvocation(invReq, invRes)
-
-		tvReq := &rdbpb.QueryTestVariantsRequest{
-			Invocations: []string{inv},
-			PageSize:    1000,
-			Predicate: &rdbpb.TestVariantPredicate{
-				Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
-			},
-		}
-		mrc.QueryTestVariants(tvReq, mockedQueryTestVariantsRsp())
-
-		// Prepare some existing analyzed test variants to update.
-		ms := []*spanner.Mutation{
-			// Known flake's status should remain unchanged.
-			insert.AnalyzedTestVariant(realm, "ninja://test_known_flake", "hash", pb.AnalyzedTestVariantStatus_FLAKY, nil),
-			// Non-flake test variant's status will change when see a flaky occurrence.
-			insert.AnalyzedTestVariant(realm, "ninja://test_has_unexpected", "hash", pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS, nil),
-			// Consistently failed test variant.
-			insert.AnalyzedTestVariant(realm, "ninja://test_consistent_failure", "hash", pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED, nil),
-			// Stale test variant has new failure.
-			insert.AnalyzedTestVariant(realm, "ninja://test_no_new_results", "hash", pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS, nil),
-		}
-		testutil.MustApply(ctx, ms...)
-
+		Convey(`partition time`, func() {
+			payload := &taskspb.IngestTestResults{
+				Build: &taskspb.Build{
+					Host: "host",
+					Id:   13131313,
+				},
+				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
+			}
+			Convey(`too early`, func() {
+				payload.PartitionTime = timestamppb.New(clock.Now(ctx).Add(25 * time.Hour))
+				err := ri.ingestTestResults(ctx, payload)
+				So(err, ShouldErrLike, "too far in the future")
+			})
+			Convey(`too late`, func() {
+				payload.PartitionTime = timestamppb.New(clock.Now(ctx).Add(-91 * 24 * time.Hour))
+				err := ri.ingestTestResults(ctx, payload)
+				So(err, ShouldErrLike, "too long ago")
+			})
+		})
 		Convey(`valid payload`, func() {
+			ctl := gomock.NewController(t)
+			defer ctl.Finish()
+
+			mrc := resultdb.NewMockedClient(ctx, ctl)
+			mbc := buildbucket.NewMockedClient(mrc.Ctx, ctl)
+			ctx = mbc.Ctx
+
+			bID := int64(87654321)
+			inv := "invocations/build-87654321"
+			realm := "chromium:ci"
+
+			mbc.GetBuildWithBuilderAndRDBInfo(bID, mockedGetBuildRsp(inv))
+
+			invReq := &rdbpb.GetInvocationRequest{
+				Name: inv,
+			}
+			invRes := &rdbpb.Invocation{
+				Name:  inv,
+				Realm: realm,
+			}
+			mrc.GetInvocation(invReq, invRes)
+
+			tvReq := &rdbpb.QueryTestVariantsRequest{
+				Invocations: []string{inv},
+				PageSize:    1000,
+				Predicate: &rdbpb.TestVariantPredicate{
+					Status: rdbpb.TestVariantStatus_UNEXPECTED_MASK,
+				},
+			}
+			mrc.QueryTestVariants(tvReq, mockedQueryTestVariantsRsp())
+
+			// Prepare some existing analyzed test variants to update.
+			ms := []*spanner.Mutation{
+				// Known flake's status should remain unchanged.
+				insert.AnalyzedTestVariant(realm, "ninja://test_known_flake", "hash", pb.AnalyzedTestVariantStatus_FLAKY, nil),
+				// Non-flake test variant's status will change when see a flaky occurrence.
+				insert.AnalyzedTestVariant(realm, "ninja://test_has_unexpected", "hash", pb.AnalyzedTestVariantStatus_HAS_UNEXPECTED_RESULTS, nil),
+				// Consistently failed test variant.
+				insert.AnalyzedTestVariant(realm, "ninja://test_consistent_failure", "hash", pb.AnalyzedTestVariantStatus_CONSISTENTLY_UNEXPECTED, nil),
+				// Stale test variant has new failure.
+				insert.AnalyzedTestVariant(realm, "ninja://test_no_new_results", "hash", pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS, nil),
+			}
+			testutil.MustApply(ctx, ms...)
+
 			payload := &taskspb.IngestTestResults{
 				Build: &taskspb.Build{
 					Host: "host",
 					Id:   bID,
 				},
-				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+				PartitionTime: timestamppb.New(clock.Now(ctx).Add(-1 * time.Hour)),
 			}
 			err := ri.ingestTestResults(ctx, payload)
 			So(err, ShouldBeNil)

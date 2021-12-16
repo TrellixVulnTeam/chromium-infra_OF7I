@@ -232,7 +232,11 @@ CREATE TABLE ClusteringState (
   Clusters BYTES(MAX) NOT NULL,
   -- The Spanner commit timestamp of when the row was last updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
-) PRIMARY KEY (Project, ChunkId);
+) PRIMARY KEY (Project, ChunkId)
+-- Commented out for Cloud Spanner Emulator:
+-- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
+-- but **should** be applied to real Spanner instances.
+--, ROW DELETION POLICY (OLDER_THAN(PartitionTime, INTERVAL 90 DAY));
 
 -- ReclusteringRuns contains details of runs used to re-cluster test results.
 CREATE TABLE ReclusteringRuns (
@@ -257,7 +261,11 @@ CREATE TABLE ReclusteringRuns (
   ShardsReported INT64 NOT NULL,
   -- The progress. This is a value between 0 and 1000*ShardCount.
   Progress INT64 NOT NULL,
-) PRIMARY KEY (Project, AttemptTimestamp DESC);
+) PRIMARY KEY (Project, AttemptTimestamp DESC)
+-- Commented out for Cloud Spanner Emulator:
+-- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
+-- but **should** be applied to real Spanner instances.
+--, ROW DELETION POLICY (OLDER_THAN(AttemptTimestamp, INTERVAL 90 DAY));
 
 -- IngestionControl is used to synchronise and deduplicate the ingestion
 -- of test results which require data from one or more sources.
@@ -282,7 +290,16 @@ CREATE TABLE IngestionControl (
   PresubmitResult BYTES(MAX),
   -- The Spanner commit timestamp of when the row was last updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
-) PRIMARY KEY (Project, BuildId);
+) PRIMARY KEY (Project, BuildId)
+-- 90 days retention, plus some margin (10 days) to ensure ingestion records
+-- are always retained longer than the ingested results (acknowledging
+-- the partition time on ingested chunks may be later than the LastUpdated
+-- time if clocks are not synchronised).
+--
+-- Commented out for Cloud Spanner Emulator:
+-- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
+-- but **should** be applied to real Spanner instances.
+--, ROW DELETION POLICY (OLDER_THAN(LastUpdated, INTERVAL 100 DAY));
 
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.

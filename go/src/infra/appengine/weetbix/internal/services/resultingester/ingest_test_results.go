@@ -8,12 +8,14 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	bbpb "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	rdbbutil "go.chromium.org/luci/resultdb/pbutil"
@@ -35,6 +37,16 @@ import (
 const (
 	resultIngestionTaskClass = "result-ingestion"
 	resultIngestionQueue     = "result-ingestion"
+
+	// ingestionEarliest is the oldest data that may be ingested by Weetbix.
+	// This is an offset relative to the current time, and should be kept
+	// in sync with the data retention period in Spanner and BigQuery.
+	ingestionEarliest = -90 * 24 * time.Hour
+
+	// ingestionLatest is the newest data that may be ingested by Weetbix.
+	// This is an offset relative to the current time. It is designed to
+	// allow for clock drift.
+	ingestionLatest = 24 * time.Hour
 )
 
 // maxResultDBPages is the maximum number of pages of results to ingest from
@@ -100,7 +112,7 @@ func Schedule(ctx context.Context, task *taskspb.IngestTestResults) {
 }
 
 func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb.IngestTestResults) error {
-	if err := validateRequest(payload); err != nil {
+	if err := validateRequest(ctx, payload); err != nil {
 		return err
 	}
 
@@ -180,9 +192,16 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	return nil
 }
 
-func validateRequest(payload *taskspb.IngestTestResults) error {
-	if payload.PartitionTime == nil {
-		return errors.New("partition time must be specified")
+func validateRequest(ctx context.Context, payload *taskspb.IngestTestResults) error {
+	if !payload.PartitionTime.IsValid() {
+		return tq.Fatal.Apply(errors.New("partition time must be specified and valid"))
+	}
+	t := payload.PartitionTime.AsTime()
+	now := clock.Now(ctx)
+	if t.Before(now.Add(ingestionEarliest)) {
+		return tq.Fatal.Apply(fmt.Errorf("partition time (%v) is too long ago", t))
+	} else if t.After(now.Add(ingestionLatest)) {
+		return tq.Fatal.Apply(fmt.Errorf("partition time (%v) is too far in the future", t))
 	}
 	return nil
 }

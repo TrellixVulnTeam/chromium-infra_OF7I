@@ -17,7 +17,7 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
-const partitionExpirationTime = 540 * 24 * time.Hour
+const partitionExpirationTime = 90 * 24 * time.Hour
 
 const rowMessage = "weetbix.bq.ClusteredFailureRow"
 
