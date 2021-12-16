@@ -105,6 +105,28 @@ const servoRepairPlanBody = `
 		"exec_name":"cros_has_enough_storage_space",
 		"exec_extra_args":[
 			"/mnt/stateful_partition:0.5"
+		],
+		"recovery_actions": [
+			"servo_servod_and_labstation_disk_cleanup"
+		]
+	},
+	"servo_servod_and_labstation_disk_cleanup":{
+		"docs":[
+			"Clean up the old servod files as well as labstation."
+		],
+		"dependencies": [
+			"servo_labstation_disk_cleanup",
+			"servod_old_logs_cleanup"
+		],
+		"exec_name":"sample_pass"
+	},
+	"servod_old_logs_cleanup":{
+		"docs":[
+			"Clean up the old servod files based on the max number of days given in the argument."
+		],
+		"exec_name":"servo_servod_old_logs_cleanup",
+		"exec_extra_args":[
+			"max_days:5"
 		]
 	},
 	"is_not_container": {

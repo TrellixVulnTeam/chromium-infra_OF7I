@@ -484,6 +484,63 @@ func servoUsesServodContainerExec(ctx context.Context, args *execs.RunArgs, acti
 	return nil
 }
 
+const (
+	// removeFileCmd is the linux file removal command that used to remove files in the filesToRemoveSlice.
+	removeFileCmd = `rm %s`
+)
+
+var filesToRemoveSlice = []string{
+	"/var/lib/metrics/uma-events",
+	"/var/spool/crash/*",
+	"/var/log/chrome/*",
+	"/var/log/ui/*",
+	"/home/chronos/BrowserMetrics/*",
+}
+
+// servoLabstationDiskCleanUpExec remove files that are in the filesToRemoveSlice.
+func servoLabstationDiskCleanUpExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	r := args.NewRunner(args.ResourceName)
+	// Remove all files in the filesToRemoveSlice during the labstation disk clean up process.
+	for _, filePath := range filesToRemoveSlice {
+		if _, err := r(ctx, fmt.Sprintf(removeFileCmd, filePath)); err != nil {
+			log.Debug(ctx, "servo labstation disk clean up: %s", err.Error())
+		}
+		log.Info(ctx, "labstation file removed: %s", filePath)
+	}
+	return nil
+}
+
+const (
+	// removeOldServodLogsCmd is the command to remove any servod files that is older than the maximum days specified by d.
+	removeOldServodLogsCmd = `/usr/bin/find /var/log/servod_* -mtime +%d -print -delete`
+)
+
+// servoServodOldLogsCleanupExec removes the old servod log files that existed more than keepLogsMaxDays days.
+//
+// @params: actionArgs should be in the format of: ["max_days:5"]
+func servoServodOldLogsCleanupExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	daysMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	keepLogsMaxDaysString, existed := daysMap["max_days"]
+	if !existed {
+		return errors.Reason("servod old logs: missing max days information in the argument").Err()
+	}
+	keepLogsMaxDaysString = strings.TrimSpace(keepLogsMaxDaysString)
+	if keepLogsMaxDaysString == "" {
+		return errors.Reason("servod old logs: max days information is empty").Err()
+	}
+	keepLogsMaxDays, err := strconv.ParseInt(keepLogsMaxDaysString, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "servod old logs").Err()
+	}
+	log.Info(ctx, "The max number of days for keeping old servod logs is: %v", keepLogsMaxDays)
+	r := args.NewRunner(args.ResourceName)
+	// remove old servod logs.
+	if _, err := r(ctx, fmt.Sprintf(removeOldServodLogsCmd, keepLogsMaxDays)); err != nil {
+		log.Debug(ctx, "servo servod old logs clean up: %s", err.Error())
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -499,4 +556,6 @@ func init() {
 	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
 	execs.Register("servo_host_is_labstation", servoHostIsLabstationExec)
 	execs.Register("servo_uses_servod_container", servoUsesServodContainerExec)
+	execs.Register("servo_labstation_disk_cleanup", servoLabstationDiskCleanUpExec)
+	execs.Register("servo_servod_old_logs_cleanup", servoServodOldLogsCleanupExec)
 }
