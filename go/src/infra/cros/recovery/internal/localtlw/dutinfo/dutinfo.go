@@ -51,6 +51,13 @@ func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDutSt
 	}, nil
 }
 
+const (
+	// Extra attributes for DUT to provide custom info.
+	ExtraAttributesPools          = "pools"
+	ExtraAttributesServoSetup     = "servo_setup"
+	ExtraAttributesServoSetupDual = "servo_setup_dual"
+)
+
 // GenerateServodParams generates servod command based on device info.
 // Expected output parameters for servod:
 //  "BOARD=${VALUE}" - name of DUT board.
@@ -59,40 +66,39 @@ func CreateUpdateDutRequest(dutID string, dut *tlw.Dut) (req *ufsAPI.UpdateDutSt
 //  "SERIAL=${VALUE}" - serial number of root servo.
 //  "CONFIG=cr50.xml" - special parameter, for extra ability of CR50.
 //  "REC_MODE=1" - start servod in recovery-mode, if root device found then servod will start event not all components detected.
-func GenerateServodParams(data *ufspb.ChromeOSDeviceData, o *tlw.ServodOptions) (cmd []string, err error) {
-	lc := data.GetLabConfig()
-	name := lc.GetName()
-	dut := lc.GetChromeosMachineLse().GetDeviceLse().GetDut()
-	if dut == nil {
-		return nil, errors.Reason("get servod params for %q: device is not DUT", name).Err()
+func GenerateServodParams(dut *tlw.Dut, o *tlw.ServodOptions) (cmd []string, err error) {
+	if dut == nil || dut.Name == "" {
+		return nil, errors.Reason("get servod params: device is not provided").Err()
+	}
+	if dut.ServoHost == nil || dut.ServoHost.Servo == nil {
+		return nil, errors.Reason("get servod params for %q: servo is not specified by device", dut.Name).Err()
 	}
 	var parts []string
-	machine := data.GetMachine()
-	if board := machine.GetChromeosMachine().GetBuildTarget(); board != "" {
-		parts = append(parts, fmt.Sprintf("BOARD=%s", board))
-		if model := machine.GetChromeosMachine().GetModel(); model != "" {
-			parts = append(parts, fmt.Sprintf("MODEL=%s", model))
+	if dut.Board != "" {
+		parts = append(parts, fmt.Sprintf("BOARD=%s", dut.Board))
+		if dut.Model != "" {
+			parts = append(parts, fmt.Sprintf("MODEL=%s", dut.Model))
 		}
 	}
-	servo := dut.GetPeripherals().GetServo()
-	if servo == nil {
-		return nil, errors.Reason("get servod params for %q: servo is not specified by device", name).Err()
-	}
-	parts = append(parts, fmt.Sprintf("PORT=%d", servo.GetServoPort()))
+	parts = append(parts, fmt.Sprintf("PORT=%d", dut.ServoHost.ServodPort))
 
-	if serial := servo.GetServoSerial(); serial != "" {
-		parts = append(parts, fmt.Sprintf("SERIAL=%s", serial))
+	if dut.ServoHost.Servo.SerialNumber != "" {
+		parts = append(parts, fmt.Sprintf("SERIAL=%s", dut.ServoHost.Servo.SerialNumber))
 	}
-	if setup := servo.GetServoSetup(); setup == ufslab.ServoSetupType_SERVO_SETUP_DUAL_V4 {
-		parts = append(parts, "DUAL_V4=1")
-	}
-	if pools := dut.GetPools(); len(pools) > 0 {
-		var hasCR50Pool bool
-		for _, p := range pools {
-			hasCR50Pool = hasCR50Pool || strings.Contains(p, "faft-cr50")
+	if vs, ok := dut.ExtraAttributes[ExtraAttributesServoSetup]; ok {
+		for _, v := range vs {
+			if v == ExtraAttributesServoSetupDual {
+				parts = append(parts, "DUAL_V4=1")
+				break
+			}
 		}
-		if hasCR50Pool {
-			parts = append(parts, "CONFIG=cr50.xml")
+	}
+	if pools, ok := dut.ExtraAttributes[ExtraAttributesPools]; ok {
+		for _, p := range pools {
+			if strings.Contains(p, "faft-cr50") {
+				parts = append(parts, "CONFIG=cr50.xml")
+				break
+			}
 		}
 	}
 	if o != nil && o.RecoveryMode {
@@ -102,16 +108,12 @@ func GenerateServodParams(data *ufspb.ChromeOSDeviceData, o *tlw.ServodOptions) 
 }
 
 // GetRpmInfo provides hostname and outlet of the device.
-func GetRpmInfo(data *ufspb.ChromeOSDeviceData) (hostname, outlet string) {
-	dle := data.GetLabConfig().GetChromeosMachineLse().GetDeviceLse()
-	var rpm *ufslab.OSRPM
-	if dut := dle.GetDut(); dut != nil {
-		rpm = dle.GetDut().GetPeripherals().GetRpm()
-	} else if l := dle.GetLabstation(); l != nil {
-		rpm = l.GetRpm()
-	}
-	if rpm != nil {
-		return rpm.GetPowerunitName(), rpm.GetPowerunitOutlet()
+func GetRpmInfo(dut *tlw.Dut) (hostname, outlet string) {
+	if dut != nil && dut.RPMOutlet != nil && dut.RPMOutlet.Name != "" {
+		parts := strings.Split(dut.RPMOutlet.Name, "|")
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
 	}
 	return "", ""
 }
@@ -162,6 +164,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	}
 
 	d := &tlw.Dut{
+		Id:                 machine.GetName(),
 		Name:               name,
 		Board:              machine.GetChromeosMachine().GetBuildTarget(),
 		Model:              machine.GetChromeosMachine().GetModel(),
@@ -183,8 +186,11 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		AudioLoopbackState: convertAudioLoopbackState(ds.GetAudioLoopbackDongle()),
 		DeviceSku:          machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
-			"pool": dut.GetPools(),
+			ExtraAttributesPools: dut.GetPools(),
 		},
+	}
+	if p.GetServo().GetServoSetup() == ufslab.ServoSetupType_SERVO_SETUP_DUAL_V4 {
+		d.ExtraAttributes[ExtraAttributesServoSetup] = []string{ExtraAttributesServoSetupDual}
 	}
 	return d, nil
 }
@@ -197,6 +203,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 	machine := data.GetMachine()
 	name := lc.GetName()
 	d := &tlw.Dut{
+		Id:              machine.GetName(),
 		Name:            name,
 		Board:           machine.GetChromeosMachine().GetBuildTarget(),
 		Model:           machine.GetChromeosMachine().GetModel(),

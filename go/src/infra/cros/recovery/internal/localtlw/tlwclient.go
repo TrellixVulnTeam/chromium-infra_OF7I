@@ -65,7 +65,7 @@ type tlwClient struct {
 	sshPool    *sshpool.Pool
 	servodPool *servod.Pool
 	// Cache received devices from inventory
-	devices map[string]*ufspb.ChromeOSDeviceData
+	devices map[string]*tlw.Dut
 }
 
 // New build new local TLW Access instance.
@@ -75,7 +75,7 @@ func New(ufs UFSClient, csac CSAClient) (tlw.Access, error) {
 		csaClient:  csac,
 		sshPool:    sshpool.New(ssh.SSHConfig()),
 		servodPool: servod.NewPool(),
-		devices:    make(map[string]*ufspb.ChromeOSDeviceData),
+		devices:    make(map[string]*tlw.Dut),
 	}
 	return c, nil
 }
@@ -100,23 +100,18 @@ func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *tlw.
 
 // InitServod initiates servod daemon on servo-host.
 func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) error {
-	dd, err := c.getDevice(ctx, req.Resource)
+	dut, err := c.getDevice(ctx, req.Resource)
 	if err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
-	dut := dd.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetDut()
-	if dut == nil {
-		return errors.Reason("init servod %q: dut is not found", req.Resource).Err()
-	}
-	servo := dut.GetPeripherals().GetServo()
-	if servo == nil {
+	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
 	}
 	s, err := c.servodPool.Get(
-		localproxy.BuildAddr(servo.GetServoHostname()),
-		servo.GetServoPort(),
+		localproxy.BuildAddr(dut.ServoHost.Name),
+		int32(dut.ServoHost.ServodPort),
 		func() ([]string, error) {
-			return dutinfo.GenerateServodParams(dd, req.Options)
+			return dutinfo.GenerateServodParams(dut, req.Options)
 		})
 	if err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
@@ -129,20 +124,18 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 
 // StopServod stops servod daemon on servo-host.
 func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
-	dd, err := c.getDevice(ctx, resourceName)
+	dut, err := c.getDevice(ctx, resourceName)
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
-	dut := dd.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetDut()
-	if dut == nil {
-		return errors.Reason("stop servod %q: dut is not found", resourceName).Err()
+	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+		return errors.Reason("stop servod %q: servo is not found", resourceName).Err()
 	}
-	servo := dut.GetPeripherals().GetServo()
-	if servo == nil {
-		log.Debug(ctx, "Stop servod %q: servo is not specified", resourceName)
-		return nil
-	}
-	s, err := c.servodPool.Get(localproxy.BuildAddr(servo.GetServoHostname()), servo.GetServoPort(), nil)
+
+	s, err := c.servodPool.Get(
+		localproxy.BuildAddr(dut.ServoHost.Name),
+		int32(dut.ServoHost.ServodPort),
+		nil)
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
@@ -166,24 +159,18 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 			Fault: true,
 		}
 	}
-	dd, err := c.getDevice(ctx, req.Resource)
+	dut, err := c.getDevice(ctx, req.Resource)
 	if err != nil {
 		return fail(err)
 	}
-	dut := dd.GetLabConfig().GetChromeosMachineLse().GetDeviceLse().GetDut()
-	if dut == nil {
-		log.Debug(ctx, "Call servod %q: dut is not found", req.Resource)
-		return nil
-	}
-	servo := dut.GetPeripherals().GetServo()
-	if servo == nil {
-		log.Debug(ctx, "Call servod %q: servo is not specified", req.Resource)
-		return nil
+	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+		return fail(errors.Reason("call servod %q: servo not found", req.Resource).Err())
 	}
 	s, err := c.servodPool.Get(
-		localproxy.BuildAddr(servo.GetServoHostname()),
-		servo.GetServoPort(), func() ([]string, error) {
-			return dutinfo.GenerateServodParams(dd, req.Options)
+		localproxy.BuildAddr(dut.ServoHost.Name),
+		int32(dut.ServoHost.ServodPort),
+		func() ([]string, error) {
+			return dutinfo.GenerateServodParams(dut, req.Options)
 		})
 	if err != nil {
 		return fail(err)
@@ -235,14 +222,14 @@ func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyR
 			Reason: "resource is not specified",
 		}
 	}
-	dd, err := c.getDevice(ctx, req.Resource)
+	dut, err := c.getDevice(ctx, req.Resource)
 	if err != nil {
 		return &tlw.SetPowerSupplyResponse{
 			Status: tlw.PowerSupplyResponseStatusError,
 			Reason: err.Error(),
 		}
 	}
-	hostname, outlet := dutinfo.GetRpmInfo(dd)
+	hostname, outlet := dutinfo.GetRpmInfo(dut)
 	log.Debug(ctx, "Set power supply %s: has rpm info %s:%s.", req.Resource, hostname, outlet)
 	if hostname == "" || outlet == "" {
 		return &tlw.SetPowerSupplyResponse{
@@ -266,7 +253,7 @@ func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyR
 	}
 	log.Debug(ctx, "Set power supply %s: state: %q for %s:%s.", req.Resource, s, hostname, outlet)
 	rpmReq := &rpm.RPMPowerRequest{
-		Hostname:          dd.GetLabConfig().GetName(),
+		Hostname:          dut.Name,
 		PowerUnitHostname: hostname,
 		PowerunitOutlet:   outlet,
 		State:             s,
@@ -313,8 +300,12 @@ func (c *tlwClient) ListResourcesForUnit(ctx context.Context, name string) ([]st
 		return nil, errors.Reason("list resources %q: device data is empty", name).Err()
 	} else {
 		log.Debug(ctx, "List resources %q: cached received device.", name)
-		c.devices[name] = dd
-		return []string{dd.GetLabConfig().GetName()}, nil
+		dut, err := dutinfo.ConvertDut(dd)
+		if err != nil {
+			return nil, errors.Annotate(err, "list resources %q", name).Err()
+		}
+		c.devices[name] = dut
+		return []string{dut.Name}, nil
 	}
 	suName := ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name)
 	log.Debug(ctx, "list resources %q: trying to find scheduling unit by name %q.", name, suName)
@@ -336,11 +327,7 @@ func (c *tlwClient) ListResourcesForUnit(ctx context.Context, name string) ([]st
 
 // GetDut provides DUT info per requested resource name from inventory.
 func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
-	dd, err := c.getDevice(ctx, name)
-	if err != nil {
-		return nil, errors.Annotate(err, "get DUT %q", name).Err()
-	}
-	dut, err := dutinfo.ConvertDut(dd)
+	dut, err := c.getDevice(ctx, name)
 	if err != nil {
 		return nil, errors.Annotate(err, "get DUT %q", name).Err()
 	}
@@ -354,7 +341,7 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 }
 
 // getDevice receives device from inventory.
-func (c *tlwClient) getDevice(ctx context.Context, name string) (*ufspb.ChromeOSDeviceData, error) {
+func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error) {
 	if d, ok := c.devices[name]; ok {
 		log.Debug(ctx, "Get device %q: received from cache.", name)
 		return d, nil
@@ -369,9 +356,13 @@ func (c *tlwClient) getDevice(ctx context.Context, name string) (*ufspb.ChromeOS
 	} else if dd.GetLabConfig() == nil {
 		return nil, errors.Reason("get device %q: received empty data", name).Err()
 	}
-	c.devices[name] = dd
+	dut, err := dutinfo.ConvertDut(dd)
+	if err != nil {
+		return nil, errors.Annotate(err, "get device %q", name).Err()
+	}
+	c.devices[name] = dut
 	log.Debug(ctx, "Get device %q: cached received device.", name)
-	return dd, nil
+	return dut, nil
 }
 
 // getStableVersion receives stable versions of device.
@@ -399,12 +390,11 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 	if dut == nil {
 		return errors.Reason("update DUT: DUT is not provided").Err()
 	}
-	dd, err := c.getDevice(ctx, dut.Name)
+	dut, err := c.getDevice(ctx, dut.Name)
 	if err != nil {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}
-	dutID := dd.GetMachine().GetName()
-	req, err := dutinfo.CreateUpdateDutRequest(dutID, dut)
+	req, err := dutinfo.CreateUpdateDutRequest(dut.Id, dut)
 	if err != nil {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}

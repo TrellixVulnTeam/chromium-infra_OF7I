@@ -234,6 +234,9 @@ const (
 
 // Dut holds info about setup used as testbed.
 type Dut struct {
+	// Unique identifier in inventory.
+	// Should never be changed in processes.
+	Id string
 	// Name is the resource name for the DUT.
 	Name string
 	// Board name of the DUT.
