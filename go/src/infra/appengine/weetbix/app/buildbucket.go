@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/errors"
@@ -17,8 +16,7 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"infra/appengine/weetbix/internal/services/resultingester"
-	"infra/appengine/weetbix/internal/tasks/taskspb"
+	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 )
 
 const (
@@ -57,7 +55,7 @@ func BuildbucketPubSubHandler(ctx *router.Context) {
 }
 
 func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) error {
-	build, createTime, err := extractBuildAndCreateTime(request)
+	build, err := extractBuild(request)
 
 	switch {
 	case err != nil:
@@ -68,18 +66,29 @@ func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) error {
 		return nil
 
 	default:
-		task := &taskspb.IngestTestResults{
-			Build:         build,
-			PartitionTime: timestamppb.New(createTime),
+		if err := JoinBuildResult(ctx, build.project, build.id, build.isPresubmit, build.result); err != nil {
+			return errors.Annotate(err, "joining build result").Err()
 		}
-		return resultingester.Schedule(ctx, task)
+		return nil
 	}
 }
 
-func extractBuildAndCreateTime(r *http.Request) (*taskspb.Build, time.Time, error) {
+type build struct {
+	// project is the LUCI project containing the build.
+	project string
+	// id is the identity of the build. This is {hostname}/{build_id}.
+	id string
+	// isPresubmit is whether the build relates to a presubmit run.
+	isPresubmit bool
+	// result is information about the build to be passed
+	// to ingestion.
+	result *ctlpb.BuildResult
+}
+
+func extractBuild(r *http.Request) (*build, error) {
 	var msg pubsubMessage
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		return nil, time.Time{}, errors.Annotate(err, "could not decode buildbucket pubsub message").Err()
+		return nil, errors.Annotate(err, "could not decode buildbucket pubsub message").Err()
 	}
 
 	var message struct {
@@ -88,21 +97,25 @@ func extractBuildAndCreateTime(r *http.Request) (*taskspb.Build, time.Time, erro
 	}
 	switch err := json.Unmarshal(msg.Message.Data, &message); {
 	case err != nil:
-		return nil, time.Time{}, errors.Annotate(err, "could not parse buildbucket pubsub message data").Err()
-	case message.Build.Bucket != chromiumCIBucket:
-		// Received a non-chromium-ci build, ignore it.
-		return nil, time.Time{}, nil
+		return nil, errors.Annotate(err, "could not parse buildbucket pubsub message data").Err()
+	case message.Build.Project != chromiumProject:
+		// Received a non-chromium build, ignore it.
+		return nil, nil
 	case message.Build.Status != bbv1.StatusCompleted:
 		// Received build that hasn't completed yet, ignore it.
-		return nil, time.Time{}, nil
+		return nil, nil
 	case message.Build.CreatedTs == 0:
-		return nil, time.Time{}, errors.New("build did not have created timestamp specified")
+		return nil, errors.New("build did not have created timestamp specified")
 	}
 
-	createTime := bbv1.ParseTimestamp(message.Build.CreatedTs)
-	build := &taskspb.Build{
-		Id:   message.Build.Id,
-		Host: message.Hostname,
-	}
-	return build, createTime, nil
+	return &build{
+		project:     message.Build.Project,
+		id:          buildID(message.Hostname, message.Build.Id),
+		isPresubmit: message.Build.Bucket != chromiumCIBucket,
+		result: &ctlpb.BuildResult{
+			CreationTime: timestamppb.New(bbv1.ParseTimestamp(message.Build.CreatedTs)),
+			Id:           message.Build.Id,
+			Host:         message.Hostname,
+		},
+	}, nil
 }

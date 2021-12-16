@@ -53,7 +53,7 @@ var resultIngestion = tq.RegisterTaskClass(tq.TaskClass{
 	ID:        resultIngestionTaskClass,
 	Prototype: &taskspb.IngestTestResults{},
 	Queue:     resultIngestionQueue,
-	Kind:      tq.NonTransactional,
+	Kind:      tq.Transactional,
 })
 
 // realmProjectRe extracts the LUCI project name from a LUCI Realm.
@@ -87,13 +87,13 @@ func RegisterTaskHandler(srv *server.Server) error {
 }
 
 // Schedule enqueues a task to ingest test results from a build.
-func Schedule(ctx context.Context, task *taskspb.IngestTestResults) error {
+func Schedule(ctx context.Context, task *taskspb.IngestTestResults) {
 	// Note that currently we don't need to deduplicate tasks, because for
 	// Chromium use case Weetbix only ingest test results of the try builds that
 	// contribute to CL submission, so each build should be processed only once.
 	// This may not be true in ChromeOS use case where Weetbix ingests test
 	// of all try builds.
-	return tq.AddTask(ctx, &tq.Task{
+	tq.MustAddTask(ctx, &tq.Task{
 		Title:   fmt.Sprintf("%s-%d", task.Build.Host, task.Build.Id),
 		Payload: task,
 	})

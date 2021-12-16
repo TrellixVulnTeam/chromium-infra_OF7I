@@ -5,6 +5,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
 	"go.chromium.org/luci/common/retry/transient"
@@ -31,4 +32,8 @@ func processErr(ctx *router.Context, err error) string {
 		ctx.Writer.WriteHeader(http.StatusOK)
 		return "permanent-failure"
 	}
+}
+
+func buildID(hostname string, id int64) string {
+	return fmt.Sprintf("%s/%v", hostname, id)
 }

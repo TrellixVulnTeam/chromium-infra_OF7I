@@ -8,8 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
+	"strings"
 	"testing"
+	"time"
 
+	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/clock"
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 	cvv1 "go.chromium.org/luci/cv/api/v1"
@@ -20,6 +24,7 @@ import (
 	"infra/appengine/weetbix/internal/cv"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
+	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -29,12 +34,27 @@ import (
 )
 
 func TestHandleCVRun(t *testing.T) {
-	t.Parallel()
-	ctx := testutil.TestingContext()
-
 	Convey(`Test CVRunPubSubHandler`, t, func() {
+		ctx := testutil.SpannerTestContext(t)
+		ctx, skdr := tq.TestingContext(ctx, nil)
+
+		// Setup two ingested builds.
+		buildIDs := []int64{87654321, 87654322}
+		for _, buildID := range buildIDs {
+			buildExp := bbv1.LegacyApiCommonBuildMessage{
+				Project:   "chromium",
+				Bucket:    "luci.chromium.try",
+				Id:        buildID,
+				Status:    bbv1.StatusCompleted,
+				CreatedTs: bbv1.FormatTimestamp(time.Now()),
+			}
+			r := &http.Request{Body: makeBBReq(buildExp, bbHost)}
+			err := bbPubSubHandlerImpl(ctx, r)
+			So(err, ShouldBeNil)
+		}
+		So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
+
 		Convey(`non chromium cv run is ignored`, func() {
-			ctx, skdr := tq.TestingContext(ctx, nil)
 			psRun := &cvv1.PubSubRun{
 				Id:     "projects/fake/runs/run_id",
 				Status: cvv1.Run_SUCCEEDED,
@@ -55,6 +75,10 @@ func TestHandleCVRun(t *testing.T) {
 					Id:         fID,
 					Mode:       "DRY_RUN",
 					CreateTime: timestamppb.New(clock.Now(ctx)),
+					Tryjobs: []*cvv0.Tryjob{
+						tryjob(buildIDs[0]),
+						tryjob(buildIDs[1]),
+					},
 				},
 			}
 			ctx = cv.UseFakeClient(ctx, runs)
@@ -74,8 +98,9 @@ func TestHandleCVRun(t *testing.T) {
 				Mode:       "FULL_RUN",
 				CreateTime: timestamppb.New(clock.Now(ctx)),
 				Tryjobs: []*cvv0.Tryjob{
-					tryjob(1),
+					tryjob(buildIDs[0]),
 					tryjob(2),
+					tryjob(buildIDs[1]),
 				},
 			}
 			runs := map[string]*cvv0.Run{
@@ -92,7 +117,15 @@ func TestHandleCVRun(t *testing.T) {
 			for _, pl := range skdr.Tasks().Payloads() {
 				actTasks = append(actTasks, pl.(*taskspb.IngestTestResults))
 			}
-			So(sortTasks(actTasks), ShouldResembleProto, sortTasks(expectedTasks(run)))
+			So(sortTasks(actTasks), ShouldResembleProto, sortTasks(expectedTasks(run, buildIDs)))
+
+			Convey(`re-processing CV run should not result in further ingestion tasks`, func() {
+				r := &http.Request{Body: makeCVChromiumRunReq(fID)}
+				processed, err := cvPubSubHandlerImpl(ctx, r)
+				So(err, ShouldBeNil)
+				So(processed, ShouldBeTrue)
+				So(len(skdr.Tasks().Payloads()), ShouldEqual, 2)
+			})
 		})
 
 		Convey(`partial success`, func() {
@@ -104,10 +137,11 @@ func TestHandleCVRun(t *testing.T) {
 				Mode:       "FULL_RUN",
 				CreateTime: timestamppb.New(clock.Now(ctx)),
 				Tryjobs: []*cvv0.Tryjob{
-					tryjob(1),
 					{
+						// Should be ignored.
 						Result: &cvv0.Tryjob_Result{},
 					},
+					tryjob(buildIDs[0]),
 				},
 			}
 			runs := map[string]*cvv0.Run{
@@ -116,10 +150,10 @@ func TestHandleCVRun(t *testing.T) {
 			ctx = cv.UseFakeClient(ctx, runs)
 			r := &http.Request{Body: makeCVChromiumRunReq(fID)}
 			processed, err := cvPubSubHandlerImpl(ctx, r)
-			So(err, ShouldErrLike, "unrecognized CV run try job result")
+			So(err, ShouldBeNil)
 			So(processed, ShouldBeTrue)
 			So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
-			So(skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults), ShouldResembleProto, expectedTasks(run)[0])
+			So(skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults), ShouldResembleProto, expectedTasks(run, buildIDs[:1])[0])
 		})
 	})
 }
@@ -137,7 +171,7 @@ func makeCVChromiumRunReq(runID string) io.ReadCloser {
 	})
 }
 
-func tryjob(bID int) *cvv0.Tryjob {
+func tryjob(bID int64) *cvv0.Tryjob {
 	return &cvv0.Tryjob{
 		Result: &cvv0.Tryjob_Result{
 			Backend: &cvv0.Tryjob_Result_Buildbucket_{
@@ -151,4 +185,29 @@ func tryjob(bID int) *cvv0.Tryjob {
 
 func fullRunID(runID string) string {
 	return fmt.Sprintf("projects/%s/runs/%s", chromiumProject, runID)
+}
+
+func expectedTasks(run *cvv0.Run, buildIDs []int64) []*taskspb.IngestTestResults {
+	res := make([]*taskspb.IngestTestResults, 0, len(run.Tryjobs))
+	for _, buildID := range buildIDs {
+		t := &taskspb.IngestTestResults{
+			Build: &taskspb.Build{
+				Host: bbHost,
+				Id:   buildID,
+			},
+			PartitionTime: run.CreateTime,
+			PresubmitRunId: &pb.PresubmitRunId{
+				System: "luci-cv",
+				Id:     chromiumProject + "/" + strings.Split(run.Id, "/")[3],
+			},
+			PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
+		}
+		res = append(res, t)
+	}
+	return res
+}
+
+func sortTasks(tasks []*taskspb.IngestTestResults) []*taskspb.IngestTestResults {
+	sort.Slice(tasks, func(i, j int) bool { return tasks[i].Build.Id < tasks[j].Build.Id })
+	return tasks
 }

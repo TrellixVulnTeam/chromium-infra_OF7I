@@ -5,6 +5,7 @@
 package resultingester
 
 import (
+	"context"
 	"sort"
 	"testing"
 	"time"
@@ -44,14 +45,20 @@ import (
 
 func TestSchedule(t *testing.T) {
 	Convey(`TestSchedule`, t, func() {
-		ctx, skdr := tq.TestingContext(testutil.TestingContext(), nil)
+		ctx := testutil.SpannerTestContext(t)
+		ctx, skdr := tq.TestingContext(ctx, nil)
 
 		task := &taskspb.IngestTestResults{
 			Build:         &taskspb.Build{},
 			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
 		}
 		expected := proto.Clone(task).(*taskspb.IngestTestResults)
-		So(Schedule(ctx, task), ShouldBeNil)
+
+		_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+			Schedule(ctx, task)
+			return nil
+		})
+		So(err, ShouldBeNil)
 		So(skdr.Tasks().Payloads()[0], ShouldResembleProto, expected)
 	})
 }

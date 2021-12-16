@@ -9,13 +9,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"sort"
-	"strings"
-
-	cvv0 "go.chromium.org/luci/cv/api/v0"
-
-	"infra/appengine/weetbix/internal/tasks/taskspb"
-	pb "infra/appengine/weetbix/proto/v1"
 
 	// Needed to ensure task class is registered.
 	_ "infra/appengine/weetbix/internal/services/resultingester"
@@ -30,32 +23,4 @@ func makeReq(blob []byte) io.ReadCloser {
 	}{struct{ Data []byte }{Data: blob}, nil}
 	jmsg, _ := json.Marshal(msg)
 	return ioutil.NopCloser(bytes.NewReader(jmsg))
-}
-
-func expectedTasks(run *cvv0.Run) []*taskspb.IngestTestResults {
-	res := make([]*taskspb.IngestTestResults, 0, len(run.Tryjobs))
-	for _, tj := range run.Tryjobs {
-		if tj.GetResult() == nil {
-			continue
-		}
-		t := &taskspb.IngestTestResults{
-			Build: &taskspb.Build{
-				Host: bbHost,
-				Id:   tj.GetResult().GetBuildbucket().GetId(),
-			},
-			PartitionTime: run.CreateTime,
-			PresubmitRunId: &pb.PresubmitRunId{
-				System: "luci-cv",
-				Id:     chromiumProject + "/" + strings.Split(run.Id, "/")[3],
-			},
-			PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
-		}
-		res = append(res, t)
-	}
-	return res
-}
-
-func sortTasks(tasks []*taskspb.IngestTestResults) []*taskspb.IngestTestResults {
-	sort.Slice(tasks, func(i, j int) bool { return tasks[i].Build.Id < tasks[j].Build.Id })
-	return tasks
 }

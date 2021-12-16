@@ -20,8 +20,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"infra/appengine/weetbix/internal/cv"
-	"infra/appengine/weetbix/internal/services/resultingester"
-	"infra/appengine/weetbix/internal/tasks/taskspb"
+	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
@@ -74,7 +73,7 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 
 	project, runID, err := parseRunID(psRun.Id)
 	if err != nil {
-		return false, errors.Annotate(err, "failed to extract run").Err()
+		return false, errors.Annotate(err, "failed to parse run ID").Err()
 	}
 	if project != chromiumProject {
 		// Received a non-chromium run, ignore it.
@@ -94,44 +93,31 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 		return false, nil
 	}
 
+	pr := &ctlpb.PresubmitResult{
+		PresubmitRunId: &pb.PresubmitRunId{
+			System: "luci-cv",
+			Id:     fmt.Sprintf("%s/%s", project, runID),
+		},
+		PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
+		CreationTime:          run.CreateTime,
+	}
+
 	// Schedule ResultIngestion tasks for each build.
-	var errs errors.MultiError
+	var buildIDs []string
 	for _, tj := range run.Tryjobs {
 		b := tj.GetResult().GetBuildbucket()
 		if b == nil {
-			errs = append(errs, errors.New("unrecognized CV run try job result"))
+			// Non build-bucket result.
 			continue
 		}
-		task := &taskspb.IngestTestResults{
-			Build: &taskspb.Build{
-				Id:   b.Id,
-				Host: bbHost,
-			},
-			PartitionTime: run.CreateTime,
-			PresubmitRunId: &pb.PresubmitRunId{
-				System: "luci-cv",
-				Id:     fmt.Sprintf("%s/%s", project, runID),
-			},
-			PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
-		}
-		if err := resultingester.Schedule(ctx, task); err != nil {
-			errs = append(errs, err)
-			continue
-		}
+
+		buildIDs = append(buildIDs, buildID(bbHost, b.Id))
 	}
-	n, fe := errs.Summary()
-	if n > 0 {
-		// It's possible that some of the tasks are successfully scheduled while
-		// others are not. In this case we should retry.
-		// For the ones that have been scheduled, rerunning them should not impact
-		// the data we already saved:
-		// * For the rerun IngestTestResults task, no test variants will be added
-		//   or updated, so no new UpdateTestVariant tasks should be scheduled from
-		//   it.
-		// * A CollectTestResults task will have to be rescheduled from the above
-		//   task, but no new verdicts will be saved.
-		return true, errors.Annotate(fe, "%d error(s) on scheduling result ingestion tasks for cv run %s", n, run.Id).Err()
+
+	if err := JoinPresubmitResult(ctx, project, buildIDs, pr); err != nil {
+		return true, errors.Annotate(err, "joining presubmit results").Err()
 	}
+
 	return true, nil
 }
 
