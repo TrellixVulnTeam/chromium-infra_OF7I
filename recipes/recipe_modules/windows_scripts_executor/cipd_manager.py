@@ -133,7 +133,10 @@ class CIPDManager:
           name = '{}/{}'.format(up_dest.cipd_src.package,
                                 up_dest.cipd_src.platform)
           pkg = self._cipd.PackageDefinition(name, root)
-          pkg.add_file(root.join(filename))
+          if self._path.isdir(source):
+            pkg.add_dir(root.join(filename))
+          else:
+            pkg.add_file(root.join(filename))  # pragma: no cover
           self._cipd.create_from_pkg(
               pkg,
               refs=[up_dest.cipd_src.refs],

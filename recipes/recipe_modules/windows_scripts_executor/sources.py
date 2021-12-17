@@ -14,7 +14,7 @@ class Source:
   """
 
   def __init__(self, cache, step, path, m_file, raw_io, cipd, gsutil, gitiles,
-               git):
+               git, archive):
     """ __init__ generates the src managers (git, gcs and cipd) and stores them
         in class variables.
         Args:
@@ -27,6 +27,7 @@ class Source:
           gsutil: ref to depot_tools/gsutil module object
           gitiles: ref to depot_tools/gitiles module object
           git: ref to depot_tools/git module object
+          archive: ref to recipe_engine/archive object
     """
     # dir to store CIPD downloaded packages
     cipd_dir = cache.join('CIPDPkgs')
@@ -40,7 +41,7 @@ class Source:
     ])
     self._cipd = cipd_manager.CIPDManager(step, cipd, path, cipd_dir)
     self._gcs = gcs_manager.GCSManager(step, gsutil, path, m_file, raw_io,
-                                       gcs_dir)
+                                       archive, gcs_dir)
     self._git = git_manager.GITManager(step, gitiles, git, m_file, path,
                                        git_dir)
     self._step = step
@@ -88,8 +89,8 @@ class Source:
       return self._git.get_local_src(src)
     if src and src.WhichOneof('src') == 'cipd_src':
       return self._cipd.get_local_src(src)
-    if src and src.WhichOneof('src') == 'local_src':
-      return src.local_src  # pragma: no cover
+    if src and src.WhichOneof('src') == 'local_src':  # pragma: no cover
+      return src.local_src
 
   def get_url(self, src):
     """ get_url returns string containing an url referencing the given src
@@ -100,6 +101,8 @@ class Source:
       return self._gcs.get_gs_url(src)
     if src and src.WhichOneof('src') == 'cipd_src':  # pragma: no cover
       return self._cipd.get_cipd_url(src)
+    if src and src.WhichOneof('src') == 'git_src':  # pragma: no cover
+      return self._cipd.get_gitiles_url(src)
 
   def upload(self):
     """ upload uploads all the available files to be uploaded if available """
@@ -114,5 +117,5 @@ class Source:
     """
     # TODO(anushruth): add support for git and cipd
     if src and src.WhichOneof('src') == 'gcs_src':
-      return self._gcs.exists(src.gcs_src)
+      return self._gcs.exists(src)
     return False  # pragma: no cover

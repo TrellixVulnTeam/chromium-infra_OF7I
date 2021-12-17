@@ -15,6 +15,7 @@ DEPS = [
     'recipe_engine/python',
     'recipe_engine/json',
     'recipe_engine/file',
+    'recipe_engine/archive',
     'recipe_engine/raw_io',
     'powershell'
 ]

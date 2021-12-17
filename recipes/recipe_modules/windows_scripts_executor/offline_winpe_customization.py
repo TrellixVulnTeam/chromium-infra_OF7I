@@ -91,7 +91,7 @@ class OfflineWinPECustomization(customization.Customization):
       return dest_pb.Dest(
           gcs_src=src_pb.GCSSrc(
               bucket='chrome-gce-images',
-              source='WIB-WIM/{}.wim'.format(self._key)),)
+              source='WIB-WIM/{}.zip'.format(self._key)),)
     return None  # pragma: no cover
 
   def execute_customization(self):
@@ -100,51 +100,64 @@ class OfflineWinPECustomization(customization.Customization):
     wpec = self._customization.offline_winpe_customization
     if wpec and len(wpec.offline_customization) > 0:
       with self._step.nest('offline winpe customization ' + wpec.name):
-        src = self._source.get_local_src(wpec.image_src)
-        if not src:
-          src = self._workdir.join('media', 'sources', 'boot.wim')
-        self.init_win_pe_image(self._arch, src, self._workdir)
+        #src = self._source.get_local_src(wpec.image_src)
+        #if not src:
+        #  src = self._workdir.join('media', 'sources', 'boot.wim')
+        self.init_win_pe_image(self._arch, wpec.image_src, self._workdir)
         try:
           for action in wpec.offline_customization:
             self.perform_winpe_actions(action)
         except Exception:
           # Unmount the image and discard changes on failure
-          self.deinit_win_pe_image(src, save=False)
+          self.deinit_win_pe_image(save=False)
           raise
         else:
-          self.deinit_win_pe_image(src)
+          self.deinit_win_pe_image()
 
-  def init_win_pe_image(self, arch, source, dest, index=1):
+  def init_win_pe_image(self, arch, image, dest, index=1):
     """ init_win_pe_image initializes the source image (if given) by mounting
         it to dest
         Args:
           arch: string representing architecture of the image
-          source: path to the wim that needs to be modified
-          dest: path to the dir where image can be mounted (under mount dir)
+          image: sources.Src object ref an image to be modified
           index: index of the image to be mounted
     """
     with self._step.nest('Init WinPE image modification ' + arch + ' in ' +
                          str(dest)):
-      if not self._path.exists(source):
+      # Path to boot.wim. This is where we expect it to always be
+      wim_path = self._workdir.join('media', 'sources', 'boot.wim')
+      # Use WhichOneOf to test for emptiness
+      # https://developers.google.com/protocol-buffers/docs/reference/python-generated#oneof
+      if not image.WhichOneof('src'):
         # gen a winpe arch dir for the given arch
         self._powershell(
             'Gen WinPE media for {}'.format(arch),
             self._scripts.join('Copy-PE.ps1'),
             args=['-WinPeArch', arch, '-Destination',
-                  str(dest)])
+                  str(self._workdir)])
+      else:
+        image_path = self._source.get_local_src(image)
+        if str(image_path).endswith('.zip'):
+          # unzip the given image
+          self._archive.extract('Unpack {}'.format(self._source.get_url(image)),
+                                self._source.get_local_src(image),
+                                self._workdir)
+        else:
+          # image was from cipd. Link the cipd dir to workdir
+          self._file.symlink(
+              'Link {} to workdir'.format(self._source.get_url(image)),
+              image_path, self._workdir)
       # ensure that the destination exists
-      dest = dest.join('mount')
+      dest = self._workdir.join('mount')
       self._file.ensure_directory('Ensure mount point', dest)
-
       # Mount the boot.wim to mount dir for modification
-      mount_wim.mount_win_wim(self._powershell, dest, source, index,
+      mount_wim.mount_win_wim(self._powershell, dest, wim_path, index,
                               self._path['cleanup'])
 
-  def deinit_win_pe_image(self, src, save=True):
+  def deinit_win_pe_image(self, save=True):
     """ deinit_win_pe_image unmounts the winpe image and saves/discards changes
         to it
         Args:
-          src: path to image that is currently mounted
           save: bool to determine if we need to save the changes to this image.
     """
     with self._step.nest('Deinit WinPE image modification'):
@@ -167,13 +180,13 @@ class OfflineWinPECustomization(customization.Customization):
       if save:
         def_dest = self.get_output()
         # upload the output to default bucket for offline_winpe_customization
-        self._source.record_upload(def_dest, src)
+        self._source.record_upload(def_dest, self._workdir)
         # upload to any custom destinations that might be given
         cust = self._customization.offline_winpe_customization
         for image_dest in cust.image_dests:
           # update the link to the original upload.
           image_dest.tags['orig'] = def_dest.tags['orig']
-          self._source.record_upload(image_dest, src)
+          self._source.record_upload(image_dest, self._workdir)
 
   def perform_winpe_action(self, action):
     """ perform_winpe_action Performs the given action

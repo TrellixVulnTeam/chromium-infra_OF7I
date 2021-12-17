@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+from PB.recipes.infra.windows_image_builder import sources
 from . import helper
 
 
@@ -13,7 +14,7 @@ class GCSManager:
     uploading artifacts to GCS.
   """
 
-  def __init__(self, step, gsutil, path, mfile, raw_io, cache):
+  def __init__(self, step, gsutil, path, mfile, raw_io, archive, cache):
     """ __init__ copies few module objects and cache dir path into class vars
         Args:
           step: module object for recipe_engine/step
@@ -29,6 +30,7 @@ class GCSManager:
     self._path = path
     self._file = mfile
     self._raw_io = raw_io
+    self._archive = archive
     self._pending_uploads = {}
     self._pending_downloads = {}
     self._pkg_record = []
@@ -45,7 +47,7 @@ class GCSManager:
     """ pin_packages pins the given src to a proper reference by checking
         object metadata"""
     for src in self._pkg_record:
-      url = self.get_orig(self.get_gs_url(src.gcs_src))
+      url = self.get_orig(self.get_gs_url(src))
       if url:
         # found the original file. Pin to the correct src
         b, s = self.get_bucket_source(url)
@@ -76,12 +78,12 @@ class GCSManager:
       return orig_url
     return ''
 
-  def exists(self, gcs_src):
+  def exists(self, src):
     """ exists returns True if the given ref exists on GCS
         Args:
-          gcs_src: sources.GCSSrc proto object to check for existence
+          src: sources.Src proto object to check for existence
     """
-    return not self.get_orig(self.get_gs_url(gcs_src)) == ''
+    return not self.get_orig(self.get_gs_url(src)) == ''
 
   def download_packages(self):
     """ download_packages downloads all the gcs refs """
@@ -102,12 +104,12 @@ class GCSManager:
     return self._cache.join(src.gcs_src.bucket,
                             helper.conv_to_win_path(src.gcs_src.source))
 
-  def get_gs_url(self, gcs_src):
+  def get_gs_url(self, src):
     """ get_gs_url returns the gcs url for the given gcs src
         Args:
-          gcs_src: sources.GCSSrc proto object referencing an artifact in GCS
+          src: sources.Src proto object referencing an artifact in GCS
     """
-    return 'gs://{}/{}'.format(gcs_src.bucket, gcs_src.source)
+    return 'gs://{}/{}'.format(src.gcs_src.bucket, src.gcs_src.source)
 
   def get_bucket_source(self, url):
     """ get_bucket_source returns bucket and source given gcs url
@@ -130,7 +132,8 @@ class GCSManager:
     if up_dest and up_dest.WhichOneof('dest') == 'gcs_src':
       if 'orig' not in up_dest.tags:
         # Add orig tag to self if not given.
-        up_dest.tags['orig'] = self.get_gs_url(up_dest.gcs_src)
+        up_dest.tags['orig'] = self.get_gs_url(
+            sources.Src(gcs_src=up_dest.gcs_src))
       if source in self._pending_uploads.keys():
         self._pending_uploads[source].append(up_dest)
       else:
@@ -143,14 +146,23 @@ class GCSManager:
     for source, uploads in self._pending_uploads.items():
       # check if the file exists before uploading
       if self._path.exists(source):
+        package = source
+        if self._path.isdir(source):
+          # Package the dir instead of uploading it recursively
+          package = source.join('gcs.zip')
+          self._archive.package(source).archive(
+              'Package {} for upload'.format(source), package)
         for upload in uploads:
           pkg = upload.gcs_src
           self._gsutil.upload(
-              source,
+              package,
               pkg.bucket,
               pkg.source,
               metadata=upload.tags,
               name='upload gs://{}/{}'.format(pkg.bucket, pkg.source))
+        if self._path.isdir(source):
+          # Delete the package
+          self._file.remove('Delete gcs.zip after upload', package)
       else:
         # cannot upload this as the file is currently not available
         failed_uploads[source] = uploads  # pragma: nocover

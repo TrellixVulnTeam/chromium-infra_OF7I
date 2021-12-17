@@ -40,7 +40,7 @@ def RunSteps(api, config):
                           'FILE')
   # mock existence of the image pulled from GCS
   api.path.mock_add_paths(
-      '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM\\ffaa037563.wim',
+      '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM\\ffaa037563.zip',
       'FILE')
   api.windows_scripts_executor.execute_config(config)
   # mock existence of image created using copype
@@ -67,7 +67,7 @@ def GenTests(api):
       sources.Src(
           gcs_src=sources.GCSSrc(
               bucket='chrome-gce-images',
-              source='WIB-OUT/intermediate-winpe.wim')))
+              source='WIB-OUT/intermediate-winpe.zip')))
 
   WPE_IMAGE_WITH_DEST = t.WPE_IMAGE(image, wib.ARCH_X86, customization,
                                     'no-action', [])
@@ -76,7 +76,7 @@ def GenTests(api):
       dest.Dest(
           gcs_src=sources.GCSSrc(
               bucket='chrome-gce-images',
-              source='WIB-OUT/intermediate-winpe.wim')))
+              source='WIB-OUT/intermediate-winpe.zip')))
 
   # add unpinned artifact from gcs
   yield (
@@ -94,9 +94,8 @@ def GenTests(api):
       t.ADD_GCS_FILE(api, 'WinTools', 'net\\ping.exe', image, customization) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
-          '\\\\sources\\\\boot.wim',
-          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))
 
@@ -124,22 +123,21 @@ def GenTests(api):
       api.properties(WPE_IMAGE_WITH_SRC) +
       # mock check for customization output existence
       t.MOCK_CUST_OUTPUT(
-          api, image, 'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+          api, image, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
           False) + t.MOUNT_WIM(api, 'x86', image, customization) +
       t.UMOUNT_WIM(api, image, customization) +
       t.DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) +
       t.CHECK_UMOUNT_WIM(api, image, customization) +
       # Pin the given file to another gcs artifact
       t.GCS_PIN_FILE(api,
-                     'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.wim',
-                     'gs://chrome-gce-images/WIB-WIM/ffaa037563.wim') +
+                     'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.zip',
+                     'gs://chrome-gce-images/WIB-WIM/ffaa037563.zip') +
       # download the artifact from it's original link
-      t.GCS_DOWNLOAD_FILE(api, 'chrome-gce-images', 'WIB-WIM/ffaa037563.wim') +
+      t.GCS_DOWNLOAD_FILE(api, 'chrome-gce-images', 'WIB-WIM/ffaa037563.zip') +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CACHE\]\\\\Pkgs\\\\GCSPkgs\\\\chrome-gce-images\\\\' +
-          'WIB-WIM\\\\ffaa037563.wim',
-          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+          api, '\[CLEANUP\]\\\\gcs_customizations\\\\workdir\\\\gcs.zip',
+          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))
 
@@ -151,15 +149,13 @@ def GenTests(api):
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
-          '\\\\sources\\\\boot.wim',
-          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
           api,
-          '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
-          '\\\\sources\\\\boot.wim',
-          'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.wim',
-          orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+          '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+          'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.zip',
+          orig='gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))

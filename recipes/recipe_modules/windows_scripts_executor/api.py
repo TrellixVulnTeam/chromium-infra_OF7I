@@ -36,7 +36,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._sources = sources.Source(self.m.path['cache'].join('Pkgs'),
                                    self.m.step, self.m.path, self.m.file,
                                    self.m.raw_io, self.m.cipd, self.m.gsutil,
-                                   self.m.gitiles, self.m.git)
+                                   self.m.gitiles, self.m.git, self.m.archive)
 
     self._configs_dir = self.m.path['cleanup'].join('configs')
     helper.ensure_dirs(self.m.file, [self._configs_dir])
@@ -54,6 +54,7 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                 path=self.m.path,
                 powershell=self.m.powershell,
                 m_file=self.m.file,
+                archive=self.m.archive,
                 source=self._sources))
 
   def pin_available_sources(self):

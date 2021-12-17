@@ -90,7 +90,7 @@ def json_res(api, success=True, err_msg='Failed step'):
 def MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps """
   return MOCK_CUST_OUTPUT(api, image,
-                          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+                          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                           False) + \
         GEN_WPE_MEDIA(api, arch, image, customization) + \
         MOUNT_WIM(api, arch, image, customization) + \
@@ -102,12 +102,23 @@ def MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
 def MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps on an action failure """
   return MOCK_CUST_OUTPUT(api, image,
-                          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+                          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                           False) + \
          GEN_WPE_MEDIA(api, arch, image, customization) + \
          MOUNT_WIM(api, arch, image, customization) + \
          UMOUNT_WIM( api, image, customization) + \
          CHECK_UMOUNT_WIM(api, image, customization, save=False)
+
+
+def MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
+  """ mock all the winpe init and deinit steps """
+  return MOCK_CUST_OUTPUT(api, image,
+                          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
+                          False) + \
+        MOUNT_WIM(api, arch, image, customization) + \
+        UMOUNT_WIM(api, image, customization) + \
+        DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) + \
+        CHECK_UMOUNT_WIM(api, image, customization)
 
 
 def MOCK_CUST_OUTPUT(api, image, url, success=True):

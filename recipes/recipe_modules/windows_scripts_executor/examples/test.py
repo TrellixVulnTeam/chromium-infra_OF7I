@@ -107,7 +107,7 @@ def GenTests(api):
           dest.Dest(
               gcs_src=sources.GCSSrc(
                   bucket='test-bucket',
-                  source='out/gce_winpe_rel.wim',
+                  source='out/gce_winpe_rel.zip',
               )))
 
   # Fail the step to gen winpe media folder using copy-pe
@@ -122,7 +122,7 @@ def GenTests(api):
          # mock failure in gen winpe media step
          t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
          t.MOCK_CUST_OUTPUT(
-             api, image, 'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+             api, image, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
              False) + api.post_process(StatusFailure) +  # recipe should fail
          api.post_process(DropExpectation))
 
@@ -210,9 +210,41 @@ def GenTests(api):
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'no_change', [])) +
          # mock output check to return true
          t.MOCK_CUST_OUTPUT(api, image,
-                            'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key),
+                            'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                             True) +
          # recipe should pass successfully
+         api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  GCS_IMAGE = t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'no_change', [])
+  # Add custom image src to modify
+  GCS_IMAGE.customizations[0].offline_winpe_customization.image_src.CopyFrom(
+      sources.Src(
+          gcs_src=sources.GCSSrc(
+              bucket='chrome-gce-images',
+              source='WIB-WIM/winpe_stable.zip',
+          )))
+  yield (api.test('Modify winpe image from GCS', api.platform('win', 64)) +
+         # start recipe with the custom GCS image src
+         api.properties(GCS_IMAGE) +
+         # mock all the init and deinit steps
+         t.MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image,
+                                                 cust_name) +
+         api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  CIPD_IMAGE = t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'no_change', [])
+  # Add custom image src to modify
+  CIPD_IMAGE.customizations[0].offline_winpe_customization.image_src.CopyFrom(
+      sources.Src(
+          cipd_src=sources.CIPDSrc(
+              package='infra_internal/labs/windows/gce',
+              refs='stable',
+              platform='windows-amd64')))
+  yield (api.test('Modify winpe image from CIPD', api.platform('win', 64)) +
+         # start recipe with the custom GCS image src
+         api.properties(CIPD_IMAGE) +
+         # mock all the init and deinit steps
+         t.MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image,
+                                                 cust_name) +
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
   # Generic happy path for recipe execution
@@ -234,15 +266,13 @@ def GenTests(api):
              cust_name) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
-             api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(cust_name) +
-             '\\\\sources\\\\boot.wim',
-             'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+             api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
+             'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
          # assert that the generated image was uploaded to custom dest
          t.CHECK_GCS_UPLOAD(
              api,
-             '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(cust_name) +
-             '\\\\sources\\\\boot.wim',
-             'gs://test-bucket/out/gce_winpe_rel.wim',
-             orig='gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+             '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
+             'gs://test-bucket/out/gce_winpe_rel.zip',
+             orig='gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
          # recipe should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))

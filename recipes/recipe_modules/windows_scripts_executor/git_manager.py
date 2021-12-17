@@ -6,6 +6,9 @@ from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
 from . import helper
 
 
+GIT_URL = '{}/+/{}/{}'
+
+
 class GITManager:
   """
     GITManager is used to download required artifacts from git and generate
@@ -81,6 +84,14 @@ class GITManager:
           dir_path=local_path,
           ref=g_src.ref,
           file_name=g_src.src)
+
+  def get_gitiles_url(self, src):
+    """ get_gitiles_url returns string representing an url for the given source
+        Args:
+          src: sources.Src object representing cipd_src object
+    """
+    if src and src.WhichOneof('src') == 'git_src':  # pragma: no cover
+      return GIT_URL.format(src.git_src.repo, src.git_src.ref, src.git_src.src)
 
   def get_local_src(self, source):
     """ get_local_src returns the location of the downloaded package in

@@ -186,9 +186,8 @@ def GenTests(api):
                       customization) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
-          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\media'.format(customization) +
-          '\\\\sources\\\\boot.wim',
-          'gs://chrome-gce-images/WIB-WIM/{}.wim'.format(key)) +
+          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
       t.CHECK_CIPD_UPLOAD(api, UPLOAD_TO_CIPD_1) +
       t.CHECK_CIPD_UPLOAD(api, UPLOAD_TO_CIPD_2) +
       # assert that the recipe was executed successfully

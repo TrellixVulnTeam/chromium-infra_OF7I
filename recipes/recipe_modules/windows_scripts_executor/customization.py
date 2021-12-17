@@ -10,7 +10,7 @@ class Customization(object):
   """
 
   def __init__(self, arch, scripts, configs, step, path, powershell, m_file,
-               source):
+               archive, source):
     """ __init__ copies common module objects to class references. These are
         commonly used for all customizations
         Args:
@@ -20,6 +20,7 @@ class Customization(object):
           path: module object for recipe_engine/path
           powershell: module object for recipe_modules/powershell
           m_file: module object for recipe_engine/file
+          archive: module object for recipe_engine/archive
           source: module object for Source from sources.py
     """
     self._arch = arch
@@ -29,6 +30,7 @@ class Customization(object):
     self._powershell = powershell
     self._source = source
     self._file = m_file
+    self._archive = archive
     self._key = ''
     self._configs = configs
     self._name = ''
