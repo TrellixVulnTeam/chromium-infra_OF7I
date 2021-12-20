@@ -5,6 +5,7 @@
 package bugs
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 )
@@ -39,4 +40,17 @@ func (b *BugID) Validate() error {
 		return fmt.Errorf("invalid bug tracking system %q", b.System)
 	}
 	return nil
+}
+
+// MonorailID returns the monorail project and ID of the given bug.
+// If the bug is not a monorail bug or is invalid, an error is returned.
+func (b *BugID) MonorailProjectAndID() (project, id string, err error) {
+	if b.System != MonorailSystem {
+		return "", "", errors.New("not a monorail bug")
+	}
+	m := MonorailBugIDRe.FindStringSubmatch(b.ID)
+	if m == nil {
+		return "", "", errors.New("not a valid monorail bug ID")
+	}
+	return m[1], m[2], nil
 }

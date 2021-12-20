@@ -247,6 +247,18 @@ func TestProjectConfigValidator(t *testing.T) {
 				So(validate(cfg), ShouldErrLike, "value must not be negative")
 			})
 		})
+
+		Convey("monorail hostname", func() {
+			// Only the domain name should be supplied, not the protocol.
+			cfg.Monorail.MonorailHostname = "http://bugs.chromium.org"
+			So(validate(cfg), ShouldErrLike, "invalid hostname")
+		})
+
+		Convey("display prefix", func() {
+			// ";" is not allowed to appear in the prefix.
+			cfg.Monorail.DisplayPrefix = "chromium:"
+			So(validate(cfg), ShouldErrLike, "invalid display prefix")
+		})
 	})
 	Convey("bug filing threshold", t, func() {
 		cfg := createProjectConfig()

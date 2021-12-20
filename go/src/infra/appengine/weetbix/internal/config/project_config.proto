@@ -64,6 +64,18 @@ message MonorailProject {
   //
   // Valid values are from 0 (no hystersis) to 1,000 (10x hysteresis).
   int64 priority_hysteresis_percent = 5;
+
+  // The prefix that should appear when displaying bugs from the
+  // given bug tracking system. E.g. "crbug.com" or "fxbug.dev".
+  // If no prefix is specified, only the bug number will appear.
+  // Otherwise, the supplifed prefix will appear, followed by a
+  // forward slash ("/"), followed by the bug number.
+  // Valid prefixes match `^[a-z0-9\-.]{0,64}$`.
+  string display_prefix = 6;
+
+  // The preferred hostname to use in links to monorail. For example,
+  // "bugs.chromium.org" or "bugs.fuchsia.dev".
+  string monorail_hostname = 7;
 }
 
 // MonorailFieldValue describes a monorail field/value pair.

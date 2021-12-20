@@ -96,7 +96,7 @@ export class RuleSection extends LitElement {
                     </tr>
                     <tr>
                         <th>Associated Bug</th>
-                        <td>${r.bug.system}/${r.bug.id}</td>
+                        <td><a href="${r.bugUrl}">${r.bugName}</a></td>
                     </tr>
                     <tr>
                         <th>Enabled</th>
@@ -361,6 +361,8 @@ interface Rule {
     lastUpdated: string; // RFC 3339 encoded date/time.
     lastUpdatedUser: string;
     bug: BugId;
+    bugName: string;
+    bugUrl: string;
     isActive: boolean;
     sourceCluster: ClusterId;
 }

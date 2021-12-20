@@ -6,7 +6,6 @@ package config
 
 import (
 	"fmt"
-	"net/url"
 	"regexp"
 
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -29,6 +28,13 @@ var (
 	// https://source.chromium.org/chromium/infra/infra/+/main:luci/appengine/auth_service/proto/realms_config.proto;l=85;drc=04e290f764a293d642d287b0118e9880df4afb35
 	realmRE = regexp.MustCompile(`^[a-z0-9_\.\-/]{1,400}$`)
 
+	// Matches valid prefixes to use when displaying bugs.
+	// E.g. "crbug.com", "fxbug.dev".
+	prefixRE = regexp.MustCompile(`^[a-z0-9\-.]{0,64}$`)
+
+	// hostnameRE excludes most invalid hostnames.
+	hostnameRE = regexp.MustCompile(`^[a-z][a-z9-9\-.]{0,62}[a-z]$`)
+
 	// Patterns for BigQuery table.
 	// https://cloud.google.com/resource-manager/docs/creating-managing-projects
 	cloudProjectRE = regexp.MustCompile(`^[a-z][a-z0-9\-]{4,28}[a-z0-9]$`)
@@ -39,7 +45,7 @@ var (
 )
 
 func validateConfig(ctx *validation.Context, cfg *Config) {
-	validateMonorailHostname(ctx, cfg.MonorailHostname)
+	validateHostname(ctx, "monorail_hostname", cfg.MonorailHostname, false /*optional*/)
 	validateStringConfig(ctx, "chunk_gcs_bucket", cfg.ChunkGcsBucket, bucketRE)
 	// Limit to default max_concurrent_requests of 1000.
 	// https://cloud.google.com/appengine/docs/standard/go111/config/queueref
@@ -49,11 +55,13 @@ func validateConfig(ctx *validation.Context, cfg *Config) {
 	validateIntegerConfig(ctx, "reclustering_interval_minutes", cfg.ReclusteringIntervalMinutes, 9)
 }
 
-func validateMonorailHostname(ctx *validation.Context, hostname string) {
-	ctx.Enter("monorail_hostname")
+func validateHostname(ctx *validation.Context, name, hostname string, optional bool) {
+	ctx.Enter(name)
 	if hostname == "" {
-		ctx.Errorf("empty value is not allowed")
-	} else if _, err := url.Parse("https://" + hostname + "/"); err != nil {
+		if !optional {
+			ctx.Errorf("empty value is not allowed")
+		}
+	} else if !hostnameRE.MatchString(hostname) {
 		ctx.Errorf("invalid hostname: %q", hostname)
 	}
 	ctx.Exit()
@@ -187,6 +195,8 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingTh
 	validateFieldID(ctx, cfg.PriorityFieldId, "priority_field_id")
 	validatePriorities(ctx, cfg.Priorities, bugFilingThres)
 	validatePriorityHysteresisPercent(ctx, cfg.PriorityHysteresisPercent)
+	validateDisplayPrefix(ctx, cfg.DisplayPrefix)
+	validateHostname(ctx, "monorail_hostname", cfg.MonorailHostname, true /*optional*/)
 }
 
 func validateDefaultFieldValues(ctx *validation.Context, fvs []*MonorailFieldValue) {
@@ -344,5 +354,13 @@ func validateBugFilingThresholdSatisfiesThresold(ctx *validation.Context, thresh
 		ctx.Errorf("%s threshold must be set, with a value of at most %v (the configured bug-filing threshold). This ensures that bugs which are filed meet the criteria to stay open", fieldName, *bugFilingThres)
 	} else if *threshold > *bugFilingThres {
 		ctx.Errorf("value must be at most %v (the configured bug-filing threshold). This ensures that bugs which are filed meet the criteria to stay open", *bugFilingThres)
+	}
+}
+
+func validateDisplayPrefix(ctx *validation.Context, prefix string) {
+	ctx.Enter(prefix)
+	defer ctx.Exit()
+	if !prefixRE.MatchString(prefix) {
+		ctx.Errorf("invalid display prefix: %q", prefix)
 	}
 }
