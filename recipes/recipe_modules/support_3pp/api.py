@@ -714,14 +714,14 @@ class Support3ppApi(recipe_api.RecipeApi):
 
     expanded_build_plan = set()
     for spec, version in explicit_build_plan:
-      expanded_build_plan.add((spec, version, force_build))
+      expanded_build_plan.add((spec, version))
       # Anything pulled in either via deps or tools dependencies should be
       # explicitly built at 'latest'.
       for sub_spec in spec.all_possible_deps_and_tools:
-        expanded_build_plan.add((sub_spec, 'latest', False))
+        expanded_build_plan.add((sub_spec, 'latest'))
 
     ret = []
     with self.m.step.defer_results():
-      for spec, version, force in sorted(expanded_build_plan):
-        ret.append(self._build_resolved_spec(spec, version, force))
+      for spec, version in sorted(expanded_build_plan):
+        ret.append(self._build_resolved_spec(spec, version, force_build))
     return ret, unsupported
