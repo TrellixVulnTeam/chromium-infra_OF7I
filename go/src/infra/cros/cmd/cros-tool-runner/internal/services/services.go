@@ -8,7 +8,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"path"
+	"time"
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/test/api"
@@ -24,6 +26,9 @@ const (
 
 	// Provision service running port, docker info.
 	crosProvisionContainerNameTemplate = "cros-provision-%s"
+
+	// Cros Test container name template.
+	crosTestContainerNameTemplate = "cros-test-%d_%d"
 
 	// File names used to interact with cros-provision CLI.
 	InputFileName  = "in.json"
@@ -86,4 +91,34 @@ func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, n
 		Network: networkName,
 	}
 	return startService(ctx, d)
+}
+
+// RunTestCLI pulls and runs cros-test as CLI.
+func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName, inputFileName, crosTestDir, resultDir string) error {
+	// Create directory to provide input files and collect output files.
+	// The directory will also has logs of the provisioning.
+	// Path on the drone where service put the logs by default.
+	p, err := createImagePath(image)
+	if err != nil {
+		return errors.Annotate(err, "failed to create image for cros-test").Err()
+	}
+	d := &docker.Docker{
+		Name:               fmt.Sprintf(crosTestContainerNameTemplate, os.Getpid(), time.Now().Unix()),
+		RequestedImageName: p,
+		// Fallback version used in case when main image fail to pull.
+		FallbackImageName: "gcr.io/chromeos-bot/cros-test:fallback",
+		ExecCommand: []string{
+			"bash",
+			"-c",
+			"sudo chown -R chromeos-test:chromeos-test /tmp/test && cros-test",
+		},
+		Volumes: []string{
+			fmt.Sprintf("%s:%s", crosTestDir, "/tmp/test/cros-test"),
+			fmt.Sprintf("%s:%s", resultDir, "/tmp/test/results"),
+		},
+		Detach:  false,
+		Network: networkName,
+	}
+	_, err = startService(ctx, d)
+	return err
 }

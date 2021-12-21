@@ -121,9 +121,9 @@ func (d *Docker) runDockerImage(ctx context.Context) (string, error) {
 		args = append(args, "-d")
 	}
 	args = append(args, "--name", d.Name)
-	if len(d.Volumes) > 0 {
+	for _, v := range d.Volumes {
 		args = append(args, "-v")
-		args = append(args, d.Volumes...)
+		args = append(args, v)
 	}
 	// Set to automatically remove the container when it exits.
 	args = append(args, "--rm")

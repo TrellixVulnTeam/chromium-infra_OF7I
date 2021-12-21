@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 
@@ -22,7 +21,6 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/lucictx"
 	"golang.org/x/sync/errgroup"
 
 	"infra/cmdsupport/cmdlib"
@@ -124,7 +122,10 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 	for i, device := range req.GetDevices() {
 		i, device := i, device
 		g.Go(func() error {
-			result := provision.Run(ctx, device, req.GetInventoryServer(), findContainer(cm, device, "cros-dut"), findContainer(cm, device, "cros-provision"))
+			result := provision.Run(ctx,
+				device, req.GetInventoryServer(),
+				findContainer(cm, device.GetContainerMetadataKey(), "cros-dut"),
+				findContainer(cm, device.GetContainerMetadataKey(), "cros-provision"))
 			provisionResults[i] = result.Out
 			return result.Err
 		})
@@ -135,20 +136,6 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 		out.Responses = append(out.Responses, result)
 	}
 	return out, errors.Annotate(err, "inner run").Err()
-}
-
-func findContainer(cm *build_api.ContainerMetadata, device *api.CrosToolRunnerProvisionRequest_Device, name string) *build_api.ContainerImageInfo {
-	// TODO: need update logic base on real examples.
-	for _, c := range cm.GetContainers() {
-		for n, i := range c.GetImages() {
-			if n == name {
-				log.Printf("Found %q image %s", name, i)
-				return i
-			}
-		}
-	}
-	log.Printf("Image %q not found", name)
-	return nil
 }
 
 func isEmptyEndPoint(i *lab_api.IpEndpoint) bool {
@@ -164,17 +151,6 @@ func readProvisionRequest(p string) (*api.CrosToolRunnerProvisionRequest, error)
 	}
 	err = jsonpb.Unmarshal(r, in)
 	return in, errors.Annotate(err, "read provision request %q", p).Err()
-}
-
-// readContainersMetadata reads the jsonproto at path containers metadata file.
-func readContainersMetadata(p string) (*build_api.ContainerMetadata, error) {
-	in := &build_api.ContainerMetadata{}
-	r, err := os.Open(p)
-	if err != nil {
-		return nil, errors.Annotate(err, "read container metadata %q", p).Err()
-	}
-	err = jsonpb.Unmarshal(r, in)
-	return in, errors.Annotate(err, "read container metadata %q", p).Err()
 }
 
 // saveOutput saves output data to the file.
@@ -211,54 +187,4 @@ func printOutput(out *api.CrosToolRunnerProvisionResponse, a subcommands.Applica
 			fmt.Fprintf(a.GetOut(), "%s\n", s)
 		}
 	}
-}
-
-// readLocalAddress read local IP of the host.
-func readLocalAddress() (string, error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return "", errors.Annotate(err, "read local address").Err()
-	}
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			return "", errors.Annotate(err, "read local address").Err()
-		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() {
-				continue
-			}
-			// TODO(otabek): Add option to work with IPv6 if we switched to it.
-			ip = ip.To4()
-			if ip == nil {
-				continue // not an ipv4 address
-			}
-			return ip.String(), nil
-		}
-	}
-	return "", errors.Reason("read local address: fail to find").Err()
-}
-
-func useSystemAuth(ctx context.Context, authFlags *authcli.Flags) (context.Context, error) {
-	authOpts, err := authFlags.Options()
-	if err != nil {
-		return nil, errors.Annotate(err, "switching to system auth").Err()
-	}
-
-	authCtx, err := lucictx.SwitchLocalAccount(ctx, "system")
-	if err == nil {
-		// If there's a system account use it (the case of running on Swarming).
-		// Otherwise default to user credentials (the local development case).
-		authOpts.Method = auth.LUCIContextMethod
-		return authCtx, nil
-	}
-	log.Printf("System account not found, err %s.\nFalling back to user credentials for auth.\n", err)
-	return ctx, nil
 }

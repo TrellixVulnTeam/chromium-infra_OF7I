@@ -42,6 +42,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 			authcli.SubcommandLogin(authOpts, "login", false),
 			authcli.SubcommandLogout(authOpts, "logout", false),
 			tasks.Provision(authOpts),
+			tasks.Test(authOpts),
 		},
 	}
 }
