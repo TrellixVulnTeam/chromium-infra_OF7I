@@ -240,6 +240,11 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 			panic(fmt.Sprintf("unhandled scheduling type %#v", p))
 		}
 	}
+
+	if g.Params.GetHardwareAttributes().GetRequireStableDevice() {
+		*inv.Stability = true
+	}
+
 	return inv, nil
 }
 
