@@ -69,6 +69,25 @@ describe('renderMarkdown', () => {
           `google.com</span></span></p>\n`;
       assert.equal(actual, expected);
     });
+
+    it('correctly renders emails', () => {
+      const actual = renderMarkdown('[person@google.com](mailto:person@google.com)');
+      const expected = `<p><span class="annotated-link"><a title="" ` +
+      `href="mailto:person@google.com"><span class="material-icons link">` +
+      `link</span>person@google.com</a><span class="tooltip">Link destination: ` +
+      `mailto:person@google.com</span></span></p>\n`;
+      assert.equal(actual, expected);
+    });
+
+    it('correctly renders monorail user links', () => {
+      const actual = renderMarkdown('[person@google.com](/u/person@google.com)');
+      const expected = `<p><span class="annotated-link"><a title="" ` +
+      `href="/u/person@google.com"><span class="material-icons ` +
+      `link">link</span>person@google.com</a><span class="tooltip">Link destination: ` +
+      `/u/person@google.com</span></span></p>\n`
+      assert.equal(actual, expected)
+    });
+
   });
 
   it('preserves bolding from description templates', () => {
