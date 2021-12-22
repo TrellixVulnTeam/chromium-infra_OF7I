@@ -134,7 +134,7 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 	if err != nil {
 		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
-	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+	if dut.ServoHost == nil || dut.ServoHost.Name == "" {
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
 	}
 	if isServodContainer(dut) {
@@ -161,7 +161,7 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
-	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+	if dut.ServoHost == nil || dut.ServoHost.Name == "" {
 		return errors.Reason("stop servod %q: servo is not found", resourceName).Err()
 	}
 	if isServodContainer(dut) {
