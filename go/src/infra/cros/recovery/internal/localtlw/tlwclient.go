@@ -20,6 +20,7 @@ import (
 
 	"infra/cros/dutstate"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
+	"infra/cros/recovery/internal/localtlw/localinfo"
 	"infra/cros/recovery/internal/localtlw/localproxy"
 	"infra/cros/recovery/internal/localtlw/rpm"
 	"infra/cros/recovery/internal/localtlw/servod"
@@ -375,7 +376,8 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 	} else {
 		dut.StableVersion = gv
 	}
-	return dut, nil
+	dut.ProvisionedInfo, err = localinfo.ReadProvisionInfo(ctx, dut.Name)
+	return dut, errors.Annotate(err, "get dut").Err()
 }
 
 // getDevice receives device from inventory.
@@ -512,7 +514,7 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 	} else {
 		return errors.Reason("update DUT %q: dutstate.UFSClient interface is not implemented by client", dut.Name).Err()
 	}
-	return nil
+	return errors.Annotate(localinfo.UpdateProvisionInfo(ctx, dut), "udpate dut").Err()
 }
 
 // Provision triggers provisioning of the device.

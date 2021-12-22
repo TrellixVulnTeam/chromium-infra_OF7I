@@ -188,6 +188,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		ExtraAttributes: map[string][]string{
 			ExtraAttributesPools: dut.GetPools(),
 		},
+		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
 	}
 	if p.GetServo().GetServoSetup() == ufslab.ServoSetupType_SERVO_SETUP_DUAL_V4 {
 		d.ExtraAttributes[ExtraAttributesServoSetup] = []string{ExtraAttributesServoSetupDual}
@@ -219,6 +220,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 		ExtraAttributes: map[string][]string{
 			"pool": l.GetPools(),
 		},
+		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
 	}
 	return d, nil
 }
