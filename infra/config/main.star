@@ -127,10 +127,17 @@ luci.bucket(
     acls = [
         acl.entry(
             roles = acl.BUILDBUCKET_TRIGGERER,
-            # Allow Tricium dev and prod to trigger analyzer tryjobs.
             users = [
+                # Allow Tricium dev and prod to trigger analyzer tryjobs.
                 "tricium-dev@appspot.gserviceaccount.com",
                 "tricium-prod@appspot.gserviceaccount.com",
+
+                # For b/211053378 allow direct buildbucket triggers for github
+                # integration experimentation.
+                #
+                # Remove after January 30, 2022 (cobalt should have its own LUCI
+                # project & builders by then).
+                "github-integration@cobalt-tools.iam.gserviceaccount.com",
             ],
             groups = [
                 "project-infra-tryjob-access",

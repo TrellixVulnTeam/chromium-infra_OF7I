@@ -209,3 +209,16 @@ wheel_tryjob("infra-internal:try/Mac wheel builder")
 wheel_tryjob("infra-internal:try/Mac ARM64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x86 wheel builder")
+
+# Placeholder tryjob for Buildbucket integration testing
+infra.builder(
+    bucket = "try",
+    name = "placeholder",
+    os = "Ubuntu",
+    executable = luci.recipe(
+        name = "engine_placeholder",
+        recipe = "placeholder",
+        cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
+        use_python3 = True,
+    ),
+)
