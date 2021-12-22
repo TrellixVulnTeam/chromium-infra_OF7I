@@ -198,7 +198,7 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	if err != nil {
 		return fail(err)
 	}
-	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+	if dut.ServoHost == nil || dut.ServoHost.Name == "" {
 		return fail(errors.Reason("call servod %q: servo not found", req.Resource).Err())
 	}
 	if isServodContainer(dut) {
