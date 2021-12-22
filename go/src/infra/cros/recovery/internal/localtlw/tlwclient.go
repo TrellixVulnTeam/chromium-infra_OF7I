@@ -58,6 +58,16 @@ type CSAClient interface {
 	GetStableVersion(ctx context.Context, in *fleet.GetStableVersionRequest, opts ...grpc.CallOption) (*fleet.GetStableVersionResponse, error)
 }
 
+// hostType provides information which type of the host.
+type hostType string
+
+const (
+	hostTypeCros      hostType = "cros-host"
+	hostTypeServo     hostType = "servo-host"
+	hostTypeBtPeer    hostType = "bluetooth-peer-host"
+	hostTypeChameleon hostType = "chameleon-host"
+)
+
 // tlwClient holds data and represents the local implementation of TLW Access interface.
 type tlwClient struct {
 	csaClient  CSAClient
@@ -65,17 +75,22 @@ type tlwClient struct {
 	sshPool    *sshpool.Pool
 	servodPool *servod.Pool
 	// Cache received devices from inventory
-	devices map[string]*tlw.Dut
+	devices   map[string]*tlw.Dut
+	hostTypes map[string]hostType
+	// Map to provide name if the DUT host as value and other hosts as key.
+	hostToParents map[string]string
 }
 
 // New build new local TLW Access instance.
 func New(ufs UFSClient, csac CSAClient) (tlw.Access, error) {
 	c := &tlwClient{
-		ufsClient:  ufs,
-		csaClient:  csac,
-		sshPool:    sshpool.New(ssh.SSHConfig()),
-		servodPool: servod.NewPool(),
-		devices:    make(map[string]*tlw.Dut),
+		ufsClient:     ufs,
+		csaClient:     csac,
+		sshPool:       sshpool.New(ssh.SSHConfig()),
+		servodPool:    servod.NewPool(),
+		devices:       make(map[string]*tlw.Dut),
+		hostTypes:     make(map[string]hostType),
+		hostToParents: make(map[string]string),
 	}
 	return c, nil
 }
@@ -95,6 +110,21 @@ func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) er
 
 // Run executes command on device by SSH related to resource name.
 func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *tlw.RunResult {
+	dut, err := c.getDevice(ctx, resourceName)
+	if err != nil {
+		return &tlw.RunResult{
+			Command:  command,
+			ExitCode: -1,
+			Stderr:   err.Error(),
+		}
+	}
+	if c.isServoHost(resourceName) && isServodContainer(dut) {
+		return &tlw.RunResult{
+			Command:  command,
+			ExitCode: -1,
+			Stderr:   "Running commands on servod container is not supported yet!",
+		}
+	}
 	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(resourceName), command)
 }
 
@@ -106,6 +136,9 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 	}
 	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
+	}
+	if isServodContainer(dut) {
+		return errors.Reason("Running commands on servod container is not supported yet").Err()
 	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
@@ -131,7 +164,9 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
 		return errors.Reason("stop servod %q: servo is not found", resourceName).Err()
 	}
-
+	if isServodContainer(dut) {
+		return errors.Reason("Running commands on servod container is not supported yet!").Err()
+	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
 		int32(dut.ServoHost.ServodPort),
@@ -165,6 +200,9 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	}
 	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
 		return fail(errors.Reason("call servod %q: servo not found", req.Resource).Err())
+	}
+	if isServodContainer(dut) {
+		return fail(errors.Reason("Running commands on servod container is not supported yet!").Err())
 	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
@@ -304,7 +342,7 @@ func (c *tlwClient) ListResourcesForUnit(ctx context.Context, name string) ([]st
 		if err != nil {
 			return nil, errors.Annotate(err, "list resources %q", name).Err()
 		}
-		c.devices[name] = dut
+		c.cacheDevice(dut)
 		return []string{dut.Name}, nil
 	}
 	suName := ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name)
@@ -342,6 +380,10 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 
 // getDevice receives device from inventory.
 func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error) {
+	if dutName, ok := c.hostToParents[name]; ok {
+		// the device was previously
+		name = dutName
+	}
 	if d, ok := c.devices[name]; ok {
 		log.Debug(ctx, "Get device %q: received from cache.", name)
 		return d, nil
@@ -360,9 +402,69 @@ func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error
 	if err != nil {
 		return nil, errors.Annotate(err, "get device %q", name).Err()
 	}
-	c.devices[name] = dut
+	c.cacheDevice(dut)
 	log.Debug(ctx, "Get device %q: cached received device.", name)
 	return dut, nil
+}
+
+// cacheDevice puts device to local cache and set list host name knows for DUT.
+func (c *tlwClient) cacheDevice(dut *tlw.Dut) {
+	if dut == nil {
+		// Skip as DUT not found.
+		return
+	}
+	name := dut.Name
+	c.devices[name] = dut
+	c.hostToParents[name] = name
+	c.hostTypes[dut.Name] = hostTypeCros
+	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+		c.hostTypes[dut.ServoHost.Name] = hostTypeServo
+		c.hostToParents[dut.ServoHost.Name] = name
+	}
+	for _, bt := range dut.BluetoothPeerHosts {
+		if bt.Name != "" {
+			c.hostTypes[bt.Name] = hostTypeBtPeer
+			c.hostToParents[bt.Name] = name
+		}
+	}
+	if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
+		c.hostTypes[dut.ChameleonHost.Name] = hostTypeChameleon
+		c.hostToParents[dut.ChameleonHost.Name] = name
+	}
+}
+
+// cacheDevice puts device to local cache and set list host name knows for DUT.
+func (c *tlwClient) unCacheDevice(dut *tlw.Dut) {
+	if dut == nil {
+		// Skip as DUT not provided.
+		return
+	}
+	name := dut.Name
+	delete(c.hostToParents, name)
+	delete(c.hostTypes, name)
+	if dut.ServoHost != nil && dut.ServoHost.Name != "" {
+		delete(c.hostTypes, dut.ServoHost.Name)
+		delete(c.hostToParents, dut.ServoHost.Name)
+	}
+	for _, bt := range dut.BluetoothPeerHosts {
+		if bt.Name != "" {
+			delete(c.hostTypes, bt.Name)
+			delete(c.hostToParents, bt.Name)
+		}
+	}
+	if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {
+		delete(c.hostTypes, dut.ChameleonHost.Name)
+		delete(c.hostToParents, dut.ChameleonHost.Name)
+	}
+	delete(c.devices, name)
+}
+
+// isServoHost tells if host is servo-host.
+func (c *tlwClient) isServoHost(host string) bool {
+	if v, ok := c.hostTypes[host]; ok {
+		return v == hostTypeServo
+	}
+	return false
 }
 
 // getStableVersion receives stable versions of device.
@@ -402,7 +504,7 @@ func (c *tlwClient) UpdateDut(ctx context.Context, dut *tlw.Dut) error {
 	if _, err := c.ufsClient.UpdateDutState(ctx, req); err != nil {
 		return errors.Annotate(err, "update DUT %q", dut.Name).Err()
 	}
-	delete(c.devices, dut.Name)
+	c.unCacheDevice(dut)
 	if ufs, ok := c.ufsClient.(dutstate.UFSClient); ok {
 		if err := dutstate.Update(ctx, ufs, dut.Name, dut.State); err != nil {
 			return errors.Annotate(err, "update DUT %q", dut.Name).Err()
@@ -433,4 +535,11 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 	defer func() { conn.Close() }()
 	err = TLSProvision(ctx, conn, req)
 	return errors.Annotate(err, "provision").Err()
+}
+
+// isServodContainer checks if DUT using servod-container.
+// For now just simple check if servod container is provided.
+// Later need distinguish when container running on the same host or remove one.
+func isServodContainer(d *tlw.Dut) bool {
+	return d != nil && d.ServoHost != nil && d.ServoHost.ContainerName != ""
 }
