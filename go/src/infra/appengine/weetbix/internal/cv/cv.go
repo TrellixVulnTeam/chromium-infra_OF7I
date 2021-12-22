@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package cv contains logic of interacting with CV(Luci Test Verifier).
+// Package cv contains logic of interacting with CV (LUCI Change Verifier).
 package cv
 
 import (
 	"context"
 	"net/http"
+
+	"google.golang.org/grpc"
 
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 	"go.chromium.org/luci/grpc/prpc"
@@ -17,7 +19,7 @@ import (
 // fakeCVClientKey is the context key indicates using fake CV client in tests.
 var fakeCVClientKey = "used in tests only for setting the fake CV client"
 
-func newRunsClient(ctx context.Context, host string) (cvv0.RunsClient, error) {
+func newRunsClient(ctx context.Context, host string) (Client, error) {
 	if fc, ok := ctx.Value(&fakeCVClientKey).(*FakeClient); ok {
 		return fc, nil
 	}
@@ -34,25 +36,20 @@ func newRunsClient(ctx context.Context, host string) (cvv0.RunsClient, error) {
 		}), nil
 }
 
-// Client is the client to communicate with CV.
-// It wraps a cvv0.RunsClient.
-type Client struct {
-	client cvv0.RunsClient
+// Client defines a subset of CV API consumed by Weebtix.
+type Client interface {
+	GetRun(ctx context.Context, in *cvv0.GetRunRequest, opts ...grpc.CallOption) (*cvv0.Run, error)
 }
 
+// ensure Client is a subset of CV interface.
+var _ Client = (cvv0.RunsClient)(nil)
+
 // NewClient creates a client to communicate with CV.
-func NewClient(ctx context.Context, host string) (*Client, error) {
+func NewClient(ctx context.Context, host string) (Client, error) {
 	client, err := newRunsClient(ctx, host)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{
-		client: client,
-	}, nil
-}
-
-// GetRun returns cvv0.Run for the requested CV run.
-func (c *Client) GetRun(ctx context.Context, req *cvv0.GetRunRequest) (*cvv0.Run, error) {
-	return c.client.GetRun(ctx, req)
+	return client, nil
 }

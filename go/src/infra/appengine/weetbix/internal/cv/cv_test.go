@@ -23,6 +23,7 @@ func TestGetRun(t *testing.T) {
 		}
 		ctx := UseFakeClient(context.Background(), runs)
 		client, err := NewClient(ctx, "host")
+		So(err, ShouldBeNil)
 		req := &cvv0.GetRunRequest{
 			Id: rID,
 		}
