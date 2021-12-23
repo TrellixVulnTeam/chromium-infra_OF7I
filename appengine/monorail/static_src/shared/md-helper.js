@@ -2,10 +2,10 @@ import marked from 'marked';
 import DOMPurify from 'dompurify';
 
 /** @type {Set} Projects that default Markdown rendering to true. */
-export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail', 'fuchsia']);
+export const DEFAULT_MD_PROJECTS = new Set(['monkeyrail', 'monorail', 'fuchsia', 'pigweed']);
 
 /** @type {Set} Projects that allow users to opt into Markdown rendering. */
-export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS, 'pigweed']);
+export const AVAILABLE_MD_PROJECTS = new Set([...DEFAULT_MD_PROJECTS]);
 
 const EMAIL_REGEX = /^mailto:[-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+(?:[.][-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+)*@(?:(?:[0-9a-zA-Z](?:[-]*[0-9a-zA-Z]+)*)(?:\.[0-9a-zA-Z](?:[-]*[0-9a-zA-Z]+)*)*)\.(?:[a-zA-Z]{2,9})$/;
 const MONORAIL_USER_REGEX = /\/u\/[-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+(?:[.][-a-zA-Z0-9!#$%&'*+\/=?^_`{|}~]+)*@(?:(?:[0-9a-zA-Z](?:[-]*[0-9a-zA-Z]+)*)(?:\.[0-9a-zA-Z](?:[-]*[0-9a-zA-Z]+)*)*)\.(?:[a-zA-Z]{2,9})$/;
