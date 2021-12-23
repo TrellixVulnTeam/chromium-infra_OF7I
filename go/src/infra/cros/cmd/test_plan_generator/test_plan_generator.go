@@ -283,15 +283,25 @@ func (c *getTestPlanRun) readLocalConfigFiles() (*testplans.BoardPriorityList, *
 
 func (c *getTestPlanRun) genTargetTestRequirements(builderNames []string) (*testplans.TargetTestRequirementsCfg, error) {
 	cmdRunner := cmd.RealCommandRunner{}
+	testReqsConfig := &testplans.TargetTestRequirementsCfg{}
+
+	// If no build results are passed to the test_plan_generator, we have nothing to test.
+	// This is handled later on for other target test req sources. For this source (direct
+	// generation), we just return empty target test reqes -- the result is the same (no
+	// tests).
+	if len(builderNames) == 0 {
+		log.Printf("--target_test_requirements_repo was passed but there are no builds attached " +
+			"to this run, returning empty target test reqs config")
+		return testReqsConfig, nil
+	}
 
 	ctx := context.Background()
 	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
 	cmd := []string{strings.Join(builderNames, ",")}
-	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, nil, c.targetTestReqsRepo, "./board_config/generate_test_config", cmd...); err != nil {
-		return nil, err
+	if err := cmdRunner.RunCommand(ctx, &stdoutBuf, &stderrBuf, c.targetTestReqsRepo, "./board_config/generate_test_config", cmd...); err != nil {
+		return nil, fmt.Errorf("error running ./board_config/generate_test_config: %s", stderrBuf.String())
 	}
-
-	testReqsConfig := &testplans.TargetTestRequirementsCfg{}
 	if err := unmarshaler.Unmarshal(bytes.NewReader(stdoutBuf.Bytes()), testReqsConfig); err != nil {
 		return nil, fmt.Errorf("couldn't decode file as TargetTestRequirementsCfg: %v", err)
 	}
