@@ -419,8 +419,16 @@ const servoRepairPlanBody = `
 	"is_not_dual_setup": {
 		"exec_name":"sample_pass"
 	},
+	"servo_has_active_dut_controller": {
+		"exec_extra_args": [
+			"command:active_dut_controller"
+		],
+		"exec_name":"servo_check_servod_control"
+	},
 	"servod_set_main_device": {
-		"exec_name":"sample_pass"
+		"conditions" : [
+			"servo_has_active_dut_controller"
+		]
 	},
 	"servo_v4_type_c": {
 		"exec_name":"sample_pass"

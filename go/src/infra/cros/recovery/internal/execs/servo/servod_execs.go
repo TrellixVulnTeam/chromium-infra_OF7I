@@ -162,6 +162,32 @@ func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	return nil
 }
 
+// servodSetActiveDutControllerExec sets the main servo device as the
+// active DUT controller.
+func servodSetActiveDutControllerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	mainDevice, err := MainServoDevice(ctx, args)
+	if err != nil {
+		return errors.Annotate(err, "servod set active dut controller exec").Err()
+	}
+	if mainDevice == "" {
+		return errors.Reason("servod set active dut controller exec: main device is empty.").Err()
+	}
+	command := "active_dut_controller"
+	_, err = ServodCallSet(ctx, args, command, mainDevice)
+	if err != nil {
+		return errors.Annotate(err, "servod set active dut controller exec").Err()
+	}
+	returnedMainDevice, err := servodGetString(ctx, args, command)
+	if err != nil {
+		return errors.Annotate(err, "servod set active dut controller exec").Err()
+	}
+	if returnedMainDevice != mainDevice {
+		return errors.Reason("servod set active dut controller exec: expected the main device to be %q, but found it to be %q", mainDevice, returnedMainDevice).Err()
+	}
+	log.Debug(ctx, "Servod Set Active Dut Controller Exec: the expected value of servod control %q matches the value returned.", command)
+	return nil
+}
+
 func init() {
 	execs.Register("servod_echo", servodEchoActionExec)
 	execs.Register("servod_lidopen", servodLidopenActionExec)
@@ -170,4 +196,5 @@ func init() {
 	execs.Register("servod_dut_cold_reset", servodDUTColdResetActionExec)
 	execs.Register("servod_has", servodHasExec)
 	execs.Register("servod_can_read_all", servodCanReadAllExec)
+	execs.Register("servod_set_main_device", servodSetActiveDutControllerExec)
 }

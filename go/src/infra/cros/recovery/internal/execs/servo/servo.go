@@ -69,3 +69,42 @@ func GetServoType(ctx context.Context, args *execs.RunArgs) (string, error) {
 	}
 	return servoType, nil
 }
+
+// MainServoDevice returns the main servo device.
+//
+// For example, if the servo_type value returned by servod is
+// 'servo_v4_with_ccd_cr50', then the function with extract the
+// substring 'ccd_cr50' and will return it. The logic is to extract
+// and return the substring between '_with_' and '_and_', if such a
+// substring is present in the servo_type value.
+//
+// A few more examples are:
+// servo_type: "servo_v3", returned value: "servo_v3"
+// servo_type: "servo_v4", returned value: "servo_v4"
+// servo_type: "servo_v4_with_ccd_cr50", returned value: "ccd_cr50"
+// servo_type: "servo_v4_with_servo_micro_and_ccd_cr50", returned value: "servo_micro"
+func MainServoDevice(ctx context.Context, args *execs.RunArgs) (string, error) {
+	servoType, err := GetServoType(ctx, args)
+	if err != nil {
+		return "", errors.Annotate(err, "main servo device").Err()
+	}
+	s, err := mainServoDeviceHelper(servoType)
+	if err != nil {
+		return "", errors.Annotate(err, "main servo device").Err()
+	}
+	return s, nil
+}
+
+// mainServoDeviceHelper extracts the main servo device from the
+// servoType string.
+//
+// This is the central logic for finding the main device, and has been
+// extracted out to make unit-tests simple.
+func mainServoDeviceHelper(servoType string) (string, error) {
+	s1 := strings.Split(servoType, "_with_")
+	s2 := strings.Split(s1[len(s1)-1], "_and_")[0]
+	if len(s2) == 0 {
+		return s2, errors.Reason("main servo device helper: main device not found").Err()
+	}
+	return s2, nil
+}
