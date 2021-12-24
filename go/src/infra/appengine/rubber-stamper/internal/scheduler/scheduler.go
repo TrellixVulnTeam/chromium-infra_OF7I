@@ -32,7 +32,7 @@ func ScheduleReviews(ctx context.Context) error {
 	}
 
 	errNum := 0
-	for host := range cfg.HostConfigs {
+	for host, hostCfg := range cfg.HostConfigs {
 		gc, err := gerrit.GetCurrentClient(ctx, getGerritHostURL(host))
 		if err != nil {
 			return err
@@ -43,7 +43,15 @@ func ScheduleReviews(ctx context.Context) error {
 			Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS, gerritpb.QueryOption_LABELS},
 		}
 		resp, err := gc.ListChanges(ctx, listReq)
+		if err != nil {
+			return err
+		}
 		for _, cl := range resp.GetChanges() {
+			if hostCfg.RepoConfigs[cl.Project] != nil && hostCfg.RepoConfigs[cl.Project].Disabled {
+				logging.Infof(ctx, "cl %d is not scheduled since Rubber Stamper is disabled in repo %s", cl.Number, cl.Project)
+				continue
+			}
+
 			err := tasks.EnqueueChangeReviewTask(ctx, host, cl)
 			if err != nil {
 				errNum = errNum + 1

@@ -41,6 +41,9 @@ message RepoConfig {
   BenignFilePattern benign_file_pattern = 1;
   CleanRevertPattern clean_revert_pattern = 2;
   CleanCherryPickPattern clean_cherry_pick_pattern = 3;
+
+  // Whether Rubber Stamper is disabled in this repository.
+  bool disabled = 4;
 }
 
 // BenignFilePattern describes pattern of changes to benign files.
