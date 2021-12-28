@@ -35,15 +35,22 @@ type AnalysisClient interface {
 // on monorail as the developer themselves rather than the Weetbix service.
 // This leads to bugs errounously being detected as having manual priority
 // changes.
-func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, simulate bool) error {
+func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, simulate bool) (retErr error) {
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
 	}
+
 	ac, err := analysis.NewClient(ctx, projectID)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := ac.Close(); err != nil && retErr == nil {
+			retErr = errors.Annotate(err, "closing analysis client").Err()
+		}
+	}()
+
 	projectCfg, err := config.Projects(ctx)
 	if err != nil {
 		return err

@@ -70,7 +70,7 @@ func (c *Client) Close() {
 
 // Put saves the given chunk to storage. If successful, it returns
 // the randomly-assigned ID of the created object.
-func (c *Client) Put(ctx context.Context, project string, content *cpb.Chunk) (string, error) {
+func (c *Client) Put(ctx context.Context, project string, content *cpb.Chunk) (objectID string, retErr error) {
 	if err := validateProject(project); err != nil {
 		return "", err
 	}
@@ -92,6 +92,11 @@ func (c *Client) Put(ctx context.Context, project string, content *cpb.Chunk) (s
 	// defensive coding and a failsafe against bad randomness in ID generation.
 	obj := c.client.Bucket(c.bucket).Object(name).If(doesNotExist)
 	w := obj.NewWriter(ctx)
+	defer func() {
+		if err := w.Close(); err != nil && retErr == nil {
+			retErr = errors.Annotate(err, "closing object writer").Err()
+		}
+	}()
 
 	// As the file is small (<8MB), set ChunkSize to object size to avoid
 	// excessive memory usage, as per the documentation. Otherwise use
@@ -104,15 +109,11 @@ func (c *Client) Put(ctx context.Context, project string, content *cpb.Chunk) (s
 	if err != nil {
 		return "", errors.Annotate(err, "writing object %q", name).Err()
 	}
-	err = w.Close()
-	if err != nil {
-		return "", errors.Annotate(err, "closing object %q", name).Err()
-	}
 	return objID, nil
 }
 
 // Get retrieves the chunk with the specified object ID and returns it.
-func (c *Client) Get(ctx context.Context, project, objectID string) (*cpb.Chunk, error) {
+func (c *Client) Get(ctx context.Context, project, objectID string) (chunk *cpb.Chunk, retErr error) {
 	if err := validateProject(project); err != nil {
 		return nil, err
 	}
@@ -125,6 +126,11 @@ func (c *Client) Get(ctx context.Context, project, objectID string) (*cpb.Chunk,
 	if err != nil {
 		return nil, errors.Annotate(err, "creating reader %q", name).Err()
 	}
+	defer func() {
+		if err := r.Close(); err != nil && retErr == nil {
+			retErr = errors.Annotate(err, "closing object reader").Err()
+		}
+	}()
 
 	// Allocate a buffer of the correct size and use io.ReadFull instead of
 	// io.ReadAll to avoid needlessly reallocating slices.
