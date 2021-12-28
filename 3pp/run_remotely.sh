@@ -89,7 +89,7 @@ for arg in "$@"; do
   if [[ $arg == platform* ]]; then
     case $arg in
       *linux*)
-        TARG_OS=Ubuntu-14.04
+        TARG_OS=Ubuntu-18.04
         DOCKER_ROLE="-d role=docker"
         ;;
       *mac*)
