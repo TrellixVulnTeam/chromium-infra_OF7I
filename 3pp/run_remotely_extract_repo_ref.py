@@ -14,7 +14,7 @@ d = json.load(sys.stdin)  # swarming task def
 build_input = d['buildbucket']['bbagent_args']['build']['input']
 cl_info = build_input['gerrit_changes'][0]
 if mode == 'ref':
-  print('refs/changes/%d/%s/%s' %
+  print('refs/changes/%02d/%s/%s' %
         (int(cl_info['change']) % 100, cl_info['change'], cl_info['patchset']))
 elif mode == 'repo':
   # Get the git host url from the code review url
