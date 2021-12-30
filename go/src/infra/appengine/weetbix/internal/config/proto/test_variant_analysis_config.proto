@@ -9,7 +9,7 @@ package weetbix.v1;
 import "google/protobuf/duration.proto";
 import "infra/appengine/weetbix/proto/v1/predicate.proto";
 
-option go_package = "infra/appengine/weetbix/internal/config;config";
+option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
 
 // Configurations for BigQuery export.
 message BigQueryExport {

@@ -21,6 +21,7 @@ import (
 
 	adminpb "infra/appengine/weetbix/internal/admin/proto"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/services/testvariantbqexporter"
 	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -44,7 +45,7 @@ func unspecified(field string) error {
 	return fmt.Errorf("%s is not specified", field)
 }
 
-func bqExportFromConfig(ctx context.Context, realm, cloudProject, dataset, table string) (*config.BigQueryExport, error) {
+func bqExportFromConfig(ctx context.Context, realm, cloudProject, dataset, table string) (*configpb.BigQueryExport, error) {
 	rc, err := config.Realm(ctx, realm)
 	if err != nil {
 		return nil, err

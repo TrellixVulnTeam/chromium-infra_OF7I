@@ -6,9 +6,9 @@ syntax = "proto3";
 
 package weetbix.v1;
 
-import "infra/appengine/weetbix/internal/config/test_variant_analysis_config.proto";
+import "infra/appengine/weetbix/internal/config/proto/test_variant_analysis_config.proto";
 
-option go_package = "infra/appengine/weetbix/internal/config;config";
+option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
 
 // ProjectConfig is the project-specific configuration data for Weetbix.
 message ProjectConfig {

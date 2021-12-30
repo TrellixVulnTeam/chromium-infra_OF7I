@@ -19,6 +19,7 @@ import (
 
 	adminpb "infra/appengine/weetbix/internal/admin/proto"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/services/testvariantbqexporter"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -32,16 +33,16 @@ func init() {
 	testvariantbqexporter.RegisterTaskClass()
 }
 
-func createProjectsConfig() map[string]*config.ProjectConfig {
-	return map[string]*config.ProjectConfig{
+func createProjectsConfig() map[string]*configpb.ProjectConfig {
+	return map[string]*configpb.ProjectConfig{
 		"chromium": {
-			Realms: []*config.RealmConfig{
+			Realms: []*configpb.RealmConfig{
 				{
 					Name: "try",
-					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
-						BqExports: []*config.BigQueryExport{
+					TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+						BqExports: []*configpb.BigQueryExport{
 							{
-								Table: &config.BigQueryExport_BigQueryTable{
+								Table: &configpb.BigQueryExport_BigQueryTable{
 									CloudProject: "cloudProject",
 									Dataset:      "dataset",
 									Table:        "table",

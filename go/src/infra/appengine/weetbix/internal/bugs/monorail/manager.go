@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"infra/appengine/weetbix/internal/bugs"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"go.chromium.org/luci/common/errors"
@@ -35,7 +35,7 @@ const monorailPageSize = 100
 type BugManager struct {
 	client *Client
 	// The snapshot of monorail configuration to use for the project.
-	monorailCfg *config.MonorailProject
+	monorailCfg *configpb.MonorailProject
 	// Simulate, if set, tells BugManager not to make mutating changes
 	// to monorail but only log the changes it would make. Must be set
 	// when running locally as RPCs made from developer systems will
@@ -46,7 +46,7 @@ type BugManager struct {
 
 // NewBugManager initialises a new bug manager, using the specified
 // monorail client.
-func NewBugManager(client *Client, monorailCfg *config.MonorailProject) *BugManager {
+func NewBugManager(client *Client, monorailCfg *configpb.MonorailProject) *BugManager {
 	return &BugManager{
 		client:      client,
 		monorailCfg: monorailCfg,

@@ -17,7 +17,7 @@ import (
 
 	"infra/appengine/weetbix/internal/bqutil"
 	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // ImpactfulClusterReadOptions specifies options for ReadImpactfulClusters().
@@ -27,7 +27,7 @@ type ImpactfulClusterReadOptions struct {
 	// Thresholds is the set of thresholds, which if any are met
 	// or exceeded, should result in the cluster being returned.
 	// Thresholds are applied based on cluster residual impact.
-	Thresholds *config.ImpactThreshold
+	Thresholds *configpb.ImpactThreshold
 	// AlwaysInclude is the set of clusters to always include.
 	AlwaysInclude []clustering.ClusterID
 }
@@ -245,9 +245,9 @@ func selectCounts(sqlPrefix, fieldPrefix, suffix string) string {
 
 // whereThresholdsExceeded generates a SQL Where clause to query
 // where a particular metric exceeds a given threshold.
-func whereThresholdsExceeded(sqlPrefix string, threshold *config.MetricThreshold) (string, []bigquery.QueryParameter) {
+func whereThresholdsExceeded(sqlPrefix string, threshold *configpb.MetricThreshold) (string, []bigquery.QueryParameter) {
 	if threshold == nil {
-		threshold = &config.MetricThreshold{}
+		threshold = &configpb.MetricThreshold{}
 	}
 	sql := sqlPrefix + "_residual_1d > @" + sqlPrefix + "_1d OR " +
 		sqlPrefix + "_residual_3d > @" + sqlPrefix + "_3d OR " +

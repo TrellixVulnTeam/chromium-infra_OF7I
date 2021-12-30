@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/server/tq"
 
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -57,23 +58,23 @@ func TestSchedule(t *testing.T) {
 	})
 }
 
-func createProjectsConfig() map[string]*config.ProjectConfig {
-	return map[string]*config.ProjectConfig{
+func createProjectsConfig() map[string]*configpb.ProjectConfig {
+	return map[string]*configpb.ProjectConfig{
 		"chromium": {
-			Realms: []*config.RealmConfig{
+			Realms: []*configpb.RealmConfig{
 				{
 					Name: "ci",
-					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
-						BqExports: []*config.BigQueryExport{
+					TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+						BqExports: []*configpb.BigQueryExport{
 							{
-								Table: &config.BigQueryExport_BigQueryTable{
+								Table: &configpb.BigQueryExport_BigQueryTable{
 									CloudProject: "test-hrd",
 									Dataset:      "chromium",
 									Table:        "flaky_test_variants_ci",
 								},
 							},
 							{
-								Table: &config.BigQueryExport_BigQueryTable{
+								Table: &configpb.BigQueryExport_BigQueryTable{
 									CloudProject: "test-hrd",
 									Dataset:      "chromium",
 									Table:        "flaky_test_variants_ci_copy",
@@ -84,10 +85,10 @@ func createProjectsConfig() map[string]*config.ProjectConfig {
 				},
 				{
 					Name: "try",
-					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
-						BqExports: []*config.BigQueryExport{
+					TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+						BqExports: []*configpb.BigQueryExport{
 							{
-								Table: &config.BigQueryExport_BigQueryTable{
+								Table: &configpb.BigQueryExport_BigQueryTable{
 									CloudProject: "test-hrd",
 									Dataset:      "chromium",
 									Table:        "flaky_test_variants_try",
@@ -99,14 +100,14 @@ func createProjectsConfig() map[string]*config.ProjectConfig {
 			},
 		},
 		"project_no_realms": {
-			BugFilingThreshold: &config.ImpactThreshold{
-				TestResultsFailed: &config.MetricThreshold{
+			BugFilingThreshold: &configpb.ImpactThreshold{
+				TestResultsFailed: &configpb.MetricThreshold{
 					OneDay: proto.Int64(1000),
 				},
 			},
 		},
 		"project_no_bq": {
-			Realms: []*config.RealmConfig{
+			Realms: []*configpb.RealmConfig{
 				{
 					Name: "ci",
 				},

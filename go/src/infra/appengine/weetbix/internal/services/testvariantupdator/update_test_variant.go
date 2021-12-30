@@ -23,6 +23,7 @@ import (
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/verdicts"
@@ -86,7 +87,7 @@ func Schedule(ctx context.Context, realm, testID, variantHash string, delay *dur
 	})
 }
 
-func configs(ctx context.Context, realm string) (*config.UpdateTestVariantTask, error) {
+func configs(ctx context.Context, realm string) (*configpb.UpdateTestVariantTask, error) {
 	rc, err := config.Realm(ctx, realm)
 	switch {
 	case err != nil:

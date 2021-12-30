@@ -23,6 +23,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
 
@@ -57,16 +58,16 @@ func TestRun(t *testing.T) {
 
 		project := "chromium"
 		monorailCfg := monorail.ChromiumTestConfig()
-		thres := &config.ImpactThreshold{
+		thres := &configpb.ImpactThreshold{
 			// Should be more onerous than the "keep-open" thresholds
 			// configured for each individual bug manager.
-			TestResultsFailed: &config.MetricThreshold{
+			TestResultsFailed: &configpb.MetricThreshold{
 				OneDay:   proto.Int64(100),
 				ThreeDay: proto.Int64(300),
 				SevenDay: proto.Int64(700),
 			},
 		}
-		projectCfg := &config.ProjectConfig{
+		projectCfg := &configpb.ProjectConfig{
 			Monorail:           monorailCfg,
 			BugFilingThreshold: thres,
 		}

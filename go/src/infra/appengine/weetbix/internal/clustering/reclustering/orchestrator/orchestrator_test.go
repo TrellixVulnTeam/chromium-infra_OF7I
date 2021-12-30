@@ -23,6 +23,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 
@@ -42,7 +43,7 @@ func TestOrchestrator(t *testing.T) {
 		ctx = memory.Use(ctx) // For config cache.
 		ctx, skdr := tq.TestingContext(ctx, nil)
 
-		cfg := &config.Config{
+		cfg := &configpb.Config{
 			ReclusteringWorkers:         4,
 			ReclusteringIntervalMinutes: 5,
 		}
@@ -64,16 +65,16 @@ func TestOrchestrator(t *testing.T) {
 		}
 
 		Convey("Without Projects", func() {
-			projectCfg := make(map[string]*config.ProjectConfig)
+			projectCfg := make(map[string]*configpb.ProjectConfig)
 			config.SetTestProjectConfig(ctx, projectCfg)
 
 			testOrchestratorDoesNothing()
 		})
 		Convey("With Projects", func() {
 			// Orchestrator only looks at the projects that have config, not the config itself.
-			projectCfg := make(map[string]*config.ProjectConfig)
-			projectCfg["project-a"] = &config.ProjectConfig{}
-			projectCfg["project-b"] = &config.ProjectConfig{}
+			projectCfg := make(map[string]*configpb.ProjectConfig)
+			projectCfg["project-a"] = &configpb.ProjectConfig{}
+			projectCfg["project-b"] = &configpb.ProjectConfig{}
 			config.SetTestProjectConfig(ctx, projectCfg)
 
 			// Create chunks in project-b. After this, the row estimates

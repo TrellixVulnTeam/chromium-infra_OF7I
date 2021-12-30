@@ -17,7 +17,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/clustering/runs"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	"go.chromium.org/luci/common/errors"
@@ -47,7 +47,7 @@ type BugUpdater struct {
 	// bug tracking system (monorail, buganizer, etc.).
 	managers map[string]BugManager
 	// bugFilingThreshold is the threshold at which bugs should be filed.
-	bugFilingThreshold *config.ImpactThreshold
+	bugFilingThreshold *configpb.ImpactThreshold
 	// MaxBugsFiledPerRun is the maximum number of bugs to file each time
 	// BugUpdater runs. This throttles the rate of changes to monorail.
 	MaxBugsFiledPerRun int
@@ -55,7 +55,7 @@ type BugUpdater struct {
 
 // NewBugUpdater initialises a new BugUpdater. The specified impact thresholds are used
 // when determining whether to a file a bug.
-func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient, bugFilingThreshold *config.ImpactThreshold) *BugUpdater {
+func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient, bugFilingThreshold *configpb.ImpactThreshold) *BugUpdater {
 	return &BugUpdater{
 		project:            project,
 		managers:           mgrs,

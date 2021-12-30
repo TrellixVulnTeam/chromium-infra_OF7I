@@ -22,7 +22,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // ListRules serves a GET request for
@@ -89,7 +89,7 @@ type rule struct {
 
 // createRuleResponse converts a *rules.FailureAssociationRule to a *rule,
 // populating the additional output-only fields.
-func createRuleResponse(r *rules.FailureAssociationRule, cfg *config.ProjectConfig) *rule {
+func createRuleResponse(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) *rule {
 	// Fallback bug name and URL.
 	bugName := fmt.Sprintf("%s/%s", r.Bug.System, r.Bug.ID)
 	bugURL := ""

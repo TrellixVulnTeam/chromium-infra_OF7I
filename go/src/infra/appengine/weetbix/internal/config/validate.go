@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"regexp"
 
+	configpb "infra/appengine/weetbix/internal/config/proto"
+
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	luciproto "go.chromium.org/luci/common/proto"
@@ -44,7 +46,7 @@ var (
 	tableRE = regexp.MustCompile(`^[\p{L}\p{M}\p{N}\p{Pc}\p{Pd}\p{Zs}]*$`)
 )
 
-func validateConfig(ctx *validation.Context, cfg *Config) {
+func validateConfig(ctx *validation.Context, cfg *configpb.Config) {
 	validateHostname(ctx, "monorail_hostname", cfg.MonorailHostname, false /*optional*/)
 	validateStringConfig(ctx, "chunk_gcs_bucket", cfg.ChunkGcsBucket, bucketRE)
 	// Limit to default max_concurrent_requests of 1000.
@@ -104,7 +106,7 @@ func validateDuration(ctx *validation.Context, name string, du *durationpb.Durat
 	}
 }
 
-func validateUpdateTestVariantTask(ctx *validation.Context, utCfg *UpdateTestVariantTask) {
+func validateUpdateTestVariantTask(ctx *validation.Context, utCfg *configpb.UpdateTestVariantTask) {
 	ctx.Enter("update_test_variant")
 	defer ctx.Exit()
 	if utCfg == nil {
@@ -114,7 +116,7 @@ func validateUpdateTestVariantTask(ctx *validation.Context, utCfg *UpdateTestVar
 	validateDuration(ctx, "duration", utCfg.TestVariantStatusUpdateDuration)
 }
 
-func validateBigQueryTable(ctx *validation.Context, tCfg *BigQueryExport_BigQueryTable) {
+func validateBigQueryTable(ctx *validation.Context, tCfg *configpb.BigQueryExport_BigQueryTable) {
 	ctx.Enter("table")
 	defer ctx.Exit()
 	if tCfg == nil {
@@ -126,7 +128,7 @@ func validateBigQueryTable(ctx *validation.Context, tCfg *BigQueryExport_BigQuer
 	validateStringConfig(ctx, "table_name", tCfg.Table, tableRE)
 }
 
-func validateBigQueryExport(ctx *validation.Context, bqCfg *BigQueryExport) {
+func validateBigQueryExport(ctx *validation.Context, bqCfg *configpb.BigQueryExport) {
 	ctx.Enter("bigquery_export")
 	defer ctx.Exit()
 	if bqCfg == nil {
@@ -141,7 +143,7 @@ func validateBigQueryExport(ctx *validation.Context, bqCfg *BigQueryExport) {
 	}
 }
 
-func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *TestVariantAnalysisConfig) {
+func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *configpb.TestVariantAnalysisConfig) {
 	ctx.Enter("test_variant")
 	defer ctx.Exit()
 	if tvCfg == nil {
@@ -153,7 +155,7 @@ func validateTestVariantAnalysisConfig(ctx *validation.Context, tvCfg *TestVaria
 	}
 }
 
-func validateRealmConfig(ctx *validation.Context, rCfg *RealmConfig) {
+func validateRealmConfig(ctx *validation.Context, rCfg *configpb.RealmConfig) {
 	ctx.Enter(fmt.Sprintf("realm %s", rCfg.Name))
 	defer ctx.Exit()
 
@@ -163,8 +165,8 @@ func validateRealmConfig(ctx *validation.Context, rCfg *RealmConfig) {
 
 // validateProjectConfigRaw deserializes the project-level config message
 // and passes it through the validator.
-func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectConfig {
-	msg := &ProjectConfig{}
+func validateProjectConfigRaw(ctx *validation.Context, content string) *configpb.ProjectConfig {
+	msg := &configpb.ProjectConfig{}
 	if err := luciproto.UnmarshalTextML(content, msg); err != nil {
 		ctx.Errorf("failed to unmarshal as text proto: %s", err)
 		return nil
@@ -173,7 +175,7 @@ func validateProjectConfigRaw(ctx *validation.Context, content string) *ProjectC
 	return msg
 }
 
-func ValidateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
+func ValidateProjectConfig(ctx *validation.Context, cfg *configpb.ProjectConfig) {
 	validateMonorail(ctx, cfg.Monorail, cfg.BugFilingThreshold)
 	validateImpactThreshold(ctx, cfg.BugFilingThreshold, "bug_filing_threshold")
 	for _, rCfg := range cfg.Realms {
@@ -181,7 +183,7 @@ func ValidateProjectConfig(ctx *validation.Context, cfg *ProjectConfig) {
 	}
 }
 
-func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingThres *ImpactThreshold) {
+func validateMonorail(ctx *validation.Context, cfg *configpb.MonorailProject, bugFilingThres *configpb.ImpactThreshold) {
 	ctx.Enter("monorail")
 	defer ctx.Exit()
 
@@ -199,7 +201,7 @@ func validateMonorail(ctx *validation.Context, cfg *MonorailProject, bugFilingTh
 	validateHostname(ctx, "monorail_hostname", cfg.MonorailHostname, true /*optional*/)
 }
 
-func validateDefaultFieldValues(ctx *validation.Context, fvs []*MonorailFieldValue) {
+func validateDefaultFieldValues(ctx *validation.Context, fvs []*configpb.MonorailFieldValue) {
 	ctx.Enter("default_field_values")
 	for i, fv := range fvs {
 		ctx.Enter("[%v]", i)
@@ -217,12 +219,12 @@ func validateFieldID(ctx *validation.Context, fieldID int64, fieldName string) {
 	ctx.Exit()
 }
 
-func validateFieldValue(ctx *validation.Context, fv *MonorailFieldValue) {
+func validateFieldValue(ctx *validation.Context, fv *configpb.MonorailFieldValue) {
 	validateFieldID(ctx, fv.GetFieldId(), "field_id")
 	// No validation applies to field value.
 }
 
-func validatePriorities(ctx *validation.Context, ps []*MonorailPriority, bugFilingThres *ImpactThreshold) {
+func validatePriorities(ctx *validation.Context, ps []*configpb.MonorailPriority, bugFilingThres *configpb.ImpactThreshold) {
 	ctx.Enter("priorities")
 	if len(ps) == 0 {
 		ctx.Errorf("at least one monorail priority must be specified")
@@ -241,12 +243,12 @@ func validatePriorities(ctx *validation.Context, ps []*MonorailPriority, bugFili
 	ctx.Exit()
 }
 
-func validatePriority(ctx *validation.Context, p *MonorailPriority) {
+func validatePriority(ctx *validation.Context, p *configpb.MonorailPriority) {
 	validatePriorityValue(ctx, p.Priority)
 	validateImpactThreshold(ctx, p.Threshold, "threshold")
 }
 
-func validatePrioritySatisfiedByBugFilingThreshold(ctx *validation.Context, p *MonorailPriority, bugFilingThres *ImpactThreshold) {
+func validatePrioritySatisfiedByBugFilingThreshold(ctx *validation.Context, p *configpb.MonorailPriority, bugFilingThres *configpb.ImpactThreshold) {
 	ctx.Enter("threshold")
 	defer ctx.Exit()
 	t := p.Threshold
@@ -272,7 +274,7 @@ func validatePriorityValue(ctx *validation.Context, value string) {
 	ctx.Exit()
 }
 
-func validateImpactThreshold(ctx *validation.Context, t *ImpactThreshold, fieldName string) {
+func validateImpactThreshold(ctx *validation.Context, t *configpb.ImpactThreshold, fieldName string) {
 	ctx.Enter(fieldName)
 	defer ctx.Exit()
 
@@ -286,7 +288,7 @@ func validateImpactThreshold(ctx *validation.Context, t *ImpactThreshold, fieldN
 	validateMetricThreshold(ctx, t.PresubmitRunsFailed, "presubmit_runs_failed")
 }
 
-func validateMetricThreshold(ctx *validation.Context, t *MetricThreshold, fieldName string) {
+func validateMetricThreshold(ctx *validation.Context, t *configpb.MetricThreshold, fieldName string) {
 	ctx.Enter(fieldName)
 	defer ctx.Exit()
 
@@ -319,11 +321,11 @@ func validateNonNegative(ctx *validation.Context, value *int64, fieldName string
 	ctx.Exit()
 }
 
-func validateBugFilingThresholdSatisfiesMetricThresold(ctx *validation.Context, threshold *MetricThreshold, bugFilingThres *MetricThreshold, fieldName string) {
+func validateBugFilingThresholdSatisfiesMetricThresold(ctx *validation.Context, threshold *configpb.MetricThreshold, bugFilingThres *configpb.MetricThreshold, fieldName string) {
 	ctx.Enter(fieldName)
 	defer ctx.Exit()
 	if threshold == nil {
-		threshold = &MetricThreshold{}
+		threshold = &configpb.MetricThreshold{}
 	}
 	if bugFilingThres == nil {
 		// Bugs are not filed based on this metric. So

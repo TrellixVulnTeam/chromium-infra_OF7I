@@ -17,6 +17,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 var sampleConfigStr = `
@@ -27,8 +29,8 @@ var sampleConfigStr = `
 `
 
 // createConfig returns a new valid Config for testing.
-func createConfig() *Config {
-	var cfg Config
+func createConfig() *configpb.Config {
+	var cfg configpb.Config
 	So(prototext.Unmarshal([]byte(sampleConfigStr), &cfg), ShouldBeNil)
 	return &cfg
 }
@@ -36,7 +38,7 @@ func createConfig() *Config {
 func TestServiceConfigValidator(t *testing.T) {
 	t.Parallel()
 
-	validate := func(cfg *Config) error {
+	validate := func(cfg *configpb.Config) error {
 		c := validation.Context{Context: context.Background()}
 		validateConfig(&c, cfg)
 		return c.Finalize()
@@ -47,7 +49,7 @@ func TestServiceConfigValidator(t *testing.T) {
 			"../../configs/services/chops-weetbix-dev/config-template.cfg",
 		)
 		So(err, ShouldBeNil)
-		cfg := &Config{}
+		cfg := &configpb.Config{}
 		So(prototext.Unmarshal(content, cfg), ShouldBeNil)
 		So(validate(cfg), ShouldBeNil)
 	})
@@ -107,7 +109,7 @@ func TestServiceConfigValidator(t *testing.T) {
 func TestProjectConfigValidator(t *testing.T) {
 	t.Parallel()
 
-	validate := func(cfg *ProjectConfig) error {
+	validate := func(cfg *configpb.ProjectConfig) error {
 		c := validation.Context{Context: context.Background()}
 		ValidateProjectConfig(&c, cfg)
 		return c.Finalize()
@@ -118,7 +120,7 @@ func TestProjectConfigValidator(t *testing.T) {
 			"../../configs/projects/chromium/chops-weetbix-dev-template.cfg",
 		)
 		So(err, ShouldBeNil)
-		cfg := &ProjectConfig{}
+		cfg := &configpb.ProjectConfig{}
 		So(prototext.Unmarshal(content, cfg), ShouldBeNil)
 		So(validate(cfg), ShouldBeNil)
 	})
@@ -152,7 +154,7 @@ func TestProjectConfigValidator(t *testing.T) {
 		})
 
 		Convey("field value with negative field ID", func() {
-			cfg.Monorail.DefaultFieldValues = []*MonorailFieldValue{
+			cfg.Monorail.DefaultFieldValues = []*configpb.MonorailFieldValue{
 				{
 					FieldId: -1,
 					Value:   "",
@@ -184,19 +186,19 @@ func TestProjectConfigValidator(t *testing.T) {
 
 				// Test validation applies to all metrics.
 				Convey("test results failed", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 					lastPriority.Threshold.TestResultsFailed = nil
 					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
 				})
 
 				Convey("test runs failed", func() {
-					bugFilingThres.TestRunsFailed = &MetricThreshold{OneDay: proto.Int64(50)}
+					bugFilingThres.TestRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(50)}
 					lastPriority.Threshold.TestRunsFailed = nil
 					So(validate(cfg), ShouldErrLike, "test_runs_failed / one_day): one_day threshold must be set, with a value of at most 50")
 				})
 
 				Convey("presubmit runs failed", func() {
-					bugFilingThres.PresubmitRunsFailed = &MetricThreshold{OneDay: proto.Int64(10)}
+					bugFilingThres.PresubmitRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(10)}
 					lastPriority.Threshold.PresubmitRunsFailed = nil
 					So(validate(cfg), ShouldErrLike, "presubmit_runs_failed / one_day): one_day threshold must be set, with a value of at most 10")
 				})
@@ -204,32 +206,32 @@ func TestProjectConfigValidator(t *testing.T) {
 				// The following properties should hold for all metrics. We test
 				// on one metric as the code is re-used for all metrics.
 				Convey("one day threshold", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
-					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(101)}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(101)}
 					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): value must be at most 100")
 				})
 
 				Convey("three day threshold", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(300)}
-					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(301)}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{ThreeDay: proto.Int64(300)}
+					lastPriority.Threshold.TestResultsFailed = &configpb.MetricThreshold{ThreeDay: proto.Int64(301)}
 					So(validate(cfg), ShouldErrLike, "test_results_failed / three_day): value must be at most 300")
 				})
 
 				Convey("seven day threshold", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(700)}
-					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(701)}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{SevenDay: proto.Int64(700)}
+					lastPriority.Threshold.TestResultsFailed = &configpb.MetricThreshold{SevenDay: proto.Int64(701)}
 					So(validate(cfg), ShouldErrLike, "test_results_failed / seven_day): value must be at most 700")
 				})
 
 				Convey("metric threshold nil", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 					lastPriority.Threshold.TestResultsFailed = nil
 					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
 				})
 
 				Convey("metric threshold not set", func() {
-					bugFilingThres.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(100)}
-					lastPriority.Threshold.TestResultsFailed = &MetricThreshold{}
+					bugFilingThres.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
+					lastPriority.Threshold.TestResultsFailed = &configpb.MetricThreshold{}
 					So(validate(cfg), ShouldErrLike, "test_results_failed / one_day): one_day threshold must be set, with a value of at most 100")
 				})
 			})
@@ -281,33 +283,33 @@ func TestProjectConfigValidator(t *testing.T) {
 		Convey("metric values are not negative", func() {
 			// Test by threshold period.
 			Convey("one day", func() {
-				threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				threshold.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 
 			Convey("three day", func() {
-				threshold.TestResultsFailed = &MetricThreshold{ThreeDay: proto.Int64(-1)}
+				threshold.TestResultsFailed = &configpb.MetricThreshold{ThreeDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 
 			Convey("seven day", func() {
-				threshold.TestResultsFailed = &MetricThreshold{SevenDay: proto.Int64(-1)}
+				threshold.TestResultsFailed = &configpb.MetricThreshold{SevenDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 
 			// Test by metric.
 			Convey("test results failed", func() {
-				threshold.TestResultsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				threshold.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 
 			Convey("test runs failed", func() {
-				threshold.TestRunsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				threshold.TestRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 
 			Convey("presubmit runs failed", func() {
-				threshold.PresubmitRunsFailed = &MetricThreshold{OneDay: proto.Int64(-1)}
+				threshold.PresubmitRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(-1)}
 				So(validate(cfg), ShouldErrLike, "value must be non-negative")
 			})
 		})

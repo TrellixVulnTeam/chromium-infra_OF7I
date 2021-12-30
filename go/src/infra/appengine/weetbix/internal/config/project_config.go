@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	configpb "infra/appengine/weetbix/internal/config/proto"
+
 	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/errors"
@@ -112,7 +114,7 @@ func updateProjects(ctx context.Context) error {
 type fetchedProjectConfig struct {
 	// config is the project-level configuration, if it has passed validation,
 	// and nil otherwise.
-	Config *ProjectConfig
+	Config *configpb.ProjectConfig
 	// meta is populated with config metadata.
 	Meta config.Meta
 }
@@ -214,9 +216,9 @@ func fetchProjectConfigEntities(ctx context.Context) (map[string]*cachedProjectC
 
 // Projects returns all project configurations, in a map by project name.
 // Uses in-memory cache to avoid hitting datastore all the time.
-func Projects(ctx context.Context) (map[string]*ProjectConfig, error) {
+func Projects(ctx context.Context) (map[string]*configpb.ProjectConfig, error) {
 	val, err := projectCacheSlot.Fetch(ctx, func(interface{}) (val interface{}, exp time.Duration, err error) {
-		var pc map[string]*ProjectConfig
+		var pc map[string]*configpb.ProjectConfig
 		if pc, err = fetchProjects(ctx); err != nil {
 			return nil, 0, err
 		}
@@ -231,22 +233,22 @@ func Projects(ctx context.Context) (map[string]*ProjectConfig, error) {
 	case err != nil:
 		return nil, err
 	default:
-		pc := val.(map[string]*ProjectConfig)
+		pc := val.(map[string]*configpb.ProjectConfig)
 		return pc, nil
 	}
 }
 
 // fetchProjects retrieves all project configurations from datastore.
-func fetchProjects(ctx context.Context) (map[string]*ProjectConfig, error) {
+func fetchProjects(ctx context.Context) (map[string]*configpb.ProjectConfig, error) {
 	ctx = cleanContext(ctx)
 
 	cachedCfgs, err := fetchProjectConfigEntities(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "fetching cached config").Err()
 	}
-	result := make(map[string]*ProjectConfig)
+	result := make(map[string]*configpb.ProjectConfig)
 	for project, cached := range cachedCfgs {
-		cfg := &ProjectConfig{}
+		cfg := &configpb.ProjectConfig{}
 		if err := proto.Unmarshal(cached.Config, cfg); err != nil {
 			return nil, errors.Annotate(err, "unmarshalling cached config").Err()
 		}
@@ -263,7 +265,7 @@ func cleanContext(ctx context.Context) context.Context {
 
 // SetTestProjectConfig sets test project configuration in datastore.
 // It should be used from unit/integration tests only.
-func SetTestProjectConfig(ctx context.Context, cfg map[string]*ProjectConfig) error {
+func SetTestProjectConfig(ctx context.Context, cfg map[string]*configpb.ProjectConfig) error {
 	fetchedConfigs := make(map[string]*fetchedProjectConfig)
 	for project, pcfg := range cfg {
 		fetchedConfigs[project] = &fetchedProjectConfig{
@@ -286,7 +288,7 @@ func SetTestProjectConfig(ctx context.Context, cfg map[string]*ProjectConfig) er
 }
 
 // Project returns the configurations of the requested project.
-func Project(ctx context.Context, project string) (*ProjectConfig, error) {
+func Project(ctx context.Context, project string) (*configpb.ProjectConfig, error) {
 	configs, err := Projects(ctx)
 	if err != nil {
 		return nil, err

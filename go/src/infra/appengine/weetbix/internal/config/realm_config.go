@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 
+	configpb "infra/appengine/weetbix/internal/config/proto"
+
 	"go.chromium.org/luci/server/auth/realms"
 )
 
 // Realm returns the configurations of the requested realm.
-func Realm(ctx context.Context, global string) (*RealmConfig, error) {
+func Realm(ctx context.Context, global string) (*configpb.RealmConfig, error) {
 	project, realm := realms.Split(global)
 	pc, err := Project(ctx, project)
 	if err != nil {

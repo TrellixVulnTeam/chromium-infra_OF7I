@@ -18,6 +18,7 @@ import (
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	"infra/appengine/weetbix/internal/testutil/insert"
@@ -101,14 +102,14 @@ func TestCheckTask(t *testing.T) {
 	})
 }
 
-func createProjectsConfig() map[string]*config.ProjectConfig {
-	return map[string]*config.ProjectConfig{
+func createProjectsConfig() map[string]*configpb.ProjectConfig {
+	return map[string]*configpb.ProjectConfig{
 		"chromium": {
-			Realms: []*config.RealmConfig{
+			Realms: []*configpb.RealmConfig{
 				{
 					Name: "ci",
-					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
-						UpdateTestVariantTask: &config.UpdateTestVariantTask{
+					TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+						UpdateTestVariantTask: &configpb.UpdateTestVariantTask{
 							UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
 							TestVariantStatusUpdateDuration: durationpb.New(24 * time.Hour),
 						},

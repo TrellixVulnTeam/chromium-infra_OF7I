@@ -29,6 +29,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
 	"infra/appengine/weetbix/internal/clustering/ingestion"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
@@ -110,14 +111,14 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 	})
 }
 
-func createProjectsConfig() map[string]*config.ProjectConfig {
-	return map[string]*config.ProjectConfig{
+func createProjectsConfig() map[string]*configpb.ProjectConfig {
+	return map[string]*configpb.ProjectConfig{
 		"chromium": {
-			Realms: []*config.RealmConfig{
+			Realms: []*configpb.RealmConfig{
 				{
 					Name: "ci",
-					TestVariantAnalysis: &config.TestVariantAnalysisConfig{
-						UpdateTestVariantTask: &config.UpdateTestVariantTask{
+					TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+						UpdateTestVariantTask: &configpb.UpdateTestVariantTask{
 							UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
 							TestVariantStatusUpdateDuration: durationpb.New(24 * time.Hour),
 						},

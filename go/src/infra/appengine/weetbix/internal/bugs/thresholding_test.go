@@ -5,12 +5,13 @@
 package bugs
 
 import (
-	"infra/appengine/weetbix/internal/config"
 	"math"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/protobuf/proto"
+
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 func TestThresholding(t *testing.T) {
@@ -34,56 +35,56 @@ func TestThresholding(t *testing.T) {
 				SevenDay: 21,
 			},
 		}
-		t := &config.ImpactThreshold{}
+		t := &configpb.ImpactThreshold{}
 		Convey("No cluster meets empty threshold", func() {
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("test results failed thresholding", func() {
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(100)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(101)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(101)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("test runs failed thresholding", func() {
-			t.TestRunsFailed = &config.MetricThreshold{OneDay: proto.Int64(30)}
+			t.TestRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(30)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.TestRunsFailed = &config.MetricThreshold{OneDay: proto.Int64(31)}
+			t.TestRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(31)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("presubmit runs failed thresholding", func() {
-			t.PresubmitRunsFailed = &config.MetricThreshold{OneDay: proto.Int64(3)}
+			t.PresubmitRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(3)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.PresubmitRunsFailed = &config.MetricThreshold{OneDay: proto.Int64(4)}
+			t.PresubmitRunsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(4)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("one day threshold", func() {
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(100)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(101)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(101)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("three day threshold", func() {
-			t.TestResultsFailed = &config.MetricThreshold{ThreeDay: proto.Int64(300)}
+			t.TestResultsFailed = &configpb.MetricThreshold{ThreeDay: proto.Int64(300)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.TestResultsFailed = &config.MetricThreshold{ThreeDay: proto.Int64(301)}
+			t.TestResultsFailed = &configpb.MetricThreshold{ThreeDay: proto.Int64(301)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("seven day threshold", func() {
-			t.TestResultsFailed = &config.MetricThreshold{SevenDay: proto.Int64(700)}
+			t.TestResultsFailed = &configpb.MetricThreshold{SevenDay: proto.Int64(700)}
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 
-			t.TestResultsFailed = &config.MetricThreshold{SevenDay: proto.Int64(701)}
+			t.TestResultsFailed = &configpb.MetricThreshold{SevenDay: proto.Int64(701)}
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("Threshold with deflation", func() {
 			// With 15% hysteresis, leads to effective threshold of
 			// 100 / 1.15 = 86.
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(100)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 			cl.TestResultsFailed.OneDay = 86
 			So(cl.MeetsInflatedThreshold(t, -15), ShouldBeTrue)
 			cl.TestResultsFailed.OneDay = 85
@@ -92,14 +93,14 @@ func TestThresholding(t *testing.T) {
 		Convey("Threshold with inflation", func() {
 			// With 15% hysteresis, leads to effective threshold of
 			// 100 * 1.15 = 115.
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(100)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(100)}
 			cl.TestResultsFailed.OneDay = 115
 			So(cl.MeetsInflatedThreshold(t, 15), ShouldBeTrue)
 			cl.TestResultsFailed.OneDay = 114
 			So(cl.MeetsInflatedThreshold(t, 15), ShouldBeFalse)
 		})
 		Convey("Thresholding of values near overflow", func() {
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(math.MaxInt64)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(math.MaxInt64)}
 			cl.TestResultsFailed.OneDay = math.MaxInt64
 			So(cl.MeetsThreshold(t), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of
@@ -108,7 +109,7 @@ func TestThresholding(t *testing.T) {
 			So(cl.MeetsThreshold(t), ShouldBeFalse)
 		})
 		Convey("Thresholding with inflation near overflow", func() {
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(math.MaxInt64)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(math.MaxInt64)}
 			cl.TestResultsFailed.OneDay = math.MaxInt64 / 11
 			So(cl.MeetsInflatedThreshold(t, -1000), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of
@@ -117,7 +118,7 @@ func TestThresholding(t *testing.T) {
 			So(cl.MeetsInflatedThreshold(t, -1000), ShouldBeFalse)
 		})
 		Convey("Thresholding with deflation near overflow", func() {
-			t.TestResultsFailed = &config.MetricThreshold{OneDay: proto.Int64(math.MaxInt64 / 11)}
+			t.TestResultsFailed = &configpb.MetricThreshold{OneDay: proto.Int64(math.MaxInt64 / 11)}
 			cl.TestResultsFailed.OneDay = math.MaxInt64
 			So(cl.MeetsInflatedThreshold(t, 1000), ShouldBeTrue)
 			// Thresholding has loss of precision towards the max value of

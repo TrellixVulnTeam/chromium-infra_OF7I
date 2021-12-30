@@ -12,6 +12,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -96,7 +97,7 @@ type updateOptions struct {
 	project            string
 	analysisClient     AnalysisClient
 	monorailClient     *monorail.Client
-	projectConfig      *config.ProjectConfig
+	projectConfig      *configpb.ProjectConfig
 	simulateBugUpdates bool
 	maxBugsFiledPerRun int
 }

@@ -5,13 +5,14 @@
 package bugs
 
 import (
-	"infra/appengine/weetbix/internal/config"
 	"math"
+
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // MeetsThreshold returns whether the nominal impact of the cluster meets
 // or exceeds the specified threshold.
-func (c *ClusterImpact) MeetsThreshold(t *config.ImpactThreshold) bool {
+func (c *ClusterImpact) MeetsThreshold(t *configpb.ImpactThreshold) bool {
 	return c.MeetsInflatedThreshold(t, 0)
 }
 
@@ -24,7 +25,7 @@ func (c *ClusterImpact) MeetsThreshold(t *config.ImpactThreshold) bool {
 // i.e. inflationPercent of +100 would result in a threshold that is 200% the
 // original threshold being used, inflationPercent of -100 would result in a
 // threshold that is 50% of the original.
-func (c *ClusterImpact) MeetsInflatedThreshold(t *config.ImpactThreshold, inflationPercent int64) bool {
+func (c *ClusterImpact) MeetsInflatedThreshold(t *configpb.ImpactThreshold, inflationPercent int64) bool {
 	if c.TestResultsFailed.meetsInflatedThreshold(t.TestResultsFailed, inflationPercent) {
 		return true
 	}
@@ -37,9 +38,9 @@ func (c *ClusterImpact) MeetsInflatedThreshold(t *config.ImpactThreshold, inflat
 	return false
 }
 
-func (m MetricImpact) meetsInflatedThreshold(t *config.MetricThreshold, inflationPercent int64) bool {
+func (m MetricImpact) meetsInflatedThreshold(t *configpb.MetricThreshold, inflationPercent int64) bool {
 	if t == nil {
-		t = &config.MetricThreshold{}
+		t = &configpb.MetricThreshold{}
 	}
 	if meetsInflatedThreshold(m.OneDay, t.OneDay, inflationPercent) {
 		return true

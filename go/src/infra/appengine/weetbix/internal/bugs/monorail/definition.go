@@ -11,7 +11,7 @@ import (
 
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"google.golang.org/genproto/protobuf/field_mask"
@@ -56,11 +56,11 @@ type Generator struct {
 	// The impact of the cluster to generate monorail changes for.
 	impact *bugs.ClusterImpact
 	// The monorail configuration to use.
-	monorailCfg *config.MonorailProject
+	monorailCfg *configpb.MonorailProject
 }
 
 // NewGenerator initialises a new Generator.
-func NewGenerator(impact *bugs.ClusterImpact, monorailCfg *config.MonorailProject) (*Generator, error) {
+func NewGenerator(impact *bugs.ClusterImpact, monorailCfg *configpb.MonorailProject) (*Generator, error) {
 	if len(monorailCfg.Priorities) == 0 {
 		return nil, fmt.Errorf("invalid configuration for monorail project %q; no monorail priorities configured", monorailCfg.Project)
 	}
@@ -360,7 +360,7 @@ func (g *Generator) isCompatibleWithPriority(issuePriority string) bool {
 	}
 
 	p := g.monorailCfg.Priorities[index]
-	var nextP *config.MonorailPriority
+	var nextP *configpb.MonorailPriority
 	if (index - 1) >= 0 {
 		nextP = g.monorailCfg.Priorities[index-1]
 	}

@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -30,46 +31,46 @@ var textPBMultiline = prototext.MarshalOptions{
 	Multiline: true,
 }
 
-func createProjectConfig() *ProjectConfig {
-	return &ProjectConfig{
-		Monorail: &MonorailProject{
+func createProjectConfig() *configpb.ProjectConfig {
+	return &configpb.ProjectConfig{
+		Monorail: &configpb.MonorailProject{
 			Project:         "chromium",
 			PriorityFieldId: 10,
-			Priorities: []*MonorailPriority{
+			Priorities: []*configpb.MonorailPriority{
 				{
 					Priority: "0",
-					Threshold: &ImpactThreshold{
-						TestResultsFailed: &MetricThreshold{
+					Threshold: &configpb.ImpactThreshold{
+						TestResultsFailed: &configpb.MetricThreshold{
 							OneDay: proto.Int64(1500),
 						},
 					},
 				},
 				{
 					Priority: "1",
-					Threshold: &ImpactThreshold{
-						TestResultsFailed: &MetricThreshold{
+					Threshold: &configpb.ImpactThreshold{
+						TestResultsFailed: &configpb.MetricThreshold{
 							OneDay: proto.Int64(500),
 						},
 					},
 				},
 			},
 		},
-		BugFilingThreshold: &ImpactThreshold{
-			TestResultsFailed: &MetricThreshold{
+		BugFilingThreshold: &configpb.ImpactThreshold{
+			TestResultsFailed: &configpb.MetricThreshold{
 				OneDay: proto.Int64(1000),
 			},
 		},
-		Realms: []*RealmConfig{
+		Realms: []*configpb.RealmConfig{
 			{
 				Name: "ci",
-				TestVariantAnalysis: &TestVariantAnalysisConfig{
-					UpdateTestVariantTask: &UpdateTestVariantTask{
+				TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+					UpdateTestVariantTask: &configpb.UpdateTestVariantTask{
 						UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
 						TestVariantStatusUpdateDuration: durationpb.New(6 * time.Hour),
 					},
-					BqExports: []*BigQueryExport{
+					BqExports: []*configpb.BigQueryExport{
 						{
-							Table: &BigQueryExport_BigQueryTable{
+							Table: &configpb.BigQueryExport_BigQueryTable{
 								CloudProject: "test-hrd",
 								Dataset:      "chromium",
 								Table:        "flaky_test_variants",
@@ -88,7 +89,7 @@ func TestProjectConfig(t *testing.T) {
 
 	Convey("SetTestProjectConfig updates context config", t, func() {
 		projectA := createProjectConfig()
-		configs := make(map[string]*ProjectConfig)
+		configs := make(map[string]*configpb.ProjectConfig)
 		configs["a"] = projectA
 
 		ctx := memory.Use(context.Background())
@@ -231,7 +232,7 @@ func TestProject(t *testing.T) {
 
 	Convey("Project", t, func() {
 		pjChromium := createProjectConfig()
-		configs := map[string]*ProjectConfig{
+		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pjChromium,
 		}
 
@@ -258,7 +259,7 @@ func TestRealm(t *testing.T) {
 
 	Convey("Realm", t, func() {
 		pj := createProjectConfig()
-		configs := map[string]*ProjectConfig{
+		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pj,
 		}
 

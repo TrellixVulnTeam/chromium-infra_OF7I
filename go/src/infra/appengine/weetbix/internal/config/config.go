@@ -8,6 +8,8 @@ package config
 import (
 	"context"
 
+	configpb "infra/appengine/weetbix/internal/config/proto"
+
 	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/errors"
@@ -19,9 +21,9 @@ import (
 // Cached service config.
 var cachedCfg = cfgcache.Register(&cfgcache.Entry{
 	Path: "config.cfg",
-	Type: (*Config)(nil),
+	Type: (*configpb.Config)(nil),
 	Validator: func(ctx *validation.Context, msg proto.Message) error {
-		validateConfig(ctx, msg.(*Config))
+		validateConfig(ctx, msg.(*configpb.Config))
 		return nil
 	},
 })
@@ -42,12 +44,12 @@ func Update(ctx context.Context) error {
 }
 
 // Get returns the service-level config.
-func Get(ctx context.Context) (*Config, error) {
+func Get(ctx context.Context) (*configpb.Config, error) {
 	cfg, err := cachedCfg.Get(ctx, nil)
-	return cfg.(*Config), err
+	return cfg.(*configpb.Config), err
 }
 
 // SetTestConfig set test configs in the cachedCfg.
-func SetTestConfig(ctx context.Context, cfg *Config) error {
+func SetTestConfig(ctx context.Context, cfg *configpb.Config) error {
 	return cachedCfg.Set(ctx, cfg, &config.Meta{})
 }

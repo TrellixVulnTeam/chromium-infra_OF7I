@@ -6,7 +6,7 @@ package monorail
 
 import (
 	"infra/appengine/weetbix/internal/bugs"
-	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	mpb "infra/monorailv2/api/v3/api_proto"
 
 	"github.com/golang/protobuf/proto"
@@ -22,37 +22,37 @@ const ChromiumTestTypeField = "projects/chromium/fieldDefs/10"
 
 // ChromiumTestConfig provides chromium-like configuration for tests
 // to use.
-func ChromiumTestConfig() *config.MonorailProject {
-	projectCfg := &config.MonorailProject{
+func ChromiumTestConfig() *configpb.MonorailProject {
+	projectCfg := &configpb.MonorailProject{
 		Project: "chromium",
-		DefaultFieldValues: []*config.MonorailFieldValue{
+		DefaultFieldValues: []*configpb.MonorailFieldValue{
 			{
 				FieldId: 10,
 				Value:   "Bug",
 			},
 		},
 		PriorityFieldId: 11,
-		Priorities: []*config.MonorailPriority{
+		Priorities: []*configpb.MonorailPriority{
 			{
 				Priority: "0",
-				Threshold: &config.ImpactThreshold{
-					TestResultsFailed: &config.MetricThreshold{
+				Threshold: &configpb.ImpactThreshold{
+					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(1000),
 					},
 				},
 			},
 			{
 				Priority: "1",
-				Threshold: &config.ImpactThreshold{
-					TestResultsFailed: &config.MetricThreshold{
+				Threshold: &configpb.ImpactThreshold{
+					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(500),
 					},
 				},
 			},
 			{
 				Priority: "2",
-				Threshold: &config.ImpactThreshold{
-					TestResultsFailed: &config.MetricThreshold{
+				Threshold: &configpb.ImpactThreshold{
+					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(100),
 					},
 				},
@@ -62,8 +62,8 @@ func ChromiumTestConfig() *config.MonorailProject {
 				// Should be less onerous than the bug-filing thresholds
 				// used in BugUpdater tests, to avoid bugs that were filed
 				// from being immediately closed.
-				Threshold: &config.ImpactThreshold{
-					TestResultsFailed: &config.MetricThreshold{
+				Threshold: &configpb.ImpactThreshold{
+					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay:   proto.Int64(50),
 						ThreeDay: proto.Int64(300),
 						SevenDay: proto.Int64(700),

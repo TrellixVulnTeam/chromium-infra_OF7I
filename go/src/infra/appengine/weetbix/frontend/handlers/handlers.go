@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // Handlers provides methods servicing Weetbix HTTP routes.
@@ -26,7 +27,7 @@ func NewHandlers(cloudProject string, prod bool) *Handlers {
 	return &Handlers{cloudProject: cloudProject, prod: prod}
 }
 
-func obtainProjectConfigOrError(ctx *router.Context) (project string, cfg *config.ProjectConfig, ok bool) {
+func obtainProjectConfigOrError(ctx *router.Context) (project string, cfg *configpb.ProjectConfig, ok bool) {
 	projectCfgs, err := config.Projects(ctx.Context)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Obtain project config: %v", err)
