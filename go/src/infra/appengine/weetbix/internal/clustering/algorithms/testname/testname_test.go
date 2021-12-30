@@ -26,24 +26,50 @@ func TestAlgorithm(t *testing.T) {
 			So(len(id), ShouldBeLessThanOrEqualTo, clustering.MaxClusterIDBytes)
 		})
 		Convey(`Same ID for same test name`, func() {
-			id1 := a.Cluster(&clustering.Failure{
-				TestID: "ninja://test_name_one/",
-				Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+			Convey(`No matching rules`, func() {
+				id1 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://test_name_one/",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+				})
+				id2 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://test_name_one/",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
+				})
+				So(id2, ShouldResemble, id1)
 			})
-			id2 := a.Cluster(&clustering.Failure{
-				TestID: "ninja://test_name_one/",
-				Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
+			Convey(`Matching rules`, func() {
+				id1 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://:blink_web_tests/virtual/abc/folder/test-name.html",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+				})
+				id2 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://:blink_web_tests/folder/test-name.html?param=2",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
+				})
+				So(id2, ShouldResemble, id1)
 			})
-			So(id2, ShouldResemble, id1)
 		})
 		Convey(`Different ID for different clusters`, func() {
-			id1 := a.Cluster(&clustering.Failure{
-				TestID: "ninja://test_name_one/",
+			Convey(`No matching rules`, func() {
+				id1 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://test_name_one/",
+				})
+				id2 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://test_name_two/",
+				})
+				So(id2, ShouldNotResemble, id1)
 			})
-			id2 := a.Cluster(&clustering.Failure{
-				TestID: "ninja://test_name_two/",
+			Convey(`Matching rules`, func() {
+				id1 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://:blink_web_tests/virtual/abc/folder/test-name-a.html",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "A"},
+				})
+				id2 := a.Cluster(&clustering.Failure{
+					TestID: "ninja://:blink_web_tests/folder/test-name-b.html?param=2",
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "B"},
+				})
+				So(id2, ShouldNotResemble, id1)
 			})
-			So(id2, ShouldNotResemble, id1)
 		})
 	})
 	Convey(`Failure Association Rule`, t, func() {
@@ -57,21 +83,43 @@ func TestAlgorithm(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(expr.Evaluate(failure), ShouldBeTrue)
 		}
-		Convey(`ninja Test ID`, func() {
+		Convey(`No matching rules`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://test_name_one/",
+			}
+			test(failure, `test = "ninja://test_name_one/"`)
+		})
+		Convey(`Matching rule`, func() {
 			failure := &clustering.Failure{
 				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
 			}
-			test(failure, `test = "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html"`)
+			test(failure, `test LIKE "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%"`)
+		})
+		Convey(`Escaping`, func() {
+			failure := &clustering.Failure{
+				TestID: `ninja://:blink_web_tests/a/b_\%c.html`,
+			}
+			test(failure, `test LIKE "ninja://:blink\\_web\\_tests/%a/b\\_\\\\\\%c.html%"`)
 		})
 	})
 	Convey(`Cluster Description`, t, func() {
 		a := &Algorithm{}
 
-		failure := &clustering.Failure{
-			TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
-		}
-		description := a.ClusterDescription(failure)
-		So(description.Title, ShouldEqual, "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html")
-		So(description.Description, ShouldContainSubstring, "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html")
+		Convey(`No matching rules`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://test_name_one",
+			}
+			description := a.ClusterDescription(failure)
+			So(description.Title, ShouldEqual, "ninja://test_name_one")
+			So(description.Description, ShouldContainSubstring, "ninja://test_name_one")
+		})
+		Convey(`Matching rule`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+			}
+			description := a.ClusterDescription(failure)
+			So(description.Title, ShouldEqual, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
+			So(description.Description, ShouldContainSubstring, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
+		})
 	})
 }

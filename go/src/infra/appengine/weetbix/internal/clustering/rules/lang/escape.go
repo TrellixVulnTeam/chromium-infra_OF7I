@@ -63,6 +63,15 @@ func likePatternToRegexp(likePattern string) (string, error) {
 	return b.String(), nil
 }
 
+// ValidateLikePattern validates the given string is a valid LIKE
+// pattern. In particular, this checks that all escape sequences
+// are valid, and that there is no unfinished trailing escape
+// sequence (trailing '\').
+func ValidateLikePattern(likePattern string) error {
+	_, err := likePatternToRegexp(likePattern)
+	return err
+}
+
 // Matches double-quoted string literals supported by golang, which
 // are a subset of those supported by Standard SQL. Handles standard escape
 // sequences (\r, \n, etc.), plus octal, hex and unicode sequences.
