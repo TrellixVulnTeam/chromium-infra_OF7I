@@ -11,14 +11,10 @@ platforms:
   - linux-ppc64
   - linux-ppc64le
   - linux-s390x
-  # TODO(crbug.com/1211921): Move to vpython-mac.yaml instead of cross compile
-  # on Linux.
-  - mac-arm64
   - windows-386
   - windows-amd64
 go_build_environ:
   CGO_ENABLED:
-    darwin:  1  # native Go DNS resolved is buggy on OSX (crbug.com/803673)
     linux:   0  # to avoid linking to system dynamic libraries
     windows: 0  # we have no cgo toolchain on Windows
 go_packages:
