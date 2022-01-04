@@ -141,14 +141,14 @@ func JobToValues(job *proto.JobSpec, userEmail string) (url.Values, error) {
 			return nil, errors.Reason("a base commit is required").Err()
 		}
 		v.Set("base_git_hash", jk.Experiment.BaseCommit.GitHash)
-		if jk.Experiment.ExperimentPatch == nil {
-			return nil, errors.Reason("an experiment patch is required").Err()
+
+		if jk.Experiment.ExperimentPatch != nil {
+			experimentPatchURL, err := gerritChangeToURL(jk.Experiment.ExperimentPatch)
+			if err != nil {
+				return nil, errors.Annotate(err, "invalid experiment patch").Err()
+			}
+			v.Set("experiment_patch", experimentPatchURL)
 		}
-		experimentPatchURL, err := gerritChangeToURL(jk.Experiment.ExperimentPatch)
-		if err != nil {
-			return nil, errors.Annotate(err, "invalid experiment patch").Err()
-		}
-		v.Set("experiment_patch", experimentPatchURL)
 
 		if jk.Experiment.ExperimentCommit != nil {
 			// Note the naming difference -- the legacy service supports "end_git_hash".
