@@ -303,6 +303,10 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetZoneFilter(filterMap)
+	filterMap, err = parseIntTypeFilter(filterMap, "bbnum")
+	if err != nil {
+		return nil, "", errors.Annotate(err, "filter value for bbnum cannot be parsed").Err()
+	}
 	racks, nextPageToken, err := registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
 	if full && !keysOnly {
 		for _, rack := range racks {

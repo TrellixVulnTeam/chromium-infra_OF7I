@@ -48,6 +48,7 @@ Gets the rack and prints the output in the user-specified format.`,
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
+		c.Flags.Var(flag.StringSlice(&c.bbnums), "bbnum", "breadboard to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
@@ -66,6 +67,7 @@ type getRack struct {
 	zones  []string
 	tags   []string
 	states []string
+	bbnums []string
 
 	pageSize int
 	keysOnly bool
@@ -119,6 +121,7 @@ func (c *getRack) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.ZoneFilterName, c.zones)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.TagFilterName, c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.StateFilterName, c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters(ufsUtil.BbnumFilterName, c.bbnums)...)
 	return filters
 }
 

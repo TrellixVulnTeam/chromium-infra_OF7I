@@ -271,8 +271,10 @@ func GetRackIndexedFieldName(input string) (string, error) {
 		field = "tags"
 	case util.StateFilterName:
 		field = "state"
+	case util.BbnumFilterName:
+		field = "bbnum"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are zone/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are zone/tag/state/bbnum", input)
 	}
 	return field, nil
 }

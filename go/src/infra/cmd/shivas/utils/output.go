@@ -63,7 +63,7 @@ var (
 	ChromePlatformTitle       = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
 	VlanTitle                 = []string{"Vlan Name", "CIDR Block", "IP Capacity", "DHCP range", "Description", "State", "Zones", "Reserved IPs", "UpdateTime"}
 	VMTitle                   = []string{"VM Name", "OS Version", "OS Image", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
-	RackTitle                 = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
+	RackTitle                 = []string{"Rack Name", "Bbnum", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle           = []string{"Host", "OS Version", "OS Image", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSEFullTitle       = []string{"Host", "OS Version", "OS Image", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 	MachineLSEDeploymentTitle = []string{"Serial Number", "Hostname", "Deployment Identifier", "Deployment Env", "UpdateTime"}
@@ -1550,6 +1550,7 @@ func rackOutputStrs(pm proto.Message) []string {
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
+		fmt.Sprintf("%d", m.GetBbnum()),
 		ufsUtil.RemoveZonePrefix(m.GetLocation().GetZone().String()),
 		fmt.Sprintf("%d", m.GetCapacityRu()),
 		ufsUtil.RemoveStatePrefix(m.GetResourceState().String()),

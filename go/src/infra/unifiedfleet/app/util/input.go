@@ -126,6 +126,7 @@ var (
 	MachineLSEsFilterName          string = "duts"
 	TypeFilterName                 string = "type"
 	SerialNumberFilterName         string = "serialnumber"
+	BbnumFilterName                string = "bbnum"
 )
 
 const separator string = "/"
