@@ -7,6 +7,7 @@ import collections
 import mock
 import six
 import time
+import unittest
 
 if six.PY2:
   # appengine sdk is supposed to be on the path.
@@ -21,7 +22,6 @@ from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 import webtest
-from testing_support import auto_stub
 
 
 class MockPatchMixin(object):  # pragma: no cover
@@ -59,7 +59,7 @@ class MockPatchMixin(object):  # pragma: no cover
       self._saved_patchers = None
 
 
-class AppengineTestCase(auto_stub.TestCase, MockPatchMixin):  # pragma: no cover
+class AppengineTestCase(unittest.TestCase, MockPatchMixin):  # pragma: no cover
   """Base class for Appengine test cases.
 
   Must set app_module to use self.test_app.
@@ -106,7 +106,13 @@ class AppengineTestCase(auto_stub.TestCase, MockPatchMixin):  # pragma: no cover
       self.testbed.deactivate()
     finally:
       MockPatchMixin.tearDown(self)
-      auto_stub.TestCase.tearDown(self)
+      mock.patch.stopall()
+
+  def mock(self, *args, **kwargs):
+    # For backwards compatibility with auto_stub.AutoStubMixIn.
+    patcher = mock.patch.object(*args, **kwargs)
+    patcher.start()
+    self.addCleanup(patcher.stop)
 
   @property
   def test_app(self):
