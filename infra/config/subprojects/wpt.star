@@ -2,11 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Definitions of WPT import/export crons."""
+"""Definitions of WPT import/export/upload crons."""
 
 load("//lib/build.star", "build")
 
-def cron(name, recipe, execution_timeout = None):
+def cron(name, recipe, execution_timeout = None, schedule = None):
     luci.builder(
         name = name,
         bucket = "cron",
@@ -21,7 +21,7 @@ def cron(name, recipe, execution_timeout = None):
         },
         service_account = "wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com",
         execution_timeout = execution_timeout or time.hour,
-        schedule = "with 60s interval",
+        schedule = schedule or "with 60s interval",
         experiments = {"luci.recipes.use_python3": 100},
     )
     luci.list_view_entry(
@@ -31,3 +31,4 @@ def cron(name, recipe, execution_timeout = None):
 
 cron(name = "wpt-exporter", recipe = "wpt_export")
 cron(name = "wpt-importer", recipe = "wpt_import", execution_timeout = 6 * time.hour)
+cron(name = "wpt-uploader", recipe = "wpt_upload", schedule = "with 86400s interval")
