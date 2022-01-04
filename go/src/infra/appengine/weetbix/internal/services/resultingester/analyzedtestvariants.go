@@ -31,12 +31,13 @@ type testVariantKey struct {
 	VariantHash string
 }
 
-// locBasedTagKeys are the keys for location based tags. Such tags should be
-// saved with analyzed test variants.
-var locBasedTagKeys = map[string]struct{}{
+// tagKeys are the keys for tags that should be saved with analyzed test
+// variants.
+var tagKeys = map[string]struct{}{
 	"monorail_component": {},
 	"os":                 {},
 	"team_email":         {},
+	"test_name":          {},
 }
 
 func shouldIngestForTestVariants(task *taskspb.IngestTestResults) bool {
@@ -180,7 +181,7 @@ func insertRow(ctx context.Context, realm, builder string, tv *rdbpb.TestVariant
 		"CreateTime":                spanner.CommitTimestamp,
 		"StatusUpdateTime":          spanner.CommitTimestamp,
 		"Builder":                   builder,
-		"Tags":                      extractLocationTags(tv),
+		"Tags":                      extractRequiredTags(tv),
 		"NextUpdateTaskEnqueueTime": now,
 	}
 	if tv.TestMetadata != nil {
@@ -234,12 +235,12 @@ func updatedStatus(derived, old pb.AnalyzedTestVariantStatus) (pb.AnalyzedTestVa
 	}
 }
 
-func extractLocationTags(tv *rdbpb.TestVariant) []*pb.StringPair {
+func extractRequiredTags(tv *rdbpb.TestVariant) []*pb.StringPair {
 	tags := make([]*pb.StringPair, 0)
 	knownKeys := make(map[string]struct{})
 	for _, tr := range tv.Results {
 		for _, t := range tr.Result.GetTags() {
-			if _, ok := locBasedTagKeys[t.Key]; !ok {
+			if _, ok := tagKeys[t.Key]; !ok {
 				// We don't care about this tag.
 				continue
 			}
