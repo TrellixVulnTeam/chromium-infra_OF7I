@@ -185,6 +185,18 @@ def _LxmlEnv():
   return env
 
 
+# For freetype-py, these variables are set only when building from
+# source, which is to say on non-Windows platforms.
+def _FreetypePyEnv():
+  if sys.platform == 'win32':
+    return None
+  return {
+      'CMAKE_BUILD_TYPE': 'Release',
+      'FREETYPEPY_BUNDLE_FT': '1',
+      'PYTHON_ARCH': '64',
+  }
+
+
 SPECS.update({
     s.spec.tag: s for s in assert_sorted(
         'SourceOrPrebuilt',
@@ -347,9 +359,15 @@ SPECS.update({
         SourceOrPrebuilt(
             'freetype-py',
             '2.2.0',
-            packaged=(),
+            # The bundled freetype build script seems to not work for building
+            # a 64-bit Windows library, so use prebuilt for now.
+            packaged=('windows-x64-py3'),
             pyversions=['py3'],
-            skip_auditwheel=True,
+            patch_version='chromium.1',
+            env=_FreetypePyEnv(),
+            # The freetype build script does not correctly support
+            # cross-compiling, and there is also no 32-bit Windows wheel.
+            skip_plat=['linux-arm64-py3', 'windows-x86-py3'],
         ),
         SourceOrPrebuilt(
             'gevent',
