@@ -215,6 +215,9 @@ endif
 
 external_deps: clean_deps deps build_js config
 
+# Build target used by LUCI CD to build frontend.
+build_frontend: clean_deps deps build_js
+
 package_release:
 	rsync -aLK . $(TARDIR)/package
 
