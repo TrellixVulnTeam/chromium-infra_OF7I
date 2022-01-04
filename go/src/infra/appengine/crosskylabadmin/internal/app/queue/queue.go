@@ -24,7 +24,9 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/crosskylabadmin/internal/app/config"
 	"infra/appengine/crosskylabadmin/internal/app/frontend"
+	"infra/appengine/crosskylabadmin/internal/ufs"
 )
 
 // InstallHandlers installs handlers for queue jobs that are part of this app.
@@ -52,7 +54,20 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	defer func() {
 		runRepairTick.Add(c.Context, 1, err == nil)
 	}()
-
+	if true {
+		// Create a UFS client at the beginning of repair and log the result, but do NOT stop execution
+		// because of problems.
+		//
+		// Eventually, we are going to use the pools associated with a device as an input to the logic that
+		// switches between repair implementations.
+		cfg := config.Get(c.Context)
+		_, err := ufs.NewUFSClient(c.Context, cfg.GetUFS().GetHost())
+		if err == nil {
+			logging.Infof(c.Context, "run repair queue handler: UFS client created successfully")
+		} else {
+			logging.Infof(c.Context, "run repair queue handler: %s", err)
+		}
+	}
 	botID := c.Request.FormValue("botID")
 	expectedState := c.Request.FormValue("expectedState")
 	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState)
