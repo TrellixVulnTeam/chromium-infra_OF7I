@@ -7,12 +7,16 @@ package gitiles
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"go.chromium.org/luci/common/retry"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Client provides the gitiles-oriented operations required for bootstrapping.
@@ -98,6 +102,18 @@ func (c *Client) FetchLatestRevision(ctx context.Context, host, project, ref str
 	return response.Log[0].GetId(), nil
 }
 
+type downloadFileRetryIterator struct {
+	limited retry.Limited
+}
+
+func (i *downloadFileRetryIterator) Next(ctx context.Context, err error) time.Duration {
+	s, ok := status.FromError(err)
+	if ok && s.Code() == codes.NotFound {
+		return i.limited.Next(ctx, err)
+	}
+	return retry.Stop
+}
+
 // DownloadFile returns the contents of the file at the given path at the given
 // revision of the given project on the given host.
 func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path string) (string, error) {
@@ -110,10 +126,25 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 		Committish: revision,
 		Path:       path,
 	}
-	response, err := gitilesClient.DownloadFile(ctx, request)
+
+	var response *gitilespb.DownloadFileResponse
+	retryFactory := func() retry.Iterator {
+		return &downloadFileRetryIterator{
+			limited: retry.Limited{
+				Delay:   time.Second,
+				Retries: 3,
+			},
+		}
+	}
+	err = retry.Retry(ctx, retryFactory, func() error {
+		var err error
+		response, err = gitilesClient.DownloadFile(ctx, request)
+		return err
+	}, retry.LogCallback(ctx, "DownloadFile"))
 	if err != nil {
 		return "", err
 	}
+
 	return response.Contents, nil
 }
 

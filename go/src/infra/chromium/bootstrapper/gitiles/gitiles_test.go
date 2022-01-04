@@ -11,6 +11,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.chromium.org/luci/common/proto"
 	gitpb "go.chromium.org/luci/common/proto/git"
@@ -170,7 +172,7 @@ func TestClient(t *testing.T) {
 				So(contents, ShouldBeEmpty)
 			})
 
-			Convey("returns latest revision for ref", func() {
+			Convey("returns file contents", func() {
 				ctl := gomock.NewController(t)
 				defer ctl.Finish()
 
@@ -178,6 +180,34 @@ func TestClient(t *testing.T) {
 				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
 					return mockGitilesClient, nil
 				})
+				mockGitilesClient.EXPECT().DownloadFile(gomock.Any(), proto.MatcherEqual(&gitilespb.DownloadFileRequest{
+					Project:    "fake/project",
+					Committish: "fake-revision",
+					Path:       "fake-file",
+				})).Return(&gitilespb.DownloadFileResponse{
+					Contents: "fake-contents",
+				}, nil)
+
+				client := NewClient(ctx)
+				contents, err := client.DownloadFile(ctx, "fake-host", "fake/project", "fake-revision", "fake-file")
+
+				So(err, ShouldBeNil)
+				So(contents, ShouldEqual, "fake-contents")
+			})
+
+			Convey("retries not found errors", func() {
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
+				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
+					return mockGitilesClient, nil
+				})
+				mockGitilesClient.EXPECT().DownloadFile(gomock.Any(), proto.MatcherEqual(&gitilespb.DownloadFileRequest{
+					Project:    "fake/project",
+					Committish: "fake-revision",
+					Path:       "fake-file",
+				})).Return(nil, status.Error(codes.NotFound, "fake transient DownloadFile failure"))
 				mockGitilesClient.EXPECT().DownloadFile(gomock.Any(), proto.MatcherEqual(&gitilespb.DownloadFileRequest{
 					Project:    "fake/project",
 					Committish: "fake-revision",
