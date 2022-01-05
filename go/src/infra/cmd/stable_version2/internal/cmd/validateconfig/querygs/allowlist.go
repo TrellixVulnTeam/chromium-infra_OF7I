@@ -9,6 +9,8 @@
 package querygs
 
 var missingBoardAllowList map[string]bool = stringSliceToStringSet([]string{
+	// The boards atlas_arm64 through x86_zgb_he are legacy allowlist exceptions.
+	// Remove them when possible.
 	"atlas_arm64",
 	"atlas_kvm",
 	"buddy_cfm",
@@ -54,6 +56,10 @@ var missingBoardAllowList map[string]bool = stringSliceToStringSet([]string{
 	"x86_mario",
 	"x86_zgb",
 	"x86_zgb_he",
+	// For more details on reven, see
+	// - b:212595053
+	// - b:213332740
+	"reven",
 })
 
 var failedToLookupAllowList map[string]bool = stringSliceToStringSet([]string{
