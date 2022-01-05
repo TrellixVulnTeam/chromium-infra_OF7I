@@ -9,8 +9,6 @@ import logging
 import os
 import time
 
-import webapp2
-
 from google.appengine.api import runtime as apiruntime
 from google.appengine.ext import ndb
 
@@ -70,6 +68,13 @@ def _assign_task_num(time_fn=datetime.datetime.utcnow):
   futures_expired = ndb.delete_multi_async(expired_keys)
   ndb.Future.wait_all(futures_unassigned + futures_expired)
   logging.debug('Committed all changes')
+
+
+# webapp2 won't be available in Chrome Infra Python3 SDK.
+try:
+  import webapp2
+except ImportError:  # pragma: no cover
+  webapp2 = type('webapp2', (object,), {"RequestHandler": object})
 
 
 class TSMonJSHandler(webapp2.RequestHandler):
