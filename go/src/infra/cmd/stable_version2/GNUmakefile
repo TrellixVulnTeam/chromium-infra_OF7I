@@ -1,13 +1,13 @@
 .PHONY: stable_version2
-stable_version2: check-environment
+stable_version2:
 	go build -o stable_version2 -- .
 
 .PHONY: gen
-gen: check-environment
+gen:
 	go generate ./...
 
 .PHONY: test
-test: check-environment
+test:
 	go test ./...
 
 .PHONY: check
@@ -27,16 +27,9 @@ clean:
 # TODO(gregorynisbet): clear the environment completely except for the variables
 # needed to authenticate.
 .PHONY: check-update-with-omaha
-check-update-with-omaha: check-environment stable_version2
+check-update-with-omaha: stable_version2
 	dir="$$(mktemp -d)" && \
 	(PATH= && ./stable_version2 update-with-omaha -dryrun -output_json="$${dir}/output.json") && \
 	status="$$?"; \
 	cat < "$${dir}/output.json"; \
 	exit "$$status"
-
-.PHONY: check-environment
-check-environment:
-	@if ! (env | grep -q '^GOPATH.*infra/go/[.]vendor'); then \
-		echo 'not in infra gopath workspace' 1>&2;      \
-		exit 1;                                         \
-	fi
