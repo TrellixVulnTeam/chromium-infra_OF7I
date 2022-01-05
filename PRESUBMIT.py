@@ -31,6 +31,7 @@ DISABLED_PROJECTS = [
     '\.git',
     '\.wheelcache',
     'bootstrap/virtualenv-ext',
+    'go/src/infra/cmd/package_index_cros',
     'go/src/infra/tools/vpython/utils',
 ]
 
