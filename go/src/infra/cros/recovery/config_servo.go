@@ -8,51 +8,47 @@ const servoRepairPlanBody = `
 "critical_actions": [
 	"servo_host_info",
 	"servod_info",
-	"create_host",
+	"init_docker_host",
 	"cros_ssh",
 	"servo_v3_uptime",
 	"lock_labstation",
 	"has_enough_disk_space",
-	"servo_components_check",
+	"servo_root_check",
+	"servo_topology",
 	"servo_fw_need_update",
-	"servo_host_servod_init",
-	"servod_echo",
+	"servo_host_servod_start",
+	"servo_servod_echo_host",
 	"servod_get_serialname",
-	"servod_servo_pd",
-	"servod_read_servo_type",
-	"servo_cr50_checks",
 	"servo_connection_pins",
-	"servo_ppdut5",
-	"servod_set_main_device",
+	"servo_dut_detected",
+	"servod_servo_pd",
+	"servo_cr50_checks",
+	"dut_controller_missing_fault",
+	"servo_cr50_console",
 	"servo_ec_check",
+	"servod_set_main_device",
+	"init_dut_for_servo",
 	"servo_testlab_enabled",
 	"servo_detect_usbkey",
-	"servo_servod_echo_host",
 	"update_servo_type_label"
 ],
 "actions": {
-	"servo_host_servod_restart": {
+	"servo_host_servod_start": {
 		"exec_timeout": {
 			"seconds": 120
-		}
-	},
-	"servo_host_servod_init": {
-		"exec_timeout": {
-			"seconds": 120
-		}
+		},
+		"exec_name": "servo_host_servod_init"
 	},
 	"servo_host_info": {
-		"dependencies" : [
-			"dut_has_name"
-		],
-		"exec_name":"sample_pass"
+		"exec_name":"dut_has_name"
 	},
 	"servod_info": {
+		"docs" : ["Verify that servo port is available, and servo serial is readable (only for non-servo-v3)."],
 		"exec_name":"sample_pass"
 	},
-	"create_host": {
+	"init_docker_host": {
 		"docs": [
-			"Only to create docker"
+			"Only to create docker. Need close docker host, and add to cros plan."
 		],
 		"exec_name":"sample_pass"
 	},
@@ -67,6 +63,9 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"reboot"
 		]
+	},
+	"reboot": {
+		"exec_name":"sample_pass"
 	},
 	"is_labstation": {
 		"docs": [
@@ -93,7 +92,7 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_labstation"
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"cros_create_servo_in_use"
 	},
 	"has_enough_disk_space": {
 		"docs":[
@@ -131,17 +130,15 @@ const servoRepairPlanBody = `
 	},
 	"is_not_container": {
 		"conditions": [
-			"is_servo_v3",
-			"is_labstation"
+			"is_container"
 		],
 		"exec_name":"sample_fail"
 	},
-	"servo_components_check": {
+	"servo_root_check": {
 		"dependencies": [
 			"cros_ssh",
-			"root_present_servo_v3",
-			"servo_v4_root_present",
-			"servo_topology"
+			"servo_v3_root_present",
+			"servo_v4_root_present"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -184,7 +181,10 @@ const servoRepairPlanBody = `
 		],
 		"allow_fail_after_recovery": true
 	},
-	"root_present_servo_v3": {
+	"servo_v3_root_present": {
+		"docs": [
+			"This remains to be implemented."
+		],
 		"dependencies": [
 			"cros_ssh"
 		],
@@ -213,7 +213,7 @@ const servoRepairPlanBody = `
 		"docs":[
 			"run command from xmlrpc"
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servod_echo"
 	},
 	"servo_get_ppdut5_mv": {
 		"exec_extra_args": [
@@ -232,7 +232,7 @@ const servoRepairPlanBody = `
 			"run command from xmlrpc"
 		],
 		"conditions": [
-			"servo_type_c"
+			"servo_v4_type_c"
 		],
 		"dependencies": [
 			"servo_get_ppdut5_mv",
@@ -251,15 +251,14 @@ const servoRepairPlanBody = `
 		],
 		"dependencies": [
 			"servo_cr50_low_sbu",
-			"servo_cr50_enumerated",
-			"servo_cr50_console"
+			"servo_cr50_enumerated"
 		],
 		"exec_name":"sample_pass"
 	},
 	"servo_cr50_low_sbu": {
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_type_c",
+			"servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
 		]
 	},
@@ -276,12 +275,15 @@ const servoRepairPlanBody = `
 		],
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_type_c",
+			"servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
 		],
 		"exec_name":"sample_fail"
 	},
 	"servo_cr50_console": {
+		"docs": [
+			"Create new action to check that servotype has ccd_cr50, and set that as a condition for this action."
+		],
 		"conditions": [
 			"is_not_servo_v3"
 		],
@@ -309,7 +311,8 @@ const servoRepairPlanBody = `
 	},
 	"servo_connection_pins": {
 		"conditions": [
-			"is_not_servo_v3"
+			"is_servo_v3",
+			"servo_v4_type_a"
 		],
 		"dependencies": [
 			"servo_cold_reset_pin",
@@ -341,7 +344,7 @@ const servoRepairPlanBody = `
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
 	},
-	"servo_ppdut5": {
+	"servo_dut_detected": {
 		"conditions": [
 			"is_not_servo_v3",
 			"servo_v4_type_a"
@@ -398,7 +401,7 @@ const servoRepairPlanBody = `
 			"seconds":7300
 		}
 	},
-	"servo_type_c": {
+	"servo_v4_type_c": {
 		"exec_name":"sample_pass"
 	},
 	"servo_lid_open": {
@@ -419,19 +422,10 @@ const servoRepairPlanBody = `
 	"is_not_dual_setup": {
 		"exec_name":"sample_pass"
 	},
-	"servo_has_active_dut_controller": {
-		"exec_extra_args": [
-			"command:active_dut_controller"
-		],
-		"exec_name":"servo_check_servod_control"
-	},
 	"servod_set_main_device": {
 		"conditions" : [
 			"servo_has_active_dut_controller"
 		]
-	},
-	"servo_v4_type_c": {
-		"exec_name":"sample_pass"
 	},
 	"servo_fw_update": {
 		"docs":[
@@ -451,6 +445,9 @@ const servoRepairPlanBody = `
 		"exec_name":"servo_check_servod_control"
 	},
 	"servo_warm_reset_pin": {
+		"docs": [
+			"TODO: If the type C has warm reset, we can drop this condition."
+		],
 		"conditions": [
 			"servo_warm_reset_supported"
 		],
@@ -463,9 +460,6 @@ const servoRepairPlanBody = `
 	"dut_has_cros_ec": {
 		"exec_name":"sample_pass"
 	},
-	"reboot":{
-		"exec_name":"sample_pass"
-	},
 	"servo_cold_reset_pin": {
 		"exec_extra_args": [
 			"command:cold_reset",
@@ -473,24 +467,37 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"servo_check_servod_control"
 	},
-	"servod_read_servo_type": {
-		"exec_name":"sample_pass"
-	},
-	"servod_restart_dut": {
-		"exec_name":"sample_pass"
-	},
 	"servo_servod_echo_host": {
+		"docs": ["Uses a servod control to check whether the servod daemon is responsive."],
 		"exec_timeout": {
 			"seconds": 30
 		}
-	},
-	"servod_echo": {
-		"dependencies" : ["servo_servod_echo_host"]
 	},
 	"update_servo_type_label":{
 		"docs":[
 			"Update the servo type label for the DUT info."
 		],
 		"exec_name":"servo_update_servo_type_label"
+	},
+	"dut_controller_missing_fault":{
+		"docs": ["Expect to be off, it is bad to be on."],
+		"exec_name":"sample_pass"
+	},
+	"init_dut_for_servo":{
+		"exec_name":"sample_pass"
+	},
+	"servo_host_servod_restart": {
+		"exec_timeout": {
+			"seconds": 120
+		}
+	},
+	"servo_has_active_dut_controller": {
+		"exec_extra_args": [
+			"command:active_dut_controller"
+		],
+		"exec_name":"servo_check_servod_control"
+	},
+	"servod_restart_dut": {
+		"exec_name":"sample_pass"
 	}
 }`
