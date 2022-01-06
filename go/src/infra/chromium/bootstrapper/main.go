@@ -40,6 +40,7 @@ type getOptionsFn func() options
 func parseFlags() options {
 	outputPath := flag.String("output", "", "Path to write the final build.proto state to.")
 	propertiesOptional := flag.Bool("properties-optional", false, "Whether missing $bootstrap/properties property should be allowed")
+	flag.Parse()
 	return options{
 		outputPath:         *outputPath,
 		exeRoot:            "exe",
