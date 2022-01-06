@@ -221,4 +221,7 @@ infra.builder(
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
         use_python3 = True,
     ),
+    properties = {
+        "status": "SUCCESS",
+    },
 )
