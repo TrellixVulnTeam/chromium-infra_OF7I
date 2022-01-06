@@ -39,6 +39,14 @@ const servoRepairPlanBody = `
 		},
 		"exec_name": "servo_host_servod_init"
 	},
+	"servo_host_servod_init": {
+		"exec_timeout": {
+			"seconds": 120
+		},
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		]
+	},
 	"servo_host_info": {
 		"exec_name":"dut_has_name"
 	},
@@ -154,6 +162,9 @@ const servoRepairPlanBody = `
 			"servo_topology_single_child",
 			"servo_topology_dual_setup"
 		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"sample_pass"
 	},
 	"servo_topology_single_child": {
@@ -260,6 +271,9 @@ const servoRepairPlanBody = `
 			"is_not_servo_v3",
 			"servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -278,6 +292,9 @@ const servoRepairPlanBody = `
 			"servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
 		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"sample_fail"
 	},
 	"servo_cr50_console": {
@@ -293,6 +310,9 @@ const servoRepairPlanBody = `
 		"exec_extra_args": [
 			"commands:cr50_ccd_level,cr50_testlab,cr50_ccd_state_flags",
 			"any_one:true"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -341,6 +361,9 @@ const servoRepairPlanBody = `
 			"command:pwr_button",
 			"expected_string_value:release"
 		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
 	},
@@ -348,6 +371,9 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_not_servo_v3",
 			"servo_v4_type_a"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -368,6 +394,9 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_not_servo_v3",
 			"dut_has_cros_ec"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -405,6 +434,9 @@ const servoRepairPlanBody = `
 		"exec_name":"sample_pass"
 	},
 	"servo_lid_open": {
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"sample_pass"
 	},
 	"is_not_servo_v3": {
@@ -425,6 +457,9 @@ const servoRepairPlanBody = `
 	"servod_set_main_device": {
 		"conditions" : [
 			"servo_has_active_dut_controller"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
 		]
 	},
 	"servo_fw_update": {
@@ -455,6 +490,9 @@ const servoRepairPlanBody = `
 			"command:warm_reset",
 			"expected_string_value:off"
 		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"servo_check_servod_control"
 	},
 	"dut_has_cros_ec": {
@@ -465,13 +503,19 @@ const servoRepairPlanBody = `
 			"command:cold_reset",
 			"expected_string_value:off"
 		],
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		],
 		"exec_name":"servo_check_servod_control"
 	},
 	"servo_servod_echo_host": {
 		"docs": ["Uses a servod control to check whether the servod daemon is responsive."],
 		"exec_timeout": {
 			"seconds": 30
-		}
+		},
+		"recovery_actions": [
+			"servo_host_servod_restart"
+		]
 	},
 	"update_servo_type_label":{
 		"docs":[
@@ -489,7 +533,8 @@ const servoRepairPlanBody = `
 	"servo_host_servod_restart": {
 		"exec_timeout": {
 			"seconds": 120
-		}
+		},
+		"run_control": 2
 	},
 	"servo_has_active_dut_controller": {
 		"exec_extra_args": [
