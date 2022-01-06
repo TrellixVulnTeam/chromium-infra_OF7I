@@ -17,6 +17,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -39,7 +40,19 @@ import (
 // Only set it to true for development purposes.
 const LuciexeProtocolPassthru = false
 
+//
+// DescribeMyDirectoryAndEnvironment controls whether labpack should write information
+// about where it was run (cwd), what files are near it, and the contents of the environment.
+const DescribeMyDirectoryAndEnvironment = true
+
+// DescriptionCommand describes the environment where labpack was run. It must write all of its output to stderr
+// and none of its output to stdout for hygiene purposes.
+const DescriptionCommand = `( echo BEGIN; echo PWD; pwd ; echo FIND; find . ; echo ENV; env; echo END ) 1>&2`
+
 func main() {
+	if DescribeMyDirectoryAndEnvironment {
+		defer describeEnvironment(os.Stderr)
+	}
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
 	log.Printf("Running in build-bucket mode")
@@ -165,4 +178,13 @@ func printInputs(ctx context.Context, input *steps.LabpackInput) (err error) {
 		return errors.Annotate(err, "failed to marshal proto").Err()
 	}
 	return nil
+}
+
+// describeEnvironment describes the environment where labpack is being run.
+// TODO(gregorynisbet): Remove this thing.
+func describeEnvironment(stderr io.Writer) error {
+	command := exec.Command("/bin/sh", "-c", DescriptionCommand)
+	command.Stderr = stderr
+	err := command.Run()
+	return errors.Annotate(err, "describe environment").Err()
 }
