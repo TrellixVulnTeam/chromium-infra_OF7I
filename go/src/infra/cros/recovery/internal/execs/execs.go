@@ -220,6 +220,20 @@ func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []st
 	return make([]string, 0)
 }
 
+// AsInt returns the value for the passed key as a int.
+func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string) int {
+	defaultValue := 0
+	if value, ok := parsedArgs[key]; ok {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
+		log.Debug(ctx, "Parsed Args As int: value %q for key %q is not a valid integer, returning default value %t.", value, key, defaultValue)
+	} else {
+		log.Debug(ctx, "Parsed Args As int: key %q does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
+	}
+	return defaultValue
+}
+
 // ParseActionArgs parses the action arguments using the splitter, and
 // returns ParsedArgs object containing key and values in the action
 // arguments. If any mal-formed action arguments are found their value
