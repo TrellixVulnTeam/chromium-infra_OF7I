@@ -170,9 +170,6 @@ def _step_client_tests(api, changes):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.step.nest('client'):
-    # There are no Windows, Linux bots with Python2 Swarming daemon.
-    if api.platform.is_mac:
-      _step_run_py_tests(api, luci_dir.join('client'))
     _step_run_py_tests(api, luci_dir.join('client'), python3=True)
 
 
@@ -202,9 +199,6 @@ def _step_swarming_bot_tests(api, changes):
   bot_dir = api.path['checkout'].join('luci', 'appengine', 'swarming',
                                       'swarming_bot')
   with api.step.nest('swarming bot'):
-    # There are no Windows, Linux bots with Python2 Swarming daemon.
-    if api.platform.is_mac:
-      _step_run_py_tests(api, bot_dir)
     _step_run_py_tests(api, bot_dir, python3=True)
 
 
