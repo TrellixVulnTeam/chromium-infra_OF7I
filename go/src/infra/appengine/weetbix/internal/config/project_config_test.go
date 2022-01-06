@@ -18,11 +18,13 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	. "go.chromium.org/luci/common/testing/assertions"
 )
@@ -93,12 +95,14 @@ func TestProjectConfig(t *testing.T) {
 		configs["a"] = projectA
 
 		ctx := memory.Use(context.Background())
+		ctx, _ = testclock.UseTime(ctx, testclock.TestTimeUTC)
 		SetTestProjectConfig(ctx, configs)
 
 		cfg, err := Projects(ctx)
+
 		So(err, ShouldBeNil)
 		So(len(cfg), ShouldEqual, 1)
-		So(cfg["a"], ShouldResembleProto, projectA)
+		So(cfg["a"], ShouldResembleProto, withLastUpdated(projectA, clock.Now(ctx)))
 	})
 
 	Convey("With mocks", t, func() {
@@ -117,8 +121,8 @@ func TestProjectConfig(t *testing.T) {
 		ctx = caching.WithEmptyProcessCache(ctx)
 
 		Convey("Update works", func() {
-
 			// Initial update.
+			creationTime := clock.Now(ctx)
 			err := updateProjects(ctx)
 			So(err, ShouldBeNil)
 			datastore.GetTestable(ctx).CatchupIndexes()
@@ -127,13 +131,17 @@ func TestProjectConfig(t *testing.T) {
 			projects, err := Projects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 2)
-			So(projects["a"], ShouldResembleProto, projectA)
-			So(projects["b"], ShouldResembleProto, projectB)
+			So(projects["a"], ShouldResembleProto, withLastUpdated(projectA, creationTime))
+			So(projects["b"], ShouldResembleProto, withLastUpdated(projectB, creationTime))
+
+			tc.Add(1 * time.Second)
 
 			// Noop update.
 			err = updateProjects(ctx)
 			So(err, ShouldBeNil)
 			datastore.GetTestable(ctx).CatchupIndexes()
+
+			tc.Add(1 * time.Second)
 
 			// Real update.
 			projectC := createProjectConfig()
@@ -144,6 +152,7 @@ func TestProjectConfig(t *testing.T) {
 			configs["projects/c"] = cfgmem.Files{
 				"${appid}.cfg": textPBMultiline.Format(projectC),
 			}
+			updateTime := clock.Now(ctx)
 			err = updateProjects(ctx)
 			So(err, ShouldBeNil)
 			datastore.GetTestable(ctx).CatchupIndexes()
@@ -152,29 +161,47 @@ func TestProjectConfig(t *testing.T) {
 			projects, err = fetchProjects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 2)
-			So(projects["b"], ShouldResembleProto, newProjectB)
-			So(projects["c"], ShouldResembleProto, projectC)
+			So(projects["b"], ShouldResembleProto, withLastUpdated(newProjectB, updateTime))
+			So(projects["c"], ShouldResembleProto, withLastUpdated(projectC, updateTime))
 
 			// Get still uses in-memory cached copy.
 			projects, err = Projects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 2)
-			So(projects["a"], ShouldResembleProto, projectA)
-			So(projects["b"], ShouldResembleProto, projectB)
+			So(projects["a"], ShouldResembleProto, withLastUpdated(projectA, creationTime))
+			So(projects["b"], ShouldResembleProto, withLastUpdated(projectB, creationTime))
 
-			// Time passes, in-memory cached copy expires.
-			tc.Add(2 * time.Minute)
+			Convey("Expedited cache eviction", func() {
+				projectB, err = ProjectWithMinimumVersion(ctx, "b", updateTime)
+				So(err, ShouldBeNil)
+				So(projectB, ShouldResembleProto, withLastUpdated(newProjectB, updateTime))
+			})
+			Convey("Natural cache eviction", func() {
+				// Time passes, in-memory cached copy expires.
+				tc.Add(2 * time.Minute)
 
-			// Get returns the new value now too.
-			projects, err = Projects(ctx)
-			So(err, ShouldBeNil)
-			So(len(projects), ShouldEqual, 2)
-			So(projects["b"], ShouldResembleProto, newProjectB)
-			So(projects["c"], ShouldResembleProto, projectC)
+				// Get returns the new value now too.
+				projects, err = Projects(ctx)
+				So(err, ShouldBeNil)
+				So(len(projects), ShouldEqual, 2)
+				So(projects["b"], ShouldResembleProto, withLastUpdated(newProjectB, updateTime))
+				So(projects["c"], ShouldResembleProto, withLastUpdated(projectC, updateTime))
+
+				// Time passes, in-memory cached copy expires.
+				tc.Add(2 * time.Minute)
+
+				// Get returns the same value.
+				projects, err = Projects(ctx)
+				So(err, ShouldBeNil)
+				So(len(projects), ShouldEqual, 2)
+				So(projects["b"], ShouldResembleProto, withLastUpdated(newProjectB, updateTime))
+				So(projects["c"], ShouldResembleProto, withLastUpdated(projectC, updateTime))
+			})
 		})
 
 		Convey("Validation works", func() {
 			configs["projects/b"]["${appid}.cfg"] = `bad data`
+			creationTime := clock.Now(ctx)
 			err := updateProjects(ctx)
 			datastore.GetTestable(ctx).CatchupIndexes()
 			So(err, ShouldErrLike, "validation errors")
@@ -185,11 +212,12 @@ func TestProjectConfig(t *testing.T) {
 			projects, err := Projects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 1)
-			So(projects["a"], ShouldResembleProto, projectA)
+			So(projects["a"], ShouldResembleProto, withLastUpdated(projectA, creationTime))
 		})
 
 		Convey("Update retains existing config if new config is invalid", func() {
 			// Initial update.
+			creationTime := clock.Now(ctx)
 			err := updateProjects(ctx)
 			So(err, ShouldBeNil)
 			datastore.GetTestable(ctx).CatchupIndexes()
@@ -198,8 +226,10 @@ func TestProjectConfig(t *testing.T) {
 			projects, err := Projects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 2)
-			So(projects["a"], ShouldResembleProto, projectA)
-			So(projects["b"], ShouldResembleProto, projectB)
+			So(projects["a"], ShouldResembleProto, withLastUpdated(projectA, creationTime))
+			So(projects["b"], ShouldResembleProto, withLastUpdated(projectB, creationTime))
+
+			tc.Add(1 * time.Second)
 
 			// Attempt to update with an invalid config for project B.
 			newProjectA := createProjectConfig()
@@ -208,6 +238,7 @@ func TestProjectConfig(t *testing.T) {
 			newProjectB.Monorail.Project = ""
 			configs["projects/a"]["${appid}.cfg"] = textPBMultiline.Format(newProjectA)
 			configs["projects/b"]["${appid}.cfg"] = textPBMultiline.Format(newProjectB)
+			updateTime := clock.Now(ctx)
 			err = updateProjects(ctx)
 			So(err, ShouldErrLike, "validation errors")
 			datastore.GetTestable(ctx).CatchupIndexes()
@@ -221,10 +252,18 @@ func TestProjectConfig(t *testing.T) {
 			projects, err = Projects(ctx)
 			So(err, ShouldBeNil)
 			So(len(projects), ShouldEqual, 2)
-			So(projects["a"], ShouldResembleProto, newProjectA)
-			So(projects["b"], ShouldResembleProto, projectB)
+			So(projects["a"], ShouldResembleProto, withLastUpdated(newProjectA, updateTime))
+			So(projects["b"], ShouldResembleProto, withLastUpdated(projectB, creationTime))
 		})
 	})
+}
+
+// withLastUpdated returns a copy of the given ProjectConfig with the
+// specified LastUpdated time set.
+func withLastUpdated(cfg *configpb.ProjectConfig, lastUpdated time.Time) *configpb.ProjectConfig {
+	result := proto.Clone(cfg).(*configpb.ProjectConfig)
+	result.LastUpdated = timestamppb.New(lastUpdated)
+	return result
 }
 
 func TestProject(t *testing.T) {
@@ -237,13 +276,15 @@ func TestProject(t *testing.T) {
 		}
 
 		ctx := memory.Use(context.Background())
+		ctx, _ = testclock.UseTime(ctx, testclock.TestRecentTimeUTC)
+		lastUpdated := clock.Now(ctx)
 		SetTestProjectConfig(ctx, configs)
 
 		Convey("success", func() {
 
 			pj, err := Project(ctx, "chromium")
 			So(err, ShouldBeNil)
-			So(pj, ShouldResembleProto, pjChromium)
+			So(pj, ShouldResembleProto, withLastUpdated(pjChromium, lastUpdated))
 		})
 
 		Convey("not found", func() {

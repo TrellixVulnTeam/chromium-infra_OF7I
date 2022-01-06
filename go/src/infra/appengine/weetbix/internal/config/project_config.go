@@ -12,7 +12,10 @@ import (
 	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/data/caching/lru"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
@@ -26,7 +29,11 @@ import (
 	"go.chromium.org/luci/server/caching"
 )
 
-var projectCacheSlot = caching.RegisterCacheSlot()
+// LRU cache, of which only one slot is used (config for all projects
+// is stored in the same slot). We use LRU cache instead of cache slot
+// as we sometimes want to refresh config before it has expired.
+// Only the LRU Cache has the methods to do this.
+var projectsCache = caching.RegisterLRUCache(1)
 
 const projectConfigKind = "weetbix.ProjectConfig"
 
@@ -138,13 +145,6 @@ func updateStoredConfig(ctx context.Context, fetchedConfigs map[string]*fetchedP
 			// Config did not pass validation.
 			continue
 		}
-		blob, err := proto.Marshal(fetch.Config)
-		if err != nil {
-			// Continue through errors to ensure bad config for one project
-			// does not affect others.
-			errs = append(errs, errors.Annotate(err, "").Err())
-			continue
-		}
 		cur, ok := currentConfigs[project]
 		if !ok {
 			cur = &cachedProjectConfig{
@@ -153,6 +153,39 @@ func updateStoredConfig(ctx context.Context, fetchedConfigs map[string]*fetchedP
 		}
 		if !forceUpdate && cur.Meta.Revision == fetch.Meta.Revision {
 			logging.Infof(ctx, "Cached config %s is up-to-date at rev %q", cur.ID, cur.Meta.Revision)
+			continue
+		}
+		var lastUpdated time.Time
+		if cur.Config != nil {
+			cfg := &configpb.ProjectConfig{}
+			if err := proto.Unmarshal(cur.Config, cfg); err != nil {
+				// Continue through errors to ensure bad config for one project
+				// does not affect others.
+				errs = append(errs, errors.Annotate(err, "unmarshal current config").Err())
+				continue
+			}
+			lastUpdated = cfg.LastUpdated.AsTime()
+		}
+		// ContentHash updated implies Revision updated, but Revision updated
+		// does not imply ContentHash updated. To avoid unnecessarily
+		// incrementing the last updated time (which triggers re-clustering),
+		// only update it if content has changed.
+		if forceUpdate || cur.Meta.ContentHash != fetch.Meta.ContentHash {
+			// Content updated. Update version.
+			now := clock.Now(ctx)
+			if !now.After(lastUpdated) {
+				errs = append(errs, errors.New("old config version is after current time"))
+				continue
+			}
+			lastUpdated = now
+		}
+		configToSave := proto.Clone(fetch.Config).(*configpb.ProjectConfig)
+		configToSave.LastUpdated = timestamppb.New(lastUpdated)
+		blob, err := proto.Marshal(configToSave)
+		if err != nil {
+			// Continue through errors to ensure bad config for one project
+			// does not affect others.
+			errs = append(errs, errors.Annotate(err, "marshal fetched config").Err())
 			continue
 		}
 		logging.Infof(ctx, "Updating cached config %s: %q -> %q", cur.ID, cur.Meta.Revision, fetch.Meta.Revision)
@@ -214,28 +247,60 @@ func fetchProjectConfigEntities(ctx context.Context) (map[string]*cachedProjectC
 	return result, nil
 }
 
-// Projects returns all project configurations, in a map by project name.
-// Uses in-memory cache to avoid hitting datastore all the time.
-func Projects(ctx context.Context) (map[string]*configpb.ProjectConfig, error) {
-	val, err := projectCacheSlot.Fetch(ctx, func(interface{}) (val interface{}, exp time.Duration, err error) {
-		var pc map[string]*configpb.ProjectConfig
-		if pc, err = fetchProjects(ctx); err != nil {
-			return nil, 0, err
-		}
-		return pc, time.Minute, nil
-	})
-	switch {
-	case err == caching.ErrNoProcessCache:
+// projectsWithMinimumVersion retrieves projects configurations, with
+// the specified project at at least the specified minimumVersion.
+// If no particular minimum version is desired, specify a project of ""
+// or a minimumVersion of time.Time{}.
+func projectsWithMinimumVersion(ctx context.Context, project string, minimumVersion time.Time) (map[string]*configpb.ProjectConfig, error) {
+	var pc map[string]*configpb.ProjectConfig
+	var err error
+	cache := projectsCache.LRU(ctx)
+	if cache == nil {
 		// A fallback useful in unit tests that may not have the process cache
 		// available. Production environments usually have the cache installed
 		// by the framework code that initializes the root context.
-		return fetchProjects(ctx)
-	case err != nil:
-		return nil, err
-	default:
-		pc := val.(map[string]*configpb.ProjectConfig)
-		return pc, nil
+		pc, err = fetchProjects(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		value, _ := projectsCache.LRU(ctx).Mutate(ctx, "projects", func(it *lru.Item) *lru.Item {
+			var pc map[string]*configpb.ProjectConfig
+			if it != nil {
+				pc = it.Value.(map[string]*configpb.ProjectConfig)
+				projectCfg, ok := pc[project]
+				if project == "" || (ok && !projectCfg.LastUpdated.AsTime().Before(minimumVersion)) {
+					// Projects contains the specified project at the given minimum version.
+					// There is no need to update it.
+					return it
+				}
+			}
+			if pc, err = fetchProjects(ctx); err != nil {
+				// Error refreshing config. Keep existing entry (if any).
+				return it
+			}
+			return &lru.Item{
+				Value: pc,
+				Exp:   time.Minute,
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+		pc = value.(map[string]*configpb.ProjectConfig)
 	}
+
+	projectCfg, ok := pc[project]
+	if project != "" && (ok && projectCfg.LastUpdated.AsTime().Before(minimumVersion)) {
+		return nil, fmt.Errorf("could not obtain projects configuration with project %s at minimum version (%v)", project, minimumVersion)
+	}
+	return pc, nil
+}
+
+// Projects returns all project configurations, in a map by project name.
+// Uses in-memory cache to avoid hitting datastore all the time.
+func Projects(ctx context.Context) (map[string]*configpb.ProjectConfig, error) {
+	return projectsWithMinimumVersion(ctx, "", time.Time{})
 }
 
 // fetchProjects retrieves all project configurations from datastore.
@@ -287,9 +352,17 @@ func SetTestProjectConfig(ctx context.Context, cfg map[string]*configpb.ProjectC
 	return nil
 }
 
-// Project returns the configurations of the requested project.
+// Project returns the configuration of the requested project.
 func Project(ctx context.Context, project string) (*configpb.ProjectConfig, error) {
-	configs, err := Projects(ctx)
+	return ProjectWithMinimumVersion(ctx, project, time.Time{})
+}
+
+// ProjectWithMinimumVersion returns the configuration of the requested
+// project, which has a LastUpdated time of at least minimumVersion.
+// This bypasses the in-process cache if the cached version is older
+// than the specified version.
+func ProjectWithMinimumVersion(ctx context.Context, project string, minimumVersion time.Time) (*configpb.ProjectConfig, error) {
+	configs, err := projectsWithMinimumVersion(ctx, project, minimumVersion)
 	if err != nil {
 		return nil, err
 	}

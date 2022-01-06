@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package weetbix.v1;
 
+import "google/protobuf/timestamp.proto";
+
 import "infra/appengine/weetbix/internal/config/proto/test_variant_analysis_config.proto";
 
 option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
@@ -21,6 +23,11 @@ message ProjectConfig {
 
   // Per realm configurations.
   repeated RealmConfig realms = 3;
+
+  // The last time this project configuration was updated.
+  // Weetbix sets and stores this value internally. Do not set
+  // in your project's configuration file, it will be ignored.
+  google.protobuf.Timestamp last_updated = 4;
 }
 
 // MonorailProject describes the configuration to use when filing bugs
