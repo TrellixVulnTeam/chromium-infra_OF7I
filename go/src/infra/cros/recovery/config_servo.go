@@ -400,13 +400,19 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"sample_pass"
 	},
+	"battery_last_charge_readable": {
+		"exec_extra_args": [
+			"command:battery_full_charge_mah"
+		],
+		"exec_name":"servo_check_servod_control"
+	},
 	"servo_battery_charging": {
 		"conditions": [
 			"is_not_servo_v3",
-			"dut_has_cros_ec"
+			"dut_has_cros_ec",
+			"battery_last_charge_readable"
 		],
-		"allow_fail_after_recovery": true,
-		"exec_name":"sample_pass"
+		"allow_fail_after_recovery": true
 	},
 	"servo_testlab_enabled": {
 		"conditions": [
