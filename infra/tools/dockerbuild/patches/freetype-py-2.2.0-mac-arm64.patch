@@ -1,12 +1,21 @@
 diff -ur freetype-py-2.2.0.orig/setup-build-freetype.py freetype-py-2.2.0/setup-build-freetype.py
 --- freetype-py-2.2.0.orig/setup-build-freetype.py	2020-07-09 16:59:28.000000000 +1000
-+++ freetype-py-2.2.0/setup-build-freetype.py	2022-01-06 15:06:29.884007497 +1100
-@@ -68,13 +68,25 @@
++++ freetype-py-2.2.0/setup-build-freetype.py	2022-01-07 13:33:53.411508679 +1100
+@@ -10,6 +10,7 @@
+ import distutils.dir_util
+ import distutils.file_util
+ import distutils.spawn
++import distutils.util
+ import glob
+ import hashlib
+ import os
+@@ -68,13 +69,26 @@
          bitness = 32
  
  if sys.platform == "darwin":
 -    print("# Making a 64 bit build.")
-+    arch = os.environ.get("PLAT", "macosx-10.9-x86_64").split('-')[2]
++    plat = distutils.util.get_platform()
++    arch = plat.split('-')[2]
 +    if arch == 'x86_64':
 +        print("# Making a x86_64 build.")
 +        CMAKE_GLOBAL_SWITCHES += (
@@ -20,7 +29,7 @@ diff -ur freetype-py-2.2.0.orig/setup-build-freetype.py freetype-py-2.2.0/setup-
 +            '-DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" '
 +        )
 +    else:
-+        assert False, 'Unknown platform: %s' % os.environ.get('PLAT')
++        assert False, 'Unknown platform: %s' % plat
      CMAKE_GLOBAL_SWITCHES += (
 -        '-DCMAKE_OSX_ARCHITECTURES="x86_64" '
 -        '-DCMAKE_OSX_DEPLOYMENT_TARGET="10.9" '

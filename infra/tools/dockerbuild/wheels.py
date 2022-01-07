@@ -352,7 +352,7 @@ SPECS.update({
             packaged=('windows-x64-py3',),
             pyversions=['py3'],
             patches=('mac-arm64',),
-            patch_version='chromium.3',
+            patch_version='chromium.4',
             env={
                 'CMAKE_BUILD_TYPE': 'Release',
                 'FREETYPEPY_BUNDLE_FT': '1',
