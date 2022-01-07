@@ -22,8 +22,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/lucictx"
 
-	"infra/cros/cmd/phosphorus/external/gs"
 	"infra/cros/cmd/phosphorus/internal/profile"
+	"infra/libs/skylab/gs"
 )
 
 // UploadToGS subcommand: Upload selected directory to Google Storage.
