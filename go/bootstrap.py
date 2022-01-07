@@ -57,10 +57,10 @@ GIT_EXE = 'git.bat' if sys.platform == 'win32' else 'git'
 #
 # Some builders use "legacy" and "bleeding_edge" variants.
 TOOLSET_VERSIONS = {
-    'default': '1.16.12',  # used on dev workstations and most try builders
-    'legacy': '1.16.12',  # used on OSX amd64 CI and prod builders
+    'default': '1.16.13',  # used on dev workstations and most try builders
+    'legacy': '1.16.13',  # used on OSX amd64 CI and prod builders
     'bleeding_edge':
-        '1.16.12',  # used on most CI and prod and some try builders
+        '1.16.13',  # used on most CI and prod and some try builders
 }
 
 # Layout is the layout of the bootstrap installation.
