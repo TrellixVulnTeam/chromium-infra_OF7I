@@ -4348,12 +4348,12 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 4.5.3.56.chromium.3
+### 4.5.3.56.chromium.4
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/opencv_python/${vpython_platform}"
-  version: "version:4.5.3.56.chromium.3"
+  version: "version:4.5.3.56.chromium.4"
 >
 ```
 

@@ -636,7 +636,7 @@ SPECS.update({
             '4.5.3.56',
             build_deps=BuildDependencies(
                 remote=[
-                    'setuptools',
+                    'setuptools<45',
                     'wheel',
                     'scikit-build',
                     'cmake',
@@ -652,7 +652,7 @@ SPECS.update({
             skip_plat=[
                 'linux-arm64-py3',
             ],
-            patch_version='chromium.3',
+            patch_version='chromium.4',
             pyversions=['py3'],
             src_filter=lambda path: not _OPENCV_SRC_RE.match(path),
         ),
