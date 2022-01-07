@@ -22,7 +22,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/lucictx"
 
-	"infra/cros/cmd/phosphorus/internal/gs"
+	"infra/cros/cmd/phosphorus/external/gs"
 	"infra/cros/cmd/phosphorus/internal/profile"
 )
 
