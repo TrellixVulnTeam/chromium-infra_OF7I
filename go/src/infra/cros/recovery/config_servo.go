@@ -23,7 +23,7 @@ const servoRepairPlanBody = `
 	"servo_dut_detected",
 	"servod_servo_pd",
 	"servo_cr50_checks",
-	"dut_controller_missing_fault",
+	"dut_controller_missing_fault_off",
 	"servo_cr50_console",
 	"servo_ec_check",
 	"servod_set_main_device",
@@ -529,9 +529,12 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"servo_update_servo_type_label"
 	},
-	"dut_controller_missing_fault":{
-		"docs": ["Expect to be off, it is bad to be on."],
-		"exec_name":"sample_pass"
+	"dut_controller_missing_fault_off":{
+		"exec_extra_args": [
+			"command:dut_controller_missing_fault",
+			"expected_string_value:off"
+		],
+		"exec_name":"servo_check_servod_control"
 	},
 	"init_dut_for_servo":{
 		"exec_name":"sample_pass"
