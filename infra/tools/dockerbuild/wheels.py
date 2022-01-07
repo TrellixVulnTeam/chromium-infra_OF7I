@@ -351,7 +351,8 @@ SPECS.update({
             # a 64-bit Windows library, so use prebuilt for now.
             packaged=('windows-x64-py3',),
             pyversions=['py3'],
-            patch_version='chromium.2',
+            patches=('mac-arm64',),
+            patch_version='chromium.3',
             env={
                 'CMAKE_BUILD_TYPE': 'Release',
                 'FREETYPEPY_BUNDLE_FT': '1',
