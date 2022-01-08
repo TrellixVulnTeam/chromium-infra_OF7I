@@ -41,17 +41,18 @@ func newProxy(ctx context.Context, host string, port int) *proxy {
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Printf("---> local proxy for %q on port %v\n", p.requestHost, p.port)
 		if err := p.cmd.Start(); err != nil {
 			fmt.Printf("Fail to starte proxy: %s\n", err)
 		}
 		go func() {
 			slurp, _ := io.ReadAll(stderr)
-			fmt.Printf("Logs for proxy: %s\n", slurp)
+			fmt.Printf("Logs for %q proxy: %s\n", p.requestHost, slurp)
 			err := p.cmd.Wait()
 			if err != nil {
-				fmt.Printf("Proxy %q finished with error: %s\n", p.address(), err)
+				fmt.Printf("Proxy %q for %q finished with error: %s\n", p.address(), p.requestHost, err)
 			} else {
-				fmt.Printf("Proxy %q finished\n", p.address())
+				fmt.Printf("Proxy %q for %q finished\n", p.address(), p.requestHost)
 			}
 		}()
 		time.Sleep(time.Second)
@@ -68,7 +69,7 @@ func ClosePool() {
 }
 
 func (p *proxy) address() string {
-	return fmt.Sprintf("127.0.0.1:%d", p.port)
+	return fmt.Sprintf("root@127.0.0.1:%d", p.port)
 }
 
 // Port provides proxy port information.

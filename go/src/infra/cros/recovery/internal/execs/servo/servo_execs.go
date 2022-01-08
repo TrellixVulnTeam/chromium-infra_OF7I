@@ -79,9 +79,6 @@ const (
 	boolValueExtraArgToken = "expected_bool_value"
 )
 
-// NOTE: That is just fake execs for local testing during developing.
-// TODO(otabek@): Replace with real execs.
-
 func servodInitActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	req := &tlw.InitServodRequest{
 		Resource: args.DUT.Name,

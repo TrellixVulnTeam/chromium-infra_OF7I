@@ -78,9 +78,10 @@ func ReleaseBoard(ctx context.Context, r execs.Runner) (string, error) {
 	}
 	matches := compiledRegexp.FindStringSubmatch(output)
 	if len(matches) != 2 {
-		return "", errors.Reason("release board: cannot find chromeos releease board information").Err()
+		return "", errors.Reason("release board: cannot find chromeos release board information").Err()
 	}
 	board := matches[1]
+	log.Debug(ctx, "Release board: %q.", board)
 	return board, nil
 }
 
