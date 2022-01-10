@@ -551,7 +551,7 @@ func TestUpdateBuild(t *testing.T) {
 			}`)
 		})
 
-		Convey("updates build with gitiles commit, $build/chromium_bootstrap module properties and build properties for properties optional bootstrapping", func() {
+		Convey("updates build with $build/chromium_bootstrap module properties and build properties for properties optional bootstrapping", func() {
 			config := &BootstrapConfig{
 				buildProperties: jsonToStruct(`{
 					"foo": "build-foo-value",
@@ -595,6 +595,48 @@ func TestUpdateBuild(t *testing.T) {
 					}
 				}
 			}`)
+		})
+
+		Convey("does not update gitiles commit for different repo", func() {
+			config := &BootstrapConfig{
+				commit: &gitilesCommit{&buildbucketpb.GitilesCommit{
+					Host:    "fake-host",
+					Project: "fake-project",
+					Ref:     "fake-ref",
+					Id:      "fake-revision",
+				}},
+				buildProperties: jsonToStruct("{}"),
+			}
+			exe := &BootstrappedExe{
+				Source: &BootstrappedExe_Cipd{
+					Cipd: &Cipd{
+						Server:           "fake-cipd-server",
+						Package:          "fake-cipd-package",
+						RequestedVersion: "fake-cipd-ref",
+						ActualVersion:    "fake-cipd-instance-id",
+					},
+				},
+				Cmd: []string{"fake-exe"},
+			}
+			build := &buildbucketpb.Build{
+				Input: &buildbucketpb.Build_Input{
+					GitilesCommit: &buildbucketpb.GitilesCommit{
+						Host:    "fake-host",
+						Project: "fake-other-project",
+						Ref:     "fake-ref",
+					},
+				},
+			}
+
+			err := config.UpdateBuild(build, exe)
+
+			So(err, ShouldBeNil)
+			So(build.Input.GitilesCommit, ShouldResembleProtoJSON, `{
+				"host": "fake-host",
+				"project": "fake-other-project",
+				"ref": "fake-ref"
+			}`)
+
 		})
 
 	})

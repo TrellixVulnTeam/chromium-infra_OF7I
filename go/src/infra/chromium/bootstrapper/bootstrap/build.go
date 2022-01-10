@@ -274,9 +274,20 @@ func (c *BootstrapConfig) UpdateBuild(build *buildbucketpb.Build, bootstrappedEx
 	}
 
 	build.Input.Properties = properties
-	if c.commit != nil {
+	if shouldUpdateGitilesCommit(build, c.commit) {
 		build.Input.GitilesCommit = c.commit.GitilesCommit
 	}
 
 	return nil
+}
+
+func shouldUpdateGitilesCommit(build *buildbucketpb.Build, commit *gitilesCommit) bool {
+	if commit == nil {
+		return false
+	}
+	buildCommit := build.Input.GitilesCommit
+	if buildCommit == nil {
+		return true
+	}
+	return buildCommit.Host == commit.Host && buildCommit.Project == commit.Project
 }
