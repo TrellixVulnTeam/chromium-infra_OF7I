@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -36,6 +37,12 @@ var (
 
 	// hostnameRE excludes most invalid hostnames.
 	hostnameRE = regexp.MustCompile(`^[a-z][a-z9-9\-.]{0,62}[a-z]$`)
+
+	// nameRE matches valid rule names.
+	ruleNameRE = regexp.MustCompile(`^[a-zA-Z0-9\-(), ]+$`)
+
+	// anyRE matches any input.
+	anyRE = regexp.MustCompile(`^.*$`)
 
 	// Patterns for BigQuery table.
 	// https://cloud.google.com/resource-manager/docs/creating-managing-projects
@@ -181,6 +188,7 @@ func ValidateProjectConfig(ctx *validation.Context, cfg *configpb.ProjectConfig)
 	for _, rCfg := range cfg.Realms {
 		validateRealmConfig(ctx, rCfg)
 	}
+	validateClustering(ctx, cfg.Clustering)
 }
 
 func validateMonorail(ctx *validation.Context, cfg *configpb.MonorailProject, bugFilingThres *configpb.ImpactThreshold) {
@@ -364,5 +372,33 @@ func validateDisplayPrefix(ctx *validation.Context, prefix string) {
 	defer ctx.Exit()
 	if !prefixRE.MatchString(prefix) {
 		ctx.Errorf("invalid display prefix: %q", prefix)
+	}
+}
+
+func validateClustering(ctx *validation.Context, ca *configpb.Clustering) {
+	ctx.Enter("clustering")
+	defer ctx.Exit()
+
+	if ca == nil {
+		return
+	}
+	for i, r := range ca.TestNameRules {
+		ctx.Enter("[%v]", i)
+		validateTestNameRule(ctx, r)
+		ctx.Exit()
+	}
+}
+
+func validateTestNameRule(ctx *validation.Context, r *configpb.TestNameClusteringRule) {
+	validateStringConfig(ctx, "name", r.Name, ruleNameRE)
+
+	// Check the fields are non-empty. Their structure will be checked
+	// by "Compile" below.
+	validateStringConfig(ctx, "like_template", r.LikeTemplate, anyRE)
+	validateStringConfig(ctx, "pattern", r.Pattern, anyRE)
+
+	_, err := rules.Compile(r)
+	if err != nil {
+		ctx.Error(err)
 	}
 }

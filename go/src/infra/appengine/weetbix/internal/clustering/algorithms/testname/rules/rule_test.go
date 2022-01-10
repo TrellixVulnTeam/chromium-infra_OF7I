@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package testname
+package rules
 
 import (
 	"testing"
+
+	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -15,12 +17,12 @@ func TestRule(t *testing.T) {
 	Convey(`Evaluate`, t, func() {
 		Convey(`Valid Examples`, func() {
 			Convey(`Blink Web Tests`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name:         "Blink Web Tests",
 					Pattern:      `^ninja://:blink_web_tests/(virtual/[^/]+/)?(?P<testname>([^/]+/)+[^/]+\.[a-zA-Z]+).*$`,
 					LikeTemplate: `ninja://:blink\_web\_tests/%${testname}%`,
 				}
-				eval, err := rule.Compile()
+				eval, err := Compile(rule)
 				So(err, ShouldBeNil)
 
 				inputs := []string{
@@ -39,14 +41,14 @@ func TestRule(t *testing.T) {
 				So(ok, ShouldBeFalse)
 			})
 			Convey(`Google Tests`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name: "Google Test (Value-parameterized)",
 					// E.g. ninja:{target}/Prefix/ColorSpaceTest.testNullTransform/11
 					// Note that "Prefix/" portion may be blank/omitted.
 					Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
 					LikeTemplate: `ninja:${target}/%${suite}.${case}%`,
 				}
-				eval, err := rule.Compile()
+				eval, err := Compile(rule)
 				So(err, ShouldBeNil)
 
 				inputs := []string{
@@ -66,12 +68,12 @@ func TestRule(t *testing.T) {
 		})
 		Convey(`Test name escaping in LIKE output`, func() {
 			Convey(`Test name is escaped when substituted`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name:         "Escape test",
 					Pattern:      `^(?P<testname>.*)$`,
 					LikeTemplate: `${testname}_%`,
 				}
-				eval, err := rule.Compile()
+				eval, err := Compile(rule)
 				So(err, ShouldBeNil)
 
 				// Verify that the test name is not injected varbatim in the generated
@@ -81,7 +83,7 @@ func TestRule(t *testing.T) {
 				So(like, ShouldEqual, `\_\\\%_%`)
 			})
 			Convey(`Unsafe LIKE templates are rejected`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name:    "Escape test",
 					Pattern: `^path\\(?P<testname>.*)$`,
 					// The user as incorrectly used an unfinished LIKE escape sequence
@@ -92,18 +94,18 @@ func TestRule(t *testing.T) {
 					// evaluation which invokes the LIKE '%' operator.
 					LikeTemplate: `path\${testname}`,
 				}
-				_, err := rule.Compile()
+				_, err := Compile(rule)
 				So(err, ShouldErrLike, `"path\\" is not a valid standalone LIKE expression: unfinished escape sequence "\" at end of LIKE pattern`)
 			})
 		})
 		Convey(`Substitution operator`, func() {
 			Convey(`Dollar sign can be inserted into output`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name:         "Insert $",
 					Pattern:      `^(?P<testname>.*)$`,
 					LikeTemplate: `${testname}$$blah$$$$`,
 				}
-				eval, err := rule.Compile()
+				eval, err := Compile(rule)
 				So(err, ShouldBeNil)
 
 				like, ok := eval(`test`)
@@ -111,38 +113,38 @@ func TestRule(t *testing.T) {
 				So(like, ShouldEqual, `test$blah$$`)
 			})
 			Convey(`Invalid uses of substitution operator are rejected`, func() {
-				rule := &ClusteringRule{
+				rule := &configpb.TestNameClusteringRule{
 					Name:         "Invalid use of $ (neither $$ or ${name})",
 					Pattern:      `^(?P<testname>.*)$`,
 					LikeTemplate: `${testname}blah$$$`,
 				}
-				_, err := rule.Compile()
+				_, err := Compile(rule)
 				So(err, ShouldErrLike, `invalid use of the $ operator at position 17 in "${testname}blah$$$"`)
 
-				rule = &ClusteringRule{
+				rule = &configpb.TestNameClusteringRule{
 					Name:         "Invalid use of $ (invalid capture group name)",
 					Pattern:      `^(?P<testname>.*)$`,
 					LikeTemplate: `${template@}blah`,
 				}
-				_, err = rule.Compile()
+				_, err = Compile(rule)
 				So(err, ShouldErrLike, `invalid use of the $ operator at position 0 in "${template@}blah"`)
 
-				rule = &ClusteringRule{
+				rule = &configpb.TestNameClusteringRule{
 					Name:         "Capture group name not defined",
 					Pattern:      `^(?P<testname>.*)$`,
 					LikeTemplate: `${myname}blah`,
 				}
-				_, err = rule.Compile()
+				_, err = Compile(rule)
 				So(err, ShouldErrLike, `like template contains reference to non-existant capturing group with name "myname"`)
 			})
 		})
 		Convey(`Invalid Pattern`, func() {
-			rule := &ClusteringRule{
+			rule := &configpb.TestNameClusteringRule{
 				Name:         "Invalid Pattern",
 				Pattern:      `[`,
 				LikeTemplate: ``,
 			}
-			_, err := rule.Compile()
+			_, err := Compile(rule)
 			So(err, ShouldErrLike, `parsing pattern: error parsing regexp`)
 		})
 	})

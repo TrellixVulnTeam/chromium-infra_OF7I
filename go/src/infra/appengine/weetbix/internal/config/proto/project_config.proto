@@ -28,6 +28,9 @@ message ProjectConfig {
   // Weetbix sets and stores this value internally. Do not set
   // in your project's configuration file, it will be ignored.
   google.protobuf.Timestamp last_updated = 4;
+
+  // Configuration for how to cluster test results.
+  Clustering clustering = 5;
 }
 
 // MonorailProject describes the configuration to use when filing bugs
@@ -182,4 +185,105 @@ message RealmConfig {
 
   // Test variant analysis configurations for the realm.
   TestVariantAnalysisConfig test_variant_analysis = 2;
+}
+
+// Configuration for how test results are clustered.
+message Clustering {
+  // Rules used to cluster test results by test name.
+  // The order of rules matters; the first matching rule will be used
+  // to cluster a given test result.
+  //
+  // If no rule matches, the test results will be clustered on the
+  // full test name. This corresponds approximately to the rule:
+  // {
+  //   name: "Full test name"
+  //   pattern: "^(?P<testname>.*)$"
+  //   like_template: "${testname}"
+  // }
+  repeated TestNameClusteringRule test_name_rules = 1;
+}
+
+// A rule used to cluster a test result by test name.
+message TestNameClusteringRule {
+  // A human-readable name for the rule. This should be unique for each rule.
+  // This may be used by Weetbix to explain why it chose to cluster the test
+  // name in this way.
+  string name = 1;
+
+  // The regular expression describing which test names should be clustered
+  // by this rule.
+  //
+  // Example.
+  //   Assume our project uploads google test (gtest) results with the test
+  //   name prefix "gtest://".
+  //   If want to cluster value-parameterized google tests
+  //   together based on the test suite and test case name (ignoring
+  //   the value parameter), we may use a pattern like:
+  //     "^gtest://(\w+/)?(?P<testcase>\w+\.\w+)/\w+$"
+  //
+  //   This will allow us to cluster test names like:
+  //     "gtest://InstantiationOne/ColorSpaceTest.testNullTransform/0"
+  //     "gtest://InstantiationOne/ColorSpaceTest.testNullTransform/1"
+  //     "gtest://InstantiationTwo/ColorSpaceTest.testNullTransform/0"
+  //   together.
+  //
+  //   See https://github.com/google/googletest/blob/main/docs/advanced.md#how-to-write-value-parameterized-tests
+  //   to further understand this example.
+  //
+  // Use ?P<name> to name capture groups, so their values can be used in
+  // like_template below.
+  string pattern = 2;
+
+  // The template used to generate a LIKE expression on test names
+  // that defines the test name cluster identified by this rule.
+  //
+  // This like expression has two purposes:
+  // (1) If the test name cluster is large enough to jusify the
+  //     creation of a bug cluster, the like expression is used to
+  //     generate a failure association rule of the following form:
+  //        test LIKE "<evaluated like_template>"
+  // (2) A hash of the expression is used as the clustering key for the
+  //     test name-based suggested cluster. This generally has the desired
+  //     clustering behaviour, i.e. the parts of the test name which
+  //     are important enough to included in the LIKE expression for (1)
+  //     are also those on which clustering should occur.
+  //
+  // As is usual for LIKE expressions, the template can contain
+  // the following operators to do wildcard matching:
+  // * '%' for wildcard match of an arbitrary number of characters, and
+  // * '_' for single character wildcard match.
+  //
+  // The template can refer to parts of the test name matched by
+  // the rule pattern using ${name}, where name refers to the capture
+  // group (see pattern). To insert the literal '$', the sequence '$$'
+  // should be used.
+  //
+  // Example.
+  //   Following the same gtest example as for the pattern field,
+  //   we may use the template:
+  //     "gtest://%${testcase}%"
+  //
+  //   When instantiated for the above example, the result would be
+  //   a failure association rule like:
+  //     test LIKE "gtest://%ColorSpaceTest.testNullTransform%"
+  //
+  //   Note the use of ${testcase} to refer to the testname capture group
+  //   specified in the pattern example.
+  //
+  // It is known that not all clusters can be precisely matched by
+  // a LIKE expression. Nonetheless, Weetbix prefers LIKE expressions
+  // as they are easier to comprehend and modify by users, and in
+  // most cases, the added precision is not required.
+  //
+  // As such, your rule should try to ensure the generated LIKE statement
+  // captures your clustering logic as best it can. Your LIKE expression
+  // MUST match all test names matched by your regex pattern, and MAY
+  // capture additional test names (though this is preferably minimised,
+  // to reduce differences between the suggested clusters and eventual
+  // bug clusters).
+  //
+  // Weetbix will automatically escape any '%' '_' and '\' in parts of
+  // the matched test name before substitution to ensure captured parts
+  // of the test name are matched literally and not interpreted.
+  string like_template = 3;
 }

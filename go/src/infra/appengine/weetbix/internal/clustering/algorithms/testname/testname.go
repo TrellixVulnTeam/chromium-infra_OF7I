@@ -11,22 +11,24 @@ import (
 	"strconv"
 
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	"go.chromium.org/luci/common/errors"
 )
 
 // TODO(crbug.com/1243174): Make this configurable on a per-project basis.
-var rules = []*ClusteringRule{
+var clusteringRules = []*configpb.TestNameClusteringRule{
 	{
 		Name:         "Blink Web Tests",
-		Pattern:      `^ninja://:blink_web_tests/` + `(virtual/[^/]+/)?(?P<testname>([^/]+/)+[^/]+\.[a-zA-Z]+).*$`,
+		Pattern:      `^ninja://:blink_web_tests/(virtual/[^/]+/)?(?P<testname>([^/]+/)+[^/]+\.[a-zA-Z]+).*$`,
 		LikeTemplate: "ninja://:blink\\_web\\_tests/%${testname}%",
 	},
 	{
 		Name: "Google Test (Value-parameterized)",
 		// E.g. ninja:{target}/Prefix/ColorSpaceTest.testNullTransform/11
 		// Note that "Prefix/" portion may be blank/omitted.
-		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
+		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
 		LikeTemplate: `ninja:${target}/%${suite}.${case}%`,
 	},
 	{
@@ -34,17 +36,17 @@ var rules = []*ClusteringRule{
 		// E.g. ninja:{target}/Prefix/GLES2DecoderPassthroughFixedCommandTest/5.InvalidCommand
 		// Note that "Prefix/" portion may be blank/omitted.
 		// https://github.com/google/googletest/blob/1b18723e874b256c1e39378c6774a90701d70f7a/googletest/include/gtest/internal/gtest-internal.h#L710
-		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)/\w+\.(?P<case>\w+)$`,
+		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/(\w+/)?(?P<suite>\w+)/\w+\.(?P<case>\w+)$`,
 		LikeTemplate: `ninja:${target}/%${suite}/%.${case}`,
 	},
 }
 
-var compiledRules []RuleEvaluator
+var compiledRules []rules.Evaluator
 
 func init() {
-	compiledRules = make([]RuleEvaluator, len(rules))
-	for i, rule := range rules {
-		eval, err := rule.Compile()
+	compiledRules = make([]rules.Evaluator, len(clusteringRules))
+	for i, rule := range clusteringRules {
+		eval, err := rules.Compile(rule)
 		if err != nil {
 			panic(errors.Annotate(err, "compiling test name clustering rule").Err())
 		}

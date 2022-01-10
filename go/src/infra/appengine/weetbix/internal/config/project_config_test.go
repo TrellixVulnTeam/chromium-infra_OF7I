@@ -83,6 +83,20 @@ func createProjectConfig() *configpb.ProjectConfig {
 				},
 			},
 		},
+		Clustering: &configpb.Clustering{
+			TestNameRules: []*configpb.TestNameClusteringRule{
+				{
+					Name:         "Google Test (Value-parameterized)",
+					Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
+					LikeTemplate: `ninja:${target}/%${suite}.${case}%`,
+				},
+				{
+					Name:         "Google Test (Type-parameterized)",
+					Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)/\w+\.(?P<case>\w+)$`,
+					LikeTemplate: `ninja:${target}/%${suite}/%.${case}`,
+				},
+			},
+		},
 	}
 }
 

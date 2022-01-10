@@ -392,7 +392,7 @@ func TestProjectConfigValidator(t *testing.T) {
 					})
 
 					Convey("dataset", func() {
-						Convey("should npt be empty", func() {
+						Convey("should not be empty", func() {
 							table.Dataset = ""
 							So(validate(cfg), ShouldErrLike, "empty dataset is not allowed")
 						})
@@ -403,7 +403,7 @@ func TestProjectConfigValidator(t *testing.T) {
 					})
 
 					Convey("table", func() {
-						Convey("should npt be empty", func() {
+						Convey("should not be empty", func() {
 							table.Table = ""
 							So(validate(cfg), ShouldErrLike, "empty table_name is not allowed")
 						})
@@ -413,6 +413,46 @@ func TestProjectConfigValidator(t *testing.T) {
 						})
 					})
 				})
+			})
+		})
+	})
+
+	Convey("clustering", t, func() {
+		cfg := createProjectConfig()
+		clustering := cfg.Clustering
+
+		Convey("may not be specified", func() {
+			cfg.Clustering = nil
+			So(validate(cfg), ShouldBeNil)
+		})
+		Convey("rules must be valid", func() {
+			rule := clustering.TestNameRules[0]
+			Convey("name is not specified", func() {
+				rule.Name = ""
+				So(validate(cfg), ShouldErrLike, "empty name is not allowed")
+			})
+			Convey("name is invalid", func() {
+				rule.Name = "<script>evil()</script>"
+				So(validate(cfg), ShouldErrLike, "invalid name")
+			})
+			Convey("pattern is not specified", func() {
+				rule.Pattern = ""
+				// Make sure the like template does not refer to capture
+				// groups in the pattern, to avoid other errors in this test.
+				rule.LikeTemplate = "%blah%"
+				So(validate(cfg), ShouldErrLike, "empty pattern is not allowed")
+			})
+			Convey("pattern is invalid", func() {
+				rule.Pattern = "["
+				So(validate(cfg), ShouldErrLike, `error parsing regexp: missing closing ]`)
+			})
+			Convey("like template is not specified", func() {
+				rule.LikeTemplate = ""
+				So(validate(cfg), ShouldErrLike, "empty like_template is not allowed")
+			})
+			Convey("like template is invalid", func() {
+				rule.LikeTemplate = "blah${broken"
+				So(validate(cfg), ShouldErrLike, `invalid use of the $ operator at position 4 in "blah${broken"`)
 			})
 		})
 	})

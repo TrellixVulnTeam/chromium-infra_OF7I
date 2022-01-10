@@ -2,15 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package testname
+// Package rules provides methods to evaluate test name clustering rules.
+package rules
 
 import (
 	"fmt"
-	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"regexp"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/appengine/weetbix/internal/clustering/rules/lang"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // likeRewriter escapes usages of '\', '%' and '_', so that
@@ -29,97 +32,10 @@ var likeRewriter = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 //   ($ not followed by $ or {name}).
 var substitutionRE = regexp.MustCompile(`\$\{(\w+?)\}|\$\$?`)
 
-// RuleEvaluator evaluates a test name clustering rule on
+// Evaluator evaluates a test name clustering rule on
 // a test name, returning whether the rule matches and
 // if so, the LIKE expression that defines the cluster.
-type RuleEvaluator func(testName string) (like string, ok bool)
-
-// ClusteringRule is a rule used to cluster a test result by test name.
-// TODO(crbug.com/1243174): Make this a message in project_config.proto when
-// this is made configurable on a per-project basis.
-type ClusteringRule struct {
-	// A human-readable name for the rule. This should be unique for each rule.
-	// This may be used by Weetbix to explain why it chose to cluster the test
-	// name in this way.
-	Name string
-
-	// The regular expression describing which test names should be clustered
-	// by this rule.
-	//
-	// Example.
-	//   Assume our project uploads google test (gtest) results with the test
-	//   name prefix "gtest://".
-	//   If want to cluster value-parameterized google tests
-	//   together based on the test suite and test case name (ignoring
-	//   the value parameter), we may use a pattern like:
-	//     "^gtest://(\w+/)?(?P<testcase>\w+\.\w+)/\w+$"
-	//
-	//   This will allow us to cluster test names like:
-	//     "gtest://InstantiationOne/ColorSpaceTest.testNullTransform/0"
-	//     "gtest://InstantiationOne/ColorSpaceTest.testNullTransform/1"
-	//     "gtest://InstantiationTwo/ColorSpaceTest.testNullTransform/0"
-	//   together.
-	//
-	//   See https://github.com/google/googletest/blob/main/docs/advanced.md#how-to-write-value-parameterized-tests
-	//   to further understand this example.
-	//
-	// Use ?P<name> to name capture groups, so their values can be used in
-	// like_template below.
-	Pattern string
-
-	// The template used to generate a LIKE expression on test names
-	// that defines the test name cluster identified by this rule.
-	//
-	// This like expression has two purposes:
-	// (1) If the test name cluster is large enough to jusify the
-	//     creation of a bug cluster, the like expression is used to
-	//     generate a failure association rule of the following form:
-	//        test LIKE "<evaluated like_template>"
-	// (2) A hash of the expression is used as the clustering key for the
-	//     test name-based suggested cluster. This generally has the desired
-	//     clustering behaviour, i.e. the parts of the test name which
-	//     are important enough to included in the LIKE expression for (1)
-	//     are also those on which clustering should occur.
-	//
-	// As is usual for LIKE expressions, the template can contain
-	// the following operators to do wildcard matching:
-	// * '%' for wildcard match of an arbitrary number of characters, and
-	// * '_' for single character wildcard match.
-	//
-	// The template can refer to parts of the test name matched by
-	// the rule pattern using ${name}, where name refers to the capture
-	// group (see pattern). To insert the literal '$', the sequence '$$'
-	// should be used.
-	//
-	// Example.
-	//   Following the same gtest example as for the pattern field,
-	//   we may use the template:
-	//     "gtest://%${testcase}%"
-	//
-	//   When instantiated for the above example, the result would be
-	//   a failure association rule like:
-	//     test LIKE "gtest://%ColorSpaceTest.testNullTransform%"
-	//
-	//   Note the use of ${testcase} to refer to the testname capture group
-	//   specified in the pattern example.
-	//
-	// It is known that not all clusters can be precisely matched by
-	// a LIKE expression. Nonetheless, Weetbix prefers LIKE expressions
-	// as they are easier to comprehend and modify by users, and in
-	// most cases, the added precision is not required.
-	//
-	// As such, your rule should try to ensure the generated LIKE statement
-	// captures your clustering logic as best it can. Your LIKE expression
-	// MUST match all test names matched by your regex pattern, and MAY
-	// capture additional test names (though this is preferably minimised,
-	// to reduce differences between the suggested clusters and eventual
-	// bug clusters).
-	//
-	// Weetbix will automatically escape any '%' '_' and '\' in parts of
-	// the matched test name before substitution to ensure captured parts
-	// of the test name are matched literally and not interpreted.
-	LikeTemplate string
-}
+type Evaluator func(testName string) (like string, ok bool)
 
 // Compile produces a RuleEvaluator that can quickly evaluate
 // whether a given test name matches the given test name
@@ -127,8 +43,8 @@ type ClusteringRule struct {
 // expression that defines the cluster.
 //
 // As Compiling rules is slow, the result should be cached.
-func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
-	re, err := regexp.Compile(c.Pattern)
+func Compile(rule *configpb.TestNameClusteringRule) (Evaluator, error) {
+	re, err := regexp.Compile(rule.Pattern)
 	if err != nil {
 		return nil, errors.Annotate(err, "parsing pattern").Err()
 	}
@@ -144,7 +60,7 @@ func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
 	// Analyze the specified LikeTemplate to identify the
 	// location of all substitution expressions (of the form ${name})
 	// and iterate through them.
-	matches := substitutionRE.FindAllStringSubmatchIndex(c.LikeTemplate, -1)
+	matches := substitutionRE.FindAllStringSubmatchIndex(rule.LikeTemplate, -1)
 	for _, match := range matches {
 		// The start and end of the substitution expression (of the form ${name})
 		// in c.LikeTemplate.
@@ -156,7 +72,7 @@ func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
 			// and the first substitution expression, or the last substitution
 			// expression and the current one. This is literal
 			// text that should be included in the output directly.
-			literalText := c.LikeTemplate[lastIndex:matchStart]
+			literalText := rule.LikeTemplate[lastIndex:matchStart]
 			if err := lang.ValidateLikePattern(literalText); err != nil {
 				return nil, errors.Annotate(err, "%q is not a valid standalone LIKE expression", literalText).Err()
 			}
@@ -165,10 +81,10 @@ func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
 			})
 		}
 
-		matchString := c.LikeTemplate[match[0]:match[1]]
+		matchString := rule.LikeTemplate[match[0]:match[1]]
 		if matchString == "$" {
 			return nil, fmt.Errorf("invalid use of the $ operator at position %v in %q ('$' not followed by '{name}' or '$'), "+
-				"if you meant to include a literal $ character, please use $$", match[0], c.LikeTemplate)
+				"if you meant to include a literal $ character, please use $$", match[0], rule.LikeTemplate)
 		}
 		if matchString == "$$" {
 			// Insert the literal "$" into the output.
@@ -178,7 +94,7 @@ func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
 		} else {
 			// The name of the capture group that should be substituted at
 			// the current position.
-			name := c.LikeTemplate[match[2]:match[3]]
+			name := rule.LikeTemplate[match[2]:match[3]]
 
 			// Find the index of the corresponding capture group in the
 			// Pattern.
@@ -206,8 +122,8 @@ func (c *ClusteringRule) Compile() (RuleEvaluator, error) {
 		lastIndex = matchEnd
 	}
 
-	if lastIndex < len(c.LikeTemplate) {
-		literalText := c.LikeTemplate[lastIndex:len(c.LikeTemplate)]
+	if lastIndex < len(rule.LikeTemplate) {
+		literalText := rule.LikeTemplate[lastIndex:len(rule.LikeTemplate)]
 		if err := lang.ValidateLikePattern(literalText); err != nil {
 			return nil, errors.Annotate(err, "%q is not a valid standalone LIKE expression", literalText).Err()
 		}
