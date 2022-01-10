@@ -72,6 +72,7 @@ func (s *servod) Prepare(ctx context.Context, pool *sshpool.Pool) error {
 		if err != nil {
 			return errors.Annotate(err, "prepare servod").Err()
 		}
+		return nil
 	case servodRunning:
 		return nil
 	}
