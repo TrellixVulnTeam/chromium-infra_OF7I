@@ -17,7 +17,19 @@ import (
 )
 
 func TestAlgorithm(t *testing.T) {
-	cfgpb := &configpb.ProjectConfig{}
+	rules := []*configpb.TestNameClusteringRule{
+		{
+			Name:         "Blink Web Tests",
+			Pattern:      `^ninja://:blink_web_tests/(virtual/[^/]+/)?(?P<testname>([^/]+/)+[^/]+\.[a-zA-Z]+).*$`,
+			LikeTemplate: "ninja://:blink\\_web\\_tests/%${testname}%",
+		},
+	}
+	cfgpb := &configpb.ProjectConfig{
+		Clustering: &configpb.Clustering{
+			TestNameRules: rules,
+		},
+	}
+
 	Convey(`Cluster`, t, func() {
 		a := &Algorithm{}
 		cfg, err := compiledcfg.NewConfig(cfgpb)

@@ -11,55 +11,14 @@ import (
 	"strconv"
 
 	"infra/appengine/weetbix/internal/clustering"
-	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
-	configpb "infra/appengine/weetbix/internal/config/proto"
-
-	"go.chromium.org/luci/common/errors"
 )
-
-// TODO(crbug.com/1243174): Make this configurable on a per-project basis.
-var clusteringRules = []*configpb.TestNameClusteringRule{
-	{
-		Name:         "Blink Web Tests",
-		Pattern:      `^ninja://:blink_web_tests/(virtual/[^/]+/)?(?P<testname>([^/]+/)+[^/]+\.[a-zA-Z]+).*$`,
-		LikeTemplate: "ninja://:blink\\_web\\_tests/%${testname}%",
-	},
-	{
-		Name: "Google Test (Value-parameterized)",
-		// E.g. ninja:{target}/Prefix/ColorSpaceTest.testNullTransform/11
-		// Note that "Prefix/" portion may be blank/omitted.
-		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
-		LikeTemplate: `ninja:${target}/%${suite}.${case}%`,
-	},
-	{
-		Name: "Google Test (Type-parameterized)",
-		// E.g. ninja:{target}/Prefix/GLES2DecoderPassthroughFixedCommandTest/5.InvalidCommand
-		// Note that "Prefix/" portion may be blank/omitted.
-		// https://github.com/google/googletest/blob/1b18723e874b256c1e39378c6774a90701d70f7a/googletest/include/gtest/internal/gtest-internal.h#L710
-		Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/(\w+/)?(?P<suite>\w+)/\w+\.(?P<case>\w+)$`,
-		LikeTemplate: `ninja:${target}/%${suite}/%.${case}`,
-	},
-}
-
-var compiledRules []rules.Evaluator
-
-func init() {
-	compiledRules = make([]rules.Evaluator, len(clusteringRules))
-	for i, rule := range clusteringRules {
-		eval, err := rules.Compile(rule)
-		if err != nil {
-			panic(errors.Annotate(err, "compiling test name clustering rule").Err())
-		}
-		compiledRules[i] = eval
-	}
-}
 
 // AlgorithmVersion is the version of the clustering algorithm. The algorithm
 // version should be incremented whenever existing test results may be
 // clustered differently (i.e. Cluster(f) returns a different value for some
 // f that may have been already ingested).
-const AlgorithmVersion = 2
+const AlgorithmVersion = 3
 
 // AlgorithmName is the identifier for the clustering algorithm.
 // Weetbix requires all clustering algorithms to have a unique identifier.
@@ -86,9 +45,9 @@ func (a *Algorithm) Name() string {
 // it to mask out parts of the test name (e.g. corresponding
 // to test variants).
 // "ninja://chrome/test:interactive_ui_tests/ColorSpaceTest.testNullTransform/%"
-func clusterLike(failure *clustering.Failure) (like string, ok bool) {
+func clusterLike(config *compiledcfg.ProjectConfig, failure *clustering.Failure) (like string, ok bool) {
 	testID := failure.TestID
-	for _, r := range compiledRules {
+	for _, r := range config.TestNameRules {
 		like, ok := r(testID)
 		if ok {
 			return like, true
@@ -102,7 +61,7 @@ func clusterLike(failure *clustering.Failure) (like string, ok bool) {
 // can be clustered) or nil otherwise.
 func (a *Algorithm) Cluster(config *compiledcfg.ProjectConfig, failure *clustering.Failure) []byte {
 	// Get the like expression that defines the cluster.
-	key, ok := clusterLike(failure)
+	key, ok := clusterLike(config, failure)
 	if !ok {
 		// Fall back to clustering on the exact test name.
 		key = failure.TestID
@@ -122,7 +81,7 @@ const bugDescriptionTemplateExact = `This bug is for all test failures with the 
 // filing bugs, with the help of the given example failure.
 func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription {
 	// Get the like expression that defines the cluster.
-	like, ok := clusterLike(example)
+	like, ok := clusterLike(config, example)
 	if ok {
 		return &clustering.ClusterDescription{
 			Title:       like,
@@ -140,7 +99,7 @@ func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, exampl
 // FailureAssociationRule returns a failure association rule that
 // captures the definition of cluster containing the given example.
 func (a *Algorithm) FailureAssociationRule(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {
-	like, ok := clusterLike(example)
+	like, ok := clusterLike(config, example)
 	if ok {
 		return fmt.Sprintf("test LIKE %s", strconv.QuoteToGraphic(like))
 	} else {

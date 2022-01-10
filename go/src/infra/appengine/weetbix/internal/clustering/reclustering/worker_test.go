@@ -796,9 +796,26 @@ func (b *scenarioBuilder) build() *scenario {
 	}
 
 	configVersion = time.Date(2001, time.January, 2, 0, 0, 0, 1, time.UTC)
-	cfgpb := &configpb.Clustering{}
+	cfgpb := &configpb.Clustering{
+		TestNameRules: []*configpb.TestNameClusteringRule{
+			{
+				Name:         "Test underscore clustering",
+				Pattern:      `^(?P<name>\w+)_\w+$`,
+				LikeTemplate: `${name}%`,
+			},
+		},
+	}
 	if !b.oldConfig {
 		configVersion = time.Date(2002, time.January, 2, 0, 0, 0, 1, time.UTC)
+		cfgpb = &configpb.Clustering{
+			TestNameRules: []*configpb.TestNameClusteringRule{
+				{
+					Name:         "Test underscore clustering",
+					Pattern:      `^(?P<name>\w+)_\w+$`,
+					LikeTemplate: `${name}\_%`,
+				},
+			},
+		}
 	}
 
 	ruleset := cache.NewRuleset(b.project, activeRules, rulesVersion, time.Time{})
