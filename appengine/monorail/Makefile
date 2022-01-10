@@ -104,7 +104,7 @@ serve_remote_email: config_local
 
 serve_cloud_tasks:
 	@echo "---[Starting Cloud Tasks Emulator]---"
-	./third_party/tools/cloud-tasks-emulator/emulator -host localhost \
+	../../cipd/cloud-tasks-emulator \
 	  --queue projects/monorail-staging/locations/us-central1/queues/componentexport \
 		--queue projects/monorail-staging/locations/us-central1/queues/default \
 		--queue projects/monorail-staging/locations/us-central1/queues/notifications \
@@ -115,7 +115,7 @@ serve_cloud_tasks:
 		--queue projects/monorail-staging/locations/us-central1/queues/wipeoutdeleteusers \
 		--queue projects/monorail-staging/locations/us-central1/queues/deleteusers \
 		--queue projects/monorail-staging/locations/us-central1/queues/pubsub-issueupdates \
-		-host 0.0.0.0 \
+		-host localhost \
 		-port 9090
 
 run: serve

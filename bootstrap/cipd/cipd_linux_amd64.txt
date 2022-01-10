@@ -11,6 +11,9 @@ infra/3pp/tools/protoc/${platform} version:2@3.17.3
 # Node.js deployment.
 infra/3pp/tools/nodejs/linux-amd64 version:2@16.13.0
 
+# Cloud Tasks Emulator.
+infra/3pp/tools/cloud-tasks-emulator/linux-amd64 version:2@1.1.1
+
 # ADB binary.
 infra/adb/linux-amd64             adb_version:1.0.36
 

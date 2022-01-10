@@ -119,4 +119,3 @@ skip_files:
 - ^(.*/)?\..*$
 - node_modules/
 - venv/
-- third_party/tools/

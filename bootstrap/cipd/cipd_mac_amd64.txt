@@ -11,6 +11,9 @@ infra/3pp/tools/protoc/${platform} version:2@3.17.3
 # Node.js deployment.
 infra/3pp/tools/nodejs/mac-amd64 version:2@16.13.0
 
+# Cloud Tasks Emulator.
+infra/3pp/tools/cloud-tasks-emulator/mac-amd64 version:2@1.1.1
+
 # LogDog tool.
 infra/tools/luci/logdog/logdog/mac-amd64  git_revision:5cf65fdf804a9b3f3023f79d5b3cab2a88ccd09e
 
