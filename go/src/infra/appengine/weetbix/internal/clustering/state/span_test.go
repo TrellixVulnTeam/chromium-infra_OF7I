@@ -63,11 +63,17 @@ func TestSpanner(t *testing.T) {
 					_, err := testCreate(e)
 					So(err, ShouldErrLike, "object ID must be specified")
 				})
+				Convey(`Config Version missing`, func() {
+					var t time.Time
+					e.Clustering.ConfigVersion = t
+					_, err := testCreate(e)
+					So(err, ShouldErrLike, "config version must be valid")
+				})
 				Convey(`Rules Version missing`, func() {
 					var t time.Time
 					e.Clustering.RulesVersion = t
 					_, err := testCreate(e)
-					So(err, ShouldErrLike, "rules version must be specified")
+					So(err, ShouldErrLike, "rules version must be valid")
 				})
 				Convey(`Algorithms Version missing`, func() {
 					e.Clustering.AlgorithmsVersion = 0
@@ -107,25 +113,20 @@ func TestSpanner(t *testing.T) {
 		})
 		Convey(`UpdateClustering`, func() {
 			Convey(`Valid`, func() {
+				entry := NewEntry(0).Build()
 				entries := []*Entry{
-					// Should not be read.
-					NewEntry(0).Build(),
+					entry,
 				}
 				commitTime, err := CreateEntriesForTesting(ctx, entries)
 				So(err, ShouldBeNil)
-				entries[0].LastUpdated = commitTime.In(time.UTC)
+				entry.LastUpdated = commitTime.In(time.UTC)
 
-				// Prepare an update.
-				newClustering := &NewEntry(1).Build().Clustering
-
-				// Convey(`Normal`, func() {
 				expected := NewEntry(0).Build()
-				expected.Clustering = *newClustering
 
-				test := func() {
+				test := func(update clustering.ClusterResults, expected *Entry) {
 					// Apply the update.
 					commitTime, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-						err := UpdateClustering(ctx, entries[0], newClustering)
+						err := UpdateClustering(ctx, entry, &update)
 						return err
 					})
 					So(err, ShouldEqual, nil)
@@ -137,21 +138,27 @@ func TestSpanner(t *testing.T) {
 					So(actual, ShouldResemble, expected)
 				}
 				Convey(`Full update`, func() {
-					So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeFalse)
-					test()
+					// Prepare an update.
+					newClustering := NewEntry(1).Build().Clustering
+					expected.Clustering = newClustering
+
+					So(clustering.AlgorithmsAndClustersEqual(&entry.Clustering, &newClustering), ShouldBeFalse)
+					test(newClustering, expected)
 				})
 				Convey(`Minor update`, func() {
-					newClustering = &NewEntry(0).Build().Clustering
-					newClustering.AlgorithmsVersion = 10
-					newClustering.RulesVersion = time.Date(2024, time.June, 5, 4, 3, 2, 1000, time.UTC)
-					expected.Clustering = *newClustering
-					So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, newClustering), ShouldBeTrue)
-					test()
+					// Update only algorithms + rules + config version, without changing clustering content.
+					newClustering := NewEntry(0).
+						WithAlgorithmsVersion(10).
+						WithConfigVersion(time.Date(2024, time.July, 5, 4, 3, 2, 1, time.UTC)).
+						WithRulesVersion(time.Date(2024, time.June, 5, 4, 3, 2, 1000, time.UTC)).
+						Build().Clustering
+
+					expected.Clustering = newClustering
+					So(clustering.AlgorithmsAndClustersEqual(&entries[0].Clustering, &newClustering), ShouldBeTrue)
+					test(newClustering, expected)
 				})
 				Convey(`No-op update`, func() {
-					newClustering = &NewEntry(0).Build().Clustering
-					expected.Clustering = *newClustering
-					test()
+					test(entry.Clustering, expected)
 				})
 			})
 			Convey(`Invalid`, func() {
@@ -197,25 +204,47 @@ func TestSpanner(t *testing.T) {
 		})
 		Convey(`ReadNextN`, func() {
 			targetRulesVersion := time.Date(2024, 1, 1, 1, 1, 1, 0, time.UTC)
+			targetConfigVersion := time.Date(2024, 2, 1, 1, 1, 1, 0, time.UTC)
 			targetAlgorithmsVersion := 10
 			entries := []*Entry{
 				// Should not be read.
-				NewEntry(0).WithChunkIDPrefix("11").WithAlgorithmsVersion(10).WithRulesVersion(targetRulesVersion).Build(),
+				NewEntry(0).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(10).
+					WithConfigVersion(targetConfigVersion).
+					WithRulesVersion(targetRulesVersion).Build(),
 
 				// Should be read (rulesVersion < targetRulesVersion).
-				NewEntry(1).WithChunkIDPrefix("11").WithAlgorithmsVersion(10).WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(), // Should be read.
-				NewEntry(3).WithChunkIDPrefix("11").WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(),
+				NewEntry(1).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(10).
+					WithConfigVersion(targetConfigVersion).
+					WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(),
+				NewEntry(2).WithChunkIDPrefix("11").
+					WithRulesVersion(targetRulesVersion.Add(-1 * time.Hour)).Build(),
+
+				// Should be read (configVersion < targetConfigVersion).
+				NewEntry(3).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(10).
+					WithConfigVersion(targetConfigVersion.Add(-1 * time.Hour)).
+					WithRulesVersion(targetRulesVersion).Build(),
+				NewEntry(4).WithChunkIDPrefix("11").
+					WithConfigVersion(targetConfigVersion.Add(-1 * time.Hour)).Build(),
 
 				// Should be read (algorithmsVersion < targetAlgorithmsVersion).
-				NewEntry(2).WithChunkIDPrefix("11").WithAlgorithmsVersion(9).WithRulesVersion(targetRulesVersion).Build(),
-				NewEntry(4).WithChunkIDPrefix("11").WithAlgorithmsVersion(2).Build(),
+				NewEntry(5).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(9).
+					WithConfigVersion(targetConfigVersion).
+					WithRulesVersion(targetRulesVersion).Build(),
+				NewEntry(6).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(2).Build(),
 
 				// Should not be read (other project).
-				NewEntry(5).WithChunkIDPrefix("11").WithAlgorithmsVersion(2).WithProject("other").Build(),
+				NewEntry(7).WithChunkIDPrefix("11").
+					WithAlgorithmsVersion(2).
+					WithProject("other").Build(),
 
 				// Check handling of EndChunkID as an inclusive upper-bound.
-				NewEntry(6).WithChunkIDPrefix("11" + strings.Repeat("ff", 15)).WithAlgorithmsVersion(2).Build(), // Should be read.
-				NewEntry(7).WithChunkIDPrefix("12" + strings.Repeat("00", 15)).WithAlgorithmsVersion(2).Build(), // Should not be read.
+				NewEntry(8).WithChunkIDPrefix("11" + strings.Repeat("ff", 15)).WithAlgorithmsVersion(2).Build(), // Should be read.
+				NewEntry(9).WithChunkIDPrefix("12" + strings.Repeat("00", 15)).WithAlgorithmsVersion(2).Build(), // Should not be read.
 			}
 
 			commitTime, err := CreateEntriesForTesting(ctx, entries)
@@ -229,7 +258,9 @@ func TestSpanner(t *testing.T) {
 				entries[2],
 				entries[3],
 				entries[4],
+				entries[5],
 				entries[6],
+				entries[8],
 			}
 			sort.Slice(expectedEntries, func(i, j int) bool {
 				return expectedEntries[i].ChunkID < expectedEntries[j].ChunkID
@@ -239,22 +270,23 @@ func TestSpanner(t *testing.T) {
 				StartChunkID:      "11" + strings.Repeat("00", 15),
 				EndChunkID:        "11" + strings.Repeat("ff", 15),
 				AlgorithmsVersion: int64(targetAlgorithmsVersion),
+				ConfigVersion:     targetConfigVersion,
 				RulesVersion:      targetRulesVersion,
 			}
 			// Reads first page.
-			rows, err := ReadNextN(span.Single(ctx), testProject, readOpts, 3)
+			rows, err := ReadNextN(span.Single(ctx), testProject, readOpts, 4)
 			So(err, ShouldBeNil)
-			So(rows, ShouldResemble, expectedEntries[0:3])
+			So(rows, ShouldResemble, expectedEntries[0:4])
 
 			// Read second page.
-			readOpts.StartChunkID = rows[2].ChunkID
-			rows, err = ReadNextN(span.Single(ctx), testProject, readOpts, 3)
+			readOpts.StartChunkID = rows[3].ChunkID
+			rows, err = ReadNextN(span.Single(ctx), testProject, readOpts, 4)
 			So(err, ShouldBeNil)
-			So(rows, ShouldResemble, expectedEntries[3:])
+			So(rows, ShouldResemble, expectedEntries[4:])
 
 			// Read empty last page.
-			readOpts.StartChunkID = rows[1].ChunkID
-			rows, err = ReadNextN(span.Single(ctx), testProject, readOpts, 3)
+			readOpts.StartChunkID = rows[2].ChunkID
+			rows, err = ReadNextN(span.Single(ctx), testProject, readOpts, 4)
 			So(err, ShouldBeNil)
 			So(rows, ShouldBeEmpty)
 		})

@@ -17,6 +17,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
+	"infra/appengine/weetbix/internal/config"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -176,6 +177,7 @@ func upToDateScenario(size int) *scenario {
 	// This is an up-to-date clustering of the test results.
 	existing := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
+		ConfigVersion:     config.StartingEpoch,
 		RulesVersion:      rulesVersion,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
@@ -204,6 +206,7 @@ func upToDateScenario(size int) *scenario {
 	// unexpected aliasing issues.
 	expected := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
+		ConfigVersion:     config.StartingEpoch,
 		RulesVersion:      rulesVersion,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},

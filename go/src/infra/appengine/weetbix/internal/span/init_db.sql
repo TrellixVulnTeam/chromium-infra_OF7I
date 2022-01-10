@@ -218,10 +218,15 @@ CREATE TABLE ClusteringState (
   ObjectId STRING(32) NOT NULL,
   -- The version of clustering algorithms used to cluster test results in this
   -- chunk. (This is a version over the set of algorithms, distinct from the
-  -- versions of a single algorithm, e.g.:
+  -- version of a single algorithm, e.g.:
   -- v1 -> {failurereason-v1}, v2 -> {failurereason-v1, testname-v1},
   -- v3 -> {failurereason-v2, testname-v1}.)
   AlgorithmsVersion INT64 NOT NULL,
+  -- The version of project configuration used by algorithms to match test
+  -- results in this chunk.
+  -- TODO(crbug.com/1243174): Mark NOT NULL after rolling out to prod and
+  -- waiting a suitable time interval.
+  ConfigVersion TIMESTAMP,
   -- The version of the set of failure association rules used to match test
   -- results in this chunk. This is the "Last Updated" time of the most
   -- recently updated failure association rule in the snapshot of failure

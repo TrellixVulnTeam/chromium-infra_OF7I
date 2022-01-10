@@ -14,6 +14,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
+	"infra/appengine/weetbix/internal/config"
 )
 
 // Algorithm represents the interface that each clustering algorithm
@@ -182,9 +183,12 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 
 	return clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		RulesVersion:      newRulesVersion,
-		Algorithms:        algorithmNames,
-		Clusters:          result,
+		// TODO(crbug.com/1243174): Once config is used, return the version of
+		// config that was used.
+		ConfigVersion: config.StartingEpoch,
+		RulesVersion:  newRulesVersion,
+		Algorithms:    algorithmNames,
+		Clusters:      result,
 	}
 }
 
@@ -214,6 +218,7 @@ func NewEmptyClusterResults(count int) clustering.ClusterResults {
 	return clustering.ClusterResults{
 		// Algorithms version 0 is the empty set of clustering algorithms.
 		AlgorithmsVersion: 0,
+		ConfigVersion:     config.StartingEpoch,
 		// The RulesVersion StartingEpoch refers to the empty set of rules.
 		RulesVersion: rules.StartingEpoch,
 		Algorithms:   make(map[string]struct{}),

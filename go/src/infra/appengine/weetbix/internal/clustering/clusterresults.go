@@ -13,10 +13,15 @@ import (
 type ClusterResults struct {
 	// AlgorithmsVersion is the version of clustering algorithms used to
 	// cluster test results in this chunk. (This is a version over the
-	// set of algorithms, distinct from the versions of a single algorithm,
+	// set of algorithms, distinct from the version of a single algorithm,
 	// e.g.: v1 -> {failurereason-v1}, v2 -> {failurereason-v1, testname-v1},
 	// v3 -> {failurereason-v2, testname-v1}.)
 	AlgorithmsVersion int64
+	// ConfigVersion is the version of Weetbix project configuration
+	// used to cluster the test results. Clustering algorithms can rely
+	// on the configuration to alter their behaviour, so changes to
+	// the configuration should trigger re-clustering of test results.
+	ConfigVersion time.Time
 	// RulesVersion is the version of failure association rules used
 	// to cluster test results.  This is the RulesLastUpdated
 	// time of the most-recently-updated failure association rule in

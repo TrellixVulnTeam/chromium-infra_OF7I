@@ -15,6 +15,7 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
 	spanutil "infra/appengine/weetbix/internal/span"
 
@@ -68,6 +69,7 @@ func Create(ctx context.Context, e *Entry) error {
 		"PartitionTime":     e.PartitionTime,
 		"ObjectID":          e.ObjectID,
 		"AlgorithmsVersion": e.Clustering.AlgorithmsVersion,
+		"ConfigVersion":     e.Clustering.ConfigVersion,
 		"RulesVersion":      e.Clustering.RulesVersion,
 		"Clusters":          clusters,
 		"LastUpdated":       spanner.CommitTimestamp,
@@ -145,6 +147,7 @@ func UpdateClustering(ctx context.Context, previous *Entry, update *clustering.C
 	upd["ChunkID"] = previous.ChunkID
 	upd["LastUpdated"] = spanner.CommitTimestamp
 	upd["AlgorithmsVersion"] = update.AlgorithmsVersion
+	upd["ConfigVersion"] = update.ConfigVersion
 	upd["RulesVersion"] = update.RulesVersion
 
 	if !clustering.AlgorithmsAndClustersEqual(&previous.Clustering, update) {
@@ -193,6 +196,10 @@ type ReadNextOptions struct {
 	// If a row has an AlgorithmsVersion less than this value, it will
 	// be eligble to be read.
 	AlgorithmsVersion int64
+	// The minimum ConfigVersion that re-clustering wants to achieve.
+	// If a row has an RulesVersion less than this value, it will
+	// be eligble to be read.
+	ConfigVersion time.Time
 	// The minimum RulesVersion that re-clustering wants to achieve.
 	// If a row has an RulesVersion less than this value, it will
 	// be eligble to be read.
@@ -205,11 +212,14 @@ func ReadNextN(ctx context.Context, project string, opts ReadNextOptions, n int)
 	params := make(map[string]interface{})
 	whereClause := `
 		ChunkId > @startChunkID AND ChunkId <= @endChunkID
-		AND (AlgorithmsVersion < @algorithmsVersion OR RulesVersion < @rulesVersion)
+		AND (AlgorithmsVersion < @algorithmsVersion
+			OR ConfigVersion < @configVersion
+			OR RulesVersion < @rulesVersion)
 	`
 	params["startChunkID"] = opts.StartChunkID
 	params["endChunkID"] = opts.EndChunkID
 	params["algorithmsVersion"] = opts.AlgorithmsVersion
+	params["configVersion"] = opts.ConfigVersion
 	params["rulesVersion"] = opts.RulesVersion
 
 	return readWhere(ctx, project, whereClause, params, n)
@@ -219,7 +229,8 @@ func readWhere(ctx context.Context, project, whereClause string, params map[stri
 	stmt := spanner.NewStatement(`
 		SELECT
 		  ChunkId, PartitionTime, ObjectId,
-		  AlgorithmsVersion, RulesVersion,
+		  AlgorithmsVersion,
+		  ConfigVersion, RulesVersion,
 		  LastUpdated, Clusters
 		FROM ClusteringState
 		WHERE Project = @project AND (` + whereClause + `)
@@ -239,13 +250,21 @@ func readWhere(ctx context.Context, project, whereClause string, params map[stri
 		clusters := &cpb.ChunkClusters{}
 		result := &Entry{Project: project}
 
+		var configVersion spanner.NullTime
 		err := b.FromSpanner(r,
 			&result.ChunkID, &result.PartitionTime, &result.ObjectID,
-			&result.Clustering.AlgorithmsVersion, &result.Clustering.RulesVersion,
+			&result.Clustering.AlgorithmsVersion,
+			&configVersion, &result.Clustering.RulesVersion,
 			&result.LastUpdated, clusters)
 		if err != nil {
 			return errors.Annotate(err, "read clustering state row").Err()
 		}
+		if configVersion.Valid {
+			result.Clustering.ConfigVersion = configVersion.Time
+		} else {
+			result.Clustering.ConfigVersion = config.StartingEpoch
+		}
+
 		result.Clustering.Algorithms, result.Clustering.Clusters, err = decodeClusters(clusters)
 		if err != nil {
 			return errors.Annotate(err, "decode clusters").Err()
@@ -361,8 +380,10 @@ func validateClusterResults(c *clustering.ClusterResults) error {
 	switch {
 	case c.AlgorithmsVersion <= 0:
 		return errors.New("algorithms version must be specified")
-	case c.RulesVersion.IsZero():
-		return errors.New("rules version must be specified")
+	case c.ConfigVersion.Before(config.StartingEpoch):
+		return errors.New("config version must be valid")
+	case c.RulesVersion.Before(rules.StartingEpoch):
+		return errors.New("rules version must be valid")
 	default:
 		if err := validateAlgorithms(c.Algorithms); err != nil {
 			return errors.Annotate(err, "algorithms").Err()

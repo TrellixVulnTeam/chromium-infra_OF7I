@@ -42,6 +42,7 @@ func NewEntry(uniqifier int) *EntryBuilder {
 		ObjectID:      "abcdef1234567890abcdef1234567890",
 		Clustering: clustering.ClusterResults{
 			AlgorithmsVersion: int64(uniqifier + 1),
+			ConfigVersion:     time.Date(2025, 2, 1, 1, 1, 1, uniqifier, time.UTC),
 			RulesVersion:      time.Date(2025, 1, 1, 1, 1, 1, uniqifier, time.UTC),
 			Algorithms: map[string]struct{}{
 				fmt.Sprintf("alg-%v", uniqifier): {},
@@ -86,6 +87,12 @@ func (b *EntryBuilder) WithProject(project string) *EntryBuilder {
 // WithAlgorithmsVersion specifies the algorithms version for the entry.
 func (b *EntryBuilder) WithAlgorithmsVersion(version int64) *EntryBuilder {
 	b.entry.Clustering.AlgorithmsVersion = version
+	return b
+}
+
+// WithConfigVersion specifies the config version for the entry.
+func (b *EntryBuilder) WithConfigVersion(version time.Time) *EntryBuilder {
+	b.entry.Clustering.ConfigVersion = version
 	return b
 }
 

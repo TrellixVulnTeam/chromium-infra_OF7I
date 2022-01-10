@@ -27,6 +27,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
+	"infra/appengine/weetbix/internal/config"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
@@ -683,6 +684,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		}
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: 1,
+			ConfigVersion:     config.StartingEpoch,
 			RulesVersion:      b.ruleset.RulesVersion,
 			Algorithms:        algs,
 			Clusters:          clusters,
@@ -698,6 +700,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		}
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: algorithms.AlgorithmsVersion,
+			ConfigVersion:     config.StartingEpoch,
 			RulesVersion:      b.ruleset.RulesVersion,
 			Algorithms:        algs,
 			Clusters:          clusters,
