@@ -2203,3 +2203,20 @@ func (s *DecoratedFleet) UpdateConfigBundle(ctx context.Context, req *UpdateConf
 	}
 	return
 }
+
+func (s *DecoratedFleet) GetDeviceData(ctx context.Context, req *GetDeviceDataRequest) (rsp *GetDeviceDataResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDeviceData", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDeviceData(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDeviceData", rsp, err)
+	}
+	return
+}

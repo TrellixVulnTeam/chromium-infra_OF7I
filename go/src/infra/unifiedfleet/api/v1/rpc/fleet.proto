@@ -417,6 +417,9 @@ service Fleet {
 
   // UpdateConfigBundle updates the ConfigBundle
   rpc UpdateConfigBundle(UpdateConfigBundleRequest) returns (UpdateConfigBundleResponse);
+
+  // GetDeviceData retrieves requested device data from UFS.
+  rpc GetDeviceData(GetDeviceDataRequest) returns (GetDeviceDataResponse);
 }
 
 message UpdateMachineLSEDeploymentRequest {
@@ -2227,4 +2230,26 @@ message UpdateConfigBundleResponse {
   // Proto path:
   // go.chromium.org/chromiumos/config/proto/chromiumos/config/payload/config_bundle.proto
   bytes config_bundle = 1;
+}
+
+message GetDeviceDataRequest {
+  // Machine/Asset ID.
+  string device_id = 1;
+  // Hostname of the DUT/MachineLSE.
+  string hostname = 2;
+}
+
+message GetDeviceDataResponse {
+  oneof resource {
+    models.SchedulingUnit scheduling_unit = 1;
+    models.ChromeOSDeviceData chrome_os_device_data = 2;
+    AttachedDeviceData attached_device_data = 3;
+  }
+}
+
+// Next Tag: 4
+message AttachedDeviceData {
+  models.MachineLSE lab_config = 1;
+  models.Machine machine = 2;
+  models.chromeos.lab.DutState dut_state = 3;
 }

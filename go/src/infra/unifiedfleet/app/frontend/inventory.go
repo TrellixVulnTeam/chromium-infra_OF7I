@@ -708,3 +708,12 @@ func (fs *FleetServerImpl) DeleteSchedulingUnit(ctx context.Context, req *ufsAPI
 	err = controller.DeleteSchedulingUnit(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// GetDeviceData gets the requested device data (scheduling unit, chromeos data,
+// attached device data) from UFS.
+func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDeviceDataRequest) (rsp *ufsAPI.GetDeviceDataResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, nil
+}
