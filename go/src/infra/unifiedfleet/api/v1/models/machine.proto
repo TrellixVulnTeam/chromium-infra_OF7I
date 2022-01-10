@@ -152,6 +152,14 @@ message AttachedDevice {
 
 // AttachedDeviceType refers to the different types of device/machine in the
 // lab environment.
+//
+// Next Tag: 7
 enum AttachedDeviceType {
   ATTACHED_DEVICE_TYPE_UNSPECIFIED = 0;
+  ATTACHED_DEVICE_TYPE_APPLE_PHONE = 1;
+  ATTACHED_DEVICE_TYPE_ANDROID_PHONE = 2;
+  ATTACHED_DEVICE_TYPE_APPLE_TABLET = 3;
+  ATTACHED_DEVICE_TYPE_ANDROID_TABLET = 4;
+  ATTACHED_DEVICE_TYPE_DEVBOARD = 5;
+  ATTACHED_DEVICE_TYPE_JETSTREAM = 6;
 }
