@@ -71,10 +71,17 @@ func TestOrchestrator(t *testing.T) {
 			testOrchestratorDoesNothing()
 		})
 		Convey("With Projects", func() {
-			// Orchestrator only looks at the projects that have config, not the config itself.
+			// Orchestrator only looks at the projects that have config,
+			// and the config version.
+			configVersionA := time.Date(2029, time.April, 1, 0, 0, 0, 1, time.UTC)
+			configVersionB := time.Date(2029, time.May, 1, 0, 0, 0, 1, time.UTC)
 			projectCfg := make(map[string]*configpb.ProjectConfig)
-			projectCfg["project-a"] = &configpb.ProjectConfig{}
-			projectCfg["project-b"] = &configpb.ProjectConfig{}
+			projectCfg["project-a"] = &configpb.ProjectConfig{
+				LastUpdated: timestamppb.New(configVersionA),
+			}
+			projectCfg["project-b"] = &configpb.ProjectConfig{
+				LastUpdated: timestamppb.New(configVersionB),
+			}
 			config.SetTestProjectConfig(ctx, projectCfg)
 
 			// Create chunks in project-b. After this, the row estimates
@@ -141,7 +148,7 @@ func TestOrchestrator(t *testing.T) {
 				Project:           "project-a",
 				AttemptTimestamp:  expectedAttemptTime,
 				AlgorithmsVersion: algorithms.AlgorithmsVersion,
-				ConfigVersion:     config.StartingEpoch,
+				ConfigVersion:     configVersionA,
 				RulesVersion:      rules.StartingEpoch,
 				ShardCount:        1,
 				ShardsReported:    0,
@@ -151,7 +158,7 @@ func TestOrchestrator(t *testing.T) {
 				Project:           "project-b",
 				AttemptTimestamp:  expectedAttemptTime,
 				AlgorithmsVersion: algorithms.AlgorithmsVersion,
-				ConfigVersion:     config.StartingEpoch,
+				ConfigVersion:     configVersionB,
 				RulesVersion:      rulesVersionB,
 				ShardCount:        3,
 				ShardsReported:    0,
@@ -186,12 +193,12 @@ func TestOrchestrator(t *testing.T) {
 				So(actualRuns, ShouldResemble, expectedRuns)
 			})
 			Convey("Schedules successfully with an existing run", func() {
-				runB := &runs.ReclusteringRun{
+				existingRunB := &runs.ReclusteringRun{
 					Project: "project-b",
 					// So as not to overlap with the run that should be created.
 					AttemptTimestamp:  expectedAttemptTime.Add(-5 * time.Minute),
 					AlgorithmsVersion: 1,
-					ConfigVersion:     config.StartingEpoch,
+					ConfigVersion:     configVersionB.Add(-1 * time.Hour),
 					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
 					ShardCount:        10,
 					ShardsReported:    10,
@@ -211,32 +218,33 @@ func TestOrchestrator(t *testing.T) {
 				}
 
 				Convey("existing complete run", func() {
-					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{existingRunB})
 					So(err, ShouldBeNil)
 
 					// A run scheduled after an existing complete run should
-					// use the latest algorithms and rules available. So our
-					// expectations are unchanged.
+					// use the latest algorithms, config and rules available. So
+					// our expectations are unchanged.
 					test()
 				})
 				Convey("existing incomplete run", func() {
-					runB.Progress = 500
+					existingRunB.Progress = 500
 
-					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{existingRunB})
 					So(err, ShouldBeNil)
 
 					// Expect the same algorithms and rules version to be used as
 					// the previous run, to ensure forward progress (if new rules
 					// are being constantly created, we don't want to be
 					// reclustering only the beginning of the workers' keyspaces).
-					expectedRunB.AlgorithmsVersion = runB.AlgorithmsVersion
-					expectedRunB.RulesVersion = runB.RulesVersion
+					expectedRunB.AlgorithmsVersion = existingRunB.AlgorithmsVersion
+					expectedRunB.ConfigVersion = existingRunB.ConfigVersion
+					expectedRunB.RulesVersion = existingRunB.RulesVersion
 					test()
 				})
 				Convey("existing complete run with later algorithms version", func() {
-					runB.AlgorithmsVersion = algorithms.AlgorithmsVersion + 5
+					existingRunB.AlgorithmsVersion = algorithms.AlgorithmsVersion + 5
 
-					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{runB})
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{existingRunB})
 					So(err, ShouldBeNil)
 
 					// If new algorithms are being rolled out, some GAE instances
@@ -246,7 +254,23 @@ func TestOrchestrator(t *testing.T) {
 					// correctness of re-clustering progress logic, we require
 					// the algorithms version of subsequent runs to always be
 					// non-decreasing.
-					expectedRunB.AlgorithmsVersion = runB.AlgorithmsVersion
+					expectedRunB.AlgorithmsVersion = existingRunB.AlgorithmsVersion
+					test()
+				})
+				Convey("existing complete run with later config version", func() {
+					existingRunB.ConfigVersion = configVersionB.Add(time.Hour)
+
+					err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{existingRunB})
+					So(err, ShouldBeNil)
+
+					// If new config is being rolled out, some GAE instances
+					// may still have old config cached. This includes the instance
+					// that runs the orchestrator.
+					// To simplify reasoning about re-clustering runs, and ensure
+					// correctness of re-clustering progress logic, we require
+					// the config version of subsequent runs to always be
+					// non-decreasing.
+					expectedRunB.ConfigVersion = existingRunB.ConfigVersion
 					test()
 				})
 			})
@@ -258,7 +282,7 @@ func TestOrchestrator(t *testing.T) {
 					AttemptTimestamp:  expectedAttemptTime.Add(-1 * time.Minute),
 					AlgorithmsVersion: 1,
 					ConfigVersion:     config.StartingEpoch,
-					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
+					RulesVersion:      rules.StartingEpoch,
 					ShardCount:        1,
 					ShardsReported:    1,
 					Progress:          500,

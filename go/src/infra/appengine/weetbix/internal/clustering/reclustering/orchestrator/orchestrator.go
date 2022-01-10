@@ -194,9 +194,15 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 		orchestratorCounter.Add(ctx, 1, project, status, workers, progress)
 	}()
 
-	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+	projectCfg, err := config.Project(ctx, project)
+	if err != nil {
+		return errors.Annotate(err, "get project config").Err()
+	}
+	configVersion := projectCfg.LastUpdated.AsTime()
+
+	_, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		var err error
-		progress, err = createProjectRun(ctx, project, attemptStart, attemptEnd, workers)
+		progress, err = createProjectRun(ctx, project, attemptStart, attemptEnd, configVersion, workers)
 		return err
 	})
 	if err != nil {
@@ -212,11 +218,12 @@ func orchestrateProject(ctx context.Context, project string, attemptStart, attem
 
 // createProjectRun creates a new run entry for a project, returning whether
 // the previous run achieved its re-clustering goal (and any errors).
-func createProjectRun(ctx context.Context, project string, attemptStart, attemptEnd time.Time, workers int) (progress int, err error) {
+func createProjectRun(ctx context.Context, project string, attemptStart, attemptEnd, latestConfigVersion time.Time, workers int) (progress int, err error) {
 	lastRun, err := runs.ReadLast(ctx, project)
 	if err != nil {
 		return 0, errors.Annotate(err, "read last run").Err()
 	}
+
 	// run.Progress is a value between 0 and 1000 * lastRun.ShardCount.
 	progress = int(lastRun.Progress / lastRun.ShardCount)
 
@@ -242,11 +249,10 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 			// this orchestrator is running old code.
 			newRun.AlgorithmsVersion = lastRun.AlgorithmsVersion
 		}
-		// TODO(crbug.com/1243174): Populate latest config version.
-		newRun.ConfigVersion = config.StartingEpoch
+		newRun.ConfigVersion = latestConfigVersion
 		if lastRun.ConfigVersion.After(newRun.ConfigVersion) {
 			// Never roll back to an earlier config version. Assume
-			// this orchestrator is running old code.
+			// this orchestrator still has old config cached.
 			newRun.ConfigVersion = lastRun.ConfigVersion
 		}
 	} else {
