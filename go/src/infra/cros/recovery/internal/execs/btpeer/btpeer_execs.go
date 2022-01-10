@@ -10,6 +10,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 )
 
@@ -33,7 +34,25 @@ func setStateWorkingExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+func getDetectedStatusesExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	h, err := activeHost(args)
+	if err != nil {
+		return errors.Annotate(err, "get detected statuses").Err()
+	}
+	res, err := Call(ctx, args.Access, h, "GetDetectedStatus")
+	if err != nil {
+		return errors.Annotate(err, "get detected statuses").Err()
+	}
+	count := len(res.GetArray().GetValues())
+	if count == 0 {
+		return errors.Reason("get detected statuses: list is empty").Err()
+	}
+	log.Debug(ctx, "Detected statuses count: %v", count)
+	return nil
+}
+
 func init() {
 	execs.Register("btpeer_state_broken", setStateBrokenExec)
 	execs.Register("btpeer_state_working", setStateWorkingExec)
+	execs.Register("btpeer_get_detected_statuses", getDetectedStatusesExec)
 }

@@ -9,7 +9,15 @@ const btpeerRepairPlanBody = `
 	"btpeer_state_broken",
 	"cros_ping",
 	"cros_ssh",
+	"check_server",
 	"btpeer_state_working"
 ],
-"actions": {}
+"actions": {
+	"check_server":{
+		"docs":[
+			"To check if devices is responsive we request not empty list of detected statuses."
+		],
+		"exec_name":"btpeer_get_detected_statuses"
+	}
+}
 `
