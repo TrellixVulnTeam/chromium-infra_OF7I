@@ -2,7 +2,7 @@ create {
   platform_re: "linux-.*|mac-.*",
   source {
     url {
-      download_url: "https://ftp.pcre.org/pub/pcre/pcre-8.41.tar.gz"
+      download_url: "https://sourceforge.net/projects/pcre/files/pcre/8.41/pcre-8.41.tar.gz/download"
       version: "8.41"
     }
     unpack_archive: true
