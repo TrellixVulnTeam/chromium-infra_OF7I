@@ -155,7 +155,7 @@ func TestRun(t *testing.T) {
 				expected := &rules.FailureAssociationRule{
 					Project:         "chromium",
 					RuleDefinition:  `reason LIKE "Failed to connect to %.%.%.%."`,
-					Bug:             bugs.BugID{System: "monorail", ID: "chromium/100"},
+					BugID:           bugs.BugID{System: "monorail", ID: "chromium/100"},
 					IsActive:        true,
 					SourceCluster:   sourceClusterID,
 					CreationUser:    rules.WeetbixSystem,
@@ -309,7 +309,7 @@ func TestRun(t *testing.T) {
 					{
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-1"`,
-						Bug:             bugs.BugID{System: "monorail", ID: "chromium/100"},
+						BugID:           bugs.BugID{System: "monorail", ID: "chromium/100"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-1"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,
@@ -318,7 +318,7 @@ func TestRun(t *testing.T) {
 					{
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-2"`,
-						Bug:             bugs.BugID{System: "monorail", ID: "chromium/101"},
+						BugID:           bugs.BugID{System: "monorail", ID: "chromium/101"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-2"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,
@@ -327,7 +327,7 @@ func TestRun(t *testing.T) {
 					{
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-3"`,
-						Bug:             bugs.BugID{System: "monorail", ID: "chromium/102"},
+						BugID:           bugs.BugID{System: "monorail", ID: "chromium/102"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-3"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,

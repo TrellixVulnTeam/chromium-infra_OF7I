@@ -62,14 +62,6 @@ export class ClusterTable extends LitElement {
         const clusterLink = (cluster: Cluster): string => {
             return `/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(cluster.clusterId.algorithm)}/${encodeURIComponent(cluster.clusterId.id)}`;
         }
-        const clusterDescription = (cluster: Cluster): string => {
-            if (cluster.clusterId.algorithm.startsWith("testname-")) {
-                return cluster.exampleTestId;
-            } else if (cluster.clusterId.algorithm.startsWith("failurereason-")) {
-                return cluster.exampleFailureReason;
-            }
-            return cluster.exampleFailureReason || cluster.exampleTestId || `${cluster.clusterId.algorithm}/${cluster.clusterId.id}`;
-        }
         const metric = (c: Cluster, metric: MetricName): number => {
             let counts: Counts;
             switch (metric) {
@@ -114,6 +106,7 @@ export class ClusterTable extends LitElement {
             <table>
                 <thead>
                     <tr>
+                        <th>Bug</th>
                         <th>Cluster</th>
                         <th class="sortable" @click=${() => this.sort('presubmitRejects')}>
                             Presubmit Runs Failed
@@ -132,23 +125,26 @@ export class ClusterTable extends LitElement {
                 <tbody>
                     ${sortedClusters.map(c => html`
                     <tr>
-                        <td class="failure-reason">
-                            <a ?data-suggested=${!c.clusterId.algorithm.startsWith('rules')} href=${clusterLink(c)}>
-                                ${clusterDescription(c)}
+                        <td class="bug">
+                            ${c.bugLink ? html`<a href="${c.bugLink.url}">${c.bugLink.name}</a>` : null}
+                        </td>
+                        <td class="failure-reason" data-cy="cluster-link">
+                            <a class="cluster-link" ?data-suggested=${!c.clusterId.algorithm.startsWith('rules')} href=${clusterLink(c)}>
+                                ${c.title}
                             </a>
                         </td>
                         <td class="number">
-                            <a href=${clusterLink(c)}>
+                            <a class="cluster-link" href=${clusterLink(c)}>
                                 ${metric(c, 'presubmitRejects')}
                             </a>
                         </td>
                         <td class="number">
-                            <a href=${clusterLink(c)}>
+                            <a class="cluster-link" href=${clusterLink(c)}>
                                 ${metric(c, 'testRunFailures')}
                             </a>
                         </td>
                         <td class="number">
-                            <a href=${clusterLink(c)}>
+                            <a class="cluster-link" href=${clusterLink(c)}>
                                 ${metric(c, 'failures')}
                             </a>
                         </td>
@@ -185,13 +181,19 @@ export class ClusterTable extends LitElement {
         td.number {
             text-align: right;
         }
-        td a {
+        td a.cluster-link {
             display: block;
             text-decoration: none;
-            color: var(--default-text-color);
+            color: inherit;
         }
         tbody tr:hover {
             background-color: var(--light-active-color);
+        }
+        .bug a {
+            font-size: var(--font-size-small);
+        }
+        .bug a:hover {
+            text-decoration: underline;
         }
         .failure-reason {
             word-break: break-all;
@@ -208,6 +210,8 @@ type MetricName = 'presubmitRejects' | 'testRunFailures' | 'failures';
 // Cluster is the cluster information sent by the server.
 interface Cluster {
     clusterId: ClusterId;
+    title: string;
+    bugLink: BugLink;
     presubmitRejects1d: Counts;
     presubmitRejects3d: Counts;
     presubmitRejects7d: Counts;
@@ -217,8 +221,11 @@ interface Cluster {
     failures1d: Counts;
     failures3d: Counts;
     failures7d: Counts;
-    exampleFailureReason: string;
-    exampleTestId: string;
+}
+
+interface BugLink {
+    name: string;
+    url: string;
 }
 
 interface ClusterId {

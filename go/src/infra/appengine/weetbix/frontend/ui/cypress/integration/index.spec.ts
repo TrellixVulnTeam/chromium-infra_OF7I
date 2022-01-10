@@ -18,7 +18,7 @@ describe('Index Page', () => {
         cy.get('cluster-table').contains('Test Runs Failed');
     })
     it('loads a cluster page', () => {
-        cy.get('cluster-table').get('td').first().click();
+        cy.get('cluster-table').get('[data-cy=cluster-link]').first().click();
         cy.get('body').contains('Breakdown');
     })
 })

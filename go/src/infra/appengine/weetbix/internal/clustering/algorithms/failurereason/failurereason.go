@@ -32,7 +32,7 @@ const AlgorithmVersion = 2
 //
 // The AlgorithmName must encode the algorithm version, so that each version
 // of an algorithm has a different name.
-var AlgorithmName = fmt.Sprintf("failurereason-v%v", AlgorithmVersion)
+var AlgorithmName = fmt.Sprintf("%sv%v", clustering.FailureReasonAlgorithmPrefix, AlgorithmVersion)
 
 const bugDescriptionTemplate = `This bug is for all test failures where the primary error message is similar to the following (ignoring numbers and hexadecimal values):
 %s`

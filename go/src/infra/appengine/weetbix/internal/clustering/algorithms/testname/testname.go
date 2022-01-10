@@ -26,7 +26,7 @@ const AlgorithmVersion = 3
 //
 // The AlgorithmName must encode the algorithm version, so that each version
 // of an algorithm has a different name.
-var AlgorithmName = fmt.Sprintf("testname-v%v", AlgorithmVersion)
+var AlgorithmName = fmt.Sprintf("%sv%v", clustering.TestNameAlgorithmPrefix, AlgorithmVersion)
 
 // Algorithm represents an instance of the test name-based clustering
 // algorithm.

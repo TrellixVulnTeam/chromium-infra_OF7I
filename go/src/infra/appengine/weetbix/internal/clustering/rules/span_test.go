@@ -6,6 +6,7 @@ package rules
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +34,8 @@ func TestSpan(t *testing.T) {
 		})
 		Convey(`ReadActive`, func() {
 			Convey(`Empty`, func() {
-				SetRulesForTesting(ctx, nil)
+				err := SetRulesForTesting(ctx, nil)
+				So(err, ShouldBeNil)
 
 				rules, err := ReadActive(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
@@ -46,7 +48,8 @@ func TestSpan(t *testing.T) {
 					NewRule(2).WithActive(false).Build(),
 					NewRule(3).Build(),
 				}
-				SetRulesForTesting(ctx, rulesToCreate)
+				err := SetRulesForTesting(ctx, rulesToCreate)
+				So(err, ShouldBeNil)
 
 				rules, err := ReadActive(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
@@ -62,7 +65,9 @@ func TestSpan(t *testing.T) {
 				So(err, ShouldErrLike, "cannot query rule deltas from before project inception")
 			})
 			Convey(`Empty`, func() {
-				SetRulesForTesting(ctx, nil)
+				err := SetRulesForTesting(ctx, nil)
+				So(err, ShouldBeNil)
+
 				rules, err := ReadDelta(span.Single(ctx), testProject, StartingEpoch)
 				So(err, ShouldBeNil)
 				So(rules, ShouldResemble, []*FailureAssociationRule{})
@@ -75,7 +80,8 @@ func TestSpan(t *testing.T) {
 					NewRule(2).WithActive(false).WithLastUpdated(reference.Add(time.Minute)).Build(),
 					NewRule(3).WithLastUpdated(reference.Add(time.Microsecond)).Build(),
 				}
-				SetRulesForTesting(ctx, rulesToCreate)
+				err := SetRulesForTesting(ctx, rulesToCreate)
+				So(err, ShouldBeNil)
 
 				rules, err := ReadDelta(span.Single(ctx), testProject, StartingEpoch)
 				So(err, ShouldBeNil)
@@ -95,6 +101,39 @@ func TestSpan(t *testing.T) {
 				rules, err = ReadDelta(span.Single(ctx), testProject, reference.Add(time.Minute))
 				So(err, ShouldBeNil)
 				So(rules, ShouldResemble, []*FailureAssociationRule{})
+			})
+		})
+		Convey(`ReadMany`, func() {
+			rulesToCreate := []*FailureAssociationRule{
+				NewRule(0).Build(),
+				NewRule(1).WithProject("otherproject").Build(),
+				NewRule(2).WithActive(false).Build(),
+				NewRule(3).Build(),
+			}
+			err := SetRulesForTesting(ctx, rulesToCreate)
+			So(err, ShouldBeNil)
+
+			ids := []string{
+				rulesToCreate[0].RuleID,
+				rulesToCreate[1].RuleID, // Should not exist, exists in different project.
+				rulesToCreate[2].RuleID,
+				rulesToCreate[3].RuleID,
+				strings.Repeat("01", 16), // Non-existent ID, should not exist.
+				strings.Repeat("02", 16), // Non-existent ID, should not exist.
+				rulesToCreate[2].RuleID,  // Repeat of existent ID.
+				strings.Repeat("01", 16), // Repeat of non-existent ID, should not exist.
+			}
+			rules, err := ReadMany(span.Single(ctx), testProject, ids)
+			So(err, ShouldBeNil)
+			So(rules, ShouldResemble, []*FailureAssociationRule{
+				rulesToCreate[0],
+				nil,
+				rulesToCreate[2],
+				rulesToCreate[3],
+				nil,
+				nil,
+				rulesToCreate[2],
+				nil,
 			})
 		})
 		Convey(`ReadLastUpdated`, func() {
@@ -192,10 +231,10 @@ func TestSpan(t *testing.T) {
 				err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "rule definition is not valid")
 			})
-			Convey(`With invalid Bug`, func() {
-				r.Bug.System = ""
+			Convey(`With invalid Bug ID`, func() {
+				r.BugID.System = ""
 				err := testCreate(r, WeetbixSystem)
-				So(err, ShouldErrLike, "bug is not valid")
+				So(err, ShouldErrLike, "bug ID is not valid")
 			})
 			Convey(`With invalid Source Cluster`, func() {
 				So(r.SourceCluster.ID, ShouldNotBeNil)
@@ -228,7 +267,7 @@ func TestSpan(t *testing.T) {
 
 			Convey(`Valid`, func() {
 				r.RuleDefinition = `test = "UpdateTest"`
-				r.Bug = bugs.BugID{System: "monorail", ID: "chromium/651234"}
+				r.BugID = bugs.BugID{System: "monorail", ID: "chromium/651234"}
 				r.IsActive = false
 				r.SourceCluster = clustering.ClusterID{Algorithm: "testname-v1", ID: "00112233445566778899aabbccddeeff"}
 				commitTime, err := testUpdate(r, "testuser@google.com")
@@ -249,10 +288,10 @@ func TestSpan(t *testing.T) {
 					_, err := testUpdate(r, WeetbixSystem)
 					So(err, ShouldErrLike, "rule definition is not valid")
 				})
-				Convey(`With invalid Bug`, func() {
-					r.Bug.System = ""
+				Convey(`With invalid Bug ID`, func() {
+					r.BugID.System = ""
 					_, err := testUpdate(r, WeetbixSystem)
-					So(err, ShouldErrLike, "bug is not valid")
+					So(err, ShouldErrLike, "bug ID is not valid")
 				})
 				Convey(`With invalid Source Cluster`, func() {
 					So(r.SourceCluster.ID, ShouldNotBeNil)

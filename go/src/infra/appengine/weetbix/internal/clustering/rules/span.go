@@ -58,9 +58,9 @@ type FailureAssociationRule struct {
 	LastUpdated time.Time `json:"lastUpdated"`
 	// The user which last updated the rule. Output only.
 	LastUpdatedUser string `json:"lastUpdatedUser"`
-	// Bug is the identifier of the bug that the failures are
+	// BugID is the identifier of the bug that the failures are
 	// associated with.
-	Bug bugs.BugID `json:"bug"`
+	BugID bugs.BugID `json:"bugId"`
 	// Whether the bug should be updated by Weetbix, and whether failures
 	// should still be matched against the rule.
 	IsActive bool `json:"isActive"`
@@ -114,6 +114,40 @@ func ReadDelta(ctx context.Context, projectID string, sinceTime time.Time) ([]*F
 	return rs, nil
 }
 
+// ReadMany reads the failure association rules with the given rule IDs.
+// The returned slice of rules will correspond one-to-one the IDs requested
+// (so returned[i].RuleId == ids[i], assuming the rule exists, else
+// returned[i] == nil). If a rule does not exist, a value of nil will be
+// returned for that ID. The same rule can be requested multiple times.
+func ReadMany(ctx context.Context, project string, ids []string) ([]*FailureAssociationRule, error) {
+	whereClause := `RuleId IN UNNEST(@ruleIds)`
+	params := map[string]interface{}{
+		"ruleIds": ids,
+	}
+	rs, err := readWhere(ctx, project, whereClause, params)
+	if err != nil {
+		return nil, errors.Annotate(err, "query rules by id").Err()
+	}
+	ruleByID := make(map[string]FailureAssociationRule)
+	for _, r := range rs {
+		ruleByID[r.RuleID] = *r
+	}
+	var result []*FailureAssociationRule
+	for _, id := range ids {
+		var entry *FailureAssociationRule
+		rule, ok := ruleByID[id]
+		if ok {
+			// Copy the rule to ensure the rules in the result
+			// are not aliased, even if the same rule ID is requested
+			// multiple times.
+			entry = new(FailureAssociationRule)
+			*entry = rule
+		}
+		result = append(result, entry)
+	}
+	return result, nil
+}
+
 // readWhere failure association rules matching the given where clause,
 // substituting params for any SQL parameters used in that calsue.
 func readWhere(ctx context.Context, projectID string, whereClause string, params map[string]interface{}) ([]*FailureAssociationRule, error) {
@@ -160,7 +194,7 @@ func readWhere(ctx context.Context, projectID string, whereClause string, params
 			CreationUser:    creationUser,
 			LastUpdated:     lastUpdated,
 			LastUpdatedUser: lastUpdatedUser,
-			Bug:             bugs.BugID{System: bugSystem, ID: bugID},
+			BugID:           bugs.BugID{System: bugSystem, ID: bugID},
 			IsActive:        isActive.Valid && isActive.Bool,
 			SourceCluster: clustering.ClusterID{
 				Algorithm: sourceClusterAlgorithm,
@@ -228,8 +262,8 @@ func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 		"CreationUser":    user,
 		"LastUpdated":     spanner.CommitTimestamp,
 		"LastUpdatedUser": user,
-		"BugSystem":       r.Bug.System,
-		"BugId":           r.Bug.ID,
+		"BugSystem":       r.BugID.System,
+		"BugId":           r.BugID.ID,
 		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
@@ -254,8 +288,8 @@ func Update(ctx context.Context, r *FailureAssociationRule, user string) error {
 		"RuleDefinition":  r.RuleDefinition,
 		"LastUpdated":     spanner.CommitTimestamp,
 		"LastUpdatedUser": user,
-		"BugSystem":       r.Bug.System,
-		"BugId":           r.Bug.ID,
+		"BugSystem":       r.BugID.System,
+		"BugId":           r.BugID.ID,
 		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
@@ -271,8 +305,8 @@ func validateRule(r *FailureAssociationRule) error {
 		return errors.New("project must be valid")
 	case !RuleIDRe.MatchString(r.RuleID):
 		return errors.New("rule ID must be valid")
-	case r.Bug.Validate() != nil:
-		return errors.Annotate(r.Bug.Validate(), "bug is not valid").Err()
+	case r.BugID.Validate() != nil:
+		return errors.Annotate(r.BugID.Validate(), "bug ID is not valid").Err()
 	case r.SourceCluster.Validate() != nil && !r.SourceCluster.IsEmpty():
 		return errors.Annotate(r.SourceCluster.Validate(), "source cluster ID is not valid").Err()
 	}

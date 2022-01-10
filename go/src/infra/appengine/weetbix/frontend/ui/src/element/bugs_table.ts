@@ -35,7 +35,7 @@ export class BugsTable extends LitElement {
             <tbody>
                 ${this.rules.map(c => html`
                 <tr>
-                    <td>${c.bug.system}/${c.bug.id}</td>
+                    <td>${c.bugId.system}/${c.bugId.id}</td>
                     <td>${c.ruleDefinition}</td>
                     <td>${c.ruleId}</td>
                     <td>${c.sourceCluster.algorithm}/${c.sourceCluster.id}</td>
@@ -51,7 +51,7 @@ interface FailureAssociationRule {
     project: string;
     ruleId: string;
     ruleDefinition: string;
-    bug: BugId;
+    bugId: BugId;
     sourceCluster: ClusterId;
 }
 

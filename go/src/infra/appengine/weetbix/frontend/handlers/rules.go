@@ -19,10 +19,8 @@ import (
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/span"
 
-	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
-	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // ListRules serves a GET request for
@@ -60,15 +58,18 @@ func (h *Handlers) GetRule(ctx *router.Context) {
 	txn, cancel := span.ReadOnlyTransaction(ctx.Context)
 	defer cancel()
 
-	rule, err := rules.Read(txn, projectID, ruleID)
+	r, err := rules.Read(txn, projectID, ruleID)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Reading rule %s: %s", ruleID, err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
-	ctx.Writer.Header().Add("ETag", ruleETag(rule))
-	response := createRuleResponse(rule, cfg)
+	response := &rule{
+		FailureAssociationRule: *r,
+		BugLink:                createBugLink(r.BugID, cfg),
+	}
+	ctx.Writer.Header().Add("ETag", ruleETag(r))
 	respondWithJSON(ctx, response)
 }
 
@@ -77,48 +78,7 @@ func (h *Handlers) GetRule(ctx *router.Context) {
 type rule struct {
 	rules.FailureAssociationRule
 
-	// BugName is the human-readable display name of the bug.
-	// E.g. "crbug.com/123456".
-	// Output only.
-	BugName string `json:"bugName"`
-	// BugURL is the link to the bug.
-	// E.g. "https://bugs.chromium.org/p/chromium/issues/detail?id=123456".
-	// Output only.
-	BugURL string `json:"bugUrl"`
-}
-
-// createRuleResponse converts a *rules.FailureAssociationRule to a *rule,
-// populating the additional output-only fields.
-func createRuleResponse(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) *rule {
-	// Fallback bug name and URL.
-	bugName := fmt.Sprintf("%s/%s", r.Bug.System, r.Bug.ID)
-	bugURL := ""
-
-	switch r.Bug.System {
-	case bugs.MonorailSystem:
-		project, id, err := r.Bug.MonorailProjectAndID()
-		if err != nil {
-			// Fallback.
-			break
-		}
-		if project == cfg.Monorail.Project {
-			if cfg.Monorail.DisplayPrefix != "" {
-				bugName = fmt.Sprintf("%s/%s", cfg.Monorail.DisplayPrefix, id)
-			} else {
-				bugName = id
-			}
-		}
-		if cfg.Monorail.MonorailHostname != "" {
-			bugURL = fmt.Sprintf("https://%s/p/%s/issues/detail?id=%s", cfg.Monorail.MonorailHostname, project, id)
-		}
-	default:
-		// Fallback.
-	}
-	return &rule{
-		FailureAssociationRule: *r,
-		BugName:                bugName,
-		BugURL:                 bugURL,
-	}
+	BugLink *BugLink `json:"bugLink"`
 }
 
 // Designed to conform to https://google.aip.dev/134.
@@ -183,8 +143,8 @@ func (h *Handlers) PatchRule(ctx *router.Context) {
 			switch path {
 			case "ruleDefinition":
 				rule.RuleDefinition = u.Rule.RuleDefinition
-			case "bug":
-				rule.Bug = u.Rule.Bug
+			case "bugId":
+				rule.BugID = u.Rule.BugID
 			case "isActive":
 				rule.IsActive = u.Rule.IsActive
 			default:
@@ -210,7 +170,10 @@ func (h *Handlers) PatchRule(ctx *router.Context) {
 	updatedRule.LastUpdated = commitTime.In(time.UTC)
 	updatedRule.LastUpdatedUser = user
 	ctx.Writer.Header().Add("ETag", ruleETag(updatedRule))
-	response := createRuleResponse(updatedRule, cfg)
+	response := &rule{
+		FailureAssociationRule: *updatedRule,
+		BugLink:                createBugLink(updatedRule.BugID, cfg),
+	}
 	respondWithJSON(ctx, response)
 }
 
@@ -223,7 +186,7 @@ func validateUpdate(update *ruleUpdateRequest) string {
 				return fmt.Sprintf("Rule definition is not valid: %s", err)
 			}
 		case "bug":
-			if err := update.Rule.Bug.Validate(); err != nil {
+			if err := update.Rule.BugID.Validate(); err != nil {
 				return "Bug is not valid."
 			}
 		case "isActive":

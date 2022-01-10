@@ -21,6 +21,14 @@ const MaxClusterIDBytes = 16
 // of the rules-based clustering algorithm.
 const RulesAlgorithmPrefix = "rules-"
 
+// TestNameAlgorithmPrefix is the algorithm name prefix used by all versions
+// of the test name clustering algorithm.
+const TestNameAlgorithmPrefix = "testname-"
+
+// FailureReasonAlgorithmPrefix is the algorithm name prefix used by all versions
+// of the failure reason clustering algorithm.
+const FailureReasonAlgorithmPrefix = "reason-"
+
 // ClusterID represents the identity of a cluster. The LUCI Project is
 // omitted as it is assumed to be implicit from the context.
 type ClusterID struct {
@@ -91,6 +99,19 @@ func (c ClusterID) IsEmpty() bool {
 // rule based clustering algorithm.
 func (c ClusterID) IsBugCluster() bool {
 	return strings.HasPrefix(c.Algorithm, RulesAlgorithmPrefix)
+}
+
+// IsTestNameCluster returns whether this cluster was made by a version
+// of the test name clustering algorithm.
+func (c ClusterID) IsTestNameCluster() bool {
+	return strings.HasPrefix(c.Algorithm, TestNameAlgorithmPrefix)
+}
+
+// IsFailureReasonCluster returns whether this cluster was made by a version
+// of the failure reason clustering algorithm.
+func (c ClusterID) IsFailureReasonCluster() bool {
+	return strings.HasPrefix(c.Algorithm, FailureReasonAlgorithmPrefix)
+
 }
 
 // SortClusters sorts the given clusters in ascending algorithm and then ID

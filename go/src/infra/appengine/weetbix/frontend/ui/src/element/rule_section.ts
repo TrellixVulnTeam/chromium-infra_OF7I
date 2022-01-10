@@ -96,7 +96,7 @@ export class RuleSection extends LitElement {
                     </tr>
                     <tr>
                         <th>Associated Bug</th>
-                        <td><a href="${r.bugUrl}">${r.bugName}</a></td>
+                        <td><a href="${r.bugLink.url}">${r.bugLink.name}</a></td>
                     </tr>
                     <tr>
                         <th>Enabled</th>
@@ -346,7 +346,7 @@ interface FieldMask {
 
 interface RuleToUpdate {
     ruleDefinition?: string;
-    bug?: BugId;
+    bugId?: BugId;
     isActive?: boolean;
 }
 
@@ -354,17 +354,21 @@ interface RuleToUpdate {
 // Rule is the failure association rule information sent by the server.
 interface Rule {
     project: string;
-    ruleID: string;
+    ruleId: string;
     ruleDefinition: string;
     creationTime: string; // RFC 3339 encoded date/time.
     creationUser: string;
     lastUpdated: string; // RFC 3339 encoded date/time.
     lastUpdatedUser: string;
-    bug: BugId;
-    bugName: string;
-    bugUrl: string;
+    bugId: BugId;
+    bugLink: BugLink;
     isActive: boolean;
     sourceCluster: ClusterId;
+}
+
+interface BugLink {
+    name: string;
+    url: string;
 }
 
 interface BugId {

@@ -196,12 +196,12 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 			continue
 		}
 
-		bugUpdates := bugUpdatesBySystem[r.Bug.System]
+		bugUpdates := bugUpdatesBySystem[r.BugID.System]
 		bugUpdates = append(bugUpdates, &bugs.BugToUpdate{
-			BugName: r.Bug.ID,
+			BugName: r.BugID.ID,
 			Impact:  impact,
 		})
-		bugUpdatesBySystem[r.Bug.System] = bugUpdates
+		bugUpdatesBySystem[r.BugID.System] = bugUpdates
 	}
 
 	for system, bugsToUpdate := range bugUpdatesBySystem {
@@ -279,7 +279,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		Project:        b.project,
 		RuleID:         ruleID,
 		RuleDefinition: rule,
-		Bug:            bugs.BugID{System: system, ID: name},
+		BugID:          bugs.BugID{System: system, ID: name},
 		IsActive:       true,
 		SourceCluster:  cs.ClusterID,
 	}
