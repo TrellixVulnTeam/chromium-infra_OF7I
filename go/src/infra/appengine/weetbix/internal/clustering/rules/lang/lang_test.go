@@ -6,10 +6,11 @@ package lang
 
 import (
 	"fmt"
-	"infra/appengine/weetbix/internal/clustering"
-	weetbixpb "infra/appengine/weetbix/proto/v1"
 	"strings"
 	"testing"
+
+	"infra/appengine/weetbix/internal/clustering"
+	weetbixpb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

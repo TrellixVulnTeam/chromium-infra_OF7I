@@ -71,13 +71,17 @@ func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient
 // The passed progress should reflect the progress of re-clustering as captured
 // in the latest analysis.
 func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgress) error {
-	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion {
-		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running old algorithms version %v (want %v).",
-			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion)
+	if progress.IsReclusteringToNewAlgorithms() {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new algorithms is in progress.", b.project)
 		return nil
 	}
-	if !progress.IncorporatesLatestAlgorithms() {
-		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new algorithms is in progress.", b.project)
+	if progress.IsReclusteringToNewConfig() {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as re-clustering to new configuration is in progress.", b.project)
+		return nil
+	}
+	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running mismatched algorithms version %v (want %v).",
+			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion)
 		return nil
 	}
 

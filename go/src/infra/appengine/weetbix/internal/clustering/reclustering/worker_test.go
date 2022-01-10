@@ -85,6 +85,7 @@ func TestReclustering(t *testing.T) {
 			Project:           testProject,
 			AttemptTimestamp:  attemptTime,
 			AlgorithmsVersion: algorithms.AlgorithmsVersion,
+			ConfigVersion:     config.StartingEpoch,
 			RulesVersion:      time.Time{}, // To be set by the test.
 			ShardCount:        1,
 			ShardsReported:    0,

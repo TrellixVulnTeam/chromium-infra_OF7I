@@ -253,6 +253,10 @@ CREATE TABLE ReclusteringRuns (
   -- Chunks with an AlgorithmsVersion less than this value are eligible to be
   -- re-clustered.
   AlgorithmsVersion INT64 NOT NULL,
+  -- The minimum config version the reclustering run is trying to achieve.
+  -- Chunks with a ConfigVersion less than this value are eligible to be
+  -- re-clustered.
+  ConfigVersion TIMESTAMP,
   -- The minimum rules version the reclustering run is trying to achieve.
   -- Chunks with a RulesVersion less than this value are eligible to be
   -- re-clustered.

@@ -184,6 +184,7 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 		StartChunkID:      t.currentChunkID,
 		EndChunkID:        t.task.EndChunkId,
 		AlgorithmsVersion: t.run.AlgorithmsVersion,
+		ConfigVersion:     t.run.ConfigVersion,
 		RulesVersion:      t.run.RulesVersion,
 	}
 	entries, err := state.ReadNextN(span.Single(ctx), t.task.Project, readOpts, batchSize)

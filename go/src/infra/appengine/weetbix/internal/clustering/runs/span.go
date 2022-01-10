@@ -29,6 +29,10 @@ type ReclusteringRun struct {
 	// to achieve. Chunks with an AlgorithmsVersion less than this
 	// value are eligible to be re-clustered.
 	AlgorithmsVersion int64
+	// The minimum config version the reclustering run is trying to achieve.
+	// Chunks with a ConfigVersion less than this value are eligible to be
+	// re-clustered.
+	ConfigVersion time.Time
 	// The minimum rules version the reclustering run is trying to achieve.
 	// Chunks with a RulesVersion less than this value are eligible to be
 	// re-clustered.
@@ -69,6 +73,7 @@ func Read(ctx context.Context, projectID string, attemptTimestamp time.Time) (*R
 // - Project matching the requested Project ID.
 // - AttemptTimestamp of 1900-01-01 00:00:00 UTC.
 // - AlgorithmsVersion of 1.
+// - ConfigVersion of clusteringcfg.StartingEpoch.
 // - RulesVersion of rules.StartingEpoch.
 // - ShardCount and ShardsReported of 1.
 // - Progress of 1000.
@@ -117,6 +122,7 @@ func fakeLastRow(projectID string) *ReclusteringRun {
 		Project:           projectID,
 		AttemptTimestamp:  time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC),
 		AlgorithmsVersion: 1,
+		ConfigVersion:     config.StartingEpoch,
 		RulesVersion:      rules.StartingEpoch,
 		ShardCount:        1,
 		ShardsReported:    1,
@@ -129,7 +135,7 @@ func fakeLastRow(projectID string) *ReclusteringRun {
 func readLastWhere(ctx context.Context, projectID string, whereClause string, params map[string]interface{}) (*ReclusteringRun, error) {
 	stmt := spanner.NewStatement(`
 		SELECT
-		  AttemptTimestamp, RulesVersion,
+		  AttemptTimestamp, ConfigVersion, RulesVersion,
 		  AlgorithmsVersion, ShardCount, ShardsReported, Progress
 		FROM ReclusteringRuns
 		WHERE Project = @projectID AND (` + whereClause + `)
@@ -145,9 +151,10 @@ func readLastWhere(ctx context.Context, projectID string, whereClause string, pa
 	rs := []*ReclusteringRun{}
 	err := it.Do(func(r *spanner.Row) error {
 		var attemptTimestamp, rulesVersion time.Time
+		var configVersion spanner.NullTime
 		var algorithmsVersion, shardCount, shardsReported, progress int64
 		err := r.Columns(
-			&attemptTimestamp, &rulesVersion,
+			&attemptTimestamp, &configVersion, &rulesVersion,
 			&algorithmsVersion, &shardCount, &shardsReported, &progress,
 		)
 		if err != nil {
@@ -162,6 +169,11 @@ func readLastWhere(ctx context.Context, projectID string, whereClause string, pa
 			ShardCount:        shardCount,
 			ShardsReported:    shardsReported,
 			Progress:          progress,
+		}
+		if configVersion.Valid {
+			run.ConfigVersion = configVersion.Time
+		} else {
+			run.ConfigVersion = config.StartingEpoch
 		}
 		rs = append(rs, run)
 		return nil
@@ -181,6 +193,7 @@ func Create(ctx context.Context, r *ReclusteringRun) error {
 		"Project":           r.Project,
 		"AttemptTimestamp":  r.AttemptTimestamp,
 		"AlgorithmsVersion": r.AlgorithmsVersion,
+		"ConfigVersion":     r.ConfigVersion,
 		"RulesVersion":      r.RulesVersion,
 		"ShardCount":        r.ShardCount,
 		"ShardsReported":    r.ShardsReported,
@@ -198,6 +211,8 @@ func validateRun(r *ReclusteringRun) error {
 		return errors.New("attempt timestamp must be set")
 	case r.AlgorithmsVersion <= 0:
 		return errors.New("algorithms version must be valid")
+	case r.ConfigVersion.Before(config.StartingEpoch):
+		return errors.New("config version must be valid")
 	case r.RulesVersion.Before(rules.StartingEpoch):
 		return errors.New("rules version must be valid")
 	case r.ShardCount <= 0:

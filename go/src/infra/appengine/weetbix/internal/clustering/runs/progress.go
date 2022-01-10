@@ -6,7 +6,6 @@ package runs
 
 import (
 	"context"
-	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"time"
 
 	"go.chromium.org/luci/server/span"
@@ -18,6 +17,9 @@ type ReclusteringTarget struct {
 	// RulesVersion is the rules version the re-clustering run is attempting
 	// to achieve.
 	RulesVersion time.Time `json:"rulesVersion"`
+	// ConfigVersion is the config version the re-clustering run is attempting
+	// to achieve.
+	ConfigVersion time.Time `json:"configVersion"`
 	// AlgorithmsVersion is the algorithms version the re-clustering run is
 	// attempting to achieve.
 	AlgorithmsVersion int64 `json:"algorithmsVersion"`
@@ -30,9 +32,12 @@ type ReclusteringProgress struct {
 	// ProgressPerMille is the progress of the current re-clustering run,
 	// measured in thousandths (per mille).
 	ProgressPerMille int `json:"progressPerMille"`
-	// LatestAlgorithmsVersion is the latest version of algorithms known to
-	// Weetbix.
+	// LatestAlgorithmsVersion is the latest version of clustering algorithms
+	// used in a Weetbix re-clustering run.
 	LatestAlgorithmsVersion int64 `json:"latestAlgorithmsVersion"`
+	// LatestConfigVersion is the latest version of configuration used
+	// in a Weetbix re-clustering run.
+	LatestConfigVersion time.Time `json:"latestConfigVersion"`
 	// Next is the goal of the current re-clustering run. (For which
 	// ProgressPerMille is specified.)
 	Next ReclusteringTarget `json:"next"`
@@ -64,35 +69,51 @@ func ReadReclusteringProgress(ctx context.Context, project string) (*Reclusterin
 	// Scale run progress to being from 0 to 1000.
 	runProgress := int(lastWithProgress.Progress / lastWithProgress.ShardCount)
 
-	latestAlgorithmsVersion := int64(algorithms.AlgorithmsVersion)
-	if last.AlgorithmsVersion > latestAlgorithmsVersion {
-		// This GAE instance is running old code, use the
-		// algorithms version on the last re-clustering run instead.
-		// Note that the AlgorithmsVersion in each subsequent
-		// re-clustering run is guaranteed to be non-decreasing, so
-		// the AlgorithmsVersion in the latest run is guaranteed
-		// to be the highest of all runs so far.
-		latestAlgorithmsVersion = last.AlgorithmsVersion
-	}
+	// The AlgorithmsVersion in each subsequent
+	// re-clustering run is guaranteed to be non-decreasing, so
+	// the AlgorithmsVersion in the latest run is guaranteed
+	// to be the highest of all runs so far.
+	latestAlgorithmsVersion := last.AlgorithmsVersion
+
+	// The ConfigVersion in each subsequent re-clustering run is
+	// guaranteed to be non-decreasing.
+	latestConfigVersion := last.ConfigVersion
 
 	return &ReclusteringProgress{
 		ProgressPerMille:        runProgress,
 		LatestAlgorithmsVersion: latestAlgorithmsVersion,
+		LatestConfigVersion:     latestConfigVersion,
 		Next: ReclusteringTarget{
 			RulesVersion:      lastWithProgress.RulesVersion,
+			ConfigVersion:     lastWithProgress.ConfigVersion,
 			AlgorithmsVersion: lastWithProgress.AlgorithmsVersion,
 		},
 		Last: ReclusteringTarget{
 			RulesVersion:      lastCompleted.RulesVersion,
+			ConfigVersion:     lastCompleted.ConfigVersion,
 			AlgorithmsVersion: lastCompleted.AlgorithmsVersion,
 		},
 	}, nil
 }
 
-// IncorporatesLatestAlgorithms returns whether only the latest
-// algorithms are in Weetbix's clustering output.
-func (p *ReclusteringProgress) IncorporatesLatestAlgorithms() bool {
-	return p.Last.AlgorithmsVersion >= p.LatestAlgorithmsVersion
+// IsReclusteringToNewAlgorithms returns whether Weetbix's
+// clustering output is being updated to use a newer standard of
+// algorithms and is not yet stable. The algorithms version Weetbix
+// is re-clustering to is accessible via LatestAlgorithmsVersion.
+func (p *ReclusteringProgress) IsReclusteringToNewAlgorithms() bool {
+	return p.Last.AlgorithmsVersion < p.LatestAlgorithmsVersion
+}
+
+// IsReclusteringToNewConfig returns whether Weetbix's
+// clustering output is in the process of being updated to a later
+// configuration standard and is not yet stable.
+// The configuration version Weetbix is re-clustering to is accessible
+// via LatestConfigVersion.
+// Clients using re-clustering output should verify they are using
+// the configuration version defined by LatestConfigVersion when
+// interpreting the output.
+func (p *ReclusteringProgress) IsReclusteringToNewConfig() bool {
+	return p.Last.ConfigVersion.Before(p.LatestConfigVersion)
 }
 
 // IncorporatesRulesVersion returns returns whether only rules

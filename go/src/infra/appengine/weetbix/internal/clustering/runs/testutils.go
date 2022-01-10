@@ -30,6 +30,7 @@ func NewRun(uniqifier int) *RunBuilder {
 		Project:           testProject,
 		AttemptTimestamp:  time.Date(2010, time.January, 1, 1, 0, 0, uniqifier, time.UTC),
 		AlgorithmsVersion: int64(uniqifier + 1),
+		ConfigVersion:     time.Date(2011, time.January, 1, 1, 0, 0, uniqifier, time.UTC),
 		RulesVersion:      time.Date(2012, time.January, 1, 1, 0, 0, uniqifier, time.UTC),
 		ShardCount:        int64(uniqifier + 1),
 		ShardsReported:    int64(uniqifier / 2),
@@ -55,6 +56,12 @@ func (b *RunBuilder) WithAttemptTimestamp(attemptTimestamp time.Time) *RunBuilde
 // WithRulesVersion specifies the rules version to use on the run.
 func (b *RunBuilder) WithRulesVersion(value time.Time) *RunBuilder {
 	b.run.RulesVersion = value
+	return b
+}
+
+// WithRulesVersion specifies the config version to use on the run.
+func (b *RunBuilder) WithConfigVersion(value time.Time) *RunBuilder {
+	b.run.ConfigVersion = value
 	return b
 }
 

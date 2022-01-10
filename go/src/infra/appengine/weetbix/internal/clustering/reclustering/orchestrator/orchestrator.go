@@ -242,15 +242,23 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 			// this orchestrator is running old code.
 			newRun.AlgorithmsVersion = lastRun.AlgorithmsVersion
 		}
+		// TODO(crbug.com/1243174): Populate latest config version.
+		newRun.ConfigVersion = config.StartingEpoch
+		if lastRun.ConfigVersion.After(newRun.ConfigVersion) {
+			// Never roll back to an earlier config version. Assume
+			// this orchestrator is running old code.
+			newRun.ConfigVersion = lastRun.ConfigVersion
+		}
 	} else {
 		// It is foreseeable that re-clustering rules could have changed
-		// every time the orchestrator runs. If we update the rules and
-		// algorithms version for each new run, we may be continuously
+		// every time the orchestrator runs. If we update the rules
+		// version for each new run, we may be continuously
 		// re-clustering chunks early on in the keyspace without ever
 		// getting around to later chunks. To ensure progress, and ensure
 		// that every chunk gets a fair slice of re-clustering resources,
 		// keep the same re-clustering goals until the last run has completed.
 		newRun.RulesVersion = lastRun.RulesVersion
+		newRun.ConfigVersion = lastRun.ConfigVersion
 		newRun.AlgorithmsVersion = lastRun.AlgorithmsVersion
 	}
 	err = runs.Create(ctx, newRun)

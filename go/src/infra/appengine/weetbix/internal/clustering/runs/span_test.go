@@ -13,6 +13,7 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/testutil"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -43,6 +44,7 @@ func TestSpan(t *testing.T) {
 				Project:           "emptyproject",
 				AttemptTimestamp:  time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC),
 				AlgorithmsVersion: 1,
+				ConfigVersion:     config.StartingEpoch,
 				RulesVersion:      rules.StartingEpoch,
 				ShardCount:        1,
 				ShardsReported:    1,
@@ -120,7 +122,7 @@ func TestSpan(t *testing.T) {
 				So(progress.IncorporatesRulesVersion(rulesVersion.Add(-1*time.Hour)), ShouldBeTrue)
 				So(progress.IncorporatesRulesVersion(rulesVersion.Add(-2*time.Hour)), ShouldBeTrue)
 			})
-			Convey(`Algorithms Upgrading (started)`, func() {
+			Convey(`Algorithms Upgrading`, func() {
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
 				runs := []*ReclusteringRun{
 					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion + 1).WithNoReportedProgress().Build(),
@@ -134,14 +136,16 @@ func TestSpan(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion+1)
-				So(progress.IncorporatesLatestAlgorithms(), ShouldBeFalse)
+				So(progress.IsReclusteringToNewAlgorithms(), ShouldBeTrue)
 			})
-			Convey(`Algorithms Upgrading (not yet started)`, func() {
+			Convey(`Config Upgrading`, func() {
+				configVersion := time.Date(2025, time.January, 1, 1, 0, 0, 0, time.UTC)
+
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
 				runs := []*ReclusteringRun{
-					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithNoReportedProgress().Build(),
-					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithReportedProgress(500).Build(),
-					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).WithCompletedProgress().Build(),
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithConfigVersion(configVersion).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithConfigVersion(configVersion).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithConfigVersion(configVersion.Add(-1 * time.Hour)).WithCompletedProgress().Build(),
 				}
 				err := SetRunsForTesting(ctx, runs)
 				So(err, ShouldBeNil)
@@ -149,15 +153,17 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion)
-				So(progress.IncorporatesLatestAlgorithms(), ShouldBeFalse)
+				So(progress.LatestConfigVersion, ShouldEqual, configVersion)
+				So(progress.IsReclusteringToNewConfig(), ShouldBeTrue)
 			})
-			Convey(`Algorithms Stable`, func() {
+			Convey(`Algorithms and Config Stable`, func() {
 				reference := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+				configVersion := time.Date(2025, time.January, 1, 1, 0, 0, 0, time.UTC)
+				algVersion := int64(2)
 				runs := []*ReclusteringRun{
-					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithNoReportedProgress().Build(),
-					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithReportedProgress(500).Build(),
-					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algorithms.AlgorithmsVersion).WithCompletedProgress().Build(),
+					NewRun(0).WithAttemptTimestamp(reference.Add(-5 * time.Minute)).WithAlgorithmsVersion(algVersion).WithConfigVersion(configVersion).WithNoReportedProgress().Build(),
+					NewRun(1).WithAttemptTimestamp(reference.Add(-10 * time.Minute)).WithAlgorithmsVersion(algVersion).WithConfigVersion(configVersion).WithReportedProgress(500).Build(),
+					NewRun(2).WithAttemptTimestamp(reference.Add(-20 * time.Minute)).WithAlgorithmsVersion(algVersion).WithConfigVersion(configVersion).WithCompletedProgress().Build(),
 				}
 				err := SetRunsForTesting(ctx, runs)
 				So(err, ShouldBeNil)
@@ -165,8 +171,10 @@ func TestSpan(t *testing.T) {
 				progress, err := ReadReclusteringProgress(ctx, testProject)
 				So(err, ShouldBeNil)
 
-				So(progress.LatestAlgorithmsVersion, ShouldEqual, algorithms.AlgorithmsVersion)
-				So(progress.IncorporatesLatestAlgorithms(), ShouldBeTrue)
+				So(progress.LatestAlgorithmsVersion, ShouldEqual, algVersion)
+				So(progress.LatestConfigVersion, ShouldEqual, configVersion)
+				So(progress.IsReclusteringToNewAlgorithms(), ShouldBeFalse)
+				So(progress.IsReclusteringToNewConfig(), ShouldBeFalse)
 			})
 		})
 		Convey(`Reporting Progress`, func() {

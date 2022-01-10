@@ -141,6 +141,7 @@ func TestOrchestrator(t *testing.T) {
 				Project:           "project-a",
 				AttemptTimestamp:  expectedAttemptTime,
 				AlgorithmsVersion: algorithms.AlgorithmsVersion,
+				ConfigVersion:     config.StartingEpoch,
 				RulesVersion:      rules.StartingEpoch,
 				ShardCount:        1,
 				ShardsReported:    0,
@@ -150,6 +151,7 @@ func TestOrchestrator(t *testing.T) {
 				Project:           "project-b",
 				AttemptTimestamp:  expectedAttemptTime,
 				AlgorithmsVersion: algorithms.AlgorithmsVersion,
+				ConfigVersion:     config.StartingEpoch,
 				RulesVersion:      rulesVersionB,
 				ShardCount:        3,
 				ShardsReported:    0,
@@ -189,6 +191,7 @@ func TestOrchestrator(t *testing.T) {
 					// So as not to overlap with the run that should be created.
 					AttemptTimestamp:  expectedAttemptTime.Add(-5 * time.Minute),
 					AlgorithmsVersion: 1,
+					ConfigVersion:     config.StartingEpoch,
 					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
 					ShardCount:        10,
 					ShardsReported:    10,
@@ -254,6 +257,7 @@ func TestOrchestrator(t *testing.T) {
 					// So as to overlap with the run that should be created.
 					AttemptTimestamp:  expectedAttemptTime.Add(-1 * time.Minute),
 					AlgorithmsVersion: 1,
+					ConfigVersion:     config.StartingEpoch,
 					RulesVersion:      rulesVersionB.Add(-1 * time.Hour),
 					ShardCount:        1,
 					ShardsReported:    1,
