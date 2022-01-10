@@ -86,6 +86,13 @@ export class ReclusteringProgressIndicator extends LitElement {
 
         let reclusteringTarget = "updated clustering algorithms";
         let progressPerMille = this.progressToLatestAlgorithms(this.progress);
+
+        const configProgress = this.progressToLatestConfig(this.progress);
+        if (configProgress < progressPerMille) {
+            reclusteringTarget = "updated clustering configuration";
+            progressPerMille = configProgress;
+        }
+
         if (this.hasRule && this.ruleLastUpdated) {
             const ruleProgress = this.progressToRulesVersion(this.progress, this.ruleLastUpdated);
             if (ruleProgress < progressPerMille) {
@@ -164,6 +171,13 @@ export class ReclusteringProgressIndicator extends LitElement {
         });
     }
 
+    progressToLatestConfig(p: ReclusteringProgress): number {
+        const targetConfigVersion = DateTime.fromISO(p.latestConfigVersion)
+        return this.progressTo(p, (t: ReclusteringTarget) => {
+            return DateTime.fromISO(t.configVersion) >= targetConfigVersion
+        });
+    }
+
     progressToRulesVersion(p: ReclusteringProgress, rulesVersion: string): number {
         const d = DateTime.fromISO(rulesVersion)
         return this.progressTo(p, (t: ReclusteringTarget) => {
@@ -215,6 +229,7 @@ export interface RefreshAnalysisEvent {
 // is re-clustering to.
 interface ReclusteringTarget {
     rulesVersion: string; // RFC 3339 encoded date/time.
+    configVersion: string; // RFC 3339 encoded date/time.
     algorithmsVersion: number;
 }
 
@@ -225,9 +240,12 @@ interface ReclusteringProgress {
     // ProgressPerMille is the progress of the current re-clustering run,
     // measured in thousandths (per mille).
     progressPerMille: number;
-    // LatestAlgorithmsVersion is the latest version of algorithms known to
-    // Weetbix.
+    // LatestAlgorithmsVersion is the latest version of algorithms
+    // used in a Weetbix re-clustering run.
     latestAlgorithmsVersion: number;
+    // LatestAlgorithmsVersion is the latest version of configuration
+    // used in a Weetbix re-clustering run, as a RFC 3339 encoded date/time.
+    latestConfigVersion: string;
     // Next is the goal of the current re-clustering run. (For which
     // ProgressPerMille is specified.)
     next: ReclusteringTarget;
