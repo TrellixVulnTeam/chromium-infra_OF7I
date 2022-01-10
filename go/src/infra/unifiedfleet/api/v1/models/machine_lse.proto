@@ -29,7 +29,7 @@ import "infra/libs/skylab/inventory/device.proto";
 // It refers to the entity in the lab which has Machine(s) associated
 // with it. It also has other components associated with it.
 //
-// Next tag: 18
+// Next tag: 22
 message MachineLSE {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/MachineLSE"
@@ -54,6 +54,9 @@ message MachineLSE {
     oneof lse {
         ChromeBrowserMachineLSE chrome_browser_machine_lse = 4;
         ChromeOSMachineLSE chromeos_machine_lse = 5;
+
+        // AttachedDeviceLSE refers to the attached device LSE to be tracked.
+        AttachedDeviceLSE attached_device_lse = 20;
     }
     // The machines that this LSE is linked to. No machine is linked if it's empty.
     // A machine cannot be linked to multiple LSEs (no use case for now).
@@ -118,6 +121,10 @@ message MachineLSE {
 
     // State of the host resource
     State resource_state = 17;
+
+    // Schedulable field will determine if a MachineLSE should be exposed to the
+    // scheduling layer (currently Swarming) or not.
+    bool schedulable = 21;
 }
 
 // ChromeBrowserMachineLSE refers to the entity
@@ -261,4 +268,21 @@ message ChromeOSServerLSE {
         type: "unified-fleet-system.appspot.com/Vlan"
     }];
     int32 service_port = 2;
+}
+
+// AttachedDeviceLSE refers to the entity in either Chrome OS or Browser lab
+// which is a USB-device.
+//
+// Next Tag: 4
+message AttachedDeviceLSE {
+  // The OS version that is running in the attached device (if applicable). E.g.
+  // Android 12, iOS 12.5.3.
+  OSVersion os_version = 1;
+  // The hostname of the device that the attached device is attached to.
+  // Examples:
+  //   1. A webcam (attached device) attached to a laptop (host).
+  //   2. A phone (attached device) attached to a Dell server (host).
+  string associated_hostname = 2;
+  // The port used of the device that the attached device is attached to.
+  string associated_host_port = 3;
 }

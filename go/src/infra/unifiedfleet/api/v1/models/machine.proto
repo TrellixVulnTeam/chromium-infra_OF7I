@@ -18,6 +18,8 @@ import "infra/unifiedfleet/api/v1/models/state.proto";
 
 // Machine refers to the devices or bare metal servers
 // which serves the tests directly.
+//
+// Next Tag: 13
 message Machine {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/Machine"
@@ -42,6 +44,8 @@ message Machine {
         // and automatically get it using Machine name once a machine gets recorded.
         ChromeOSMachine chromeos_machine = 5 [
                 (google.api.field_behavior) = OUTPUT_ONLY];
+        // Attached Device. Device data for any USB-attached devices.
+        AttachedDevice attached_device = 11;
     };
     // Record the last update timestamp of this machine (In UTC timezone)
     google.protobuf.Timestamp update_time = 6 [
@@ -57,6 +61,9 @@ message Machine {
 
     // State of the machine
     State resource_state = 10;
+
+    // Asset tag of the machine
+    string asset_tag = 12;
 }
 
 // ChromeBrowserMachine refers to bare metal servers in Chrome Browser lab
@@ -127,4 +134,24 @@ enum ChromeOSDeviceType {
     DEVICE_CHROMEBOOK = 1;
     DEVICE_LABSTATION = 2;
     DEVICE_SERVO = 3;
+}
+
+// AttachedDevice refers to attached devices in the labs.
+//
+// Next Tag: 5
+message AttachedDevice {
+  // Manufacturer of the device. E.g. Apple, Samsung.
+  string manufacturer = 1;
+  // Device type of the device. E.g. iPad, Android phone, Android tablet.
+  AttachedDeviceType device_type = 2;
+  // Reference board of the device. E.g. goldfish, bravo, GT-I9000
+  string build_target = 3;
+  // Model of the device aka product in some cases. E.g. Nexus One, GT-I9000
+  string model = 4;
+}
+
+// AttachedDeviceType refers to the different types of device/machine in the
+// lab environment.
+enum AttachedDeviceType {
+  ATTACHED_DEVICE_TYPE_UNSPECIFIED = 0;
 }
