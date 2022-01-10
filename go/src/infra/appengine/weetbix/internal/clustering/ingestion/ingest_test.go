@@ -14,15 +14,20 @@ import (
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/chunkstore"
 	"infra/appengine/weetbix/internal/clustering/rules"
+	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
 
+	"go.chromium.org/luci/gae/impl/memory"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/caching"
 	"google.golang.org/protobuf/proto"
@@ -37,6 +42,7 @@ func TestIngest(t *testing.T) {
 	Convey(`With Ingestor`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx = caching.WithEmptyProcessCache(ctx) // For rules cache.
+		ctx = memory.Use(ctx)                    // For project config in datastore.
 
 		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
@@ -84,9 +90,23 @@ func TestIngest(t *testing.T) {
 
 		// This rule should match failures used in this test.
 		rule := rules.NewRule(100).WithProject(opts.Project).WithRuleDefinition(`reason LIKE "Failure reason%"`).Build()
-		rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
+		err := rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
 			rule,
 		})
+		So(err, ShouldBeNil)
+
+		// Setup clustering configuration
+		projectCfg := &configpb.ProjectConfig{
+			Clustering:  algorithms.TestClusteringConfig(),
+			LastUpdated: timestamppb.New(time.Date(2020, time.January, 5, 0, 0, 0, 1, time.UTC)),
+		}
+		projectCfgs := map[string]*configpb.ProjectConfig{
+			"chromium": projectCfg,
+		}
+		So(config.SetTestProjectConfig(ctx, projectCfgs), ShouldBeNil)
+
+		cfg, err := compiledcfg.NewConfig(projectCfg)
+		So(err, ShouldBeNil)
 
 		Convey(`Ingest one failure`, func() {
 			const uniqifier = 1
@@ -99,9 +119,9 @@ func TestIngest(t *testing.T) {
 			const testRunNum = 0
 			const resultNum = 0
 			regexpCF := expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTestRun, resultNum)
-			setRegexpClustered(regexpCF)
+			setRegexpClustered(cfg, regexpCF)
 			testnameCF := expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTestRun, resultNum)
-			setTestNameClustered(testnameCF)
+			setTestNameClustered(cfg, testnameCF)
 			ruleCF := expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTestRun, resultNum)
 			setRuleClustered(ruleCF, rule)
 			expectedCFs := []*bqpb.ClusteredFailureRow{regexpCF, testnameCF, ruleCF}
@@ -210,7 +230,7 @@ func TestIngest(t *testing.T) {
 
 				// Recompute the cluster ID to reflect the different
 				// failure reason.
-				setRegexpClustered(regexpCF)
+				setRegexpClustered(cfg, regexpCF)
 
 				// As the test result does not match any rules, the
 				// test result should be included in the suggested clusters
@@ -236,9 +256,9 @@ func TestIngest(t *testing.T) {
 				var testRunExp []*bqpb.ClusteredFailureRow
 				for j := 0; j < resultsPerTestRun; j++ {
 					regexpCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
-					setRegexpClustered(regexpCF)
+					setRegexpClustered(cfg, regexpCF)
 					testnameCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
-					setTestNameClustered(testnameCF)
+					setTestNameClustered(cfg, testnameCF)
 					ruleCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
 					setRuleClustered(ruleCF, rule)
 					testRunExp = append(testRunExp, regexpCF, testnameCF, ruleCF)
@@ -288,9 +308,9 @@ func TestIngest(t *testing.T) {
 				for t := 0; t < testRunsPerVariant; t++ {
 					for j := 0; j < resultsPerTestRun; j++ {
 						regexpCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
-						setRegexpClustered(regexpCF)
+						setRegexpClustered(cfg, regexpCF)
 						testnameCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
-						setTestNameClustered(testnameCF)
+						setTestNameClustered(cfg, testnameCF)
 						ruleCF := expectedClusteredFailure(uniqifier, testRunsPerVariant, t, resultsPerTestRun, j)
 						setRuleClustered(ruleCF, rule)
 						expectedCFs = append(expectedCFs, regexpCF, testnameCF, ruleCF)
@@ -304,16 +324,16 @@ func TestIngest(t *testing.T) {
 	})
 }
 
-func setTestNameClustered(e *bqpb.ClusteredFailureRow) {
+func setTestNameClustered(cfg *compiledcfg.ProjectConfig, e *bqpb.ClusteredFailureRow) {
 	e.ClusterAlgorithm = testname.AlgorithmName
-	e.ClusterId = hex.EncodeToString((&testname.Algorithm{}).Cluster(&clustering.Failure{
+	e.ClusterId = hex.EncodeToString((&testname.Algorithm{}).Cluster(cfg, &clustering.Failure{
 		TestID: e.TestId,
 	}))
 }
 
-func setRegexpClustered(e *bqpb.ClusteredFailureRow) {
+func setRegexpClustered(cfg *compiledcfg.ProjectConfig, e *bqpb.ClusteredFailureRow) {
 	e.ClusterAlgorithm = failurereason.AlgorithmName
-	e.ClusterId = hex.EncodeToString((&failurereason.Algorithm{}).Cluster(&clustering.Failure{
+	e.ClusterId = hex.EncodeToString((&failurereason.Algorithm{}).Cluster(cfg, &clustering.Failure{
 		Reason: &pb.FailureReason{PrimaryErrorMessage: e.FailureReason.PrimaryErrorMessage},
 	}))
 }

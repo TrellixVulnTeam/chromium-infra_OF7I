@@ -12,6 +12,7 @@ import (
 
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 
 	"go.chromium.org/luci/common/errors"
@@ -99,7 +100,7 @@ func clusterLike(failure *clustering.Failure) (like string, ok bool) {
 
 // Cluster clusters the given test failure and returns its cluster ID (if it
 // can be clustered) or nil otherwise.
-func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
+func (a *Algorithm) Cluster(config *compiledcfg.ProjectConfig, failure *clustering.Failure) []byte {
 	// Get the like expression that defines the cluster.
 	key, ok := clusterLike(failure)
 	if !ok {
@@ -119,7 +120,7 @@ const bugDescriptionTemplateExact = `This bug is for all test failures with the 
 
 // ClusterDescription returns a description of the cluster, for use when
 // filing bugs, with the help of the given example failure.
-func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription {
+func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription {
 	// Get the like expression that defines the cluster.
 	like, ok := clusterLike(example)
 	if ok {
@@ -133,13 +134,12 @@ func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.
 			Title:       example.TestID,
 			Description: fmt.Sprintf(bugDescriptionTemplateExact, example.TestID),
 		}
-
 	}
 }
 
 // FailureAssociationRule returns a failure association rule that
 // captures the definition of cluster containing the given example.
-func (a *Algorithm) FailureAssociationRule(example *clustering.Failure) string {
+func (a *Algorithm) FailureAssociationRule(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {
 	like, ok := clusterLike(example)
 	if ok {
 		return fmt.Sprintf("test LIKE %s", strconv.QuoteToGraphic(like))

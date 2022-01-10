@@ -14,6 +14,7 @@ import (
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	"infra/appengine/weetbix/internal/clustering/state"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 
 	"go.chromium.org/luci/common/trace"
 	"go.chromium.org/luci/server/caching"
@@ -67,7 +68,7 @@ type PendingUpdate struct {
 // If the chunk does exist in Spanner, pass the state.Entry read
 // from Spanner, along with the test results. The chunk will be
 // re-clustered and updated.
-func PrepareUpdate(ctx context.Context, ruleset *cache.Ruleset, chunk *cpb.Chunk, existingState *state.Entry) (upd *PendingUpdate, err error) {
+func PrepareUpdate(ctx context.Context, ruleset *cache.Ruleset, config *compiledcfg.ProjectConfig, chunk *cpb.Chunk, existingState *state.Entry) (upd *PendingUpdate, err error) {
 	_, s := trace.StartSpan(ctx, "infra/appengine/weetbix/internal/clustering/reclustering.PrepareUpdate")
 	s.Attribute("project", existingState.Project)
 	s.Attribute("chunkID", existingState.ChunkID)
@@ -84,7 +85,7 @@ func PrepareUpdate(ctx context.Context, ruleset *cache.Ruleset, chunk *cpb.Chunk
 		existingClustering = existingState.Clustering
 	}
 
-	newClustering := algorithms.Cluster(ruleset, existingClustering, clustering.FailuresFromProtos(chunk.Failures))
+	newClustering := algorithms.Cluster(config, ruleset, existingClustering, clustering.FailuresFromProtos(chunk.Failures))
 
 	updates := prepareClusterUpdates(chunk, existingClustering, newClustering)
 

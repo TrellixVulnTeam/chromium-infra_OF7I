@@ -23,6 +23,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -30,13 +31,16 @@ import (
 	"cloud.google.com/go/bigquery"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/config/validation"
+	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/span"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestRun(t *testing.T) {
 	Convey("Run bug updates", t, func() {
 		ctx := testutil.SpannerTestContext(t)
+		ctx = memory.Use(ctx)
 
 		f := &monorail.FakeIssuesStore{
 			NextID:            100,
@@ -45,16 +49,6 @@ func TestRun(t *testing.T) {
 		user := monorail.AutomationUsers[0]
 		mc, err := monorail.NewClient(monorail.UseFakeIssuesClient(ctx, f, user), "myhost")
 		So(err, ShouldBeNil)
-
-		suggestedClusters := []*analysis.ClusterSummary{
-			makeSuggestedCluster(0),
-			makeSuggestedCluster(1),
-			makeSuggestedCluster(2),
-			makeSuggestedCluster(3),
-		}
-		ac := &fakeAnalysisClient{
-			clusters: suggestedClusters,
-		}
 
 		project := "chromium"
 		monorailCfg := monorail.ChromiumTestConfig()
@@ -70,22 +64,41 @@ func TestRun(t *testing.T) {
 		projectCfg := &configpb.ProjectConfig{
 			Monorail:           monorailCfg,
 			BugFilingThreshold: thres,
+			LastUpdated:        timestamppb.New(time.Date(2030, time.July, 1, 0, 0, 0, 0, time.UTC)),
+		}
+		projectsCfg := map[string]*configpb.ProjectConfig{
+			project: projectCfg,
+		}
+		err = config.SetTestProjectConfig(ctx, projectsCfg)
+		So(err, ShouldBeNil)
+
+		compiledCfg, err := compiledcfg.NewConfig(projectCfg)
+		So(err, ShouldBeNil)
+
+		suggestedClusters := []*analysis.ClusterSummary{
+			makeSuggestedCluster(compiledCfg, 0),
+			makeSuggestedCluster(compiledCfg, 1),
+			makeSuggestedCluster(compiledCfg, 2),
+			makeSuggestedCluster(compiledCfg, 3),
+		}
+		ac := &fakeAnalysisClient{
+			clusters: suggestedClusters,
 		}
 
 		opts := updateOptions{
 			project:            project,
 			analysisClient:     ac,
 			monorailClient:     mc,
-			projectConfig:      projectCfg,
 			maxBugsFiledPerRun: 1,
 		}
 
 		// Unless otherwise specified, assume re-clustering has caught up to
-		// the latest version of algorithms.
+		// the latest version of algorithms and config.
 		err = runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
 			runs.NewRun(0).
 				WithProject(project).
 				WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+				WithConfigVersion(projectCfg.LastUpdated.AsTime()).
 				WithRulesVersion(rules.StartingEpoch).
 				WithCompletedProgress().Build(),
 		})
@@ -110,7 +123,7 @@ func TestRun(t *testing.T) {
 			So(f.Issues, ShouldBeNil)
 		})
 		Convey("With a suggested cluster above impact thresold", func() {
-			sourceClusterID := reasonClusterID("Failed to connect to 100.1.1.99.")
+			sourceClusterID := reasonClusterID(compiledCfg, "Failed to connect to 100.1.1.99.")
 			suggestedClusters[1].ClusterID = sourceClusterID
 			suggestedClusters[1].ExampleFailureReason = bigquery.NullString{StringVal: "Failed to connect to 100.1.1.105.", Valid: true}
 
@@ -214,6 +227,7 @@ func TestRun(t *testing.T) {
 					runs.NewRun(0).
 						WithProject(project).
 						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+						WithConfigVersion(projectCfg.LastUpdated.AsTime()).
 						WithRulesVersion(createTime).
 						WithCompletedProgress().Build(),
 				})
@@ -227,6 +241,21 @@ func TestRun(t *testing.T) {
 					runs.NewRun(0).
 						WithProject(project).
 						WithAlgorithmsVersion(algorithms.AlgorithmsVersion - 1).
+						WithConfigVersion(projectCfg.LastUpdated.AsTime()).
+						WithRulesVersion(rules.StartingEpoch).
+						WithCompletedProgress().Build(),
+				})
+				So(err, ShouldBeNil)
+
+				expectCreate = false
+				test()
+			})
+			Convey("Without re-clustering caught up to latest config", func() {
+				err = runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
+					runs.NewRun(0).
+						WithProject(project).
+						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+						WithConfigVersion(projectCfg.LastUpdated.AsTime().Add(-1 * time.Hour)).
 						WithRulesVersion(rules.StartingEpoch).
 						WithCompletedProgress().Build(),
 				})
@@ -281,7 +310,7 @@ func TestRun(t *testing.T) {
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-1"`,
 						Bug:             bugs.BugID{System: "monorail", ID: "chromium/100"},
-						SourceCluster:   testIDClusterID("testname-1"),
+						SourceCluster:   testIDClusterID(compiledCfg, "testname-1"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
@@ -290,7 +319,7 @@ func TestRun(t *testing.T) {
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-2"`,
 						Bug:             bugs.BugID{System: "monorail", ID: "chromium/101"},
-						SourceCluster:   testIDClusterID("testname-2"),
+						SourceCluster:   testIDClusterID(compiledCfg, "testname-2"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
@@ -299,7 +328,7 @@ func TestRun(t *testing.T) {
 						Project:         "chromium",
 						RuleDefinition:  `test = "testname-3"`,
 						Bug:             bugs.BugID{System: "monorail", ID: "chromium/102"},
-						SourceCluster:   testIDClusterID("testname-3"),
+						SourceCluster:   testIDClusterID(compiledCfg, "testname-3"),
 						IsActive:        true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
@@ -366,6 +395,7 @@ func TestRun(t *testing.T) {
 					runs.NewRun(0).
 						WithProject(project).
 						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
+						WithConfigVersion(projectCfg.LastUpdated.AsTime()).
 						WithRulesVersion(rs[2].LastUpdated).
 						WithCompletedProgress().Build(),
 				})
@@ -425,10 +455,10 @@ func TestRun(t *testing.T) {
 	})
 }
 
-func makeSuggestedCluster(uniqifier int) *analysis.ClusterSummary {
+func makeSuggestedCluster(config *compiledcfg.ProjectConfig, uniqifier int) *analysis.ClusterSummary {
 	testID := fmt.Sprintf("testname-%v", uniqifier)
 	return &analysis.ClusterSummary{
-		ClusterID:     testIDClusterID(testID),
+		ClusterID:     testIDClusterID(config, testID),
 		Failures1d:    analysis.Counts{Residual: 9},
 		Failures3d:    analysis.Counts{Residual: 29},
 		Failures7d:    analysis.Counts{Residual: 69},
@@ -446,25 +476,25 @@ func makeBugCluster(ruleID string) *analysis.ClusterSummary {
 	}
 }
 
-func testIDClusterID(testID string) clustering.ClusterID {
+func testIDClusterID(config *compiledcfg.ProjectConfig, testID string) clustering.ClusterID {
 	testAlg, err := algorithms.SuggestingAlgorithm(testname.AlgorithmName)
 	So(err, ShouldBeNil)
 
 	return clustering.ClusterID{
 		Algorithm: testname.AlgorithmName,
-		ID: hex.EncodeToString(testAlg.Cluster(&clustering.Failure{
+		ID: hex.EncodeToString(testAlg.Cluster(config, &clustering.Failure{
 			TestID: testID,
 		})),
 	}
 }
 
-func reasonClusterID(reason string) clustering.ClusterID {
+func reasonClusterID(config *compiledcfg.ProjectConfig, reason string) clustering.ClusterID {
 	reasonAlg, err := algorithms.SuggestingAlgorithm(failurereason.AlgorithmName)
 	So(err, ShouldBeNil)
 
 	return clustering.ClusterID{
 		Algorithm: failurereason.AlgorithmName,
-		ID: hex.EncodeToString(reasonAlg.Cluster(&clustering.Failure{
+		ID: hex.EncodeToString(reasonAlg.Cluster(config, &clustering.Failure{
 			Reason: &pb.FailureReason{PrimaryErrorMessage: reason},
 		})),
 	}

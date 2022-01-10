@@ -15,6 +15,7 @@ import (
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 
 	"go.chromium.org/luci/common/clock"
@@ -215,9 +216,15 @@ func (t *taskContext) recluster(ctx context.Context) (done bool, err error) {
 			return false, errors.Annotate(err, "obtain ruleset").Err()
 		}
 
+		// Obtain a recent configuration of at least ConfigVersion.
+		cfg, err := compiledcfg.Project(ctx, t.task.Project, t.run.ConfigVersion)
+		if err != nil {
+			return false, errors.Annotate(err, "obtain config").Err()
+		}
+
 		// Re-cluster the test results in spanner, then export
 		// the re-clustering to BigQuery for analysis.
-		update, err := PrepareUpdate(ctx, ruleset, chunk, entry)
+		update, err := PrepareUpdate(ctx, ruleset, cfg, chunk, entry)
 		if err != nil {
 			return false, errors.Annotate(err, "re-cluster chunk").Err()
 		}

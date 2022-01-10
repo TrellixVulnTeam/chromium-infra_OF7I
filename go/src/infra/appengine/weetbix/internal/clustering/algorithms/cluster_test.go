@@ -17,10 +17,12 @@ import (
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
-	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestCluster(t *testing.T) {
@@ -28,7 +30,7 @@ func TestCluster(t *testing.T) {
 		Convey(`From scratch`, func() {
 			s := fromScratchScenario(1)
 
-			results := Cluster(s.ruleset, s.existing, s.failures)
+			results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 			So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 			So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -39,7 +41,7 @@ func TestCluster(t *testing.T) {
 			Convey(`From already up-to-date clustering`, func() {
 				s := upToDateScenario(1)
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -50,7 +52,7 @@ func TestCluster(t *testing.T) {
 			Convey(`From older suggested clustering algorithm`, func() {
 				s := fromOlderSuggestedClusteringScenario()
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -58,9 +60,9 @@ func TestCluster(t *testing.T) {
 				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
 			})
 			Convey(`Incrementally from older rule-based clustering`, func() {
-				s := fromOlderRuleClusteringScenario()
+				s := fromOlderRuleAlgorithmScenario()
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -70,7 +72,7 @@ func TestCluster(t *testing.T) {
 			Convey(`Incrementally from later clustering algorithms`, func() {
 				s := fromLaterAlgorithmsScenario()
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -80,7 +82,7 @@ func TestCluster(t *testing.T) {
 			Convey(`Incrementally from older rules version`, func() {
 				s := fromOlderRulesVersionScenario(1)
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -90,7 +92,27 @@ func TestCluster(t *testing.T) {
 			Convey(`Incrementally from newer rules version`, func() {
 				s := fromNewerRulesVersionScenario()
 
-				results := Cluster(s.ruleset, s.existing, s.failures)
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from older config version`, func() {
+				s := fromOlderConfigVersionScenario()
+
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
+
+				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
+				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
+				So(results.Algorithms, ShouldResemble, s.expected.Algorithms)
+				So(diffClusters(results.Clusters, s.expected.Clusters), ShouldBeBlank)
+			})
+			Convey(`Incrementally from newer config version`, func() {
+				s := fromNewerConfigVersionScenario()
+
+				results := Cluster(s.config, s.ruleset, s.existing, s.failures)
 
 				So(results.AlgorithmsVersion, ShouldEqual, s.expected.AlgorithmsVersion)
 				So(results.RulesVersion, ShouldEqual, s.expected.RulesVersion)
@@ -106,7 +128,7 @@ func BenchmarkClusteringFromScratch(b *testing.B) {
 	s := fromScratchScenario(1000)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Cluster(s.ruleset, s.existing, s.failures)
+		_ = Cluster(s.config, s.ruleset, s.existing, s.failures)
 	}
 }
 
@@ -115,7 +137,7 @@ func BenchmarkClusteringFromOlderRules(b *testing.B) {
 	s := fromOlderRulesVersionScenario(1000)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Cluster(s.ruleset, s.existing, s.failures)
+		_ = Cluster(s.config, s.ruleset, s.existing, s.failures)
 	}
 }
 
@@ -124,7 +146,7 @@ func BenchmarkClusteringUpToDate(b *testing.B) {
 	s := upToDateScenario(1000)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Cluster(s.ruleset, s.existing, s.failures)
+		_ = Cluster(s.config, s.ruleset, s.existing, s.failures)
 	}
 }
 
@@ -132,6 +154,7 @@ type scenario struct {
 	failures []*clustering.Failure
 	rules    []*cache.CachedRule
 	ruleset  *cache.Ruleset
+	config   *compiledcfg.ProjectConfig
 	existing clustering.ClusterResults
 	expected clustering.ClusterResults
 }
@@ -141,7 +164,7 @@ func upToDateScenario(size int) *scenario {
 
 	rule1, err := cache.NewCachedRule(
 		rules.NewRule(100).
-			WithRuleDefinition(`test = "ninja://test_name_two/"`).
+			WithRuleDefinition(`test = "ninja://test_name/2"`).
 			WithLastUpdated(rulesVersion.Add(-1 * time.Hour)).Build())
 	if err != nil {
 		panic(err)
@@ -159,15 +182,25 @@ func upToDateScenario(size int) *scenario {
 	rules := []*cache.CachedRule{rule1, rule2}
 	ruleset := cache.NewRuleset("myproject", rules, rulesVersion, lastUpdated)
 
+	cfgpb := &configpb.ProjectConfig{
+		Clustering:  TestClusteringConfig(),
+		LastUpdated: timestamppb.New(time.Date(2020, time.February, 1, 1, 0, 0, 0, time.UTC)),
+	}
+	cfg, err := compiledcfg.NewConfig(cfgpb)
+	if err != nil {
+		// Should not occur, test data should be valid.
+		panic(err)
+	}
+
 	failures := []*clustering.Failure{
 		{
-			TestID: "ninja://test_name_one/",
+			TestID: "ninja://test_name/1",
 		},
 	}
 	for i := 0; i < size; i++ {
 		failures = append(failures,
 			&clustering.Failure{
-				TestID: "ninja://test_name_two/",
+				TestID: "ninja://test_name/2",
 				Reason: &pb.FailureReason{
 					PrimaryErrorMessage: "failed to connect to 192.168.0.1",
 				},
@@ -177,7 +210,7 @@ func upToDateScenario(size int) *scenario {
 	// This is an up-to-date clustering of the test results.
 	existing := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		ConfigVersion:     config.StartingEpoch,
+		ConfigVersion:     cfg.LastUpdated,
 		RulesVersion:      rulesVersion,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
@@ -186,14 +219,14 @@ func upToDateScenario(size int) *scenario {
 		},
 		Clusters: [][]clustering.ClusterID{
 			{
-				testNameClusterID(failures[0]),
+				testNameClusterID(cfg, failures[0]),
 			},
 		},
 	}
 	for i := 0; i < size; i++ {
 		clusters := []clustering.ClusterID{
-			failureReasonClusterID(failures[1]),
-			testNameClusterID(failures[1]),
+			failureReasonClusterID(cfg, failures[1]),
+			testNameClusterID(cfg, failures[1]),
 			ruleClusterID(rule1.RuleID),
 			ruleClusterID(rule2.RuleID),
 		}
@@ -206,7 +239,7 @@ func upToDateScenario(size int) *scenario {
 	// unexpected aliasing issues.
 	expected := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		ConfigVersion:     config.StartingEpoch,
+		ConfigVersion:     cfg.LastUpdated,
 		RulesVersion:      rulesVersion,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
@@ -215,14 +248,14 @@ func upToDateScenario(size int) *scenario {
 		},
 		Clusters: [][]clustering.ClusterID{
 			{
-				testNameClusterID(failures[0]),
+				testNameClusterID(cfg, failures[0]),
 			},
 		},
 	}
 	for i := 0; i < size; i++ {
 		clusters := []clustering.ClusterID{
-			failureReasonClusterID(failures[1]),
-			testNameClusterID(failures[1]),
+			failureReasonClusterID(cfg, failures[1]),
+			testNameClusterID(cfg, failures[1]),
 			ruleClusterID(rule1.RuleID),
 			ruleClusterID(rule2.RuleID),
 		}
@@ -234,6 +267,7 @@ func upToDateScenario(size int) *scenario {
 		failures: failures,
 		rules:    rules,
 		ruleset:  ruleset,
+		config:   cfg,
 		expected: expected,
 		existing: existing,
 	}
@@ -252,14 +286,14 @@ func fromOlderSuggestedClusteringScenario() *scenario {
 	return s
 }
 
-func fromOlderRuleClusteringScenario() *scenario {
+func fromOlderRuleAlgorithmScenario() *scenario {
 	s := upToDateScenario(1)
 	s.existing.AlgorithmsVersion--
 	delete(s.existing.Algorithms, rulesalgorithm.AlgorithmName)
 	s.existing.Algorithms["rules-v0"] = struct{}{}
 	s.existing.Clusters[1] = []clustering.ClusterID{
-		failureReasonClusterID(s.failures[1]),
-		testNameClusterID(s.failures[1]),
+		failureReasonClusterID(s.config, s.failures[1]),
+		testNameClusterID(s.config, s.failures[1]),
 		{Algorithm: "rules-v0", ID: s.rules[0].RuleID},
 		{Algorithm: "rules-v0", ID: "rule-no-longer-matched-with-v1"},
 	}
@@ -292,8 +326,8 @@ func fromOlderRulesVersionScenario(size int) *scenario {
 	s.existing.RulesVersion = s.existing.RulesVersion.Add(-1 * time.Hour)
 	for i := 1; i <= size; i++ {
 		s.existing.Clusters[i] = []clustering.ClusterID{
-			failureReasonClusterID(s.failures[i]),
-			testNameClusterID(s.failures[i]),
+			failureReasonClusterID(s.config, s.failures[i]),
+			testNameClusterID(s.config, s.failures[i]),
 			ruleClusterID(s.rules[0].RuleID),
 			ruleClusterID("now-deleted-rule-id"),
 		}
@@ -306,8 +340,8 @@ func fromNewerRulesVersionScenario() *scenario {
 	s := upToDateScenario(1)
 	s.existing.RulesVersion = s.existing.RulesVersion.Add(1 * time.Hour)
 	s.existing.Clusters[1] = []clustering.ClusterID{
-		failureReasonClusterID(s.failures[1]),
-		testNameClusterID(s.failures[1]),
+		failureReasonClusterID(s.config, s.failures[1]),
+		testNameClusterID(s.config, s.failures[1]),
 		ruleClusterID(s.rules[0].RuleID),
 		ruleClusterID("later-added-rule-id"),
 	}
@@ -319,25 +353,61 @@ func fromNewerRulesVersionScenario() *scenario {
 	return s
 }
 
+func fromOlderConfigVersionScenario() *scenario {
+	s := upToDateScenario(1)
+	oldConfigVersion := s.existing.ConfigVersion.Add(-1 * time.Hour)
+	s.existing.ConfigVersion = oldConfigVersion
+
+	for _, cs := range s.existing.Clusters {
+		for j := range cs {
+			if cs[j].Algorithm == testname.AlgorithmName {
+				cs[j].ID = hex.EncodeToString([]byte("old-test-cluster"))
+			}
+		}
+		clustering.SortClusters(cs)
+	}
+	return s
+}
+
+func fromNewerConfigVersionScenario() *scenario {
+	s := upToDateScenario(1)
+	newConfigVersion := s.existing.ConfigVersion.Add(1 * time.Hour)
+	s.existing.ConfigVersion = newConfigVersion
+
+	for _, cs := range s.existing.Clusters {
+		for j := range cs {
+			if cs[j].Algorithm == testname.AlgorithmName {
+				cs[j].ID = hex.EncodeToString([]byte("new-test-cluster"))
+			}
+		}
+		clustering.SortClusters(cs)
+	}
+
+	s.expected.ConfigVersion = newConfigVersion
+	// Should keep existing clusters, as they are newer.
+	s.expected.Clusters = s.existing.Clusters
+	return s
+}
+
 func fromScratchScenario(size int) *scenario {
 	s := upToDateScenario(size)
 	s.existing = NewEmptyClusterResults(len(s.failures))
 	return s
 }
 
-func testNameClusterID(failure *clustering.Failure) clustering.ClusterID {
+func testNameClusterID(config *compiledcfg.ProjectConfig, failure *clustering.Failure) clustering.ClusterID {
 	alg := &testname.Algorithm{}
 	return clustering.ClusterID{
 		Algorithm: testname.AlgorithmName,
-		ID:        hex.EncodeToString(alg.Cluster(failure)),
+		ID:        hex.EncodeToString(alg.Cluster(config, failure)),
 	}
 }
 
-func failureReasonClusterID(failure *clustering.Failure) clustering.ClusterID {
+func failureReasonClusterID(config *compiledcfg.ProjectConfig, failure *clustering.Failure) clustering.ClusterID {
 	alg := &failurereason.Algorithm{}
 	return clustering.ClusterID{
 		Algorithm: failurereason.AlgorithmName,
-		ID:        hex.EncodeToString(alg.Cluster(failure)),
+		ID:        hex.EncodeToString(alg.Cluster(config, failure)),
 	}
 }
 

@@ -17,7 +17,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/clustering/runs"
-	configpb "infra/appengine/weetbix/internal/config/proto"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	"go.chromium.org/luci/common/errors"
@@ -46,8 +46,9 @@ type BugUpdater struct {
 	// managers stores the manager responsible for updating bugs for each
 	// bug tracking system (monorail, buganizer, etc.).
 	managers map[string]BugManager
-	// bugFilingThreshold is the threshold at which bugs should be filed.
-	bugFilingThreshold *configpb.ImpactThreshold
+	// projectCfg is the snapshot of project configuration to use for
+	// the auto-bug filing run.
+	projectCfg *compiledcfg.ProjectConfig
 	// MaxBugsFiledPerRun is the maximum number of bugs to file each time
 	// BugUpdater runs. This throttles the rate of changes to monorail.
 	MaxBugsFiledPerRun int
@@ -55,12 +56,12 @@ type BugUpdater struct {
 
 // NewBugUpdater initialises a new BugUpdater. The specified impact thresholds are used
 // when determining whether to a file a bug.
-func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient, bugFilingThreshold *configpb.ImpactThreshold) *BugUpdater {
+func NewBugUpdater(project string, mgrs map[string]BugManager, ac AnalysisClient, projectCfg *compiledcfg.ProjectConfig) *BugUpdater {
 	return &BugUpdater{
 		project:            project,
 		managers:           mgrs,
 		analysisClient:     ac,
-		bugFilingThreshold: bugFilingThreshold,
+		projectCfg:         projectCfg,
 		MaxBugsFiledPerRun: 1, // Default value.
 	}
 }
@@ -82,6 +83,11 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 	if algorithms.AlgorithmsVersion != progress.LatestAlgorithmsVersion {
 		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running mismatched algorithms version %v (want %v).",
 			b.project, algorithms.AlgorithmsVersion, progress.LatestAlgorithmsVersion)
+		return nil
+	}
+	if !b.projectCfg.LastUpdated.Equal(progress.LatestConfigVersion) {
+		logging.Warningf(ctx, "Auto-bug filing paused for project %s as bug-filing is running mismatched config version %v (want %v).",
+			b.project, b.projectCfg.LastUpdated, progress.LatestConfigVersion)
 		return nil
 	}
 
@@ -119,7 +125,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 	//    them, so we can file a bug.
 	clusterSummaries, err := b.analysisClient.ReadImpactfulClusters(ctx, analysis.ImpactfulClusterReadOptions{
 		Project:       b.project,
-		Thresholds:    b.bugFilingThreshold,
+		Thresholds:    b.projectCfg.Config.BugFilingThreshold,
 		AlwaysInclude: bugClusterIDs,
 	})
 	if err != nil {
@@ -151,7 +157,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 
 		// Only file a bug if the residual impact exceeds the threshold.
 		impact := bugs.ExtractResidualImpact(clusterSummary)
-		if !impact.MeetsThreshold(b.bugFilingThreshold) {
+		if !impact.MeetsThreshold(b.projectCfg.Config.BugFilingThreshold) {
 			continue
 		}
 
@@ -241,15 +247,17 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	// could result in indefinite creation of new bugs, as the system
 	// will repeatedly create new failure association rules for the
 	// same suggested cluster.
-	if hex.EncodeToString(alg.Cluster(failure)) != cs.ClusterID.ID {
+	// Mismatches should usually be transient as re-clustering will fix
+	// up any incorrect clustering.
+	if hex.EncodeToString(alg.Cluster(b.projectCfg, failure)) != cs.ClusterID.ID {
 		return false, errors.New("example failure did not match cluster ID")
 	}
-	rule, err := generateFailureAssociationRule(alg, failure)
+	rule, err := b.generateFailureAssociationRule(alg, failure)
 	if err != nil {
 		return false, errors.Annotate(err, "obtain failure association rule").Err()
 	}
 	request := &bugs.CreateRequest{
-		Description: alg.ClusterDescription(failure),
+		Description: alg.ClusterDescription(b.projectCfg, failure),
 		Impact:      bugs.ExtractResidualImpact(cs),
 	}
 
@@ -285,8 +293,8 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	return true, nil
 }
 
-func generateFailureAssociationRule(alg algorithms.Algorithm, failure *clustering.Failure) (string, error) {
-	rule := alg.FailureAssociationRule(failure)
+func (b *BugUpdater) generateFailureAssociationRule(alg algorithms.Algorithm, failure *clustering.Failure) (string, error) {
+	rule := alg.FailureAssociationRule(b.projectCfg, failure)
 
 	// Check the generated rule is valid and matches the failure.
 	// An improperly generated failure association rule could result

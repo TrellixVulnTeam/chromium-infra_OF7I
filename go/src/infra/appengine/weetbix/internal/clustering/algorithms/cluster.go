@@ -15,6 +15,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/rules/cache"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 )
 
 // Algorithm represents the interface that each clustering algorithm
@@ -25,13 +26,13 @@ type Algorithm interface {
 	// Cluster clusters the given test failure and returns its cluster ID (if
 	// it can be clustered) or nil otherwise. THe returned cluster ID must be
 	// at most 16 bytes.
-	Cluster(failure *clustering.Failure) []byte
+	Cluster(config *compiledcfg.ProjectConfig, failure *clustering.Failure) []byte
 	// FailureAssociationRule returns a failure association rule that
 	// captures the definition of the cluster containing the given example.
-	FailureAssociationRule(example *clustering.Failure) string
+	FailureAssociationRule(config *compiledcfg.ProjectConfig, example *clustering.Failure) string
 	// ClusterDescription returns a description of the cluster, for use when
 	// filing bugs, with the help of the given example failure.
-	ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription
+	ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription
 }
 
 // AlgorithmsVersion is the version of the set of algorithms used.
@@ -65,17 +66,22 @@ var rulesAlgorithm = rulesalgorithm.Algorithm{}
 // The set of all algorithms known by Weetbix.
 var algorithmNames map[string]struct{}
 
+// The set of all suggested algorithms known by Weetbix.
+var suggestedAlgorithmNames map[string]struct{}
+
 func init() {
 	algorithmNames = make(map[string]struct{})
+	suggestedAlgorithmNames = make(map[string]struct{})
 	algorithmNames[rulesalgorithm.AlgorithmName] = struct{}{}
 	for _, a := range suggestingAlgorithms {
 		algorithmNames[a.Name()] = struct{}{}
+		suggestedAlgorithmNames[a.Name()] = struct{}{}
 	}
 }
 
 // Cluster performs (incremental re-)clustering of the given test
 // failures using all registered clustering algorithms and the
-// specified set of failure association rules.
+// specified set of failure association rules and config.
 //
 // If the test results have not been previously clustered, pass
 // an existing ClusterResults of NewEmptyClusterResults(...)
@@ -83,7 +89,15 @@ func init() {
 //
 // If the test results have been previously clustered, pass the
 // ClusterResults returned by the last call to Cluster.
-func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failures []*clustering.Failure) clustering.ClusterResults {
+//
+// Cluster(...) will always return a set of ClusterResults which
+// are as- or more-recent than the existing ClusterResults.
+// This is defined as the following postcondition:
+//  returned.AlgorithmsVersion > existing.AlgorithmsVersion ||
+//  (returned.AlgorithmsVersion == existing.AlgorithmsVersion &&
+//    returned.ConfigVersion >= existing.ConfigVersion &&
+//    returned.RulesVersion >= existing.RulesVersion)
+func Cluster(config *compiledcfg.ProjectConfig, ruleset *cache.Ruleset, existing clustering.ClusterResults, failures []*clustering.Failure) clustering.ClusterResults {
 	if existing.AlgorithmsVersion > AlgorithmsVersion {
 		// We are running out-of-date clustering algorithms. Do not
 		// try to improve on the existing clustering. This can
@@ -91,20 +105,22 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 		return existing
 	}
 
-	// For each suggesting algorithm, figure out whether it has already been
-	// run previously and we can retain its results (for efficiency), or
-	// if we need to run it again.
-	var suggestedAlgorithmsToRun []Algorithm
-	suggestedAlgorithmsToRetain := make(map[string]struct{})
+	newSuggestedAlgorithms := false
 	for _, alg := range suggestingAlgorithms {
-		if _, ok := existing.Algorithms[alg.Name()]; ok {
-			// The algorithm was run previously. Retain its results.
-			suggestedAlgorithmsToRetain[alg.Name()] = struct{}{}
-		} else {
-			// The algorithm was not previously run. Run it now.
-			suggestedAlgorithmsToRun = append(suggestedAlgorithmsToRun, alg)
+		if _, ok := existing.Algorithms[alg.Name()]; !ok {
+			newSuggestedAlgorithms = true
 		}
 	}
+	// We should recycle the previous suggested clusters for performance if:
+	// (1) the algorithms to be run are the same (or a subset)
+	//     of what was previously run, and
+	// (2) the config available to us is not later than
+	//     what was available when clustering occurred.
+	//
+	// Implied is that we may only update to suggested clusters based
+	// on an earlier version of config if there are new algorithms.
+	reuseSuggestedAlgorithmResults := !newSuggestedAlgorithms &&
+		!config.LastUpdated.After(existing.ConfigVersion)
 
 	// For rule-based clustering.
 	_, reuseRuleAlgorithmResults := existing.Algorithms[rulesalgorithm.AlgorithmName]
@@ -123,9 +139,12 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 
 		existingIDs := existing.Clusters[i]
 		for _, id := range existingIDs {
-			if _, ok := suggestedAlgorithmsToRetain[id.Algorithm]; ok {
-				// The algorithm was run previously. Retain its results.
-				newIDs = append(newIDs, id)
+			if reuseSuggestedAlgorithmResults {
+				if _, ok := suggestedAlgorithmNames[id.Algorithm]; ok {
+					// The algorithm was run previously and its results are still valid.
+					// Retain its results.
+					newIDs = append(newIDs, id)
+				}
 			}
 			if reuseRuleAlgorithmResults && id.Algorithm == rulesalgorithm.AlgorithmName {
 				// The rules algorithm was previously run. Record the past results,
@@ -137,16 +156,18 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 			}
 		}
 
-		// Run the suggested clustering algorithms.
-		for _, a := range suggestedAlgorithmsToRun {
-			id := a.Cluster(f)
-			if id == nil {
-				continue
+		if !reuseSuggestedAlgorithmResults {
+			// Run the suggested clustering algorithms.
+			for _, a := range suggestingAlgorithms {
+				id := a.Cluster(config, f)
+				if id == nil {
+					continue
+				}
+				newIDs = append(newIDs, clustering.ClusterID{
+					Algorithm: a.Name(),
+					ID:        hex.EncodeToString(id),
+				})
 			}
-			newIDs = append(newIDs, clustering.ClusterID{
-				Algorithm: a.Name(),
-				ID:        hex.EncodeToString(id),
-			})
 		}
 
 		if ruleset.RulesVersion.After(existingRulesVersion) {
@@ -180,15 +201,19 @@ func Cluster(ruleset *cache.Ruleset, existing clustering.ClusterResults, failure
 		// This is normal.
 		newRulesVersion = existingRulesVersion
 	}
+	newConfigVersion := existing.ConfigVersion
+	if !reuseSuggestedAlgorithmResults {
+		// If the we recomputed the suggested clusters, record the version
+		// of config we used.
+		newConfigVersion = config.LastUpdated
+	}
 
 	return clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
-		// TODO(crbug.com/1243174): Once config is used, return the version of
-		// config that was used.
-		ConfigVersion: config.StartingEpoch,
-		RulesVersion:  newRulesVersion,
-		Algorithms:    algorithmNames,
-		Clusters:      result,
+		ConfigVersion:     newConfigVersion,
+		RulesVersion:      newRulesVersion,
+		Algorithms:        algorithmNames,
+		Clusters:          result,
 	}
 }
 

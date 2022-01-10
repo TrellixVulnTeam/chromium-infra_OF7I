@@ -12,7 +12,7 @@ import (
 	"infra/appengine/weetbix/internal/bugs/monorail"
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
-	configpb "infra/appengine/weetbix/internal/config/proto"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -64,7 +64,7 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, 
 	var errs []error
 	// In future, the 10 minute GAE request limit may mean we need to
 	// parallelise these tasks or fan them out as separate tasks.
-	for project, cfg := range projectCfg {
+	for project := range projectCfg {
 		if _, ok := projectsWithDataset[project]; !ok {
 			// Dataset not provisioned for project.
 			continue
@@ -74,7 +74,6 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, 
 			project:            project,
 			analysisClient:     ac,
 			monorailClient:     mc,
-			projectConfig:      cfg,
 			simulateBugUpdates: simulate,
 			maxBugsFiledPerRun: 1,
 		}
@@ -97,7 +96,6 @@ type updateOptions struct {
 	project            string
 	analysisClient     AnalysisClient
 	monorailClient     *monorail.Client
-	projectConfig      *configpb.ProjectConfig
 	simulateBugUpdates bool
 	maxBugsFiledPerRun int
 }
@@ -112,19 +110,23 @@ func updateAnalysisAndBugsForProject(ctx context.Context, opts updateOptions) er
 		return errors.Annotate(err, "read re-clustering progress").Err()
 	}
 
+	projectCfg, err := compiledcfg.Project(ctx, opts.project, progress.LatestConfigVersion)
+	if err != nil {
+		return errors.Annotate(err, "read project config").Err()
+	}
+
 	if err := opts.analysisClient.RebuildAnalysis(ctx, opts.project); err != nil {
 		return errors.Annotate(err, "update cluster summaries").Err()
 	}
 
-	monorailCfg := opts.projectConfig.Monorail
-	thresholds := opts.projectConfig.BugFilingThreshold
+	monorailCfg := projectCfg.Config.Monorail
 	mgrs := make(map[string]BugManager)
 
 	mbm := monorail.NewBugManager(opts.monorailClient, monorailCfg)
 	mbm.Simulate = opts.simulateBugUpdates
 	mgrs[bugs.MonorailSystem] = mbm
 
-	bu := NewBugUpdater(opts.project, mgrs, opts.analysisClient, thresholds)
+	bu := NewBugUpdater(opts.project, mgrs, opts.analysisClient, projectCfg)
 	bu.MaxBugsFiledPerRun = opts.maxBugsFiledPerRun
 	if err := bu.Run(ctx, progress); err != nil {
 		return errors.Annotate(err, "update bugs").Err()

@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 )
 
 // AlgorithmVersion is the version of the clustering algorithm. The algorithm
@@ -51,7 +52,7 @@ func (a *Algorithm) Name() string {
 
 // Cluster clusters the given test failure and returns its cluster ID (if it
 // can be clustered) or nil otherwise.
-func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
+func (a *Algorithm) Cluster(config *compiledcfg.ProjectConfig, failure *clustering.Failure) []byte {
 	if failure.Reason == nil || failure.Reason.PrimaryErrorMessage == "" {
 		return nil
 	}
@@ -66,7 +67,7 @@ func (a *Algorithm) Cluster(failure *clustering.Failure) []byte {
 
 // ClusterDescription returns a description of the cluster, for use when
 // filing bugs, with the help of the given example failure.
-func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.ClusterDescription {
+func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription {
 	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
 		return nil
 	}
@@ -82,7 +83,7 @@ func (a *Algorithm) ClusterDescription(example *clustering.Failure) *clustering.
 
 // FailureAssociationRule returns a failure association rule that
 // captures the definition of cluster containing the given example.
-func (a *Algorithm) FailureAssociationRule(example *clustering.Failure) string {
+func (a *Algorithm) FailureAssociationRule(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {
 	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
 		return ""
 	}

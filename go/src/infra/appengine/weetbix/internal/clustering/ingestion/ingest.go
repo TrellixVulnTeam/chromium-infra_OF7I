@@ -15,6 +15,8 @@ import (
 	"infra/appengine/weetbix/internal/clustering/reclustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/clustering/state"
+	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 	pb "infra/appengine/weetbix/proto/v1"
 
 	"go.chromium.org/luci/common/errors"
@@ -187,7 +189,12 @@ func (i *Ingestion) writeChunk(ctx context.Context, chunk *cpb.Chunk) error {
 		return errors.Annotate(err, "obtain ruleset").Err()
 	}
 
-	update, err := reclustering.PrepareUpdate(ctx, ruleset, chunk, clusterState)
+	cfg, err := compiledcfg.Project(ctx, i.opts.Project, config.StartingEpoch)
+	if err != nil {
+		return errors.Annotate(err, "obtain config").Err()
+	}
+
+	update, err := reclustering.PrepareUpdate(ctx, ruleset, cfg, chunk, clusterState)
 	if err != nil {
 		return err
 	}

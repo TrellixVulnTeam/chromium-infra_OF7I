@@ -28,6 +28,8 @@ import (
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/clustering/state"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
@@ -37,6 +39,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 
+	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
 	"google.golang.org/protobuf/proto"
@@ -58,6 +61,10 @@ type scenario struct {
 	// netBQExports are the test result-cluster insertions recorded
 	// in BigQuery, net of any deletions/updates.
 	netBQExports []*bqpb.ClusteredFailureRow
+	// config is the clustering configuration.
+	config *configpb.Clustering
+	// configVersion is the last updated time of the configuration.
+	configVersion time.Time
 	// rulesVersion is last updated time of the most recently updated
 	// failure association rule.
 	rulesVersion time.Time
@@ -73,6 +80,7 @@ func TestReclustering(t *testing.T) {
 		ctx := testutil.SpannerTestContext(t)
 		ctx, tc := testclock.UseTime(ctx, testclock.TestRecentTimeUTC)
 		ctx = caching.WithEmptyProcessCache(ctx) // For rules cache.
+		ctx = memory.Use(ctx)                    // For project config.
 
 		chunkStore := chunkstore.NewFakeClient()
 		clusteredFailures := clusteredfailures.NewFakeClient()
@@ -85,7 +93,6 @@ func TestReclustering(t *testing.T) {
 			Project:           testProject,
 			AttemptTimestamp:  attemptTime,
 			AlgorithmsVersion: algorithms.AlgorithmsVersion,
-			ConfigVersion:     config.StartingEpoch,
 			RulesVersion:      time.Time{}, // To be set by the test.
 			ShardCount:        1,
 			ShardsReported:    0,
@@ -107,10 +114,19 @@ func TestReclustering(t *testing.T) {
 		setupScenario := func(s *scenario) {
 			// Create the run entry corresponding to the task.
 			run.RulesVersion = s.rulesVersion
+			run.ConfigVersion = s.configVersion
 			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
 
 			// Set stored failure association rules.
 			So(rules.SetRulesForTesting(ctx, s.rules), ShouldBeNil)
+
+			cfg := map[string]*configpb.ProjectConfig{
+				testProject: {
+					Clustering:  s.config,
+					LastUpdated: timestamppb.New(s.configVersion),
+				},
+			}
+			So(config.SetTestProjectConfig(ctx, cfg), ShouldBeNil)
 
 			// Set stored test result chunks.
 			for objectID, chunk := range s.testResultsByObjectID {
@@ -125,113 +141,86 @@ func TestReclustering(t *testing.T) {
 			So(err, ShouldBeNil)
 		}
 
-		Convey(`No re-clustering`, func() {
-			// Start with up-to-date clustering.
-			s := newScenario().withOldClustering(false).build()
-			setupScenario(s)
+		Convey(`Re-clustering`, func() {
+			testReclustering := func(initial *scenario, expected *scenario) {
+				setupScenario(initial)
 
-			// Run the task.
-			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
-			So(err, ShouldBeNil)
-			So(continuation, ShouldBeNil)
+				// Run the task.
+				continuation, err := worker.Do(ctx, task, TargetTaskDuration)
+				So(err, ShouldBeNil)
+				So(continuation, ShouldBeNil)
 
-			// Final clustering state should be equal starting state.
-			actualState, err := state.ReadAllForTesting(ctx, testProject)
-			So(err, ShouldBeNil)
-			So(actualState, ShouldResemble, s.clusteringState)
+				// Final clustering state should be equal expected state.
+				actualState, err := state.ReadAllForTesting(ctx, testProject)
+				So(err, ShouldBeNil)
+				for _, as := range actualState {
+					// Clear last updated time to compare actual vs expected
+					// state based on row contents, not when the row was updated.
+					as.LastUpdated = time.Time{}
+				}
+				So(actualState, ShouldResemble, expected.clusteringState)
 
-			// No changes written to BigQuery.
-			So(clusteredFailures.InsertionsByProject[testProject], ShouldBeEmpty)
+				// BigQuery exports should correctly reflect the new
+				// test result-cluster inclusions.
+				exports := clusteredFailures.InsertionsByProject[testProject]
+				sortBQExport(exports)
+				netExports := flattenBigQueryExports(append(initial.netBQExports, exports...))
+				So(netExports, ShouldResembleProto, expected.netBQExports)
 
-			// Run is reported as complete.
-			actualRun, err := runs.Read(span.Single(ctx), testProject, run.AttemptTimestamp)
-			So(err, ShouldBeNil)
-			So(actualRun.Progress, ShouldEqual, 1000)
-		})
-		Convey(`Significant re-clustering`, func() {
-			expected := newScenario().withOldClustering(false).build()
-
-			// Start with an out of date clustering.
-			s := newScenario().withOldClustering(true).build()
-			s.rules = expected.rules
-			s.rulesVersion = expected.rulesVersion
-			setupScenario(s)
-
-			// Run the task.
-			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
-			So(err, ShouldBeNil)
-			So(continuation, ShouldBeNil)
-
-			// Final clustering state should be equal expected state.
-			actualState, err := state.ReadAllForTesting(ctx, testProject)
-			So(err, ShouldBeNil)
-			for _, as := range actualState {
-				// Clear last updated time to compare actual vs expected
-				// state based on row contents, not when the row was updated.
-				as.LastUpdated = time.Time{}
+				// Run is reported as complete.
+				actualRun, err := runs.Read(span.Single(ctx), testProject, run.AttemptTimestamp)
+				So(err, ShouldBeNil)
+				So(actualRun.Progress, ShouldEqual, 1000)
 			}
-			So(actualState, ShouldResemble, expected.clusteringState)
 
-			// BigQuery exports should correctly reflect the new
-			// test result-cluster inclusions.
-			exports := clusteredFailures.InsertionsByProject[testProject]
-			sortBQExport(exports)
-			netExports := flattenBigQueryExports(append(s.netBQExports, exports...))
-			So(netExports, ShouldResembleProto, expected.netBQExports)
+			Convey("Already up-to-date", func() {
+				expected := newScenario().build()
 
-			// Run is reported as complete.
-			actualRun, err := runs.Read(span.Single(ctx), testProject, run.AttemptTimestamp)
-			So(err, ShouldBeNil)
-			So(actualRun.Progress, ShouldEqual, 1000)
-		})
-		Convey(`Minor re-clustering`, func() {
-			s := newScenario().withOldClustering(false).build()
+				// Start with up-to-date clustering.
+				s := newScenario().build()
 
-			// Add a new rule that needs to be matched against all test
-			// results. (For simplicity, its definition is FALSE, which
-			// means our expected clustering state need not be modified.)
-			rule3 := rules.NewRule(100).
-				WithProject(testProject).
-				WithRuleDefinition("FALSE").
-				WithLastUpdated(s.rulesVersion.Add(1 * time.Hour)).
-				Build()
-			s.rules = append(s.rules, rule3)
-			s.rulesVersion = s.rulesVersion.Add(1 * time.Hour)
+				testReclustering(s, expected)
 
-			setupScenario(s)
+				// Further bound the expected behaviour. Not only
+				// should there be zero net changes to the BigQuery
+				// export, no changes should be written to BigQuery
+				// at all.
+				So(clusteredFailures.InsertionsByProject[testProject], ShouldBeEmpty)
+			})
+			Convey("From old algorithms", func() {
+				expected := newScenario().build()
 
-			// Run the task.
-			continuation, err := worker.Do(ctx, task, TargetTaskDuration)
-			So(err, ShouldBeNil)
-			So(continuation, ShouldBeNil)
+				// Start with an out of date clustering.
+				s := newScenario().withOldAlgorithms(true).build()
 
-			// Final clustering state should be equal starting state,
-			// except that RulesVersion should now be later (and
-			// LastUpdated may have changed).
-			expected := newScenario().withOldClustering(false).build()
-			for _, es := range expected.clusteringState {
-				es.Clustering.RulesVersion = s.rulesVersion
-			}
-			actualState, err := state.ReadAllForTesting(ctx, testProject)
-			So(err, ShouldBeNil)
-			for _, as := range actualState {
-				as.LastUpdated = time.Time{}
-			}
-			So(actualState, ShouldResemble, expected.clusteringState)
+				testReclustering(s, expected)
+			})
+			Convey("From old configuration", func() {
+				expected := newScenario().build()
 
-			// No changes written to BigQuery.
-			So(clusteredFailures.InsertionsByProject[testProject], ShouldBeEmpty)
+				// Start with clustering based on old configuration.
+				s := newScenario().withOldConfig(true).build()
+				s.config = expected.config
+				s.configVersion = expected.configVersion
 
-			// Run is reported as complete.
-			actualRun, err := runs.Read(span.Single(ctx), testProject, run.AttemptTimestamp)
-			So(err, ShouldBeNil)
-			So(actualRun.Progress, ShouldEqual, 1000)
+				testReclustering(s, expected)
+			})
+			Convey("From old rules", func() {
+				expected := newScenario().build()
+
+				// Start with clustering based on old rules.
+				s := newScenario().withOldRules(true).build()
+				s.rules = expected.rules
+				s.rulesVersion = expected.rulesVersion
+
+				testReclustering(s, expected)
+			})
 		})
 		Convey(`Worker respects end time`, func() {
-			expected := newScenario().withOldClustering(false).build()
+			expected := newScenario().build()
 
 			// Start with an out of date clustering.
-			s := newScenario().withOldClustering(true).build()
+			s := newScenario().withOldAlgorithms(true).build()
 			s.rules = expected.rules
 			s.rulesVersion = expected.rulesVersion
 			setupScenario(s)
@@ -259,10 +248,10 @@ func TestReclustering(t *testing.T) {
 			So(actualRun.Progress, ShouldEqual, 0)
 		})
 		Convey(`Handles update/update races`, func() {
-			finalState := newScenario().withOldClustering(false).build()
+			finalState := newScenario().build()
 
 			// Start with an out of date clustering.
-			s := newScenario().withOldClustering(true).build()
+			s := newScenario().withOldAlgorithms(true).build()
 			s.rules = finalState.rules
 			s.rulesVersion = finalState.rulesVersion
 			setupScenario(s)
@@ -308,7 +297,7 @@ func TestReclustering(t *testing.T) {
 
 			// Because of update races, none of the chunks should have been
 			// re-clustered further.
-			expected := newScenario().withOldClustering(true).build()
+			expected := newScenario().withOldAlgorithms(true).build()
 			for _, es := range expected.clusteringState {
 				es.Clustering.AlgorithmsVersion = algorithms.AlgorithmsVersion + 1
 			}
@@ -330,6 +319,7 @@ func TestReclustering(t *testing.T) {
 		})
 		Convey(`Worker running out of date algorithms`, func() {
 			run.AlgorithmsVersion = algorithms.AlgorithmsVersion + 1
+			run.ConfigVersion = config.StartingEpoch
 			run.RulesVersion = rules.StartingEpoch
 			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
 
@@ -339,6 +329,7 @@ func TestReclustering(t *testing.T) {
 		})
 		Convey(`Continuation correctly scheduled`, func() {
 			run.RulesVersion = rules.StartingEpoch
+			run.ConfigVersion = config.StartingEpoch
 			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
 
 			// Leave no time for the task to run.
@@ -567,7 +558,7 @@ func (b *testResultBuilder) buildBQExport(clusterIDs []clustering.ClusterID) []*
 
 // buildClusters returns the clusters that would be expected for this test
 // result, if current clustering algorithms were used.
-func (b *testResultBuilder) buildClusters(rules *cache.Ruleset) []clustering.ClusterID {
+func (b *testResultBuilder) buildClusters(rules *cache.Ruleset, config *compiledcfg.ProjectConfig) []clustering.ClusterID {
 	var clusters []clustering.ClusterID
 	failure := &clustering.Failure{
 		TestID: b.testName,
@@ -576,13 +567,13 @@ func (b *testResultBuilder) buildClusters(rules *cache.Ruleset) []clustering.Clu
 	testNameAlg := &testname.Algorithm{}
 	clusters = append(clusters, clustering.ClusterID{
 		Algorithm: testNameAlg.Name(),
-		ID:        hex.EncodeToString(testNameAlg.Cluster(failure)),
+		ID:        hex.EncodeToString(testNameAlg.Cluster(config, failure)),
 	})
 	if b.failureReason != nil && b.failureReason.PrimaryErrorMessage != "" {
 		failureReasonAlg := &failurereason.Algorithm{}
 		clusters = append(clusters, clustering.ClusterID{
 			Algorithm: failureReasonAlg.Name(),
-			ID:        hex.EncodeToString(failureReasonAlg.Cluster(failure)),
+			ID:        hex.EncodeToString(failureReasonAlg.Cluster(config, failure)),
 		})
 	}
 	vals := &clustering.Failure{
@@ -609,7 +600,8 @@ type chunkBuilder struct {
 	objectID      string
 	testResults   []*testResultBuilder
 	ruleset       *cache.Ruleset
-	oldClustering bool
+	config        *compiledcfg.ProjectConfig
+	oldAlgorithms bool
 }
 
 // newChunk returns a new chunkBuilder for creating a new chunk. Uniqifier
@@ -617,12 +609,20 @@ type chunkBuilder struct {
 func newChunk(uniqifier int) *chunkBuilder {
 	chunkID := sha256.Sum256([]byte(fmt.Sprintf("chunk-%v", uniqifier)))
 	objectID := sha256.Sum256([]byte(fmt.Sprintf("object-%v", uniqifier)))
+	config, err := compiledcfg.NewConfig(&configpb.ProjectConfig{
+		LastUpdated: timestamppb.New(time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC)),
+	})
+	if err != nil {
+		// This should never occur, as the config should be valid.
+		panic(err)
+	}
 	return &chunkBuilder{
 		project:       "testproject",
 		chunkID:       hex.EncodeToString(chunkID[:16]),
 		objectID:      hex.EncodeToString(objectID[:16]),
 		ruleset:       cache.NewRuleset("", nil, rules.StartingEpoch, time.Time{}),
-		oldClustering: false,
+		config:        config,
+		oldAlgorithms: false,
 	}
 }
 
@@ -636,17 +636,24 @@ func (b *chunkBuilder) withTestResults(tr ...*testResultBuilder) *chunkBuilder {
 	return b
 }
 
-// withOldClustering sets whether old clusters (i.e. out of date algorithms
-// and rules) should be used instead of current clustering.
-func (b *chunkBuilder) withOldClustering(old bool) *chunkBuilder {
-	b.oldClustering = old
+// withOldAlgorithms sets whether out of date algorithms
+// should be used instead of current clustering.
+func (b *chunkBuilder) withOldAlgorithms(old bool) *chunkBuilder {
+	b.oldAlgorithms = old
 	return b
 }
 
 // withRuleset sets the ruleset to use to determine current clustering
-// (only used if out-of-date clustering is not set).
+// (only used if out-of-date algorithms is not set).
 func (b *chunkBuilder) withRuleset(ruleset *cache.Ruleset) *chunkBuilder {
 	b.ruleset = ruleset
+	return b
+}
+
+// withConfig sets the configuration to use to determine current clustering
+// (only used if out-of-date algorithms is not set).
+func (b *chunkBuilder) withConfig(config *compiledcfg.ProjectConfig) *chunkBuilder {
+	b.config = config
 	return b
 }
 
@@ -664,7 +671,7 @@ func (b *chunkBuilder) buildTestResults() (chunk *cpb.Chunk) {
 
 func (b *chunkBuilder) buildState() *state.Entry {
 	var crs clustering.ClusterResults
-	if b.oldClustering {
+	if b.oldAlgorithms {
 		algs := make(map[string]struct{})
 		algs["testname-v0"] = struct{}{}
 		algs["rules-v0"] = struct{}{}
@@ -685,7 +692,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		}
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: 1,
-			ConfigVersion:     config.StartingEpoch,
+			ConfigVersion:     b.config.LastUpdated,
 			RulesVersion:      b.ruleset.RulesVersion,
 			Algorithms:        algs,
 			Clusters:          clusters,
@@ -697,11 +704,11 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		algs[rulesalgorithm.AlgorithmName] = struct{}{}
 		var clusters [][]clustering.ClusterID
 		for _, tr := range b.testResults {
-			clusters = append(clusters, tr.buildClusters(b.ruleset))
+			clusters = append(clusters, tr.buildClusters(b.ruleset, b.config))
 		}
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: algorithms.AlgorithmsVersion,
-			ConfigVersion:     config.StartingEpoch,
+			ConfigVersion:     b.config.LastUpdated,
 			RulesVersion:      b.ruleset.RulesVersion,
 			Algorithms:        algs,
 			Clusters:          clusters,
@@ -740,7 +747,9 @@ func (b *chunkBuilder) buildBQExport() []*bqpb.ClusteredFailureRow {
 type scenarioBuilder struct {
 	project       string
 	chunkCount    int
-	oldClustering bool
+	oldAlgorithms bool
+	oldRules      bool
+	oldConfig     bool
 }
 
 func newScenario() *scenarioBuilder {
@@ -750,29 +759,58 @@ func newScenario() *scenarioBuilder {
 	}
 }
 
-func (b *scenarioBuilder) withOldClustering(value bool) *scenarioBuilder {
-	b.oldClustering = value
+func (b *scenarioBuilder) withOldAlgorithms(value bool) *scenarioBuilder {
+	b.oldAlgorithms = value
+	return b
+}
+
+func (b *scenarioBuilder) withOldRules(value bool) *scenarioBuilder {
+	b.oldRules = value
+	return b
+}
+
+func (b *scenarioBuilder) withOldConfig(value bool) *scenarioBuilder {
+	b.oldConfig = value
 	return b
 }
 
 func (b *scenarioBuilder) build() *scenario {
 	var rs []*rules.FailureAssociationRule
 	var activeRules []*cache.CachedRule
-	rulesVersion := rules.StartingEpoch
-	if !b.oldClustering {
-		rulesVersion = time.Date(2020, time.August, 1, 8, 1, 8, 1000, time.UTC)
-		ruleOne := rules.NewRule(0).WithProject(b.project).WithRuleDefinition(`test = "test_b"`).WithLastUpdated(rulesVersion).Build()
-		ruleTwo := rules.NewRule(1).WithProject(b.project).WithRuleDefinition(`reason = "reason_b"`).WithLastUpdated(rulesVersion.Add(-1 * time.Hour)).Build()
-		rs = []*rules.FailureAssociationRule{ruleOne, ruleTwo}
 
-		for _, r := range rs {
-			active, err := cache.NewCachedRule(r)
-			So(err, ShouldBeNil)
-			activeRules = append(activeRules, active)
-		}
+	rulesVersion := rules.StartingEpoch
+	configVersion := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+
+	rulesVersion = time.Date(2001, time.January, 1, 0, 0, 0, 1000, time.UTC)
+	ruleOne := rules.NewRule(0).WithProject(b.project).WithRuleDefinition(`test = "test_b"`).WithLastUpdated(rulesVersion).Build()
+	rs = []*rules.FailureAssociationRule{ruleOne}
+	if !b.oldRules {
+		rulesVersion = time.Date(2002, time.January, 1, 0, 0, 0, 1000, time.UTC)
+		ruleTwo := rules.NewRule(1).WithProject(b.project).WithRuleDefinition(`reason = "reason_b"`).WithLastUpdated(rulesVersion).Build()
+		rs = append(rs, ruleTwo)
+	}
+	for _, r := range rs {
+		active, err := cache.NewCachedRule(r)
+		So(err, ShouldBeNil)
+		activeRules = append(activeRules, active)
+	}
+
+	configVersion = time.Date(2001, time.January, 2, 0, 0, 0, 1, time.UTC)
+	cfgpb := &configpb.Clustering{}
+	if !b.oldConfig {
+		configVersion = time.Date(2002, time.January, 2, 0, 0, 0, 1, time.UTC)
 	}
 
 	ruleset := cache.NewRuleset(b.project, activeRules, rulesVersion, time.Time{})
+	projectCfg := &configpb.ProjectConfig{
+		Clustering:  cfgpb,
+		LastUpdated: timestamppb.New(configVersion),
+	}
+	cfg, err := compiledcfg.NewConfig(projectCfg)
+	if err != nil {
+		// Should never occur as config should be valid.
+		panic(err)
+	}
 
 	var state []*state.Entry
 	testResultsByObjectID := make(map[string]*cpb.Chunk)
@@ -786,8 +824,9 @@ func (b *scenarioBuilder) build() *scenario {
 		}).withTestName("test_b")
 
 		cb := newChunk(i).withProject(b.project).
-			withOldClustering(b.oldClustering).
+			withOldAlgorithms(b.oldAlgorithms).
 			withRuleset(ruleset).
+			withConfig(cfg).
 			withTestResults(trOne, trTwo)
 
 		s := cb.buildState()
@@ -798,6 +837,8 @@ func (b *scenarioBuilder) build() *scenario {
 	sortState(state)
 	sortBQExport(bqExports)
 	return &scenario{
+		config:                cfgpb,
+		configVersion:         configVersion,
 		rulesVersion:          rulesVersion,
 		rules:                 rs,
 		testResultsByObjectID: testResultsByObjectID,
