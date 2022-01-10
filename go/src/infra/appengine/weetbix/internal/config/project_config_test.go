@@ -105,18 +105,18 @@ func TestProjectConfig(t *testing.T) {
 
 	Convey("SetTestProjectConfig updates context config", t, func() {
 		projectA := createProjectConfig()
+		projectA.LastUpdated = timestamppb.New(time.Now())
 		configs := make(map[string]*configpb.ProjectConfig)
 		configs["a"] = projectA
 
 		ctx := memory.Use(context.Background())
-		ctx, _ = testclock.UseTime(ctx, testclock.TestTimeUTC)
 		SetTestProjectConfig(ctx, configs)
 
 		cfg, err := Projects(ctx)
 
 		So(err, ShouldBeNil)
 		So(len(cfg), ShouldEqual, 1)
-		So(cfg["a"], ShouldResembleProto, withLastUpdated(projectA, clock.Now(ctx)))
+		So(cfg["a"], ShouldResembleProto, projectA)
 	})
 
 	Convey("With mocks", t, func() {
@@ -290,15 +290,12 @@ func TestProject(t *testing.T) {
 		}
 
 		ctx := memory.Use(context.Background())
-		ctx, _ = testclock.UseTime(ctx, testclock.TestRecentTimeUTC)
-		lastUpdated := clock.Now(ctx)
 		SetTestProjectConfig(ctx, configs)
 
 		Convey("success", func() {
-
 			pj, err := Project(ctx, "chromium")
 			So(err, ShouldBeNil)
-			So(pj, ShouldResembleProto, withLastUpdated(pjChromium, lastUpdated))
+			So(pj, ShouldResembleProto, pjChromium)
 		})
 
 		Convey("not found", func() {

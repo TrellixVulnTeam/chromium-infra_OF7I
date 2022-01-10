@@ -37,6 +37,15 @@ var projectsCache = caching.RegisterLRUCache(1)
 
 const projectConfigKind = "weetbix.ProjectConfig"
 
+// ProjectCacheExpiry defines how often project configuration stored
+// in the in-process cache is refreshed from datastore.
+const ProjectCacheExpiry = 1 * time.Minute
+
+// StartingEpoch is the earliest valid config version for a project.
+// It is deliberately different from the timestamp zero value to be
+// discernible from "timestamp not populated" programming errors.
+var StartingEpoch = time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)
+
 var (
 	importAttemptCounter = metric.NewCounter(
 		"weetbix/project_config/import_attempt",
@@ -127,9 +136,9 @@ type fetchedProjectConfig struct {
 }
 
 // updateStoredConfig updates the config stored in datastore. fetchedConfigs
-// contains the new configs to store, forceUpdate forces overwrite of existing
+// contains the new configs to store, setForTesting forces overwrite of existing
 // configuration (ignoring whether the config revision is newer).
-func updateStoredConfig(ctx context.Context, fetchedConfigs map[string]*fetchedProjectConfig, forceUpdate bool) error {
+func updateStoredConfig(ctx context.Context, fetchedConfigs map[string]*fetchedProjectConfig, setForTesting bool) error {
 	// Drop out of any existing datastore transactions.
 	ctx = cleanContext(ctx)
 
@@ -151,36 +160,40 @@ func updateStoredConfig(ctx context.Context, fetchedConfigs map[string]*fetchedP
 				ID: project,
 			}
 		}
-		if !forceUpdate && cur.Meta.Revision == fetch.Meta.Revision {
+		if !setForTesting && cur.Meta.Revision == fetch.Meta.Revision {
 			logging.Infof(ctx, "Cached config %s is up-to-date at rev %q", cur.ID, cur.Meta.Revision)
 			continue
 		}
-		var lastUpdated time.Time
-		if cur.Config != nil {
-			cfg := &configpb.ProjectConfig{}
-			if err := proto.Unmarshal(cur.Config, cfg); err != nil {
-				// Continue through errors to ensure bad config for one project
-				// does not affect others.
-				errs = append(errs, errors.Annotate(err, "unmarshal current config").Err())
-				continue
-			}
-			lastUpdated = cfg.LastUpdated.AsTime()
-		}
-		// ContentHash updated implies Revision updated, but Revision updated
-		// does not imply ContentHash updated. To avoid unnecessarily
-		// incrementing the last updated time (which triggers re-clustering),
-		// only update it if content has changed.
-		if forceUpdate || cur.Meta.ContentHash != fetch.Meta.ContentHash {
-			// Content updated. Update version.
-			now := clock.Now(ctx)
-			if !now.After(lastUpdated) {
-				errs = append(errs, errors.New("old config version is after current time"))
-				continue
-			}
-			lastUpdated = now
-		}
 		configToSave := proto.Clone(fetch.Config).(*configpb.ProjectConfig)
-		configToSave.LastUpdated = timestamppb.New(lastUpdated)
+		if !setForTesting {
+			var lastUpdated time.Time
+			if cur.Config != nil {
+				cfg := &configpb.ProjectConfig{}
+				if err := proto.Unmarshal(cur.Config, cfg); err != nil {
+					// Continue through errors to ensure bad config for one project
+					// does not affect others.
+					errs = append(errs, errors.Annotate(err, "unmarshal current config").Err())
+					continue
+				}
+				lastUpdated = cfg.LastUpdated.AsTime()
+			}
+			// ContentHash updated implies Revision updated, but Revision updated
+			// does not imply ContentHash updated. To avoid unnecessarily
+			// incrementing the last updated time (which triggers re-clustering),
+			// only update it if content has changed.
+			if cur.Meta.ContentHash != fetch.Meta.ContentHash {
+				// Content updated. Update version.
+				now := clock.Now(ctx)
+				if !now.After(lastUpdated) {
+					errs = append(errs, errors.New("old config version is after current time"))
+					continue
+				}
+				lastUpdated = now
+			}
+			configToSave.LastUpdated = timestamppb.New(lastUpdated)
+		}
+		// else: use LastUpdated time provided in SetTestProjectConfig call.
+
 		blob, err := proto.Marshal(configToSave)
 		if err != nil {
 			// Continue through errors to ensure bad config for one project
@@ -281,7 +294,7 @@ func projectsWithMinimumVersion(ctx context.Context, project string, minimumVers
 			}
 			return &lru.Item{
 				Value: pc,
-				Exp:   time.Minute,
+				Exp:   ProjectCacheExpiry,
 			}
 		})
 		if err != nil {
@@ -338,8 +351,8 @@ func SetTestProjectConfig(ctx context.Context, cfg map[string]*configpb.ProjectC
 			Meta:   config.Meta{},
 		}
 	}
-	forceUpdate := true
-	if err := updateStoredConfig(ctx, fetchedConfigs, forceUpdate); err != nil {
+	setForTesting := true
+	if err := updateStoredConfig(ctx, fetchedConfigs, setForTesting); err != nil {
 		return err
 	}
 	testable := datastore.GetTestable(ctx)
