@@ -414,11 +414,24 @@ func unpackValue(val value, out interface{}) error {
 			o.ScalarOneof = &xmlrpc.Value_Double{
 				Double: f,
 			}
+		} else if val.Array != nil {
+			vl := make([]*xmlrpc.Value, len(val.Array.Values))
+			o.ScalarOneof = &xmlrpc.Value_Array{
+				Array: &xmlrpc.Array{
+					Values: vl,
+				},
+			}
+			for i, v := range val.Array.Values {
+				vl[i] = &xmlrpc.Value{}
+				if err := unpackValue(v, vl[i]); err != nil {
+					return err
+				}
+			}
 		} else {
-			return errors.Reason("%q is not a supported type for unpackValue", reflect.TypeOf(out)).Err()
+			return errors.Reason("not implemented type of *xmlrpc.Value,  %#v", val).Err()
 		}
 	default:
-		return errors.Reason("%q is not a supported type for unpackValue", reflect.TypeOf(out)).Err()
+		return errors.Reason("%q is not a supported type for unpackValue %#v", reflect.TypeOf(out), out).Err()
 	}
 	return nil
 }
