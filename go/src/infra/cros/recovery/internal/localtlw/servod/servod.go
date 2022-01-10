@@ -19,7 +19,6 @@ import (
 	"infra/cros/recovery/internal/localtlw/ssh"
 	"infra/cros/recovery/internal/localtlw/xmlrpc"
 	"infra/cros/recovery/internal/log"
-	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
 )
 
@@ -128,7 +127,7 @@ func (s *servod) Stop(ctx context.Context, pool *sshpool.Pool) error {
 }
 
 // Call performs execution commands by servod daemon by XMLRPC connection.
-func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, req *tlw.CallServodRequest) (r *tlw.CallServodResponse, rErr error) {
+func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
 	if s.proxy == nil {
 		p, err := newProxy(pool, s.host, s.port)
 		if err != nil {
@@ -146,21 +145,17 @@ func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, req *tlw.CallServ
 		return nil, errors.Annotate(err, "call servod %q", newAddr).Err()
 	}
 	c := xmlrpc.New(host, port)
-	var args []interface{}
-	for _, ra := range req.Args {
-		args = append(args, ra)
+	var iArgs []interface{}
+	for _, ra := range args {
+		iArgs = append(iArgs, ra)
 	}
-	method := string(req.Method)
-	call := xmlrpc.NewCall(method, args...)
+	call := xmlrpc.NewCall(method, iArgs...)
 	val := &xmlrpc_value.Value{}
 	err = c.Run(ctx, call, val)
 	if err != nil {
 		return nil, errors.Annotate(err, "call servod %q: %s", newAddr, method).Err()
 	}
-	return &tlw.CallServodResponse{
-		Value: val,
-		Fault: false,
-	}, nil
+	return val, nil
 }
 
 // Close closes using resource.

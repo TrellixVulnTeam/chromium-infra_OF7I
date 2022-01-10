@@ -31,6 +31,8 @@ type Access interface {
 	// CallServod executes a command on servod related to resource name.
 	// Commands will be run against servod on servo-host.
 	CallServod(ctx context.Context, req *CallServodRequest) *CallServodResponse
+	// Commands will be run against servod on servo-host.
+	CallBluetoothPeer(ctx context.Context, req *CallBluetoothPeerRequest) *CallBluetoothPeerResponse
 	// CopyFileTo copies file to remote device from local.
 	CopyFileTo(ctx context.Context, req *CopyRequest) error
 	// CopyFileFrom copies file from remote device to local.
@@ -141,7 +143,7 @@ type SetPowerSupplyResponse struct {
 // Examples:
 //   get: to read data need to pass method:`get`, command:`lid_open`.
 //   set: to update state need to pass method:`set`, command:`lid_open`, value:`no`.
-type ServodMethod string
+type ServodMethod = string
 
 const (
 	// Reading data by servod daemon.
@@ -565,4 +567,17 @@ type Servo struct {
 	// Self representation of servo-setup by servod.
 	// Example: servo_v4_with_servo_micro, servo_v4_with_ccd_cr50.
 	Type string
+}
+
+// CallBluetoothPeerRequest represents data to run command on bluetooth peer.
+type CallBluetoothPeerRequest struct {
+	Resource string
+	Method   string
+	Args     []*xmlrpc.Value
+}
+
+// CallBluetoothPeerResponse represents result data from running command on bluetooth peer.
+type CallBluetoothPeerResponse struct {
+	Value *xmlrpc.Value
+	Fault bool
 }

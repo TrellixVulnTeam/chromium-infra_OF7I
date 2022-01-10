@@ -67,6 +67,8 @@ const (
 	hostTypeServo     hostType = "servo-host"
 	hostTypeBtPeer    hostType = "bluetooth-peer-host"
 	hostTypeChameleon hostType = "chameleon-host"
+
+	deafultBluetoothPeerServerPort = 9992
 )
 
 // tlwClient holds data and represents the local implementation of TLW Access interface.
@@ -214,11 +216,50 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	if err != nil {
 		return fail(err)
 	}
-	res, err := s.Call(ctx, c.sshPool, req)
+	val, err := s.Call(ctx, c.sshPool, req.Method, req.Args)
 	if err != nil {
 		return fail(err)
 	}
-	return res
+	return &tlw.CallServodResponse{
+		Value: val,
+		Fault: false,
+	}
+}
+
+// CallServod executes a command on servod related to resource name.
+// Commands will be run against servod on servo-host.
+func (c *tlwClient) CallBluetoothPeer(ctx context.Context, req *tlw.CallBluetoothPeerRequest) *tlw.CallBluetoothPeerResponse {
+	// Translator to convert error to response structure.
+	fail := func(err error) *tlw.CallBluetoothPeerResponse {
+		return &tlw.CallBluetoothPeerResponse{
+			Value: &xmlrpc.Value{
+				ScalarOneof: &xmlrpc.Value_String_{
+					String_: fmt.Sprintf("call servod %q: %s", req.Resource, err),
+				},
+			},
+			Fault: true,
+		}
+	}
+	// Check if the name was detected by loaded device.
+	_, err := c.getDevice(ctx, req.Resource)
+	if err != nil {
+		return fail(err)
+	}
+	s, err := c.servodPool.Get(
+		localproxy.BuildAddr(req.Resource),
+		int32(deafultBluetoothPeerServerPort),
+		func() ([]string, error) { return nil, nil })
+	if err != nil {
+		return fail(err)
+	}
+	val, err := s.Call(ctx, c.sshPool, req.Method, req.Args)
+	if err != nil {
+		return fail(err)
+	}
+	return &tlw.CallBluetoothPeerResponse{
+		Value: val,
+		Fault: false,
+	}
 }
 
 // CopyFileTo copies file to remote device from local.
