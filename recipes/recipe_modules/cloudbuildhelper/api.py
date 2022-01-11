@@ -478,24 +478,30 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
     )
     return res.json.output.get('updated') or []
 
-  def discover_manifests(self, root, dirs, test_data=None):
+  def discover_manifests(self, root, entries, test_data=None):
     """Returns a list with paths to all manifests we need to build.
+
+    Each entry is either a directory to scan recursively, or a reference to
+    a concrete manifest (if ends with ".yaml").
 
     Args:
       * root (Path) - gclient solution root.
-      * dirs ([str]) - paths relative to the solution root to scan.
+      * entries ([str]) - paths relative to the solution root to scan.
       * test_data ([str]) - paths to put into each `dirs` in training mode.
 
     Returns:
       [Path].
     """
     paths = []
-    for d in dirs:
-      paths.extend(self.m.file.glob_paths(
-          'list %s' % d,
-          root.join(d),
-          '**/*.yaml',
-          test_data=test_data if test_data is not None else ['target.yaml']))
+    for entry in entries:
+      if entry.endswith('.yaml'):
+        paths.append(root.join(*entry.split('/')))
+      else:
+        paths.extend(self.m.file.glob_paths(
+            'list %s' % entry,
+            root.join(entry),
+            '**/*.yaml',
+            test_data=test_data if test_data is not None else ['target.yaml']))
     return paths
 
   def do_roll(self, repo_url, root, callback, ref='main'):
@@ -568,25 +574,45 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
 
       return out['issue'], out['issue_url']
 
-  def get_commit_label(self, path, revision, commit_position=None):
-    """Computes `<number>-<revision>` string identifying a commit.
+  def get_version_label(self,
+                        path,
+                        revision,
+                        ref=None,
+                        commit_position=None,
+                        template=None):
+    """Computes a version string identifying a commit.
 
-    Either uses `Cr-Commit-Position` footer, if available, or falls back
-    to `git number <rev>`.
+    To calculate a commit position it either uses `Cr-Commit-Position` footer,
+    if available, or falls back to `git number <rev>`.
 
-    This label is used as part of a version name for artifacts produced based on
-    this checked out commit.
+    Uses the given `template` string to format the label. It is a Python format
+    string, with following placeholders available:
+
+      {rev}: a string with the short git revision hash.
+      {ref}: a string with the last component of the commit ref (e.g. 'main').
+      {cp}: an integer with the commit position number.
+      {date}: "YYYY.MM.DD" UTC date when the build started.
+      {build}: an integer build number or 0 if not available.
+
+    Defaults to `{cp}-{rev}`.
+
+    This label is used as a version name for artifacts produced based on this
+    checked out commit.
 
     Args:
       * path (Path) - path to the git checkout root.
       * revision (str) - checked out revision.
+      * ref (str) - checked out git ref if known.
       * commit_position (str) - `Cr-Commit-Position` footer value if available.
+      * template (str) - a Python format string to use to format the version.
 
     Returns:
-      A `<number>-<revision>` string.
+      A version string.
     """
     if commit_position:
-      _, cp_num = self.m.commit_position.parse(commit_position)
+      cp_ref, cp = self.m.commit_position.parse(commit_position)
+      if cp_ref and not ref:
+        ref = cp_ref
     else:
       with self.m.context(cwd=path, env={'CHROME_HEADLESS': '1'}):
         with self.m.depot_tools.on_path():
@@ -596,9 +622,15 @@ class CloudBuildHelperApi(recipe_api.RecipeApi):
               stdout=self.m.raw_io.output(),
               step_test_data=(
                   lambda: self.m.raw_io.test_api.stream_output('11112\n')))
-      cp_num = int(result.stdout.strip())
+      cp = int(result.stdout.strip())
 
-    return '%d-%s' % (cp_num, revision[:7])
+    return (template or '{cp}-{rev}').format(
+        rev=revision[:7],
+        ref='unknown' if not ref else ref[ref.rfind('/')+1:],
+        cp=cp,
+        date=self.m.time.utcnow().strftime('%Y.%m.%d'),
+        build=self.m.buildbucket.build.number,
+    )
 
   @contextlib.contextmanager
   def build_environment(self,

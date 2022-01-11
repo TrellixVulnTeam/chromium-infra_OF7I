@@ -1,0 +1,61 @@
+[
+  {
+    "cmd": [
+      "git",
+      "number",
+      "abcdefabcdef63ad814cd1dfffe2fcfc9f81299c"
+    ],
+    "cwd": "None",
+    "env": {
+      "CHROME_HEADLESS": "1"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "get commit label"
+  },
+  {
+    "cmd": [
+      "echo",
+      "11112-abcdefa"
+    ],
+    "name": "label 1"
+  },
+  {
+    "cmd": [
+      "git",
+      "number",
+      "abcdefabcdef63ad814cd1dfffe2fcfc9f81299c"
+    ],
+    "cwd": "None",
+    "env": {
+      "CHROME_HEADLESS": "1"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "get commit label (2)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "abcdefa-unknown-11112-2012.05.14-0"
+    ],
+    "name": "label 2"
+  },
+  {
+    "name": "$result"
+  }
+]

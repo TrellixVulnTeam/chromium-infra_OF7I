@@ -13,8 +13,9 @@ DEPS = [
 def RunSteps(api):
   paths = api.cloudbuildhelper.discover_manifests(
       root=api.path['cache'],
-      dirs=['1', '2'])
+      entries=['stuff/direct.yaml', '1', '2'])
   assert paths == [
+      api.path['cache'].join('stuff', 'direct.yaml'),
       api.path['cache'].join('1', 'target.yaml'),
       api.path['cache'].join('2', 'target.yaml'),
   ], paths

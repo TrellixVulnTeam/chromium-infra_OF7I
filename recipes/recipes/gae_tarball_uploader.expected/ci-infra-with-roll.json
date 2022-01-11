@@ -370,7 +370,7 @@
     ],
     "cwd": "[CACHE]/builder/roll",
     "name": "upload roll CL.roll_tarballs.py",
-    "stdin": "{\"tarballs\": [{\"tarball\": \"example/target\", \"version\": {\"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", \"metadata\": {\"date\": \"2012-05-14T12:53:21.500000Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}, \"sources\": []}, \"sha256\": \"82ac16b294bc0f98...\", \"version\": \"197293-5e03a58\"}}]}",
+    "stdin": "{\"tarballs\": [{\"tarball\": \"example/target\", \"version\": {\"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", \"metadata\": {\"date\": \"2012-05-14T12:53:23Z\", \"links\": {\"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"}, \"source\": {\"repo\": \"https://chromium.googlesource.com/infra/infra\", \"revision\": \"5e03a58dc0850e5137a8ebbce29610670c756aed\"}, \"sources\": []}, \"sha256\": \"82ac16b294bc0f98...\", \"version\": \"197293-5e03a58\"}}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -394,7 +394,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"version\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"location\": \"gs://example/tarballs/example/target/82ac16b294bc0f98....tar.gz\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"metadata\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@          \"date\": \"2012-05-14T12:53:21.500000Z\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"date\": \"2012-05-14T12:53:23Z\", @@@",
       "@@@STEP_LOG_LINE@json.output@          \"links\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"buildbucket\": \"https://cr-buildbucket.appspot.com/build/0\"@@@",
       "@@@STEP_LOG_LINE@json.output@          }, @@@",

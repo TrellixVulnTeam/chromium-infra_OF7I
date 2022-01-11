@@ -21,10 +21,16 @@ PROPERTIES = {
 
 
 def RunSteps(api, commit_position):
-  api.step('label', ['echo', api.cloudbuildhelper.get_commit_label(
+  api.step('label 1', ['echo', api.cloudbuildhelper.get_version_label(
       path=api.path['checkout'],
       revision='abcdefabcdef63ad814cd1dfffe2fcfc9f81299c',
       commit_position=commit_position,
+  )])
+  api.step('label 2', ['echo', api.cloudbuildhelper.get_version_label(
+      path=api.path['checkout'],
+      revision='abcdefabcdef63ad814cd1dfffe2fcfc9f81299c',
+      commit_position=commit_position,
+      template='{rev}-{ref}-{cp}-{date}-{build}',
   )])
 
 

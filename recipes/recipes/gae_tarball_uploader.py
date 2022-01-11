@@ -140,19 +140,20 @@ def _checkout(api, p):
           PROPERTIES.PROJECT_INFRA,
           PROPERTIES.PROJECT_INFRA_INTERNAL,
       ):
-      return _checkout_gclient(api, p.project)
+      return _checkout_gclient(api, p.project, p.version_label_template)
     elif p.project == PROPERTIES.PROJECT_GIT_REPO:
-      return _checkout_git(api, p.git_repo)
+      return _checkout_git(api, p.git_repo, p.version_label_template)
     else:  # pragma: no cover
       raise AssertionError('Should not happen, validated props already')
 
 
-def _checkout_gclient(api, project):
+def _checkout_gclient(api, project, version_label_template):
   """Checks out an infra or infra_internal gclient solution.
 
   Args:
     api: recipes API.
     project: PROPERTIES.Project enum.
+    version_label_template: a template for the version label string.
 
   Returns:
     (Metadata, build environment context manager).
@@ -189,10 +190,12 @@ def _checkout_gclient(api, project):
   return Metadata(
       repo_url=repo_url,
       revision=props['got_revision'],
-      canonical_tag=api.cloudbuildhelper.get_commit_label(
+      canonical_tag=api.cloudbuildhelper.get_version_label(
           path=co.path.join('infra_internal' if internal else 'infra'),
           revision=props['got_revision'],
+          ref=api.buildbucket.gitiles_commit.ref,
           commit_position=props.get('got_revision_cp'),
+          template=version_label_template,
       ),
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=co.path,
@@ -200,7 +203,7 @@ def _checkout_gclient(api, project):
       )), build_environ
 
 
-def _checkout_git(api, repo):
+def _checkout_git(api, repo, version_label_template):
   """Checks out a standalone Git repository.
 
   Checks out the commit passed via Buildbucket inputs or `refs/heads/main`.
@@ -208,6 +211,7 @@ def _checkout_git(api, repo):
   Args:
     api: recipes API.
     repo: PROPERTIES.GitRepo proto.
+    version_label_template: a template for the version label string.
 
   Returns:
     (Metadata, build environment context manager).
@@ -229,9 +233,11 @@ def _checkout_git(api, repo):
   return Metadata(
       repo_url=repo.url,
       revision=revision,
-      canonical_tag=api.cloudbuildhelper.get_commit_label(
+      canonical_tag=api.cloudbuildhelper.get_version_label(
           path=path,
           revision=revision,
+          ref=api.buildbucket.gitiles_commit.ref,
+          template=version_label_template,
       ),
       checkout=api.cloudbuildhelper.CheckoutMetadata(
           root=path,

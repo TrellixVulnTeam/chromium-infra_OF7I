@@ -28,10 +28,10 @@
   * [build_wheels](#recipes-build_wheels)
   * [chromium_bootstrap/test](#recipes-chromium_bootstrap_test) (Python3 ✅) &mdash; This recipe verifies importing of chromium bootstrap protos.
   * [cloudbuildhelper:examples/build_env](#recipes-cloudbuildhelper_examples_build_env) (Python3 ✅)
-  * [cloudbuildhelper:examples/commit_label](#recipes-cloudbuildhelper_examples_commit_label) (Python3 ✅)
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover) (Python3 ✅)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full) (Python3 ✅)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll) (Python3 ✅)
+  * [cloudbuildhelper:examples/version_label](#recipes-cloudbuildhelper_examples_version_label) (Python3 ✅)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage) (Python3 ✅)
   * [cv_testing/tryjob](#recipes-cv_testing_tryjob) (Python3 ✅) &mdash; Recipe to test LUCI CQ/CV itself.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
@@ -80,7 +80,7 @@
 
 ### *recipe_modules* / [cloudbuildhelper](/recipes/recipe_modules/cloudbuildhelper)
 
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/golang][recipe_engine/recipe_modules/golang], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/nodejs][recipe_engine/recipe_modules/nodejs], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/__init__.py#7): [depot\_tools/depot\_tools][depot_tools/recipe_modules/depot_tools], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/golang][recipe_engine/recipe_modules/golang], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/nodejs][recipe_engine/recipe_modules/nodejs], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -113,7 +113,7 @@ Returns:
 Raises:
   StepFailure on failures.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [build\_environment](/recipes/recipe_modules/cloudbuildhelper/api.py#603)(self, root, go_version_file=None, nodejs_version_file=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [build\_environment](/recipes/recipe_modules/cloudbuildhelper/api.py#635)(self, root, go_version_file=None, nodejs_version_file=None):**
 
 A context manager that activates the build environment.
 
@@ -156,19 +156,22 @@ Args:
 
 Can be used to tell the module to use an existing binary.
 
-&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#481)(self, root, dirs, test_data=None):**
+&mdash; **def [discover\_manifests](/recipes/recipe_modules/cloudbuildhelper/api.py#481)(self, root, entries, test_data=None):**
 
 Returns a list with paths to all manifests we need to build.
 
+Each entry is either a directory to scan recursively, or a reference to
+a concrete manifest (if ends with ".yaml").
+
 Args:
   * root (Path) - gclient solution root.
-  * dirs ([str]) - paths relative to the solution root to scan.
+  * entries ([str]) - paths relative to the solution root to scan.
   * test_data ([str]) - paths to put into each `dirs` in training mode.
 
 Returns:
   [Path].
 
-&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#501)(self, repo_url, root, callback, ref='main'):**
+&mdash; **def [do\_roll](/recipes/recipe_modules/cloudbuildhelper/api.py#507)(self, repo_url, root, callback, ref='main'):**
 
 Checks out a repo, calls the callback to modify it, uploads the result.
 
@@ -185,23 +188,36 @@ Returns:
   * (None, None) if didn't create a CL (because nothing has changed).
   * (Issue number, Issue URL) if created a CL.
 
-&mdash; **def [get\_commit\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#571)(self, path, revision, commit_position=None):**
+&mdash; **def [get\_version\_label](/recipes/recipe_modules/cloudbuildhelper/api.py#577)(self, path, revision, ref=None, commit_position=None, template=None):**
 
-Computes `<number>-<revision>` string identifying a commit.
+Computes a version string identifying a commit.
 
-Either uses `Cr-Commit-Position` footer, if available, or falls back
-to `git number <rev>`.
+To calculate a commit position it either uses `Cr-Commit-Position` footer,
+if available, or falls back to `git number <rev>`.
 
-This label is used as part of a version name for artifacts produced based on
-this checked out commit.
+Uses the given `template` string to format the label. It is a Python format
+string, with following placeholders available:
+
+  {rev}: a string with the short git revision hash.
+  {ref}: a string with the last component of the commit ref (e.g. 'main').
+  {cp}: an integer with the commit position number.
+  {date}: "YYYY.MM.DD" UTC date when the build started.
+  {build}: an integer build number or 0 if not available.
+
+Defaults to `{cp}-{rev}`.
+
+This label is used as a version name for artifacts produced based on this
+checked out commit.
 
 Args:
   * path (Path) - path to the git checkout root.
   * revision (str) - checked out revision.
+  * ref (str) - checked out git ref if known.
   * commit_position (str) - `Cr-Commit-Position` footer value if available.
+  * template (str) - a Python format string to use to format the version.
 
 Returns:
-  A `<number>-<revision>` string.
+  A version string.
 
 &mdash; **def [report\_version](/recipes/recipe_modules/cloudbuildhelper/api.py#109)(self):**
 
@@ -1266,13 +1282,6 @@ The protos are exported via a symlink in
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/build_env.py#15)(api):**
-### *recipes* / [cloudbuildhelper:examples/commit\_label](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py)
-
-[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/commit_label.py#23)(api, commit_position):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
@@ -1302,6 +1311,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/roll.py#21)(api, commit):**
+### *recipes* / [cloudbuildhelper:examples/version\_label](/recipes/recipe_modules/cloudbuildhelper/examples/version_label.py)
+
+[DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/version_label.py#7): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/cloudbuildhelper/examples/version_label.py#23)(api, commit_position):**
 ### *recipes* / [cloudkms:examples/usage](/recipes/recipe_modules/cloudkms/examples/usage.py)
 
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#7): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]

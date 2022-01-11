@@ -5,6 +5,7 @@
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
+  'recipe_engine/buildbucket',
   'recipe_engine/cipd',
   'recipe_engine/commit_position',
   'recipe_engine/context',
@@ -15,6 +16,7 @@ DEPS = [
   'recipe_engine/path',
   'recipe_engine/raw_io',
   'recipe_engine/step',
+  'recipe_engine/time',
 
   'depot_tools/depot_tools',
   'depot_tools/git',

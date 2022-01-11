@@ -8,7 +8,7 @@ package recipes.infra.gae_tarball_uploader;
 
 // Input properties recognized by 'infra/gae_tarball_uploader' recipe.
 //
-// Next id: 7.
+// Next id: 8.
 message Inputs {
   // Project describes what code to checkout.
   enum Project {
@@ -38,9 +38,11 @@ message Inputs {
   // Required.
   string infra = 2;
 
-  // A path(s) within the checkout to a directory with *.yaml files to
-  // discover and build, e.g. 'infra/build/gae/luci-py'. Will be listed
-  // recursively.
+  // A path(s) within the checkout to a directory with *.yaml files (or *.yaml
+  // files themselves) to discover and build, e.g. 'infra/build/gae/infra' or
+  // 'infra/build/gae/infra/target.yaml'.
+  //
+  // Directories will be listed recursively.
   //
   // Required.
   repeated string manifests = 3;
@@ -77,4 +79,17 @@ message Inputs {
     repeated string storage = 3;      // prefixes of allowed gs:// destinations
   }
   Restrictions restrictions = 6;
+
+  // A template for the version label string.
+  //
+  // It is a Python format string, with following placeholders available:
+  //
+  //   {rev}: a string with the short git revision hash.
+  //   {ref}: a string with the last component of the commit ref (e.g. 'main').
+  //   {cp}: an integer with the commit position number.
+  //   {date}: "YYYY.MM.DD" UTC date when the build started.
+  //   {build}: an integer build number or 0 if not available.
+  //
+  // The default is `{cp}-{rev}`.
+  string version_label_template = 7;
 }
