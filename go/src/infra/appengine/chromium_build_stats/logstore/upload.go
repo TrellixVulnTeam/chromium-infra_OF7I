@@ -14,7 +14,7 @@ import (
 	"path"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/appengine/file"
+	"google.golang.org/appengine"
 )
 
 // Upload uploads data to logstore and returns logPath.
@@ -33,11 +33,7 @@ func Upload(ctx context.Context, prefix string, data []byte) (_ string, rerr err
 	}
 	defer closeCloser(client)
 
-	bkt, err := file.DefaultBucketName(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get DefaultBucketName: %v", err)
-	}
-
+	bkt := appengine.DefaultVersionHostname(ctx)
 	hd := sha256.Sum256(data)
 	h := base64.URLEncoding.EncodeToString(hd[:])
 	logPath := path.Join("upload", fmt.Sprintf("%s.%s.gz", prefix, h))

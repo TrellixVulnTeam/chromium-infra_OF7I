@@ -9,14 +9,14 @@ import (
 	"context"
 	"strings"
 
-	"google.golang.org/appengine/file"
+	"google.golang.org/appengine"
 )
 
 // Bucket returns url of the given obj.
 func Bucket(ctx context.Context, obj string) (string, error) {
 	obj = strings.TrimPrefix(obj, "/")
 	if strings.HasPrefix(obj, "upload/") {
-		return file.DefaultBucketName(ctx)
+		return appengine.DefaultVersionHostname(ctx), nil
 	}
 	return "chrome-goma-log", nil
 }
