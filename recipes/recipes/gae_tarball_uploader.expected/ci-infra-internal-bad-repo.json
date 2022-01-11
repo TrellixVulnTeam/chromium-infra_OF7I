@@ -1,0 +1,8 @@
+[
+  {
+    "failure": {
+      "humanReason": "Bad input commit: Expecting repo 'https://chrome-internal.googlesource.com/infra/infra_internal', but got u'https://example.com/wat'"
+    },
+    "name": "$result"
+  }
+]

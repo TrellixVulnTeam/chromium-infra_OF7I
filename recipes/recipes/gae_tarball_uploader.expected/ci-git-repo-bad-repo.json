@@ -1,0 +1,8 @@
+[
+  {
+    "failure": {
+      "humanReason": "Bad input commit: Expecting repo u'https://git.example.com/repo', but got u'https://git.example.com/wat'"
+    },
+    "name": "$result"
+  }
+]

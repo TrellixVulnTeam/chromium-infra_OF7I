@@ -1,0 +1,8 @@
+[
+  {
+    "failure": {
+      "humanReason": "Bad input commit: Ref should start with any of [u'refs/tags/'], but got u'refs/heads/main'"
+    },
+    "name": "$result"
+  }
+]

@@ -8,7 +8,7 @@ package recipes.infra.gae_tarball_uploader;
 
 // Input properties recognized by 'infra/gae_tarball_uploader' recipe.
 //
-// Next id: 8.
+// Next id: 9.
 message Inputs {
   // Project describes what code to checkout.
   enum Project {
@@ -92,4 +92,12 @@ message Inputs {
   //
   // The default is `{cp}-{rev}`.
   string version_label_template = 7;
+
+  // A list of prefixes of git refs allowed in the input gitiles commit.
+  //
+  // Useful for release branch builders configuration as a precaution against
+  // building something other than a release branch.
+  //
+  // If empty, defaults to "everything is allowed".
+  repeated string allowed_refs = 8;
 }

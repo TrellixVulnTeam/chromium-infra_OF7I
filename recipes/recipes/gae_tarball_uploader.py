@@ -48,6 +48,11 @@ def RunSteps(api, properties):
   except ValueError as exc:
     raise recipe_api.InfraFailure('Bad input properties: %s' % exc)
 
+  try:
+    _validate_input_commit(api.buildbucket.gitiles_commit, properties)
+  except ValueError as exc:
+    raise recipe_api.InfraFailure('Bad input commit: %s' % exc)
+
   # Checkout the code.
   meta, build_env = _checkout(api, properties)
 
@@ -123,6 +128,27 @@ def _validate_props(p):  # pragma: no cover
     raise ValueError('"infra" is required')
   if not p.manifests:
     raise ValueError('"manifests" is required')
+
+
+def _validate_input_commit(commit, p):
+  """Checks input buildbucket.v2.GitilesCommit matches the config."""
+  if commit.host or commit.project:
+    got = 'https://%s/%s' % (commit.host, commit.project)
+    if p.project == PROPERTIES.PROJECT_INFRA:
+      want = 'https://chromium.googlesource.com/infra/infra'
+    elif p.project == PROPERTIES.PROJECT_INFRA_INTERNAL:
+      want = 'https://chrome-internal.googlesource.com/infra/infra_internal'
+    elif p.project == PROPERTIES.PROJECT_GIT_REPO:
+      want = p.git_repo.url
+    else:  # pragma: no cover
+      raise AssertionError('Should not happen, validated props already')
+    if got != want:
+      raise ValueError('Expecting repo %r, but got %r' % (want, got))
+
+  ref = commit.ref or 'refs/heads/main'
+  if p.allowed_refs and not any(ref.startswith(pfx) for pfx in p.allowed_refs):
+    raise ValueError(
+        'Ref should start with any of %r, but got %r' % (p.allowed_refs, ref))
 
 
 def _checkout(api, p):
@@ -377,7 +403,20 @@ def GenTests(api):
           project=PROPERTIES.PROJECT_INFRA,
           infra='prod',
           manifests=['infra/build/gae'],
+      ) +
+      api.buildbucket.ci_build(
+          git_repo='https://chromium.googlesource.com/infra/infra'
       )
+  )
+
+  yield (
+      api.test('ci-infra-bad-repo') +
+      api.properties(
+          project=PROPERTIES.PROJECT_INFRA,
+          infra='prod',
+          manifests=['infra/build/gae'],
+      ) +
+      api.buildbucket.ci_build(git_repo='https://example.com/wat')
   )
 
   yield (
@@ -386,7 +425,21 @@ def GenTests(api):
           project=PROPERTIES.PROJECT_INFRA_INTERNAL,
           infra='prod',
           manifests=['infra_internal/build/gae'],
+      ) +
+      api.buildbucket.ci_build(
+          git_repo='https://chrome-internal.googlesource.com/'
+                   'infra/infra_internal'
       )
+  )
+
+  yield (
+      api.test('ci-infra-internal-bad-repo') +
+      api.properties(
+          project=PROPERTIES.PROJECT_INFRA_INTERNAL,
+          infra='prod',
+          manifests=['infra_internal/build/gae'],
+      ) +
+      api.buildbucket.ci_build(git_repo='https://example.com/wat')
   )
 
   yield (
@@ -418,7 +471,21 @@ def GenTests(api):
               build_steps=['copy', 'go_gae_bundle'],
               storage=['gs://something'],
           ),
-      )
+      ) +
+      api.buildbucket.ci_build(git_repo='https://git.example.com/repo')
+  )
+
+  yield (
+      api.test('ci-git-repo-bad-repo') +
+      api.properties(
+          project=PROPERTIES.PROJECT_GIT_REPO,
+          infra='prod',
+          manifests=['build/gae'],
+          git_repo=PROPERTIES.GitRepo(
+              url='https://git.example.com/repo',
+          ),
+      ) +
+      api.buildbucket.ci_build(git_repo='https://git.example.com/wat')
   )
 
   yield (
@@ -436,19 +503,6 @@ def GenTests(api):
   )
 
   yield (
-      api.test('ci-git-repo-with-bb') +
-      api.buildbucket.ci_build() +
-      api.properties(
-          project=PROPERTIES.PROJECT_GIT_REPO,
-          infra='prod',
-          manifests=['build/gae'],
-          git_repo=PROPERTIES.GitRepo(
-              url='https://git.example.com/repo',
-          ),
-      )
-  )
-
-  yield (
       api.test('build-failure') +
       api.properties(
           project=PROPERTIES.PROJECT_INFRA,
@@ -459,6 +513,20 @@ def GenTests(api):
           'cloudbuildhelper upload target',
           api.cloudbuildhelper.upload_error_output('Boom'),
           retcode=1)
+  )
+
+  yield (
+      api.test('disallowed-ref') +
+      api.properties(
+          project=PROPERTIES.PROJECT_GIT_REPO,
+          infra='prod',
+          manifests=['build/gae'],
+          allowed_refs=['refs/tags/'],
+          git_repo=PROPERTIES.GitRepo(
+              url='https://git.example.com/repo',
+          ),
+      ) +
+      api.buildbucket.ci_build(git_repo='https://git.example.com/repo')
   )
 
   yield (

@@ -13,6 +13,18 @@
       "--url",
       "https://git.example.com/repo"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.git setup",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -23,7 +35,6 @@
       "git",
       "fetch",
       "origin",
-      "main",
       "--progress"
     ],
     "cwd": "[CACHE]/builder/repo",
@@ -31,6 +42,18 @@
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.git fetch",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -41,10 +64,22 @@
       "git",
       "checkout",
       "-f",
-      "FETCH_HEAD"
+      "2d72510e447ab60a9728aeea2362d8be2cbd7789"
     ],
     "cwd": "[CACHE]/builder/repo",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.git checkout",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -58,6 +93,18 @@
     ],
     "cwd": "[CACHE]/builder/repo",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.read revision",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -74,6 +121,18 @@
     ],
     "cwd": "[CACHE]/builder/repo",
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.git clean",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -98,6 +157,18 @@
       ]
     },
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "checkout.get commit label",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -115,6 +186,18 @@
       "**/*.yaml"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "list build/gae",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[CACHE]/builder/repo/build/gae/target.yaml@@@",
@@ -138,6 +221,18 @@
       "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A496f60e4015d89eef468337d1c66da53278cb8fb"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "install infra/tools/cloudbuildhelper.ensure package directory",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -157,6 +252,18 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "install infra/tools/cloudbuildhelper.ensure_installed",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -178,6 +285,18 @@
       "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A496f60e4015d89eef468337d1c66da53278cb8fb/cloudbuildhelper",
       "version"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cloudbuildhelper version",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>cloudbuildhelper v6.6.6<br/><br/>CIPD package name: infra/tools/cloudbuildhelper/...<br/>CIPD instance ID:  lTJD7x...@@@"
@@ -191,7 +310,7 @@
       "-canonical-tag",
       "11112-deadbee",
       "-build-id",
-      "https://cr-buildbucket.appspot.com/build/0",
+      "https://cr-buildbucket.appspot.com/build/8945511751514863184",
       "-infra",
       "prod",
       "-restrict-targets",
@@ -211,6 +330,18 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "cloudbuildhelper upload target",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>Name: example/target<br/>Version: 11112-deadbee<br/>SHA256: 82ac16b294bc0f98...@@@",
