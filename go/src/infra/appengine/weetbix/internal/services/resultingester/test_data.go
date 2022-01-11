@@ -57,6 +57,7 @@ func mockedQueryTestVariantsRsp() *rdbpb.QueryTestVariantsResponse {
 					{
 						Result: &rdbpb.TestResult{
 							Status: rdbpb.TestStatus_FAIL,
+							Tags:   pbutil.StringPairs("os", "Mac", "monorail_component", "Monorail>Component"),
 						},
 					},
 				},

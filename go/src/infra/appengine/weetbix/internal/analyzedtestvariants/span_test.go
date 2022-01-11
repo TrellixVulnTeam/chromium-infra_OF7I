@@ -69,7 +69,7 @@ func TestAnalyzedTestVariantSpan(t *testing.T) {
 				spanner.Key{realm, "ninja://test-not-exists", "variantHash1"},
 			)
 			atvs := make([]*pb.AnalyzedTestVariant, 0)
-			err := ReadStatus(span.Single(ctx), ks, func(atv *pb.AnalyzedTestVariant) error {
+			err := ReadStatusAndTags(span.Single(ctx), ks, func(atv *pb.AnalyzedTestVariant) error {
 				So(atv.Realm, ShouldEqual, realm)
 				atvs = append(atvs, atv)
 				return nil

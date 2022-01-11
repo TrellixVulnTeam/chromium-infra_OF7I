@@ -17,14 +17,14 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
-// ReadStatus reads AnalyzedTestVariant rows by keys.
-func ReadStatus(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant) error) error {
-	fields := []string{"Realm", "TestId", "VariantHash", "Status"}
+// ReadStatusAndTags reads AnalyzedTestVariant rows by keys.
+func ReadStatusAndTags(ctx context.Context, ks spanner.KeySet, f func(*pb.AnalyzedTestVariant) error) error {
+	fields := []string{"Realm", "TestId", "VariantHash", "Status", "Tags"}
 	var b spanutil.Buffer
 	return span.Read(ctx, "AnalyzedTestVariants", ks, fields).Do(
 		func(row *spanner.Row) error {
 			tv := &pb.AnalyzedTestVariant{}
-			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status); err != nil {
+			if err := b.FromSpanner(row, &tv.Realm, &tv.TestId, &tv.VariantHash, &tv.Status, &tv.Tags); err != nil {
 				return err
 			}
 			return f(tv)

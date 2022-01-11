@@ -7,6 +7,7 @@ package resultingester
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/spanner"
@@ -65,7 +66,7 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 	ks := testVariantKeySet(realm, tvs)
 	_, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		found := make(map[testVariantKey]*pb.AnalyzedTestVariant)
-		err := analyzedtestvariants.ReadStatus(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {
+		err := analyzedtestvariants.ReadStatusAndTags(ctx, ks, func(atv *pb.AnalyzedTestVariant) error {
 			k := testVariantKey{atv.TestId, atv.VariantHash}
 			found[k] = atv
 			return nil
@@ -95,11 +96,7 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 				ms = append(ms, m)
 				tvToEnQTime[k] = enqueueTime
 			} else {
-				if atv.Status == pb.AnalyzedTestVariantStatus_FLAKY {
-					// The saved analyzed test variant is a known flake, any status of the new
-					// test variant would not change its status.
-					continue
-				}
+				nts := updatedTags(extractRequiredTags(tv), atv.Tags)
 				ds, err := derivedStatus(tv.Status)
 				if err != nil {
 					logging.Errorf(ctx, "Update test variant %s: %s", tvStr, err)
@@ -110,14 +107,20 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 					logging.Errorf(ctx, "Update test variant %s: %s", tvStr, err)
 					continue
 				}
+				if ns == atv.Status && len(nts) == 0 {
+					continue
+				}
 
+				vals := map[string]interface{}{
+					"Realm":       atv.Realm,
+					"TestId":      atv.TestId,
+					"VariantHash": atv.VariantHash,
+				}
+				if len(nts) > 0 {
+					vals["Tags"] = nts
+				}
 				if ns != atv.Status {
-					vals := map[string]interface{}{
-						"Realm":       atv.Realm,
-						"TestId":      atv.TestId,
-						"VariantHash": atv.VariantHash,
-						"Status":      int64(ns),
-					}
+					vals["Status"] = int64(ns)
 					if atv.Status == pb.AnalyzedTestVariantStatus_CONSISTENTLY_EXPECTED || atv.Status == pb.AnalyzedTestVariantStatus_NO_NEW_RESULTS {
 						// The test variant starts to have unexpected failures again, need
 						// to start updating its status.
@@ -125,9 +128,8 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 						vals["NextUpdateTaskEnqueueTime"] = now
 						tvToEnQTime[k] = now
 					}
-
-					ms = append(ms, spanutil.UpdateMap("AnalyzedTestVariants", vals))
 				}
+				ms = append(ms, spanutil.UpdateMap("AnalyzedTestVariants", vals))
 			}
 		}
 		span.BufferWrite(ctx, ms...)
@@ -256,4 +258,56 @@ func extractRequiredTags(tv *rdbpb.TestVariant) []*pb.StringPair {
 		}
 	}
 	return tags
+}
+
+// tagsEqual compares two sets of tags.
+func tagsEqual(newTags, oldTags []*pb.StringPair) bool {
+	if len(newTags) != len(oldTags) {
+		return false
+	}
+	ntStrings := pbutil.StringPairsToStrings(newTags...)
+	sort.Strings(ntStrings)
+	otStrings := pbutil.StringPairsToStrings(oldTags...)
+	sort.Strings(otStrings)
+
+	for i, t := range ntStrings {
+		if t != otStrings[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// updatedTags returns a merged slices of tags.
+// * if the same key appears in both newTags and oldTags, use the value from
+//   newTags;
+// * if a key appears in only one of the slices, append the string pair as it
+//   is;
+// * if the merged slice is the same as oldTags, return nil to indicate there
+//   is no need to update tags.
+func updatedTags(newTags, oldTags []*pb.StringPair) []*pb.StringPair {
+	switch {
+	case len(newTags) == 0:
+		return nil
+	case len(oldTags) == 0:
+		return newTags
+	}
+
+	if same := tagsEqual(newTags, oldTags); same {
+		return nil
+	}
+
+	resultMap := make(map[string]*pb.StringPair)
+	for _, t := range oldTags {
+		resultMap[t.Key] = t
+	}
+	for _, t := range newTags {
+		resultMap[t.Key] = t
+	}
+
+	result := make([]*pb.StringPair, 0, len(resultMap))
+	for _, t := range resultMap {
+		result = append(result, t)
+	}
+	return result
 }
