@@ -34,6 +34,7 @@ func setStateWorkingExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// getDetectedStatusesExec verifies communication with XMLRPC service running on bluetooth-peer and send one request to verify that service is responsive and initialized.
 func getDetectedStatusesExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	h, err := activeHost(args)
 	if err != nil {
