@@ -13,7 +13,7 @@ DEPS="$2"
 CPPFLAGS="-I${DEPS}/include"
 LDFLAGS="-L$DEPS/lib"
 EXPATDIR="${DEPS}"
-CFLAGS=""
+CFLAGS="-O2 -std=gnu99"
 
 # Write the "version" file. This is used by the "GIT-VERSION-GEN" script to pull
 # the Git version. We name ours after the Git tag that we pulled and our
@@ -73,7 +73,7 @@ else
       # worth it to turn on LTO there.
       AR=${AR%ar}gcc-ar
       LDFLAGS="-flto $LDFLAGS"
-      CFLAGS="-flto"
+      CFLAGS="$CFLAGS -flto"
       ;;
     *)
       # Cross compiling; git wants to run little programs to detect these, but
