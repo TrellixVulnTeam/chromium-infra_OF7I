@@ -16,11 +16,12 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 1.  You need to [get the Chrome Infra depot_tools commands](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) to check out the source code and all its related dependencies and to be able to send changes for review.
 1.  Check out the Monorail source code
     1.  `cd /path/to/empty/workdir`
-    1.  `fetch infra`
+    1.  `fetch infra` (make sure you are not "fetch internal_infra" )
     1.  `cd infra/appengine/monorail`
 1.  Make sure you have the AppEngine SDK:
     1.  It should be fetched for you by step 1 above (during runhooks)
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
+    1.  Also follow https://cloud.google.com/appengine/docs/standard/python3/setting-up-environment to setup `gcloud`
 1.  Spin up dependent services.
     1. We use docker and docker-compose to orchestrate. So install [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) first. For glinux users see [go/docker](http://go/docker)
     1.  Make sure to authenticate with the App Engine SDK and configure Docker. This is needed to install Cloud Tasks Emulator.
@@ -55,7 +56,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
             1.  Install node version manager `brew install nvm`
             1.  See the brew instructions on updating your shell's configuration
             1.  Install node and npm `nvm install 12.13.0`
-            1.  Add the following to the end of your `~/.zshrc` file: 
+            1.  Add the following to the end of your `~/.zshrc` file:
 
                     export NVM_DIR="$HOME/.nvm"
                     [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
@@ -66,18 +67,19 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
         1. For mac: `brew install mysql@5.6`
         1. For Debian derivatives, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar): `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
     1.  Optional: You may need to install `pip`. You can verify whether you have it installed with `which pip`.
-        1. `curl -O https://bootstrap.pypa.io/2.7/get-pip.py`
+        1. make sure to install `pip` using `python2` instead of `python3` (use `python --version` to check the version, `which python2` to check the path)
+        1. `curl -O https://bootstrap.pypa.io/pip/2.7/get-pip.py`
         1. `sudo python get-pip.py`
     1.  Use `virtualenv` to keep from modifying system dependencies.
         1. `sudo pip install virtualenv`
         1. `virtualenv venv` to set up virtualenv within your monorail directory.
         1. `source venv/bin/activate` to activate it, needed in each terminal instance of the directory.
-    1.  Mac only: install [libssl](https://github.com/PyMySQL/mysqlclient-python/issues/74), needed for mysqlclient.
+    1.  Mac only: install [libssl](https://github.com/PyMySQL/mysqlclient-python/issues/74), needed for mysqlclient. (do this in local env not virtual env)
         1. `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
-    1.  `make dev_deps`
-    1.  `make deps`
+    1.  `make dev_deps` (run in virtual env)
+    1.  `make deps` (run in virtual env)
 1.  Run the app:
-    1.  `make serve`
+    1.  `make serve` (run in virtual env)
 1.  Browse the app at localhost:8080 your browser.
 1. Set up your test user account (these steps are a little odd, but just roll with it):
        1.  Sign in using `test@example.com`
@@ -97,7 +99,7 @@ To set up FLT/Approvals in Monorail:
 1. Visit the gear > Development Process > Labels and fields
 1. Add at least one custom field with type "Approval" (this will be your approval
 1. Visit gear > Development Process > Templates
-1. Check "Include Gates and Approval Tasks in issue" 
+1. Check "Include Gates and Approval Tasks in issue"
 1. Fill out the chart - The top row is the gates/phases on your FLT issue and you can select radio buttons for which gate each approval goes
 
 ## Testing
@@ -161,7 +163,9 @@ on port 8080, you can run `kill $(lsof -ti:8080)`.
 
 *   `RuntimeError: maximum recursion depth exceeded while calling a Python object`
 
-If running `make serve` gives an output similar to [this](https://paste.googleplex.com/4693398234595328), make sure you're using a virtual environment (see above for how to configure one). Then, make the changes outlined in [this CL](https://chromium-review.googlesource.com/c/infra/infra/+/3152656). 
+If running `make serve` gives an output similar to [this](https://paste.googleplex.com/4693398234595328),
+1.  make sure you're using a virtual environment (see above for how to configure one). Then, make the changes outlined in [this CL](https://chromium-review.googlesource.com/c/infra/infra/+/3152656).
+1.  Also try `pip install protobuf`
 
 *   `gcloud: command not found`
 
@@ -192,6 +196,39 @@ You may not have six.moves in your virtual environment and you may need to insta
     1.  `which pip`
 1.  If your python and pip are in vpython-root
     1.  ```sudo `which python` `which pip` install six```
+
+*  `enum hash not match` when run `make dev_peds`
+
+You may run the app using python3 instead of python2.
+
+1. Determine the python version used in virtual environment `python --version` if it's 3.X
+
+   `deactivate`
+
+   `rm -r venv/`
+
+    `pip uninstall virtualenv`
+
+    `pip uninstall pip`
+
+   in local environment `python --version` make sure to change it to python2
+
+   follow previous to instructions to reinstall `pip` and `virtualenv`
+
+* `mysql_config not found` when run `make dev_deps`
+
+  this may be caused installing the wrong version of six. run `pip list` in virtual env make sure it is 1.15.0
+  if not
+
+   `deactivate`
+
+   `rm -r venv/`
+
+   `pip uninstall six`
+
+   `pip install six==1.15.0`
+
+   `virtualenv venv`
 
 # Development resources
 
