@@ -708,7 +708,7 @@ type TestNameClusteringRule struct {
 	//   together.
 	//
 	//   See https://github.com/google/googletest/blob/main/docs/advanced.md#how-to-write-value-parameterized-tests
-	//   to further understand this example.
+	//   to understand value-parameterised google tests.
 	//
 	// Use ?P<name> to name capture groups, so their values can be used in
 	// like_template below.
@@ -717,7 +717,7 @@ type TestNameClusteringRule struct {
 	// that defines the test name cluster identified by this rule.
 	//
 	// This like expression has two purposes:
-	// (1) If the test name cluster is large enough to jusify the
+	// (1) If the test name cluster is large enough to justify the
 	//     creation of a bug cluster, the like expression is used to
 	//     generate a failure association rule of the following form:
 	//        test LIKE "<evaluated like_template>"
@@ -732,22 +732,33 @@ type TestNameClusteringRule struct {
 	// * '%' for wildcard match of an arbitrary number of characters, and
 	// * '_' for single character wildcard match.
 	//
+	// To match literal '%' or '_', escape the operator with a '\',
+	// i.e. use "\%" or "\_" to match literal '%' and '_' respectively.
+	// To match literal '\', you should use "\\".
+	//
 	// The template can refer to parts of the test name matched by
 	// the rule pattern using ${name}, where name refers to the capture
 	// group (see pattern). To insert the literal '$', the sequence '$$'
 	// should be used.
 	//
 	// Example.
-	//   Following the same gtest example as for the pattern field,
-	//   we may use the template:
+	//   Assume our project uploads google test (gtest) results with the test
+	//   name prefix "gtest://". Further assume we used the pattern:
+	//     "^gtest://(\w+/)?(?P<testcase>\w+\.\w+)/\w+$"
+	//
+	//   We might use the following like_template:
 	//     "gtest://%${testcase}%"
 	//
-	//   When instantiated for the above example, the result would be
-	//   a failure association rule like:
+	//   When instantiated for a value-parameterised test, e.g.
+	//   "gtest://InstantiationOne/ColorSpaceTest.testNullTransform/0",
+	//   the result would be a failure association rule like:
 	//     test LIKE "gtest://%ColorSpaceTest.testNullTransform%"
 	//
 	//   Note the use of ${testcase} to refer to the testname capture group
 	//   specified in the pattern example.
+	//
+	//   See https://github.com/google/googletest/blob/main/docs/advanced.md#how-to-write-value-parameterized-tests
+	//   to understand value-parameterised google tests.
 	//
 	// It is known that not all clusters can be precisely matched by
 	// a LIKE expression. Nonetheless, Weetbix prefers LIKE expressions
