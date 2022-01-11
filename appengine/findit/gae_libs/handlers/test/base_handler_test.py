@@ -377,17 +377,6 @@ class InternalExceptionTest(testing.AppengineTestCase):
                    re.MULTILINE | re.DOTALL), self.test_app.get, '/exception')
     mocked_log_exception.assert_called_once()
 
-  @mock.patch('logging.exception')
-  def testSecurityScanInternalException(self, mocked_log_exception):
-    self.assertRaisesRegexp(
-        webtest.app.AppError,
-        re.compile('.*500 Internal Server Error.*An internal error occurred.*',
-                   re.MULTILINE | re.DOTALL),
-        self.test_app.get,
-        '/exception',
-        headers={'user-agent': '...GoogleSecurityScanner...'})
-    self.assertFalse(mocked_log_exception.called)
-
 
 class CreateErrorTest(testing.AppengineTestCase):
 

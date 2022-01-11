@@ -236,10 +236,7 @@ class BaseHandler(webapp2.RequestHandler):
         allowed_origin = result.get('allowed_origin')
 
     except Exception as e:
-      user_agent = self.request.headers.get('user-agent')
-      if not (user_agent and 'GoogleSecurityScanner' in user_agent):
-        logging.exception(e)
-
+      logging.exception(e)
       template = 'error.html'
       data = {'error_message': 'An internal error occurred.'}
       return_code = 500

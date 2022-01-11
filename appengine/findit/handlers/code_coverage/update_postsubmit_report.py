@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.from datetime import datetime
 
+import logging
+
 from gae_libs.handlers.base_handler import BaseHandler, Permission
 
 from handlers.code_coverage import utils
@@ -31,6 +33,15 @@ class UpdatePostsubmitReport(BaseHandler):
     ref = self.request.get('ref')
     revision = self.request.get('revision')
     visible = self.request.get('visible').lower() == 'true'
+
+    logging.info("host = %s", host)
+    logging.info("project = %s", project)
+    logging.info("ref = %s", ref)
+    logging.info("revision = %s", revision)
+    logging.info("bucket = %s", bucket)
+    logging.info("builder = %s", builder)
+    logging.info("modifier_id = %d", modifier_id)
+
     report = PostsubmitReport.Get(
         server_host=host,
         project=project,
