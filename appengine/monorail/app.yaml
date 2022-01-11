@@ -1,5 +1,5 @@
 # Copyright 2019 The Chromium Authors. All rights reserved.
-# Use of this source code is govered by a BSD-style
+# Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
@@ -9,27 +9,28 @@ threadsafe: no
 
 default_expiration: "10d"
 
-define(`_VERSION', `syscmd(`echo $_VERSION')')
-
-ifdef(`PROD', `
 instance_class: F4
 automatic_scaling:
-  min_idle_instances: 25
-  max_pending_latency: 0.2s
-')
+  min_idle_instances: ${MIN_IDLE_INSTANCES}
+  max_pending_latency: ${MAX_PENDING_LATENCY}
 
-ifdef(`STAGING', `
-instance_class: F4
-automatic_scaling:
-  min_idle_instances: 1
-  max_pending_latency: 0.2s
-')
+# Note: this is interpreted by gae.py, it maps the app ID being deployed to
+# values of ${...} vars.
+# Reference: https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/examples/appengine/helloworld_v2/app.yaml
 
-ifdef(`DEV', `
-instance_class: F4
-automatic_scaling:
-  min_idle_instances: 1
-')
+luci_gae_vars:
+  monorail-dev:
+    MIN_IDLE_INSTANCES: "1"
+    MAX_PENDING_LATENCY: "automatic"
+    VPC_ACCESS_CONNECTOR: "projects/monorail-dev/locations/us-central1/connectors/redis-connector"
+  monorail-staging:
+    MIN_IDLE_INSTANCES: "1"
+    MAX_PENDING_LATENCY: "0.2s"
+    VPC_ACCESS_CONNECTOR: "projects/monorail-staging/locations/us-central1/connectors/redis-connector"
+  monorail-prod:
+    MIN_IDLE_INSTANCES: "25"
+    MAX_PENDING_LATENCY: "0.2s"
+    VPC_ACCESS_CONNECTOR: "projects/monorail-prod/locations/us-central1/connectors/redis-connector"
 
 handlers:
 - url: /_ah/api/.*
@@ -76,12 +77,7 @@ handlers:
 inbound_services:
 - mail
 - mail_bounce
-ifdef(`PROD', `
 - warmup
-')
-ifdef(`STAGING', `
-- warmup
-')
 
 libraries:
 - name: endpoints
@@ -97,19 +93,10 @@ includes:
 - gae_ts_mon
 
 env_variables:
-  VERSION_ID: '_VERSION'
   GAE_USE_SOCKETS_HTTPLIB : ''
 
 vpc_access_connector:
-ifdef(`DEV',`
-  name: "projects/monorail-dev/locations/us-central1/connectors/redis-connector"
-')
-ifdef(`STAGING',`
-  name: "projects/monorail-staging/locations/us-central1/connectors/redis-connector"
-')
-ifdef(`PROD', `
-  name: "projects/monorail-prod/locations/us-central1/connectors/redis-connector"
-')
+  name: ${VPC_ACCESS_CONNECTOR}
 
 skip_files:
 - ^(.*/)?#.*#$
@@ -119,3 +106,4 @@ skip_files:
 - ^(.*/)?\..*$
 - node_modules/
 - venv/
+- third_party/tools/

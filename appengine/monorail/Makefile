@@ -26,8 +26,6 @@ PY_DIRS = api,businesslogic,features,framework,project,proto,search,services,sit
 
 _VERSION ?= $(shell ../../../infra/luci/appengine/components/tools/calculate_version.py)
 
-SPIN = $(shell command -v spin 2> /dev/null)
-
 default: help
 
 check:
@@ -84,21 +82,21 @@ test_coverage:
 # devserver requires an application ID (-A) to be specified.
 # We are using `-A monorail-staging` because ml spam code is set up
 # to impersonate monorail-staging in the local environment.
-serve: config_local
+serve:
 	@echo "---[Starting SDK AppEngine Server]---"
 	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
 
-serve_email: config_local
+serve_email:
 	@echo "---[Starting SDK AppEngine Server]---"
 	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
 
 # The _remote commands expose the app on 0.0.0.0, so that it is externally
 # accessible by hostname:port, rather than just localhost:port.
-serve_remote: config_local
+serve_remote:
 	@echo "---[Starting SDK AppEngine Server]---"
 	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
 
-serve_remote_email: config_local
+serve_remote_email:
 	@echo "---[Starting SDK AppEngine Server]---"
 	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
 
@@ -147,75 +145,12 @@ pylint:
 py3lint:
 	pylint --py3k *py {$(PY_DIRS)}{/,/test/}*py
 
-config: config_prod_cloud config_staging_cloud config_dev_cloud
-
-# Service yaml files used by gae.py are expected to be named module-<service-name>.yaml
-config_prod:
-	m4 -DPROD < app.yaml.m4 > app.yaml
-	m4 -DPROD < module-besearch.yaml.m4 > module-besearch.yaml
-	m4 -DPROD < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
-	m4 -DPROD < module-api.yaml.m4 > module-api.yaml
-
-# Generate yaml files used by spinnaker.
-config_prod_cloud:
-	m4 -DPROD < app.yaml.m4 > app.prod.yaml
-	m4 -DPROD < module-besearch.yaml.m4 > besearch.prod.yaml
-	m4 -DPROD < module-latency-insensitive.yaml.m4 > latency-insensitive.prod.yaml
-	m4 -DPROD < module-api.yaml.m4 > api.prod.yaml
-
-config_staging:
-	m4 -DSTAGING < app.yaml.m4 > app.yaml
-	m4 -DSTAGING < module-besearch.yaml.m4 > module-besearch.yaml
-	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
-	m4 -DSTAGING < module-api.yaml.m4 > module-api.yaml
-
-config_staging_cloud:
-	m4 -DSTAGING < app.yaml.m4 > app.staging.yaml
-	m4 -DSTAGING < module-besearch.yaml.m4 > besearch.staging.yaml
-	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > latency-insensitive.staging.yaml
-	m4 -DSTAGING < module-api.yaml.m4 > api.staging.yaml
-
-config_dev:
-	m4 -DDEV < app.yaml.m4 > app.yaml
-	m4 -DDEV < module-besearch.yaml.m4 > module-besearch.yaml
-	m4 -DDEV < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
-	m4 -DDEV < module-api.yaml.m4 > module-api.yaml
-
-config_dev_cloud:
-	m4 -DDEV < app.yaml.m4 > app.yaml
-	m4 -DDEV < module-besearch.yaml.m4 > besearch.yaml
-	m4 -DDEV < module-latency-insensitive.yaml.m4 > latency-insensitive.yaml
-	m4 -DDEV < module-api.yaml.m4 > api.yaml
-
-config_local:
-	m4 app.yaml.m4 > app.yaml
-	m4 module-besearch.yaml.m4 > module-besearch.yaml
-	m4 module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
-	m4 module-api.yaml.m4 > module-api.yaml
-
-deploy_dev: clean_deps deps build_js config_dev
+deploy_dev: build_frontend
 	$(eval BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD))
 	@echo "---[Dev $(DEVID)]---"
 	$(GAE_PY) upload --tag $(BRANCH_NAME) -A $(DEVID) $(FRONTEND_MODULES) $(BACKEND_MODULES)
 
-deploy_cloud_dev: clean_deps deps build_js config
-	$(eval GCB_DIR:= $(shell mktemp -d -p /tmp monorail_XXXXX))
-	rsync -aLK . $(GCB_DIR)  # Dereferences symlinks before snapshotting.
-	cd $(GCB_DIR) && tar cf ${_VERSION}.tar .
-	gsutil cp $(GCB_DIR)/${_VERSION}.tar gs://chrome-infra-builds/monorail/dev
-	rm -rf $(GCB_DIR)
-
-
-deploy:
-ifeq ($(SPIN),)
-	$(error "please install spin go/chops-install-spin")
-endif
-	$(SPIN) pipeline execute --name "Deploy Monorail" --application monorail
-	@echo "Follow progress here: https://spinnaker-1.endpoints.chrome-infra-spinnaker.cloud.goog/#/applications/monorail/executions"
-
-external_deps: clean_deps deps build_js config
-
-# Build target used by LUCI CD to build frontend.
+# Build target used by LUCI CD and manual process to build frontend.
 build_frontend: clean_deps deps build_js
 
 package_release:
@@ -230,12 +165,12 @@ lsbuilds:
 # the main app-id, but it is still sometimes useful to have a completely
 # separate app-id.  E.g., for testing inbound email, load testing, or using
 # throwaway databases.
-deploy_staging: clean_deps deps build_js config_staging
+deploy_staging: build_frontend
 	@echo "---[Staging $(STAGEID)]---"
 	$(GAE_PY) upload -A $(STAGEID) $(FRONTEND_MODULES) $(BACKEND_MODULES)
 
 # This is our production server that users actually use.
-deploy_prod: clean_deps deps build_js config_prod
+deploy_prod: build_frontend
 	@echo "---[Deploying prod instance $(PRODID)]---"
 	$(GAE_PY) upload -A $(PRODID) $(FRONTEND_MODULES) $(BACKEND_MODULES)
 

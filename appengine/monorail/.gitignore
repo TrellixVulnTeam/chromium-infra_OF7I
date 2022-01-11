@@ -7,7 +7,6 @@
 .*\#.*
 .*@.*
 .nyc_output
-index\.yaml
 REVISION
 .coverage
 coverage
@@ -19,15 +18,6 @@ static/dist
 node_modules
 elements/mock-data/*\.json
 !elements/mock-data/gates-mock.json
-app.yaml
-app.prod.yaml
-module-besearch.yaml
-besearch.prod.yaml
-besearch.yaml
-module-latency-insensitive.yaml
-latency-insensitive.prod.yaml
-latency-insensitive.yaml
-module-api.yaml
 templates/webpack-out
 full_results.json
 
