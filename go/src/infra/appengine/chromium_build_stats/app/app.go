@@ -13,8 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/appengine/v2"
-	"google.golang.org/appengine/v2/urlfetch"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 const (
@@ -67,9 +66,8 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	loc := req.FormValue("loc")
 	if loc != "" {
 		if strings.HasPrefix(loc, "http://build.chromium.org/") {
-			ctx := appengine.NewContext(req)
-			client := urlfetch.Client(ctx)
-			resp, err := client.Get(loc)
+			ctx := req.Context()
+			resp, err := ctxhttp.Get(ctx, nil, loc)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return

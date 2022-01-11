@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 	"google.golang.org/appengine/v2/user"
 
@@ -120,7 +119,7 @@ func init() {
 
 // compilerProxyLogHandler handles /<path> for compiler_proxy.INFO log file in gs://chrome-goma-log/<path>
 func compilerProxyLogHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	u := user.Current(ctx)
 	if u == nil {
 		authPage(w, req, http.StatusUnauthorized, compilerProxyAuthTmpl, u, path.Join("/compiler_proxy_log", req.URL.Path))

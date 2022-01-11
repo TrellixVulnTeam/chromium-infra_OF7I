@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 	"google.golang.org/appengine/v2/user"
 
@@ -255,7 +254,7 @@ func init() {
 }
 
 func uploadNinjaLogHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := r.Context()
 
 	// X-AppEngine-Trusted-IP-Request=1 means the request is coming from a corp machine.
 	if r.Header.Get("X-AppEngine-Trusted-IP-Request") != "1" {
@@ -302,7 +301,7 @@ func ninjaLogHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	log.Infof(ctx, "/ninja_log: %s", req.URL.Path)
 
 	err := req.ParseForm()
@@ -344,13 +343,13 @@ func ninjalogForm(w http.ResponseWriter, req *http.Request) {
 		ninjalogUpload(w, req)
 		return
 	}
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	u := user.Current(ctx)
 	authPage(w, req, http.StatusOK, formTmpl, u, "/ninja_log/")
 }
 
 func ninjalogUpload(w http.ResponseWriter, req *http.Request) {
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	u := user.Current(ctx)
 	if u == nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

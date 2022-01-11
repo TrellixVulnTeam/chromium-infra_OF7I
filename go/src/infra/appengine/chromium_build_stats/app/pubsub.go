@@ -19,7 +19,6 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/googleapis/google-cloud-go-testing/storage/stiface"
 	pubsub "google.golang.org/api/pubsub/v1"
-	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 
 	"infra/appengine/chromium_build_stats/ninjalog"
@@ -35,7 +34,7 @@ func init() {
 }
 
 func pubsubHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "failed to read body request", http.StatusBadRequest)

@@ -4,13 +4,12 @@ import (
 	"html/template"
 	"net/http"
 
-	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 	"google.golang.org/appengine/v2/user"
 )
 
 func authPage(w http.ResponseWriter, req *http.Request, status int, tmpl *template.Template, u *user.User, reqpath string) {
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	login, err := user.LoginURL(ctx, reqpath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

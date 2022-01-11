@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 	"google.golang.org/appengine/v2/user"
 
@@ -25,7 +24,7 @@ func init() {
 
 // fileHandler handles /<path> to access gs://chrome-goma-log/<path>.
 func fileHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := appengine.NewContext(req)
+	ctx := req.Context()
 	user := user.Current(ctx)
 	if user == nil {
 		http.Error(w, "Login required", http.StatusUnauthorized)
