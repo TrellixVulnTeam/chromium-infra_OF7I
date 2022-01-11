@@ -10,8 +10,8 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/bq"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/v2"
+	"google.golang.org/appengine/v2/log"
 
 	"infra/appengine/chromium_build_stats/ninjalog"
 )

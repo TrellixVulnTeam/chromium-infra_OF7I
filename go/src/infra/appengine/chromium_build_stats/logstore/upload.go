@@ -14,7 +14,7 @@ import (
 	"path"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/appengine"
+	"google.golang.org/appengine/v2"
 )
 
 // Upload uploads data to logstore and returns logPath.

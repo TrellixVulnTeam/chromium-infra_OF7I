@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/urlfetch"
+	"google.golang.org/appengine/v2"
+	"google.golang.org/appengine/v2/urlfetch"
 )
 
 const (

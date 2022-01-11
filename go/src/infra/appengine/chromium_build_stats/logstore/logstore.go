@@ -9,7 +9,7 @@ import (
 	"context"
 	"strings"
 
-	"google.golang.org/appengine"
+	"google.golang.org/appengine/v2"
 )
 
 // Bucket returns url of the given obj.

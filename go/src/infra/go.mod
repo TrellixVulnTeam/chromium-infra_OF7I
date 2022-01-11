@@ -76,6 +76,7 @@ require (
 	gonum.org/v1/gonum v0.9.3
 	google.golang.org/api v0.56.0
 	google.golang.org/appengine v1.6.7
+	google.golang.org/appengine/v2 v2.0.1
 	google.golang.org/genproto v0.0.0-20210909211513-a8c4777a87af
 	google.golang.org/grpc v1.40.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
