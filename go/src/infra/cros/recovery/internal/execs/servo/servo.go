@@ -108,3 +108,13 @@ func mainServoDeviceHelper(servoType string) (string, error) {
 	}
 	return s2, nil
 }
+
+// IsContainerizedServoHost checks if the servohost is using servod container.
+func IsContainerizedServoHost(ctx context.Context, args *execs.RunArgs) bool {
+	servodContainerName := args.DUT.ServoHost.ContainerName
+	if servodContainerName == "" {
+		return false
+	}
+	log.Debug(ctx, "Servo uses servod container with the name: %s", servodContainerName)
+	return true
+}
