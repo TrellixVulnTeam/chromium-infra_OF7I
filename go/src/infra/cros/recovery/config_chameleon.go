@@ -6,7 +6,17 @@ package recovery
 
 const chameleonPlanBody = `
 "critical_actions": [
-	"sample_pass"
+	"Mark as bad",
+	"cros_ping",
+	"cros_ssh",
+	"Mark as good"
 ],
-"actions": {}
+"actions": {
+	"Mark as bad":{
+		"exec_name":"chameleon_state_broken"
+	},
+	"Mark as good":{
+		"exec_name":"chameleon_state_working"
+	}
+}
 `
