@@ -526,7 +526,6 @@ var createdTimestamp = ptypes.TimestampNow
 
 // ToProto converts ninjalog to structs of protocol buffer.
 func ToProto(info *NinjaLog) []*npb.NinjaTask {
-	var ninjaTasks []*npb.NinjaTask
 	weightedTime := WeightedTime(info.Steps)
 	steps := Dedup(info.Steps)
 	timestamp := createdTimestamp()
@@ -551,7 +550,7 @@ func ToProto(info *NinjaLog) []*npb.NinjaTask {
 		os = npb.NinjaTask_MAC
 	}
 
-	var buildConfigs []*npb.NinjaTask_KeyValue
+	buildConfigs := make([]*npb.NinjaTask_KeyValue, 0, len(info.Metadata.BuildConfigs))
 	for k, v := range info.Metadata.BuildConfigs {
 		buildConfigs = append(buildConfigs, &npb.NinjaTask_KeyValue{
 			Key:   k,
@@ -596,6 +595,8 @@ func ToProto(info *NinjaLog) []*npb.NinjaTask {
 			targets = append(targets, arg)
 		}
 	}
+
+	ninjaTasks := make([]*npb.NinjaTask, 0, len(steps))
 
 	for _, s := range steps {
 		ninjalog := &npb.NinjaTask{
