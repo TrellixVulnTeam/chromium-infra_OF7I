@@ -4,4 +4,4 @@
 
 package ninjaproto
 
-//go:generate protoc --go_out=./ ninjalog.proto
+//go:generate cproto -discovery=false

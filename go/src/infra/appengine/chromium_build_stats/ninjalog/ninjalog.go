@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	npb "infra/appengine/chromium_build_stats/ninjaproto"
 )
@@ -522,7 +522,7 @@ func StatsByType(steps []Step, weighted map[string]time.Duration, typeOf func(St
 }
 
 // createdTimestamp is ptypes function name
-var createdTimestamp = ptypes.TimestampNow
+var createdTimestamp = timestamppb.Now
 
 // ToProto converts ninjalog to structs of protocol buffer.
 func ToProto(info *NinjaLog) []*npb.NinjaTask {

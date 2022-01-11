@@ -5,6 +5,8 @@
 syntax = "proto3";
 package ninjaproto;
 
+option go_package = "infra/appengine/chromium_build_stats/ninjaproto";
+
 import "google/protobuf/timestamp.proto";
 
 // NinjaTask message for the log uploaded from chromium developers or buildbot.

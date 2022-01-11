@@ -13,10 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	npb "infra/appengine/chromium_build_stats/ninjaproto"
 )
@@ -571,15 +570,13 @@ func TestToProto(t *testing.T) {
 		Metadata: metadataTestCase,
 	}
 
-	createdTime, err := ptypes.TimestampProto(time.Unix(1514768400, 12345678))
-	if err != nil {
-		t.Errorf("time stamp error: %v", err)
-	}
+	createdTime := timestamppb.New(time.Unix(1514768400, 12345678))
+
 	originalTimestampNow := createdTimestamp
 	defer func() {
 		createdTimestamp = originalTimestampNow
 	}()
-	createdTimestamp = func() *tspb.Timestamp { return createdTime }
+	createdTimestamp = func() *timestamppb.Timestamp { return createdTime }
 
 	got := ToProto(&info)
 
@@ -692,7 +689,7 @@ func TestToProto(t *testing.T) {
 			CreatedAt:           createdTime,
 		},
 	}
-	if diff := cmp.Diff(want, got, cmp.Comparer(proto.Equal)); diff != "" {
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 		t.Errorf("ToProto(%v)\n differs: (-want +got)\n%s", info, diff)
 	}
 }
