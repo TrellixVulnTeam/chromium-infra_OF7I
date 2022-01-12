@@ -17,7 +17,7 @@ _PAGE_SIZE = 100
 
 # List of builders for which coverage metrics to be exported.
 # These should be ci builders.
-_SOURCE_BUILDERS = [
+_CHROMIUM_SOURCE_BUILDERS = [
     'linux-code-coverage', 'win10-code-coverage', 'android-code-coverage',
     'ios-simulator-code-coverage', 'linux-chromeos-code-coverage',
     'linux-lacros-code-coverage'
@@ -31,19 +31,25 @@ def ExportFilesAbsoluteCoverage():
   coverage bar and exports them to a Bigquery table.
   """
 
-  for builder in _SOURCE_BUILDERS:
-    _ExportAbsoluteCoverageForBuilder(builder)
+  for builder in _CHROMIUM_SOURCE_BUILDERS:
+    _ExportAbsoluteCoverageForBuilder(
+        builder=builder,
+        project='chromium/src',
+        server_host='chromium.googlesource.com')
+
+  _ExportAbsoluteCoverageForBuilder(
+      builder='fuchsia-coverage',
+      project='fuchsia',
+      server_host='fuchsia.googlesource.com')
 
 
-def _ExportAbsoluteCoverageForBuilder(builder):
+def _ExportAbsoluteCoverageForBuilder(builder, project, server_host):
   """Export Absolute coverage for files in a given ci builder
 
   Args:
     builder (String): Name of the CI builder.
   """
   total_rows = 0
-  project = "chromium/src"
-  server_host = "chromium.googlesource.com"
   # Find latest revision
   query = PostsubmitReport.query(
       PostsubmitReport.gitiles_commit.server_host == server_host,

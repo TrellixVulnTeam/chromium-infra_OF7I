@@ -67,7 +67,9 @@ class FilesAbsCoverageTest(WaterfallTestCase):
     file_coverage_data.put()
 
     files_absolute_coverage._ExportAbsoluteCoverageForBuilder(
-        'linux-code-coverage')
+        builder='linux-code-coverage',
+        project='chromium/src',
+        server_host='chromium.googlesource.com')
 
     expected_bq_rows = [{
         'project': 'chromium/src',
