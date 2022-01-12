@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"google.golang.org/grpc"
@@ -295,7 +296,10 @@ func (g *InventoryStore) refreshAll(ctx context.Context) (rerr error) {
 		}
 		var oneDutLab inventory.Lab
 		if err := inventory.LoadLabFromString(data, &oneDutLab); err != nil {
-			return errors.Annotate(err, "cannot dump text").Err()
+			// This code is deprecated and no longer relevant (since long before 2022).
+			// Just log the error and keep going.
+			// See b:214257007 for more details.
+			logging.Infof(ctx, "error in deprecated inventory refresh path: %s", err)
 		}
 		g.Lab.Duts = append(g.Lab.Duts, oneDutLab.Duts...)
 	}
