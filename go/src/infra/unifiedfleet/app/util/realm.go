@@ -93,7 +93,7 @@ func CurrentUser(ctx context.Context) string {
 
 // hasPermission checks if the user has permission in the realm
 func hasPermission(ctx context.Context, perm realms.Permission, realm string) (bool, error) {
-	has, err := auth.HasPermission(ctx, perm, realm)
+	has, err := auth.HasPermission(ctx, perm, realm, nil)
 	if err != nil {
 		logging.Errorf(ctx, "failed to check realm %q ACLs", err.Error())
 		return false, status.Errorf(codes.PermissionDenied, "failed to check realm %q ACLs", err)
