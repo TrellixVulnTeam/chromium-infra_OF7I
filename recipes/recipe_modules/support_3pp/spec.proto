@@ -69,7 +69,7 @@ message Spec {
       //   `*.*` glob, in the checkout/subdir directory after the source phase
       //   is complete.
       //   * Archives must be .zip or a well-known tarball extension (supporting
-      //   either none, gzip or bzip2 compression).
+      //   either none, gzip, bzip2, lzma/xz, or zstandard compression).
       //   * The recipe will delete any other files in this directory prior to
       //   unpacking the tarball.
       //   * If the tarball has all files in a single directory, this directory
