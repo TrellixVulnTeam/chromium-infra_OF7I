@@ -28,9 +28,8 @@ class CreateReferencedCoverageMetricsCron(BaseHandler):
     ]
 
   def HandleGet(self):
-    modifier_id = utils.GetActiveReferenceCommit(
-        server_host='chromium.googlesource.com', project='chromium/src')
-    if modifier_id:
+    for modifier_id in utils.GetActiveReferenceCommits(
+        server_host='chromium.googlesource.com', project='chromium/src'):
       for builder in self._GetSourceBuilders():
         url = '/coverage/task/referenced-coverage?modifier_id=%d&builder=%s' % (
             modifier_id, builder)

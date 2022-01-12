@@ -23,6 +23,9 @@ from waterfall import waterfall_config
 # The regex to extract the luci project name from the url path.
 _LUCI_PROJECT_REGEX = re.compile(r'^/coverage/p/([^/]+)')
 
+# The regex to extract the year since which referenced coverage is desired
+_REFERENCED_COVERAGE_YEAR_REGEX = re.compile(r'.*/referenced([0-9]+)')
+
 
 def _GetPostsubmitDefaultReportConfig(luci_project):
   """Returns a tuple of (host, project, ref, platform) to serve default report.
@@ -562,15 +565,21 @@ class ServeCodeCoverageData(BaseHandler):
     host = self.request.get('host', default_config['host'])
     project = self.request.get('project', default_config['project'])
 
+    def _GetReferencedCoverageYear():
+      match = _REFERENCED_COVERAGE_YEAR_REGEX.match(self.request.path)
+      return int(match.group(1)) if match else None
+
     # If the request is for referenced coverage, find the corresponding
     # CoverageReportModifier and redirect with modifier_id in params
-    if self.request.path.endswith('/referenced'):
-      modifier_id = utils.GetActiveReferenceCommit(host, project)
+    referenced_coverage_year = _GetReferencedCoverageYear()
+    if referenced_coverage_year:
+      modifier_id = utils.GetLastActiveReferenceCommitForYear(
+          host, project, referenced_coverage_year - 1)
       if not modifier_id:
         return BaseHandler.CreateError(
-            'No reference commit found for host %s and project %s' % host,
-            project)
-      path = self.request.path[:-len('/referenced')]
+            'No reference commit found for host %s, project %s and year %d' %
+            host, project, referenced_coverage_year)
+      path = self.request.path[:-len('/referencedYYYY')]
       query_string = self.request.query_string
       if query_string:
         query_string = '%s&modifier_id=%d' % (query_string, modifier_id)

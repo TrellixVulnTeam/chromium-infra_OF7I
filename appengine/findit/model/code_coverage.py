@@ -172,6 +172,9 @@ class CoverageReportModifier(ndb.Model):
   # Reference commit to generate coverage reports past a checkpoint.
   reference_commit = ndb.StringProperty(indexed=True)
 
+  # Timestamp when the reference commit was committed.
+  reference_commit_timestamp = ndb.DateTimeProperty(indexed=True)
+
   # Timestamp this modifier got created.
   insert_timestamp = ndb.DateTimeProperty(auto_now_add=True)
 

@@ -839,8 +839,11 @@ class ServeCodeCoverageDataTest(WaterfallTestCase):
 
   def testServeFullRepoReferencedReport_RedirectsWithModifier(self):
     self.mock_current_user(user_email='test@google.com', is_admin=False)
-    CoverageReportModifier(reference_commit='past_commit', id=123).put()
-    request_url = '/coverage/p/chromium/referenced'
+    CoverageReportModifier(
+        reference_commit='past_commit',
+        reference_commit_timestamp=datetime(2020, 12, 31),
+        id=123).put()
+    request_url = '/coverage/p/chromium/referenced2021'
     response = self.test_app.get(request_url)
     self.assertEqual(302, response.status_int)
     self.assertIn('/coverage/p/chromium?modifier_id=123',

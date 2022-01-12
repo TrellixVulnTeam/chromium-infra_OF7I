@@ -81,11 +81,11 @@ def GetMatchedDependencyRepository(manifest, file_path):  # pragma: no cover.
   return None
 
 
-def GetActiveReferenceCommit(server_host, project):
-  """Returns commit against which coverage is to be generated.
+def GetActiveReferenceCommits(server_host, project):
+  """Returns commits against which coverage is to be generated.
 
-  Returns id of the CoverageReportModifier corresponding to the active
-  reference commit.
+  Returns ids of the CoverageReportModifier corresponding to the active
+  reference commits.
   """
   query = CoverageReportModifier.query(
       CoverageReportModifier.server_host == server_host,
@@ -95,8 +95,26 @@ def GetActiveReferenceCommit(server_host, project):
   for x in query.fetch():
     if x.reference_commit:
       modifier_ids.append(x.key.id())
-  assert len(modifier_ids) <= 1, "More than one reference commit found"
-  return modifier_ids[0] if modifier_ids else None
+  return modifier_ids
+
+
+def GetLastActiveReferenceCommitForYear(server_host, project, year):
+  """Returns last active commit for a given year
+
+  Args:
+    server_host (str): Gitiles hostname, e.g. "chromium.googlesource.com".
+    project (str): Gitiles project name, e.g. "chromium/src.git".
+    year (int): Year whose last commit is desired.
+  """
+  modifier_ids = GetActiveReferenceCommits(server_host, project)
+  reference_commits = []
+  for modifier_id in modifier_ids:
+    modifier = CoverageReportModifier.Get(modifier_id)
+    if modifier.reference_commit_timestamp.year == year:
+      reference_commits.append(
+          (modifier.reference_commit_timestamp, modifier_id))
+  reference_commits.sort()
+  return reference_commits[-1][1]
 
 
 def GetFileContentFromGitiles(manifest, file_path,
