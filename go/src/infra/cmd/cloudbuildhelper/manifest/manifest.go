@@ -62,9 +62,9 @@ type Manifest struct {
 	// ContextDir is a unix-style path to the directory to use as a basis for
 	// the build. The path is relative to this YAML file.
 	//
-	// All files there end up available to the remote builder (e.g. a docker
-	// daemon will see this directory as a context directory when building
-	// the image).
+	// All non-gitignored files there end up available to the remote builder
+	// (e.g. a docker daemon will see this directory as a context directory when
+	// building the image).
 	//
 	// All symlinks there are resolved to their targets. Only +w and +x file mode
 	// bits are preserved (all files have 0444 mode by default, +w adds additional
@@ -81,6 +81,8 @@ type Manifest struct {
 	//
 	// Unlike ContextDir, its full content does not automatically end up in the
 	// output.
+	//
+	// If unset, defaults to ContextDir.
 	InputsDir string `yaml:"inputsdir,omitempty"`
 
 	// ImagePins is a unix-style path to the YAML file with pre-resolved mapping
@@ -329,13 +331,18 @@ type CopyBuildStep struct {
 	// the output as Dest. By default Dest is "${contextdir}/<basename of Copy>"
 	// (i.e. we copy Copy into the root of the context dir).
 	Copy string `yaml:"copy,omitempty"`
+
+	// Ignore is a list of patterns of files and directories to *not* copy.
+	//
+	// The format of patterns is the same as used in .gitignore.
+	Ignore []string `yaml:"ignore,omitempty"`
 }
 
 func (s *CopyBuildStep) Kind() string { return "copy" }
 
 func (s *CopyBuildStep) String() string { return fmt.Sprintf("copy %q", s.Copy) }
 
-func (s *CopyBuildStep) isEmpty() bool { return s.Copy == "" }
+func (s *CopyBuildStep) isEmpty() bool { return s.Copy == "" && len(s.Ignore) == 0 }
 
 func (s *CopyBuildStep) initStep(bs *BuildStep, dirs map[string]string) (err error) {
 	if s.Copy, err = renderPath("copy", s.Copy, dirs); err != nil {
@@ -569,6 +576,9 @@ func (m *Manifest) initBase(cwd string) error {
 // Finalize replaces "${dir}/" in paths in steps with actual values and fills
 // in defaults.
 func (m *Manifest) Finalize() error {
+	if m.InputsDir == "" {
+		m.InputsDir = m.ContextDir
+	}
 	if len(m.Sources) == 0 {
 		switch {
 		case m.InputsDir != "":

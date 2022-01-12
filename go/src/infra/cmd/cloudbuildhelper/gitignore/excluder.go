@@ -61,6 +61,19 @@ func NewExcluder(dir, ignoreFile string) (fileset.Excluder, error) {
 	}, nil
 }
 
+// NewPatternExcluder returns a predicate that returns true if the path is
+// excluded by any of the given .gitignore patterns.
+func NewPatternExcluder(patterns []string) fileset.Excluder {
+	var pats []gitignore.Pattern
+	for _, pat := range patterns {
+		pats = append(pats, gitignore.ParsePattern(pat, nil))
+	}
+	matcher := gitignore.NewMatcher(pats)
+	return func(absPath string, isDir bool) bool {
+		return matcher.Match(splitPath(absPath), isDir)
+	}
+}
+
 // findRepoRoot searches for a parent directory that has ".git" child directory.
 //
 // `start` itself is also considered during the search. Returns `start` as well

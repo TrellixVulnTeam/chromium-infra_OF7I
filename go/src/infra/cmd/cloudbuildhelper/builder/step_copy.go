@@ -6,9 +6,15 @@ package builder
 
 import (
 	"context"
+
+	"infra/cmd/cloudbuildhelper/gitignore"
 )
 
 // runCopyBuildStep executes manifest.CopyBuildStep.
 func runCopyBuildStep(ctx context.Context, inv *stepRunnerInv) error {
-	return inv.addFilesToOutput(ctx, inv.BuildStep.CopyBuildStep.Copy, inv.BuildStep.Dest, nil)
+	return inv.addFilesToOutput(ctx,
+		inv.BuildStep.CopyBuildStep.Copy,
+		inv.BuildStep.Dest,
+		gitignore.NewPatternExcluder(inv.BuildStep.CopyBuildStep.Ignore),
+	)
 }

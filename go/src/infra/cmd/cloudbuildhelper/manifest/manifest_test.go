@@ -36,6 +36,7 @@ func TestManifest(t *testing.T) {
 			Name:        "zzz",
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			ContextDir:  filepath.FromSlash("root/1/blarg"),
+			InputsDir:   filepath.FromSlash("root/1/blarg"),
 			Sources:     []string{filepath.FromSlash("root/1/blarg")},
 		})
 	})
@@ -63,6 +64,7 @@ func TestManifest(t *testing.T) {
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			Dockerfile:  filepath.FromSlash("root/1/blarg/Dockerfile"),
 			ContextDir:  filepath.FromSlash("root/1/blarg"),
+			InputsDir:   filepath.FromSlash("root/1/blarg"),
 			Sources:     []string{filepath.FromSlash("root/1/blarg")},
 		})
 	})
@@ -74,6 +76,7 @@ func TestManifest(t *testing.T) {
 			Name:        "zzz",
 			ManifestDir: filepath.FromSlash("root/1/2/3/4"),
 			ContextDir:  filepath.FromSlash("root/1/2/3/4"),
+			InputsDir:   filepath.FromSlash("root/1/2/3/4"),
 			Sources:     []string{filepath.FromSlash("root/1/2/3/4")},
 			ImagePins:   filepath.FromSlash("root/1/blarg/pins.yaml"),
 		})

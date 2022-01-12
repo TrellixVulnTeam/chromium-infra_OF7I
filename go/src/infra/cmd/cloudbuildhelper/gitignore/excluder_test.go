@@ -159,6 +159,38 @@ func TestExcluder(t *testing.T) {
 	})
 }
 
+func TestPatternExcluder(t *testing.T) {
+	t.Parallel()
+
+	Convey("Works", t, func() {
+		exc := NewPatternExcluder([]string{"*.bad", "*.worse", "hidden"})
+
+		So(exc("something.good", false), ShouldBeFalse)
+		So(exc("something.good", true), ShouldBeFalse)
+		So(exc("a/b/c/something.good", false), ShouldBeFalse)
+		So(exc("something.good/a/b/c", false), ShouldBeFalse)
+
+		So(exc("something.bad", false), ShouldBeTrue)
+		So(exc("something.bad", true), ShouldBeTrue)
+		So(exc("a/b/c/something.bad", false), ShouldBeTrue)
+		So(exc("something.bad/a/b/c", false), ShouldBeTrue)
+
+		So(exc("something.worse", false), ShouldBeTrue)
+		So(exc("something.worse", true), ShouldBeTrue)
+		So(exc("a/b/c/something.worse", false), ShouldBeTrue)
+		So(exc("something.worse/a/b/c", false), ShouldBeTrue)
+
+		So(exc("something/hidden", true), ShouldBeTrue)
+		So(exc("hidden", true), ShouldBeTrue)
+		So(exc("hidden/something", false), ShouldBeTrue)
+	})
+
+	Convey("Empty", t, func() {
+		exc := NewPatternExcluder(nil)
+		So(exc("stuff", false), ShouldBeFalse)
+	})
+}
+
 type tmpDir struct {
 	p string
 	c C
