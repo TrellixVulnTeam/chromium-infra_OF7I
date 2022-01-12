@@ -8,6 +8,7 @@ build:
     cwd: ${contextdir}
     outputs:
       - ${contextdir}/static/dist
+      - ${contextdir}/templates/webpack-out
 
   # This directory is in .gitignore and excluded by default. This statement
   # copies it into the output anyway, skipping some files.
