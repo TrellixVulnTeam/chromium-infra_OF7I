@@ -111,6 +111,9 @@ var defaultGitRetryRegexpSource = []string{
 	`error: .* did not send all necessary objects`,
 	`fatal: .*: OpenSSL SSL_read: SSL_ERROR_SYSCALL, errno`,
 	`fatal: .*: Empty reply from server`,
+
+	// fxbug.dev/91419
+	`fatal: .* trying to write ref .* with nonexistent object`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
