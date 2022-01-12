@@ -236,6 +236,67 @@ func (x *BootstrapExeProperties) GetExe() *proto.Executable {
 	return nil
 }
 
+// Optional input properties specifying per-trigger values.
+//
+// Next ID: 2
+type BootstrapTriggerProperties struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Commits to search when looking for the properties file
+	//
+	// When a bootstrapped builder triggers another builder with the expectation
+	// that it will check out the same version of source, this can transmit the
+	// commits that the bootstrapper used to find the properties file so that if
+	// the triggered builder is also bootstrapped it loads properties from the
+	// same revision. When needing to download a file from gitiles for a given
+	// host and project, it will search for a commit first in the build proto and
+	// then search this list in order. If a commit that matches the host and
+	// project is found, then the file will be downloaded from the ref or ID of
+	// the matching commit.
+	Commits []*proto.GitilesCommit `protobuf:"bytes,1,rep,name=commits,proto3" json:"commits,omitempty"`
+}
+
+func (x *BootstrapTriggerProperties) Reset() {
+	*x = BootstrapTriggerProperties{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BootstrapTriggerProperties) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BootstrapTriggerProperties) ProtoMessage() {}
+
+func (x *BootstrapTriggerProperties) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BootstrapTriggerProperties.ProtoReflect.Descriptor instead.
+func (*BootstrapTriggerProperties) Descriptor() ([]byte, []int) {
+	return file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BootstrapTriggerProperties) GetCommits() []*proto.GitilesCommit {
+	if x != nil {
+		return x.Commits
+	}
+	return nil
+}
+
 // A project where the builder property files are retrieved from a specified
 // repository
 type BootstrapPropertiesProperties_TopLevelProject struct {
@@ -261,7 +322,7 @@ type BootstrapPropertiesProperties_TopLevelProject struct {
 func (x *BootstrapPropertiesProperties_TopLevelProject) Reset() {
 	*x = BootstrapPropertiesProperties_TopLevelProject{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[3]
+		mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -274,7 +335,7 @@ func (x *BootstrapPropertiesProperties_TopLevelProject) String() string {
 func (*BootstrapPropertiesProperties_TopLevelProject) ProtoMessage() {}
 
 func (x *BootstrapPropertiesProperties_TopLevelProject) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[3]
+	mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -333,7 +394,7 @@ type BootstrapPropertiesProperties_DependencyProject struct {
 func (x *BootstrapPropertiesProperties_DependencyProject) Reset() {
 	*x = BootstrapPropertiesProperties_DependencyProject{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[4]
+		mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -346,7 +407,7 @@ func (x *BootstrapPropertiesProperties_DependencyProject) String() string {
 func (*BootstrapPropertiesProperties_DependencyProject) ProtoMessage() {}
 
 func (x *BootstrapPropertiesProperties_DependencyProject) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[4]
+	mi := &file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -454,10 +515,16 @@ var file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_rawDesc = []byte{
 	0x74, 0x72, 0x61, 0x70, 0x45, 0x78, 0x65, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65,
 	0x73, 0x12, 0x2c, 0x0a, 0x03, 0x65, 0x78, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a,
 	0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x76, 0x32, 0x2e,
-	0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x03, 0x65, 0x78, 0x65, 0x42,
-	0x27, 0x5a, 0x25, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x69, 0x75,
-	0x6d, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x73, 0x74, 0x72, 0x61, 0x70, 0x70, 0x65, 0x72, 0x2f, 0x62,
-	0x6f, 0x6f, 0x74, 0x73, 0x74, 0x72, 0x61, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x03, 0x65, 0x78, 0x65, 0x22,
+	0x55, 0x0a, 0x1a, 0x42, 0x6f, 0x6f, 0x74, 0x73, 0x74, 0x72, 0x61, 0x70, 0x54, 0x72, 0x69, 0x67,
+	0x67, 0x65, 0x72, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x12, 0x37, 0x0a,
+	0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d,
+	0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x76, 0x32, 0x2e,
+	0x47, 0x69, 0x74, 0x69, 0x6c, 0x65, 0x73, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x07, 0x63,
+	0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x73, 0x42, 0x27, 0x5a, 0x25, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f,
+	0x63, 0x68, 0x72, 0x6f, 0x6d, 0x69, 0x75, 0x6d, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x73, 0x74, 0x72,
+	0x61, 0x70, 0x70, 0x65, 0x72, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x73, 0x74, 0x72, 0x61, 0x70, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -472,27 +539,30 @@ func file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_rawDescGZIP() []
 	return file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_rawDescData
 }
 
-var file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_goTypes = []interface{}{
 	(*GitilesRepo)(nil),                                     // 0: chromium.bootstrapper.bootstrap.GitilesRepo
 	(*BootstrapPropertiesProperties)(nil),                   // 1: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties
 	(*BootstrapExeProperties)(nil),                          // 2: chromium.bootstrapper.bootstrap.BootstrapExeProperties
-	(*BootstrapPropertiesProperties_TopLevelProject)(nil),   // 3: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject
-	(*BootstrapPropertiesProperties_DependencyProject)(nil), // 4: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject
-	(*proto.Executable)(nil),                                // 5: buildbucket.v2.Executable
+	(*BootstrapTriggerProperties)(nil),                      // 3: chromium.bootstrapper.bootstrap.BootstrapTriggerProperties
+	(*BootstrapPropertiesProperties_TopLevelProject)(nil),   // 4: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject
+	(*BootstrapPropertiesProperties_DependencyProject)(nil), // 5: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject
+	(*proto.Executable)(nil),                                // 6: buildbucket.v2.Executable
+	(*proto.GitilesCommit)(nil),                             // 7: buildbucket.v2.GitilesCommit
 }
 var file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_depIdxs = []int32{
-	3, // 0: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.top_level_project:type_name -> chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject
-	4, // 1: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.dependency_project:type_name -> chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject
-	5, // 2: chromium.bootstrapper.bootstrap.BootstrapExeProperties.exe:type_name -> buildbucket.v2.Executable
-	0, // 3: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject.repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
-	0, // 4: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject.top_level_repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
-	0, // 5: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject.config_repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4, // 0: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.top_level_project:type_name -> chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject
+	5, // 1: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.dependency_project:type_name -> chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject
+	6, // 2: chromium.bootstrapper.bootstrap.BootstrapExeProperties.exe:type_name -> buildbucket.v2.Executable
+	7, // 3: chromium.bootstrapper.bootstrap.BootstrapTriggerProperties.commits:type_name -> buildbucket.v2.GitilesCommit
+	0, // 4: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.TopLevelProject.repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
+	0, // 5: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject.top_level_repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
+	0, // 6: chromium.bootstrapper.bootstrap.BootstrapPropertiesProperties.DependencyProject.config_repo:type_name -> chromium.bootstrapper.bootstrap.GitilesRepo
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_init() }
@@ -538,7 +608,7 @@ func file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_init() {
 			}
 		}
 		file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BootstrapPropertiesProperties_TopLevelProject); i {
+			switch v := v.(*BootstrapTriggerProperties); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -550,6 +620,18 @@ func file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_init() {
 			}
 		}
 		file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BootstrapPropertiesProperties_TopLevelProject); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BootstrapPropertiesProperties_DependencyProject); i {
 			case 0:
 				return &v.state
@@ -572,7 +654,7 @@ func file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_chromium_bootstrapper_bootstrap_bootstrap_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

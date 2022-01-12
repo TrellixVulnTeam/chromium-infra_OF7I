@@ -29,7 +29,7 @@ type InputOptions struct {
 // that prepare a bootstrapped executable to run. It is safe to share a single
 // instance between multiple operations that take Input.
 type Input struct {
-	commit             *buildbucketpb.GitilesCommit
+	commits            []*buildbucketpb.GitilesCommit
 	changes            []*buildbucketpb.GerritChange
 	buildProperties    *structpb.Struct
 	propertiesOptional bool
@@ -86,6 +86,8 @@ func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 			addPropsProperties()
 		}
 	}
+	triggerProperties := &BootstrapTriggerProperties{}
+	propsToParse["$bootstrap/trigger"] = triggerProperties
 	casRecipeBundle := &apipb.CASReference{}
 	propsToParse[ledcmd.CASRecipeBundleProperty] = casRecipeBundle
 
@@ -106,7 +108,11 @@ func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 		casRecipeBundle = nil
 	}
 
-	commit := proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit)
+	commits := []*buildbucketpb.GitilesCommit{}
+	if build.Input.GitilesCommit != nil {
+		commits = append(commits, proto.Clone(build.Input.GitilesCommit).(*buildbucketpb.GitilesCommit))
+	}
+	commits = append(commits, triggerProperties.Commits...)
 
 	changes := make([]*buildbucketpb.GerritChange, len(build.Input.GerritChanges))
 	for i, change := range build.Input.GerritChanges {
@@ -119,7 +125,7 @@ func (o InputOptions) NewInput(build *buildbucketpb.Build) (*Input, error) {
 	}
 
 	input := &Input{
-		commit:             commit,
+		commits:            commits,
 		changes:            changes,
 		buildProperties:    properties,
 		propertiesOptional: o.PropertiesOptional,

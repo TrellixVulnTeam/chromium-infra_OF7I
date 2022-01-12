@@ -87,3 +87,22 @@ message BootstrapExeProperties {
   // Required, the executable to bootstrap
   buildbucket.v2.Executable exe = 1;
 }
+
+// Optional input properties specifying per-trigger values.
+//
+// Next ID: 2
+message BootstrapTriggerProperties {
+
+  // Commits to search when looking for the properties file
+  //
+  // When a bootstrapped builder triggers another builder with the expectation
+  // that it will check out the same version of source, this can transmit the
+  // commits that the bootstrapper used to find the properties file so that if
+  // the triggered builder is also bootstrapped it loads properties from the
+  // same revision. When needing to download a file from gitiles for a given
+  // host and project, it will search for a commit first in the build proto and
+  // then search this list in order. If a commit that matches the host and
+  // project is found, then the file will be downloaded from the ref or ID of
+  // the matching commit.
+  repeated buildbucket.v2.GitilesCommit commits = 1;
+}

@@ -41,6 +41,12 @@ func setBootstrapExeProperties(build *buildbucketpb.Build, propsJson string) {
 	})
 }
 
+func setBootstrapTriggerProperties(build *buildbucketpb.Build, propsJson string) {
+	setPropertiesFromJson(build, map[string]string{
+		"$bootstrap/trigger": propsJson,
+	})
+}
+
 func strPtr(s string) *string {
 	return &s
 }

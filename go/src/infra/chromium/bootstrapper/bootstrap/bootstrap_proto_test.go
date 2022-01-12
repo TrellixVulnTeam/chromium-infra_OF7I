@@ -301,3 +301,74 @@ func TestBootstrapExePropertiesValidation(t *testing.T) {
 
 	})
 }
+
+func createBootstrapTriggerProperties(propsJson []byte) *BootstrapTriggerProperties {
+	props := &BootstrapTriggerProperties{}
+	PanicOnError(protojson.Unmarshal(propsJson, props))
+	return props
+}
+
+func TestBootstrapTriggerPropertiesValidation(t *testing.T) {
+	t.Parallel()
+
+	Convey("validate", t, func() {
+
+		Convey("fails for unset required fields in commits", func() {
+			props := createBootstrapTriggerProperties([]byte(`{
+				"commits": [
+					{
+						"project": "fake-project1",
+						"ref": "fake-ref1"
+					},
+					{
+						"host": "fake-host2",
+						"ref": "fake-ref2"
+					},
+					{
+						"host": "fake-host3",
+						"project": "fake-project3"
+					}
+				]
+			}`))
+
+			err := validate(props, "$test")
+
+			So(err, ShouldErrLike,
+				"$test.commits[0].host is not set",
+				"$test.commits[1].project is not set",
+				"$test.commits[2] has neither ref nor id set")
+		})
+
+		Convey("succeeds for valid properties", func() {
+			props := createBootstrapTriggerProperties([]byte(`{
+				"commits": [
+					{
+						"host": "fake-host1",
+						"project": "fake-project1",
+						"ref": "fake-ref1"
+					},
+					{
+						"host": "fake-host2",
+						"project": "fake-project2",
+						"ref": "fake-ref2"
+					},
+					{
+						"host": "fake-host3",
+						"project": "fake-project3",
+						"ref": "fake-ref3"
+					},
+					{
+						"host": "fake-host4",
+						"project": "fake-project4",
+						"id": "fake-revision4"
+					}
+				]
+			}`))
+
+			err := validate(props, "$test")
+
+			So(err, ShouldBeNil)
+		})
+
+	})
+}

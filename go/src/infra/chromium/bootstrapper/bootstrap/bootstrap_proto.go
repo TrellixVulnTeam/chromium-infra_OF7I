@@ -153,3 +153,17 @@ func (x *BootstrapExeProperties) validate(v *validator) {
 		}
 	}
 }
+
+func (x *BootstrapTriggerProperties) validate(v *validator) {
+	for i, commit := range x.Commits {
+		if commit.Host == "" {
+			v.errorf("${}.commits[%d].host is not set", i)
+		}
+		if commit.Project == "" {
+			v.errorf("${}.commits[%d].project is not set", i)
+		}
+		if commit.Ref == "" && commit.Id == "" {
+			v.errorf("${}.commits[%d] has neither ref nor id set", i)
+		}
+	}
+}

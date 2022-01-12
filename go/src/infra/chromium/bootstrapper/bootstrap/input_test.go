@@ -116,7 +116,7 @@ func TestInput(t *testing.T) {
 				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
-				So(input.commit, ShouldBeNil)
+				So(input.commits, ShouldBeEmpty)
 				So(input.changes, ShouldBeEmpty)
 				So(input.buildProperties, ShouldResembleProtoJSON, `{
 					"foo": "bar"
@@ -174,7 +174,7 @@ func TestInput(t *testing.T) {
 				}`)
 			})
 
-			Convey("with commit set if build has commit", func() {
+			Convey("with commits set if build has commit", func() {
 				build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
 					Host:    "fake-host",
 					Project: "fake-project",
@@ -185,9 +185,93 @@ func TestInput(t *testing.T) {
 				input, err := opts.NewInput(build)
 
 				So(err, ShouldBeNil)
-				So(input.commit, ShouldResembleProto, build.Input.GitilesCommit)
+				So(input.commits, ShouldResembleProto, []*buildbucketpb.GitilesCommit{build.Input.GitilesCommit})
 				// Make sure we can't modify the build through aliased protos
-				So(input.commit, ShouldNotEqual, build.Input.GitilesCommit)
+				So(input.commits[0], ShouldNotEqual, build.Input.GitilesCommit)
+			})
+
+			Convey("with commits set if $bootstrap/trigger has commits", func() {
+				setBootstrapTriggerProperties(build, `{
+					"commits": [
+						{
+							"host": "fake-host1",
+							"project": "fake-project1",
+							"ref": "fake-ref1",
+							"id": "fake-revision1"
+						},
+						{
+							"host": "fake-host2",
+							"project": "fake-project2",
+							"ref": "fake-ref2",
+							"id": "fake-revision2"
+						}
+					]
+				}`)
+
+				input, err := opts.NewInput(build)
+
+				So(err, ShouldBeNil)
+				So(input.commits, ShouldResembleProto, []*buildbucketpb.GitilesCommit{
+					{
+						Host:    "fake-host1",
+						Project: "fake-project1",
+						Ref:     "fake-ref1",
+						Id:      "fake-revision1",
+					},
+					{
+						Host:    "fake-host2",
+						Project: "fake-project2",
+						Ref:     "fake-ref2",
+						Id:      "fake-revision2",
+					},
+				})
+			})
+
+			Convey("with commits set if build has commit and $bootstrap/trigger has commits", func() {
+				build.Input.GitilesCommit = &buildbucketpb.GitilesCommit{
+					Host:    "fake-host1",
+					Project: "fake-project1",
+					Ref:     "fake-ref1a",
+				}
+				setBootstrapTriggerProperties(build, `{
+					"commits": [
+						{
+							"host": "fake-host1",
+							"project": "fake-project1",
+							"ref": "fake-ref1b",
+							"id": "fake-revision1"
+						},
+						{
+							"host": "fake-host2",
+							"project": "fake-project2",
+							"ref": "fake-ref2",
+							"id": "fake-revision2"
+						}
+					]
+				}`)
+
+				input, err := opts.NewInput(build)
+
+				So(err, ShouldBeNil)
+				So(input.commits, ShouldResembleProto, []*buildbucketpb.GitilesCommit{
+					{
+						Host:    "fake-host1",
+						Project: "fake-project1",
+						Ref:     "fake-ref1a",
+					},
+					{
+						Host:    "fake-host1",
+						Project: "fake-project1",
+						Ref:     "fake-ref1b",
+						Id:      "fake-revision1",
+					},
+					{
+						Host:    "fake-host2",
+						Project: "fake-project2",
+						Ref:     "fake-ref2",
+						Id:      "fake-revision2",
+					},
+				})
 			})
 
 			Convey("with changes set if build has changes", func() {

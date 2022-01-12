@@ -98,9 +98,11 @@ func (b *BuildBootstrapper) GetBootstrapConfig(ctx context.Context, input *Input
 			return nil, errors.Reason("config_project handling for type %T is not implemented", x).Err()
 		}
 
-		if err := b.populateCommitId(ctx, config.commit); err != nil {
+		commit, err := b.populateCommitId(ctx, config.commit)
+		if err != nil {
 			return nil, errors.Annotate(err, "failed to resolve ID for config commit %s", config.commit).Err()
 		}
+		config.commit = commit
 
 		if err := b.getPropertiesFromFile(ctx, input.propsProperties.PropertiesFile, config); err != nil {
 			return nil, errors.Annotate(err, "failed to get properties from properties file %s", input.propsProperties.PropertiesFile).Err()
@@ -123,10 +125,7 @@ func (b *BuildBootstrapper) getTopLevelConfig(ctx context.Context, input *Input,
 			return nil, errors.Annotate(err, "failed to get target ref for config change %s", change).Err()
 		}
 	}
-	var commit *gitilesCommit
-	if matchGitilesCommit(input.commit, topLevel.Repo) {
-		commit = &gitilesCommit{proto.Clone(input.commit).(*buildbucketpb.GitilesCommit)}
-	}
+	commit := findMatchingGitilesCommit(input.commits, topLevel.Repo)
 	if commit == nil {
 		commit = &gitilesCommit{&buildbucketpb.GitilesCommit{
 			Host:    topLevel.Repo.Host,
@@ -199,20 +198,26 @@ func (b *BuildBootstrapper) getPropertiesFromFile(ctx context.Context, propsFile
 
 }
 
-func (b *BuildBootstrapper) populateCommitId(ctx context.Context, commit *gitilesCommit) error {
+func (b *BuildBootstrapper) populateCommitId(ctx context.Context, commit *gitilesCommit) (*gitilesCommit, error) {
 	if commit.Id == "" {
 		logging.Infof(ctx, "getting revision for %s", commit)
 		revision, err := b.gitiles.FetchLatestRevision(ctx, commit.Host, commit.Project, commit.Ref)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		commit = &gitilesCommit{proto.Clone(commit.GitilesCommit).(*buildbucketpb.GitilesCommit)}
 		commit.Id = revision
 	}
-	return nil
+	return commit, nil
 }
 
-func matchGitilesCommit(commit *buildbucketpb.GitilesCommit, repo *GitilesRepo) bool {
-	return commit != nil && commit.Host == repo.Host && commit.Project == repo.Project
+func findMatchingGitilesCommit(commits []*buildbucketpb.GitilesCommit, repo *GitilesRepo) *gitilesCommit {
+	for _, commit := range commits {
+		if commit.Host == repo.Host && commit.Project == repo.Project {
+			return &gitilesCommit{commit}
+		}
+	}
+	return nil
 }
 
 func findMatchingGerritChange(changes []*buildbucketpb.GerritChange, repo *GitilesRepo) *gerritChange {
