@@ -26,6 +26,20 @@ PY_DIRS = api,businesslogic,features,framework,project,proto,search,services,sit
 
 _VERSION ?= $(shell ../../../infra/luci/appengine/components/tools/calculate_version.py)
 
+RUN_CLOUD_TASKS := ../../cipd/cloud-tasks-emulator \
+	  --queue projects/monorail-staging/locations/us-central1/queues/componentexport \
+		--queue projects/monorail-staging/locations/us-central1/queues/default \
+		--queue projects/monorail-staging/locations/us-central1/queues/notifications \
+		--queue projects/monorail-staging/locations/us-central1/queues/outboundemail \
+		--queue projects/monorail-staging/locations/us-central1/queues/recomputederivedfields \
+		--queue projects/monorail-staging/locations/us-central1/queues/spamexport \
+		--queue projects/monorail-staging/locations/us-central1/queues/wipeoutsendusers \
+		--queue projects/monorail-staging/locations/us-central1/queues/wipeoutdeleteusers \
+		--queue projects/monorail-staging/locations/us-central1/queues/deleteusers \
+		--queue projects/monorail-staging/locations/us-central1/queues/pubsub-issueupdates \
+		-host localhost \
+		-port 9090
+
 default: help
 
 check:
@@ -84,37 +98,29 @@ test_coverage:
 # to impersonate monorail-staging in the local environment.
 serve:
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS)\
+	& $(WEBPACK_PATH) --watch\
+	& $(RUN_CLOUD_TASKS)
 
 serve_email:
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True\
+	& $(WEBPACK_PATH) --watch\
+	& $(RUN_CLOUD_TASKS)
 
 # The _remote commands expose the app on 0.0.0.0, so that it is externally
 # accessible by hostname:port, rather than just localhost:port.
 serve_remote:
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS)\
+	& $(WEBPACK_PATH) --watch\
+	& $(RUN_CLOUD_TASKS)
 
 serve_remote_email:
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
-
-serve_cloud_tasks:
-	@echo "---[Starting Cloud Tasks Emulator]---"
-	../../cipd/cloud-tasks-emulator \
-	  --queue projects/monorail-staging/locations/us-central1/queues/componentexport \
-		--queue projects/monorail-staging/locations/us-central1/queues/default \
-		--queue projects/monorail-staging/locations/us-central1/queues/notifications \
-		--queue projects/monorail-staging/locations/us-central1/queues/outboundemail \
-		--queue projects/monorail-staging/locations/us-central1/queues/recomputederivedfields \
-		--queue projects/monorail-staging/locations/us-central1/queues/spamexport \
-		--queue projects/monorail-staging/locations/us-central1/queues/wipeoutsendusers \
-		--queue projects/monorail-staging/locations/us-central1/queues/wipeoutdeleteusers \
-		--queue projects/monorail-staging/locations/us-central1/queues/deleteusers \
-		--queue projects/monorail-staging/locations/us-central1/queues/pubsub-issueupdates \
-		-host localhost \
-		-port 9090
+	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True\
+	& $(WEBPACK_PATH) --watch\
+	& $(RUN_CLOUD_TASKS)
 
 run: serve
 
@@ -155,8 +161,6 @@ build_frontend: clean_deps deps build_js
 
 package_release:
 	rsync -aLK . $(TARDIR)/package
-
-
 
 lsbuilds:
 	gcloud builds list --filter="tags='monorail'"

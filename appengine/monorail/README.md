@@ -22,22 +22,19 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  It should be fetched for you by step 1 above (during runhooks)
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
     1.  Also follow https://cloud.google.com/appengine/docs/standard/python3/setting-up-environment to setup `gcloud`
-1.  Spin up dependent services.
-    1. We use docker and docker-compose to orchestrate. So install [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) first. For glinux users see [go/docker](http://go/docker)
-    1.  Make sure to authenticate with the App Engine SDK and configure Docker. This is needed to install Cloud Tasks Emulator.
-        1.  `gcloud auth login`
-        1.  `gcloud auth configure-docker`
-            1. If you get authentication errors here, run `setenv PATH = $PATH;/path/to/gcloud/bin`
-    1. Run `docker-compose -f dev-services.yml up -d`. This should spin up:
-        1. MySQL v5.6
-        1. Redis
-        1. Cloud Tasks Emulator
-            1. [TODO](https://github.com/aertje/cloud-tasks-emulator/issues/4) host this publicly and remove section.
-            1. This will require you to authenticate to Google Container Registry to pull the docker image: `gcloud auth login` `gcloud auth configure-docker`. If you're an open source developer and do not have access to the monorail project and thereby its container registry you will need to start the Cloud Tasks Emulator from [source](https://github.com/aertje/cloud-tasks-emulator)
+1.  Install CIPD dependencies:
+    1. `gclient runhooks`
+1.  Install MySQL v5.6.
+    1. On a Debian derivative, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar):
+        1.  `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`
+        1. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
+    1. On Mac, use [homebrew](https://brew.sh/) to install MySQL v5.6:
+            1.  `brew install mysql@5.6`
+    1. Otherwise, download from the [official page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
+        1.  **Do not download v5.7 (as of April 2016)**
 1.  Set up SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
-    1. Copy setup schema into the docker container
-        1.  `docker cp schema/. mysql:/schema`
-        1.  `docker exec -it mysql bash`
+    1. Copy setup schema into your local MySQL service.
+        1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
         1.  `mysql --user=root monorail < schema/framework.sql`
         1.  `mysql --user=root monorail < schema/project.sql`
         1.  `mysql --user=root monorail < schema/tracker.sql`
@@ -63,9 +60,6 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
                     [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 1.  Install Python and JS dependencies:
-    1.  Install MySQL, needed for mysqlclient
-        1. For mac: `brew install mysql@5.6`
-        1. For Debian derivatives, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar): `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
     1.  Optional: You may need to install `pip`. You can verify whether you have it installed with `which pip`.
         1. make sure to install `pip` using `python2` instead of `python3` (use `python --version` to check the version, `which python2` to check the path)
         1. `curl -O https://bootstrap.pypa.io/pip/2.7/get-pip.py`
@@ -80,14 +74,17 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
     1.  `make deps` (run in virtual env)
 1.  Run the app:
     1.  `make serve` (run in virtual env)
-1.  Browse the app at localhost:8080 your browser.
+    1.  Start MySQL:
+        1. Mac: `brew services restart mysql@5.6`
+        1. Linux: `mysqld`
+1. Browse the app at localhost:8080 your browser.
 1. Set up your test user account (these steps are a little odd, but just roll with it):
        1.  Sign in using `test@example.com`
        1.  Log back out and log in again as `example@example.com`
        1.  Log out and finally log in again as `test@example.com`.
        1.  Everything should work fine now.
 1.  Modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
-    1.  `docker exec mysql mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
+    1.  `mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
     1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver. If you kill the dev server before running the docker command, the restart may not be necessary.
 
 Instructions for deploying Monorail to an existing instance or setting up a new instance are [here](doc/deployment.md).
