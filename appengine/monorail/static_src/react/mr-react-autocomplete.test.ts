@@ -85,11 +85,21 @@ describe('mr-react-autocomplete', () => {
   it('_options gets component names', () => {
     element.vocabularyName = 'component';
     element._components = new Map([
-      ['Infra>UI', {docstring: 'Test docs'}],
-      ['Bird>Penguin', {docstring: 'Test docs'}],
+      ['Infra>UI', {path: 'Infra>UI', docstring: 'Test docs'}],
+      ['Bird>Penguin', {path: 'Bird>Penguin', docstring: 'Test docs'}],
     ]);
 
     assert.deepEqual(element._options(), ['Infra>UI', 'Bird>Penguin']);
+  });
+
+  it('_options does not get deprecated components', () => {
+    element.vocabularyName = 'component';
+    element._components = new Map([
+      ['Infra>UI>Deprecated', {path: 'Infra>UI>Deprecated', deprecated: true, docstring: 'Test docs'}],
+      ['Infra>UI>NotDeprecated', {path: 'Infra>UI>NotDeprecated', docstring: 'Test docs'}],
+    ]);
+
+    assert.deepEqual(element._options(), ['Infra>UI>NotDeprecated']);
   });
 
   it('_options gets label names', () => {

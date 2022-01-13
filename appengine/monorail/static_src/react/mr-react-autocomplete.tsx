@@ -153,7 +153,7 @@ export class MrReactAutocomplete extends connectStore(LitElement) {
   _options(): string[] {
     switch (this.vocabularyName) {
       case 'component': {
-        return [...this._components.keys()];
+        return [...this._components.values()].filter((c) => !c.deprecated).map((c) => c.path);
       } case 'label': {
         // The label map keys are lowercase. Use the LabelDef label name instead.
         return [...this._labels.values()].map((labelDef: LabelDef) => labelDef.label);
