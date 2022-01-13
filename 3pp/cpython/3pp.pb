@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.39" }
+  source { patch_version: "chromium.40" }
 }
 
 create {
