@@ -311,6 +311,12 @@ class BuildRequest(_BuildRequestBase):
     Assumes self is valid.
     """
     sbr = self.schedule_build_request
+    if builder_cfg:
+      logging.warning(
+          "LEGACY: Creating v2 build via python for %s",
+          config.builder_id_string(sbr.builder)
+      )
+
     exps, exp_reasons = self.compute_experiments(sbr, builder_cfg, settings)
 
     build_proto = yield self.create_build_proto_async(
@@ -348,11 +354,6 @@ class BuildRequest(_BuildRequestBase):
       build.lease_expiration_date = self.lease_expiration_date
       build.leasee = created_by
       build.regenerate_lease_key()
-    else:
-      logging.warning(
-          "LEGACY: Creating v2 build via python for %s",
-          config.builder_id_string(sbr.builder)
-      )
 
     raise ndb.Return(build)
 
