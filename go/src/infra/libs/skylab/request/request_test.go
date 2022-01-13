@@ -93,7 +93,7 @@ func TestDimensionsBB(t *testing.T) {
 					},
 					{
 						Key:   "label-model",
-						Value: "foo-model2",
+						Value: "foo-model_2",
 					},
 				}
 
@@ -480,7 +480,7 @@ func TestStaticDimensions(t *testing.T) {
 					},
 				},
 			},
-			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "label-board:coral", "label-model:babytiger", "some:value", "label-board:coral2", "label-model:babytiger2"}),
+			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "label-board:coral", "label-model:babytiger", "some:value", "label-board:coral_2", "label-model:babytiger_2"}),
 		},
 	}
 

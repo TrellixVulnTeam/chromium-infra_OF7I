@@ -191,7 +191,7 @@ func trimJoinedDimensions(dims swarming_inventory.Dimensions) swarming_inventory
 				// a suffix to make all of them unique, otherwise it will be treated as a single
 				// dimension match from swarming.
 				suffix := counter[value] + 1
-				trimmedDims[key] = append(trimmedDims[key], fmt.Sprintf("%s%d", value, suffix))
+				trimmedDims[key] = append(trimmedDims[key], fmt.Sprintf("%s_%d", value, suffix))
 				counter[value]++
 			}
 		}
