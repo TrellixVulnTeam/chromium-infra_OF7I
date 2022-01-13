@@ -35,8 +35,9 @@ class CreateReferencedCoverageMetricsCron(BaseHandler):
             modifier_id, builder)
         taskqueue.add(
             method='GET',
-            name='%s-%s' %
-            (builder, datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
+            name='%d-%s-%s' %
+            (modifier_id, builder,
+             datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
             queue_name=constants.REFERENCED_COVERAGE_QUEUE,
             target=constants.CODE_COVERAGE_REFERENCED_COVERAGE_WORKER,
             url=url)
