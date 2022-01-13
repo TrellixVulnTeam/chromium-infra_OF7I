@@ -155,6 +155,8 @@ const (
 	// Verify if control is known and present in servod daemon.
 	// Example: ec_board, lid_open.
 	ServodMethodDoc ServodMethod = "doc"
+	// Initialize all controls
+	ServodMethodHwInit ServodMethod = "hwinit"
 )
 
 // ServodOption represents options to start servod.

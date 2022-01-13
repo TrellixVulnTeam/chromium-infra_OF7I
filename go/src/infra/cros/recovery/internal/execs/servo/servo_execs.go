@@ -585,6 +585,27 @@ func servoValidateBatteryChargingExec(ctx context.Context, args *execs.RunArgs, 
 	return nil
 }
 
+// initDutForServoExec initializes the DUT and sets all servo signals
+// to default values.
+func initDutForServoExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	verbose := true
+	if _, err := ServodCallHwInit(ctx, args, verbose); err != nil {
+		return errors.Annotate(err, "init dut for servo exec").Err()
+	}
+	usbMuxControl := "usb_mux_oe1"
+	if _, err := ServodCallHas(ctx, args, usbMuxControl); err == nil {
+		if _, err2 := ServodCallSet(ctx, args, usbMuxControl, "on"); err2 != nil {
+			return errors.Annotate(err, "init dut for servo exec").Err()
+		}
+		if _, err := ServodCallSet(ctx, args, "image_usbkey_pwr", "off"); err != nil {
+			return errors.Annotate(err, "init dut for servo exec").Err()
+		}
+	} else {
+		log.Debug(ctx, "Init Dut For Servo Exec: servod control %q is not available.", usbMuxControl)
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -603,4 +624,5 @@ func init() {
 	execs.Register("servo_labstation_disk_cleanup", servoLabstationDiskCleanUpExec)
 	execs.Register("servo_servod_old_logs_cleanup", servoServodOldLogsCleanupExec)
 	execs.Register("servo_battery_charging", servoValidateBatteryChargingExec)
+	execs.Register("init_dut_for_servo", initDutForServoExec)
 }

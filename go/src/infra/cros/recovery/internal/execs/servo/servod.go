@@ -78,6 +78,21 @@ func ServodCallHas(ctx context.Context, in *execs.RunArgs, command string) (*tlw
 	return res, nil
 }
 
+// ServodCallHwInit calls servod with hwinit method and re-initializes all servod controls.
+func ServodCallHwInit(ctx context.Context, in *execs.RunArgs, verbose bool) (*tlw.CallServodResponse, error) {
+	res := in.Access.CallServod(ctx, &tlw.CallServodRequest{
+		Resource: in.DUT.Name,
+		Method:   tlw.ServodMethodHwInit,
+		Args:     packToXMLRPCValues(verbose),
+		Options:  defaultServodOptions,
+	})
+	log.Debug(ctx, "Servod call hwinit %t: received %s", verbose, res.Value.String())
+	if res.Fault {
+		return nil, errors.Reason("servod call hwinit %t: received %s", verbose, res.Value.GetString_()).Err()
+	}
+	return res, nil
+}
+
 // packToXMLRPCValues packs values to XMLRPC structs.
 func packToXMLRPCValues(values ...interface{}) []*xmlrpc.Value {
 	var r []*xmlrpc.Value

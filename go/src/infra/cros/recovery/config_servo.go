@@ -305,7 +305,7 @@ const servoRepairPlanBody = `
 			"is_not_servo_v3"
 		],
 		"dependencies": [
-			"servod_dut_controller"
+			"init_dut_for_servo"
 		],
 		"exec_extra_args": [
 			"commands:cr50_ccd_level,cr50_testlab,cr50_ccd_state_flags",
@@ -323,11 +323,13 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"servo_check_servod_control"
 	},
-	"servod_dut_controller": {
+	"init_dut_for_servo": {
 		"conditions": [
 			"is_not_servo_v3"
 		],
-		"exec_name":"sample_pass"
+		"dependencies": [
+			"servod_set_main_device"
+		]
 	},
 	"servo_connection_pins": {
 		"conditions": [
@@ -535,9 +537,6 @@ const servoRepairPlanBody = `
 			"expected_string_value:off"
 		],
 		"exec_name":"servo_check_servod_control"
-	},
-	"init_dut_for_servo":{
-		"exec_name":"sample_pass"
 	},
 	"servo_host_servod_restart": {
 		"exec_timeout": {
