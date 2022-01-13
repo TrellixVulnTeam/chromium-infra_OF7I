@@ -18,6 +18,7 @@
 package queue
 
 import (
+	"math/rand"
 	"net/http"
 
 	"go.chromium.org/luci/appengine/gaemiddleware"
@@ -70,7 +71,9 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	}
 	botID := c.Request.FormValue("botID")
 	expectedState := c.Request.FormValue("expectedState")
-	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState)
+	// RandFloat is guaranteed to be in the half-open interval [0,1).
+	randFloat := rand.Float64()
+	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState, randFloat)
 	if err != nil {
 		logging.Infof(c.Context, "fail to run repair job in queue for %s: %s", botID, err.Error())
 		return err

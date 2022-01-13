@@ -11,31 +11,77 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// TestIsRecoveryEnabledForLabstation tests that we correctly make
+// TestRouteRepairTask tests that we correctly make
 // a decision on whether to use recovery for labstations based on the config
 // file.
-func TestIsRecoveryEnabledForLabstation(t *testing.T) {
+func TestRouteRepairTask(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name string
-		in   *config.Paris
-		out  bool
+		name          string
+		in            *config.Paris
+		botID         string
+		expectedState string
+		randFloat     float64
+		out           string
+		hasErr        bool
 	}{
 		{
-			// If Paris is not enabled at all in the config, we should default
-			// to always using the legacy flow.
-			name: "default config without paris",
-			in:   nil,
-			out:  false,
+			name:          "default config",
+			in:            nil,
+			botID:         "foo-labstation1",
+			expectedState: "ready",
+			randFloat:     0.5,
+			out:           "",
+			hasErr:        false,
 		},
 		{
-			// If the recover labstation feature is enabled, every labstation should be opted in.
-			name: "only enable labstation repair",
+			name: "use labstation",
 			in: &config.Paris{
 				EnableLabstationRecovery: true,
+				OptinAllLabstations:      true,
 			},
-			out: true,
+			botID:         "foo-labstation1",
+			expectedState: "ready",
+			randFloat:     0.5,
+			out:           "paris",
+			hasErr:        false,
+		},
+		{
+			name: "use labstation -- default threshold of zero is not okay",
+			in: &config.Paris{
+				EnableLabstationRecovery: true,
+				OptinAllLabstations:      false,
+			},
+			botID:         "foo-labstation1",
+			expectedState: "ready",
+			randFloat:     0,
+			out:           "",
+			hasErr:        true,
+		},
+		{
+			name: "use labstation sometimes - good",
+			in: &config.Paris{
+				EnableLabstationRecovery:   true,
+				LabstationRecoveryPermille: 499,
+			},
+			botID:         "foo-labstation1",
+			expectedState: "ready",
+			randFloat:     0.5,
+			out:           "paris",
+			hasErr:        false,
+		},
+		{
+			name: "use labstation sometimes - near miss",
+			in: &config.Paris{
+				EnableLabstationRecovery:   true,
+				LabstationRecoveryPermille: 501,
+			},
+			botID:         "foo-labstation1",
+			expectedState: "ready",
+			randFloat:     0.5,
+			out:           "",
+			hasErr:        false,
 		},
 	}
 
@@ -51,9 +97,18 @@ func TestIsRecoveryEnabledForLabstation(t *testing.T) {
 			cfg.Paris = tt.in
 			ctx = config.Use(ctx, cfg)
 			expected := tt.out
-			actual := isRecoveryEnabledForLabstation(ctx)
+			actual, err := RouteRepairTask(ctx, tt.botID, tt.expectedState, tt.randFloat)
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("unexpected diff (-want +got) in subtest %d: %s", i, diff)
+			}
+			if tt.hasErr {
+				if err == nil {
+					t.Errorf("expected error but didn't get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %s", err)
+				}
 			}
 		})
 	}

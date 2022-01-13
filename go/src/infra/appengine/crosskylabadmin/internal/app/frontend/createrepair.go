@@ -7,6 +7,7 @@ package frontend
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -18,21 +19,65 @@ import (
 	"infra/libs/skylab/common/heuristics"
 )
 
-// CreateRepairTask kicks off a repair job.
-// This function will either schedule a legacy repair task or a PARIS repair task.
+const paris = "paris"
+
+// RouteRepairTask routes a repair task for a given bot.
 //
-// TODO(gregorynisbet): Make rules more complicated.
-func CreateRepairTask(ctx context.Context, botID, expectedState string) (string, error) {
-	logging.Infof(ctx, "Creating repair task for %q expected state %q", botID, expectedState)
-	useBuildbucketFlow := false
-	labstationRecoveryEnabled := isRecoveryEnabledForLabstation(ctx)
-	if heuristics.LooksLikeLabstation(botID) && labstationRecoveryEnabled {
-		useBuildbucketFlow = true
+// The possible return values are:
+// - ""      (for legacy, which is the default)
+// - "paris" (for PARIS, which is new)
+//
+// RouteRepairTask takes as an argument randFloat (which is a float64 in the closed interval [0, 1]).
+// This argument is, by design, all the entropy that randFloat will need. Taking this as an argument allows
+// RouteRepairTask itself to be deterministic because the caller is responsible for generating the random
+// value.
+//
+// TODO(gregorynisbet): This function is not finished; we need to take the labstation pool into account as well.
+func RouteRepairTask(ctx context.Context, botID string, expectedState string, randFloat float64) (string, error) {
+	if !(0.0 <= randFloat && randFloat <= 1.0) {
+		return "", fmt.Errorf("route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
-	if useBuildbucketFlow {
+	parisCfg := config.Get(ctx).GetParis()
+	if !heuristics.LooksLikeLabstation(botID) {
+		logging.Infof(ctx, "Non-labstations always use legacy flow")
+		return "", nil
+	}
+	if !parisCfg.GetEnableLabstationRecovery() {
+		logging.Infof(ctx, "Labstation recovery is not enabled at all")
+		return "", nil
+	}
+	if parisCfg.GetOptinAllLabstations() {
+		return paris, nil
+	}
+	threshold := parisCfg.GetLabstationRecoveryPermille()
+	if threshold == 0 {
+		return "", fmt.Errorf("route repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set")
+	}
+	// If we make it this far, then it's possible for us to use the new flow.
+	// However, we should only actually do it if our value exceeds the threshold.
+	myValue := math.Round(1000.0 * randFloat)
+	if myValue >= float64(threshold) {
+		return paris, nil
+	}
+	return "", nil
+}
+
+// CreateRepairTask kicks off a repair job.
+//
+// This function will either schedule a legacy repair task or a PARIS repair task.
+func CreateRepairTask(ctx context.Context, botID string, expectedState string, randFloat float64) (string, error) {
+	logging.Infof(ctx, "Creating repair task for %q expected state %q with random input %f", botID, expectedState, randFloat)
+	// If we encounter an error picking paris or legacy, do the safe thing and use legacy.
+	taskType, err := RouteRepairTask(ctx, botID, expectedState, randFloat)
+	if err != nil {
+		logging.Infof(ctx, "Create repair task: falling back to legacy repair by default: %s", err)
+	}
+	switch taskType {
+	case "paris":
 		return createBuildbucketRepairTask(ctx, botID, expectedState)
+	default:
+		return createLegacyRepairTask(ctx, botID, expectedState)
 	}
-	return createLegacyRepairTask(ctx, botID, expectedState)
 }
 
 // CreateBuildbucketRepairTask creates a new repair task for a labstation. Not yet implemented.
