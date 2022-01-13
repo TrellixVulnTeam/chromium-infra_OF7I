@@ -21,6 +21,7 @@ done
 # Move the meat where we actually want it.
 mkdir "$PREFIX/bin"
 mv SourceDir/* "$PREFIX/bin"
+ls "$PREFIX/bin"
 
 # Install pip_bootstrap things.
 "$PREFIX/bin/python.exe" "$(where pip_bootstrap.py)" "$PREFIX/bin"
