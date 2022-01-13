@@ -61,7 +61,7 @@ func TestJoinSingleValueLabel(t *testing.T) {
 
 	Convey("Test with repeat labels", t, func() {
 		l := []string{"nami", "coral", "nami", "nami"}
-		So(joinSingleValueLabel(l), ShouldResemble, []string{"nami", "coral", "nami2", "nami3"})
+		So(joinSingleValueLabel(l), ShouldResemble, []string{"nami", "coral", "nami_2", "nami_3"})
 	})
 }
 

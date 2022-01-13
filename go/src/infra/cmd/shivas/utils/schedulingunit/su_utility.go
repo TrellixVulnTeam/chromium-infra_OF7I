@@ -52,7 +52,7 @@ func joinSingleValueLabel(labels []string) []string {
 		// will have label-board: [eve, eve2]
 		suffix := ""
 		if occurrences[l] > 1 {
-			suffix = fmt.Sprintf("%d", occurrences[l])
+			suffix = fmt.Sprintf("_%d", occurrences[l])
 		}
 		res = append(res, l+suffix)
 	}
