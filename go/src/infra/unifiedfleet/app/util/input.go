@@ -127,6 +127,7 @@ var (
 	TypeFilterName                 string = "type"
 	SerialNumberFilterName         string = "serialnumber"
 	BbnumFilterName                string = "bbnum"
+	AssetTagFilterName             string = "assettag"
 )
 
 const separator string = "/"
