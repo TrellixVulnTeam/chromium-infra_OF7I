@@ -86,16 +86,20 @@ class AppengineTestCase(unittest.TestCase, MockPatchMixin):  # pragma: no cover
     self.testbed.init_capability_stub()
     self.testbed.init_datastore_v3_stub(
         consistency_policy=self.datastore_stub_consistency_policy)
-    self.testbed.init_files_stub()
-    self.testbed.init_logservice_stub()
     self.testbed.init_mail_stub()
     self.testbed.init_memcache_stub()
     self.testbed.init_modules_stub()
-    self.testbed.init_search_stub()
     self.testbed.init_taskqueue_stub(root_path=self.taskqueue_stub_root_path)
     self.testbed.init_urlfetch_stub()
     self.testbed.init_user_stub()
-    self.testbed.init_xmpp_stub()
+
+    if six.PY2:
+      # These stubs aren't in the Py3 appengine-python-standard package.
+      self.testbed.init_files_stub()
+      self.testbed.init_logservice_stub()
+      self.testbed.init_search_stub()
+      self.testbed.init_xmpp_stub()
+
     # Test app is lazily initialized on a first use from app_module.
     self._test_app = None
 
