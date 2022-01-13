@@ -11,7 +11,17 @@ build:
       - ${contextdir}/templates/webpack-out
 
   # This directory is in .gitignore and excluded by default. This statement
-  # copies it into the output anyway, skipping some files.
+  # copies it into the output anyway, skipping some files that aren't really
+  # needed on GAE, but cause issues with builds reproducibility.
   - copy: '${inputsdir}/lib'
     dest: '${contextdir}/lib'
-    ignore: ['*.pyc', '*.pyo']
+    ignore:
+      # Non-reproducible, depends on the python version on the builder.
+      - '*.pyc'
+      - '*.pyo'
+      # Non-reproducible, depends on where python is installed on the builder.
+      # Path to it ends up in `#!...` lines in scripts in `bin/`.
+      - 'bin/'
+      # Non-reproducible, contains hashes of files in `bin/`, which are
+      # themselves non-reproducible.
+      - 'RECORD'
