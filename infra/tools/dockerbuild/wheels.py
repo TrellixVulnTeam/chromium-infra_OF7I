@@ -1633,6 +1633,7 @@ SPECS.update({
                 'windows-x86', 'windows-x86-py3', 'windows-x64',
                 'windows-x64-py3'
             ],
+            patch_version='chromium.1',
         ),
         CryptographyPyPI(
             'cryptography',

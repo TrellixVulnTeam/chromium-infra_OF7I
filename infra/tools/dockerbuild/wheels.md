@@ -1612,12 +1612,12 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 2.9.2
+### 2.9.2.chromium.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/cryptography/${vpython_platform}"
-  version: "version:2.9.2"
+  version: "version:2.9.2.chromium.1"
 >
 ```
 
