@@ -39,12 +39,25 @@ func mockChromeBrowserMachine(id, lab, name string) *ufspb.Machine {
 	}
 }
 
+func mockAttachedDevice(id, lab, buildTarget string) *ufspb.Machine {
+	return &ufspb.Machine{
+		Name: id,
+		Device: &ufspb.Machine_AttachedDevice{
+			AttachedDevice: &ufspb.AttachedDevice{
+				BuildTarget: buildTarget,
+			},
+		},
+	}
+}
+
 func assertMachineEqual(a *ufspb.Machine, b *ufspb.Machine) {
 	So(a.GetName(), ShouldEqual, b.GetName())
 	So(a.GetChromeBrowserMachine().GetDescription(), ShouldEqual,
 		b.GetChromeBrowserMachine().GetDescription())
 	So(a.GetChromeosMachine().GetReferenceBoard(), ShouldEqual,
 		b.GetChromeosMachine().GetReferenceBoard())
+	So(a.GetAttachedDevice().GetBuildTarget(), ShouldEqual,
+		b.GetAttachedDevice().GetBuildTarget())
 }
 
 func getMachineNames(machines []*ufspb.Machine) []string {
@@ -61,11 +74,17 @@ func TestCreateMachine(t *testing.T) {
 	datastore.GetTestable(ctx).Consistent(true)
 	chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
 	chromeOSMachine2 := mockChromeOSMachine("", "chromeoslab", "samus")
+	attchedDevice1 := mockAttachedDevice("attached-device-1", "chromeoslab", "goldfish")
 	Convey("CreateMachine", t, func() {
-		Convey("Create new machine", func() {
+		Convey("Create new os machine", func() {
 			resp, err := CreateMachine(ctx, chromeOSMachine1)
 			So(err, ShouldBeNil)
 			assertMachineEqual(resp, chromeOSMachine1)
+		})
+		Convey("Create new attached device", func() {
+			resp, err := CreateMachine(ctx, attchedDevice1)
+			So(err, ShouldBeNil)
+			assertMachineEqual(resp, attchedDevice1)
 		})
 		Convey("Create existing machine", func() {
 			resp, err := CreateMachine(ctx, chromeOSMachine1)

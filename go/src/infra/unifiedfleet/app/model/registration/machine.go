@@ -67,6 +67,20 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to marshal Machine %s", p).Err()
 	}
+
+	var buildTarget string
+	var deviceType string
+	var model string
+	if p.GetChromeosMachine() != nil {
+		buildTarget = p.GetChromeosMachine().GetBuildTarget()
+		deviceType = p.GetChromeosMachine().GetDeviceType().String()
+		model = strings.ToLower(p.GetChromeosMachine().GetModel())
+	} else if p.GetAttachedDevice() != nil {
+		buildTarget = p.GetAttachedDevice().GetBuildTarget()
+		deviceType = p.GetAttachedDevice().GetDeviceType().String()
+		model = strings.ToLower(p.GetAttachedDevice().GetModel())
+	}
+
 	return &MachineEntity{
 		ID:               p.GetName(),
 		SerialNumber:     p.GetSerialNumber(),
@@ -79,9 +93,9 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		Tags:             p.GetTags(),
 		Machine:          machine,
 		State:            p.GetResourceState().String(),
-		Model:            strings.ToLower(p.GetChromeosMachine().GetModel()),
-		BuildTarget:      p.GetChromeosMachine().GetBuildTarget(),
-		DeviceType:       p.GetChromeosMachine().GetDeviceType().String(),
+		Model:            model,
+		BuildTarget:      buildTarget,
+		DeviceType:       deviceType,
 		Phase:            p.GetChromeosMachine().GetPhase(),
 	}, nil
 }
