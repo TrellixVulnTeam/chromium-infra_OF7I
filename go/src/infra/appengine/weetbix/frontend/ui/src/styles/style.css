@@ -7,7 +7,7 @@ body {
   box-sizing: border-box;
   color: var(--default-text-color);
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  font-size: 14px;
+  font-size: var(--font-size-default);
   letter-spacing: 0.25px;
   line-height: 1.4;
   margin: 0;
@@ -49,5 +49,6 @@ html {
   --delete-color: var(--failure-color);
   --mdc-theme-primary: var(--active-color);
 
+  --font-size-default: 14px;
   --font-size-small: 12px;
 }

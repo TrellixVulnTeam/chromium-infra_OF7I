@@ -4,9 +4,11 @@
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
 import { BeforeEnterObserver, RouterLocation } from '@vaadin/router';
-import './rule_section.ts';
 import { RuleChangedEvent } from './rule_section';
+
+import "./failure_table.ts";
 import './reclustering_progress_indicator.ts';
+import './rule_section.ts';
 
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
@@ -131,29 +133,6 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             </table>`;
         }
 
-        var breakdownTable = html`Loading...`;
-        if (c !== undefined) {
-            const merged = mergeSubClusters([c.affectedTests1d, c.affectedTests3d, c.affectedTests7d]);
-            breakdownTable = html`
-            <table>
-                <thead>
-                    <tr>
-                        <th>Test</th>
-                        <th>1 day</th>
-                        <th>3 days</th>
-                        <th>7 days</th>
-                    </tr>
-                </thead>
-                <tbody class="data">
-                    ${merged.map(entry => html`
-                    <tr>
-                        <td class="test-id">${entry.name}</td>
-                        ${entry.values.map(v => html`<td class="number">${v}</td>`)}
-                    </tr>`)}
-                </tbody>
-            </table>`;
-        }
-
         return html`
         <reclustering-progress-indicator
             project=${this.project}
@@ -166,8 +145,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             ${definitionSection}
             <h2>Impact</h2>
             ${impactTable}
-            <h2>Breakdown</h2>
-            ${breakdownTable}
+            <h2>Recent Failures</h2>
+            <failure-table project=${this.project} clusterAlgorithm=${this.clusterAlgorithm} clusterID=${this.clusterId}></failure-table>
         </div>
         `;
     }
@@ -241,10 +220,6 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         tbody.data tr:hover {
             background-color: var(--light-active-color);
         }
-        .test-id {
-            word-break: break-all;
-            font-size: var(--font-size-small);
-        }
     `];
 }
 
@@ -282,44 +257,4 @@ interface ClusterId {
 interface SubCluster {
     value: string;
     numFails: number;
-}
-
-interface MergedSubClusters {
-    name: string;
-    values: number[];
-}
-
-// Merge multiple related subcluster lists into a single list with multiple values.
-// Missing values are filled with zeros. The returned list is sorted by the values.
-//
-// eg: mergeSubClusters([[{value: "a", numFails: 1}, {value: "b", numFails: 2}], [{value:"a", numFails: 3}]])
-//     =>
-//     [{name: "a", values: [1, 3]}, {name: "b", values: [2, 0]}]
-const mergeSubClusters = (subClusters: Array<SubCluster[] | null>): MergedSubClusters[] => {
-    const lookup: { [name: string]: number[] } = {};
-    for (let i = 0; i < subClusters.length; i++) {
-        const clusters = subClusters[i];
-        for (const entry of clusters || []) {
-            let values = lookup[entry.value]
-            if (!values) {
-                values = new Array(subClusters.length).fill(0);
-                lookup[entry.value] = values;
-            }
-            values[i] = entry.numFails;
-        }
-    }
-
-    const merged = Object.entries(lookup).map(([name, values]) => ({ name, values }))
-
-    // sort descending by first value in subcluster, then second, and so on.
-    merged.sort((a, b) => {
-        for (let i = 0; i < a.values.length; i++) {
-            const cmp = b.values[i] - a.values[i];
-            if (cmp !== 0) {
-                return cmp;
-            }
-        }
-        return 0;
-    });
-    return merged;
 }

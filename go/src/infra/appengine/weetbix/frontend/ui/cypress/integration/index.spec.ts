@@ -20,5 +20,7 @@ describe('Index Page', () => {
     it('loads a cluster page', () => {
         cy.get('cluster-table').get('[data-cy=cluster-link]').first().click();
         cy.get('body').contains('Breakdown');
+        // Check that the analysis section is showing at least one group.
+        cy.get('td.group');
     })
 })

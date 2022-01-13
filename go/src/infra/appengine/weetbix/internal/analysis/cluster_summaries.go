@@ -328,15 +328,16 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 }
 
 type ClusterFailure struct {
-	Realm                      bigquery.NullString    `json:"realm"`
-	IngestedInvocationID       bigquery.NullString    `json:"ingestedInvocationID"`
-	TestID                     bigquery.NullString    `json:"testID"`
-	Variant                    []*Variant             `json:"variant"`
-	PresubmitRunID             *PresubmitRunID        `json:"presubmitRunID"`
-	PartitionTime              bigquery.NullTimestamp `json:"partitionTime"`
-	IsIncluded                 bigquery.NullBool      `json:"isIncluded"`
-	IsIncludedWithHighPriority bigquery.NullBool      `json:"isIncludedWithHighPriority"`
-	IsExonerated               bigquery.NullBool      `json:"isExonerated"`
+	Realm                       bigquery.NullString    `json:"realm"`
+	TestID                      bigquery.NullString    `json:"testId"`
+	Variant                     []*Variant             `json:"variant"`
+	PresubmitRunID              *PresubmitRunID        `json:"presubmitRunId"`
+	PartitionTime               bigquery.NullTimestamp `json:"partitionTime"`
+	IsExonerated                bigquery.NullBool      `json:"isExonerated"`
+	IngestedInvocationID        bigquery.NullString    `json:"ingestedInvocationId"`
+	IsIngestedInvocationBlocked bigquery.NullBool      `json:"isIngestedInvocationBlocked"`
+	TestRunId                   bigquery.NullString    `json:"testRunId"`
+	IsTestRunBlocked            bigquery.NullBool      `json:"isTestRunBlocked"`
 }
 
 type Variant struct {
@@ -355,20 +356,18 @@ func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, cl
 	if err != nil {
 		return nil, errors.Annotate(err, "getting dataset").Err()
 	}
-	// TODO(mwarton): change this to read from materialized
-	// table instead of directly from the view for better performance
-	// (from 30 seconds -> 2 seconds).
 	q := c.client.Query(`
 		SELECT
 			realm as Realm,
-			ingested_invocation_id as IngestedInvocationID,
 			test_id as TestID,
 			variant as Variant,
 			presubmit_run_id as PresubmitRunID,
 			partition_time as PartitionTime,
-			is_included as IsIncluded,
-			is_included_with_high_priority as IsIncludedWithHighPriority,
-			is_exonerated as IsExonerated
+			is_exonerated as IsExonerated,
+			ingested_invocation_id as IngestedInvocationID,
+			is_ingested_invocation_blocked as IsIngestedInvocationBlocked,
+			test_run_id as TestRunId,
+			is_test_run_blocked as IsTestRunBlocked
 		FROM
 			` + dataset + `.clustered_failures_latest_7d
 		WHERE cluster_algorithm = @clusterAlgorithm

@@ -13,10 +13,10 @@ gcloud config set project chops-weetbix-dev
 gcloud auth application-default login
 ```
 
-Once the GCP project is authorized, in one terminal start webpack to rebuild the UI code after any changes:
+Once the GCP project is authorized, in one terminal start esbuild to rebuild the UI code after any changes:
 ```
 cd frontend/ui
-npx webpack watch
+npm run watch
 ```
 
 To run the server, in another terminal use:
@@ -47,7 +47,13 @@ configs.
 You can run the UI tests by:
 ```
 cd frontend/ui
-npx cypress run
+npm run test
+```
+
+You can debug the UI unit tests by visiting the server started by the following command with your browser:
+```
+cd frontend/ui
+npm run test-watch
 ```
 
 ## Deployment
@@ -64,6 +70,8 @@ eval infra/go/env.py
 
 Then use the following commands to deploy:
 ```
+cd frontend/ui
+npm run build
 gae.py upload -A <appid>
 ```
 
