@@ -25,9 +25,6 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 1.  Install CIPD dependencies:
     1. `gclient runhooks`
 1.  Install MySQL v5.6.
-    1. On a Debian derivative, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar):
-        1.  `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`
-        1. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
     1. On Mac, use [homebrew](https://brew.sh/) to install MySQL v5.6:
             1.  `brew install mysql@5.6`
     1. Otherwise, download from the [official page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
@@ -61,12 +58,13 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 
 1.  Install Python and JS dependencies:
     1.  Optional: You may need to install `pip`. You can verify whether you have it installed with `which pip`.
-        1. make sure to install `pip` using `python2` instead of `python3` (use `python --version` to check the version, `which python2` to check the path)
-        1. `curl -O https://bootstrap.pypa.io/pip/2.7/get-pip.py`
-        1. `sudo python get-pip.py`
+        1. make sure to install `pip` using `python2` instead of `python3` (use `python --version` to check the version for 2.7, `which python2` to check the path)
+            1. If you need python 2.7 for now: `sudo apt install python2.7 python2.7-dev python-is-python2`
+        1. `curl -O /tmp/get-pip.py https://bootstrap.pypa.io/pip/2.7/get-pip.py`
+        1. `sudo python /tmp/get-pip.py`
     1.  Use `virtualenv` to keep from modifying system dependencies.
-        1. `sudo pip install virtualenv`
-        1. `virtualenv venv` to set up virtualenv within your monorail directory.
+        1. `pip install virtualenv`
+        1. `python -m virtualenv venv` to set up virtualenv within your monorail directory.
         1. `source venv/bin/activate` to activate it, needed in each terminal instance of the directory.
     1.  Mac only: install [libssl](https://github.com/PyMySQL/mysqlclient-python/issues/74), needed for mysqlclient. (do this in local env not virtual env)
         1. `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
