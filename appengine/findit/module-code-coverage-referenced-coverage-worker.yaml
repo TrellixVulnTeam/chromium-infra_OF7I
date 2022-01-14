@@ -6,7 +6,7 @@ api_version: 1
 threadsafe: true
 instance_class: B8  # 1GB memory, 4.8GHz CPU.
 manual_scaling:
-  instances: 1
+  instances: 3
 
 handlers:
 - url: .*/coverage/task/referenced-coverage.*
