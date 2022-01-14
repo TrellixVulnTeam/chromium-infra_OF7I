@@ -21,6 +21,8 @@ func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Fai
 	var failures []*cpb.Failure
 	for _, tv := range tvs {
 		// Process results in order of StartTime.
+		// This is to ensure test result indexes are later
+		// assigned correctly w.r.t the actual execution order.
 		results := sortResultsByStartTime(tv.Results)
 
 		// Stores the test run for each test result.
@@ -55,7 +57,8 @@ func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Fai
 				continue
 			}
 
-			exonerated := len(tv.Exonerations) > 0
+			exonerated := len(tv.Exonerations) > 0 ||
+				!hasPass && opts.AutoExonerateBlockingFailures
 			failure := failureFromResult(tv, tr.Result, opts, exonerated, testRun)
 			failure.IngestedInvocationResultIndex = int64(i)
 			failure.IngestedInvocationResultCount = int64(len(tv.Results))
@@ -105,6 +108,8 @@ func sortResultsByStartTime(results []*rdbpb.TestResultBundle) []*rdbpb.TestResu
 		bTime := bResult.StartTime.AsTime()
 		if aTime.Equal(bTime) {
 			// If start time the same, order by Result Name.
+			// Needed to ensure the output of this sort is
+			// deterministic given the input.
 			return aResult.Name < bResult.Name
 		}
 		return aTime.Before(bTime)

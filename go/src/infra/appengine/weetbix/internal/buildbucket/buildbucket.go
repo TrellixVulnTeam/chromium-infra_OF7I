@@ -9,8 +9,6 @@ import (
 	"context"
 	"net/http"
 
-	"google.golang.org/genproto/protobuf/field_mask"
-
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
@@ -57,17 +55,4 @@ func NewClient(ctx context.Context, host string) (*Client, error) {
 // GetBuild returns bbpb.Build for the requested build.
 func (c *Client) GetBuild(ctx context.Context, req *bbpb.GetBuildRequest) (*bbpb.Build, error) {
 	return c.client.GetBuild(ctx, req)
-}
-
-// GetBuildWithBuilderAndRDBInfo is a shortcut for GetBuild which returns the
-// bbpb.Build that contains builder and information about the resultdb invocation.
-func (c *Client) GetBuildWithBuilderAndRDBInfo(ctx context.Context, id int64) (*bbpb.Build, error) {
-	return c.GetBuild(ctx, &bbpb.GetBuildRequest{
-		Id: id,
-		Mask: &bbpb.BuildMask{
-			Fields: &field_mask.FieldMask{
-				Paths: []string{"builder", "infra.resultdb"},
-			},
-		},
-	})
 }

@@ -12,10 +12,12 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/gae/impl/memory"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/caching"
@@ -178,7 +180,15 @@ func TestIngestTestResults(t *testing.T) {
 			inv := "invocations/build-87654321"
 			realm := "chromium:ci"
 
-			mbc.GetBuildWithBuilderAndRDBInfo(bID, mockedGetBuildRsp(inv))
+			request := &bbpb.GetBuildRequest{
+				Id: bID,
+				Mask: &bbpb.BuildMask{
+					Fields: &field_mask.FieldMask{
+						Paths: []string{"builder", "infra.resultdb", "status"},
+					},
+				},
+			}
+			mbc.GetBuild(request, mockedGetBuildRsp(inv))
 
 			invReq := &rdbpb.GetInvocationRequest{
 				Name: inv,

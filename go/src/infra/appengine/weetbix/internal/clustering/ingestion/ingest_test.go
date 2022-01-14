@@ -50,11 +50,12 @@ func TestIngest(t *testing.T) {
 		ingestor := New(chunkStore, analysis)
 
 		opts := Options{
-			Project:        "chromium",
-			PartitionTime:  time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
-			Realm:          "chromium:ci",
-			InvocationID:   "build-123456790123456",
-			PresubmitRunID: &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+			Project:                       "chromium",
+			PartitionTime:                 time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
+			Realm:                         "chromium:ci",
+			InvocationID:                  "build-123456790123456",
+			PresubmitRunID:                &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+			AutoExonerateBlockingFailures: false,
 		}
 		testIngestion := func(input []*rdbpb.TestVariant, expectedCFs []*bqpb.ClusteredFailureRow) {
 			ingestion := ingestor.Open(opts)
@@ -218,6 +219,19 @@ func TestIngest(t *testing.T) {
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
+			Convey(`Failure with auto-exoneration enabled`, func() {
+				// E.g. the containing invocation was a build which was
+				// cancelled or passed.
+				opts.AutoExonerateBlockingFailures = true
+
+				// Update expectations.
+				testnameCF.IsExonerated = true
+				regexpCF.IsExonerated = true
+				ruleCF.IsExonerated = true
+
+				testIngestion(tvs, expectedCFs)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
+			})
 			Convey(`Failure with only suggested clusters`, func() {
 				reason := &pb.FailureReason{
 					PrimaryErrorMessage: "Should not match rule",
@@ -250,6 +264,10 @@ func TestIngest(t *testing.T) {
 			tv := newTestVariant(uniqifier, testRunsPerVariant, resultsPerTestRun)
 			tvs := []*rdbpb.TestVariant{tv}
 
+			// Setup a scenario as follows:
+			// - A test was run four times in total, consisting of two test
+			//   runs with two tries each.
+			// - The test failed on all tries.
 			var expectedCFs []*bqpb.ClusteredFailureRow
 			var expectedCFsByTestRun [][]*bqpb.ClusteredFailureRow
 			for t := 0; t < testRunsPerVariant; t++ {
@@ -267,13 +285,37 @@ func TestIngest(t *testing.T) {
 				expectedCFs = append(expectedCFs, testRunExp...)
 			}
 
+			// Expectation: all test results show both the test run and
+			// invocation blocked by failures.
+			for _, exp := range expectedCFs {
+				exp.IsIngestedInvocationBlocked = true
+				exp.IsTestRunBlocked = true
+			}
+
 			Convey(`Test run and presubmit run blocked`, func() {
-				for _, exp := range expectedCFs {
-					exp.IsIngestedInvocationBlocked = true
-					exp.IsTestRunBlocked = true
-				}
-				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Contents), ShouldEqual, 1)
+				Convey(`Build failed`, func() {
+					opts.AutoExonerateBlockingFailures = false
+					// No test failure should be exonerated, because
+					// the test variant had no exoneration and
+					// AutoExonerateBlockingFailures is unset.
+					for _, exp := range expectedCFs {
+						exp.IsExonerated = false
+					}
+					testIngestion(tvs, expectedCFs)
+					So(len(chunkStore.Contents), ShouldEqual, 1)
+				})
+				Convey(`Build passed, cancelled or infra failure`, func() {
+					opts.AutoExonerateBlockingFailures = true
+					// The test failure should be exonerated, despite
+					// the test variant having no exoneration, because
+					// all attempts of the test failed, and
+					// AutoExonerateBlockingFailures is set.
+					for _, exp := range expectedCFs {
+						exp.IsExonerated = true
+					}
+					testIngestion(tvs, expectedCFs)
+					So(len(chunkStore.Contents), ShouldEqual, 1)
+				})
 			})
 			Convey(`Some test runs blocked and presubmit run not blocked`, func() {
 				// Let the last retry of the last test run pass.
@@ -291,8 +333,25 @@ func TestIngest(t *testing.T) {
 					exp.IsIngestedInvocationBlocked = false
 					exp.IsTestRunBlocked = false
 				}
-				testIngestion(tvs, expectedCFs)
-				So(len(chunkStore.Contents), ShouldEqual, 1)
+				// No failures should record an exoneration because:
+				// - the test variant did not have an exoneration recorded
+				//   against it, AND
+				// - the failures are not invocation blocking (so are not
+				//   eligible for auto-exoneration, regardless of the
+				//   value of AutoExonerateBlockingFailures).
+				for _, exp := range expectedCFs {
+					exp.IsExonerated = false
+				}
+				Convey(`Build failed`, func() {
+					opts.AutoExonerateBlockingFailures = false
+					testIngestion(tvs, expectedCFs)
+					So(len(chunkStore.Contents), ShouldEqual, 1)
+				})
+				Convey(`Build passed, cancelled or infra failure`, func() {
+					opts.AutoExonerateBlockingFailures = true
+					testIngestion(tvs, expectedCFs)
+					So(len(chunkStore.Contents), ShouldEqual, 1)
+				})
 			})
 		})
 		Convey(`Ingest many failures`, func() {

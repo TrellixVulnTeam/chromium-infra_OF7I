@@ -28,6 +28,7 @@ func mockedGetBuildRsp(inv string) *bbpb.Build {
 				Invocation: inv,
 			},
 		},
+		Status: bbpb.Status_FAILURE,
 	}
 }
 

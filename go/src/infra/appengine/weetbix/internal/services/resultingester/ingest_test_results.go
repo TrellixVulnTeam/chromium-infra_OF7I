@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"time"
 
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -116,7 +117,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return err
 	}
 
-	b, err := builderAndResultDBInfo(ctx, payload)
+	// Buildbucket build only has builder, infra.resultdb, status populated.
+	b, err := retrieveBuild(ctx, payload)
 	code := status.Code(err)
 	if code == codes.NotFound {
 		// Build not found, end the task gracefully.
@@ -145,11 +147,21 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 
 	// Setup clustering ingestion.
 	invID, err := rdbbutil.ParseInvocationName(invName)
+	if err != nil {
+		return err
+	}
 	opts := ingestion.Options{
 		Project:       project,
 		InvocationID:  invID,
 		PartitionTime: payload.PartitionTime.AsTime(),
 		Realm:         inv.Realm,
+		// In case of Success, Cancellation, or Infra Failure automatically
+		// exonerate failures of tests which were invocation-blocking,
+		// even if the recipe did not upload an exoneration to ResultDB.
+		// The build status implies the test result could not have been
+		// responsible for causing the build (or consequently, the CQ run)
+		// to fail.
+		AutoExonerateBlockingFailures: b.Status != bbpb.Status_FAILURE,
 	}
 	if payload.PresubmitRunId != nil {
 		opts.PresubmitRunID = payload.PresubmitRunId
@@ -214,19 +226,27 @@ func projectFromRealm(realm string) string {
 	return ""
 }
 
-func builderAndResultDBInfo(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {
+func retrieveBuild(ctx context.Context, payload *taskspb.IngestTestResults) (*bbpb.Build, error) {
 	bbHost := payload.Build.Host
-	bId := payload.Build.Id
+	id := payload.Build.Id
 	bc, err := buildbucket.NewClient(ctx, bbHost)
 	if err != nil {
 		return nil, err
 	}
-	b, err := bc.GetBuildWithBuilderAndRDBInfo(ctx, bId)
+	request := &bbpb.GetBuildRequest{
+		Id: id,
+		Mask: &bbpb.BuildMask{
+			Fields: &field_mask.FieldMask{
+				Paths: []string{"builder", "infra.resultdb", "status"},
+			},
+		},
+	}
+	b, err := bc.GetBuild(ctx, request)
 	switch {
 	case err != nil:
 		return nil, err
 	case b.GetInfra().GetResultdb() == nil || b.Infra.Resultdb.GetInvocation() == "":
-		return nil, tq.Fatal.Apply(errors.Reason("build %s-%d not have ResultDB invocation", bbHost, bId).Err())
+		return nil, tq.Fatal.Apply(errors.Reason("build %s-%d not have ResultDB invocation", bbHost, id).Err())
 	}
 	return b, nil
 }

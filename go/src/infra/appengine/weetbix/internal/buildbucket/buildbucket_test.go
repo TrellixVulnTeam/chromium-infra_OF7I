@@ -10,6 +10,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/protobuf/proto"
+
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -28,6 +31,15 @@ func TestGetBuild(t *testing.T) {
 		bID := int64(87654321)
 		inv := "invocations/build-87654321"
 
+		req := &bbpb.GetBuildRequest{
+			Id: bID,
+			Mask: &bbpb.BuildMask{
+				Fields: &field_mask.FieldMask{
+					Paths: []string{"builder", "infra.resultdb", "status"},
+				},
+			},
+		}
+
 		res := &bbpb.Build{
 			Builder: &bbpb.BuilderID{
 				Project: "chromium",
@@ -40,12 +52,14 @@ func TestGetBuild(t *testing.T) {
 					Invocation: inv,
 				},
 			},
+			Status: bbpb.Status_FAILURE,
 		}
-		mc.GetBuildWithBuilderAndRDBInfo(bID, res)
+		reqCopy := proto.Clone(req).(*bbpb.GetBuildRequest)
+		mc.GetBuild(reqCopy, res)
 
 		bc, err := NewClient(mc.Ctx, "bbhost")
 		So(err, ShouldBeNil)
-		b, err := bc.GetBuildWithBuilderAndRDBInfo(mc.Ctx, bID)
+		b, err := bc.GetBuild(mc.Ctx, req)
 		So(err, ShouldBeNil)
 		So(b, ShouldResembleProto, res)
 	})
