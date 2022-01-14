@@ -15,6 +15,7 @@
 package main
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -22,25 +23,29 @@ import (
 	"path/filepath"
 )
 
+// This compiles `task.cfg` into the final program as a []byte
+//go:embed task.cfg
+var Config []byte
+
+const configName = "task.cfg"
+
 var execCommand = exec.Command
 
 // RunInNsjail takes in the command to be run as a []string
 // where command[0] is the executable to be run, and
 // command[1...] are the arguments to pass to the executable
-// TODO(yulanlin) use a config file
-// TODO(yulanlin) add seccomp-bpf settings
 func RunInNsjail(command []string) error {
+
+	if err := os.WriteFile(configName, Config, 0644); err != nil {
+		return fmt.Errorf("problem writing config: %s", err.Error())
+	}
 
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.New("could not obtain working directory")
 	}
 	nsjailPath := filepath.Join(dir, "nsjail")
-
-	// TODO(yulanlin): embed the config and pass that to nsjail
-	config := "--user 99999 --group 99999"
-	cmdConfig := append([]string{config, "--"}, command...)
-
+	cmdConfig := append([]string{"--config", configName}, command...)
 	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
 
 	// TODO(yulanlin): handle log output properly
