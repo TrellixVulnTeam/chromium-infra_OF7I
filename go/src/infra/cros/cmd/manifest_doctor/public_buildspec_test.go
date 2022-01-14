@@ -271,12 +271,12 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 
 	expectedLists := map[string]map[string][]string{
 		"chromiumos-manifest-versions": {
-			"legacy/test/": {},
+			"test/": {},
 		},
 	}
 	expectedWrites := map[string][]byte{
-		"gs://chromeos-manifest-versions/legacy/test/foo.xml":   []byte(internalManifestXMLDumped),
-		"gs://chromiumos-manifest-versions/legacy/test/foo.xml": []byte(externalManifestXML),
+		"gs://chromeos-manifest-versions/test/foo.xml":   []byte(internalManifestXMLDumped),
+		"gs://chromiumos-manifest-versions/test/foo.xml": []byte(externalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,

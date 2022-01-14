@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -102,16 +101,6 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-// We don't want to clobber buildspecs sourced from the internal GS bucket,
-// so if we're using manifest-versions as our source we prefix the path with
-// legacy/.
-func (b *publicBuildspec) legacyPrefix(path string) string {
-	if b.readFromManifestVersions && !strings.HasPrefix(path, "legacy/") {
-		return "legacy/" + path
-	}
-	return path
-}
-
 // CreateProjectBuildspec creates a public buildspec as
 // outlined in go/per-project-buildspecs.
 func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client) error {
@@ -136,7 +125,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 			continue
 		}
 
-		externalPath := b.legacyPrefix(watchPath)
+		externalPath := watchPath
 		externalBuildspecs, err := gsClient.List(ctx, b.externalBuildspecsGSBucket, externalPath)
 		if err != nil {
 			LogErr(errors.Annotate(err, "failed to list external buildspecs for dir %s, skipping...", externalPath).Err().Error())
@@ -148,7 +137,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 		}
 
 		for _, internalBuildspec := range internalBuildspecs {
-			externalBuildspec := b.legacyPrefix(internalBuildspec)
+			externalBuildspec := internalBuildspec
 			// Skip buildspecs that are already present.
 			if _, ok := externalBuildspecMap[externalBuildspec]; ok {
 				continue
@@ -177,7 +166,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 
 			// If legacy, upload the internal buildspec to the internal bucket for internal consistency.
 			if b.readFromManifestVersions {
-				uploadPath := lgs.MakePath(b.internalBuildspecsGSBucket, b.legacyPrefix(internalBuildspec))
+				uploadPath := lgs.MakePath(b.internalBuildspecsGSBucket, internalBuildspec)
 				if err := WriteManifestToGS(gsClient, uploadPath, buildspec); err != nil {
 					LogErr(errors.Annotate(err, "failed to write internal buildspec to %s", string(uploadPath)).Err().Error())
 					errs = append(errs, err)
