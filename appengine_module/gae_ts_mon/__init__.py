@@ -36,11 +36,10 @@ sys.modules['infra_libs.ts_mon'] = sys.modules[__package__]
 sys.modules['infra_libs'].utils = utils
 sys.modules['infra_libs.utils'] = utils
 
-if six.PY2:  # pragma: no cover
-  # Put the httplib2_utils package into infra_lib directly.
-  import infra_libs.ts_mon.httplib2_utils
-  sys.modules['infra_libs'].httplib2_utils = infra_libs.ts_mon.httplib2_utils
-  sys.modules['infra_libs.httplib2_utils'] = infra_libs.ts_mon.httplib2_utils
+# Put the httplib2_utils package into infra_lib directly.
+import infra_libs.ts_mon.httplib2_utils
+sys.modules['infra_libs'].httplib2_utils = infra_libs.ts_mon.httplib2_utils
+sys.modules['infra_libs.httplib2_utils'] = infra_libs.ts_mon.httplib2_utils
 
 from .config import initialize
 from .instrument_endpoint import instrument as instrument_endpoint
