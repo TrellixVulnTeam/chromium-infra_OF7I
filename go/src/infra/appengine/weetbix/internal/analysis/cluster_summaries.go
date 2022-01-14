@@ -336,8 +336,9 @@ type ClusterFailure struct {
 	IsExonerated                bigquery.NullBool      `json:"isExonerated"`
 	IngestedInvocationID        bigquery.NullString    `json:"ingestedInvocationId"`
 	IsIngestedInvocationBlocked bigquery.NullBool      `json:"isIngestedInvocationBlocked"`
-	TestRunId                   bigquery.NullString    `json:"testRunId"`
+	TestRunIds                  []bigquery.NullString  `json:"testRunIds"`
 	IsTestRunBlocked            bigquery.NullBool      `json:"isTestRunBlocked"`
+	Count                       int32                  `json:"count"`
 }
 
 type Variant struct {
@@ -350,7 +351,9 @@ type PresubmitRunID struct {
 	ID     bigquery.NullString `json:"id"`
 }
 
-// ReadClusterFailures reads the latest 2000 failures for a single cluster for the last 7 days.
+// ReadClusterFailures reads the latest 2000 groups of failures for a single cluster for the last 7 days.
+// A group of failures are failures that would be grouped together in MILO display, i.e.
+// same ingested_invocation_id, test_id and variant.
 func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, clusterID clustering.ClusterID) ([]*ClusterFailure, error) {
 	dataset, err := bqutil.DatasetForProject(luciProject)
 	if err != nil {
@@ -360,18 +363,25 @@ func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, cl
 		SELECT
 			realm as Realm,
 			test_id as TestID,
-			variant as Variant,
-			presubmit_run_id as PresubmitRunID,
+			ANY_VALUE(variant) as Variant,
+			ANY_VALUE(presubmit_run_id) as PresubmitRunID,
 			partition_time as PartitionTime,
-			is_exonerated as IsExonerated,
+			ANY_VALUE(is_exonerated) as IsExonerated,
 			ingested_invocation_id as IngestedInvocationID,
-			is_ingested_invocation_blocked as IsIngestedInvocationBlocked,
-			test_run_id as TestRunId,
-			is_test_run_blocked as IsTestRunBlocked
+			ANY_VALUE(is_ingested_invocation_blocked) as IsIngestedInvocationBlocked,
+			ARRAY_AGG(DISTINCT test_run_id) as TestRunIds,
+			ANY_VALUE(is_test_run_blocked) as IsTestRunBlocked,
+			count(*) as Count
 		FROM
 			` + dataset + `.clustered_failures_latest_7d
 		WHERE cluster_algorithm = @clusterAlgorithm
 		  AND cluster_id = @clusterID
+		GROUP BY
+			realm,
+			ingested_invocation_id,
+			test_id,
+			variant_hash,
+			partition_time			
 		ORDER BY partition_time DESC
 		LIMIT 2000
 	`)
