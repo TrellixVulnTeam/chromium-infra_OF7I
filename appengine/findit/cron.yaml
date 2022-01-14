@@ -67,7 +67,7 @@ cron:
 
 - description: Query and export file coverage metrics to bigquery.
   url: /coverage/cron/files-absolute-coverage
-  schedule: every sunday 01:00
+  schedule: every day 01:00
   timezone: America/Los_Angeles
   retry_parameters:
     job_retry_limit: 0
