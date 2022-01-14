@@ -25,82 +25,77 @@ const testProject = "myproject"
 // RuleBuilder provides methods to build a failure asociation rule
 // for testing.
 type RuleBuilder struct {
-	uniqifier     int
-	project       string
-	active        bool
-	definition    string
-	creationTime  time.Time
-	lastUpdated   time.Time
-	sourceCluster clustering.ClusterID
+	rule *FailureAssociationRule
 }
 
 // NewRule starts building a new Rule.
 func NewRule(uniqifier int) *RuleBuilder {
-	return &RuleBuilder{
-		project:      testProject,
-		uniqifier:    uniqifier,
-		active:       true,
-		definition:   "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
-		creationTime: time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
-		lastUpdated:  time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
-		sourceCluster: clustering.ClusterID{
+	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", uniqifier)))
+	rule := &FailureAssociationRule{
+		Project:         testProject,
+		RuleID:          hex.EncodeToString(ruleIDBytes[0:16]),
+		RuleDefinition:  "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
+		BugID:           bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)},
+		IsActive:        true,
+		CreationTime:    time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		CreationUser:    WeetbixSystem,
+		LastUpdated:     time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		LastUpdatedUser: "user@google.com",
+		SourceCluster: clustering.ClusterID{
 			Algorithm: fmt.Sprintf("clusteralg%v", uniqifier),
 			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", uniqifier))),
 		},
+	}
+	return &RuleBuilder{
+		rule: rule,
 	}
 }
 
 // WithProject specifies the project to use on the rule.
 func (b *RuleBuilder) WithProject(project string) *RuleBuilder {
-	b.project = project
+	b.rule.Project = project
 	return b
 }
 
 // WithActive specifies whether the rule will be active.
 func (b *RuleBuilder) WithActive(active bool) *RuleBuilder {
-	b.active = active
+	b.rule.IsActive = active
+	return b
+}
+
+// WithBug specifies the bug to use on the rule.
+func (b *RuleBuilder) WithBug(bug bugs.BugID) *RuleBuilder {
+	b.rule.BugID = bug
 	return b
 }
 
 // WithCreationTime specifies the creation time of the rule.
 func (b *RuleBuilder) WithCreationTime(value time.Time) *RuleBuilder {
-	b.creationTime = value
+	b.rule.CreationTime = value
 	return b
 }
 
-// WithLastUpdated specifies the LastUpdated time on the rule.
+// WithLastUpdated specifies the "last updated" time on the rule.
 func (b *RuleBuilder) WithLastUpdated(lastUpdated time.Time) *RuleBuilder {
-	b.lastUpdated = lastUpdated
+	b.rule.LastUpdated = lastUpdated
 	return b
 }
 
 // WithRuleDefinition specifies the definition of the rule.
 func (b *RuleBuilder) WithRuleDefinition(definition string) *RuleBuilder {
-	b.definition = definition
+	b.rule.RuleDefinition = definition
 	return b
 }
 
 // WithSourceCluster specifies the source suggested cluster that triggered the
 // creation of the rule.
 func (b *RuleBuilder) WithSourceCluster(value clustering.ClusterID) *RuleBuilder {
-	b.sourceCluster = value
+	b.rule.SourceCluster = value
 	return b
 }
 
 func (b *RuleBuilder) Build() *FailureAssociationRule {
-	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", b.uniqifier)))
-	return &FailureAssociationRule{
-		Project:         b.project,
-		RuleID:          hex.EncodeToString(ruleIDBytes[0:16]),
-		RuleDefinition:  b.definition,
-		BugID:           bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", b.uniqifier)},
-		IsActive:        b.active,
-		CreationTime:    b.creationTime,
-		CreationUser:    WeetbixSystem,
-		LastUpdated:     b.lastUpdated,
-		LastUpdatedUser: "user@google.com",
-		SourceCluster:   b.sourceCluster,
-	}
+	return b.rule
 }
 
 // SetRulesForTesting replaces the set of stored rules to match the given set.

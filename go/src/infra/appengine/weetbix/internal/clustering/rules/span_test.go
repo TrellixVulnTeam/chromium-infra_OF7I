@@ -24,13 +24,21 @@ func TestSpan(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		Convey(`Read`, func() {
-			expectedRule := NewRule(100).Build()
-			err := SetRulesForTesting(ctx, []*FailureAssociationRule{expectedRule})
-			So(err, ShouldBeNil)
+			Convey(`Not Exists`, func() {
+				ruleID := strings.Repeat("00", 16)
+				rule, err := Read(span.Single(ctx), testProject, ruleID)
+				So(err, ShouldEqual, NotExistsErr)
+				So(rule, ShouldBeNil)
+			})
+			Convey(`Exists`, func() {
+				expectedRule := NewRule(100).Build()
+				err := SetRulesForTesting(ctx, []*FailureAssociationRule{expectedRule})
+				So(err, ShouldBeNil)
 
-			rule, err := Read(span.Single(ctx), testProject, expectedRule.RuleID)
-			So(err, ShouldBeNil)
-			So(rule, ShouldResemble, expectedRule)
+				rule, err := Read(span.Single(ctx), testProject, expectedRule.RuleID)
+				So(err, ShouldBeNil)
+				So(rule, ShouldResemble, expectedRule)
+			})
 		})
 		Convey(`ReadActive`, func() {
 			Convey(`Empty`, func() {
@@ -57,6 +65,23 @@ func TestSpan(t *testing.T) {
 					rulesToCreate[0],
 					rulesToCreate[3],
 				})
+			})
+		})
+		Convey(`ReadByBug`, func() {
+			bugID := bugs.BugID{System: "monorail", ID: "monorailproject/1"}
+			Convey(`Not Exists`, func() {
+				rule, err := ReadByBug(span.Single(ctx), bugID)
+				So(err, ShouldEqual, NotExistsErr)
+				So(rule, ShouldBeNil)
+			})
+			Convey(`Exists`, func() {
+				expectedRule := NewRule(100).WithBug(bugID).Build()
+				err := SetRulesForTesting(ctx, []*FailureAssociationRule{expectedRule})
+				So(err, ShouldBeNil)
+
+				rule, err := ReadByBug(span.Single(ctx), bugID)
+				So(err, ShouldBeNil)
+				So(rule, ShouldResemble, expectedRule)
 			})
 		})
 		Convey(`ReadDelta`, func() {

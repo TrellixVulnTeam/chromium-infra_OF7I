@@ -38,6 +38,10 @@ const WeetbixSystem = "weetbix"
 // errors.
 var StartingEpoch = time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)
 
+// NotExistsErr is returned by Read methods for a single failure
+// association rule, if no matching rule exists.
+var NotExistsErr = errors.New("no matching rule exists")
+
 // FailureAssociationRule associates failures with a bug. When the rule
 // is used to match incoming test failures, the resultant cluster is
 // known as a 'bug cluster' because the cluster is associated with a bug
@@ -72,42 +76,66 @@ type FailureAssociationRule struct {
 }
 
 // Read reads the failure association rule with the given rule ID.
+// If no rule exists, NotExistsErr will be returned.
 func Read(ctx context.Context, project string, id string) (*FailureAssociationRule, error) {
-	whereClause := `RuleId = @ruleId`
+	whereClause := `Project = @project AND RuleId = @ruleId`
 	params := map[string]interface{}{
-		"ruleId": id,
+		"project": project,
+		"ruleId":  id,
 	}
-	rs, err := readWhere(ctx, project, whereClause, params)
+	rs, err := readWhere(ctx, whereClause, params)
 	if err != nil {
 		return nil, errors.Annotate(err, "query rule by id").Err()
 	}
 	if len(rs) == 0 {
-		return nil, errors.New("no matching rule exists")
+		return nil, NotExistsErr
 	}
 	return rs[0], nil
 }
 
 // ReadActive reads all active Weetbix failure association rules in the given LUCI project.
-func ReadActive(ctx context.Context, projectID string) ([]*FailureAssociationRule, error) {
-	whereClause := `IsActive`
-	rs, err := readWhere(ctx, projectID, whereClause, nil)
+func ReadActive(ctx context.Context, project string) ([]*FailureAssociationRule, error) {
+	whereClause := `Project = @project AND IsActive`
+	params := map[string]interface{}{
+		"project": project,
+	}
+	rs, err := readWhere(ctx, whereClause, params)
 	if err != nil {
 		return nil, errors.Annotate(err, "query active rules").Err()
 	}
 	return rs, nil
 }
 
+// ReadByBug reads the failure association rule associated with the given bug.
+// If no such failure association rule exists, NotExistsErr will be returned.
+func ReadByBug(ctx context.Context, bugID bugs.BugID) (*FailureAssociationRule, error) {
+	whereClause := `BugSystem = @bugSystem and BugId = @bugId`
+	params := map[string]interface{}{
+		"bugSystem": bugID.System,
+		"bugId":     bugID.ID,
+	}
+	rs, err := readWhere(ctx, whereClause, params)
+	if err != nil {
+		return nil, errors.Annotate(err, "query rule by id").Err()
+	}
+	if len(rs) == 0 {
+		return nil, NotExistsErr
+	}
+	return rs[0], nil
+}
+
 // ReadDelta reads the changed failure association rules since the given
 // timestamp, in the given LUCI project.
-func ReadDelta(ctx context.Context, projectID string, sinceTime time.Time) ([]*FailureAssociationRule, error) {
+func ReadDelta(ctx context.Context, project string, sinceTime time.Time) ([]*FailureAssociationRule, error) {
 	if sinceTime.Before(StartingEpoch) {
 		return nil, errors.New("cannot query rule deltas from before project inception")
 	}
-	whereClause := `LastUpdated > @sinceTime`
+	whereClause := `Project = @project AND LastUpdated > @sinceTime`
 	params := map[string]interface{}{
+		"project":   project,
 		"sinceTime": sinceTime,
 	}
-	rs, err := readWhere(ctx, projectID, whereClause, params)
+	rs, err := readWhere(ctx, whereClause, params)
 	if err != nil {
 		return nil, errors.Annotate(err, "query rules since").Err()
 	}
@@ -120,11 +148,12 @@ func ReadDelta(ctx context.Context, projectID string, sinceTime time.Time) ([]*F
 // returned[i] == nil). If a rule does not exist, a value of nil will be
 // returned for that ID. The same rule can be requested multiple times.
 func ReadMany(ctx context.Context, project string, ids []string) ([]*FailureAssociationRule, error) {
-	whereClause := `RuleId IN UNNEST(@ruleIds)`
+	whereClause := `Project = @project AND RuleId IN UNNEST(@ruleIds)`
 	params := map[string]interface{}{
+		"project": project,
 		"ruleIds": ids,
 	}
-	rs, err := readWhere(ctx, project, whereClause, params)
+	rs, err := readWhere(ctx, whereClause, params)
 	if err != nil {
 		return nil, errors.Annotate(err, "query rules by id").Err()
 	}
@@ -150,33 +179,29 @@ func ReadMany(ctx context.Context, project string, ids []string) ([]*FailureAsso
 
 // readWhere failure association rules matching the given where clause,
 // substituting params for any SQL parameters used in that calsue.
-func readWhere(ctx context.Context, projectID string, whereClause string, params map[string]interface{}) ([]*FailureAssociationRule, error) {
+func readWhere(ctx context.Context, whereClause string, params map[string]interface{}) ([]*FailureAssociationRule, error) {
 	stmt := spanner.NewStatement(`
-		SELECT RuleId, RuleDefinition, BugSystem, BugId,
+		SELECT Project, RuleId, RuleDefinition, BugSystem, BugId,
 		  CreationTime, LastUpdated,
 		  CreationUser, LastUpdatedUser,
 		  IsActive,
 		  SourceClusterAlgorithm, SourceClusterId
 		FROM FailureAssociationRules
-		WHERE Project = @projectID AND (` + whereClause + `)
+		WHERE (` + whereClause + `)
 		ORDER BY BugSystem, BugId
 	`)
-	stmt.Params = make(map[string]interface{})
-	for k, v := range params {
-		stmt.Params[k] = v
-	}
-	stmt.Params["projectID"] = projectID
+	stmt.Params = params
 
 	it := span.Query(ctx, stmt)
 	rs := []*FailureAssociationRule{}
 	err := it.Do(func(r *spanner.Row) error {
-		var ruleID, ruleDefinition, bugSystem, bugID string
+		var project, ruleID, ruleDefinition, bugSystem, bugID string
 		var creationTime, lastUpdated time.Time
 		var creationUser, lastUpdatedUser string
 		var isActive spanner.NullBool
 		var sourceClusterAlgorithm, sourceClusterID string
 		err := r.Columns(
-			&ruleID, &ruleDefinition, &bugSystem, &bugID,
+			&project, &ruleID, &ruleDefinition, &bugSystem, &bugID,
 			&creationTime, &lastUpdated,
 			&creationUser, &lastUpdatedUser,
 			&isActive,
@@ -187,7 +212,7 @@ func readWhere(ctx context.Context, projectID string, whereClause string, params
 		}
 
 		rule := &FailureAssociationRule{
-			Project:         projectID,
+			Project:         project,
 			RuleID:          ruleID,
 			RuleDefinition:  ruleDefinition,
 			CreationTime:    creationTime,
