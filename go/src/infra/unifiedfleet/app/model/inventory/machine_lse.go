@@ -46,6 +46,8 @@ type MachineLSEEntity struct {
 	VirtualDatacenter     string   `gae:"virtualdatacenter"`
 	Nic                   string   `gae:"nic"`
 	Pools                 []string `gae:"pools"`
+	AssociatedHostname    string   `gae:"associated_hostname"`
+	AssociatedHostPort    string   `gae:"associated_host_port"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -83,6 +85,13 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		pools = p.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetPools()
 	}
 
+	var os []string
+	if p.GetChromeBrowserMachineLse() != nil {
+		os = ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
+	} else if p.GetAttachedDeviceLse() != nil {
+		os = ufsds.GetOSIndex(p.GetAttachedDeviceLse().GetOsVersion().GetValue())
+	}
+
 	return &MachineLSEEntity{
 		ID:                    p.GetName(),
 		MachineIDs:            p.GetMachines(),
@@ -97,11 +106,13 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		Zone:                  p.GetZone(),
 		Manufacturer:          strings.ToLower(p.GetManufacturer()),
 		State:                 p.GetResourceState().String(),
-		OS:                    ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue()),
+		OS:                    os,
 		VirtualDatacenter:     p.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		Nic:                   p.GetNic(),
 		Tags:                  p.GetTags(),
 		Pools:                 pools,
+		AssociatedHostname:    p.GetAttachedDeviceLse().GetAssociatedHostname(),
+		AssociatedHostPort:    p.GetAttachedDeviceLse().GetAssociatedHostPort(),
 		MachineLSE:            machineLSE,
 	}, nil
 }
