@@ -35,6 +35,9 @@ export class FailureTable extends LitElement {
     variants: FailureVariant[] = [];
 
     @state()
+    failureFilter: FailureFilter = failureFilters[0];
+
+    @state()
     impactFilter: ImpactFilter = impactFilters[0];
 
     @property()
@@ -79,7 +82,13 @@ export class FailureTable extends LitElement {
 
     groupAndSortFailures() {
         if (this.failures) {
-            this.groups = groupFailures(this.failures, f => {
+            let failures = this.failures;
+            if (this.failureFilter == 'Presubmit Failures') {
+                failures = failures.filter(f => f.presubmitRunId);
+            } else if (this.failureFilter == 'Postsubmit Failures') {
+                failures = failures.filter(f => !f.presubmitRunId);
+            }
+            this.groups = groupFailures(failures, f => {
                 const variantValues = this.variants.filter(v => v.isSelected)
                     .map(v => f.variant.filter(fv => fv.key === v.key)?.[0]?.value || '');
                 return [...variantValues, f.testId || ''];
@@ -118,6 +127,14 @@ export class FailureTable extends LitElement {
         this.groupAndSortFailures();
     }
 
+    onFailureFilterChanged() {
+        const item = this.shadowRoot!.querySelector('#failure-filter [selected]');
+        if (item) {
+            this.failureFilter = (item.getAttribute('value') as FailureFilter) || failureFilters[0];
+        }
+        this.groupAndSortFailures();
+    }
+
     toggleVariant(variant: FailureVariant) {
         const index = this.variants.indexOf(variant);
         this.variants.splice(index, 1);
@@ -142,6 +159,9 @@ export class FailureTable extends LitElement {
         }
         const failureLink = (failure: ClusterFailure) => {
             const query = `ID:${failure.testId} `
+            if (failure.ingestedInvocationId?.startsWith('build-')) {
+                return `https://ci.chromium.org/ui/b/${failure.ingestedInvocationId.replace('build-', '')}/test-results?q=${encodeURIComponent(query)}`;
+            }
             return `https://ci.chromium.org/ui/inv/${failure.ingestedInvocationId}/test-results?q=${encodeURIComponent(query)}`;
         }
         const indentStyle = (level: number) => {
@@ -159,7 +179,13 @@ export class FailureTable extends LitElement {
                         <mwc-icon>${group.isExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}</mwc-icon>
                         ${group.name || 'none'}
                     </td>`}
-                <td class="number">${group.presubmitRejects}</td>
+                <td class="number">
+                    ${group.failure ?
+                    (group.failure.presubmitRunId ?
+                        html`<a class="presubmit-link" href="https://luci-change-verifier.appspot.com/ui/run/${group.failure.presubmitRunId.id}" target="_blank">${group.presubmitRejects}</a>` :
+                        '-')
+                    : group.presubmitRejects}
+                </td>
                 <td class="number">${group.invocationFailures}</td>
                 <td class="number">${group.testRunFailures}</td>
                 <td class="number">${group.failures}</td>
@@ -167,7 +193,7 @@ export class FailureTable extends LitElement {
             </tr>
             ${group.isExpanded ? group.children.map(child => groupRow(child)) : null}`
         }
-        const filterButton = (variant: FailureVariant) => {
+        const groupByButton = (variant: FailureVariant) => {
             return html`
                 <mwc-button
                     label=${`${variant.key} (${variant.values.length})`}
@@ -178,6 +204,11 @@ export class FailureTable extends LitElement {
         return html`
             <div class="controls">
                 <div class="select-offset">
+                    <mwc-select id="failure-filter" outlined label="Failure Type" @change=${() => this.onFailureFilterChanged()}>
+                        ${failureFilters.map((filter) => html`<mwc-list-item ?selected=${filter == this.failureFilter} value="${filter}">${filter}</mwc-list-item>`)}
+                    </mwc-select>
+                </div>
+                <div class="select-offset">
                     <mwc-select id="impact-filter" outlined label="Impact" @change=${() => this.onImpactFilterChanged()}>
                         ${impactFilters.map((filter) => html`<mwc-list-item ?selected=${filter == this.impactFilter} value="${filter.name}">${filter.name}</mwc-list-item>`)}
                     </mwc-select>
@@ -186,7 +217,7 @@ export class FailureTable extends LitElement {
                     <div class="label">
                         Group By
                     </div>
-                    ${this.variants.map(v => filterButton(v))}
+                    ${this.variants.map(v => groupByButton(v))}
                 </div>
             </div>
             <table>
@@ -272,6 +303,9 @@ export class FailureTable extends LitElement {
             color: var(--greyed-out-text-color);
             font-size: var(--font-size-small);
         }
+        .presubmit-link {
+            font-size: var(--font-size-small);
+        }
     `];
 }
 
@@ -306,6 +340,9 @@ export const impactFilters: ImpactFilter[] = [
         ignoreTestRunBlocked: true,
     }
 ];
+
+const failureFilters = ['All Failures', 'Presubmit Failures', 'Postsubmit Failures'] as const;
+type FailureFilter = typeof failureFilters[number];
 
 // group a number of failures into a tree of failure groups.
 // grouper is a function that returns a list of keys, one corresponding to each level of the grouping tree.
