@@ -18,13 +18,15 @@ class CreateReferencedCoverageMetricsCron(BaseHandler):
   def _GetSourceBuilders(self):
     """Returns CI builders for which coverage metrics are to be generated."""
     return [
-        'linux-code-coverage', 'mac-code-coverage', 'win10-code-coverage',
-        'android-code-coverage', 'android-code-coverage-native',
-        'ios-simulator-code-coverage', 'linux-chromeos-code-coverage',
-        'linux-code-coverage_unit', 'mac-code-coverage_unit',
-        'win10-code-coverage_unit', 'android-code-coverage_unit',
-        'android-code-coverage-native_unit', 'ios-simulator-code-coverage_unit',
-        'linux-chromeos-code-coverage_unit'
+        'linux-code-coverage', 'linux-code-coverage_unit', 'mac-code-coverage',
+        'mac-code-coverage_unit', 'win10-code-coverage',
+        'win10-code-coverage_unit', 'android-code-coverage',
+        'android-code-coverage_unit', 'android-code-coverage-native',
+        'android-code-coverage-native_unit', 'ios-simulator-code-coverage',
+        'ios-simulator-code-coverage_unit', 'linux-chromeos-code-coverage',
+        'linux-chromeos-code-coverage_unit', 'linux-lacros-code-coverage',
+        'linux-lacros-code-coverage_unit', 'fuchsia-code-coverage',
+        'fuchsia-code-coverage_unit'
     ]
 
   def HandleGet(self):
