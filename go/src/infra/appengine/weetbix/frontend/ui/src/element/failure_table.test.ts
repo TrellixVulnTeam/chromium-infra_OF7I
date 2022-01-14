@@ -7,7 +7,7 @@ import { DateTime } from 'luxon/src/luxon';
 
 import { ClusterFailure, ImpactFilter, exportedForTesting, FailureGroup } from './failure_table';
 
-const { impactFilters, rejectedIngestedInvocationIdsExtractor, rejectedPresubmitRunIdsExtractor, rejectedTestRunIdsExtractor, groupFailures, treeDistinctCounts, sortFailureGroups } = exportedForTesting;
+const { impactFilters, rejectedIngestedInvocationIdExtractor, rejectedPresubmitRunIdExtractor, rejectedTestRunIdExtractor, groupFailures, treeDistinctCounts, sortFailureGroups } = exportedForTesting;
 
 describe('Extractors', () => {
     it('should return ids in only the cases expected by failure type and impact filter.', () => {
@@ -140,24 +140,24 @@ describe('Extractors', () => {
             shouldExtractIngestedInvocationId: true,
         }];
         for (const tc of testCases) {
-            const testRunIds = rejectedTestRunIdsExtractor(impactFilterNamed(tc.filter))(tc.failure);
+            const testRunId = rejectedTestRunIdExtractor(impactFilterNamed(tc.filter))(tc.failure);
             if (tc.shouldExtractTestRunId) {
-                assert.isNotEmpty(testRunIds, `failed to extract testRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isString(testRunId, `failed to extract testRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             } else {
-                assert.isEmpty(testRunIds, `unexpectedly extracted testRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isUndefined(testRunId, `unexpectedly extracted testRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             }
-            const ingestedInvocationIds = rejectedIngestedInvocationIdsExtractor(impactFilterNamed(tc.filter))(tc.failure);
+            const ingestedInvocationId = rejectedIngestedInvocationIdExtractor(impactFilterNamed(tc.filter))(tc.failure);
             if (tc.shouldExtractIngestedInvocationId) {
-                assert.isNotEmpty(ingestedInvocationIds, `failed to extract ingestedInvocationId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isString(ingestedInvocationId, `failed to extract ingestedInvocationId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             } else {
-                assert.isEmpty(ingestedInvocationIds, `unexpectedly extracted ingestedInvocationId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isUndefined(ingestedInvocationId, `unexpectedly extracted ingestedInvocationId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             }
-            const presubmitRunIds = rejectedPresubmitRunIdsExtractor(impactFilterNamed(tc.filter))(tc.failure);
+            const presubmitRunId = rejectedPresubmitRunIdExtractor(impactFilterNamed(tc.filter))(tc.failure);
             // presubmitRunId is extracted under exactly the same conditions as ingestedInvocationId.
             if (tc.shouldExtractIngestedInvocationId) {
-                assert.isNotEmpty(presubmitRunIds, `failed to extract presubmitRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isString(presubmitRunId, `failed to extract presubmitRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             } else {
-                assert.isEmpty(presubmitRunIds, `unexpectedly extracted presubmitRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
+                assert.isUndefined(presubmitRunId, `unexpectedly extracted presubmitRunId with filter ${tc.filter} on failure ${JSON.stringify(tc.failure)}`);
             }
         }
     });
@@ -208,14 +208,14 @@ describe('treeDistinctCounts', () => {
     it('should have count of 1 for a valid feature', () => {
         const groups = groupFailures([newFailure().build()], () => ['group']);
 
-        treeDistinctCounts(groups[0], () => new Set(['a']), setFailures);
+        treeDistinctCounts(groups[0], () => 'a', setFailures);
 
         assert.equal(groups[0].failures, 1);
     });
     it('should have count of 0 for an invalid feature', () => {
         const groups = groupFailures([newFailure().build()], () => ['group']);
 
-        treeDistinctCounts(groups[0], () => new Set(), setFailures);
+        treeDistinctCounts(groups[0], () => undefined, setFailures);
 
         assert.equal(groups[0].failures, 0);
     });
@@ -225,7 +225,7 @@ describe('treeDistinctCounts', () => {
             newFailure().build(),
         ], () => ['group']);
 
-        treeDistinctCounts(groups[0], () => new Set(['a']), setFailures);
+        treeDistinctCounts(groups[0], () => 'a', setFailures);
 
         assert.equal(groups[0].failures, 1);
     });
@@ -235,7 +235,7 @@ describe('treeDistinctCounts', () => {
             newFailure().withTestId('b').build(),
         ], () => ['group']);
 
-        treeDistinctCounts(groups[0], f => f.testId ? new Set([f.testId]) : new Set(), setFailures);
+        treeDistinctCounts(groups[0], f => f.testId || undefined, setFailures);
 
         assert.equal(groups[0].failures, 2);
     });
@@ -245,7 +245,7 @@ describe('treeDistinctCounts', () => {
             newFailure().withTestId('a').withVariant('group', 'b').build(),
         ], f => ['top', ...f.variant.map((v) => v.value || '')]);
 
-        treeDistinctCounts(groups[0], f => f.testId ? new Set([f.testId]) : new Set(), setFailures);
+        treeDistinctCounts(groups[0], f => f.testId || undefined, setFailures);
 
         assert.equal(groups[0].failures, 1);
         assert.equal(groups[0].children[0].failures, 1);
@@ -257,7 +257,7 @@ describe('treeDistinctCounts', () => {
             newFailure().withTestId('b').withVariant('group', 'b').build(),
         ], f => ['top', ...f.variant.map((v) => v.value || '')]);
 
-        treeDistinctCounts(groups[0], f => f.testId ? new Set([f.testId]) : new Set(), setFailures);
+        treeDistinctCounts(groups[0], f => f.testId || undefined, setFailures);
 
         assert.equal(groups[0].failures, 2);
         assert.equal(groups[0].children[0].failures, 1);
@@ -339,9 +339,8 @@ class ClusterFailureBuilder {
             isExonerated: false,
             ingestedInvocationId: 'ingestedInvocationId',
             isIngestedInvocationBlocked: false,
-            testRunIds: ['testRunId'],
+            testRunId: 'testRunId',
             isTestRunBlocked: false,
-            count: 1,
         };
     }
     build(): ClusterFailure {
