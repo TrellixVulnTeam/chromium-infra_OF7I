@@ -73,18 +73,18 @@ const (
 func TestPublicBuildspec(t *testing.T) {
 	t.Parallel()
 	expectedLists := map[string]map[string][]string{
-		"buildspecs-internal": {
+		"chromeos-manifest-versions": {
 			"test/": {"test/foo.xml"},
 		},
-		"buildspecs-external": {
+		"chromiumos-manifest-versions": {
 			"test/": {},
 		},
 	}
 	expectedReads := map[string][]byte{
-		"gs://buildspecs-internal/test/foo.xml": []byte(internalManifestXML),
+		"gs://chromeos-manifest-versions/test/foo.xml": []byte(internalManifestXML),
 	}
 	expectedWrites := map[string][]byte{
-		"gs://buildspecs-external/test/foo.xml": []byte(externalManifestXML),
+		"gs://chromiumos-manifest-versions/test/foo.xml": []byte(externalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,
@@ -104,15 +104,15 @@ func TestPublicBuildspec(t *testing.T) {
 func TestPublicBuildspecDryRun(t *testing.T) {
 	t.Parallel()
 	expectedLists := map[string]map[string][]string{
-		"buildspecs-internal": {
+		"chromeos-manifest-versions": {
 			"test/": {"test/foo.xml"},
 		},
-		"buildspecs-external": {
+		"chromiumos-manifest-versions": {
 			"test/": {},
 		},
 	}
 	expectedReads := map[string][]byte{
-		"gs://buildspecs-internal/test/foo.xml": []byte(internalManifestXML),
+		"gs://chromeos-manifest-versions/test/foo.xml": []byte(internalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,
@@ -132,18 +132,18 @@ func TestPublicBuildspecDryRun(t *testing.T) {
 func TestPublicBuildspecNoAnnotations(t *testing.T) {
 	t.Parallel()
 	expectedLists := map[string]map[string][]string{
-		"buildspecs-internal": {
+		"chromeos-manifest-versions": {
 			"test/": {"test/foo.xml"},
 		},
-		"buildspecs-external": {
+		"chromiumos-manifest-versions": {
 			"test/": {},
 		},
 	}
 	expectedReads := map[string][]byte{
-		"gs://buildspecs-internal/test/foo.xml": []byte(internalManifestXMLNoAnnotations),
+		"gs://chromeos-manifest-versions/test/foo.xml": []byte(internalManifestXMLNoAnnotations),
 	}
 	expectedWrites := map[string][]byte{
-		"gs://buildspecs-external/test/foo.xml": []byte(externalManifestXML),
+		"gs://chromiumos-manifest-versions/test/foo.xml": []byte(externalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,
@@ -186,15 +186,15 @@ func TestPublicBuildspecNoAnnotations(t *testing.T) {
 func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
 	t.Parallel()
 	expectedLists := map[string]map[string][]string{
-		"buildspecs-internal": {
+		"chromeos-manifest-versions": {
 			"test/": {"test/foo.xml"},
 		},
-		"buildspecs-external": {
+		"chromiumos-manifest-versions": {
 			"test/": {},
 		},
 	}
 	expectedReads := map[string][]byte{
-		"gs://buildspecs-internal/test/foo.xml": []byte(internalManifestXMLNoAnnotations),
+		"gs://chromeos-manifest-versions/test/foo.xml": []byte(internalManifestXMLNoAnnotations),
 	}
 	f := &gs.FakeClient{
 		T:             t,
@@ -270,13 +270,13 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 	gc := gerrit.NewTestClient(mockMap)
 
 	expectedLists := map[string]map[string][]string{
-		"buildspecs-external": {
+		"chromiumos-manifest-versions": {
 			"legacy/test/": {},
 		},
 	}
 	expectedWrites := map[string][]byte{
-		"gs://buildspecs-internal/legacy/test/foo.xml": []byte(internalManifestXMLDumped),
-		"gs://buildspecs-external/legacy/test/foo.xml": []byte(externalManifestXML),
+		"gs://chromeos-manifest-versions/legacy/test/foo.xml":   []byte(internalManifestXMLDumped),
+		"gs://chromiumos-manifest-versions/legacy/test/foo.xml": []byte(externalManifestXML),
 	}
 	f := &gs.FakeClient{
 		T:              t,

@@ -20,8 +20,8 @@ const (
 	manifestInternalProject           = "chromeos/manifest-internal"
 	internalManifestVersionsProject   = "chromeos/manifest-versions"
 	externalManifestVersionsProject   = "chromiumos/manifest-versions"
-	internalBuildspecsGSBucketDefault = "buildspecs-internal"
-	externalBuildspecsGSBucketDefault = "buildspecs-external"
+	internalBuildspecsGSBucketDefault = "chromeos-manifest-versions"
+	externalBuildspecsGSBucketDefault = "chromiumos-manifest-versions"
 )
 
 // CreateProjectBuildspec creates a public buildspec as outlined in go/per-project-buildspecs.
