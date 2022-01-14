@@ -54,7 +54,7 @@ export class FailureTable extends LitElement {
             .then((failures: ClusterFailure[]) => {
                 this.failures = failures
                 this.countDistictVariantValues();
-                this.groupAndSortFailures();
+                this.groupCountAndSortFailures();
             });
     }
 
@@ -80,7 +80,7 @@ export class FailureTable extends LitElement {
         });
     }
 
-    groupAndSortFailures() {
+    groupCountAndSortFailures() {
         if (this.failures) {
             let failures = this.failures;
             if (this.failureFilter == 'Presubmit Failures') {
@@ -93,13 +93,17 @@ export class FailureTable extends LitElement {
                     .map(v => f.variant.filter(fv => fv.key === v.key)?.[0]?.value || '');
                 return [...variantValues, f.testId || ''];
             });
-            this.groups.forEach(group => {
-                treeDistinctValues(group, failureIdExtractor(), (g, values) => g.failures = values.size);
-                treeDistinctValues(group, rejectedTestRunIdExtractor(this.impactFilter), (g, values) => g.testRunFailures = values.size);
-                treeDistinctValues(group, rejectedIngestedInvocationIdExtractor(this.impactFilter), (g, values) => g.invocationFailures = values.size);
-                treeDistinctValues(group, rejectedPresubmitRunIdExtractor(this.impactFilter), (g, values) => g.presubmitRejects = values.size);
-            });
         }
+        this.countAndSortFailures();
+    }
+
+    countAndSortFailures() {
+        this.groups.forEach(group => {
+            treeDistinctValues(group, failureIdsExtractor(), (g, values) => g.failures = values.size);
+            treeDistinctValues(group, rejectedTestRunIdsExtractor(this.impactFilter), (g, values) => g.testRunFailures = values.size);
+            treeDistinctValues(group, rejectedIngestedInvocationIdsExtractor(this.impactFilter), (g, values) => g.invocationFailures = values.size);
+            treeDistinctValues(group, rejectedPresubmitRunIdsExtractor(this.impactFilter), (g, values) => g.presubmitRejects = values.size);
+        });
         this.sortFailures();
     }
 
@@ -124,7 +128,7 @@ export class FailureTable extends LitElement {
             const selected = item.getAttribute('value')
             this.impactFilter = impactFilters.filter(f => f.name == selected)?.[0] || impactFilters[0];
         }
-        this.groupAndSortFailures();
+        this.countAndSortFailures();
     }
 
     onFailureFilterChanged() {
@@ -132,7 +136,7 @@ export class FailureTable extends LitElement {
         if (item) {
             this.failureFilter = (item.getAttribute('value') as FailureFilter) || failureFilters[0];
         }
-        this.groupAndSortFailures();
+        this.groupCountAndSortFailures();
     }
 
     toggleVariant(variant: FailureVariant) {
@@ -141,7 +145,7 @@ export class FailureTable extends LitElement {
         variant.isSelected = !variant.isSelected;
         const numSelected = this.variants.filter(v => v.isSelected).length;
         this.variants.splice(numSelected, 0, variant);
-        this.groupAndSortFailures();
+        this.groupCountAndSortFailures();
     }
 
     toggleExpand(group: FailureGroup) {
@@ -404,9 +408,8 @@ const treeDistinctValues = (group: FailureGroup,
     visitor: (group: FailureGroup, distinctValues: Set<string>) => void): Set<string> => {
     const values: Set<string> = new Set();
     if (group.failure) {
-        const f = featureExtractor(group.failure);
-        if (f !== undefined) {
-            values.add(f)
+        for (const value of featureExtractor(group.failure)) {
+            values.add(value);
         }
     } else {
         for (const child of group.children) {
@@ -421,63 +424,81 @@ const treeDistinctValues = (group: FailureGroup,
 
 // A FeatureExtractor returns a string representing some feature of a ClusterFailure.
 // Returns undefined if there is no such feature for this failure.
-type FeatureExtractor = (failure: ClusterFailure) => string | undefined;
+type FeatureExtractor = (failure: ClusterFailure) => Set<string>;
 
 // failureIdExtractor returns an extractor that returns a unique failure id for each failure.
 // As failures don't actually have ids, it just returns an incrementing integer.
-const failureIdExtractor = (): FeatureExtractor => {
+const failureIdsExtractor = (): FeatureExtractor => {
     let unique = 0;
-    return _f => {
-        unique += 1;
-        return '' + unique;
+    return f => {
+        const values: Set<string> = new Set();
+        for (let i = 0; i < f.count; i++) {
+            unique += 1;
+            values.add('' + unique);
+        }
+        return values;
     }
 }
 
 // Returns an extractor that returns the id of the test run that was rejected by this failure, if any.
 // The impact filter is taken into account in determining if the run was rejected by this failure.
-const rejectedTestRunIdExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
+const rejectedTestRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
+        const values: Set<string> = new Set();
         if (f.isExonerated && !impactFilter.ignoreExoneration) {
-            return undefined;
+            return values;
         }
         if (!impactFilter.ignoreTestRunBlocked && !f.isTestRunBlocked) {
-            return undefined;
+            return values;
         }
-        return f.testRunId || undefined;
+        for (const testRunId of f.testRunIds) {
+            if (testRunId) {
+                values.add(testRunId);
+            }
+        }
+        return values;
     }
 }
 
 // Returns an extractor that returns the id of the ingested invocation that was rejected by this failure, if any.
 // The impact filter is taken into account in determining if the invocation was rejected by this failure.
-const rejectedIngestedInvocationIdExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
+const rejectedIngestedInvocationIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
+        const values: Set<string> = new Set();
         if (f.isExonerated && !impactFilter.ignoreExoneration) {
-            return undefined;
+            return values;
         }
         if (!f.isIngestedInvocationBlocked && !impactFilter.ignoreIngestedInvocationBlocked) {
-            return undefined;
+            return values;
         }
         if (!impactFilter.ignoreTestRunBlocked && !f.isTestRunBlocked) {
-            return undefined;
+            return values;
         }
-        return f.ingestedInvocationId || undefined;
+        if (f.ingestedInvocationId) {
+            values.add(f.ingestedInvocationId);
+        }
+        return values;
     }
 }
 
 // Returns an extractor that returns the id of the presubmit run that was rejected by this failure, if any.
 // The impact filter is taken into account in determining if the presubmit run was rejected by this failure.
-const rejectedPresubmitRunIdExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
+const rejectedPresubmitRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
+        const values: Set<string> = new Set();
         if (f.isExonerated && !impactFilter.ignoreExoneration) {
-            return undefined;
+            return values;
         }
         if (!f.isIngestedInvocationBlocked && !impactFilter.ignoreIngestedInvocationBlocked) {
-            return undefined;
+            return values;
         }
         if (!impactFilter.ignoreTestRunBlocked && !f.isTestRunBlocked) {
-            return undefined;
+            return values;
         }
-        return f.presubmitRunId?.id || undefined;
+        if (f.presubmitRunId?.id) {
+            values.add(f.presubmitRunId?.id);
+        }
+        return values;
     }
 }
 
@@ -507,23 +528,13 @@ const sortFailureGroups = (groups: FailureGroup[], metric: MetricName, ascending
     }
 }
 
-// Flattens a group tree into a list of visible rows based on which groups are expanded or not.
-const flattenGroupRows = (groups: FailureGroup[], flattened: FailureGroup[]) => {
-    for (const group of groups) {
-        flattened.push(group);
-        if (group.isExpanded) {
-            flattenGroupRows(group.children, flattened);
-        }
-    }
-}
-
 // The failure grouping code is complex, so export the parts for unit testing.
 export const exportedForTesting = {
     groupFailures,
     impactFilters,
-    rejectedIngestedInvocationIdExtractor,
-    rejectedPresubmitRunIdExtractor,
-    rejectedTestRunIdExtractor,
+    rejectedIngestedInvocationIdsExtractor,
+    rejectedPresubmitRunIdsExtractor,
+    rejectedTestRunIdsExtractor,
     sortFailureGroups,
     treeDistinctCounts: treeDistinctValues,
 }
@@ -538,8 +549,9 @@ export interface ClusterFailure {
     isExonerated: boolean | null;
     ingestedInvocationId: string | null;
     isIngestedInvocationBlocked: boolean | null;
-    testRunId: string | null;
+    testRunIds: Array<string | null>;
     isTestRunBlocked: boolean | null;
+    count: number;
 }
 
 // Key/Value Variant pairs for failures.
