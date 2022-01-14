@@ -81,6 +81,12 @@ func (b *RuleBuilder) WithLastUpdated(lastUpdated time.Time) *RuleBuilder {
 	return b
 }
 
+// WithLastUpdatedUser specifies the "last updated" user on the rule.
+func (b *RuleBuilder) WithLastUpdatedUser(user string) *RuleBuilder {
+	b.rule.LastUpdatedUser = user
+	return b
+}
+
 // WithRuleDefinition specifies the definition of the rule.
 func (b *RuleBuilder) WithRuleDefinition(definition string) *RuleBuilder {
 	b.rule.RuleDefinition = definition

@@ -127,13 +127,7 @@ func main() {
 		mw := pageBase(srv)
 
 		handlers := handlers.NewHandlers(srv.Options.CloudProject, srv.Options.Prod)
-		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id/failures", mw, handlers.GetClusterFailures)
-		srv.Routes.GET("/api/projects/:project/clusters/:algorithm/:id", mw, handlers.GetCluster)
-		srv.Routes.GET("/api/projects/:project/clusters", mw, handlers.ListClusters)
-		srv.Routes.GET("/api/projects/:project/reclusteringProgress", mw, handlers.GetReclusteringProgress)
-		srv.Routes.GET("/api/projects/:project/rules", mw, handlers.ListRules)
-		srv.Routes.GET("/api/projects/:project/rules/:id", mw, handlers.GetRule)
-		srv.Routes.PATCH("/api/projects/:project/rules/:id", mw, handlers.PatchRule)
+		handlers.RegisterRoutes(srv.Routes, mw)
 		srv.Routes.Static("/static/", mw, http.Dir("./ui/dist"))
 		// Anything that is not found, serve app html and let the client side router handle it.
 		srv.Routes.NotFound(mw, handlers.IndexPage)

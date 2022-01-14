@@ -14,14 +14,23 @@ import (
 
 	"google.golang.org/genproto/protobuf/field_mask"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/span"
 
+	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering/rules"
-	"infra/appengine/weetbix/internal/clustering/rules/lang"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
+
+// ValidationError is the tag applied to validation errors.
+var ValidationErrorTag = errors.BoolTag{Key: errors.NewTagKey("validation error")}
+
+// concurrentModification is an error that is returned if a concurrent
+// update is detected.
+var ConcurrentModificationTag = errors.BoolTag{Key: errors.NewTagKey("concurrent modification")}
 
 // ListRules serves a GET request for
 // /api/projects/:project/rules.
@@ -60,17 +69,16 @@ func (h *Handlers) GetRule(ctx *router.Context) {
 
 	r, err := rules.Read(txn, projectID, ruleID)
 	if err != nil {
+		if err == rules.NotExistsErr {
+			http.Error(ctx.Writer, "Rule does not exist.", http.StatusNotFound)
+			return
+		}
 		logging.Errorf(ctx.Context, "Reading rule %s: %s", ruleID, err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
-	response := &rule{
-		FailureAssociationRule: *r,
-		BugLink:                createBugLink(r.BugID, cfg),
-	}
-	ctx.Writer.Header().Add("ETag", ruleETag(r))
-	respondWithJSON(ctx, response)
+	respondWithRule(ctx, cfg, r)
 }
 
 // The rule returned by the REST API. This combines data stored in
@@ -81,10 +89,13 @@ type rule struct {
 	BugLink *BugLink `json:"bugLink"`
 }
 
-// Designed to conform to https://google.aip.dev/134.
-type ruleUpdateRequest struct {
-	Rule       *rules.FailureAssociationRule `json:"rule"`
-	UpdateMask field_mask.FieldMask          `json:"updateMask"`
+func respondWithRule(ctx *router.Context, cfg *configpb.ProjectConfig, r *rules.FailureAssociationRule) {
+	ctx.Writer.Header().Add("ETag", ruleETag(r))
+	response := &rule{
+		FailureAssociationRule: *r,
+		BugLink:                createBugLink(r.BugID, cfg),
+	}
+	respondWithJSON(ctx, response)
 }
 
 func ruleETag(rule *rules.FailureAssociationRule) string {
@@ -92,6 +103,12 @@ func ruleETag(rule *rules.FailureAssociationRule) string {
 	// remove them or modify them to be Weak as it compresses content.
 	// Marking the ETag as weak to start with addresses this.
 	return fmt.Sprintf(`W/"%s"`, rule.LastUpdated.UTC().Format(time.RFC3339Nano))
+}
+
+// Designed to conform to https://google.aip.dev/134.
+type ruleUpdateRequest struct {
+	Rule       *rules.FailureAssociationRule `json:"rule"`
+	UpdateMask *field_mask.FieldMask         `json:"updateMask"`
 }
 
 // PatchRule serves a PATCH request for
@@ -113,87 +130,106 @@ func (h *Handlers) PatchRule(ctx *router.Context) {
 		http.Error(ctx.Writer, "Failed to read request body.", http.StatusBadRequest)
 		return
 	}
-	var u *ruleUpdateRequest
-	if err := json.Unmarshal(blob, &u); err != nil {
+	var request *ruleUpdateRequest
+	if err := json.Unmarshal(blob, &request); err != nil {
 		logging.Errorf(ctx.Context, "Failed to umarshal rule update request: %s", err)
 		http.Error(ctx.Writer, "Incorrectly formed request: invalid json.", http.StatusBadRequest)
 		return
 	}
-	if msg := validateUpdate(u); msg != "" {
-		http.Error(ctx.Writer, msg, http.StatusBadRequest)
+
+	requestedETag := ctx.Request.Header.Get("If-Match")
+	updatedRule, err := updateRule(ctx.Context, projectID, cfg, ruleID, request, requestedETag)
+	if err != nil {
+		if ConcurrentModificationTag.In(err) {
+			http.Error(ctx.Writer, "The rule was modified since it was last read; the update was not applied.", http.StatusConflict)
+			return
+		}
+		if ValidationErrorTag.In(err) {
+			http.Error(ctx.Writer, fmt.Sprintf("Validation error: %s.", err.Error()), http.StatusBadRequest)
+			return
+		}
+		logging.Errorf(ctx.Context, "Updating rule %s: %s", ruleID, err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
-	requestedETag := ctx.Request.Header.Get("If-Match")
-	user := auth.CurrentUser(ctx.Context).Email
+	respondWithRule(ctx, cfg, updatedRule)
+}
 
-	var concurrentModification bool
+func updateRule(ctx context.Context, projectID string, cfg *configpb.ProjectConfig, ruleID string, request *ruleUpdateRequest, requestedETag string) (*rules.FailureAssociationRule, error) {
+	user := auth.CurrentUser(ctx).Email
+
 	var updatedRule *rules.FailureAssociationRule
-	commitTime, err := span.ReadWriteTransaction(ctx.Context, func(ctx context.Context) error {
+	commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		rule, err := rules.Read(ctx, projectID, ruleID)
 		if err != nil {
 			return err
 		}
 		if requestedETag != "" && ruleETag(rule) != requestedETag {
-			concurrentModification = true
-			return nil
+			return ConcurrentModificationTag.Apply(errors.New("the rule was modified since it was last read; the update was not applied."))
 		}
-		for _, path := range u.UpdateMask.Paths {
+		for _, path := range request.UpdateMask.Paths {
 			// Only limited fields may be modified by the client.
 			switch path {
 			case "ruleDefinition":
-				rule.RuleDefinition = u.Rule.RuleDefinition
+				rule.RuleDefinition = request.Rule.RuleDefinition
 			case "bugId":
-				rule.BugID = u.Rule.BugID
+				bugID := request.Rule.BugID
+				if err := validateBugAgainstConfig(cfg, bugID); err != nil {
+					return ValidationErrorTag.Apply(err)
+				}
+
+				// Verify the bug is not used by another rule.
+				bugRule, err := rules.ReadByBug(ctx, bugID)
+				if err != nil && err != rules.NotExistsErr {
+					return err
+				}
+				bugValid := (err == rules.NotExistsErr) || (bugRule.Project == projectID && bugRule.RuleID == ruleID)
+				if !bugValid {
+					// Note: this validation could disclose the existence of rules
+					// in projects other than those the user may have access to.
+					// This is unavoidable in the context of the bug uniqueness
+					// constraint we current have, which is needed to avoid Weetbix
+					// making conflicting updates to the same bug.
+					return ValidationErrorTag.Apply(fmt.Errorf("bug already used by another failure association rule (%s/%s)", bugRule.Project, bugRule.RuleID))
+				}
+
+				rule.BugID = bugID
 			case "isActive":
-				rule.IsActive = u.Rule.IsActive
+				rule.IsActive = request.Rule.IsActive
 			default:
-				return fmt.Errorf("unsupported field update: %s", path)
+				return ValidationErrorTag.Apply(fmt.Errorf("unsupported field mask: %s", path))
 			}
 		}
+
 		if err := rules.Update(ctx, rule, user); err != nil {
-			return err
+			return ValidationErrorTag.Apply(err)
 		}
-		concurrentModification = false
 		updatedRule = rule
 		return nil
 	})
 	if err != nil {
-		logging.Errorf(ctx.Context, "Updating rule %s: %s", ruleID, err)
-		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
-		return
-	}
-	if concurrentModification {
-		http.Error(ctx.Writer, "The rule was modified since it was last read; the update was not applied.", http.StatusConflict)
-		return
+		return nil, err
 	}
 	updatedRule.LastUpdated = commitTime.In(time.UTC)
 	updatedRule.LastUpdatedUser = user
-	ctx.Writer.Header().Add("ETag", ruleETag(updatedRule))
-	response := &rule{
-		FailureAssociationRule: *updatedRule,
-		BugLink:                createBugLink(updatedRule.BugID, cfg),
-	}
-	respondWithJSON(ctx, response)
+	return updatedRule, nil
 }
 
-func validateUpdate(update *ruleUpdateRequest) string {
-	for _, path := range update.UpdateMask.Paths {
-		switch path {
-		case "ruleDefinition":
-			_, err := lang.Parse(update.Rule.RuleDefinition)
-			if err != nil {
-				return fmt.Sprintf("Rule definition is not valid: %s", err)
-			}
-		case "bug":
-			if err := update.Rule.BugID.Validate(); err != nil {
-				return "Bug is not valid."
-			}
-		case "isActive":
-			continue
-		default:
-			return fmt.Sprintf("Unsupported update mask - %s", path)
+// validateBugAgainstConfig validates the specified bug is consistent with
+// the project configuration.
+func validateBugAgainstConfig(cfg *configpb.ProjectConfig, bug bugs.BugID) error {
+	switch bug.System {
+	case bugs.MonorailSystem:
+		project, _, err := bug.MonorailProjectAndID()
+		if err != nil {
+			return err
 		}
+		if project != cfg.Monorail.Project {
+			return fmt.Errorf("bug not in expected monorail project (%s)", cfg.Monorail.Project)
+		}
+	default:
+		return fmt.Errorf("unsupported bug system: %s", bug.System)
 	}
-	return ""
+	return nil
 }
