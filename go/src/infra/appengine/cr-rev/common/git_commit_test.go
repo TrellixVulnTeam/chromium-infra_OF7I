@@ -23,24 +23,24 @@ func TestGitCommit(t *testing.T) {
 			commit := &GitCommit{
 				CommitMessage: "foo\n\nbar",
 			}
-			So(commit.GetFooters("foo"), ShouldBeEmpty)
-			So(commit.GetFooters("bar"), ShouldBeEmpty)
-			So(commit.GetFooters("baz"), ShouldBeEmpty)
+			So(commit.GetFooters("Foo"), ShouldBeEmpty)
+			So(commit.GetFooters("Bar"), ShouldBeEmpty)
+			So(commit.GetFooters("Baz"), ShouldBeEmpty)
 		})
 
 		Convey("empty value", func() {
 			commit := &GitCommit{
 				CommitMessage: "foo\n\nbar:",
 			}
-			So(commit.GetFooters("foo"), ShouldBeEmpty)
-			So(commit.GetFooters("bar"), ShouldResemble, []string{""})
+			So(commit.GetFooters("Foo"), ShouldBeEmpty)
+			So(commit.GetFooters("Bar"), ShouldResemble, []string{""})
 		})
 
 		Convey("multiple values", func() {
 			commit := &GitCommit{
 				CommitMessage: "foo\n\nBar: 42\nBar: 43",
 			}
-			So(commit.GetFooters("Bar"), ShouldResemble, []string{"42", "43"})
+			So(commit.GetFooters("Bar"), ShouldResemble, []string{"43", "42"})
 		})
 
 		Convey("quoted values not extracted", func() {
@@ -62,12 +62,12 @@ func TestGitCommit(t *testing.T) {
 
 		Convey("gitnumberer syntax", func() {
 			commit := &GitCommit{
-				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/master@{#42}",
+				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/main@{#42}",
 			}
 			position, err := commit.GetPositionNumber()
 			So(err, ShouldBeNil)
 			So(position.Number, ShouldEqual, 42)
-			So(position.Name, ShouldEqual, "refs/heads/master")
+			So(position.Name, ShouldEqual, "refs/heads/main")
 		})
 
 		Convey("svn-id syntax", func() {
@@ -82,7 +82,7 @@ func TestGitCommit(t *testing.T) {
 
 		Convey("with quoted text position", func() {
 			commit := &GitCommit{
-				CommitMessage: "foo\n\n>Cr-Commit-Position: refs/heads/master@{#42}",
+				CommitMessage: "foo\n\n>Cr-Commit-Position: refs/heads/main@{#42}",
 			}
 			_, err := commit.GetPositionNumber()
 			So(err, ShouldEqual, ErrNoPositionFooter)
@@ -90,17 +90,17 @@ func TestGitCommit(t *testing.T) {
 
 		Convey("gitnumberer syntax with quoted text", func() {
 			commit := &GitCommit{
-				CommitMessage: "foo\n\n>Cr-Commit-Position: refs/heads/foo@{#42}\nCr-Commit-Position: refs/heads/master@{#43}",
+				CommitMessage: "foo\n\n>Cr-Commit-Position: refs/heads/foo@{#42}\nCr-Commit-Position: refs/heads/main@{#43}",
 			}
 			position, err := commit.GetPositionNumber()
 			So(err, ShouldBeNil)
 			So(position.Number, ShouldEqual, 43)
-			So(position.Name, ShouldEqual, "refs/heads/master")
+			So(position.Name, ShouldEqual, "refs/heads/main")
 		})
 
 		Convey("gitnumberer syntax with quoted text2", func() {
 			commit := &GitCommit{
-				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/foo@{#42}\n>Cr-Commit-Position: refs/heads/master@{#43}",
+				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/foo@{#42}\n>Cr-Commit-Position: refs/heads/main@{#43}",
 			}
 			position, err := commit.GetPositionNumber()
 			So(err, ShouldBeNil)
@@ -108,13 +108,13 @@ func TestGitCommit(t *testing.T) {
 			So(position.Name, ShouldEqual, "refs/heads/foo")
 		})
 
-		Convey("multiuple gitnumberer", func() {
+		Convey("multiple gitnumberer", func() {
 			commit := &GitCommit{
-				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/foo@{#42}\nCr-Commit-Position: refs/heads/master@{#43}",
+				CommitMessage: "foo\n\nCr-Commit-Position: refs/heads/foo@{#42}\nCr-Commit-Position: refs/heads/main@{#43}",
 			}
 			position, err := commit.GetPositionNumber()
 			So(err, ShouldBeNil)
-			So(position.Number, ShouldEqual, 43)
+			So(position.Number, ShouldEqual, 42)
 		})
 
 		Convey("invalid format", func() {

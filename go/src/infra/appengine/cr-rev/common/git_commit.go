@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+
+	"go.chromium.org/luci/common/git/footer"
 )
 
+// All commit message footers are stored in title case. Hence, any
+// case form of "git-svn-id" would be stored as "Git-Svn-Id".
 const gitCommitPositionFooterName = "Cr-Commit-Position"
-const svnCommitPositionFooterName = "git-svn-id"
+const svnCommitPositionFooterName = "Git-Svn-Id"
 
-var footerFormat = regexp.MustCompile(`(?m)^([a-zA-Z0-9-_]+)\s*:\s*(.*)$`)
 var gitCommitPositionFormat = regexp.MustCompile(`(?P<name>.*)@{#(?P<number>\d+)}`)
 var svnCommitPositionFormat = regexp.MustCompile(`(?P<name>.*)@(?P<number>\d+)`)
 
@@ -49,18 +52,10 @@ func (c *GitCommit) ID() string {
 // GetFooters parses git commit message and extracts desired footers. A footer
 // must contain key and value separated by a colon.
 func (c *GitCommit) GetFooters(name string) []string {
-	if c.footers != nil {
-		return c.footers[name]
+	if c.footers == nil {
+		c.footers = footer.ParseMessage(c.CommitMessage)
 	}
-	c.footers = make(map[string][]string)
-	results := footerFormat.FindAllStringSubmatch(c.CommitMessage, -1)
-	for _, result := range results {
-		if v, ok := c.footers[result[1]]; ok {
-			c.footers[result[1]] = append(v, result[2])
-		} else {
-			c.footers[result[1]] = []string{result[2]}
-		}
-	}
+
 	return c.footers[name]
 }
 
