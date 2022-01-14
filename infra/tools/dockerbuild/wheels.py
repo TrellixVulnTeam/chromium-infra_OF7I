@@ -1252,6 +1252,7 @@ SPECS.update({
         Universal('apipkg', '1.5'),
         Universal('appdirs', '1.4.3'),
         Universal('appengine-python-standard', '0.2.2', pyversions=['py3']),
+        Universal('appengine-python-standard', '0.3.1', pyversions=['py3']),
         Universal('argcomplete', '1.12.2'),
         Universal('argparse',
                   '1.4.0'),  # Includes fixes missing from stdlib 2.7.6
@@ -1273,6 +1274,7 @@ SPECS.update({
         Universal('attrs', '18.2.0'),
         Universal('attrs', '19.3.0'),
         Universal('attrs', '20.3.0'),
+        Universal('attrs', '21.4.0'),
         Universal('backports.functools_lru_cache', '1.5'),
         Universal('backports.shutil_get_terminal_size', '1.0.0'),
         Universal('beautifulsoup4', '4.9.0', pyversions=['py2']),
@@ -1442,6 +1444,7 @@ SPECS.update({
         Universal('protobuf', '3.15.8'),
         Universal('protobuf', '3.17.3'),
         Universal('protobuf', '3.18.1'),
+        Universal('protobuf', '3.19.3', pyversions=['py3']),
         Universal('py', '1.5.3'),
         Universal('py', '1.10.0'),
         Universal('pyasn1', '0.2.3'),

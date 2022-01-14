@@ -630,6 +630,18 @@ wheel: <
 
 * *universal*
 
+### 0.3.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/appengine-python-standard-py3"
+  version: "version:0.3.1"
+>
+```
+
+
+* *universal*
+
 ## **argcomplete**
 
 ### 1.12.2
@@ -880,6 +892,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/attrs-py2_py3"
   version: "version:20.3.0"
+>
+```
+
+
+* *universal*
+
+### 21.4.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/attrs-py2_py3"
+  version: "version:21.4.0"
 >
 ```
 
@@ -4981,6 +5005,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/protobuf-py2_py3"
   version: "version:3.6.1"
+>
+```
+
+
+* *universal*
+
+## **protobuf-py3**
+
+### 3.19.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/protobuf-py3"
+  version: "version:3.19.3"
 >
 ```
 
