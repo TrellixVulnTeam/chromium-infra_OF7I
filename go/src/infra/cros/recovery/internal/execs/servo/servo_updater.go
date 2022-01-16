@@ -10,16 +10,12 @@ import (
 	"strings"
 
 	"infra/cros/recovery/internal/execs"
+	"infra/cros/recovery/internal/execs/servo/topology"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 )
 
 const (
-	// // This is command to check whether the 'print' option for servo
-	// // updater utility is available on the servo host. This option was
-	// // added in R90.
-	// servoUpdaterPrintCheckCMD = "servo_updater --help | grep print"
-
 	// This is the command to get servo firmware version for requested
 	// board and channel.
 	latestVersionCMD = "servo_updater -p -b %q -c %s | grep firmware"
@@ -29,15 +25,24 @@ const (
 	// "firmware: servo_v4_v2.4.58-c37246f9c". The splitter is
 	// required to separate out the string after ':'.
 	servoUpdaterOutputSplitter = ":"
-
-	// // This command fetches the path to the latest available firmware
-	// // on host.
-	// latestFirmwareVersionCMD = "realpath /usr/share/servo_updater/firmware/%s.bin"
 )
 
+// Map for all servo types that can be updated.
+var updatableServoNames = map[string]bool{
+	topology.SERVO_V4_TYPE:          true,
+	topology.SERVO_V4P1_TYPE:        true,
+	topology.SERVO_SERVO_MICRO_TYPE: true,
+	topology.SERVO_C2D2_TYPE:        true,
+	topology.SERVO_SWEETBERRY_TYPE:  true,
+}
+
 // Checks whether the servo update is required for the passed servo device.
-func needsUpdate(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel, board string) bool {
-	if isVersionOutdated(ctx, runner, device, channel, board) {
+func needsUpdate(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel) bool {
+	if !updatableServoNames[device.Type] {
+		log.Debug(ctx, "Needs Update: servo type %q cannot be updated", device.Type)
+		return false
+	}
+	if isVersionOutdated(ctx, runner, device, channel) {
 		log.Debug(ctx, "Needs Update: version is outdated, update needed.")
 		return true
 	}
@@ -46,13 +51,13 @@ func needsUpdate(ctx context.Context, runner execs.Runner, device *tlw.ServoTopo
 }
 
 // Checks whether the servo version is outdated for the passed servo device.
-func isVersionOutdated(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel, board string) bool {
+func isVersionOutdated(ctx context.Context, runner execs.Runner, device *tlw.ServoTopologyItem, channel tlw.ServoFirmwareChannel) bool {
 	cVersion := device.FwVersion
 	log.Debug(ctx, "Is Version Outdated: current version is %q", cVersion)
 	if cVersion == "" {
 		return true
 	}
-	lVersion := latestVersionFromUpdater(ctx, runner, channel, board)
+	lVersion := latestVersionFromUpdater(ctx, runner, channel, device.Type)
 
 	log.Debug(ctx, "Is Version Outdated: latest version is %q", lVersion)
 	// In LABPACK, if lVersion is empty, we raise an

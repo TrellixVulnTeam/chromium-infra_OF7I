@@ -308,7 +308,9 @@ func servoFirmwareNeedsUpdateExec(ctx context.Context, args *execs.RunArgs, acti
 	}
 	for _, d := range devices {
 		if topology.IsItemGood(ctx, d) {
-			if needsUpdate(ctx, runner, d, args.DUT.ServoHost.Servo.FirmwareChannel, args.DUT.Board) {
+			log.Debug(ctx, "Servo Firmware Needs Update Exec: device type (d.Type) :%q.", d.Type)
+			if needsUpdate(ctx, runner, d, args.DUT.ServoHost.Servo.FirmwareChannel) {
+				log.Debug(ctx, "Servo Firmware Needs Update Exec: needs update is true")
 				return errors.Reason("servo firmware needs update exec: servo needs update").Err()
 			}
 		}
