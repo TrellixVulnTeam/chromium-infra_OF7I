@@ -10,6 +10,8 @@ import (
 	"go.chromium.org/luci/server/router"
 )
 
+const testProject = "testproject"
+
 // routerForTesting returns a *router.Router to use for testing
 // handlers.
 func routerForTesting(ctx context.Context) *router.Router {

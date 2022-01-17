@@ -13,6 +13,7 @@ func (h *Handlers) RegisterRoutes(r *router.Router, mw router.MiddlewareChain) {
 	r.GET("/api/projects/:project/clusters/:algorithm/:id/failures", mw, h.GetClusterFailures)
 	r.GET("/api/projects/:project/clusters/:algorithm/:id", mw, h.GetCluster)
 	r.GET("/api/projects/:project/clusters", mw, h.ListClusters)
+	r.GET("/api/projects/:project/config", mw, h.GetConfig)
 	r.GET("/api/projects/:project/reclusteringProgress", mw, h.GetReclusteringProgress)
 	r.GET("/api/projects/:project/rules", mw, h.ListRules)
 	r.GET("/api/projects/:project/rules/:id", mw, h.GetRule)

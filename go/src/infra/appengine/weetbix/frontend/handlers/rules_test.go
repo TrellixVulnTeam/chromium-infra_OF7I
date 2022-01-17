@@ -31,8 +31,6 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-const testProject = "testproject"
-
 func TestRules(t *testing.T) {
 	Convey("With Router", t, func() {
 		ctx := testutil.SpannerTestContext(t)
