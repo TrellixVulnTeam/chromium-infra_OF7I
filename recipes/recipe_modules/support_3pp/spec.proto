@@ -62,22 +62,20 @@ message Spec {
       // run in `/path/to/checkout`.
       string subdir = 5;
 
-      // (optional) If set to true, the source checkout will produce a single
-      // archive (zip or tar) file in the checkout directory, and the recipe
-      // will find and unpack it.
-      //   * The recipe will expect exactly one archive file, conforming to the
-      //   `*.*` glob, in the checkout/subdir directory after the source phase
-      //   is complete.
+      // (optional) If set to true, the recipe will find and unpack it all
+      // archives fetched.
       //   * Archives must be .zip or a well-known tarball extension (supporting
       //   either none, gzip, bzip2, lzma/xz, or zstandard compression).
       //   * The recipe will delete any other files in this directory prior to
-      //   unpacking the tarball.
-      //   * If the tarball has all files in a single directory, this directory
-      //   will be pruned (and this applies recursively). Many source tallballs
-      //   are released like `foo-1.2.tar.gz`, containing a folder `foo-1.2`
-      //   with all source files inside that. Pruning these archives makes the
-      //   installation scripts easier. If you run into a case where this
-      //   behavior is undesired, set `no_archive_prune` to true.
+      //   unpacking the archives.
+      //   * If there's only a single archive, and it has all files in a single
+      //   directory, this directory will be pruned (and this applies
+      //   recursively). Many source tallballs are released like
+      //   `foo-1.2.tar.gz`, containing a folder `foo-1.2` with all source files
+      //   inside that. Pruning these archives makes the installation scripts
+      //   easier. If you run into a case where this behavior is undesired, set
+      //   `no_archive_prune` to true. If more than one archive is produced,
+      //   this setting has no effect.
       bool unpack_archive = 6;
       bool no_archive_prune = 7;
 

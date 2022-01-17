@@ -454,7 +454,7 @@ def GenTests(api):
       # posix_tool says it needs an archive unpacking.
       test += api.step_data(mk_name(
         'building tools/posix_tool', 'fetch sources', 'unpack_archive',
-        'find archive to unpack',
+        'find archives to unpack',
       ), api.file.glob_paths(['archive.tgz']))
     else:
       test += api.step_data(mk_name(

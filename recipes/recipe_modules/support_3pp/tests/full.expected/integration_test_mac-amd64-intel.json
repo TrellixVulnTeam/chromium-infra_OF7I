@@ -7053,7 +7053,7 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "building tools/posix_tool.fetch sources.unpack_archive.find archive to unpack",
+    "name": "building tools/posix_tool.fetch sources.unpack_archive.find archives to unpack",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_TEXT@found 'archive.tgz'@@@",

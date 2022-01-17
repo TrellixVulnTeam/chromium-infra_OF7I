@@ -514,32 +514,32 @@ def _source_checkout(api,
 
   if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):
-      paths = api.file.glob_paths('find archive to unpack', checkout_dir, '*.*')
-      assert len(paths) == 1, (
-          'unpack_archive==true - expected single archive file, '
-          'but %s are extracted' % (paths,))
-
-      archive = paths[0]
-      archive_name = archive.pieces[-1]
-      api.step.active_result.presentation.step_text = ('found %r' %
-                                                       (archive_name,))
-
       tmpdir = api.path.mkdtemp()
-      # Use copy instead of move because archive might be a symlink (e.g. when
-      # using a "cipd" source mode).
-      #
-      # TODO(iannucci): Have a way for `cipd pkg-deploy` to always deploy in
-      # copy mode and change this to a move.
-      api.file.copy('cp %r [tmpdir]' % archive_name, archive,
-                    tmpdir.join(archive_name))
+
+      paths = api.file.glob_paths('find archives to unpack', checkout_dir,
+                                  '*.*')
+      for archive in paths:
+        archive_name = archive.pieces[-1]
+        api.step.active_result.presentation.step_text = ('found %r' %
+                                                         (archive_name,))
+
+        # Use copy instead of move because archive might be a symlink (e.g. when
+        # using a "cipd" source mode).
+        #
+        # TODO(iannucci): Have a way for `cipd pkg-deploy` to always deploy in
+        # copy mode and change this to a move.
+        api.file.copy('cp %r [tmpdir]' % archive_name, archive,
+                      tmpdir.join(archive_name))
 
       # blow away any other files (e.g. .git)
       api.file.rmtree('rm -rf [checkout_dir]', checkout_dir)
 
-      api.archive.extract('extracting [tmpdir]/%s' % archive_name,
-                          tmpdir.join(archive_name), checkout_dir)
+      for archive in paths:
+        archive_name = archive.pieces[-1]
+        api.archive.extract('extracting [tmpdir]/%s' % archive_name,
+                            tmpdir.join(archive_name), checkout_dir)
 
-      if not source_pb.no_archive_prune:
+      if len(paths) == 1 and not source_pb.no_archive_prune:
         api.file.flatten_single_directories('prune archive subdirs',
                                             checkout_dir)
 
