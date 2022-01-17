@@ -15,6 +15,8 @@ import (
 	"testing"
 
 	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
@@ -217,6 +219,122 @@ func TestRules(t *testing.T) {
 			Convey("XSRF Token missing", func() {
 				request.XSRFToken = ""
 				response := patch(request)
+
+				So(response.StatusCode, ShouldEqual, 400)
+			})
+		})
+		Convey("Post", func() {
+			post := func(body *ruleCreateRequest) *http.Response {
+				b, err := json.Marshal(body)
+				So(err, ShouldBeNil)
+
+				url := fmt.Sprintf("/api/projects/%s/rules", testProject)
+				request, err := http.NewRequest("POST", url, bytes.NewReader(b))
+				So(err, ShouldBeNil)
+
+				response := httptest.NewRecorder()
+				router.ServeHTTP(response, request)
+				return response.Result()
+			}
+
+			tok, err := xsrf.Token(ctx)
+			So(err, ShouldBeNil)
+
+			request := &ruleCreateRequest{
+				Rule: &rules.FailureAssociationRule{
+					RuleDefinition: `test = "create"`,
+					BugID: bugs.BugID{
+						System: "monorail",
+						ID:     "monorailproject/2",
+					},
+					IsActive: false,
+					SourceCluster: clustering.ClusterID{
+						Algorithm: testname.AlgorithmName,
+						ID:        strings.Repeat("aa", 16),
+					},
+				},
+				XSRFToken: tok,
+			}
+
+			Convey("Success", func() {
+				response := post(request)
+
+				So(response.StatusCode, ShouldEqual, 200)
+
+				// Verify the returned rule matches what was expected.
+				b, err := io.ReadAll(response.Body)
+				So(err, ShouldBeNil)
+				var responseBody *rule
+				So(json.Unmarshal(b, &responseBody), ShouldBeNil)
+
+				storedRule, err := rules.Read(span.Single(ctx), testProject, responseBody.RuleID)
+				So(err, ShouldBeNil)
+
+				// Response should match what is in the database.
+				So(responseBody.FailureAssociationRule, ShouldResemble, *storedRule)
+				So(responseBody.BugLink, ShouldResemble, &BugLink{
+					Name: "mybug.com/2",
+					URL:  "https://monorailhost.com/p/monorailproject/issues/detail?id=2",
+				})
+				So(response.Header.Get("ETag"), ShouldEqual, ruleETag(storedRule))
+
+				// Both should also match our expectations.
+				expectedRule := rules.NewRule(0).
+					WithProject(testProject).
+					// Accept the randomly generated rule ID.
+					WithRuleID(responseBody.RuleID).
+					WithRuleDefinition(`test = "create"`).
+					WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
+					WithActive(false).
+					// Accept whatever CreationTime was assigned, as it
+					// is determined by Spanner commit time.
+					// Rule spanner data access code tests already validate
+					// this is populated correctly.
+					WithCreationTime(storedRule.CreationTime).
+					WithCreationUser("someone@example.com").
+					// LastUpdated time should be the same as Creation Time.
+					WithLastUpdated(storedRule.CreationTime).
+					WithLastUpdatedUser("someone@example.com").
+					WithSourceCluster(clustering.ClusterID{
+						Algorithm: testname.AlgorithmName,
+						ID:        strings.Repeat("aa", 16),
+					}).
+					Build()
+				So(responseBody.FailureAssociationRule, ShouldResemble, *expectedRule)
+			})
+			Convey("Validation error", func() {
+				Convey("Invalid bug monorail project", func() {
+					request.Rule.BugID.ID = "otherproject/2"
+					response := post(request)
+
+					So(response.StatusCode, ShouldEqual, 400)
+					b, err := io.ReadAll(response.Body)
+					So(err, ShouldBeNil)
+					So(string(b), ShouldEqual, "Validation error: bug not in expected monorail project (monorailproject).\n")
+				})
+				Convey("Re-use of same bug", func() {
+					// Use the same bug as another rule.
+					request.Rule.BugID = ruleTwo.BugID
+					response := post(request)
+
+					So(response.StatusCode, ShouldEqual, 400)
+					b, err := io.ReadAll(response.Body)
+					So(err, ShouldBeNil)
+					So(string(b), ShouldContainSubstring, "Validation error: bug already used by another failure association rule")
+				})
+				Convey("Unset rule definition", func() {
+					request.Rule.RuleDefinition = ""
+					response := post(request)
+
+					So(response.StatusCode, ShouldEqual, 400)
+					b, err := io.ReadAll(response.Body)
+					So(err, ShouldBeNil)
+					So(string(b), ShouldContainSubstring, "Validation error: rule definition is not valid")
+				})
+			})
+			Convey("XSRF Token missing", func() {
+				request.XSRFToken = ""
+				response := post(request)
 
 				So(response.StatusCode, ShouldEqual, 400)
 			})

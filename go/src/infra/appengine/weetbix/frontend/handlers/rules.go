@@ -239,3 +239,97 @@ func validateBugAgainstConfig(cfg *configpb.ProjectConfig, bug bugs.BugID) error
 	}
 	return nil
 }
+
+// Designed to conform to https://google.aip.dev/133.
+type ruleCreateRequest struct {
+	Rule      *rules.FailureAssociationRule `json:"rule"`
+	XSRFToken string                        `json:"xsrfToken"`
+}
+
+// PostRule serves a POST request for
+// /api/projects/:project/rules.
+func (h *Handlers) PostRule(ctx *router.Context) {
+	projectID, cfg, ok := obtainProjectConfigOrError(ctx)
+	if !ok {
+		return
+	}
+
+	blob, err := ioutil.ReadAll(ctx.Request.Body)
+	if err != nil {
+		http.Error(ctx.Writer, "Failed to read request body.", http.StatusBadRequest)
+		return
+	}
+	var request *ruleCreateRequest
+	if err := json.Unmarshal(blob, &request); err != nil {
+		logging.Errorf(ctx.Context, "Failed to umarshal rule create request: %s", err)
+		http.Error(ctx.Writer, "Incorrectly formed request: invalid json.", http.StatusBadRequest)
+		return
+	}
+
+	if err := xsrf.Check(ctx.Context, request.XSRFToken); err != nil {
+		http.Error(ctx.Writer, "Invalid XSRF Token.", http.StatusBadRequest)
+		return
+	}
+	createdRule, err := createRule(ctx.Context, projectID, cfg, request)
+	if err != nil {
+		if ValidationErrorTag.In(err) {
+			http.Error(ctx.Writer, fmt.Sprintf("Validation error: %s.", err.Error()), http.StatusBadRequest)
+			return
+		}
+		logging.Errorf(ctx.Context, "Creating rule: %s", err)
+		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
+	}
+	respondWithRule(ctx, cfg, createdRule)
+}
+
+func createRule(ctx context.Context, project string, cfg *configpb.ProjectConfig, request *ruleCreateRequest) (*rules.FailureAssociationRule, error) {
+	ruleID, err := rules.GenerateID()
+	if err != nil {
+		return nil, errors.Annotate(err, "generating Rule ID").Err()
+	}
+	user := auth.CurrentUser(ctx).Email
+
+	r := &rules.FailureAssociationRule{
+		Project:        project,
+		RuleID:         ruleID,
+		RuleDefinition: request.Rule.RuleDefinition,
+		BugID:          request.Rule.BugID,
+		IsActive:       request.Rule.IsActive,
+		SourceCluster:  request.Rule.SourceCluster,
+	}
+
+	if err := validateBugAgainstConfig(cfg, r.BugID); err != nil {
+		return nil, ValidationErrorTag.Apply(err)
+	}
+
+	commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+		// Verify the bug is not used by another rule.
+		bugRule, err := rules.ReadByBug(ctx, r.BugID)
+		if err != nil && err != rules.NotExistsErr {
+			return err
+		}
+		if err != rules.NotExistsErr {
+			// Note: this validation could disclose the existence of rules
+			// in projects other than those the user may have access to.
+			// This is unavoidable in the context of the bug uniqueness
+			// constraint we current have, which is needed to avoid Weetbix
+			// making conflicting updates to the same bug.
+			return ValidationErrorTag.Apply(fmt.Errorf("bug already used by another failure association rule (%s/%s)", bugRule.Project, bugRule.RuleID))
+		}
+
+		err = rules.Create(ctx, r, user)
+		if err != nil {
+			return ValidationErrorTag.Apply(err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	r.CreationTime = commitTime.In(time.UTC)
+	r.CreationUser = user
+	r.LastUpdated = commitTime.In(time.UTC)
+	r.LastUpdatedUser = user
+	return r, nil
+}

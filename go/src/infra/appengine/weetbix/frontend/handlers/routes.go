@@ -16,6 +16,7 @@ func (h *Handlers) RegisterRoutes(r *router.Router, mw router.MiddlewareChain) {
 	r.GET("/api/projects/:project/config", mw, h.GetConfig)
 	r.GET("/api/projects/:project/reclusteringProgress", mw, h.GetReclusteringProgress)
 	r.GET("/api/projects/:project/rules", mw, h.ListRules)
+	r.POST("/api/projects/:project/rules", mw, h.PostRule)
 	r.GET("/api/projects/:project/rules/:id", mw, h.GetRule)
 	r.PATCH("/api/projects/:project/rules/:id", mw, h.PatchRule)
 	r.GET("/api/xsrfToken", mw, h.GetXSRFToken)

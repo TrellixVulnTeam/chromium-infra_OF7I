@@ -6,6 +6,8 @@ package rules
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"regexp"
 	"time"
 
@@ -347,4 +349,15 @@ func validateUser(u string) error {
 		return errors.New("user must be valid")
 	}
 	return nil
+}
+
+// GenerateID returns a random 128-bit rule ID, encoded as
+// 32 lowercase hexadecimal characters.
+func GenerateID() (string, error) {
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(randomBytes), nil
 }

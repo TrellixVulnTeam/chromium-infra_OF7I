@@ -57,6 +57,12 @@ func (b *RuleBuilder) WithProject(project string) *RuleBuilder {
 	return b
 }
 
+// WithRuleID specifies the Rule ID to use on the rule.
+func (b *RuleBuilder) WithRuleID(id string) *RuleBuilder {
+	b.rule.RuleID = id
+	return b
+}
+
 // WithActive specifies whether the rule will be active.
 func (b *RuleBuilder) WithActive(active bool) *RuleBuilder {
 	b.rule.IsActive = active
@@ -72,6 +78,12 @@ func (b *RuleBuilder) WithBug(bug bugs.BugID) *RuleBuilder {
 // WithCreationTime specifies the creation time of the rule.
 func (b *RuleBuilder) WithCreationTime(value time.Time) *RuleBuilder {
 	b.rule.CreationTime = value
+	return b
+}
+
+// WithCreationUser specifies the "created" user on the rule.
+func (b *RuleBuilder) WithCreationUser(user string) *RuleBuilder {
+	b.rule.CreationUser = user
 	return b
 }
 
