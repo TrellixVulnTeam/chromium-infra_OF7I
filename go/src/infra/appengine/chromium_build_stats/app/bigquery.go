@@ -41,6 +41,8 @@ func SendToBigquery(ctx context.Context, info *ninjalog.NinjaLog, bqResultTable 
 		m[i] = t
 	}
 
+	log.Debugf(ctx, "putting %d entries", len(m))
+
 	if err := up.Put(ctx, m...); err != nil {
 		log.Errorf(ctx, "failed to put BigQuery: %v", err)
 		return err
