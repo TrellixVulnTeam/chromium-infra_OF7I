@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/span"
 
@@ -109,6 +110,7 @@ func ruleETag(rule *rules.FailureAssociationRule) string {
 type ruleUpdateRequest struct {
 	Rule       *rules.FailureAssociationRule `json:"rule"`
 	UpdateMask *field_mask.FieldMask         `json:"updateMask"`
+	XSRFToken  string                        `json:"xsrfToken"`
 }
 
 // PatchRule serves a PATCH request for
@@ -137,6 +139,10 @@ func (h *Handlers) PatchRule(ctx *router.Context) {
 		return
 	}
 
+	if err := xsrf.Check(ctx.Context, request.XSRFToken); err != nil {
+		http.Error(ctx.Writer, "Invalid XSRF Token.", http.StatusBadRequest)
+		return
+	}
 	requestedETag := ctx.Request.Header.Get("If-Match")
 	updatedRule, err := updateRule(ctx.Context, projectID, cfg, ruleID, request, requestedETag)
 	if err != nil {

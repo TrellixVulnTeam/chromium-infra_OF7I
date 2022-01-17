@@ -24,6 +24,7 @@ import (
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
+	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/secrets"
 	"go.chromium.org/luci/server/secrets/testsecrets"
 	"go.chromium.org/luci/server/span"
@@ -36,7 +37,7 @@ func TestRules(t *testing.T) {
 	Convey("With Router", t, func() {
 		ctx := testutil.SpannerTestContext(t)
 
-		// For user identification.
+		// For user identification and XSRF Tokens.
 		ctx = authtest.MockAuthConfig(ctx)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
 			Identity: "user:someone@example.com",
@@ -120,6 +121,9 @@ func TestRules(t *testing.T) {
 				return response.Result()
 			}
 
+			tok, err := xsrf.Token(ctx)
+			So(err, ShouldBeNil)
+
 			request := &ruleUpdateRequest{
 				Rule: &rules.FailureAssociationRule{
 					RuleDefinition: `test = "updated"`,
@@ -132,6 +136,7 @@ func TestRules(t *testing.T) {
 				UpdateMask: &fieldmaskpb.FieldMask{
 					Paths: []string{"ruleDefinition", "bugId", "isActive"},
 				},
+				XSRFToken: tok,
 			}
 
 			Convey("Success", func() {
@@ -210,6 +215,12 @@ func TestRules(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(string(b), ShouldContainSubstring, "Validation error: rule definition is not valid")
 				})
+			})
+			Convey("XSRF Token missing", func() {
+				request.XSRFToken = ""
+				response := patch(request)
+
+				So(response.StatusCode, ShouldEqual, 400)
 			})
 		})
 	})

@@ -12,6 +12,7 @@ import { TextArea } from '@material/mwc-textarea';
 import '@material/mwc-textfield';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
+import { obtainXSRFToken } from '../libs/xsrf';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.
@@ -148,6 +149,10 @@ export class RuleSection extends LitElement {
         this.etag = r.headers.get("ETag");
         this.rule = rule || null;
         this.fireRuleChanged();
+
+        // Ensures a XSRF token is cached, minimising latency if
+        // the user decides to perform an action.
+        await obtainXSRFToken()
     }
 
     edit() {
@@ -177,15 +182,17 @@ export class RuleSection extends LitElement {
 
         this.validationMessage = "";
 
-        const request: RuleUpdateRequest = {
-            rule: {
-                ruleDefinition: ruleDefinition.value,
-            },
-            updateMask: {
-                paths: ["ruleDefinition"],
-            },
-        }
         try {
+            const request: RuleUpdateRequest = {
+                rule: {
+                    ruleDefinition: ruleDefinition.value,
+                },
+                updateMask: {
+                    paths: ["ruleDefinition"],
+                },
+                xsrfToken: await obtainXSRFToken(),
+            }
+
             const validationError = await this.applyUpdate(request);
             if (validationError != null) {
                 this.validationMessage = validationError;
@@ -199,16 +206,18 @@ export class RuleSection extends LitElement {
         if (!this.rule) {
             throw new Error('invariant violated: toggleActive cannot be called before rule is loaded');
         }
-        const request: RuleUpdateRequest = {
-            rule: {
-                isActive: !this.rule.isActive,
-            },
-            updateMask: {
-                paths: ["isActive"],
-            },
-        }
 
         try {
+            const request: RuleUpdateRequest = {
+                rule: {
+                    isActive: !this.rule.isActive,
+                },
+                updateMask: {
+                    paths: ["isActive"],
+                },
+                xsrfToken: await obtainXSRFToken(),
+            }
+
             const validationError = await this.applyUpdate(request);
             if (validationError != null) {
                 throw validationError;
@@ -338,6 +347,7 @@ export interface RuleChangedEvent {
 interface RuleUpdateRequest {
     rule: RuleToUpdate;
     updateMask: FieldMask;
+    xsrfToken: string;
 }
 
 interface FieldMask {
@@ -349,7 +359,6 @@ interface RuleToUpdate {
     bugId?: BugId;
     isActive?: boolean;
 }
-
 
 // Rule is the failure association rule information sent by the server.
 interface Rule {
