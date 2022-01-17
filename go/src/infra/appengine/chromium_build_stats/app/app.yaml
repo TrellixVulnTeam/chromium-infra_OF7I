@@ -12,7 +12,7 @@
 runtime: go116
 app_engine_apis: true
 
-instance_class: F4
+instance_class: F4_1G
 
 automatic_scaling:
   max_instances: 10
