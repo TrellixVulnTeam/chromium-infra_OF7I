@@ -10,6 +10,8 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigList, ConfigGroup, Single, List
 
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'recipe_engine/cipd',
   'recipe_engine/file',
@@ -109,7 +111,8 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
         ref = pl.get('ref', 'refs/heads/main')
         subdir = pl.get('subdir', '')
 
-        hash_name = hashlib.sha1("%s:%s" % (repo, ref)).hexdigest()
+        hash_name = hashlib.sha1(str("%s:%s" %
+                                     (repo, ref)).encode('utf-8')).hexdigest()
         actual_repos.add(hash_name)
 
         checkout_path = package_repos.join(hash_name)
@@ -122,7 +125,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
 
     with api.step.nest('remove unused repos'):
       leftovers = current_repos - actual_repos
-      for hash_name in leftovers:
+      for hash_name in sorted(leftovers):
         api.file.rmtree('rm %s' % (hash_name,),
                         package_repos.join(hash_name))
 

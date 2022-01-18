@@ -21,7 +21,7 @@
   * [zip](#recipe_modules-zip) (Python3 ✅)
 
 **[Recipes](#Recipes)**
-  * [3pp](#recipes-3pp) &mdash; This recipe builds and packages third party software, such as Git.
+  * [3pp](#recipes-3pp) (Python3 ✅) &mdash; This recipe builds and packages third party software, such as Git.
   * [build_conda_cipd_pkg](#recipes-build_conda_cipd_pkg) &mdash; Recipe to build CIPD package with sealed Conda environment.
   * [build_from_tarball](#recipes-build_from_tarball) (Python3 ✅)
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
@@ -1216,13 +1216,13 @@ Returns:
 
 ### *recipes* / [3pp](/recipes/recipes/3pp.py)
 
-[DEPS](/recipes/recipes/3pp.py#13): [depot\_tools/git][depot_tools/recipe_modules/git], [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/3pp.py#15): [depot\_tools/git][depot_tools/recipe_modules/git], [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This recipe builds and packages third party software, such as Git.
 
-&mdash; **def [RunSteps](/recipes/recipes/3pp.py#76)(api, package_locations, to_build, platform, force_build, package_prefix, source_cache_prefix):**
+&mdash; **def [RunSteps](/recipes/recipes/3pp.py#78)(api, package_locations, to_build, platform, force_build, package_prefix, source_cache_prefix):**
 ### *recipes* / [build\_conda\_cipd\_pkg](/recipes/recipes/build_conda_cipd_pkg.py)
 
 [DEPS](/recipes/recipes/build_conda_cipd_pkg.py#20): [conda](#recipe_modules-conda), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
