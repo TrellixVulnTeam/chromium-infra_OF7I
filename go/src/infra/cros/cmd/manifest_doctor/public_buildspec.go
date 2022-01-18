@@ -101,6 +101,21 @@ func (b *publicBuildspec) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
+func (b *publicBuildspec) copyExternalBuildspec(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client, externalBuildspec string) error {
+	data, err := gerritClient.DownloadFileFromGitiles(ctx, chromeExternalHost,
+		externalManifestVersionsProject, "HEAD", externalBuildspec)
+	if err != nil {
+		return errors.Annotate(err, "failed to download %s from %s", externalBuildspec, externalManifestVersionsProject).Err()
+	}
+	if b.push {
+		uploadPath := lgs.MakePath(b.externalBuildspecsGSBucket, externalBuildspec)
+		if err := gsClient.WriteFileToGS(uploadPath, []byte(data)); err != nil {
+			return errors.Annotate(err, "failed to write external buildspec to %s", string(uploadPath)).Err()
+		}
+	}
+	return nil
+}
+
 // CreateProjectBuildspec creates a public buildspec as
 // outlined in go/per-project-buildspecs.
 func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient gs.Client, gerritClient *gerrit.Client) error {
@@ -123,6 +138,21 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 			LogErr(errors.Annotate(err, "failed to list internal buildspecs for dir %s, skipping...", watchPath).Err().Error())
 			errs = append(errs, err)
 			continue
+		}
+
+		legacyExternalBuildspecMap := make(map[string]bool)
+		if b.readFromManifestVersions {
+			// If legacy, also fetch list of existing external buildspecs.
+			legacyExternalBuildspecs, err := gerritClient.ListFiles(ctx, chromeExternalHost, externalManifestVersionsProject, "HEAD", watchPath)
+			if err != nil {
+				LogErr(errors.Annotate(err, "failed to list external buildspecs for dir %s in %s, skipping...", watchPath, externalManifestVersionsProject).Err().Error())
+				errs = append(errs, err)
+				continue
+			}
+			// Unlike GS, Gerrit lists relative paths so we need to reconstruct them here.
+			for _, buildspec := range legacyExternalBuildspecs {
+				legacyExternalBuildspecMap[filepath.Join(watchPath, buildspec)] = true
+			}
 		}
 
 		externalPath := watchPath
@@ -165,7 +195,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 			}
 
 			// If legacy, upload the internal buildspec to the internal bucket for internal consistency.
-			if b.readFromManifestVersions {
+			if b.readFromManifestVersions && b.push {
 				uploadPath := lgs.MakePath(b.internalBuildspecsGSBucket, internalBuildspec)
 				if err := WriteManifestToGS(gsClient, uploadPath, buildspec); err != nil {
 					LogErr(errors.Annotate(err, "failed to write internal buildspec to %s", string(uploadPath)).Err().Error())
@@ -174,12 +204,22 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 				}
 			}
 
-			// Create and upload external buildspec.
-			LogOut("Attempting to create external buildspec %s for %s...", externalBuildspec, internalBuildspec)
-			uploadPath := lgs.MakePath(b.externalBuildspecsGSBucket, externalBuildspec)
-			if err := createPublicBuildspec(gsClient, gerritClient, buildspec, uploadPath, b.push); err != nil {
-				LogErr(errors.Annotate(err, "failed to create external buildspec %s", externalBuildspec).Err().Error())
-				errs = append(errs, err)
+			// If we're reading from legacy and an external buildspec already exists, we should
+			// use that instead of creating a new one.
+			if _, ok := legacyExternalBuildspecMap[externalBuildspec]; ok {
+				if err := b.copyExternalBuildspec(ctx, gsClient, gerritClient, externalBuildspec); err != nil {
+					LogErr(err.Error())
+					errs = append(errs, err)
+					continue
+				}
+			} else {
+				// Create and upload external buildspec.
+				LogOut("Attempting to create external buildspec %s for %s...", externalBuildspec, internalBuildspec)
+				uploadPath := lgs.MakePath(b.externalBuildspecsGSBucket, externalBuildspec)
+				if err := createPublicBuildspec(gsClient, gerritClient, buildspec, uploadPath, b.push); err != nil {
+					LogErr(errors.Annotate(err, "failed to create external buildspec %s", externalBuildspec).Err().Error())
+					errs = append(errs, err)
+				}
 			}
 		}
 	}

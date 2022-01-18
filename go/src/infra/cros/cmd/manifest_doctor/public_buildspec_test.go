@@ -232,8 +232,9 @@ func TestPublicBuildspecNoAnnotations_missingAtToT(t *testing.T) {
 	assert.ErrorContains(t, b.CreatePublicBuildspecs(context.Background(), f, gc), "could not get public status")
 }
 
-func TestPublicBuildspecManifestVersions(t *testing.T) {
-	t.Parallel()
+func legacyTest(t *testing.T, externalList []string, externalDownloads map[string]string,
+	expectedGSWrites map[string][]byte) (*gs.FakeClient, *gerrit.Client) {
+	t.Helper()
 	// Mock Gitiles controller
 	ctl := gomock.NewController(t)
 	t.Cleanup(ctl.Finish)
@@ -250,6 +251,20 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 		},
 		nil,
 	)
+	reqList = &gitilespb.ListFilesRequest{
+		Project:    "chromiumos/manifest-versions",
+		Path:       "test/",
+		Committish: "HEAD",
+	}
+	if externalList == nil {
+		externalList = []string{}
+	}
+	gitilesMock.EXPECT().ListFiles(gomock.Any(), gerrit.ListFilesRequestEq(reqList)).Return(
+		&gitilespb.ListFilesResponse{
+			Files: namesToFiles(externalList),
+		},
+		nil,
+	)
 
 	reqLocalManifest := &gitilespb.DownloadFileRequest{
 		Project:    "chromeos/manifest-versions",
@@ -262,6 +277,23 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 		},
 		nil,
 	)
+	if externalDownloads != nil {
+		for path, contents := range externalDownloads {
+			req := &gitilespb.DownloadFileRequest{
+				Project:    "chromiumos/manifest-versions",
+				Path:       path,
+				Committish: "HEAD",
+			}
+			gitilesMock.EXPECT().DownloadFile(gomock.Any(), gerrit.DownloadFileRequestEq(req)).Return(
+				&gitilespb.DownloadFileResponse{
+					// Return something obviously wrong so we can check that this is
+					// the file being used.
+					Contents: contents,
+				},
+				nil,
+			)
+		}
+	}
 
 	mockMap := map[string]gitilespb.GitilesClient{
 		chromeInternalHost: gitilesMock,
@@ -278,13 +310,80 @@ func TestPublicBuildspecManifestVersions(t *testing.T) {
 		"gs://chromeos-manifest-versions/test/foo.xml":   []byte(internalManifestXMLDumped),
 		"gs://chromiumos-manifest-versions/test/foo.xml": []byte(externalManifestXML),
 	}
+	if expectedGSWrites != nil {
+		expectedWrites = expectedGSWrites
+	}
 	f := &gs.FakeClient{
 		T:              t,
 		ExpectedLists:  expectedLists,
 		ExpectedWrites: expectedWrites,
 	}
+	return f, gc
+}
+
+func TestPublicBuildspecLegacy(t *testing.T) {
+	t.Parallel()
+	f, gc := legacyTest(t, nil, nil, nil)
 	b := publicBuildspec{
 		push:                       true,
+		watchPaths:                 []string{"test/"},
+		readFromManifestVersions:   true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
+	}
+	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
+}
+
+// Check that dry run doesn't upload anything.
+func TestPublicBuildspecLegacy_DryRun(t *testing.T) {
+	t.Parallel()
+	expectedGSWrites := map[string][]byte{}
+	f, gc := legacyTest(t, nil, nil, expectedGSWrites)
+	b := publicBuildspec{
+		push:                       false,
+		watchPaths:                 []string{"test/"},
+		readFromManifestVersions:   true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
+	}
+	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
+}
+
+// When we're reading from legacy (git) and the public buildspec already
+// exists in the public manifest-versions repository, we should use that
+// file instead of generating a new one.
+func TestPublicBuildspecLegacy_ExternalExists(t *testing.T) {
+	t.Parallel()
+	externalList := []string{"foo.xml"}
+	expectedExternalDownloads := map[string]string{
+		"test/foo.xml": "foo",
+	}
+	expectedGSWrites := map[string][]byte{
+		"gs://chromeos-manifest-versions/test/foo.xml":   []byte(internalManifestXMLDumped),
+		"gs://chromiumos-manifest-versions/test/foo.xml": []byte("foo"),
+	}
+	f, gc := legacyTest(t, externalList, expectedExternalDownloads, expectedGSWrites)
+	b := publicBuildspec{
+		push:                       true,
+		watchPaths:                 []string{"test/"},
+		readFromManifestVersions:   true,
+		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
+		externalBuildspecsGSBucket: externalBuildspecsGSBucketDefault,
+	}
+	assert.NilError(t, b.CreatePublicBuildspecs(context.Background(), f, gc))
+}
+
+// Check that dry run doesn't upload anything.
+func TestPublicBuildspecLegacy_ExternalExists_DryRun(t *testing.T) {
+	t.Parallel()
+	externalList := []string{"foo.xml"}
+	expectedExternalDownloads := map[string]string{
+		"test/foo.xml": "foo",
+	}
+	expectedGSWrites := map[string][]byte{}
+	f, gc := legacyTest(t, externalList, expectedExternalDownloads, expectedGSWrites)
+	b := publicBuildspec{
+		push:                       false,
 		watchPaths:                 []string{"test/"},
 		readFromManifestVersions:   true,
 		internalBuildspecsGSBucket: internalBuildspecsGSBucketDefault,
