@@ -94,7 +94,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 
 	cases := []struct {
 		name      string
-		in        *config.Paris
+		in        *config.RolloutConfig
 		pools     []string
 		randFloat float64
 		out       string
@@ -110,9 +110,9 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "use labstation",
-			in: &config.Paris{
-				EnableLabstationRecovery: true,
-				OptinAllLabstations:      true,
+			in: &config.RolloutConfig{
+				Enable:       true,
+				OptinAllDuts: true,
 			},
 			randFloat: 0.5,
 			pools:     []string{"some pool"},
@@ -121,9 +121,9 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "no pool means UFS error",
-			in: &config.Paris{
-				EnableLabstationRecovery: true,
-				OptinAllLabstations:      true,
+			in: &config.RolloutConfig{
+				Enable:       true,
+				OptinAllDuts: true,
 			},
 			pools:     nil,
 			randFloat: 1,
@@ -132,9 +132,9 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "use labstation -- default threshold of zero is not okay",
-			in: &config.Paris{
-				EnableLabstationRecovery: true,
-				OptinAllLabstations:      false,
+			in: &config.RolloutConfig{
+				Enable:       true,
+				OptinAllDuts: false,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0,
@@ -143,10 +143,10 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "all labstations are opted in",
-			in: &config.Paris{
-				EnableLabstationRecovery:   true,
-				LabstationRecoveryPermille: 499,
-				OptinAllLabstations:        true,
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 499,
+				OptinAllDuts:    true,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
@@ -155,10 +155,10 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "use labstation sometimes - good",
-			in: &config.Paris{
-				EnableLabstationRecovery:   true,
-				LabstationRecoveryPermille: 499,
-				OptinAllLabstations:        false,
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 499,
+				OptinAllDuts:    false,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
@@ -167,9 +167,9 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "use labstation sometimes - near miss",
-			in: &config.Paris{
-				EnableLabstationRecovery:   true,
-				LabstationRecoveryPermille: 501,
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 501,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
@@ -178,11 +178,11 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "good pool",
-			in: &config.Paris{
-				EnableLabstationRecovery:   true,
-				LabstationRecoveryPermille: 500,
-				OptinAllLabstations:        false,
-				OptinLabstationPool:        []string{"paris"},
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 500,
+				OptinAllDuts:    false,
+				OptinDutPool:    []string{"paris"},
 			},
 			pools:     []string{"paris"},
 			randFloat: 0.5,
@@ -191,11 +191,11 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 		},
 		{
 			name: "bad pool",
-			in: &config.Paris{
-				EnableLabstationRecovery:   true,
-				LabstationRecoveryPermille: 500,
-				OptinAllLabstations:        false,
-				OptinLabstationPool:        []string{"paris"},
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 500,
+				OptinAllDuts:    false,
+				OptinDutPool:    []string{"paris"},
 			},
 			pools:     []string{"NOT PARIS"},
 			randFloat: 0.5,
@@ -250,8 +250,10 @@ func TestRouteRepairTask(t *testing.T) {
 		{
 			name: "paris labstation",
 			in: &config.Paris{
-				EnableLabstationRecovery: true,
-				OptinAllLabstations:      true,
+				LabstationRepair: &config.RolloutConfig{
+					Enable:       true,
+					OptinAllDuts: true,
+				},
 			},
 			botID:         "foo-labstation1",
 			expectedState: "ready",
@@ -263,7 +265,9 @@ func TestRouteRepairTask(t *testing.T) {
 		{
 			name: "legacy labstation",
 			in: &config.Paris{
-				EnableLabstationRecovery: false,
+				LabstationRepair: &config.RolloutConfig{
+					Enable: false,
+				},
 			},
 			botID:         "foo-labstation1",
 			expectedState: "ready",

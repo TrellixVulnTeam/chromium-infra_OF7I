@@ -64,7 +64,7 @@ func RouteRepairTask(ctx context.Context, botID string, expectedState string, po
 		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
 	if heuristics.LooksLikeLabstation(botID) {
-		out, reason := routeLabstationRepairTask(config.Get(ctx).GetParis(), pools, randFloat)
+		out, reason := routeLabstationRepairTask(config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
 		logging.Infof(ctx, "Sending labstation repair to %q because %s", out, reason)
 		return out, nil
 	}
@@ -92,9 +92,10 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 }
 
 // RouteLabstationRepairTask takes a repair task for a labstation and routes it.
-func routeLabstationRepairTask(parisCfg *config.Paris, pools []string, randFloat float64) (string, reason) {
+// TODO(gregorynisbet): Generalize this to non-labstation tasks.
+func routeLabstationRepairTask(r *config.RolloutConfig, pools []string, randFloat float64) (string, reason) {
 	// Check that the feature is enabled at all.
-	if !parisCfg.GetEnableLabstationRecovery() {
+	if !r.GetEnable() {
 		return "", parisNotEnabled
 	}
 	// Check for malformed input data that would cause us to be unable to make a decision.
@@ -102,14 +103,14 @@ func routeLabstationRepairTask(parisCfg *config.Paris, pools []string, randFloat
 		return "", noPools
 	}
 	// Happy path.
-	if parisCfg.GetOptinAllLabstations() {
+	if r.GetOptinAllDuts() {
 		return paris, allLabstationsAreOptedIn
 	}
-	threshold := parisCfg.GetLabstationRecoveryPermille()
+	threshold := r.GetRolloutPermille()
 	if threshold == 0 {
 		return "", thresholdZero
 	}
-	if len(parisCfg.GetOptinLabstationPool()) > 0 && isDisjoint(pools, parisCfg.GetOptinLabstationPool()) {
+	if len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
 		return "", wrongPool
 	}
 	myValue := math.Round(1000.0 * randFloat)
@@ -145,7 +146,7 @@ func createLegacyRepairTask(ctx context.Context, botID string, expectedState str
 // TODO(gregorynisbet): Expand this to take into account other relevant factors like the pools that the labstation is in.
 func isRecoveryEnabledForLabstation(ctx context.Context) bool {
 	enabled := true
-	enabled = enabled && config.Get(ctx).GetParis().GetEnableLabstationRecovery()
+	enabled = enabled && config.Get(ctx).GetParis().GetLabstationRepair().GetEnable()
 	return enabled
 }
 
