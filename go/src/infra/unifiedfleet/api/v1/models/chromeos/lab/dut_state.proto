@@ -14,12 +14,14 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/chromeos_device_id.proto";
 
 // This proto defines status labels in lab config of a DUT.
 
-// Next Tag: 16
+// Next Tag: 17
 message DutState {
   ChromeOSDeviceID id = 1;
   PeripheralState servo = 2;
   PeripheralState chameleon = 3;
   PeripheralState audio_loopback_dongle = 4;
+  // wifi_peripheral_state is used for swarming scheduling. It represent the state for wifi peripheral devices.
+  PeripheralState wifi_peripheral_state = 16;
   // Indicate how many working bluetooth btpeer for a device.
   int32 working_bluetooth_btpeer = 5;
 
@@ -54,6 +56,7 @@ message DutState {
   HardwareState storage_state = 8;
   HardwareState servo_usb_state = 9;
   HardwareState battery_state = 13;
+  // wifi_state represent state for DUT's internal wifi component.
   HardwareState wifi_state = 14;
   HardwareState bluetooth_state = 15;
   PeripheralState rpm_state = 12;

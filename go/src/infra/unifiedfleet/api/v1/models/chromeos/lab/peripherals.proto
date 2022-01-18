@@ -10,6 +10,8 @@ option go_package = "infra/unifiedfleet/api/v1/models/chromeos/lab;ufspb";
 
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/chameleon.proto";
 import "infra/unifiedfleet/api/v1/models/chromeos/lab/servo.proto";
+import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
+
 
 // This proto defines setup labels in lab config of a DUT.
 
@@ -99,7 +101,7 @@ message Audio {
   bool audio_cable = 3;
 }
 
-// Next Tag: 4
+// Next Tag: 5
 message Wifi {
   // Indicate if the device is inside a hermetic wifi cell.
   bool wificell = 1;
@@ -122,6 +124,20 @@ message Wifi {
   // Indicate if the device is in a pre-setup environment with 802.11ax routers.
   // crbug.com/1044786
   Router router = 3;
+  // collections of routers used for wifi testing.
+  repeated WifiRouter wifi_routers = 4;
+}
+
+// Next Tag: 6
+message WifiRouter {
+
+  string hostname = 1;
+  PeripheralState state = 2;
+  string build_target = 3;
+  string model = 4;
+
+  // RPM to perform remote power management. use OSRPM defined here.
+  OSRPM rpm = 5;
 }
 
 // Next Tag: 2
