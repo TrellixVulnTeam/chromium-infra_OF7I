@@ -104,6 +104,7 @@ var defaultGitRetryRegexpSource = []string{
 	`fetch-pack: unable to finish http-fetch`,
 	`fetch-pack: pack downloaded from .* does not match expected hash .*`,
 	`fetch-pack: invalid index-pack output`,
+	`fetch-pack: unexpected disconnect while reading sideband packet`,
 
 	// fxbug.dev/87312
 	`fatal: expected flush after ref listing`,
