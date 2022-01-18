@@ -301,28 +301,31 @@ message Paris {
   // Enable_labstation_recovery is set to true when recovery is enabled for labstations at all.
   // Merely setting this value to true does *not* use Paris to recover labstations by itself.
   // However, setting this value to false will *prevent* Paris from being used for this purpose.
-  bool enable_labstation_recovery = 1;
+  bool enable_labstation_recovery = 1 [deprecated = true];
 
   // Optin_all_labstations opts in every labstation (regardless of optin_labstation_prefix) if set to true.
-  bool optin_all_labstations = 2;
+  bool optin_all_labstations = 2 [deprecated = true];
 
   // Optin_labstation_pools are the pools that contain labstations that are allowed to run the new flow.
-  repeated string optin_labstation_pool = 3;
+  repeated string optin_labstation_pool = 3 [deprecated = true];
 
   // Labstation_recovery_permille is the probability (out of 1000) that we use the new flow for a labstation if
   // we are permitted to repair the labstation in question by the other settings in the config file.
   //
   // The smallest permissible value is 0. The largest is 1000.
-  int32 labstation_recovery_permille = 4;
+  int32 labstation_recovery_permille = 4 [deprecated = true];
 
-  // DUT_repair controls the repair task.
+  // DUT_repair controls the repair task for DUTs.
   RolloutConfig dut_repair = 5;
 
-  // DUT_verify controls the verify task.
+  // DUT_verify controls the verify task for DUTs.
   RolloutConfig dut_verify = 6;
 
-  // DUT_audit controls the audit task.
-  RolloutConfig dut_audit  = 7;
+  // DUT_audit controls the audit task for DUTs.
+  RolloutConfig dut_audit = 7;
+
+  // Labstation_repair controls the rollout of repair for labstations.
+  RolloutConfig labstation_repair = 8;
 }
 
 // RolloutConfig controls the rollout of a new feature.
