@@ -78,6 +78,8 @@ func latestVersionFromUpdater(ctx context.Context, runner execs.Runner, channel 
 		if len(resultComponents) == 2 {
 			return strings.TrimSpace(resultComponents[len(resultComponents)-1])
 		}
+	} else {
+		log.Debug(ctx, "Latest Version From Updater: encountered error while determining latest version %q", err)
 	}
 	// If any error was encountered while determining the later
 	// version, it is sufficient to return an empty string because
