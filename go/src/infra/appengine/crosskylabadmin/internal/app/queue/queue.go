@@ -55,25 +55,30 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	defer func() {
 		runRepairTick.Add(c.Context, 1, err == nil)
 	}()
-	if true {
-		// Create a UFS client at the beginning of repair and log the result, but do NOT stop execution
-		// because of problems.
-		//
-		// Eventually, we are going to use the pools associated with a device as an input to the logic that
-		// switches between repair implementations.
-		cfg := config.Get(c.Context)
-		_, err := ufs.NewUFSClient(c.Context, cfg.GetUFS().GetHost())
-		if err == nil {
-			logging.Infof(c.Context, "run repair queue handler: UFS client created successfully")
-		} else {
-			logging.Infof(c.Context, "run repair queue handler: %s", err)
-		}
+	// Create a UFS client at the beginning of repair and log the result, but do NOT stop execution
+	// because of problems. We are not yet ready to make UFS a hard dependency of CSA, so at this point
+	// it is a soft dependency. The UFS client can be nil.
+	//
+	// We are going to use the pools associated with a device as an input to decide which implementation
+	// of repair to use.
+	cfg := config.Get(c.Context)
+	ufsClient, err := ufs.NewUFSClient(c.Context, cfg.GetUFS().GetHost())
+	if err == nil {
+		logging.Infof(c.Context, "run repair queue handler: UFS client created successfully")
+	} else {
+		logging.Infof(c.Context, "run repair queue handler: %s", err)
 	}
 	botID := c.Request.FormValue("botID")
 	expectedState := c.Request.FormValue("expectedState")
 	// RandFloat is guaranteed to be in the half-open interval [0,1).
 	randFloat := rand.Float64()
-	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState, randFloat)
+	pools, err := ufs.GetPools(c.Context, ufsClient, botID)
+	// Failure to look up the pools associated with a device is non-fatal.
+	// We will take a safe action inside CreateRepairTask. Log and move on.
+	if err != nil {
+		logging.Infof(c.Context, "run repair queue handler: %s", err)
+	}
+	taskURL, err := frontend.CreateRepairTask(c.Context, botID, expectedState, pools, randFloat)
 	if err != nil {
 		logging.Infof(c.Context, "fail to run repair job in queue for %s: %s", botID, err.Error())
 		return err

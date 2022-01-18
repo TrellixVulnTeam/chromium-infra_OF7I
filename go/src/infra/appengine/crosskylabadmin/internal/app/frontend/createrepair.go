@@ -19,7 +19,35 @@ import (
 	"infra/libs/skylab/common/heuristics"
 )
 
+// Paris represents a decision to use the paris stack for this request.
 const paris = "paris"
+
+// Legacy represents a decision to use the legacy stack for this request.
+const legacy = "legacy"
+
+// Reason is a rationale for why we made the decision that we made.
+type reason int
+
+const (
+	parisNotEnabled reason = iota
+	allLabstationsAreOptedIn
+	noPools
+	wrongPool
+	scoreExceedsThreshold
+	scoreTooLow
+	thresholdZero
+)
+
+// ReasonMessageMap maps each reason to a readable description.
+var reasonMessageMap = map[reason]string{
+	parisNotEnabled:          "PARIS is not enabled",
+	allLabstationsAreOptedIn: "All Labstations are opted in",
+	noPools:                  "Labstation has no pools, possibly due to error calling UFS",
+	wrongPool:                "Labstation has a pool not matching opted-in pools",
+	scoreExceedsThreshold:    "Random score associated with task exceeds threshold",
+	scoreTooLow:              "Random score associated with task does NOT exceed threshold",
+	thresholdZero:            "Route labstation repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set",
+}
 
 // RouteRepairTask routes a repair task for a given bot.
 //
@@ -31,44 +59,27 @@ const paris = "paris"
 // This argument is, by design, all the entropy that randFloat will need. Taking this as an argument allows
 // RouteRepairTask itself to be deterministic because the caller is responsible for generating the random
 // value.
-//
-// TODO(gregorynisbet): This function is not finished; we need to take the labstation pool into account as well.
-func RouteRepairTask(ctx context.Context, botID string, expectedState string, randFloat float64) (string, error) {
+func RouteRepairTask(ctx context.Context, botID string, expectedState string, pools []string, randFloat float64) (string, error) {
 	if !(0.0 <= randFloat && randFloat <= 1.0) {
-		return "", fmt.Errorf("route repair task: randfloat %f is not in [0, 1]", randFloat)
+		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
-	parisCfg := config.Get(ctx).GetParis()
-	if !heuristics.LooksLikeLabstation(botID) {
-		logging.Infof(ctx, "Non-labstations always use legacy flow")
-		return "", nil
+	if heuristics.LooksLikeLabstation(botID) {
+		out, reason := routeLabstationRepairTask(config.Get(ctx).GetParis(), pools, randFloat)
+		logging.Infof(ctx, "Sending labstation repair to %q because %s", out, reason)
+		return out, nil
 	}
-	if !parisCfg.GetEnableLabstationRecovery() {
-		logging.Infof(ctx, "Labstation recovery is not enabled at all")
-		return "", nil
-	}
-	if parisCfg.GetOptinAllLabstations() {
-		return paris, nil
-	}
-	threshold := parisCfg.GetLabstationRecoveryPermille()
-	if threshold == 0 {
-		return "", fmt.Errorf("route repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set")
-	}
-	// If we make it this far, then it's possible for us to use the new flow.
-	// However, we should only actually do it if our value exceeds the threshold.
-	myValue := math.Round(1000.0 * randFloat)
-	if myValue >= float64(threshold) {
-		return paris, nil
-	}
+	logging.Infof(ctx, "Non-labstations always use legacy flow")
 	return "", nil
 }
 
 // CreateRepairTask kicks off a repair job.
 //
 // This function will either schedule a legacy repair task or a PARIS repair task.
-func CreateRepairTask(ctx context.Context, botID string, expectedState string, randFloat float64) (string, error) {
+// Note that the ufs client can be nil.
+func CreateRepairTask(ctx context.Context, botID string, expectedState string, pools []string, randFloat float64) (string, error) {
 	logging.Infof(ctx, "Creating repair task for %q expected state %q with random input %f", botID, expectedState, randFloat)
 	// If we encounter an error picking paris or legacy, do the safe thing and use legacy.
-	taskType, err := RouteRepairTask(ctx, botID, expectedState, randFloat)
+	taskType, err := RouteRepairTask(ctx, botID, expectedState, pools, randFloat)
 	if err != nil {
 		logging.Infof(ctx, "Create repair task: falling back to legacy repair by default: %s", err)
 	}
@@ -78,6 +89,34 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, r
 	default:
 		return createLegacyRepairTask(ctx, botID, expectedState)
 	}
+}
+
+// RouteLabstationRepairTask takes a repair task for a labstation and routes it.
+func routeLabstationRepairTask(parisCfg *config.Paris, pools []string, randFloat float64) (string, reason) {
+	// Check that the feature is enabled at all.
+	if !parisCfg.GetEnableLabstationRecovery() {
+		return "", parisNotEnabled
+	}
+	// Check for malformed input data that would cause us to be unable to make a decision.
+	if len(pools) == 0 {
+		return "", noPools
+	}
+	// Happy path.
+	if parisCfg.GetOptinAllLabstations() {
+		return paris, allLabstationsAreOptedIn
+	}
+	threshold := parisCfg.GetLabstationRecoveryPermille()
+	if threshold == 0 {
+		return "", thresholdZero
+	}
+	if len(parisCfg.GetOptinLabstationPool()) > 0 && isDisjoint(pools, parisCfg.GetOptinLabstationPool()) {
+		return "", wrongPool
+	}
+	myValue := math.Round(1000.0 * randFloat)
+	if myValue >= float64(threshold) {
+		return paris, scoreExceedsThreshold
+	}
+	return "", scoreTooLow
 }
 
 // CreateBuildbucketRepairTask creates a new repair task for a labstation. Not yet implemented.
@@ -108,4 +147,18 @@ func isRecoveryEnabledForLabstation(ctx context.Context) bool {
 	enabled := true
 	enabled = enabled && config.Get(ctx).GetParis().GetEnableLabstationRecovery()
 	return enabled
+}
+
+// IsDisjoint returns true if and only if two sequences have no elements in common.
+func isDisjoint(a []string, b []string) bool {
+	bMap := make(map[string]bool, len(b))
+	for _, item := range b {
+		bMap[item] = true
+	}
+	for _, item := range a {
+		if bMap[item] {
+			return false
+		}
+	}
+	return true
 }

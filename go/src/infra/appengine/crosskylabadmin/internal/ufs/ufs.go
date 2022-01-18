@@ -6,6 +6,7 @@ package ufs
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"go.chromium.org/luci/common/errors"
@@ -13,6 +14,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // NewUFS client creates a new UFS client when given a hostname.
@@ -28,4 +30,24 @@ func NewUFSClient(ctx context.Context, hostname string) (ufsAPI.FleetClient, err
 		Host:    hostname,
 		Options: nil,
 	}), nil
+}
+
+// GetPools gets the pools associated with a particular bot.
+// UFSClient may be nil.
+func GetPools(ctx context.Context, ufsClient ufsAPI.FleetClient, botID string) ([]string, error) {
+	if ufsClient == nil {
+		return nil, fmt.Errorf("get pools: ufsClient cannot be nil")
+	}
+	res, err := ufsClient.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, botID),
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "get pools").Err()
+	}
+	if res.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+		// We have a non-labstation DUT.
+		return res.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools(), nil
+	}
+	// We have a labstation DUT.
+	return res.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetPools(), nil
 }
