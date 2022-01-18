@@ -50,9 +50,6 @@ const DescribeMyDirectoryAndEnvironment = true
 const DescriptionCommand = `( echo BEGIN; echo PWD; pwd ; echo FIND; find . ; echo ENV; env; echo END ) 1>&2`
 
 func main() {
-	if DescribeMyDirectoryAndEnvironment {
-		defer describeEnvironment(os.Stderr)
-	}
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
 	log.Printf("Running in build-bucket mode")
@@ -68,6 +65,12 @@ func main() {
 			func(ctx context.Context, args []string, state *build.State) error {
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
+
+				// Right after instantiating the logger, but inside build.Main's callback,
+				// make sure that we log what our environment looks like.
+				if DescribeMyDirectoryAndEnvironment {
+					describeEnvironment(os.Stderr)
+				}
 
 				// Set the log (via the Go standard library's log package) to Stderr, since we know that stderr is collected
 				// for the process as a whole. This will also indirectly influence lg.
