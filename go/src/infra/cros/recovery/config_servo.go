@@ -392,15 +392,26 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"sample_pass"
 	},
+	"dut_has_cros_ec": {
+		"exec_extra_args": [
+			"command:supports_cros_ec_communication",
+			"expected_string_value:yes"
+		],
+		"exec_name":"servo_check_servod_control"
+	},
 	"servo_ec_console": {
 		"conditions": [
 			"is_not_servo_v3",
 			"dut_has_cros_ec"
 		],
+		"exec_extra_args": [
+			"commands:ec_system_powerstate,ec_board",
+			"any_one:true"
+		],
 		"recovery_actions": [
 			"servo_host_servod_restart"
 		],
-		"exec_name":"sample_pass"
+		"exec_name":"servod_can_read_all"
 	},
 	"battery_last_charge_readable": {
 		"exec_extra_args": [
@@ -502,9 +513,6 @@ const servoRepairPlanBody = `
 			"servo_host_servod_restart"
 		],
 		"exec_name":"servo_check_servod_control"
-	},
-	"dut_has_cros_ec": {
-		"exec_name":"sample_pass"
 	},
 	"servo_cold_reset_pin": {
 		"exec_extra_args": [
