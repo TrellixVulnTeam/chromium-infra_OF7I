@@ -8,9 +8,10 @@ build:
 generate: ninjaproto/ninjalog.proto
 	go generate ./...
 
+# Create table with 7 days expiration.
 update-staging: ninjaproto/ninjalog.proto
-	bqschemaupdater -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.ninjalog
-	bqschemaupdater -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.user
+	bqschemaupdater -partitioning-expiration 168h -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.ninjalog
+	bqschemaupdater -partitioning-expiration 168h -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.user
 
 # namiko(TODO): change table name later
 update-prod: ninjaproto/ninjalog.proto
