@@ -3,25 +3,29 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import ssl
 import sys
-import urllib
 
 from pkg_resources import parse_version
+from six.moves import urllib
 import certifi
 
 BASE_URL = 'https://nodejs.org/dist/'
 
 # Make sure up-to-date root certificates are used.
-urllib._urlopener = urllib.FancyURLopener(
-    context=ssl.create_default_context(cafile=certifi.where()))
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 def do_latest():
-  data = json.load(urllib.urlopen(BASE_URL + 'index.json'))
+  data = json.load(urllib.request.urlopen(BASE_URL + 'index.json'))
   max_version, max_string = parse_version('0'), '0'
   for release in data:
     s = release['version'].lstrip('v')
@@ -30,7 +34,7 @@ def do_latest():
       max_version = v
       max_string = s
 
-  print str(max_string)
+  print(str(max_string))
 
 
 def get_download_url(version, platform):
