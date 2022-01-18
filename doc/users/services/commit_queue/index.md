@@ -1,5 +1,10 @@
 # Commit Queue (CQ)
 
+*** note
+Warning: The legacy CQ Daemon is being replaced by LUCI Change Verifier (CV).
+So much of this doc may be outdated. See [here] for more info about CV.
+***
+
 ## What (is it)?
 
 It's a service (aka a bot) that commits Gerrit changes for you,
@@ -187,6 +192,7 @@ This is controlled by a config file cq.cfg (e.g.
 [config for chromium][chromium-cq-cfg]). Also see [this document][analyze-step]
 for details on the analyze step.
 
+[here]: https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv/README.md
 [internal docs]: https://chrome-internal.googlesource.com/infra/infra_internal/+/master/doc/commit_queue.md
 [Commit Queue Patches]: https://codereview.chromium.org/search?closed=3&commit=2
 [chrome-troopers]: https://chromium.googlesource.com/infra/infra/+/master/doc/users/contacting_troopers.md
