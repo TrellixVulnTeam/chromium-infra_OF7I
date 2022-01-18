@@ -314,7 +314,43 @@ message Paris {
   //
   // The smallest permissible value is 0. The largest is 1000.
   int32 labstation_recovery_permille = 4;
+
+  // DUT_repair controls the repair task.
+  RolloutConfig dut_repair = 5;
+
+  // DUT_verify controls the verify task.
+  RolloutConfig dut_verify = 6;
+
+  // DUT_audit controls the audit task.
+  RolloutConfig dut_audit  = 7;
 }
+
+// RolloutConfig controls the rollout of a new feature.
+//
+// For example, the following config rolls out a new feature at the 5% (50/1000) level for
+// devices in the pools "a" and "b". Devices not in these pools are rolled out at the 0% level.
+//
+// {
+//  "enable": True,
+//  "optin_all_duts": False,
+//  "optin_dut_pool": [ "a", "b" ],
+//  "rollout_permille": 50
+// }
+message RolloutConfig {
+  // Enable is set to true when recovery is enabled at all. If it is set to false, the entire
+  // DUT recovery flow for PARIS is skipped and the legacy flow is used instead.
+  bool enable = 1;
+
+  // Optin_all_duts opts in every DUT (regardless of optin_dut_prefix) if set to true.
+  bool optin_all_duts = 2;
+
+  // Optin_dut_pool controls on a per-bool basis.
+  repeated string optin_dut_pool = 3;
+
+  // Rollout_permille is the probability (multiplied by 1000) that we use the new flow for a DUT if
+  // we are permitted to repair the device in question by the other settings in the config file.
+  int32 rollout_permille = 4;
+};
 
 // UFSConfig contains information about UFS, such as its hostname.
 message UFSConfig {

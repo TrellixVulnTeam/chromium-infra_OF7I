@@ -1185,6 +1185,12 @@ type Paris struct {
 	//
 	// The smallest permissible value is 0. The largest is 1000.
 	LabstationRecoveryPermille int32 `protobuf:"varint,4,opt,name=labstation_recovery_permille,json=labstationRecoveryPermille,proto3" json:"labstation_recovery_permille,omitempty"`
+	// DUT_repair controls the repair task.
+	DutRepair *RolloutConfig `protobuf:"bytes,5,opt,name=dut_repair,json=dutRepair,proto3" json:"dut_repair,omitempty"`
+	// DUT_verify controls the verify task.
+	DutVerify *RolloutConfig `protobuf:"bytes,6,opt,name=dut_verify,json=dutVerify,proto3" json:"dut_verify,omitempty"`
+	// DUT_audit controls the audit task.
+	DutAudit *RolloutConfig `protobuf:"bytes,7,opt,name=dut_audit,json=dutAudit,proto3" json:"dut_audit,omitempty"`
 }
 
 func (x *Paris) Reset() {
@@ -1247,6 +1253,115 @@ func (x *Paris) GetLabstationRecoveryPermille() int32 {
 	return 0
 }
 
+func (x *Paris) GetDutRepair() *RolloutConfig {
+	if x != nil {
+		return x.DutRepair
+	}
+	return nil
+}
+
+func (x *Paris) GetDutVerify() *RolloutConfig {
+	if x != nil {
+		return x.DutVerify
+	}
+	return nil
+}
+
+func (x *Paris) GetDutAudit() *RolloutConfig {
+	if x != nil {
+		return x.DutAudit
+	}
+	return nil
+}
+
+// RolloutConfig controls the rollout of a new feature.
+//
+// For example, the following config rolls out a new feature at the 5% (50/1000) level for
+// devices in the pools "a" and "b". Devices not in these pools are rolled out at the 0% level.
+//
+// {
+//  "enable": True,
+//  "optin_all_duts": False,
+//  "optin_dut_pool": [ "a", "b" ],
+//  "rollout_permille": 50
+// }
+type RolloutConfig struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Enable is set to true when recovery is enabled at all. If it is set to false, the entire
+	// DUT recovery flow for PARIS is skipped and the legacy flow is used instead.
+	Enable bool `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
+	// Optin_all_duts opts in every DUT (regardless of optin_dut_prefix) if set to true.
+	OptinAllDuts bool `protobuf:"varint,2,opt,name=optin_all_duts,json=optinAllDuts,proto3" json:"optin_all_duts,omitempty"`
+	// Optin_dut_pool controls on a per-bool basis.
+	OptinDutPool []string `protobuf:"bytes,3,rep,name=optin_dut_pool,json=optinDutPool,proto3" json:"optin_dut_pool,omitempty"`
+	// Rollout_permille is the probability (multiplied by 1000) that we use the new flow for a DUT if
+	// we are permitted to repair the device in question by the other settings in the config file.
+	RolloutPermille int32 `protobuf:"varint,4,opt,name=rollout_permille,json=rolloutPermille,proto3" json:"rollout_permille,omitempty"`
+}
+
+func (x *RolloutConfig) Reset() {
+	*x = RolloutConfig{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RolloutConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RolloutConfig) ProtoMessage() {}
+
+func (x *RolloutConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RolloutConfig.ProtoReflect.Descriptor instead.
+func (*RolloutConfig) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RolloutConfig) GetEnable() bool {
+	if x != nil {
+		return x.Enable
+	}
+	return false
+}
+
+func (x *RolloutConfig) GetOptinAllDuts() bool {
+	if x != nil {
+		return x.OptinAllDuts
+	}
+	return false
+}
+
+func (x *RolloutConfig) GetOptinDutPool() []string {
+	if x != nil {
+		return x.OptinDutPool
+	}
+	return nil
+}
+
+func (x *RolloutConfig) GetRolloutPermille() int32 {
+	if x != nil {
+		return x.RolloutPermille
+	}
+	return 0
+}
+
 // UFSConfig contains information about UFS, such as its hostname.
 type UFSConfig struct {
 	state         protoimpl.MessageState
@@ -1264,7 +1379,7 @@ type UFSConfig struct {
 func (x *UFSConfig) Reset() {
 	*x = UFSConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[12]
+		mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1277,7 +1392,7 @@ func (x *UFSConfig) String() string {
 func (*UFSConfig) ProtoMessage() {}
 
 func (x *UFSConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[12]
+	mi := &file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1290,7 +1405,7 @@ func (x *UFSConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UFSConfig.ProtoReflect.Descriptor instead.
 func (*UFSConfig) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDescGZIP(), []int{12}
+	return file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UFSConfig) GetHost() string {
@@ -1562,7 +1677,7 @@ var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDes
 	0x73, 0x74, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x73,
 	0x12, 0x2a, 0x0a, 0x11, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x5f, 0x76, 0x32,
 	0x5f, 0x6f, 0x6e, 0x6c, 0x79, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0f, 0x69, 0x6e, 0x76,
-	0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x56, 0x32, 0x4f, 0x6e, 0x6c, 0x79, 0x22, 0xef, 0x01, 0x0a,
+	0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x56, 0x32, 0x4f, 0x6e, 0x6c, 0x79, 0x22, 0xbf, 0x03, 0x0a,
 	0x05, 0x50, 0x61, 0x72, 0x69, 0x73, 0x12, 0x3c, 0x0a, 0x1a, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65,
 	0x5f, 0x6c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x65, 0x63, 0x6f,
 	0x76, 0x65, 0x72, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x18, 0x65, 0x6e, 0x61, 0x62,
@@ -1577,13 +1692,36 @@ var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDes
 	0x6c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x65, 0x63, 0x6f, 0x76,
 	0x65, 0x72, 0x79, 0x5f, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x6c, 0x6c, 0x65, 0x18, 0x04, 0x20, 0x01,
 	0x28, 0x05, 0x52, 0x1a, 0x6c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65,
-	0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x6c, 0x6c, 0x65, 0x22, 0x1f,
-	0x0a, 0x09, 0x55, 0x46, 0x53, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x68,
-	0x6f, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x6f, 0x73, 0x74, 0x42,
-	0x35, 0x5a, 0x33, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69,
-	0x6e, 0x65, 0x2f, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x61, 0x64, 0x6d,
-	0x69, 0x6e, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x61, 0x70, 0x70, 0x2f,
-	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x6c, 0x6c, 0x65, 0x12, 0x44,
+	0x0a, 0x0a, 0x64, 0x75, 0x74, 0x5f, 0x72, 0x65, 0x70, 0x61, 0x69, 0x72, 0x18, 0x05, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x61,
+	0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x6f, 0x6c, 0x6c,
+	0x6f, 0x75, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x09, 0x64, 0x75, 0x74, 0x52, 0x65,
+	0x70, 0x61, 0x69, 0x72, 0x12, 0x44, 0x0a, 0x0a, 0x64, 0x75, 0x74, 0x5f, 0x76, 0x65, 0x72, 0x69,
+	0x66, 0x79, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x72, 0x6f, 0x73, 0x73,
+	0x6b, 0x79, 0x6c, 0x61, 0x62, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x2e, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52,
+	0x09, 0x64, 0x75, 0x74, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x12, 0x42, 0x0a, 0x09, 0x64, 0x75,
+	0x74, 0x5f, 0x61, 0x75, 0x64, 0x69, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e,
+	0x63, 0x72, 0x6f, 0x73, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e,
+	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x52, 0x08, 0x64, 0x75, 0x74, 0x41, 0x75, 0x64, 0x69, 0x74, 0x22, 0x9e,
+	0x01, 0x0a, 0x0d, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x12, 0x16, 0x0a, 0x06, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x06, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x24, 0x0a, 0x0e, 0x6f, 0x70, 0x74, 0x69,
+	0x6e, 0x5f, 0x61, 0x6c, 0x6c, 0x5f, 0x64, 0x75, 0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x0c, 0x6f, 0x70, 0x74, 0x69, 0x6e, 0x41, 0x6c, 0x6c, 0x44, 0x75, 0x74, 0x73, 0x12, 0x24,
+	0x0a, 0x0e, 0x6f, 0x70, 0x74, 0x69, 0x6e, 0x5f, 0x64, 0x75, 0x74, 0x5f, 0x70, 0x6f, 0x6f, 0x6c,
+	0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0c, 0x6f, 0x70, 0x74, 0x69, 0x6e, 0x44, 0x75, 0x74,
+	0x50, 0x6f, 0x6f, 0x6c, 0x12, 0x29, 0x0a, 0x10, 0x72, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x5f,
+	0x70, 0x65, 0x72, 0x6d, 0x69, 0x6c, 0x6c, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0f,
+	0x72, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x6c, 0x6c, 0x65, 0x22,
+	0x1f, 0x0a, 0x09, 0x55, 0x46, 0x53, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x12, 0x0a, 0x04,
+	0x68, 0x6f, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x6f, 0x73, 0x74,
+	0x42, 0x35, 0x5a, 0x33, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67,
+	0x69, 0x6e, 0x65, 0x2f, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x61, 0x64,
+	0x6d, 0x69, 0x6e, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x61, 0x70, 0x70,
+	0x2f, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1598,7 +1736,7 @@ func file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDe
 	return file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDescData
 }
 
-var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_goTypes = []interface{}{
 	(*Config)(nil),              // 0: crosskylabadmin.config.Config
 	(*Swarming)(nil),            // 1: crosskylabadmin.config.Swarming
@@ -1612,8 +1750,9 @@ var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_goType
 	(*StableVersionConfig)(nil), // 9: crosskylabadmin.config.StableVersionConfig
 	(*InventoryProvider)(nil),   // 10: crosskylabadmin.config.InventoryProvider
 	(*Paris)(nil),               // 11: crosskylabadmin.config.Paris
-	(*UFSConfig)(nil),           // 12: crosskylabadmin.config.UFSConfig
-	(*durationpb.Duration)(nil), // 13: google.protobuf.Duration
+	(*RolloutConfig)(nil),       // 12: crosskylabadmin.config.RolloutConfig
+	(*UFSConfig)(nil),           // 13: crosskylabadmin.config.UFSConfig
+	(*durationpb.Duration)(nil), // 14: google.protobuf.Duration
 }
 var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_depIdxs = []int32{
 	1,  // 0: crosskylabadmin.config.Config.swarming:type_name -> crosskylabadmin.config.Swarming
@@ -1625,19 +1764,22 @@ var file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_depIdx
 	9,  // 6: crosskylabadmin.config.Config.stable_version_config:type_name -> crosskylabadmin.config.StableVersionConfig
 	10, // 7: crosskylabadmin.config.Config.inventory_provider:type_name -> crosskylabadmin.config.InventoryProvider
 	11, // 8: crosskylabadmin.config.Config.paris:type_name -> crosskylabadmin.config.Paris
-	12, // 9: crosskylabadmin.config.Config.UFS:type_name -> crosskylabadmin.config.UFSConfig
-	13, // 10: crosskylabadmin.config.Cron.repair_idle_duration:type_name -> google.protobuf.Duration
-	13, // 11: crosskylabadmin.config.Cron.repair_attempt_delay_duration:type_name -> google.protobuf.Duration
+	13, // 9: crosskylabadmin.config.Config.UFS:type_name -> crosskylabadmin.config.UFSConfig
+	14, // 10: crosskylabadmin.config.Cron.repair_idle_duration:type_name -> google.protobuf.Duration
+	14, // 11: crosskylabadmin.config.Cron.repair_attempt_delay_duration:type_name -> google.protobuf.Duration
 	6,  // 12: crosskylabadmin.config.Cron.pool_balancer:type_name -> crosskylabadmin.config.PoolBalancer
-	13, // 13: crosskylabadmin.config.Inventory.dut_info_cache_validity:type_name -> google.protobuf.Duration
+	14, // 13: crosskylabadmin.config.Inventory.dut_info_cache_validity:type_name -> google.protobuf.Duration
 	8,  // 14: crosskylabadmin.config.Endpoint.deploy_dut:type_name -> crosskylabadmin.config.DeployDut
-	13, // 15: crosskylabadmin.config.DeployDut.task_expiration_timeout:type_name -> google.protobuf.Duration
-	13, // 16: crosskylabadmin.config.DeployDut.task_execution_timeout:type_name -> google.protobuf.Duration
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	14, // 15: crosskylabadmin.config.DeployDut.task_expiration_timeout:type_name -> google.protobuf.Duration
+	14, // 16: crosskylabadmin.config.DeployDut.task_execution_timeout:type_name -> google.protobuf.Duration
+	12, // 17: crosskylabadmin.config.Paris.dut_repair:type_name -> crosskylabadmin.config.RolloutConfig
+	12, // 18: crosskylabadmin.config.Paris.dut_verify:type_name -> crosskylabadmin.config.RolloutConfig
+	12, // 19: crosskylabadmin.config.Paris.dut_audit:type_name -> crosskylabadmin.config.RolloutConfig
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_init() }
@@ -1791,6 +1933,18 @@ func file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_init(
 			}
 		}
 		file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RolloutConfig); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UFSConfig); i {
 			case 0:
 				return &v.state
@@ -1809,7 +1963,7 @@ func file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_init(
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_crosskylabadmin_internal_app_config_config_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
