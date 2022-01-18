@@ -6,7 +6,6 @@ package cros
 
 import (
 	"context"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -20,11 +19,11 @@ const (
 
 // updateHWIDToInvExec read HWID from the resource and update DUT info.
 func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, readHWIDCommand)
-	if r.ExitCode != 0 {
-		return errors.Reason("update HWID in DUT-info: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	hwid, err := run(ctx, readHWIDCommand)
+	if err != nil {
+		return errors.Annotate(err, "update HWID in DUT-info").Err()
 	}
-	hwid := strings.TrimSpace(r.Stdout)
 	if hwid == "" {
 		return errors.Reason("update HWID in DUT-info: is empty").Err()
 	}
@@ -35,12 +34,12 @@ func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 
 // matchHWIDToInvExec matches HWID from the resource to value in the Inventory.
 func matchHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, readHWIDCommand)
-	if r.ExitCode != 0 {
-		return errors.Reason("match HWID to inventory: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	actualHWID, err := run(ctx, readHWIDCommand)
+	if err != nil {
+		return errors.Annotate(err, "match HWID to inventory").Err()
 	}
 	expectedHWID := args.DUT.Hwid
-	actualHWID := strings.TrimSpace(r.Stdout)
 	if actualHWID != expectedHWID {
 		return errors.Reason("match HWID to inventory: failed, expected: %q, but got %q", expectedHWID, actualHWID).Err()
 	}

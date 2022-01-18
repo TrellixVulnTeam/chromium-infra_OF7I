@@ -51,7 +51,7 @@ func isFirmwareInGoodState(ctx context.Context, args *execs.RunArgs, actionArgs 
 // isOnRWFirmwareStableVersionExec confirms that the DUT is currently running the stable version based on its specification.
 func isOnRWFirmwareStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	stableVersion := args.DUT.StableVersion.CrosFirmwareVersion
-	err := matchCrosSystemValueToExpectation(ctx, args, "fwid", stableVersion)
+	err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), "fwid", stableVersion)
 	return errors.Annotate(err, "on rw firmware stable version").Err()
 }
 

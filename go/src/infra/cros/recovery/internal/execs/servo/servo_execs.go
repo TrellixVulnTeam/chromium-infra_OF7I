@@ -118,11 +118,10 @@ func servoDetectUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	}
 	servoUsbPath := res.Value.GetString_()
 	log.Debug(ctx, "Servo Detect USB-Key Exec: USB-key path: %s.", servoUsbPath)
-	r := args.Access.Run(ctx, args.DUT.ServoHost.Name, fmt.Sprintf("fdisk -l %s", servoUsbPath))
-	if r.ExitCode != 0 {
+	run := args.NewRunner(args.DUT.ServoHost.Name)
+	if _, err := run(ctx, fmt.Sprintf("fdisk -l %s", servoUsbPath)); err != nil {
 		args.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
-		log.Debug(ctx, "Servo Detect USB-Key Exec: fdisk command did not succeed, exit code %q.", r.ExitCode)
-		return errors.Reason("servo detect usb key exec: could not determine whether %q is a valid usb path", servoUsbPath).Err()
+		return errors.Annotate(err, "servo detect usb key exec: could not determine whether %q is a valid usb path", servoUsbPath).Err()
 	}
 	if args.DUT.ServoHost.UsbkeyState == tlw.HardwareStateNeedReplacement {
 		// This device has been marked for replacement. A further
@@ -135,23 +134,24 @@ func servoDetectUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 }
 
 func runCheckOnHost(ctx context.Context, args *execs.RunArgs, resourceName string, usbPath string) (tlw.HardwareState, error) {
+	run := args.NewRunner(resourceName)
 	command := fmt.Sprintf(badBlocksCommandPrefix, usbPath)
 	log.Debug(ctx, "Run Check On Host: Executing %q", command)
 	// The execution timeout for this audit job is configured at the
 	// level of the action. So the execution of this command will be
 	// bound by that.
-	r := args.Access.Run(ctx, resourceName, command)
-	switch r.ExitCode {
-	case 0:
+	out, err := run(ctx, command)
+	switch {
+	case err == nil:
 		// TODO(vkjoshi@): recheck if this is required, or does stderr need to be examined.
-		if len(strings.TrimSpace(r.Stdout)) > 0 {
+		if len(out) > 0 {
 			return tlw.HardwareStateNeedReplacement, nil
 		}
 		return tlw.HardwareStateNormal, nil
-	case 124: // timeout
-		return "", errors.Reason("run check on host: could not successfully complete check, error %q", r.Stderr).Err()
-	case 127: // badblocks
-		return "", errors.Reason("run check on host: could not successfully complete check, error %q", r.Stderr).Err()
+	case execs.SSHErrorLinuxTimeout.In(err): // 124 timeout
+		fallthrough
+	case execs.SSHErrorCLINotFound.In(err): // 127 badblocks
+		return "", errors.Annotate(err, "run check on host: could not successfully complete check").Err()
 	default:
 		return tlw.HardwareStateNeedReplacement, nil
 	}
@@ -159,7 +159,7 @@ func runCheckOnHost(ctx context.Context, args *execs.RunArgs, resourceName strin
 
 func servoAuditUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	dutUsb := ""
-	if cros.IsSSHable(ctx, args, args.DUT.Name) == nil {
+	if cros.IsSSHable(ctx, args.NewRunner(args.DUT.Name)) == nil {
 		log.Debug(ctx, "Servo Audit USB-Key Exec: %q is reachable through SSH", args.DUT.Name)
 		var err error = nil
 		dutUsb, err = GetUSBDrivePathOnDut(ctx, args)

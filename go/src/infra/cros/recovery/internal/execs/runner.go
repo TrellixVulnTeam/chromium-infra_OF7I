@@ -9,11 +9,16 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/log"
 )
 
 var (
 	// 127: linux command line error of command not found.
 	SSHErrorCLINotFound = errors.BoolTag{Key: errors.NewTagKey("ssh_error_cli_not_found")}
+
+	// 124: linux command line error of command timeout.
+	SSHErrorLinuxTimeout = errors.BoolTag{Key: errors.NewTagKey("linux_timeout")}
 
 	// other linux error tag.
 	GeneralError = errors.BoolTag{Key: errors.NewTagKey("general_error")}
@@ -42,6 +47,7 @@ type Runner func(context.Context, string) (string, error)
 // servo-host etc.
 func (args *RunArgs) NewRunner(host string) Runner {
 	runner := func(ctx context.Context, cmd string) (string, error) {
+		log.Debug(ctx, "Run command %q", cmd)
 		r := args.Access.Run(ctx, host, cmd)
 		exitCode := r.ExitCode
 		if exitCode != 0 {
@@ -57,6 +63,8 @@ func (args *RunArgs) NewRunner(host string) Runner {
 					errAnnotator.Tag(OtherErrorInternal)
 				}
 				// general linux errors
+			} else if exitCode == 124 {
+				errAnnotator.Tag(SSHErrorLinuxTimeout)
 			} else if exitCode == 127 {
 				errAnnotator.Tag(SSHErrorCLINotFound)
 			} else {
@@ -64,7 +72,9 @@ func (args *RunArgs) NewRunner(host string) Runner {
 			}
 			return "", errAnnotator.Err()
 		}
-		return strings.TrimSpace(r.Stdout), nil
+		out := strings.TrimSpace(r.Stdout)
+		log.Debug(ctx, "Run output:\n%s", out)
+		return out, nil
 	}
 	return runner
 }

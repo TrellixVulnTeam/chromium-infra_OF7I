@@ -7,7 +7,6 @@ package cros
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -26,18 +25,19 @@ const (
 
 // createRebootRequestExec creates reboot flag file request.
 func createRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf(rebootRequestCreateSingleGlob, args.DUT.ServoHost.ServodPort))
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Create the reboot request: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	run := args.NewRunner(args.ResourceName)
+	_, err := run(ctx, fmt.Sprintf(rebootRequestCreateSingleGlob, args.DUT.ServoHost.ServodPort))
+	if err != nil {
+		// Print finish result as we ignore any errors.
+		log.Debug(ctx, "Create the reboot request: %s", err)
+	}
 	return nil
 }
 
 // hasRebootRequestExec checks presence of reboot request flag on the host.
 func hasRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, rebootRequestFindCmd)
-	// Print finish result as we treat failure as no results.
-	log.Debug(ctx, "Has reboot requests: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
-	rr := strings.TrimSpace(r.Stdout)
+	run := args.NewRunner(args.ResourceName)
+	rr, _ := run(ctx, rebootRequestFindCmd)
 	if rr == "" {
 		return errors.Reason("has reboot request: not request found").Err()
 	}
@@ -47,17 +47,21 @@ func hasRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 
 // removeAllRebootRequestsExec removes all reboot flag file requests.
 func removeAllRebootRequestsExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, rebootRequestRemoveAllCmd)
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Remove all reboot requests: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	run := args.NewRunner(args.ResourceName)
+	if _, err := run(ctx, rebootRequestRemoveAllCmd); err != nil {
+		// Print finish result as we ignore any errors.
+		log.Debug(ctx, "Remove all reboot requests: %s", err)
+	}
 	return nil
 }
 
 // removeRebootRequestExec removes reboot flag file request.
 func removeRebootRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.DUT.ServoHost.Name, fmt.Sprintf(rebootRequestRemoveSingleGlob, args.DUT.ServoHost.ServodPort))
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Remove the reboot request: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	run := args.NewRunner(args.DUT.ServoHost.Name)
+	if _, err := run(ctx, fmt.Sprintf(rebootRequestRemoveSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+		// Print finish result as we ignore any errors.
+		log.Debug(ctx, "Remove the reboot request: %s", err)
+	}
 	return nil
 }
 

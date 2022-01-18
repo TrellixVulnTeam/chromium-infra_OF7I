@@ -46,20 +46,21 @@ func pingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) err
 
 // sshExec verifies ssh access to the DUT.
 func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return WaitUntilSSHable(ctx, args, args.ResourceName, NormalBootingTime)
+	return WaitUntilSSHable(ctx, args.NewRunner(args.ResourceName), NormalBootingTime)
 }
 
 // rebootExec reboots the cros DUT.
 func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
-	r := args.Access.Run(ctx, args.ResourceName, rebootCommand)
-	if r.ExitCode == -2 {
+	run := args.NewRunner(args.ResourceName)
+	out, err := run(ctx, rebootCommand)
+	if execs.NoExitStatusErrorInternal.In(err) {
 		// Client closed connected as rebooting.
-		log.Debug(ctx, "Client exit as device rebooted: %s", r.Stderr)
-	} else if r.ExitCode != 0 {
-		return errors.Reason("cros reboot: failed, code: %d, %s", r.ExitCode, r.Stderr).Err()
+		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+	} else if err != nil {
+		return errors.Annotate(err, "cros reboot").Err()
 	}
-	log.Debug(ctx, "Stdout: %s", r.Stdout)
+	log.Debug(ctx, "Stdout: %s", out)
 	return nil
 }
 
@@ -67,7 +68,7 @@ func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) e
 func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	expected := args.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
-	fromDevice, err := releaseBuildPath(ctx, args.ResourceName, args)
+	fromDevice, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
@@ -82,7 +83,7 @@ func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	expected := args.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
-	fromDevice, err := releaseBuildPath(ctx, args.ResourceName, args)
+	fromDevice, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
@@ -95,11 +96,11 @@ func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs
 
 // isDefaultBootFromDiskExec confirms the resource is set to boot from disk by default.
 func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "crossystem dev_default_boot")
-	if r.ExitCode != 0 {
-		return errors.Reason("default boot from disk: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	defaultBoot, err := run(ctx, "crossystem dev_default_boot")
+	if err != nil {
+		return errors.Annotate(err, "default boot from disk").Err()
 	}
-	defaultBoot := strings.TrimSpace(r.Stdout)
 	if defaultBoot != "disk" {
 		return errors.Reason("default boot from disk: failed, expected: disk, but got: %q", defaultBoot).Err()
 	}
@@ -108,11 +109,11 @@ func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionA
 
 // isNotInDevModeExec confirms that the host is not in dev mode.
 func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "crossystem devsw_boot")
-	if r.ExitCode != 0 {
-		return errors.Reason("not in dev mode: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	devModeResult, err := run(ctx, "crossystem devsw_boot")
+	if err != nil {
+		return errors.Annotate(err, "not in dev mode").Err()
 	}
-	devModeResult := strings.TrimSpace(r.Stdout)
 	if devModeResult != "0" {
 		return errors.Reason("not in dev mode: failed").Err()
 	}
@@ -124,9 +125,11 @@ func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	if len(actionArgs) != 0 {
 		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
 		cmd := strings.Join(actionArgs, " ")
-		r := args.Access.Run(ctx, args.ResourceName, cmd)
-		if r.ExitCode != 0 {
-			return errors.Reason("run shell command: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+		run := args.NewRunner(args.ResourceName)
+		if out, err := run(ctx, cmd); err != nil {
+			return errors.Annotate(err, "run shell command").Err()
+		} else {
+			log.Debug(ctx, "Run shell command: output: %s", out)
 		}
 	} else {
 		log.Debug(ctx, "Run shell command: no arguments passed.")
@@ -153,10 +156,11 @@ func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionAr
 	for _, testDir := range testDirs {
 		filename := filepath.Join(testDir, "writable_my_test_file")
 		command := fmt.Sprintf("touch %s && rm %s", filename, filename)
-		r := args.Access.Run(ctx, args.ResourceName, command)
-		if r.ExitCode != 0 {
+		run := args.NewRunner(args.ResourceName)
+		_, err := run(ctx, command)
+		if err != nil {
 			log.Debug(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
-			return errors.Reason("file system writtable: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+			return errors.Annotate(err, "file system writtable").Err()
 		}
 	}
 	return nil
@@ -164,36 +168,40 @@ func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionAr
 
 // hasPythonInterpreterExec confirm the presence of a working Python interpreter.
 func hasPythonInterpreterExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, `python -c "import json"`)
+	run := args.NewRunner(args.ResourceName)
+	_, err := run(ctx, `python -c "import json"`)
 	switch {
-	case r.ExitCode == 0:
+	case err == nil:
 		// Python detected and import is working. do nothing
 		return nil
-	case r.ExitCode == 127:
-		if strings.TrimSpace(args.Access.Run(ctx, args.ResourceName, "which python").Stdout) == "" {
+	case execs.SSHErrorCLINotFound.In(err):
+		if pOut, pErr := run(ctx, "which python"); pErr != nil {
+			return errors.Annotate(pErr, "has python interpreter: python is missing").Err()
+		} else if pOut == "" {
 			return errors.Reason("has python interpreter: python is missing; may be caused by powerwash").Err()
 		}
 		fallthrough
 	default:
-		return errors.Reason("has python interpreter: interpreter is broken").Err()
+		return errors.Annotate(err, "has python interpreter: interpreter is broken").Err()
 	}
 }
 
 // hasCriticalKernelErrorExec confirms we have seen critical file system kernel errors
 func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	run := args.NewRunner(args.ResourceName)
 	// grep for stateful FS errors of the type "EXT4-fs error (device sda1):"
 	command := `dmesg | grep -E "EXT4-fs error \(device $(cut -d ' ' -f 5,9 /proc/$$/mountinfo | grep -e '^/mnt/stateful_partition ' | cut -d ' ' -f 2 | cut -d '/' -f 3)\):"`
-	r := args.Access.Run(ctx, args.ResourceName, command)
-	if strings.TrimSpace(r.Stdout) != "" {
-		sample := strings.Split(r.Stdout, `\n`)[0]
+	out, _ := run(ctx, command)
+	if out != "" {
+		sample := strings.Split(out, `\n`)[0]
 		// Log the first file system error.
 		log.Error(ctx, "first file system error: %q", sample)
 		return errors.Reason("has critical kernel error: saw file system error: %s", sample).Err()
 	}
 	// Check for other critical FS errors.
 	command = `dmesg | grep "This should not happen!!  Data will be lost"`
-	r = args.Access.Run(ctx, args.ResourceName, command)
-	if strings.TrimSpace(r.Stdout) != "" {
+	out, _ = run(ctx, command)
+	if out != "" {
 		return errors.Reason("has critical kernel error: saw file system error: Data will be lost").Err()
 	}
 	log.Debug(ctx, "Could not determine stateful mount.")
@@ -207,24 +215,22 @@ func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, action
 // Thus, the presence of the file indicates that a prior update failed.
 // The verifier tests for the existence of the marker file and fails if it still exists.
 func isLastProvisionSuccessfulExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf("test -f %s", provisionFailed))
-	if r.ExitCode == 0 {
-		return errors.Reason("last provision successful: last provision on this DUT failed").Err()
-	}
-	return nil
+	run := args.NewRunner(args.ResourceName)
+	_, err := run(ctx, fmt.Sprintf("test -f %s", provisionFailed))
+	return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
 }
 
 // isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
 func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, `cat /proc/cpuinfo | grep "model name"`)
-	if r.ExitCode != 0 {
-		return errors.Reason("not virtual machine: failed with code: %d, %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	out, err := run(ctx, `cat /proc/cpuinfo | grep "model name"`)
+	if err != nil {
+		return errors.Annotate(err, "not virtual machine").Err()
 	}
-	output := strings.TrimSpace(r.Stdout)
-	if output == "" {
+	if out == "" {
 		return errors.Reason("not virtual machine: no cpu information found").Err()
 	}
-	if strings.Contains(strings.ToLower(output), "qemu") {
+	if strings.Contains(strings.ToLower(out), "qemu") {
 		return errors.Reason("not virtual machine: qemu is virtual machine").Err()
 	}
 	return nil

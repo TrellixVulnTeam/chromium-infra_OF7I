@@ -42,21 +42,21 @@ const (
 )
 
 // releaseBuildPath reads release build path from lsb-release.
-func releaseBuildPath(ctx context.Context, resource string, args *execs.RunArgs) (string, error) {
+func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 	// lsb-release is set of key=value so we need extract right part from it.
 	//  Example: CHROMEOS_RELEASE_BUILDER_PATH=board-release/R99-9999.99.99
-	r := args.Access.Run(ctx, resource, extactReleaseBuilderPathCommand)
-	if r.ExitCode != 0 {
-		return "", errors.Reason("release build path: fail. exit:%d, %s", r.ExitCode, r.Stderr).Err()
+	output, err := run(ctx, extactReleaseBuilderPathCommand)
+	if err != nil {
+		return "", errors.Annotate(err, "release build path").Err()
 	}
-	log.Debug(ctx, "Read value: %q.", r.Stdout)
+	log.Debug(ctx, "Read value: %q.", output)
 	p, err := regexp.Compile("CHROMEOS_RELEASE_BUILDER_PATH=([\\w\\W]*)")
 	if err != nil {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
-	parts := p.FindStringSubmatch(r.Stdout)
+	parts := p.FindStringSubmatch(output)
 	if len(parts) < 2 {
-		return "", errors.Reason("release build path: fail to read value from %s", r.Stdout).Err()
+		return "", errors.Reason("release build path: fail to read value from %s", output).Err()
 	}
 	return strings.TrimSpace(parts[1]), nil
 }
@@ -86,24 +86,24 @@ func ReleaseBoard(ctx context.Context, r execs.Runner) (string, error) {
 }
 
 // uptime returns uptime of resource.
-func uptime(ctx context.Context, resource string, args *execs.RunArgs) (*time.Duration, error) {
+func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 	// Received value represent two parts where the first value represents the total number
 	// of seconds the system has been up and the second value is the sum of how much time
 	// each core has spent idle, in seconds. We are looking
 	//  E.g.: 683503.88 1003324.85
 	// Consequently, the second value may be greater than the overall system uptime on systems with multiple cores.
-	r := args.Access.Run(ctx, resource, "cat /proc/uptime")
-	if r.ExitCode != 0 {
-		return nil, errors.Reason("uptime: fail. exit:%d, %s", r.ExitCode, r.Stderr).Err()
+	out, err := run(ctx, "cat /proc/uptime")
+	if err != nil {
+		return nil, errors.Annotate(err, "uptime").Err()
 	}
-	log.Debug(ctx, "Read value: %q.", r.Stdout)
+	log.Debug(ctx, "Read value: %q.", out)
 	p, err := regexp.Compile("([\\d.]{6,})")
 	if err != nil {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
-	parts := p.FindStringSubmatch(r.Stdout)
+	parts := p.FindStringSubmatch(out)
 	if len(parts) < 2 {
-		return nil, errors.Reason("uptime: fail to read value from %s", r.Stdout).Err()
+		return nil, errors.Reason("uptime: fail to read value from %s", out).Err()
 	}
 	// Direct parse to duration.
 	// Example: 683503.88s -> 189h51m43.88s
@@ -129,27 +129,25 @@ func WaitUntilPingable(ctx context.Context, args *execs.RunArgs, resourceName st
 }
 
 // IsSSHable checks whether the resource is sshable
-func IsSSHable(ctx context.Context, args *execs.RunArgs, resourceName string) error {
-	if r := args.Access.Run(ctx, resourceName, "true"); r.ExitCode != 0 {
-		return errors.Reason("is sshable: code %d, %s", r.ExitCode, r.Stderr).Err()
-	}
-	return nil
+func IsSSHable(ctx context.Context, run execs.Runner) error {
+	_, err := run(ctx, "true")
+	return errors.Annotate(err, "is sshable").Err()
 }
 
 // WaitUntilSSHable waiting resource to be sshable.
-func WaitUntilSSHable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration) error {
+func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Duration) error {
 	return retry.WithTimeout(ctx, sshAttemptInteval, waitTime, func() error {
-		return IsSSHable(ctx, args, resourceName)
+		return IsSSHable(ctx, run)
 	}, "wait to ssh access")
 }
 
 // matchCrosSystemValueToExpectation reads value from crossystem and compared to expected value.
-func matchCrosSystemValueToExpectation(ctx context.Context, args *execs.RunArgs, subcommand string, expectedValue string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "crossystem "+subcommand)
-	if r.ExitCode != 0 {
-		return errors.Reason("match crossystem value to expectation: fail read %s. fail with code: %d, %q", subcommand, r.ExitCode, r.Stderr).Err()
+func matchCrosSystemValueToExpectation(ctx context.Context, run execs.Runner, subcommand string, expectedValue string) error {
+	out, err := run(ctx, "crossystem "+subcommand)
+	if err != nil {
+		return errors.Annotate(err, "match crossystem value to expectation: fail read %s", subcommand).Err()
 	}
-	actualValue := strings.TrimSpace(r.Stdout)
+	actualValue := strings.TrimSpace(out)
 	if actualValue != expectedValue {
 		return errors.Reason("match crossystem value to expectation: %q, found: %q", expectedValue, actualValue).Err()
 	}

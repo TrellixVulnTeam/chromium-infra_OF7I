@@ -29,19 +29,19 @@ func GetUSBDrivePathOnDut(ctx context.Context, args *execs.RunArgs) (string, err
 	if _, err := ServodCallSet(ctx, args, servod.ImageUsbkeyDirection, servod.ImageUsbkeyTowardsDUT); err != nil {
 		return "", errors.Annotate(err, "get usb drive path on dut: could not switch USB to DUT").Err()
 	}
+	run := args.NewRunner(args.DUT.Name)
 	// A detection delay is required when attaching this USB drive to DUT
 	time.Sleep(usbDetectionDelay * time.Second)
-	r := args.Access.Run(ctx, args.DUT.Name, "ls /dev/sd[a-z]")
-	if r.ExitCode == 0 {
-		for _, p := range strings.Split(strings.TrimSpace(r.Stdout), "\n") {
-			cmd := fmt.Sprintf(". /usr/share/misc/chromeos-common.sh; get_device_type %s", p)
-			newResult := args.Access.Run(ctx, args.DUT.Name, cmd)
-			if newResult.ExitCode != 0 {
-				return "", errors.Reason("get usb drive path on dut: could not check %q", p).Err()
+	if out, err := run(ctx, "ls /dev/sd[a-z]"); err != nil {
+		return "", errors.Annotate(err, "get usb drive path on dut").Err()
+	} else {
+		for _, p := range strings.Split(out, "\n") {
+			dtOut, dtErr := run(ctx, fmt.Sprintf(". /usr/share/misc/chromeos-common.sh; get_device_type %s", p))
+			if dtErr != nil {
+				return "", errors.Annotate(dtErr, "get usb drive path on dut: could not check %q", p).Err()
 			}
-			if strings.TrimSpace(newResult.Stdout) == "USB" {
-				fdiskResult := args.Access.Run(ctx, args.DUT.Name, fmt.Sprintf("fdisk -l %s", p))
-				if fdiskResult.ExitCode == 0 {
+			if dtOut == "USB" {
+				if _, fErr := run(ctx, fmt.Sprintf("fdisk -l %s", p)); fErr == nil {
 					return p, nil
 				} else {
 					log.Debug(ctx, "Get USB-drive path on dut: checked candidate usb drive path %q and found it incorrect.", p)

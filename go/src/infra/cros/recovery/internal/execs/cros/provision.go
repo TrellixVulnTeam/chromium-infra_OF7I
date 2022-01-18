@@ -23,7 +23,7 @@ const (
 
 // updateProvisionedCrosVersionExec reads OS version from the DUT for provisioned info.
 func updateProvisionedCrosVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	version, err := releaseBuildPath(ctx, args.DUT.Name, args)
+	version, err := releaseBuildPath(ctx, args.NewRunner(args.DUT.Name))
 	if err != nil {
 		return errors.Annotate(err, "read os version").Err()
 	}

@@ -6,7 +6,6 @@ package cros
 
 import (
 	"context"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -20,11 +19,11 @@ const (
 
 // updateSerialNumberToInvExec updates serial number in DUT-info.
 func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, readSerialNumberCommand)
-	if r.ExitCode != 0 {
-		return errors.Reason("update serial number in DUT-info: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	sn, err := run(ctx, readSerialNumberCommand)
+	if err != nil {
+		return errors.Annotate(err, "update serial number in DUT-info").Err()
 	}
-	sn := strings.TrimSpace(r.Stdout)
 	if sn == "" {
 		return errors.Reason("update serial number in DUT-info: is empty").Err()
 	}
@@ -35,12 +34,12 @@ func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actio
 
 // matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
 func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, readSerialNumberCommand)
-	if r.ExitCode != 0 {
-		return errors.Reason("match serial number to inventory: failed with code: %d and %q", r.ExitCode, r.Stderr).Err()
+	run := args.NewRunner(args.ResourceName)
+	actualSerialNumber, err := run(ctx, readSerialNumberCommand)
+	if err != nil {
+		return errors.Annotate(err, "match serial number to inventory").Err()
 	}
 	expectedSerialNumber := args.DUT.SerialNumber
-	actualSerialNumber := strings.TrimSpace(r.Stdout)
 	if actualSerialNumber != expectedSerialNumber {
 		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, actualSerialNumber).Err()
 	}

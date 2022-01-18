@@ -21,7 +21,7 @@ const (
 
 // matchCrosVersionToInvExec matches the cros-version match version on the DUT.
 func matchCrosVersionToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	osFromDUT, err := releaseBuildPath(ctx, args.ResourceName, args)
+	osFromDUT, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
 	if err != nil {
 		return errors.Annotate(err, "match cros version to inventory").Err()
 	}
@@ -53,7 +53,7 @@ func matchJobRepoURLVersionToInvExec(ctx context.Context, args *execs.RunArgs, a
 		log.Info(ctx, "job repo url is empty, skipping check")
 		return nil
 	}
-	osFromDUT, err := releaseBuildPath(ctx, args.ResourceName, args)
+	osFromDUT, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
 	if err != nil {
 		return errors.Annotate(err, "match cros version to inventory").Err()
 	}

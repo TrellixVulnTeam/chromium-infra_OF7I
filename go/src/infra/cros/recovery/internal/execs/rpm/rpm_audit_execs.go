@@ -26,7 +26,7 @@ func rpmAuditExec(ctx context.Context, args *execs.RunArgs, actionArgs []string)
 	if err := rpmPowerOnExec(ctx, args, actionArgs); err != nil {
 		return errors.Annotate(err, "rpm audit").Err()
 	}
-	if err := cros.WaitUntilSSHable(ctx, args, args.ResourceName, cros.NormalBootingTime); err != nil {
+	if err := cros.WaitUntilSSHable(ctx, args.NewRunner(args.ResourceName), cros.NormalBootingTime); err != nil {
 		args.DUT.RPMOutlet.State = tlw.RPMStateWrongConfig
 		return errors.Annotate(err, "rpm audit: resource did not booted").Err()
 	}

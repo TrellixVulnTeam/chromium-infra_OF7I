@@ -83,11 +83,10 @@ func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *execs.RunArg
 	if _, err := ServodCallSet(ctx, args, "power_state", "rec"); err != nil {
 		return errors.Annotate(err, "servod boot in recovery-mode").Err()
 	}
+	run := args.NewRunner(args.DUT.Name)
 	return retry.WithTimeout(ctx, 10*time.Second, usbkeyBootTimeout, func() error {
-		if r := args.Access.Run(ctx, args.DUT.Name, "true"); r.ExitCode != 0 {
-			return errors.Reason("servod boot in recovery-mode: check ssh access, code: %d, %s", r.ExitCode, r.Stderr).Err()
-		}
-		return nil
+		_, err := run(ctx, "true")
+		return errors.Annotate(err, "servod boot in recovery-mode: check ssh access").Err()
 	}, "servod boot in recovery-mode: check ssh access")
 }
 

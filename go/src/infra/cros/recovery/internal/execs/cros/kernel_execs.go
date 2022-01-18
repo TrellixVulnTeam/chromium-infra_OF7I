@@ -15,7 +15,7 @@ import (
 
 // kernelBootPriorityChangedExec checks if kernel priority changed.
 func kernelBootPriorityChangedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	yes, err := IsKernelPriorityChanged(ctx, args.DUT.Name, args.Access)
+	yes, err := IsKernelPriorityChanged(ctx, args.NewRunner(args.DUT.Name))
 	if err != nil {
 		return errors.Annotate(err, "kernel boot priority changed").Err()
 	}
@@ -28,7 +28,7 @@ func kernelBootPriorityChangedExec(ctx context.Context, args *execs.RunArgs, act
 
 // kernelBootPriorityPersistExec checks if kernel priority has not changed.
 func kernelBootPriorityPersistExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	yes, err := IsKernelPriorityChanged(ctx, args.DUT.Name, args.Access)
+	yes, err := IsKernelPriorityChanged(ctx, args.NewRunner(args.DUT.Name))
 	if err != nil {
 		return errors.Annotate(err, "kernel boot priority persist").Err()
 	}

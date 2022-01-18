@@ -7,7 +7,6 @@ package cros
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -28,19 +27,19 @@ const (
 
 // createServoInUseFlagExec creates servo in-use flag file.
 func createServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf(inUseFlagFileCreateSingleGlob, args.DUT.ServoHost.ServodPort))
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Create in-use flag file: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	run := args.NewRunner(args.ResourceName)
+	if _, err := run(ctx, fmt.Sprintf(inUseFlagFileCreateSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+		// Print finish result as we ignore any errors.
+		log.Debug(ctx, "Create in-use flag file: %s", err)
+	}
 	return nil
 }
 
 // hasNoServoInUseExec fails if any servo is in-use now.
 func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	run := args.NewRunner(args.ResourceName)
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
-	r := args.Access.Run(ctx, args.ResourceName, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
-	// Ignore exit code as if it fail to execute that mean no flag files.
-	log.Debug(ctx, "Has no servo is-use: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
-	v := strings.TrimSpace(r.Stdout)
+	v, _ := run(ctx, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
 	if v == "" {
 		log.Debug(ctx, "Does not have any servo in-use.")
 		return nil
@@ -50,9 +49,11 @@ func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 
 // removeServoInUseFlagExec removes servo in-use flag file.
 func removeServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.DUT.ServoHost.Name, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, args.DUT.ServoHost.ServodPort))
-	// Print finish result as we ignore any errors.
-	log.Debug(ctx, "Remove in-use file flag: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
+	run := args.NewRunner(args.DUT.ServoHost.Name)
+	if _, err := run(ctx, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+		// Print finish result as we ignore any errors.
+		log.Debug(ctx, "Remove in-use file flag: %s", err)
+	}
 	return nil
 }
 

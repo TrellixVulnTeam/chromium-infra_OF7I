@@ -23,12 +23,9 @@ const (
 
 // cleanTmpOwnerRequestExec cleans tpm owner requests.
 func cleanTmpOwnerRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.Access.Run(ctx, args.ResourceName, "crossystem clear_tpm_owner_request=1")
-	log.Debug(ctx, "Clean TMP before reboot: finished with code: %d, error: %s", r.ExitCode, r.Stderr)
-	if r.ExitCode != 0 {
-		return errors.Reason("clear tpm owner request: finished with code: %d, error: %s", r.ExitCode, r.Stderr).Err()
-	}
-	return nil
+	run := args.NewRunner(args.ResourceName)
+	_, err := run(ctx, "crossystem clear_tpm_owner_request=1")
+	return errors.Annotate(err, "clear tpm owner request").Err()
 }
 
 // validateUptime validate that host is up for more than 6 hours.
@@ -43,7 +40,7 @@ func validateUptime(ctx context.Context, args *execs.RunArgs, actionArgs []strin
 			maxUptime = d
 		}
 	}
-	dur, err := uptime(ctx, args.ResourceName, args)
+	dur, err := uptime(ctx, args.NewRunner(args.ResourceName))
 	if err != nil {
 		return errors.Annotate(err, "validate uptime").Err()
 	}
@@ -61,10 +58,11 @@ const (
 // allowedRebootExec checks if DUT is allowed to reboot.
 // If system has /tmp/no_reboot file then reboot is not allowed.
 func allowedRebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	run := args.NewRunner(args.ResourceName)
 	cmd := fmt.Sprintf("test %s", noRebootFlagFile)
-	r := args.Access.Run(ctx, args.ResourceName, cmd)
-	if r.ExitCode != 0 {
-		return errors.Reason("has no-reboot request: failed with code: %d, error: %s", r.ExitCode, r.Stderr).Err()
+	_, err := run(ctx, cmd)
+	if err != nil {
+		return errors.Annotate(err, "has no-reboot request").Err()
 	}
 	log.Debug(ctx, "No-reboot request file found.")
 	return nil

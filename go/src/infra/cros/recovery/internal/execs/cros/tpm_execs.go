@@ -30,7 +30,7 @@ const (
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tpm_kernver may fail due to firmware rollback protection.
 func matchDevTPMKernelVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if err := matchCrosSystemValueToExpectation(ctx, args, tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
+	if err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm kernel version").Err()
 	}
 	return nil
@@ -42,7 +42,7 @@ func matchDevTPMKernelVersionExec(ctx context.Context, args *execs.RunArgs, acti
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tmp_fwver may fail due to firmware rollback protection.
 func matchDevTPMFirmwareVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if err := matchCrosSystemValueToExpectation(ctx, args, tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
+	if err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm firmware version").Err()
 	}
 	return nil

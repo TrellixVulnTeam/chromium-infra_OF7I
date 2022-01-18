@@ -7,7 +7,6 @@ package cros
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -45,10 +44,10 @@ const (
 // We consider state 1, and first scenario(check_enrollment=1) of state 3
 // as unacceptable state here as they may interfere with normal tests.
 func isEnrollmentInCleanStateExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	run := args.NewRunner(args.ResourceName)
 	command := fmt.Sprintf(`grep "check_enrollment" %s`, VPD_CACHE)
-	r := args.Access.Run(ctx, args.ResourceName, command)
-	if r.ExitCode == 0 {
-		result := strings.TrimSpace(r.Stdout)
+	result, err := run(ctx, command)
+	if err == nil {
 		log.Debug(ctx, "Enrollment state in VPD cache: %s", result)
 		if result != `"check_enrollment"="0"` {
 			return errors.Reason("enrollment in clean state: failed, The device is enrolled, it may interfere with some tests").Err()
@@ -57,7 +56,7 @@ func isEnrollmentInCleanStateExec(ctx context.Context, args *execs.RunArgs, acti
 	}
 	// In any case it returns a non zero value, it means we can't verify enrollment state, but we cannot say the device is enrolled
 	// Only trigger the enrollment in clean state when we can confirm the device is enrolled.
-	log.Error(ctx, "Unexpected error occured during verify enrollment state in VPD cache, skipping verify process.")
+	log.Error(ctx, "Unexpected error occurred during verify enrollment state in VPD cache, skipping verify process.")
 	return nil
 }
 
