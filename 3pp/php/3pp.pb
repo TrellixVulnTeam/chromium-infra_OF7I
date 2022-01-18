@@ -9,7 +9,7 @@ create {
   }
 
   build {
-    dep: "tools/httpd"
+    dep: "static_libs/httpd"
     dep: "static_libs/zlib"
   }
 }
