@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
@@ -144,7 +145,7 @@ func (b *publicBuildspec) CreatePublicBuildspecs(ctx context.Context, gsClient g
 		if b.readFromManifestVersions {
 			// If legacy, also fetch list of existing external buildspecs.
 			legacyExternalBuildspecs, err := gerritClient.ListFiles(ctx, chromeExternalHost, externalManifestVersionsProject, "HEAD", watchPath)
-			if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "NotFound") {
 				LogErr(errors.Annotate(err, "failed to list external buildspecs for dir %s in %s, skipping...", watchPath, externalManifestVersionsProject).Err().Error())
 				errs = append(errs, err)
 				continue
