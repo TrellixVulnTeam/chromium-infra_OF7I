@@ -18,7 +18,6 @@ const servoRepairPlanBody = `
 	"servo_fw_need_update",
 	"servo_host_servod_start",
 	"servo_servod_echo_host",
-	"servod_get_serialname",
 	"servo_connection_pins",
 	"servo_dut_detected",
 	"servod_servo_pd",
@@ -51,7 +50,15 @@ const servoRepairPlanBody = `
 		"exec_name":"dut_has_name"
 	},
 	"servod_info": {
-		"docs" : ["Verify that servo port is available, and servo serial is readable (only for non-servo-v3)."],
+		"docs" : ["Verify that servo port is available, and servo serial is readable.",
+					"This is applicable only if the servo version is not V3."],
+		"conditions": [
+			"is_not_servo_v3"
+		],
+		"dependencies": [
+			"servo_servod_port_present",
+			"servod_get_serialname"
+		],
 		"exec_name":"sample_pass"
 	},
 	"init_docker_host": {
