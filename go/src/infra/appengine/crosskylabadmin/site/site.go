@@ -47,7 +47,8 @@ func SecretsDir() string {
 var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
 
 // Major is the Major version number
-const Major = 1
+// See b:215410393 for context behind bumping the version.
+const Major = 4
 
 // Minor is the Minor version number
 const Minor = 0
