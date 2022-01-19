@@ -19,7 +19,7 @@ import {ReactAutocomplete, MAX_AUTOCOMPLETE_OPTIONS}
   fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
 };
 
-xdescribe('ReactAutocomplete', () => {
+describe('ReactAutocomplete', () => {
   it('renders', async () => {
     const {container} = render(<ReactAutocomplete label="cool" options={[]} />);
 
@@ -139,6 +139,27 @@ xdescribe('ReactAutocomplete', () => {
 
     fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
     assert.strictEqual(input?.value, 'foobar');
+  });
+
+  it('filterOptions matching prefix first', async () => {
+    const options = [`a_test`, `test`];
+
+    const {container} = render(<ReactAutocomplete
+      label="cool"
+      options={options}
+    />);
+
+    const input = container.querySelector('input');
+    assert.isNotNull(input);
+    if (!input) return;
+
+    userEvent.type(input, 'tes');
+
+    const results = document.querySelectorAll('.autocomplete-option');
+
+    fireEvent.keyDown(input, {key: 'Enter', code: 'Enter'});
+
+    assert.strictEqual(input?.value, 'test');
   });
 
   it('onChange callback is called', async () => {

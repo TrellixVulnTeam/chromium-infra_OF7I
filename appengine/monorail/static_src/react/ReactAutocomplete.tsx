@@ -86,12 +86,20 @@ function _filterOptions<T>(getOptionDescription: (option: T) => string) {
     if (!inputValue.length) {
       return [];
     }
+    const prefixMatch = (option: T) => {
+      const label = getOptionLabel(option);
+      return label.substring(0, inputValue.length).toLowerCase() === inputValue.toLowerCase();
+    }
+    const prefixMatchOptions = options.filter(prefixMatch);
+
+    const prefixMatchOptionsSet = new Set(prefixMatchOptions);
     const regex = _matchRegex(inputValue);
     const predicate = (option: T) => {
-      return getOptionLabel(option).match(regex) ||
-        getOptionDescription(option).match(regex);
+      return !prefixMatchOptionsSet.has(option) && (getOptionLabel(option).match(regex) ||
+        getOptionDescription(option).match(regex));
     }
-    return options.filter(predicate).slice(0, MAX_AUTOCOMPLETE_OPTIONS);
+    const matchOptions = options.filter(predicate);
+    return [...prefixMatchOptions, ...matchOptions].slice(0, MAX_AUTOCOMPLETE_OPTIONS);
   }
 }
 
