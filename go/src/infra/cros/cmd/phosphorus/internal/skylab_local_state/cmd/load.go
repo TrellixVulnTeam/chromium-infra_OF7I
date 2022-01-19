@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"infra/cros/cmd/phosphorus/internal/botcache"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/inv"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
@@ -30,6 +29,8 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
+
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
@@ -310,6 +311,7 @@ func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.Auto
 
 // getFullHostInfo aggregates data from local and admin services state into one hostinfo object
 func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
+	var hostInfo *skylab_local_state.AutotestHostInfo
 	useDutTopo := os.Getenv("USE_DUT_TOPO")
 	if strings.ToLower(useDutTopo) == "true" {
 		dutTopo, err := getDUTTopology(ctx, dut)
@@ -320,9 +322,17 @@ func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutSta
 			fmt.Println("Error getting DUT topology: ", err.Error())
 			return nil, errors.Annotate(err, "get dut topology").Err()
 		}
+
+		hostInfo, err = convertDutTopologyToHostInfo(dutTopo)
+		if err != nil {
+			return nil, errors.Annotate(err, "convert dut topology to host info").Err()
+		}
+		// Output hostInfo to stdout during development
+		log.Printf(proto.MarshalTextString(hostInfo))
+	} else {
+		hostInfo = hostInfoFromDutInfo(dut)
+		addDutStateToHostInfo(hostInfo, dutState)
 	}
-	hostInfo := hostInfoFromDutInfo(dut)
-	addDutStateToHostInfo(hostInfo, dutState)
 	return hostInfo, nil
 }
 
@@ -337,4 +347,85 @@ func createDutTopology(duts []*inventory.DeviceUnderTest) []*skylab_local_state.
 		})
 	}
 	return dt
+}
+
+// convert dut topology to host info.
+func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_state.AutotestHostInfo, error) {
+	// Should always have one dut info as this being called for each dut individually.
+	if len(dutTopo.Duts) != 1 {
+		return nil, fmt.Errorf("Exactly one dut expected but found %d.", len(dutTopo.Duts))
+	}
+	dut := dutTopo.Duts[0].GetChromeos()
+
+	// Add attributes
+	var attrMap map[string]string
+	// Attributes will be added later
+
+	// Add labels
+	var labels []string
+
+	// - Servo
+	servo := dut.GetServo()
+	if servo != nil {
+		if servo.GetPresent() {
+			labels = append(labels, "servo")
+		}
+	}
+
+	// - Chameleon
+	chameleon := dut.GetChameleon()
+	if chameleon != nil {
+		labels = append(labels, "chameleon")
+
+		if chameleon.AudioBoard {
+			labels = append(labels, "audio_board")
+		}
+
+		for _, v := range chameleon.GetPeripherals() {
+			lv := "chameleon:" + strings.ToLower(v.String())
+			labels = append(labels, lv)
+		}
+	}
+
+	// - RPM
+	// - ExternalCamera
+
+	// - Audio
+	audio := dut.GetAudio()
+	if audio != nil {
+		if audio.GetAtrus() {
+			labels = append(labels, "atrus")
+		}
+	}
+
+	// - Wifi
+	wifi := dut.GetWifi()
+	if wifi != nil {
+		labels = append(labels, "wificell")
+	}
+
+	// - Touch
+	touch := dut.GetTouch()
+	if touch != nil {
+		if touch.GetMimo() {
+			labels = append(labels, "mimo")
+		}
+	}
+
+	// - Camerabox
+	camerabox := dut.GetCamerabox()
+	if camerabox != nil {
+		facing := camerabox.GetFacing()
+		labels = append(labels, "camerabox_facing:"+strings.ToLower(facing.String()))
+	}
+
+	// - Cable
+	// - Cellular
+
+	return &skylab_local_state.AutotestHostInfo{
+		Attributes:        attrMap,
+		Labels:            labels,
+		SerializerVersion: currentSerializerVersion,
+	}, nil
+
 }
