@@ -15,12 +15,13 @@
 package main
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	_ "embed"
 )
 
 // This compiles `task.cfg` into the final program as a []byte
@@ -48,11 +49,23 @@ func RunInNsjail(command []string) error {
 	cmdConfig := append([]string{"--config", configName}, command...)
 	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
 
-	// TODO(yulanlin): handle log output properly
-	_, err = nsjailCmd.CombinedOutput()
+	nsjailCmd.Stdin = os.Stdin
+	nsjailCmd.Stdout = os.Stdout
+	nsjailCmd.Stderr = os.Stderr
 
-	if err != nil {
+	if err := nsjailCmd.Start(); err != nil {
 		return fmt.Errorf("problem running nsjail: %s", err.Error())
+	}
+
+	// Not closing stdout/stderr because we expect the wrapper's
+	// output to mingle with subprocess output, and when the
+	// wrapper process exits the system will close them anyways.
+	if err := os.Stdin.Close(); err != nil {
+		return fmt.Errorf("closing stdin: %s", err.Error())
+	}
+
+	if err := nsjailCmd.Wait(); err != nil {
+		return fmt.Errorf("nsjail completed with error: %s", err.Error())
 	}
 
 	return nil
