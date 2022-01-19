@@ -4,8 +4,10 @@
 
 from contextlib import contextmanager
 
+from recipe_engine import post_process
 from recipe_engine.recipe_api import InfraFailure
 from recipe_engine.recipe_api import Property
+from recipe_engine.recipe_api import StepFailure
 from recipe_engine.config import List
 
 DEPS = [
@@ -162,7 +164,7 @@ def PlatformSdk(api, platforms):
     is_64bit = all((p.startswith('windows-x64') for p in platforms))
     is_32bit = all((p.startswith('windows-x86') for p in platforms))
     if is_64bit == is_32bit:
-      raise ValueError(
+      raise StepFailure(
           'Must specify either 32-bit or 64-bit windows platforms.')
     target_arch = 'x64' if is_64bit else 'x86'
     sdk = api.windows_sdk(target_arch=target_arch)
@@ -197,10 +199,17 @@ def GenTests(api):
       'win-32and64bit',
       api.platform('win', 64) +
       api.properties(platforms=['windows-x64', 'windows-x86']) +
-      api.expect_exception('ValueError'))
+      api.post_process(
+          post_process.ResultReasonRE,
+          'Must specify either 32-bit or 64-bit windows platform.') +
+      api.post_process(post_process.DropExpectation))
   # Must explicitly specify the platforms to build on Windows.
-  yield api.test('win-noplatforms',
-                 api.platform('win', 64) + api.expect_exception('ValueError'))
+  yield api.test(
+      'win-noplatforms',
+      api.platform('win', 64) + api.post_process(
+          post_process.ResultReasonRE,
+          'Must specify either 32-bit or 64-bit windows platform.') +
+      api.post_process(post_process.DropExpectation))
 
   yield api.test(
       'trybot non-wheels file CL',
