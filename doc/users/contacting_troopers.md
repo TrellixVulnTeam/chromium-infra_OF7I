@@ -55,16 +55,21 @@ as well as the builder name (Builder: win-archive-rel) when applicable.
 
 Priorities are set using the `Pri=N` label. Use the following as your guideline:
 
-*   Pri-0: Immediate attention desired.  The trooper will stop everything they are
-    doing and investigate.
+*   **Pri-0**: Immediate attention desired. The owner will stop everything they
+    are doing and investigate.
+    *   These reserved for massive outages, release blocking or multi-developer
+        blocking productivity issues.
     *   Examples: CQ no longer committing changes.
-*   Pri-1: Resolution desired within an hour or two.
-    * Examples: disk full on device, device offline, sheriff-o-matic data stale.
-*   Pri-2: Should be handled today.
-*   Pri-3: Non-urgent. If the trooper cannot get to this today due to other
-    incidents, it is ok to wait.
-    *   Examples: Large change that will need trooper assistance, aka,
-        "I'd like to land this gigantic change that may break the world"</span>
+*   **Pri-1**: Respond within 24 hours, resolution within 1 week
+    *   These are non-P0 blocking issues that need attention from a Trooper
+    *   Examples: disk full on device, device offline, pending time high issues.
+*   **Pri-2**: Respond within 1 week, resolution is variable, depending on the issue
+    *   These are non-blocking issues or requests that need attention from a Trooper
+    *   Examples: Non-blocking bugs or feature improvement suggestions
+*   **Pri-3**: Non-urgent. It is ok to wait or unassign.
+    *   These are non-urgent issues or nice to have changes.
+    *   Examples: Large change that will require major infrastructure changes or
+        something that is a moonshot.
 
 ## Life of a Request
 
