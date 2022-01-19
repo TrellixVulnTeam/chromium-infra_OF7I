@@ -23,7 +23,7 @@ type Access interface {
 	// Ping performs ping by resource name.
 	Ping(ctx context.Context, resourceName string, count int) error
 	// Run executes command on device by SSH related to resource name.
-	Run(ctx context.Context, resourceName, command string) *RunResult
+	Run(ctx context.Context, req *RunRequest) *RunResult
 	// InitServod initiates servod daemon on servo-host.
 	InitServod(ctx context.Context, req *InitServodRequest) error
 	// StopServod stops servod daemon on servo-host.

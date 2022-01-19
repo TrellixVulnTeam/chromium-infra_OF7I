@@ -1,0 +1,17 @@
+// Copyright 2022 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chromeos.recovery;
+
+option go_package = "infra/cros/recovery/tlw;tlw";
+
+// RunRequest represents result of executed command.
+message RunRequest {
+  // Resource name
+  string resource = 1;
+  // Command executed on the resource.
+  string command = 2;
+}

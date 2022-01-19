@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
 var (
@@ -48,7 +49,10 @@ type Runner func(context.Context, string) (string, error)
 func (args *RunArgs) NewRunner(host string) Runner {
 	runner := func(ctx context.Context, cmd string) (string, error) {
 		log.Debug(ctx, "Run command %q", cmd)
-		r := args.Access.Run(ctx, host, cmd)
+		r := args.Access.Run(ctx, &tlw.RunRequest{
+			Resource: host,
+			Command:  cmd,
+		})
 		exitCode := r.ExitCode
 		if exitCode != 0 {
 			errAnnotator := errors.Reason("runner: command %q completed with exit code %d", cmd, r.ExitCode)

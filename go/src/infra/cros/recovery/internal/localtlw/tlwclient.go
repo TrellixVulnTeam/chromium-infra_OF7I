@@ -112,23 +112,23 @@ func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) er
 }
 
 // Run executes command on device by SSH related to resource name.
-func (c *tlwClient) Run(ctx context.Context, resourceName, command string) *tlw.RunResult {
-	dut, err := c.getDevice(ctx, resourceName)
+func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult {
+	dut, err := c.getDevice(ctx, req.GetResource())
 	if err != nil {
 		return &tlw.RunResult{
-			Command:  command,
+			Command:  req.GetCommand(),
 			ExitCode: -1,
 			Stderr:   err.Error(),
 		}
 	}
-	if c.isServoHost(resourceName) && isServodContainer(dut) {
+	if c.isServoHost(req.GetResource()) && isServodContainer(dut) {
 		return &tlw.RunResult{
-			Command:  command,
+			Command:  req.GetCommand(),
 			ExitCode: -1,
 			Stderr:   "Running commands on servod container is not supported yet!",
 		}
 	}
-	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(resourceName), command)
+	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), req.GetCommand())
 }
 
 // InitServod initiates servod daemon on servo-host.
