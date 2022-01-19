@@ -23,11 +23,10 @@ type Options struct {
 type DoFunc func() error
 
 var (
-	// LongerOpts gives a longer timeout than default to for gitiles quota
-	// issues (~5 minutes).
-	LongerOpts = Options{BaseDelay: 5 * time.Second, BackoffBase: 2.0, Retries: 5}
-	// DefaultOpts is the default timeout (~30 seconds).
-	DefaultOpts = Options{BaseDelay: time.Second, BackoffBase: 2.0, Retries: 5}
+	// LongerOpts gives a longer timeout than default to for quota issues (~15 minutes).
+	LongerOpts = Options{BaseDelay: 30 * time.Second, BackoffBase: 2.0, Retries: 5}
+	// DefaultOpts is the default timeout (~5 minutes).
+	DefaultOpts = Options{BaseDelay: 10 * time.Second, BackoffBase: 2.0, Retries: 5}
 )
 
 // DoWithRetry executes function doFunc. If there is an error, it will retry with a backoff delay
