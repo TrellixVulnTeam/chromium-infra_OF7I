@@ -32,6 +32,9 @@ builder(
     execution_timeout = 10 * time.minute,
     schedule = "37 */3 * * *",  # every 3 hours
     triggers = ["publish_tarball"],
+    experiments = {
+        "luci.recipes.use_python3": 100,
+    },
 )
 
 builder(
@@ -41,6 +44,9 @@ builder(
     # Each trigger from 'publish_tarball_dispatcher' should result in a build.
     triggering_policy = scheduler.greedy_batching(max_batch_size = 1),
     triggers = ["Build From Tarball"],
+    experiments = {
+        "luci.recipes.use_python3": 100,
+    },
 )
 
 builder(
