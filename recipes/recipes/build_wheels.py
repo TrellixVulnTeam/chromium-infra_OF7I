@@ -10,6 +10,8 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.recipe_api import StepFailure
 from recipe_engine.config import List
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'depot_tools/gclient',
     'depot_tools/git',
@@ -92,7 +94,7 @@ def RunSteps(api, platforms, dry_run, rebuild):
           '--name-only',
           'HEAD~',
           name='git diff to find changed files',
-          stdout=api.raw_io.output()).stdout.split()
+          stdout=api.raw_io.output_text()).stdout.split()
       assert (files != [])
       # Avoid rebuilding everything if only the wheel specs have changed.
       if all(api.path.basename(p) in {'wheels.py', 'wheels.md'} for p in files):
@@ -105,7 +107,8 @@ def RunSteps(api, platforms, dry_run, rebuild):
         new_wheels = run_wheel_json('compute new wheels.json')
 
         patch_commit = api.git(
-            'rev-parse', 'HEAD', stdout=api.raw_io.output()).stdout.strip()
+            'rev-parse', 'HEAD',
+            stdout=api.raw_io.output_text()).stdout.strip()
         api.git('checkout', 'HEAD~', name='git checkout previous revision')
 
         old_wheels = run_wheel_json('compute old wheels.json')
@@ -218,7 +221,8 @@ def GenTests(api):
       api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
       api.override_step_data(
           'git diff to find changed files',
-          stdout=api.raw_io.output('infra/tools/dockerbuild/wheel_wheel.py')))
+          stdout=api.raw_io.output_text(
+              'infra/tools/dockerbuild/wheel_wheel.py')))
 
   yield api.test(
       'trybot wheels only CL',
@@ -227,7 +231,7 @@ def GenTests(api):
       api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
       api.override_step_data(
           'git diff to find changed files',
-          stdout=api.raw_io.output('infra/tools/dockerbuild/wheels.py')) +
+          stdout=api.raw_io.output_text('infra/tools/dockerbuild/wheels.py')) +
       api.override_step_data(
           'compute old wheels.json',
           stdout=api.json.output([{
@@ -257,7 +261,7 @@ def GenTests(api):
       api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
       api.override_step_data(
           'git diff to find changed files',
-          stdout=api.raw_io.output('infra/tools/dockerbuild/wheels.py')) +
+          stdout=api.raw_io.output_text('infra/tools/dockerbuild/wheels.py')) +
       api.override_step_data(
           'compute old wheels.json',
           stdout=api.json.output([{
