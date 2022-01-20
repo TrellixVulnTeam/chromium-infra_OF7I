@@ -322,7 +322,8 @@ message Paris {
 //  "enable": True,
 //  "optin_all_duts": False,
 //  "optin_dut_pool": [ "a", "b" ],
-//  "rollout_permille": 50
+//  "rollout_permille": 50,
+//  "ufs_error_policy": "strict",
 // }
 message RolloutConfig {
   // Enable is set to true when recovery is enabled at all. If it is set to false, the entire
@@ -338,6 +339,15 @@ message RolloutConfig {
   // Rollout_permille is the probability (multiplied by 1000) that we use the new flow for a DUT if
   // we are permitted to repair the device in question by the other settings in the config file.
   int32 rollout_permille = 4;
+
+  // The UFS_error_policy controls what happens if we encounter a UFS error at the beginning of launching a task.
+  // The valid values are:
+  //  - "default" or "" or "fallback" -- Fall back to the legacy path in the event of a UFS error.
+  //  - "lax"                         -- In cases where the pool is not needed to route the task, do not fail the request because of UFS errors.
+  //  - "strict"                      -- Whether we need the data or not, fail the request if there's a UFS error.
+  //
+  /// TODO(gregorynisbet): Remove this option and adopt the strict policy once the dependency on UFS stabilizes.
+  string ufs_error_policy = 5;
 };
 
 // UFSConfig contains information about UFS, such as its hostname.
