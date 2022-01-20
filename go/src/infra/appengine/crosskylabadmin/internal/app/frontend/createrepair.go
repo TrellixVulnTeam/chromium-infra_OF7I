@@ -64,8 +64,12 @@ func RouteRepairTask(ctx context.Context, botID string, expectedState string, po
 		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
 	if heuristics.LooksLikeLabstation(botID) {
-		out, reason := routeLabstationRepairTask(config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
-		logging.Infof(ctx, "Sending labstation repair to %q because %s", out, reason)
+		out, r := routeLabstationRepairTask(config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
+		reason, ok := reasonMessageMap[r]
+		if !ok {
+			logging.Infof(ctx, "Unrecognized reason %d", int64(r))
+		}
+		logging.Infof(ctx, "Sending labstation repair to %q because %q", out, reason)
 		return out, nil
 	}
 	logging.Infof(ctx, "Non-labstations always use legacy flow")
