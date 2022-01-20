@@ -100,11 +100,11 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 func routeLabstationRepairTask(r *config.RolloutConfig, pools []string, randFloat float64) (string, reason) {
 	// Check that the feature is enabled at all.
 	if !r.GetEnable() {
-		return "", parisNotEnabled
+		return legacy, parisNotEnabled
 	}
 	// Check for malformed input data that would cause us to be unable to make a decision.
 	if len(pools) == 0 {
-		return "", noPools
+		return legacy, noPools
 	}
 	// Happy path.
 	if r.GetOptinAllDuts() {
@@ -112,16 +112,16 @@ func routeLabstationRepairTask(r *config.RolloutConfig, pools []string, randFloa
 	}
 	threshold := r.GetRolloutPermille()
 	if threshold == 0 {
-		return "", thresholdZero
+		return legacy, thresholdZero
 	}
 	if len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
-		return "", wrongPool
+		return legacy, wrongPool
 	}
 	myValue := math.Round(1000.0 * randFloat)
 	if myValue >= float64(threshold) {
 		return paris, scoreExceedsThreshold
 	}
-	return "", scoreTooLow
+	return legacy, scoreTooLow
 }
 
 // CreateBuildbucketRepairTask creates a new repair task for a labstation. Not yet implemented.

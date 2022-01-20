@@ -105,7 +105,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			in:        nil,
 			randFloat: 0.5,
 			pools:     nil,
-			out:       "",
+			out:       legacy,
 			reason:    parisNotEnabled,
 		},
 		{
@@ -116,7 +116,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			randFloat: 0.5,
 			pools:     []string{"some pool"},
-			out:       "paris",
+			out:       paris,
 			reason:    allLabstationsAreOptedIn,
 		},
 		{
@@ -127,7 +127,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     nil,
 			randFloat: 1,
-			out:       "",
+			out:       legacy,
 			reason:    noPools,
 		},
 		{
@@ -138,7 +138,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0,
-			out:       "",
+			out:       legacy,
 			reason:    thresholdZero,
 		},
 		{
@@ -150,7 +150,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
-			out:       "paris",
+			out:       paris,
 			reason:    allLabstationsAreOptedIn,
 		},
 		{
@@ -162,7 +162,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
-			out:       "paris",
+			out:       paris,
 			reason:    scoreExceedsThreshold,
 		},
 		{
@@ -173,7 +173,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
-			out:       "",
+			out:       legacy,
 			reason:    scoreTooLow,
 		},
 		{
@@ -186,7 +186,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"paris"},
 			randFloat: 0.5,
-			out:       "paris",
+			out:       paris,
 			reason:    scoreExceedsThreshold,
 		},
 		{
@@ -199,7 +199,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			pools:     []string{"NOT PARIS"},
 			randFloat: 0.5,
-			out:       "",
+			out:       legacy,
 			reason:    wrongPool,
 		},
 	}
@@ -244,7 +244,7 @@ func TestRouteRepairTask(t *testing.T) {
 			botID:         "foo-labstation1",
 			expectedState: "ready",
 			randFloat:     0.5,
-			out:           "",
+			out:           legacy,
 			hasErr:        false,
 		},
 		{
@@ -259,7 +259,7 @@ func TestRouteRepairTask(t *testing.T) {
 			expectedState: "ready",
 			pools:         []string{"some-pool"},
 			randFloat:     1,
-			out:           "paris",
+			out:           paris,
 			hasErr:        false,
 		},
 		{
@@ -273,7 +273,7 @@ func TestRouteRepairTask(t *testing.T) {
 			expectedState: "ready",
 			pools:         nil,
 			randFloat:     1,
-			out:           "",
+			out:           legacy,
 			hasErr:        false,
 		},
 	}
