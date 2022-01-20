@@ -67,8 +67,8 @@ func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []st
 }
 
 // AsInt returns the value for the passed key as a int.
-func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string) int {
-	defaultValue := 0
+// @params defaultValue: if the value cannot be interpreted as int, then the passed in defaultValue is being returned.
+func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue int) int {
 	if value, ok := parsedArgs[key]; ok {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
