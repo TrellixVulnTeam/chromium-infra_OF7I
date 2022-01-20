@@ -129,6 +129,8 @@ led get-builder -canary 'luci.infra-internal.try:infra-internal-presubmit' | \
   led edit -p repo_name= -p runhooks | \
   # This is always experimental
   led edit -p '$recipe_engine/runtime={"is_experimental": true}' | \
+  # 3pp is py3-only
+  led edit -experiment luci.recipes.use_python3=true |
   # Add our isolated recipes
   led edit-recipe-bundle | \
   # Add 3pp properties

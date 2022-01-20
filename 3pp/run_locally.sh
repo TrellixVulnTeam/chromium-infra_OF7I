@@ -101,7 +101,7 @@ echo Using upload prefix: experimental/$CIPD_EMAIL
 rm -rf $WORKDIR/3pp
 
 set -x
-$REPO/recipes/recipes.py run --workdir $WORKDIR \
+RECIPES_USE_PY3=true $REPO/recipes/recipes.py run --workdir $WORKDIR \
   3pp \
   'package_locations=[{"repo": "file://'"$REPO"'", "ref": "HEAD", "subdir": "3pp"}]' \
   '$recipe_engine/runtime={"is_experimental": true}' \
