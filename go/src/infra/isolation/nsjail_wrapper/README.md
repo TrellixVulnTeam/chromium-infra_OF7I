@@ -24,6 +24,10 @@ This will include things like:
 -   namespacing
 -   seccomp-bpf filter
 
+## nsjail config notes
+
+Currently, the uid will be that of the calling user.
+
 ### Fulfilling the `luciexe` contract
 
 This includes things like:
