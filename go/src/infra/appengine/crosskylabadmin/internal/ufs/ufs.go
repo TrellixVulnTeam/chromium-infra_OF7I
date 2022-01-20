@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
 
+	"infra/appengine/crosskylabadmin/site"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -28,7 +29,7 @@ func NewUFSClient(ctx context.Context, hostname string) (ufsAPI.FleetClient, err
 	return ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    hostname,
-		Options: nil,
+		Options: site.DefaultPRPCOptions,
 	}), nil
 }
 
