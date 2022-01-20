@@ -169,6 +169,9 @@ class CoverageReportModifier(ndb.Model):
   # Gerrit hashtag to uniquely identify a feature.
   gerrit_hashtag = ndb.StringProperty(indexed=True)
 
+  # Author of a change
+  author = ndb.StringProperty(indexed=True)
+
   # Reference commit to generate coverage reports past a checkpoint.
   reference_commit = ndb.StringProperty(indexed=True)
 

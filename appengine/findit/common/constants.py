@@ -15,7 +15,8 @@ FLAKE_DETECTION_BACKEND = 'flake-detection-backend'
 DISABLED_TEST_BACKEND = 'disabled-test-backend'
 AUTO_ACTION_BACKEND = 'auto-action-backend'
 CODE_COVERAGE_BACKEND = 'code-coverage-backend'
-CODE_COVERAGE_FEATURE_COVERAGE_WORKER = 'code-coverage-feature-coverage-worker'
+CODE_COVERAGE_GERRIT_FILTER_COVERAGE_WORKER = (
+    'code-coverage-gerrit-filter-coverage-worker')
 CODE_COVERAGE_REFERENCED_COVERAGE_WORKER = (
     'code-coverage-referenced-coverage-worker')
 
@@ -31,8 +32,8 @@ FLAKE_DETECTION_MULTITASK_QUEUE = 'flake-detection-multitask-queue'
 DISABLED_TEST_DETECTION_QUEUE = 'disabled-test-detection-queue'
 DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
 FILES_ABSOLUTE_COVERAGE_QUEUE = 'files-absolute-coverage-queue'
-FEATURE_COVERAGE_QUEUE = 'feature-coverage-queue'
-ALL_FEATURE_COVERAGE_QUEUE = 'all-feature-coverage-queue'
+GERRIT_FILTER_COVERAGE_QUEUE = 'gerrit-filter-coverage-queue'
+ALL_GERRIT_FILTER_COVERAGE_QUEUE = 'all-gerrit-filter-coverage-queue'
 REFERENCED_COVERAGE_QUEUE = 'referenced-coverage-queue'
 # Waterfall-related.
 WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL = (

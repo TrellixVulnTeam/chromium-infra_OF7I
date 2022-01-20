@@ -72,8 +72,8 @@ cron:
   retry_parameters:
     job_retry_limit: 0
 
-- description: Query and export feature coverage metrics to bigquery.
-  url: /coverage/cron/all-feature-coverage
+- description: Query and export gerrit filter coverage metrics to bigquery.
+  url: /coverage/cron/all-gerrit-filter-coverage
   schedule: every day 17:00
   timezone: America/Los_Angeles
   retry_parameters:

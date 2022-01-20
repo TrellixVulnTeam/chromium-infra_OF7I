@@ -64,26 +64,30 @@ _EXPONENTIAL_BACKOFF_LIMIT_SECONDS = 2048
 _NO_ERROR_LOGGING_STATUSES = [404, 429]
 
 
-def _GetFeatureCommits(hashtag):
-  """Returns merged commits corresponding to a feature.
+def _GetCandidateCommits(modifier_id):
+  """Returns merged commits corresponding to a gerrit filter.
 
   Args:
-    hashtag (string): Gerrit hashtag corresponding to the feature.
+    modified_id (int): id of the CoverageReportModifier entity which would
+                      determine what commits are considered interesting
 
   Returns:
     Yields a dict which looks like
     {
-      'feature_commit' : c1
+      'candidate_commit' : c1
       'parent_commit': c2
       'files': list of files affected as part of the commit
       'cl_number': Change num of the gerrit CL
     }
-    where c1 is the commit_hash corresponding to a feature CL
-    submitted as part of the feature and c2 is the hash of the parent commit of
-    c1.
+    where c1 is the commit_hash corresponding to a gerrit filter
+    and c2 is the hash of the parent commit of c1.
   """
-  changes = code_coverage_util.FetchMergedChangesWithHashtag(
-      _CHROMIUM_GERRIT_HOST, _CHROMIUM_PROJECT, hashtag)
+  modifier = CoverageReportModifier.Get(modifier_id)
+  changes = code_coverage_util.FetchMergedChanges(
+      host=_CHROMIUM_GERRIT_HOST,
+      project=_CHROMIUM_PROJECT,
+      hashtag=modifier.gerrit_hashtag,
+      author=modifier.author)
   for change in changes:
     commit = change['current_revision']
     parent_commit = change['revisions'][commit]['commit']['parents'][0][
@@ -96,27 +100,27 @@ def _GetFeatureCommits(hashtag):
       files.append(file_name)
     cl_number = change['_number']
     yield {
-        'feature_commit': commit,
+        'candidate_commit': commit,
         'parent_commit': parent_commit,
         'files': files,
         'cl_number': cl_number
     }
 
 
-def _GetInterestingLines(latest_lines, feature_commit_lines,
+def _GetInterestingLines(latest_lines, candidate_commit_lines,
                          parent_commit_lines):
-  """Returns interesting_lines in latest_lines corresponding to a feature commit
+  """Returns interesting lines in latest_lines corresponding to candidate commit
 
-  interesting_lines are defined as lines, which were modified/added at feature
+  interesting_lines are defined as lines, which were modified/added at candidate
   commit and have not been modified/deleted since.
 
   Args:
     latest_lines (list): A list of strings representing the content of a file
       in latest coverage report.
-    feature_commit_lines (list): A list of strings representing the content of a
-      file right after the feature commit was merged.
+    candidate_commit_lines (list): A list of strings representing the content
+        of a file right after the candidate commit was merged.
     parent_commit_lines (list): A list of strings representing the content of a
-      file right before the feature commit was merged.
+      file right before the candidate commit was merged.
 
   Returns:
     A set of integers, representing interesting line numbers in latest_lines.
@@ -135,21 +139,21 @@ def _GetInterestingLines(latest_lines, feature_commit_lines,
                                                commit_lines).keys())
     return unchanged_lines
 
-  lines_unmodified_since_feature_commit = _GetUnmodifiedLinesSinceCommit(
-      latest_lines, feature_commit_lines)
+  lines_unmodified_since_candidate_commit = _GetUnmodifiedLinesSinceCommit(
+      latest_lines, candidate_commit_lines)
   lines_unmodified_since_parent_commit = _GetUnmodifiedLinesSinceCommit(
       latest_lines, parent_commit_lines)
 
   interesting_lines = [
       x for x in range(1,
                        len(latest_lines) + 1)
-      if x in lines_unmodified_since_feature_commit and
+      if x in lines_unmodified_since_candidate_commit and
       x not in lines_unmodified_since_parent_commit
   ]
   return set(interesting_lines)
 
 
-def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
+def _GetCoveragePerFile(postsubmit_report, interesting_lines_per_file):
   """Returns line coverage metrics for interesting lines in a file.
 
   Args:
@@ -169,8 +173,8 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
   for file_path, interesting_lines in interesting_lines_per_file.items():
     # Only export result for files which have non zero number of interesting
     # lines. If this is not the case, it means the changes done as part of the
-    # feature were later overridden by a non-feature commit. Therefore, it isn't
-    # useful to export coverage info for such files.
+    # a candidate commit were later overridden by a non-candidate commit.
+    # Therefore, it isn't useful to export coverage info for such files.
     if not interesting_lines:
       continue
     file_coverage = FileCoverageData.Get(
@@ -191,7 +195,7 @@ def _GetFeatureCoveragePerFile(postsubmit_report, interesting_lines_per_file):
         # `total` signifies number of lines which are interesting
         # AND instrumented. This means There could be lines which are
         # interesting but are not included in `total` because they were not
-        # instrumented. e.g. a feature CL adds a comment
+        # instrumented. e.g. it's a comment line
         if line_num in interesting_lines:
           total += 1
           if (line_num == interesting_line_ranges[-1]['last'] + 1 and
@@ -292,21 +296,19 @@ def _CreateModifiedDirSummaryCoverage(directories_coverage, postsubmit_report,
   _FlushEntities(entities, total, last=True)
 
 
-def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
+def _CreateBigqueryRows(postsubmit_report, run_id, modifier_id,
                         coverage_per_file, files_with_missing_coverage,
                         interesting_lines_per_file):
-  """Create bigquery rows for files modified as part of a feature.
+  """Create bigquery rows for files modified as part of a candiate commit.
 
   Args:
     postsubmit_report (PostsubmitReport): Full codebase report object containing
       metadata corresponding to the report e.g. builder, revision etc.
-      gerrit_hashtag (string): Gerrit hashtag corresponding to the feature.
       modifier_id (int): Id of the CoverageReportModifier corresponding to
                           the gerrit hashtag.
-      run_id (int): Unique id of this execution of feature coverage logic.
-                    This is exported to bigquery, so that downstream reporting
-                    logic can group rows added in one execution of the
-                    feature coverage algorithm.
+      run_id (int): Unique id of this execution of the algorithm. This is
+                    exported to bigquery, so that downstream reporting logic can
+                    group rows added in one execution of the algorithm.
       coverage_per_file (dict): Mapping from file_path to the coverage data
                               corresponding to interesting lines in the file.
       files_with_missing_coverage(set): A set of files for which coverage info
@@ -318,6 +320,7 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
     A list of dict objects whose keys are column names and values are column
     values corresponding to the schema of the bigquery table.
   """
+  modifier = CoverageReportModifier.Get(modifier_id)
   bq_rows = []
   for file_path in coverage_per_file.keys():
     bq_rows.append({
@@ -330,7 +333,9 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
         'run_id':
             run_id,
         'gerrit_hashtag':
-            gerrit_hashtag,
+            modifier.gerrit_hashtag,
+        'author':
+            modifier.author,
         'modifier_id':
             modifier_id,
         'path':
@@ -352,7 +357,8 @@ def _CreateBigqueryRows(postsubmit_report, gerrit_hashtag, run_id, modifier_id,
         'revision': postsubmit_report.gitiles_commit.revision,
         'run_id': run_id,
         'builder': postsubmit_report.builder,
-        'gerrit_hashtag': gerrit_hashtag,
+        'gerrit_hashtag': modifier.gerrit_hashtag,
+        'author': modifier.author,
         'modifier_id': modifier_id,
         'path': file_path[2:],
         'total_lines': None,
@@ -404,14 +410,14 @@ def _GetAllowedBuilders():
   return _SOURCE_BUILDERS
 
 
-def ExportFeatureCoverage(modifier_id, run_id):
-  """Exports coverage metrics to Datastore and Bigquery for input feature.
+def ExportCoverage(modifier_id, run_id):
+  """Exports coverage metrics to Datastore and Bigquery for gerrit based filter.
 
   Args:
     modifier_id(int): Id of the CoverageReportModifier corresponding
-                      to the feature
+                      to the gerrit filter
     run_id(int): Unique id corresponding to the current execution of
-                feature coverage logic.
+                this algorithm.
   """
   # NDB caches each result in the in-context cache while accessing.
   # This is problematic as due to the size of the result set,
@@ -424,7 +430,9 @@ def ExportFeatureCoverage(modifier_id, run_id):
   context.set_cache_policy(False)
   context.set_memcache_policy(False)
 
-  gerrit_hashtag = CoverageReportModifier.Get(modifier_id).gerrit_hashtag
+  modifier = CoverageReportModifier.Get(modifier_id)
+  assert modifier.gerrit_hashtag or modifier.author, (
+      'One of gerrit_hashtag or author must be present')
   builder_to_latest_report = {}
   for builder in _GetAllowedBuilders().keys():
     # Fetch latest full codebase coverage report for the builder
@@ -441,7 +449,7 @@ def ExportFeatureCoverage(modifier_id, run_id):
   file_content_queue = Queue.Queue()
   files_deleted_at_latest = defaultdict(list)
   interesting_lines_per_builder_per_file = defaultdict(lambda: defaultdict(set))
-  commits = _GetFeatureCommits(gerrit_hashtag)
+  commits = _GetCandidateCommits(modifier_id)
   aggregator = summary_coverage_aggregator.SummaryCoverageAggregator(
       metrics=['line'])
   for commit in commits:
@@ -472,22 +480,22 @@ def ExportFeatureCoverage(modifier_id, run_id):
       if not file_type_supported_by_builders:
         continue
 
-      # Fetch content at feature and parent commit
-      feature_commit_thread = Thread(
+      # Fetch content at candidate and parent commit
+      candidate_commit_thread = Thread(
           target=_FetchFileContentAtCommit,
-          args=(file_path, commit['feature_commit'], manifest,
+          args=(file_path, commit['candidate_commit'], manifest,
                 file_content_queue))
       parent_commit_thread = Thread(
           target=_FetchFileContentAtCommit,
           args=(file_path, commit['parent_commit'], manifest,
                 file_content_queue))
-      feature_commit_thread.start()
+      candidate_commit_thread.start()
       parent_commit_thread.start()
 
       # Wait for all threads to finish
       for thread in builder_to_latest_content_thread.values():
         thread.join()
-      feature_commit_thread.join()
+      candidate_commit_thread.join()
       parent_commit_thread.join()
 
       # Consume content from all threads
@@ -497,10 +505,10 @@ def ExportFeatureCoverage(modifier_id, run_id):
         k, v = file_content_queue.get(block=False)
         contents[k] = v
 
-      # File content must be there at feature commit
-      assert contents[commit['feature_commit']], (
+      # File content must be there at candidate commit
+      assert contents[commit['candidate_commit']], (
           "File Content not found for path %s at commit %s (CL: %s)" %
-          (file_path, commit['feature_commit'], commit['cl_number']))
+          (file_path, commit['candidate_commit'], commit['cl_number']))
 
       # Calculate interesting lines for file corresponding to each builder
       for builder, report in builder_to_latest_report.items():
@@ -515,17 +523,17 @@ def ExportFeatureCoverage(modifier_id, run_id):
         content_at_latest = contents[report.gitiles_commit.revision]
         if content_at_latest:
           interesting_lines = _GetInterestingLines(
-              content_at_latest, contents[commit['feature_commit']],
+              content_at_latest, contents[commit['candidate_commit']],
               contents[commit['parent_commit']])
           interesting_lines_per_builder_per_file[builder][file_path] = (
               interesting_lines_per_builder_per_file[builder][file_path]
               | interesting_lines)
         else:
           files_deleted_at_latest[builder].append(file_path)
-    logging.info("process commit %s", commit['feature_commit'])
-  # Export feature coverage data to Datastore and Bigquery
+    logging.info("process commit %s", commit['candidate_commit'])
+  # Export coverage data to Datastore and Bigquery
   for builder, report in builder_to_latest_report.items():
-    coverage_per_file, files_with_missing_coverage = _GetFeatureCoveragePerFile(
+    coverage_per_file, files_with_missing_coverage = _GetCoveragePerFile(
         report, interesting_lines_per_builder_per_file[builder])
     _CreateModifiedFileCoverage(coverage_per_file, report, modifier_id)
     for file_coverage in coverage_per_file.values():
@@ -550,12 +558,12 @@ def ExportFeatureCoverage(modifier_id, run_id):
       modified_report.put()
 
     bq_rows = _CreateBigqueryRows(
-        report, gerrit_hashtag, run_id, modifier_id, coverage_per_file,
+        report, run_id, modifier_id, coverage_per_file,
         files_with_missing_coverage,
         interesting_lines_per_builder_per_file[builder])
     if bq_rows:
       bigquery_helper.ReportRowsToBigquery(bq_rows, 'findit-for-me',
                                            'code_coverage_summaries',
-                                           'feature_coverage')
-      logging.info('Rows added for feature %s and builder %s = %d',
-                   gerrit_hashtag, builder, len(bq_rows))
+                                           'gerrit_filter_coverage')
+      logging.info('Rows added for modifier %d and builder %s = %d',
+                   modifier_id, builder, len(bq_rows))

@@ -170,16 +170,21 @@ def _FetchChangeDetails(host, project, change):
   return json.loads(response)
 
 
-def FetchMergedChangesWithHashtag(host, project, hashtag):
+def FetchMergedChanges(host, project, hashtag=None, author=None):
   """Yields a generator object corresponding to changes with a given hashtag."""
+  assert hashtag or author, 'One of hashtag or author must be provided'
   num_results = 100
-  template = ('https://%s/changes/?q=project:%s+is:merged+hashtag:%s&S=%d&n=%d'
-              '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES')
+  query = 'https://%s/changes/?q=project:%s+is:merged' % (host, project)
+  if hashtag:
+    query += '+hashtag:%s' % (hashtag)
+  if author:
+    query += '+owner:%s' % (author)
+  query += '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'
   more = True
   skip = 0
   while more:
-    url = template % (host, project, hashtag, skip, num_results)
-    status_code, response, _ = FinditHttpClient().Get(url)
+    paged_query = '%s&S=%d&n=%d' % (query, skip, num_results)
+    status_code, response, _ = FinditHttpClient().Get(paged_query)
     if status_code != 200:
       logging.info((
           'Failed to fetch changes with hashtag %s,status_code: %d response: %s'

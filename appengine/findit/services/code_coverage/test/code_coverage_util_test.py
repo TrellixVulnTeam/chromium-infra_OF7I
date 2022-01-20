@@ -638,18 +638,68 @@ class CodeCoverageUtilTest(WaterfallTestCase):
         (200, ')]}\'' + json.dumps(second_response), None),
     ]
     changes = [
-        x for x in code_coverage_util.FetchMergedChangesWithHashtag(
-            host, project, hashtag)
+        x for x in code_coverage_util.FetchMergedChanges(
+            host=host, project=project, hashtag=hashtag)
     ]
 
     first_call = mock.call(
         ('https://chromium-review.googlesource.com/changes/'
-         '?q=project:chromium/src+is:merged+hashtag:my_new_feature&S=0&n=100'
-         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
+         '?q=project:chromium/src+is:merged+hashtag:my_new_feature'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES&S=0&n=100'))
     second_call = mock.call(
         ('https://chromium-review.googlesource.com/changes/'
-         '?q=project:chromium/src+is:merged+hashtag:my_new_feature&S=100&n=100'
-         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES'))
+         '?q=project:chromium/src+is:merged+hashtag:my_new_feature'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES&S=100&n=100'))
+    mock_http_client.assert_has_calls([first_call, second_call])
+    self.assertEqual(changes[:-1], first_response)
+    self.assertEqual(changes[-1:], second_response)
+
+  @mock.patch.object(code_coverage_util.FinditHttpClient, 'Get')
+  def testFetchMergedChangesByAuthor(self, mock_http_client):
+    host = 'chromium-review.googlesource.com'
+    project = 'chromium/src'
+    author = 'abc@google.com'
+    first_response = []
+    for i in range(99):
+      first_response.append({
+          'project': project,
+          'owner': author,
+          'status': 'MERGED',
+          'current_revision': 'revision_hash',
+          '_cl_number': i
+      })
+    first_response.append({
+        'project': project,
+        'owner': author,
+        'status': 'MERGED',
+        'current_revision': 'revision_hash',
+        '_more_changes': True,
+        '_cl_number': 99
+    })
+    second_response = [{
+        'project': project,
+        'owner': author,
+        'status': 'MERGED',
+        'current_revision': 'revision_hash',
+        '_cl_number': 100
+    }]
+    mock_http_client.side_effect = [
+        (200, ')]}\'' + json.dumps(first_response), None),
+        (200, ')]}\'' + json.dumps(second_response), None),
+    ]
+    changes = [
+        x for x in code_coverage_util.FetchMergedChanges(
+            host=host, project=project, author=author)
+    ]
+
+    first_call = mock.call(
+        ('https://chromium-review.googlesource.com/changes/'
+         '?q=project:chromium/src+is:merged+owner:abc@google.com'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES&S=0&n=100'))
+    second_call = mock.call(
+        ('https://chromium-review.googlesource.com/changes/'
+         '?q=project:chromium/src+is:merged+owner:abc@google.com'
+         '&o=CURRENT_REVISION&o=CURRENT_COMMIT&o=CURRENT_FILES&S=100&n=100'))
     mock_http_client.assert_has_calls([first_call, second_call])
     self.assertEqual(changes[:-1], first_response)
     self.assertEqual(changes[-1:], second_response)

@@ -1,5 +1,5 @@
 application: findit-for-me-staging
-module: code-coverage-feature-coverage-worker
+module: code-coverage-gerrit-filter-coverage-worker
 version: 1
 runtime: python27
 api_version: 1
@@ -9,8 +9,8 @@ manual_scaling:
   instances: 5
 
 handlers:
-- url: .*/coverage/task/feature-coverage.*
-  script: coverage_main.feature_coverage_worker_application
+- url: .*/coverage/task/gerrit-filter-coverage.*
+  script: coverage_main.gerrit_filter_coverage_worker_application
   secure: always
 
 skip_files:

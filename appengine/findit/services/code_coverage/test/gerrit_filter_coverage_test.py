@@ -17,7 +17,7 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PostsubmitReport
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
-from services.code_coverage import feature_coverage
+from services.code_coverage import gerrit_filter_coverage
 from services import bigquery_helper
 
 _DEFAULT_LUCI_PROJECT = 'chromium'
@@ -65,14 +65,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   # with coverage data compressed in the right format. The subsequent tests do
   # not test this scenario and only test the export to bigquery.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testParityBetweenBqAndDatastoreExport(self, mock_merged_changes,
                                             mock_file_content,
                                             mocked_report_rows, *_):
@@ -128,16 +128,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines':
@@ -149,7 +153,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
     entity = FileCoverageData.Get(
         server_host='chromium.googlesource.com',
         project='chromium/src',
@@ -186,14 +190,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   # This test tests the case where feature commits adds a new file and the file
   # has not changed after that.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testSingleCommit_AddsNewFile_FileStaysIntact(self, mock_merged_changes,
                                                    mock_file_content,
                                                    mocked_report_rows, *_):
@@ -255,16 +259,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines':
@@ -276,16 +284,16 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testDirSummaryCoveageGetsCreated(self, mock_merged_changes,
                                        mock_file_content, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -334,7 +342,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
     entity1 = SummaryCoverageData.Get(
         server_host='chromium.googlesource.com',
@@ -397,13 +405,13 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         })
 
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testPostsubmitReportGetsCreated(self, mock_merged_changes,
                                       mock_file_content, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -452,7 +460,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
     entity = PostsubmitReport.Get(
         server_host='chromium.googlesource.com',
@@ -467,17 +475,18 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         'total': 2,
         'name': 'line'
     }])
+
   # This test tests the case where feature commit adds new lines to an existing
   # file and the file has not changed after that.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testSingleCommit_ModifiesExistingFile_FileStaysIntact(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -526,16 +535,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
@@ -546,20 +559,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   # This test tests the case where feature commit adds new lines to an existing
   # file, but a part of those modifications got overwritten by a commit outside
   # feature boundaries, thus reducing the number of interesting lines.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testSingleCommit_ModifiesExistingFile_GetsPartiallyModifiedOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -608,16 +621,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
@@ -628,20 +645,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   # This test tests the case where feature commit adds new lines to an existing
   # file, but ALL those modifications got overwritten by a commit outside
   # feature boundaries, thus leaving no interesting lines.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testSingleCommit_ModifiesExistingFile_GetsOverwrittenOutsideFeature(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -690,23 +707,26 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where a file is modified by a feature commit, but
   # later got deleted/moved outside feature boundaries
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testSingleCommit_FileGotDeleted(self, mock_merged_changes,
                                       mock_file_content, mocked_report_rows,
                                       *_):
@@ -738,24 +758,27 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the overlap between two feature commits i.e.
   # it tests the case where feature commit adds new lines to an existing file,
   # but a part of those modifications gets overwritten by another feature commit
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testMultipleCommits_ModifiesExistingFile_SecondCommitPartiallyOverlaps(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -806,16 +829,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 2,  # Two interesting lines are instrumented
@@ -828,18 +855,18 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   # This test tests the case where a file is modified by two feature commits,
   # but later got deleted/moved outside feature boundaries
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testMultipleCommits_FileGotDeleted(self, mock_merged_changes,
                                          mock_file_content, mocked_report_rows,
                                          *_):
@@ -877,21 +904,24 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where the file under consideration is not supported
   # by coverage tooling e.g. xml, proto etc.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testUnsupportedFileType_NoRowsCreated(self, mock_merged_changes,
                                             mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -913,24 +943,27 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     ]
     run_id = time.time()
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case where the file under consideration is not present
   # in the latest coverage report, but such a file has non zero interesting
   # lines.
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testMissingCoverage_NonZeroInterestingLines_EmptyRowsCreated(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -961,16 +994,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': None,
@@ -981,21 +1018,21 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   # This test tests the case where the file under consideration is not present
   # in the latest coverage report. And also such a file as zero interesting
   # lines. This could be because file was part of feature commit, but the
   # changes made in those commits were overridden later on
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testMissingCoverage_ZeroInterestingLines_NoRowsCreated(
       self, mock_merged_changes, mock_file_content, mocked_report_rows, *_):
     CoverageReportModifier(gerrit_hashtag='my_feature', id=123).put()
@@ -1030,22 +1067,25 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     self.assertFalse(mocked_report_rows.called)
 
   # This test tests the case when qps to gitiles exceeds short term limit
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={'linux-code-coverage': ['.cc']})
   @mock.patch.object(time_util, 'GetUTCNow', return_value=datetime(2020, 9, 21))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testExponentialBackoffWithGitiles(self, mock_merged_changes,
                                         mock_file_content, mocked_report_rows,
                                         *_):
@@ -1104,16 +1144,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     mock_file_content.side_effect = _getMockContent
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
@@ -1124,14 +1168,14 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')
 
   # This test tests the case when two builders with different supporting
   # file types generate PostsubmitReports at the same commit. In this case,
   # bigquery table should contain rows only for the one supporting the file
   # type
   @mock.patch.object(
-      feature_coverage,
+      gerrit_filter_coverage,
       '_GetAllowedBuilders',
       return_value={
           'linux-code-coverage': ['.cc'],
@@ -1141,7 +1185,7 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
   @mock.patch.object(GitilesRepository, 'GetSourceAndStatus')
-  @mock.patch.object(code_coverage_util, 'FetchMergedChangesWithHashtag')
+  @mock.patch.object(code_coverage_util, 'FetchMergedChanges')
   def testMultipleBuildersWithReportsAtSameRevision(self, mock_merged_changes,
                                                     mock_file_content,
                                                     mocked_report_rows, *_):
@@ -1202,16 +1246,20 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
         lambda path, revision: (commit_to_content[revision], 200))
     run_id = int(time.time())
 
-    feature_coverage.ExportFeatureCoverage(123, run_id)
+    gerrit_filter_coverage.ExportCoverage(123, run_id)
 
-    mock_merged_changes.assert_called_with('chromium-review.googlesource.com',
-                                           'chromium/src', 'my_feature')
+    mock_merged_changes.assert_called_with(
+        host='chromium-review.googlesource.com',
+        project='chromium/src',
+        hashtag='my_feature',
+        author=None)
     expected_bq_rows = [{
         'project': 'chromium/src',
         'revision': 'latest',
         'run_id': run_id,
         'builder': 'linux-code-coverage',
         'gerrit_hashtag': 'my_feature',
+        'author': None,
         'modifier_id': 123,
         'path': 'myfile.cc',
         'total_lines': 1,  # One interesting line is instrumented(line2)
@@ -1222,4 +1270,4 @@ class FeatureIncrementalCoverageTest(WaterfallTestCase):
     }]
     mocked_report_rows.assert_called_with(expected_bq_rows, 'findit-for-me',
                                           'code_coverage_summaries',
-                                          'feature_coverage')
+                                          'gerrit_filter_coverage')

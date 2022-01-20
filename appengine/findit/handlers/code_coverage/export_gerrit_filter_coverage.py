@@ -15,10 +15,10 @@ from common import constants
 from handlers.code_coverage import utils
 from model.code_coverage import CoverageReportModifier
 from model.code_coverage import PostsubmitReport
-from services.code_coverage import feature_coverage
+from services.code_coverage import gerrit_filter_coverage
 
 
-class ExportAllFeatureCoverageMetricsCron(BaseHandler):
+class ExportAllCoverageMetricsCron(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
@@ -30,26 +30,24 @@ class ExportAllFeatureCoverageMetricsCron(BaseHandler):
     # can be executed at any time.
     taskqueue.add(
         method='GET',
-        queue_name=constants.ALL_FEATURE_COVERAGE_QUEUE,
+        queue_name=constants.ALL_GERRIT_FILTER_COVERAGE_QUEUE,
         target=constants.CODE_COVERAGE_BACKEND,
-        url='/coverage/task/all-feature-coverage')
+        url='/coverage/task/all-gerrit-filter-coverage')
     return {'return_code': 200}
 
 
-class ExportAllFeatureCoverageMetrics(BaseHandler):
+class ExportAllCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
-  def _GetActiveFeatureModifers(self):
-    """Returns hashtags for which coverage is to be generated.
+  def _GetActiveGerritFilters(self):
+    """Returns filters for which coverage is to be generated.
 
-    Yields a tuple where first elem is the gerrit hashtag and second is the
-    id of the corresponding CoverageReportModifier.
+    Yields id of the corresponding CoverageReportModifier.
     """
     query = CoverageReportModifier.query(
         CoverageReportModifier.server_host == 'chromium.googlesource.com',
         CoverageReportModifier.project == 'chromium/src',
-        CoverageReportModifier.is_active == True).order(
-            CoverageReportModifier.gerrit_hashtag)
+        CoverageReportModifier.is_active == True)
     more = True
     cursor = None
     page_size = 100
@@ -60,41 +58,45 @@ class ExportAllFeatureCoverageMetrics(BaseHandler):
           start_cursor=cursor,
           config=ndb.ContextOptions(use_cache=False))
       for x in results:
-        if x.gerrit_hashtag:
-          # To prevent bloating up of feature coverage pipeline, we do not
+        if x.gerrit_hashtag or x.author:
+          # To prevent bloating up of feature coverage dashboard, we do not
           # generate coverage metrics for features which are older than 90 days.
-          if x.update_timestamp + datetime.timedelta(
+          if x.gerrit_hashtag and x.update_timestamp + datetime.timedelta(
               days=90) < datetime.datetime.now():
             x.is_active = False
             make_inactive.append(x)
           else:
-            yield x.key.id(), x.gerrit_hashtag
+            yield x.key.id()
     ndb.put_multi(make_inactive)
 
   def HandleGet(self):
-    # Spawn a sub task for each active feature
-    for modifier_id, gerrit_hashtag in self._GetActiveFeatureModifers():
-      logging.info('%d...%s' % (modifier_id, gerrit_hashtag))
-      url = '/coverage/task/feature-coverage?modifier_id=%d' % (modifier_id)
+    # Spawn a sub task for each active filter
+    for modifier_id in self._GetActiveGerritFilters():
+      modifier = CoverageReportModifier.Get(modifier_id)
+      logging.info('modifier_id: %d, gerrit_hashtag: %s, author: %s' %
+                   (modifier_id, modifier.gerrit_hashtag, modifier.author))
+      url = '/coverage/task/gerrit-filter-coverage?modifier_id=%d' % (
+          modifier_id)
       taskqueue.add(
           method='GET',
           url=url,
-          name='%s-%s' %
-          (gerrit_hashtag, datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
-          queue_name=constants.FEATURE_COVERAGE_QUEUE,
-          target=constants.CODE_COVERAGE_FEATURE_COVERAGE_WORKER)
+          name='%s-%s-%s' % (modifier.gerrit_hashtag, modifier.author,
+                             datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
+          queue_name=constants.GERRIT_FILTER_COVERAGE_QUEUE,
+          target=constants.CODE_COVERAGE_GERRIT_FILTER_COVERAGE_WORKER)
     return {'return_code': 200}
 
 
-class ExportFeatureCoverageMetrics(BaseHandler):
+class ExportCoverageMetrics(BaseHandler):
   PERMISSION_LEVEL = Permission.APP_SELF
 
   def HandleGet(self):
     start_time = time.time()
     modifier_id = int(self.request.get('modifier_id'))
-    feature_coverage.ExportFeatureCoverage(modifier_id, int(start_time))
+    gerrit_filter_coverage.ExportCoverage(modifier_id, int(start_time))
     minutes = (time.time() - start_time) / 60
-    report_modifier = CoverageReportModifier.Get(modifier_id)
-    logging.info('Generating feature coverage for feature %s took %.0f minutes',
-                 report_modifier.gerrit_hashtag, minutes)
+    modifier = CoverageReportModifier.Get(modifier_id)
+    logging.info(
+        'Generating coverage for hashtag:%s author:%s took %.0f minutes',
+        modifier.gerrit_hashtag, modifier.author, minutes)
     return {'return_code': 200}

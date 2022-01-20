@@ -29,8 +29,8 @@ dispatch:
   - url: "*/waterfall/*"
     module: frontend
 
-  - url: "*/coverage/task/feature-coverage*"
-    module: code-coverage-feature-coverage-worker
+  - url: "*/coverage/task/gerrit-filter-coverage*"
+    module: code-coverage-gerrit-filter-coverage-worker
 
   - url: "*/coverage/task/referenced-coverage*"
     module: code-coverage-referenced-coverage-worker
