@@ -10,7 +10,7 @@
   * [infra_checkout](#recipe_modules-infra_checkout) (Python3 ✅)
   * [infra_cipd](#recipe_modules-infra_cipd) (Python3 ✅)
   * [infra_system](#recipe_modules-infra_system) (Python3 ✅)
-  * [omahaproxy](#recipe_modules-omahaproxy)
+  * [omahaproxy](#recipe_modules-omahaproxy) (Python3 ✅)
   * [powershell](#recipe_modules-powershell)
   * [provenance](#recipe_modules-provenance) (Python3 ✅)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller) (Python3 ✅)
@@ -507,9 +507,9 @@ API for interacting with a provisioned infrastructure system.
 &emsp; **@property**<br>&mdash; **def [sys\_bin\_path](/recipes/recipe_modules/infra_system/api.py#17)(self):**
 ### *recipe_modules* / [omahaproxy](/recipes/recipe_modules/omahaproxy)
 
-[DEPS](/recipes/recipe_modules/omahaproxy/__init__.py#1): [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/url][recipe_engine/recipe_modules/url]
+[DEPS](/recipes/recipe_modules/omahaproxy/__init__.py#3): [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [OmahaproxyApi](/recipes/recipe_modules/omahaproxy/api.py#11)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
