@@ -1,0 +1,25 @@
+From 1b68be938d03917e6154c9c726a7a9f140cab84e Mon Sep 17 00:00:00 2001
+From: Weizhong Xia <weizhong@google.com>
+Date: Thu, 13 Jan 2022 00:10:29 +0000
+Subject: [PATCH] [PATCH] Make pcre relocatable
+
+---
+ pcre-config.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/pcre-config.in b/pcre-config.in
+index ac06a33..8d9efa7 100644
+--- a/pcre-config.in
++++ b/pcre-config.in
+@@ -1,6 +1,7 @@
+ #!/bin/sh
+ 
+-prefix=@prefix@
++this_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
++prefix="$this_path/.."
+ exec_prefix=@exec_prefix@
+ exec_prefix_set=no
+ 
+-- 
+2.34.1.575.g55b058a8bb-goog
+

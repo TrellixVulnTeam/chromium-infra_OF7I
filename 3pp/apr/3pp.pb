@@ -1,14 +1,15 @@
 create {
-  platform_re: "linux-.*|mac-.*",
+  platform_re: "linux-.*|mac-.*"
   source {
     url {
-      download_url: "https://sourceforge.net/projects/pcre/files/pcre/8.41/pcre-8.41.tar.gz/download"
-      version: "8.41"
+      download_url: "https://archive.apache.org/dist/apr/apr-1.6.5.tar.gz"
+      version: "1.6.5"
     }
     unpack_archive: true
     patch_dir: "patches"
     patch_version: "chromium.1"
   }
+
   build {}
 }
 
