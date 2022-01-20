@@ -9,8 +9,6 @@ import itertools
 import operator
 import re
 
-import six
-
 from pkg_resources import parse_version
 
 from .run_script import run_script
@@ -26,7 +24,7 @@ def _to_versions(raw_ls_remote_lines, version_join, tag_re, tag_filter_re):
   """
   ret = []
   for line in raw_ls_remote_lines:
-    git_hash, ref = six.ensure_text(line).split('\t')
+    git_hash, ref = line.split('\t')
     if ref.startswith('refs/tags/'):
       tag = ref[len('refs/tags/'):]
       if tag_filter_re and not tag_filter_re.match(tag):
@@ -110,21 +108,22 @@ def resolve_latest(api, spec):
     # repo's tags.
     tag_re = re.escape(
       source_method_pb.tag_pattern if source_method_pb.tag_pattern else '%s')
-    # re.escape() no longer escapes '%' in python 3.
-    replace_str = '\\%s' if six.PY2 else '%s'
-    tag_re = '^%s$' % (tag_re.replace(replace_str, '(.*)'),)
+    tag_re = '^%s$' % (tag_re.replace('%s', '(.*)'),)
 
-    step = api.git('ls-remote', '-t', source_method_pb.repo,
-                   stdout=api.raw_io.output(),
-                   step_test_data=lambda: api.raw_io.test_api.stream_output(
-                     '\n'.join([
-                       'hash\trefs/tags/unrelated',
-                       'hash\trefs/tags/v1.0.0-a2',
-                       'hash\trefs/tags/v1.3.0',
-                       'hash\trefs/tags/v1.4.0',
-                       'hash\trefs/tags/v1.4.1',
-                       'hash\trefs/tags/v1.5.0-rc1',
-                     ])))
+    step = api.git(
+        'ls-remote',
+        '-t',
+        source_method_pb.repo,
+        stdout=api.raw_io.output_text(),
+        step_test_data=lambda: api.raw_io.test_api.stream_output_text('\n'.join(
+            [
+                'hash\trefs/tags/unrelated',
+                'hash\trefs/tags/v1.0.0-a2',
+                'hash\trefs/tags/v1.3.0',
+                'hash\trefs/tags/v1.4.0',
+                'hash\trefs/tags/v1.4.1',
+                'hash\trefs/tags/v1.5.0-rc1',
+            ])))
 
     tag_filter_re = None
     if source_method_pb.tag_filter_re:
@@ -159,14 +158,13 @@ def resolve_latest(api, spec):
   elif method_name == 'script':
     script = spec.pkg_dir.join(source_method_pb.name[0])
     args = list(map(str, source_method_pb.name[1:])) + ['latest']
-    version = six.ensure_text(
-        run_script(
-            api,
-            script,
-            *args,
-            stdout=api.raw_io.output(),
-            step_test_data=lambda: api.raw_io.test_api.stream_output('2.0.0'))
-        .stdout).strip()
+    version = run_script(
+        api,
+        script,
+        *args,
+        stdout=api.raw_io.output_text(),
+        step_test_data=lambda: api.raw_io.test_api.stream_output_text('2.0.0')
+    ).stdout.strip()
     api.step.active_result.presentation.step_text = (
       'resolved version: %s' % (version,))
 

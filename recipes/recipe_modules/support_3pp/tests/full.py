@@ -7,7 +7,7 @@ from recipe_engine.recipe_api import Property
 
 from RECIPE_MODULES.infra.support_3pp.resolved_spec import PACKAGE_EPOCH
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+PYTHON_VERSION_COMPATIBILITY = "PY3"
 
 DEPS = [
   'recipe_engine/buildbucket',
@@ -457,9 +457,12 @@ def GenTests(api):
         'find archives to unpack',
       ), api.file.glob_paths(['archive.tgz']))
     else:
-      test += api.step_data(mk_name(
-          'building tools/windows_experiment', 'fetch.py latest',
-      ), stdout=api.raw_io.output('2.0.0.windows.1'))
+      test += api.step_data(
+          mk_name(
+              'building tools/windows_experiment',
+              'fetch.py latest',
+          ),
+          stdout=api.raw_io.output_text('2.0.0.windows.1'))
 
     for pkg_path, spec in pkgs:
       pkg_spec_dir = pkg_repo_path % sep.join(pkg_path.split('/'))

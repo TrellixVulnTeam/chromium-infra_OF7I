@@ -5,8 +5,6 @@
 import functools
 import re
 
-import six
-
 # The epoch is prepended to the version when constructing the version: tag
 # for both the source package and the final built package. It must be
 # incremented in the case of incompatible changes to the source package
@@ -24,7 +22,7 @@ def parse_name_version(name_version):
     name, version = name_version.split('@')
   else:
     name, version = name_version, 'latest'
-  return six.ensure_text(name), six.ensure_text(version)
+  return name, version
 
 
 def platform_for_host(api):

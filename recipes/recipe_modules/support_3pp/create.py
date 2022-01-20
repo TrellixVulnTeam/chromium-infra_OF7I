@@ -9,8 +9,6 @@ and uploading a ResolvedSpec.
 """
 import re
 
-import six
-
 from . import source
 from . import build
 from . import resolved_spec
