@@ -1218,7 +1218,7 @@ Returns:
 
 [DEPS](/recipes/recipes/3pp.py#15): [depot\_tools/git][depot_tools/recipe_modules/git], [support\_3pp](#recipe_modules-support_3pp), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This recipe builds and packages third party software, such as Git.
 
