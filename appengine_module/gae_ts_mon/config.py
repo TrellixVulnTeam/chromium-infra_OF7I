@@ -95,7 +95,8 @@ def initialize(
     # AppengineTestCase.setUp() won't have run yet and none of the appengine
     # stubs will be initialized, so accessing Datastore or even getting the
     # application ID will fail.
-    is_local_unittest = ('expect_tests' in sys.argv[0])
+    is_local_unittest = ('expect_tests' in sys.argv[0]) or (
+        'unittest' in sys.argv[0])
 
   if is_enabled_fn is not None:
     interface.state.flush_enabled_fn = is_enabled_fn
