@@ -23,7 +23,7 @@ require (
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20211112060257-af570c2721ed
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.5.5 // indirect
-	github.com/danjacques/gofslock v0.0.0-20200623023034-5d0bd0fa6ef0
+	github.com/danjacques/gofslock v0.0.0-20220118125105-cc7f001fe0e7
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-logr/logr v1.1.0 // indirect
@@ -68,7 +68,7 @@ require (
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.org/x/tools v0.1.8-0.20211014194737-fc98fb2abd48
 	golang.org/x/tools/gopls v0.7.3
