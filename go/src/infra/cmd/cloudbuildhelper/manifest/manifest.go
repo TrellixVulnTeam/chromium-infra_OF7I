@@ -191,9 +191,7 @@ type Infra struct {
 
 	// Registry is a Cloud Registry to push images to e.g. "gcr.io/something".
 	//
-	// If empty, images will be built and then just discarded (will not be pushed
-	// anywhere). Useful to verify Dockerfile is working without accumulating
-	// cruft.
+	// Required when using Cloud Build.
 	Registry string `yaml:"registry"`
 
 	// CloudBuild contains configuration presets of Cloud Build infrastructure.

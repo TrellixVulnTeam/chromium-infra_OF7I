@@ -39,10 +39,7 @@ type Request struct {
 
 	// Image is a name of the image (perhaps with ":<tag>") to produce and push.
 	//
-	// Should include a docker registry part, e.g. have form "gcr.io/../...".
-	//
-	// If empty, Builder will still build an image, but will not push it anywhere.
-	// Useful to verify Dockerfile is working without accumulating cruft.
+	// Should include a docker registry part, e.g. have form "gcr.io/.../...".
 	Image string
 
 	// Labels is a labels to put into the produced docker image (if any).
@@ -104,20 +101,13 @@ func New(ctx context.Context, ts oauth2.TokenSource, cfg manifest.CloudBuildBuil
 //
 // ID of the returned build can be used to query its status later in Check(...).
 func (b *Builder) Trigger(ctx context.Context, r Request) (*Build, error) {
-	var pushImages []string
 	dockerArgs := append([]string{
 		"build",
 		".",
 		"--network", "cloudbuild", // this is what "gcloud build submit" uses, it is documented
 		"--no-cache", // state of the cache on Cloud Build workers is not well defined
+		"--tag", r.Image,
 	}, r.Labels.AsBuildArgs()...)
-
-	// If asked to push the image, tag it locally and ask Cloud Build to push out
-	// this tag to the registry as well.
-	if r.Image != "" {
-		dockerArgs = append(dockerArgs, "--tag", r.Image)
-		pushImages = append(pushImages, r.Image)
-	}
 
 	// Version of gcr.io/cloud-builders/docker image to use.
 	var dockerVer string
@@ -158,8 +148,8 @@ func (b *Builder) Trigger(ctx context.Context, r Request) (*Build, error) {
 			},
 		},
 
-		// Push whatever we tagged (if anything) to the registry.
-		Images: pushImages,
+		// Push whatever we tagged to the registry.
+		Images: []string{r.Image},
 	})
 
 	op, err := call.Context(ctx).Do()

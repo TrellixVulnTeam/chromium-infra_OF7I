@@ -232,7 +232,9 @@ func (c *commandBase) loadManifest(ctx context.Context, path string, needStorage
 		case !ok:
 			return nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
 		case needStorage && section.Storage == "":
-			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
+			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using Cloud Build", path).Tag(isCLIError).Err()
+		case needCloudBuild && section.Registry == "":
+			return nil, nil, errors.Reason("in %q: infra[...].registry is required when using Cloud Build", path).Tag(isCLIError).Err()
 		case needCloudBuild:
 			m.CloudBuild, err = section.ResolveCloudBuildConfig(m.Manifest.CloudBuild)
 			if err != nil {

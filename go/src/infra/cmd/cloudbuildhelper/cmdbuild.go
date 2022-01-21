@@ -121,21 +121,6 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 		return err
 	}
 
-	// If not pushing to a registry, just build and then discard the image. This
-	// is accomplished by NOT passing the image name to runBuild.
-	image := ""
-	if m.Infra.Registry != "" {
-		image = path.Join(m.Infra.Registry, m.Manifest.Name)
-	} else {
-		// If not using a registry, can't push any tags.
-		switch {
-		case c.canonicalTag != "":
-			return errBadFlag("-canonical-tag", "can't be used if a registry is not specified in the manifest")
-		case len(c.tags) != 0:
-			return errBadFlag("-tag", "can't be used if a registry is not specified in the manifest")
-		}
-	}
-
 	// Need a token source to talk to Google Storage and Cloud Build.
 	ts, err := c.tokenSource(ctx)
 	if err != nil {
@@ -156,7 +141,7 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 	res, err := runBuild(ctx, buildParams{
 		Manifest:     m.Manifest,
 		Force:        c.force,
-		Image:        image,
+		Image:        path.Join(m.Infra.Registry, m.Manifest.Name),
 		Labels:       c.labels,
 		BuildID:      c.buildID,
 		CanonicalTag: c.canonicalTag,
@@ -201,7 +186,7 @@ type buildParams struct {
 	// Inputs.
 	Manifest     *manifest.Manifest // original manifest
 	Force        bool               // true to always build an image, ignoring any caches
-	Image        string             // full image name to upload (or "" to skip uploads)
+	Image        string             // full image name to upload
 	Labels       map[string]string  // extra labels to put into the image
 	BuildID      string             // identifier of a CI build that called us
 	CanonicalTag string             // a tag to apply to the image if we really built it
@@ -240,7 +225,7 @@ func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
 	// canonical tag. This check is delayed until later if ":inputs-hash" is used
 	// as a canonical tag, since we don't know it yet (need to build the tarball
 	// in p.Stage first).
-	if p.Image != "" && p.CanonicalTag != "" && p.CanonicalTag != inputsHashCanonicalTag {
+	if p.CanonicalTag != "" && p.CanonicalTag != inputsHashCanonicalTag {
 		if res.Image, err = maybeReuseExistingImage(ctx, p); err != nil {
 			return
 		}
@@ -259,13 +244,8 @@ func runBuild(ctx context.Context, p buildParams) (res buildResult, err error) {
 	}
 
 	// Attach all requested tags (even if we reused an existing image).
-	//
-	// Note that res.Image may be nil if we are building the image but not
-	// uploading it anywhere (if "registry" is not set in the manifest).
-	if res.Image != nil {
-		if err := tagImage(ctx, p.Registry, res.Image, p.Tags); err != nil {
-			return res, errors.Annotate(err, "tagging the image with -tag(s)").Err()
-		}
+	if err := tagImage(ctx, p.Registry, res.Image, p.Tags); err != nil {
+		return res, errors.Annotate(err, "tagging the image with -tag(s)").Err()
 	}
 
 	return
@@ -355,7 +335,7 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 	// function of the tarball and we can reuse an existing image if we already
 	// built something from this tarball.
 	determ := p.Manifest.Deterministic != nil && *p.Manifest.Deterministic
-	if determ && p.Image != "" && p.CanonicalTag != "" {
+	if determ && p.CanonicalTag != "" {
 		logging.Infof(ctx, "The target is marked as deterministic: looking for existing images built from this tarball...")
 		switch imgRef, err := reuseExistingImage(ctx, obj, p.Image, p.Registry); {
 		case err != nil:
@@ -385,10 +365,6 @@ func remoteBuild(ctx context.Context, p buildParams, out *fileset.Set) (res buil
 	}
 	if err != nil {
 		return // err is annotated already
-	}
-	if p.Image == "" {
-		logging.Warningf(ctx, "The registry is not configured, the image wasn't pushed")
-		return
 	}
 
 	// Our new image.
@@ -477,15 +453,13 @@ func tagImage(ctx context.Context, r registryImpl, imgRef *imageRef, tags []stri
 func doCloudBuild(ctx context.Context, in *storage.Object, inDigest string, p buildParams) (string, *cloudbuild.Build, error) {
 	logging.Infof(ctx, "Triggering new Cloud Build build...")
 
-	// Cloud Build always pushes the tagged image to the registry. The default tag
-	// is "latest", and we don't want to use it in case someone decides to rely
-	// on it. So pick something more cryptic. Note that we don't really care if
-	// this tag is moved concurrently by someone else. We never read it, we
+	// Cloud Build always pushes the tagged image to the registry. The default
+	// tag is "latest", and we don't want to use it in case someone decides to
+	// rely on it. So pick something more cryptic. Note that we don't really care
+	// if this tag is moved concurrently by someone else. We never read it, we
 	// consume only the image digest returned directly by Cloud Build API.
-	image := p.Image
-	if image != "" {
-		image += ":cbh"
-	}
+	image := p.Image + ":cbh"
+
 	build, err := p.Builder.Trigger(ctx, cloudbuild.Request{
 		Source: in,
 		Image:  image,

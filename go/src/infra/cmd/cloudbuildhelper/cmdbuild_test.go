@@ -331,35 +331,6 @@ func TestBuild(t *testing.T) {
 			})
 		})
 
-		Convey("No registry is set => nothing is uploaded", func() {
-			builder.provenance = func(gs string) string {
-				So(gs, ShouldEqual, testTarballURL+"#1") // used first gen
-				return digest                            // got its digest correctly
-			}
-
-			res, err := runBuild(ctx, buildParams{
-				Manifest:     &manifest.Manifest{Name: testTargetName},
-				CanonicalTag: testTagName, // ignored
-				Stage:        stageFileSet(fs),
-				Store:        store,
-				Builder:      builder,
-				Registry:     registry,
-				Output:       testBaseOutput,
-			})
-			So(err, ShouldBeNil)
-
-			// Uploaded the file.
-			obj, err := store.Check(ctx, testTarballPath)
-			So(err, ShouldBeNil)
-			So(obj.String(), ShouldEqual, testTarballURL+"#1") // uploaded the first gen
-
-			// Did NOT produce any image, but have a link to the build.
-			So(res, ShouldResemble, buildResult{
-				baseOutput:   testBaseOutput,
-				ViewBuildURL: testLogURL,
-			})
-		})
-
 		Convey("Cloud Build build failure", func() {
 			builder.finalStatus = cloudbuild.StatusFailure
 			_, err := runBuild(ctx, buildParams{
