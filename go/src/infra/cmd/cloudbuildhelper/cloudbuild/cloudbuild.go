@@ -26,8 +26,10 @@ import (
 
 // Builder knows how to trigger Cloud Build builds and check their status.
 type Builder struct {
-	builds *cloudbuild.ProjectsBuildsService
-	cfg    manifest.CloudBuildBuilder
+	builds   *cloudbuild.ProjectsLocationsBuildsService
+	location string // "projects/.../locations/..."
+	pool     *cloudbuild.PoolOption
+	cfg      manifest.CloudBuildBuilder
 }
 
 // Request specifies what we want to build and push.
@@ -91,9 +93,25 @@ func New(ctx context.Context, ts oauth2.TokenSource, cfg manifest.CloudBuildBuil
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to instantiate cloudbuild.Service").Err()
 	}
+
+	// When not using private pools we can hit "global" location in the API.
+	// When using a private pool we need to hit the location that hosts it,
+	// otherwise Cloud Build replies with "404 no such workerpool".
+	location := fmt.Sprintf("projects/%s/locations/global", cfg.Project)
+
+	var pool *cloudbuild.PoolOption
+	if cfg.Pool != nil && cfg.Pool.ID != "" {
+		location = fmt.Sprintf("projects/%s/locations/%s", cfg.Project, cfg.Pool.Region)
+		pool = &cloudbuild.PoolOption{
+			Name: fmt.Sprintf("%s/workerPools/%s", location, cfg.Pool.ID),
+		}
+	}
+
 	return &Builder{
-		builds: cloudbuild.NewProjectsBuildsService(svc),
-		cfg:    cfg,
+		builds:   svc.Projects.Locations.Builds,
+		location: location,
+		pool:     pool,
+		cfg:      cfg,
 	}, nil
 }
 
@@ -120,15 +138,16 @@ func (b *Builder) Trigger(ctx context.Context, r Request) (*Build, error) {
 		dockerVer = ":" + v
 	}
 
-	// Note: this call roughly matches what "gcloud build submit --tag ..." does,
-	// except we tweak options a bit.
-	call := b.builds.Create(b.cfg.Project, &cloudbuild.Build{
-		// See https://cloud.google.com/cloud-build/docs/api/reference/rest/Shared.Types/Build#BuildOptions
+	// Note: this call roughly matches what "gcloud build submit --tag ..."
+	// does, except we tweak options a bit.
+	call := b.builds.Create(b.location, &cloudbuild.Build{
+		// See https://cloud.google.com/build/docs/api/reference/rest/v1/projects.builds#Build.BuildOptions
 		Options: &cloudbuild.BuildOptions{
 			LogStreamingOption:    "STREAM_ON",
 			Logging:               "GCS_ONLY",
 			RequestedVerifyOption: "VERIFIED",
 			SourceProvenanceHash:  []string{"SHA256"},
+			Pool:                  b.pool,
 		},
 
 		// Where to fetch "." used from the build step below.
@@ -173,7 +192,7 @@ func (b *Builder) Trigger(ctx context.Context, r Request) (*Build, error) {
 
 // Check returns details of a build given its ID.
 func (b *Builder) Check(ctx context.Context, bid string) (*Build, error) {
-	build, err := b.builds.Get(b.cfg.Project, bid).Context(ctx).Do()
+	build, err := b.builds.Get(fmt.Sprintf("%s/builds/%s", b.location, bid)).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Annotate(err, "API call to Cloud Build failed").Err()
 	}

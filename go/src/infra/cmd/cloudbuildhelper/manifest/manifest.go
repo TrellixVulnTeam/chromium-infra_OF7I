@@ -269,8 +269,22 @@ func (i *Infra) rebaseOnTop(b Infra) {
 // It has a name. Individual targets can specify what configuration they want
 // to use via `builder` field of `cloudbuild` section.
 type CloudBuildBuilder struct {
-	Project string `yaml:"project"` // name of Cloud Project to use for builds
-	Docker  string `yaml:"docker"`  // version of "docker" tool to use for builds
+	// Project is Google Cloud Project name that hosts the Cloud Build instance.
+	Project string `yaml:"project"`
+
+	// Pool is a private worker pool to run builds on (if any).
+	Pool *WorkerPool `yaml:"pool,omitempty"`
+
+	// Docker is a version of "docker" tool to use for builds.
+	Docker string `yaml:"docker"`
+}
+
+// WorkerPool is an ID of a worker pool within a project.
+type WorkerPool struct {
+	// Region is a Cloud Region that hosts this pool.
+	Region string `yaml:"region"`
+	// ID is the short pool ID.
+	ID string `yaml:"id"`
 }
 
 // CloudBuildConfig contains target-specific Cloud Build configuration.
