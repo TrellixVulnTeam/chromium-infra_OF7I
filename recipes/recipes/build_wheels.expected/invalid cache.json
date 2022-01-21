@@ -16,7 +16,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "verify"
@@ -63,7 +63,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "config",
@@ -82,7 +82,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "sync",
@@ -124,7 +124,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "recurse",
@@ -145,7 +145,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "recurse",
@@ -166,7 +166,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"

@@ -82,7 +82,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "revinfo",
@@ -214,7 +214,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "python",
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "revinfo",
