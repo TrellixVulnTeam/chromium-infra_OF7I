@@ -106,18 +106,20 @@ func routeLabstationRepairTask(r *config.RolloutConfig, pools []string, randFloa
 	if len(pools) == 0 {
 		return legacy, noPools
 	}
-	// Happy path.
-	if r.GetOptinAllDuts() {
-		return paris, allLabstationsAreOptedIn
-	}
 	threshold := r.GetRolloutPermille()
+	myValue := math.Round(1000.0 * randFloat)
+	if r.GetOptinAllDuts() {
+		if myValue >= float64(threshold) {
+			return paris, scoreExceedsThreshold
+		}
+		return legacy, scoreTooLow
+	}
 	if threshold == 0 {
 		return legacy, thresholdZero
 	}
-	if len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
+	if !r.GetOptinAllDuts() && len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
 		return legacy, wrongPool
 	}
-	myValue := math.Round(1000.0 * randFloat)
 	if myValue >= float64(threshold) {
 		return paris, scoreExceedsThreshold
 	}

@@ -117,7 +117,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			randFloat: 0.5,
 			pools:     []string{"some pool"},
 			out:       paris,
-			reason:    allLabstationsAreOptedIn,
+			reason:    scoreExceedsThreshold,
 		},
 		{
 			name: "no pool means UFS error",
@@ -151,7 +151,19 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
 			out:       paris,
-			reason:    allLabstationsAreOptedIn,
+			reason:    scoreExceedsThreshold,
+		},
+		{
+			name: "use permille even when all labstations are opted in",
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 501,
+				OptinAllDuts:    true,
+			},
+			pools:     []string{"some-pool"},
+			randFloat: 0.5,
+			out:       legacy,
+			reason:    scoreTooLow,
 		},
 		{
 			name: "use labstation sometimes - good",
