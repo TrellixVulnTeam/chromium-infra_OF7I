@@ -43,7 +43,8 @@ const servoRepairPlanBody = `
 			"seconds": 120
 		},
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		]
 	},
 	"servo_host_info": {
@@ -171,7 +172,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_cycle_repair"
+			"servo_power_cycle_repair",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -261,6 +263,9 @@ const servoRepairPlanBody = `
 			"command:servo_pd_role",
 			"expected_string_value:snk"
 		],
+		"recovery_actions": [
+			"servo_power_delivery_repair"
+		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
 	},
@@ -282,7 +287,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_cycle_repair"
+			"servo_power_cycle_repair",
+			"servo_power_delivery_repair"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -291,7 +297,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:on"
 		],
 		"recovery_actions": [
-			"servo_power_cycle_repair"
+			"servo_power_cycle_repair",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -326,7 +333,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_cycle_repair"
+			"servo_power_cycle_repair",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -334,6 +342,9 @@ const servoRepairPlanBody = `
 		"exec_extra_args": [
 			"command:cr50_testlab",
 			"expected_string_value:on"
+		],
+		"recovery_actions": [
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -378,7 +389,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:release"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -389,7 +401,8 @@ const servoRepairPlanBody = `
 			"servo_v4_type_a"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -524,7 +537,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:off"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -534,7 +548,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:off"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -544,7 +559,8 @@ const servoRepairPlanBody = `
 			"seconds": 30
 		},
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
 		]
 	},
 	"update_servo_type_label":{
@@ -558,6 +574,9 @@ const servoRepairPlanBody = `
 			"command:dut_controller_missing_fault",
 			"expected_string_value:off"
 		],
+		"recovery_actions": [
+			"servo_power_delivery_repair"
+		],
 		"exec_name":"servo_check_servod_control"
 	},
 	"servo_host_servod_restart": {
@@ -569,6 +588,9 @@ const servoRepairPlanBody = `
 	"servo_has_active_dut_controller": {
 		"exec_extra_args": [
 			"command:active_dut_controller"
+		],
+		"recovery_actions": [
+			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -594,6 +616,31 @@ const servoRepairPlanBody = `
 		],
 		"exec_extra_args": [
 			"toggle_times:1",
+			"wait_in_retry:5",
+			"wait_before_retry:1"
+		],
+		"run_control": 1,
+		"exec_name":"servo_servod_toggle_pd_role"
+	},
+	"servo_power_delivery_repair":{
+		"docs":[
+			"Toggle the servod command servo_pd_role 5 times. And then stop the servod afterwards. TODO: Add dependency for servo initialize."
+		],
+		"dependencies": [
+			"servo_pd_toggle_five_times"
+		],
+		"exec_timeout": {
+			"seconds": 600
+		},
+		"run_control": 1,
+		"exec_name":"servo_host_servod_stop"
+	},
+	"servo_pd_toggle_five_times":{
+		"docs":[
+			"Toggle the servod command servo_pd_role 5 times."
+		],
+		"exec_extra_args": [
+			"toggle_times:5",
 			"wait_in_retry:5",
 			"wait_before_retry:1"
 		],
