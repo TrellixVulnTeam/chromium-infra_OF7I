@@ -235,9 +235,6 @@ interface Cluster {
     failures1d: Counts;
     failures3d: Counts;
     failures7d: Counts;
-    affectedTests1d: SubCluster[] | null;
-    affectedTests3d: SubCluster[] | null;
-    affectedTests7d: SubCluster[] | null;
     exampleFailureReason: string;
     exampleTestId: string;
 }
@@ -252,9 +249,4 @@ interface Counts {
 interface ClusterId {
     algorithm: string;
     id: string;
-}
-
-interface SubCluster {
-    value: string;
-    numFails: number;
 }

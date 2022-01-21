@@ -45,18 +45,8 @@ type ClusterSummary struct {
 	Failures1d           Counts               `json:"failures1d"`
 	Failures3d           Counts               `json:"failures3d"`
 	Failures7d           Counts               `json:"failures7d"`
-	AffectedTests1d      []SubCluster         `json:"affectedTests1d"`
-	AffectedTests3d      []SubCluster         `json:"affectedTests3d"`
-	AffectedTests7d      []SubCluster         `json:"affectedTests7d"`
 	ExampleFailureReason bigquery.NullString  `json:"exampleFailureReason"`
 	ExampleTestID        string               `json:"exampleTestId"`
-}
-
-// SubCluster represents the name of a test and the number of times
-// a failure has impacted it.
-type SubCluster struct {
-	Value     string `json:"value"`
-	Num_Fails int    `json:"numFails"`
 }
 
 // Counts captures the values of an integer-valued metric in different
@@ -288,9 +278,6 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 		selectCounts("failures", "Failures", "1d") +
 		selectCounts("failures", "Failures", "3d") +
 		selectCounts("failures", "Failures", "7d") + `
-			affected_tests_1d as AffectedTests1d,
-			affected_tests_3d as AffectedTests3d,
-			affected_tests_7d as AffectedTests7d,
 			example_failure_reason.primary_error_message as ExampleFailureReason,
 			example_test_id as ExampleTestID
 		FROM ` + dataset + `.cluster_summaries
