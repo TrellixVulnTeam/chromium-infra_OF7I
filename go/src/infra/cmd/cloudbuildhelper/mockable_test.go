@@ -88,10 +88,11 @@ func (s *storageImplMock) UpdateMetadata(ctx context.Context, obj *storage.Objec
 
 type builderImplMock struct {
 	// Can be touched.
-	checkCallback func(b *runningBuild) error
-	finalStatus   cloudbuild.Status
-	provenance    func(gs string) string  // gs://.... => SHA256
-	outputDigests func(img string) string // full image name => "sha256:..."
+	checkCallback    func(b *runningBuild) error
+	finalStatus      cloudbuild.Status
+	provenance       func(gs string) string  // gs://.... => SHA256
+	outputDigests    func(img string) string // full image name => "sha256:..."
+	pushesExplicitly bool                    // if true, don't populate OutputDigest
 
 	// Shouldn't be touched.
 	registry *registryImplMock
@@ -101,7 +102,11 @@ type builderImplMock struct {
 
 type runningBuild struct {
 	cloudbuild.Build
+
 	Request cloudbuild.Request
+
+	imageRef    string
+	finalDigest string
 }
 
 func newBuilderImplMock(r *registryImplMock) *builderImplMock {
@@ -121,12 +126,13 @@ func newBuilderImplMock(r *registryImplMock) *builderImplMock {
 		case cloudbuild.StatusWorking:
 			b.Status = bld.finalStatus
 			if b.Status == cloudbuild.StatusSuccess {
+				b.finalDigest = bld.outputDigests(b.imageRef)
 				b.InputHashes = map[string]string{
 					b.Request.Source.String(): bld.provenance(b.Request.Source.String()),
 				}
-				b.OutputImage = b.Request.Image
-				if b.Request.Image != "" {
-					b.OutputDigest = bld.outputDigests(b.Request.Image)
+				if !bld.pushesExplicitly {
+					b.OutputImage = b.imageRef
+					b.OutputDigest = b.finalDigest
 				}
 			}
 		}
@@ -136,18 +142,20 @@ func newBuilderImplMock(r *registryImplMock) *builderImplMock {
 	return bld
 }
 
-func (b *builderImplMock) Trigger(ctx context.Context, r cloudbuild.Request) (*cloudbuild.Build, error) {
+func (b *builderImplMock) Trigger(ctx context.Context, r cloudbuild.Request) (*cloudbuild.Build, string, error) {
 	b.nextID++
+	imageRef := fmt.Sprintf("%s:mocked-%d", r.Image, b.nextID)
 	build := cloudbuild.Build{
 		ID:     fmt.Sprintf("b-%d", b.nextID),
 		Status: cloudbuild.StatusQueued,
 		LogURL: testLogURL,
 	}
 	b.builds[build.ID] = runningBuild{
-		Build:   build,
-		Request: r,
+		Build:    build,
+		Request:  r,
+		imageRef: imageRef,
 	}
-	return &build, nil
+	return &build, imageRef, nil
 }
 
 func (b *builderImplMock) Check(ctx context.Context, bid string) (*cloudbuild.Build, error) {
@@ -159,8 +167,8 @@ func (b *builderImplMock) Check(ctx context.Context, bid string) (*cloudbuild.Bu
 		return nil, err
 	}
 	b.builds[bid] = build
-	if build.Status == cloudbuild.StatusSuccess && build.Request.Image != "" {
-		b.registry.put(build.Request.Image, build.OutputDigest)
+	if build.Status == cloudbuild.StatusSuccess {
+		b.registry.put(build.imageRef, build.finalDigest)
 	}
 	return &build.Build, nil
 }

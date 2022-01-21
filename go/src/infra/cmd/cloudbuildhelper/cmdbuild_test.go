@@ -70,17 +70,16 @@ func TestBuild(t *testing.T) {
 			testTarballURL = fmt.Sprintf("gs://%s/%s/%s.tar.gz", testBucketName, testTargetName, digest)
 		)
 
+		builder.provenance = func(gs string) string {
+			So(gs, ShouldEqual, testTarballURL+"#1") // used first gen
+			return digest                            // got its digest correctly
+		}
 		builder.outputDigests = func(img string) string {
-			So(img, ShouldEqual, testImageName+":cbh")
+			So(img, ShouldStartWith, testImageName+":mocked-")
 			return testDigest
 		}
 
 		Convey("Never seen before tarball", func() {
-			builder.provenance = func(gs string) string {
-				So(gs, ShouldEqual, testTarballURL+"#1") // used first gen
-				return digest                            // got its digest correctly
-			}
-
 			res, err := runBuild(ctx, buildParams{
 				Manifest: &manifest.Manifest{
 					Name:          testTargetName,
@@ -182,12 +181,8 @@ func TestBuild(t *testing.T) {
 			// but mark the target as non-deterministic. It should ignore the existing
 			// image and build a new one.
 			Convey("Building existing tarball non-deterministically: creates new image", func() {
-				builder.provenance = func(gs string) string {
-					So(gs, ShouldEqual, testTarballURL+"#1") // reused first gen
-					return digest
-				}
 				builder.outputDigests = func(img string) string {
-					So(img, ShouldEqual, testImageName+":cbh")
+					So(img, ShouldStartWith, testImageName+":mocked-")
 					return "sha256:new-totally-legit-hash"
 				}
 
@@ -238,6 +233,54 @@ func TestBuild(t *testing.T) {
 			})
 		})
 
+		Convey("Building with PushesExplicitly==true builder", func() {
+			builder.pushesExplicitly = true
+
+			res, err := runBuild(ctx, buildParams{
+				Manifest: &manifest.Manifest{
+					Name:          testTargetName,
+					Deterministic: &_true,
+				},
+				Image:        testImageName,
+				BuildID:      "b1",
+				CanonicalTag: testTagName,
+				Tags:         []string{"latest"},
+				Stage:        stageFileSet(fs),
+				Store:        store,
+				Builder:      builder,
+				Registry:     registry,
+				Output:       testBaseOutput,
+			})
+			So(err, ShouldBeNil)
+
+			// Uploaded the file.
+			obj, err := store.Check(ctx, testTarballPath)
+			So(err, ShouldBeNil)
+			So(obj.String(), ShouldEqual, testTarballURL+"#1") // uploaded the first gen
+
+			// Used Cloud Build.
+			So(res, ShouldResemble, buildResult{
+				baseOutput: testBaseOutput,
+				Image: &imageRef{
+					Image:        testImageName,
+					Digest:       testDigest,
+					CanonicalTag: testTagName,
+					BuildID:      "b1",
+				},
+				ViewBuildURL: testLogURL,
+			})
+
+			// Tagged it with canonical tag.
+			img, err := registry.GetImage(ctx, fmt.Sprintf("%s:%s", testImageName, testTagName))
+			So(err, ShouldBeNil)
+			So(img.Digest, ShouldEqual, testDigest)
+
+			// And moved "latest" tag.
+			img, err = registry.GetImage(ctx, testImageName+":latest")
+			So(err, ShouldBeNil)
+			So(img.Digest, ShouldEqual, testDigest)
+		})
+
 		Convey("Already seen canonical tag", func() {
 			registry.put(fmt.Sprintf("%s:%s", testImageName, testTagName), testDigest)
 
@@ -269,11 +312,6 @@ func TestBuild(t *testing.T) {
 
 		Convey("Using :inputs-hash as canonical tag", func() {
 			expectedTag := "cbh-inputs-" + digest[:24]
-
-			builder.provenance = func(gs string) string {
-				So(gs, ShouldEqual, testTarballURL+"#1") // used first gen
-				return digest                            // got its digest correctly
-			}
 
 			params := buildParams{
 				Manifest: &manifest.Manifest{

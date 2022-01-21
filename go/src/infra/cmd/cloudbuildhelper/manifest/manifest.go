@@ -275,8 +275,41 @@ type CloudBuildBuilder struct {
 	// Pool is a private worker pool to run builds on (if any).
 	Pool *WorkerPool `yaml:"pool,omitempty"`
 
-	// Docker is a version of "docker" tool to use for builds.
-	Docker string `yaml:"docker"`
+	// Executable is a name of the container to execute as Cloud Build step.
+	//
+	// May include ":<tag>" suffix. Its working directory will be "/workspace" and
+	// it will be populated with files from the context directory, as prepared by
+	// the cloudbuildhelper.
+	Executable string `yaml:"executable"`
+
+	// Args is command line arguments to pass to the executable.
+	//
+	// Following tokens will be substituted by the cloudbuildhelper before passing
+	// the command to Cloud Build:
+	//   * ${CBH_DOCKER_IMAGE}: the full image name (including the registry prefix
+	//     and ":<tag>" suffix) that the Cloud Build step should build.
+	//   * ${CBH_DOCKER_LABELS}: list of ["--label", "k=v", "--label", "k=v", ...]
+	//     pairs with all labels to pass to `docker build`. Can be passed directly
+	//     to `docker build`.
+	Args []string `yaml:"args"`
+
+	// PushesExplicitly, if true, indicates the step pushes the final image to
+	// the registry itself, instead of relying on Cloud Build to do the push.
+	//
+	// Note that PushesExplicitly == true somewhat reduces security properties of
+	// the build, since the pushed image can theoretically be replaced with
+	// something else between the moment it was pushed by the builder and
+	// cloudbuildhelper resolves its tag into a SHA256 digest. When pushing via
+	// Cloud Build (i.e. PushesExplicitly == false) Cloud Build reports the image
+	// SHA256 digest directly (based on its local docker cache) and the tag is
+	// not used at all.
+	PushesExplicitly bool `yaml:"pushes_explicitly"`
+
+	// Timeout is how long the Cloud Build build is allowed to run.
+	//
+	// Default timeout is ten minutes. Specified as a duration in seconds,
+	// terminated by 's'. Example: "3.5s".
+	Timeout string `yaml:"timeout"`
 }
 
 // WorkerPool is an ID of a worker pool within a project.
@@ -312,9 +345,30 @@ func (i *Infra) ResolveCloudBuildConfig(cfg CloudBuildConfig) (*CloudBuildBuilde
 	if !ok {
 		return nil, errors.Reason("cloudbuild.builder references unknown Cloud Build builder %q", cfg.Builder).Err()
 	}
+
 	if builder.Project == "" {
 		return nil, errors.Reason("infra[...].cloudbuild[...].project is required when using Cloud Build").Err()
 	}
+
+	// By default do regular "docker build" calls.
+	if builder.Executable == "" {
+		builder.Executable = "gcr.io/cloud-builders/docker:latest"
+	}
+	if len(builder.Args) == 0 {
+		builder.Args = []string{
+			"build",
+			".",
+			"--network", "cloudbuild", // this is what "gcloud build submit" uses, it is documented
+			"--no-cache", // state of the cache on Cloud Build workers is not well defined
+			"--tag", "${CBH_DOCKER_IMAGE}",
+			"${CBH_DOCKER_LABELS}",
+		}
+	}
+
+	if builder.Timeout == "" {
+		builder.Timeout = "600s"
+	}
+
 	return &builder, nil
 }
 

@@ -26,7 +26,7 @@ type storageImpl interface {
 
 // builderImpl is implemented by *cloudbuild.Builder.
 type builderImpl interface {
-	Trigger(ctx context.Context, r cloudbuild.Request) (*cloudbuild.Build, error)
+	Trigger(ctx context.Context, r cloudbuild.Request) (*cloudbuild.Build, string, error)
 	Check(ctx context.Context, bid string) (*cloudbuild.Build, error)
 }
 

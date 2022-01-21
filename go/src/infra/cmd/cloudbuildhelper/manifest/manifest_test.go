@@ -353,9 +353,9 @@ func TestExtends(t *testing.T) {
 						Storage:  "gs://mid-storage",
 						Registry: "leaf-registry",
 						CloudBuild: map[string]CloudBuildBuilder{
-							"builder1": {Project: "project-1-override"},
-							"builder2": {Project: "project-2"},
-							"builder3": {Project: "project-3"},
+							"builder1": {Project: "project-1-override", Args: []string{}},
+							"builder2": {Project: "project-2", Args: []string{}},
+							"builder3": {Project: "project-3", Args: []string{}},
 						},
 						Notify: []NotifyConfig{notifyMid},
 					},

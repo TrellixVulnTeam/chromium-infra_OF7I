@@ -453,16 +453,9 @@ func tagImage(ctx context.Context, r registryImpl, imgRef *imageRef, tags []stri
 func doCloudBuild(ctx context.Context, in *storage.Object, inDigest string, p buildParams) (string, *cloudbuild.Build, error) {
 	logging.Infof(ctx, "Triggering new Cloud Build build...")
 
-	// Cloud Build always pushes the tagged image to the registry. The default
-	// tag is "latest", and we don't want to use it in case someone decides to
-	// rely on it. So pick something more cryptic. Note that we don't really care
-	// if this tag is moved concurrently by someone else. We never read it, we
-	// consume only the image digest returned directly by Cloud Build API.
-	image := p.Image + ":cbh"
-
-	build, err := p.Builder.Trigger(ctx, cloudbuild.Request{
+	build, image, err := p.Builder.Trigger(ctx, cloudbuild.Request{
 		Source: in,
-		Image:  image,
+		Image:  p.Image,
 		Labels: docker.Labels{
 			Created:      clock.Now(ctx).UTC(),
 			BuildTool:    UserAgent,
@@ -492,12 +485,24 @@ func doCloudBuild(ctx context.Context, in *storage.Object, inDigest string, p bu
 	if got := build.InputHashes[in.String()]; got != inDigest {
 		return "", build, errors.Reason("build consumed file with digest %q, but we produced %q", got, inDigest).Err()
 	}
-	// And it pushed the image we asked it to push.
-	if build.OutputImage != image {
-		return "", build, errors.Reason("build produced image %q, but we expected %q", build.OutputImage, image).Err()
+
+	// If Cloud Build pushed the image itself, trust the digest it returned.
+	if build.OutputDigest != "" {
+		if build.OutputImage != image {
+			return "", build, errors.Reason("build produced image %q, but we expected %q", build.OutputImage, image).Err()
+		}
+		return build.OutputDigest, build, nil
 	}
 
-	return build.OutputDigest, build, nil
+	// If the Cloud Build didn't push the image itself, then the custom build
+	// command must have done it (under `image` tag). Resolve this tag into
+	// a concrete digest.
+	logging.Infof(ctx, "Resolving digest of %s...", image)
+	resolved, err := p.Registry.GetImage(ctx, image)
+	if err != nil {
+		return "", build, errors.Annotate(err, "the Cloud Build step didn't push image %q", image).Err()
+	}
+	return resolved.Digest, build, nil
 }
 
 // waitBuild polls Build until it is in some terminal state (successful or not).
