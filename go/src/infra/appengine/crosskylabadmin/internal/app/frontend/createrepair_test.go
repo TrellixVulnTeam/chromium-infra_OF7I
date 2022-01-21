@@ -5,10 +5,11 @@
 package frontend
 
 import (
-	"infra/appengine/crosskylabadmin/internal/app/config"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"infra/appengine/crosskylabadmin/internal/app/config"
 )
 
 // TestIsDisjoint tests that isDisjoint(a, b) returns true if and only if
