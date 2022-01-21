@@ -13,7 +13,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca"
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee"
     ],
     "infra_step": true,
     "name": "install infra/tools/cloudbuildhelper.ensure package directory",
@@ -26,9 +26,9 @@
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee",
       "-ensure-file",
-      "infra/tools/cloudbuildhelper/${platform} git_revision:bff3c33e29fdedbe74a1e21c6439366f1622ecca",
+      "infra/tools/cloudbuildhelper/${platform} git_revision:37366cd2fe49707b887d568dfd7c28d27f43a8ee",
       "-max-threads",
       "0",
       "-json-output",
@@ -42,7 +42,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:bff\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:373\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/cloudbuildhelper/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -53,7 +53,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "version"
     ],
     "name": "cloudbuildhelper version",
@@ -63,7 +63,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -120,7 +120,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "another.yaml",
       "-json-output",
@@ -159,7 +159,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "a.yaml",
       "-tag",
@@ -188,7 +188,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "b.yaml",
       "-canonical-tag",
@@ -217,7 +217,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "third.yaml",
       "-json-output",
@@ -237,7 +237,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "build",
       "fail_maybe.yaml",
       "-json-output",
@@ -257,7 +257,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "upload",
       "some/dir/target.yaml",
       "-canonical-tag",
@@ -303,7 +303,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "upload",
       "another.yaml",
       "-canonical-tag",
@@ -334,7 +334,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3Abff3c33e29fdedbe74a1e21c6439366f1622ecca/cloudbuildhelper",
+      "[START_DIR]/cipd_tool/infra/tools/cloudbuildhelper/git_revision%3A37366cd2fe49707b887d568dfd7c28d27f43a8ee/cloudbuildhelper",
       "upload",
       "fail_maybe.yaml",
       "-canonical-tag",

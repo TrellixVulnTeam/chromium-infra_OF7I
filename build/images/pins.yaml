@@ -36,3 +36,9 @@ pins:
 - image: gcr.io/distroless/static
   tag: latest
   digest: sha256:8ad6f3ec70dad966479b9fb48da991138c72ba969859098ec689d1450c2e6c97
+- image: mcr.microsoft.com/windows/nanoserver
+  tag: "1809"
+  digest: sha256:a608d7e96462ad9de894c98de74ac5c08c4624a40c6332d78d3a38c1939e1f62
+- image: mcr.microsoft.com/windows/servercore
+  tag: ltsc2019
+  digest: sha256:ab693245cc2f6c018a5718b9ded9eac109629e207907df81991f449d138cd85c

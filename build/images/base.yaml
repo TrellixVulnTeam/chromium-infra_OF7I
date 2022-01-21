@@ -9,6 +9,10 @@ name: base
 #   $ cloudbuildhelper pins-update pins.yaml
 imagepins: pins.yaml
 
+# Build using "linux" Cloud Build configuration by default.
+cloudbuild:
+  builder: linux
+
 infra:
   # Set of infra services used when building images from workstations.
   #
@@ -25,8 +29,29 @@ infra:
     storage: gs://chops-public-images-dev/dev
     registry: gcr.io/chops-public-images-dev
     cloudbuild:
-      project: chops-public-images-dev
-      docker: 18.09.6  # see https://gcr.io/cloud-builders/docker
+      linux:
+        project: chops-public-images-dev
+        executable: gcr.io/cloud-builders/docker:18.09.6
+      windows:
+        project: chops-public-images-dev
+        pool:
+          region: us-west1
+          id: chops-public-images-dev
+        executable: us-docker.pkg.dev/cloud-builders/preview/gke-windows-builder:20220120
+        timeout: "1800s"
+        pushes_explicitly: true
+        args: [
+          "--region", "us-west1",
+          "--zone", "us-west1-a",
+          "--machineType", "e2-standard-2",
+          "--serviceAccount", "windows-cloudbuild-vm@chops-public-images-dev.iam.gserviceaccount.com",
+          "--use-internal-ip",
+          "--network", "cloudbuild",
+          "--subnetwork", "cloudbuild",
+          "--workspace-bucket", "chops-public-images-dev-win-builder-tmp",
+          "--container-image-name", "${CBH_DOCKER_IMAGE}",
+          "--versions", "ltsc2019",
+        ]
 
   # Set of infra services used when building images on try builders.
   #
@@ -40,8 +65,29 @@ infra:
     storage: gs://chops-public-images-dev/try
     registry: gcr.io/chops-public-images-dev
     cloudbuild:
-      project: chops-public-images-dev
-      docker: 18.09.6  # see https://gcr.io/cloud-builders/docker
+      linux:
+        project: chops-public-images-dev
+        executable: gcr.io/cloud-builders/docker:18.09.6
+      windows:
+        project: chops-public-images-dev
+        pool:
+          region: us-west1
+          id: chops-public-images-dev
+        executable: us-docker.pkg.dev/cloud-builders/preview/gke-windows-builder:20220120
+        timeout: "1800s"
+        pushes_explicitly: true
+        args: [
+          "--region", "us-west1",
+          "--zone", "us-west1-a",
+          "--machineType", "e2-standard-2",
+          "--serviceAccount", "windows-cloudbuild-vm@chops-public-images-dev.iam.gserviceaccount.com",
+          "--use-internal-ip",
+          "--network", "cloudbuild",
+          "--subnetwork", "cloudbuild",
+          "--workspace-bucket", "chops-public-images-dev-win-builder-tmp",
+          "--container-image-name", "${CBH_DOCKER_IMAGE}",
+          "--versions", "ltsc2019",
+        ]
 
   # Set of infra services used when building images on non-production CI
   # builders.
@@ -55,8 +101,29 @@ infra:
     storage: gs://chops-public-images-dev/ci
     registry: gcr.io/chops-public-images-dev
     cloudbuild:
-      project: chops-public-images-dev
-      docker: 18.09.6  # see https://gcr.io/cloud-builders/docker
+      linux:
+        project: chops-public-images-dev
+        executable: gcr.io/cloud-builders/docker:18.09.6
+      windows:
+        project: chops-public-images-dev
+        pool:
+          region: us-west1
+          id: chops-public-images-dev
+        executable: us-docker.pkg.dev/cloud-builders/preview/gke-windows-builder:20220120
+        timeout: "1800s"
+        pushes_explicitly: true
+        args: [
+          "--region", "us-west1",
+          "--zone", "us-west1-a",
+          "--machineType", "e2-standard-2",
+          "--serviceAccount", "windows-cloudbuild-vm@chops-public-images-dev.iam.gserviceaccount.com",
+          "--use-internal-ip",
+          "--network", "cloudbuild",
+          "--subnetwork", "cloudbuild",
+          "--workspace-bucket", "chops-public-images-dev-win-builder-tmp",
+          "--container-image-name", "${CBH_DOCKER_IMAGE}",
+          "--versions", "ltsc2019",
+        ]
 
   # Set of infra services used when building release images on production
   # release builders. Nominally only release builders have access to these
@@ -70,8 +137,29 @@ infra:
     storage: gs://chops-public-images-prod
     registry: gcr.io/chops-public-images-prod
     cloudbuild:
-      project: chops-public-images-prod
-      docker: 18.09.6  # see https://gcr.io/cloud-builders/docker
+      linux:
+        project: chops-public-images-prod
+        executable: gcr.io/cloud-builders/docker:18.09.6
+      windows:
+        project: chops-public-images-prod
+        pool:
+          region: us-west1
+          id: chops-public-images-prod
+        executable: us-docker.pkg.dev/cloud-builders/preview/gke-windows-builder:20220120
+        timeout: "1800s"
+        pushes_explicitly: true
+        args: [
+          "--region", "us-west1",
+          "--zone", "us-west1-a",
+          "--machineType", "e2-standard-2",
+          "--serviceAccount", "windows-cloudbuild-vm@chops-public-images-prod.iam.gserviceaccount.com",
+          "--use-internal-ip",
+          "--network", "cloudbuild",
+          "--subnetwork", "cloudbuild",
+          "--workspace-bucket", "chops-public-images-prod-win-builder-tmp",
+          "--container-image-name", "${CBH_DOCKER_IMAGE}",
+          "--versions", "ltsc2019",
+        ]
     notify:
       # Roll the built production images into the repo with k8s configs. This
       # YAML section is interpreted by images_builder.py recipe.
