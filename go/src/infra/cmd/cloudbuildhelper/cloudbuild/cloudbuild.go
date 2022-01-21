@@ -27,7 +27,7 @@ import (
 // Builder knows how to trigger Cloud Build builds and check their status.
 type Builder struct {
 	builds *cloudbuild.ProjectsBuildsService
-	cfg    manifest.CloudBuildConfig
+	cfg    manifest.CloudBuildBuilder
 }
 
 // Request specifies what we want to build and push.
@@ -89,7 +89,7 @@ type Build struct {
 }
 
 // New prepares a Builder instance.
-func New(ctx context.Context, ts oauth2.TokenSource, cfg manifest.CloudBuildConfig) (*Builder, error) {
+func New(ctx context.Context, ts oauth2.TokenSource, cfg manifest.CloudBuildBuilder) (*Builder, error) {
 	svc, err := cloudbuild.NewService(ctx, option.WithTokenSource(ts))
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to instantiate cloudbuild.Service").Err()

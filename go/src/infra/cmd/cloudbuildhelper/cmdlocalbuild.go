@@ -51,7 +51,7 @@ func (c *cmdLocalBuildRun) init() {
 }
 
 func (c *cmdLocalBuildRun) exec(ctx context.Context) error {
-	m, _, _, err := c.loadManifest(ctx, c.targetManifest, false, false)
+	m, _, err := c.loadManifest(ctx, c.targetManifest, false, false)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (c *cmdLocalBuildRun) exec(ctx context.Context) error {
 		Extra:     c.labels,
 	}
 
-	return stage(ctx, m, func(out *fileset.Set) error {
+	return stage(ctx, m.Manifest, func(out *fileset.Set) error {
 		logging.Infof(ctx, "Sending tarball with %d files to the docker...", out.Len())
 
 		r, w := io.Pipe()
@@ -80,7 +80,7 @@ func (c *cmdLocalBuildRun) exec(ctx context.Context) error {
 
 		imageDigest, dockerErr := docker.Build(ctx, r, append([]string{
 			"--no-cache",
-			"--tag", m.Name, // attach a local tag for convenience
+			"--tag", m.Manifest.Name, // attach a local tag for convenience
 		}, labels.AsBuildArgs()...))
 		r.Close()
 		<-done

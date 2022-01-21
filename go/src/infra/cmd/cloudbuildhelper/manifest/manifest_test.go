@@ -286,9 +286,9 @@ func TestExtends(t *testing.T) {
 					"mid": {
 						Storage:  "gs://mid-storage",
 						Registry: "mid-registry",
-						CloudBuild: CloudBuildConfig{
-							Project: "mid-project",
-							Docker:  "mid-docker",
+						CloudBuild: map[string]CloudBuildBuilder{
+							"builder1": {Project: "project-1"},
+							"builder2": {Project: "project-2"},
 						},
 						Notify: []NotifyConfig{notifyMid},
 					},
@@ -308,8 +308,9 @@ func TestExtends(t *testing.T) {
 				Infra: map[string]Infra{
 					"mid": { // partial override
 						Registry: "leaf-registry",
-						CloudBuild: CloudBuildConfig{
-							Docker: "leaf-docker",
+						CloudBuild: map[string]CloudBuildBuilder{
+							"builder1": {Project: "project-1-override"},
+							"builder3": {Project: "project-3"},
 						},
 					},
 				},
@@ -343,16 +344,18 @@ func TestExtends(t *testing.T) {
 				Deterministic: &falseVal,
 				Infra: map[string]Infra{
 					"base": {
-						Storage:  "gs://base-storage",
-						Registry: "base-registry",
-						Notify:   []NotifyConfig{notifyBase},
+						Storage:    "gs://base-storage",
+						Registry:   "base-registry",
+						Notify:     []NotifyConfig{notifyBase},
+						CloudBuild: map[string]CloudBuildBuilder{},
 					},
 					"mid": {
 						Storage:  "gs://mid-storage",
 						Registry: "leaf-registry",
-						CloudBuild: CloudBuildConfig{
-							Project: "mid-project",
-							Docker:  "leaf-docker",
+						CloudBuild: map[string]CloudBuildBuilder{
+							"builder1": {Project: "project-1-override"},
+							"builder2": {Project: "project-2"},
+							"builder3": {Project: "project-3"},
 						},
 						Notify: []NotifyConfig{notifyMid},
 					},

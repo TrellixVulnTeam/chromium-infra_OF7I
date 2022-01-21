@@ -62,10 +62,17 @@ func (r *Restrictions) CheckBuildSteps(steps []*BuildStep) (violations []string)
 func (r *Restrictions) CheckInfra(m *Infra) (violations []string) {
 	report(&violations, "Google Storage destination", m.Storage, &r.storage, true)
 	report(&violations, "Container Registry destination", m.Registry, &r.registry, false)
-	report(&violations, "Cloud Build project", m.CloudBuild.Project, &r.build, false)
 	for _, n := range m.Notify {
 		report(&violations, "notification destination", n.DestinationID(), &r.notifications, true)
 	}
+	return
+}
+
+// CheckCloudBuild checks if any of Cloud Build restrictions are violated.
+//
+// Returns a list of violations as human readable messages with details.
+func (r *Restrictions) CheckCloudBuild(c *CloudBuildBuilder) (violations []string) {
+	report(&violations, "Cloud Build project", c.Project, &r.build, false)
 	return
 }
 

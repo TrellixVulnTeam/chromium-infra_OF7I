@@ -155,6 +155,12 @@ type Manifest struct {
 	// controlled via "-infra" command line flag (defaults to "dev").
 	Infra map[string]Infra `yaml:"infra"`
 
+	// CloudBuild specifies what Cloud Build configuration to use.
+	//
+	// All available configurations are defined in `cloudbuild` section of `infra`
+	// section. This field allows to pick the active one of this target.
+	CloudBuild CloudBuildConfig `yaml:"cloudbuild,omitempty"`
+
 	// Build defines a series of local build steps.
 	//
 	// Each step may add more files to the context directory. The actual
@@ -190,8 +196,11 @@ type Infra struct {
 	// cruft.
 	Registry string `yaml:"registry"`
 
-	// CloudBuild contains configuration of Cloud Build infrastructure.
-	CloudBuild CloudBuildConfig `yaml:"cloudbuild"`
+	// CloudBuild contains configuration presets of Cloud Build infrastructure.
+	//
+	// Each entry defines a named Cloud Build configuration that can be referenced
+	// in individual manifests via `builder` field of `cloudbuild` section.
+	CloudBuild map[string]CloudBuildBuilder `yaml:"cloudbuild"`
 
 	// Notify indicates what downstream services to notify once the image is
 	// built.
@@ -240,22 +249,61 @@ func (n *NotifyConfig) DestinationID() string {
 func (i *Infra) rebaseOnTop(b Infra) {
 	setIfEmpty(&i.Storage, b.Storage)
 	setIfEmpty(&i.Registry, b.Registry)
-	i.CloudBuild.rebaseOnTop(b.CloudBuild)
+
+	// We support only adding CloudBuild configs, not overriding existing ones.
+	// Copy all entries in 'b' that are not in 'i'.
+	for k, v := range b.CloudBuild {
+		if _, ok := i.CloudBuild[k]; !ok {
+			if i.CloudBuild == nil {
+				i.CloudBuild = make(map[string]CloudBuildBuilder, 1)
+			}
+			i.CloudBuild[k] = v
+		}
+	}
+
 	if len(b.Notify) != 0 {
 		i.Notify = append([]NotifyConfig(nil), b.Notify...)
 	}
 }
 
-// CloudBuildConfig contains configuration of Cloud Build infrastructure.
-type CloudBuildConfig struct {
+// CloudBuildBuilder contains a configuration of Cloud Build infrastructure.
+//
+// It has a name. Individual targets can specify what configuration they want
+// to use via `builder` field of `cloudbuild` section.
+type CloudBuildBuilder struct {
 	Project string `yaml:"project"` // name of Cloud Project to use for builds
 	Docker  string `yaml:"docker"`  // version of "docker" tool to use for builds
 }
 
+// CloudBuildConfig contains target-specific Cloud Build configuration.
+//
+// It is used to select/tweak a named configuration preset specified in
+// `cloudbuild` field of `infra` section.
+type CloudBuildConfig struct {
+	Builder string `yaml:"builder"` // what named configuration to use
+}
+
 // rebaseOnTop implements "extends" logic.
 func (c *CloudBuildConfig) rebaseOnTop(b CloudBuildConfig) {
-	setIfEmpty(&c.Project, b.Project)
-	setIfEmpty(&c.Docker, b.Docker)
+	setIfEmpty(&c.Builder, b.Builder)
+}
+
+// ResolveCloudBuildConfig combines CloudBuildConfig specified in the target
+// manifest with the corresponding CloudBuildBuilder in this infra section
+// and returns the resolved validated configuration to use when calling
+// Cloud Build.
+func (i *Infra) ResolveCloudBuildConfig(cfg CloudBuildConfig) (*CloudBuildBuilder, error) {
+	if cfg.Builder == "" {
+		return nil, errors.Reason("cloudbuild.builder is required when using Cloud Build").Err()
+	}
+	builder, ok := i.CloudBuild[cfg.Builder]
+	if !ok {
+		return nil, errors.Reason("cloudbuild.builder references unknown Cloud Build builder %q", cfg.Builder).Err()
+	}
+	if builder.Project == "" {
+		return nil, errors.Reason("infra[...].cloudbuild[...].project is required when using Cloud Build").Err()
+	}
+	return &builder, nil
 }
 
 // BuildStep is one local build operation.
@@ -632,6 +680,8 @@ func (m *Manifest) rebaseOnTop(b *Manifest) {
 			m.Infra[k] = v
 		}
 	}
+
+	m.CloudBuild.rebaseOnTop(b.CloudBuild)
 
 	// Steps are just joined (base ones first).
 	m.Build = append(b.Build, m.Build...)

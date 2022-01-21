@@ -106,7 +106,7 @@ func (c *cmdBuildRun) init() {
 }
 
 func (c *cmdBuildRun) exec(ctx context.Context) error {
-	m, infra, output, err := c.loadManifest(ctx, c.targetManifest, true, true)
+	m, output, err := c.loadManifest(ctx, c.targetManifest, true, true)
 	if err != nil {
 		return err
 	}
@@ -124,8 +124,8 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 	// If not pushing to a registry, just build and then discard the image. This
 	// is accomplished by NOT passing the image name to runBuild.
 	image := ""
-	if infra.Registry != "" {
-		image = path.Join(infra.Registry, m.Name)
+	if m.Infra.Registry != "" {
+		image = path.Join(m.Infra.Registry, m.Manifest.Name)
 	} else {
 		// If not using a registry, can't push any tags.
 		switch {
@@ -143,18 +143,18 @@ func (c *cmdBuildRun) exec(ctx context.Context) error {
 	}
 
 	// Instantiate infra services based on what's in the manifest.
-	store, err := storage.New(ctx, ts, infra.Storage)
+	store, err := storage.New(ctx, ts, m.Infra.Storage)
 	if err != nil {
 		return errors.Annotate(err, "failed to initialize Storage").Err()
 	}
-	builder, err := cloudbuild.New(ctx, ts, infra.CloudBuild)
+	builder, err := cloudbuild.New(ctx, ts, *m.CloudBuild)
 	if err != nil {
 		return errors.Annotate(err, "failed to initialize Builder").Err()
 	}
 	registry := &registry.Client{TokenSource: ts} // can talk to any registry
 
 	res, err := runBuild(ctx, buildParams{
-		Manifest:     m,
+		Manifest:     m.Manifest,
 		Force:        c.force,
 		Image:        image,
 		Labels:       c.labels,

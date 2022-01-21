@@ -91,11 +91,11 @@ func (c *cmdStageRun) exec(ctx context.Context) error {
 		panic("impossible")
 	}
 
-	m, _, _, err := c.loadManifest(ctx, c.targetManifest, false, false)
+	m, _, err := c.loadManifest(ctx, c.targetManifest, false, false)
 	if err != nil {
 		return err
 	}
-	return stage(ctx, m, outputWriter)
+	return stage(ctx, m.Manifest, outputWriter)
 }
 
 // stage executes logic of 'stage' subcommand, calling the callback in the

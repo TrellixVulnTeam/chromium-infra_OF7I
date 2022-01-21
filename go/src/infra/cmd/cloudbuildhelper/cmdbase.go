@@ -66,6 +66,13 @@ type extraFlags struct {
 	jsonOutput   bool // -json-output and -render-to-stdout
 }
 
+// loadedManifest is returned by loadManifest.
+type loadedManifest struct {
+	Manifest   *manifest.Manifest
+	Infra      *manifest.Infra
+	CloudBuild *manifest.CloudBuildBuilder
+}
+
 // baseOutput is a shared portion of -json-output for `upload` and `build`
 // commands.
 type baseOutput struct {
@@ -189,61 +196,74 @@ func (c *commandBase) newTempDir() (string, error) {
 // If the command requires `-infra` flag (as indicated by extraFlags in init),
 // checks it was passed and picks the corresponding infra section from the
 // manifest and checks it doesn't violate any of the restrictions supplied by
-// `-restrict-*` flags.
-func (c *commandBase) loadManifest(ctx context.Context, path string, needStorage, needCloudBuild bool) (m *manifest.Manifest, infra *manifest.Infra, output *baseOutput, err error) {
-	m, err = manifest.Load(path)
+// `-restrict-*` flags. Populates Infra field of loadedManifest on success.
+// If the command doesn't require `-infra` flag, the returned Infra is nil.
+//
+// If needCloudBuild is true, verifies Cloud Build configuration specified in
+// the manifest and populates CloudBuild field of loadedManifest with the final
+// resolved and validated configuration.
+func (c *commandBase) loadManifest(ctx context.Context, path string, needStorage, needCloudBuild bool) (m *loadedManifest, output *baseOutput, err error) {
+	m = &loadedManifest{}
+
+	m.Manifest, err = manifest.Load(path)
 	if err != nil {
-		return nil, nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
 	}
 
 	// If contextdir isn't set, replace it with an empty temp directory.
-	if m.ContextDir == "" {
-		m.ContextDir, err = c.newTempDir()
+	if m.Manifest.ContextDir == "" {
+		m.Manifest.ContextDir, err = c.newTempDir()
 		if err != nil {
-			return nil, nil, nil, errors.Annotate(err, "failed to create temp directory to act as a context dir").Err()
+			return nil, nil, errors.Annotate(err, "failed to create temp directory to act as a context dir").Err()
 		}
 	}
 
 	// Now that all paths are initialized, render "${dir}/..." strings.
-	if err = m.Finalize(); err != nil {
-		return nil, nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
+	if err = m.Manifest.Finalize(); err != nil {
+		return nil, nil, errors.Annotate(err, "when loading manifest").Tag(isCLIError).Err()
 	}
 
 	if c.extraFlags.infra {
 		if c.infra == "" {
-			return nil, nil, nil, errBadFlag("-infra", "a value is required")
+			return nil, nil, errBadFlag("-infra", "a value is required")
 		}
-		section, ok := m.Infra[c.infra]
+		section, ok := m.Manifest.Infra[c.infra]
 		switch {
 		case !ok:
-			return nil, nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
+			return nil, nil, errBadFlag("-infra", fmt.Sprintf("no %q infra specified in the manifest", c.infra))
 		case needStorage && section.Storage == "":
-			return nil, nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
-		case needCloudBuild && section.CloudBuild.Project == "":
-			return nil, nil, nil, errors.Reason("in %q: infra[...].cloudbuild.project is required when using remote build", path).Tag(isCLIError).Err()
+			return nil, nil, errors.Reason("in %q: infra[...].storage is required when using remote build", path).Tag(isCLIError).Err()
+		case needCloudBuild:
+			m.CloudBuild, err = section.ResolveCloudBuildConfig(m.Manifest.CloudBuild)
+			if err != nil {
+				return nil, nil, errors.Annotate(err, "in %q", path).Err()
+			}
 		}
-		infra = &section
+		m.Infra = &section
 	}
 
 	// Enforce restrictions specified via -restrict-* flags.
 	if c.extraFlags.restrictions {
 		var violations []string
-		violations = append(violations, c.restrictions.CheckTargetName(m.Name)...)
-		violations = append(violations, c.restrictions.CheckBuildSteps(m.Build)...)
+		violations = append(violations, c.restrictions.CheckTargetName(m.Manifest.Name)...)
+		violations = append(violations, c.restrictions.CheckBuildSteps(m.Manifest.Build)...)
 		if c.extraFlags.infra {
-			violations = append(violations, c.restrictions.CheckInfra(infra)...)
+			violations = append(violations, c.restrictions.CheckInfra(m.Infra)...)
+		}
+		if needCloudBuild {
+			violations = append(violations, c.restrictions.CheckCloudBuild(m.CloudBuild)...)
 		}
 		if len(violations) != 0 {
 			for _, msg := range violations {
 				logging.Errorf(ctx, "Restriction violation: %s", msg)
 			}
-			return nil, nil, nil, errors.Reason("restrictions violation detected, see logs").Err()
+			return nil, nil, errors.Reason("restrictions violation detected, see logs").Err()
 		}
 	}
 
 	// Prepare -json-output portion that depends on the manifest.
-	if output, err = prepBaseOutput(m, infra); err != nil {
-		return nil, nil, nil, errors.Annotate(err, "failed to prepare values for -json-output").Err()
+	if output, err = prepBaseOutput(m.Manifest, m.Infra); err != nil {
+		return nil, nil, errors.Annotate(err, "failed to prepare values for -json-output").Err()
 	}
 
 	return

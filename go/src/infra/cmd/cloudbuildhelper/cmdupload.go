@@ -79,7 +79,7 @@ func (c *cmdUploadRun) init() {
 }
 
 func (c *cmdUploadRun) exec(ctx context.Context) error {
-	m, infra, output, err := c.loadManifest(ctx, c.targetManifest, true, false)
+	m, output, err := c.loadManifest(ctx, c.targetManifest, true, false)
 	if err != nil {
 		return err
 	}
@@ -92,14 +92,14 @@ func (c *cmdUploadRun) exec(ctx context.Context) error {
 	if err != nil {
 		return errors.Annotate(err, "failed to setup auth").Err()
 	}
-	store, err := storage.New(ctx, ts, infra.Storage)
+	store, err := storage.New(ctx, ts, m.Infra.Storage)
 	if err != nil {
 		return errors.Annotate(err, "failed to initialize Storage").Err()
 	}
 
 	// Execute the main logic.
 	obj, digest, oldestRef, err := buildAndUpload(ctx, uploadParams{
-		Manifest:     m,
+		Manifest:     m.Manifest,
 		CanonicalTag: c.canonicalTag,
 		BuildID:      c.buildID,
 		Store:        store,
