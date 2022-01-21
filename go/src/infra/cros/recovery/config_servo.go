@@ -170,7 +170,8 @@ const servoRepairPlanBody = `
 			"servo_topology_dual_setup"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_cycle_repair"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -280,13 +281,17 @@ const servoRepairPlanBody = `
 			"servo_is_sbu_voltage_issue"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_cycle_repair"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
 		"exec_extra_args": [
 			"command:dut_sbu_voltage_float_fault",
 			"expected_string_value:on"
+		],
+		"recovery_actions": [
+			"servo_power_cycle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -300,7 +305,8 @@ const servoRepairPlanBody = `
 			"servo_is_sbu_voltage_issue"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_cycle_repair"
 		],
 		"exec_name":"sample_fail"
 	},
@@ -319,7 +325,8 @@ const servoRepairPlanBody = `
 			"any_one:true"
 		],
 		"recovery_actions": [
-			"servo_host_servod_restart"
+			"servo_host_servod_restart",
+			"servo_power_cycle_repair"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -567,5 +574,30 @@ const servoRepairPlanBody = `
 	},
 	"servod_restart_dut": {
 		"exec_name":"sample_pass"
+	},
+	"servo_power_cycle_repair":{
+		"docs":[
+			"Toggle the servod command servo_pd_role only once. And then stop the servod afterwards. TODO: Add dependency for servo initialize."
+		],
+		"dependencies": [
+			"servo_pd_toggle_once"
+		],
+		"exec_timeout": {
+			"seconds": 120
+		},
+		"run_control": 1,
+		"exec_name":"servo_host_servod_stop"
+	},
+	"servo_pd_toggle_once":{
+		"docs":[
+			"Toggle the servod command servo_pd_role only once."
+		],
+		"exec_extra_args": [
+			"toggle_times:1",
+			"wait_in_retry:5",
+			"wait_before_retry:1"
+		],
+		"run_control": 1,
+		"exec_name":"servo_servod_toggle_pd_role"
 	}
 }`
