@@ -108,7 +108,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
-	defer access.Close()
+	defer access.Close(ctx)
 
 	task := tasknames.Recovery
 	if t, ok := supportedTasks[in.TaskName]; ok {

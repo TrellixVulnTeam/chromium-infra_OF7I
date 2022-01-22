@@ -117,7 +117,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 	if err != nil {
 		return errors.Annotate(err, "local recovery: create tlw access").Err()
 	}
-	defer access.Close()
+	defer access.Close(ctx)
 	in := &recovery.RunArgs{
 		UnitName:              unit,
 		Access:                access,

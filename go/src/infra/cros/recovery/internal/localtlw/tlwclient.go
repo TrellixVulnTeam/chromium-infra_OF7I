@@ -99,7 +99,7 @@ func New(ufs UFSClient, csac CSAClient) (tlw.Access, error) {
 }
 
 // Close closes all used resources.
-func (c *tlwClient) Close() error {
+func (c *tlwClient) Close(ctx context.Context) error {
 	if err := c.sshPool.Close(); err != nil {
 		return errors.Annotate(err, "tlw client").Err()
 	}

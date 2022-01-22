@@ -56,7 +56,7 @@ type Access interface {
 	// Provision triggers provisioning of the device.
 	Provision(ctx context.Context, req *ProvisionRequest) error
 	// Close closes all used resources.
-	Close() error
+	Close(ctx context.Context) error
 }
 
 // ProvisionRequest provides data to perform provisioning of the device.
