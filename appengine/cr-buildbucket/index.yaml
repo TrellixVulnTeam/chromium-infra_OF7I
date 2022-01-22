@@ -72,3 +72,9 @@ indexes:
   - name: status_v2
   - name: tags
   - name: create_time
+
+# Can be used by SearchBuilds, depending on given criteria.
+- kind: Build
+  properties:
+  - name: bucket_id
+  - name: tags
