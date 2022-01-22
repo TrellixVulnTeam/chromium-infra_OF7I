@@ -477,7 +477,7 @@ func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionA
 
 // servoUsesServodContainerExec checks if the servo uses a servod-container.
 func servoUsesServodContainerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if !IsContainerizedServoHost(ctx, args) {
+	if !IsContainerizedServoHost(ctx, args.DUT.ServoHost) {
 		return errors.Reason("servo not using servod container").Err()
 	}
 	return nil

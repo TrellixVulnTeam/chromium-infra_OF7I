@@ -15,6 +15,7 @@ import (
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
 const (
@@ -110,11 +111,10 @@ func mainServoDeviceHelper(servoType string) (string, error) {
 }
 
 // IsContainerizedServoHost checks if the servohost is using servod container.
-func IsContainerizedServoHost(ctx context.Context, args *execs.RunArgs) bool {
-	servodContainerName := args.DUT.ServoHost.ContainerName
-	if servodContainerName == "" {
+func IsContainerizedServoHost(ctx context.Context, servoHost *tlw.ServoHost) bool {
+	if servoHost == nil || servoHost.ContainerName == "" {
 		return false
 	}
-	log.Debug(ctx, "Servo uses servod container with the name: %s", servodContainerName)
+	log.Debug(ctx, "Servo uses servod container with the name: %s", servoHost.ContainerName)
 	return true
 }
