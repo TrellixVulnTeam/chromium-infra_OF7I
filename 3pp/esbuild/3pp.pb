@@ -8,7 +8,7 @@ create {
       repo: "https://github.com/evanw/esbuild.git"
       tag_pattern: "v%s"
     }
-    patch_version: "chromium.1"
+    patch_version: "chromium.2"
   }
   build {
     tool: "tools/go"
