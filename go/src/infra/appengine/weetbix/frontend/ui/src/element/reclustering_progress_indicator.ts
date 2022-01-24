@@ -41,7 +41,7 @@ export class ReclusteringProgressIndicator extends LitElement {
     show = false;
 
     // The last progress shown on the UI.
-    progressPerMille = 0;
+    progressPerMille = 1000;
 
     // The ID returned by window.setInterval. Used to manage the timer
     // used to periodically poll for status updates.
@@ -69,16 +69,16 @@ export class ReclusteringProgressIndicator extends LitElement {
     // tickerTick is called periodically. Its purpose is to obtain the
     // latest re-clustering progress if progress is not complete.
     timerTick() {
-        // Only fetch updates if the page is being shown. This avoids
+        // Only fetch updates if the indicator is being shown. This avoids
         // creating server load for no appreciable UX improvement.
-        if (document.visibilityState == 'visible' && this.progressPerMille < 1000) {
+        if (document.visibilityState == 'visible' &&
+            this.progressPerMille < 1000) {
             this.fetch();
         }
     }
 
     render() {
         if (this.progress === undefined ||
-            this.hasRule === undefined ||
             (this.hasRule && !this.ruleLastUpdated)) {
             // Still loading.
             return html``;
