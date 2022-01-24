@@ -24,6 +24,18 @@ func LooksLikeHeader(rec []string) bool {
 	return strings.EqualFold(rec[0], "name")
 }
 
+// LooksLikeCrosskBotName checks whether the name in question begins with "crossk-".
+// This prefix reliably identifies a CrOSSkylabAdmin swarming bot (and distinguishes it from a DUT hostname).
+func LooksLikeCrosskBotName(name string) bool {
+	return strings.HasPrefix(name, "crossk-")
+}
+
+// NormalizeBotNameToDeviceName takes a bot name or a DUT name and normalizes it to a DUT name.
+// If the input is not a bot name or DUT name, then the results are undefined.
+func NormalizeBotNameToDeviceName(name string) string {
+	return strings.TrimPrefix(name, "crossk-")
+}
+
 // looksLikeValidPool heuristically checks a string to see if it looks like a valid pool.
 // A heuristically valid pool name contains only a-z, A-Z, 0-9, -, and _ .
 // A pool name cannot begin with - and 0-9 .
