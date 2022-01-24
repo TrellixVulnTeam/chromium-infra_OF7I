@@ -52,6 +52,7 @@ func respondWithJSON(ctx *router.Context, data interface{}) {
 	if err != nil {
 		logging.Errorf(ctx.Context, "Marshalling JSON for response: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
 	}
 	ctx.Writer.Header().Add("Content-Type", "application/json")
 	if _, err := ctx.Writer.Write(bytes); err != nil {

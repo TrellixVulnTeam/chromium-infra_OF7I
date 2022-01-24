@@ -19,6 +19,7 @@ func (h *Handlers) GetXSRFToken(ctx *router.Context) {
 	if err != nil {
 		logging.Errorf(ctx.Context, "Obtain XSRF token: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+		return
 	}
 
 	data := map[string]string{
