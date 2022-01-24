@@ -39,4 +39,4 @@ func NormalizeBotNameToDeviceName(name string) string {
 // looksLikeValidPool heuristically checks a string to see if it looks like a valid pool.
 // A heuristically valid pool name contains only a-z, A-Z, 0-9, -, and _ .
 // A pool name cannot begin with - and 0-9 .
-var LooksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][-A-za-z0-9_]*\z`).MatchString
+var LooksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][-A-Za-z0-9_]*\z`).MatchString
