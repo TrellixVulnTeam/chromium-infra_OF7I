@@ -694,11 +694,10 @@ const servoRepairPlanBody = `
 		"exec_name": "servo_set_servo_state"
 	},
 	"servo_has_serial": {
-		"docs" : [
-			"This is a new state created while finalizing the servo states.",
-			"TODO: Implement this"
+		"conditions": [
+			"is_not_servo_v3"
 		],
-		"exec_name": "sample_pass"
+		"exec_name": "servo_has_serial"
 	},
 	"set_state_no_ssh": {
 		"exec_extra_args": [

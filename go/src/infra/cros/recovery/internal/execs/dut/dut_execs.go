@@ -94,6 +94,16 @@ func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	return errors.Reason("dut check model exec: %s", msg).Err()
 }
 
+// servoVerifySerialNumberExec verifies that the servo host attached
+// to the DUT has a serial number configured.
+func servoVerifySerialNumberExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if args.DUT != nil && args.DUT.ServoHost != nil && args.DUT.ServoHost.Servo != nil && args.DUT.ServoHost.Servo.SerialNumber != "" {
+		log.Debug(ctx, "Servo Verify Serial Number : %q", args.DUT.ServoHost.Servo.SerialNumber)
+		return nil
+	}
+	return errors.Reason("servo verify serial number: serial number is not available").Err()
+}
+
 func init() {
 	execs.Register("dut_has_name", hasDutNameActionExec)
 	execs.Register("dut_has_board_name", hasDutBoardActionExec)
@@ -101,4 +111,5 @@ func init() {
 	execs.Register("dut_has_device_sku", hasDutDeviceSkuActionExec)
 	execs.Register("dut_check_model", dutCheckModelExec)
 	execs.Register("dut_servoless", dutServolessExec)
+	execs.Register("servo_has_serial", servoVerifySerialNumberExec)
 }
