@@ -9,4 +9,8 @@ set -o pipefail
 
 PREFIX="$1"
 
-go build -o "${PREFIX}/esbuild" ./cmd/esbuild
+if [[ $PLATFORM == windows* ]]; then
+    go build -o "${PREFIX}/esbuild.exe" ./cmd/esbuild
+else
+    go build -o "${PREFIX}/esbuild" ./cmd/esbuild
+fi
