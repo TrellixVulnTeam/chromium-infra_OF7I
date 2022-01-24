@@ -78,3 +78,12 @@ indexes:
   properties:
   - name: bucket_id
   - name: tags
+
+# Used to calculate metrics.v2.ConsecutiveFailureCount
+- kind: Build
+  properties:
+  - name: bucket_id
+  - name: status_v2
+  - name: tags
+  - name: status_changed_time
+    direction: desc
