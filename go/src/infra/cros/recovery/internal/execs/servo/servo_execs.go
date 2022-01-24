@@ -608,6 +608,46 @@ func initDutForServoExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	return nil
 }
 
+// servoUpdateServoFirmwareExec updates all the servo devices' firmware based on the condition specified by the actionArgs
+//
+// @params try_attempt_count:  Count of attempts to update servo. For force option the count attempts is always 1 (one).
+// @params try_force_update_after_fail:   Try force force option if fail to update in normal mode.
+// @params force_update:       Run updater with force option. Override try_force_update_after_fail option.
+// @params ignore_version:     Skip check the version on the device.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["try_attempt_count:x", "try_force_update_after_fail:true/false", "force_update:true/false", "ignore_version:true/false"]
+func servoUpdateServoFirmwareExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	fwUpdateMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	// If the passed in "try_attempt_count" is either 0 or cannot be parsed successfully,
+	// then, we default the count to be 1 to at least try to update it once.
+	tryAttemptCount := fwUpdateMap.AsInt(ctx, "try_attempt_count", 1)
+	tryForceUpdateAfterFail := fwUpdateMap.AsBool(ctx, "try_force_update_after_fail")
+	forceUpdate := fwUpdateMap.AsBool(ctx, "force_update")
+	ignoreVersion := fwUpdateMap.AsBool(ctx, "ignore_version")
+	run := args.NewRunner(args.DUT.ServoHost.Name)
+	if forceUpdate {
+		// If requested to update with force then first attempt will be with force
+		// and there no second attempt.
+		tryAttemptCount = 1
+		tryForceUpdateAfterFail = false
+	}
+	req := FwUpdaterRequest{
+		UseContainer:            IsContainerizedServoHost(ctx, args.DUT.ServoHost),
+		FirmwareChannel:         args.DUT.ServoHost.Servo.FirmwareChannel,
+		TryAttemptCount:         tryAttemptCount,
+		TryForceUpdateAfterFail: tryForceUpdateAfterFail,
+		ForceUpdate:             forceUpdate,
+		IgnoreVersion:           ignoreVersion,
+	}
+	failBoards := UpdateBoardsServoFw(ctx, run, req, topology.AllDevices(args.DUT.ServoHost.ServoTopology))
+	if len(failBoards) != 0 {
+		args.DUT.ServoHost.Servo.State = tlw.ServoStateNeedReplacement
+		return errors.Reason("servo update servo firmware: %d servo devices fails the update process", len(failBoards)).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -627,4 +667,5 @@ func init() {
 	execs.Register("servo_servod_old_logs_cleanup", servoServodOldLogsCleanupExec)
 	execs.Register("servo_battery_charging", servoValidateBatteryChargingExec)
 	execs.Register("init_dut_for_servo", initDutForServoExec)
+	execs.Register("servo_update_servo_firmware", servoUpdateServoFirmwareExec)
 }
