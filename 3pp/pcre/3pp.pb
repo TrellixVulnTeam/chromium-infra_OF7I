@@ -6,8 +6,6 @@ create {
       version: "8.41"
     }
     unpack_archive: true
-    patch_dir: "patches"
-    patch_version: "chromium.1"
   }
   build {}
 }
