@@ -6,30 +6,58 @@ package recovery
 
 const servoRepairPlanBody = `
 "critical_actions": [
+	"set_state_missing_config",
 	"servo_host_info",
+	"servo_servod_port_present",
 	"servod_info",
+	"set_state_wrong_config",
+	"servo_has_serial",
 	"init_docker_host",
+	"set_state_no_ssh",
 	"cros_ssh",
+	"cros_ping",
 	"servo_v3_uptime",
+	"set_state_servo_host_issue",
 	"lock_labstation",
+	"set_state_broken",
 	"has_enough_disk_space",
+	"set_state_not_connected",
 	"servo_root_check",
+	"set_state_topology_issue",
 	"servo_topology",
+	"set_state_servo_updater_issue",
 	"servo_fw_need_update",
+	"set_state_servod_issue",
 	"servo_host_servod_start",
+	"set_state_servo_host_issue",
+	"servod_get_serialname",
+	"set_state_servod_proxy_issue",
 	"servo_servod_echo_host",
-	"servo_connection_pins",
+	"set_state_cold_reset_pin_issue",
+	"servo_cold_reset_pin",
+	"set_state_warm_reset_pin_issue",
+	"servo_warm_reset_pin",
+	"set_state_dut_not_connected",
 	"servo_dut_detected",
+	"set_state_servod_issue",
 	"servod_servo_pd",
+	"set_state_cr50_not_enumerated",
 	"servo_cr50_checks",
+	"set_state_servod_dut_controller_missing",
 	"dut_controller_missing_fault_off",
+	"set_state_cr50_console_missing",
 	"servo_cr50_console",
+	"set_state_ec_broken",
 	"servo_ec_check",
+	"set_state_servod_issue",
 	"servod_set_main_device",
 	"init_dut_for_servo",
+	"set_state_ccd_testlab_issue",
 	"servo_testlab_enabled",
+	"set_state_broken",
 	"servo_detect_usbkey",
-	"update_servo_type_label"
+	"update_servo_type_label",
+	"set_state_working"
 ],
 "actions": {
 	"servo_host_servod_start": {
@@ -359,17 +387,6 @@ const servoRepairPlanBody = `
 			"servod_set_main_device"
 		]
 	},
-	"servo_connection_pins": {
-		"conditions": [
-			"is_servo_v3",
-			"servo_v4_type_a"
-		],
-		"dependencies": [
-			"servo_cold_reset_pin",
-			"servo_warm_reset_pin"
-		],
-		"exec_name":"sample_pass"
-	},
 	"pwr_button_supported_models": {
 		"docs": [
 			"power button check is not applicable for these models"
@@ -541,6 +558,8 @@ const servoRepairPlanBody = `
 			"TODO: If the type C has warm reset, we can drop this condition."
 		],
 		"conditions": [
+			"is_servo_v3",
+			"servo_v4_type_a",
 			"servo_warm_reset_supported"
 		],
 		"exec_extra_args": [
@@ -554,6 +573,10 @@ const servoRepairPlanBody = `
 		"exec_name":"servo_check_servod_control"
 	},
 	"servo_cold_reset_pin": {
+		"conditions": [
+			"is_servo_v3",
+			"servo_v4_type_a"
+		],
 		"exec_extra_args": [
 			"command:cold_reset",
 			"expected_string_value:off"
@@ -657,5 +680,126 @@ const servoRepairPlanBody = `
 		],
 		"run_control": 1,
 		"exec_name":"servo_servod_toggle_pd_role"
+	},
+	"set_state_missing_config": {
+		"exec_extra_args": [
+			"state:MISSING_CONFIG"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_wrong_config": {
+		"exec_extra_args": [
+			"state:WRONG_CONFIG"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"servo_has_serial": {
+		"docs" : [
+			"This is a new state created while finalizing the servo states.",
+			"TODO: Implement this"
+		],
+		"exec_name": "sample_pass"
+	},
+	"set_state_no_ssh": {
+		"exec_extra_args": [
+			"state:NO_SSH"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_broken": {
+		"exec_extra_args": [
+			"state:BROKEN"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_not_connected": {
+		"exec_extra_args": [
+			"state:NOT_CONNECTED"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_topology_issue": {
+		"exec_extra_args": [
+			"state:TOPOLOGY_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_servo_updater_issue": {
+		"exec_extra_args": [
+			"state:SERVO_UPDATER_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_servod_issue": {
+		"exec_extra_args": [
+			"state:SERVOD_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_servo_host_issue": {
+		"exec_extra_args": [
+			"state:SERVOD_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_servod_proxy_issue": {
+		"exec_extra_args": [
+			"state:SERVOD_PROXY_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_cold_reset_pin_issue": {
+		"exec_extra_args": [
+			"state:COLD_RESET_PIN_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_warm_reset_pin_issue": {
+		"exec_extra_args": [
+			"state:WARM_RESET_PIN_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_dut_not_connected": {
+		"exec_extra_args": [
+			"state:DUT_NOT_CONNECTED"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_cr50_not_enumerated": {
+		"exec_extra_args": [
+			"state:DUT_NOT_CONNECTED"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_servod_dut_controller_missing": {
+		"exec_extra_args": [
+			"state:DUT_NOT_CONNECTED"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_cr50_console_missing": {
+		"exec_extra_args": [
+			"state:CR50_CONSOLE_MISSING"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_ec_broken": {
+		"exec_extra_args": [
+			"state:EC_BROKEN"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_ccd_testlab_issue": {
+		"exec_extra_args": [
+			"state:CCD_TESTLAB_ISSUE"
+		],
+		"exec_name": "servo_set_servo_state"
+	},
+	"set_state_working": {
+		"exec_extra_args": [
+			"state:WORKING"
+		],
+		"exec_name": "servo_set_servo_state"
 	}
 }`
