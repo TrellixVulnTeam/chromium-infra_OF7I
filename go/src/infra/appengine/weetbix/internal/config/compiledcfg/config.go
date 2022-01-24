@@ -23,6 +23,10 @@ import (
 // can monitor it.
 var configCache = caching.RegisterLRUCache(0)
 
+// NotExistsErr is returned if no matching configuration could be found
+// for the specified project.
+var NotExistsErr = errors.New("no config exists for the specified project")
+
 // ProjectConfig is a compiled version of Weetbix project configuration.
 type ProjectConfig struct {
 	// Config is the raw, uncompiled, configuration.
@@ -59,7 +63,6 @@ func NewConfig(config *configpb.ProjectConfig) (*ProjectConfig, error) {
 // with a LastUpdated time of at least minimumVersion. If no particular
 // minimum version is desired, pass time.Time{} to minimumVersion.
 func Project(ctx context.Context, project string, minimumVersion time.Time) (*ProjectConfig, error) {
-	var err error
 	cache := configCache.LRU(ctx)
 	if cache == nil {
 		// A fallback useful in unit tests that may not have the process cache
@@ -75,6 +78,7 @@ func Project(ctx context.Context, project string, minimumVersion time.Time) (*Pr
 		}
 		return config, nil
 	} else {
+		var err error
 		val, _ := cache.Mutate(ctx, project, func(it *lru.Item) *lru.Item {
 			var projectCfg *configpb.ProjectConfig
 			// Fetch the latest configuration for the given project, with
@@ -104,6 +108,9 @@ func Project(ctx context.Context, project string, minimumVersion time.Time) (*Pr
 			}
 		})
 		if err != nil {
+			if err == config.NotExistsErr {
+				return nil, NotExistsErr
+			}
 			return nil, errors.Annotate(err, "obtain compiled configuration").Err()
 		}
 		cfg := val.(*ProjectConfig)

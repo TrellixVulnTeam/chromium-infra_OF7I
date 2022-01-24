@@ -16,15 +16,16 @@ import (
 
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/clustering"
+	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/rules"
-	configpb "infra/appengine/weetbix/internal/config/proto"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
+	weetbixpb "infra/appengine/weetbix/proto/v1"
 )
 
-// ClusterSummary provides a summary of a Weetbix cluster.
-type ClusterSummary struct {
+// ClusterCommon captures common cluster fields used in ClusterSummary
+// and Cluster.
+type ClusterCommon struct {
 	ClusterID          clustering.ClusterID `json:"clusterId"`
-	Title              string               `json:"title"`
-	BugLink            *BugLink             `json:"bugLink"`
 	PresubmitRejects1d analysis.Counts      `json:"presubmitRejects1d"`
 	PresubmitRejects3d analysis.Counts      `json:"presubmitRejects3d"`
 	PresubmitRejects7d analysis.Counts      `json:"presubmitRejects7d"`
@@ -34,6 +35,17 @@ type ClusterSummary struct {
 	Failures1d         analysis.Counts      `json:"failures1d"`
 	Failures3d         analysis.Counts      `json:"failures3d"`
 	Failures7d         analysis.Counts      `json:"failures7d"`
+}
+
+// ClusterSummary provides a summary of a Weetbix cluster.
+// It is used in the ListClusters response.
+type ClusterSummary struct {
+	ClusterCommon
+	// Title is a one-line description of the cluster.
+	Title string `json:"title"`
+	// BugLink is the link to the bug associated with the cluster.
+	// Set only for rule-based clusters.
+	BugLink *BugLink `json:"bugLink"`
 }
 
 // ListClusters serves a GET request for /api/projects/:project/clusters.
@@ -51,7 +63,7 @@ func (h *Handlers) ListClusters(ctx *router.Context) {
 	respondWithJSON(ctx, cs)
 }
 
-func (h *Handlers) listClustersInternal(ctx context.Context, projectID string, projectCfg *configpb.ProjectConfig) ([]*ClusterSummary, error) {
+func (h *Handlers) listClustersInternal(ctx context.Context, projectID string, projectCfg *compiledcfg.ProjectConfig) ([]*ClusterSummary, error) {
 	ac, err := analysis.NewClient(ctx, h.cloudProject)
 	if err != nil {
 		return nil, err
@@ -63,7 +75,7 @@ func (h *Handlers) listClustersInternal(ctx context.Context, projectID string, p
 	}()
 	opts := analysis.ImpactfulClusterReadOptions{
 		Project:    projectID,
-		Thresholds: projectCfg.BugFilingThreshold,
+		Thresholds: projectCfg.Config.BugFilingThreshold,
 	}
 	clusters, err := ac.ReadImpactfulClusters(ctx, opts)
 	if err != nil {
@@ -83,46 +95,102 @@ func (h *Handlers) listClustersInternal(ctx context.Context, projectID string, p
 
 	var result []*ClusterSummary
 	for _, c := range clusters {
-		var title string
-		var link *BugLink
-		switch {
-		case c.ClusterID.IsBugCluster():
+		cs := &ClusterSummary{}
+		cs.ClusterCommon = newClusterCommon(c)
+		if c.ClusterID.IsBugCluster() {
 			rule := rules[ruleIndex]
-			title = rule.RuleDefinition
-			link = createBugLink(rule.BugID, projectCfg)
+			cs.Title = rule.RuleDefinition
+			cs.BugLink = createBugLink(rule.BugID, projectCfg.Config)
 			ruleIndex++
-		case c.ClusterID.IsTestNameCluster():
-			title = c.ExampleTestID
-		case c.ClusterID.IsFailureReasonCluster():
-			title = c.ExampleFailureReason.StringVal
-		default:
-			// Fallback
-			title = fmt.Sprintf("%s/%s", c.ClusterID.Algorithm, c.ClusterID.ID)
+		} else {
+			// Suggested cluster.
+			cs.Title = suggestedClusterTitle(c, projectCfg)
 		}
 
-		cs := &ClusterSummary{
-			ClusterID:          c.ClusterID,
-			Title:              title,
-			BugLink:            link,
-			PresubmitRejects1d: c.PresubmitRejects1d,
-			PresubmitRejects3d: c.PresubmitRejects3d,
-			PresubmitRejects7d: c.PresubmitRejects7d,
-			TestRunFails1d:     c.TestRunFails1d,
-			TestRunFails3d:     c.TestRunFails3d,
-			TestRunFails7d:     c.TestRunFails7d,
-			Failures1d:         c.Failures1d,
-			Failures3d:         c.Failures3d,
-			Failures7d:         c.Failures7d,
-		}
 		result = append(result, cs)
 	}
 	return result, nil
 }
 
+func newClusterCommon(cs *analysis.ClusterSummary) ClusterCommon {
+	return ClusterCommon{
+		ClusterID:          cs.ClusterID,
+		PresubmitRejects1d: cs.PresubmitRejects1d,
+		PresubmitRejects3d: cs.PresubmitRejects3d,
+		PresubmitRejects7d: cs.PresubmitRejects7d,
+		TestRunFails1d:     cs.TestRunFails1d,
+		TestRunFails3d:     cs.TestRunFails3d,
+		TestRunFails7d:     cs.TestRunFails7d,
+		Failures1d:         cs.Failures1d,
+		Failures3d:         cs.Failures3d,
+		Failures7d:         cs.Failures7d,
+	}
+}
+
+func suggestedClusterTitle(cs *analysis.ClusterSummary, cfg *compiledcfg.ProjectConfig) string {
+	var title string
+
+	// Ignore error, it is only returned if algorithm cannot be found.
+	alg, _ := algorithms.SuggestingAlgorithm(cs.ClusterID.Algorithm)
+	switch {
+	case alg != nil:
+		example := &clustering.Failure{
+			TestID: cs.ExampleTestID,
+			Reason: &weetbixpb.FailureReason{
+				PrimaryErrorMessage: cs.ExampleFailureReason.StringVal,
+			},
+		}
+		title = alg.ClusterTitle(cfg, example)
+	case cs.ClusterID.IsTestNameCluster():
+		// Fallback for old test name clusters.
+		title = cs.ExampleTestID
+	case cs.ClusterID.IsFailureReasonCluster():
+		// Fallback for old reason-based clusters.
+		title = cs.ExampleFailureReason.StringVal
+	default:
+		// Fallback for all other cases.
+		title = fmt.Sprintf("%s/%s", cs.ClusterID.Algorithm, cs.ClusterID.ID)
+	}
+	return title
+}
+
+// Cluster is the type provided by the GetCluster response.
+type Cluster struct {
+	ClusterCommon
+	// Title is a one-line description of the cluster.
+	// Populated only for suggested clusters.
+	Title string `json:"title"`
+	// The equivalent failure association rule to use if filing a new bug.
+	// Populated only for suggested clusters, where the algorithm is still
+	// known by Weetbix.
+	FailureAssociationRule string `json:"failureAssociationRule"`
+}
+
+func newCluster(cs *analysis.ClusterSummary, cfg *compiledcfg.ProjectConfig) *Cluster {
+	result := &Cluster{}
+	result.ClusterCommon = newClusterCommon(cs)
+	if !cs.ClusterID.IsBugCluster() {
+		result.Title = suggestedClusterTitle(cs, cfg)
+
+		// Ignore error, it is only returned if algorithm cannot be found.
+		alg, _ := algorithms.SuggestingAlgorithm(cs.ClusterID.Algorithm)
+		if alg != nil {
+			example := &clustering.Failure{
+				TestID: cs.ExampleTestID,
+				Reason: &weetbixpb.FailureReason{
+					PrimaryErrorMessage: cs.ExampleFailureReason.StringVal,
+				},
+			}
+			result.FailureAssociationRule = alg.FailureAssociationRule(cfg, example)
+		}
+	}
+	return result
+}
+
 // GetCluster serves a GET request for
 // api/projects/:project/clusters/:algorithm/:id.
 func (h *Handlers) GetCluster(ctx *router.Context) {
-	projectID, ok := obtainProjectOrError(ctx)
+	projectID, projectCfg, ok := obtainProjectConfigOrError(ctx)
 	if !ok {
 		return
 	}
@@ -146,14 +214,16 @@ func (h *Handlers) GetCluster(ctx *router.Context) {
 		}
 	}()
 
-	clusters, err := ac.ReadCluster(ctx.Context, projectID, clusterID)
+	cs, err := ac.ReadCluster(ctx.Context, projectID, clusterID)
 	if err != nil {
 		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 
-	respondWithJSON(ctx, clusters)
+	response := newCluster(cs, projectCfg)
+
+	respondWithJSON(ctx, response)
 }
 
 // GetClusterFailures handles a GET request for

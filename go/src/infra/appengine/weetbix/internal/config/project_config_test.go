@@ -300,7 +300,7 @@ func TestProject(t *testing.T) {
 
 		Convey("not found", func() {
 			pj, err := Project(ctx, "random")
-			So(err, ShouldErrLike, "no config found for project random")
+			So(err, ShouldEqual, NotExistsErr)
 			So(pj, ShouldBeNil)
 		})
 	})

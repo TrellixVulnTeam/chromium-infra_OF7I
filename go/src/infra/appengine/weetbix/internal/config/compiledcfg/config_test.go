@@ -58,7 +58,7 @@ func TestCompiledConfig(t *testing.T) {
 		}
 		verifyNotExists := func(minimumVersion time.Time) {
 			cfg, err := Project(ctx, "myproject", minimumVersion)
-			So(err, ShouldErrLike, "no config found")
+			So(err, ShouldEqual, NotExistsErr)
 			So(cfg, ShouldBeNil)
 		}
 

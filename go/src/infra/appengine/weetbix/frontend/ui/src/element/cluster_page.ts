@@ -4,8 +4,8 @@
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
 import { BeforeEnterObserver, RouterLocation } from '@vaadin/router';
-import { RuleChangedEvent } from './rule_section';
 
+import { RuleChangedEvent } from './rule_section';
 import "./failure_table.ts";
 import './reclustering_progress_indicator.ts';
 import './rule_section.ts';
@@ -50,14 +50,6 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
 
     render() {
         const c = this.cluster;
-        const clusterCriteriaValue = (cluster: Cluster): string => {
-            if (cluster.clusterId.algorithm.startsWith("testname-")) {
-                return cluster.exampleTestId;
-            } else if (cluster.clusterId.algorithm.startsWith("failurereason-")) {
-                return cluster.exampleFailureReason;
-            }
-            return `${cluster.clusterId.algorithm}/${cluster.clusterId.id}`;
-        }
         const metric = (counts: Counts): number => {
             return counts.nominal;
         }
@@ -75,15 +67,15 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             var criteriaName = ""
             if (this.clusterAlgorithm.startsWith("testname-")) {
                 criteriaName = "Test name-based clustering";
-            } else if (this.clusterAlgorithm.startsWith("failurereason-")) {
+            } else if (this.clusterAlgorithm.startsWith("reason-")) {
                 criteriaName = "Failure reason-based clustering";
             }
 
             definitionSection = html`
             <div class="definition-box-container">
-                <pre class="definition-box">${clusterCriteriaValue(c)}</pre>
+                <pre class="definition-box">${c.title}</pre>
             </div>
-            <table>
+            <table class="definition-table">
                 <tbody>
                     <tr>
                         <th>Type</th>
@@ -226,6 +218,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
 // Cluster is the cluster information sent by the server.
 interface Cluster {
     clusterId: ClusterId;
+    title: string;
+    failureAssociationRule: string;
     presubmitRejects1d: Counts;
     presubmitRejects3d: Counts;
     presubmitRejects7d: Counts;
@@ -235,8 +229,6 @@ interface Cluster {
     failures1d: Counts;
     failures3d: Counts;
     failures7d: Counts;
-    exampleFailureReason: string;
-    exampleTestId: string;
 }
 
 interface Counts {

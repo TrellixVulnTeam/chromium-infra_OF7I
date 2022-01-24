@@ -123,6 +123,26 @@ func TestAlgorithm(t *testing.T) {
 			test(failure, `test LIKE "ninja://:blink\\_web\\_tests/%a/b\\_\\\\\\%c.html%"`)
 		})
 	})
+	Convey(`Cluster Title`, t, func() {
+		a := &Algorithm{}
+		cfg, err := compiledcfg.NewConfig(cfgpb)
+		So(err, ShouldBeNil)
+
+		Convey(`No matching rules`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://test_name_one",
+			}
+			title := a.ClusterTitle(cfg, failure)
+			So(title, ShouldEqual, "ninja://test_name_one")
+		})
+		Convey(`Matching rule`, func() {
+			failure := &clustering.Failure{
+				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+			}
+			title := a.ClusterTitle(cfg, failure)
+			So(title, ShouldEqual, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
+		})
+	})
 	Convey(`Cluster Description`, t, func() {
 		a := &Algorithm{}
 		cfg, err := compiledcfg.NewConfig(cfgpb)

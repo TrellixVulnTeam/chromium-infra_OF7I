@@ -23,7 +23,7 @@ import (
 
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering/rules"
-	configpb "infra/appengine/weetbix/internal/config/proto"
+	"infra/appengine/weetbix/internal/config/compiledcfg"
 )
 
 // ValidationError is the tag applied to validation errors.
@@ -90,11 +90,11 @@ type rule struct {
 	BugLink *BugLink `json:"bugLink"`
 }
 
-func respondWithRule(ctx *router.Context, cfg *configpb.ProjectConfig, r *rules.FailureAssociationRule) {
+func respondWithRule(ctx *router.Context, cfg *compiledcfg.ProjectConfig, r *rules.FailureAssociationRule) {
 	ctx.Writer.Header().Add("ETag", ruleETag(r))
 	response := &rule{
 		FailureAssociationRule: *r,
-		BugLink:                createBugLink(r.BugID, cfg),
+		BugLink:                createBugLink(r.BugID, cfg.Config),
 	}
 	respondWithJSON(ctx, response)
 }
@@ -162,7 +162,7 @@ func (h *Handlers) PatchRule(ctx *router.Context) {
 	respondWithRule(ctx, cfg, updatedRule)
 }
 
-func updateRule(ctx context.Context, projectID string, cfg *configpb.ProjectConfig, ruleID string, request *ruleUpdateRequest, requestedETag string) (*rules.FailureAssociationRule, error) {
+func updateRule(ctx context.Context, projectID string, cfg *compiledcfg.ProjectConfig, ruleID string, request *ruleUpdateRequest, requestedETag string) (*rules.FailureAssociationRule, error) {
 	user := auth.CurrentUser(ctx).Email
 
 	var updatedRule *rules.FailureAssociationRule
@@ -224,15 +224,15 @@ func updateRule(ctx context.Context, projectID string, cfg *configpb.ProjectConf
 
 // validateBugAgainstConfig validates the specified bug is consistent with
 // the project configuration.
-func validateBugAgainstConfig(cfg *configpb.ProjectConfig, bug bugs.BugID) error {
+func validateBugAgainstConfig(cfg *compiledcfg.ProjectConfig, bug bugs.BugID) error {
 	switch bug.System {
 	case bugs.MonorailSystem:
 		project, _, err := bug.MonorailProjectAndID()
 		if err != nil {
 			return err
 		}
-		if project != cfg.Monorail.Project {
-			return fmt.Errorf("bug not in expected monorail project (%s)", cfg.Monorail.Project)
+		if project != cfg.Config.Monorail.Project {
+			return fmt.Errorf("bug not in expected monorail project (%s)", cfg.Config.Monorail.Project)
 		}
 	default:
 		return fmt.Errorf("unsupported bug system: %s", bug.System)
@@ -283,7 +283,7 @@ func (h *Handlers) PostRule(ctx *router.Context) {
 	respondWithRule(ctx, cfg, createdRule)
 }
 
-func createRule(ctx context.Context, project string, cfg *configpb.ProjectConfig, request *ruleCreateRequest) (*rules.FailureAssociationRule, error) {
+func createRule(ctx context.Context, project string, cfg *compiledcfg.ProjectConfig, request *ruleCreateRequest) (*rules.FailureAssociationRule, error) {
 	ruleID, err := rules.GenerateID()
 	if err != nil {
 		return nil, errors.Annotate(err, "generating Rule ID").Err()

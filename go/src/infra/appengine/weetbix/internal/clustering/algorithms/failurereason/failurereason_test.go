@@ -94,6 +94,26 @@ func TestAlgorithm(t *testing.T) {
 			test(failure, `reason LIKE "\\_\\%\"'+[]|\x00\r\n\v\u202e\u2066 %"`)
 		})
 	})
+	Convey(`Cluster Title`, t, func() {
+		a := &Algorithm{}
+		cfg, err := compiledcfg.NewConfig(cfgpb)
+		So(err, ShouldBeNil)
+
+		Convey(`Hexadecimal`, func() {
+			failure := &clustering.Failure{
+				Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
+			}
+			title := a.ClusterTitle(cfg, failure)
+			So(title, ShouldEqual, `Null pointer exception at ip 0x45637271`)
+		})
+		Convey(`Escaping`, func() {
+			failure := &clustering.Failure{
+				Reason: &pb.FailureReason{PrimaryErrorMessage: `_%"'+[]|` + "\u0000\r\n\v\u202E\u2066 AdafdxAAD17917+/="},
+			}
+			title := a.ClusterTitle(cfg, failure)
+			So(title, ShouldEqual, `_%\"'+[]|\x00\r\n\v\u202e\u2066 AdafdxAAD17917+/=`)
+		})
+	})
 	Convey(`Cluster Description`, t, func() {
 		a := &Algorithm{}
 		cfg, err := compiledcfg.NewConfig(cfgpb)

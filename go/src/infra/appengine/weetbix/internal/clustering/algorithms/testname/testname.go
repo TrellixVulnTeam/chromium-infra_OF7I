@@ -96,6 +96,17 @@ func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, exampl
 	}
 }
 
+// ClusterTitle returns a title for the cluster containing the given
+// example, to display on the cluster page or cluster listing.
+func (a *Algorithm) ClusterTitle(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {
+	like, ok := clusterLike(config, example)
+	if ok {
+		return like
+	} else {
+		return example.TestID
+	}
+}
+
 // FailureAssociationRule returns a failure association rule that
 // captures the definition of cluster containing the given example.
 func (a *Algorithm) FailureAssociationRule(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {

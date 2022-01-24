@@ -27,7 +27,7 @@ func (h *Handlers) GetConfig(ctx *router.Context) {
 	result := &projectConfig{
 		Project: projectID,
 		Monorail: &monorail{
-			DisplayPrefix: cfg.Monorail.DisplayPrefix,
+			DisplayPrefix: cfg.Config.Monorail.DisplayPrefix,
 		},
 	}
 	respondWithJSON(ctx, result)

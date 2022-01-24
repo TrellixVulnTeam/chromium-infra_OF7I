@@ -46,6 +46,10 @@ const ProjectCacheExpiry = 1 * time.Minute
 // discernible from "timestamp not populated" programming errors.
 var StartingEpoch = time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)
 
+// NotExistsErr is returned if no matching configuration could be found
+// for the specified project.
+var NotExistsErr = errors.New("no config exists for the specified project")
+
 var (
 	importAttemptCounter = metric.NewCounter(
 		"weetbix/project_config/import_attempt",
@@ -382,5 +386,5 @@ func ProjectWithMinimumVersion(ctx context.Context, project string, minimumVersi
 	if c, ok := configs[project]; ok {
 		return c, nil
 	}
-	return nil, fmt.Errorf("no config found for project %s", project)
+	return nil, NotExistsErr
 }
