@@ -111,6 +111,7 @@ var defaultGitRetryRegexpSource = []string{
 	`fatal: expected response end packet after ref listing`,
 	`error: .* did not send all necessary objects`,
 	`fatal: .*: OpenSSL SSL_\w+: SSL_ERROR_SYSCALL`,
+	`fatal: .*: SSL_\w+ returned SYSCALL`,
 	`fatal: .*: Empty reply from server`,
 
 	// fxbug.dev/91419
