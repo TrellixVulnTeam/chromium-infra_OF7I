@@ -226,6 +226,9 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_not_servo_v3"
 		],
+		"exec_timeout": {
+			"seconds": 300
+		},
 		"recovery_actions": [
 			"servo_fw_update"
 		]
@@ -513,11 +516,19 @@ const servoRepairPlanBody = `
 			"Try to update in  normal ways 3 times",
 			"if fail allow run force update"
 		],
-		"exec_extra_args": [
-			"try:3",
-			"use_force"
+		"conditions": [
+			"is_not_servo_v3"
 		],
-		"exec_name":"sample_pass"
+		"exec_extra_args": [
+			"try_attempt_count:3",
+			"try_force_update_after_fail:true", 
+			"force_update:false", 
+			"ignore_version:false"
+		],
+		"exec_timeout": {
+			"seconds": 600
+		},
+		"exec_name":"servo_update_servo_firmware"
 	},
 	"servo_warm_reset_supported": {
 		"exec_extra_args": [
