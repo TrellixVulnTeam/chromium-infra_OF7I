@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
+
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/servo/topology"
 	"infra/cros/recovery/internal/log"
@@ -88,4 +90,19 @@ func latestVersionFromUpdater(ctx context.Context, runner execs.Runner, channel 
 	// return an error from the function that calls this current
 	// function.
 	return ""
+}
+
+const (
+	// Commands to kill active servo_updater
+	killActiveUpdatersCmd = `ps aux | grep -ie [s]ervo_updater |grep "%s" | awk '{print $2}' | xargs kill -9`
+)
+
+// KillActiveUpdaterProcesses kills any active servo_updater processes running on the host.
+func KillActiveUpdaterProcesses(ctx context.Context, r execs.Runner, deviceSerial string) error {
+	cmd := fmt.Sprintf(killActiveUpdatersCmd, deviceSerial)
+	if _, err := r(ctx, cmd); err != nil {
+		log.Debug(ctx, "Fail to kill active update process")
+		return errors.Annotate(err, "kill active update process").Err()
+	}
+	return nil
 }
