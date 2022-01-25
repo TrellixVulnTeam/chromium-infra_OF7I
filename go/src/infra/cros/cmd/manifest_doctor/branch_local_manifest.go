@@ -42,6 +42,7 @@ const (
 type localManifestBrancher struct {
 	subcommands.CommandRunBase
 	authFlags            authcli.Flags
+	bbid                 int
 	chromeosCheckoutPath string
 	minMilestone         int
 	specificBranches     []string
@@ -75,17 +76,19 @@ func cmdLocalManifestBrancher(authOpts auth.Options) *subcommands.Command {
 			b.Flags.BoolVar(&b.push, "push", false,
 				"Whether or not to push changes to the remote.")
 			b.Flags.IntVar(&b.workerCount, "j", 1, "Number of jobs to run for parallel operations.")
+			b.Flags.IntVar(&b.bbid, "bbid", 0,
+				"LUCI buildbucket ID which launched this manifest_doctor. If not set, no build URL will be referenced in the git commit.")
 			return b
 		}}
 }
 
 func (b *localManifestBrancher) validate() error {
 	if b.minMilestone == -1 && len(b.specificBranches) == 0 {
-		return fmt.Errorf("--min_milestone or --branches required")
+		return gerrs.New("--min_milestone or --branches required")
 	}
 
 	if b.chromeosCheckoutPath == "" {
-		return fmt.Errorf("--chromeos_checkout required")
+		return gerrs.New("--chromeos_checkout required")
 	} else if _, err := os.Stat(b.chromeosCheckoutPath); gerrs.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("path %s does not exist", b.chromeosCheckoutPath)
 	} else if err != nil {
@@ -93,9 +96,8 @@ func (b *localManifestBrancher) validate() error {
 	}
 
 	if len(b.projects) == 0 {
-		return fmt.Errorf("at least one project is required")
+		return gerrs.New("at least one project is required")
 	}
-
 	return nil
 }
 
@@ -194,7 +196,7 @@ func (p *prodFirestoreClient) writeFirestoreData(ctx context.Context, branch str
 // pinLocalManifest returns whether or not local_manifest.xml in the specified
 // the project/branch is up to date (false if the file does not exist), and
 // a potential error.
-func pinLocalManifest(ctx context.Context, checkout, path, branch string, referenceManifest *repo.Manifest, dryRun bool) (bool, error) {
+func pinLocalManifest(ctx context.Context, checkout, path, branch string, referenceManifest *repo.Manifest, bbid int, dryRun bool) (bool, error) {
 	// Checkout appropriate branch of project.
 	projectPath := filepath.Join(checkout, path)
 	if !osutils.PathExists(projectPath) {
@@ -254,6 +256,9 @@ func pinLocalManifest(ctx context.Context, checkout, path, branch string, refere
 	var commitMsg string
 	commitMsg += fmt.Sprintf("Repair local_manifest.xml for branch %s\n\n", branch)
 	commitMsg += "This CL was created by the Manifest Doctor.\n"
+	if bbid != 0 {
+		commitMsg += fmt.Sprintf("See original build: http://go/bbid/%d\n", bbid)
+	}
 	if _, err := git.CommitAll(projectPath, commitMsg); err != nil {
 		return false, errors.Annotate(err, "%s: failed to commit changes", logPrefix).Err()
 	}
@@ -369,7 +374,7 @@ func (b *localManifestBrancher) BranchLocalManifests(ctx context.Context, fsClie
 		for i := 1; i <= b.workerCount; i++ {
 			go func(workerId int) {
 				for path := range toProcess {
-					if didWork, err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, dryRun); err != nil {
+					if didWork, err := pinLocalManifest(ctx, checkout, path, branch, referenceManifest, b.bbid, dryRun); err != nil {
 						LogErr("error: %s", err.Error())
 						errs = append(errs, err)
 						wg.Done()

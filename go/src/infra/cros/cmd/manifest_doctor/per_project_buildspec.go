@@ -112,17 +112,17 @@ func cmdProjectBuildspec(authOpts auth.Options) *subcommands.Command {
 
 func (b *projectBuildspec) validate() error {
 	if b.buildspec == "" && len(b.watchPaths) == 0 {
-		return fmt.Errorf("--buildspec or --paths required")
+		return gerrs.New("--buildspec or --paths required")
 	}
 	if b.buildspec != "" && len(b.watchPaths) != 0 {
-		return fmt.Errorf("--buildspec and --paths cannot be used together")
+		return gerrs.New("--buildspec and --paths cannot be used together")
 	}
 	if len(b.watchPaths) > 0 && b.minMilestone == -1 {
-		return fmt.Errorf("--min_milestone required for --paths")
+		return gerrs.New("--min_milestone required for --paths")
 	}
 
 	if len(b.projects) == 0 && len(b.otherRepos) == 0 {
-		return fmt.Errorf("must specify at least one project with --projects or --other-repos")
+		return gerrs.New("must specify at least one project with --projects or --other-repos")
 	}
 	return nil
 }
