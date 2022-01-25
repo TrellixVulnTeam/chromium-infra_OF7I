@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/log"
@@ -117,4 +118,22 @@ func IsContainerizedServoHost(ctx context.Context, servoHost *tlw.ServoHost) boo
 	}
 	log.Debug(ctx, "Servo uses servod container with the name: %s", servoHost.ContainerName)
 	return true
+}
+
+// WrappedServoType returns the type of servo device.
+//
+// This function first looks up the servo type using the servod
+// control. If that does not work, it looks up the dut information for
+// the servo host.
+func WrappedServoType(ctx context.Context, args *execs.RunArgs) (*servo.ServoType, error) {
+	servoType, err := GetServoType(ctx, args)
+	if err != nil {
+		log.Debug(ctx, "Wrapped Servo Type: Could not read the servo type from servod.")
+		if args.DUT != nil && args.DUT.ServoHost != nil && args.DUT.ServoHost.Servo != nil && args.DUT.ServoHost.Servo.Type != "" {
+			servoType = args.DUT.ServoHost.Servo.Type
+		} else {
+			return nil, errors.Reason("wrapped servo type: could not determine the servo type from servod control as well DUT Info.").Err()
+		}
+	}
+	return servo.NewServoType(servoType), nil
 }

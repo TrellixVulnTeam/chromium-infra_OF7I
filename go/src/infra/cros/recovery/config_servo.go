@@ -496,8 +496,14 @@ const servoRepairPlanBody = `
 			"seconds":7300
 		}
 	},
+	"servo_v4": {
+		"docs": ["This action will detect whether or not the attached servo device is of type V4."]
+	},
 	"servo_v4_type_c": {
-		"exec_name":"sample_pass"
+		"docs": ["This action will detect whether or not the attached servo V4 device is connect to DUT using Type-C connection."],
+		"conditions": [
+			"servo_v4"
+		]
 	},
 	"servo_lid_open": {
 		"recovery_actions": [
