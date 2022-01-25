@@ -87,6 +87,10 @@ var (
 	// significantly.
 	checkFailedRE = regexp.MustCompile(`.*?([a-zA-Z0-9_.]+\.[a-zA-Z0-9_]+\([0-9]+\))]? (Check failed:.*)`)
 
+	// googleTestTraceRE identifies output from SCOPED_TRACE calls in GTest
+	// so that they can be removed from the primary error message.
+	googleTestTraceRE = regexp.MustCompile(`(?s)Google Test trace:.*$`)
+
 	// ResultSink limits the failure reason primary error message to 1024 bytes in UTF-8.
 	maxPrimaryErrorBytes = 1024
 )
@@ -383,8 +387,12 @@ func extractFailureReasonFromResultParts(ctx context.Context, parts []*GTestRunR
 	}
 	summary := string(summaryBytes)
 	return &pb.FailureReason{
-		PrimaryErrorMessage: truncateString(summary, maxPrimaryErrorBytes),
+		PrimaryErrorMessage: truncateString(trimGoogleTestTrace(summary), maxPrimaryErrorBytes),
 	}
+}
+
+func trimGoogleTestTrace(message string) string {
+	return googleTestTraceRE.ReplaceAllString(message, "")
 }
 
 func extractFailureReasonFromSnippet(ctx context.Context, snippet string) *pb.FailureReason {

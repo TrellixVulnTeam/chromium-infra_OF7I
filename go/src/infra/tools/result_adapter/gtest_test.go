@@ -362,6 +362,19 @@ func TestGTestConversions(t *testing.T) {
 				})
 				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, `This is a failure message.`)
 			})
+			Convey("Google Test trace is removed from failure reason", func() {
+				input := "error message\nGoogle Test trace:\nRandom tracing output\n"
+				tr := convert(&GTestRunResult{
+					Status: "FAILURE",
+					ResultParts: []*GTestRunResultPart{
+						{
+							SummaryBase64: base64.StdEncoding.EncodeToString([]byte(input)),
+							Type:          "failure",
+						},
+					},
+				})
+				So(tr.FailureReason.PrimaryErrorMessage, ShouldEqual, "error message\n")
+			})
 			Convey("empty", func() {
 				tr := convert(&GTestRunResult{
 					Status:      "FAILURE",
