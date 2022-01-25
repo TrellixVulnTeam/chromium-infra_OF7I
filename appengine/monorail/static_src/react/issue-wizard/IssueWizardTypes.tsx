@@ -4,9 +4,9 @@
 
 // this const is used on issue wizard lading page for render user role  options
 export enum IssueWizardPersona {
-  EndUser = 0,
-  Developer = 1,
-  Contributor = 2
+  EndUser = "EndUser",
+  Developer = "Developer",
+  Contributor = "Contributor",
 };
 
 

@@ -5,7 +5,7 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/styles';
 import { RoleSelection } from './RoleSelection/RoleSelection.tsx';
-import {ISSUE_WIZARD_PERSONAS_DETAIL} from '../IssueWizardTypes.tsx';
+import {ISSUE_WIZARD_PERSONAS_DETAIL, IssueWizardPersona} from '../IssueWizardTypes.tsx';
 
 const useStyles = makeStyles({
   flex: {
@@ -15,16 +15,16 @@ const useStyles = makeStyles({
 });
 
 const getUserGroupSelectors = (
-  value: string,
+  value: IssueWizardPersona,
   onSelectorClick:
     (selector: string) =>
       (event: React.MouseEvent<HTMLElement>) => any) => {
   const selectors = new Array();
-  Object.values(ISSUE_WIZARD_PERSONAS_DETAIL).forEach((persona) => {
+  Object.entries(ISSUE_WIZARD_PERSONAS_DETAIL).forEach(([key, persona]) => {
     selectors.push(
         <RoleSelection
-          checked={value === persona.name}
-          handleOnClick={onSelectorClick(persona.name)}
+          checked={IssueWizardPersona[value] === key}
+          handleOnClick={onSelectorClick(key)}
           value={persona.name}
           description={persona.description}
           inputProps={{ 'aria-label': persona.name }}
@@ -39,13 +39,19 @@ const getUserGroupSelectors = (
  *
  * @returns React.ReactElement
  */
-export const RadioDescription = ({ value, setValue }: { value: string, setValue: Function }): React.ReactElement => {
+type Props = {
+  selectedRadio: IssueWizardPersona,
+  onClickRadio: Function,
+}
+
+export const RadioDescription = (props: Props): React.ReactElement => {
+  const { selectedRadio, onClickRadio } = props;
   const classes = useStyles();
 
   const handleRoleSelectionClick = (userGroup: string) =>
-     (event: React.MouseEvent<HTMLElement>) => setValue(userGroup);
+     (event: React.MouseEvent<HTMLElement>) => onClickRadio(userGroup);
 
-  const userGroupsSelectors = getUserGroupSelectors(value, handleRoleSelectionClick);
+  const userGroupsSelectors = getUserGroupSelectors(selectedRadio, handleRoleSelectionClick);
 
   return (
     <div className={classes.flex}>

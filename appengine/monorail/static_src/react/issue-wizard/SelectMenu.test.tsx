@@ -14,7 +14,7 @@ describe('SelectMenu', () => {
   let container: React.RenderResult;
 
   beforeEach(() => {
-    container = render(<SelectMenu />).container;
+    container = render(<SelectMenu optionsList = {['op1', 'op2']} />).container;
   });
 
   it('renders', () => {
@@ -33,6 +33,6 @@ describe('SelectMenu', () => {
     // 14 is the current number of options in the select menu
     const count = screen.getAllByTestId('select-menu-item').length;
 
-    assert.equal(count, 14);
+    assert.equal(count, 2);
   });
 });

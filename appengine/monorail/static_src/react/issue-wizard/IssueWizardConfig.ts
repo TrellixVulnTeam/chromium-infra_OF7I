@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 // TODO: create a `monorail/frontend/config/` folder to store all the feature config file
-import {IssueCategory, IssueWizardPersona} from "./IssueWizardTypes";
+import {IssueCategory, IssueWizardPersona} from "./IssueWizardTypes.tsx";
 
 export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   {

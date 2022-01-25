@@ -6,17 +6,16 @@ import {ReactElement} from 'react';
 import * as React from 'react'
 import ReactDOM from 'react-dom';
 import styles from './IssueWizard.css';
-import DotMobileStepper from './issue-wizard/DotMobileStepper.tsx';
 import LandingStep from './issue-wizard/LandingStep.tsx';
 import DetailsStep from './issue-wizard/DetailsStep.tsx'
+import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
  * @return Issue wizard JSX.
  */
 export function IssueWizard(): ReactElement {
-  const [checkExisting, setCheckExisting] = React.useState(false);
-  const [userType, setUserType] = React.useState('End User');
+  const [userPersona, setUserPersona] = React.useState(IssueWizardPersona.EndUser);
   const [activeStep, setActiveStep] = React.useState(0);
   const [category, setCategory] = React.useState('');
   const [textValues, setTextValues] = React.useState(
@@ -31,14 +30,12 @@ export function IssueWizard(): ReactElement {
   let page;
   if (activeStep === 0){
     page = <LandingStep
-        checkExisting={checkExisting}
-        setCheckExisting={setCheckExisting}
-        userType={userType}
-        setUserType={setUserType}
+        userPersona={userPersona}
+        setUserPersona={setUserPersona}
         category={category}
         setCategory={setCategory}
+        setActiveStep={setActiveStep}
         />;
-    nextEnabled = checkExisting && userType && (category != '');
   } else if (activeStep === 1){
     page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category}/>;
     nextEnabled = (textValues.oneLineSummary.trim() !== '') &&
@@ -51,7 +48,6 @@ export function IssueWizard(): ReactElement {
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins"></link>
       <div className={styles.container}>
         {page}
-        <DotMobileStepper nextEnabled={nextEnabled} activeStep={activeStep} setActiveStep={setActiveStep}/>
       </div>
     </>
   );

@@ -9,6 +9,10 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox, { CheckboxProps } from '@material-ui/core/Checkbox';
 import SelectMenu from './SelectMenu.tsx';
 import { RadioDescription } from './RadioDescription/RadioDescription.tsx';
+import {GetCategoriesByPersona} from './IssueWizardUtils.tsx';
+import {ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts';
+import DotMobileStepper from './DotMobileStepper.tsx';
+import {IssueWizardPersona} from './IssueWizardTypes.tsx';
 
 const CustomCheckbox = withStyles({
   root: {
@@ -67,14 +71,52 @@ const useStyles = makeStyles({
   },
 });
 
-export default function LandingStep({ checkExisting, setCheckExisting, userType, setUserType, category, setCategory }:
-  { checkExisting: boolean, setCheckExisting: Function, userType: string, setUserType: Function, category: string, setCategory: Function }) {
+type Props = {
+  userPersona: IssueWizardPersona,
+  setUserPersona: Function,
+  category: string,
+  setCategory: Function,
+  setActiveStep: Function,
+};
+
+export default function LandingStep(props: Props) {
+
+  const {userPersona, setUserPersona, category, setCategory, setActiveStep} = props;
   const classes = useStyles();
+
+  const categoriesByPersonaMap = GetCategoriesByPersona(ISSUE_WIZARD_QUESTIONS);
+
+  const [categoryList, setCategoryList] = React.useState(categoriesByPersonaMap.get(userPersona));
+  const [checkExisting, setCheckExisting] = React.useState(false);
 
   const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCheckExisting(event.target.checked);
   };
 
+  const onSelectUserPersona = (userPersona: string) => {
+    setUserPersona(userPersona);
+    setCategoryList(categoriesByPersonaMap.get(userPersona));
+    setCategory('');
+  }
+
+  const contributorAlert = () => {
+    return (
+      <div>
+        <div className={classes.subheader}>
+          Want to explain the problem yourself?
+        </div>
+        <div>
+          It's usually best to work through this short wizard so that your issue is given the labels needed for the right team to see it.
+          Otherwise it might take longer for your issue to be triaged and resolved.
+        </div>
+        <div>However, if you are a Chromium contributor and none of the other options apply, you may use the
+          <a href="entry"> regular issue entry form</a>
+        .</div>
+      </div>
+    );
+  }
+
+  const nextEnabled = (userPersona != IssueWizardPersona.Contributor) && checkExisting && (category != '');
   return (
     <>
       <p className={classes.header}>Report an issue with Chromium</p>
@@ -86,27 +128,32 @@ export default function LandingStep({ checkExisting, setCheckExisting, userType,
       <p className={classes.subheader}>
         Please select your following role: <span className={classes.red}>*</span>
       </p>
-      <RadioDescription value={userType} setValue={setUserType} />
-      <div className={classes.subheader}>
-        Which of the following best describes the issue that you are reporting? <span className={classes.red}>*</span>
-      </div>
-      <SelectMenu option={category} setOption={setCategory} />
-      <div className={classes.warningBox}>
-        <p className={classes.warningHeader}> Avoid duplicate issue reports:</p>
+      <RadioDescription selectedRadio={userPersona} onClickRadio={onSelectUserPersona} />
+      { userPersona === IssueWizardPersona.Contributor ? contributorAlert() :
         <div>
-          <div className={classes.star}>*</div>
-          <FormControlLabel className={classes.pad}
-            control={
-              <CustomCheckbox
-                checked={checkExisting}
-                onChange={handleCheckChange}
-                name="warningCheck"
+          <div className={classes.subheader}>
+            Which of the following best describes the issue that you are reporting? <span className={classes.red}>*</span>
+          </div>
+          <SelectMenu optionsList={categoryList} selectedOption={category} setOption={setCategory} />
+          <div className={classes.warningBox}>
+            <p className={classes.warningHeader}> Avoid duplicate issue reports:</p>
+            <div>
+              <div className={classes.star}>*</div>
+              <FormControlLabel className={classes.pad}
+                control={
+                  <CustomCheckbox
+                    checked={checkExisting}
+                    onChange={handleCheckChange}
+                    name="warningCheck"
+                  />
+                }
+                label="By checking this box, I'm acknowledging that I have searched for existing issues that already report this problem."
               />
-            }
-            label="By checking this box, I'm acknowledging that I have searched for existing issues that already report this problem."
-          />
+            </div>
+          </div>
         </div>
-      </div>
+      }
+      <DotMobileStepper nextEnabled={nextEnabled} activeStep={0} setActiveStep={setActiveStep}/>
     </>
   );
 }

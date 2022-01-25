@@ -8,65 +8,6 @@ import {makeStyles} from '@material-ui/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
-const CATEGORIES = [
-  {
-    value: 'UI',
-    label: 'UI',
-  },
-  {
-    value: 'Accessibility',
-    label: 'Accessibility',
-  },
-  {
-    value: 'Network/Downloading',
-    label: 'Network/Downloading',
-  },
-  {
-    value: 'Audio/Video',
-    label: 'Audio/Video',
-  },
-  {
-    value: 'Content',
-    label: 'Content',
-  },
-  {
-    value: 'Apps',
-    label: 'Apps',
-  },
-  {
-    value: 'Extensions/Themes',
-    label: 'Extensions/Themes',
-  },
-  {
-    value: 'Webstore',
-    label: 'Webstore',
-  },
-  {
-    value: 'Sync',
-    label: 'Sync',
-  },
-  {
-    value: 'Enterprise',
-    label: 'Enterprise',
-  },
-  {
-    value: 'Installation',
-    label: 'Installation',
-  },
-  {
-    value: 'Crashes',
-    label: 'Crashes',
-  },
-  {
-    value: 'Security',
-    label: 'Security',
-  },
-  {
-    value: 'Other',
-    label: 'Other',
-  },
-];
-
 const theme: Theme = createTheme();
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -92,8 +33,17 @@ const useStyles = makeStyles((theme: Theme) => ({
  *
  * @return ReactElement.
  */
-export default function SelectMenu({option, setOption}: {option: string, setOption: Function}) {
+type Props = {
+  optionsList: string[] | null,
+  selectedOption: string | null,
+  setOption: Function,
+};
+
+export default function SelectMenu(props: Props) {
   const classes = useStyles();
+
+  const {optionsList, selectedOption, setOption} = props;
+
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setOption(event.target.value as string);
   };
@@ -105,7 +55,7 @@ export default function SelectMenu({option, setOption}: {option: string, setOpti
         select
         label=''
         className={classes.textField}
-        value={option}
+        value={selectedOption}
         onChange={handleChange}
         InputLabelProps={{shrink: false}}
         SelectProps={{
@@ -117,16 +67,17 @@ export default function SelectMenu({option, setOption}: {option: string, setOpti
         variant="outlined"
         fullWidth={true}
       >
-      {CATEGORIES.map(option => (
-        <MenuItem
-          className={classes.menu}
-          key={option.value}
-          value={option.value}
-          data-testid="select-menu-item"
-        >
-           {option.label}
-        </MenuItem>
-       ))}
+      {
+        optionsList?.map(option => (
+          <MenuItem
+            className={classes.menu}
+            key={option}
+            value={option}
+            data-testid="select-menu-item"
+          >
+             {option}
+          </MenuItem>))
+      }
       </TextField>
     </form>
   );

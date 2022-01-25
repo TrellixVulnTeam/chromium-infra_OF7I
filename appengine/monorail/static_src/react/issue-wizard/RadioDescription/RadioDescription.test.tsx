@@ -9,6 +9,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 
 import { RadioDescription } from './RadioDescription.tsx';
+import {IssueWizardPersona} from '../IssueWizardTypes.tsx';
 
 describe('RadioDescription', () => {
   afterEach(cleanup);
@@ -29,7 +30,7 @@ describe('RadioDescription', () => {
   it('checks selected radio value', () => {
     // We're passing in the "Web Developer" value here manually
     // to tell our code that that radio button is selected.
-    render(<RadioDescription value={'Web Developer'} />);
+    render(<RadioDescription selectedRadio={IssueWizardPersona.Developer} />);
 
     const checkedRadio = screen.getByRole('radio', { name: /Web Developer/i });
     assert.isTrue(checkedRadio.checked);
@@ -43,25 +44,25 @@ describe('RadioDescription', () => {
     // Using the sinon.js testing library to create a function for testing.
     const setValue = sinon.stub();
 
-    render(<RadioDescription setValue={setValue} />);
+    render(<RadioDescription onClickRadio={setValue} />);
 
     const radio = screen.getByRole('radio', { name: /Web Developer/i });
     userEvent.click(radio);
 
     // Asserts that "Web Developer" was passed into our "setValue" function.
-    sinon.assert.calledWith(setValue, 'Web Developer');
+    sinon.assert.calledWith(setValue, IssueWizardPersona.Developer);
   });
 
   it('sets radio value when any part of the parent RoleSelection is clicked', () => {
     const setValue = sinon.stub();
 
-    render(<RadioDescription setValue={setValue} />);
+    render(<RadioDescription onClickRadio={setValue} />);
 
     // Click text in the RoleSelection component
     const p = screen.getByText('End User');
     userEvent.click(p);
 
     // Asserts that "End User" was passed into our "setValue" function.
-    sinon.assert.calledWith(setValue, 'End User');
+    sinon.assert.calledWith(setValue, IssueWizardPersona.EndUser);
   });
 });
