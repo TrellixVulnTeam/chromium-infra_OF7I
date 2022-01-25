@@ -20,14 +20,24 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// NewUFS client creates a new UFS client when given a hostname.
-// The hostname should generally be read from the config.
-func NewUFSClient(ctx context.Context, hostname string) (ufsAPI.FleetClient, error) {
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
+// NewHTTPClient creates a new client specifically configured to talk to UFS correctly when run from
+// CrOSSkyladAdmin dev or prod. It does not support other environments.
+func NewHTTPClient(ctx context.Context) (*http.Client, error) {
+	transport, err := auth.GetRPCTransport(ctx, auth.AsSelf)
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to get RPC transport for host %s", hostname).Err()
+		return nil, errors.Annotate(err, "failed to get RPC transport").Err()
 	}
-	hc := &http.Client{Transport: t}
+	return &http.Client{
+		Transport: transport,
+	}, nil
+}
+
+// NewClient creates a new UFS client when given a hostname and a http client.
+// The hostname should generally be read from the config.
+func NewClient(ctx context.Context, hc *http.Client, hostname string) (ufsAPI.FleetClient, error) {
+	if hc == nil {
+		return nil, errors.Reason("new ufs client: hc cannot be nil").Err()
+	}
 	return ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    hostname,

@@ -62,7 +62,11 @@ func runRepairQueueHandler(c *router.Context) (err error) {
 	// We are going to use the pools associated with a device as an input to decide which implementation
 	// of repair to use.
 	cfg := config.Get(c.Context)
-	ufsClient, err := ufs.NewUFSClient(c.Context, cfg.GetUFS().GetHost())
+	hc, err := ufs.NewHTTPClient(c.Context)
+	if err != nil {
+		logging.Infof(c.Context, "run repair queue handler: %s", err)
+	}
+	ufsClient, err := ufs.NewClient(c.Context, hc, cfg.GetUFS().GetHost())
 	if err == nil {
 		logging.Infof(c.Context, "run repair queue handler: UFS client created successfully")
 	} else {
