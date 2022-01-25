@@ -284,7 +284,7 @@ const servoRepairPlanBody = `
 			"run command from xmlrpc"
 		],
 		"conditions": [
-			"servo_v4_type_c"
+			"is_servo_v4_type_c"
 		],
 		"dependencies": [
 			"servo_get_ppdut5_mv",
@@ -313,7 +313,7 @@ const servoRepairPlanBody = `
 	"servo_cr50_low_sbu": {
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_v4_type_c",
+			"is_servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
 		],
 		"recovery_actions": [
@@ -339,7 +339,7 @@ const servoRepairPlanBody = `
 		],
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_v4_type_c",
+			"is_servo_v4_type_c",
 			"servo_is_sbu_voltage_issue"
 		],
 		"recovery_actions": [
@@ -477,7 +477,7 @@ const servoRepairPlanBody = `
 	"servo_testlab_enabled": {
 		"conditions": [
 			"is_not_servo_v3",
-			"servo_v4_type_c"
+			"is_servo_v4_type_c"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -496,13 +496,13 @@ const servoRepairPlanBody = `
 			"seconds":7300
 		}
 	},
-	"servo_v4": {
+	"is_servo_v4": {
 		"docs": ["This action will detect whether or not the attached servo device is of type V4."]
 	},
-	"servo_v4_type_c": {
+	"is_servo_v4_type_c": {
 		"docs": ["This action will detect whether or not the attached servo V4 device is connect to DUT using Type-C connection."],
 		"conditions": [
-			"servo_v4"
+			"is_servo_v4"
 		]
 	},
 	"servo_lid_open": {
@@ -559,13 +559,9 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"servo_check_servod_control"
 	},
-	"servo_warm_reset_pin": {
-		"docs": [
-			"TODO: If the type C has warm reset, we can drop this condition."
-		],
+	"servo_warm_reset_pin_for_servo_v3": {
 		"conditions": [
 			"is_servo_v3",
-			"servo_v4_type_a",
 			"servo_warm_reset_supported"
 		],
 		"exec_extra_args": [
@@ -577,6 +573,31 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair"
 		],
 		"exec_name":"servo_check_servod_control"
+	},
+	"servo_warm_reset_pin_for_servo_micro": {
+		"conditions": [
+			"is_servo_micro",
+			"servo_warm_reset_supported"
+		],
+		"exec_extra_args": [
+			"command:warm_reset",
+			"expected_string_value:off"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair"
+		],
+		"exec_name":"servo_check_servod_control"
+	},
+	"servo_warm_reset_pin": {
+		"docs": [
+			"We need to check for warm reset only for servo micro and V3."
+		],
+		"dependencies": [
+			"servo_warm_reset_pin_for_servo_v3",
+			"servo_warm_reset_pin_for_servo_micro"
+		],
+		"exec_name":"sample_pass"
 	},
 	"servo_cold_reset_pin": {
 		"conditions": [

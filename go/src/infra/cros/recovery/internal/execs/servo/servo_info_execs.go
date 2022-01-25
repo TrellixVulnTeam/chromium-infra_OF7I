@@ -58,8 +58,40 @@ func servoVerifyV4TypeCExec(ctx context.Context, args *execs.RunArgs, actionArgs
 	return nil
 }
 
+// servoVerifyV3Exec verifies whether the servo attached to the servo
+// host if of type V3.
+func servoVerifyV3Exec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	sType, err := WrappedServoType(ctx, args)
+	if err != nil {
+		log.Debug(ctx, "Servo Verify V3: could not determine the servo type")
+		return errors.Annotate(err, "servo verify v3").Err()
+	}
+	if sType.IsV3() {
+		return nil
+	}
+	log.Debug(ctx, "Servo Verify V3: servo type is not V3.")
+	return errors.Reason("servo verify v3: servo type %q is not V3.", sType).Err()
+}
+
+// servoVerifyServoMicroExec verifies whether the servo attached to
+// the servo host if of type servo micro.
+func servoVerifyServoMicroExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	sType, err := WrappedServoType(ctx, args)
+	if err != nil {
+		log.Debug(ctx, "Servo Verify Servo Micro: could not determine the servo type")
+		return errors.Annotate(err, "servo verify servo micro").Err()
+	}
+	if !sType.IsMicro() {
+		log.Debug(ctx, "Servo Verify servo micro: servo type is not servo micro.")
+		return errors.Reason("servo verify servo micro: servo type %q is not servo micro.", sType).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_servod_port_present", servoVerifyPortNumberExec)
-	execs.Register("servo_v4", servoVerifyV4Exec)
-	execs.Register("servo_v4_type_c", servoVerifyV4TypeCExec)
+	execs.Register("is_servo_v4", servoVerifyV4Exec)
+	execs.Register("is_servo_v4_type_c", servoVerifyV4TypeCExec)
+	execs.Register("is_servo_v3", servoVerifyV3Exec)
+	execs.Register("is_servo_micro", servoVerifyServoMicroExec)
 }
