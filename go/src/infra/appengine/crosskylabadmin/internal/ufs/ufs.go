@@ -6,14 +6,16 @@ package ufs
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
+	"google.golang.org/grpc"
 
 	"infra/appengine/crosskylabadmin/site"
+	"infra/libs/skylab/common/heuristics"
+	models "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -33,14 +35,20 @@ func NewUFSClient(ctx context.Context, hostname string) (ufsAPI.FleetClient, err
 	}), nil
 }
 
-// GetPools gets the pools associated with a particular bot.
+// GetPoolsClient expsoes the subset of the UFS client API needed by GetPools.
+type GetPoolsClient interface {
+	GetMachineLSE(ctx context.Context, in *ufsAPI.GetMachineLSERequest, opts ...grpc.CallOption) (*models.MachineLSE, error)
+}
+
+// GetPools gets the pools associated with a particular bot or dut.
 // UFSClient may be nil.
-func GetPools(ctx context.Context, ufsClient ufsAPI.FleetClient, botID string) ([]string, error) {
+func GetPools(ctx context.Context, ufsClient GetPoolsClient, name string) ([]string, error) {
 	if ufsClient == nil {
-		return nil, fmt.Errorf("get pools: ufsClient cannot be nil")
+		return nil, errors.Reason("get pools: ufsClient cannot be nil").Err()
 	}
+	name = heuristics.NormalizeBotNameToDeviceName(name)
 	res, err := ufsClient.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, botID),
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
 	})
 	if err != nil {
 		return nil, errors.Annotate(err, "get pools").Err()
