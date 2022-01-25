@@ -48,3 +48,7 @@ dispatch:
   # Only serve it on default service.
   - url: "*/build/*"
     service: default
+
+  # Global config validation is implemented in Go, so serve it from there.
+  - url: "*/api/config/*"
+    service: default-go
