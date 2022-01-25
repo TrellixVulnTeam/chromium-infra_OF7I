@@ -3,27 +3,21 @@
 # found in the LICENSE file.
 
 """Provides functions for handling tokens."""
+import os
 
-from components import auth
-import model
-
-
-class BuildToken(auth.TokenKind):
-  """Used for generating tokens to validate build messages."""
-  expiration_sec = model.BUILD_TIMEOUT.total_seconds()
-  secret_key = auth.SecretKey('build_id')
-
-
-def _token_message(build_id):
-  assert isinstance(build_id, (int, long)), build_id
-  return str(build_id)
+from components.auth import b64
+from go.chromium.org.luci.buildbucket.proto import token_pb2
 
 
 def generate_build_token(build_id):
   """Returns a token associated with the build."""
-  return BuildToken.generate(_token_message(build_id))
-
-
-def validate_build_token(token, build_id):
-  """Raises auth.InvalidTokenError if the token is invalid."""
-  return BuildToken.validate(token, _token_message(build_id))
+  body = token_pb2.TokenBody(
+      build_id=build_id,
+      purpose=token_pb2.TokenBody.BUILD,
+      state=os.urandom(16),
+  )
+  env = token_pb2.TokenEnvelope(
+      version=token_pb2.TokenEnvelope.UNENCRYPTED_PASSWORD_LIKE
+  )
+  env.payload = body.SerializeToString()
+  return b64.encode(env.SerializeToString())
