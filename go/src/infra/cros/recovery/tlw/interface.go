@@ -59,18 +59,6 @@ type Access interface {
 	Close(ctx context.Context) error
 }
 
-// ProvisionRequest provides data to perform provisioning of the device.
-type ProvisionRequest struct {
-	// Resource name
-	Resource string
-	// Path to system image.
-	// Path to the GS file.
-	// Example: gs://bucket/file_name
-	SystemImagePath string
-	// Prevent reboot during provision OS.
-	PreventReboot bool
-}
-
 // RunResult represents result of executed command.
 type RunResult struct {
 	// Command executed on the resource.
@@ -569,17 +557,4 @@ type Servo struct {
 	// Self representation of servo-setup by servod.
 	// Example: servo_v4_with_servo_micro, servo_v4_with_ccd_cr50.
 	Type string
-}
-
-// CallBluetoothPeerRequest represents data to run command on bluetooth peer.
-type CallBluetoothPeerRequest struct {
-	Resource string
-	Method   string
-	Args     []*xmlrpc.Value
-}
-
-// CallBluetoothPeerResponse represents result data from running command on bluetooth peer.
-type CallBluetoothPeerResponse struct {
-	Value *xmlrpc.Value
-	Fault bool
 }

@@ -234,25 +234,25 @@ func (c *tlwClient) CallBluetoothPeer(ctx context.Context, req *tlw.CallBluetoot
 		return &tlw.CallBluetoothPeerResponse{
 			Value: &xmlrpc.Value{
 				ScalarOneof: &xmlrpc.Value_String_{
-					String_: fmt.Sprintf("call servod %q: %s", req.Resource, err),
+					String_: fmt.Sprintf("call servod %q: %s", req.GetResource(), err),
 				},
 			},
 			Fault: true,
 		}
 	}
 	// Check if the name was detected by loaded device.
-	_, err := c.getDevice(ctx, req.Resource)
+	_, err := c.getDevice(ctx, req.GetResource())
 	if err != nil {
 		return fail(err)
 	}
 	s, err := c.servodPool.Get(
-		localproxy.BuildAddr(req.Resource),
+		localproxy.BuildAddr(req.GetResource()),
 		int32(deafultBluetoothPeerServerPort),
 		func() ([]string, error) { return nil, nil })
 	if err != nil {
 		return fail(err)
 	}
-	val, err := s.Call(ctx, c.sshPool, req.Method, req.Args)
+	val, err := s.Call(ctx, c.sshPool, req.GetMethod(), req.GetArgs())
 	if err != nil {
 		return fail(err)
 	}
@@ -563,10 +563,10 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 	if req == nil {
 		return errors.Reason("provision: request is empty").Err()
 	}
-	if req.Resource == "" {
+	if req.GetResource() == "" {
 		return errors.Reason("provision: resource is not specified").Err()
 	}
-	if req.SystemImagePath == "" {
+	if req.GetSystemImagePath() == "" {
 		return errors.Reason("provision: system image path is not specified").Err()
 	}
 	log.Debug(ctx, "Started provisioning by TLS: %s", req)

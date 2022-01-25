@@ -22,14 +22,14 @@ func TLSProvision(ctx context.Context, conn *grpc.ClientConn, req *tlw.Provision
 	op, err := c.ProvisionDut(
 		ctx,
 		&tls.ProvisionDutRequest{
-			Name: req.Resource,
+			Name: req.GetResource(),
 			TargetBuild: &tls.ChromeOsImage{
 				PathOneof: &tls.ChromeOsImage_GsPathPrefix{
-					GsPathPrefix: req.SystemImagePath,
+					GsPathPrefix: req.GetSystemImagePath(),
 				},
 			},
 			ForceProvisionOs: true,
-			PreventReboot:    req.PreventReboot,
+			PreventReboot:    req.GetPreventReboot(),
 		},
 	)
 	if err != nil {

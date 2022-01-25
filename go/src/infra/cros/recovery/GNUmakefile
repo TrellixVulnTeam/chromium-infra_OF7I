@@ -17,3 +17,7 @@ build:
 .PHONY:
 test-slow:
 	go test ./... $(GOTESTFLAGS) -p 1
+
+.PHONY: gen
+gen:
+	go generate ./...

@@ -8,10 +8,38 @@ package chromeos.recovery;
 
 option go_package = "infra/cros/recovery/tlw;tlw";
 
+import "go.chromium.org/chromiumos/config/proto/chromiumos/config/api/test/xmlrpc/xmlrpc.proto";
+
 // RunRequest represents result of executed command.
 message RunRequest {
   // Resource name
   string resource = 1;
   // Command executed on the resource.
   string command = 2;
+}
+
+// ProvisionRequest provides data to perform provisioning of the device.
+message ProvisionRequest {
+	// Resource name
+	string resource  = 1;
+	// Path to system image.
+	// Path to the GS file.
+	// Example: gs://bucket/file_name
+	string system_image_path = 2;
+	// Prevent reboot during provision OS.
+	bool prevent_reboot = 3;
+}
+
+// CallBluetoothPeerRequest represents data to run command on bluetooth peer.
+message CallBluetoothPeerRequest {
+  string Resource = 1;
+  string method = 2;
+  repeated chromiumos.config.api.test.xmlrpc.Value args = 3;
+}
+
+// CallBluetoothPeerResponse represents result data from running command on
+// bluetooth peer.
+message CallBluetoothPeerResponse {
+  chromiumos.config.api.test.xmlrpc.Value value = 1;
+  bool fault = 2;
 }
