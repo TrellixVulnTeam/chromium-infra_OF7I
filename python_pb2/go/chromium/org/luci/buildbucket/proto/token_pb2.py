@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n2go.chromium.org/luci/buildbucket/proto/token.proto\x12\x0e\x62uildbucket.v2\"\x8f\x01\n\tTokenBody\x12\x10\n\x08\x62uild_id\x18\x01 \x01(\x03\x12\x32\n\x07purpose\x18\x02 \x01(\x0e\x32!.buildbucket.v2.TokenBody.Purpose\x12\r\n\x05state\x18\x03 \x01(\x0c\"-\n\x07Purpose\x12\x17\n\x13PURPOSE_UNSPECIFIED\x10\x00\x12\t\n\x05\x42UILD\x10\x01\"1\n\rTokenEnvelope\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\x0f\n\x07payload\x18\x02 \x01(\x0c\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+  serialized_pb=b'\n2go.chromium.org/luci/buildbucket/proto/token.proto\x12\x0e\x62uildbucket.v2\"\x8f\x01\n\tTokenBody\x12\x10\n\x08\x62uild_id\x18\x01 \x01(\x03\x12\x32\n\x07purpose\x18\x02 \x01(\x0e\x32!.buildbucket.v2.TokenBody.Purpose\x12\r\n\x05state\x18\x03 \x01(\x0c\"-\n\x07Purpose\x12\x17\n\x13PURPOSE_UNSPECIFIED\x10\x00\x12\t\n\x05\x42UILD\x10\x01\"\x9b\x01\n\rTokenEnvelope\x12\x36\n\x07version\x18\x01 \x01(\x0e\x32%.buildbucket.v2.TokenEnvelope.Version\x12\x0f\n\x07payload\x18\x02 \x01(\x0c\"A\n\x07Version\x12\x17\n\x13VERSION_UNSPECIFIED\x10\x00\x12\x1d\n\x19UNENCRYPTED_PASSWORD_LIKE\x10\x01\x42\x36Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
 )
 
 
@@ -48,6 +48,31 @@ _TOKENBODY_PURPOSE = _descriptor.EnumDescriptor(
   serialized_end=214,
 )
 _sym_db.RegisterEnumDescriptor(_TOKENBODY_PURPOSE)
+
+_TOKENENVELOPE_VERSION = _descriptor.EnumDescriptor(
+  name='Version',
+  full_name='buildbucket.v2.TokenEnvelope.Version',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='VERSION_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='UNENCRYPTED_PASSWORD_LIKE', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=307,
+  serialized_end=372,
+)
+_sym_db.RegisterEnumDescriptor(_TOKENENVELOPE_VERSION)
 
 
 _TOKENBODY = _descriptor.Descriptor(
@@ -107,7 +132,7 @@ _TOKENENVELOPE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='version', full_name='buildbucket.v2.TokenEnvelope.version', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -124,6 +149,7 @@ _TOKENENVELOPE = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
+    _TOKENENVELOPE_VERSION,
   ],
   serialized_options=None,
   is_extendable=False,
@@ -131,12 +157,14 @@ _TOKENENVELOPE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=216,
-  serialized_end=265,
+  serialized_start=217,
+  serialized_end=372,
 )
 
 _TOKENBODY.fields_by_name['purpose'].enum_type = _TOKENBODY_PURPOSE
 _TOKENBODY_PURPOSE.containing_type = _TOKENBODY
+_TOKENENVELOPE.fields_by_name['version'].enum_type = _TOKENENVELOPE_VERSION
+_TOKENENVELOPE_VERSION.containing_type = _TOKENENVELOPE
 DESCRIPTOR.message_types_by_name['TokenBody'] = _TOKENBODY
 DESCRIPTOR.message_types_by_name['TokenEnvelope'] = _TOKENENVELOPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
