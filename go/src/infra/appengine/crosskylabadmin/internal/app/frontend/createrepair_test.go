@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -215,18 +216,43 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			out:       legacy,
 			reason:    wrongPool,
 		},
+		{
+			name: "ignore UFS error",
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 500,
+				OptinAllDuts:    true,
+				UfsErrorPolicy:  "lax",
+			},
+			randFloat: 0.5,
+			out:       paris,
+			reason:    scoreExceedsThreshold,
+		},
+		{
+			name: "don't ignore UFS error if we're below the threshold",
+			in: &config.RolloutConfig{
+				Enable:          true,
+				RolloutPermille: 503,
+				OptinAllDuts:    true,
+				UfsErrorPolicy:  "lax",
+			},
+			randFloat: 0.5,
+			out:       legacy,
+			reason:    scoreTooLow,
+		},
 	}
 
 	for i, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			ctx := context.Background()
 			expected := tt.out
 			expectedReason := reasonMessageMap[tt.reason]
 			if expectedReason == "" {
 				t.Errorf("expected reason should be valid reason")
 			}
-			actual, r := routeLabstationRepairTask(tt.in, tt.pools, tt.randFloat)
+			actual, r := routeLabstationRepairTask(ctx, tt.in, tt.pools, tt.randFloat)
 			actualReason := reasonMessageMap[r]
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("unexpected diff (-want +got) in subtest %d %q: %s", i, tt.name, diff)

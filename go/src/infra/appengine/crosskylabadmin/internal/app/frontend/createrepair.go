@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -36,6 +37,7 @@ const (
 	scoreExceedsThreshold
 	scoreTooLow
 	thresholdZero
+	malformedPolicy
 )
 
 // ReasonMessageMap maps each reason to a readable description.
@@ -47,13 +49,45 @@ var reasonMessageMap = map[reason]string{
 	scoreExceedsThreshold:    "Random score associated with task exceeds threshold",
 	scoreTooLow:              "Random score associated with task does NOT exceed threshold",
 	thresholdZero:            "Route labstation repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set",
+	malformedPolicy:          "Unrecognized policy",
+}
+
+// UFSErrorPolicy controls how UFS errors are handled.
+type ufsErrorPolicy string
+
+// UFS error policy constants.
+// Error policy constants are defined in go/src/infra/appengine/crosskylabadmin/app/config/config.proto.
+//
+// Strict   -- fail on UFS error even if we don't need the result
+// Fallback -- if we encounter a UFS error, fall back to the legacy path.
+// Lax      -- if we do not need the UFS response to make a decision, do not fail the request.
+const (
+	// The strict policy causes all UFS error requests to be treated as fatal and causes the request to fail.
+	ufsErrorPolicyStrict   ufsErrorPolicy = "strict"
+	ufsErrorPolicyFallback                = "fallback"
+	ufsErrorPolicyLax                     = "lax"
+)
+
+// NormalizeError policy normalizes a string into the canonical name for a policy.
+func normalizeErrorPolicy(policy string) (ufsErrorPolicy, error) {
+	policy = strings.ToLower(policy)
+	switch policy {
+	case "", "default", "fallback":
+		return ufsErrorPolicyFallback, nil
+	case "strict":
+		return ufsErrorPolicyStrict, nil
+	case "lax":
+		return ufsErrorPolicyLax, nil
+	}
+	return "", fmt.Errorf("unrecognized policy: %q", policy)
 }
 
 // RouteRepairTask routes a repair task for a given bot.
 //
 // The possible return values are:
-// - ""      (for legacy, which is the default)
-// - "paris" (for PARIS, which is new)
+// - "legacy"  (for legacy, which is the default)
+// -       ""  (indicates an error, should be treated as equivalent to "legacy" by callers)
+// -  "paris"  (for PARIS, which is new)
 //
 // RouteRepairTask takes as an argument randFloat (which is a float64 in the closed interval [0, 1]).
 // This argument is, by design, all the entropy that randFloat will need. Taking this as an argument allows
@@ -64,7 +98,7 @@ func RouteRepairTask(ctx context.Context, botID string, expectedState string, po
 		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
 	if heuristics.LooksLikeLabstation(botID) {
-		out, r := routeLabstationRepairTask(config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
+		out, r := routeLabstationRepairTask(ctx, config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
 		reason, ok := reasonMessageMap[r]
 		if !ok {
 			logging.Infof(ctx, "Unrecognized reason %d", int64(r))
@@ -97,14 +131,29 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 
 // RouteLabstationRepairTask takes a repair task for a labstation and routes it.
 // TODO(gregorynisbet): Generalize this to non-labstation tasks.
-func routeLabstationRepairTask(r *config.RolloutConfig, pools []string, randFloat float64) (string, reason) {
+func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, pools []string, randFloat float64) (string, reason) {
+	// TODO(gregorynisbet): Log instead of silently falling back to the default error handling policy.
+	ufsErrorPolicy, err := normalizeErrorPolicy(r.GetUfsErrorPolicy())
+	if err != nil {
+		logging.Infof(ctx, "error while routing labstation repair task: %s", err)
+	}
 	// Check that the feature is enabled at all.
 	if !r.GetEnable() {
 		return legacy, parisNotEnabled
 	}
 	// Check for malformed input data that would cause us to be unable to make a decision.
 	if len(pools) == 0 {
-		return legacy, noPools
+		switch ufsErrorPolicy {
+		case ufsErrorPolicyLax:
+			// Do nothing.
+		case ufsErrorPolicyStrict:
+			// TODO(gregorynisbet): Make strict error handling propagate the failure back up.
+			return legacy, noPools
+		case ufsErrorPolicyFallback:
+			return legacy, noPools
+		default:
+			return legacy, malformedPolicy
+		}
 	}
 	threshold := r.GetRolloutPermille()
 	myValue := math.Round(1000.0 * randFloat)
