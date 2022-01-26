@@ -63,10 +63,7 @@ message NinjaTask {
     // Output filenames of task grouped by command_hash.
     repeated string outputs = 1;
 
-    // Hash of running command.
-    string command_hash = 2;
-
-    reserved 3, 4;
+    reserved 2, 3, 4;
 
     // Duration between the time starting task and the time when ninja started.
     // We don't use "google.protobuf.Duration" here in order to make it a bit easier to write a query.

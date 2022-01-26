@@ -597,7 +597,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"resources/inspector/devtools_api.js", "resources/inspector/devtools_extension_api.js"},
-				CommandHash:      "75430546595be7c2",
 				StartDurationSec: (76 * time.Millisecond).Seconds(),
 				EndDurationSec:   (187 * time.Millisecond).Seconds(),
 			},
@@ -611,7 +610,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"gen/angle/commit_id.py", "gen/angle/commit_id_2.py", "gen/angle/commit_id_3.py"},
-				CommandHash:      "4ede38e2c1617d8c",
 				StartDurationSec: (78 * time.Millisecond).Seconds(),
 				EndDurationSec:   (286 * time.Millisecond).Seconds(),
 			},
@@ -625,7 +623,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"gen/angle/copy_compiler_dll.bat"},
-				CommandHash:      "9fb635ad5d2c1109",
 				StartDurationSec: (79 * time.Millisecond).Seconds(),
 				EndDurationSec:   (287 * time.Millisecond).Seconds(),
 			},
@@ -639,7 +636,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"gen/autofill_regex_constants.cc"},
-				CommandHash:      "fa33c8d7ce1d8791",
 				StartDurationSec: (80 * time.Millisecond).Seconds(),
 				EndDurationSec:   (284 * time.Millisecond).Seconds(),
 			},
@@ -653,7 +649,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"PepperFlash/manifest.json"},
-				CommandHash:      "324f0a0b77c37ef",
 				StartDurationSec: (141 * time.Millisecond).Seconds(),
 				EndDurationSec:   (287 * time.Millisecond).Seconds(),
 			},
@@ -667,7 +662,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"PepperFlash/libpepflashplayer.so"},
-				CommandHash:      "1e2c2b7845a4d4fe",
 				StartDurationSec: (142 * time.Millisecond).Seconds(),
 				EndDurationSec:   (288 * time.Millisecond).Seconds(),
 			},
@@ -681,7 +675,6 @@ func TestToProto(t *testing.T) {
 			Jobs:     50,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          []string{"obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp"},
-				CommandHash:      "b211d373de72f455",
 				StartDurationSec: (287 * time.Millisecond).Seconds(),
 				EndDurationSec:   (290 * time.Millisecond).Seconds(),
 			},

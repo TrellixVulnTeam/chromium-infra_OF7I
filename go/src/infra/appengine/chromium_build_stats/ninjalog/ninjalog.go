@@ -609,7 +609,6 @@ func ToProto(info *NinjaLog) []*npb.NinjaTask {
 			BuildConfigs: buildConfigs,
 			LogEntry: &npb.NinjaTask_LogEntry{
 				Outputs:          append(s.Outs, s.Out),
-				CommandHash:      s.CmdHash,
 				StartDurationSec: s.Start.Seconds(),
 				EndDurationSec:   s.End.Seconds(),
 			},
