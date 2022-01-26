@@ -80,6 +80,20 @@ func mockLabstationMachineLSE(name string) *ufspb.MachineLSE {
 	}
 }
 
+func mockAttachedDeviceMachineLSE(name string) *ufspb.MachineLSE {
+	return &ufspb.MachineLSE{
+		Name:     name,
+		Hostname: name,
+		Lse: &ufspb.MachineLSE_AttachedDeviceLse{
+			AttachedDeviceLse: &ufspb.AttachedDeviceLSE{
+				OsVersion: &ufspb.OSVersion{
+					Value: "test",
+				},
+			},
+		},
+	}
+}
+
 func TestCreateMachineLSE(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -2592,6 +2606,89 @@ func TestRenameMachineLSE(t *testing.T) {
 			So(changes[1].NewValue, ShouldEqual, "machinelse-20")
 			So(changes[0].OldValue, ShouldEqual, "RENAME")
 			So(changes[0].NewValue, ShouldEqual, "RENAME")
+		})
+	})
+}
+
+func TestGetAttachedDeviceData(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = external.WithTestingContext(ctx)
+	ctx = useTestingCfg(ctx)
+
+	machine := &ufspb.Machine{
+		Name: "machine-1",
+		Device: &ufspb.Machine_AttachedDevice{
+			AttachedDevice: &ufspb.AttachedDevice{
+				Manufacturer: "Apple",
+				DeviceType:   ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_PHONE,
+				BuildTarget:  "test",
+				Model:        "test",
+			},
+		},
+	}
+	registration.CreateMachine(ctx, machine)
+
+	// var dummylse *ufspb.MachineLSE
+	admlse := mockAttachedDeviceMachineLSE("lse-1")
+	admlse.Machines = []string{"machine-1"}
+	inventory.CreateMachineLSE(ctx, admlse)
+
+	dutState := mockDutState("machine-1", "lse-1")
+	UpdateDutState(ctx, dutState)
+
+	Convey("TestGetAttachedDeviceData", t, func() {
+		Convey("GetAttachedDeviceData - happy path", func() {
+			resp, err := GetAttachedDeviceData(ctx, admlse)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, admlse)
+			So(resp.GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetDutState(), ShouldResembleProto, dutState)
+		})
+
+		Convey("GetAttachedDeviceData - machine not found by hostname", func() {
+			admlse2 := mockAttachedDeviceMachineLSE("lse-2")
+			admlse2.Machines = []string{"machine-2"}
+			inventory.CreateMachineLSE(ctx, admlse2)
+
+			resp, err := GetAttachedDeviceData(ctx, admlse2)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, admlse2)
+			So(resp.GetMachine(), ShouldBeNil)
+			So(resp.GetDutState(), ShouldBeNil)
+		})
+
+		Convey("GetAttachedDeviceData - machine not found by id", func() {
+			admlse3 := mockAttachedDeviceMachineLSE("lse-3")
+			admlse3.Machines = []string{"machine-3"}
+			inventory.CreateMachineLSE(ctx, admlse3)
+
+			resp, err := GetAttachedDeviceData(ctx, admlse3)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetLabConfig(), ShouldResembleProto, admlse3)
+			So(resp.GetMachine(), ShouldBeNil)
+			So(resp.GetDutState(), ShouldBeNil)
+		})
+
+		Convey("GetAttachedDeviceData - no machine specified", func() {
+			admlse4 := mockAttachedDeviceMachineLSE("lse-4")
+			admlse4.Machines = []string{}
+			inventory.CreateMachineLSE(ctx, admlse4)
+
+			resp, err := GetAttachedDeviceData(ctx, admlse4)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "host does not have machines registered to it")
+		})
+
+		Convey("GetAttachedDeviceData - nil machinelse", func() {
+			resp, err := GetAttachedDeviceData(ctx, nil)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "host cannot be empty")
 		})
 	})
 }

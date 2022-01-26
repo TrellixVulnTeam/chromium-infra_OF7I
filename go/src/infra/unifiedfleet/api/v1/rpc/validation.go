@@ -56,6 +56,7 @@ var (
 	EmptyRackName                  string = "Invalid input - Rack name cannot be empty."
 	FilterFormat                   string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
 	InvalidFilterFormat            string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
+	EmptyRequest                   string = "Empty Request"
 )
 
 var (
@@ -740,7 +741,7 @@ func (r *UpdateDutStateRequest) Validate() error {
 // Validate validates input requests of GetDutStateRequest.
 func (r *GetDutStateRequest) Validate() error {
 	if r == nil {
-		return status.Errorf(codes.InvalidArgument, "Empty Request")
+		return status.Errorf(codes.InvalidArgument, EmptyRequest)
 	}
 	if r.ChromeosDeviceId == "" && r.Hostname == "" {
 		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
@@ -1145,7 +1146,7 @@ func (r *DeleteAssetRequest) Validate() error {
 // Validate validates input requests of GetChromeOSDeviceDataRequest.
 func (r *GetChromeOSDeviceDataRequest) Validate() error {
 	if r == nil {
-		return status.Errorf(codes.InvalidArgument, "Empty Request")
+		return status.Errorf(codes.InvalidArgument, EmptyRequest)
 	}
 	if r.ChromeosDeviceId == "" && r.Hostname == "" {
 		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
@@ -1161,7 +1162,7 @@ func (r *GetMachineLSEDeploymentRequest) Validate() error {
 // Validate validates input requests of UpdateMachineLSEDeploymentRequest.
 func (r *UpdateMachineLSEDeploymentRequest) Validate() error {
 	if r == nil {
-		return status.Errorf(codes.InvalidArgument, "Empty Request")
+		return status.Errorf(codes.InvalidArgument, EmptyRequest)
 	}
 	if r.GetMachineLseDeployment().GetSerialNumber() == "" {
 		return status.Errorf(codes.InvalidArgument, "cannot update a deployment record with empty serial number")
@@ -1428,4 +1429,15 @@ func parse(v reflect.Value, k string) string {
 		}
 	}
 	return ""
+}
+
+// Validate validates input requests of GetDeviceDataRequest.
+func (r *GetDeviceDataRequest) Validate() error {
+	if r == nil {
+		return status.Errorf(codes.InvalidArgument, EmptyRequest)
+	}
+	if r.DeviceId == "" && r.Hostname == "" {
+		return status.Errorf(codes.InvalidArgument, "Both Id and hostname are empty")
+	}
+	return nil
 }

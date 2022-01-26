@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
@@ -21,6 +22,7 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/external"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -715,5 +717,92 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, nil
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Find LSE for hostname/asset tag
+	lse, err := getMachineLseIfExists(ctx, req.GetDeviceId(), req.GetHostname())
+	if err != nil {
+		// Try to query and return SchedulingUnit if failed to fetch lse
+		rsp, err = getSchedulingUnitDeviceDataIfExists(ctx, req.GetHostname())
+		if err != nil {
+			logging.Errorf(ctx, err.Error())
+		}
+		if rsp != nil {
+			return rsp, nil
+		}
+		return nil, grpcStatus.Error(codes.NotFound, "no valid device found")
+	}
+
+	// Get data based on device type
+	if lse.GetChromeosMachineLse() != nil {
+		// TODO (justinsuen): refactor GetChromeOSDeviceData to take LSE as input.
+		// Will remove machineId assignment after refactor.
+		var machineId string
+		if len(lse.GetMachines()) != 0 {
+			machineId = lse.GetMachines()[0]
+		} else if req.GetDeviceId() != "" {
+			machineId = req.GetDeviceId()
+		}
+		device, err := controller.GetChromeOSDeviceData(ctx, machineId, req.GetHostname())
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to get chromeos device data").Err()
+		}
+		return &ufsAPI.GetDeviceDataResponse{
+			Resource: &ufsAPI.GetDeviceDataResponse_ChromeOsDeviceData{
+				ChromeOsDeviceData: device,
+			},
+		}, nil
+	} else if lse.GetAttachedDeviceLse() != nil {
+		device, err := controller.GetAttachedDeviceData(ctx, lse)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to get attached device data").Err()
+		}
+		return &ufsAPI.GetDeviceDataResponse{
+			Resource: &ufsAPI.GetDeviceDataResponse_AttachedDeviceData{
+				AttachedDeviceData: device,
+			},
+		}, nil
+	}
+	return nil, grpcStatus.Error(codes.NotFound, "no valid device found")
+}
+
+func getSchedulingUnitDeviceDataIfExists(ctx context.Context, hostname string) (*ufsAPI.GetDeviceDataResponse, error) {
+	su, err := controller.GetSchedulingUnit(ctx, util.RemovePrefix(hostname))
+	if err != nil {
+		return nil, err
+	}
+	if su != nil {
+		return &ufsAPI.GetDeviceDataResponse{
+			Resource: &ufsAPI.GetDeviceDataResponse_SchedulingUnit{
+				SchedulingUnit: su,
+			},
+		}, nil
+	}
+	return nil, fmt.Errorf("failed to get scheduling unit")
+}
+
+func getMachineLseIfExists(ctx context.Context, id, hostname string) (*ufspb.MachineLSE, error) {
+	// Find LSE for hostname/asset tag
+	var lse *ufspb.MachineLSE
+	var err error
+	if hostname != "" {
+		// Query MachineLSE by hostname
+		lse, err = controller.GetMachineLSE(ctx, hostname)
+		if err != nil {
+			return nil, err
+		}
+	} else if id != "" {
+		// Query MachineLSE by Machine id
+		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", id, false)
+		if err != nil {
+			return nil, err
+		}
+		if len(machinelses) == 0 {
+			return nil, grpcStatus.Error(codes.NotFound, fmt.Sprintf("device not found w/ asset id %s", id))
+		}
+		lse = machinelses[0]
+	}
+	return lse, nil
 }

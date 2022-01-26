@@ -1765,3 +1765,27 @@ func validateRenameMachineLSE(ctx context.Context, oldName, newName string, lse 
 	}
 	return nil
 }
+
+// GetAttachedDeviceData returns AttachedDeviceData for the given id/hostname from UFS.
+func GetAttachedDeviceData(ctx context.Context, lse *ufspb.MachineLSE) (*ufsAPI.AttachedDeviceData, error) {
+	if lse == nil {
+		return nil, fmt.Errorf("host cannot be empty")
+	}
+	if len(lse.GetMachines()) == 0 {
+		return nil, fmt.Errorf("host does not have machines registered to it")
+	}
+	machineId := lse.GetMachines()[0]
+	dutState, err := state.GetDutState(ctx, machineId)
+	if err != nil {
+		logging.Warningf(ctx, "DutState for %s not found. Error: %s", machineId, err)
+	}
+	machine, err := GetMachine(ctx, machineId)
+	if err != nil {
+		logging.Errorf(ctx, "Machine for %s not found. Error: %s", machineId, err)
+	}
+	return &ufsAPI.AttachedDeviceData{
+		LabConfig: lse,
+		Machine:   machine,
+		DutState:  dutState,
+	}, nil
+}
