@@ -32,9 +32,24 @@ func NewHTTPClient(ctx context.Context) (*http.Client, error) {
 	}, nil
 }
 
+// Client exposes a deliberately chosen subset of the UFS functionality.
+type Client interface {
+	GetMachineLSE(context.Context, *ufsAPI.GetMachineLSERequest, ...grpc.CallOption) (*models.MachineLSE, error)
+}
+
+// ClientImpl is the concrete implementation of this client.
+type clientImpl struct {
+	client ufsAPI.FleetClient
+}
+
+// GetMachineLSE gets information about a DUT.
+func (c *clientImpl) GetMachineLSE(ctx context.Context, req *ufsAPI.GetMachineLSERequest) (*models.MachineLSE, error) {
+	return c.client.GetMachineLSE(ctx, req)
+}
+
 // NewClient creates a new UFS client when given a hostname and a http client.
 // The hostname should generally be read from the config.
-func NewClient(ctx context.Context, hc *http.Client, hostname string) (ufsAPI.FleetClient, error) {
+func NewClient(ctx context.Context, hc *http.Client, hostname string) (Client, error) {
 	if hc == nil {
 		return nil, errors.Reason("new ufs client: hc cannot be nil").Err()
 	}
@@ -52,13 +67,12 @@ type GetPoolsClient interface {
 
 // GetPools gets the pools associated with a particular bot or dut.
 // UFSClient may be nil.
-func GetPools(ctx context.Context, ufsClient GetPoolsClient, name string) ([]string, error) {
-	if ufsClient == nil {
-		return nil, errors.Reason("get pools: ufsClient cannot be nil").Err()
+func GetPools(ctx context.Context, client Client, botID string) ([]string, error) {
+	if client == nil {
+		return nil, errors.Reason("get pools: client cannot be nil").Err()
 	}
-	name = heuristics.NormalizeBotNameToDeviceName(name)
-	res, err := ufsClient.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
+	res, err := client.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, heuristics.NormalizeBotNameToDeviceName(botID)),
 	})
 	if err != nil {
 		return nil, errors.Annotate(err, "get pools").Err()
