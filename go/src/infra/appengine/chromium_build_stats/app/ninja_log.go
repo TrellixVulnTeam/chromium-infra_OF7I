@@ -256,13 +256,6 @@ func init() {
 func uploadNinjaLogHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// X-AppEngine-Trusted-IP-Request=1 means the request is coming from a corp machine.
-	if r.Header.Get("X-AppEngine-Trusted-IP-Request") != "1" {
-		log.Warningf(ctx, "request from non trusted ip")
-		http.Error(w, "Access Denied: You're not on corp.", http.StatusForbidden)
-		return
-	}
-
 	if r.Method != http.MethodPost {
 		log.Warningf(ctx, "request is not post: %s", r.Method)
 		http.Error(w, "Only POST method is allowed.", http.StatusMethodNotAllowed)
