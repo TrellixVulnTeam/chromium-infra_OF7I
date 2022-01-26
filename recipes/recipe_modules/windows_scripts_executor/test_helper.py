@@ -57,19 +57,19 @@ def NEST_WINPE_DEINIT_STEP():
   return 'Deinit WinPE image modification'
 
 
-def NEST_PIN_ALL_SRCS():
+def NEST_PIN_SRCS(cust):
   """ generate Pin Src step nesting name """
-  return 'Pin all the required artifacts'
+  return 'Pin resources from {}'.format(cust)
 
 
-def NEST_DOWNLOAD_ALL_SRC():
+def NEST_DOWNLOAD_ALL_SRC(cust):
   """ Download all available packages step name"""
-  return 'Download all available packages'
+  return 'Download resources for {}'.format(cust)
 
 
-def NEST_UPLOAD_ALL_SRC():
+def NEST_UPLOAD_CUST_OUTPUT(cust):
   """ Upload all gcs artifacts step name"""
-  return 'Upload all available packages'
+  return 'Upload the output of {}'.format(cust)
 
 
 def json_res(api, success=True, err_msg='Failed step'):
@@ -174,18 +174,18 @@ def DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization, success=True):
       stdout=json_res(api, success))
 
 
-def GIT_PIN_FILE(api, refs, path, data):
+def GIT_PIN_FILE(api, cust, refs, path, data):
   """ mock git pin file step """
   return api.step_data(
       NEST(
-          NEST_PIN_ALL_SRCS(),
+          NEST_PIN_SRCS(cust),
           'gitiles log: ' + '{}/{}'.format(refs, path),
       ),
       api.gitiles.make_log_test_data(data),
   )
 
 
-def GCS_PIN_FILE(api, url, pin_url='', success=True):
+def GCS_PIN_FILE(api, cust, url, pin_url='', success=True):
   """ mock gcs pin file action"""
   retcode = 1
   if success:
@@ -193,20 +193,21 @@ def GCS_PIN_FILE(api, url, pin_url='', success=True):
   if not pin_url:
     pin_url = url
   return api.step_data(
-      NEST(NEST_PIN_ALL_SRCS(), 'gsutil stat {}'.format(url)),
+      NEST(NEST_PIN_SRCS(cust), 'gsutil stat {}'.format(url)),
       api.raw_io.stream_output(_gcs_stat.format(url, pin_url)),
       retcode=retcode,
   )
 
 
-def GCS_DOWNLOAD_FILE(api, bucket, source, success=True):
+def GCS_DOWNLOAD_FILE(api, cust, bucket, source, success=True):
   """ mock gcs download file action"""
   retcode = 1
   if success:
     retcode = 0
   return api.step_data(
-      NEST(NEST_DOWNLOAD_ALL_SRC(),
-           'gsutil download gs://{}/{}'.format(bucket, source)),
+      NEST(
+          NEST_DOWNLOAD_ALL_SRC(cust),
+          'gsutil download gs://{}/{}'.format(bucket, source)),
       retcode=retcode,
   )
 
@@ -292,7 +293,7 @@ def CHECK_UMOUNT_WIM(api, image, customization, save=True):
               customization)), args)
 
 
-def CHECK_GCS_UPLOAD(api, source, destination, orig=''):
+def CHECK_GCS_UPLOAD(api, image, cust, source, destination, orig=''):
   """
       Post check the upload to GCS
   """
@@ -304,7 +305,10 @@ def CHECK_GCS_UPLOAD(api, source, destination, orig=''):
   args[10] = destination  # ensure upload to correct location
   return api.post_process(
       StepCommandRE,
-      NEST(NEST_UPLOAD_ALL_SRC(), 'gsutil upload {}'.format(destination)), args)
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(cust),
+          NEST_WINPE_DEINIT_STEP(), NEST_UPLOAD_CUST_OUTPUT(cust),
+          'gsutil upload {}'.format(destination)), args)
 
 
 def CHECK_INSTALL_CAB(api, image, customization, action, args=None):
@@ -335,7 +339,7 @@ def CHECK_INSTALL_DRIVER(api, image, customization, action, args=None):
           'PowerShell> Install driver {}'.format(action)), wild_card)
 
 
-def CHECK_CIPD_UPLOAD(api, dest):
+def CHECK_CIPD_UPLOAD(api, image, cust, dest):
   """
       Post check the upload to GCS
   """
@@ -352,8 +356,10 @@ def CHECK_CIPD_UPLOAD(api, dest):
   platform = dest.cipd_src.platform
   return api.post_process(
       StepCommandRE,
-      NEST(NEST_UPLOAD_ALL_SRC(), 'create {}/{}'.format(package, platform)),
-      args)
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(cust),
+          NEST_WINPE_DEINIT_STEP(), NEST_UPLOAD_CUST_OUTPUT(cust),
+          'create {}/{}'.format(package, platform)), args)
 
 
 #   Generate proto configs helper functions

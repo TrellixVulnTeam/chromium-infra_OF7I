@@ -30,9 +30,9 @@ customization = 'offline_winpe_2013_x64'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.pin_customizations()
   api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.download_all_packages()
   api.windows_scripts_executor.execute_config(config)
 
 

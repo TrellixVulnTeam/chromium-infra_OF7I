@@ -34,9 +34,9 @@ key = '4fa9269b1b8ebc0cd8d2c1c2415374819838ffb0a4a541a601ec51749b555096'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.pin_customizations()
   api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.download_all_packages()
   # mock cipd packages to avoid spooking add_file execution
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\' +
@@ -53,7 +53,6 @@ def RunSteps(api, config):
   # mock existence of customization output to trigger upload
   api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(cust_name) +
                           'media\\sources\\boot.wim')
-  api.windows_scripts_executor.upload_wib_artifacts()
 
 
 def GenTests(api):
@@ -118,7 +117,8 @@ def GenTests(api):
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
                          [ACTION_ADD_STARTNET])) +
          # mock pinning the file to current refs
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock failure in gen winpe media step
          t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
          t.MOCK_CUST_OUTPUT(
@@ -148,7 +148,8 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, cust_name) +
          # mock git pin execution
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file from git to image execution
          t.ADD_GIT_FILE(
              api, image, cust_name, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -181,7 +182,8 @@ def GenTests(api):
          # mock all the init and deinit steps for winpe
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -254,7 +256,8 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -266,11 +269,14 @@ def GenTests(api):
              cust_name) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
-             api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
+             api, image, cust_name,
+             '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
              'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
          # assert that the generated image was uploaded to custom dest
          t.CHECK_GCS_UPLOAD(
              api,
+             image,
+             cust_name,
              '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
              'gs://test-bucket/out/gce_winpe_rel.zip',
              orig='gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +

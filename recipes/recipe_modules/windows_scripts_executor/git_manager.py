@@ -41,64 +41,51 @@ class GITManager:
     self._path = path
     # cache will be used to download the artifacts to
     self._cache = cache
-    self._pinned_srcs = {}
-    self._downloads = {}
-    self._pkg_record = []
+    # cache stored as dict with url as key and pinned src as value
+    self._pinning_cache = {}
+    # cache stored as dict with url as key and downloaded src as value
+    self._downloads_cache = {}
 
-  def record_package(self, src):
-    """ record all the git pkgs into a list
-        Args:
-          src: sources.Src proto object representing git_src
-    """
-    if src and src.WhichOneof('src') == 'git_src':
-      self._pkg_record.append(src)
+  def pin_package(self, git_src):
+    """ pin_package replaces a volatile ref to deterministic ref in given
+        git_src """
+    url = self.get_gitiles_url(git_src)
+    if url in self._pinning_cache:
+      return self._pinning_cache[url]
+    else:
+      commits, _ = self._gitiles.log(git_src.repo,
+                                     git_src.ref + '/' + git_src.src)
+      # pin the file to the latest available commit
+      git_src.ref = commits[0]['commit']
+      self._pinning_cache[url] = git_src
+      return git_src
 
-  def pin_packages(self):
-    """ pin_package replaces a volatile ref to deterministic ref in all
-        git_src"""
-    for src in self._pkg_record:
-      # gen_key is the path for the unpinned src
-      gen_key = self.get_local_src(src)
-      pkg = src.git_src
-      # check if we pinned the source already
-      if gen_key not in self._pinned_srcs.keys():
-        commits, _ = self._gitiles.log(pkg.repo, pkg.ref + '/' + pkg.src)
-        # pin the file to the latest available commit
-        pkg.ref = commits[0]['commit']
-        # copy the pinned src to avoid redoing it
-        self._pinned_srcs[gen_key] = src
-        # copy the pinned src to download list/dict
-        self._downloads[self.get_local_src(src)] = src
-      else:
-        # copy the ref to src
-        pkg.ref = self._pinned_srcs[gen_key].git_src.ref
+  def download_package(self, git_src):
+    with self._step.nest('Download {}'.format(self.get_gitiles_url(git_src))):
+      local_path = self.get_local_src(git_src)
+      if not local_path in self._downloads_cache:
+        download_path = self._cache.join(git_src.ref)
+        self._git.checkout(
+            step_suffix=git_src.src,
+            url=git_src.repo,
+            dir_path=download_path,
+            ref=git_src.ref,
+            file_name=git_src.src)
+        self._downloads_cache[local_path] = git_src
+      return local_path
 
-  def download_packages(self):
-    """ download_package downloads all recorded git_src"""
-    for _, src in self._downloads.items():
-      g_src = src.git_src
-      local_path = self._cache.join(g_src.ref)
-      self._git.checkout(
-          step_suffix=g_src.src,
-          url=g_src.repo,
-          dir_path=local_path,
-          ref=g_src.ref,
-          file_name=g_src.src)
-
-  def get_gitiles_url(self, src):
+  def get_gitiles_url(self, git_src):
     """ get_gitiles_url returns string representing an url for the given source
         Args:
-          src: sources.Src object representing cipd_src object
+          git_src: sources.GITSrc object representing an object
     """
-    if src and src.WhichOneof('src') == 'git_src':  # pragma: no cover
-      return GIT_URL.format(src.git_src.repo, src.git_src.ref, src.git_src.src)
+    return GIT_URL.format(git_src.repo, git_src.ref, git_src.src)
 
-  def get_local_src(self, source):
+  def get_local_src(self, git_src):
     """ get_local_src returns the location of the downloaded package in
         disk
         Args:
-          source: sources.Src object representing git_src
+          git_src: sources.GITSrc object
     """
-    f_path = self._cache.join(source.git_src.ref,
-                              helper.conv_to_win_path(source.git_src.src))
+    f_path = self._cache.join(git_src.ref, helper.conv_to_win_path(git_src.src))
     return f_path

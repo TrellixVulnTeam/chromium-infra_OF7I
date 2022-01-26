@@ -192,10 +192,6 @@
   },
   {
     "cmd": [],
-    "name": "Pin all the required artifacts"
-  },
-  {
-    "cmd": [],
     "name": "ensure windows adk present"
   },
   {
@@ -330,15 +326,7 @@
   },
   {
     "cmd": [],
-    "name": "Download all available packages"
-  },
-  {
-    "cmd": [],
     "name": "execute config test_config"
-  },
-  {
-    "cmd": [],
-    "name": "Upload all available packages"
   },
   {
     "name": "$result"

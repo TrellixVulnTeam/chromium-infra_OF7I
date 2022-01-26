@@ -33,28 +33,28 @@ class GCSManager:
     self._archive = archive
     self._pending_uploads = {}
     self._pending_downloads = {}
-    self._pkg_record = []
+    # dict mapping unpinned url to pinned package
+    self._pinned_srcs = {}
+    # dict mapping downloaded package paths to package
+    self._downloaded_srcs = {}
 
-  def record_package(self, src):
-    """ record_upload records the given src into a list if it is a gcs_src
+  def pin_package(self, gcs_src):
+    """ pin_package takes a gcs_src and returns a pinned gcs_src
         Args:
-          src: sources.Src is a proto object that refers to a gcs_src ref
+          gcs_src: sources.GCSSrc type referring to a package
     """
-    if src and src.WhichOneof('src') == 'gcs_src':
-      self._pkg_record.append(src)
-
-  def pin_packages(self):
-    """ pin_packages pins the given src to a proper reference by checking
-        object metadata"""
-    for src in self._pkg_record:
-      url = self.get_orig(self.get_gs_url(src))
-      if url:
-        # found the original file. Pin to the correct src
-        b, s = self.get_bucket_source(url)
-        src.gcs_src.bucket = b
-        src.gcs_src.source = s
-        self._pending_downloads[url] = src
-        self._pkg_record.remove(src)
+    pkg_url = self.get_gs_url(gcs_src)
+    if pkg_url in self._pinned_srcs:
+      return self._pinned_srcs[pkg_url]  # pragma: no cover
+    else:
+      pin_url = self.get_orig(pkg_url)
+      if pin_url:
+        # This package was linked to another
+        b, s = self.get_bucket_source(pin_url)
+        gcs_src.bucket = b
+        gcs_src.source = s
+      self._pinned_srcs[pkg_url] = gcs_src
+      return gcs_src
 
   def get_orig(self, url):
     """ get_orig goes through the metadata to determine original object and
@@ -85,31 +85,35 @@ class GCSManager:
     """
     return not self.get_orig(self.get_gs_url(src)) == ''
 
-  def download_packages(self):
-    """ download_packages downloads all the gcs refs """
-    for url, pkg in self._pending_downloads.items():
-      src = pkg.gcs_src
+  def download_package(self, gcs_src):
+    """ download_package downloads the given package if required and returns
+        local_path to the package.
+        gcs_src: source.GCSSrc object referencing a package
+    """
+    local_path = self.get_local_src(gcs_src)
+    if not local_path in self._downloaded_srcs:
       self._gsutil.download(
-          src.bucket,
-          src.source,
-          self.get_local_src(pkg),
-          name='download gs://{}/{}'.format(src.bucket, src.source))
-      del self._pending_downloads[url]
+          gcs_src.bucket,
+          gcs_src.source,
+          local_path,
+          name='download {}'.format(self.get_gs_url(gcs_src)))
+      self._downloaded_srcs[local_path] = gcs_src
+    return local_path
 
-  def get_local_src(self, src):
+  def get_local_src(self, gcs_src):
     """ get_local_src returns the path to the source on disk
         Args:
-          src: sources.Src proto representing gcs_src ref
+          gcs_src: sources.GCSSrc proto object referencing an artifact in GCS
     """
-    return self._cache.join(src.gcs_src.bucket,
-                            helper.conv_to_win_path(src.gcs_src.source))
+    return self._cache.join(gcs_src.bucket,
+                            helper.conv_to_win_path(gcs_src.source))
 
-  def get_gs_url(self, src):
+  def get_gs_url(self, gcs_src):
     """ get_gs_url returns the gcs url for the given gcs src
         Args:
-          src: sources.Src proto object referencing an artifact in GCS
+          gcs_src: sources.GCSSrc proto object referencing an artifact in GCS
     """
-    return 'gs://{}/{}'.format(src.gcs_src.bucket, src.gcs_src.source)
+    return 'gs://{}/{}'.format(gcs_src.bucket, gcs_src.source)
 
   def get_bucket_source(self, url):
     """ get_bucket_source returns bucket and source given gcs url
@@ -122,49 +126,24 @@ class GCSManager:
     source = bs.replace(bucket + '/', '')
     return bucket, source
 
-  def record_upload(self, up_dest, source):
-    """ record_upload records the upload to be made on upload_packages
+  def upload_package(self, dest, source):
+    """ upload_package uploads the contents of source on disk to dest.
         Args:
-          up_dest: dest.Dest proto object representing a file to be created on
-                   GCS.
-          source: local path for the file to be uploaded
+          dest: dest.Dest proto object representing an upload location
+          source: path to the package on disk to be uploaded
     """
-    if up_dest and up_dest.WhichOneof('dest') == 'gcs_src':
-      if 'orig' not in up_dest.tags:
-        # Add orig tag to self if not given.
-        up_dest.tags['orig'] = self.get_gs_url(
-            sources.Src(gcs_src=up_dest.gcs_src))
-      if source in self._pending_uploads.keys():
-        self._pending_uploads[source].append(up_dest)
-      else:
-        self._pending_uploads[source] = [up_dest]
-
-  def upload_packages(self):
-    """ upload_packages uploads all the packages that were recorded by
-        record_upload """
-    failed_uploads = {}
-    for source, uploads in self._pending_uploads.items():
-      # check if the file exists before uploading
-      if self._path.exists(source):
-        package = source
-        if self._path.isdir(source):
-          # Package the dir instead of uploading it recursively
-          package = source.join('gcs.zip')
-          self._archive.package(source).archive(
-              'Package {} for upload'.format(source), package)
-        for upload in uploads:
-          pkg = upload.gcs_src
-          self._gsutil.upload(
-              package,
-              pkg.bucket,
-              pkg.source,
-              metadata=upload.tags,
-              name='upload gs://{}/{}'.format(pkg.bucket, pkg.source))
-        if self._path.isdir(source):
-          # Delete the package
-          self._file.remove('Delete gcs.zip after upload', package)
-      else:
-        # cannot upload this as the file is currently not available
-        failed_uploads[source] = uploads  # pragma: nocover
-    # update the pending uploads map
-    self._pending_uploads = failed_uploads
+    if self._path.exists(source):
+      package = source
+      if self._path.isdir(source):
+        # package the dir to zip
+        package = source.join('gcs.zip')
+        self._archive.package(source).archive(
+            'Package {} for upload'.format(source), package)
+      self._gsutil.upload(
+          package,
+          dest.gcs_src.bucket,
+          dest.gcs_src.source,
+          metadata=dest.tags,
+          name='upload {}'.format(self.get_gs_url(dest.gcs_src)))
+      if self._path.isdir(source):
+        self._file.remove('Delete gcs.zip after upload', package)

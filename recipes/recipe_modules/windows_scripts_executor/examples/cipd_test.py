@@ -31,7 +31,7 @@ key = '835663538df204d1d6ba072b185850ba502e4520fddbfe2262562596511368af'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.pin_customizations()
   api.windows_scripts_executor.gen_canonical_configs(config)
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
@@ -45,13 +45,11 @@ def RunSteps(api, config):
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\infra\\files\\cipd-3\\windows-amd64', 'DIRECTORY')
-  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.download_all_packages()
   api.windows_scripts_executor.execute_config(config)
   # mock existence of customization output to trigger upload
   api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(customization) +
                           'media\\sources\\boot.wim')
-  api.windows_scripts_executor.upload_wib_artifacts()
-
 
 def GenTests(api):
   # add file from cipd to winpe image action
@@ -172,23 +170,23 @@ def GenTests(api):
          # assert that the recipe executed successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
-  yield (
-      api.test('Test cipd upload package', api.platform('win', 64)) +
-      # image with an action to add file from cipd
-      api.properties(
-          t.WPE_IMAGE(image, wib.ARCH_X86, customization, 'add pkg from cipd',
-                      [ACTION_ADD_CIPD_1], [UPLOAD_TO_CIPD_1, UPLOAD_TO_CIPD_2])
-      ) +
-      # mock init and deinit steps
-      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
-      # mock add cipd file step
-      t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
-                      customization) +
-      # assert that the generated image was uploaded
-      t.CHECK_GCS_UPLOAD(
-          api, '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
-          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
-      t.CHECK_CIPD_UPLOAD(api, UPLOAD_TO_CIPD_1) +
-      t.CHECK_CIPD_UPLOAD(api, UPLOAD_TO_CIPD_2) +
-      # assert that the recipe was executed successfully
-      api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+  yield (api.test('Test cipd upload package', api.platform('win', 64)) +
+         # image with an action to add file from cipd
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, customization,
+                         'add pkg from cipd', [ACTION_ADD_CIPD_1],
+                         [UPLOAD_TO_CIPD_1, UPLOAD_TO_CIPD_2])) +
+         # mock init and deinit steps
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
+         # mock add cipd file step
+         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
+                         customization) +
+         # assert that the generated image was uploaded
+         t.CHECK_GCS_UPLOAD(
+             api, image, customization,
+             '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+             'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
+         t.CHECK_CIPD_UPLOAD(api, image, customization, UPLOAD_TO_CIPD_1) +
+         t.CHECK_CIPD_UPLOAD(api, image, customization, UPLOAD_TO_CIPD_2) +
+         # assert that the recipe was executed successfully
+         api.post_process(StatusSuccess) + api.post_process(DropExpectation))

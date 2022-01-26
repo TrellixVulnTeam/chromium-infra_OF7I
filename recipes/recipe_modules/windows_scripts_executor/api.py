@@ -57,10 +57,11 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                 archive=self.m.archive,
                 source=self._sources))
 
-  def pin_available_sources(self):
-    """ pin_wib_config pins the given config to current refs."""
-    with self.m.step.nest('Pin all the required artifacts'):
-      self._sources.pin()
+  def pin_customizations(self):
+    """ pin_customizations pins all the sources in the customizations"""
+    for cust in self._customizations:
+      with self.m.step.nest('Pin resources from {}'.format(cust.name())):
+        cust.pin_sources()
 
   def gen_canonical_configs(self, config):
     """ gen_canonical_configs strips all the names in the config and returns
@@ -160,10 +161,10 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
       self.m.file.copy('Copy {} to {}'.format(cfg_file, key_file), cfg_file,
                        key_file)
 
-  def download_available_packages(self):
-    """ download_available_packages downloads the src refs that are pinned """
-    with self.m.step.nest('Download all available packages'):
-      self._sources.download()
+  def download_all_packages(self):
+    for cust in self._customizations:
+      with self.m.step.nest('Download resources for {}'.format(cust.name())):
+        cust.download_sources()
 
   def execute_config(self, config):
     """ Executes the windows image builder user config.
@@ -176,7 +177,3 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
         if not self._sources.exists(src_pb.Src(gcs_src=output.gcs_src)):
           # execute the customization if we don't have the output
           cust.execute_customization()
-
-  def upload_wib_artifacts(self):
-    """ upload_wib_artifacts uploads all the available artifacts """
-    self._sources.upload()

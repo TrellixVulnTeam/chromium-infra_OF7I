@@ -1016,17 +1016,15 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 API for using Windows PowerShell scripts.
 
-&mdash; **def [download\_available\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#163)(self):**
+&mdash; **def [download\_all\_packages](/recipes/recipe_modules/windows_scripts_executor/api.py#164)(self):**
 
-download_available_packages downloads the src refs that are pinned 
-
-&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#168)(self, config):**
+&mdash; **def [execute\_config](/recipes/recipe_modules/windows_scripts_executor/api.py#169)(self, config):**
 
 Executes the windows image builder user config.
 Args:
   config: wib.Image proto representing the image to be generated
 
-&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#65)(self, config):**
+&mdash; **def [gen\_canonical\_configs](/recipes/recipe_modules/windows_scripts_executor/api.py#66)(self, config):**
 
 gen_canonical_configs strips all the names in the config and returns
 individual configs containing one customization per image.
@@ -1109,13 +1107,9 @@ init initializes all the dirs and sub modules required.
 Args:
   config: wib.Image proto object representing the image to be created
 
-&mdash; **def [pin\_available\_sources](/recipes/recipe_modules/windows_scripts_executor/api.py#60)(self):**
+&mdash; **def [pin\_customizations](/recipes/recipe_modules/windows_scripts_executor/api.py#60)(self):**
 
-pin_wib_config pins the given config to current refs.
-
-&mdash; **def [upload\_wib\_artifacts](/recipes/recipe_modules/windows_scripts_executor/api.py#180)(self):**
-
-upload_wib_artifacts uploads all the available artifacts 
+pin_customizations pins all the sources in the customizations
 ### *recipe_modules* / [windows\_sdk](/recipes/recipe_modules/windows_sdk)
 
 [DEPS](/recipes/recipe_modules/windows_sdk/__init__.py#5): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step]

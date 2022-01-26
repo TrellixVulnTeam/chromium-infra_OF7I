@@ -27,6 +27,17 @@ def get_src_from_action(action):
     return action.add_windows_driver.src
 
 
+def pin_src_from_action(action, sources):
+  if action.WhichOneof('action') == 'add_file':
+    action.add_file.src.CopyFrom(sources.pin(action.add_file.src))
+  if action.WhichOneof('action') == 'add_windows_package':
+    action.add_windows_package.src.CopyFrom(
+        sources.pin(action.add_windows_package.src))
+  if action.WhichOneof('action') == 'add_windows_driver':
+    action.add_windows_driver.src.CopyFrom(
+        sources.pin(action.add_windows_driver.src))
+
+
 def get_build_offline_customization(offline_customization):
   """ get_build_offline_customization returns actions.OfflineAction object
       same as oc, but with all name strings reset

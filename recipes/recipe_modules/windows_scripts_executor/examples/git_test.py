@@ -32,9 +32,9 @@ arch = 'x86'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_available_sources()
+  api.windows_scripts_executor.pin_customizations()
   api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_available_packages()
+  api.windows_scripts_executor.download_all_packages()
   api.windows_scripts_executor.execute_config(config)
 
 
@@ -70,7 +70,8 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock adding the file to wim
          t.ADD_GIT_FILE(api, image, customization,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -89,7 +90,8 @@ def GenTests(api):
       # mock all the init and deinit steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
       # mock pin of the git src, should only happen once
-      t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+      t.GIT_PIN_FILE(api, customization, 'HEAD',
+                     'windows/artifacts/startnet.cmd', 'HEAD') +
       # mock adding the file to wim
       t.ADD_GIT_FILE(api, image, customization,
                      'ef70cb069518e6dc3ff24bfae7f195de5099c377',
@@ -109,9 +111,11 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
+                        'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, 'HEAD', 'windows/artifacts/diskpart.txt', 'HEAD') +
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
+                        'windows/artifacts/diskpart.txt', 'HEAD') +
          # mock adding the file to wim
          t.ADD_GIT_FILE(api, image, customization,
                         'ef70cb069518e6dc3ff24bfae7f195de5099c377',

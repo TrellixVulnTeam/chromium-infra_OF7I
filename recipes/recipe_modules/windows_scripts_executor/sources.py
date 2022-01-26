@@ -46,37 +46,26 @@ class Source:
                                        git_dir)
     self._step = step
 
-  def record_download(self, src):
-    """ record_download records src for pinning and downloading purposes
-        Args:
-          src: sources.Src proto object that contains ref to an artifact
-    """
-    self._gcs.record_package(src)
-    self._git.record_package(src)
-    self._cipd.record_package(src)
-
-  def pin(self):
+  def pin(self, src):
     """ pin pins all the recorded packages to static refs """
-    self._gcs.pin_packages()
-    self._cipd.pin_packages()
-    self._git.pin_packages()
+    if src and src.WhichOneof('src') == 'git_src':
+      src.git_src.CopyFrom(self._git.pin_package(src.git_src))
+      return src
+    if src and src.WhichOneof('src') == 'gcs_src':
+      src.gcs_src.CopyFrom(self._gcs.pin_package(src.gcs_src))
+      return src
+    if src and src.WhichOneof('src') == 'cipd_src':
+      src.cipd_src.CopyFrom(self._cipd.pin_package(src.cipd_src))
+      return src
 
-  def download(self):
+  def download(self, src):
     """ download downloads all the pinned packages to cache on disk """
-    self._gcs.download_packages()
-    self._git.download_packages()
-    self._cipd.download_packages()
-
-  def record_upload(self, dest, source):
-    """ record_upload records an upload that is pending to be performed
-        Args:
-          dest: dest.Dest proto object that refs a file to be uploaded
-          source: local_path to the file to be uploaded
-    """
-    if dest and dest.WhichOneof('dest') == 'gcs_src':
-      self._gcs.record_upload(dest, source)
-    if dest and dest.WhichOneof('dest') == 'cipd_src':
-      self._cipd.record_upload(dest, source)
+    if src and src.WhichOneof('src') == 'git_src':
+      return self._git.download_package(src.git_src)
+    if src and src.WhichOneof('src') == 'gcs_src':
+      return self._gcs.download_package(src.gcs_src)
+    if src and src.WhichOneof('src') == 'cipd_src':
+      return self._cipd.download_package(src.cipd_src)
 
   def get_local_src(self, src):
     """ get_local_src returns path on the disk that points to the given src ref
@@ -84,11 +73,11 @@ class Source:
           src: sources.Src proto object that is ref to a downloaded artifact
     """
     if src and src.WhichOneof('src') == 'gcs_src':
-      return self._gcs.get_local_src(src)
+      return self._gcs.get_local_src(src.gcs_src)
     if src and src.WhichOneof('src') == 'git_src':
-      return self._git.get_local_src(src)
+      return self._git.get_local_src(src.git_src)
     if src and src.WhichOneof('src') == 'cipd_src':
-      return self._cipd.get_local_src(src)
+      return self._cipd.get_local_src(src.cipd_src)
     if src and src.WhichOneof('src') == 'local_src':  # pragma: no cover
       return src.local_src
 
@@ -97,18 +86,19 @@ class Source:
         Args:
           src: sources.Src proto object that contains ref to an artifact
     """
-    if src and src.WhichOneof('src') == 'gcs_src':  # pragma: no cover
-      return self._gcs.get_gs_url(src)
-    if src and src.WhichOneof('src') == 'cipd_src':  # pragma: no cover
-      return self._cipd.get_cipd_url(src)
+    if src and src.WhichOneof('src') == 'gcs_src':
+      return self._gcs.get_gs_url(src.gcs_src)
+    if src and src.WhichOneof('src') == 'cipd_src':
+      return self._cipd.get_cipd_url(src.cipd_src)
     if src and src.WhichOneof('src') == 'git_src':  # pragma: no cover
-      return self._cipd.get_gitiles_url(src)
+      return self._cipd.get_gitiles_url(src.git_src)
 
-  def upload(self):
-    """ upload uploads all the available files to be uploaded if available """
-    with self._step.nest('Upload all available packages'):
-      self._gcs.upload_packages()
-      self._cipd.upload_packages()
+  def upload_package(self, dest, source):
+    """ upload_package uploads a given package to the given destination"""
+    if dest.WhichOneof('dest') == 'gcs_src':
+      self._gcs.upload_package(dest, source)
+    if dest and dest.WhichOneof('dest') == 'cipd_src':
+      self._cipd.upload_package(dest, source)
 
   def exists(self, src):
     """ exists Returns True if the given src exists
@@ -117,5 +107,5 @@ class Source:
     """
     # TODO(anushruth): add support for git and cipd
     if src and src.WhichOneof('src') == 'gcs_src':
-      return self._gcs.exists(src)
+      return self._gcs.exists(src.gcs_src)
     return False  # pragma: no cover

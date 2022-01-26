@@ -40,13 +40,22 @@ class OfflineWinPECustomization(customization.Customization):
     self._scratchpad = self._path['cleanup'].join(self._name, 'sp')
     self._canon_cust = None
 
-    # record all the sources
+  def pin_sources(self):
+    """ pins the given config by replacing the sources in customization """
     wpec = self._customization.offline_winpe_customization
-    self._source.record_download(wpec.image_src)
-    if wpec:
-      for off_action in wpec.offline_customization:
-        for action in off_action.actions:
-          self._source.record_download(helper.get_src_from_action(action))
+    if wpec.image_src.WhichOneof('src'):
+      wpec.image_src.CopyFrom(self._source.pin(wpec.image_src))
+    for off_action in wpec.offline_customization:
+      for action in off_action.actions:
+        helper.pin_src_from_action(action, self._source)
+
+  def download_sources(self):
+    """ download_sources downloads the sources in the given config to disk"""
+    wpec = self._customization.offline_winpe_customization
+    self._source.download(wpec.image_src)
+    for off_action in wpec.offline_customization:
+      for action in off_action.actions:
+        self._source.download(helper.get_src_from_action(action))
 
   def get_canonical_cfg(self):
     """ get_canonical_cfg returns canonical config after removing name and dest
@@ -88,10 +97,12 @@ class OfflineWinPECustomization(customization.Customization):
     """ return the output of executing this config. Doesn't guarantee that the
         output exists"""
     if self._key:
+      output = src_pb.GCSSrc(
+          bucket='chrome-gce-images', source='WIB-WIM/{}.zip'.format(self._key))
       return dest_pb.Dest(
-          gcs_src=src_pb.GCSSrc(
-              bucket='chrome-gce-images',
-              source='WIB-WIM/{}.zip'.format(self._key)),)
+          gcs_src=output,
+          tags={'orig': self._source.get_url(src_pb.Src(gcs_src=output))},
+      )
     return None  # pragma: no cover
 
   def execute_customization(self):
@@ -178,15 +189,16 @@ class OfflineWinPECustomization(customization.Customization):
           self._scratchpad,
           save=save)
       if save:
-        def_dest = self.get_output()
-        # upload the output to default bucket for offline_winpe_customization
-        self._source.record_upload(def_dest, self._workdir)
-        # upload to any custom destinations that might be given
-        cust = self._customization.offline_winpe_customization
-        for image_dest in cust.image_dests:
-          # update the link to the original upload.
-          image_dest.tags['orig'] = def_dest.tags['orig']
-          self._source.record_upload(image_dest, self._workdir)
+        with self._step.nest('Upload the output of {}'.format(self.name())):
+          def_dest = self.get_output()
+          # upload the output to default bucket for offline_winpe_customization
+          self._source.upload_package(def_dest, self._workdir)
+          # upload to any custom destinations that might be given
+          cust = self._customization.offline_winpe_customization
+          for image_dest in cust.image_dests:
+            # update the link to the original upload.
+            image_dest.tags['orig'] = def_dest.tags['orig']
+            self._source.upload_package(image_dest, self._workdir)
 
   def perform_winpe_action(self, action):
     """ perform_winpe_action Performs the given action
