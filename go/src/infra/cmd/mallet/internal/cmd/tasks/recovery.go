@@ -61,8 +61,11 @@ func (c *recoveryRun) Run(a subcommands.Application, args []string, env subcomma
 
 func (c *recoveryRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-
-	bc, err := buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, site.BBProject, site.MalletBucket, site.MalletBuilder)
+	hc, err := buildbucket.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return errors.Annotate(err, "recovery run").Err()
+	}
+	bc, err := buildbucket.NewClient2(ctx, hc, site.DefaultPRPCOptions, site.BBProject, site.MalletBucket, site.MalletBuilder)
 	if err != nil {
 		return err
 	}
