@@ -328,7 +328,15 @@ func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutSta
 			return nil, errors.Annotate(err, "convert dut topology to host info").Err()
 		}
 		// Output hostInfo to stdout during development
+		log.Printf("Host info from DutTopology:\n")
 		log.Printf(proto.MarshalTextString(hostInfo))
+
+		// This is done only for testing purposes.
+		// TODO(b/201424819): Remove this part once testing is done.
+		old_hostInfo := hostInfoFromDutInfo(dut)
+		addDutStateToHostInfo(old_hostInfo, dutState)
+		log.Printf("Old Host info:\n")
+		log.Printf(proto.MarshalTextString(old_hostInfo))
 	} else {
 		hostInfo = hostInfoFromDutInfo(dut)
 		addDutStateToHostInfo(hostInfo, dutState)
@@ -358,11 +366,11 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 	dut := dutTopo.Duts[0].GetChromeos()
 
 	// Add attributes
-	var attrMap map[string]string
+	var attrMap map[string]string = make(map[string]string)
 	// Attributes will be added later
 
 	// Add labels
-	var labels []string
+	var labels []string = make([]string, 0)
 
 	// - Servo
 	servo := dut.GetServo()
