@@ -458,32 +458,6 @@ func servoCheckServodControlExec(ctx context.Context, args *execs.RunArgs, actio
 }
 
 const (
-	labstationKeyWord = "labstation"
-)
-
-// servoHostIsLabstationExec confirms the servo host is a labstation
-// TODO (yunzhiyu@): Revisit when we onboard dockers.
-func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.DUT.ServoHost.Name)
-	board, err := cros.ReleaseBoard(ctx, r)
-	if err != nil {
-		return errors.Annotate(err, "servo host is labstation").Err()
-	}
-	if !strings.Contains(board, labstationKeyWord) {
-		return errors.Reason("servo host is not labstation").Err()
-	}
-	return nil
-}
-
-// servoUsesServodContainerExec checks if the servo uses a servod-container.
-func servoUsesServodContainerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if !IsContainerizedServoHost(ctx, args.DUT.ServoHost) {
-		return errors.Reason("servo not using servod container").Err()
-	}
-	return nil
-}
-
-const (
 	// removeFileCmd is the linux file removal command that used to remove files in the filesToRemoveSlice.
 	removeFileCmd = `rm %s`
 )
@@ -661,8 +635,6 @@ func init() {
 	execs.Register("servo_set", servoSetExec)
 	execs.Register("servo_low_ppdut5", servoLowPPDut5Exec)
 	execs.Register("servo_check_servod_control", servoCheckServodControlExec)
-	execs.Register("servo_host_is_labstation", servoHostIsLabstationExec)
-	execs.Register("servo_uses_servod_container", servoUsesServodContainerExec)
 	execs.Register("servo_labstation_disk_cleanup", servoLabstationDiskCleanUpExec)
 	execs.Register("servo_servod_old_logs_cleanup", servoServodOldLogsCleanupExec)
 	execs.Register("servo_battery_charging", servoValidateBatteryChargingExec)
