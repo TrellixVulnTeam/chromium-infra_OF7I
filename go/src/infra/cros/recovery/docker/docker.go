@@ -32,7 +32,8 @@ const (
 
 	// Enable more debug logs to triage issue.
 	// Will be set to false after stabilize work with container.
-	enableDebugLogging = false
+	// TODO(otabek): Set false after testing in the prod.
+	enableDebugLogging = true
 )
 
 // Proxy wraps a Servo object and forwards connections to the servod instance
@@ -98,6 +99,8 @@ func createDockerClient(ctx context.Context) (*client.Client, error) {
 
 // StartContainerRequest holds info to start container.
 type StartContainerRequest struct {
+	// Run container in detached mode.
+	// Detached container are not wait till the process will be finished.
 	Detached     bool
 	ImageName    string
 	PublishPorts []string
@@ -109,9 +112,18 @@ type StartContainerRequest struct {
 	Exec         []string
 }
 
+// StartContainerResponse holds result data from starting the container.
+type StartContainerResponse struct {
+	// Exit code of execution.
+	// Negative exit codes are reserved for internal use.
+	ExitCode int
+	Stdout   string
+	Stderr   string
+}
+
 // StartContainer pull and start container by request.
 // More details https://docs.docker.com/engine/reference/run/
-func (dc *DockerClient) StartContainer(ctx context.Context, req *StartContainerRequest, timeout time.Duration) (string, string, error) {
+func (dc *DockerClient) StartContainer(ctx context.Context, req *StartContainerRequest, timeout time.Duration) (*StartContainerResponse, error) {
 	// TODO: migrate to use docker SDK.
 	// TODO: move logic to separate method with tests.
 	args := []string{"run"}
@@ -146,14 +158,18 @@ func (dc *DockerClient) StartContainer(ctx context.Context, req *StartContainerR
 	if len(req.Exec) > 0 {
 		args = append(args, req.Exec...)
 	}
-	ec, so, se, err := runWithTimeout(ctx, timeout, "docker", args...)
+	res, err := runWithTimeout(ctx, timeout, "docker", args...)
 	if enableDebugLogging {
-		log.Printf("Run docker image %q: exitcode: %v\n", dc.name, ec)
-		log.Printf("Run docker image %q: stdout: %v\n", dc.name, so)
-		log.Printf("Run docker image %q: errout: %v\n", dc.name, se)
-		log.Printf("Run docker image %q: err: %v\n", dc.name, err)
+		log.Printf("Run docker exec %q: exitcode: %v", dc.name, res.ExitCode)
+		log.Printf("Run docker exec %q: stdout: %v", dc.name, res.Stdout)
+		log.Printf("Run docker exec %q: stderr: %v", dc.name, res.Stderr)
+		log.Printf("Run docker exec %q: err: %v", dc.name, err)
 	}
-	return so, se, errors.Annotate(err, "run docker image %q: %s", dc.name, se).Err()
+	return &StartContainerResponse{
+		ExitCode: res.ExitCode,
+		Stdout:   res.Stdout,
+		Stderr:   res.Stderr,
+	}, errors.Annotate(err, "run docker image %q: %s", dc.name, res.Stderr).Err()
 }
 
 // StopContainer stops running container.
@@ -178,10 +194,13 @@ func (d *DockerClient) RemoveContainer(ctx context.Context, force bool) error {
 	return errors.Annotate(err, "docker remove container  %s", d.name).Err()
 }
 
+// ExecContainerResponse holds result of the execution on docker.
 type ExecContainerResponse struct {
+	// Exit code of execution.
+	// Negative exit codes are reserved for internal use.
 	ExitCode int
 	Stdout   string
-	Errout   string
+	Stderr   string
 }
 
 // Run executes command on running container.
@@ -191,21 +210,30 @@ func (d *DockerClient) ExecContainer(ctx context.Context, timeout time.Duration,
 			ExitCode: -1,
 		}, errors.Reason("exec container: command is not provided").Err()
 	}
+	if up, err := d.ContainerIsUp(ctx); err != nil {
+		return &ExecContainerResponse{
+			ExitCode: -1,
+		}, errors.Annotate(err, "exec container").Err()
+	} else if !up {
+		return &ExecContainerResponse{
+			ExitCode: -1,
+		}, errors.Reason("exec container: container is down").Err()
+	}
 	// The commands executed is not restricted by logic and it required to run them under sh without TTY.
-	args := []string{"exec", "-i", d.name, "sh", "-c"}
+	args := []string{"exec", "-i", d.name}
 	args = append(args, cmd...)
-	exitCode, so, eo, err := runWithTimeout(ctx, timeout, "docker", args...)
+	res, err := runWithTimeout(ctx, timeout, "docker", args...)
 	if enableDebugLogging {
-		log.Printf("Run docker exec %q: stdout: %s", d.name, so)
-		log.Printf("Run docker exec %q: errout: %s", d.name, eo)
-		log.Printf("Run docker exec %q: err: %s", d.name, err)
+		log.Printf("Run docker exec %q: exitcode: %v", d.name, res.ExitCode)
+		log.Printf("Run docker exec %q: stdout: %v", d.name, res.Stdout)
+		log.Printf("Run docker exec %q: stderr: %v", d.name, res.Stderr)
+		log.Printf("Run docker exec %q: err: %v", d.name, err)
 	}
-	res := &ExecContainerResponse{
-		ExitCode: exitCode,
-		Stdout:   so,
-		Errout:   eo,
-	}
-	return res, errors.Annotate(err, "run docker image %q: %v", d.name, eo).Err()
+	return &ExecContainerResponse{
+		ExitCode: res.ExitCode,
+		Stdout:   res.Stdout,
+		Stderr:   res.Stderr,
+	}, errors.Annotate(err, "run docker image %q: %v", d.name, res.Stderr).Err()
 }
 
 // Copy copies the file to the container.
@@ -247,8 +275,17 @@ func (d *DockerClient) ContainerIsUp(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
+// runResult holds info of execution.
+type runResult struct {
+	ExitCode int
+	Stdout   string
+	Stderr   string
+}
+
 // runWithTimeout runs command with timeout limit.
-func runWithTimeout(ctx context.Context, timeout time.Duration, command string, args ...string) (exitCode int, stdout string, stderr string, err error) {
+func runWithTimeout(ctx context.Context, timeout time.Duration, command string, args ...string) (res *runResult, err error) {
+	//exitCode int, stdout string, stderr string, err error) {
+	res = &runResult{}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	cw := make(chan error, 1)
@@ -257,8 +294,8 @@ func runWithTimeout(ctx context.Context, timeout time.Duration, command string, 
 	cmd.Stderr = &se
 	cmd.Stdout = &so
 	defer func() {
-		stdout = so.String()
-		stderr = se.String()
+		res.Stdout = so.String()
+		res.Stderr = se.String()
 	}()
 	go func() {
 		log.Printf("Run cmd: %s", cmd)
@@ -266,13 +303,15 @@ func runWithTimeout(ctx context.Context, timeout time.Duration, command string, 
 	}()
 	select {
 	case e := <-cw:
-		exitCode = 1
-		if exitError, ok := err.(*exec.ExitError); ok {
-			exitCode = exitError.ExitCode()
+		if exitError, ok := e.(*exec.ExitError); ok {
+			res.ExitCode = exitError.ExitCode()
+		} else if e != nil {
+			res.ExitCode = 1
 		}
 		err = errors.Annotate(e, "run with timeout %s", timeout).Err()
 		return
 	case <-ctx.Done():
+		res.ExitCode = 124
 		err = errors.Reason("run with timeout %s: excited timeout", timeout).Err()
 		return
 	}
