@@ -8,15 +8,21 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/auth"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/clients"
 	"infra/appengine/crosskylabadmin/internal/app/config"
 	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/worker"
+	"infra/appengine/crosskylabadmin/site"
+	"infra/cros/recovery/tasknames"
+	"infra/libs/skylab/buildbucket"
+	"infra/libs/skylab/buildbucket/labpack"
 	"infra/libs/skylab/common/heuristics"
 )
 
@@ -123,7 +129,14 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 	}
 	switch taskType {
 	case "paris":
-		return createBuildbucketRepairTask(ctx, botID, expectedState)
+		url, err := createBuildbucketRepairTask(ctx, botID)
+		if err != nil {
+			logging.Errorf(ctx, "Attempted and failed to create buildbucket task: %s", err)
+			logging.Errorf(ctx, "Falling back to legacy flow")
+			url, err = createLegacyRepairTask(ctx, botID, expectedState)
+			return url, errors.Annotate(err, "fallback legacy repair task somehow failed").Err()
+		}
+		return url, err
 	default:
 		return createLegacyRepairTask(ctx, botID, expectedState)
 	}
@@ -175,10 +188,42 @@ func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, poo
 	return legacy, scoreTooLow
 }
 
-// CreateBuildbucketRepairTask creates a new repair task for a labstation. Not yet implemented.
-func createBuildbucketRepairTask(ctx context.Context, botID string, expectedState string) (string, error) {
+// CreateBuildbucketRepairTask creates a new repair task for a labstation.
+// Err should be non-nil if and only if a task was created.
+// We rely on this signal to decide whether to fall back to the legacy flow.
+func createBuildbucketRepairTask(ctx context.Context, botID string) (string, error) {
 	logging.Infof(ctx, "Using new repair flow for bot %q", botID)
-	return "", fmt.Errorf("not yet implemented")
+	transport, err := auth.GetRPCTransport(ctx, auth.AsSelf)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to get RPC transport").Err()
+	}
+	hc := &http.Client{
+		Transport: transport,
+	}
+	bc, err := buildbucket.NewClient2(ctx, hc, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
+	if err != nil {
+		logging.Errorf(ctx, "error creating buildbucket client: %q", err)
+		return "", errors.Annotate(err, "create buildbucket repair task").Err()
+	}
+	p := &labpack.Params{
+		UnitName:       heuristics.NormalizeBotNameToDeviceName(botID),
+		TaskName:       string(tasknames.Recovery),
+		EnableRecovery: true,
+		// TODO(gregorynisbet): This is our own name, move it to the config.
+		AdminService: "chromeos-skylab-bot-fleet.appspot.com",
+		// NOTE: We use the UFS service, not the Inventory service here.
+		InventoryService: config.Get(ctx).GetUFS().GetHost(),
+		NoStepper:        false,
+		NoMetrics:        false,
+		// TODO(gregorynisbet): Pass config file to labpack task.
+		Configuration: "",
+	}
+	taskID, err := labpack.ScheduleTask(ctx, bc, p)
+	if err != nil {
+		logging.Errorf(ctx, "error scheduling task: %q", err)
+		return "", errors.Annotate(err, "create buildbucket repair task").Err()
+	}
+	return bc.BuildURL(taskID), nil
 }
 
 // CreateLegacyRepairTask creates a legacy repair task for a labstation.

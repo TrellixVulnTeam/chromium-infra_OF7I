@@ -37,14 +37,28 @@ type clientImpl struct {
 }
 
 // NewClient returns a new client to interact with buildbucket builds.
-func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Options, project string, bucket string, builder string) (Client, error) {
-	hClient, err := newHTTPClient(ctx, &authFlags)
+//
+// Deprecated:
+//   This function takes authcli.Flags parameters directly instead of an http.Client.
+//   This is too inflexible when it comes to authentication strategies.
+//   Replace calls to this function with calls to NewClient2 and then rename NewClient2 to NewClient.
+//
+func NewClient(ctx context.Context, f authcli.Flags, options *prpc.Options, project string, bucket string, builder string) (Client, error) {
+	hc, err := NewHTTPClient(ctx, &f)
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "new buildbucket client").Err()
 	}
+	return NewClient2(ctx, hc, options, project, bucket, builder)
+}
 
+// NewClient2 returns a new client to interact with buildbucket builds.
+// TODO(gregorynisbet): Replace calls to NewClient with calls to NewClient2, and then rename NewClient2 to NewClient.
+func NewClient2(ctx context.Context, hc *http.Client, options *prpc.Options, project string, bucket string, builder string) (Client, error) {
+	if hc == nil {
+		return nil, errors.Reason("buildbucket client cannot be created from nil http.Client").Err()
+	}
 	pClient := &prpc.Client{
-		C:       hClient,
+		C:       hc,
 		Host:    "cr-buildbucket.appspot.com",
 		Options: options,
 	}
@@ -59,8 +73,8 @@ func NewClient(ctx context.Context, authFlags authcli.Flags, options *prpc.Optio
 	}, nil
 }
 
-// newHTTPClient returns an HTTP client with authentication set up.
-func newHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
+// NewHTTPClient returns an HTTP client with authentication set up.
+func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) {
 	o, err := f.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to get auth options").Err()
