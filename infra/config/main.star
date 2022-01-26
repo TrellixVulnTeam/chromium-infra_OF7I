@@ -27,9 +27,6 @@ Includes CI configs for the following subprojects:
 
 lucicfg.check_version("1.30.1", "Please update depot_tools")
 
-# Enable v2 bucket names in LUCI Scheduler config.
-lucicfg.enable_experiment("crbug.com/1182002")
-
 # Tell lucicfg what files it is allowed to touch.
 lucicfg.config(
     config_dir = "generated",
