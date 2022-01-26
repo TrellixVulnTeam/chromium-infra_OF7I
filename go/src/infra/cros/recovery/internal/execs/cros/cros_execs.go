@@ -122,11 +122,10 @@ func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 
 // runShellCommandExec runs a given action exec arguments in shell.
 func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if len(actionArgs) != 0 {
+	if len(actionArgs) > 0 {
 		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
-		cmd := strings.Join(actionArgs, " ")
 		run := args.NewRunner(args.ResourceName)
-		if out, err := run(ctx, cmd); err != nil {
+		if out, err := run(ctx, actionArgs[0], actionArgs[1:]...); err != nil {
 			return errors.Annotate(err, "run shell command").Err()
 		} else {
 			log.Debug(ctx, "Run shell command: output: %s", out)

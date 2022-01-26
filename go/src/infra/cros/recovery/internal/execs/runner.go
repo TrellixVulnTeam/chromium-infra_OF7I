@@ -39,19 +39,20 @@ var (
 
 // Runner defines the type for a function that will execute a command
 // on a host, and returns the result as a single line.
-type Runner func(context.Context, string) (string, error)
+type Runner func(context.Context, string, ...string) (string, error)
 
 // NewRunner returns a function of type Runner that executes a command
 // on a host and returns the results as a single line. This function
 // defines the specific host on which the command will be
 // executed. Examples of such specific hosts can be the DUT, or the
 // servo-host etc.
-func (args *RunArgs) NewRunner(host string) Runner {
-	runner := func(ctx context.Context, cmd string) (string, error) {
+func (a *RunArgs) NewRunner(host string) Runner {
+	runner := func(ctx context.Context, cmd string, args ...string) (string, error) {
 		log.Debug(ctx, "Run command %q", cmd)
-		r := args.Access.Run(ctx, &tlw.RunRequest{
+		r := a.Access.Run(ctx, &tlw.RunRequest{
 			Resource: host,
 			Command:  cmd,
+			Args:     args,
 		})
 		exitCode := r.ExitCode
 		if exitCode != 0 {

@@ -16,6 +16,8 @@ message RunRequest {
   string resource = 1;
   // Command executed on the resource.
   string command = 2;
+  // Command arguments.
+  repeated string args = 3;
 }
 
 // ProvisionRequest provides data to perform provisioning of the device.

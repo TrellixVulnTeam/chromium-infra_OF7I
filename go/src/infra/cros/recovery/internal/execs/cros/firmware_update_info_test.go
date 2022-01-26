@@ -188,7 +188,7 @@ func TestParseFirmwareManifest(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
-			r := func(ctx context.Context, cmd string) (string, error) {
+			r := func(ctx context.Context, cmd string, args ...string) (string, error) {
 				return tt.rawOutput, nil
 			}
 			actualModelFirmware, actualErr := ReadFirmwareManifest(ctx, r, tt.dutModel)

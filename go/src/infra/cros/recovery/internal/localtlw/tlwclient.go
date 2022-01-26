@@ -8,6 +8,7 @@ package localtlw
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
@@ -114,22 +115,24 @@ func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) er
 
 // Run executes command on device by SSH related to resource name.
 func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult {
+	command := strings.Join(append([]string{req.GetCommand()}, req.GetArgs()...), " ")
 	dut, err := c.getDevice(ctx, req.GetResource())
 	if err != nil {
 		return &tlw.RunResult{
-			Command:  req.GetCommand(),
+			Command:  command,
 			ExitCode: -1,
 			Stderr:   err.Error(),
 		}
 	}
 	if c.isServoHost(req.GetResource()) && isServodContainer(dut) {
 		return &tlw.RunResult{
-			Command:  req.GetCommand(),
+			Command:  command,
 			ExitCode: -1,
 			Stderr:   "Running commands on servod container is not supported yet!",
 		}
 	}
-	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), req.GetCommand())
+	// TODO: pass args to run execution.
+	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), command)
 }
 
 // InitServod initiates servod daemon on servo-host.

@@ -61,7 +61,7 @@ type Access interface {
 
 // RunResult represents result of executed command.
 type RunResult struct {
-	// Command executed on the resource.
+	// Full command executed on the resource.
 	Command string
 	// Exit code return.
 	// Eg: 0 - everything is good
