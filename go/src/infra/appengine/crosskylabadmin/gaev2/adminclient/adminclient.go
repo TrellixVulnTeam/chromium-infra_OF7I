@@ -34,8 +34,10 @@ func newApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
-			subcommands.Section("RPCs"),
+			subcommands.Section("CrosAdm RPCs"),
 			cmds.GetStableVersion,
+			subcommands.Section("UFS RPCs"),
+			cmds.GetMachineLSE,
 		},
 	}
 }
