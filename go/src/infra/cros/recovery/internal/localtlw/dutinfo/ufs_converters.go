@@ -132,6 +132,21 @@ func convertBluetoothPeerState(s ufslab.PeripheralState) tlw.BluetoothPeerState 
 	return tlw.BluetoothPeerStateUnspecified
 }
 
+// routerStates maps the router UFS state to TLW  state
+// it is used to in convertRouterState to convert ufs periperal state to tlw router state
+var routerStates = map[ufslab.PeripheralState]tlw.RouterState{
+	ufslab.PeripheralState_WORKING: tlw.RouterStateWorking,
+	ufslab.PeripheralState_BROKEN:  tlw.RouterStateBroken,
+}
+
+// converts router UFS state to TLW state
+func convertRouterState(s ufslab.PeripheralState) tlw.RouterState {
+	if ns, ok := routerStates[s]; ok {
+		return ns
+	}
+	return tlw.RouterStateUnspecified
+}
+
 var rpmStates = map[ufslab.PeripheralState]tlw.RPMState{
 	ufslab.PeripheralState_WORKING:        tlw.RPMStateWorking,
 	ufslab.PeripheralState_MISSING_CONFIG: tlw.RPMStateMissingConfig,

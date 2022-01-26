@@ -66,6 +66,7 @@ const (
 	hostTypeCros      hostType = "cros-host"
 	hostTypeServo     hostType = "servo-host"
 	hostTypeBtPeer    hostType = "bluetooth-peer-host"
+	hostTypeRouter    hostType = "router-host"
 	hostTypeChameleon hostType = "chameleon-host"
 
 	deafultBluetoothPeerServerPort = 9992
@@ -468,6 +469,12 @@ func (c *tlwClient) cacheDevice(dut *tlw.Dut) {
 		if bt.Name != "" {
 			c.hostTypes[bt.Name] = hostTypeBtPeer
 			c.hostToParents[bt.Name] = name
+		}
+	}
+	for _, router := range dut.WifiRouterHosts {
+		if router != nil && router.Name != "" {
+			c.hostTypes[router.Name] = hostTypeRouter
+			c.hostToParents[router.Name] = name
 		}
 	}
 	if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {

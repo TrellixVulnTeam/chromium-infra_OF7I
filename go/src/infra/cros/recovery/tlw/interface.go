@@ -271,6 +271,8 @@ type Dut struct {
 	ChameleonHost *ChameleonHost
 	// BluetoothPeer info of DUT setup.
 	BluetoothPeerHosts []*BluetoothPeerHost
+	// Array of Wifi Router peripheral devices
+	WifiRouterHosts []*WifiRouterHost
 	// RPMOutlet of the DUT setup.
 	RPMOutlet *RPMOutlet
 
@@ -404,6 +406,31 @@ type BluetoothPeerHost struct {
 	Name string
 	// State of the device.
 	State BluetoothPeerState
+}
+
+// RouterState describes the state of bluetooth peer device.
+type RouterState string
+
+const (
+	RouterStateUnspecified RouterState = "UNSPECIFIED"
+	// Device and software on it is working as expected.
+	RouterStateWorking RouterState = "WORKING"
+	// Device is broken or not working as expected.
+	RouterStateBroken RouterState = "BROKEN"
+)
+
+// Router devices
+type WifiRouterHost struct {
+	// Name is the resource name.
+	Name string
+	// State of the device.
+	State RouterState
+	// Model
+	Model string
+	// Board
+	Board string
+	// RPM
+	RPMOutlet *RPMOutlet
 }
 
 // RPMState describes the state of RPM outlet.

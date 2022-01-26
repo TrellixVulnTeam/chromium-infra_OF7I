@@ -175,6 +175,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		PowerSupplyType:    supplyType,
 		Storage:            createDUTStorage(dc, ds),
 		Wifi:               createDUTWifi(data.GetManufacturingConfig(), ds),
+		WifiRouterHosts:    createWifiRouterHosts(p.GetWifi()),
 		Bluetooth:          createDUTBluetooth(ds, dc),
 		BluetoothPeerHosts: bluetoothPeerHosts,
 		Battery:            battery,
@@ -276,6 +277,31 @@ func createDUTWifi(make *ufsmake.ManufacturingConfig, ds *ufslab.DutState) *tlw.
 		State:    convertHardwareState(ds.GetWifiState()),
 		ChipName: make.GetWifiChip(),
 	}
+}
+
+// createWifiRouterHosts convert ufslab.Wifi.WifiRouters to []*tlw.WifiRouterHost
+// It include router hostname, model, board, state, rpm information which will be used to verification and recovery
+func createWifiRouterHosts(wifi *ufslab.Wifi) []*tlw.WifiRouterHost {
+	var routers []*tlw.WifiRouterHost
+	for _, ufsRouter := range wifi.GetWifiRouters() {
+		tlwRpm := tlw.RPMOutlet{
+			// TODO update when http://b/216315183 is done.
+			//set to unknown till rpm is updated to enable peripherals.
+			//currently,rpm only supports on dut. router rpm state is not defined in proto yet and no api for rpmoutlet for non dut
+			State: convertRPMState(ufslab.PeripheralState_UNKNOWN),
+		}
+		if rpm := ufsRouter.GetRpm(); rpm != nil && rpm.GetPowerunitName() != "" && rpm.GetPowerunitOutlet() != "" {
+			tlwRpm.Name = fmt.Sprintf("%s|%s", rpm.GetPowerunitName(), rpm.GetPowerunitOutlet())
+		}
+		routers = append(routers, &tlw.WifiRouterHost{
+			Name:      ufsRouter.GetHostname(),
+			State:     convertRouterState(ufsRouter.GetState()),
+			Model:     ufsRouter.GetModel(),
+			Board:     ufsRouter.GetBuildTarget(),
+			RPMOutlet: &tlwRpm,
+		})
+	}
+	return routers
 }
 
 func createDUTBluetooth(ds *ufslab.DutState, dc *ufsdevice.Config) *tlw.DUTBluetooth {
