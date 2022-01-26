@@ -58,7 +58,7 @@
   * [provenance:examples/usage](#recipes-provenance_examples_usage) (Python3 ✅)
   * [recipe_autoroller](#recipes-recipe_autoroller) (Python3 ✅) &mdash; Rolls recipes.
   * [recipe_autoroller:examples/full](#recipes-recipe_autoroller_examples_full) (Python3 ✅)
-  * [recipe_bundler](#recipes-recipe_bundler)
+  * [recipe_bundler](#recipes-recipe_bundler) (Python3 ✅)
   * [recipe_roll_tryjob](#recipes-recipe_roll_tryjob)
   * [recipe_simulation](#recipes-recipe_simulation) &mdash; A continuous builder which runs recipe tests.
   * [recipes_py_continuous](#recipes-recipes_py_continuous)
@@ -1528,11 +1528,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/recipe_modules/recipe_autoroller/examples/full.py#33)(api, projects, db_gcs_bucket):**
 ### *recipes* / [recipe\_bundler](/recipes/recipes/recipe_bundler.py)
 
-[DEPS](/recipes/recipes/recipe_bundler.py#8): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/recipe_bundler.py#10): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipes/recipe_bundler.py#47)(api, recipe_bundler_pkg, recipe_bundler_vers, repo_specs, repo_specs_optional, package_name_prefix, package_name_internal_prefix):**
+&mdash; **def [RunSteps](/recipes/recipes/recipe_bundler.py#49)(api, recipe_bundler_pkg, recipe_bundler_vers, repo_specs, repo_specs_optional, package_name_prefix, package_name_internal_prefix):**
 ### *recipes* / [recipe\_roll\_tryjob](/recipes/recipes/recipe_roll_tryjob.py)
 
 [DEPS](/recipes/recipes/recipe_roll_tryjob.py#13): [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/tryserver][depot_tools/recipe_modules/tryserver], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
