@@ -2,19 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {CustomQuestion, IssueCategory, IssueWizardPersona} from "./IssueWizardTypes";
+import {CustomQuestion, IssueCategory, IssueCategoryDetail, IssueWizardPersona} from "./IssueWizardTypes";
 
 // this function is used to get the issue list belong to different persona
 // when a user group is selected a list of related issue categories will show up
-export function GetCategoriesByPersona (categories: IssueCategory[]): Map<IssueWizardPersona, string[]> {
-  const categoriesByPersona = new Map<IssueWizardPersona, string[]>();
+export function GetCategoriesByPersona (categories: IssueCategory[]): Map<IssueWizardPersona, IssueCategoryDetail[]> {
+  const categoriesByPersona = new Map<IssueWizardPersona, IssueCategoryDetail[]>();
 
   categories.forEach((category) => {
     if (category.enabled) {
       const currentIssuePersona = category.persona;
-      const currentCategoryName = category.name;
       const currentCategories = categoriesByPersona.get(currentIssuePersona) ?? [];
-      currentCategories.push(currentCategoryName);
+      currentCategories.push({
+        name: category.name,
+        description: category.description,
+      });
       categoriesByPersona.set(currentIssuePersona, currentCategories);
     }
   });

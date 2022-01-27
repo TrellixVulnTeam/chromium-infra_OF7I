@@ -40,7 +40,13 @@ export type CustomQuestion = {
 
 export type IssueCategory = {
   name: string,
+  description: string,
   persona: IssueWizardPersona,
   enabled: boolean,
   customQuestions?: CustomQuestion[],
+};
+
+export type IssueCategoryDetail = {
+  name: string,
+  description: string,
 };

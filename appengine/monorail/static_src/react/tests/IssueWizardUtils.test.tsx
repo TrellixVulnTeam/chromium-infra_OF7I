@@ -11,11 +11,13 @@ describe('IssueWizardUtils', () => {
     const categories: IssueCategory[]= [
       {
         name: 't1',
+        description: 'd1',
         persona: IssueWizardPersona.EndUser,
         enabled: true,
       },
       {
         name: 't2',
+        description: 'd2',
         persona: IssueWizardPersona.EndUser,
         enabled: false,
       },
@@ -25,13 +27,15 @@ describe('IssueWizardUtils', () => {
     const validCategories = categoriesByPersonaMap.get(IssueWizardPersona.EndUser);
 
     assert.equal(validCategories?.length, 1);
-    assert.equal(validCategories[0], 't1');
+    assert.equal(validCategories[0].name, 't1');
+    assert.equal(validCategories[0].description, 'd1');
   });
 
   it('generate custom questions to issue categories map', () => {
     const categories: IssueCategory[]= [
       {
         name: 't1',
+        description: 'd1',
         persona: IssueWizardPersona.EndUser,
         enabled: true,
         customQuestions: [

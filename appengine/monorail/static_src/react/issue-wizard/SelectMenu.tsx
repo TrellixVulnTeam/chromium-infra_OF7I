@@ -24,6 +24,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     width: '100%',
     minWidth: '300px',
   },
+  description: {
+    fontSize: 'small',
+    color: 'gray',
+  },
 }), {defaultTheme: theme});
 
 /**
@@ -71,11 +75,14 @@ export default function SelectMenu(props: Props) {
         optionsList?.map(option => (
           <MenuItem
             className={classes.menu}
-            key={option}
-            value={option}
+            key={option.name}
+            value={option.name}
             data-testid="select-menu-item"
           >
-             {option}
+            <div>
+              <div>{option.name}</div>
+              <div className={classes.description}>{option.description}</div>
+            </div>
           </MenuItem>))
       }
       </TextField>
