@@ -1,0 +1,11 @@
+package: infra/tools/luci/nsjail_wrapper/${platform}
+description: nsjail wrapper for task isolation on linux
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/isolation/nsjail_wrapper
+root: ../../go/bin
+install_mode: copy
+data:
+  - file: nsjail_wrapper${exe_suffix}
+  - version_file: .versions/nsjail_wrapper${exe_suffix}.cipd_version
