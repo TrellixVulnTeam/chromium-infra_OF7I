@@ -26,8 +26,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                                        debug=True)
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -84,8 +82,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertEqual(1, len(json.loads(response.body)['created_rows']))
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -117,8 +113,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertEqual(200, response.status_int)
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -147,8 +141,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertEqual(200, response.status_int)
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -162,8 +154,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertFalse(mock_post.called)
     self.assertEqual(200, response.status_int)
 
-  @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
@@ -212,8 +202,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertNotIn('created_rows', response.body)
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -261,8 +249,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertEqual(200, response.status_int)
     self.assertNotIn('created_rows', response.body)
 
-  @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
@@ -331,8 +317,6 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     self.assertEqual('linux_chromium_compile_dbg_ng', entry.builder_name)
 
   @mock.patch.object(completed_build_pubsub_ingestor,
-                     '_TriggerV1AnalysisForChromiumBuildIfNeeded')
-  @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleFailuresInBuild')
   @mock.patch.object(completed_build_pubsub_ingestor,
                      '_HandlePossibleCodeCoverageBuild')
@@ -360,30 +344,3 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
         '/index-isolated-builds?format=json', params=request_body)
     self.assertFalse(mock_post.called)
     self.assertEqual(200, response.status_int)
-
-  @mock.patch.object(completed_build_pubsub_ingestor, 'GetV2Build')
-  def testTriggerV1AnalysisForChromiumBuildIfNeededNoCIBuild(
-      self, mock_get_build):
-    completed_build_pubsub_ingestor._TriggerV1AnalysisForChromiumBuildIfNeeded(
-        'try', 'linux-rel', 8000000123, 'FAILURE')
-    self.assertFalse(mock_get_build.called)
-
-  @mock.patch.object(completed_build_pubsub_ingestor, 'GetV2Build')
-  def testTriggerV1AnalysisForChromiumBuildIfNeededNoFailure(
-      self, mock_get_build):
-    completed_build_pubsub_ingestor._TriggerV1AnalysisForChromiumBuildIfNeeded(
-        'ci', 'linux-rel', 8000000123, 'SUCCESS')
-    self.assertFalse(mock_get_build.called)
-
-  @mock.patch.object(taskqueue, 'add')
-  @mock.patch.object(completed_build_pubsub_ingestor, 'GetV2Build')
-  def testTriggerV1AnalysisForChromiumBuildIfNeeded(self, mock_get_build,
-                                                    mock_enqueue):
-    build_id = 8000000123
-    mock_build = Build(id=build_id, number=123)
-    mock_build.input.properties['builder_group'] = 'chromium.linux'
-    mock_get_build.return_value = mock_build
-
-    completed_build_pubsub_ingestor._TriggerV1AnalysisForChromiumBuildIfNeeded(
-        'ci', 'linux-rel', build_id, 'FAILURE')
-    self.assertTrue(mock_enqueue.called)

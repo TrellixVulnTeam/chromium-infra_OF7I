@@ -28,7 +28,7 @@ _PROP_NAME_REGEX = re.compile(
 
 # Builds from such LUCI projects should be intercepted by Findit v2.
 # It doesn't necessarily mean build failures will be analyzed in v2 though.
-_FINDIT_V2_INTERCEPT_PROJECTS = ['chromium', 'chromeos']
+_FINDIT_V2_INTERCEPT_PROJECTS = ['chromium']
 
 
 class CompletedBuildPubsubIngestor(BaseHandler):
@@ -228,60 +228,3 @@ def _IngestProto(build_id):
               revision=output_properties.get('got_revision')))
   result = [key.pairs() for key in ndb.put_multi(entities)]
   return {'data': {'created_rows': result}}
-
-
-def _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name, build_id,
-                                               build_result):
-  """Temporary solution of triggering v1 analysis until v2 is ready."""
-  if not bucket.endswith('ci'):
-    return
-
-  if build_result != 'FAILURE':
-    logging.debug('Build %d is not a failure', build_id)
-    return
-
-  assert build_id
-  build = GetV2Build(
-      build_id,
-      fields=FieldMask(
-          paths=['id', 'number', 'output.properties', 'input.properties']))
-
-  # Sanity check.
-  assert build, 'Failed to download build for {}.'.format(build_id)
-  assert build_id == build.id, (
-      'Build id {} is different from the requested id {}.'.format(
-          build.id, build_id))
-  assert build.number, 'No build_number for chromium build {}'.format(build_id)
-
-  # Converts the Struct to standard dict, to use .get, .iteritems etc.
-  input_properties = json_format.MessageToDict(build.input.properties)
-  output_properties = json_format.MessageToDict(build.output.properties)
-  # TODO(https://crbug.com/1109276) Once all builders use builder_group
-  # property, do not check the mastername property
-  master_name = (
-      output_properties.get('target_builder_group') or
-      input_properties.get('target_builder_group') or
-      output_properties.get('target_mastername') or
-      input_properties.get('target_mastername') or
-      output_properties.get('builder_group') or
-      input_properties.get('builder_group') or
-      output_properties.get('mastername') or input_properties.get('mastername'))
-  if not master_name:
-    logging.error('Build %d does not have expected "mastername" property',
-                  build_id)
-    return
-
-  build_info = {
-      'master_name': master_name,
-      'builder_name': builder_name,
-      'build_number': build.number,
-  }
-
-  logging.info('Triggering v1 analysis for chromium build %d', build_id)
-  target = appengine_util.GetTargetNameForModule(constants.WATERFALL_BACKEND)
-  payload = json.dumps({'builds': [build_info]})
-  taskqueue.add(
-      url=constants.WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL,
-      payload=payload,
-      target=target,
-      queue_name=constants.WATERFALL_FAILURE_ANALYSIS_REQUEST_QUEUE)
