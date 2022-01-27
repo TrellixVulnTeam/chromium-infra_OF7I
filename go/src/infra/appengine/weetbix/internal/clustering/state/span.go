@@ -250,19 +250,13 @@ func readWhere(ctx context.Context, project, whereClause string, params map[stri
 		clusters := &cpb.ChunkClusters{}
 		result := &Entry{Project: project}
 
-		var configVersion spanner.NullTime
 		err := b.FromSpanner(r,
 			&result.ChunkID, &result.PartitionTime, &result.ObjectID,
 			&result.Clustering.AlgorithmsVersion,
-			&configVersion, &result.Clustering.RulesVersion,
+			&result.Clustering.ConfigVersion, &result.Clustering.RulesVersion,
 			&result.LastUpdated, clusters)
 		if err != nil {
 			return errors.Annotate(err, "read clustering state row").Err()
-		}
-		if configVersion.Valid {
-			result.Clustering.ConfigVersion = configVersion.Time
-		} else {
-			result.Clustering.ConfigVersion = config.StartingEpoch
 		}
 
 		result.Clustering.Algorithms, result.Clustering.Clusters, err = decodeClusters(clusters)

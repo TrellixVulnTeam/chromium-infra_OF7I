@@ -224,9 +224,7 @@ CREATE TABLE ClusteringState (
   AlgorithmsVersion INT64 NOT NULL,
   -- The version of project configuration used by algorithms to match test
   -- results in this chunk.
-  -- TODO(crbug.com/1243174): Mark NOT NULL after rolling out to prod and
-  -- waiting a suitable time interval.
-  ConfigVersion TIMESTAMP,
+  ConfigVersion TIMESTAMP NOT NULL,
   -- The version of the set of failure association rules used to match test
   -- results in this chunk. This is the "Last Updated" time of the most
   -- recently updated failure association rule in the snapshot of failure
@@ -256,7 +254,7 @@ CREATE TABLE ReclusteringRuns (
   -- The minimum config version the reclustering run is trying to achieve.
   -- Chunks with a ConfigVersion less than this value are eligible to be
   -- re-clustered.
-  ConfigVersion TIMESTAMP,
+  ConfigVersion TIMESTAMP NOT NULL,
   -- The minimum rules version the reclustering run is trying to achieve.
   -- Chunks with a RulesVersion less than this value are eligible to be
   -- re-clustered.

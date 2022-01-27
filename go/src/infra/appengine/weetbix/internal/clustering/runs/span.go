@@ -150,8 +150,7 @@ func readLastWhere(ctx context.Context, projectID string, whereClause string, pa
 	it := span.Query(ctx, stmt)
 	rs := []*ReclusteringRun{}
 	err := it.Do(func(r *spanner.Row) error {
-		var attemptTimestamp, rulesVersion time.Time
-		var configVersion spanner.NullTime
+		var attemptTimestamp, rulesVersion, configVersion time.Time
 		var algorithmsVersion, shardCount, shardsReported, progress int64
 		err := r.Columns(
 			&attemptTimestamp, &configVersion, &rulesVersion,
@@ -165,15 +164,11 @@ func readLastWhere(ctx context.Context, projectID string, whereClause string, pa
 			Project:           projectID,
 			AttemptTimestamp:  attemptTimestamp,
 			AlgorithmsVersion: algorithmsVersion,
+			ConfigVersion:     configVersion,
 			RulesVersion:      rulesVersion,
 			ShardCount:        shardCount,
 			ShardsReported:    shardsReported,
 			Progress:          progress,
-		}
-		if configVersion.Valid {
-			run.ConfigVersion = configVersion.Time
-		} else {
-			run.ConfigVersion = config.StartingEpoch
 		}
 		rs = append(rs, run)
 		return nil
