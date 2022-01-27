@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -622,6 +623,46 @@ func servoUpdateServoFirmwareExec(ctx context.Context, args *execs.RunArgs, acti
 	return nil
 }
 
+const (
+	// Servod uart command for use in servo v4/v4p1.
+	//
+	// TODO: (@yunzhiyu) use servodUartCmd for both servo v4 /v4p1
+	// in the future instead of servodUartV4Cmd and servodUartV4P1Cmd separately.
+	// Currently blocked by: (b/198638900).
+	servodUartV4Cmd   = "servo_v4_uart_cmd"
+	servodUartV4P1Cmd = "servo_v4p1_uart_cmd"
+	servodUartCmd     = "root.servo_uart_cmd"
+)
+
+// servoFakeDisconnectDUTExec tries to unplug DUT from servo and restore the connection.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["delay_in_ms:x", "timeout_in_ms:x"]
+func servoFakeDisconnectDUTExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	// Delay to disconnect in milliseconds. Default to be 100ms.
+	delayMS := argsMap.AsInt(ctx, "delay_in_ms", 100)
+	// Timeout to wait to restore the connection. Default to be 2000ms.
+	timeoutMS := argsMap.AsInt(ctx, "timeout_in_ms", 2000)
+	disconnectCmd := fmt.Sprintf(`fakedisconnect %d %d`, delayMS, timeoutMS)
+	uartCmd := servodUartV4Cmd
+	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
+	// As in the (b/204369636), currently blocked by (b/198638900).
+	if _, err := ServodCallHas(ctx, args, uartCmd); err != nil {
+		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
+		uartCmd = servodUartV4P1Cmd
+		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
+	}
+	if _, err := ServodCallSet(ctx, args, uartCmd, disconnectCmd); err != nil {
+		return errors.Annotate(err, "servod fake disconnect servo").Err()
+	}
+	// Formula to cover how long we wait to see the effect
+	// when we convert params to seconds and then +2 seconds to apply effect.
+	waitFinishExecutionTimeout := (delayMS+timeoutMS)/1000 + 2
+	time.Sleep(time.Duration(waitFinishExecutionTimeout) * time.Second)
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -640,4 +681,5 @@ func init() {
 	execs.Register("servo_battery_charging", servoValidateBatteryChargingExec)
 	execs.Register("init_dut_for_servo", initDutForServoExec)
 	execs.Register("servo_update_servo_firmware", servoUpdateServoFirmwareExec)
+	execs.Register("servo_fake_disconnect_dut", servoFakeDisconnectDUTExec)
 }

@@ -94,6 +94,21 @@ func servoVerifyDualSetupExec(ctx context.Context, args *execs.RunArgs, actionAr
 	return nil
 }
 
+// servoVerifyServoCCDExec verifies whether the servo attached to
+// the servo host if of type servo ccd.
+func servoVerifyServoCCDExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	sType, err := WrappedServoType(ctx, args)
+	if err != nil {
+		log.Debug(ctx, "Servo Verify Servo CCD: could not determine the servo type")
+		return errors.Annotate(err, "servo verify servo type ccd").Err()
+	}
+	if !sType.IsCCD() {
+		log.Debug(ctx, "Servo Verify servo CCD: servo type is not servo ccd.")
+		return errors.Reason("servo verify servo ccd: servo type %q is not servo ccd.", sType).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_servod_port_present", servoVerifyPortNumberExec)
 	execs.Register("is_servo_v4", servoVerifyV4Exec)
@@ -101,4 +116,5 @@ func init() {
 	execs.Register("is_servo_micro", servoVerifyServoMicroExec)
 	execs.Register("is_dual_setup_configured", servoIsDualSetupConfiguredExec)
 	execs.Register("is_dual_setup", servoVerifyDualSetupExec)
+	execs.Register("is_servo_type_ccd", servoVerifyServoCCDExec)
 }
