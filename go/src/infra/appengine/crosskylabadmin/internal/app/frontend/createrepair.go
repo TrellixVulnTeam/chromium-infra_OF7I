@@ -40,8 +40,8 @@ const (
 	allLabstationsAreOptedIn
 	noPools
 	wrongPool
-	scoreExceedsThreshold
-	scoreTooLow
+	scoreBelowThreshold
+	scoreTooHigh
 	thresholdZero
 	malformedPolicy
 )
@@ -52,8 +52,8 @@ var reasonMessageMap = map[reason]string{
 	allLabstationsAreOptedIn: "All Labstations are opted in",
 	noPools:                  "Labstation has no pools, possibly due to error calling UFS",
 	wrongPool:                "Labstation has a pool not matching opted-in pools",
-	scoreExceedsThreshold:    "Random score associated with task exceeds threshold",
-	scoreTooLow:              "Random score associated with task does NOT exceed threshold",
+	scoreBelowThreshold:      "Random score associated with is below threshold, authorizing new flow",
+	scoreTooHigh:             "Random score associated with task is too high",
 	thresholdZero:            "Route labstation repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set",
 	malformedPolicy:          "Unrecognized policy",
 }
@@ -170,11 +170,14 @@ func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, poo
 	}
 	threshold := r.GetRolloutPermille()
 	myValue := math.Round(1000.0 * randFloat)
+	// If the threshold is zero, let's reject all possible values of myValue.
+	// This way a threshold of zero actually means 0.0% instead of 0.1%.
+	valueBelowThreshold := threshold != 0 && myValue <= float64(threshold)
 	if r.GetOptinAllDuts() {
-		if myValue >= float64(threshold) {
-			return paris, scoreExceedsThreshold
+		if valueBelowThreshold {
+			return paris, scoreBelowThreshold
 		}
-		return legacy, scoreTooLow
+		return legacy, scoreTooHigh
 	}
 	if threshold == 0 {
 		return legacy, thresholdZero
@@ -182,10 +185,10 @@ func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, poo
 	if !r.GetOptinAllDuts() && len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
 		return legacy, wrongPool
 	}
-	if myValue >= float64(threshold) {
-		return paris, scoreExceedsThreshold
+	if valueBelowThreshold {
+		return paris, scoreBelowThreshold
 	}
-	return legacy, scoreTooLow
+	return legacy, scoreTooHigh
 }
 
 // CreateBuildbucketRepairTask creates a new repair task for a labstation.

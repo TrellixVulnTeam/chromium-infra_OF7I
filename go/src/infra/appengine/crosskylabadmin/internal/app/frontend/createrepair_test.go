@@ -6,6 +6,8 @@ package frontend
 
 import (
 	"context"
+	"math"
+	"math/rand"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -111,15 +113,27 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			reason:    parisNotEnabled,
 		},
 		{
-			name: "use labstation",
+			name: "do not use labstation",
 			in: &config.RolloutConfig{
 				Enable:       true,
 				OptinAllDuts: true,
 			},
 			randFloat: 0.5,
 			pools:     []string{"some pool"},
+			out:       legacy,
+			reason:    scoreTooHigh,
+		},
+		{
+			name: "do use labstation",
+			in: &config.RolloutConfig{
+				Enable:          true,
+				OptinAllDuts:    true,
+				RolloutPermille: 1000,
+			},
+			randFloat: 0.5,
+			pools:     []string{"some pool"},
 			out:       paris,
-			reason:    scoreExceedsThreshold,
+			reason:    scoreBelowThreshold,
 		},
 		{
 			name: "no pool means UFS error",
@@ -147,48 +161,48 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			name: "all labstations are opted in",
 			in: &config.RolloutConfig{
 				Enable:          true,
-				RolloutPermille: 499,
+				RolloutPermille: 501,
 				OptinAllDuts:    true,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
 			out:       paris,
-			reason:    scoreExceedsThreshold,
+			reason:    scoreBelowThreshold,
 		},
 		{
 			name: "use permille even when all labstations are opted in",
 			in: &config.RolloutConfig{
 				Enable:          true,
-				RolloutPermille: 501,
+				RolloutPermille: 499,
 				OptinAllDuts:    true,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
 			out:       legacy,
-			reason:    scoreTooLow,
+			reason:    scoreTooHigh,
 		},
 		{
 			name: "use labstation sometimes - good",
 			in: &config.RolloutConfig{
 				Enable:          true,
-				RolloutPermille: 499,
+				RolloutPermille: 501,
 				OptinAllDuts:    false,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
 			out:       paris,
-			reason:    scoreExceedsThreshold,
+			reason:    scoreBelowThreshold,
 		},
 		{
 			name: "use labstation sometimes - near miss",
 			in: &config.RolloutConfig{
 				Enable:          true,
-				RolloutPermille: 501,
+				RolloutPermille: 499,
 			},
 			pools:     []string{"some-pool"},
 			randFloat: 0.5,
 			out:       legacy,
-			reason:    scoreTooLow,
+			reason:    scoreTooHigh,
 		},
 		{
 			name: "good pool",
@@ -201,7 +215,7 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			pools:     []string{"paris"},
 			randFloat: 0.5,
 			out:       paris,
-			reason:    scoreExceedsThreshold,
+			reason:    scoreBelowThreshold,
 		},
 		{
 			name: "bad pool",
@@ -226,19 +240,19 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			},
 			randFloat: 0.5,
 			out:       paris,
-			reason:    scoreExceedsThreshold,
+			reason:    scoreBelowThreshold,
 		},
 		{
-			name: "don't ignore UFS error if we're below the threshold",
+			name: "don't ignore UFS error if we're above the threshold",
 			in: &config.RolloutConfig{
 				Enable:          true,
-				RolloutPermille: 503,
+				RolloutPermille: 498,
 				OptinAllDuts:    true,
 				UfsErrorPolicy:  "lax",
 			},
 			randFloat: 0.5,
 			out:       legacy,
-			reason:    scoreTooLow,
+			reason:    scoreTooHigh,
 		},
 	}
 
@@ -264,6 +278,8 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 	}
 }
 
+// TestRouteRepairTask tests the RouteRepairTask function, which delegates most of the decision logic to
+// routeLabstationRepairTask in a few simple cases.
 func TestRouteRepairTask(t *testing.T) {
 	t.Parallel()
 
@@ -290,8 +306,9 @@ func TestRouteRepairTask(t *testing.T) {
 			name: "paris labstation",
 			in: &config.Paris{
 				LabstationRepair: &config.RolloutConfig{
-					Enable:       true,
-					OptinAllDuts: true,
+					Enable:          true,
+					OptinAllDuts:    true,
+					RolloutPermille: 1000,
 				},
 			},
 			botID:         "foo-labstation1",
@@ -340,5 +357,59 @@ func TestRouteRepairTask(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestRouteRepairTaskProbability tests that the probability that a labstation is sent to one path vs
+// another is reasonsable. See b:216499840 for details.
+func TestRouteRepairTaskProbability(t *testing.T) {
+	// t.Parallel -- This test is sensitive to the state of the random number generator.
+	//               Do not run it in parallel with anything else.
+
+	const samples = 1000 * 1000
+
+	// Make this test deterministic by configuring the RNG with a specific seed.
+	// Save a random number from before we set the seed so that we can re-seed the RNG
+	// when the test exits.
+	seedForLater := int64(rand.Uint64())
+	rand.Seed(1)
+	defer rand.Seed(seedForLater)
+
+	ctx := context.Background()
+
+	rolloutCfg := &config.RolloutConfig{
+		Enable:          true,
+		OptinAllDuts:    true,
+		RolloutPermille: 1,
+	}
+
+	tally := 0
+
+	for i := 0; i < samples; i++ {
+		dest, reason := routeLabstationRepairTask(ctx, rolloutCfg, []string{"pool1"}, rand.Float64())
+		switch reason {
+		case scoreBelowThreshold:
+			// do nothing
+		case scoreTooHigh:
+			// do nothing
+		default:
+			t.Errorf("unexpected reason: %q", reasonMessageMap[reason])
+		}
+		if dest == paris {
+			tally++
+		}
+	}
+
+	// The tolerance here is extremely wide compared to the standard deviation, which is sqrt{p(1-p)/n}, with n being
+	// the number of samples we are averaging together.
+	//
+	// However, this test is mostly interested in the case where the interpretation of rolloutPermille is backwards,
+	// so a wide tolerance is acceptable.
+	expected := 0.001 * samples
+	tol := 3 * expected
+	dist := math.Abs(float64(tally) - expected)
+
+	if dist > tol {
+		t.Errorf("difference %f is too high", dist)
 	}
 }
