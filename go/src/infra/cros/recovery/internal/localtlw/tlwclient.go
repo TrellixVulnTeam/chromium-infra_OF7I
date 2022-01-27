@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
@@ -17,9 +18,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cros/recovery/internal/localtlw/dutinfo"
-
 	"infra/cros/dutstate"
+	"infra/cros/recovery/docker"
+	"infra/cros/recovery/internal/localtlw/dutinfo"
 	tlwio "infra/cros/recovery/internal/localtlw/io"
 	"infra/cros/recovery/internal/localtlw/localinfo"
 	"infra/cros/recovery/internal/localtlw/localproxy"
@@ -109,30 +110,89 @@ func (c *tlwClient) Close(ctx context.Context) error {
 }
 
 // Ping performs ping by resource name.
+//
+// For containers it checks if it is up.
 func (c *tlwClient) Ping(ctx context.Context, resourceName string, count int) error {
-	return ping(resourceName, count)
+	dut, err := c.getDevice(ctx, resourceName)
+	if err != nil {
+		return errors.Annotate(err, "ping").Err()
+	}
+	if c.isServoHost(resourceName) && isServodContainer(dut) {
+		log.Info(ctx, "Ping: servod container %s starting...", resourceName)
+		d, err := c.dockerClient(ctx)
+		if err != nil {
+			return errors.Annotate(err, "ping").Err()
+		}
+		containerName := servoContainerName(dut)
+		if up, err := d.IsUp(ctx, containerName); err != nil {
+			return errors.Annotate(err, "ping").Err()
+		} else if up {
+			log.Info(ctx, "Ping: servod container %s is up!", containerName)
+			return nil
+		}
+		return errors.Reason("ping: container %q is down", containerName).Err()
+	} else {
+		err = ping(resourceName, count)
+		return errors.Annotate(err, "ping").Err()
+	}
 }
 
 // Run executes command on device by SSH related to resource name.
+//
+// Foc containers: For backwards compatibility if command provided without arguments
+// we assume the whole command in one string and run it in linux shell (/bin/sh -c).
 func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult {
-	command := strings.Join(append([]string{req.GetCommand()}, req.GetArgs()...), " ")
+	fullCmd := strings.Join(append([]string{req.GetCommand()}, req.GetArgs()...), " ")
 	dut, err := c.getDevice(ctx, req.GetResource())
 	if err != nil {
 		return &tlw.RunResult{
-			Command:  command,
+			Command:  fullCmd,
 			ExitCode: -1,
-			Stderr:   err.Error(),
+			Stderr:   fmt.Sprintf("run: %s", err),
 		}
 	}
+	// Servod-container does not have ssh access so to execute any commands
+	// we need to use the docker client.
 	if c.isServoHost(req.GetResource()) && isServodContainer(dut) {
-		return &tlw.RunResult{
-			Command:  command,
-			ExitCode: -1,
-			Stderr:   "Running commands on servod container is not supported yet!",
+		d, err := c.dockerClient(ctx)
+		if err != nil {
+			return &tlw.RunResult{
+				Command:  fullCmd,
+				ExitCode: -1,
+				Stderr:   fmt.Sprintf("run: %s", err),
+			}
+		}
+		eReq := &docker.ExecRequest{
+			Timeout: time.Hour,
+			Cmd:     append([]string{req.GetCommand()}, req.GetArgs()...),
+		}
+		containerName := servoContainerName(dut)
+		// For backwards compatibility if only command provide we assume
+		// that that is whole command in one line. We will run it in linux shell.
+		if strings.Contains(req.GetCommand(), " ") && len(req.GetArgs()) == 0 {
+			eReq.Cmd = []string{"/bin/sh", "-c", req.GetCommand()}
+			// Quoting is only works because the string created for user
+			// representation and logs, not for use for execution.
+			fullCmd = fmt.Sprintf("/bin/sh -c %q", req.GetCommand())
+		}
+		// As container is created and running we can execute the commands.
+		// TODO: Receive timeout from request.
+		if res, err := d.Exec(ctx, containerName, eReq); err != nil {
+			return &tlw.RunResult{
+				Command:  fullCmd,
+				ExitCode: -1,
+				Stderr:   fmt.Sprintf("run: %s", err),
+			}
+		} else {
+			return &tlw.RunResult{
+				Command:  fullCmd,
+				ExitCode: res.ExitCode,
+				Stdout:   res.Stdout,
+				Stderr:   res.Stderr,
+			}
 		}
 	}
-	// TODO: pass args to run execution.
-	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), command)
+	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), fullCmd)
 }
 
 // InitServod initiates servod daemon on servo-host.
@@ -145,7 +205,8 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 		return errors.Reason("init servod %q: servo is not found", req.Resource).Err()
 	}
 	if isServodContainer(dut) {
-		return errors.Reason("Running commands on servod container is not supported yet").Err()
+		err := c.startServodContainer(ctx, dut)
+		return errors.Annotate(err, "init servod %q", req.Resource).Err()
 	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
@@ -162,6 +223,81 @@ func (c *tlwClient) InitServod(ctx context.Context, req *tlw.InitServodRequest) 
 	return nil
 }
 
+// dockerServodImageName provides image for servod when use container.
+func dockerServodImageName() string {
+	// TODO(otabek): Value has to come here from somewhere.
+	return "us-docker.pkg.dev/chromeos-partner-moblab/common-core/servod:release"
+}
+
+// startServodContainer start servod container if required.
+func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) error {
+	containerName := servoContainerName(dut)
+	d, err := c.dockerClient(ctx)
+	if err != nil {
+		return errors.Annotate(err, "start servod container").Err()
+	}
+	if up, err := d.IsUp(ctx, containerName); err != nil {
+		return errors.Annotate(err, "start servod container").Err()
+	} else if up {
+		log.Debug(ctx, "Servod container %s is already up!", containerName)
+		return nil
+	}
+	// TODO: Receive timeout from request.
+	sp := fmt.Sprintf("%d", dut.ServoHost.ServodPort)
+	// TODO(otabek): move servod param preparation to separate method.
+	envVar := []string{
+		fmt.Sprintf("PORT=%s", sp),
+		fmt.Sprintf("BOARD=%s", dut.Board),
+		fmt.Sprintf("MODEL=%s", dut.Model),
+		"REC_MODE=1",
+	}
+	if sn := dut.ServoHost.Servo.SerialNumber; sn != "" {
+		envVar = append(envVar, fmt.Sprintf("SERIAL=%s", sn))
+	}
+	if vs, ok := dut.ExtraAttributes[dutinfo.ExtraAttributesServoSetup]; ok {
+		for _, v := range vs {
+			if v == dutinfo.ExtraAttributesServoSetupDual {
+				envVar = append(envVar, "DUAL_V4=1")
+				break
+			}
+		}
+	}
+	if pools, ok := dut.ExtraAttributes[dutinfo.ExtraAttributesPools]; ok {
+		for _, p := range pools {
+			if strings.Contains(p, "faft-cr50") {
+				envVar = append(envVar, "CONFIG=cr50.xml")
+				break
+			}
+		}
+	}
+	res, err := d.Start(ctx, containerName, &docker.ContainerArgs{
+		Detached:   true,
+		ImageName:  dockerServodImageName(),
+		EnvVar:     envVar,
+		Volumes:    []string{"/dev:/dev"},
+		Privileged: true,
+		Exec:       []string{"bash", "/start_servod.sh"},
+	}, time.Hour)
+	if err != nil {
+		return errors.Annotate(err, "start servod container").Err()
+	}
+	log.Debug(ctx, "Container started with id:%s\n with errout: %s", res.Stdout, res.Stderr)
+	// Wait 3 seconds as sometimes container is not fully initialized and fail
+	// when start ing working with servod or tooling.
+	// TODO(otabek): Move to servod-container wrapper.
+	time.Sleep(3 * time.Second)
+	// Waiting to finish servod initialization.
+	eReq := &docker.ExecRequest{
+		Timeout: 2 * time.Minute,
+		Cmd:     []string{"servodtool", "instance", "wait-for-active", "-p", sp},
+	}
+	if _, err := d.Exec(ctx, containerName, eReq); err != nil {
+		return errors.Annotate(err, "start servod container").Err()
+	}
+	log.Debug(ctx, "Servod container %s started and up!", containerName)
+	return nil
+}
+
 // StopServod stops servod daemon on servo-host.
 func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	dut, err := c.getDevice(ctx, resourceName)
@@ -172,7 +308,12 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 		return errors.Reason("stop servod %q: servo is not found", resourceName).Err()
 	}
 	if isServodContainer(dut) {
-		return errors.Reason("Running commands on servod container is not supported yet!").Err()
+		if d, err := c.dockerClient(ctx); err != nil {
+			return errors.Annotate(err, "stop servod %q", resourceName).Err()
+		} else {
+			err := d.Remove(ctx, servoContainerName(dut), true)
+			return errors.Annotate(err, "stop servod %q", resourceName).Err()
+		}
 	}
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
@@ -590,9 +731,30 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 	return errors.Annotate(err, "provision").Err()
 }
 
+// dockerClient provides docker client for target container by expected name of container.
+func (c *tlwClient) dockerClient(ctx context.Context) (docker.Client, error) {
+	d, err := docker.NewClient(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "docker client").Err()
+	}
+	// Print the containers to test connectivity.
+	if err = d.PrintAll(ctx); err != nil {
+		return nil, errors.Annotate(err, "docker client").Err()
+	}
+	return d, nil
+}
+
 // isServodContainer checks if DUT using servod-container.
 // For now just simple check if servod container is provided.
 // Later need distinguish when container running on the same host or remove one.
 func isServodContainer(d *tlw.Dut) bool {
-	return d != nil && d.ServoHost != nil && d.ServoHost.ContainerName != ""
+	return servoContainerName(d) != ""
+}
+
+// servoContainerName returns container name specified for servo-host.
+func servoContainerName(d *tlw.Dut) string {
+	if d == nil || d.ServoHost == nil {
+		return ""
+	}
+	return d.ServoHost.ContainerName
 }

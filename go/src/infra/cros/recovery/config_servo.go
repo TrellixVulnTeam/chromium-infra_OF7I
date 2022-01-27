@@ -61,20 +61,36 @@ const servoRepairPlanBody = `
 ],
 "actions": {
 	"servo_host_servod_start": {
-		"exec_timeout": {
-			"seconds": 120
-		},
-		"exec_name": "servo_host_servod_init"
-	},
-	"servo_host_servod_init": {
-		"exec_timeout": {
-			"seconds": 120
-		},
+		"conditions":[
+			"is_not_container"
+		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair"
-		]
+		],
+		"exec_name":"servo_host_servod_init",
+		"exec_timeout": {
+			"seconds": 120
+		}
+	},
+	"init_docker_host": {
+		"docs": [
+			"Initiate docker to have access to the host.",
+			"TODO: Need close docker host, and add to cros plan."
+		],
+		"exec_timeout": {
+			"seconds": 360
+		},
+		"conditions":[
+			"is_container"
+		],
+		"recovery_actions": [
+			"servo_host_servod_restart",
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
+		],
+		"exec_name":"servo_host_servod_init"
 	},
 	"servo_host_info": {
 		"exec_name":"dut_has_name"
@@ -86,14 +102,7 @@ const servoRepairPlanBody = `
 			"is_not_servo_v3"
 		],
 		"dependencies": [
-			"servo_servod_port_present",
-			"servod_get_serialname"
-		],
-		"exec_name":"sample_pass"
-	},
-	"init_docker_host": {
-		"docs": [
-			"Only to create docker. Need close docker host, and add to cros plan."
+			"servo_servod_port_present"
 		],
 		"exec_name":"sample_pass"
 	},
