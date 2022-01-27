@@ -5,3 +5,4 @@
 package weetbixpb
 
 //go:generate cproto
+//go:generate svcdec -type RulesServer
