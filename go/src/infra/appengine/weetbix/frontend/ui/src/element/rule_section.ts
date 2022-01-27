@@ -13,6 +13,7 @@ import '@material/mwc-textfield';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
 import { obtainXSRFToken } from '../libs/xsrf';
+import { Rule, RuleUpdateRequest } from '../libs/rules';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.
@@ -100,20 +101,21 @@ export class RuleSection extends LitElement {
                         <td><a href="${r.bugLink.url}">${r.bugLink.name}</a></td>
                     </tr>
                     <tr>
-                        <th>Enabled</th>
+                        <th>Enabled <mwc-icon class="inline-icon" title="Enabled failure association rules are used to match failures. If a rule is no longer needed, it should be disabled.">help_outline</mwc-icon></th>
                         <td data-cy="rule-enabled">
                             ${r.isActive ? "Yes" : "No"}
-                            <mwc-icon class="inline-icon" title="Enabled failure association rules are used to match failures. If a rule is no longer needed, it should be disabled.">help_outline</mwc-icon>
                             <div class="inline-button">
                                 <mwc-button outlined dense @click="${this.toggleActive}" data-cy="rule-enabled-toggle">${r.isActive ? "Disable" : "Enable"}</mwc-button>
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <th>Source Cluster</th>
+                        <th>Source Cluster <mwc-icon class="inline-icon" title="The cluster this rule was originally created from.">help_outline</mwc-icon></th>
                         <td>
-                            <a href="/projects/${this.project}/clusters/${r.sourceCluster.algorithm}/${r.sourceCluster.id}">${r.sourceCluster.algorithm}/${r.sourceCluster.id}</a>
-                            <mwc-icon class="inline-icon" title="The cluster this bug cluster was originally created from.">help_outline</mwc-icon>
+                            ${r.sourceCluster.algorithm && r.sourceCluster.id ?
+                                html`<a href="/projects/${this.project}/clusters/${r.sourceCluster.algorithm}/${r.sourceCluster.id}">${r.sourceCluster.algorithm}/${r.sourceCluster.id}</a>` :
+                                html`None`
+                            }
                         </td>
                     </tr>
                 </tbody>
@@ -126,12 +128,12 @@ export class RuleSection extends LitElement {
         </div>
         <mwc-dialog class="rule-edit-dialog" ?open="${this.editing}" @closed="${this.editClosed}">
             <div class="edit-title">Edit Rule Definition <mwc-icon class="inline-icon" title="Weetbix rule definitions describe the failures associated with a bug. Rules follow a subset of BigQuery Standard SQL's boolean expression syntax.">help_outline</mwc-icon></div>
+            <div class="validation-error" data-cy="rule-definition-validation-error">${this.validationMessage}</div>
             <mwc-textarea id="rule-definition" label="Rule Definition" maxLength="4096" required data-cy="rule-definition-textbox"></mwc-textarea>
             <div>
                 Supported is AND, OR, =, <>, NOT, IN, LIKE, parentheses and <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#regexp_contains">REGEXP_CONTAINS</a>.
                 Valid identifiers are <em>test</em> and <em>reason</em>.
             </div>
-            <div class="validation-error" data-cy="rule-definition-validation-error">${this.validationMessage}</div>
             <mwc-button slot="primaryAction" @click="${this.save}" data-cy="rule-definition-save">Save</mwc-button>
             <mwc-button slot="secondaryAction" dialogAction="close" data-cy="rule-definition-cancel">Cancel</mwc-button>
         </mwc-dialog>
@@ -296,7 +298,8 @@ export class RuleSection extends LitElement {
             color: var(--mdc-theme-error, #b00020);
         }
         #rule-definition {
-            width:100%
+            width: 100%;
+            height: 160px;
         }
         .definition-box-container {
             display: flex;
@@ -340,52 +343,4 @@ export class RuleSection extends LitElement {
 
 export interface RuleChangedEvent {
     lastUpdated: string; // RFC 3339 encoded date/time.
-}
-
-// RuleUpdateRequest is the data expected the server in a PATCH request
-// to update a rule.
-interface RuleUpdateRequest {
-    rule: RuleToUpdate;
-    updateMask: FieldMask;
-    xsrfToken: string;
-}
-
-interface FieldMask {
-    paths: string[];
-}
-
-interface RuleToUpdate {
-    ruleDefinition?: string;
-    bugId?: BugId;
-    isActive?: boolean;
-}
-
-// Rule is the failure association rule information sent by the server.
-interface Rule {
-    project: string;
-    ruleId: string;
-    ruleDefinition: string;
-    creationTime: string; // RFC 3339 encoded date/time.
-    creationUser: string;
-    lastUpdated: string; // RFC 3339 encoded date/time.
-    lastUpdatedUser: string;
-    bugId: BugId;
-    bugLink: BugLink;
-    isActive: boolean;
-    sourceCluster: ClusterId;
-}
-
-interface BugLink {
-    name: string;
-    url: string;
-}
-
-interface BugId {
-    system: string;
-    id: string;
-}
-
-interface ClusterId {
-    algorithm: string;
-    id: string;
 }

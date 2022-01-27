@@ -14,6 +14,7 @@ type projectConfig struct {
 }
 
 type monorail struct {
+	Project       string `json:"project"`
 	DisplayPrefix string `json:"displayPrefix"`
 }
 
@@ -24,10 +25,12 @@ func (h *Handlers) GetConfig(ctx *router.Context) {
 	if !ok {
 		return
 	}
+	cfgpb := cfg.Config
 	result := &projectConfig{
 		Project: projectID,
 		Monorail: &monorail{
-			DisplayPrefix: cfg.Config.Monorail.DisplayPrefix,
+			Project:       cfgpb.Monorail.Project,
+			DisplayPrefix: cfgpb.Monorail.DisplayPrefix,
 		},
 	}
 	respondWithJSON(ctx, result)

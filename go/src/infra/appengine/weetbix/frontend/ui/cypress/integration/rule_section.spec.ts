@@ -7,15 +7,25 @@ describe('Rule Section', () => {
         // Login.
         cy.visit('/').get('button').click();
 
-        // Set initial rule state.
-        cy.request('PATCH', '/api/projects/chromium/rules/9e5a795d961af2adb52d92f337e6ed2f', {
-            rule: {
-                ruleDefinition: 'test = "cypress test 1"',
-                isActive: true,
-            },
-            updateMask: {
-                paths: ['ruleDefinition', 'isActive'],
-            },
+        let token = '';
+        cy.request('/api/xsrfToken').then((response) => {
+            assert.strictEqual(response.status, 200);
+            let body = response.body;
+            token = body.token;
+            assert.isString(token);
+            assert.notEqual(token, '');
+
+            // Set initial rule state.
+            cy.request('PATCH', '/api/projects/chromium/rules/9e5a795d961af2adb52d92f337e6ed2f', {
+                rule: {
+                    ruleDefinition: 'test = "cypress test 1"',
+                    isActive: true,
+                },
+                updateMask: {
+                    paths: ['ruleDefinition', 'isActive'],
+                },
+                xsrfToken: token,
+            });
         });
         cy.visit('/projects/chromium/clusters/rules-v1/9e5a795d961af2adb52d92f337e6ed2f');
     })
@@ -34,7 +44,7 @@ describe('Rule Section', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-edit]').click()
         cy.get('rule-section').get('[data-cy=rule-definition-textbox]').get('textarea').type('{selectall}test = "cypress test 2"a')
         cy.get('rule-section').get('[data-cy=rule-definition-save]').click()
-        cy.get('rule-section').get('[data-cy=rule-definition-validation-error]').contains('Rule definition is not valid: syntax error: 1:24: unexpected token "a"')
+        cy.get('rule-section').get('[data-cy=rule-definition-validation-error]').contains('Validation error: rule definition is not valid: syntax error: 1:24: unexpected token "a"')
         cy.get('rule-section').get('[data-cy=rule-definition-cancel]').click()
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"');
     })

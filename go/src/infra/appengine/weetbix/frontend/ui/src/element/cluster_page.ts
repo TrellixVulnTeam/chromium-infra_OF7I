@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
-import { BeforeEnterObserver, RouterLocation } from '@vaadin/router';
+import { BeforeEnterObserver, RouterLocation, Router } from '@vaadin/router';
 
 import { RuleChangedEvent } from './rule_section';
 import "./failure_table.ts";
@@ -87,6 +87,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
                     </tr>
                 </tbody>
             </table>
+            <mwc-button raised @click=${this.newRuleClicked}>New Rule from Cluster</mwc-button>
             `
         }
 
@@ -143,6 +144,19 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         `;
     }
 
+    newRuleClicked() {
+        if (!this.cluster) {
+            throw new Error('invariant violated: newRuleClicked cannot be called before cluster is loaded');
+        }
+        let projectParam = encodeURIComponent(this.project)
+        let ruleParam = encodeURIComponent(this.cluster.failureAssociationRule)
+        let sourceAlgParam = encodeURIComponent(this.clusterAlgorithm)
+        let sourceIdParam = encodeURIComponent(this.clusterId)
+
+        let newRuleURL = `/projects/${projectParam}/rules/new?rule=${ruleParam}&sourceAlg=${sourceAlgParam}&sourceId=${sourceIdParam}`
+        Router.go(newRuleURL)
+    }
+
     // Called when the rule displayed in the rule section is loaded
     // for the first time, or updated.
     ruleChanged(e: CustomEvent<RuleChangedEvent>) {
@@ -192,6 +206,9 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             display: inline-block;
             white-space: pre-wrap;
             overflow-wrap: anywhere;
+        }
+        .definition-table {
+            margin-bottom: 10px;
         }
         table {
             border-collapse: collapse;

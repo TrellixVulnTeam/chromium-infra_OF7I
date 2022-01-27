@@ -34,6 +34,7 @@ export class TitleBar extends LitElement {
       <ul>
         <li><a href="/">Clusters</a></li>
         <li><a href="/bugs">Bugs</a></li>
+        <li><a href="/projects/chromium/rules/new" data-cy="new-rule-link">New Rule</a></li>
       </ul>
     </div>
     <slot></slot>
