@@ -146,17 +146,7 @@ func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, method string, ar
 		return nil, errors.Annotate(err, "call servod %q", newAddr).Err()
 	}
 	c := xmlrpc.New(host, port)
-	var iArgs []interface{}
-	for _, ra := range args {
-		iArgs = append(iArgs, ra)
-	}
-	call := xmlrpc.NewCall(method, iArgs...)
-	val := &xmlrpc_value.Value{}
-	err = c.Run(ctx, call, val)
-	if err != nil {
-		return nil, errors.Annotate(err, "call servod %q: %s", newAddr, method).Err()
-	}
-	return val, nil
+	return Call(ctx, c, method, args)
 }
 
 // Close closes using resource.
@@ -167,4 +157,18 @@ func (s *servod) Close() error {
 		}
 	}
 	return nil
+}
+
+// Call calls xmlrpc service with provided method and arguments.
+func Call(ctx context.Context, c *xmlrpc.XMLRpc, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
+	var iArgs []interface{}
+	for _, ra := range args {
+		iArgs = append(iArgs, ra)
+	}
+	call := xmlrpc.NewCall(method, iArgs...)
+	val := &xmlrpc_value.Value{}
+	if err := c.Run(ctx, call, val); err != nil {
+		return nil, errors.Annotate(err, "call servod %q: %s", c.Addr(), method).Err()
+	}
+	return val, nil
 }

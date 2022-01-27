@@ -27,6 +27,7 @@ import (
 	"infra/cros/recovery/internal/localtlw/rpm"
 	"infra/cros/recovery/internal/localtlw/servod"
 	"infra/cros/recovery/internal/localtlw/ssh"
+	tlw_xmlrpc "infra/cros/recovery/internal/localtlw/xmlrpc"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 	"infra/libs/sshpool"
@@ -349,19 +350,32 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	if dut.ServoHost == nil || dut.ServoHost.Name == "" {
 		return fail(errors.Reason("call servod %q: servo not found", req.Resource).Err())
 	}
+	var val *xmlrpc.Value
+	// For container connect to the container as it running on the same host.
 	if isServodContainer(dut) {
-		return fail(errors.Reason("Running commands on servod container is not supported yet!").Err())
+		d, err := c.dockerClient(ctx)
+		if err != nil {
+			return fail(err)
+		}
+		var addr string
+		if addr, err = d.IPAddress(ctx, servoContainerName(dut)); err != nil {
+			return fail(err)
+		}
+		rpc := tlw_xmlrpc.New(addr, dut.ServoHost.ServodPort)
+		val, err = servod.Call(ctx, rpc, req.Method, req.Args)
+	} else {
+		// For labstation using port forward by ssh.
+		s, err := c.servodPool.Get(
+			localproxy.BuildAddr(dut.ServoHost.Name),
+			int32(dut.ServoHost.ServodPort),
+			func() ([]string, error) {
+				return dutinfo.GenerateServodParams(dut, req.Options)
+			})
+		if err != nil {
+			return fail(err)
+		}
+		val, err = s.Call(ctx, c.sshPool, req.Method, req.Args)
 	}
-	s, err := c.servodPool.Get(
-		localproxy.BuildAddr(dut.ServoHost.Name),
-		int32(dut.ServoHost.ServodPort),
-		func() ([]string, error) {
-			return dutinfo.GenerateServodParams(dut, req.Options)
-		})
-	if err != nil {
-		return fail(err)
-	}
-	val, err := s.Call(ctx, c.sshPool, req.Method, req.Args)
 	if err != nil {
 		return fail(err)
 	}
@@ -371,8 +385,7 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	}
 }
 
-// CallServod executes a command on servod related to resource name.
-// Commands will be run against servod on servo-host.
+// CallBluetoothPeer executes a command on bluetooth-peer service.
 func (c *tlwClient) CallBluetoothPeer(ctx context.Context, req *tlw.CallBluetoothPeerRequest) *tlw.CallBluetoothPeerResponse {
 	// Translator to convert error to response structure.
 	fail := func(err error) *tlw.CallBluetoothPeerResponse {

@@ -211,3 +211,29 @@ func (d *dockerClient) IsUp(ctx context.Context, containerName string) (bool, er
 	}
 	return false, nil
 }
+
+// IPAddress reads assigned Ip address for container.
+//
+// Execution will use docker CLI:
+// $ docker inspect '--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' some_container
+// 192.168.27.4
+func (d *dockerClient) IPAddress(ctx context.Context, containerName string) (string, error) {
+	args := []string{"inspect", "--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", containerName}
+	res, err := runWithTimeout(ctx, time.Minute, "docker", args...)
+	if enableDebugLogging {
+		log.Printf("Run docker exec %q: exitcode: %v", containerName, res.ExitCode)
+		log.Printf("Run docker exec %q: stdout: %v", containerName, res.Stdout)
+		log.Printf("Run docker exec %q: stderr: %v", containerName, res.Stderr)
+		log.Printf("Run docker exec %q: err: %v", containerName, err)
+	}
+	if err != nil {
+		return "", errors.Annotate(err, "ip address %q", containerName).Err()
+	} else if res.ExitCode != 0 {
+		return "", errors.Reason("ip address %q: fail with exit code %v", containerName, res.ExitCode).Err()
+	}
+	addr := strings.TrimSpace(res.Stdout)
+	if enableDebugLogging {
+		log.Printf("IPAddress %q: %v", containerName, addr)
+	}
+	return addr, nil
+}

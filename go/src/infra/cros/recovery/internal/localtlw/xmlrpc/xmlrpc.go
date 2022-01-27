@@ -40,6 +40,11 @@ func New(host string, port int) *XMLRpc {
 	return &XMLRpc{host: host, port: port}
 }
 
+// Addr provides address used to connect.
+func (r *XMLRpc) Addr() string {
+	return fmt.Sprintf("%s:%d", r.host, r.port)
+}
+
 // Call represents a XML-RPC call request.
 type Call struct {
 	method  string

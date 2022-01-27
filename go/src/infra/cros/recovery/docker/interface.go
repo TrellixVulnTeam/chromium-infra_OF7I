@@ -19,6 +19,7 @@ type Client interface {
 	IsUp(ctx context.Context, containerName string) (bool, error)
 	Remove(ctx context.Context, containerName string, force bool) error
 	Exec(ctx context.Context, containerName string, req *ExecRequest) (*ExecResponse, error)
+	IPAddress(ctx context.Context, containerName string) (string, error)
 	PrintAll(ctx context.Context) error
 }
 
