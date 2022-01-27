@@ -753,6 +753,7 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 			Resource: &ufsAPI.GetDeviceDataResponse_ChromeOsDeviceData{
 				ChromeOsDeviceData: device,
 			},
+			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE,
 		}, nil
 	} else if lse.GetAttachedDeviceLse() != nil {
 		device, err := controller.GetAttachedDeviceData(ctx, lse)
@@ -763,6 +764,7 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 			Resource: &ufsAPI.GetDeviceDataResponse_AttachedDeviceData{
 				AttachedDeviceData: device,
 			},
+			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE,
 		}, nil
 	}
 	return nil, grpcStatus.Error(codes.NotFound, "no valid device found")
@@ -778,6 +780,7 @@ func getSchedulingUnitDeviceDataIfExists(ctx context.Context, hostname string) (
 			Resource: &ufsAPI.GetDeviceDataResponse_SchedulingUnit{
 				SchedulingUnit: su,
 			},
+			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT,
 		}, nil
 	}
 	return nil, fmt.Errorf("failed to get scheduling unit")

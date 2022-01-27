@@ -2245,6 +2245,15 @@ message GetDeviceDataResponse {
     models.ChromeOSDeviceData chrome_os_device_data = 2;
     AttachedDeviceData attached_device_data = 3;
   }
+
+  ResourceType resource_type = 4;
+
+  enum ResourceType {
+    RESOURCE_TYPE_UNSPECIFIED = 0;
+    RESOURCE_TYPE_SCHEDULING_UNIT = 1;
+    RESOURCE_TYPE_CHROMEOS_DEVICE = 2;
+    RESOURCE_TYPE_ATTACHED_DEVICE = 3;
+  }
 }
 
 // Next Tag: 4

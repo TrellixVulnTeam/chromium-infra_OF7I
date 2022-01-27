@@ -1797,6 +1797,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			resp.GetSchedulingUnit().Name = util.RemovePrefix(resp.GetSchedulingUnit().Name)
 			So(resp.GetSchedulingUnit(), ShouldResembleProto, su)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT)
 		})
 
 		Convey("Get ChromeOSDeviceData by existing hostname - happy path", func() {
@@ -1808,6 +1809,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeOsDeviceData().GetLabConfig(), ShouldResembleProto, machinelse)
 			So(resp.GetChromeOsDeviceData().GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE)
 		})
 
 		Convey("Get ChromeOSDeviceData by existing hostname in os namespace", func() {
@@ -1837,6 +1839,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeOsDeviceData().GetLabConfig(), ShouldResembleProto, machineOsLse)
 			So(resp.GetChromeOsDeviceData().GetMachine(), ShouldResembleProto, machineOs)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE)
 
 			// Should not exist in Browser namespace
 			respBrowser, err := tf.Fleet.GetDeviceData(tf.C, req)
@@ -1854,6 +1857,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeOsDeviceData().GetLabConfig(), ShouldResembleProto, machinelse)
 			So(resp.GetChromeOsDeviceData().GetMachine(), ShouldResembleProto, machine)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE)
 		})
 
 		Convey("Get AttachedDeviceData by existing hostname - happy path", func() {
@@ -1865,6 +1869,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetAttachedDeviceData().GetLabConfig(), ShouldResembleProto, admlse)
 			So(resp.GetAttachedDeviceData().GetMachine(), ShouldResembleProto, adm)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE)
 		})
 
 		Convey("Get AttachedDeviceData by existing hostname in os namespace", func() {
@@ -1894,6 +1899,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetAttachedDeviceData().GetLabConfig(), ShouldResembleProto, admlse)
 			So(resp.GetAttachedDeviceData().GetMachine(), ShouldResembleProto, adm)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE)
 
 			// Should not exist in Browser namespace
 			respBrowser, err := tf.Fleet.GetDeviceData(tf.C, req)
@@ -1911,6 +1917,7 @@ func TestGetDeviceData(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp.GetAttachedDeviceData().GetLabConfig(), ShouldResembleProto, admlse)
 			So(resp.GetAttachedDeviceData().GetMachine(), ShouldResembleProto, adm)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE)
 		})
 
 		Convey("Get device data - Invalid input empty name", func() {
