@@ -12,7 +12,12 @@ describe('DetailsStep', () => {
   afterEach(cleanup);
 
   it('renders', async () => {
-    const {container} = render(<DetailsStep />);
+    const textFiled = {
+      oneLineSummary: '',
+      stepsToReproduce: '',
+      describeProblem: '',
+    };
+    const {container} = render(<DetailsStep textValues={textFiled}/>);
 
     // this is checking for the first question
     const input = container.querySelector('input');
@@ -24,7 +29,13 @@ describe('DetailsStep', () => {
   });
 
   it('renders category in title', async () => {
-    const {container} = render(<DetailsStep category='UI'/>);
+    const textFiled = {
+      oneLineSummary: '',
+      stepsToReproduce: '',
+      describeProblem: '',
+    };
+
+    const {container} = render(<DetailsStep category='UI' textValues={textFiled}/>);
 
     // this is checking the title contains our category
     const title = container.querySelector('h2');

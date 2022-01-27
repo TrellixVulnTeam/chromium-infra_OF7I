@@ -26,7 +26,6 @@ export function IssueWizard(): ReactElement {
       additionalComments: ''
     });
 
-  let nextEnabled;
   let page;
   if (activeStep === 0){
     page = <LandingStep
@@ -37,10 +36,7 @@ export function IssueWizard(): ReactElement {
         setActiveStep={setActiveStep}
         />;
   } else if (activeStep === 1){
-    page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category}/>;
-    nextEnabled = (textValues.oneLineSummary.trim() !== '') &&
-                  (textValues.stepsToReproduce.trim() !== '') &&
-                  (textValues.describeProblem.trim() !== '');
+    page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category} setActiveStep={setActiveStep}/>;
   }
 
   return (

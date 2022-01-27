@@ -7,7 +7,7 @@ import {createStyles, createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
-import Button from '@material-ui/core/Button'
+import DotMobileStepper from './DotMobileStepper.tsx';
 
 /**
  * The detail step is the second step on the dot
@@ -36,14 +36,26 @@ const useStyles = makeStyles((theme: Theme) =>
   }), {defaultTheme: theme}
 );
 
-export default function DetailsStep({textValues, setTextValues, category}:
-  {textValues: Object, setTextValues: Function, category: string}): React.ReactElement {
+type Props = {
+  textValues: Object,
+  setTextValues: Function,
+  category: string,
+  setActiveStep: Function,
+};
+
+export default function DetailsStep(props: Props): React.ReactElement {
   const classes = useStyles();
 
+  const {textValues, setTextValues, category, setActiveStep} = props;
   const handleChange = (valueName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const textInput = e.target.value;
     setTextValues({...textValues, [valueName]: textInput});
   };
+
+  const nextEnabled =
+    (textValues.oneLineSummary.trim() !== '') &&
+    (textValues.stepsToReproduce.trim() !== '') &&
+    (textValues.describeProblem.trim() !== '');
 
   return (
     <>
@@ -65,6 +77,7 @@ export default function DetailsStep({textValues, setTextValues, category}:
             <input type="file" accept="image/*" multiple />
 
         </form>
+        <DotMobileStepper nextEnabled={nextEnabled} activeStep={1} setActiveStep={setActiveStep}/>
     </>
   );
 }
