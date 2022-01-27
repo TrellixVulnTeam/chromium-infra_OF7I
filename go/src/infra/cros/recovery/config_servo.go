@@ -72,7 +72,8 @@ const servoRepairPlanBody = `
 		},
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		]
 	},
 	"servo_host_info": {
@@ -201,7 +202,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -295,7 +297,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:snk"
 		],
 		"recovery_actions": [
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -319,7 +322,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -329,7 +333,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_power_cycle_repair",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -365,7 +370,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -375,7 +381,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:on"
 		],
 		"recovery_actions": [
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -410,7 +417,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -422,7 +430,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -596,7 +605,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -636,7 +646,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -647,7 +658,8 @@ const servoRepairPlanBody = `
 		},
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		]
 	},
 	"update_servo_type_label":{
@@ -662,7 +674,8 @@ const servoRepairPlanBody = `
 			"expected_string_value:off"
 		],
 		"recovery_actions": [
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -677,7 +690,8 @@ const servoRepairPlanBody = `
 			"command:active_dut_controller"
 		],
 		"recovery_actions": [
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -853,5 +867,27 @@ const servoRepairPlanBody = `
 			"state:WORKING"
 		],
 		"exec_name": "servo_set_servo_state"
+	},
+	"servo_fake_disconnect_dut_repair":{
+		"docs":[
+			"Try to repair servod by mimic reconnection of servo."
+		],
+		"dependencies": [
+			"servo_fake_disconnect_dut"
+		],
+		"exec_timeout": {
+			"seconds": 600
+		},
+		"run_control": 1,
+		"exec_name":"servo_host_servod_stop"
+	},
+	"servo_fake_disconnect_dut":{
+		"conditions": [
+			"is_servo_type_ccd"
+		],
+		"exec_extra_args": [
+			"delay_in_ms:100",
+			"timeout_in_ms:2000"
+		]
 	}
 }`
