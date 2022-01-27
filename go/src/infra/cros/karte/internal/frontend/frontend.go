@@ -175,6 +175,7 @@ func (k *karteFrontend) UpdateAction(ctx context.Context, req *kartepb.UpdateAct
 		ctx,
 		reqActionEntity,
 		req.GetUpdateMask().GetPaths(),
+		true,
 	)
 	return entity.ConvertToAction(), err
 }

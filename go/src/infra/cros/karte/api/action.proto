@@ -84,4 +84,8 @@ message Action {
 
   // The hostname is the hostname of the DUT in question.
   string hostname = 15;
+
+  // Modification_count returns the number of times that the Karte record has been modified. This field is managed by Karte.
+  int32 modification_count = 16
+      [(google.api.field_behavior) = OUTPUT_ONLY];
 }

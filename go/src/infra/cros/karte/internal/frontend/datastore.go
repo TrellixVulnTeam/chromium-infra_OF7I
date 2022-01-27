@@ -7,6 +7,7 @@ package frontend
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"go.chromium.org/luci/common/logging"
@@ -44,6 +45,8 @@ type ActionEntity struct {
 	FailReason     string    `gae:"fail_reason"`
 	SealTime       time.Time `gae:"seal_time"` // After the seal time has passed, no further modifications may be made.
 	Hostname       string    `gae:"hostname"`
+	// Count the number of times that an action entity was modified by a request.
+	ModificationCount int32 `gae:"modification_count"`
 	// Deprecated fields!
 	ErrorReason string `gae:"error_reason"` // succeeded by "fail_reason'.
 }
@@ -54,18 +57,19 @@ func (e *ActionEntity) ConvertToAction() *kartepb.Action {
 		return nil
 	}
 	return &kartepb.Action{
-		Name:           e.ID,
-		Kind:           e.Kind,
-		SwarmingTaskId: e.SwarmingTaskID,
-		BuildbucketId:  e.BuildbucketID,
-		AssetTag:       e.AssetTag,
-		StartTime:      scalars.ConvertTimeToTimestampPtr(e.StartTime),
-		StopTime:       scalars.ConvertTimeToTimestampPtr(e.StopTime),
-		CreateTime:     scalars.ConvertTimeToTimestampPtr(e.CreateTime),
-		Status:         scalars.ConvertInt32ToActionStatus(e.Status),
-		FailReason:     e.FailReason,
-		SealTime:       scalars.ConvertTimeToTimestampPtr(e.SealTime),
-		Hostname:       e.Hostname,
+		Name:              e.ID,
+		Kind:              e.Kind,
+		SwarmingTaskId:    e.SwarmingTaskID,
+		BuildbucketId:     e.BuildbucketID,
+		AssetTag:          e.AssetTag,
+		StartTime:         scalars.ConvertTimeToTimestampPtr(e.StartTime),
+		StopTime:          scalars.ConvertTimeToTimestampPtr(e.StopTime),
+		CreateTime:        scalars.ConvertTimeToTimestampPtr(e.CreateTime),
+		Status:            scalars.ConvertInt32ToActionStatus(e.Status),
+		FailReason:        e.FailReason,
+		SealTime:          scalars.ConvertTimeToTimestampPtr(e.SealTime),
+		Hostname:          e.Hostname,
+		ModificationCount: e.ModificationCount,
 	}
 }
 
@@ -389,10 +393,11 @@ func setActionEntityFields(fields []string, src *ActionEntity, dst *ActionEntity
 	if addAll || m["status"] {
 		dst.Status = src.Status
 	}
+	// ModificationCount is managed by Karte internally and thus ineligible for copying.
 }
 
 // UpdateActionEntity updates an entity according to the field mask.
-func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []string) (*ActionEntity, error) {
+func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []string, increment bool) (*ActionEntity, error) {
 	if entity == nil {
 		// TODO(gregorynisbet): Remove call to status.Errorf. See b/200578943 for details.
 		return nil, status.Errorf(codes.InvalidArgument, "entity cannot be nil")
@@ -405,6 +410,12 @@ func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []s
 		return nil, errors.Annotate(err, "update action entity: datastore err").Err()
 	}
 	setActionEntityFields(fieldMask, entity /*src*/, fullEntity /*dst*/)
+	// If we're supposed to increment the tally during this update, then increment the tally.
+	if increment {
+		if fullEntity.ModificationCount < math.MaxInt32 {
+			fullEntity.ModificationCount++
+		}
+	}
 	if err := PutActionEntities(ctx, fullEntity); err != nil {
 		return nil, errors.Annotate(err, "update action entity").Err()
 	}

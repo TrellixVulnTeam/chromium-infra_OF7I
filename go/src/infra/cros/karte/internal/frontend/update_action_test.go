@@ -19,39 +19,67 @@ import (
 // TestUpdateActionEntity tests writing an action entity to datastore, updating it, and then reading it back.
 func TestUpdateActionEntity(t *testing.T) {
 	t.Parallel()
-	ctx := gaetesting.TestingContext()
-	datastore.GetTestable(ctx).Consistent(true)
-	if err := PutActionEntities(
-		ctx,
-		&ActionEntity{ID: "hi", Kind: "w"},
-	); err != nil {
-		t.Errorf("putting entities: %s", err)
-	}
-	// We record actual1 to check whether UpdateActionEntity returns the correct entity.
-	// UpdateActionEntity does not perform a get to datastore after writing.
-	actual1, err := UpdateActionEntity(
-		ctx,
-		&ActionEntity{
-			ID:   "hi",
-			Kind: "x",
+
+	cases := []struct {
+		name              string
+		increment         bool
+		modificationCount int32
+	}{
+		{
+			name:              "increment",
+			increment:         true,
+			modificationCount: 1,
 		},
-		[]string{"kind"},
-	)
-	if err != nil {
-		t.Errorf("updating entities: %s", err)
+		{
+			name:              "NO increment",
+			increment:         false,
+			modificationCount: 0,
+		},
 	}
-	// Actual is the read value.
-	actual2, err := GetActionEntityByID(ctx, "hi")
-	if err != nil {
-		t.Errorf("reading back entities: %s", err)
-	}
-	expected := &ActionEntity{
-		ID:   "hi",
-		Kind: "x",
-	}
-	for _, actual := range []*ActionEntity{actual1, actual2} {
-		if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(ActionEntity{})); diff != "" {
-			t.Errorf("unexpected error: %s", diff)
-		}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := gaetesting.TestingContext()
+			datastore.GetTestable(ctx).Consistent(true)
+			if err := PutActionEntities(
+				ctx,
+				&ActionEntity{ID: "hi", Kind: "w"},
+			); err != nil {
+				t.Errorf("putting entities: %s", err)
+			}
+			// We record actual1 to check whether UpdateActionEntity returns the correct entity.
+			// UpdateActionEntity does not perform a get to datastore after writing.
+			actual1, err := UpdateActionEntity(
+				ctx,
+				&ActionEntity{
+					ID:   "hi",
+					Kind: "x",
+				},
+				[]string{"kind"},
+				tt.increment,
+			)
+			if err != nil {
+				t.Errorf("updating entities for %q: %s", tt.name, err)
+			}
+			// Actual is the read value.
+			actual2, err := GetActionEntityByID(ctx, "hi")
+			if err != nil {
+				t.Errorf("reading back entities for %q: %s", tt.name, err)
+			}
+			expected := &ActionEntity{
+				ID:                "hi",
+				Kind:              "x",
+				ModificationCount: tt.modificationCount,
+			}
+			for _, actual := range []*ActionEntity{actual1, actual2} {
+				if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(ActionEntity{})); diff != "" {
+					t.Errorf("unexpected error: %s", diff)
+				}
+			}
+
+		})
 	}
 }
