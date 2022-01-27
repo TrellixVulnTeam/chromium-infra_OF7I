@@ -162,7 +162,7 @@ type Cluster struct {
 	Title string `json:"title"`
 	// The equivalent failure association rule to use if filing a new bug.
 	// Populated only for suggested clusters, where the algorithm is still
-	// known by Weetbix.
+	// known by Weetbix and there are recent examples.
 	FailureAssociationRule string `json:"failureAssociationRule"`
 }
 
@@ -183,6 +183,15 @@ func newCluster(cs *analysis.ClusterSummary, cfg *compiledcfg.ProjectConfig) *Cl
 			}
 			result.FailureAssociationRule = alg.FailureAssociationRule(cfg, example)
 		}
+	}
+	return result
+}
+
+func newEmptyCluster(clusterID clustering.ClusterID) *Cluster {
+	result := &Cluster{}
+	result.ClusterID = clusterID
+	if !clusterID.IsBugCluster() {
+		result.Title = "(cluster no longer exists)"
 	}
 	return result
 }
@@ -215,13 +224,18 @@ func (h *Handlers) GetCluster(ctx *router.Context) {
 	}()
 
 	cs, err := ac.ReadCluster(ctx.Context, projectID, clusterID)
-	if err != nil {
+	if err != nil && err != analysis.NotExistsErr {
 		logging.Errorf(ctx.Context, "Reading Cluster from BigQuery: %s", err)
 		http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-
-	response := newCluster(cs, projectCfg)
+	var response *Cluster
+	if err != analysis.NotExistsErr {
+		response = newCluster(cs, projectCfg)
+	} else {
+		// Return a placeholder cluster with zero impact.
+		response = newEmptyCluster(clusterID)
+	}
 
 	respondWithJSON(ctx, response)
 }

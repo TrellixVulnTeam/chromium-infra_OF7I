@@ -6,7 +6,6 @@ package analysis
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
@@ -19,6 +18,10 @@ import (
 	"infra/appengine/weetbix/internal/clustering"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 )
+
+// NotExistsErr is returned if there is no data for the specified cluster in
+// Weetbix.
+var NotExistsErr = errors.New("cluster does not exist")
 
 // ImpactfulClusterReadOptions specifies options for ReadImpactfulClusters().
 type ImpactfulClusterReadOptions struct {
@@ -309,7 +312,7 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 		clusters = append(clusters, row)
 	}
 	if len(clusters) == 0 {
-		return nil, fmt.Errorf("cluster %s not found", clusterID)
+		return nil, NotExistsErr
 	}
 	return clusters[0], nil
 }

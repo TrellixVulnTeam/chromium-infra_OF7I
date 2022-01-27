@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css, state } from 'lit-element';
+import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
 import { BeforeEnterObserver, RouterLocation, Router } from '@vaadin/router';
 
 import { RuleChangedEvent } from './rule_section';
@@ -70,6 +70,10 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             } else if (this.clusterAlgorithm.startsWith("reason-")) {
                 criteriaName = "Failure reason-based clustering";
             }
+            let newRuleButton : TemplateResult = html``
+            if (c.failureAssociationRule) {
+                newRuleButton = html`<mwc-button class="new-rule-button" raised @click=${this.newRuleClicked}>New Rule from Cluster</mwc-button>`;
+            }
 
             definitionSection = html`
             <div class="definition-box-container">
@@ -87,7 +91,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
                     </tr>
                 </tbody>
             </table>
-            <mwc-button raised @click=${this.newRuleClicked}>New Rule from Cluster</mwc-button>
+            ${newRuleButton}
             `
         }
 
@@ -207,8 +211,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
-        .definition-table {
-            margin-bottom: 10px;
+        .new-rule-button {
+            margin-top: 10px;
         }
         table {
             border-collapse: collapse;
