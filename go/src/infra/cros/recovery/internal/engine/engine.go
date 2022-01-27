@@ -64,21 +64,22 @@ func (r *recoveryEngine) runPlan(ctx context.Context) (rErr error) {
 	var forgivenFailureTally int64
 
 	if r.args != nil && r.args.Metrics != nil {
+		var mErr error
 		var closer execs.CloserFunc
-		metricAction, closer = r.args.NewMetric(
+		metricAction, closer, mErr = r.args.NewMetric(
 			newCtx,
 			fmt.Sprintf("plan:%s", r.planName),
 		)
-		defer func() {
-			if closer != nil {
+		if mErr == nil {
+			defer func() {
 				metricAction.Observations = append(
 					metricAction.Observations,
 					metrics.NewInt64Observation("restarts", restartTally),
 					metrics.NewInt64Observation("forgiven_failures", forgivenFailureTally),
 				)
 				closer(ctx, rErr)
-			}
-		}()
+			}()
+		}
 	}
 
 	for {
@@ -126,15 +127,17 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 	if r.args != nil {
 		if r.args.Metrics != nil {
 			log.Debug(ctx, "Recording metrics for action %q", actionName)
-			_, closer := r.args.NewMetric(
+			_, closer, err := r.args.NewMetric(
 				newCtx,
 				// TODO(gregorynisbet): Consider adding a new field to Karte to explicitly track the name
 				//                      assigned to an action by recoverylib.
 				fmt.Sprintf("action:%s", actionName),
 			)
-			defer func() {
-				closer(ctx, rErr)
-			}()
+			if err == nil {
+				defer func() {
+					closer(ctx, rErr)
+				}()
+			}
 		} else {
 			log.Debug(ctx, "Skipping metrics for action %q", actionName)
 		}

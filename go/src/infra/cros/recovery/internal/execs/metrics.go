@@ -10,6 +10,8 @@ import (
 
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/logger/metrics"
+
+	"go.chromium.org/luci/common/errors"
 )
 
 // CloserFunc is a function that updates an action and is NOT safe to use in a defer block WITHOUT CHECKING FOR NIL.
@@ -34,7 +36,10 @@ type CloserFunc = func(context.Context, error)
 // NewMetric creates a new metric. Neither the action nor the closer function that NewMetrics returns will
 // ever be nil.
 // TODO(gregorynisbet): Consider adding a time parameter.
-func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, CloserFunc) {
+func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, CloserFunc, error) {
+	if a == nil {
+		return nil, nil, errors.Reason("new metrics: run args cannot be nil").Err()
+	}
 	startTime := time.Now()
 	action := &metrics.Action{
 		ActionKind:     kind,
@@ -42,7 +47,8 @@ func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, 
 		SwarmingTaskID: a.SwarmingTaskID,
 		BuildbucketID:  a.BuildbucketID,
 	}
-	return createMetric(ctx, a.Metrics, action)
+	m, c := createMetric(ctx, a.Metrics, action)
+	return m, c, nil
 }
 
 // CreateMetric creates a metric with an actionKind, and a startTime.
