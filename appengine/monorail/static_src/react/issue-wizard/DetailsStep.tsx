@@ -7,6 +7,7 @@ import {createStyles, createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
+import Button from '@material-ui/core/Button'
 
 /**
  * The detail step is the second step on the dot
@@ -57,8 +58,12 @@ export default function DetailsStep({textValues, setTextValues, category}:
             <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
             <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
 
-            <h3 className={classes.head}>Additional Comments</h3>
+            <h3 className={classes.head}>Additional comments</h3>
             <TextField multiline rows={3} id="outlined-basic-4" variant="outlined" onChange={handleChange('additionalComments')}/>
+
+            <h3 className={classes.head}>Upload any relevant screenshots</h3>
+            <input type="file" accept="image/*" multiple />
+
         </form>
     </>
   );
