@@ -11,7 +11,7 @@ This is also enforced by PRESUBMIT.py script.
 
 load("//lib/infra.star", "infra")
 
-lucicfg.check_version("1.30.1", "Please update depot_tools")
+lucicfg.check_version("1.30.8", "Please update depot_tools")
 
 # Global recipe defaults
 luci.recipe.defaults.cipd_version.set("refs/heads/main")
@@ -319,6 +319,19 @@ luci.realm(
         luci.binding(
             roles = "role/swarming.taskTriggerer",
             groups = "project-infra-tests-submitters",
+        ),
+    ],
+)
+
+# Temporary binding to verify conditional bindings end-to-end.
+luci.binding(
+    realm = "ci",
+    roles = "role/scheduler.owner",
+    users = ["vadimsh@chromium.org"],
+    conditions = [
+        luci.restrict_attribute(
+            attribute = "scheduler.job.name",
+            values = ["gsutil-hello-world-bionic-64"],
         ),
     ],
 )
