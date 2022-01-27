@@ -322,16 +322,3 @@ luci.realm(
         ),
     ],
 )
-
-# Temporary binding to verify conditional bindings end-to-end.
-luci.binding(
-    realm = "ci",
-    roles = "role/scheduler.owner",
-    users = ["vadimsh@chromium.org"],
-    conditions = [
-        luci.restrict_attribute(
-            attribute = "scheduler.job.name",
-            values = ["gsutil-hello-world-bionic-64"],
-        ),
-    ],
-)
