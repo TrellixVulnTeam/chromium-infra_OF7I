@@ -46,6 +46,11 @@ func (s *ServoType) IsMicro() bool {
 	return strings.Contains(s.str, "servo_micro")
 }
 
+// Servo has dual setup.
+func (s *ServoType) IsDualSetup() bool {
+	return s.IsV4() && (s.IsMicro() || s.IsC2D2()) && s.IsCCD()
+}
+
 // String provide ability to use ToString functionality.
 func (s *ServoType) String() string {
 	return s.str

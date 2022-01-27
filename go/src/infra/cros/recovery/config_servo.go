@@ -533,11 +533,24 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"servo_check_servod_control"
 	},
+	"is_dual_setup_configured": {
+		"docs":[
+			"Check whether the servo device has been configured such that dual setup is expected of it."
+		]
+	},
 	"is_dual_setup": {
-		"exec_name":"sample_pass"
+		"docs":[
+			"Check whether the servo device has dual setup. This check only applies to the devices that have the dual setup configured on them."
+		],
+		"conditions" : [
+			"is_dual_setup_configured"
+		]
 	},
 	"is_not_dual_setup": {
-		"exec_name":"sample_pass"
+		"conditions":[
+			"is_dual_setup"
+		],
+		"exec_name":"sample_fail"
 	},
 	"servod_set_main_device": {
 		"conditions" : [

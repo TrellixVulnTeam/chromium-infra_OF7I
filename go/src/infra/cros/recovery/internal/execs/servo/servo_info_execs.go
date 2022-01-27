@@ -69,9 +69,36 @@ func servoVerifyServoMicroExec(ctx context.Context, args *execs.RunArgs, actionA
 	return nil
 }
 
+// servoIsDualSetupConfiguredExec checks whether the servo device has
+// been setup in dual mode.
+func servoIsDualSetupConfiguredExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	if args.DUT != nil && args.DUT.ExtraAttributes != nil {
+		if _, ok := args.DUT.ExtraAttributes["servo_setup_dual"]; ok {
+			log.Debug(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
+			return nil
+		}
+	}
+	return errors.Reason("servo is dual setup configured: servo device is not configured to be in dual-setup mode").Err()
+}
+
+// servoVerifyDualSetupExec verifies whether the servo attached to the
+// servo host actually exhibits dual setup.
+func servoVerifyDualSetupExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	sType, err := WrappedServoType(ctx, args)
+	if err != nil {
+		return errors.Annotate(err, "servo verify dual setup").Err()
+	}
+	if !sType.IsDualSetup() {
+		return errors.Reason("servo verify dual setup: servo type %q is not dual setup.", sType).Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_servod_port_present", servoVerifyPortNumberExec)
 	execs.Register("is_servo_v4", servoVerifyV4Exec)
 	execs.Register("is_servo_v3", servoVerifyV3Exec)
 	execs.Register("is_servo_micro", servoVerifyServoMicroExec)
+	execs.Register("is_dual_setup_configured", servoIsDualSetupConfiguredExec)
+	execs.Register("is_dual_setup", servoVerifyDualSetupExec)
 }
