@@ -63,7 +63,7 @@ enum Lab {
 }
 
 // Zone refers to the different network zones under chrome org
-// Next tag: 26
+// Next tag: 27
 enum Zone {
     ZONE_UNSPECIFIED = 0;
     ZONE_ATLANTA = 1; // "atl" Building ? Room ?
@@ -90,4 +90,5 @@ enum Zone {
     ZONE_BROWSER_GOOGLER_DESK = 19; // "desk" // for browser assets given to googlers
     ZONE_JETSTREAM_B946 = 20; // US-MTV-946-1-1E1
     ZONE_EM25_NETWORK = 25; // "em25_network" // US-PAO-EM25 // Room 115
+    ZONE_SFO36 = 27; // "sfo36" // US-PAO-EM25 // Room 105
 }
