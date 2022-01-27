@@ -59,8 +59,8 @@ deps = {
      "76162a98044f2a481e2ef34d32b7e8196e534b78",
 
   "infra/appengine/third_party/six":
-     "{chromium_git}/external/bitbucket.org/gutworth/six.git@" +
-     "06daa9c7a4b43c49bf2a3d588c52672e1c5e3a2c",
+     "{external_github}/benjaminp/six.git@" +
+     "65486e4383f9f411da95937451205d3c7b61b9e1",
 
   "infra/appengine/third_party/oauth2client":
      "{external_github}/google/oauth2client.git@" +
