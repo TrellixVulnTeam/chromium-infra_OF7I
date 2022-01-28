@@ -662,6 +662,44 @@ func servoFakeDisconnectDUTExec(ctx context.Context, args *execs.RunArgs, action
 	return nil
 }
 
+// servoServodCCToggleExec is the servo repair action that toggles cc line off and then on.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["off_timeout:x", "on_timeout:x"]
+func servoServodCCToggleExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	ccToggleMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	// Timeout for shut down configuration channel. Default to be 10s.
+	ccOffTimeout := ccToggleMap.AsInt(ctx, "off_timeout", 10)
+	// Timeout for initialize configuration channel. Default to be 30s.
+	ccOnTimeout := ccToggleMap.AsInt(ctx, "on_timeout", 30)
+	uartCmd := servodUartV4Cmd
+	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
+	// As in the (b/204369636), currently blocked by (b/198638900).
+	if _, err := ServodCallHas(ctx, args, uartCmd); err != nil {
+		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
+		uartCmd = servodUartV4P1Cmd
+		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
+	}
+	// Turning off configuration channel.
+	log.Info(ctx, "Turn off configuration channel and wait %d seconds.", ccOffTimeout)
+	if _, err := ServodCallSet(ctx, args, uartCmd, "cc off"); err != nil {
+		return errors.Annotate(err, "servod cc toggle").Err()
+	}
+	time.Sleep(time.Duration(ccOffTimeout) * time.Second)
+	// Turning on configuration channel.
+	log.Info(ctx, "Turn on configuration channel and wait %d seconds.", ccOnTimeout)
+	if _, err := ServodCallSet(ctx, args, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
+		return errors.Annotate(err, "servod cc toggle").Err()
+	}
+	// "servo_dts_mode" is the servod command to enable/disable DTS mode on servo.
+	// It has two value for this cmd: on and off.
+	if _, err := ServodCallSet(ctx, args, "servo_dts_mode", "on"); err != nil {
+		return errors.Annotate(err, "servod cc toggle").Err()
+	}
+	time.Sleep(time.Duration(ccOnTimeout) * time.Second)
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -681,4 +719,5 @@ func init() {
 	execs.Register("init_dut_for_servo", initDutForServoExec)
 	execs.Register("servo_update_servo_firmware", servoUpdateServoFirmwareExec)
 	execs.Register("servo_fake_disconnect_dut", servoFakeDisconnectDUTExec)
+	execs.Register("servo_servod_cc_toggle", servoServodCCToggleExec)
 }
