@@ -9,6 +9,7 @@ import styles from './IssueWizard.css';
 import LandingStep from './issue-wizard/LandingStep.tsx';
 import DetailsStep from './issue-wizard/DetailsStep.tsx'
 import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
+import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
@@ -27,7 +28,7 @@ export function IssueWizard(): ReactElement {
     });
 
   let page;
-  if (activeStep === 0){
+  if (activeStep === 0) {
     page = <LandingStep
         userPersona={userPersona}
         setUserPersona={setUserPersona}
@@ -35,8 +36,10 @@ export function IssueWizard(): ReactElement {
         setCategory={setCategory}
         setActiveStep={setActiveStep}
         />;
-  } else if (activeStep === 1){
+  } else if (activeStep === 1) {
     page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category} setActiveStep={setActiveStep}/>;
+  } else if (activeStep === 2) {
+    page = <CustomQuestionsStep setActiveStep={setActiveStep}/>;
   }
 
   return (
