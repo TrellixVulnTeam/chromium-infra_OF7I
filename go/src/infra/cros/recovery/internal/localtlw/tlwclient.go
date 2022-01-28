@@ -152,6 +152,12 @@ func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult
 			Stderr:   fmt.Sprintf("run: %s", err),
 		}
 	}
+	// For backward compatibility we set max limit 1 hour for any request.
+	// 1 hours as some provisioning or download can take longer.
+	timeout := time.Hour
+	if req.GetTimeout().IsValid() {
+		timeout = req.GetTimeout().AsDuration()
+	}
 	// Servod-container does not have ssh access so to execute any commands
 	// we need to use the docker client.
 	if c.isServoHost(req.GetResource()) && isServodContainer(dut) {
@@ -164,7 +170,7 @@ func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult
 			}
 		}
 		eReq := &docker.ExecRequest{
-			Timeout: time.Hour,
+			Timeout: timeout,
 			Cmd:     append([]string{req.GetCommand()}, req.GetArgs()...),
 		}
 		containerName := servoContainerName(dut)
@@ -192,8 +198,25 @@ func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult
 				Stderr:   res.Stderr,
 			}
 		}
+	} else {
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		cr := make(chan *tlw.RunResult, 1)
+		go func() {
+			cr <- ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), fullCmd)
+		}()
+		select {
+		case r := <-cr:
+			return r
+		case <-ctx.Done():
+			// If we reached timeout first.
+			return &tlw.RunResult{
+				Command:  fullCmd,
+				ExitCode: 124,
+				Stderr:   fmt.Sprintf("run: excited timeout %s", timeout),
+			}
+		}
 	}
-	return ssh.Run(ctx, c.sshPool, localproxy.BuildAddr(req.GetResource()), fullCmd)
 }
 
 // InitServod initiates servod daemon on servo-host.

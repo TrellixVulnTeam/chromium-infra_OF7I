@@ -8,6 +8,7 @@ package chromeos.recovery;
 
 option go_package = "infra/cros/recovery/tlw;tlw";
 
+import "google/protobuf/duration.proto";
 import "go.chromium.org/chromiumos/config/proto/chromiumos/config/api/test/xmlrpc/xmlrpc.proto";
 
 // RunRequest represents result of executed command.
@@ -18,6 +19,8 @@ message RunRequest {
   string command = 2;
   // Command arguments.
   repeated string args = 3;
+  // Command execution timeout.
+  google.protobuf.Duration timeout = 4;
 }
 
 // ProvisionRequest provides data to perform provisioning of the device.
