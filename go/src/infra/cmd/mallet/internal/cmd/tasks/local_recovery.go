@@ -7,6 +7,7 @@ package tasks
 import (
 	"context"
 	"os"
+	"os/signal"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -88,6 +89,22 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		// The logger level before create gologger.
 		ctx = logging.SetLevel(ctx, logging.Debug)
 	}
+
+	// React to user cancel.
+	ctx, cancel := context.WithCancel(ctx)
+	cs := make(chan os.Signal, 1)
+	signal.Notify(cs, os.Interrupt)
+	defer func() {
+		signal.Stop(cs)
+		cancel()
+	}()
+	go func() {
+		select {
+		case <-cs:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 
 	tn := tasknames.Recovery
 	if c.deployTask {
