@@ -141,7 +141,7 @@ const crosRepairPlanBody = `
 	},
 	"is_not_servo_v3": {
 		"conditions":[
-			"servo_is_v3"
+			"is_servo_v3"
 		],
 		"exec_name":"sample_fail"
 	},

@@ -136,8 +136,7 @@ const servoRepairPlanBody = `
 	"is_servo_v3": {
 		"docs": [
 			"Condition to check if the servo is v3."
-		],
-		"exec_name":"servo_is_v3"
+		]
 	},
 	"lock_labstation": {
 		"docs": [
@@ -536,7 +535,7 @@ const servoRepairPlanBody = `
 	},
 	"is_not_servo_v3": {
 		"conditions":[
-			"servo_is_v3"
+			"is_servo_v3"
 		],
 		"exec_name":"sample_fail"
 	},
