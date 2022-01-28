@@ -24,6 +24,8 @@ DEPS = [
     'recipe_engine/path',
 ]
 
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
+
 PROPERTIES = wib.Image
 
 image = 'gcs_test_image'

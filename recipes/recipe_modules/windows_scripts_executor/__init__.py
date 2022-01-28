@@ -19,3 +19,5 @@ DEPS = [
     'recipe_engine/raw_io',
     'powershell'
 ]
+
+PYTHON_VERSION_COMPATIBILITY = 'PY3'

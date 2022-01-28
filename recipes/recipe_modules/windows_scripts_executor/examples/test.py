@@ -23,6 +23,8 @@ DEPS = [
     'windows_scripts_executor',
 ]
 
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
+
 PROPERTIES = wib.Image
 
 # constants for use in test

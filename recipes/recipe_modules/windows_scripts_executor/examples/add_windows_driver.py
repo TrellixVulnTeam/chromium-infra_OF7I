@@ -21,6 +21,8 @@ DEPS = [
     'windows_scripts_executor'
 ]
 
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
+
 PROPERTIES = wib.Image
 
 key = '4587561855fcc569fc485e4f74b693870fd0d61eea5f40e9cef2ec9821d240a7'

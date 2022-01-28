@@ -67,7 +67,7 @@ class GCSManager:
         ok_ret='any')
     ret_code = res.exc_result.retcode
     if ret_code == 0:
-      text = res.stdout
+      text = res.stdout.decode('utf-8')
       # return the given url if not pinned
       orig_url = url
       for line in text.split('\n'):

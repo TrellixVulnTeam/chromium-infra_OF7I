@@ -21,6 +21,8 @@ DEPS = [
     'recipe_engine/raw_io'
 ]
 
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
+
 PROPERTIES = wib.Image
 
 key = '82db41f183c1addbd1b7a2f9ec5a5e2cac46744a5a68f153dbf7ee76327cc491'
