@@ -45,7 +45,7 @@ const (
 func releaseBuildPath(ctx context.Context, run execs.Runner) (string, error) {
 	// lsb-release is set of key=value so we need extract right part from it.
 	//  Example: CHROMEOS_RELEASE_BUILDER_PATH=board-release/R99-9999.99.99
-	output, err := run(ctx, extactReleaseBuilderPathCommand)
+	output, err := run(ctx, time.Minute, extactReleaseBuilderPathCommand)
 	if err != nil {
 		return "", errors.Annotate(err, "release build path").Err()
 	}
@@ -68,7 +68,7 @@ const (
 
 // ReleaseBoard reads release board info from lsb-release.
 func ReleaseBoard(ctx context.Context, r execs.Runner) (string, error) {
-	output, err := r(ctx, extactReleaseBoardCommand)
+	output, err := r(ctx, time.Minute, extactReleaseBoardCommand)
 	if err != nil {
 		return "", errors.Annotate(err, "release board").Err()
 	}
@@ -92,7 +92,7 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 	// each core has spent idle, in seconds. We are looking
 	//  E.g.: 683503.88 1003324.85
 	// Consequently, the second value may be greater than the overall system uptime on systems with multiple cores.
-	out, err := run(ctx, "cat /proc/uptime")
+	out, err := run(ctx, time.Minute, "cat /proc/uptime")
 	if err != nil {
 		return nil, errors.Annotate(err, "uptime").Err()
 	}
@@ -130,7 +130,7 @@ func WaitUntilPingable(ctx context.Context, args *execs.RunArgs, resourceName st
 
 // IsSSHable checks whether the resource is sshable
 func IsSSHable(ctx context.Context, run execs.Runner) error {
-	_, err := run(ctx, "true")
+	_, err := run(ctx, time.Minute, "true")
 	return errors.Annotate(err, "is sshable").Err()
 }
 
@@ -143,7 +143,7 @@ func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Durat
 
 // matchCrosSystemValueToExpectation reads value from crossystem and compared to expected value.
 func matchCrosSystemValueToExpectation(ctx context.Context, run execs.Runner, subcommand string, expectedValue string) error {
-	out, err := run(ctx, "crossystem "+subcommand)
+	out, err := run(ctx, time.Minute, "crossystem "+subcommand)
 	if err != nil {
 		return errors.Annotate(err, "match crossystem value to expectation: fail read %s", subcommand).Err()
 	}
@@ -162,7 +162,7 @@ func IsPathExist(ctx context.Context, args *execs.RunArgs, path string) error {
 	path = strings.ReplaceAll(path, `"`, `\"`)
 	path = strings.ReplaceAll(path, "`", `\`+"`")
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, fmt.Sprintf(`test -e "%s"`, path))
+	_, err := r(ctx, time.Minute, fmt.Sprintf(`test -e "%s"`, path))
 	if err != nil {
 		return errors.Annotate(err, "path exist").Err()
 	}
@@ -184,7 +184,7 @@ func pathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string
 		cmd = fmt.Sprintf(`df -Pi %s | tail -1`, path)
 	}
 	r := args.NewRunner(dutName)
-	output, err := r(ctx, cmd)
+	output, err := r(ctx, time.Minute, cmd)
 	if err != nil {
 		return errors.Annotate(err, "path has enough value: %s", typeOfSpace).Err()
 	}
@@ -242,14 +242,14 @@ func FindSingleUsbDeviceFSDir(ctx context.Context, r execs.Runner, basePath stri
 	}
 	basePath += "*/"
 	// find vid path:
-	vidPath, err := r(ctx, fmt.Sprintf(findFilePathByContentCmdGlob, vid, basePath, "idVendor"))
+	vidPath, err := r(ctx, time.Minute, fmt.Sprintf(findFilePathByContentCmdGlob, vid, basePath, "idVendor"))
 	if err != nil {
 		return "", errors.Annotate(err, "find single usb device file system directory").Err()
 	} else if !hasOnlySingleLine(ctx, vidPath) {
 		return "", errors.Reason("find single usb device file system directory: found more then one device with required VID: %s", vid).Err()
 	}
 	// find pid path:
-	pidPath, err := r(ctx, fmt.Sprintf(findFilePathByContentCmdGlob, pid, basePath, "idProduct"))
+	pidPath, err := r(ctx, time.Minute, fmt.Sprintf(findFilePathByContentCmdGlob, pid, basePath, "idProduct"))
 	if err != nil {
 		return "", errors.Annotate(err, "find single usb device file system directory").Err()
 	} else if !hasOnlySingleLine(ctx, pidPath) {
@@ -257,7 +257,7 @@ func FindSingleUsbDeviceFSDir(ctx context.Context, r execs.Runner, basePath stri
 	}
 	// If both files locates matched then we found our device.
 	commDirCmd := fmt.Sprintf("LC_ALL=C comm -12 <(dirname %s) <(dirname %s)", vidPath, pidPath)
-	commDir, err := r(ctx, commDirCmd)
+	commDir, err := r(ctx, time.Minute, commDirCmd)
 	if err != nil {
 		return "", errors.Annotate(err, "find single usb device file system directory").Err()
 	} else if commDir == "" || commDir == "." {
@@ -280,14 +280,14 @@ const (
 // @param nic_path: Path to network device on the host
 func ServoNICMacAddress(ctx context.Context, r execs.Runner, nicPath string) (string, error) {
 	findNICAddressFileCmd := fmt.Sprintf(macAddressFileUnderNetFolderOfThePathGlob, nicPath)
-	nicAddressFile, err := r(ctx, findNICAddressFileCmd)
+	nicAddressFile, err := r(ctx, time.Minute, findNICAddressFileCmd)
 	if err != nil {
 		return "", errors.Annotate(err, "servo nic mac address").Err()
 	} else if !hasOnlySingleLine(ctx, nicAddressFile) {
 		return "", errors.Reason("servo nic mac address: found more then one nic address file").Err()
 	}
 	log.Info(ctx, "Found servo NIC address file: %q", nicAddressFile)
-	macAddress, err := r(ctx, fmt.Sprintf("cat %s", nicAddressFile))
+	macAddress, err := r(ctx, time.Minute, fmt.Sprintf("cat %s", nicAddressFile))
 	if err != nil {
 		return "", errors.Annotate(err, "servo nic mac address").Err()
 	}

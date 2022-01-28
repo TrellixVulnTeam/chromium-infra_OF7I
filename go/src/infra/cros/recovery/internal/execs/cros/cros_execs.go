@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -53,7 +54,7 @@ func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) erro
 func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
 	run := args.NewRunner(args.ResourceName)
-	out, err := run(ctx, rebootCommand)
+	out, err := run(ctx, 2*time.Minute, rebootCommand)
 	if execs.NoExitStatusErrorInternal.In(err) {
 		// Client closed connected as rebooting.
 		log.Debug(ctx, "Client exit as device rebooted: %s", err)
@@ -97,7 +98,7 @@ func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs
 // isDefaultBootFromDiskExec confirms the resource is set to boot from disk by default.
 func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	defaultBoot, err := run(ctx, "crossystem dev_default_boot")
+	defaultBoot, err := run(ctx, time.Minute, "crossystem dev_default_boot")
 	if err != nil {
 		return errors.Annotate(err, "default boot from disk").Err()
 	}
@@ -110,7 +111,7 @@ func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionA
 // isNotInDevModeExec confirms that the host is not in dev mode.
 func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	devModeResult, err := run(ctx, "crossystem devsw_boot")
+	devModeResult, err := run(ctx, time.Minute, "crossystem devsw_boot")
 	if err != nil {
 		return errors.Annotate(err, "not in dev mode").Err()
 	}
@@ -125,7 +126,7 @@ func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	if len(actionArgs) > 0 {
 		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
 		run := args.NewRunner(args.ResourceName)
-		if out, err := run(ctx, actionArgs[0], actionArgs[1:]...); err != nil {
+		if out, err := run(ctx, -1, actionArgs[0], actionArgs[1:]...); err != nil {
 			return errors.Annotate(err, "run shell command").Err()
 		} else {
 			log.Debug(ctx, "Run shell command: output: %s", out)
@@ -156,7 +157,7 @@ func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionAr
 		filename := filepath.Join(testDir, "writable_my_test_file")
 		command := fmt.Sprintf("touch %s && rm %s", filename, filename)
 		run := args.NewRunner(args.ResourceName)
-		_, err := run(ctx, command)
+		_, err := run(ctx, time.Minute, command)
 		if err != nil {
 			log.Debug(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
 			return errors.Annotate(err, "file system writtable").Err()
@@ -168,13 +169,13 @@ func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionAr
 // hasPythonInterpreterExec confirm the presence of a working Python interpreter.
 func hasPythonInterpreterExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	_, err := run(ctx, `python -c "import json"`)
+	_, err := run(ctx, time.Minute, `python -c "import json"`)
 	switch {
 	case err == nil:
 		// Python detected and import is working. do nothing
 		return nil
 	case execs.SSHErrorCLINotFound.In(err):
-		if pOut, pErr := run(ctx, "which python"); pErr != nil {
+		if pOut, pErr := run(ctx, time.Minute, "which python"); pErr != nil {
 			return errors.Annotate(pErr, "has python interpreter: python is missing").Err()
 		} else if pOut == "" {
 			return errors.Reason("has python interpreter: python is missing; may be caused by powerwash").Err()
@@ -190,7 +191,7 @@ func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, action
 	run := args.NewRunner(args.ResourceName)
 	// grep for stateful FS errors of the type "EXT4-fs error (device sda1):"
 	command := `dmesg | grep -E "EXT4-fs error \(device $(cut -d ' ' -f 5,9 /proc/$$/mountinfo | grep -e '^/mnt/stateful_partition ' | cut -d ' ' -f 2 | cut -d '/' -f 3)\):"`
-	out, _ := run(ctx, command)
+	out, _ := run(ctx, time.Minute, command)
 	if out != "" {
 		sample := strings.Split(out, `\n`)[0]
 		// Log the first file system error.
@@ -199,7 +200,7 @@ func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, action
 	}
 	// Check for other critical FS errors.
 	command = `dmesg | grep "This should not happen!!  Data will be lost"`
-	out, _ = run(ctx, command)
+	out, _ = run(ctx, time.Minute, command)
 	if out != "" {
 		return errors.Reason("has critical kernel error: saw file system error: Data will be lost").Err()
 	}
@@ -215,14 +216,14 @@ func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, action
 // The verifier tests for the existence of the marker file and fails if it still exists.
 func isLastProvisionSuccessfulExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	_, err := run(ctx, fmt.Sprintf("test -f %s", provisionFailed))
+	_, err := run(ctx, time.Minute, fmt.Sprintf("test -f %s", provisionFailed))
 	return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
 }
 
 // isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
 func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	out, err := run(ctx, `cat /proc/cpuinfo | grep "model name"`)
+	out, err := run(ctx, time.Minute, `cat /proc/cpuinfo | grep "model name"`)
 	if err != nil {
 		return errors.Annotate(err, "not virtual machine").Err()
 	}
@@ -244,7 +245,7 @@ func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	// Check the status of an upstart init script
 	cmd := fmt.Sprintf("status %s", serviceName)
 	r := args.NewRunner(args.ResourceName)
-	output, err := r(ctx, cmd)
+	output, err := r(ctx, time.Minute, cmd)
 	if err != nil {
 		return errors.Annotate(err, "wait for system").Err()
 	}
@@ -261,7 +262,7 @@ func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 // If host-info has label 'cr50' then we expect to have GSC tool on the host.
 func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, verify_gsc_cmd)
+	_, err := r(ctx, time.Minute, verify_gsc_cmd)
 	if err != nil {
 		return errors.Annotate(err, "gsc tool present: gsc tool issue detected").Err()
 	}
@@ -289,7 +290,7 @@ func isToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 		return errors.Reason("tool present: tool name given in the argument is empty").Err()
 	}
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, fmt.Sprintf(toolPresentCmd, toolName))
+	_, err := r(ctx, time.Minute, fmt.Sprintf(toolPresentCmd, toolName))
 	if err != nil {
 		return errors.Annotate(err, "tool present").Err()
 	}

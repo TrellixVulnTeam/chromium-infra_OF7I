@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -47,7 +48,7 @@ const (
 //	if the err == nil, the boolean value returned represents whether the given audio node type is found in the output.
 //	if the err != nil, the execution of this function is not successful, the boolean value returned is set as default.
 func CrasAudioNodeTypeIsPlugged(ctx context.Context, r execs.Runner, nodeType string) (bool, error) {
-	output, err := r(ctx, crasAudioNodesQueryCmd)
+	output, err := r(ctx, time.Minute, crasAudioNodesQueryCmd)
 	if err != nil {
 		return false, errors.Annotate(err, "node type of %s is plugged", nodeType).Err()
 	}

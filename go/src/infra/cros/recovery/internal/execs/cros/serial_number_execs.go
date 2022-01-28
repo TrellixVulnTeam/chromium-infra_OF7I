@@ -6,6 +6,7 @@ package cros
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -20,7 +21,7 @@ const (
 // updateSerialNumberToInvExec updates serial number in DUT-info.
 func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	sn, err := run(ctx, readSerialNumberCommand)
+	sn, err := run(ctx, time.Minute, readSerialNumberCommand)
 	if err != nil {
 		return errors.Annotate(err, "update serial number in DUT-info").Err()
 	}
@@ -35,7 +36,7 @@ func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actio
 // matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
 func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	actualSerialNumber, err := run(ctx, readSerialNumberCommand)
+	actualSerialNumber, err := run(ctx, time.Minute, readSerialNumberCommand)
 	if err != nil {
 		return errors.Annotate(err, "match serial number to inventory").Err()
 	}

@@ -76,7 +76,7 @@ const (
 	// screen delay, time to start the network on the DUT, and the ssh timeout of 120 seconds.
 	dutBootTimeout = 150 * time.Second
 	// Time to allow for boot from a USB device, including the 30 second dev-mode delay and time to start the network.
-	usbkeyBootTimeout = 300 * time.Second
+	usbkeyBootTimeout = 5 * time.Minute
 )
 
 func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
@@ -85,7 +85,7 @@ func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *execs.RunArg
 	}
 	run := args.NewRunner(args.DUT.Name)
 	return retry.WithTimeout(ctx, 10*time.Second, usbkeyBootTimeout, func() error {
-		_, err := run(ctx, "true")
+		_, err := run(ctx, 30*time.Second, "true")
 		return errors.Annotate(err, "servod boot in recovery-mode: check ssh access").Err()
 	}, "servod boot in recovery-mode: check ssh access")
 }

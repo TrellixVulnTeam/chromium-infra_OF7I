@@ -89,7 +89,7 @@ func isVersionOutdated(ctx context.Context, runner execs.Runner, device *tlw.Ser
 
 // Get latest available version from the servo_updater command.
 func latestVersionFromUpdater(ctx context.Context, runner execs.Runner, channel tlw.ServoFirmwareChannel, board string) string {
-	result, err := runner(ctx, fmt.Sprintf(latestVersionCMD, board, strings.ToLower(string(channel))))
+	result, err := runner(ctx, time.Minute, fmt.Sprintf(latestVersionCMD, board, strings.ToLower(string(channel))))
 	// An example result is "firmware: servo_v4_v2.4.58-c37246f9c". We
 	// need to parse-out the string after ":" here, because that is
 	// the firmware version value we are looking for.
@@ -116,9 +116,9 @@ const (
 )
 
 // KillActiveUpdaterProcesses kills any active servo_updater processes running on the host.
-func KillActiveUpdaterProcesses(ctx context.Context, r execs.Runner, deviceSerial string) error {
+func KillActiveUpdaterProcesses(ctx context.Context, r execs.Runner, timeout time.Duration, deviceSerial string) error {
 	cmd := fmt.Sprintf(killActiveUpdatersCmd, deviceSerial)
-	if _, err := r(ctx, cmd); err != nil {
+	if _, err := r(ctx, timeout, cmd); err != nil {
 		log.Debug(ctx, "Fail to kill active update process")
 		return errors.Annotate(err, "kill active update process").Err()
 	}
@@ -149,21 +149,19 @@ func updateServoDeviceFW(ctx context.Context, r execs.Runner, useContainer bool,
 	updateCmd := createServoDeviceFwUpdateCmd(useContainer, device, forceUpdate, channel)
 	log.Info(ctx, "Try to update servo fw of the device: %s", device.Type)
 	// Kill any active updater processes before return.
-	defer retry.WithTimeout(ctx, 0*time.Second, 30*time.Second, func() error {
-		return KillActiveUpdaterProcesses(ctx, r, device.Serial)
-	}, "kill active update process")
+	defer func() {
+		if err := KillActiveUpdaterProcesses(ctx, r, 30*time.Second, device.Serial); err != nil {
+			log.Debug(ctx, "Kill active update process fail: %s", err)
+		}
+	}()
 	// Perform servo device firmware update.
-	var fwUpdateStdOut string
-	fwUpdateErr := retry.WithTimeout(ctx, 0*time.Second, fwUpdaterTimeout, func() (err error) {
-		fwUpdateStdOut, err = r(ctx, updateCmd)
-		return
-	}, "servo device fw update")
-	if fwUpdateErr != nil {
-		return errors.Annotate(fwUpdateErr, "update servo device fw").Err()
+	if fwUpdateStdOut, err := r(ctx, fwUpdaterTimeout, updateCmd); err != nil {
+		return errors.Annotate(err, "update servo device fw").Err()
+	} else {
+		log.Debug(ctx, "Servo firmware update of %s finished with output: %s", device.Type, fwUpdateStdOut)
+		log.Info(ctx, "Servo firmware update of %s finished.", device.Type)
+		return nil
 	}
-	log.Debug(ctx, "Servo firmware update of %s finished with output: %s", device.Type, fwUpdateStdOut)
-	log.Info(ctx, "Servo firmware update of %s finished.", device.Type)
-	return nil
 }
 
 // runUpdateServoDeviceFwAttempt will update the specific servo board(device) based on the condition specified by the parameter once.

@@ -8,6 +8,7 @@ import (
 	"context"
 	"reflect"
 	"strings"
+	"time"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
@@ -35,7 +36,7 @@ const (
 // Check if bluetooth on the host has been powered-on and is responding.
 func auditBluetoothExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.NewRunner(args.ResourceName)
-	output, err := r(ctx, bluetoothDetectionCmd)
+	output, err := r(ctx, time.Minute, bluetoothDetectionCmd)
 	if err == nil {
 		// dbus-send command completed with success
 		// example output:

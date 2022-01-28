@@ -8,6 +8,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"infra/cros/recovery/internal/execs"
 
@@ -46,7 +47,7 @@ type powerSupplyInfo struct {
 //       percentage:              95.9276
 //       technology:              Li-ion
 func ReadPowerInfo(ctx context.Context, r execs.Runner) (*powerSupplyInfo, error) {
-	output, err := r(ctx, "power_supply_info")
+	output, err := r(ctx, time.Minute, "power_supply_info")
 	if err != nil {
 		return nil, errors.Annotate(err, "read power information").Err()
 	}

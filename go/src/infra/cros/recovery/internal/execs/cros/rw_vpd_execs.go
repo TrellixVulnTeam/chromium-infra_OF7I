@@ -7,6 +7,7 @@ package cros
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -31,7 +32,7 @@ func areRequiredRWVPDKeysPresentExec(ctx context.Context, args *execs.RunArgs, a
 	r := args.NewRunner(args.ResourceName)
 	for k := range RwVPDMap {
 		cmd := fmt.Sprintf(readRwVPDValuesCmdGlob, k)
-		if _, err := r(ctx, cmd); err != nil {
+		if _, err := r(ctx, time.Minute, cmd); err != nil {
 			return errors.Annotate(err, "any rw vpd keys missing").Err()
 		}
 	}

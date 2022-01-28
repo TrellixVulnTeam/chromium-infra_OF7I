@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path"
 	"strconv"
+	"time"
 
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros/power"
@@ -73,7 +74,7 @@ func ReadBatteryInfo(ctx context.Context, r execs.Runner) (*batteryInfo, error) 
 func (b *batteryInfo) readFile(ctx context.Context, r execs.Runner, fileName string) (float64, error) {
 	pathToRead := path.Join(b.DeviceDirPath, fileName)
 	cmd := fmt.Sprintf("cat %s", pathToRead)
-	output, err := r(ctx, cmd)
+	output, err := r(ctx, time.Minute, cmd)
 	if err != nil {
 		return -1, errors.Annotate(err, "read file: %s", fileName).Err()
 	}

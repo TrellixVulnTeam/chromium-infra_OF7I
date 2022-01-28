@@ -6,6 +6,7 @@ package cros
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -20,7 +21,7 @@ const (
 // updateHWIDToInvExec read HWID from the resource and update DUT info.
 func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	hwid, err := run(ctx, readHWIDCommand)
+	hwid, err := run(ctx, time.Minute, readHWIDCommand)
 	if err != nil {
 		return errors.Annotate(err, "update HWID in DUT-info").Err()
 	}
@@ -35,7 +36,7 @@ func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 // matchHWIDToInvExec matches HWID from the resource to value in the Inventory.
 func matchHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	actualHWID, err := run(ctx, readHWIDCommand)
+	actualHWID, err := run(ctx, time.Minute, readHWIDCommand)
 	if err != nil {
 		return errors.Annotate(err, "match HWID to inventory").Err()
 	}

@@ -8,6 +8,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -32,7 +33,7 @@ var storageStateMap = map[storage.StorageState]tlw.HardwareState{
 // auditStorageSMARTExec confirms that it is able to audi smartStorage info and mark the dut if it needs replacement.
 func auditStorageSMARTExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.NewRunner(args.ResourceName)
-	rawOutput, err := r(ctx, readStorageInfoCMD)
+	rawOutput, err := r(ctx, time.Minute, readStorageInfoCMD)
 	if err != nil {
 		return errors.Annotate(err, "audit storage smart").Err()
 	}

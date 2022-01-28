@@ -24,7 +24,7 @@ const (
 // cleanTmpOwnerRequestExec cleans tpm owner requests.
 func cleanTmpOwnerRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	_, err := run(ctx, "crossystem clear_tpm_owner_request=1")
+	_, err := run(ctx, time.Minute, "crossystem clear_tpm_owner_request=1")
 	return errors.Annotate(err, "clear tpm owner request").Err()
 }
 
@@ -60,7 +60,7 @@ const (
 func allowedRebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
 	cmd := fmt.Sprintf("test %s", noRebootFlagFile)
-	_, err := run(ctx, cmd)
+	_, err := run(ctx, time.Minute, cmd)
 	if err != nil {
 		return errors.Annotate(err, "has no-reboot request").Err()
 	}

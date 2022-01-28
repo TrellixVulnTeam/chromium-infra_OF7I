@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -121,7 +122,7 @@ func readDeviceInfo(ctx context.Context, runner execs.Runner, devicePath string)
 
 // Get the path of root servo on servo host.
 func getRootServoPath(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
-	servoPath, err := runner(ctx, fmt.Sprintf(servodtoolDeviceUSBPathCMD, servoSerial))
+	servoPath, err := runner(ctx, time.Minute, fmt.Sprintf(servodtoolDeviceUSBPathCMD, servoSerial))
 	if err != nil {
 		return "", errors.Annotate(err, "get root servo path: servo not detected").Err()
 	}
@@ -137,7 +138,7 @@ func getRootServoPath(ctx context.Context, runner execs.Runner, servoSerial stri
 // directory that contains servo details.
 func readServoFs(ctx context.Context, runner execs.Runner, servoPath string, filename string) (string, error) {
 	fullPath := filepath.Join(servoPath, filename)
-	v, err := runner(ctx, fmt.Sprintf(fileReadCmd, fullPath))
+	v, err := runner(ctx, time.Minute, fmt.Sprintf(fileReadCmd, fullPath))
 	if err != nil {
 		return "", errors.Annotate(err, "read servo file %s", fullPath).Err()
 	}
@@ -204,7 +205,7 @@ func ListOfDevices(ctx context.Context, runner execs.Runner, servoSerial string)
 	}
 	// Find all serial files of devices under servo-hub. Each device
 	// has to have a serial number.
-	v, err := runner(ctx, fmt.Sprintf(serialFindCMD, servoHub))
+	v, err := runner(ctx, time.Minute, fmt.Sprintf(serialFindCMD, servoHub))
 	if err != nil {
 		return nil, errors.Annotate(err, "retrieve servo topology").Err()
 	}

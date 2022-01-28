@@ -7,6 +7,7 @@ package cros
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -34,13 +35,13 @@ const (
 // This verify action checks whether it appears that firmware should be re-flashed using servo.
 func isFirmwareInGoodState(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, readAndDumpAPFirmwareCmd)
+	_, err := r(ctx, time.Minute, readAndDumpAPFirmwareCmd)
 	if err != nil {
 		return errors.Annotate(err, "firmware in good state").Err()
 	}
-	defer func() { r(ctx, removeFirmwareFileCmd) }()
+	defer func() { r(ctx, time.Minute, removeFirmwareFileCmd) }()
 	for _, val := range []string{"A", "B"} {
-		_, err := r(ctx, fmt.Sprintf(verifyFirmwareCmd, val, val))
+		_, err := r(ctx, time.Minute, fmt.Sprintf(verifyFirmwareCmd, val, val))
 		if err != nil {
 			return errors.Annotate(err, "firmware in good state: firmware %s is in a bad state", val).Err()
 		}

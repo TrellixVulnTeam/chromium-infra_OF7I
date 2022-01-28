@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -71,7 +72,7 @@ const (
 
 // ReadFirmwareManifest reads the firmware update manifest info and return a modelFirmware struct.
 func ReadFirmwareManifest(ctx context.Context, r execs.Runner, dutModel string) (*modelFirmware, error) {
-	rawOutput, err := r(ctx, firmwareUpdateManifestCmd)
+	rawOutput, err := r(ctx, time.Minute, firmwareUpdateManifestCmd)
 	if err != nil {
 		return nil, errors.Annotate(err, "read firmware manifest").Err()
 	}

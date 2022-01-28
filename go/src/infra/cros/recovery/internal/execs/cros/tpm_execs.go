@@ -6,6 +6,7 @@ package cros
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -50,8 +51,8 @@ func matchDevTPMFirmwareVersionExec(ctx context.Context, args *execs.RunArgs, ac
 
 // isTPMPresentExec confirms that the given DUT's TPM is present.
 func isTPMPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	tpmRunner := args.NewRunner(args.ResourceName)
-	rawOutput, err := tpmRunner(ctx, "cryptohome --action=status")
+	r := args.NewRunner(args.ResourceName)
+	rawOutput, err := r(ctx, time.Minute, "cryptohome --action=status")
 	if err != nil {
 		return errors.Annotate(err, "tpm present").Err()
 	}
@@ -61,8 +62,8 @@ func isTPMPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []str
 
 // isTPMInGoodStatusExec confirms that the given DUT's TPM is in good state.
 func isTPMInGoodStatusExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	tpmRunner := args.NewRunner(args.ResourceName)
-	rawOutput, err := tpmRunner(ctx, "cryptohome --action=status")
+	r := args.NewRunner(args.ResourceName)
+	rawOutput, err := r(ctx, time.Minute, "cryptohome --action=status")
 	if err != nil {
 		return errors.Annotate(err, "tpm in good status").Err()
 	}

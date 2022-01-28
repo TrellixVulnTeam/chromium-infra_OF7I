@@ -7,6 +7,7 @@ package cros
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -28,7 +29,7 @@ const (
 // createServoInUseFlagExec creates servo in-use flag file.
 func createServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
-	if _, err := run(ctx, fmt.Sprintf(inUseFlagFileCreateSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileCreateSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
 		log.Debug(ctx, "Create in-use flag file: %s", err)
 	}
@@ -39,7 +40,7 @@ func createServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionAr
 func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
-	v, _ := run(ctx, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
+	v, _ := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
 	if v == "" {
 		log.Debug(ctx, "Does not have any servo in-use.")
 		return nil
@@ -50,7 +51,7 @@ func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 // removeServoInUseFlagExec removes servo in-use flag file.
 func removeServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.DUT.ServoHost.Name)
-	if _, err := run(ctx, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
 		log.Debug(ctx, "Remove in-use file flag: %s", err)
 	}

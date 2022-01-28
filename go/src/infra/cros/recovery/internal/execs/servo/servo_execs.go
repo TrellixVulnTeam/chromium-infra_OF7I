@@ -120,7 +120,7 @@ func servoDetectUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	servoUsbPath := res.Value.GetString_()
 	log.Debug(ctx, "Servo Detect USB-Key Exec: USB-key path: %s.", servoUsbPath)
 	run := args.NewRunner(args.DUT.ServoHost.Name)
-	if _, err := run(ctx, fmt.Sprintf("fdisk -l %s", servoUsbPath)); err != nil {
+	if _, err := run(ctx, time.Minute, fmt.Sprintf("fdisk -l %s", servoUsbPath)); err != nil {
 		args.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 		return errors.Annotate(err, "servo detect usb key exec: could not determine whether %q is a valid usb path", servoUsbPath).Err()
 	}
@@ -134,14 +134,13 @@ func servoDetectUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 	return nil
 }
 
-func runCheckOnHost(ctx context.Context, args *execs.RunArgs, resourceName string, usbPath string) (tlw.HardwareState, error) {
-	run := args.NewRunner(resourceName)
+func runCheckOnHost(ctx context.Context, run execs.Runner, usbPath string, timeout time.Duration) (tlw.HardwareState, error) {
 	command := fmt.Sprintf(badBlocksCommandPrefix, usbPath)
 	log.Debug(ctx, "Run Check On Host: Executing %q", command)
 	// The execution timeout for this audit job is configured at the
 	// level of the action. So the execution of this command will be
 	// bound by that.
-	out, err := run(ctx, command)
+	out, err := run(ctx, timeout, command)
 	switch {
 	case err == nil:
 		// TODO(vkjoshi@): recheck if this is required, or does stderr need to be examined.
@@ -172,7 +171,7 @@ func servoAuditUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	}
 	if dutUsb != "" {
 		// DUT is reachable, and we found a USB drive on it.
-		state, err := runCheckOnHost(ctx, args, args.DUT.Name, dutUsb)
+		state, err := runCheckOnHost(ctx, args.NewRunner(args.DUT.Name), dutUsb, 2*time.Hour)
 		if err != nil {
 			return errors.Reason("servo audit usb key exec: could not check DUT usb path %q", dutUsb).Err()
 		}
@@ -200,7 +199,7 @@ func servoAuditUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 			log.Debug(ctx, "Servo Audit USB-Key Exec: cannot continue audit because the path to USB-Drive is empty")
 			return errors.Reason("servo audit usb key exec: the path to usb drive is empty").Err()
 		}
-		state, err := runCheckOnHost(ctx, args, args.DUT.ServoHost.Name, servoUsbPath)
+		state, err := runCheckOnHost(ctx, args.NewRunner(args.DUT.ServoHost.Name), servoUsbPath, 2*time.Hour)
 		if err != nil {
 			log.Debug(ctx, "Servo Audit USB-Key Exec: error %q during audit of USB-Drive", err)
 			return errors.Annotate(err, "servo audit usb key: could not check usb path %q on servo-host %q", servoUsbPath, args.DUT.ServoHost.Name).Err()
@@ -276,7 +275,7 @@ func servoTopologyUpdateExec(ctx context.Context, args *execs.RunArgs, actionArg
 // Verify that servod is responsive
 func servoServodEchoHostExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	runner := args.NewRunner(args.DUT.ServoHost.Name)
-	v, err := runner(ctx, fmt.Sprintf(servodHostCheckupCmd, args.DUT.ServoHost.ServodPort))
+	v, err := runner(ctx, time.Minute, fmt.Sprintf(servodHostCheckupCmd, args.DUT.ServoHost.ServodPort))
 	if err != nil {
 		return errors.Annotate(err, "servo servod echo host exec: servod is not responsive for dut-control commands").Err()
 	}
@@ -476,7 +475,7 @@ func servoLabstationDiskCleanUpExec(ctx context.Context, args *execs.RunArgs, ac
 	r := args.NewRunner(args.ResourceName)
 	// Remove all files in the filesToRemoveSlice during the labstation disk clean up process.
 	for _, filePath := range filesToRemoveSlice {
-		if _, err := r(ctx, fmt.Sprintf(removeFileCmd, filePath)); err != nil {
+		if _, err := r(ctx, time.Minute, fmt.Sprintf(removeFileCmd, filePath)); err != nil {
 			log.Debug(ctx, "servo labstation disk clean up: %s", err.Error())
 		}
 		log.Info(ctx, "labstation file removed: %s", filePath)
@@ -509,7 +508,7 @@ func servoServodOldLogsCleanupExec(ctx context.Context, args *execs.RunArgs, act
 	log.Info(ctx, "The max number of days for keeping old servod logs is: %v", keepLogsMaxDays)
 	r := args.NewRunner(args.ResourceName)
 	// remove old servod logs.
-	if _, err := r(ctx, fmt.Sprintf(removeOldServodLogsCmd, keepLogsMaxDays)); err != nil {
+	if _, err := r(ctx, time.Minute, fmt.Sprintf(removeOldServodLogsCmd, keepLogsMaxDays)); err != nil {
 		log.Debug(ctx, "servo servod old logs clean up: %s", err.Error())
 	}
 	return nil

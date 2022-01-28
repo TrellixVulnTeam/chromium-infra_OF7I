@@ -7,6 +7,7 @@ package cros
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -46,7 +47,7 @@ const (
 func isEnrollmentInCleanStateExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	run := args.NewRunner(args.ResourceName)
 	command := fmt.Sprintf(`grep "check_enrollment" %s`, VPD_CACHE)
-	result, err := run(ctx, command)
+	result, err := run(ctx, time.Minute, command)
 	if err == nil {
 		log.Debug(ctx, "Enrollment state in VPD cache: %s", result)
 		if result != `"check_enrollment"="0"` {

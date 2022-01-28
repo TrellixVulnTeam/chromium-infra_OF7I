@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -66,7 +67,7 @@ const (
 // Ex: 0.5.40 for fw version
 //     0x87b73b67 for fw keyid
 func cr50FWComponent(ctx context.Context, r execs.Runner, region CR50Region, findComponentRegexp string) (string, error) {
-	output, err := r(ctx, cr50FWCmd)
+	output, err := r(ctx, time.Minute, cr50FWCmd)
 	if err != nil {
 		return "", errors.Annotate(err, "cr50").Err()
 	}

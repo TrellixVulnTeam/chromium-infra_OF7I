@@ -6,6 +6,7 @@ package cros
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -25,7 +26,7 @@ const (
 // Detect if the DUT has wifi device listed in the output of 'lspci' command.
 func auditWiFiExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, wifiDetectCmd)
+	_, err := r(ctx, time.Minute, wifiDetectCmd)
 	if err == nil {
 		// successfully detected
 		args.DUT.Wifi.State = tlw.HardwareStateNormal

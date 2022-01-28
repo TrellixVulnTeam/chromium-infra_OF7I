@@ -7,8 +7,10 @@ package execs
 import (
 	"context"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
@@ -39,7 +41,7 @@ var (
 
 // Runner defines the type for a function that will execute a command
 // on a host, and returns the result as a single line.
-type Runner func(context.Context, string, ...string) (string, error)
+type Runner func(context.Context, time.Duration, string, ...string) (string, error)
 
 // NewRunner returns a function of type Runner that executes a command
 // on a host and returns the results as a single line. This function
@@ -47,10 +49,11 @@ type Runner func(context.Context, string, ...string) (string, error)
 // executed. Examples of such specific hosts can be the DUT, or the
 // servo-host etc.
 func (a *RunArgs) NewRunner(host string) Runner {
-	runner := func(ctx context.Context, cmd string, args ...string) (string, error) {
+	runner := func(ctx context.Context, timeout time.Duration, cmd string, args ...string) (string, error) {
 		log.Debug(ctx, "Run command %q", cmd)
 		r := a.Access.Run(ctx, &tlw.RunRequest{
 			Resource: host,
+			Timeout:  durationpb.New(timeout),
 			Command:  cmd,
 			Args:     args,
 		})
