@@ -67,7 +67,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_host_servod_init",
 		"exec_timeout": {
@@ -88,7 +89,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_host_servod_init"
 	},
@@ -211,7 +213,8 @@ const servoRepairPlanBody = `
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -306,7 +309,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -331,7 +335,8 @@ const servoRepairPlanBody = `
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -342,7 +347,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_power_cycle_repair",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -379,7 +385,8 @@ const servoRepairPlanBody = `
 			"servo_host_servod_restart",
 			"servo_power_cycle_repair",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -390,7 +397,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -426,7 +434,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -439,7 +448,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -614,7 +624,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -629,7 +640,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_host_servod_restart",
-			"servo_power_delivery_repair"
+			"servo_power_delivery_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -655,7 +667,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -667,7 +680,8 @@ const servoRepairPlanBody = `
 		"recovery_actions": [
 			"servo_host_servod_restart",
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		]
 	},
 	"update_servo_type_label":{
@@ -683,7 +697,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -699,7 +714,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_power_delivery_repair",
-			"servo_fake_disconnect_dut_repair"
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -897,5 +913,28 @@ const servoRepairPlanBody = `
 			"delay_in_ms:100",
 			"timeout_in_ms:2000"
 		]
+	},
+	"servo_servod_cc_toggle_repair":{
+		"docs":[
+			"Try to repair servod by toggling cc."
+		],
+		"dependencies": [
+			"servo_servod_cc_toggle"
+		],
+		"exec_timeout": {
+			"seconds": 600
+		},
+		"run_control": 1,
+		"exec_name":"servo_host_servod_stop"
+	},
+	"servo_servod_cc_toggle":{
+		"conditions": [
+			"is_servo_type_ccd"
+		],
+		"exec_extra_args": [
+			"cc_off_timeout:10",
+			"cc_on_timeout:30"
+		],
+		"run_control": 1
 	}
 }`
