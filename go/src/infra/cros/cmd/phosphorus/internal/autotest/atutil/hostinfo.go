@@ -74,6 +74,9 @@ func (hi *HostInfo) setPackageStagingCacheURL(ctx context.Context, bt *tls.Backg
 	if err != nil {
 		return err
 	}
+	if hi.Attributes == nil {
+		hi.Attributes = map[string]string{}
+	}
 	hi.Attributes[jobRepoURLLabel] = pkgStagingURL.String()
 	return nil
 }

@@ -366,11 +366,11 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 	dut := dutTopo.Duts[0].GetChromeos()
 
 	// Add attributes
-	var attrMap map[string]string = make(map[string]string)
+	attrMap := make(map[string]string)
 	// Attributes will be added later
 
 	// Add labels
-	var labels []string = make([]string, 0)
+	labels := make([]string, 0)
 
 	// - Servo
 	servo := dut.GetServo()
