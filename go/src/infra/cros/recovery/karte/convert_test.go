@@ -42,6 +42,7 @@ func TestConvertActionToKarteAction(t *testing.T) {
 				SwarmingTaskID: "b",
 				BuildbucketID:  "w",
 				AssetTag:       "c",
+				Hostname:       "fake-hostname",
 				StartTime:      time.Unix(1, 2),
 				StopTime:       time.Unix(3, 4),
 				Status:         metrics.ActionStatusFail,
@@ -63,7 +64,17 @@ func TestConvertActionToKarteAction(t *testing.T) {
 				StartTime:      convertTimeToProtobufTimestamp(time.Unix(1, 2)),
 				StopTime:       convertTimeToProtobufTimestamp(time.Unix(3, 4)),
 				FailReason:     "w",
+				Hostname:       "fake-hostname",
 				Status:         kartepb.Action_FAIL,
+			},
+		},
+		{
+			name: "action with hostname",
+			input: &metrics.Action{
+				Hostname: "h",
+			},
+			output: &kartepb.Action{
+				Hostname: "h",
 			},
 		},
 	}
@@ -120,6 +131,7 @@ func TestConvertKarteActionToAction(t *testing.T) {
 				StartTime:      convertTimeToProtobufTimestamp(time.Unix(1, 2)),
 				StopTime:       convertTimeToProtobufTimestamp(time.Unix(3, 4)),
 				FailReason:     "w",
+				Hostname:       "fake-hostname",
 				Status:         kartepb.Action_FAIL,
 			},
 			output: &metrics.Action{
@@ -131,8 +143,18 @@ func TestConvertKarteActionToAction(t *testing.T) {
 				StartTime:      time.Unix(1, 2),
 				StopTime:       time.Unix(3, 4),
 				Status:         metrics.ActionStatusFail,
+				Hostname:       "fake-hostname",
 				FailReason:     "w",
 				Observations:   nil,
+			},
+		},
+		{
+			name: "hostname",
+			input: &kartepb.Action{
+				Hostname: "h",
+			},
+			output: &metrics.Action{
+				Hostname: "h",
 			},
 		},
 	}

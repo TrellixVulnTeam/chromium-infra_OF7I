@@ -33,12 +33,15 @@ import (
 //
 type CloserFunc = func(context.Context, error)
 
-// NewMetric creates a new metric. Neither the action nor the closer function that NewMetrics returns will
-// ever be nil.
-// TODO(gregorynisbet): Consider adding a time parameter.
+// NewMetric creates a new metric.
 func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, CloserFunc, error) {
+	// Keep this function up to date with the call to args.Metrics.Create in recovery.go
 	if a == nil {
 		return nil, nil, errors.Reason("new metrics: run args cannot be nil").Err()
+	}
+	dutName := ""
+	if a.DUT != nil {
+		dutName = a.DUT.Name
 	}
 	startTime := time.Now()
 	action := &metrics.Action{
@@ -46,6 +49,7 @@ func (a *RunArgs) NewMetric(ctx context.Context, kind string) (*metrics.Action, 
 		StartTime:      startTime,
 		SwarmingTaskID: a.SwarmingTaskID,
 		BuildbucketID:  a.BuildbucketID,
+		Hostname:       dutName,
 	}
 	m, c := createMetric(ctx, a.Metrics, action)
 	return m, c, nil

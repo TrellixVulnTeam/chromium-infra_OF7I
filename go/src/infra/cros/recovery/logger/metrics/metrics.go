@@ -56,6 +56,8 @@ type Action struct {
 	StopTime time.Time
 	// Status is whether the event was successful, failed, or unknown.
 	Status ActionStatus
+	// Hostname is the hostname of the device or the name of the unit.
+	Hostname string
 	// FailReason is an error message with information describing the failure.
 	FailReason string
 	// Observations are the observations associated with the current observation.

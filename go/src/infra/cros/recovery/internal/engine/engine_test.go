@@ -722,6 +722,7 @@ func TestRecoveryCachePersistence(t *testing.T) {
 func TestCallMetricsInSimplePlan(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	_ = ctx
 	m := newFakeMetrics()
 	r := &recoveryEngine{
 		planName: "2e9aa66a-5fa1-4eaa-933c-eee8e4337823",

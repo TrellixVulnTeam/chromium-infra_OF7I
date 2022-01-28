@@ -80,6 +80,7 @@ func convertActionToKarteAction(action *metrics.Action) *kartepb.Action {
 		StopTime:       convertTimeToProtobufTimestamp(action.StopTime),
 		Status:         convertActionStatusToKarteActionStatus(action.Status),
 		FailReason:     action.FailReason,
+		Hostname:       action.Hostname,
 	}
 }
 
@@ -98,5 +99,6 @@ func convertKarteActionToAction(action *kartepb.Action) *metrics.Action {
 		StopTime:       convertProtobufTimestampToTime(action.GetStopTime()),
 		Status:         convertKarteActionStatusToActionStatus(action.GetStatus()),
 		FailReason:     action.GetFailReason(),
+		Hostname:       action.GetHostname(),
 	}
 }

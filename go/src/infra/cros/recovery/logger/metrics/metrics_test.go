@@ -44,6 +44,7 @@ func TestNewMetrics(t *testing.T) {
 			`    "StartTime": "0001-01-01T00:00:00Z",`,
 			`    "StopTime": "0001-01-01T00:00:00Z",`,
 			`    "Status": "",`,
+			`    "Hostname": "",`,
 			`    "FailReason": "",`,
 			`    "Observations": [`,
 			`        {`,

@@ -77,6 +77,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 				status = metrics.ActionStatusSuccess
 				failReason = rErr.Error()
 			}
+			// Keep this call up to date with NewMetric in execs.go.
 			_, err := args.Metrics.Create(
 				ctx,
 				&metrics.Action{
@@ -85,6 +86,7 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 					StopTime:       stop,
 					SwarmingTaskID: args.SwarmingTaskID,
 					BuildbucketID:  args.BuildbucketID,
+					Hostname:       args.UnitName,
 					// TODO(gregorynisbet): add status and FailReason.
 					Status:     status,
 					FailReason: failReason,
