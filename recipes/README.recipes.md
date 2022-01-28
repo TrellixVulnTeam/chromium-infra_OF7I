@@ -67,6 +67,7 @@
   * [update_submodules_mirror](#recipes-update_submodules_mirror)
   * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline)
+  * [windows_image_builder/winpe_customization](#recipes-windows_image_builder_winpe_customization) (Python3 ✅)
   * [windows_scripts_executor:examples/add_windows_driver](#recipes-windows_scripts_executor_examples_add_windows_driver) (Python3 ✅)
   * [windows_scripts_executor:examples/add_windows_package](#recipes-windows_scripts_executor_examples_add_windows_package) (Python3 ✅)
   * [windows_scripts_executor:examples/cipd_test](#recipes-windows_scripts_executor_examples_cipd_test) (Python3 ✅)
@@ -1620,6 +1621,15 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/offline.py#29)(api, inputs):**
 
 This recipe runs windows offline builder for a given user config.
+### *recipes* / [windows\_image\_builder/winpe\_customization](/recipes/recipes/windows_image_builder/winpe_customization.py)
+
+[DEPS](/recipes/recipes/windows_image_builder/winpe_customization.py#14): [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [windows\_adk](#recipe_modules-windows_adk), [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+&mdash; **def [RunSteps](/recipes/recipes/windows_image_builder/winpe_customization.py#29)(api, image):**
+
+This recipe executes offline_winpe_customization.
 ### *recipes* / [windows\_scripts\_executor:examples/add\_windows\_driver](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_driver.py)
 
 [DEPS](/recipes/recipe_modules/windows_scripts_executor/examples/add_windows_driver.py#15): [windows\_scripts\_executor](#recipe_modules-windows_scripts_executor), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
