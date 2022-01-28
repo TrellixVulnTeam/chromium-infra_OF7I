@@ -89,6 +89,6 @@ enum Zone {
     ZONE_SATLAB = 18; // "satlab" // zone for satlab duts
     ZONE_BROWSER_GOOGLER_DESK = 19; // "desk" // for browser assets given to googlers
     ZONE_JETSTREAM_B946 = 20; // US-MTV-946-1-1E1
-    ZONE_EM25_NETWORK = 25; // "em25_network" // US-PAO-EM25 // Room 115
+    ZONE_SFO36_NETWORK = 25; // "sfo36_network" // US-PAO-EM25 // Room 115
     ZONE_SFO36 = 27; // "sfo36" // US-PAO-EM25 // Room 105
 }
