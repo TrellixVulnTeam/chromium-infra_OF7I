@@ -42,8 +42,11 @@ class PowershellAPI(recipe_api.RecipeApi):
     if step_results:
       for k, v in step_results.items():
         results.presentation.logs[k] = v
-    if not step_results['results']['Success']:
-      results = step_results['results']
-      raise self.m.step.StepFailure('Failed {}'.format(
-          results['ErrorInfo']['Message']))
+      if 'results' in step_results and \
+         'Success' in step_results['results'] and \
+         not step_results['results']['Success']:
+        # If the result is a failure. Throw an error
+        results = step_results['results']
+        raise self.m.step.StepFailure('Failed {}'.format(
+            results['ErrorInfo']['Message']))
     return step_results

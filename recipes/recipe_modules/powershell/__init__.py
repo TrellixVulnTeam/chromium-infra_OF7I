@@ -7,3 +7,5 @@ DEPS = [
     'recipe_engine/json',
     'recipe_engine/step',
 ]
+
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'

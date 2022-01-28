@@ -11,7 +11,7 @@
   * [infra_cipd](#recipe_modules-infra_cipd) (Python3 ✅)
   * [infra_system](#recipe_modules-infra_system) (Python3 ✅)
   * [omahaproxy](#recipe_modules-omahaproxy) (Python3 ✅)
-  * [powershell](#recipe_modules-powershell)
+  * [powershell](#recipe_modules-powershell) (Python3 ✅)
   * [provenance](#recipe_modules-provenance) (Python3 ✅)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller) (Python3 ✅)
   * [support_3pp](#recipe_modules-support_3pp) (Python3 ✅) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
@@ -522,7 +522,7 @@ APIs for interacting with omahaproxy.
 
 [DEPS](/recipes/recipe_modules/powershell/__init__.py#5): [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [PowershellAPI](/recipes/recipe_modules/powershell/api.py#9)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
