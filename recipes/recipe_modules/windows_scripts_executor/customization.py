@@ -4,16 +4,20 @@
 from . import add_windows_package
 from . import add_windows_driver
 
+from PB.recipes.infra.windows_image_builder import windows_image_builder as wib
+
+
 class Customization(object):
   """ Base customization class. Provides support for pinning and executing
       recipes.
   """
 
-  def __init__(self, arch, scripts, configs, step, path, powershell, m_file,
-               archive, source):
+  def __init__(self, cust, arch, scripts, configs, step, path, powershell,
+               m_file, archive, source):
     """ __init__ copies common module objects to class references. These are
         commonly used for all customizations
         Args:
+          cust: wib.Customization proto object
           arch: string representing architecture to build the image for
           scripts: path to the scripts resource dir
           step: module object for recipe_engine/step
@@ -23,6 +27,9 @@ class Customization(object):
           archive: module object for recipe_engine/archive
           source: module object for Source from sources.py
     """
+    # generate a copy of customization
+    self._customization = wib.Customization()
+    self._customization.CopyFrom(cust)
     self._arch = arch
     self._scripts = scripts
     self._step = step
@@ -39,6 +46,10 @@ class Customization(object):
     """ name returns the name of the customization object. This needs to be
         set by the inheriting class"""
     return self._name
+
+  def customization(self):
+    """customization returns wib.Customization object representing self"""
+    return self._customization
 
   def set_key(self, key):
     """ set_key is used to set the identification keys for the customization

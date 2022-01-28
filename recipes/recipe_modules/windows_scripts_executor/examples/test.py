@@ -34,9 +34,8 @@ key = '4fa9269b1b8ebc0cd8d2c1c2415374819838ffb0a4a541a601ec51749b555096'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_customizations()
-  api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_all_packages()
+  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.download_all_packages(custs)
   # mock cipd packages to avoid spooking add_file execution
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\' +
@@ -49,7 +48,7 @@ def RunSteps(api, config):
       'resolved-instance_id-of-latest----------\\' +
       'infra_internal\\labs\\drivers\\microsoft\\' +
       'windows_adk\\winpe\\winpe-wmi\\windows-amd64', 'DIRECTORY')
-  api.windows_scripts_executor.execute_config(config)
+  api.windows_scripts_executor.execute_customizations(custs)
   # mock existence of customization output to trigger upload
   api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(cust_name) +
                           'media\\sources\\boot.wim')
@@ -117,7 +116,7 @@ def GenTests(api):
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
                          [ACTION_ADD_STARTNET])) +
          # mock pinning the file to current refs
-         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock failure in gen winpe media step
          t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
@@ -148,7 +147,7 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, cust_name) +
          # mock git pin execution
-         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file from git to image execution
          t.ADD_GIT_FILE(
@@ -182,7 +181,7 @@ def GenTests(api):
          # mock all the init and deinit steps for winpe
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,
@@ -256,7 +255,7 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_GIT_FILE(api, image, cust_name,

@@ -28,10 +28,9 @@ key = '96fe4737ff3346d68755d1359da74003c56d38571669d4c97602fd3f1d59d3f7'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_customizations()
-  api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_all_packages()
-  api.windows_scripts_executor.execute_config(config)
+  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.download_all_packages(custs)
+  api.windows_scripts_executor.execute_customizations(custs)
 
 
 def GenTests(api):

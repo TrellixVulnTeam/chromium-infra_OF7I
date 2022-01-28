@@ -57,6 +57,11 @@ def NEST_WINPE_DEINIT_STEP():
   return 'Deinit WinPE image modification'
 
 
+def NEST_PROCESS_CUST(image):
+  """ generate process customization header"""
+  return 'Process the customizations in {}'.format(image)
+
+
 def NEST_PIN_SRCS(cust):
   """ generate Pin Src step nesting name """
   return 'Pin resources from {}'.format(cust)
@@ -126,7 +131,7 @@ def MOCK_CUST_OUTPUT(api, image, url, success=True):
   if success:
     retcode = 0
   return api.step_data(
-      NEST(NEST_CONFIG_STEP(image), 'gsutil stat {}'.format(url)),
+      NEST(NEST_PROCESS_CUST(image), 'gsutil stat {}'.format(url)),
       api.raw_io.stream_output(_gcs_stat.format(url, url)),
       retcode=retcode,
   )
@@ -174,10 +179,11 @@ def DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization, success=True):
       stdout=json_res(api, success))
 
 
-def GIT_PIN_FILE(api, cust, refs, path, data):
+def GIT_PIN_FILE(api, image, cust, refs, path, data):
   """ mock git pin file step """
   return api.step_data(
       NEST(
+          NEST_PROCESS_CUST(image),
           NEST_PIN_SRCS(cust),
           'gitiles log: ' + '{}/{}'.format(refs, path),
       ),
@@ -185,7 +191,7 @@ def GIT_PIN_FILE(api, cust, refs, path, data):
   )
 
 
-def GCS_PIN_FILE(api, cust, url, pin_url='', success=True):
+def GCS_PIN_FILE(api, image, cust, url, pin_url='', success=True):
   """ mock gcs pin file action"""
   retcode = 1
   if success:
@@ -193,7 +199,9 @@ def GCS_PIN_FILE(api, cust, url, pin_url='', success=True):
   if not pin_url:
     pin_url = url
   return api.step_data(
-      NEST(NEST_PIN_SRCS(cust), 'gsutil stat {}'.format(url)),
+      NEST(
+          NEST_PROCESS_CUST(image), NEST_PIN_SRCS(cust),
+          'gsutil stat {}'.format(url)),
       api.raw_io.stream_output(_gcs_stat.format(url, pin_url)),
       retcode=retcode,
   )

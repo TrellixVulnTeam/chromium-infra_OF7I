@@ -33,16 +33,15 @@ key = '9e007120d0ca02d6d82cf2bf23544ba222e9260eded07310393eca73a501842e'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_customizations()
-  api.windows_scripts_executor.gen_canonical_configs(config)
-  api.windows_scripts_executor.download_all_packages()
+  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.download_all_packages(custs)
   api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\WinTools\\net\\ping.exe',
                           'FILE')
   # mock existence of the image pulled from GCS
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM\\ffaa037563.zip',
       'FILE')
-  api.windows_scripts_executor.execute_config(config)
+  api.windows_scripts_executor.execute_customizations(custs)
   # mock existence of image created using copype
   api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(customization) +
                           'media\\sources\\boot.wim')
@@ -86,7 +85,7 @@ def GenTests(api):
       # mock all the init and deint steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
       # self pinned gcs artifact
-      t.GCS_PIN_FILE(api, customization, 'gs://WinTools/net/ping.exe') +
+      t.GCS_PIN_FILE(api, image, customization, 'gs://WinTools/net/ping.exe') +
       # download the unpinned artifact
       t.GCS_DOWNLOAD_FILE(api, customization, 'WinTools', 'net/ping.exe') +
       # add the given file to the image
@@ -109,7 +108,11 @@ def GenTests(api):
       t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, 'x86', image, customization) +
       # non-existent gcs artifact
       t.GCS_PIN_FILE(
-          api, customization, 'gs://WinTools/net/ping.exe', success=False) +
+          api,
+          image,
+          customization,
+          'gs://WinTools/net/ping.exe',
+          success=False) +
       # failure adding the file to the image
       t.ADD_GCS_FILE(
           api, 'WinTools', 'net\\ping.exe', image, customization, success=False)
@@ -130,7 +133,7 @@ def GenTests(api):
       t.DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) +
       t.CHECK_UMOUNT_WIM(api, image, customization) +
       # Pin the given file to another gcs artifact
-      t.GCS_PIN_FILE(api, customization,
+      t.GCS_PIN_FILE(api, image, customization,
                      'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.zip',
                      'gs://chrome-gce-images/WIB-WIM/ffaa037563.zip') +
       # download the artifact from it's original link

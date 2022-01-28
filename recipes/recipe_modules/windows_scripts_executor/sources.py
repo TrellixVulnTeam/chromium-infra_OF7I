@@ -6,6 +6,9 @@ from . import git_manager
 from . import gcs_manager
 from . import helper
 
+from PB.recipes.infra.windows_image_builder import sources as src_pb
+from PB.recipes.infra.windows_image_builder import dest as dest_pb
+
 
 class Source:
   """ Source handles all the pinning, downloading, and uploading artifacts to
@@ -103,9 +106,14 @@ class Source:
   def exists(self, src):
     """ exists Returns True if the given src exists
         Args:
-          src: sources.Src proto object representing an artifact
+          src: {sources.Src | dest.Dest} proto object representing an artifact
     """
     # TODO(anushruth): add support for git and cipd
-    if src and src.WhichOneof('src') == 'gcs_src':
-      return self._gcs.exists(src.gcs_src)
+    if isinstance(src, src_pb.Src):  #pragma: no cover
+      if src.WhichOneof('src') == 'gcs_src':
+        return self._gcs.exists(src.gcs_src)
+    if isinstance(src, dest_pb.Dest):
+      if src.WhichOneof('dest') == 'gcs_src':
+        return self._gcs.exists(src.gcs_src)
+
     return False  # pragma: no cover

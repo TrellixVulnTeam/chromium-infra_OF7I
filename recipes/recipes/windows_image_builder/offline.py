@@ -76,18 +76,14 @@ def RunSteps(api, inputs):
           ))
 
   api.windows_scripts_executor.init(config)
-  # Pin the configs to absolute refs
-  api.windows_scripts_executor.pin_customizations()
 
-  api.windows_scripts_executor.gen_canonical_configs(config)
+  custs = api.windows_scripts_executor.process_customizations()
 
-  #TODO(anushruth): Check if the build can be skipped
-
+  api.windows_scripts_executor.download_all_packages(custs)
   # Ensure windows adk is installed
   api.windows_adk.ensure()
 
-  api.windows_scripts_executor.download_all_packages()
-  api.windows_scripts_executor.execute_config(config)
+  api.windows_scripts_executor.execute_customizations(custs)
 
 
 def GenTests(api):

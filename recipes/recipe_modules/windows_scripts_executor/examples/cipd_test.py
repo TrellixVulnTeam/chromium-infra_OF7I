@@ -31,8 +31,8 @@ key = '835663538df204d1d6ba072b185850ba502e4520fddbfe2262562596511368af'
 
 def RunSteps(api, config):
   api.windows_scripts_executor.init(config)
-  api.windows_scripts_executor.pin_customizations()
-  api.windows_scripts_executor.gen_canonical_configs(config)
+  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.download_all_packages(custs)
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
@@ -45,8 +45,7 @@ def RunSteps(api, config):
   api.path.mock_add_paths(
       '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
       '\\infra\\files\\cipd-3\\windows-amd64', 'DIRECTORY')
-  api.windows_scripts_executor.download_all_packages()
-  api.windows_scripts_executor.execute_config(config)
+  api.windows_scripts_executor.execute_customizations(custs)
   # mock existence of customization output to trigger upload
   api.path.mock_add_paths('[CLEANUP]\\{}\\workdir\\'.format(customization) +
                           'media\\sources\\boot.wim')

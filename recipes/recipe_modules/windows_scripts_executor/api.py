@@ -22,6 +22,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._sources = None
     self._configs_dir = None
     self._customizations = []
+    self._executable_cust = []
+    self._config = wib.Image()
 
   def init(self, config):
     """ init initializes all the dirs and sub modules required.
@@ -41,12 +43,14 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._configs_dir = self.m.path['cleanup'].join('configs')
     helper.ensure_dirs(self.m.file, [self._configs_dir])
 
+    self._config.CopyFrom(config)
+
     # initialize all customizations
     for cust in config.customizations:
       if cust.WhichOneof('customization') == 'offline_winpe_customization':
         self._customizations.append(
             offwinpecust.OfflineWinPECustomization(
-                cust,
+                cust=cust,
                 arch=arch,
                 scripts=self._scripts,
                 configs=self._configs_dir,
@@ -57,17 +61,35 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                 archive=self.m.archive,
                 source=self._sources))
 
-  def pin_customizations(self):
-    """ pin_customizations pins all the sources in the customizations"""
-    for cust in self._customizations:
+    return self._customizations
+
+  def process_customizations(self):
+    """ process_customizations pins all the volatile srcs, generates
+        canonnical configs, filters customizations that need to be executed.
+        Returns list of customizations that can be executed.
+    """
+    with self.m.step.nest('Process the customizations in {}'.format(
+        self._config.name)):
+      self.pin_customizations(self._customizations)
+      self.gen_canonical_configs(self._customizations)
+      self._customizations = self.filter_executable_customizations(
+          self._customizations)
+      return self._customizations
+
+  def pin_customizations(self, customizations):
+    """ pin_customizations pins all the sources in the customizations
+        Args:
+          customizations: List of Customizations object from customizations.py
+    """
+    for cust in customizations:
       with self.m.step.nest('Pin resources from {}'.format(cust.name())):
         cust.pin_sources()
 
-  def gen_canonical_configs(self, config):
+  def gen_canonical_configs(self, customizations):
     """ gen_canonical_configs strips all the names in the config and returns
         individual configs containing one customization per image.
         Args:
-          config: wib.Image proto representing the image to be generated
+          customizations: List of Customizations object from customizations.py
         Example:
           Given an Image
             Image{
@@ -139,14 +161,15 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
           etc,. are set to empty before calculating the hash to maintain the
           uniqueness of the hash.
     """
-    for cust in self._customizations:
+    for cust in customizations:
       # create a new image object, with same arch and containing only one
       # customization
       canon_image = wib.Image(
-          arch=config.arch, customizations=[cust.get_canonical_cfg()])
+          arch=self._config.arch, customizations=[cust.get_canonical_cfg()])
       name = cust.name()
       # write the config to disk
-      cfg_file = self._configs_dir.join('{}-{}.cfg'.format(config.name, name))
+      cfg_file = self._configs_dir.join('{}-{}.cfg'.format(
+          self._config.name, name))
       self.m.file.write_proto(
           'Write config {}'.format(cfg_file),
           cfg_file,
@@ -161,19 +184,52 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
       self.m.file.copy('Copy {} to {}'.format(cfg_file, key_file), cfg_file,
                        key_file)
 
-  def download_all_packages(self):
-    for cust in self._customizations:
+    return customizations
+
+  def filter_executable_customizations(self, customizations):
+    """ filter_executable_customizations generates a list of customizations
+        that need to be executed.
+        Args:
+          customizations: List of Customizations object from customizations.py
+    """
+    exec_customizations = []
+    for cust in customizations:
+      output = cust.get_output()
+      if output and not self._sources.exists(output):
+        # add to executable list if the output doesn't exist
+        exec_customizations.append(cust)
+    return exec_customizations
+
+  def download_all_packages(self, custs):
+    """ download_all_packages downloads all the packages referenced by given
+        custs.
+        Args:
+          customizations: List of Customizations object from customizations.py
+    """
+    for cust in custs:
       with self.m.step.nest('Download resources for {}'.format(cust.name())):
         cust.download_sources()
 
-  def execute_config(self, config):
+  def execute_customizations(self, custs):
     """ Executes the windows image builder user config.
         Args:
-          config: wib.Image proto representing the image to be generated
+          customizations: List of Customizations object from customizations.py
     """
-    with self.m.step.nest('execute config {}'.format(config.name)):
-      for cust in self._customizations:
-        output = cust.get_output()
-        if not self._sources.exists(src_pb.Src(gcs_src=output.gcs_src)):
-          # execute the customization if we don't have the output
-          cust.execute_customization()
+    with self.m.step.nest('execute config {}'.format(self._config.name)):
+      for cust in custs:
+        cust.execute_customization()
+
+  def get_executable_configs(self, custs):  # pragma: no cover
+    """ get_executable_config takes list of customizations and returns a list
+        of wib.Image proto objects that can be used to trigger other builders
+        Args:
+          custs: list of customizations refs generated by process_customizations
+    """
+    images = []
+    for cust in custs:
+      image = wib.Image()
+      image.CopyFrom(self._config)
+      image.customizations = []
+      image.customizations.append(cust.customization())
+      images.append(image)
+    return images

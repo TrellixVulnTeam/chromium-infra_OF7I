@@ -192,6 +192,10 @@
   },
   {
     "cmd": [],
+    "name": "Process the customizations in test_config"
+  },
+  {
+    "cmd": [],
     "name": "ensure windows adk present"
   },
   {

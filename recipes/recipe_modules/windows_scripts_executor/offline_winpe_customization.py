@@ -22,20 +22,15 @@ ADDFILE = 'robocopy'
 class OfflineWinPECustomization(customization.Customization):
   """ WinPE based customization support """
 
-  def __init__(self, cust, **kwargs):
+  def __init__(self, **kwargs):
     """ __init__ generates a ref for the given customization
-        Args:
-          cust: wib.Customization proto object representing
-          wib.OfflineWinPECustomization
     """
     super(OfflineWinPECustomization, self).__init__(**kwargs)
     # ensure that the customization is of the correct type
-    assert cust.WhichOneof('customization') == 'offline_winpe_customization'
-    # generate a copy of customization
-    self._customization = wib.Customization()
-    self._customization.CopyFrom(cust)
+    assert self.customization().WhichOneof(
+        'customization') == 'offline_winpe_customization'
     # use a custom work dir
-    self._name = self._customization.offline_winpe_customization.name
+    self._name = self.customization().offline_winpe_customization.name
     self._workdir = self._path['cleanup'].join(self._name, 'workdir')
     self._scratchpad = self._path['cleanup'].join(self._name, 'sp')
     self._canon_cust = None

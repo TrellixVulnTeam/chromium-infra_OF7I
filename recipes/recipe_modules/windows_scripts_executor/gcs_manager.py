@@ -31,8 +31,6 @@ class GCSManager:
     self._file = mfile
     self._raw_io = raw_io
     self._archive = archive
-    self._pending_uploads = {}
-    self._pending_downloads = {}
     # dict mapping unpinned url to pinned package
     self._pinned_srcs = {}
     # dict mapping downloaded package paths to package
