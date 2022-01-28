@@ -60,6 +60,8 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
+  PING_URL = 'gs://WinTools/net/ping.exe'
+
   WPE_IMAGE_WITH_SRC = t.WPE_IMAGE(image, wib.ARCH_X86, customization,
                                    'no-action', [])
   tmp_customization = WPE_IMAGE_WITH_SRC.customizations[0]
@@ -91,7 +93,7 @@ def GenTests(api):
       # download the unpinned artifact
       t.GCS_DOWNLOAD_FILE(api, customization, 'WinTools', 'net/ping.exe') +
       # add the given file to the image
-      t.ADD_GCS_FILE(api, 'WinTools', 'net\\ping.exe', image, customization) +
+      t.ADD_FILE(api, image, customization, PING_URL) +
       # assert that the generated image was uploaded
       t.CHECK_GCS_UPLOAD(
           api, image, customization,
@@ -101,25 +103,23 @@ def GenTests(api):
       api.post_process(DropExpectation))
 
   # add non-existent artifact from gcs
-  yield (
-      api.test('Add non-existent binary from gcs', api.platform('win', 64)) +
-      api.properties(
-          t.WPE_IMAGE(image, wib.ARCH_X86, customization,
-                      'add artifact from gcs', [ACTION_ADD_PING])) +
-      # mock all the init and deint steps
-      t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, 'x86', image, customization) +
-      # non-existent gcs artifact
-      t.GCS_PIN_FILE(
-          api,
-          image,
-          customization,
-          'gs://WinTools/net/ping.exe',
-          success=False) +
-      # failure adding the file to the image
-      t.ADD_GCS_FILE(
-          api, 'WinTools', 'net\\ping.exe', image, customization, success=False)
-      + api.post_process(StatusFailure) +  # recipe should fail
-      api.post_process(DropExpectation))
+  yield (api.test('Add non-existent binary from gcs', api.platform('win', 64)) +
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, customization,
+                         'add artifact from gcs', [ACTION_ADD_PING])) +
+         # mock all the init and deint steps
+         t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, 'x86', image, customization) +
+         # non-existent gcs artifact
+         t.GCS_PIN_FILE(
+             api,
+             image,
+             customization,
+             'gs://WinTools/net/ping.exe',
+             success=False) +
+         # failure adding the file to the image
+         t.ADD_FILE(api, image, customization, PING_URL, success=False) +
+         api.post_process(StatusFailure) +  # recipe should fail
+         api.post_process(DropExpectation))
 
   # Test using GCSSrc as an input image to the customization and input artifact
   # to add file action. Test both pinned (intermediate-winpe) and

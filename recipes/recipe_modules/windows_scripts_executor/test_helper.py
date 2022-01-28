@@ -220,34 +220,13 @@ def GCS_DOWNLOAD_FILE(api, cust, bucket, source, success=True):
   )
 
 
-def ADD_GIT_FILE(api, image, customization, commit, path, success=True):
-  """ mock add git file to unpacked image step """
-  return ADD_FILE(api, image, customization,
-                  '[CACHE]\\Pkgs\\GITPkgs\\' + commit + '\\' + path, success)
-
-
-def ADD_FILE(api, image, customization, path, success=True):
+def ADD_FILE(api, image, customization, url, success=True):
   """ mock add file to image step """
   return api.step_data(
       NEST(
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(customization),
-          'PowerShell> Add file {}'.format(path)),
+          'PowerShell> Add file {}'.format(url)),
       stdout=json_res(api, success))
-
-
-def ADD_CIPD_FILE(api, pkg, platform, image, customization, success=True):
-  """ mock add cipd file to unpacked image step """
-  return ADD_FILE(
-      api, image, customization,
-      '[CACHE]\\Pkgs\\CIPDPkgs\\resolved-instance_id-of-latest----------' +
-      '\\{}\\{}\\*'.format(pkg, platform), success)
-
-
-def ADD_GCS_FILE(api, bucket, path, image, customization, success=True):
-  """ mock add cipd file to unpacked image step """
-  return ADD_FILE(api, image, customization,
-                  '[CACHE]\\Pkgs\\GCSPkgs\\{}\\{}'.format(bucket,
-                                                          path), success)
 
 
 def INSTALL_FILE(api, name, image, customization, success=True):
@@ -368,6 +347,22 @@ def CHECK_CIPD_UPLOAD(api, image, cust, dest):
           NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(cust),
           NEST_WINPE_DEINIT_STEP(), NEST_UPLOAD_CUST_OUTPUT(cust),
           'create {}/{}'.format(package, platform)), args)
+
+
+def CHECK_ADD_FILE(api, image, cust, url, dest):
+  """
+      Check add file step
+  """
+  wild_card = ['.*'] * 15
+  wild_card[4] = 'robocopy'
+  wild_card[12] = dest
+
+  return api.post_process(
+      StepCommandRE,
+      NEST(
+          NEST_CONFIG_STEP(image), NEST_WINPE_CUSTOMIZATION_STEP(cust),
+          'PowerShell> Add file {}'.format(url)), wild_card)
+
 
 
 #   Generate proto configs helper functions

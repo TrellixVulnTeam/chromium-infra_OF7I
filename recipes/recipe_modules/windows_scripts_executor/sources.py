@@ -94,7 +94,7 @@ class Source:
     if src and src.WhichOneof('src') == 'cipd_src':
       return self._cipd.get_cipd_url(src.cipd_src)
     if src and src.WhichOneof('src') == 'git_src':  # pragma: no cover
-      return self._cipd.get_gitiles_url(src.git_src)
+      return self._git.get_gitiles_url(src.git_src)
 
   def upload_package(self, dest, source):
     """ upload_package uploads a given package to the given destination"""

@@ -52,6 +52,9 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
+  STARTNET_URL = 'chromium.dev/+/ef70cb069518e6dc3ff24bfae7f195de5099c377/' +\
+                 'windows/artifacts/startnet.cmd'
+
   ACTION_ADD_DISKPART = actions.Action(
       add_file=actions.AddFile(
           name='add_diskpart_file',
@@ -62,6 +65,9 @@ def GenTests(api):
                   src='windows/artifacts/diskpart.txt'),),
           dst='Windows\\System32',
       ))
+
+  DISKPART_URL = 'chromium.dev/+/ef70cb069518e6dc3ff24bfae7f195de5099c377/' +\
+                 'windows/artifacts/diskpart.txt'
 
   yield (api.test('Add git src in action', api.platform('win', 64)) +
          # run a config for adding startnet file to wim
@@ -74,9 +80,7 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, image, customization, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock adding the file to wim
-         t.ADD_GIT_FILE(api, image, customization,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\startnet.cmd') +
+         t.ADD_FILE(api, image, customization, STARTNET_URL) +
          api.post_process(StatusSuccess) +  # recipe should pass
          api.post_process(DropExpectation))
 
@@ -94,13 +98,9 @@ def GenTests(api):
       t.GIT_PIN_FILE(api, image, customization, 'HEAD',
                      'windows/artifacts/startnet.cmd', 'HEAD') +
       # mock adding the file to wim
-      t.ADD_GIT_FILE(api, image, customization,
-                     'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                     'windows\\artifacts\\startnet.cmd') +
+      t.ADD_FILE(api, image, customization, STARTNET_URL) +
       # mock adding the file to wim
-      t.ADD_GIT_FILE(api, image, customization,
-                     'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                     'windows\\artifacts\\startnet.cmd (2)') +
+      t.ADD_FILE(api, image, customization, STARTNET_URL + ' (2)') +
       api.post_process(StatusSuccess) +  # recipe should pass
       api.post_process(DropExpectation))
 
@@ -118,12 +118,8 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, image, customization, 'HEAD',
                         'windows/artifacts/diskpart.txt', 'HEAD') +
          # mock adding the file to wim
-         t.ADD_GIT_FILE(api, image, customization,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\startnet.cmd') +
+         t.ADD_FILE(api, image, customization, STARTNET_URL) +
          # mock adding the file to wim
-         t.ADD_GIT_FILE(api, image, customization,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\diskpart.txt') +
+         t.ADD_FILE(api, image, customization, DISKPART_URL) +
          api.post_process(StatusSuccess) +  # recipe should pass
          api.post_process(DropExpectation))

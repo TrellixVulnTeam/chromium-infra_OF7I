@@ -70,6 +70,9 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
+  STARTNET_URL = 'chromium.dev/+/ef70cb069518e6dc3ff24bfae7f195de5099c377/' +\
+                 'windows/artifacts/startnet.cmd'
+
   yield (api.test('not_run_on_windows', api.platform('linux', 64)) +
          api.expect_exception('AssertionError') +
          api.post_process(DropExpectation))
@@ -83,9 +86,7 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, wpe_image, wpe_cust, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to wpe_image mount dir step
-         t.ADD_GIT_FILE(api, wpe_image, wpe_cust,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\startnet.cmd') +
+         t.ADD_FILE(api, wpe_image, wpe_cust, STARTNET_URL) +
          # assert that the generated wpe_image was uploaded
          t.CHECK_GCS_UPLOAD(
              api, wpe_image, wpe_cust,

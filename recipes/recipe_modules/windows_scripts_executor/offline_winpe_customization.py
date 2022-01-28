@@ -253,9 +253,9 @@ class OfflineWinPECustomization(customization.Customization):
       src_file = self._path.basename(src)
       src = self._path.dirname(src)
     # destination to copy the file to
-    dest = self._workdir.join('mount', af.dst)
+    dest = '"{}"'.format(self._workdir.join('mount', af.dst))
     self.execute_script(
-        'Add file {}'.format(src.join(src_file)),
+        'Add file {}'.format(self._source.get_url(af.src)),
         ADDFILE,
         src,
         dest,

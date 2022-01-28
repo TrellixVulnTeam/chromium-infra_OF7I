@@ -66,6 +66,10 @@ def GenTests(api):
           dst='Windows\\Users\\',
       ))
 
+  CIPD_1_URL = 'https://chrome-infra-packages.appspot.com/p/infra/files/' +\
+               'cipd-1/windows-amd64/+/' +\
+               'resolved-instance_id-of-latest----------'
+
   # add file from cipd to winpe image action
   ACTION_ADD_CIPD_2 = actions.Action(
       add_file=actions.AddFile(
@@ -79,6 +83,10 @@ def GenTests(api):
           dst='Windows\\Users\\',
       ))
 
+  CIPD_2_URL = 'https://chrome-infra-packages.appspot.com/p/infra/files/' +\
+              'cipd-2/windows-amd64/+/' +\
+              'resolved-instance_id-of-latest----------'
+
   # add file from cipd to winpe image action
   ACTION_ADD_CIPD_3 = actions.Action(
       add_file=actions.AddFile(
@@ -91,6 +99,10 @@ def GenTests(api):
               ),),
           dst='Windows\\Users\\',
       ))
+
+  CIPD_3_URL = 'https://chrome-infra-packages.appspot.com/p/infra/files/' +\
+               'cipd-3/windows-amd64/+/' +\
+               'resolved-instance_id-of-latest----------'
 
   UPLOAD_TO_CIPD_1 = dest.Dest(
       cipd_src=sources.CIPDSrc(
@@ -122,8 +134,7 @@ def GenTests(api):
       # mock init and deinit steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
       # mock add cipd file step
-      t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
-                      customization) +
+      t.ADD_FILE(api, image, customization, CIPD_1_URL) +
       # assert that the recipe was executed successfully
       api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -137,11 +148,9 @@ def GenTests(api):
       # mock init and deinit steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
       # mock add cipd file step
-      t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
-                      customization) +
+      t.ADD_FILE(api, image, customization, CIPD_1_URL) +
       # mock add cipd file step
-      t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-2', 'windows-amd64', image,
-                      customization) +
+      t.ADD_FILE(api, image, customization, CIPD_2_URL) +
       # assert that the recipe execution was a success
       api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -160,14 +169,11 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
-                         customization) +
+         t.ADD_FILE(api, image, customization, CIPD_1_URL) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-3', 'windows-amd64', image,
-                         customization) +
+         t.ADD_FILE(api, image, customization, CIPD_2_URL) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-2', 'windows-amd64', image,
-                         customization) +
+         t.ADD_FILE(api, image, customization, CIPD_3_URL) +
          # assert that the recipe executed successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -180,8 +186,7 @@ def GenTests(api):
          # mock init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(api, 'infra\\files\\cipd-1', 'windows-amd64', image,
-                         customization) +
+         t.ADD_FILE(api, image, customization, CIPD_1_URL) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
              api, image, customization,

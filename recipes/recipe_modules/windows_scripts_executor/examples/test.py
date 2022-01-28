@@ -70,6 +70,9 @@ def GenTests(api):
           dst='Windows\\System32',
       ))
 
+  STARTNET_URL = 'chromium.dev/+/ef70cb069518e6dc3ff24bfae7f195de5099c377/' +\
+                 'windows/artifacts/startnet.cmd'
+
   # action to copy file from cipd
   ACTION_ADD_DOT3SVC = actions.Action(
       add_file=actions.AddFile(
@@ -83,6 +86,10 @@ def GenTests(api):
               ),),
           dst='Windows\\System32\\',
       ))
+
+  DOT3SVC_URL = 'https://chrome-infra-packages.appspot.com/p/infra_internal/' +\
+                'labs/drivers/microsoft/windows_adk/winpe/winpe-dot3svc/' +\
+                'windows-amd64/+/resolved-instance_id-of-latest----------'
 
   # actions for installing windows packages
   ACTION_INSTALL_WMI = actions.Action(
@@ -98,17 +105,20 @@ def GenTests(api):
           args=['-IgnoreCheck'],
       ))
 
-  # generate happy path image with custom destination for upload
-  HAPPY_PATH_IMAGE = t.WPE_IMAGE(image, wib.ARCH_X86, cust_name,
-                                 'network_setup',
-                                 [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])
-  HAPPY_PATH_IMAGE.customizations[
-      0].offline_winpe_customization.image_dests.append(
-          dest.Dest(
-              gcs_src=sources.GCSSrc(
-                  bucket='test-bucket',
-                  source='out/gce_winpe_rel.zip',
-              )))
+  # add cygwin. [b/213240613] Test for space in dest location
+  ACTION_ADD_CYGWIN = actions.Action(
+      add_file=actions.AddFile(
+          name='add_startnet_file',
+          src=sources.Src(
+              git_src=sources.GITSrc(
+                  repo='chromium.dev',
+                  ref='HEAD',
+                  src='windows/artifacts/cygwin.exe'),),
+          dst='Program Files\\Cygwin',
+      ))
+
+  CYGWIN_URL = 'chromium.dev/+/ef70cb069518e6dc3ff24bfae7f195de5099c377/' +\
+               'windows/artifacts/cygwin.exe'
 
   # Fail the step to gen winpe media folder using copy-pe
   # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/copype-command-line-options
@@ -152,9 +162,8 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file from git to image execution
-         t.ADD_GIT_FILE(
-             api, image, cust_name, 'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-             'windows\\artifacts\\startnet.cmd', False) +  # Fail to add file
+         t.ADD_FILE(api, image, cust_name, STARTNET_URL, False)
+         +  # Fail to add file
          api.post_process(StatusFailure) +  # recipe fails
          api.post_process(DropExpectation))
 
@@ -167,10 +176,7 @@ def GenTests(api):
          # mock init and deinit steps for offline customization
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock add cipd file step
-         t.ADD_CIPD_FILE(
-             api,
-             'infra_internal\\labs\\drivers\\microsoft\\windows_adk\\winpe\\' +
-             'winpe-dot3svc', 'windows-amd64', image, cust_name) +
+         t.ADD_FILE(api, image, cust_name, DOT3SVC_URL) +
          # assert that recipe completed execution successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -186,9 +192,7 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
-         t.ADD_GIT_FILE(api, image, cust_name,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\startnet.cmd') +
+         t.ADD_FILE(api, image, cust_name, STARTNET_URL) +
          # recipe execution should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -226,6 +230,7 @@ def GenTests(api):
               bucket='chrome-gce-images',
               source='WIB-WIM/winpe_stable.zip',
           )))
+
   yield (api.test('Modify winpe image from GCS', api.platform('win', 64)) +
          # start recipe with the custom GCS image src
          api.properties(GCS_IMAGE) +
@@ -242,6 +247,7 @@ def GenTests(api):
               package='infra_internal/labs/windows/gce',
               refs='stable',
               platform='windows-amd64')))
+
   yield (api.test('Modify winpe image from CIPD', api.platform('win', 64)) +
          # start recipe with the custom GCS image src
          api.properties(CIPD_IMAGE) +
@@ -249,6 +255,44 @@ def GenTests(api):
          t.MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image,
                                                  cust_name) +
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  # [b/213240613] Test for spaces in Add_File destination
+  yield (
+      api.test('Escape spaces in path test', api.platform('win', 64)) +
+      # generate image with install wmi action
+      api.properties(
+          t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'wmi_setup',
+                      [ACTION_ADD_CYGWIN])) +
+      # mock all the init and deinit steps
+      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
+      # mock git pin file
+      t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
+                     'windows/artifacts/cygwin.exe', 'HEAD') +
+      # mock add file to image mount dir step
+      t.ADD_FILE(api, image, cust_name, CYGWIN_URL) +
+      # assert that the generated image was uploaded
+      t.CHECK_GCS_UPLOAD(
+          api, image, cust_name,
+          '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(cust_name),
+          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
+      t.CHECK_ADD_FILE(
+          api, image, cust_name, CYGWIN_URL,
+          "\"\[CLEANUP\]\\\\generic_cust\\\\workdir\\\\mount\\\\Program Files"
+          "\\\\Cygwin\"") +
+      # recipe should pass successfully
+      api.post_process(StatusSuccess) + api.post_process(DropExpectation))
+
+  # generate happy path image with custom destination for upload
+  HAPPY_PATH_IMAGE = t.WPE_IMAGE(image, wib.ARCH_X86, cust_name,
+                                 'network_setup',
+                                 [ACTION_ADD_STARTNET, ACTION_ADD_DOT3SVC])
+  HAPPY_PATH_IMAGE.customizations[
+      0].offline_winpe_customization.image_dests.append(
+          dest.Dest(
+              gcs_src=sources.GCSSrc(
+                  bucket='test-bucket',
+                  source='out/gce_winpe_rel.zip',
+              )))
 
   # Generic happy path for recipe execution
   yield (api.test('Happy path', api.platform('win', 64)) +
@@ -260,14 +304,9 @@ def GenTests(api):
          t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
-         t.ADD_GIT_FILE(api, image, cust_name,
-                        'ef70cb069518e6dc3ff24bfae7f195de5099c377',
-                        'windows\\artifacts\\startnet.cmd') +
+         t.ADD_FILE(api, image, cust_name, STARTNET_URL) +
          # mock add file to image mount dir step
-         t.ADD_CIPD_FILE(
-             api, 'infra_internal\\labs\\drivers\\microsoft\\' +
-             'windows_adk\\winpe\\winpe-dot3svc', 'windows-amd64', image,
-             cust_name) +
+         t.ADD_FILE(api, image, cust_name, DOT3SVC_URL) +
          # assert that the generated image was uploaded
          t.CHECK_GCS_UPLOAD(
              api, image, cust_name,
