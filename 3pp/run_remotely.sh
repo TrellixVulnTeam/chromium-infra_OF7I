@@ -68,7 +68,7 @@ Notes:
     For googlers, you can delete package following
     http://go/luci-cipd#deletepackage
     For non-googlers or you don't have permission to delete, please file crbug
-    with component Infra>Platform>Admin.
+    with component Infra>LUCI>Admin.
   * You will need to be a member of flex-internal-try-led-users.
 EOF
 

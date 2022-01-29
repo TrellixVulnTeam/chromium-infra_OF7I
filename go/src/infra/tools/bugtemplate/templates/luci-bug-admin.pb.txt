@@ -49,7 +49,7 @@ MDB or google groups readers to add/remove:
 
 END
 
-components: "Infra>Platform>Admin"
+components: "Infra>LUCI>Admin"
 type: Task
 pri: P1
 labels: "Restrict-View-Google"

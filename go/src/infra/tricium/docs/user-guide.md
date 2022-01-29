@@ -50,7 +50,7 @@ functions {
   needs: GIT_FILE_DETAILS
   provides: RESULTS
   owner: "someone@chromium.org"
-  monorail_component: "Infra>Platform>Tricium>Analyzer"
+  monorail_component: "Infra>LUCI>BuildService>PreSubmit>Tricium"
   impls {
     runtime_platform: LINUX
     provides_for_platform: LINUX

@@ -71,7 +71,7 @@ func reportNotUseful(c context.Context, commentID string) (*tricium.ReportNotUse
 // be a temporary hack until there is another way to specify bug filing
 // information; see crbug.com/1201312.
 func responseForComment(comment *track.Comment) *tricium.ReportNotUsefulResponse {
-	const comp = "Infra>Platform>Tricium>Analyzer"
+	const comp = "Infra>LUCI>BuildService>PreSubmit>Tricium"
 	switch name := comment.Analyzer; {
 	case name == "Analyze" || strings.HasPrefix(name, "FuchsiaTricium"):
 		return &tricium.ReportNotUsefulResponse{Owner: "maruel@google.com", MonorailComponent: comp}

@@ -10,7 +10,7 @@ To file another bug like this: go/luci-trooper-bug
 
 END
 
-components: "Infra>Platform"
+components: "Infra>LUCI"
 type: Bug
 pri: P1
 labels: "Restrict-View-Google"

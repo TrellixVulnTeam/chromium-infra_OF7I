@@ -65,7 +65,7 @@ func TestReportNotUseful(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
+				MonorailComponent: "Infra>LUCI>BuildService>PreSubmit>Tricium",
 			})
 			So(ds.Get(ctx, feedback), ShouldBeNil)
 			So(feedback.NotUsefulReports, ShouldEqual, 1)
@@ -103,13 +103,13 @@ func TestReportNotUseful(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
+				MonorailComponent: "Infra>LUCI>BuildService>PreSubmit>Tricium",
 			})
 			response, err = server.ReportNotUseful(ctx, request)
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "qyearsley@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
+				MonorailComponent: "Infra>LUCI>BuildService>PreSubmit>Tricium",
 			})
 			So(ds.Get(ctx, feedback), ShouldBeNil)
 			So(feedback.NotUsefulReports, ShouldEqual, 2)
@@ -132,7 +132,7 @@ func TestReportNotUseful(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response, ShouldResemble, &tricium.ReportNotUsefulResponse{
 				Owner:             "gbiv@chromium.org",
-				MonorailComponent: "Infra>Platform>Tricium>Analyzer",
+				MonorailComponent: "Infra>LUCI>BuildService>PreSubmit>Tricium",
 			})
 		})
 	})

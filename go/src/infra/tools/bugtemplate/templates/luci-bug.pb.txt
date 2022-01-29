@@ -11,6 +11,6 @@ To file another bug like this: go/luci-bug
 
 END
 
-components: "Infra>Platform"
+components: "Infra>LUCI"
 pri: P3
 labels: "Restrict-View-Google"

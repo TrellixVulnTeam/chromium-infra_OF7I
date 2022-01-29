@@ -175,7 +175,7 @@ cipd auth-info
 cipd auth-login
 ```
 
-Second, [file a bug with the Infra\>Platform\>Admin component](https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3EPlatform%3EAdmin) to add you to this group.
+Second, [file a bug with the Infra\>LUCI\>Admin component](https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EAdmin) to add you to this group.
 
 ### Got permission denied while downloading docker image
 
