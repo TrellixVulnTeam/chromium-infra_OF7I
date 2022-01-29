@@ -14,7 +14,6 @@ import (
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/test/api"
-	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/cmd/cros-tool-runner/internal/docker"
@@ -36,7 +35,7 @@ const (
 )
 
 // CreateDutService pulls and starts cros-dut service.
-func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string, inventoryServer *lab_api.IpEndpoint) (*docker.Docker, error) {
+func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string) (*docker.Docker, error) {
 	p, err := createImagePath(image)
 	if err != nil {
 		log.Printf("Create cros-dut service: %s", err)
@@ -49,7 +48,6 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 		ExecCommand: []string{
 			"cros-dut",
 			"-dut_name", dutName,
-			"-wiring_address", getAddr(inventoryServer),
 			"-port", "80",
 		},
 		ServicePort: 80,

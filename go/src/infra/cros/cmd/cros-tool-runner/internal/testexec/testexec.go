@@ -65,8 +65,7 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 		Primary: &api.CrosTestRequest_Device{
 			Dut: req.PrimaryDut.GetDut(),
 		},
-		Companions:      companions,
-		InventoryServer: req.GetInventoryServer(),
+		Companions: companions,
 	}
 	if err := writeTestInput(inputFileName, testReq); err != nil {
 		return nil, errors.Annotate(err, "run test: failed to create input file %s", inputFileName).Err()

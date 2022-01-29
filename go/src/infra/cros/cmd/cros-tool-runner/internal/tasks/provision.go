@@ -109,10 +109,6 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 		return out, errors.Annotate(err, "inner run").Err()
 	}
 
-	if isEmptyEndPoint(req.GetInventoryServer()) {
-		return out, errors.Annotate(err, "inner run: inventory service is not provided").Err()
-	}
-
 	// TODO(otabek): Listen signal to cancel execution by client.
 
 	// errgroup returns the first error but doesn't stop execution of other goroutines.
@@ -123,7 +119,7 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 		i, device := i, device
 		g.Go(func() error {
 			result := provision.Run(ctx,
-				device, req.GetInventoryServer(),
+				device,
 				findContainer(cm, device.GetContainerMetadataKey(), "cros-dut"),
 				findContainer(cm, device.GetContainerMetadataKey(), "cros-provision"))
 			provisionResults[i] = result.Out

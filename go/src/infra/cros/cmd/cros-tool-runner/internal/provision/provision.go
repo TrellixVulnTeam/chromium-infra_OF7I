@@ -29,7 +29,7 @@ type Result struct {
 }
 
 // Run runs provisioning software dependencies per DUT.
-func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device, inventoryServer *lab_api.IpEndpoint, crosDutContainer, crosProvisionContainer *build_api.ContainerImageInfo) *Result {
+func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device, crosDutContainer, crosProvisionContainer *build_api.ContainerImageInfo) *Result {
 	res := &Result{
 		Out: &api.CrosProvisionResponse{
 			Id: device.GetDut().GetId(),
@@ -42,10 +42,6 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 	}
 	if device == nil || device.GetProvisionState() == nil {
 		res.Err = errors.Reason("run provision: DUT input is empty").Err()
-		return res
-	}
-	if inventoryServer == nil {
-		res.Err = errors.Reason("run provision: local address is not provided").Err()
 		return res
 	}
 	dutName := res.Out.Id.GetValue()
@@ -62,7 +58,7 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 	log.Printf("--> Network was created for %q ...", dutName)
 
 	log.Printf("--> Starting cros-dut service for %q ...", dutName)
-	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName, inventoryServer)
+	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName)
 	defer dutService.Remove(ctx)
 	if err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
@@ -85,7 +81,6 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 			Address: dutService.Name,
 			Port:    int32(dutService.ServicePort),
 		},
-		InventoryServer: inventoryServer,
 	}
 	provisionService, err := services.RunProvisionCLI(ctx, crosProvisionContainer, networkName, provisionReq, dir)
 	defer func() {
