@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/cron"
@@ -40,6 +41,8 @@ import (
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/services/testvariantbqexporter"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
+	weetbixpb "infra/appengine/weetbix/proto/v1"
+	"infra/appengine/weetbix/rpc"
 )
 
 // authGroup is the name of the LUCI Auth group that controls whether the user
@@ -132,6 +135,21 @@ func main() {
 		// Anything that is not found, serve app html and let the client side router handle it.
 		srv.Routes.NotFound(mw, handlers.IndexPage)
 
+		// Register pPRC servers.
+		srv.PRPC.AccessControl = prpc.AllowOriginAll
+		srv.PRPC.Authenticator = &auth.Authenticator{
+			Methods: []auth.Method{
+				&auth.GoogleOAuth2Method{
+					Scopes: []string{"https://www.googleapis.com/auth/userinfo.email"},
+				},
+			},
+		}
+		// TODO(crbug/1082369): Remove this workaround once field masks can be decoded.
+		srv.PRPC.HackFixFieldMasksForJSON = true
+
+		weetbixpb.RegisterRulesServer(srv.PRPC, rpc.NewRules())
+		adminpb.RegisterAdminServer(srv.PRPC, admin.CreateServer())
+
 		// GAE crons.
 		cron.RegisterHandler("read-config", config.Update)
 		cron.RegisterHandler("update-analysis-and-bugs", handlers.UpdateAnalysisAndBugs)
@@ -153,9 +171,6 @@ func main() {
 		resultcollector.RegisterTaskClass()
 		testvariantbqexporter.RegisterTaskClass()
 		testvariantupdator.RegisterTaskClass()
-
-		// Register pRPC servers.
-		adminpb.RegisterAdminServer(srv.PRPC, admin.CreateServer())
 
 		return nil
 	})
