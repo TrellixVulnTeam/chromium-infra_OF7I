@@ -1,13 +1,12 @@
-<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+import { css, html, LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
 
-<dom-module id="som-help">
-  <template>
-    <style>
-      ul, p {
-        line-height: 160%;
-      }
-    </style>
-    <h2>Sheriff-o-Matic Help</h2>
+// som-help is a help page displayed when no tree is selected.
+@customElement('som-help')
+export class SomHelp extends LitElement {
+    render() {
+        return html`
+      <h2>Sheriff-o-Matic Help</h2>
     <article>
       <p>
         Sheriff-o-Matic (SoM) is a tool designed to help make sheriffing easier. SoM shows alerts for failures and allows you to
@@ -119,15 +118,12 @@
         developer documentation<a>.
       </p>
     </article>
-  </template>
-  <script>
-  'use strict';
-  class SomHelp extends Polymer.Element {
-    static get is() {
-      return 'som-help';
+      `;
     }
-  }
 
-  customElements.define(SomHelp.is, SomHelp);
-  </script>
-</dom-module>
+    static styles = css`
+     ul, p {
+        line-height: 160%;
+      }
+  `;
+}

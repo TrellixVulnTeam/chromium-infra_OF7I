@@ -15,8 +15,6 @@
 
 <link rel="import" href="../../elements/som-test-expectations/som-test-expectations.html">
 
-<link rel="import" href="../../elements/pages/som-help.html">
-
 <link rel="import" href="../../elements/tree-status/som-all-status/som-all-status.html">
 <link rel="import" href="../../elements/tree-status/som-tree-status-view/som-tree-status-view.html">
 
@@ -32,37 +30,48 @@
         position: fixed;
         background-color: #000;
       }
+
       chops-login {
         --chops-login-link-color: #fff;
       }
+
       iron-icon {
         flex-shrink: 0;
       }
+
       #alertView {
         padding-bottom: 5em;
       }
+
       #headerRightContent {
         display: flex;
         align-items: center;
       }
-      #refresh, #toggleDrawer {
+
+      #refresh,
+      #toggleDrawer {
         display: flex;
         width: 25px;
         height: 25px;
         padding: 0 2px;
         cursor: pointer;
       }
+
       #toggleDrawer {
         display: none;
         padding-right: 8px;
       }
-      #lastUpdated, #username {
+
+      #lastUpdated,
+      #username {
         text-align: right;
         padding-right: 1em;
       }
+
       #lastUpdatedTimeShort {
         display: none;
       }
+
       #somContainer {
         box-sizing: border-box;
         padding-top: 50px;
@@ -70,12 +79,14 @@
         min-height: 100%;
         display: flex;
       }
+
       #somContent {
         padding-left: 256px;
         display: flex;
         flex-direction: column;
         flex-grow: 1;
       }
+
       #somDrawerWrapper {
         width: 256px;
         height: 100%;
@@ -85,9 +96,11 @@
         background: #fff;
         z-index: 1;
       }
+
       .error {
         margin-top: 0;
       }
+
       .page-body {
         display: flex;
         flex-direction: column;
@@ -96,45 +109,57 @@
         background: #fff;
         flex-grow: 1;
       }
+
       .page-body-padded {
         padding: 1em 16px;
       }
+
       @media (max-width: 1280px) {
         #somContent {
           padding-left: 0;
         }
+
         #somDrawerWrapper {
           display: none;
         }
+
         #somDrawerWrapper.opened {
           display: flex;
         }
-        #somDrawerWrapper.opened + #somDrawerOverlay {
+
+        #somDrawerWrapper.opened+#somDrawerOverlay {
           position: fixed;
           content: '';
           width: 100%;
           height: 100%;
           background: rgba(0, 0, 0, 0.5);
         }
+
         #toggleDrawer {
           display: flex;
         }
       }
+
       @media (max-width: 840px) {
         chops-header {
           --chops-header-title-theme: {
             display: none;
-          };
+          }
+
+          ;
         }
+
         #lastUpdatedTimeShort {
           /* Responsively display a shorter last updated time. */
           display: inline;
         }
+
         #lastUpdatedTime,
         #fetchingAlerts {
           display: none;
         }
       }
+
       .perfWarningBanner {
         background-color: #e75d54;
         font-size: 16px;
@@ -151,7 +176,9 @@
       </div>
       <template is="dom-if" if="[[_isPerfTree]]">
         <div class="perfWarningBanner">
-          Perfbot sheriffs should also check <a target="_blank" href="https://ci.chromium.org/p/chrome/g/chrome.perf/console">the CI console</a> for issues not surfaced here.
+          Perfbot sheriffs should also check <a target="_blank"
+            href="https://ci.chromium.org/p/chrome/g/chrome.perf/console">the CI console</a> for issues not surfaced
+          here.
         </div>
       </template>
       <div id="headerRightContent">
@@ -172,39 +199,31 @@
     </chops-header>
     <div id="somContainer">
       <div id="somDrawerWrapper">
-        <som-drawer
-            id="drawer"
-            path="{{_path}}"
-            static-pages="[[_staticPages]]"
-            tree="[[_tree]]"
-            trees="{{_trees}}"
-            collapse-by-default="{{collapseByDefault}}"
-            ></som-drawer>
+        <som-drawer id="drawer" path="{{_path}}" static-pages="[[_staticPages]]" tree="[[_tree]]" trees="{{_trees}}"
+          collapse-by-default="{{collapseByDefault}}"></som-drawer>
       </div>
       <div id="somDrawerOverlay" on-tap="_toggleDrawer"></div>
       <iron-pages id="somContent" attr-for-selected='id' selected="[[_selectedPage]]">
         <template is="dom-if" if="[[_showAlertTableView]]">
-          <som-table-view id="alertTableView" class="page-body" tree="[[_tree]]"></som-alert-view>
+          <som-table-view id="alertTableView" class="page-body" tree="[[_tree]]">
+            </som-alert-view>
         </template>
         <template is="dom-if" if="[[_showAlertView]]">
-          <som-alert-view id="alertView" class="page-body"
-            alerts-times="{{alertsTimes}}"
-            examined-alert-key="[[_examinedAlertKey]]"
-            fetching-alerts="{{_fetchingAlerts}}"
-            trees="[[_trees]]"
-            tree="[[_tree]]"
-            user="[[user]]"
-            collapse-by-default="[[collapseByDefault]]"></som-alert-view>
+          <som-alert-view id="alertView" class="page-body" alerts-times="{{alertsTimes}}"
+            examined-alert-key="[[_examinedAlertKey]]" fetching-alerts="{{_fetchingAlerts}}" trees="[[_trees]]"
+            tree="[[_tree]]" user="[[user]]" collapse-by-default="[[collapseByDefault]]"></som-alert-view>
         </template>
         <som-help id="helpSOM" class="page-body page-body-padded"></som-help>
         <template is="dom-if" if="[[_showTestExpectations]]">
-          <som-test-expectations class="page-body" id="testExpectations" edited-test-name="{{_editedTestName}}"></som-test-expectations>
+          <som-test-expectations class="page-body" id="testExpectations" edited-test-name="{{_editedTestName}}">
+          </som-test-expectations>
         </template>
         <template is="dom-if" if="[[_showTreeStatusAll]]">
           <som-all-status class="page-body page-body-padded" id="treeStatusAll" trees="[[_trees]]"></som-all-status>
         </template>
         <template is="dom-if" if="[[_showTreeStatusView]]">
-          <som-tree-status-view class="page-body page-body-padded" id="treeStatusView" tree="[[_tree]]"></som-tree-status-view>
+          <som-tree-status-view class="page-body page-body-padded" id="treeStatusView" tree="[[_tree]]">
+          </som-tree-status-view>
         </template>
       </iron-pages>
     </div>
