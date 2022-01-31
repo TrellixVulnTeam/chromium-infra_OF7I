@@ -364,6 +364,8 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 	state.BatteryState = ufslab.HardwareState_HARDWARE_UNKNOWN
 	state.WifiState = ufslab.HardwareState_HARDWARE_UNKNOWN
 	state.BluetoothState = ufslab.HardwareState_HARDWARE_UNKNOWN
+	state.Chameleon = ufslab.PeripheralState_UNKNOWN
+	state.WorkingBluetoothBtpeer = 0
 
 	// Update states for present components.
 	if sh := dut.ServoHost; sh != nil {
@@ -404,11 +406,12 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 		state.BluetoothState = convertHardwareStateToUFS(b.State)
 	}
 	if ch := dut.ChameleonHost; ch != nil {
-		if ch.State == tlw.ChameleonStateWorking {
-			state.Chameleon = ufslab.PeripheralState_WORKING
+		for us, rs := range chameleonStates {
+			if ch.State == rs {
+				state.Chameleon = us
+			}
 		}
 	}
-	state.WorkingBluetoothBtpeer = 0
 	for _, btph := range dut.BluetoothPeerHosts {
 		if btph.State == tlw.BluetoothPeerStateWorking {
 			state.WorkingBluetoothBtpeer += 1
