@@ -408,6 +408,11 @@ const servoRepairPlanBody = `
 		],
 		"dependencies": [
 			"servod_set_main_device"
+		],
+		"recovery_actions": [
+			"servo_power_delivery_repair",
+			"servo_fake_disconnect_dut_repair",
+			"servo_servod_cc_toggle_repair"
 		]
 	},
 	"pwr_button_supported_models": {
