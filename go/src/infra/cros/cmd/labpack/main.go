@@ -117,7 +117,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
-		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
+		metrics, err = karte.NewMetrics(ctx, kclient.DevConfig(auth.Options{}))
 		if err == nil {
 			lg.Info("internal run: metrics client successfully created.")
 		} else {

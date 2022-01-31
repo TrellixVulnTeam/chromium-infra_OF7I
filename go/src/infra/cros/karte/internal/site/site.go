@@ -22,11 +22,8 @@ const progName = "karte"
 //
 const DefaultCLIKarteServer = DevKarteServer
 
-// DevKarteServer is the dev cloud project for Karte.
+// DevKaretServer is the dev cloud project for Karte.
 const DevKarteServer = "chrome-fleet-karte-dev.appspot.com"
-
-// ProdKarteServer is the prod cloud project for Karte.
-const ProdKarteServer = "chrome-fleet-karte.appspot.com"
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra
 // defaults.
