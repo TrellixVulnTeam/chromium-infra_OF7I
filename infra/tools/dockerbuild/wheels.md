@@ -1987,6 +1987,20 @@ wheel: <
 
 * *universal*
 
+## **flatbuffers-py3**
+
+### 2.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/flatbuffers-py3"
+  version: "version:2.0"
+>
+```
+
+
+* *universal*
+
 ## **freetype-py**
 
 ### 2.1.0.post1
@@ -3114,6 +3128,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+### 3.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/h5py/${vpython_platform}"
+  version: "version:3.6.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **html5lib**
 
 ### 1.0.1
@@ -3578,6 +3606,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/libclang/${vpython_platform}"
   version: "version:11.1.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
+### 12.0.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/libclang/${vpython_platform}"
+  version: "version:12.0.0"
 >
 ```
 
@@ -4247,6 +4289,23 @@ wheel: <
 
 
 * *linux-arm64-py3*
+* *mac-arm64-cp38*
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
+### 1.22.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/numpy/${vpython_platform}"
+  version: "version:1.22.1"
+>
+```
+
+
 * *mac-arm64-cp38*
 * *mac-x64-cp38*
 * *manylinux-x64-py3*
@@ -6700,6 +6759,18 @@ wheel: <
 
 * *universal*
 
+### 1.16.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/six-py2_py3"
+  version: "version:1.16.0"
+>
+```
+
+
+* *universal*
+
 ## **smmap2**
 
 ### 2.0.3
@@ -6982,6 +7053,18 @@ wheel: <
 
 ## **tf-agents-py3**
 
+### 0.11.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tf-agents-py3"
+  version: "version:0.11.0"
+>
+```
+
+
+* *universal*
+
 ### 0.7.1
 
 ```protobuf
@@ -7073,6 +7156,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/typing-extensions-py3"
   version: "version:3.7.4.3"
+>
+```
+
+
+* *universal*
+
+### 4.0.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/typing-extensions-py3"
+  version: "version:4.0.1"
 >
 ```
 
@@ -7355,6 +7450,21 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/wrapt/${vpython_platform}"
   version: "version:1.12.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+* *windows-x64-py3*
+
+### 1.13.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/wrapt/${vpython_platform}"
+  version: "version:1.13.3"
 >
 ```
 

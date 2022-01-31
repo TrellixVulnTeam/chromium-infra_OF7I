@@ -633,6 +633,20 @@ SPECS.update({
             pyversions=['py3'],
         ),
         SourceOrPrebuilt(
+            'numpy',
+            '1.22.1',
+            packaged=[
+                'mac-arm64-cp38',
+            ],
+            arch_map={
+                'mac-arm64-cp38': _NUMPY_MAC_ARM,
+            },
+            skip_plat=[
+                'linux-arm64-py3',
+            ],
+            pyversions=['py3'],
+        ),
+        SourceOrPrebuilt(
             'opencv_python',
             '4.5.3.56',
             build_deps=BuildDependencies(
@@ -934,6 +948,17 @@ SPECS.update({
             ],
             pyversions=['py3']),
         SourceOrPrebuilt(
+            'wrapt',
+            '1.13.3',
+            packaged=(),
+            only_plat=[
+                'manylinux-x64-py3',
+                'manylinux-x64-py3.9',
+                'mac-x64-cp38',
+                'windows-x64-py3',
+            ],
+            pyversions=['py3']),
+        SourceOrPrebuilt(
             'zstandard', '0.16.0', packaged=(), pyversions=['py3']),
     )
 })
@@ -988,8 +1013,19 @@ SPECS.update({
             ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
         ),
         Prebuilt(
+            'h5py',
+            '3.6.0',
+            ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
+        ),
+        Prebuilt(
             'libclang',
             '11.1.0',
+            ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
+            arch_map={'mac-x64': _NUMPY_MAC_x64},
+        ),
+        Prebuilt(
+            'libclang',
+            '12.0.0',
             ['manylinux-x64-py3', 'windows-x64-py3', 'mac-x64-cp38'],
             arch_map={'mac-x64': _NUMPY_MAC_x64},
         ),
@@ -1321,6 +1357,7 @@ SPECS.update({
         Universal('flask', '1.0.2'),
         Universal('flask', '2.0.2', pyversions=['py3']),
         Universal('flatbuffers', '1.12'),
+        Universal('flatbuffers', '2.0', pyversions=['py3']),
         Universal('frozendict', '2.0.6', pyversions=['py3']),
         Universal('funcsigs', '1.0.2'),
         Universal('futures', '3.1.1', pyversions=['py2']),
@@ -1520,6 +1557,7 @@ SPECS.update({
         Universal('six', '1.12.0'),
         Universal('six', '1.14.0'),
         Universal('six', '1.15.0'),
+        Universal('six', '1.16.0'),
         Universal('smmap2', '2.0.3'),
         Universal('sortedcontainers', '2.4.0', pyversions=['py3']),
         Universal('soupsieve', '1.9.5'),
@@ -1535,9 +1573,11 @@ SPECS.update({
         Universal('tensorflow-probability', '0.12.2'),
         Universal('tensorflow-probability', '0.13.0'),
         Universal('tf-agents', '0.7.1', pyversions=['py3']),
+        Universal('tf-agents', '0.11.0', pyversions=['py3']),
         Universal('toml', '0.10.1', pyversions=['py3']),
         Universal('typing', '3.6.4', pyversions=['py2']),
         Universal('typing-extensions', '3.7.4.3', pyversions=['py3']),
+        Universal('typing-extensions', '4.0.1', pyversions=['py3']),
         Universal('typing-inspect', '0.7.1', pyversions=['py3']),
         Universal('uritemplate', '3.0.0'),
         Universal('urllib3', '1.22'),
