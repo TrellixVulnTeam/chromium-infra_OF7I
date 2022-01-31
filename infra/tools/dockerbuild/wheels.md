@@ -6876,6 +6876,20 @@ wheel: <
 * *manylinux-x64-py3*
 * *windows-x64-py3*
 
+### 2.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow/${vpython_platform}"
+  version: "version:2.7.0"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **tensorflow-estimator**
 
 ### 2.4.0
