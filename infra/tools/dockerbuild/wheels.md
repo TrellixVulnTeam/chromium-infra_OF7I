@@ -2679,6 +2679,18 @@ wheel: <
 
 ## **google-cloud-storage**
 
+### 1.41.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-storage-py2_py3"
+  version: "version:1.41.1"
+>
+```
+
+
+* *universal*
+
 ### 1.6.0
 
 ```protobuf

@@ -1363,6 +1363,7 @@ SPECS.update({
         Universal('google-cloud-spanner', '0.29.0'),
         Universal('google-cloud-speech', '0.30.0'),
         Universal('google-cloud-storage', '1.6.0'),
+        Universal('google-cloud-storage', '1.41.1'),
         Universal('google-cloud-translate', '1.3.0'),
         Universal('google-cloud-videointelligence', '0.28.0'),
         Universal('google-pasta', '0.2.0', pyversions=['py3']),
