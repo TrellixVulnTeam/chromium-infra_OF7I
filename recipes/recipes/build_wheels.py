@@ -10,7 +10,7 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.recipe_api import StepFailure
 from recipe_engine.config import List
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+PYTHON_VERSION_COMPATIBILITY = 'PY3'
 
 DEPS = [
     'depot_tools/gclient',
