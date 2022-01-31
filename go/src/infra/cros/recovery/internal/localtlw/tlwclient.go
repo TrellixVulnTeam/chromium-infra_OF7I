@@ -373,19 +373,25 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 	if dut.ServoHost == nil || dut.ServoHost.Name == "" {
 		return fail(errors.Reason("call servod %q: servo not found", req.Resource).Err())
 	}
-	var val *xmlrpc.Value
 	// For container connect to the container as it running on the same host.
 	if isServodContainer(dut) {
 		d, err := c.dockerClient(ctx)
 		if err != nil {
 			return fail(err)
 		}
-		var addr string
-		if addr, err = d.IPAddress(ctx, servoContainerName(dut)); err != nil {
+		addr, err := d.IPAddress(ctx, servoContainerName(dut))
+		if err != nil {
 			return fail(err)
 		}
 		rpc := tlw_xmlrpc.New(addr, dut.ServoHost.ServodPort)
-		val, err = servod.Call(ctx, rpc, req.Method, req.Args)
+		if val, err := servod.Call(ctx, rpc, req.Method, req.Args); err != nil {
+			return fail(err)
+		} else {
+			return &tlw.CallServodResponse{
+				Value: val,
+				Fault: false,
+			}
+		}
 	} else {
 		// For labstation using port forward by ssh.
 		s, err := c.servodPool.Get(
@@ -397,14 +403,14 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 		if err != nil {
 			return fail(err)
 		}
-		val, err = s.Call(ctx, c.sshPool, req.Method, req.Args)
-	}
-	if err != nil {
-		return fail(err)
-	}
-	return &tlw.CallServodResponse{
-		Value: val,
-		Fault: false,
+		if val, err := s.Call(ctx, c.sshPool, req.Method, req.Args); err != nil {
+			return fail(err)
+		} else {
+			return &tlw.CallServodResponse{
+				Value: val,
+				Fault: false,
+			}
+		}
 	}
 }
 
