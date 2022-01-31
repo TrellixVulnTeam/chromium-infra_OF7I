@@ -367,12 +367,19 @@ const servoRepairPlanBody = `
 		],
 		"exec_name":"sample_fail"
 	},
+	"is_servo_main_ccd_cr50": {
+		"conditions": [
+			"is_servo_v4",
+			"is_servo_type_ccd"
+		]
+	},
 	"servo_cr50_console": {
 		"docs": [
 			"Create new action to check that servotype has ccd_cr50, and set that as a condition for this action."
 		],
 		"conditions": [
-			"is_not_servo_v3"
+			"is_not_servo_v3",
+			"is_servo_main_ccd_cr50"
 		],
 		"dependencies": [
 			"init_dut_for_servo"
