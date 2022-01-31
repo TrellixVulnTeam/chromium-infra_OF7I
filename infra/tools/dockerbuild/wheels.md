@@ -3264,12 +3264,12 @@ wheel: <
 
 ## **infra_libs-py2**
 
-### 2.2.1
+### 2.3.0
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/infra_libs-py2"
-  version: "version:2.2.1"
+  version: "version:2.3.0"
 >
 ```
 
