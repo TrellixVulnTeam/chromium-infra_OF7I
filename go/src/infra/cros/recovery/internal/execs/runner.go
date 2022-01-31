@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"infra/cros/recovery/internal/components"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/tlw"
 )
@@ -41,7 +42,7 @@ var (
 
 // Runner defines the type for a function that will execute a command
 // on a host, and returns the result as a single line.
-type Runner func(context.Context, time.Duration, string, ...string) (string, error)
+type Runner = components.Runner
 
 // NewRunner returns a function of type Runner that executes a command
 // on a host and returns the results as a single line. This function

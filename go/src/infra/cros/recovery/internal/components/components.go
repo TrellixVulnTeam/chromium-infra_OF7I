@@ -13,14 +13,14 @@ import (
 
 // Runner defines the type for a function that will execute a command
 // on a host, and returns the result as a single line.
-type Runner func(ctx context.Context, cmd string, timeout time.Duration) (string, error)
+type Runner func(context.Context, time.Duration, string, ...string) (string, error)
 
 // Servod defines the interface to communicate with servod daemon.
 type Servod interface {
 	// Get read value by requested command.
 	Get(ctx context.Context, cmd string) (*xmlrpc.Value, error)
 	// Set sets value to provided command.
-	Set(ctx context.Context, cmd string, val *xmlrpc.Value) error
+	Set(ctx context.Context, cmd string, val interface{}) error
 	// Port provides port used for running servod daemon.
 	Port() int
 }

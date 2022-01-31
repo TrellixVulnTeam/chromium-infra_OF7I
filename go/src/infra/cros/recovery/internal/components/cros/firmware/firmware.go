@@ -76,12 +76,12 @@ const (
 // Try extracting the image_candidates from the tarball.
 func extractFromTarball(ctx context.Context, tarballPath, destDirPath string, candidates []string, run components.Runner, log logger.Logger) (string, error) {
 	// Create the firmware_name subdirectory if it doesn't exist
-	if _, err := run(ctx, fmt.Sprintf(createDirSafeGlob, destDirPath), extractFileTimeout); err != nil {
+	if _, err := run(ctx, extractFileTimeout, fmt.Sprintf(createDirSafeGlob, destDirPath)); err != nil {
 		return "", errors.Annotate(err, "extract from tarball: fail to create a destination directory %s", destDirPath).Err()
 	}
 	// Generate a list of all tarball files
 	tarballFiles := make(map[string]bool, 50)
-	if out, err := run(ctx, fmt.Sprintf(tarballListTheFileGlob, tarballPath), extractFileTimeout); err != nil {
+	if out, err := run(ctx, extractFileTimeout, fmt.Sprintf(tarballListTheFileGlob, tarballPath)); err != nil {
 		return "", errors.Annotate(err, "extract from tarball").Err()
 	} else {
 		for _, fn := range strings.Split(out, "\n") {
@@ -95,7 +95,7 @@ func extractFromTarball(ctx context.Context, tarballPath, destDirPath string, ca
 			continue
 		}
 		cmd := fmt.Sprintf(tarballExtractTheFileGlob, tarballPath, destDirPath, cf)
-		if _, err := run(ctx, cmd, extractFileTimeout); err != nil {
+		if _, err := run(ctx, extractFileTimeout, cmd); err != nil {
 			log.Debug("Extract from tarball: candidate %q fail to be extracted from tarball.", cf)
 		} else {
 			return cf, nil

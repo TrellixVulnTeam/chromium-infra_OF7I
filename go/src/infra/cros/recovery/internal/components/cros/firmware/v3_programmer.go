@@ -64,7 +64,7 @@ func (p *v3Programmer) programEC(ctx context.Context, imagePath string) error {
 	} else {
 		cmd = fmt.Sprintf(ecProgrammerCmdGlob, ecChip, imagePath, p.servod.Port())
 	}
-	out, err := p.run(ctx, cmd, firmwareProgramTimeout)
+	out, err := p.run(ctx, firmwareProgramTimeout, cmd)
 	p.log.Debug("Program EC output: \n%s", out)
 	return errors.Annotate(err, "program ec").Err()
 }
@@ -94,7 +94,7 @@ func (p *v3Programmer) programAP(ctx context.Context, imagePath, gbbHex string) 
 			cmd += fmt.Sprintf(apProgrammerWithParam, v)
 		}
 	}
-	out, err := p.run(ctx, cmd, firmwareProgramTimeout)
+	out, err := p.run(ctx, firmwareProgramTimeout, cmd)
 	p.log.Debug("Program AP output: \n%s", out)
 	return errors.Annotate(err, "program ap").Err()
 }
@@ -136,6 +136,6 @@ func isImageExist(imagePath string) error {
 // isToolPresent checks if tool is installed on the host.
 func isToolPresent(ctx context.Context, toolName string, run components.Runner) error {
 	cmd := fmt.Sprintf("which %s", toolName)
-	_, err := run(ctx, cmd, 30*time.Second)
+	_, err := run(ctx, 30*time.Second, cmd)
 	return errors.Annotate(err, "tool %s is not found", toolName).Err()
 }

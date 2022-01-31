@@ -65,7 +65,7 @@ func (mr *MockServodMockRecorder) Port() *gomock.Call {
 }
 
 // Set mocks base method.
-func (m *MockServod) Set(ctx context.Context, cmd string, val *xmlrpc.Value) error {
+func (m *MockServod) Set(ctx context.Context, cmd string, val interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, cmd, val)
 	ret0, _ := ret[0].(error)

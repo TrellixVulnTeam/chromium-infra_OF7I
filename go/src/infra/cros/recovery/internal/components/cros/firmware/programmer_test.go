@@ -6,6 +6,7 @@ package firmware
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,7 +69,8 @@ func stringValue(v string) *xmlrpc.Value {
 }
 
 func mockRunner(runResponse map[string]string) components.Runner {
-	return func(ctx context.Context, cmd string, timeout time.Duration) (string, error) {
+	return func(ctx context.Context, timeout time.Duration, cmd string, args ...string) (string, error) {
+		cmd = strings.Join(append([]string{cmd}, args...), " ")
 		if v, ok := runResponse[cmd]; ok {
 			return v, nil
 		}
