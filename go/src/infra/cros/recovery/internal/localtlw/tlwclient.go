@@ -8,6 +8,7 @@ package localtlw
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -297,6 +298,7 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 	res, err := d.Start(ctx, containerName, &docker.ContainerArgs{
 		Detached:   true,
 		ImageName:  dockerServodImageName(),
+		Network:    defaultDockerNetwork(),
 		EnvVar:     envVar,
 		Volumes:    []string{"/dev:/dev"},
 		Privileged: true,
@@ -320,6 +322,16 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 	}
 	log.Debug(ctx, "Servod container %s started and up!", containerName)
 	return nil
+}
+
+// defaultDockerNetwork provides network in which docker need to run.
+func defaultDockerNetwork() string {
+	network := os.Getenv("DOCKER_DEFAULT_NETWORK")
+	// TODO(b/217258787): Remove check and default value.
+	if network == "" {
+		network = "default_satlab"
+	}
+	return network
 }
 
 // StopServod stops servod daemon on servo-host.
