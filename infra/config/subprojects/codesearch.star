@@ -181,7 +181,7 @@ chromium_genfiles(
     "win",
     "codesearch-gen-chromium-win",
     os = "Windows-10",
-    cpu_cores = "16",
+    cpu_cores = "32",
 )
 
 update_submodules_mirror(
