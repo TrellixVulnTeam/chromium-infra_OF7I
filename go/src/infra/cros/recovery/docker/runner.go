@@ -39,7 +39,9 @@ func runWithTimeout(ctx context.Context, timeout time.Duration, command string, 
 		res.Stderr = se.String()
 	}()
 	go func() {
-		log.Printf("Run cmd: %s", cmd)
+		if enableDebugLogging {
+			log.Printf("Run cmd: %s", cmd)
+		}
 		cw <- cmd.Run()
 	}()
 	select {
