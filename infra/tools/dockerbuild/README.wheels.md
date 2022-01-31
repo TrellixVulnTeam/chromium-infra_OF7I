@@ -93,17 +93,15 @@ as a full registry of available versions.
 
 And update the wheel.md documentation:
 
-    path/to/infra.git/run.py         \
-       infra.tools.dockerbuild       \
+    vpython3 -m infra.tools.dockerbuild \
        wheel-dump
 
 Now, test that your wheel builds successfully using the following:
 
-    path/to/infra.git/run.py         \
-       infra.tools.dockerbuild       \
-       --logs-debug                  \
-       wheel-build                   \
-       --wheel 'scandir-1.9.0'       \
+    vpython3 -m infra.tools.dockerbuild \
+       --logs-debug                     \
+       wheel-build                      \
+       --wheel 'scandir-1.9.0'          \
 
 Notable options (check `--help` for details):
   * `--wheel_re` - Use in place of `--wheel` to run for multiple wheels or

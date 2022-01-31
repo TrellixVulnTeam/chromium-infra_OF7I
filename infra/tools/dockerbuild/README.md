@@ -202,7 +202,7 @@ sudo service docker restart
 To upload all sources to CIPD, run:
 
 ```bash
-./run.py infra.tools.dockerbuild --upload-sources sources
+vpython3 -m infra.tools.dockerbuild --upload-sources sources
 ```
 
 ### Update dockcross base image mirrors
@@ -210,7 +210,7 @@ To upload all sources to CIPD, run:
 To update the Google Cloud repository's mirrored `dockcross` images, run:
 
 ```bash
-./run.py infra.tools.dockerbuild docker-mirror --upload
+vpython3 -m infra.tools.dockerbuild docker-mirror --upload
 ```
 
 ### Build and upload DockerBuild images
@@ -219,7 +219,7 @@ To build new DockerBuild images and upload them to the Google Cloud repository,
 run:
 
 ```bash
-./run.py infra.tools.dockerbuild docker-generate --upload
+vpython3 -m infra.tools.dockerbuild docker-generate --upload
 ```
 
 ### Regenerate all configured wheels
@@ -228,7 +228,7 @@ To ensure that all configured Python wheels are uploaded to CIPD for all known
 platforms, run the following command:
 
 ```bash
-./run.py infra.tools.dockerbuild --upload-sources wheel-build --upload
+vpython3 -m infra.tools.dockerbuild --upload-sources wheel-build --upload
 ```
 
 - `--upload-sources` instructs DockerBuild to upload CIPD packages for any
@@ -246,9 +246,9 @@ source, then configure it for the cross-compile environment and build.
 ```bash
 wget https://github.com/python/cpython/archive/v2.7.13.tar.gz
 cd cpython-2.7.13
-./run.py infra.tools.dockerbuild run --platform linux-armv6 run -- \
+vpython3 -m infra.tools.dockerbuild run --platform linux-armv6 run -- \
   sh -c './configure --prefix=/work/PREFIX --host=$CROSS_TRIPLE --build=$(gcc -dumpmachine)'
-./run.py infra.tools.dockerbuild run --platform linux-armv6 run -- make install
+vpython3 -m infra.tools.dockerbuild run --platform linux-armv6 run -- make install
 ```
 
 - Note that we use `sh` to ensure that the environment variables are evaluated
