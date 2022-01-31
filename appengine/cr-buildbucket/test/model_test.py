@@ -71,6 +71,14 @@ class BuildTest(testing.AppengineTestCase):
       self.assertFalse(in_range(time_high))
       self.assertFalse(in_range(time_high + unit))
 
+  def test_ancestor_ids(self):
+    ancestor_ids = [1, 2, 3]
+    build = test_util.build(ancestor_ids=ancestor_ids)
+    build.put()
+    actual = ndb.Key(model.Build, build.proto.id).get()
+    self.assertEqual(actual.ancestor_ids, ancestor_ids)
+    self.assertEqual(actual.parent_id, 3)
+
 
 class TestStatusConversion(unittest.TestCase):
 

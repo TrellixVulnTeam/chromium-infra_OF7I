@@ -234,6 +234,17 @@ class Build(ndb.Model):
 
   is_luci = ndb.BooleanProperty()
 
+  # Ids of the build's ancestors. This includes all parents/grandparents/etc.
+  # This is ordered from top-to-bottom so `ancestor_ids[0]` is the root of
+  # the builds tree, and `ancestor_ids[-1]` is this build's immediate parent.
+  # This does not include any "siblings" at higher levels of the tree, just
+  # the direct chain of ancestors from root to this build.
+  ancestor_ids = ndb.IntegerProperty(repeated=True)
+
+  # ParentID is the build's immediate parent build id.
+  # Stored separately from AncestorIds in order to index this special case.
+  parent_id = ndb.IntegerProperty()
+
   @property
   def realm(self):  # pragma: no cover
     return '%s:%s' % (self.proto.builder.project, self.proto.builder.bucket)
@@ -333,6 +344,10 @@ class Build(ndb.Model):
 
     self.tags = sorted(set(self.tags))
     self.experiments = sorted(set(self.experiments))
+    for ancestor_id in self.proto.ancestor_ids:
+      self.ancestor_ids.append(ancestor_id)
+    if self.ancestor_ids:
+      self.parent_id = self.ancestor_ids[-1]
 
   @classmethod
   def _post_get_hook(cls, key, future):
