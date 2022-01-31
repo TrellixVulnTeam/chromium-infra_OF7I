@@ -7,14 +7,14 @@ const refreshDelayMs = 60 * 1000;
 const recentUngroupedResolvedMs = 24 * 3600 * 1000;
 
 class SomAlertView extends Polymer.mixinBehaviors(
-    [
-      AnnotationManagerBehavior,
-      AlertTypeBehavior,
-      BugManagerBehavior,
-      PostBehavior,
-      TimeBehavior,
-    ],
-    Polymer.Element) {
+  [
+    AnnotationManagerBehavior,
+    AlertTypeBehavior,
+    BugManagerBehavior,
+    PostBehavior,
+    TimeBehavior,
+  ],
+  Polymer.Element) {
   static get is() {
     return 'som-alert-view';
   }
@@ -27,14 +27,14 @@ class SomAlertView extends Polymer.mixinBehaviors(
       },
       _allAlerts: {
         type: Array,
-        value: function() {
+        value: function () {
           return [];
         },
         computed: `_computeAlerts(_alertsData.*, _alertsResolvedData.*, annotations)`,
       },
       _alerts: {
         type: Array,
-        value: function() {
+        value: function () {
           return [];
         },
         computed: `_filterAlerts(_allAlerts, annotations, _filterPattern)`,
@@ -42,19 +42,19 @@ class SomAlertView extends Polymer.mixinBehaviors(
       // Map of stream to data, timestamp of latest updated data.
       _alertsData: {
         type: Object,
-        value: function() {
+        value: function () {
           return {};
         },
       },
       _alertsResolvedData: {
         type: Object,
-        value: function() {
+        value: function () {
           return {};
         },
       },
       alertsTimes: {
         type: Object,
-        value: function() {
+        value: function () {
           return {};
         },
         notify: true,
@@ -63,13 +63,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
         type: Array,
         computed: '_computeAlertStreams(tree)',
         observer: '_updateAlerts',
-        value: function() {
+        value: function () {
           return [];
         },
       },
       annotations: {
         type: Object,
-        value: function() {
+        value: function () {
           return {};
         },
       },
@@ -80,7 +80,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       },
       _checkedAlerts: {
         type: Array,
-        value: function() {
+        value: function () {
           return [];
         },
       },
@@ -92,7 +92,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       _examinedAlert: {
         type: Object,
         computed: '_computeExaminedAlert(_alerts, examinedAlertKey)',
-        value: function() {
+        value: function () {
           return {};
         },
       },
@@ -110,7 +110,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       _hideJulie: {
         type: Boolean,
         computed:
-            `_computeHideJulie(_allAlerts, _fetchedAlerts, fetchingAlerts,
+          `_computeHideJulie(_allAlerts, _fetchedAlerts, fetchingAlerts,
               _fetchAlertsError, tree)`,
         value: true,
       },
@@ -129,7 +129,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       },
       trees: {
         type: Object,
-        value: function() {
+        value: function () {
           return {};
         },
       },
@@ -221,7 +221,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
     return [tree.name];
   }
 
-  _computeCurrentAlertView(examinedAlert){
+  _computeCurrentAlertView(examinedAlert) {
     if (examinedAlert && examinedAlert.key) {
       return 'examineAlert';
     }
@@ -276,16 +276,16 @@ class SomAlertView extends Polymer.mixinBehaviors(
       }
       if (json.alerts && json.alerts.length) {
         this.set(['_alertsData', this._alertStreamVarName(stream)],
-                 json.alerts);
+          json.alerts);
         this.alertsTimes = {};
         if (json.timestamp) {
           this.set(['alertsTimes', this._alertStreamVarName(stream)],
-                  json.timestamp);
+            json.timestamp);
         }
       }
       if (json.resolved && json.resolved.length) {
         this.set(['_alertsResolvedData', this._alertStreamVarName(stream)],
-                 json.resolved);
+          json.resolved);
       }
     }
   }
@@ -303,11 +303,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
           if (window.location.href.indexOf('useMilo') != -1) {
             base = base + 'milo.';
           }
-          window.fetch(base + stream, {credentials: 'include'})
-              .then((resp) => {return this._handleAlertsResponse(resp,
-                                                                 stream)},
-                    (error) => {this._handleAlertsError(error)})
-              .then((json) => {this._alertsSetData(json, stream)});
+          window.fetch(base + stream, { credentials: 'include' })
+            .then((resp) => {
+              return this._handleAlertsResponse(resp,
+                stream)
+            },
+              (error) => { this._handleAlertsError(error) })
+            .then((json) => { this._alertsSetData(json, stream) });
         }
       });
     }
@@ -315,6 +317,10 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
   _alertStreamVarName(stream) {
     return stream.replace(/\./g, '_');
+  }
+
+  _computeIsChromeos(tree) {
+    return tree.name == 'chromeos';
   }
 
   _computeFetchingAlerts(activeRequests) {
@@ -350,7 +356,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
     let groups = {};
     this._computeAlertsSet(alertsData, false, annotations, allAlerts, groups);
     this._computeAlertsSet(alertsResolvedData, true, annotations, allAlerts,
-                           groups);
+      groups);
 
     allAlerts = this._sortAlerts(allAlerts, annotations);
     allAlerts = this._filterUngroupedResolved(allAlerts);
@@ -358,7 +364,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
   }
 
   _computeAlertsSet(alertsData, resolved, annotations, alertItems,
-                              groups) {
+    groups) {
     for (let tree in alertsData) {
       let alerts = alertsData[tree];
       if (!alerts) {
@@ -367,7 +373,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
       for (let i in alerts) {
         this._computeAlert(alerts[i], resolved, annotations, alertItems,
-                           groups);
+          groups);
       }
     }
   }
@@ -388,7 +394,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
           links: [],
           tags: [],
           type: alert.type,
-          extension: {stages: [], builders: [], grouped: true},
+          extension: { stages: [], builders: [], grouped: true },
           grouped: true,
           alerts: [],
           resolved: resolved,
@@ -418,10 +424,10 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
       if (alert.extension) {
         this._mergeStages(group.extension.stages, alert.extension.stages,
-                          alert.extension.builders);
+          alert.extension.builders);
         this._mergeBuilders(group.extension.builders,
-                            alert.extension.builders,
-                            alert.extension.stages);
+          alert.extension.builders,
+          alert.extension.stages);
         // TODO(martiniss): Comment this back in once the logic is robust.
         // Right now this isn't very useful if you actually want to use these
         // regression ranges to determine which alerts should be grouped
@@ -430,7 +436,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
         // fairly unnoticed.
         //this._mergeRegressionRanges(group.extension, alert.extension);
         group.extension.reason = this._mergeReason(group.extension,
-                                                   alert.extension);
+          alert.extension);
       }
       group.alerts.push(alert);
       if (resolved) {
@@ -490,7 +496,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
     groupExtension.regression_ranges = [];
     for (let repo in byRepo) {
       groupExtension.regression_ranges.push(
-          byRepo[repo].reduce(this._mergeRegressionRange.bind(this)));
+        byRepo[repo].reduce(this._mergeRegressionRange.bind(this)));
     }
   }
 
@@ -539,7 +545,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       return {
         repo: groupRange.repo,
         error: "Invalid regression range",
-        explanation: `Two regression ranges, ${gRR[0]} - ${gRR[gRR.length - 1]} and ${aRR[0]} - ${aRR[aRR.length-1]}, were merged together, but don't share any common commit positions. This probably means this alert should be split into a few different alerts, each with different root causes.`,
+        explanation: `Two regression ranges, ${gRR[0]} - ${gRR[gRR.length - 1]} and ${aRR[0]} - ${aRR[aRR.length - 1]}, were merged together, but don't share any common commit positions. This probably means this alert should be split into a few different alerts, each with different root causes.`,
         bad_range: [lower, upper]
       };
     }
@@ -663,7 +669,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
   }
 
   _filterUngroupedResolved(alerts) {
-    return alerts.filter(function(alert) {
+    return alerts.filter(function (alert) {
       if (!alert.resolved || alert.grouped) {
         return true;
       }
@@ -684,8 +690,8 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
   _searchAlert(alert, re) {
     if ((alert.key && alert.key.match(re)) ||
-        (alert.title && alert.title.match(re)) ||
-        (alert.body && alert.body.match(re))) {
+      (alert.title && alert.title.match(re)) ||
+      (alert.body && alert.body.match(re))) {
       return true;
     }
 
@@ -752,7 +758,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       }
       if (extension.reason) {
         if ((extension.reason.name && extension.reason.name.match(re)) ||
-            this._searchNotes(extension.reason.test_names, re)) {
+          this._searchNotes(extension.reason.test_names, re)) {
           return true;
         }
       }
@@ -776,13 +782,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
     }
 
     // extension is a list of extensions.
-    let mergedExtension = {stages: [], builders: []};
+    let mergedExtension = { stages: [], builders: [] };
     for (let i in extension) {
       let subExtension = extension[i];
       this._mergeStages(mergedExtension.stages, subExtension.stages,
-                        subExtension.builders);
+        subExtension.builders);
       this._mergeBuilders(mergedExtension.builders, subExtension.builders,
-                          subExtension.stages);
+        subExtension.stages);
     }
 
     return mergedExtension;
@@ -816,7 +822,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
     }
 
     // Only keep notes that are in common between all builders.
-    merged.notes = merged.notes.filter(function(n) {
+    merged.notes = merged.notes.filter(function (n) {
       return stage.notes.indexOf(n) !== -1;
     });
 
@@ -833,18 +839,18 @@ class SomAlertView extends Polymer.mixinBehaviors(
     let merged = mergedBuilders.find((b) => {
       // TODO: In the future actually merge these into a single entry.
       return b.name == builder.name &&
-             b.first_failure == builder.first_failure &&
-             b.latest_failure == builder.latest_failure;
+        b.first_failure == builder.first_failure &&
+        b.latest_failure == builder.latest_failure;
     });
 
     if (!merged) {
-      merged = Object.assign({stages: []}, builder);
+      merged = Object.assign({ stages: [] }, builder);
       mergedBuilders.push(merged);
     }
 
     merged.start_time = Math.min(merged.start_time, builder.start_time);
     merged.first_failure =
-        Math.min(merged.first_failure, builder.first_failure);
+      Math.min(merged.first_failure, builder.first_failure);
     if (builder.latest_failure > merged.latest_failure) {
       merged.url = builder.url;
       merged.latest_failure = builder.latest_failure;
@@ -854,9 +860,9 @@ class SomAlertView extends Polymer.mixinBehaviors(
   }
 
   _computeHideJulie(alerts, fetchedAlerts, fetchingAlerts,
-                              fetchAlertsError, tree) {
+    fetchAlertsError, tree) {
     if (fetchingAlerts || !fetchedAlerts || !alerts ||
-        fetchAlertsError !== '' || !tree) {
+      fetchAlertsError !== '' || !tree) {
       return true;
     }
     return alerts.length > 0;
@@ -865,7 +871,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
   ////////////////////// Alert Categories ///////////////////////////
 
   _alertItemsWithCategory(alerts, category) {
-    return alerts.filter(function(alert) {
+    return alerts.filter(function (alert) {
       if (category == AlertSeverity.Resolved) {
         return alert.resolved;
       } else if (alert.resolved) {
@@ -875,7 +881,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
       if (category == AlertSeverity.InfraFailure) {
         // Put trooperable alerts into "Infra failures" on sheriff views
         return this.isTrooperAlertType(alert.type) ||
-               alert.severity == category;
+          alert.severity == category;
       }
       return alert.severity == category;
     }, this);
@@ -883,7 +889,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
   _computeCategories(alerts) {
     let categories = [];
-    alerts.forEach(function(alert) {
+    alerts.forEach(function (alert) {
       let cat = alert.severity;
       if (alert.resolved) {
         cat = AlertSeverity.Resolved;
@@ -931,8 +937,8 @@ class SomAlertView extends Polymer.mixinBehaviors(
     // - must be unresolved or grouped
     return alerts.filter((a) => {
       return a.type == alert.type && a.key != alert.key &&
-             (!alert.grouped || !a.grouped) &&
-             (!a.resolved || a.grouped);
+        (!alert.grouped || !a.grouped) &&
+        (!a.resolved || a.grouped);
     });
   }
 
@@ -958,7 +964,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
   _handleLinkBugBulk(evt) {
     this.$.annotations.handleLinkBug(this._checkedAlerts,
-                                     this._uncheckAll.bind(this));
+      this._uncheckAll.bind(this));
   }
 
   _handleRemoveBug(evt) {
@@ -973,13 +979,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
 
   _handleSnoozeBulk(evt) {
     this.$.annotations.handleSnooze(this._checkedAlerts,
-                                    this._uncheckAll.bind(this));
+      this._uncheckAll.bind(this));
   }
 
   _handleGroupBulk(evt) {
     this.$.annotations.handleGroupAlerts(
-        this._checkedAlerts,
-        this._uncheckAll.bind(this));
+      this._checkedAlerts,
+      this._uncheckAll.bind(this));
   }
 
   // This opens the bulk ungroup dialog.
@@ -1062,8 +1068,8 @@ class SomAlertView extends Polymer.mixinBehaviors(
       'resolved': resolved,
     };
     this.postJSON(url, request)
-        .then(jsonParsePromise)
-        .then(this._resolveResponse.bind(this));
+      .then(jsonParsePromise)
+      .then(this._resolveResponse.bind(this));
   }
 
   _findAlertIndexByKey(alerts, key) {
@@ -1084,13 +1090,13 @@ class SomAlertView extends Polymer.mixinBehaviors(
       let alert;
       if (index != -1) {
         alert = alerts[index];
-        this.splice(['_alertsData', response.tree], index, 1 );
+        this.splice(['_alertsData', response.tree], index, 1);
       } else {
         let alerts = this._alertsResolvedData[response.tree];
         index = this._findAlertIndexByKey(alerts, key);
-        if (index != -1 ) {
+        if (index != -1) {
           alert = alerts[index];
-          this.splice(['_alertsResolvedData', response.tree], index, 1 );
+          this.splice(['_alertsResolvedData', response.tree], index, 1);
         }
       }
 
