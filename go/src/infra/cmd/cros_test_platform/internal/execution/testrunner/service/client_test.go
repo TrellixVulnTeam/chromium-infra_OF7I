@@ -344,8 +344,8 @@ func TestAbortedTask(t *testing.T) {
 			res, err := tf.skylab.FetchResults(tf.ctx, task)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeNil)
-			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
-			So(res.Result, ShouldBeNil)
+			So(res.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
+			So(res.Result, ShouldNotBeNil)
 		})
 	})
 }

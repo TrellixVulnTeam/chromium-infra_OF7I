@@ -273,7 +273,7 @@ var bbStatusToLifeCycle = map[buildbucketpb.Status]test_platform.TaskState_LifeC
 	buildbucketpb.Status_STARTED:       test_platform.TaskState_LIFE_CYCLE_RUNNING,
 	buildbucketpb.Status_SUCCESS:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	buildbucketpb.Status_FAILURE:       test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-	buildbucketpb.Status_INFRA_FAILURE: test_platform.TaskState_LIFE_CYCLE_ABORTED,
+	buildbucketpb.Status_INFRA_FAILURE: test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 	buildbucketpb.Status_CANCELED:      test_platform.TaskState_LIFE_CYCLE_CANCELLED,
 }
 
