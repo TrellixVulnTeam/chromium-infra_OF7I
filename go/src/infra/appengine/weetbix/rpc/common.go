@@ -10,6 +10,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/appstatus"
 	"go.chromium.org/luci/server/auth"
+
 	"google.golang.org/grpc/codes"
 
 	"github.com/golang/protobuf/proto"
@@ -26,6 +27,12 @@ func commonPrelude(ctx context.Context, methodName string, req proto.Message) (c
 
 func commonPostlude(ctx context.Context, methodName string, rsp proto.Message, err error) error {
 	return appstatus.GRPCifyAndLog(ctx, err)
+}
+
+// validationError annotates err as having an invalid argument.
+// The error message is shared with the requester as is.
+func validationError(err error) error {
+	return appstatus.Attachf(err, codes.InvalidArgument, "%s", err)
 }
 
 func checkAllowed(ctx context.Context) error {

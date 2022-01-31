@@ -23,8 +23,12 @@ import (
 	spanutil "infra/appengine/weetbix/internal/span"
 )
 
+// RuleIDRe is the regular expression pattern that matches validly
+// formed rule IDs.
+const RuleIDRePattern = `[0-9a-f]{32}`
+
 // RuleIDRe matches validly formed rule IDs.
-var RuleIDRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
+var RuleIDRe = regexp.MustCompile(`^` + RuleIDRePattern + `$`)
 
 // UserRe matches valid users. These are email addresses or the special
 // value "weetbix".

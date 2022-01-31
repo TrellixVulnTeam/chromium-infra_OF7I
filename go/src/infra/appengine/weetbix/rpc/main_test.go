@@ -10,6 +10,8 @@ import (
 	"infra/appengine/weetbix/internal/testutil"
 )
 
+const testProject = "testproject"
+
 func TestMain(m *testing.M) {
 	testutil.SpannerTestMain(m)
 }
