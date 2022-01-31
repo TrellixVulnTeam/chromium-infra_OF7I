@@ -1711,6 +1711,21 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+### 1.5.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/debugpy/${vpython_platform}"
+  version: "version:1.5.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+* *windows-x86-py3*
+
 ## **decorator-py3**
 
 ### 4.4.2
