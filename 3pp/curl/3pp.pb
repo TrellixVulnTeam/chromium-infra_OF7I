@@ -8,6 +8,7 @@ create {
     }
     patch_version: "chromium.3"
     unpack_archive: true
+    cpe_base_address: "cpe:/a:curl_project:curl"
   }
 
   build {
