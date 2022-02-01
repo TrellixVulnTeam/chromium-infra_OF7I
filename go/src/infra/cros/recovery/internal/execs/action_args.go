@@ -42,11 +42,10 @@ func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string) bool {
 	return defaultValue
 }
 
-// AsString returns the value for the passed key as a string. If the
-// key does not exist in the parsed arguments, a default value of
-// empty string is returned.
-func (parsedArgs ParsedArgs) AsString(ctx context.Context, key string) string {
-	defaultValue := ""
+// AsString returns the value for the passed key as a string.
+// If the key does not exist in the parsed arguments, the passed defaultValue
+// is returned.
+func (parsedArgs ParsedArgs) AsString(ctx context.Context, key, defaultValue string) string {
 	if value, ok := parsedArgs[key]; ok {
 		log.Debug(ctx, "Parsed Args As String: value %q found for key %q", value, key)
 		return value
@@ -55,11 +54,10 @@ func (parsedArgs ParsedArgs) AsString(ctx context.Context, key string) string {
 	return defaultValue
 }
 
-// AsStringSlice returns the value for the passed key as a slice of
-// string. If the key does not exist in the parsed arguments, an empty
-// slice is returned.
+// AsStringSlice returns the value for the passed key as a slice of string.
+// If the key does not exist in the parsed arguments, an empty slice is returned.
 func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []string {
-	value := parsedArgs.AsString(ctx, key)
+	value := parsedArgs.AsString(ctx, key, "")
 	if len(value) > 0 {
 		return strings.Split(value, MultiValueSplitter)
 	}
@@ -67,7 +65,8 @@ func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []st
 }
 
 // AsInt returns the value for the passed key as a int.
-// @params defaultValue: if the value cannot be interpreted as int, then the passed in defaultValue is being returned.
+// If the value cannot be interpreted as int, then the passed in defaultValue
+// is being returned.
 func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue int) int {
 	if value, ok := parsedArgs[key]; ok {
 		if intVal, err := strconv.Atoi(value); err == nil {

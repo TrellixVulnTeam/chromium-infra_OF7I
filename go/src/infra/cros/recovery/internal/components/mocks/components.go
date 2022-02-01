@@ -50,6 +50,20 @@ func (mr *MockServodMockRecorder) Get(ctx, cmd interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockServod)(nil).Get), ctx, cmd)
 }
 
+// Has mocks base method.
+func (m *MockServod) Has(ctx context.Context, command string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Has", ctx, command)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Has indicates an expected call of Has.
+func (mr *MockServodMockRecorder) Has(ctx, command interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Has", reflect.TypeOf((*MockServod)(nil).Has), ctx, command)
+}
+
 // Port mocks base method.
 func (m *MockServod) Port() int {
 	m.ctrl.T.Helper()

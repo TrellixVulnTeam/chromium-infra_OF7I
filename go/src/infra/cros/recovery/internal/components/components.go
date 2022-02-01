@@ -21,6 +21,8 @@ type Servod interface {
 	Get(ctx context.Context, cmd string) (*xmlrpc.Value, error)
 	// Set sets value to provided command.
 	Set(ctx context.Context, cmd string, val interface{}) error
+	// Has verifies that command is known.
+	Has(ctx context.Context, command string) bool
 	// Port provides port used for running servod daemon.
 	Port() int
 }
