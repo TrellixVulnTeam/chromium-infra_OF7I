@@ -6,6 +6,7 @@ create {
       version: "1.2.11"
     }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:zlib:zlib"
   }
   build {}
 }
