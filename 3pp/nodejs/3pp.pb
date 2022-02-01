@@ -1,6 +1,9 @@
 create {
   platform_re: "linux-armv6l|linux-mips.*"
   unsupported: true
+  source {
+    cpe_base_address: "cpe:/a:nodejs:nodejs"
+  }
 }
 
 create {
