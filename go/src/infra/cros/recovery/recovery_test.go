@@ -59,13 +59,13 @@ var dutPlansCases = []struct {
 		"cros recovery",
 		tlw.DUTSetupTypeCros,
 		tasknames.Recovery,
-		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
+		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "wifi_router", "close"},
 	},
 	{
 		"cros deploy",
 		tlw.DUTSetupTypeCros,
 		tasknames.Deploy,
-		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "close"},
+		[]string{"servo", "cros", "chameleon", "bluetooth_peer", "wifi_router", "close"},
 	},
 	{
 		"cros custom",

@@ -295,7 +295,7 @@ func createWifiRouterHosts(wifi *ufslab.Wifi) []*tlw.WifiRouterHost {
 		}
 		routers = append(routers, &tlw.WifiRouterHost{
 			Name:      ufsRouter.GetHostname(),
-			State:     convertRouterState(ufsRouter.GetState()),
+			State:     convertWifiRouterState(ufsRouter.GetState()),
 			Model:     ufsRouter.GetModel(),
 			Board:     ufsRouter.GetBuildTarget(),
 			RPMOutlet: &tlwRpm,

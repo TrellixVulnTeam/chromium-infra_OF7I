@@ -13,4 +13,5 @@ import (
 	_ "infra/cros/recovery/internal/execs/rpm"
 	_ "infra/cros/recovery/internal/execs/servo"
 	_ "infra/cros/recovery/internal/execs/stableversion"
+	_ "infra/cros/recovery/internal/execs/wifirouter"
 )

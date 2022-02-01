@@ -414,7 +414,7 @@ func runDUTPlanPerResource(ctx context.Context, resource, planName string, plan 
 }
 
 // collectResourcesForPlan collect resource names for supported plan.
-// Mostly we have one resource per plan by in some cases we can have more
+// Mostly we have one resource per plan but in some cases we can have more
 // resources and then we will run the same plan for each resource.
 func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	switch planName {
@@ -436,6 +436,12 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 		if dut.ChameleonHost != nil {
 			return []string{dut.ChameleonHost.Name}
 		}
+	case PlanWifiRouter:
+		var resources []string
+		for _, router := range dut.WifiRouterHosts {
+			resources = append(resources, router.Name)
+		}
+		return resources
 	}
 	return nil
 }
@@ -485,6 +491,7 @@ const (
 	PlanServo         = "servo"
 	PlanChameleon     = "chameleon"
 	PlanBluetoothPeer = "bluetooth_peer"
+	PlanWifiRouter    = "wifi_router"
 	// That is final plan which will run always if present in configuration.
 	// The goal is execution final step to clean up stages if something left
 	// over in the devices.

@@ -33,6 +33,11 @@ func CrosRepairConfig() io.Reader {
 			allowFail: true,
 		},
 		{
+			name:      "wifi_router",
+			body:      wifiRouterRepairPlanBody,
+			allowFail: true,
+		},
+		{
 			name:      "close",
 			body:      crosClosePlanBody,
 			allowFail: true,
@@ -61,6 +66,11 @@ func CrosDeployConfig() io.Reader {
 		{
 			name:      "bluetooth_peer",
 			body:      btpeerRepairPlanBody,
+			allowFail: true,
+		},
+		{
+			name:      "wifi_router",
+			body:      wifiRouterRepairPlanBody,
 			allowFail: true,
 		},
 		{

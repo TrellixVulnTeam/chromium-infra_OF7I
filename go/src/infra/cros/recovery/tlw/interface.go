@@ -409,14 +409,14 @@ type BluetoothPeerHost struct {
 }
 
 // RouterState describes the state of bluetooth peer device.
-type RouterState string
+type WifiRouterState string
 
 const (
-	RouterStateUnspecified RouterState = "UNSPECIFIED"
+	WifiRouterStateUnspecified WifiRouterState = "UNSPECIFIED"
 	// Device and software on it is working as expected.
-	RouterStateWorking RouterState = "WORKING"
+	WifiRouterStateWorking WifiRouterState = "WORKING"
 	// Device is broken or not working as expected.
-	RouterStateBroken RouterState = "BROKEN"
+	WifiRouterStateBroken WifiRouterState = "BROKEN"
 )
 
 // Router devices
@@ -424,7 +424,7 @@ type WifiRouterHost struct {
 	// Name is the resource name.
 	Name string
 	// State of the device.
-	State RouterState
+	State WifiRouterState
 	// Model
 	Model string
 	// Board
