@@ -354,7 +354,9 @@ func (c *tlwClient) StopServod(ctx context.Context, resourceName string) error {
 	s, err := c.servodPool.Get(
 		localproxy.BuildAddr(dut.ServoHost.Name),
 		int32(dut.ServoHost.ServodPort),
-		nil)
+		func() ([]string, error) {
+			return dutinfo.GenerateServodParams(dut, nil)
+		})
 	if err != nil {
 		return errors.Annotate(err, "stop servod %q", resourceName).Err()
 	}
