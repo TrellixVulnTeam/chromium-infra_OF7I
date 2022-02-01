@@ -110,10 +110,13 @@ func main() {
 			Prelude: announcementsPrelude,
 		})
 		srv.PRPC.AccessControl = func(c context.Context, origin string) prpc.AccessControlDecision {
-			// AccessAllowWithoutCredentials sets access control headers
-			// (so sites like gerrit can query for announcements) without sharing
-			// credentials (so we can use cookies auth).
-			return prpc.AccessAllowWithoutCredentials
+			// Allow other sites (like Gerrit) to query for announcements using
+			// anonymous requests or requests authenticated using OAuth, but forbid
+			// them using cookies set by dashboard's own frontend.
+			return prpc.AccessControlDecision{
+				AllowCrossOriginRequests: true,
+				AllowCredentials:         false,
+			}
 		}
 		srv.PRPC.Authenticator = &auth.Authenticator{
 			Methods: []auth.Method{
