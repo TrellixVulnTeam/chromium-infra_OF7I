@@ -1,6 +1,9 @@
 create {
   platform_re: ".*-386"
   unsupported: true
+  source {
+    cpe_base_address: "cpe:/a:cmake_project:cmake"
+  }
 }
 
 create {
