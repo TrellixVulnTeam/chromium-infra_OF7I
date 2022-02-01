@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import React from 'react'
+import React from 'react';
 import OutlinedInput from "@material-ui/core/OutlinedInput";
 import {makeStyles} from '@material-ui/styles';
 
@@ -17,7 +17,7 @@ type Props = {
   updateAnswers: Function,
 }
 
-export default function InputTypeCustomQuestion(props: Props): React.ReactElement {
+export default function TextareaTypeCustomQuestion(props: Props): React.ReactElement {
 
   const classes = userStyles();
 
@@ -32,6 +32,8 @@ export default function InputTypeCustomQuestion(props: Props): React.ReactElemen
     <>
       <h3>{question}</h3>
       <OutlinedInput
+        multiline={true}
+        rows={3}
         value={answer}
         onChange={handleChange}
         className={classes.inputArea}

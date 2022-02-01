@@ -25,4 +25,14 @@ describe('IssueWizard CustomQuestionsStep', () => {
     const input = container.querySelector('input');
     assert.isNotNull(input);
   })
+
+  it('render TextType Question', async () => {
+    const questionList = [{
+      type: CustomQuestionType.Text,
+      question: "this is a test",
+    }]
+    const {container} = render(<CustomQuestionsStep questionsList={questionList}/>);
+    const input = container.querySelector('textarea');
+    assert.isNotNull(input);
+  })
 });

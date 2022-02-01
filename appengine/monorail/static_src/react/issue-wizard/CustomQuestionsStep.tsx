@@ -8,6 +8,7 @@ import {grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import {CustomQuestion, CustomQuestionType} from './IssueWizardTypes.tsx';
 import InputTypeCustomQuestion from './CustomQuestions/InputTypeCustomQuestion.tsx';
+import TextareaTypeCustomQuestion from './CustomQuestions/TextareaTypeCustomQuestion.tsx';
 
 const userStyles = makeStyles({
   greyText: {
@@ -45,6 +46,14 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
           />
         );
         return;
+      case CustomQuestionType.Text:
+          customQuestions.push(
+            <TextareaTypeCustomQuestion
+              question={q.question}
+              updateAnswers={(answer: string) => {updateAnswer(answer, i);}}
+            />
+          );
+          return;
       default:
         return;
     }
