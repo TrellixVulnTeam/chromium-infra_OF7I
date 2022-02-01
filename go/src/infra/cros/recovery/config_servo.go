@@ -53,7 +53,7 @@ const servoRepairPlanBody = `
 	"servod_set_main_device",
 	"init_dut_for_servo",
 	"set_state_ccd_testlab_issue",
-	"servo_testlab_enabled",
+	"cr50_testlab",
 	"set_state_broken",
 	"servo_detect_usbkey",
 	"update_servo_type_label",
@@ -398,6 +398,10 @@ const servoRepairPlanBody = `
 		"exec_name":"servod_can_read_all"
 	},
 	"cr50_testlab": {
+		"conditions": [
+			"is_not_servo_v3",
+			"is_servo_v4_type_c"
+		],
 		"exec_extra_args": [
 			"command:cr50_testlab",
 			"expected_string_value:on"
@@ -512,13 +516,6 @@ const servoRepairPlanBody = `
 			"battery_last_charge_readable"
 		],
 		"allow_fail_after_recovery": true
-	},
-	"servo_testlab_enabled": {
-		"conditions": [
-			"is_not_servo_v3",
-			"is_servo_v4_type_c"
-		],
-		"exec_name":"sample_pass"
 	},
 	"servo_detect_usbkey": {
 		"docs": [
