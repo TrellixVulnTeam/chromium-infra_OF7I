@@ -19,10 +19,10 @@ deps = {
 
   # Used to initiate bootstrapping.
   #
-  # This commit resolves to tag "15.1.0".
+  # This commit resolves to tag "16.7.12".
   "infra/bootstrap/virtualenv-ext":
      "{external_github}/pypa/virtualenv@" +
-     "2db288fe1f8b6755f8df53b8a8a0667a0f71b1cf",
+     "fdfec65ff031997503fb409f365ee3aeb4c2c89f",
 
   "infra/luci":
      "{chromium_git}/infra/luci/luci-py@" +

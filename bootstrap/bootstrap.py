@@ -95,9 +95,11 @@ def sha_for(deps_entry):
 
 
 def get_links(deps):
-  import pip.wheel  # pylint: disable=E0611
-  plat_tag = platform_tag()  # this is something like '_Ubuntu_14.04' or ''
+  import pip._internal.utils.compatibility_tags as compatibility_tags
+  import pip._internal.models.wheel as pip_wheel
 
+  plat_tag = platform_tag()  # this is something like '_Ubuntu_14.04' or ''
+  pep425_tags = compatibility_tags.get_supported()
   links = []
 
   for name, dep in deps.iteritems():
@@ -110,14 +112,14 @@ def get_links(deps):
 
     for entry in ls('wheels/'+prefix):
       fname = entry['name'].split('/')[-1]
-      wheel_info = pip.wheel.Wheel.wheel_file_re.match(fname)
+      wheel_info = pip_wheel.Wheel.wheel_file_re.match(fname)
       if not wheel_info:
         LOGGER.warning('Skipping invalid wheel: %r', fname)
         continue
 
       # This check skips all obviously unsupported wheels (like Linux wheels on
       # Windows).
-      if not pip.wheel.Wheel(fname).supported():
+      if not pip_wheel.Wheel(fname).supported(pep425_tags):
         continue
 
       if entry['local']:
