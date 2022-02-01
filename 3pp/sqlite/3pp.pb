@@ -6,6 +6,7 @@ create {
       version: "3.19.3"
     }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:sqlite:sqlite"
   }
   build {}
 }
