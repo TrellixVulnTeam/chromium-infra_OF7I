@@ -6,6 +6,7 @@ create {
       version: "1.1.1"
     }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:re2c:re2c"
   }
   build {}
 }
