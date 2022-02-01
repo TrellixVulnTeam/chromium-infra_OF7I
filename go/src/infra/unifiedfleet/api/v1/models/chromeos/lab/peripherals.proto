@@ -101,7 +101,7 @@ message Audio {
   bool audio_cable = 3;
 }
 
-// Next Tag: 5
+// Next Tag: 6
 message Wifi {
   // Indicate if the device is inside a hermetic wifi cell.
   bool wificell = 1;
@@ -126,9 +126,18 @@ message Wifi {
   Router router = 3;
   // collections of routers used for wifi testing.
   repeated WifiRouter wifi_routers = 4;
+
+  // Feature for Wifi.
+  // Next Tag: 6
+  enum Feature {
+    UNKNOWN = 0;
+  }
+  // Features this wifi testbed has.
+  repeated Feature features = 5;
 }
 
-// Next Tag: 6
+
+// Next Tag: 7
 message WifiRouter {
 
   string hostname = 1;
@@ -138,6 +147,14 @@ message WifiRouter {
 
   // RPM to perform remote power management. use OSRPM defined here.
   OSRPM rpm = 5;
+
+  // Feature for Wifi.
+  // Next Tag: 7
+  enum Feature {
+    UNKNOWN = 0;
+  }
+  // Features this router exhibits.
+  repeated Feature features = 6;
 }
 
 // Next Tag: 2

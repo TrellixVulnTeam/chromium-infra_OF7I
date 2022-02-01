@@ -371,7 +371,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 31
+// NEXT TAG: 33
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -445,6 +445,16 @@ message Peripherals {
   optional HardwareState wifi_state = 28;
   optional HardwareState bluetooth_state = 29;
   optional PeripheralState rpm_state = 25;
+
+
+  optional PeripheralState peripheral_wifi_state = 31;
+  // WifiFeature enums copy UFS peripherals.proto Wifi.Feature and WifiRouter.Feature
+  // Next Tag: 12
+  enum WifiFeature {
+    UNKNOWN = 0;
+  }
+  // Feature collections from UFS peripheral.wifi and peripheral.wifi.wifiRouters.
+  repeated WifiFeature peripheral_wifi_features = 32;
 }
 
 // Servo Firmware Channel describes the firmware expected to have on servos.

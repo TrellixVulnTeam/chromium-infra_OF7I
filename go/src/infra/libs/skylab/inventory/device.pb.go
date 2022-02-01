@@ -1440,6 +1440,61 @@ func (Peripherals_CameraboxLight) EnumDescriptor() ([]byte, []int) {
 	return file_infra_libs_skylab_inventory_device_proto_rawDescGZIP(), []int{12, 2}
 }
 
+// WifiFeature enums copy UFS peripherals.proto Wifi.Feature and WifiRouter.Feature
+// Next Tag: 12
+type Peripherals_WifiFeature int32
+
+const (
+	Peripherals_UNKNOWN Peripherals_WifiFeature = 0
+)
+
+// Enum value maps for Peripherals_WifiFeature.
+var (
+	Peripherals_WifiFeature_name = map[int32]string{
+		0: "UNKNOWN",
+	}
+	Peripherals_WifiFeature_value = map[string]int32{
+		"UNKNOWN": 0,
+	}
+)
+
+func (x Peripherals_WifiFeature) Enum() *Peripherals_WifiFeature {
+	p := new(Peripherals_WifiFeature)
+	*p = x
+	return p
+}
+
+func (x Peripherals_WifiFeature) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Peripherals_WifiFeature) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_libs_skylab_inventory_device_proto_enumTypes[19].Descriptor()
+}
+
+func (Peripherals_WifiFeature) Type() protoreflect.EnumType {
+	return &file_infra_libs_skylab_inventory_device_proto_enumTypes[19]
+}
+
+func (x Peripherals_WifiFeature) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Do not use.
+func (x *Peripherals_WifiFeature) UnmarshalJSON(b []byte) error {
+	num, err := protoimpl.X.UnmarshalJSONEnum(x.Descriptor(), b)
+	if err != nil {
+		return err
+	}
+	*x = Peripherals_WifiFeature(num)
+	return nil
+}
+
+// Deprecated: Use Peripherals_WifiFeature.Descriptor instead.
+func (Peripherals_WifiFeature) EnumDescriptor() ([]byte, []int) {
+	return file_infra_libs_skylab_inventory_device_proto_rawDescGZIP(), []int{12, 3}
+}
+
 // Related to sparse CTS testing. See b/70309087
 // NEXT TAG: 4
 type TestCoverageHints_CTSSparse int32
@@ -1478,11 +1533,11 @@ func (x TestCoverageHints_CTSSparse) String() string {
 }
 
 func (TestCoverageHints_CTSSparse) Descriptor() protoreflect.EnumDescriptor {
-	return file_infra_libs_skylab_inventory_device_proto_enumTypes[19].Descriptor()
+	return file_infra_libs_skylab_inventory_device_proto_enumTypes[20].Descriptor()
 }
 
 func (TestCoverageHints_CTSSparse) Type() protoreflect.EnumType {
-	return &file_infra_libs_skylab_inventory_device_proto_enumTypes[19]
+	return &file_infra_libs_skylab_inventory_device_proto_enumTypes[20]
 }
 
 func (x TestCoverageHints_CTSSparse) Number() protoreflect.EnumNumber {
@@ -2787,7 +2842,7 @@ func (x *HardwareCapabilities) GetVideoAcceleration() []HardwareCapabilities_Vid
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 31
+// NEXT TAG: 33
 type Peripherals struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2833,6 +2888,9 @@ type Peripherals struct {
 	WifiState              *HardwareState               `protobuf:"varint,28,opt,name=wifi_state,json=wifiState,enum=chrome.chromeos_infra.skylab.proto.inventory.HardwareState" json:"wifi_state,omitempty"`
 	BluetoothState         *HardwareState               `protobuf:"varint,29,opt,name=bluetooth_state,json=bluetoothState,enum=chrome.chromeos_infra.skylab.proto.inventory.HardwareState" json:"bluetooth_state,omitempty"`
 	RpmState               *PeripheralState             `protobuf:"varint,25,opt,name=rpm_state,json=rpmState,enum=chrome.chromeos_infra.skylab.proto.inventory.PeripheralState" json:"rpm_state,omitempty"`
+	PeripheralWifiState    *PeripheralState             `protobuf:"varint,31,opt,name=peripheral_wifi_state,json=peripheralWifiState,enum=chrome.chromeos_infra.skylab.proto.inventory.PeripheralState" json:"peripheral_wifi_state,omitempty"`
+	// Feature collections from UFS peripheral.wifi and peripheral.wifi.wifiRouters.
+	PeripheralWifiFeatures []Peripherals_WifiFeature `protobuf:"varint,32,rep,name=peripheral_wifi_features,json=peripheralWifiFeatures,enum=chrome.chromeos_infra.skylab.proto.inventory.Peripherals_WifiFeature" json:"peripheral_wifi_features,omitempty"`
 }
 
 func (x *Peripherals) Reset() {
@@ -3075,6 +3133,20 @@ func (x *Peripherals) GetRpmState() PeripheralState {
 		return *x.RpmState
 	}
 	return PeripheralState_UNKNOWN
+}
+
+func (x *Peripherals) GetPeripheralWifiState() PeripheralState {
+	if x != nil && x.PeripheralWifiState != nil {
+		return *x.PeripheralWifiState
+	}
+	return PeripheralState_UNKNOWN
+}
+
+func (x *Peripherals) GetPeripheralWifiFeatures() []Peripherals_WifiFeature {
+	if x != nil {
+		return x.PeripheralWifiFeatures
+	}
+	return nil
 }
 
 // Copy from servo.proto
@@ -4125,7 +4197,7 @@ var file_infra_libs_skylab_inventory_device_proto_rawDesc = []byte{
 	0x4f, 0x5f, 0x41, 0x43, 0x43, 0x45, 0x4c, 0x45, 0x52, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x4d,
 	0x4a, 0x50, 0x47, 0x10, 0x0b, 0x12, 0x1f, 0x0a, 0x1b, 0x56, 0x49, 0x44, 0x45, 0x4f, 0x5f, 0x41,
 	0x43, 0x43, 0x45, 0x4c, 0x45, 0x52, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x45, 0x4e, 0x43, 0x5f,
-	0x4d, 0x4a, 0x50, 0x47, 0x10, 0x0c, 0x22, 0x8e, 0x11, 0x0a, 0x0b, 0x50, 0x65, 0x72, 0x69, 0x70,
+	0x4d, 0x4a, 0x50, 0x47, 0x10, 0x0c, 0x22, 0x9e, 0x13, 0x0a, 0x0b, 0x50, 0x65, 0x72, 0x69, 0x70,
 	0x68, 0x65, 0x72, 0x61, 0x6c, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x5f,
 	0x62, 0x6f, 0x61, 0x72, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x61, 0x75, 0x64,
 	0x69, 0x6f, 0x42, 0x6f, 0x61, 0x72, 0x64, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x75, 0x64, 0x69, 0x6f,
@@ -4239,30 +4311,47 @@ var file_infra_libs_skylab_inventory_device_proto_rawDesc = []byte{
 	0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e, 0x73, 0x6b,
 	0x79, 0x6c, 0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e,
 	0x74, 0x6f, 0x72, 0x79, 0x2e, 0x50, 0x65, 0x72, 0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x53,
-	0x74, 0x61, 0x74, 0x65, 0x52, 0x08, 0x72, 0x70, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x65, 0x22, 0x9b,
-	0x01, 0x0a, 0x0d, 0x43, 0x68, 0x61, 0x6d, 0x65, 0x6c, 0x65, 0x6f, 0x6e, 0x54, 0x79, 0x70, 0x65,
-	0x12, 0x1a, 0x0a, 0x16, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59,
-	0x50, 0x45, 0x5f, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x10, 0x00, 0x12, 0x15, 0x0a, 0x11,
-	0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x44,
-	0x50, 0x10, 0x02, 0x12, 0x1a, 0x0a, 0x16, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e,
-	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x44, 0x50, 0x5f, 0x48, 0x44, 0x4d, 0x49, 0x10, 0x03, 0x12,
-	0x16, 0x0a, 0x12, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59, 0x50,
-	0x45, 0x5f, 0x56, 0x47, 0x41, 0x10, 0x04, 0x12, 0x17, 0x0a, 0x13, 0x43, 0x48, 0x41, 0x4d, 0x45,
-	0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x48, 0x44, 0x4d, 0x49, 0x10, 0x05,
-	0x22, 0x04, 0x08, 0x01, 0x10, 0x01, 0x22, 0x04, 0x08, 0x06, 0x10, 0x08, 0x22, 0x66, 0x0a, 0x0f,
-	0x43, 0x61, 0x6d, 0x65, 0x72, 0x61, 0x62, 0x6f, 0x78, 0x46, 0x61, 0x63, 0x69, 0x6e, 0x67, 0x12,
-	0x1c, 0x0a, 0x18, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x46, 0x41, 0x43,
-	0x49, 0x4e, 0x47, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x19, 0x0a,
-	0x15, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x46, 0x41, 0x43, 0x49, 0x4e,
-	0x47, 0x5f, 0x42, 0x41, 0x43, 0x4b, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x43, 0x41, 0x4d, 0x45,
-	0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x46, 0x41, 0x43, 0x49, 0x4e, 0x47, 0x5f, 0x46, 0x52, 0x4f,
-	0x4e, 0x54, 0x10, 0x02, 0x22, 0x61, 0x0a, 0x0e, 0x43, 0x61, 0x6d, 0x65, 0x72, 0x61, 0x62, 0x6f,
-	0x78, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x12, 0x1b, 0x0a, 0x17, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41,
-	0x42, 0x4f, 0x58, 0x5f, 0x4c, 0x49, 0x47, 0x48, 0x54, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57,
-	0x4e, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58,
-	0x5f, 0x4c, 0x49, 0x47, 0x48, 0x54, 0x5f, 0x4c, 0x45, 0x44, 0x10, 0x01, 0x12, 0x19, 0x0a, 0x15,
-	0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x4c, 0x49, 0x47, 0x48, 0x54, 0x5f,
-	0x4e, 0x4f, 0x4c, 0x45, 0x44, 0x10, 0x02, 0x22, 0xc1, 0x01, 0x0a, 0x0d, 0x53, 0x65, 0x72, 0x76,
+	0x74, 0x61, 0x74, 0x65, 0x52, 0x08, 0x72, 0x70, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x71,
+	0x0a, 0x15, 0x70, 0x65, 0x72, 0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x5f, 0x77, 0x69, 0x66,
+	0x69, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x1f, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x3d, 0x2e,
+	0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f,
+	0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e, 0x73, 0x6b, 0x79, 0x6c, 0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x50, 0x65, 0x72,
+	0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x13, 0x70, 0x65,
+	0x72, 0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x57, 0x69, 0x66, 0x69, 0x53, 0x74, 0x61, 0x74,
+	0x65, 0x12, 0x7f, 0x0a, 0x18, 0x70, 0x65, 0x72, 0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x5f,
+	0x77, 0x69, 0x66, 0x69, 0x5f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x20, 0x20,
+	0x03, 0x28, 0x0e, 0x32, 0x45, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x2e, 0x63, 0x68, 0x72,
+	0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e, 0x73, 0x6b, 0x79, 0x6c,
+	0x61, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f,
+	0x72, 0x79, 0x2e, 0x50, 0x65, 0x72, 0x69, 0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x73, 0x2e, 0x57,
+	0x69, 0x66, 0x69, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52, 0x16, 0x70, 0x65, 0x72, 0x69,
+	0x70, 0x68, 0x65, 0x72, 0x61, 0x6c, 0x57, 0x69, 0x66, 0x69, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72,
+	0x65, 0x73, 0x22, 0x9b, 0x01, 0x0a, 0x0d, 0x43, 0x68, 0x61, 0x6d, 0x65, 0x6c, 0x65, 0x6f, 0x6e,
+	0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f,
+	0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x10, 0x00,
+	0x12, 0x15, 0x0a, 0x11, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59,
+	0x50, 0x45, 0x5f, 0x44, 0x50, 0x10, 0x02, 0x12, 0x1a, 0x0a, 0x16, 0x43, 0x48, 0x41, 0x4d, 0x45,
+	0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x44, 0x50, 0x5f, 0x48, 0x44, 0x4d,
+	0x49, 0x10, 0x03, 0x12, 0x16, 0x0a, 0x12, 0x43, 0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e,
+	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x56, 0x47, 0x41, 0x10, 0x04, 0x12, 0x17, 0x0a, 0x13, 0x43,
+	0x48, 0x41, 0x4d, 0x45, 0x4c, 0x45, 0x4f, 0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x48, 0x44,
+	0x4d, 0x49, 0x10, 0x05, 0x22, 0x04, 0x08, 0x01, 0x10, 0x01, 0x22, 0x04, 0x08, 0x06, 0x10, 0x08,
+	0x22, 0x66, 0x0a, 0x0f, 0x43, 0x61, 0x6d, 0x65, 0x72, 0x61, 0x62, 0x6f, 0x78, 0x46, 0x61, 0x63,
+	0x69, 0x6e, 0x67, 0x12, 0x1c, 0x0a, 0x18, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58,
+	0x5f, 0x46, 0x41, 0x43, 0x49, 0x4e, 0x47, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10,
+	0x00, 0x12, 0x19, 0x0a, 0x15, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x46,
+	0x41, 0x43, 0x49, 0x4e, 0x47, 0x5f, 0x42, 0x41, 0x43, 0x4b, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16,
+	0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x46, 0x41, 0x43, 0x49, 0x4e, 0x47,
+	0x5f, 0x46, 0x52, 0x4f, 0x4e, 0x54, 0x10, 0x02, 0x22, 0x61, 0x0a, 0x0e, 0x43, 0x61, 0x6d, 0x65,
+	0x72, 0x61, 0x62, 0x6f, 0x78, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x12, 0x1b, 0x0a, 0x17, 0x43, 0x41,
+	0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x4c, 0x49, 0x47, 0x48, 0x54, 0x5f, 0x55, 0x4e,
+	0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x43, 0x41, 0x4d, 0x45, 0x52,
+	0x41, 0x42, 0x4f, 0x58, 0x5f, 0x4c, 0x49, 0x47, 0x48, 0x54, 0x5f, 0x4c, 0x45, 0x44, 0x10, 0x01,
+	0x12, 0x19, 0x0a, 0x15, 0x43, 0x41, 0x4d, 0x45, 0x52, 0x41, 0x42, 0x4f, 0x58, 0x5f, 0x4c, 0x49,
+	0x47, 0x48, 0x54, 0x5f, 0x4e, 0x4f, 0x4c, 0x45, 0x44, 0x10, 0x02, 0x22, 0x1a, 0x0a, 0x0b, 0x57,
+	0x69, 0x66, 0x69, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e,
+	0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x22, 0xc1, 0x01, 0x0a, 0x0d, 0x53, 0x65, 0x72, 0x76,
 	0x6f, 0x54, 0x6f, 0x70, 0x6f, 0x6c, 0x6f, 0x67, 0x79, 0x12, 0x53, 0x0a, 0x04, 0x6d, 0x61, 0x69,
 	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x3f, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65,
 	0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x5f, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2e,
@@ -4472,7 +4561,7 @@ func file_infra_libs_skylab_inventory_device_proto_rawDescGZIP() []byte {
 	return file_infra_libs_skylab_inventory_device_proto_rawDescData
 }
 
-var file_infra_libs_skylab_inventory_device_proto_enumTypes = make([]protoimpl.EnumInfo, 20)
+var file_infra_libs_skylab_inventory_device_proto_enumTypes = make([]protoimpl.EnumInfo, 21)
 var file_infra_libs_skylab_inventory_device_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_infra_libs_skylab_inventory_device_proto_goTypes = []interface{}{
 	(ServoFwChannel)(0),                         // 0: chrome.chromeos_infra.skylab.proto.inventory.ServoFwChannel
@@ -4494,67 +4583,68 @@ var file_infra_libs_skylab_inventory_device_proto_goTypes = []interface{}{
 	(Peripherals_ChameleonType)(0),              // 16: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.ChameleonType
 	(Peripherals_CameraboxFacing)(0),            // 17: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.CameraboxFacing
 	(Peripherals_CameraboxLight)(0),             // 18: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.CameraboxLight
-	(TestCoverageHints_CTSSparse)(0),            // 19: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.CTSSparse
-	(*Device)(nil),                              // 20: chrome.chromeos_infra.skylab.proto.inventory.Device
-	(*DeviceUnderTest)(nil),                     // 21: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
-	(*ServoHostDevice)(nil),                     // 22: chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice
-	(*ChameleonDevice)(nil),                     // 23: chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice
-	(*CommonDeviceSpecs)(nil),                   // 24: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
-	(*RemovalReason)(nil),                       // 25: chrome.chromeos_infra.skylab.proto.inventory.RemovalReason
-	(*Location)(nil),                            // 26: chrome.chromeos_infra.skylab.proto.inventory.Location
-	(*PhysicalLab)(nil),                         // 27: chrome.chromeos_infra.skylab.proto.inventory.PhysicalLab
-	(*DeviceLock)(nil),                          // 28: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock
-	(*Shard)(nil),                               // 29: chrome.chromeos_infra.skylab.proto.inventory.Shard
-	(*SchedulableLabels)(nil),                   // 30: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels
-	(*HardwareCapabilities)(nil),                // 31: chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities
-	(*Peripherals)(nil),                         // 32: chrome.chromeos_infra.skylab.proto.inventory.Peripherals
-	(*ServoTopology)(nil),                       // 33: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology
-	(*ServoTopologyItem)(nil),                   // 34: chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
-	(*TestCoverageHints)(nil),                   // 35: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints
-	(*KeyValue)(nil),                            // 36: chrome.chromeos_infra.skylab.proto.inventory.KeyValue
-	(*License)(nil),                             // 37: chrome.chromeos_infra.skylab.proto.inventory.License
-	(*ModemInfo)(nil),                           // 38: chrome.chromeos_infra.skylab.proto.inventory.ModemInfo
-	(*SIMInfo)(nil),                             // 39: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo
-	(*SIMProfileInfo)(nil),                      // 40: chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo
-	(Environment)(0),                            // 41: chrome.chromeos_infra.skylab.proto.inventory.Environment
-	(*Timestamp)(nil),                           // 42: chrome.chromeos_infra.skylab.proto.inventory.Timestamp
+	(Peripherals_WifiFeature)(0),                // 19: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.WifiFeature
+	(TestCoverageHints_CTSSparse)(0),            // 20: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.CTSSparse
+	(*Device)(nil),                              // 21: chrome.chromeos_infra.skylab.proto.inventory.Device
+	(*DeviceUnderTest)(nil),                     // 22: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
+	(*ServoHostDevice)(nil),                     // 23: chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice
+	(*ChameleonDevice)(nil),                     // 24: chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice
+	(*CommonDeviceSpecs)(nil),                   // 25: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
+	(*RemovalReason)(nil),                       // 26: chrome.chromeos_infra.skylab.proto.inventory.RemovalReason
+	(*Location)(nil),                            // 27: chrome.chromeos_infra.skylab.proto.inventory.Location
+	(*PhysicalLab)(nil),                         // 28: chrome.chromeos_infra.skylab.proto.inventory.PhysicalLab
+	(*DeviceLock)(nil),                          // 29: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock
+	(*Shard)(nil),                               // 30: chrome.chromeos_infra.skylab.proto.inventory.Shard
+	(*SchedulableLabels)(nil),                   // 31: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels
+	(*HardwareCapabilities)(nil),                // 32: chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities
+	(*Peripherals)(nil),                         // 33: chrome.chromeos_infra.skylab.proto.inventory.Peripherals
+	(*ServoTopology)(nil),                       // 34: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology
+	(*ServoTopologyItem)(nil),                   // 35: chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
+	(*TestCoverageHints)(nil),                   // 36: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints
+	(*KeyValue)(nil),                            // 37: chrome.chromeos_infra.skylab.proto.inventory.KeyValue
+	(*License)(nil),                             // 38: chrome.chromeos_infra.skylab.proto.inventory.License
+	(*ModemInfo)(nil),                           // 39: chrome.chromeos_infra.skylab.proto.inventory.ModemInfo
+	(*SIMInfo)(nil),                             // 40: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo
+	(*SIMProfileInfo)(nil),                      // 41: chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo
+	(Environment)(0),                            // 42: chrome.chromeos_infra.skylab.proto.inventory.Environment
+	(*Timestamp)(nil),                           // 43: chrome.chromeos_infra.skylab.proto.inventory.Timestamp
 }
 var file_infra_libs_skylab_inventory_device_proto_depIdxs = []int32{
-	21, // 0: chrome.chromeos_infra.skylab.proto.inventory.Device.dut:type_name -> chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
-	22, // 1: chrome.chromeos_infra.skylab.proto.inventory.Device.servo_host:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice
-	23, // 2: chrome.chromeos_infra.skylab.proto.inventory.Device.chameleon:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice
-	24, // 3: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
-	25, // 4: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest.removal_reason:type_name -> chrome.chromeos_infra.skylab.proto.inventory.RemovalReason
-	24, // 5: chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
-	24, // 6: chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
-	36, // 7: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.attributes:type_name -> chrome.chromeos_infra.skylab.proto.inventory.KeyValue
-	28, // 8: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.device_locks:type_name -> chrome.chromeos_infra.skylab.proto.inventory.DeviceLock
-	41, // 9: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.environment:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Environment
-	30, // 10: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.labels:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels
-	26, // 11: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.location:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Location
-	29, // 12: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.owner_shard:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Shard
-	42, // 13: chrome.chromeos_infra.skylab.proto.inventory.RemovalReason.expire_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
-	27, // 14: chrome.chromeos_infra.skylab.proto.inventory.Location.lab:type_name -> chrome.chromeos_infra.skylab.proto.inventory.PhysicalLab
-	42, // 15: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock.begin_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
-	42, // 16: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock.expire_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
-	31, // 17: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.capabilities:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities
+	22, // 0: chrome.chromeos_infra.skylab.proto.inventory.Device.dut:type_name -> chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest
+	23, // 1: chrome.chromeos_infra.skylab.proto.inventory.Device.servo_host:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice
+	24, // 2: chrome.chromeos_infra.skylab.proto.inventory.Device.chameleon:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice
+	25, // 3: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
+	26, // 4: chrome.chromeos_infra.skylab.proto.inventory.DeviceUnderTest.removal_reason:type_name -> chrome.chromeos_infra.skylab.proto.inventory.RemovalReason
+	25, // 5: chrome.chromeos_infra.skylab.proto.inventory.ServoHostDevice.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
+	25, // 6: chrome.chromeos_infra.skylab.proto.inventory.ChameleonDevice.common:type_name -> chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs
+	37, // 7: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.attributes:type_name -> chrome.chromeos_infra.skylab.proto.inventory.KeyValue
+	29, // 8: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.device_locks:type_name -> chrome.chromeos_infra.skylab.proto.inventory.DeviceLock
+	42, // 9: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.environment:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Environment
+	31, // 10: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.labels:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels
+	27, // 11: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.location:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Location
+	30, // 12: chrome.chromeos_infra.skylab.proto.inventory.CommonDeviceSpecs.owner_shard:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Shard
+	43, // 13: chrome.chromeos_infra.skylab.proto.inventory.RemovalReason.expire_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
+	28, // 14: chrome.chromeos_infra.skylab.proto.inventory.Location.lab:type_name -> chrome.chromeos_infra.skylab.proto.inventory.PhysicalLab
+	43, // 15: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock.begin_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
+	43, // 16: chrome.chromeos_infra.skylab.proto.inventory.DeviceLock.expire_time:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Timestamp
+	32, // 17: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.capabilities:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities
 	7,  // 18: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.cr50_phase:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.CR50_Phase
 	8,  // 19: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.critical_pools:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.DUTPool
 	9,  // 20: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.cts_abi:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.CTSABI
 	10, // 21: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.cts_cpu:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.CTSCPU
 	11, // 22: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.ec_type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.ECType
-	37, // 23: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.licenses:type_name -> chrome.chromeos_infra.skylab.proto.inventory.License
-	38, // 24: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.modeminfo:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ModemInfo
-	39, // 25: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.siminfo:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMInfo
+	38, // 23: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.licenses:type_name -> chrome.chromeos_infra.skylab.proto.inventory.License
+	39, // 24: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.modeminfo:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ModemInfo
+	40, // 25: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.siminfo:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMInfo
 	12, // 26: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.os_type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.OSType
-	32, // 27: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.peripherals:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals
+	33, // 27: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.peripherals:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals
 	13, // 28: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.phase:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.Phase
-	35, // 29: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.test_coverage_hints:type_name -> chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints
+	36, // 29: chrome.chromeos_infra.skylab.proto.inventory.SchedulableLabels.test_coverage_hints:type_name -> chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints
 	14, // 30: chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities.carrier:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities.Carrier
 	15, // 31: chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities.video_acceleration:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareCapabilities.VideoAcceleration
 	16, // 32: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.chameleon_type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals.ChameleonType
 	1,  // 33: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.servo_state:type_name -> chrome.chromeos_infra.skylab.proto.inventory.PeripheralState
-	33, // 34: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.servo_topology:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopology
+	34, // 34: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.servo_topology:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopology
 	0,  // 35: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.servo_fw_channel:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoFwChannel
 	17, // 36: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.camerabox_facing:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals.CameraboxFacing
 	18, // 37: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.camerabox_light:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals.CameraboxLight
@@ -4564,19 +4654,21 @@ var file_infra_libs_skylab_inventory_device_proto_depIdxs = []int32{
 	2,  // 41: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.wifi_state:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareState
 	2,  // 42: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.bluetooth_state:type_name -> chrome.chromeos_infra.skylab.proto.inventory.HardwareState
 	1,  // 43: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.rpm_state:type_name -> chrome.chromeos_infra.skylab.proto.inventory.PeripheralState
-	34, // 44: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology.main:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
-	34, // 45: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology.children:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
-	19, // 46: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.cts_sparse:type_name -> chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.CTSSparse
-	3,  // 47: chrome.chromeos_infra.skylab.proto.inventory.License.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.LicenseType
-	4,  // 48: chrome.chromeos_infra.skylab.proto.inventory.ModemInfo.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ModemType
-	6,  // 49: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMType
-	40, // 50: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo.profile_info:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo
-	5,  // 51: chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo.carrier_name:type_name -> chrome.chromeos_infra.skylab.proto.inventory.NetworkProvider
-	52, // [52:52] is the sub-list for method output_type
-	52, // [52:52] is the sub-list for method input_type
-	52, // [52:52] is the sub-list for extension type_name
-	52, // [52:52] is the sub-list for extension extendee
-	0,  // [0:52] is the sub-list for field type_name
+	1,  // 44: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.peripheral_wifi_state:type_name -> chrome.chromeos_infra.skylab.proto.inventory.PeripheralState
+	19, // 45: chrome.chromeos_infra.skylab.proto.inventory.Peripherals.peripheral_wifi_features:type_name -> chrome.chromeos_infra.skylab.proto.inventory.Peripherals.WifiFeature
+	35, // 46: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology.main:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
+	35, // 47: chrome.chromeos_infra.skylab.proto.inventory.ServoTopology.children:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ServoTopologyItem
+	20, // 48: chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.cts_sparse:type_name -> chrome.chromeos_infra.skylab.proto.inventory.TestCoverageHints.CTSSparse
+	3,  // 49: chrome.chromeos_infra.skylab.proto.inventory.License.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.LicenseType
+	4,  // 50: chrome.chromeos_infra.skylab.proto.inventory.ModemInfo.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.ModemType
+	6,  // 51: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo.type:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMType
+	41, // 52: chrome.chromeos_infra.skylab.proto.inventory.SIMInfo.profile_info:type_name -> chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo
+	5,  // 53: chrome.chromeos_infra.skylab.proto.inventory.SIMProfileInfo.carrier_name:type_name -> chrome.chromeos_infra.skylab.proto.inventory.NetworkProvider
+	54, // [54:54] is the sub-list for method output_type
+	54, // [54:54] is the sub-list for method input_type
+	54, // [54:54] is the sub-list for extension type_name
+	54, // [54:54] is the sub-list for extension extendee
+	0,  // [0:54] is the sub-list for field type_name
 }
 
 func init() { file_infra_libs_skylab_inventory_device_proto_init() }
@@ -4849,7 +4941,7 @@ func file_infra_libs_skylab_inventory_device_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_libs_skylab_inventory_device_proto_rawDesc,
-			NumEnums:      20,
+			NumEnums:      21,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
