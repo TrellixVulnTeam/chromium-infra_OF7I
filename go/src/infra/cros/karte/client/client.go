@@ -55,6 +55,20 @@ func DevConfig(o auth.Options) *Config {
 	}
 }
 
+// ProdConfig returns a configuration for the Karte client intended to talk to the dev
+// instance of Karte, which is a cloud project.
+//
+// The auth options are required and must be passed in explicitly. The hostname and
+// type of login are set to reasonable defaults for a local command line tool.
+func ProdConfig(o auth.Options) *Config {
+	return &Config{
+		karteService: site.ProdKarteServer,
+		loginMode:    auth.InteractiveLogin,
+		authOption:   o,
+		userAgent:    "local command line tool",
+	}
+}
+
 // EmptyConfig is a config with no content. It is expected to fail to construct a client if used as the
 // base config without the appropriate options being set.
 func EmptyConfig() *Config {
