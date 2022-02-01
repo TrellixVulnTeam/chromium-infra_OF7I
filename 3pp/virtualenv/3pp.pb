@@ -9,6 +9,7 @@ create {
     }
     patch_dir: "patches"
     patch_version: "chromium.5"
+    cpe_base_address: "cpe:/a:virtualenv:virtualenv"
   }
   build {
     dep: "build_support/pip_bootstrap"
