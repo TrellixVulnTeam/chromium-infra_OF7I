@@ -7,6 +7,7 @@ create {
     }
     unpack_archive: true
     patch_version: "chromium.1"
+    cpe_base_address: "cpe:/a:flex_project:flex"
   }
 
   build {
