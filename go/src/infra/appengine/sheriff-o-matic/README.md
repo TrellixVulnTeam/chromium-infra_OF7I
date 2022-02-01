@@ -243,6 +243,56 @@ debug later if something go wrong.
 ## Dataflow
 A (simplified) dataflow in SoM is in this [diagram](https://docs.google.com/presentation/d/1onUTH9QSE5Y65Vlp7pm6UPM7LRIwWHvwc_yJoEXyfDg).
 
+## Assigning builds to trees
+
+### Chromium/Chrome
+
+In the case of the **chromium** and **chrome** projects as well as their
+corresponding branch projects (**chromium-m\*** and **chrome-m\***), builds are
+assigned to trees based on the value of the `sheriff_rotations` property. The
+`sheriff_rotations` property is a list containing the names of the trees the
+build should be included in.
+
+To modify the `sheriff_rotations` property for a builder's builds, update the
+definition of the builder by setting the `sheriff_rotations` argument, which can
+take a single value or a list of values:
+
+```starlark
+builder(
+    name = "my-builder",
+    ...
+    sheriff_rotations = sheriff_rotations.ANDROID,
+    ...
+)
+```
+
+The builders are organized in files based on builder groups, which often are all
+assigned the same tree. In that case, the `sheriff_rotations` value can be set
+for the entire file by using module-level defaults:
+
+```starlark
+defaults.set(
+    builder_group = "my-builder-group",
+    ...
+    sheriff_rotations = sheriff_rotations.CHROMIUM,
+    ...
+)
+```
+
+Any values specified at the builder will be merged with those set in the
+module-level defaults. If the module-level defaults should be ignored,
+`args.ignore_default` can be used to take only what is specified at the builder,
+so the following example would cause the `sheriff_rotations` property to not be
+set regardless of the module-level default value:
+
+```starlark
+builder(
+    name = "my-unsheriffed-builder",
+    ...
+    sheriff_rotations = args.ignore_default(None),
+    ...
+)
+```
 
 ## Troubleshooting common problems
 ### SoM is showing incorrect/missing/stale data

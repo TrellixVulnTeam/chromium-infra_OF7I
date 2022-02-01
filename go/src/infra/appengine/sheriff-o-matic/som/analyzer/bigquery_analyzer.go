@@ -77,125 +77,6 @@ LIMIT
 	1000
 `
 
-var androidFilterFunc = func(r failureRow) bool {
-	if r.Project != "chrome" && r.Project != "chromium" {
-		return false
-	}
-	excludedBuckets := []string{"try", "findit"}
-	if sliceContains(excludedBuckets, r.Bucket) {
-		return false
-	}
-	builderGroup := r.BuilderGroup.String()
-	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, builderGroup) {
-		return true
-	}
-	if builderGroup == "chromium" && r.Builder == "Android" {
-		return true
-	}
-	if builderGroup == "chromium.webkit" && sliceContains([]string{"Android Builder", "Webkit Android (Nexus4)"}, r.Builder) {
-		return true
-	}
-	validBuilders := []string{
-		"android-androidx-packager",
-		"android-arm-official-tests",
-		"android-arm64-official-tests",
-		"android-arm-beta-tests",
-		"android-arm64-beta-tests",
-		"android-arm-stable-tests",
-		"android-arm64-stable-tests",
-		"android-arm-beta",
-		"android-arm64-beta",
-		"android-arm64-stable",
-		"android-arm64-stable",
-		"android-arm-stable",
-		"android-asan",
-		"android-arm",
-		"android-arm-tests",
-		"android-arm64",
-		"android-arm64-tests",
-	}
-	return sliceContains(validBuilders, r.Builder)
-}
-
-var chromiumFilterFunc = func(r failureRow) bool {
-	if r.Project != "chrome" && r.Project != "chromium" {
-		return false
-	}
-	builderGroup := r.BuilderGroup.String()
-	validBuilderGroups := []string{
-		"chrome",
-		"chromium",
-		"chromium.chromiumos",
-		"chromium.linux",
-		"chromium.mac",
-		"chromium.memory",
-		"chromium.win",
-	}
-	return sliceContains(validBuilderGroups, builderGroup) && r.Bucket == "ci"
-}
-
-var chromiumGPUFilterFunc = func(r failureRow) bool {
-	if r.Project != "chrome" && r.Project != "chromium" {
-		return false
-	}
-	if r.Bucket == "findit" {
-		return false
-	}
-	validBuilderGroups := []string{
-		"chromium.gpu",
-		"chromium.gpu.fyi",
-		"chromium.swangle",
-	}
-	return sliceContains(validBuilderGroups, r.BuilderGroup.String())
-}
-
-var chromiumPerfFilterFunc = func(r failureRow) bool {
-	if r.Project != "chrome" && r.Project != "chromium" {
-		return false
-	}
-	if strings.Contains(r.Builder, "bisect") {
-		return false
-	}
-	excludedBuckets := []string{"try", "cq", "staging", "general", "findit"}
-	if sliceContains(excludedBuckets, r.Bucket) {
-		return false
-	}
-	return (r.Project == "chromium.perf" || r.BuilderGroup.String() == "chromium.perf") && (!r.BuilderGroup.Valid || !strings.HasSuffix(r.BuilderGroup.String(), ".fyi"))
-}
-
-var iosFilterFunc = func(r failureRow) bool {
-	if r.Project != "chrome" && r.Project != "chromium" {
-		return false
-	}
-	if r.Bucket == "findit" {
-		return false
-	}
-	if r.Project == "chrome" && r.BuilderGroup.String() == "internal.bling.main" {
-		return true
-	}
-	validBuilders := []string{
-		"ios-device",
-		"ios-simulator",
-		"ios-simulator-full-configs",
-		"ios-simulator-noncq",
-	}
-	if r.Project == "chromium" && r.BuilderGroup.String() == "chromium.mac" && sliceContains(validBuilders, r.Builder) {
-		return true
-	}
-	return false
-}
-
-var chromiumClangFilterFunc = func(r failureRow) bool {
-	if strings.Contains(r.Builder, "bisect") {
-		return false
-	}
-	excludedBuckets := []string{"try", "cq", "staging", "general", "findit"}
-	if sliceContains(excludedBuckets, r.Bucket) {
-		return false
-	}
-	return (r.Project == "chromium.clang" || r.BuilderGroup.String() == "chromium.clang") && (!r.BuilderGroup.Valid || !strings.HasSuffix(r.BuilderGroup.String(), ".fyi"))
-}
-
 func chromeBrowserFilterFunc(tree string) func(r failureRow) bool {
 	return func(r failureRow) bool {
 		return sliceContains(r.SheriffRotations, tree)
@@ -346,20 +227,8 @@ func shouldUseCache(tree string) bool {
 
 func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
 	switch tree {
-	case "android":
-		return androidFilterFunc, nil
-	case "chromium":
-		return chromiumFilterFunc, nil
-	case "chromium.gpu":
-		return chromiumGPUFilterFunc, nil
-	case "chromium.perf":
-		return chromiumPerfFilterFunc, nil
-	case "ios":
-		return iosFilterFunc, nil
-	case "chrome_browser_release":
+	case "android", "chrome_browser_release", "chromium", "chromium.clang", "chromium.gpu", "chromium.perf", "ios":
 		return chromeBrowserFilterFunc(tree), nil
-	case "chromium.clang":
-		return chromiumClangFilterFunc, nil
 	default:
 		return nil, fmt.Errorf("could not find filter function for tree %s", tree)
 	}
