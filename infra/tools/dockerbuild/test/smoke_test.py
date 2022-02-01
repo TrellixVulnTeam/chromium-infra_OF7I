@@ -32,16 +32,15 @@ def run_vpython(script):
   """
   env = escape_virtual_env(os.environ)
   env['PYTHONDONTWRITEBYTECODE'] = '1'
-  proc = subprocess.Popen([
-      'vpython3',
-      '-vpython-log-level',
-      'debug',
-      '-vpython-spec',
-      SPEC,
-      script,
-  ],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT)
+  proc = subprocess.Popen(
+      [
+          'vpython',
+          '-vpython-log-level', 'debug',
+          '-vpython-spec', SPEC,
+          script,
+      ],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT)
   out, _ = proc.communicate()
   return proc.returncode, out
 

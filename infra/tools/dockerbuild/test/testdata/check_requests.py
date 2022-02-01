@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython3
+#!/usr/bin/env vpython
 # Copyright 2019 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -26,7 +26,7 @@ TEST_CASES = [
 
 def get_code_or_err(url):
   try:
-    print('Trying %s' % url)
+    print 'Trying %s' % url
     return requests.get(url).status_code
   except requests.exceptions.SSLError as exc:
     return exc
@@ -38,10 +38,10 @@ def tests_succeed():
     res = get_code_or_err(url)
     if isinstance(exp, int):
       if exp != res:
-        print >> sys.stderr, ('For %s: expecting %d, got %s' % (url, exp, res))
+        print >> sys.stderr, 'For %s: expecting %d, got %s' % (url, exp, res)
         ok = False
     elif not isinstance(res, exp):
-      print >> sys.stderr, ('For %s: expecting %s, got %s' % (url, exp, res))
+      print >> sys.stderr, 'For %s: expecting %s, got %s' % (url, exp, res)
       ok = False
   return ok
 
