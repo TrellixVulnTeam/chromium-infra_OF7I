@@ -6,6 +6,7 @@ create {
       version: "10.23"
     }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:pcre:pcre2"
   }
   build {}
 }
