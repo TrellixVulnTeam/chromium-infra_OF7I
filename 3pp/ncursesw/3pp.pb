@@ -7,6 +7,7 @@ create {
     }
     unpack_archive: true
     patch_dir: "patches"
+    cpe_base_address: "cpe:/a:ncurses_project:ncurses"
   }
   build {}
 }
