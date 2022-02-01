@@ -33,6 +33,9 @@ Options:
         prefixed with the upload.pkg_prefix, such as "tools/cpython".
       * 'platform="linux-amd64"' - Allows you to select which CIPD platform
         you're targeting.
+    Note: You need both 'to_build' and 'platform'. Like:
+    ./run_locally.sh 'platform=linux-amd64' 'to_build=["tools/squashfs"]'
+    Only use 1 argument will result error.
 
 Tips:
   * When stuff goes wrong, it's very helpful to inspect the state of the

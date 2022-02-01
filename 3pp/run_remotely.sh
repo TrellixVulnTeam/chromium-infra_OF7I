@@ -32,6 +32,9 @@ Options:
         you're targeting. This will also affect the os dimension selected for
         the led task. By default this will use Windows as the target os (since
         most of our devs have easy local access to Linux/Mac).
+    Note: You need both 'to_build' and 'platform'. Like:
+    ./run_remotely.sh 'platform=linux-amd64' 'to_build=["tools/squashfs"]'
+    Only use 1 argument will result error.
 
 Tips:
   * If you end up uploading a bad package to your experimental prefix. You'll
