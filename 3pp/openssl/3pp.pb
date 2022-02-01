@@ -8,6 +8,7 @@ create {
     patch_version: "chromium.1"
     patch_dir: "patches"
     unpack_archive: true
+    cpe_base_address: "cpe:/a:openssl_project:openssl"
   }
   build {}
 }
