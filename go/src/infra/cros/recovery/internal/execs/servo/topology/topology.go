@@ -120,6 +120,18 @@ func readDeviceInfo(ctx context.Context, runner execs.Runner, devicePath string)
 	return servo
 }
 
+// RereadServoFwVersion rereads the servo's firmware inside servo toplogy to the current version
+// based on the configuration file.
+func RereadServoFwVersion(ctx context.Context, runner execs.Runner, servo *tlw.ServoTopologyItem) error {
+	if fwVersion, err := readServoFs(ctx, runner, servo.SysfsPath, configurationFileName); err != nil {
+		return errors.Annotate(err, "reread servo fw version").Err()
+	} else {
+		log.Debug(ctx, "Reread servo device %q firmware to be %q", servo.Type, fwVersion)
+		servo.FwVersion = fwVersion
+		return nil
+	}
+}
+
 // Get the path of root servo on servo host.
 func getRootServoPath(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
 	servoPath, err := runner(ctx, time.Minute, fmt.Sprintf(servodtoolDeviceUSBPathCMD, servoSerial))

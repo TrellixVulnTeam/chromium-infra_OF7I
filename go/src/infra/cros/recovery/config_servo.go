@@ -272,8 +272,7 @@ const servoRepairPlanBody = `
 		},
 		"recovery_actions": [
 			"servo_fw_update"
-		],
-		"allow_fail_after_recovery": true
+		]
 	},
 	"servod_get_serialname": {
 		"docs":[
@@ -600,14 +599,12 @@ const servoRepairPlanBody = `
 	"servo_fw_update": {
 		"docs":[
 			"Try to update in  normal ways 3 times",
-			"if fail allow run force update",
-			"TODO: remove sample_fail when repair will working."
+			"if fail allow run force update"
 		],
 		"conditions": [
 			"is_not_servo_v3"
 		],
 		"dependencies": [
-			"sample_fail",
 			"servo_host_servod_stop"
 		],
 		"exec_extra_args": [
