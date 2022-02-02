@@ -40,7 +40,7 @@ export function IssueWizard(): ReactElement {
     page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category} setActiveStep={setActiveStep}/>;
   } else if (activeStep === 2) {
     // TODO: (crbug.com/monorail/10581) get the customQuestions List
-    page = <CustomQuestionsStep setActiveStep={setActiveStep} questionsList={[]}/>;
+    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={[]}/>;
   }
 
   return (

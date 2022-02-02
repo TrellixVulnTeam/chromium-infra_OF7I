@@ -10,7 +10,7 @@ import {CustomQuestionType} from 'react/issue-wizard/IssueWizardTypes.tsx';
 
 describe('IssueWizard CustomQuestionsStep', () => {
   it('renders', async () => {
-    render(<CustomQuestionsStep questionsList={[]}/>);
+    render(<CustomQuestionsStep questions={[]}/>);
     const stepper = document.getElementById("mobile-stepper")
 
     assert.isNotNull(stepper);
@@ -21,7 +21,7 @@ describe('IssueWizard CustomQuestionsStep', () => {
       type: CustomQuestionType.Input,
       question: "this is a test",
     }]
-    const {container} = render(<CustomQuestionsStep questionsList={questionList}/>);
+    const {container} = render(<CustomQuestionsStep questions={questionList}/>);
     const input = container.querySelector('input');
     assert.isNotNull(input);
   })
@@ -31,7 +31,7 @@ describe('IssueWizard CustomQuestionsStep', () => {
       type: CustomQuestionType.Text,
       question: "this is a test",
     }]
-    const {container} = render(<CustomQuestionsStep questionsList={questionList}/>);
+    const {container} = render(<CustomQuestionsStep questions={questionList}/>);
     const input = container.querySelector('textarea');
     assert.isNotNull(input);
   })

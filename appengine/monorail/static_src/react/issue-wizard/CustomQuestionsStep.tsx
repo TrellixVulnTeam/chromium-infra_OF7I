@@ -7,8 +7,9 @@ import {makeStyles} from '@material-ui/styles';
 import {grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import {CustomQuestion, CustomQuestionType} from './IssueWizardTypes.tsx';
-import InputTypeCustomQuestion from './CustomQuestions/InputTypeCustomQuestion.tsx';
-import TextareaTypeCustomQuestion from './CustomQuestions/TextareaTypeCustomQuestion.tsx';
+import CustomQuestionInput from './CustomQuestions/CustomQuestionInput.tsx';
+import CustomQuestionTextarea from './CustomQuestions/CustomQuestionTextarea.tsx';
+import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 
 const userStyles = makeStyles({
   greyText: {
@@ -21,39 +22,50 @@ const userStyles = makeStyles({
 
 type Props = {
   setActiveStep: Function,
-  questionsList: CustomQuestion[],
+  questions: CustomQuestion[],
 };
 
 export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
-  const {setActiveStep, questionsList} = props;
+  const {setActiveStep, questions} = props;
   const classes = userStyles();
 
   const customQuestions = new Array();
-  const answers = Array(questionsList.length).fill('');
+
+  // TODO: (crbug.com/monorail/10581) load all the custom questions and update answers
+  const answers = Array(questions.length).fill('');
 
   const updateAnswer = (answer: string, index: number) => {
     answers[index] = answer;
   }
 
-  questionsList.forEach((q, i) => {
+  questions.forEach((q, i) => {
     switch(q.type) {
       case CustomQuestionType.Input:
         customQuestions.push(
-          <InputTypeCustomQuestion
+          <CustomQuestionInput
             question={q.question}
-            updateAnswers={(answer: string) => {updateAnswer(answer, i);}}
+            updateAnswers={(answer: string) => updateAnswer(answer, i)}
           />
         );
         return;
       case CustomQuestionType.Text:
           customQuestions.push(
-            <TextareaTypeCustomQuestion
+            <CustomQuestionTextarea
               question={q.question}
-              updateAnswers={(answer: string) => {updateAnswer(answer, i);}}
+              updateAnswers={(answer: string) => updateAnswer(answer, i)}
             />
           );
           return;
+      case CustomQuestionType.Select:
+        customQuestions.push(
+          <CustomQuestionSelector
+            question={q.question}
+            options={q.options}
+            updateAnswers={(answer: string) => updateAnswer(answer, i)}
+          />
+        );
+        return;
       default:
         return;
     }

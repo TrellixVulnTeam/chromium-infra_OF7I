@@ -7,6 +7,7 @@ import {createTheme, Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
+import {SelectMenuOption} from './IssueWizardTypes.tsx';
 
 const theme: Theme = createTheme();
 
@@ -38,8 +39,8 @@ const useStyles = makeStyles((theme: Theme) => ({
  * @return ReactElement.
  */
 type Props = {
-  optionsList: string[] | null,
-  selectedOption: string | null,
+  optionsList: SelectMenuOption[] | null,
+  selectedOption: SelectMenuOption | null,
   setOption: Function,
 };
 
@@ -81,7 +82,11 @@ export default function SelectMenu(props: Props) {
           >
             <div>
               <div>{option.name}</div>
-              <div className={classes.description}>{option.description}</div>
+              {
+                option.description ?
+                  <div className={classes.description}>{option.description}</div>
+                  : null
+              }
             </div>
           </MenuItem>))
       }

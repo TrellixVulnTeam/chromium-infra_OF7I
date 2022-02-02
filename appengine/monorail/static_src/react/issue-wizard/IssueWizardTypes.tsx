@@ -46,7 +46,7 @@ export type IssueCategory = {
   customQuestions?: CustomQuestion[],
 };
 
-export type IssueCategoryDetail = {
+export type SelectMenuOption = {
   name: string,
-  description: string,
+  description?: string,
 };
