@@ -700,6 +700,26 @@ func servoServodCCToggleExec(ctx context.Context, args *execs.RunArgs, actionArg
 	return nil
 }
 
+// servoRebootEcOnDUTExec will reboot EC on DUT using servod command.
+// It reboots just the embedded controllers on the DUT.
+func servoRebootEcOnDUTExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	ecUartFlush := "ec_uart_flush"
+	log.Info(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
+	if _, err := ServodCallSet(ctx, args, ecUartFlush, "off"); err != nil {
+		return errors.Annotate(err, "servod reboot ec on dut").Err()
+	}
+	ecUartCmd := "ec_uart_cmd"
+	log.Info(ctx, `Setting servod command %q to "reboot" value.`, ecUartCmd)
+	if _, err := ServodCallSet(ctx, args, ecUartCmd, "reboot"); err != nil {
+		return errors.Annotate(err, "servod reboot ec on dut").Err()
+	}
+	log.Info(ctx, `Setting servod command %q to "on" value.`, ecUartFlush)
+	if _, err := ServodCallSet(ctx, args, ecUartFlush, "on"); err != nil {
+		return errors.Annotate(err, "servod reboot ec on dut").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -720,4 +740,5 @@ func init() {
 	execs.Register("servo_update_servo_firmware", servoUpdateServoFirmwareExec)
 	execs.Register("servo_fake_disconnect_dut", servoFakeDisconnectDUTExec)
 	execs.Register("servo_servod_cc_toggle", servoServodCCToggleExec)
+	execs.Register("servo_reboot_ec_on_dut", servoRebootEcOnDUTExec)
 }
