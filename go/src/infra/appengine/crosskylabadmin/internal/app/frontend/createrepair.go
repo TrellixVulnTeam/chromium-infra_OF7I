@@ -245,14 +245,6 @@ func createLegacyRepairTask(ctx context.Context, botID string, expectedState str
 	return taskURL, nil
 }
 
-// IsRecoveryEnabledForLabstation returns whether recovery is enabled for labstations.
-// TODO(gregorynisbet): Expand this to take into account other relevant factors like the pools that the labstation is in.
-func isRecoveryEnabledForLabstation(ctx context.Context) bool {
-	enabled := true
-	enabled = enabled && config.Get(ctx).GetParis().GetLabstationRepair().GetEnable()
-	return enabled
-}
-
 // IsDisjoint returns true if and only if two sequences have no elements in common.
 func isDisjoint(a []string, b []string) bool {
 	bMap := make(map[string]bool, len(b))
