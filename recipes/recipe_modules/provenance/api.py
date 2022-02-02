@@ -5,6 +5,12 @@
 from recipe_engine import recipe_api
 
 
+# Usage of provenance recipe_module will be highly restricted in near future and
+# to avoid any production outage, we are pinning the latest known good build of
+# the tool here. Upstream changes are intentionally left out.
+LATEST_STABLE_VERSION = 'git_revision:1b94785f1e15dc6c54840db4988d6c5bf0f4714c'
+
+
 class ProvenanceApi(recipe_api.RecipeApi):
   """API for interacting with Provenance using the provenance tool."""
 
@@ -23,7 +29,7 @@ class ProvenanceApi(recipe_api.RecipeApi):
     if self._provenance_bin is None:
       provenance_dir = self.m.path['start_dir'].join('provenance')
       ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/provenance/${platform}', 'latest')
+          'infra/tools/provenance/${platform}', LATEST_STABLE_VERSION)
       self.m.cipd.ensure(provenance_dir, ensure_file)
       self._provenance_bin = provenance_dir.join('provenance')
     return self._provenance_bin

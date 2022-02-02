@@ -549,11 +549,11 @@ Raises:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [ProvenanceApi](/recipes/recipe_modules/provenance/api.py#8)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [ProvenanceApi](/recipes/recipe_modules/provenance/api.py#14)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for interacting with Provenance using the provenance tool.
 
-&mdash; **def [generate](/recipes/recipe_modules/provenance/api.py#31)(self, kms_crypto_key, input_file, output_file):**
+&mdash; **def [generate](/recipes/recipe_modules/provenance/api.py#37)(self, kms_crypto_key, input_file, output_file):**
 
 Generate an attestation file with a built artifact.
 
@@ -563,7 +563,7 @@ Args:
   * input_file (Path) - The path to the input manifest file.
   * output_file (Path) - The path to the output attestation file.
 
-&emsp; **@property**<br>&mdash; **def [provenance\_path](/recipes/recipe_modules/provenance/api.py#15)(self):**
+&emsp; **@property**<br>&mdash; **def [provenance\_path](/recipes/recipe_modules/provenance/api.py#21)(self):**
 
 Returns the path to provenance binary.
 
