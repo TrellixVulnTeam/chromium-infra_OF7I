@@ -14,8 +14,24 @@
 
 package main
 
-import "fmt"
+import (
+	"context"
+	"log"
+	"os"
+)
 
 func main() {
-	fmt.Println("hello world")
+	ctx := context.Background()
+
+	// Check for the presence of "--" between the wrapper & the cmd
+	// bbagent already resolves the cmd to absolute path
+	args := os.Args[1:]
+	if args[0] != "--" {
+		log.Fatalf("there should be  a `--` between the wrapper and the cmd")
+	}
+	args = args[1:]
+
+	if err := RunInNsjail(ctx, args); err != nil {
+		log.Fatalf("running command: %s", err.Error())
+	}
 }
