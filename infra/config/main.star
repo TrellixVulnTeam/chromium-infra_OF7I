@@ -110,9 +110,6 @@ luci.notify(tree_closing_enabled = True)
 
 # Global builder defaults.
 luci.builder.defaults.execution_timeout.set(45 * time.minute)
-luci.builder.defaults.experiments.set({
-    "luci.use_realms": 100,
-})
 
 # Global recipe defaults
 luci.recipe.defaults.cipd_version.set("refs/heads/main")

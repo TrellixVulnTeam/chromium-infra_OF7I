@@ -21,7 +21,6 @@ def ci_builder(name, os, tree_closing = False, properties = None):
         bucket = "ci",
         executable = infra.recipe("luci_go"),
         os = os,
-        use_realms = True,
         properties = properties,
         triggered_by = [
             luci.gitiles_poller(
@@ -53,7 +52,6 @@ def try_builder(
         bucket = "try",
         executable = infra.recipe(recipe or "luci_go"),
         os = os,
-        use_realms = True,
         properties = properties,
     )
     if in_cq:

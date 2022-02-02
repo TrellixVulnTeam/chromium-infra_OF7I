@@ -90,7 +90,6 @@ luci.bucket(name = "ci")
 
 luci.builder.defaults.experiments.set({
     "luci.buildbucket.bbagent_getbuild": 100,
-    "luci.use_realms": 100,
 })
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
