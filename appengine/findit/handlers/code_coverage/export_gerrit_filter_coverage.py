@@ -77,10 +77,11 @@ class ExportAllCoverageMetrics(BaseHandler):
                    (modifier_id, modifier.gerrit_hashtag, modifier.author))
       url = '/coverage/task/gerrit-filter-coverage?modifier_id=%d' % (
           modifier_id)
+      author = modifier.author.replace('@', '_') if modifier.author else None
       taskqueue.add(
           method='GET',
           url=url,
-          name='%s-%s-%s' % (modifier.gerrit_hashtag, modifier.author,
+          name='%s-%s-%s' % (modifier.gerrit_hashtag, author,
                              datetime.datetime.now().strftime('%d%m%Y-%H%M%S')),
           queue_name=constants.GERRIT_FILTER_COVERAGE_QUEUE,
           target=constants.CODE_COVERAGE_GERRIT_FILTER_COVERAGE_WORKER)
