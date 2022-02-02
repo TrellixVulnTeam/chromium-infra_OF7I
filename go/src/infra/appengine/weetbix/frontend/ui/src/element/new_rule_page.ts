@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import { LitElement, html, customElement, property, css, state } from 'lit-element';
+import { GrpcError, RpcCode } from '@chopsui/prpc-client';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import '@material/mwc-icon';
@@ -14,8 +15,7 @@ import { TextArea } from '@material/mwc-textarea';
 import { TextField } from '@material/mwc-textfield';
 import { BeforeEnterObserver, Router, RouterLocation } from '@vaadin/router';
 
-import { obtainXSRFToken } from '../libs/xsrf';
-import { Rule, RuleCreateRequest, ClusterId } from '../libs/rules';
+import { getRulesService, ClusterId, CreateRuleRequest } from '../services/rules';
 import { readProjectConfig, ProjectConfig } from '../libs/config';
 
 /**
@@ -99,11 +99,6 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
         if (!this.project) {
             throw new Error('new-rule-page element project property is required');
         }
-        // Ensures a XSRF token is cached, minimising latency when
-        // user decides to submit the form. We do not need to await
-        // this promise, we call obtainXSRFToken() with await when we
-        // actually need the token.
-        obtainXSRFToken();
 
         this.projectConfig = await readProjectConfig(this.project);
     }
@@ -124,58 +119,41 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
 
         this.validationMessage = '';
 
-        try {
-            const request: RuleCreateRequest = {
-                rule: {
-                    bugId: {
-                        system: bugSystem,
-                        id: bugId,
-                    },
-                    ruleDefinition: ruleDefinition.value,
-                    isActive: true,
-                    sourceCluster: this.sourceCluster,
+        const request: CreateRuleRequest = {
+            parent: `projects/${this.project}`,
+            rule: {
+                bug: {
+                    system: bugSystem,
+                    id: bugId,
                 },
-                xsrfToken: await obtainXSRFToken(),
-            }
-
-            const validationError = await this.applyCreate(request);
-            if (validationError != null) {
-                this.validationMessage = validationError;
-            }
-        } catch (err) {
-            this.showSnackbar(err as string);
-        }
-    }
-
-    // applyUpdate tries to apply the given update to the rule. If the
-    // update succeeds, this method returns nil. If a validation error
-    // occurs, the validation message is returned.
-    async applyCreate(request: RuleCreateRequest): Promise<string | null> {
-        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules`, {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json',
+                ruleDefinition: ruleDefinition.value,
+                isActive: true,
+                sourceCluster: this.sourceCluster,
             },
-            body: JSON.stringify(request),
-        });
-        if (response.ok) {
-            const rule: Rule = await response.json();
-            let path = `/projects/${encodeURIComponent(this.project)}/clusters/rules-v1/${rule.ruleId}`;
+        }
+
+        const service = getRulesService();
+        try {
+            const rule = await service.create(request);
+            this.validationMessage = JSON.stringify(rule);
+            const path = `/projects/${encodeURIComponent(rule.project)}/clusters/rules-v1/${encodeURIComponent(rule.ruleId)}`;
             Router.go(path);
-            return null;
-        } else {
-            const err = await response.text();
-            // 400 = Bad request.
-            if (response.status == 400) {
-                return err;
-            } else {
-                throw err;
+        } catch (e) {
+            let handled = false;
+            if (e instanceof GrpcError) {
+                if (e.code === RpcCode.INVALID_ARGUMENT) {
+                    handled = true;
+                    this.validationMessage = 'Validation error: ' + e.description.trim() + '.';
+                }
+            }
+            if (!handled) {
+                this.showSnackbar(e as string);
             }
         }
     }
 
     showSnackbar(error: string) {
-        this.snackbarError = "Updating rule: " + error;
+        this.snackbarError = "Creating rule: " + error;
 
         // Let the snackbar manage its own closure after a delay.
         const snackbar = this.shadowRoot!.getElementById("error-snackbar") as Snackbar;

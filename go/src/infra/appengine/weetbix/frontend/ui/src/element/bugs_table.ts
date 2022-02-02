@@ -4,6 +4,8 @@
 
 import { LitElement, html, customElement, property, state } from 'lit-element';
 
+import { getRulesService, ListRulesRequest, Rule } from '../services/rules';
+
 // BugsTable lists the failure association rules configured in Weetbix.
 @customElement('bugs-table')
 export class BugsTable extends LitElement {
@@ -11,11 +13,20 @@ export class BugsTable extends LitElement {
     project = 'chromium';
 
     @state()
-    rules: FailureAssociationRule[] | undefined;
+    rules: Rule[] | undefined;
 
     connectedCallback() {
-        super.connectedCallback()
-        fetch(`/api/projects/${encodeURIComponent(this.project)}/rules`).then(r => r.json()).then(rules => this.rules = rules);
+        super.connectedCallback();
+        this.fetch();
+    }
+
+    async fetch() {
+        const service = getRulesService();
+        const request: ListRulesRequest = {
+            parent: `projects/${this.project}`,
+        }
+        const response = await service.list(request);
+        this.rules = response.rules;
     }
 
     render() {
@@ -35,7 +46,7 @@ export class BugsTable extends LitElement {
             <tbody>
                 ${this.rules.map(c => html`
                 <tr>
-                    <td>${c.bugId.system}/${c.bugId.id}</td>
+                    <td>${c.bug.system}/${c.bug.id}</td>
                     <td>${c.ruleDefinition}</td>
                     <td>${c.ruleId}</td>
                     <td>${c.sourceCluster.algorithm}/${c.sourceCluster.id}</td>
@@ -46,21 +57,3 @@ export class BugsTable extends LitElement {
     }
 }
 
-// FailureAssociationRule is the failure association rule information sent by the server.
-interface FailureAssociationRule {
-    project: string;
-    ruleId: string;
-    ruleDefinition: string;
-    bugId: BugId;
-    sourceCluster: ClusterId;
-}
-
-interface BugId {
-    system: string;
-    id: string;
-}
-
-interface ClusterId {
-    algorithm: string;
-    id: string;
-}

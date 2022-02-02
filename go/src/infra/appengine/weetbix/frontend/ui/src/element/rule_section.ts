@@ -4,6 +4,7 @@
 
 import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
 import { DateTime } from 'luxon';
+import { GrpcError, RpcCode } from '@chopsui/prpc-client';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import '@material/mwc-textfield';
@@ -12,8 +13,9 @@ import { TextArea } from '@material/mwc-textarea';
 import '@material/mwc-textfield';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
-import { obtainXSRFToken } from '../libs/xsrf';
-import { Rule, RuleUpdateRequest } from '../libs/rules';
+import '@material/mwc-icon'
+
+import { getRulesService, Rule, UpdateRuleRequest } from '../services/rules';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.
@@ -28,8 +30,6 @@ export class RuleSection extends LitElement {
 
     @state()
     rule: Rule | null = null;
-
-    etag: string | null = null;
 
     @state()
     editing = false;
@@ -98,7 +98,7 @@ export class RuleSection extends LitElement {
                     </tr>
                     <tr>
                         <th>Associated Bug</th>
-                        <td><a href="${r.bugLink.url}">${r.bugLink.name}</a></td>
+                        <td><a href="${r.bug.url}">${r.bug.linkText}</a></td>
                     </tr>
                     <tr>
                         <th>Enabled <mwc-icon class="inline-icon" title="Enabled failure association rules are used to match failures. If a rule is no longer needed, it should be disabled.">help_outline</mwc-icon></th>
@@ -121,9 +121,9 @@ export class RuleSection extends LitElement {
                 </tbody>
             </table>
             <div class="audit">
-                ${(r.lastUpdated != r.creationTime) ?
-                html`Last updated by <span class="user">${formatUser(r.lastUpdatedUser)}</span> <span class="time" title="${formatTooltipTime(r.lastUpdated)}">${formatTime(r.lastUpdated)}</span>.` : html``}
-                Created by <span class="user">${formatUser(r.creationUser)}</span> <span class="time" title="${formatTooltipTime(r.creationTime)}">${formatTime(r.creationTime)}</span>.
+                ${(r.lastUpdateTime != r.createTime) ?
+                html`Last updated by <span class="user">${formatUser(r.lastUpdateUser)}</span> <span class="time" title="${formatTooltipTime(r.lastUpdateTime)}">${formatTime(r.lastUpdateTime)}</span>.` : html``}
+                Created by <span class="user">${formatUser(r.createUser)}</span> <span class="time" title="${formatTooltipTime(r.createTime)}">${formatTime(r.createTime)}</span>.
             </div>
         </div>
         <mwc-dialog class="rule-edit-dialog" ?open="${this.editing}" @closed="${this.editClosed}">
@@ -145,16 +145,13 @@ export class RuleSection extends LitElement {
         if (!this.ruleId) {
             throw new Error('rule-section element ruleID property is required');
         }
-        const r = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`);
-        const rule = await r.json();
+        const service = getRulesService();
+        const rule = await service.get({
+            name: `projects/${this.project}/rules/${this.ruleId}`
+        })
 
-        this.etag = r.headers.get("ETag");
         this.rule = rule || null;
         this.fireRuleChanged();
-
-        // Ensures a XSRF token is cached, minimising latency if
-        // the user decides to perform an action.
-        await obtainXSRFToken()
     }
 
     edit() {
@@ -184,23 +181,28 @@ export class RuleSection extends LitElement {
 
         this.validationMessage = "";
 
-        try {
-            const request: RuleUpdateRequest = {
-                rule: {
-                    ruleDefinition: ruleDefinition.value,
-                },
-                updateMask: {
-                    paths: ["ruleDefinition"],
-                },
-                xsrfToken: await obtainXSRFToken(),
-            }
+        const request: UpdateRuleRequest = {
+            rule: {
+                name: this.rule.name,
+                ruleDefinition: ruleDefinition.value,
+            },
+            updateMask: "ruleDefinition",
+            etag: this.rule.etag,
+        }
 
-            const validationError = await this.applyUpdate(request);
-            if (validationError != null) {
-                this.validationMessage = validationError;
+        try {
+            await this.applyUpdate(request);
+        } catch (e) {
+            let handled = false;
+            if (e instanceof GrpcError) {
+                if (e.code === RpcCode.INVALID_ARGUMENT) {
+                    handled = true;
+                    this.validationMessage = 'Validation error: ' + e.description.trim() + '.';
+                }
             }
-        } catch (err) {
-            this.showSnackbar(err as string);
+            if (!handled) {
+                this.showSnackbar(e as string);
+            }
         }
     }
 
@@ -208,22 +210,16 @@ export class RuleSection extends LitElement {
         if (!this.rule) {
             throw new Error('invariant violated: toggleActive cannot be called before rule is loaded');
         }
-
+        const request: UpdateRuleRequest = {
+            rule: {
+                name: this.rule.name,
+                isActive: !this.rule.isActive,
+            },
+            updateMask: "isActive",
+            etag: this.rule.etag,
+        }
         try {
-            const request: RuleUpdateRequest = {
-                rule: {
-                    isActive: !this.rule.isActive,
-                },
-                updateMask: {
-                    paths: ["isActive"],
-                },
-                xsrfToken: await obtainXSRFToken(),
-            }
-
-            const validationError = await this.applyUpdate(request);
-            if (validationError != null) {
-                throw validationError;
-            }
+            await this.applyUpdate(request);
         } catch (err) {
             this.showSnackbar(err as string);
         }
@@ -232,31 +228,12 @@ export class RuleSection extends LitElement {
     // applyUpdate tries to apply the given update to the rule. If the
     // update succeeds, this method returns nil. If a validation error
     // occurs, the validation message is returned.
-    async applyUpdate(request: RuleUpdateRequest): Promise<string | null> {
-        if (!this.etag) {
-            throw new Error('invariant violated: applyUpdate cannot be called if etag is not set (should be set during rule fetch)');
-        }
-        const response = await fetch(`/api/projects/${encodeURIComponent(this.project)}/rules/${encodeURIComponent(this.ruleId)}`, {
-            method: "PATCH",
-            headers: { "If-Match": this.etag },
-            body: JSON.stringify(request),
-        });
-        if (response.ok) {
-            const rule = await response.json();
-            this.rule = rule;
-            this.etag = response.headers.get("ETag");
-            this.editing = false;
-            this.fireRuleChanged();
-            return null;
-        } else {
-            const err = await response.text();
-            // 400 = Bad request.
-            if (response.status == 400) {
-                return err;
-            } else {
-                throw err;
-            }
-        }
+    async applyUpdate(request: UpdateRuleRequest) : Promise<void> {
+        const service = getRulesService();
+        const rule = await service.update(request)
+        this.rule = rule;
+        this.editing = false;
+        this.fireRuleChanged();
     }
 
     showSnackbar(error: string) {
@@ -273,7 +250,7 @@ export class RuleSection extends LitElement {
         }
         const event = new CustomEvent<RuleChangedEvent>('rulechanged', {
             detail: {
-                lastUpdated: this.rule.lastUpdated
+                lastUpdated: this.rule.lastUpdateTime
             },
         });
         this.dispatchEvent(event);

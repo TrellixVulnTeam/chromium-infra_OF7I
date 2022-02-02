@@ -7,27 +7,36 @@ describe('Rule Section', () => {
         // Login.
         cy.visit('/').get('button').click();
 
-        let token = '';
-        cy.request('/api/xsrfToken').then((response) => {
+        cy.request({
+            url: '/api/authState',
+            headers: {
+                'Sec-Fetch-Site': 'same-origin',
+            }
+        }).then((response) => {
             assert.strictEqual(response.status, 200);
-            let body = response.body;
-            token = body.token;
-            assert.isString(token);
-            assert.notEqual(token, '');
+            const body = response.body;
+            const accessToken = body.accessToken;
+            assert.isString(accessToken);
+            assert.notEqual(accessToken, '');
 
             // Set initial rule state.
-            cy.request('PATCH', '/api/projects/chromium/rules/9e5a795d961af2adb52d92f337e6ed2f', {
-                rule: {
-                    ruleDefinition: 'test = "cypress test 1"',
-                    isActive: true,
+            cy.request({
+                method: 'POST',
+                url:  '/prpc/weetbix.v1.Rules/Update',
+                body: {
+                    rule: {
+                        name: 'projects/chromium/rules/ac856b1827dc1cb845486edbf4b80cfa',
+                        ruleDefinition: 'test = "cypress test 1"',
+                        isActive: true,
+                    },
+                    updateMask: 'ruleDefinition,isActive'
                 },
-                updateMask: {
-                    paths: ['ruleDefinition', 'isActive'],
+                headers: {
+                    Authorization: 'Bearer ' + accessToken,
                 },
-                xsrfToken: token,
             });
         });
-        cy.visit('/projects/chromium/clusters/rules-v1/9e5a795d961af2adb52d92f337e6ed2f');
+        cy.visit('/projects/chromium/clusters/rules-v1/ac856b1827dc1cb845486edbf4b80cfa');
     })
     it('loads rule', () => {
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"')
