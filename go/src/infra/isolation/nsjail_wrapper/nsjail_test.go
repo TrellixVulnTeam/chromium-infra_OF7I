@@ -15,7 +15,10 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -24,6 +27,22 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+// in the test
+const (
+	nsjailLogTestKey = "holds an *os.File"
+	testNsjailLog    = "nsjailLog"
+)
+
+func init() {
+	setupNsJailLog = func(ctx context.Context) (*os.File, error) {
+		retFile, ok := ctx.Value(nsjailLogTestKey).(*os.File)
+		if !ok {
+			return nil, errors.New("no nsjaillog in test!")
+		}
+		return retFile, nil
+	}
+}
 
 // TestHelperProcess isn't a real test
 // Inspired by: https://github.com/golang/go/blob/master/src/os/exec/exec_test.go#L758
@@ -61,11 +80,22 @@ func TestRunInNsjail(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping on Windows because this will not be built or deployed for Windows.")
 	}
+
+	ctx := context.Background()
+	f, err := os.CreateTemp("", testNsjailLog)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx = context.WithValue(ctx, nsjailLogTestKey, f)
+
 	Convey("basic command tries to run nsjail", t, func() {
-		err := RunInNsjail([]string{"cat", "hello world"})
+		err := RunInNsjail(ctx, []string{"cat", "hello world"})
 		// // override exec.Command
 		execCommand = fakeExecCommand
 		defer func() { execCommand = exec.Command }()
 		So(err.Error(), ShouldContainSubstring, "nsjail: no such file or directory")
 	})
+
+	defer os.Remove(testNsjailLog)
 }

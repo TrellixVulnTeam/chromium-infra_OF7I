@@ -15,13 +15,18 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	_ "embed"
+
+	"go.chromium.org/luci/logdog/client/butlerlib/bootstrap"
+	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
 )
 
 // This compiles `task.cfg` into the final program as a []byte
@@ -32,23 +37,42 @@ const configName = "task.cfg"
 
 var execCommand = exec.Command
 
+// This function is replaced in the test.
+var setupNsJailLog = func(ctx context.Context) (*os.File, error) {
+	logdogBootstrap, err := bootstrap.Get()
+	nsjailLog, err := logdogBootstrap.Client.NewStream(ctx, "nsjail", streamclient.ForProcess())
+	if err != nil {
+		return nil, fmt.Errorf("could not open logstream for nsjail: %s", err.Error())
+	}
+	return nsjailLog.(*os.File), nil
+}
+
 // RunInNsjail takes in the command to be run as a []string
 // where command[0] is the executable to be run, and
 // command[1...] are the arguments to pass to the executable
-func RunInNsjail(command []string) error {
+func RunInNsjail(ctx context.Context, command []string) error {
 
 	if err := os.WriteFile(configName, Config, 0644); err != nil {
 		return fmt.Errorf("problem writing config: %s", err.Error())
+	}
+
+	nsjailFile, err := setupNsJailLog(ctx)
+	if err != nil {
+		return fmt.Errorf("problem retrieving nsjail log file: %s", err.Error())
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.New("could not obtain working directory")
 	}
-	nsjailPath := filepath.Join(dir, "nsjail")
-	cmdConfig := append([]string{"--config", configName}, command...)
-	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
 
+	logFd := strconv.FormatUint(uint64(nsjailFile.Fd())+3, 10)
+	nsjailPath := filepath.Join(dir, "nsjail")
+	cmdConfig := append([]string{"--config", configName, "--log_fd", logFd, "--seccomp_log"}, command...)
+	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
+	nsjailCmd.ExtraFiles = []*os.File{nsjailFile}
+
+	// Configure stdin/stdout/stderr
 	nsjailCmd.Stdin = os.Stdin
 	nsjailCmd.Stdout = os.Stdout
 	nsjailCmd.Stderr = os.Stderr
@@ -66,6 +90,10 @@ func RunInNsjail(command []string) error {
 
 	if err := nsjailCmd.Wait(); err != nil {
 		return fmt.Errorf("nsjail completed with error: %s", err.Error())
+	}
+
+	if err := nsjailFile.Close(); err != nil {
+		return fmt.Errorf("could not close log: %s", err.Error())
 	}
 
 	return nil
