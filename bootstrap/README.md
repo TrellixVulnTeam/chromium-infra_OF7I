@@ -187,7 +187,7 @@ Once a wheel is sucessfully built, it is uploaded to
 Only Googlers have access to that bucket. Make sure to run the following
 command to authenticate first:
 
-    depot_tools/third_party/gsutil/gsutil config
+    depot_tools/gsutil.py config
 
 [build_deps.py](build_deps.py) assumes that it can find `gsutil` on `PATH`, so
 go ahead and install it appropriately for whichever platform you're on.
@@ -217,10 +217,14 @@ subprocess
 
 Since wheel is a package needed to build the wheels, it has a slightly
 different treatment. To roll a wheel, bump the version in deps.pyl, and
-then run `bootstrap_wheel_wheel.sh` to build and upload the wheel for
+then run `build_deps.py --upload` to build and upload the wheel for
 `wheel` pinned at the version in `deps.pyl`.
 
 Once you do that, `build_deps.py` will continue working as expected.
+
+If you ran into an authentication error, make sure you ran
+`depot_tools/gsutil.py config` and if that didn't work, you may need to
+contact http://go/chops-security.
 
 ## Building deps on Windows
 
