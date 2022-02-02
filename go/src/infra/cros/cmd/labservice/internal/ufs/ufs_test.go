@@ -71,6 +71,15 @@ func TestGetDutTopology_single(t *testing.T) {
 					},
 				},
 			},
+			Machine: &ufspb.Machine{
+				Name: "mary",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{
+						BuildTarget: "build-target",
+						Model:       "model",
+					},
+				},
+			},
 		},
 	}
 	c := newFakeClient(ctx, t, s)
@@ -120,6 +129,10 @@ func TestGetDutTopology_single(t *testing.T) {
 								Type: labapi.Cable_AUDIOJACK,
 							},
 						},
+						DutModel: &labapi.DutModel{
+							BuildTarget: "build-target",
+							ModelName:   "model",
+						},
 					},
 				},
 			},
@@ -135,8 +148,12 @@ type fakeServer struct {
 	ChromeOSDeviceData *ufspb.ChromeOSDeviceData
 }
 
-func (s *fakeServer) GetChromeOSDeviceData(ctx context.Context, in *ufsapi.GetChromeOSDeviceDataRequest) (*ufspb.ChromeOSDeviceData, error) {
-	return proto.Clone(s.ChromeOSDeviceData).(*ufspb.ChromeOSDeviceData), nil
+func (s *fakeServer) GetDeviceData(ctx context.Context, in *ufsapi.GetDeviceDataRequest) (*ufsapi.GetDeviceDataResponse, error) {
+	return &ufsapi.GetDeviceDataResponse{
+		Resource: &ufsapi.GetDeviceDataResponse_ChromeOsDeviceData{
+			ChromeOsDeviceData: proto.Clone(s.ChromeOSDeviceData).(*ufspb.ChromeOSDeviceData),
+		},
+	}, nil
 }
 
 // Make a fake client for testing.
