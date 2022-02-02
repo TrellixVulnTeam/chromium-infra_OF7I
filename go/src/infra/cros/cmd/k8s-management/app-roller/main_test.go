@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/jdxcode/netrc"
 )
@@ -83,6 +84,7 @@ func TestResolveImageToOfficialErrors(t *testing.T) {
 		t.Errorf("resolveImageToOfficial(%v) succeeded with no official tags, want error", image)
 	}
 }
+
 func TestResolveImageErrors(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -118,5 +120,49 @@ func TestResolveImageErrors(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestSplitYAMLDoc(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		content string
+		want    []string
+	}{
+		{
+			name:    "zero yaml doc",
+			content: "",
+			want:    nil,
+		},
+		{
+			name:    "one yaml doc",
+			content: "a: 1",
+			want:    []string{"a: 1\n"},
+		},
+		{
+			name:    "one yaml doc with seperator",
+			content: "---\na: 1",
+			want:    []string{"a: 1\n"},
+		},
+		{
+			name:    "two yaml docs",
+			content: "---\na: 1\n---\nb: 2",
+			want:    []string{"a: 1\n", "b: 2\n"},
+		},
+		{
+			name:    "two yaml docs without leading '---'",
+			content: "a: 1\n---\nb: 2",
+			want:    []string{"a: 1\n", "b: 2\n"},
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, _ := splitYAMLDoc(tc.content)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("splitYAMLDoc(%q) mismatch: (-want, +got):\n%s", tc.content, diff)
+			}
+		})
+	}
 }

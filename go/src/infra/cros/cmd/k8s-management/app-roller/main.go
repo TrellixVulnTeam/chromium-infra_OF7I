@@ -63,7 +63,7 @@ func main() {
 func innerMain() error {
 	var (
 		serviceAccountJSON = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
-		netrcPath          = flag.String("netrc", "", "Path to .netrc file used to access the gerrit server")
+		netrcPath          = flag.String("netrc", "", "Path to .netrc file used to access the Gerrit server")
 		appsYAMLURL        = flag.String("apps-yaml-url", "", "URL to a yaml file which includes all applications data")
 	)
 	flag.Parse()
@@ -161,8 +161,14 @@ func rolloutApp(a app, auth authn.Authenticator, d downloader) error {
 	if err != nil {
 		return fmt.Errorf("roll out app %q: %s", a, err)
 	}
-	if err := applyToK8s(content); err != nil {
+	yamlDocs, err := splitYAMLDoc(content)
+	if err != nil {
 		return fmt.Errorf("roll out app %q: %s", a, err)
+	}
+	for _, d := range yamlDocs {
+		if err := applyToK8s(d); err != nil {
+			return fmt.Errorf("roll out app %q: %s", a, err)
+		}
 	}
 	return nil
 }
@@ -415,4 +421,27 @@ func getClusterName() (string, error) {
 		return "", fmt.Errorf("no data in ServerAddressByClientCIDRs")
 	}
 	return v.ServerAddressByClientCIDRs[0].ServerAddress, nil
+}
+
+// splitYAMLDoc splits the input YAML file content into multiple YAML documents
+// separated by '---'.
+func splitYAMLDoc(content string) ([]string, error) {
+	dec := yaml.NewDecoder(bytes.NewReader([]byte(content)))
+	var docs []string
+	for {
+		var v interface{}
+		err := dec.Decode(&v)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("split YAML doc: %s", err)
+		}
+		s, err := yaml.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("split YAML doc: %s", err)
+		}
+		docs = append(docs, string(s))
+	}
+	return docs, nil
 }
