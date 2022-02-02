@@ -3,12 +3,16 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import re
 import sys
 import urllib
+
+from six.moves import urllib
 
 
 # A regex for a name of the release asset to package, available at
@@ -20,10 +24,11 @@ WINDOWS_ASSET_RE = {
 
 
 def do_latest():
-  print json.load(
-      urllib.urlopen(
-          'https://api.github.com/repos/git-for-windows/git/releases/latest')
-  )['tag_name'].lstrip('v')
+  print(
+      json.load(
+          urllib.request.urlopen(
+              'https://api.github.com/repos/git-for-windows/git/releases/latest'
+          ))['tag_name'].lstrip('v'))
 
 
 def get_download_url(version, platform):
@@ -32,7 +37,7 @@ def get_download_url(version, platform):
 
   target_tag = 'v%s' % (version,)
   for release in json.load(
-      urllib.urlopen(
+      urllib.request.urlopen(
           'https://api.github.com/repos/git-for-windows/git/releases')):
     if str(release['tag_name']) == target_tag:
       for asset in release['assets']:

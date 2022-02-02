@@ -3,18 +3,23 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import sys
 import urllib
 
+from six.moves import urllib
 
 BASE_URL = 'https://dl.google.com/dl/cloudsdk/channels/rapid'
 
 
 def do_latest():
-  print json.load(urllib.urlopen(BASE_URL + '/components-2.json'))['version']
+  print(
+      json.load(urllib.request.urlopen(BASE_URL +
+                                       '/components-2.json'))['version'])
 
 
 def get_download_url(version, platform):

@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
@@ -11,18 +13,22 @@ import ssl
 import sys
 import urllib
 
+import six
+from six.moves import urllib
 import pkg_resources
 import certifi
 
 # Make sure up-to-date root certificates are used.
-urllib._urlopener = urllib.FancyURLopener(
-    context=ssl.create_default_context(cafile=certifi.where()))
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 def _get_wheel_url(pkgname, version):
   for filedata in json.load(
-      urllib.urlopen('https://pypi.org/pypi/%s/json' %
-                     pkgname))['releases'][version]:
+      urllib.request.urlopen('https://pypi.org/pypi/%s/json' %
+                             pkgname))['releases'][version]:
     if filedata['packagetype'] == 'bdist_wheel':
       return filedata['url'], filedata['filename']
   raise AssertionError('could not find wheel for %s @ %s' % (pkgname, version))
@@ -31,7 +37,8 @@ def _get_wheel_url(pkgname, version):
 def _get_version(pkgname, bad_versions=()):
   # Find the latest python2-compatible version.
   releases = json.load(
-      urllib.urlopen('https://pypi.org/pypi/%s/json' % pkgname))['releases']
+      urllib.request.urlopen('https://pypi.org/pypi/%s/json' %
+                             pkgname))['releases']
   versions = [pkg_resources.parse_version(v) for v in releases.keys()]
   for version in sorted(versions, reverse=True):
     version_str = str(version)
@@ -48,9 +55,10 @@ def do_latest():
       '45.0.0',  # Advertises python_version='py2.py3', but also requires >= 3.5
   ])
 
-  print 'pip%s.setuptools%s.wheel%s' % (_get_version(
-      'pip'), _get_version('setuptools', bad_versions=setuptools_bad_versions),
-                                        _get_version('wheel'))
+  print('pip%s.setuptools%s.wheel%s' %
+        (_get_version('pip'),
+         _get_version('setuptools', bad_versions=setuptools_bad_versions),
+         _get_version('wheel')))
 
 
 def get_download_url(version):
@@ -64,7 +72,7 @@ def get_download_url(version):
     'wheel': m.group(3),
   }
   download_urls, name = [], []
-  for pkgname, vers in versions.iteritems():
+  for pkgname, vers in six.iteritems(versions):
     url, filename = _get_wheel_url(pkgname, vers)
     download_urls.append(url)
     name.append(filename)

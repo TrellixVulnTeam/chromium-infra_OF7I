@@ -3,11 +3,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import sys
-import urllib
 
 
 # This is hardcoded to 2.7.18. It seems unlikely that we'll need to release
@@ -24,7 +25,7 @@ def get_installer_suffix(platform):
 
 
 def do_latest():
-  print VERSION
+  print(VERSION)
 
 
 def get_download_url(version, platform):

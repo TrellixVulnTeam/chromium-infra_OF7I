@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import ssl
@@ -10,16 +12,21 @@ import os
 import sys
 import urllib
 
+from six.moves import urllib
 import certifi
 
 # Make sure up-to-date root certificates are used.
-urllib._urlopener = urllib.FancyURLopener(
-    context=ssl.create_default_context(cafile=certifi.where()))
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 def do_latest():
-  print json.load(urllib.urlopen(
-      'https://registry.npmjs.org/firebase-tools'))['dist-tags']['latest']
+  print(
+      json.load(
+          urllib.request.urlopen('https://registry.npmjs.org/firebase-tools'))
+      ['dist-tags']['latest'])
 
 
 def get_download_url(version, platform):

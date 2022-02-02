@@ -3,11 +3,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import sys
 import urllib
+
+from six.moves import urllib
 
 
 # https://developer.github.com/v3/repos/releases/#get-the-latest-release
@@ -53,8 +57,8 @@ PROTOC_PLATFORMS = {
 
 
 def do_latest():
-  print json.load(
-      urllib.urlopen(LATEST))['tag_name'][1:]  # e.g. v3.8.0 -> 3.8.0
+  print(json.load(
+      urllib.request.urlopen(LATEST))['tag_name'][1:])  # e.g. v3.8.0 -> 3.8.0
 
 
 def get_download_url(version, platform):
@@ -62,7 +66,7 @@ def get_download_url(version, platform):
     raise ValueError('unsupported platform %s' % platform)
   name = 'protoc-%s-%s.zip' % (version, PROTOC_PLATFORMS[platform])
 
-  rsp = json.load(urllib.urlopen(TAGGED_RELEASE % version))
+  rsp = json.load(urllib.request.urlopen(TAGGED_RELEASE % version))
   actual_tag = rsp['tag_name'][1:]
   if version != actual_tag:
     raise ValueError('expected %s, actual is %s' % (version, actual_tag))

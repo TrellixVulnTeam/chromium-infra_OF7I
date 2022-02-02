@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import os
 import sys
 import shutil
@@ -185,9 +187,9 @@ if __name__ == '__main__':
   platform = os.environ['_3PP_PLATFORM']
   tool_platform = os.environ['_3PP_TOOL_PLATFORM']
   if 'windows' not in platform and platform != tool_platform:
-    print 'SKIPPING TESTS'
-    print '  platform:', platform
-    print '  tool_platform:', tool_platform
+    print('SKIPPING TESTS')
+    print('  platform:', platform)
+    print('  tool_platform:', tool_platform)
     sys.exit(0)
 
   PYTHON_TEST_CIPD_PACKAGE = sys.argv[1]

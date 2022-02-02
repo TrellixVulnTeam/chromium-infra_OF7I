@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
@@ -13,6 +15,7 @@ import sys
 import urllib
 
 from pkg_resources import parse_version
+from six.moves import urllib
 import certifi
 
 
@@ -45,8 +48,10 @@ _FILES = frozenset([
 ])
 
 # Make sure up-to-date root certificates are used.
-urllib._urlopener = urllib.FancyURLopener(
-    context=ssl.create_default_context(cafile=certifi.where()))
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 def get_webinstaller_suffix(platform):
@@ -67,24 +72,25 @@ def do_latest(platform):
   version folders."""
   suf = get_webinstaller_suffix(platform)
   # Find the highest version e.g. 3.8.0.
-  page_data = urllib.urlopen('https://www.python.org/ftp/python/')
+  page_data = urllib.request.urlopen('https://www.python.org/ftp/python/')
   highest = None
   href_re = re.compile(r'href="(\d+\.\d+\.\d+)/"')
-  for m in href_re.finditer(page_data.read()):
+  for m in href_re.finditer(page_data.read().decode('utf-8')):
     v = parse_version(m.group(1))
     if v < _VERSION_LIMIT:
       if not highest or v > highest:
         highest = v
-  page_data = urllib.urlopen('https://www.python.org/ftp/python/%s/' % highest)
+  page_data = urllib.request.urlopen('https://www.python.org/ftp/python/%s/' %
+                                     highest)
   # Find the highest release e.g. 3.8.0a4.
   highest = None
   href_re = re.compile(r'href="python-(\d+\.\d+\.\d+((a|b|rc)\d+)?)%s"' % suf)
-  for m in href_re.finditer(page_data.read()):
+  for m in href_re.finditer(page_data.read().decode('utf-8')):
     v = parse_version(m.group(1))
     if v < _VERSION_LIMIT:
       if not highest or v > highest:
         highest = v
-  print highest
+  print(highest)
 
 
 def get_download_url(version, platform):

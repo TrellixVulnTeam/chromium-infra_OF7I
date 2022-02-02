@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
@@ -10,16 +12,18 @@ import sys
 import urllib
 
 from pkg_resources import parse_version
+from six.moves import urllib
 
 
 def do_latest():
   versions = []
-  for release in json.load(urllib.urlopen('https://golang.org/dl/?mode=json')):
+  for release in json.load(
+      urllib.request.urlopen('https://golang.org/dl/?mode=json')):
     ver = parse_version(release['version'].replace('go', ''))
     if ver < parse_version('1.17a0'):
       versions.append(ver)
   versions.sort()
-  print versions[-1]
+  print(versions[-1])
 
 
 def get_download_url(version, platform, kind):

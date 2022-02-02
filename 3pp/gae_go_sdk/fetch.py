@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
@@ -10,6 +12,7 @@ import sys
 import urllib
 
 from pkg_resources import parse_version
+from six.moves import urllib
 
 
 def _gae_platform():
@@ -25,8 +28,8 @@ ZIP_PREFIX = 'go_appengine_sdk_' + _gae_platform() + '-'
 def do_latest():
   BASE_URL = 'https://www.googleapis.com/storage/v1/b/appengine-sdks/o/'
   url = BASE_URL+'?prefix=featured/%s&delimiter=/' % ZIP_PREFIX
-  print >>sys.stderr, "Hitting %r" % url
-  data = json.load(urllib.urlopen(url))
+  print("Hitting %r" % url, file=sys.stderr)
+  data = json.load(urllib.request.urlopen(url))
   max_ver, max_string = parse_version(''), ''
   for obj in data['items']:
     ver_string = obj['name'].split('/')[-1].lstrip(ZIP_PREFIX).rstrip('.zip')
@@ -36,12 +39,12 @@ def do_latest():
       max_string = ver_string
 
   if not max_string:
-    print "GOT DATA"
+    print("GOT DATA")
     for obj in data['items']:
-      print obj
+      print(obj)
     raise Exception('failed to find a version')
 
-  print max_string
+  print(max_string)
 
 
 def get_download_url(version):

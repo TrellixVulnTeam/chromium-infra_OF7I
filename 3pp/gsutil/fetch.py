@@ -3,17 +3,23 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import print_function
+
 import argparse
 import json
 import os
 import sys
 import urllib
 
+from six.moves import urllib
+
 
 def do_latest():
-  print urllib.urlopen(
-      'https://raw.githubusercontent.com/'
-      'GoogleCloudPlatform/gsutil/master/VERSION').read().strip()
+  print(
+      urllib.request.urlopen(
+          'https://raw.githubusercontent.com/'
+          'GoogleCloudPlatform/gsutil/master/VERSION').read().decode(
+              'utf-8').strip())
 
 
 def get_download_url(version):
