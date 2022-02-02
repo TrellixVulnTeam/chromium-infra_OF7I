@@ -140,8 +140,18 @@ def run_script(api, *args, **kwargs):
                         stdout=stdout, step_test_data=step_test_data)
 
     elif interpreter == 'python':
-      return api.python(step_name, args[0], args[1:],
-                        stdout=stdout, step_test_data=step_test_data,
-                        venv=True)
+      if api.properties.get('py3_scripts'):
+        return api.step(
+            step_name, ['vpython3', '-u'] + list(args),
+            stdout=stdout,
+            step_test_data=step_test_data)
+      else:
+        return api.python(
+            step_name,
+            args[0],
+            args[1:],
+            stdout=stdout,
+            step_test_data=step_test_data,
+            venv=True)
 
   raise AssertionError('impossible') # pragma: no cover

@@ -111,7 +111,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_build_tools/self_dependency/fetch.py",
       "latest"
@@ -252,7 +252,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_build_tools/self_dependency/fetch.py",
       "get_url"
@@ -755,7 +755,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_build_tools/self_dependency/fetch.py",
       "latest"
@@ -934,7 +934,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_build_tools/self_dependency/fetch.py",
       "get_url"

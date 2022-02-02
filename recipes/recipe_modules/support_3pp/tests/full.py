@@ -736,8 +736,8 @@ def GenTests(api):
   upload { pkg_prefix: "tools" }
   '''
   yield (api.test('cross-compile-self-dep') + api.platform('linux', 64) +
-         api.properties(GOOS='linux', GOARCH='arm64')
-         + api.properties(key_path=KEY_PATH) + api.step_data(
+         api.properties(GOOS='linux', GOARCH='arm64') +
+         api.properties(key_path=KEY_PATH, py3_scripts=True) + api.step_data(
              'find package specs',
              api.file.glob_paths(['dir_build_tools/self_dependency/3pp.pb'])) +
          api.step_data(
