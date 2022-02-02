@@ -790,14 +790,7 @@ func (c *tlwClient) Provision(ctx context.Context, req *tlw.ProvisionRequest) er
 // dockerClient provides docker client for target container by expected name of container.
 func (c *tlwClient) dockerClient(ctx context.Context) (docker.Client, error) {
 	d, err := docker.NewClient(ctx)
-	if err != nil {
-		return nil, errors.Annotate(err, "docker client").Err()
-	}
-	// Print the containers to test connectivity.
-	if err = d.PrintAll(ctx); err != nil {
-		return nil, errors.Annotate(err, "docker client").Err()
-	}
-	return d, nil
+	return d, errors.Annotate(err, "docker client").Err()
 }
 
 // isServodContainer checks if DUT using servod-container.

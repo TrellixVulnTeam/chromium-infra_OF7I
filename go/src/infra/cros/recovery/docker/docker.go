@@ -50,9 +50,13 @@ func NewClient(ctx context.Context) (Client, error) {
 		}
 		return nil, errors.Annotate(err, "new docker client").Err()
 	} else {
-		return &dockerClient{
+		d := &dockerClient{
 			client: client,
-		}, nil
+		}
+		if enableDebugLogging {
+			d.PrintAll(ctx)
+		}
+		return d, nil
 	}
 }
 
