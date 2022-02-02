@@ -7,10 +7,17 @@ package gcs
 import (
 	"context"
 	"io/ioutil"
+	"strings"
 
 	"cloud.google.com/go/storage"
 
 	"go.chromium.org/luci/common/errors"
+)
+
+const (
+	BucketID          = "chromeos-test-logs"
+	LogsName          = "log.txt"
+	StoragePathPrefix = "storage"
 )
 
 // ReadFileContents reads logs contents with a given bucket ID and an object ID.
@@ -31,4 +38,9 @@ func ReadFileContents(ctx context.Context, bucketID string, objID string) ([]byt
 		return nil, errors.Annotate(err, "read logs file contents").Err()
 	}
 	return bytes, nil
+}
+
+// CreateObjectID creates object ID for a log given its basic information.
+func CreateObjectID(logsURL string, test string, bucketID string, logsName string) string {
+	return strings.TrimPrefix(logsURL, "/browse/"+bucketID+"/") + "/autoserv_test/tast/results/tests/" + test[5:] + "/" + logsName
 }
