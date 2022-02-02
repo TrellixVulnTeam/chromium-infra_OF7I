@@ -56,4 +56,3 @@ export class BugsTable extends LitElement {
         `;
     }
 }
-

@@ -13,12 +13,15 @@ import { TextArea } from '@material/mwc-textarea';
 import '@material/mwc-textfield';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
-import '@material/mwc-icon'
+import '@material/mwc-icon';
+import { BugPicker } from './bug_picker';
+import './bug_picker';
 
 import { getRulesService, Rule, UpdateRuleRequest } from '../services/rules';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.
+ * @fires rulechanged
  */
 @customElement('rule-section')
 export class RuleSection extends LitElement {
@@ -32,7 +35,10 @@ export class RuleSection extends LitElement {
     rule: Rule | null = null;
 
     @state()
-    editing = false;
+    editingRule = false;
+
+    @state()
+    editingBug = false;
 
     @state()
     validationMessage = '';
@@ -42,11 +48,6 @@ export class RuleSection extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-
-        this.editing = false;
-        this.validationMessage = "";
-        this.snackbarError = "";
-
         this.fetch();
     }
 
@@ -59,7 +60,7 @@ export class RuleSection extends LitElement {
             let t = DateTime.fromISO(time);
             let d = DateTime.now().diff(t);
             if (d.as('seconds') < 60) {
-                return "just now";
+                return 'just now';
             }
             if (d.as('hours') < 24) {
                 return t.toRelative()?.toLocaleLowerCase() || '';
@@ -87,7 +88,7 @@ export class RuleSection extends LitElement {
             <div class="definition-box-container">
                 <pre class="definition-box" data-cy="rule-definition">${r.ruleDefinition}</pre>
                 <div class="definition-edit-button">
-                    <mwc-button outlined @click="${this.edit}" data-cy="rule-definition-edit">Edit</mwc-button>
+                    <mwc-button outlined @click="${this.editRule}" data-cy="rule-definition-edit">Edit</mwc-button>
                 </div>
             </div>
             <table>
@@ -98,7 +99,12 @@ export class RuleSection extends LitElement {
                     </tr>
                     <tr>
                         <th>Associated Bug</th>
-                        <td><a href="${r.bug.url}">${r.bug.linkText}</a></td>
+                        <td data-cy="bug">
+                            <a href="${r.bug.url}">${r.bug.linkText}</a>
+                            <div class="inline-button">
+                                <mwc-button outlined dense @click="${this.editBug}" data-cy="bug-edit">Edit</mwc-button>
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <th>Enabled <mwc-icon class="inline-icon" title="Enabled failure association rules are used to match failures. If a rule is no longer needed, it should be disabled.">help_outline</mwc-icon></th>
@@ -126,7 +132,7 @@ export class RuleSection extends LitElement {
                 Created by <span class="user">${formatUser(r.createUser)}</span> <span class="time" title="${formatTooltipTime(r.createTime)}">${formatTime(r.createTime)}</span>.
             </div>
         </div>
-        <mwc-dialog class="rule-edit-dialog" ?open="${this.editing}" @closed="${this.editClosed}">
+        <mwc-dialog class="rule-edit-dialog" .open="${this.editingRule}" @closed="${this.editRuleClosed}">
             <div class="edit-title">Edit Rule Definition <mwc-icon class="inline-icon" title="Weetbix rule definitions describe the failures associated with a bug. Rules follow a subset of BigQuery Standard SQL's boolean expression syntax.">help_outline</mwc-icon></div>
             <div class="validation-error" data-cy="rule-definition-validation-error">${this.validationMessage}</div>
             <mwc-textarea id="rule-definition" label="Rule Definition" maxLength="4096" required data-cy="rule-definition-textbox"></mwc-textarea>
@@ -134,8 +140,15 @@ export class RuleSection extends LitElement {
                 Supported is AND, OR, =, <>, NOT, IN, LIKE, parentheses and <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#regexp_contains">REGEXP_CONTAINS</a>.
                 Valid identifiers are <em>test</em> and <em>reason</em>.
             </div>
-            <mwc-button slot="primaryAction" @click="${this.save}" data-cy="rule-definition-save">Save</mwc-button>
+            <mwc-button slot="primaryAction" @click="${this.saveRule}" data-cy="rule-definition-save">Save</mwc-button>
             <mwc-button slot="secondaryAction" dialogAction="close" data-cy="rule-definition-cancel">Cancel</mwc-button>
+        </mwc-dialog>
+        <mwc-dialog class="bug-edit-dialog" .open="${this.editingBug}" @closed="${this.editBugClosed}">
+            <div class="edit-title">Edit Associated Bug</div>
+            <div class="validation-error" data-cy="bug-validation-error">${this.validationMessage}</div>
+            <bug-picker id="bug" project="${this.project}" material832Workaround></bug-picker>
+            <mwc-button slot="primaryAction" @click="${this.saveBug}" data-cy="bug-save">Save</mwc-button>
+            <mwc-button slot="secondaryAction" dialogAction="close" data-cy="bug-cancel">Cancel</mwc-button>
         </mwc-dialog>
         <mwc-snackbar id="error-snackbar" labelText="${this.snackbarError}"></mwc-snackbar>
         `;
@@ -154,56 +167,109 @@ export class RuleSection extends LitElement {
         this.fireRuleChanged();
     }
 
-    edit() {
+    editRule() {
         if (!this.rule) {
-            throw new Error('invariant violated: edit cannot be called before rule is loaded');
+            throw new Error('invariant violated: editRule cannot be called before rule is loaded');
         }
         const ruleDefinition = this.shadowRoot!.getElementById("rule-definition") as TextArea;
         ruleDefinition.value = this.rule.ruleDefinition;
 
-        this.editing = true;
+        this.editingRule = true;
         this.validationMessage = "";
     }
 
-    editClosed() {
-        this.editing = false;
+    editBug() {
+        if (!this.rule) {
+            throw new Error('invariant violated: editBug cannot be called before rule is loaded');
+        }
+        const picker = this.shadowRoot!.getElementById("bug") as BugPicker;
+        picker.bugSystem = this.rule.bug.system;
+        picker.bugId = this.rule.bug.id;
+
+        this.editingBug = true;
+        this.validationMessage = '';
     }
 
-    async save() {
+    editRuleClosed() {
+        this.editingRule = false;
+    }
+
+    editBugClosed() {
+        this.editingBug = false;
+    }
+
+    async saveRule() {
         if (!this.rule) {
-            throw new Error('invariant violated: save cannot be called before rule is loaded');
+            throw new Error('invariant violated: saveRule cannot be called before rule is loaded');
         }
-        const ruleDefinition = this.shadowRoot!.getElementById("rule-definition") as TextArea;
+        const ruleDefinition = this.shadowRoot!.getElementById('rule-definition') as TextArea;
         if (ruleDefinition.value == this.rule.ruleDefinition) {
-            this.editing = false;
+            this.editingRule = false;
             return;
         }
 
-        this.validationMessage = "";
+        this.validationMessage = '';
 
         const request: UpdateRuleRequest = {
             rule: {
                 name: this.rule.name,
                 ruleDefinition: ruleDefinition.value,
             },
-            updateMask: "ruleDefinition",
+            updateMask: 'ruleDefinition',
             etag: this.rule.etag,
         }
 
         try {
             await this.applyUpdate(request);
+            this.editingRule = false;
         } catch (e) {
-            let handled = false;
-            if (e instanceof GrpcError) {
-                if (e.code === RpcCode.INVALID_ARGUMENT) {
-                    handled = true;
-                    this.validationMessage = 'Validation error: ' + e.description.trim() + '.';
-                }
-            }
-            if (!handled) {
-                this.showSnackbar(e as string);
+            this.routeUpdateError(e);
+        }
+    }
+
+    async saveBug() {
+        if (!this.rule) {
+            throw new Error('invariant violated: saveBug cannot be called before rule is loaded');
+        }
+        const picker = this.shadowRoot!.getElementById("bug") as BugPicker;
+        if (picker.bugSystem === this.rule.bug.system && picker.bugId === this.rule.bug.id) {
+            this.editingBug = false;
+            return;
+        }
+
+        this.validationMessage = '';
+
+        const request: UpdateRuleRequest = {
+            rule: {
+                name: this.rule.name,
+                bug: {
+                    system: picker.bugSystem,
+                    id: picker.bugId,
+                },
+            },
+            updateMask: "bug",
+            etag: this.rule.etag,
+        }
+
+        try {
+            await this.applyUpdate(request);
+            this.editingBug = false;
+        } catch (e) {
+            this.routeUpdateError(e);
+        }
+    }
+
+    // routeUpdateError is used to handle update errors that occur in the
+    // context of a model dialog, where a validation err message can be
+    // displayed.
+    routeUpdateError(e: any) {
+        if (e instanceof GrpcError) {
+            if (e.code === RpcCode.INVALID_ARGUMENT) {
+                this.validationMessage = 'Validation error: ' + e.description.trim() + '.';
+                return;
             }
         }
+        this.showSnackbar(e as string);
     }
 
     async toggleActive() {
@@ -232,7 +298,6 @@ export class RuleSection extends LitElement {
         const service = getRulesService();
         const rule = await service.update(request)
         this.rule = rule;
-        this.editing = false;
         this.fireRuleChanged();
     }
 
@@ -308,7 +373,7 @@ export class RuleSection extends LitElement {
             padding: 4px;
             max-width: 80%;
         }
-        mwc-textarea, mwc-textfield {
+        mwc-textarea, bug-picker {
             margin: 5px 0px;
         }
         .audit {

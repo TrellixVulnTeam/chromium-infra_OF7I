@@ -7,16 +7,13 @@ import { GrpcError, RpcCode } from '@chopsui/prpc-client';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import '@material/mwc-icon';
-import '@material/mwc-list';
-import '@material/mwc-list/mwc-list-item';
-import { Select } from '@material/mwc-select';
 import { Snackbar } from '@material/mwc-snackbar';
 import { TextArea } from '@material/mwc-textarea';
-import { TextField } from '@material/mwc-textfield';
 import { BeforeEnterObserver, Router, RouterLocation } from '@vaadin/router';
 
+import { BugPicker } from './bug_picker';
+import './bug_picker';
 import { getRulesService, ClusterId, CreateRuleRequest } from '../services/rules';
-import { readProjectConfig, ProjectConfig } from '../libs/config';
 
 /**
  * NewRulePage displays a page for creating a new rule in Weetbix.
@@ -28,9 +25,6 @@ import { readProjectConfig, ProjectConfig } from '../libs/config';
 export class NewRulePage extends LitElement implements BeforeEnterObserver {
     @property()
     project = '';
-
-    @state()
-    projectConfig : ProjectConfig | null = null;
 
     @state()
     validationMessage = '';
@@ -68,8 +62,6 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
 
         this.validationMessage = '';
         this.snackbarError = '';
-
-        this.fetch();
     }
 
     render() {
@@ -78,12 +70,7 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
             <h1>New Rule</h1>
             <div class="validation-error" data-cy="rule-definition-validation-error">${this.validationMessage}</div>
             <div class="label">Associated Bug <mwc-icon class="inline-icon" title="The bug corresponding to the specified failures.">help_outline</mwc-icon></div>
-            <div id="bug">
-                <mwc-select id="bug-system" required label="Bug Tracker" data-cy="bug-system-dropdown">
-                    ${this.projectConfig != null ? html`<mwc-list-item value="monorail" selected>${this.projectConfig.monorail.displayPrefix}</mwc-list-item>` : null }
-                </mwc-select>
-                <mwc-textfield id="bug-number" pattern="[0-9]{1,16}" required label="Bug Number" data-cy="bug-number-textbox"></mwc-textfield>
-            </div>
+            <bug-picker project="${this.project}" id="bug"></bug-picker>
             <div class="label">Rule Definition <mwc-icon class="inline-icon" title="A rule describing the set of failures being associated. Rules follow a subset of BigQuery Standard SQL's boolean expression syntax.">help_outline</mwc-icon></div>
             <div class="info">
                 E.g. reason LIKE "%something blew up%" or test = "mytest". Supported is AND, OR, =, <>, NOT, IN, LIKE, parentheses and <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#regexp_contains">REGEXP_CONTAINS</a>.
@@ -95,27 +82,9 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
         `;
     }
 
-    async fetch() {
-        if (!this.project) {
-            throw new Error('new-rule-page element project property is required');
-        }
-
-        this.projectConfig = await readProjectConfig(this.project);
-    }
-
     async save() {
-        if (!this.projectConfig) {
-            throw new Error('invariant violated: save cannot be called before projectConfig is loaded');
-        }
         const ruleDefinition = this.shadowRoot!.getElementById('rule-definition') as TextArea;
-        const bugSystemControl = this.shadowRoot!.getElementById('bug-system') as Select;
-        const bugNumberField = this.shadowRoot!.getElementById('bug-number') as TextField;
-        const bugSystem = bugSystemControl.selected?.value || '';
-
-        let bugId = '';
-        if (bugSystem == 'monorail') {
-            bugId = this.projectConfig.monorail.project + '/' + bugNumberField.value;
-        }
+        const bugPicker = this.shadowRoot!.getElementById('bug') as BugPicker;
 
         this.validationMessage = '';
 
@@ -123,8 +92,8 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
             parent: `projects/${this.project}`,
             rule: {
                 bug: {
-                    system: bugSystem,
-                    id: bugId,
+                    system: bugPicker.bugSystem,
+                    id: bugPicker.bugId,
                 },
                 ruleDefinition: ruleDefinition.value,
                 isActive: true,
@@ -163,9 +132,6 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
     static styles = [css`
         #container {
             margin: 20px 14px;
-        }
-        #bug {
-            display: inline;
         }
         #rule-definition {
             width: 100%;
@@ -209,7 +175,7 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
-        mwc-textarea, mwc-textfield, mwc-select {
+        mwc-textarea, bug-picker {
             margin: 5px 0px;
         }
     `];
