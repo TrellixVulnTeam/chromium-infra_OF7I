@@ -542,6 +542,7 @@ of dependencies that `requests` has is derived from the `PyOpenSSL` package.
 
 ```protobuf
 
+python_version: "3.8"
 wheel: <
   name: "infra/python/wheels/requests-py2_py3"
   version: "version:2.21.0"
@@ -577,14 +578,6 @@ wheel: <
   # NOTE: For Python 2.7, use version:2.9.2 instead to avoid a noisy
   # deprecation warning.
   version: "version:3.3.1.chromium.1"
->
-wheel: <
-  name: "infra/python/wheels/enum34-py2"
-  version: "version:1.1.6"
->
-wheel: <
-  name: "infra/python/wheels/ipaddress-py2"
-  version: "version:1.0.18"
 >
 wheel: <
   name: "infra/python/wheels/cffi/${vpython_platform}"

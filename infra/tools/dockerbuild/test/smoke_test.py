@@ -7,14 +7,14 @@ import subprocess
 import unittest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-SPEC = os.path.join(THIS_DIR, '..', 'standalone.vpython')
+SPEC = os.path.join(THIS_DIR, '..', 'standalone.vpython3')
 TESTDATA = os.path.join(THIS_DIR, 'testdata')
 
 
 class TestSmoke(unittest.TestCase):
   """Verifies some important wheels are actually usable.
 
-  Assumes 'vpython' is in PATH.
+  Assumes 'vpython3' is in PATH.
   """
 
   def test_check_requests(self):
@@ -32,15 +32,16 @@ def run_vpython(script):
   """
   env = escape_virtual_env(os.environ)
   env['PYTHONDONTWRITEBYTECODE'] = '1'
-  proc = subprocess.Popen(
-      [
-          'vpython',
-          '-vpython-log-level', 'debug',
-          '-vpython-spec', SPEC,
-          script,
-      ],
-      stdout=subprocess.PIPE,
-      stderr=subprocess.STDOUT)
+  proc = subprocess.Popen([
+      'vpython3',
+      '-vpython-log-level',
+      'debug',
+      '-vpython-spec',
+      SPEC,
+      script,
+  ],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT)
   out, _ = proc.communicate()
   return proc.returncode, out
 
