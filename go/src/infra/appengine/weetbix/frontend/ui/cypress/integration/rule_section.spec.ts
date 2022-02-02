@@ -40,7 +40,7 @@ describe('Rule Section', () => {
                 },
             });
         });
-        cy.visit('/projects/chromium/clusters/rules-v1/ac856b1827dc1cb845486edbf4b80cfa');
+        cy.visit('/p/chromium/rules/ac856b1827dc1cb845486edbf4b80cfa');
     })
     it('loads rule', () => {
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"')

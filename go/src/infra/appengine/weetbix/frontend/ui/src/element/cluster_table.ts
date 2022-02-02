@@ -10,6 +10,8 @@ import "@material/mwc-icon/mwc-icon";
 import "@material/mwc-list/mwc-list-item";
 import '@material/mwc-select';
 
+import { linkToCluster } from '../urlHandling/links';
+
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
 export class ClusterTable extends LitElement {
@@ -60,7 +62,7 @@ export class ClusterTable extends LitElement {
             return html`Loading...`;
         }
         const clusterLink = (cluster: Cluster): string => {
-            return `/projects/${encodeURIComponent(this.project)}/clusters/${encodeURIComponent(cluster.clusterId.algorithm)}/${encodeURIComponent(cluster.clusterId.id)}`;
+            return linkToCluster(this.project, cluster.clusterId);
         }
         const metric = (c: Cluster, metric: MetricName): number => {
             let counts: Counts;

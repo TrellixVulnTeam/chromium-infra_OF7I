@@ -14,6 +14,7 @@ import { BeforeEnterObserver, Router, RouterLocation } from '@vaadin/router';
 import { BugPicker } from './bug_picker';
 import './bug_picker';
 import { getRulesService, ClusterId, CreateRuleRequest } from '../services/rules';
+import { linkToRule } from '../urlHandling/links';
 
 /**
  * NewRulePage displays a page for creating a new rule in Weetbix.
@@ -105,8 +106,7 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
         try {
             const rule = await service.create(request);
             this.validationMessage = JSON.stringify(rule);
-            const path = `/projects/${encodeURIComponent(rule.project)}/clusters/rules-v1/${encodeURIComponent(rule.ruleId)}`;
-            Router.go(path);
+            Router.go(linkToRule(rule.project, rule.ruleId));
         } catch (e) {
             let handled = false;
             if (e instanceof GrpcError) {

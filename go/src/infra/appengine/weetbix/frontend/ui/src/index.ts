@@ -21,8 +21,9 @@ const serverRoute = (ctx: Context) => { window.location.pathname = ctx.pathname;
 router.setRoutes([
     { path: '/auth/(.*)', action: serverRoute },  // For logout links.
     { path: '/', component: 'cluster-table' },
-    { path: '/projects/:project/rules/new', component: 'new-rule-page' },
-    { path: '/projects/:project/clusters/:algorithm/:id', component: 'cluster-page' },
+    { path: '/p/:project/rules/new', component: 'new-rule-page' },
+    { path: '/p/:project/rules/:id', component: 'cluster-page' },
+    { path: '/p/:project/clusters/:algorithm/:id', component: 'cluster-page' },
     { path: '/bugs', component: 'bugs-table' },
     { path: '(.*)', component: 'not-found-page' },
 ]);

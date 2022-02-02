@@ -18,6 +18,7 @@ import { BugPicker } from './bug_picker';
 import './bug_picker';
 
 import { getRulesService, Rule, UpdateRuleRequest } from '../services/rules';
+import { linkToCluster } from '../urlHandling/links';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.
@@ -119,7 +120,7 @@ export class RuleSection extends LitElement {
                         <th>Source Cluster <mwc-icon class="inline-icon" title="The cluster this rule was originally created from.">help_outline</mwc-icon></th>
                         <td>
                             ${r.sourceCluster.algorithm && r.sourceCluster.id ?
-                                html`<a href="/projects/${this.project}/clusters/${r.sourceCluster.algorithm}/${r.sourceCluster.id}">${r.sourceCluster.algorithm}/${r.sourceCluster.id}</a>` :
+                                html`<a href="${linkToCluster(this.project, r.sourceCluster)}">${r.sourceCluster.algorithm}/${r.sourceCluster.id}</a>` :
                                 html`None`
                             }
                         </td>

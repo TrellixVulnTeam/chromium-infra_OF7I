@@ -37,7 +37,13 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     onBeforeEnter(location: RouterLocation) {
         // Take the first parameter value only.
         this.project = typeof location.params.project == 'string' ? location.params.project : location.params.project[0];
-        this.clusterAlgorithm = typeof location.params.algorithm == 'string' ? location.params.algorithm : location.params.algorithm[0];
+        if (location.params.algorithm) {
+            // Via /p/:project/clusters/:algorithm/:id.
+            this.clusterAlgorithm = typeof location.params.algorithm == 'string' ? location.params.algorithm : location.params.algorithm[0];
+        } else {
+            // /p/:project/rules/:id.
+            this.clusterAlgorithm = 'rules-v1';
+        }
         this.clusterId = typeof location.params.id == 'string' ? location.params.id : location.params.id[0];
     }
 
@@ -152,13 +158,13 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         if (!this.cluster) {
             throw new Error('invariant violated: newRuleClicked cannot be called before cluster is loaded');
         }
-        let projectParam = encodeURIComponent(this.project)
-        let ruleParam = encodeURIComponent(this.cluster.failureAssociationRule)
-        let sourceAlgParam = encodeURIComponent(this.clusterAlgorithm)
-        let sourceIdParam = encodeURIComponent(this.clusterId)
+        const projectEncoded = encodeURIComponent(this.project);
+        const ruleEncoded = encodeURIComponent(this.cluster.failureAssociationRule);
+        const sourceAlgEncoded = encodeURIComponent(this.clusterAlgorithm);
+        const sourceIdEncoded = encodeURIComponent(this.clusterId);
 
-        let newRuleURL = `/projects/${projectParam}/rules/new?rule=${ruleParam}&sourceAlg=${sourceAlgParam}&sourceId=${sourceIdParam}`
-        Router.go(newRuleURL)
+        const newRuleURL = `/p/${projectEncoded}/rules/new?rule=${ruleEncoded}&sourceAlg=${sourceAlgEncoded}&sourceId=${sourceIdEncoded}`;
+        Router.go(newRuleURL);
     }
 
     // Called when the rule displayed in the rule section is loaded
