@@ -29,10 +29,10 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     cluster: Cluster | undefined;
 
     @state()
-    // When the displayed rule (if any) was last updated. This is provided to
-    // the reclustering progress indicator to show the correct re-clustering
-    // status.
-    ruleLastUpdated: string = '';
+    // When the displayed rule's predicate (if any) was last updated.
+    // This is provided to the reclustering progress indicator to show
+    // the correct re-clustering status.
+    rulePredicateLastUpdated: string = '';
 
     onBeforeEnter(location: RouterLocation) {
         // Take the first parameter value only.
@@ -50,7 +50,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     connectedCallback() {
         super.connectedCallback();
 
-        this.ruleLastUpdated = "";
+        this.rulePredicateLastUpdated = "";
         this.refreshAnalysis();
     }
 
@@ -66,7 +66,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
                 <rule-section
                     project=${this.project}
                     ruleId=${this.clusterId}
-                    @rulechanged=${this.ruleChanged}>
+                    @rulechanged=${this.onRuleChanged}>
                 </rule-section>
             `;
         } else if (c !== undefined) {
@@ -140,7 +140,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         <reclustering-progress-indicator
             project=${this.project}
             ?hasrule=${this.clusterAlgorithm.startsWith("rules-")}
-            ruleLastUpdated=${this.ruleLastUpdated}
+            rulePredicateLastUpdated=${this.rulePredicateLastUpdated}
             @refreshanalysis=${this.refreshAnalysis}>
         </reclustering-progress-indicator>
         <div id="container">
@@ -169,8 +169,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
 
     // Called when the rule displayed in the rule section is loaded
     // for the first time, or updated.
-    ruleChanged(e: CustomEvent<RuleChangedEvent>) {
-        this.ruleLastUpdated = e.detail.lastUpdated;
+    onRuleChanged(e: CustomEvent<RuleChangedEvent>) {
+        this.rulePredicateLastUpdated = e.detail.predicateLastUpdated;
     }
 
     // (Re-)loads cluster impact analysis. Called on page load or

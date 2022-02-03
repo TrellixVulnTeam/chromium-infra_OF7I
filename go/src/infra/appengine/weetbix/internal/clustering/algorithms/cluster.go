@@ -173,7 +173,7 @@ func Cluster(config *compiledcfg.ProjectConfig, ruleset *cache.Ruleset, existing
 			}
 		}
 
-		if ruleset.RulesVersion.After(existingRulesVersion) {
+		if ruleset.Version.Predicates.After(existingRulesVersion) {
 			// Match against the (incremental) set of rules.
 			rulesAlgorithm.Cluster(ruleset, existingRulesVersion, ruleIDs, f)
 		}
@@ -195,7 +195,9 @@ func Cluster(config *compiledcfg.ProjectConfig, ruleset *cache.Ruleset, existing
 		result[i] = newIDs
 	}
 
-	newRulesVersion := ruleset.RulesVersion
+	// Base re-clustering on rule predicate changes,
+	// as only the rule predicate matters for clustering.
+	newRulesVersion := ruleset.Version.Predicates
 	if existingRulesVersion.After(newRulesVersion) {
 		// If the existing rule-matching is more current than our current
 		// ruleset allows, we will have kept its results, and should keep

@@ -25,10 +25,10 @@ import (
 var rulesCache = cache.NewRulesCache(caching.RegisterLRUCache(0))
 
 // Ruleset returns the cached ruleset for the given project. If a minimum
-// rules version is required, pass it as the minimumVersion. (Or otherwise,
-// use time.Time{}).
-func Ruleset(ctx context.Context, project string, minimumVersion time.Time) (*cache.Ruleset, error) {
-	ruleset, err := rulesCache.Ruleset(ctx, project, minimumVersion)
+// version of rule predicates is required, pass it as minimumPredicatesVersion.
+// Otherwise, pass rules.StartingEpoch.
+func Ruleset(ctx context.Context, project string, minimumPredicatesVersion time.Time) (*cache.Ruleset, error) {
+	ruleset, err := rulesCache.Ruleset(ctx, project, minimumPredicatesVersion)
 	if err != nil {
 		return nil, err
 	}

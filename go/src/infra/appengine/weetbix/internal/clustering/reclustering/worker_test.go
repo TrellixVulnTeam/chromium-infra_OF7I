@@ -65,9 +65,8 @@ type scenario struct {
 	config *configpb.Clustering
 	// configVersion is the last updated time of the configuration.
 	configVersion time.Time
-	// rulesVersion is last updated time of the most recently updated
-	// failure association rule.
-	rulesVersion time.Time
+	// rulesVersion is version of failure association rules.
+	rulesVersion rules.Version
 	// rules are the failure association rules.
 	rules []*rules.FailureAssociationRule
 	// testResults are the actual test failures ingested by Weetbix,
@@ -113,7 +112,7 @@ func TestReclustering(t *testing.T) {
 
 		setupScenario := func(s *scenario) {
 			// Create the run entry corresponding to the task.
-			run.RulesVersion = s.rulesVersion
+			run.RulesVersion = s.rulesVersion.Predicates
 			run.ConfigVersion = s.configVersion
 			So(runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{run}), ShouldBeNil)
 
@@ -584,7 +583,7 @@ func (b *testResultBuilder) buildClusters(rules *cache.Ruleset, config *compiled
 		if rule.Expr.Evaluate(vals) {
 			clusters = append(clusters, clustering.ClusterID{
 				Algorithm: rulesalgorithm.AlgorithmName,
-				ID:        rule.RuleID,
+				ID:        rule.Rule.RuleID,
 			})
 		}
 	}
@@ -620,7 +619,7 @@ func newChunk(uniqifier int) *chunkBuilder {
 		project:       "testproject",
 		chunkID:       hex.EncodeToString(chunkID[:16]),
 		objectID:      hex.EncodeToString(objectID[:16]),
-		ruleset:       cache.NewRuleset("", nil, rules.StartingEpoch, time.Time{}),
+		ruleset:       cache.NewRuleset("", nil, rules.StartingVersion, time.Time{}),
 		config:        config,
 		oldAlgorithms: false,
 	}
@@ -693,7 +692,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: 1,
 			ConfigVersion:     b.config.LastUpdated,
-			RulesVersion:      b.ruleset.RulesVersion,
+			RulesVersion:      b.ruleset.Version.Predicates,
 			Algorithms:        algs,
 			Clusters:          clusters,
 		}
@@ -709,7 +708,7 @@ func (b *chunkBuilder) buildState() *state.Entry {
 		crs = clustering.ClusterResults{
 			AlgorithmsVersion: algorithms.AlgorithmsVersion,
 			ConfigVersion:     b.config.LastUpdated,
-			RulesVersion:      b.ruleset.RulesVersion,
+			RulesVersion:      b.ruleset.Version.Predicates,
 			Algorithms:        algs,
 			Clusters:          clusters,
 		}
@@ -778,15 +777,26 @@ func (b *scenarioBuilder) build() *scenario {
 	var rs []*rules.FailureAssociationRule
 	var activeRules []*cache.CachedRule
 
-	rulesVersion := rules.StartingEpoch
-	configVersion := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
-
-	rulesVersion = time.Date(2001, time.January, 1, 0, 0, 0, 1000, time.UTC)
-	ruleOne := rules.NewRule(0).WithProject(b.project).WithRuleDefinition(`test = "test_b"`).WithLastUpdated(rulesVersion).Build()
+	rulesVersion := rules.Version{
+		Predicates: time.Date(2001, time.January, 1, 0, 0, 0, 1000, time.UTC),
+		Total:      time.Date(2001, time.January, 1, 0, 0, 0, 2000, time.UTC),
+	}
+	ruleOne := rules.NewRule(0).WithProject(b.project).
+		WithRuleDefinition(`test = "test_b"`).
+		WithPredicateLastUpdated(rulesVersion.Predicates).
+		WithLastUpdated(rulesVersion.Total).
+		Build()
 	rs = []*rules.FailureAssociationRule{ruleOne}
 	if !b.oldRules {
-		rulesVersion = time.Date(2002, time.January, 1, 0, 0, 0, 1000, time.UTC)
-		ruleTwo := rules.NewRule(1).WithProject(b.project).WithRuleDefinition(`reason = "reason_b"`).WithLastUpdated(rulesVersion).Build()
+		rulesVersion = rules.Version{
+			Predicates: time.Date(2002, time.January, 1, 0, 0, 0, 1000, time.UTC),
+			Total:      time.Date(2002, time.January, 1, 0, 0, 0, 2000, time.UTC),
+		}
+		ruleTwo := rules.NewRule(1).WithProject(b.project).
+			WithRuleDefinition(`reason = "reason_b"`).
+			WithPredicateLastUpdated(rulesVersion.Predicates).
+			WithLastUpdated(rulesVersion.Total).
+			Build()
 		rs = append(rs, ruleTwo)
 	}
 	for _, r := range rs {
@@ -795,7 +805,7 @@ func (b *scenarioBuilder) build() *scenario {
 		activeRules = append(activeRules, active)
 	}
 
-	configVersion = time.Date(2001, time.January, 2, 0, 0, 0, 1, time.UTC)
+	configVersion := time.Date(2001, time.January, 2, 0, 0, 0, 1, time.UTC)
 	cfgpb := &configpb.Clustering{
 		TestNameRules: []*configpb.TestNameClusteringRule{
 			{

@@ -19,10 +19,8 @@ import (
 // It should be treated as immutable, and is therefore safe to
 // share across multiple threads.
 type CachedRule struct {
-	// The unique identifier for the failure association rule.
-	RuleID string
-	// The time the rule was last updated.
-	LastUpdated time.Time
+	// The failure association rule.
+	Rule rules.FailureAssociationRule
 	// The parsed and compiled failure association rule.
 	Expr *lang.Expr
 }
@@ -35,9 +33,8 @@ func NewCachedRule(rule *rules.FailureAssociationRule) (*CachedRule, error) {
 		return nil, err
 	}
 	return &CachedRule{
-		RuleID:      rule.RuleID,
-		LastUpdated: rule.LastUpdated,
-		Expr:        expr,
+		Rule: *rule,
+		Expr: expr,
 	}, nil
 }
 
@@ -50,29 +47,31 @@ type Ruleset struct {
 	Project string
 	// ActiveRulesSorted is the set of active failure association rules
 	// (should be used by Weetbix for matching), sorted in descending
-	// LastUpdated time order.
+	// PredicateLastUpdated time order.
 	ActiveRulesSorted []*CachedRule
 	// ActiveRuleIDs stores the IDs of active failure association
 	// rules.
 	ActiveRuleIDs map[string]struct{}
-	// RulesVersion is the Spanner commit timestamp describing
-	// the version of the ruleset.
-	RulesVersion time.Time
-	// LastRefresh is when the ruleset was last refreshed.
+	// Version versions the contents of the Ruleset. These timestamps only
+	// change if a rule is modified.
+	Version rules.Version
+	// LastRefresh is the system time when the ruleset was last
+	// refreshed.
 	LastRefresh time.Time
 }
 
-// ActiveRulesUpdatedSince returns the set of rules that are
-// active and have been updated since (but not including) the given time.
+// ActiveRulesWithPredicateUpdatedSince returns the set of rules that are
+// active and whose predicates have been updated since (but not including)
+// the given time.
 // Rules which have been made inactive since the given time will NOT be
 // returned. To check if a previous rule has been made inactive, consider
 // using IsRuleActive instead.
 // The returned slice must not be mutated.
-func (r *Ruleset) ActiveRulesUpdatedSince(t time.Time) []*CachedRule {
+func (r *Ruleset) ActiveRulesWithPredicateUpdatedSince(t time.Time) []*CachedRule {
 	// Use the property that ActiveRules is sorted by descending
 	// LastUpdated time.
 	for i, rule := range r.ActiveRulesSorted {
-		if !rule.LastUpdated.After(t) {
+		if !rule.Rule.PredicateLastUpdated.After(t) {
 			// This is the first rule that has not been updated since time t.
 			// Return all rules up to (but not including) this rule.
 			return r.ActiveRulesSorted[:i]
@@ -94,22 +93,22 @@ func newEmptyRuleset(project string) *Ruleset {
 		Project:           project,
 		ActiveRulesSorted: nil,
 		ActiveRuleIDs:     make(map[string]struct{}),
-		// The zero time is not a valid RulesVersion and will be rejected
-		// by clustering state validation if we ever try to save it to
-		// Spanner.
-		RulesVersion: time.Time{},
-		LastRefresh:  time.Time{},
+		// The zero predicate last updated time is not valid and will be
+		// rejected by clustering state validation if we ever try to save
+		// it to Spanner as a chunk's RulesVersion.
+		Version:     rules.Version{},
+		LastRefresh: time.Time{},
 	}
 }
 
 // NewRuleset creates a new ruleset with the given project,
-// active rules, rules version and last refresh time.
-func NewRuleset(project string, activeRules []*CachedRule, rulesVersion, lastRefresh time.Time) *Ruleset {
+// active rules, rules last updated and last refresh time.
+func NewRuleset(project string, activeRules []*CachedRule, version rules.Version, lastRefresh time.Time) *Ruleset {
 	return &Ruleset{
 		Project:           project,
-		ActiveRulesSorted: sortByDescendingLastUpdated(activeRules),
+		ActiveRulesSorted: sortByDescendingPredicateLastUpdated(activeRules),
 		ActiveRuleIDs:     ruleIDs(activeRules),
-		RulesVersion:      rulesVersion,
+		Version:           version,
 		LastRefresh:       lastRefresh,
 	}
 }
@@ -128,7 +127,7 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 	defer cancel()
 
 	var activeRules []*CachedRule
-	if r.RulesVersion == (time.Time{}) {
+	if r.Version == (rules.Version{}) {
 		// On the first refresh, query all active rules.
 		ruleRows, err := rules.ReadActive(txn, r.Project)
 		if err != nil {
@@ -140,7 +139,7 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 		}
 	} else {
 		// On subsequent refreshes, query just the differences.
-		delta, err := rules.ReadDelta(txn, r.Project, r.RulesVersion)
+		delta, err := rules.ReadDelta(txn, r.Project, r.Version.Total)
 		if err != nil {
 			return nil, err
 		}
@@ -151,11 +150,9 @@ func (r *Ruleset) refresh(ctx context.Context) (ruleset *Ruleset, err error) {
 	}
 
 	// Get the version of set of rules read by ReadActive/ReadDelta.
-	// This is expressed as the Spanner time of the most recent update
-	// to the set of rules in the project.
 	// Must occur in the same spanner transaction as ReadActive/ReadDelta.
 	// If the project has no rules, this returns rules.StartingEpoch.
-	rulesVersion, err := rules.ReadLastUpdated(txn, r.Project)
+	rulesVersion, err := rules.ReadVersion(txn, r.Project)
 	if err != nil {
 		return nil, err
 	}
@@ -183,15 +180,9 @@ func cachedRulesFromFullRead(activeRules []*rules.FailureAssociationRule) ([]*Ca
 func cachedRulesFromDelta(existing []*CachedRule, delta []*rules.FailureAssociationRule) ([]*CachedRule, error) {
 	ruleByID := make(map[string]*CachedRule)
 	for _, r := range existing {
-		ruleByID[r.RuleID] = r
+		ruleByID[r.Rule.RuleID] = r
 	}
 	for _, d := range delta {
-		existing, ok := ruleByID[d.RuleID]
-		if ok && existing.LastUpdated == d.LastUpdated {
-			// Rule was already known and has not changed, so move on.
-			// This saves parsing and recompiling rules which are unchanged.
-			continue
-		}
 		if d.IsActive {
 			cr, err := NewCachedRule(d)
 			if err != nil {
@@ -210,17 +201,17 @@ func cachedRulesFromDelta(existing []*CachedRule, delta []*rules.FailureAssociat
 	return results, nil
 }
 
-// sortByDescendingLastUpdated sorts the given rules in descending last-updated
-// time order. If two rules have the same LastUpdated time, they are sorted
-// in RuleID order.
-func sortByDescendingLastUpdated(rules []*CachedRule) []*CachedRule {
+// sortByDescendingPredicateLastUpdated sorts the given rules in descending
+// predicate last-updated time order. If two rules have the same
+// PredicateLastUpdated time, they are sorted in RuleID order.
+func sortByDescendingPredicateLastUpdated(rules []*CachedRule) []*CachedRule {
 	result := make([]*CachedRule, len(rules))
 	copy(result, rules)
 	sort.Slice(result, func(i, j int) bool {
-		if result[i].LastUpdated.Equal(result[j].LastUpdated) {
-			return result[i].RuleID < result[j].RuleID
+		if result[i].Rule.PredicateLastUpdated.Equal(result[j].Rule.PredicateLastUpdated) {
+			return result[i].Rule.RuleID < result[j].Rule.RuleID
 		}
-		return result[i].LastUpdated.After(result[j].LastUpdated)
+		return result[i].Rule.PredicateLastUpdated.After(result[j].Rule.PredicateLastUpdated)
 	})
 	return result
 }
@@ -229,7 +220,7 @@ func sortByDescendingLastUpdated(rules []*CachedRule) []*CachedRule {
 func ruleIDs(rules []*CachedRule) map[string]struct{} {
 	result := make(map[string]struct{})
 	for _, r := range rules {
-		result[r.RuleID] = struct{}{}
+		result[r.Rule.RuleID] = struct{}{}
 	}
 	return result
 }

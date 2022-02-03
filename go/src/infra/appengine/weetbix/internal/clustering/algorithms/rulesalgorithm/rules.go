@@ -46,15 +46,15 @@ func (a *Algorithm) Cluster(ruleset *cache.Ruleset, existingRulesVersion time.Ti
 
 	// For efficiency, only match new/modified rules since the
 	// last call to Cluster(...).
-	newRules := ruleset.ActiveRulesUpdatedSince(existingRulesVersion)
+	newRules := ruleset.ActiveRulesWithPredicateUpdatedSince(existingRulesVersion)
 	for _, r := range newRules {
 		if r.Expr.Evaluate(failure) {
-			ruleIDs[r.RuleID] = struct{}{}
+			ruleIDs[r.Rule.RuleID] = struct{}{}
 		} else {
 			// If this is a modified rule (rather than a new rule)
 			// it may have matched previously. Delete any existing
 			// match.
-			delete(ruleIDs, r.RuleID)
+			delete(ruleIDs, r.Rule.RuleID)
 		}
 	}
 }

@@ -160,12 +160,15 @@ type scenario struct {
 }
 
 func upToDateScenario(size int) *scenario {
-	rulesVersion := time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC)
+	rulesVersion := rules.Version{
+		Predicates: time.Date(2020, time.January, 1, 1, 0, 0, 0, time.UTC),
+	}
 
 	rule1, err := cache.NewCachedRule(
 		rules.NewRule(100).
 			WithRuleDefinition(`test = "ninja://test_name/2"`).
-			WithLastUpdated(rulesVersion.Add(-1 * time.Hour)).Build())
+			WithPredicateLastUpdated(rulesVersion.Predicates.Add(-1 * time.Hour)).
+			Build())
 	if err != nil {
 		panic(err)
 	}
@@ -173,7 +176,7 @@ func upToDateScenario(size int) *scenario {
 	rule2, err := cache.NewCachedRule(
 		rules.NewRule(101).
 			WithRuleDefinition(`reason LIKE "failed to connect to %.%.%.%"`).
-			WithLastUpdated(rulesVersion).Build())
+			WithPredicateLastUpdated(rulesVersion.Predicates).Build())
 	if err != nil {
 		panic(err)
 	}
@@ -211,7 +214,7 @@ func upToDateScenario(size int) *scenario {
 	existing := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
 		ConfigVersion:     cfg.LastUpdated,
-		RulesVersion:      rulesVersion,
+		RulesVersion:      rulesVersion.Predicates,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
 			rulesalgorithm.AlgorithmName: {},
@@ -227,8 +230,8 @@ func upToDateScenario(size int) *scenario {
 		clusters := []clustering.ClusterID{
 			failureReasonClusterID(cfg, failures[1]),
 			testNameClusterID(cfg, failures[1]),
-			ruleClusterID(rule1.RuleID),
-			ruleClusterID(rule2.RuleID),
+			ruleClusterID(rule1.Rule.RuleID),
+			ruleClusterID(rule2.Rule.RuleID),
 		}
 		clustering.SortClusters(clusters)
 		existing.Clusters = append(existing.Clusters, clusters)
@@ -240,7 +243,7 @@ func upToDateScenario(size int) *scenario {
 	expected := clustering.ClusterResults{
 		AlgorithmsVersion: AlgorithmsVersion,
 		ConfigVersion:     cfg.LastUpdated,
-		RulesVersion:      rulesVersion,
+		RulesVersion:      rulesVersion.Predicates,
 		Algorithms: map[string]struct{}{
 			failurereason.AlgorithmName:  {},
 			rulesalgorithm.AlgorithmName: {},
@@ -256,8 +259,8 @@ func upToDateScenario(size int) *scenario {
 		clusters := []clustering.ClusterID{
 			failureReasonClusterID(cfg, failures[1]),
 			testNameClusterID(cfg, failures[1]),
-			ruleClusterID(rule1.RuleID),
-			ruleClusterID(rule2.RuleID),
+			ruleClusterID(rule1.Rule.RuleID),
+			ruleClusterID(rule2.Rule.RuleID),
 		}
 		clustering.SortClusters(clusters)
 		expected.Clusters = append(expected.Clusters, clusters)
@@ -294,7 +297,7 @@ func fromOlderRuleAlgorithmScenario() *scenario {
 	s.existing.Clusters[1] = []clustering.ClusterID{
 		failureReasonClusterID(s.config, s.failures[1]),
 		testNameClusterID(s.config, s.failures[1]),
-		{Algorithm: "rules-v0", ID: s.rules[0].RuleID},
+		{Algorithm: "rules-v0", ID: s.rules[0].Rule.RuleID},
 		{Algorithm: "rules-v0", ID: "rule-no-longer-matched-with-v1"},
 	}
 	clustering.SortClusters(s.existing.Clusters[1])
@@ -328,7 +331,7 @@ func fromOlderRulesVersionScenario(size int) *scenario {
 		s.existing.Clusters[i] = []clustering.ClusterID{
 			failureReasonClusterID(s.config, s.failures[i]),
 			testNameClusterID(s.config, s.failures[i]),
-			ruleClusterID(s.rules[0].RuleID),
+			ruleClusterID(s.rules[0].Rule.RuleID),
 			ruleClusterID("now-deleted-rule-id"),
 		}
 		clustering.SortClusters(s.existing.Clusters[i])
@@ -342,7 +345,7 @@ func fromNewerRulesVersionScenario() *scenario {
 	s.existing.Clusters[1] = []clustering.ClusterID{
 		failureReasonClusterID(s.config, s.failures[1]),
 		testNameClusterID(s.config, s.failures[1]),
-		ruleClusterID(s.rules[0].RuleID),
+		ruleClusterID(s.rules[0].Rule.RuleID),
 		ruleClusterID("later-added-rule-id"),
 	}
 	clustering.SortClusters(s.existing.Clusters[1])

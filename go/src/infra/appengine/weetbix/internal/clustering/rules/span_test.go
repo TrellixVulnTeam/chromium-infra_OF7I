@@ -165,9 +165,9 @@ func TestSpan(t *testing.T) {
 			Convey(`Empty`, func() {
 				SetRulesForTesting(ctx, nil)
 
-				timestamp, err := ReadLastUpdated(span.Single(ctx), testProject)
+				timestamp, err := ReadVersion(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
-				So(timestamp, ShouldEqual, StartingEpoch)
+				So(timestamp, ShouldResemble, StartingVersion)
 			})
 			Convey(`Multiple`, func() {
 				// Spanner commit timestamps are in microsecond
@@ -177,16 +177,31 @@ func TestSpan(t *testing.T) {
 				// when testing.
 				reference := time.Date(2020, 1, 2, 3, 4, 5, 6000, time.UTC)
 				rulesToCreate := []*FailureAssociationRule{
-					NewRule(0).WithLastUpdated(reference.Add(-1 * time.Hour)).Build(),
-					NewRule(1).WithProject("otherproject").WithLastUpdated(reference.Add(time.Hour)).Build(),
-					NewRule(2).WithActive(false).WithLastUpdated(reference).Build(),
-					NewRule(3).WithLastUpdated(reference.Add(-2 * time.Hour)).Build(),
+					NewRule(0).
+						WithPredicateLastUpdated(reference.Add(-1 * time.Hour)).
+						WithLastUpdated(reference.Add(-1 * time.Hour)).
+						Build(),
+					NewRule(1).WithProject("otherproject").
+						WithPredicateLastUpdated(reference.Add(time.Hour)).
+						WithLastUpdated(reference.Add(time.Hour)).
+						Build(),
+					NewRule(2).WithActive(false).
+						WithPredicateLastUpdated(reference.Add(-1 * time.Second)).
+						WithLastUpdated(reference).
+						Build(),
+					NewRule(3).
+						WithPredicateLastUpdated(reference.Add(-2 * time.Hour)).
+						WithLastUpdated(reference.Add(-2 * time.Hour)).
+						Build(),
 				}
 				SetRulesForTesting(ctx, rulesToCreate)
 
-				timestamp, err := ReadLastUpdated(span.Single(ctx), testProject)
+				version, err := ReadVersion(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
-				So(timestamp, ShouldEqual, reference)
+				So(version, ShouldResemble, Version{
+					Predicates: reference.Add(-1 * time.Second),
+					Total:      reference,
+				})
 			})
 		})
 		Convey(`Create`, func() {

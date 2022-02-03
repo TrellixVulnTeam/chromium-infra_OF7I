@@ -38,11 +38,18 @@ var UserRe = regexp.MustCompile(`^weetbix|([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA
 // Weetbix system itself in audit fields.
 const WeetbixSystem = "weetbix"
 
-// StartingEpoch is the rule version used for projects that have no rules
-// (even inactive rules). It is deliberately different from the timestamp
-// zero value to be discernible from "timestamp not populated" programming
-// errors.
+// StartingEpoch is the rule last updated time used for projects that have
+// no rules (active or otherwise). It is deliberately different from the
+// timestamp zero value to be discernible from "timestamp not populated"
+// programming errors.
 var StartingEpoch = time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)
+
+// StartingEpoch is the rule version used for projects that have
+// no rules (active or otherwise).
+var StartingVersion = Version{
+	Predicates: StartingEpoch,
+	Total:      StartingEpoch,
+}
 
 // NotExistsErr is returned by Read methods for a single failure
 // association rule, if no matching rule exists.
@@ -76,9 +83,6 @@ type FailureAssociationRule struct {
 	// Compare with RulesVersion on ReclusteringRuns to identify
 	// reclustering state.
 	// Output only.
-	// TODO(crbug.com/1243174): This field was recently added to avoid
-	// changes to the associated bug triggering a re-clustering. It is
-	// not yet the source of truth. Use LastUpdated for now.
 	PredicateLastUpdated time.Time `json:"predicateLastUpdated"`
 	// BugID is the identifier of the bug that the failures are
 	// associated with.
@@ -256,9 +260,22 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 	return rs, err
 }
 
-// ReadLastUpdated reads the last timestamp a rule in the given project was
-// updated. This is used to version the set of rules retrieved by ReadActive
-// and is typically called in the same transaction.
+// Version captures version information about a project's rules.
+type Version struct {
+	// Predicates is the last time any rule changed its
+	// rule predicate (RuleDefinition or IsActive).
+	// Also known as "Rules Version" in clustering contexts.
+	Predicates time.Time
+	// Total is the last time any rule was updated in any way.
+	// Pass to ReadDelta when seeking to read changed rules.
+	Total time.Time
+}
+
+// ReadVersion reads information about when rules in the given project
+// were last updated. This is used to version the set of rules retrieved
+// by ReadActive and is typically called in the same transaction.
+// It is also used to implement change detection on rule predicates
+// for the purpose of triggering re-clustering.
 //
 // Simply reading the last LastUpdated time of the rules read by ReadActive
 // is not sufficient to version the set of rules read, as the most recent
@@ -267,32 +284,42 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 //
 // If the project has no failure association rules, the timestamp
 // StartingEpoch is returned.
-func ReadLastUpdated(ctx context.Context, projectID string) (time.Time, error) {
+func ReadVersion(ctx context.Context, projectID string) (Version, error) {
 	stmt := spanner.NewStatement(`
-		SELECT MAX(LastUpdated) as LastUpdated
+		SELECT
+		  Max(PredicateLastUpdated) as PredicateLastUpdated,
+		  MAX(LastUpdated) as LastUpdated
 		FROM FailureAssociationRules
 		WHERE Project = @projectID
 	`)
 	stmt.Params = map[string]interface{}{
 		"projectID": projectID,
 	}
-	var lastUpdated spanner.NullTime
+	var predicateLastUpdated, lastUpdated spanner.NullTime
 	it := span.Query(ctx, stmt)
 	err := it.Do(func(r *spanner.Row) error {
-		err := r.Columns(&lastUpdated)
+		err := r.Columns(&predicateLastUpdated, &lastUpdated)
 		if err != nil {
 			return errors.Annotate(err, "read last updated row").Err()
 		}
 		return nil
 	})
 	if err != nil {
-		return time.Time{}, errors.Annotate(err, "query last updated").Err()
+		return Version{}, errors.Annotate(err, "query last updated").Err()
 	}
-	// No failure association rules.
-	if !lastUpdated.Valid {
-		return StartingEpoch, nil
+	result := Version{
+		Predicates: StartingEpoch,
+		Total:      StartingEpoch,
 	}
-	return lastUpdated.Time, nil
+	// predicateLastUpdated / lastUpdated are only invalid if there
+	// are no failure association rules.
+	if predicateLastUpdated.Valid {
+		result.Predicates = predicateLastUpdated.Time
+	}
+	if lastUpdated.Valid {
+		result.Total = lastUpdated.Time
+	}
+	return result, nil
 }
 
 // Create inserts a new failure association rule with the specified details.

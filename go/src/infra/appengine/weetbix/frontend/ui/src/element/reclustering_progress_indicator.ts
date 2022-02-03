@@ -23,9 +23,10 @@ export class ReclusteringProgressIndicator extends LitElement {
     hasRule: boolean | undefined;
 
     @property()
-    // The last updated time of the rule which defines the cluster (if any).
+    // The last updated time of the rule predicate which defines the
+    // cluster (if any).
     // This should be set if hasRule is true.
-    ruleLastUpdated: string | undefined;
+    rulePredicateLastUpdated: string | undefined;
 
     @state()
     progress: ReclusteringProgress | undefined;
@@ -79,7 +80,7 @@ export class ReclusteringProgressIndicator extends LitElement {
 
     render() {
         if (this.progress === undefined ||
-            (this.hasRule && !this.ruleLastUpdated)) {
+            (this.hasRule && !this.rulePredicateLastUpdated)) {
             // Still loading.
             return html``;
         }
@@ -93,8 +94,8 @@ export class ReclusteringProgressIndicator extends LitElement {
             progressPerMille = configProgress;
         }
 
-        if (this.hasRule && this.ruleLastUpdated) {
-            const ruleProgress = this.progressToRulesVersion(this.progress, this.ruleLastUpdated);
+        if (this.hasRule && this.rulePredicateLastUpdated) {
+            const ruleProgress = this.progressToRulesVersion(this.progress, this.rulePredicateLastUpdated);
             if (ruleProgress < progressPerMille) {
                 reclusteringTarget = "the latest rule definition";
                 progressPerMille = ruleProgress;

@@ -238,11 +238,14 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 		Progress:         0,
 	}
 	if progress == 1000 {
-		rulesVersion, err := rules.ReadLastUpdated(ctx, project)
+		rulesVersion, err := rules.ReadVersion(ctx, project)
 		if err != nil {
 			return progress, err
 		}
-		newRun.RulesVersion = rulesVersion
+		// Trigger re-clustering on rule predicate changes,
+		// as only the rule predicate matters for determining
+		// which clusters a failure is in.
+		newRun.RulesVersion = rulesVersion.Predicates
 		newRun.AlgorithmsVersion = algorithms.AlgorithmsVersion
 		if lastRun.AlgorithmsVersion > newRun.AlgorithmsVersion {
 			// Never roll back to an earlier algorithms version. Assume

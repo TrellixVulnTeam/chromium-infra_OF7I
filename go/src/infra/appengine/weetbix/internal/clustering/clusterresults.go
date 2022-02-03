@@ -23,9 +23,8 @@ type ClusterResults struct {
 	// the configuration should trigger re-clustering of test results.
 	ConfigVersion time.Time
 	// RulesVersion is the version of failure association rules used
-	// to cluster test results.  This is the RulesLastUpdated
-	// time of the most-recently-updated failure association rule in
-	// the snapshot of failure association rules used to cluster
+	// to cluster test results.  This is most recent PredicateLastUpdated
+	// time in the snapshot of failure association rules used to cluster
 	// the test results.
 	RulesVersion time.Time
 	// Algorithms is the set of algorithms that were used to cluster

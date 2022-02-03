@@ -41,7 +41,9 @@ func TestAlgorithm(t *testing.T) {
 					Build())
 			So(err, ShouldBeNil)
 
-			rulesVersion := time.Now()
+			rulesVersion := rules.Version{
+				Predicates: time.Now(),
+			}
 			lastUpdated := time.Now()
 			rules := []*cache.CachedRule{rule1, rule2}
 			ruleset := cache.NewRuleset("myproject", rules, rulesVersion, lastUpdated)
@@ -52,7 +54,7 @@ func TestAlgorithm(t *testing.T) {
 						TestID: "ninja://test_name_one/",
 					})
 					So(ids, ShouldResemble, map[string]struct{}{
-						rule1.RuleID: {},
+						rule1.Rule.RuleID: {},
 					})
 				})
 				Convey(`Non-matcing`, func() {
@@ -70,7 +72,7 @@ func TestAlgorithm(t *testing.T) {
 					},
 				})
 				So(ids, ShouldResemble, map[string]struct{}{
-					rule2.RuleID: {},
+					rule2.Rule.RuleID: {},
 				})
 			})
 			Convey(`Matches multiple`, func() {
@@ -80,11 +82,11 @@ func TestAlgorithm(t *testing.T) {
 						PrimaryErrorMessage: "failed to connect to 192.168.0.1",
 					},
 				})
-				expectedIDs := []string{rule1.RuleID, rule2.RuleID}
+				expectedIDs := []string{rule1.Rule.RuleID, rule2.Rule.RuleID}
 				sort.Strings(expectedIDs)
 				So(ids, ShouldResemble, map[string]struct{}{
-					rule1.RuleID: {},
-					rule2.RuleID: {},
+					rule1.Rule.RuleID: {},
+					rule2.Rule.RuleID: {},
 				})
 			})
 		})
@@ -105,30 +107,32 @@ func TestAlgorithm(t *testing.T) {
 		// should never happen in reality) to check it is never evaluated.
 		rule1, err := cache.NewCachedRule(
 			rules.NewRule(100).WithRuleDefinition(`FALSE`).
-				WithLastUpdated(originalRulesVersion).Build())
+				WithPredicateLastUpdated(originalRulesVersion).Build())
 		So(err, ShouldBeNil)
 		rule3, err := cache.NewCachedRule(
 			rules.NewRule(102).
 				WithRuleDefinition(`reason LIKE "failed to connect to %"`).
-				WithLastUpdated(originalRulesVersion.Add(time.Hour)).Build())
+				WithPredicateLastUpdated(originalRulesVersion.Add(time.Hour)).Build())
 		So(err, ShouldBeNil)
 
-		rules := []*cache.CachedRule{rule1, rule3}
-		newRulesVersion := originalRulesVersion.Add(time.Hour)
+		rs := []*cache.CachedRule{rule1, rule3}
+		newRulesVersion := rules.Version{
+			Predicates: originalRulesVersion.Add(time.Hour),
+		}
 		lastUpdated := time.Now()
-		secondRuleset := cache.NewRuleset("myproject", rules, newRulesVersion, lastUpdated)
+		secondRuleset := cache.NewRuleset("myproject", rs, newRulesVersion, lastUpdated)
 
 		ids := map[string]struct{}{
-			rule1.RuleID: {},
-			"rule2-id":   {},
+			rule1.Rule.RuleID: {},
+			"rule2-id":        {},
 		}
 
 		// Test incrementally clustering leads to the correct outcome,
 		// matching rule 3 and unmatching rule 2.
 		a.Cluster(secondRuleset, originalRulesVersion, ids, testFailure)
 		So(ids, ShouldResemble, map[string]struct{}{
-			rule1.RuleID: {},
-			rule3.RuleID: {},
+			rule1.Rule.RuleID: {},
+			rule3.Rule.RuleID: {},
 		})
 	})
 }

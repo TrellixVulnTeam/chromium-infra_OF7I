@@ -31,16 +31,18 @@ func NewRulesCache(c caching.LRUHandle) *RulesCache {
 }
 
 // Ruleset obtains the Ruleset for a particular project from the cache, or if
-// it does not exist, retrieves it from Spanner. MinimumVersion specifies the
-// minimum RulesVersion that is required (if any).
-func (c *RulesCache) Ruleset(ctx context.Context, project string, minimumRulesVersion time.Time) (*Ruleset, error) {
+// it does not exist, retrieves it from Spanner. MinimumPredicatesVersion
+// specifies the minimum version of rule predicates that must be incorporated
+// in the given Ruleset. If no particular version is desired, pass
+// rules.StartingEpoch.
+func (c *RulesCache) Ruleset(ctx context.Context, project string, minimumPredicatesVersion time.Time) (*Ruleset, error) {
 	var err error
 	now := clock.Now(ctx)
 	value, _ := c.cache.LRU(ctx).Mutate(ctx, project, func(it *lru.Item) *lru.Item {
 		var ruleset *Ruleset
 		if it != nil {
 			ruleset = it.Value.(*Ruleset)
-			if ruleset.LastRefresh.Add(refreshInterval).After(now) && !ruleset.RulesVersion.Before(minimumRulesVersion) {
+			if ruleset.LastRefresh.Add(refreshInterval).After(now) && !ruleset.Version.Predicates.Before(minimumPredicatesVersion) {
 				// The ruleset is up-to-date. Do not mutate it further.
 				return it
 			}
@@ -61,8 +63,8 @@ func (c *RulesCache) Ruleset(ctx context.Context, project string, minimumRulesVe
 		return nil, err
 	}
 	ruleset := value.(*Ruleset)
-	if ruleset.RulesVersion.Before(minimumRulesVersion) {
-		return nil, fmt.Errorf("could not obtain ruleset of requested minimum version (%v)", minimumRulesVersion)
+	if ruleset.Version.Predicates.Before(minimumPredicatesVersion) {
+		return nil, fmt.Errorf("could not obtain ruleset of requested minimum predicate version (%v)", minimumPredicatesVersion)
 	}
 	return ruleset, nil
 }

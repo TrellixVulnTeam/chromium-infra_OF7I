@@ -191,7 +191,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 		// Only update the bug if re-clustering and analysis ran on the latest
 		// version of this failure association rule. This avoids bugs getting
 		// erroneous priority changes while impact information is incomplete.
-		if !progress.IncorporatesRulesVersion(r.LastUpdated) {
+		if !progress.IncorporatesRulesVersion(r.PredicateLastUpdated) {
 			continue
 		}
 

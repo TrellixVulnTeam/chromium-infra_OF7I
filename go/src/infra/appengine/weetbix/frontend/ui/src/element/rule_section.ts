@@ -316,7 +316,7 @@ export class RuleSection extends LitElement {
         }
         const event = new CustomEvent<RuleChangedEvent>('rulechanged', {
             detail: {
-                lastUpdated: this.rule.lastUpdateTime
+                predicateLastUpdated: this.rule.predicateLastUpdatedTime,
             },
         });
         this.dispatchEvent(event);
@@ -385,5 +385,5 @@ export class RuleSection extends LitElement {
 }
 
 export interface RuleChangedEvent {
-    lastUpdated: string; // RFC 3339 encoded date/time.
+    predicateLastUpdated: string; // RFC 3339 encoded date/time.
 }

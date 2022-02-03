@@ -96,7 +96,7 @@ func TestOrchestrator(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			rulesVersionB := time.Date(2020, time.January, 10, 9, 8, 7, 0, time.UTC)
-			rule := rules.NewRule(1).WithProject("project-b").WithLastUpdated(rulesVersionB).Build()
+			rule := rules.NewRule(1).WithProject("project-b").WithPredicateLastUpdated(rulesVersionB).Build()
 			err = rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{rule})
 			So(err, ShouldBeNil)
 

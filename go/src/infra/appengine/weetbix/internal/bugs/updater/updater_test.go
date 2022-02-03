@@ -208,7 +208,8 @@ func TestRun(t *testing.T) {
 				rule := rules.NewRule(0).
 					WithProject(project).
 					WithCreationTime(createTime).
-					WithLastUpdated(createTime.Add(1 * time.Hour)).
+					WithPredicateLastUpdated(createTime.Add(1 * time.Hour)).
+					WithLastUpdated(createTime.Add(2 * time.Hour)).
 					WithSourceCluster(sourceClusterID).Build()
 				err := rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
 					rule,
@@ -301,6 +302,7 @@ func TestRun(t *testing.T) {
 					So(r.RuleID, ShouldNotBeEmpty)
 					So(r.CreationTime, ShouldNotBeZeroValue)
 					So(r.LastUpdated, ShouldNotBeZeroValue)
+					So(r.PredicateLastUpdated, ShouldNotBeZeroValue)
 					// Accept whatever values the implementation has set.
 					r.RuleID = ""
 					r.CreationTime = time.Time{}
@@ -399,7 +401,7 @@ func TestRun(t *testing.T) {
 						WithProject(project).
 						WithAlgorithmsVersion(algorithms.AlgorithmsVersion).
 						WithConfigVersion(projectCfg.LastUpdated.AsTime()).
-						WithRulesVersion(rs[2].LastUpdated).
+						WithRulesVersion(rs[2].PredicateLastUpdated).
 						WithCompletedProgress().Build(),
 				})
 				So(err, ShouldBeNil)

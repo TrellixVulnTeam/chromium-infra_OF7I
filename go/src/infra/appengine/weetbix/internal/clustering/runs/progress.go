@@ -116,9 +116,10 @@ func (p *ReclusteringProgress) IsReclusteringToNewConfig() bool {
 	return p.Last.ConfigVersion.Before(p.LatestConfigVersion)
 }
 
-// IncorporatesRulesVersion returns returns whether only rules
-// of at least the given rules version are used in Weetbix's clustering
-// output.
+// IncorporatesRulesVersion returns returns whether Weetbix
+// clustering output incorporates all rule changes up to
+// the given predicate last updated time. Later changes
+// may also be included, in full or in part.
 func (p *ReclusteringProgress) IncorporatesRulesVersion(rulesVersion time.Time) bool {
 	return !rulesVersion.After(p.Last.RulesVersion)
 }
