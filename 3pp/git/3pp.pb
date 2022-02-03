@@ -40,7 +40,7 @@ create {
     #
     # So, we remove the .windows.XX suffix here; if git-for-windows produces
     # a new patch version that you need, bump the 'patch_version' at the top of
-    # this file. You'll get new builds on other platforms, too, but ¯\_(ツ)_/¯.
+    # this file. You'll get new builds on other platforms, too, but <shrug>.
     alter_version_re: "(.*)\.windows\.\d*(.*)"
     alter_version_replace: "\\1\\2"
   }
