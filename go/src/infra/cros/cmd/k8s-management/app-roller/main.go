@@ -391,7 +391,7 @@ func applyToK8s(generatedYAML string) error {
 	// TODO(guocb): log to BigQuery.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := k8sApply(ctx, generatedYAML); err != nil {
+	if _, err := k8sApply(ctx, generatedYAML); err != nil {
 		return fmt.Errorf("apply to k8s: %s", err)
 	}
 	return nil
