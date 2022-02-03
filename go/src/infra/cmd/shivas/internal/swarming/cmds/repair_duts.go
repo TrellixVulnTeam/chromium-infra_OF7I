@@ -18,7 +18,6 @@ import (
 	"infra/cros/recovery/tasknames"
 	"infra/libs/skylab/buildbucket"
 	"infra/libs/skylab/buildbucket/labpack"
-	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/worker"
 	"infra/libs/swarming"
 )
@@ -75,7 +74,7 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 	var bc buildbucket.Client
 	if c.paris {
 		var err error
-		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair (labstations only)\n")
+		fmt.Fprintf(a.GetErr(), "Using PARIS flow for repair\n")
 		bc, err = buildbucket.NewClient(ctx, c.authFlags, site.DefaultPRPCOptions, "chromeos", "labpack", "labpack")
 		if err != nil {
 			return err
@@ -88,10 +87,10 @@ func (c *repairDuts) innerRun(a subcommands.Application, args []string, env subc
 		cmd.LogDogAnnotationURL = creator.LogdogURL()
 		var taskInfo *swarming.TaskInfo
 		var err error
-		if c.paris && heuristics.LooksLikeLabstation(host) {
+		if c.paris {
 			// Use PARIS.
-			fmt.Fprintf(a.GetErr(), "Using PARIS for labstation %q\n", host)
-			taskInfo, err = scheduleRepairBuilder(ctx, bc, e, host)
+			fmt.Fprintf(a.GetErr(), "Using PARIS for %q\n", host)
+			taskInfo, err = scheduleRepairBuilder(ctx, bc, e, host, !c.onlyVerify)
 		} else {
 			// Legacy Flow, no PARIS.
 			if c.onlyVerify {
@@ -119,14 +118,11 @@ func (c *repairDuts) taskName() string {
 }
 
 // ScheduleRepairBuilder schedules a labpack Buildbucket builder/recipe with the necessary arguments to run repair.
-func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string) (*swarming.TaskInfo, error) {
-	if !heuristics.LooksLikeLabstation(host) {
-		return nil, fmt.Errorf("cannot run paris repair on non-labstation %q", host)
-	}
+func scheduleRepairBuilder(ctx context.Context, bc buildbucket.Client, e site.Environment, host string, runRepair bool) (*swarming.TaskInfo, error) {
 	p := &labpack.Params{
 		UnitName:       host,
 		TaskName:       string(tasknames.Recovery),
-		EnableRecovery: true,
+		EnableRecovery: runRepair,
 		AdminService:   e.AdminService,
 		// NOTE: We use the UFS service, not the Inventory service here.
 		InventoryService: e.UnifiedFleetService,

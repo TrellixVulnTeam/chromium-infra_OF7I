@@ -7,7 +7,6 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,7 +25,7 @@ func TestScheduleRepairBuilder(t *testing.T) {
 
 	client := &fakeClient{}
 
-	taskInfo, err := scheduleRepairBuilder(ctx, client, site.Environment{}, "fake-labstation1")
+	taskInfo, err := scheduleRepairBuilder(ctx, client, site.Environment{}, "fake-labstation1", true)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -39,25 +38,6 @@ func TestScheduleRepairBuilder(t *testing.T) {
 	actual = taskInfo.TaskURL
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Errorf("unexpected diff: %s", diff)
-	}
-}
-
-// TestScheduleRepairBuilderRejectsDUT tests that scheduling repair on a non-labstation DUT is rejected with
-// the correct-ish error message.
-func TestScheduleRepairBuilderRejectsDUT(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-
-	client := &fakeClient{}
-
-	_, err := scheduleRepairBuilder(ctx, client, site.Environment{}, "fake-dut1")
-
-	if err == nil {
-		t.Errorf("scheduling repair on a non-labstation was unexpectedly successful")
-	}
-	if !strings.Contains(err.Error(), "repair on non-labstation") {
-		t.Errorf("error message %q looks wrong somehow", err.Error())
 	}
 }
 
