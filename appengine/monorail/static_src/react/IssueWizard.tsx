@@ -10,6 +10,8 @@ import LandingStep from './issue-wizard/LandingStep.tsx';
 import DetailsStep from './issue-wizard/DetailsStep.tsx'
 import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
+import {getOs, getBrowser} from './issue-wizard/IssueWizardUtils.tsx'
+
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
@@ -26,6 +28,8 @@ export function IssueWizard(): ReactElement {
       describeProblem: '',
       additionalComments: ''
     });
+    const [osName, setOsName] = React.useState(getOs())
+    const [browserName, setBrowserName] = React.useState(getBrowser())
 
   let page;
   if (activeStep === 0) {
@@ -36,12 +40,20 @@ export function IssueWizard(): ReactElement {
         setCategory={setCategory}
         setActiveStep={setActiveStep}
         />;
-  } else if (activeStep === 1) {
-    page = <DetailsStep textValues={textValues} setTextValues={setTextValues} category={category} setActiveStep={setActiveStep}/>;
-  } else if (activeStep === 2) {
-    // TODO: (crbug.com/monorail/10581) get the customQuestions List
-    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={[]}/>;
-  }
+      } else if (activeStep === 1) {
+        page = <DetailsStep
+          textValues={textValues}
+          setTextValues={setTextValues}
+          category={category}
+          setActiveStep={setActiveStep}
+          osName={osName}
+          setOsName={setOsName}
+          browserName={browserName}
+          setBrowserName={setBrowserName}
+    />;
+   } else if (activeStep === 2) {
+      // TODO: (crbug.com/monorail/10581) get the customQuestions List
+      page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={[]}/>;  }
 
   return (
     <>

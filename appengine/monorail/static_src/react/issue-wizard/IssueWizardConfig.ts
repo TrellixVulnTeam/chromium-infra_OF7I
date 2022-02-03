@@ -103,3 +103,71 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     enabled: true,
   },
 ];
+
+export const OS_LIST = [
+  {
+    name: 'Android',
+    description: '',
+  },
+  {
+    name: 'iOS',
+    description: '',
+  },
+  {
+    name: 'Linux',
+    description: '',
+  },
+  {
+    name: 'Mac OS',
+    description: '',
+  },
+  {
+    name: 'Windows',
+    description: '',
+  },
+
+  {
+    name: 'Unknown/Other',
+    description: '',
+  },
+
+]
+
+export const BROWSER_LIST = [
+  {
+    name: 'Apple Safari',
+    description: '',
+  },
+  {
+    name: 'Google Chrome or Chromium',
+    description: '',
+  },
+  {
+    name: 'Mozilla Firefox',
+    description: '',
+  },
+  {
+    name: 'Microsoft Edge (Chromium)',
+    description: '',
+  },
+  {
+    name: 'Microsoft Edge (Legacy)',
+    description: '',
+  },
+  {
+    name: 'Microsoft Internet Explorer',
+    description: '',
+  },
+  {
+    name: 'Opera',
+    description: '',
+  },
+  {
+    name: 'Samsung Internet',
+    description: '',
+  },
+  {
+    name: 'Unknown / Other',
+    description: '',
+  },
+]

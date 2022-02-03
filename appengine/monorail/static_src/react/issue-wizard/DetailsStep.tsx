@@ -8,6 +8,8 @@ import {makeStyles} from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
+import SelectMenu from './SelectMenu.tsx';
+import {OS_LIST, BROWSER_LIST} from './IssueWizardConfig.ts'
 
 /**
  * The detail step is the second step on the dot
@@ -41,12 +43,16 @@ type Props = {
   setTextValues: Function,
   category: string,
   setActiveStep: Function,
+  osName: string,
+  setOsName: Function,
+  browserName: string
+  setBrowserName: Function,
 };
 
 export default function DetailsStep(props: Props): React.ReactElement {
   const classes = useStyles();
 
-  const {textValues, setTextValues, category, setActiveStep} = props;
+  const {textValues, setTextValues, category, setActiveStep, osName, setOsName, browserName, setBrowserName} = props;
   const handleChange = (valueName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const textInput = e.target.value;
     setTextValues({...textValues, [valueName]: textInput});
@@ -61,6 +67,13 @@ export default function DetailsStep(props: Props): React.ReactElement {
     <>
         <h2 className={classes.grey}>Details for problems with {category}</h2>
         <form className={classes.root} noValidate autoComplete="off">
+
+            <h3 className={classes.head}>Please confirm that the following version information is correct. <span className={classes.red}>*</span></h3>
+            <h3>Operating System:</h3>
+            <SelectMenu optionsList={OS_LIST} selectedOption={osName} setOption={setOsName} />
+            <h3>Browser:</h3>
+            <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
+
             <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
             <TextField id="outlined-basic-1" variant="outlined" onChange={handleChange('oneLineSummary')}/>
 
@@ -75,7 +88,6 @@ export default function DetailsStep(props: Props): React.ReactElement {
 
             <h3 className={classes.head}>Upload any relevant screenshots</h3>
             <input type="file" accept="image/*" multiple />
-
         </form>
         <DotMobileStepper nextEnabled={nextEnabled} activeStep={1} setActiveStep={setActiveStep}/>
     </>
