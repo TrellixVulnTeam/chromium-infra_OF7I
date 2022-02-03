@@ -2244,6 +2244,7 @@ message GetDeviceDataResponse {
     models.SchedulingUnit scheduling_unit = 1;
     models.ChromeOSDeviceData chrome_os_device_data = 2;
     AttachedDeviceData attached_device_data = 3;
+    BrowserDeviceData browser_device_data = 5;
   }
 
   ResourceType resource_type = 4;
@@ -2253,6 +2254,7 @@ message GetDeviceDataResponse {
     RESOURCE_TYPE_SCHEDULING_UNIT = 1;
     RESOURCE_TYPE_CHROMEOS_DEVICE = 2;
     RESOURCE_TYPE_ATTACHED_DEVICE = 3;
+    RESOURCE_TYPE_BROWSER_DEVICE = 4;
   }
 }
 
@@ -2261,4 +2263,9 @@ message AttachedDeviceData {
   models.MachineLSE lab_config = 1;
   models.Machine machine = 2;
   models.chromeos.lab.DutState dut_state = 3;
+}
+
+// Next Tag: 2
+message BrowserDeviceData {
+  models.MachineLSE host = 1;
 }

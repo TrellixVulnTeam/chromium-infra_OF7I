@@ -736,7 +736,16 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 	}
 
 	// Get data based on device type
-	if lse.GetChromeosMachineLse() != nil {
+	if lse.GetChromeBrowserMachineLse() != nil {
+		return &ufsAPI.GetDeviceDataResponse{
+			Resource: &ufsAPI.GetDeviceDataResponse_BrowserDeviceData{
+				BrowserDeviceData: &ufsAPI.BrowserDeviceData{
+					Host: lse,
+				},
+			},
+			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_BROWSER_DEVICE,
+		}, nil
+	} else if lse.GetChromeosMachineLse() != nil {
 		// TODO (justinsuen): refactor GetChromeOSDeviceData to take LSE as input.
 		// Will remove machineId assignment after refactor.
 		var machineId string

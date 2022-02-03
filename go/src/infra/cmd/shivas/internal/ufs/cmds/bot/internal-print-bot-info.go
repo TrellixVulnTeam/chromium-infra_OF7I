@@ -69,14 +69,18 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 		return cmdlib.NewUsageError(c.Flags, "exactly one DUT hostname must be provided")
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	e := c.envFlags.Env()
+	ns, err := c.envFlags.Namespace()
+	if err != nil {
+		// Set namespace to OS namespace for whatever errors.
+		ns = ufsUtil.OSNamespace
+	}
 	if c.commonFlags.Verbose() {
-		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+		fmt.Printf("Using UnifiedFleet service %s (namespace %s)\n", e.UnifiedFleetService, ns)
 	}
 	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
@@ -86,15 +90,26 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 	stderr := a.GetErr()
 	r := func(e error) { fmt.Fprintf(stderr, "sanitize dimensions: %s\n", err) }
 	var bi *botInfo
-	if bi, err = botInfoForDUT(ctx, ufsClient, args[0], c.byHostname, r); err != nil && status.Code(err) == codes.NotFound {
-		// If we cannot found DUT, then assume it's a scheduling unit.
-		var suErr error
-		if bi, suErr = botInfoForSU(ctx, ufsClient, args[0], r); suErr != nil {
-			return errors.Annotate(suErr, "Failed to get DUT or Scheduling unit %s, %s", args[0], err).Err()
+
+	if ns == ufsUtil.BrowserNamespace {
+		ctx = utils.SetupContext(ctx, ufsUtil.BrowserNamespace)
+		if bi, err = handleBrowserBot(ctx, ufsClient, args[0], r); err != nil {
+			return err
 		}
-	} else if err != nil {
-		return err
+	} else {
+		ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
+		if bi, err = botInfoForDUT(ctx, ufsClient, args[0], c.byHostname, r); err != nil && status.Code(err) == codes.NotFound {
+			// If we cannot found DUT, then assume it's a scheduling unit.
+			var suErr error
+			if bi, suErr = botInfoForSU(ctx, ufsClient, args[0], r); suErr != nil {
+				return errors.Annotate(suErr, "Failed to get DUT or Scheduling unit %s, %s", args[0], err).Err()
+			}
+		} else if err != nil {
+			return err
+		}
 	}
+
+	// Post-processing
 	enc, err := json.Marshal(bi)
 	if err != nil {
 		return err
@@ -109,6 +124,24 @@ type botInfo struct {
 }
 
 type botState map[string][]string
+
+func handleBrowserBot(ctx context.Context, c ufsAPI.FleetClient, id string, r swarming.ReportFunc) (*botInfo, error) {
+	// id is the hostname by default for browser bots
+	res, err := c.GetDeviceData(ctx, &ufsAPI.GetDeviceDataRequest{
+		Hostname: id,
+	})
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, errors.New(fmt.Sprintf("no browser device data for host %q", id))
+		}
+		return nil, err
+	}
+	return &botInfo{
+		Dimensions: map[string][]string{
+			"dut_state": {dutstate.ConvertFromUFSState(res.GetBrowserDeviceData().GetHost().GetResourceState()).String()},
+		},
+	}, nil
+}
 
 func botInfoForSU(ctx context.Context, c ufsAPI.FleetClient, id string, r swarming.ReportFunc) (*botInfo, error) {
 	req := &ufsAPI.GetSchedulingUnitRequest{
