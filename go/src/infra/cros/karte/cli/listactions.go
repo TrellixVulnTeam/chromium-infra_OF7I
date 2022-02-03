@@ -60,7 +60,7 @@ func (c *listActionsRun) innerRun(ctx context.Context, a subcommands.Application
 	if err != nil {
 		return errors.Annotate(err, "inner run").Err()
 	}
-	kClient, err := client.NewClient(ctx, client.DevConfig(authOptions))
+	kClient, err := client.NewClient(ctx, client.ProdConfig(authOptions))
 	if err != nil {
 		return errors.Annotate(err, "inner run").Err()
 	}
