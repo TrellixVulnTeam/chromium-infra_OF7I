@@ -106,10 +106,15 @@ def run_script(api, *args, **kwargs):
       cmd.extend(tup)
     cmd += ['--', interpreter, args[0]] + list(args[1:])
     with api.context(env={'PYTHONPATH': repo_root}):
-      return api.python(step_name,
-          '-m', cmd, stdout=stdout, step_test_data=step_test_data,
-          venv=repo_root.join(
-            'infra', 'tools', 'dockerbuild', 'standalone.vpython'))
+      return api.step(
+          step_name,
+          [
+              'vpython3', '-vpython-spec',
+              repo_root.join('infra', 'tools', 'dockerbuild',
+                             'standalone.vpython3'), '-u', '-m'
+          ] + cmd,
+          stdout=stdout,
+          step_test_data=step_test_data)
 
   @contextmanager
   def no_sdk():

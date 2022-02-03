@@ -726,9 +726,9 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-vpython-spec",
-      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython",
+      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython3",
       "-u",
       "-m",
       "infra.tools.dockerbuild",
@@ -1531,9 +1531,9 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-vpython-spec",
-      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython",
+      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython3",
       "-u",
       "-m",
       "infra.tools.dockerbuild",
@@ -2504,9 +2504,9 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-vpython-spec",
-      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython",
+      "RECIPE_REPO[infra]/infra/tools/dockerbuild/standalone.vpython3",
       "-u",
       "-m",
       "infra.tools.dockerbuild",
