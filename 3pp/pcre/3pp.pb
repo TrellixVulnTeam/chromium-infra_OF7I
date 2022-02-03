@@ -6,6 +6,8 @@ create {
       version: "8.41"
     }
     unpack_archive: true
+    patch_dir: "patches"
+    patch_version: "chromium.1"
     cpe_base_address: "cpe:/a:pcre:pcre"
   }
   build {}

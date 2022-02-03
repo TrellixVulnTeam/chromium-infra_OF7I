@@ -7,6 +7,7 @@ create {
       tag_pattern: "R_%s"
       version_join: "_"
     }
+    patch_version: "chromium.1"
     cpe_base_address: "cpe:/a:libexpat_project:libexpat"
   }
   build {

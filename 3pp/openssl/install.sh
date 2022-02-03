@@ -54,3 +54,6 @@ perl Configure -lpthread --prefix="$PREFIX" --cross-compile-prefix= \
 
 make -j "$(nproc)"
 make install_sw
+# pkg-config will have the original build prefix, which is not useful
+# for relocatable packages. Remove the configs completely.
+rm -rf $PREFIX/lib/pkgconfig
