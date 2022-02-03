@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
@@ -49,6 +50,14 @@ func (k *karteFrontend) CreateAction(ctx context.Context, req *kartepb.CreateAct
 	if req.GetAction().GetCreateTime() == nil {
 		logging.Infof(ctx, "(msgid: 68361e64-46fb-4881-b4a3-d6b40e8ffd90) Applying default timestamp to request")
 		req.GetAction().CreateTime = scalars.ConvertTimeToTimestampPtr(clock.Now(ctx))
+	}
+
+	// Add a seal time. Seal times prohibit modification after the seal time has passed.
+	if req.GetAction().GetSealTime() == nil {
+		// TODO(gregorynisbet): Move seal time to a configuration setting.
+		// If we don't have a seal time, create a default one in the future.
+		req.GetAction().SealTime = scalars.ConvertTimeToTimestampPtr(
+			scalars.ConvertTimestampPtrToTime(req.GetAction().GetCreateTime()).Add(time.Duration(12) * time.Hour))
 	}
 
 	// Here we use the action create time given to us in the request proto instead of time.Now() so that

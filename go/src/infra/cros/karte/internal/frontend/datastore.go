@@ -10,6 +10,7 @@ import (
 	"math"
 	"time"
 
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -402,6 +403,7 @@ func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []s
 		// TODO(gregorynisbet): Remove call to status.Errorf. See b/200578943 for details.
 		return nil, status.Errorf(codes.InvalidArgument, "entity cannot be nil")
 	}
+
 	// Read the current entity as fullEntity, modify the fields in it that are indicated by fieldMask, and
 	// then insert it back into datastore.
 	fullEntity, err := GetActionEntityByID(ctx, entity.ID)
@@ -409,6 +411,13 @@ func UpdateActionEntity(ctx context.Context, entity *ActionEntity, fieldMask []s
 		logging.Errorf(ctx, "update action entity: datastore error: %s", err)
 		return nil, errors.Annotate(err, "update action entity: datastore err").Err()
 	}
+
+	sealTime := fullEntity.SealTime
+
+	if !sealTime.IsZero() && clock.Now(ctx).After(sealTime) {
+		return nil, errors.Reason("update action entity: entry sealed at %v", sealTime).Err()
+	}
+
 	setActionEntityFields(fieldMask, entity /*src*/, fullEntity /*dst*/)
 	// If we're supposed to increment the tally during this update, then increment the tally.
 	if increment {

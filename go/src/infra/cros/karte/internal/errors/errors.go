@@ -26,6 +26,11 @@ func Annotate(err error, reason string, args ...interface{}) Annotator {
 	return errors.Annotate(err, reason, args...)
 }
 
+// Reason produces a new error.
+func Reason(reason string, args ...interface{}) Annotator {
+	return errors.Reason(reason, args...)
+}
+
 // Errorf creates a new error given a format string.
 func Errorf(format string, a ...interface{}) error {
 	return fmt.Errorf(format, a...)

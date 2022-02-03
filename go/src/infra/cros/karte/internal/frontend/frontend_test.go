@@ -47,6 +47,7 @@ func TestCreateAction(t *testing.T) {
 	expected := &kartepb.Action{
 		Name:       "entity001000000000",
 		Kind:       "ssh-attempt",
+		SealTime:   scalars.ConvertTimeToTimestampPtr(time.Unix(1+12*60*60, 2)),
 		CreateTime: scalars.ConvertTimeToTimestampPtr(time.Unix(1, 2)),
 	}
 	if err != nil {
@@ -147,6 +148,7 @@ func TestCreateActionWithSwarmingAndBuildbucketID(t *testing.T) {
 			SwarmingTaskId: "a",
 			BuildbucketId:  "b",
 			CreateTime:     scalars.ConvertTimeToTimestampPtr(time.Unix(3, 0)),
+			SealTime:       scalars.ConvertTimeToTimestampPtr(time.Unix(3+12*60*60, 0)),
 		},
 	}
 

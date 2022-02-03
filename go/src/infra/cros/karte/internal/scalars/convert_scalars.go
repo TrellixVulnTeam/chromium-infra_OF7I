@@ -5,6 +5,7 @@
 package scalars
 
 import (
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -29,6 +30,13 @@ func ConvertTimeToTimestampPtr(t time.Time) *timestamppb.Timestamp {
 		return nil
 	}
 	return timestamppb.New(t)
+}
+
+func ConvertTimestampPtrToString(timestamp *timestamppb.Timestamp) string {
+	if timestamp == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d:%d", timestamp.GetSeconds(), timestamp.GetNanos())
 }
 
 // ConvertActionStatusToInt32 takes an action status and converts it to an int32.
