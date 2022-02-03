@@ -167,7 +167,7 @@ const crosRepairPlanBody = `
 		],
 		"exec_name":"cros_is_tool_present",
 		"exec_extra_args":[
-			"tool:dfu-programmer"
+			"tools:dfu-programmer"
 		]
 	},
 	"lufa_keyboard_found":{

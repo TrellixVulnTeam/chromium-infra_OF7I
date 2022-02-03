@@ -270,29 +270,26 @@ func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	return nil
 }
 
-const (
-	toolPresentCmd = "hash %s"
-)
-
 // isToolPresentExec checks the presence of the tool on the DUT.
 //
 // For example, the tool "dfu-programmer" is checked by running the command:
 // "hash dfu-programmer" on the DUT
-// The actionArgs should be in the format of ["tool:..."]
+// The actionArgs should be in the format of ["tools:dfu-programmer,python,..."]
 func isToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	toolMap := execs.ParseActionArgs(ctx, actionArgs, ":")
-	toolName, existed := toolMap["tool"]
-	if !existed {
-		return errors.Reason("tool present: missing tool information in the argument").Err()
-	}
-	toolName = strings.TrimSpace(toolName)
-	if toolName == "" {
-		return errors.Reason("tool present: tool name given in the argument is empty").Err()
+	toolNames := toolMap.AsStringSlice(ctx, "tools")
+	if len(toolNames) == 0 {
+		return errors.Reason("tool present: tools argument is empty or not provided").Err()
 	}
 	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, time.Minute, fmt.Sprintf(toolPresentCmd, toolName))
-	if err != nil {
-		return errors.Annotate(err, "tool present").Err()
+	for _, toolName := range toolNames {
+		toolName = strings.TrimSpace(toolName)
+		if toolName == "" {
+			return errors.Reason("tool present: tool name given in the tools argument is empty").Err()
+		}
+		if _, err := r(ctx, time.Minute, "hash", toolName); err != nil {
+			return errors.Annotate(err, "tool present").Err()
+		}
 	}
 	return nil
 }
