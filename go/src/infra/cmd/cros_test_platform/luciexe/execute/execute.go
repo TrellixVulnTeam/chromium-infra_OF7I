@@ -115,7 +115,8 @@ func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
 }
 
 func inferDeadline(r *steps.ExecuteRequests) (time.Time, error) {
-	c := r.GetBuild().GetCreateTime().AsTime()
+	// Deadline = test_runner CreateTime + MaxDuration
+	c := time.Now().UTC()
 	if c.IsZero() {
 		return c, errors.Reason("infer deadline: build creation time not known").Err()
 	}
