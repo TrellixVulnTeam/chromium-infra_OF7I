@@ -6,8 +6,11 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
@@ -15,6 +18,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/lucictx"
+
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 )
 
 // readContainersMetadata reads the jsonproto at path containers metadata file.
@@ -56,4 +61,23 @@ func useSystemAuth(ctx context.Context, authFlags *authcli.Flags) (context.Conte
 	}
 	log.Printf("System account not found, err %s.\nFalling back to user credentials for auth.\n", err)
 	return ctx, nil
+}
+
+// dockerAuth will run the gcloud auth cmd and return the token given.
+func dockerAuth(ctx context.Context, keyfile string) (string, error) {
+	cmd := exec.Command("sudo", "--non-interactive", "gcloud", "auth", "activate-service-account",
+		fmt.Sprintf("--key-file=%v", keyfile))
+	out, _, err := common.RunWithTimeout(ctx, cmd, time.Minute)
+	if err != nil {
+		log.Printf("Failed running gcloud auth: %s", err)
+		return "", errors.Annotate(err, "gcloud auth").Err()
+	}
+	log.Printf("gcloud auth done. Result: %s", out)
+
+	cmd = exec.Command("sudo", "--non-interactive", "gcloud", "auth", "print-access-token")
+	out, _, err = common.RunWithTimeout(ctx, cmd, time.Minute)
+	if err != nil {
+		return "", errors.Annotate(err, "failed running 'gcloud auth print-access-token'").Err()
+	}
+	return out, nil
 }

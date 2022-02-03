@@ -22,7 +22,7 @@ import (
 )
 
 // Run runs tests.
-func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContainer *build_api.ContainerImageInfo) (res *api.CrosToolRunnerTestResponse, err error) {
+func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContainer *build_api.ContainerImageInfo, token string) (res *api.CrosToolRunnerTestResponse, err error) {
 	// Use host network for dev environment which DUT address is in the form localhost:<port>
 	const networkName = "host"
 
@@ -70,7 +70,7 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 	if err := writeTestInput(inputFileName, testReq); err != nil {
 		return nil, errors.Annotate(err, "run test: failed to create input file %s", inputFileName).Err()
 	}
-	if err = services.RunTestCLI(ctx, crosTestContainer, networkName, inputFileName, crosTestDir, resultDir); err != nil {
+	if err = services.RunTestCLI(ctx, crosTestContainer, networkName, inputFileName, crosTestDir, resultDir, token); err != nil {
 		return nil, errors.Annotate(err, "run test: failed to run test CLI").Err()
 	}
 

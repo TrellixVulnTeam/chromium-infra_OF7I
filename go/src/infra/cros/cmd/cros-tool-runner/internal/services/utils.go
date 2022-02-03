@@ -24,6 +24,9 @@ func startService(ctx context.Context, d *docker.Docker) (*docker.Docker, error)
 	if err := d.Remove(ctx); err != nil {
 		log.Printf("Fail to clean up container %q. Error: %s", d.Name, err)
 	}
+	if err := d.Auth(ctx); err != nil {
+		return d, errors.Annotate(err, "start service").Err()
+	}
 	if err := d.PullImage(ctx); err != nil {
 		return d, errors.Annotate(err, "start service").Err()
 	}
@@ -64,6 +67,18 @@ func createImagePath(i *build_api.ContainerImageInfo) (string, error) {
 	path := fmt.Sprintf("%s/%s/%s:%s", r.GetHostname(), r.GetProject(), i.GetName(), tag)
 	log.Printf("Container image: %q", path)
 	return path, nil
+}
+
+// createRegistryName creates the Registry name used for authing to docker.
+func createRegistryName(i *build_api.ContainerImageInfo) (string, error) {
+	if i.GetRepository() == nil {
+		return "", errors.Reason("create image path: no repository info").Err()
+	}
+	r := i.GetRepository()
+	if r.GetHostname() == "" || r.GetProject() == "" {
+		return "", errors.Reason("create image path: repository info is missing").Err()
+	}
+	return fmt.Sprintf("%s/%s", r.GetHostname(), r.GetProject()), nil
 }
 
 // createProvisionInput created input file for cros-provision.

@@ -29,7 +29,7 @@ type Result struct {
 }
 
 // Run runs provisioning software dependencies per DUT.
-func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device, crosDutContainer, crosProvisionContainer *build_api.ContainerImageInfo) *Result {
+func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device, crosDutContainer, crosProvisionContainer *build_api.ContainerImageInfo, token string) *Result {
 	res := &Result{
 		Out: &api.CrosProvisionResponse{
 			Id: device.GetDut().GetId(),
@@ -50,7 +50,10 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 	// Create separate network to run docker independent.
 	log.Printf("--> Creating the network for %q ...", dutName)
 	networkName := dutName
-	defer docker.RemoveNetwork(ctx, networkName)
+	defer func() {
+		docker.RemoveNetwork(ctx, networkName)
+	}()
+
 	if err := docker.CreateNetwork(ctx, networkName); err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
@@ -58,8 +61,10 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 	log.Printf("--> Network was created for %q ...", dutName)
 
 	log.Printf("--> Starting cros-dut service for %q ...", dutName)
-	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName)
-	defer dutService.Remove(ctx)
+	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName, token)
+	defer func() {
+		dutService.Remove(ctx)
+	}()
 	if err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
@@ -71,7 +76,7 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 		res.Err = errors.Annotate(err, "run provision: create temp dir").Err()
 		return res
 	}
-	defer os.RemoveAll(dir)
+	defer func() { os.RemoveAll(dir) }()
 
 	log.Printf("--> Starting cros-provision service for %q ...", dutName)
 	provisionReq := &api.CrosProvisionRequest{
@@ -82,7 +87,7 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 			Port:    int32(dutService.ServicePort),
 		},
 	}
-	provisionService, err := services.RunProvisionCLI(ctx, crosProvisionContainer, networkName, provisionReq, dir)
+	provisionService, err := services.RunProvisionCLI(ctx, crosProvisionContainer, networkName, provisionReq, dir, token)
 	defer func() {
 		if provisionService != nil {
 			provisionService.Remove(ctx)

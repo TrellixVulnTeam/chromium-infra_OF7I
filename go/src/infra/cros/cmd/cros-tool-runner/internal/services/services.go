@@ -35,14 +35,20 @@ const (
 )
 
 // CreateDutService pulls and starts cros-dut service.
-func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string) (*docker.Docker, error) {
+func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string, t string) (*docker.Docker, error) {
 	p, err := createImagePath(image)
+	if err != nil {
+		log.Printf("Create cros-dut service: %s", err)
+	}
+	r, err := createRegistryName(image)
 	if err != nil {
 		log.Printf("Create cros-dut service: %s", err)
 	}
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosDutContainerNameTemplate, dutName),
 		RequestedImageName: p,
+		Registry:           r,
+		Token:              t,
 		// Fallback version used in case when main image fail to pull.
 		FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
 		ExecCommand: []string{
@@ -58,7 +64,7 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 }
 
 // RunProvisionCLI pulls and starts cros-provision as CLI.
-func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName string, req *api.CrosProvisionRequest, dir string) (*docker.Docker, error) {
+func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName string, req *api.CrosProvisionRequest, dir string, t string) (*docker.Docker, error) {
 	// Create directory to provide input files and collect output files.
 	// The directory will also has logs of the provisioning.
 	if err := createProvisionInput(req, dir); err != nil {
@@ -68,12 +74,18 @@ func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, n
 	dockerResultDirName := "/tmp/provisionservice"
 	p, err := createImagePath(image)
 	if err != nil {
-		return nil, errors.Reason("run provision").Err()
+		return nil, errors.Reason("failed to create image for run provision").Err()
+	}
+	r, err := createRegistryName(image)
+	if err != nil {
+		return nil, errors.Reason("failed to create registry path run provision").Err()
 	}
 	dutName := req.Dut.Id.GetValue()
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosProvisionContainerNameTemplate, dutName),
 		RequestedImageName: p,
+		Registry:           r,
+		Token:              t,
 		// Fallback version used in case when main image fail to pull.
 		FallbackImageName: "gcr.io/chromeos-bot/cros-provision:fallback",
 		ExecCommand: []string{
@@ -92,14 +104,20 @@ func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, n
 }
 
 // RunTestCLI pulls and runs cros-test as CLI.
-func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName, inputFileName, crosTestDir, resultDir string) error {
+func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName, inputFileName, crosTestDir, resultDir string, t string) error {
 	p, err := createImagePath(image)
 	if err != nil {
 		return errors.Annotate(err, "failed to create image for cros-test").Err()
 	}
+	r, err := createRegistryName(image)
+	if err != nil {
+		return errors.Annotate(err, "failed to create registry path for cros-test").Err()
+	}
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosTestContainerNameTemplate, os.Getpid(), time.Now().Unix()),
 		RequestedImageName: p,
+		Registry:           r,
+		Token:              t,
 		// Fallback version used in case when main image fail to pull.
 		FallbackImageName: "gcr.io/chromeos-bot/cros-test:fallback",
 		ExecCommand: []string{
@@ -119,10 +137,14 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 }
 
 // RunTestFinderCLI pulls and runs cros-test-finder as CLI.
-func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName, crosTestFinderDir string) error {
+func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, networkName, crosTestFinderDir string, t string) error {
 	p, err := createImagePath(image)
 	if err != nil {
-		return errors.Annotate(err, "failed to create image for cros-test-finder").Err()
+		return errors.Annotate(err, "failed to create image for cros-test").Err()
+	}
+	r, err := createRegistryName(image)
+	if err != nil {
+		return errors.Annotate(err, "failed to create reigstry path for cros-test-finder").Err()
 	}
 	// The files or directories used by cros-test-finder container is set up this way.
 	// File or Directory inside the container   Source
@@ -135,6 +157,8 @@ func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, 
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosTestContainerNameTemplate, os.Getpid(), time.Now().Unix()),
 		RequestedImageName: p,
+		Registry:           r,
+		Token:              t,
 		// Fallback version used in case when main image fail to pull.
 		FallbackImageName: "gcr.io/chromeos-bot/cros-test-finder:fallback",
 		ExecCommand: []string{

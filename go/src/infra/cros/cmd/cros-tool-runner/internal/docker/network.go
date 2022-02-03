@@ -11,12 +11,14 @@ import (
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 )
 
 // CreateNetwork created network for docker.
 func CreateNetwork(ctx context.Context, name string) error {
 	cmd := exec.Command("docker", "network", "create", name)
-	out, e, err := runWithTimeout(ctx, cmd, time.Minute)
+	out, e, err := common.RunWithTimeout(ctx, cmd, time.Minute)
 	if err != nil {
 		log.Printf("Create network %q: %s", name, e)
 		return errors.Annotate(err, "create network %q", name).Err()
@@ -28,7 +30,7 @@ func CreateNetwork(ctx context.Context, name string) error {
 // RemoveNetwork removes network from docker.
 func RemoveNetwork(ctx context.Context, name string) error {
 	cmd := exec.Command("docker", "network", "rm", name)
-	out, e, err := runWithTimeout(ctx, cmd, time.Minute)
+	out, e, err := common.RunWithTimeout(ctx, cmd, time.Minute)
 	if err != nil {
 		log.Printf("Remove network %q: %s", name, e)
 		return errors.Annotate(err, "remove network %q", name).Err()

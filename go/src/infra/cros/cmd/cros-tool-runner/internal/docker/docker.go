@@ -7,7 +7,6 @@
 package docker
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -17,6 +16,8 @@ import (
 
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 )
 
 const (
@@ -28,6 +29,10 @@ const (
 type Docker struct {
 	// Requested docker image, if not exist then use FallbackImageName.
 	RequestedImageName string
+	// Registry to auth for docker interactions.
+	Registry string
+	// token to token
+	Token string
 	// Fall back docker image name. Used if RequestedImageName is empty or image not found.
 	FallbackImageName string
 	// ServicePort tells which port need to bing bind from docker to the host.
@@ -74,12 +79,42 @@ func (d *Docker) PullImage(ctx context.Context) (err error) {
 // pullImage pulls image by docker-cli.
 // docker-cli has to have permission to download images from required repos.
 func pullImage(ctx context.Context, image string) error {
-	cmd := exec.Command("docker", "pull", image)
-	if _, _, err := runWithTimeout(ctx, cmd, 2*time.Minute); err != nil {
-		log.Printf("Pull image %q: failed with error %s", image, err)
+	cmd := exec.Command("sudo", "docker", "pull", image)
+	if stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 2*time.Minute); err != nil {
+		log.Printf("Pull image %q: failed with error %s\nstdout: %s \nstderr %s\n", image, err, stdout, stderr)
+
 		return errors.Annotate(err, "pull image").Err()
 	}
 	log.Printf("Pull image %q: successful pulled.", image)
+	return nil
+}
+
+// Auth with docker registry so that pulling and stuff works.
+func (d *Docker) Auth(ctx context.Context) (err error) {
+	if d.Token == "" {
+		log.Printf("No token was provided so skipping docker auth.")
+		return nil
+	}
+	if d.Registry == "" {
+		return errors.Reason("docker auth: failed").Err()
+	}
+
+	if err = auth(ctx, d.Registry, d.Token); err != nil {
+		return errors.Annotate(err, "docker auth").Err()
+	}
+	return nil
+}
+
+// auth authorizes the current process to the given registry, using keys on the drone.
+// This will give permissions for pullImage to work :)
+func auth(ctx context.Context, registry string, token string) error {
+	cmd := exec.Command("sudo", "docker", "login", "-u", "oauth2accesstoken",
+		"-p", token, registry)
+	stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 1*time.Minute)
+	if err != nil {
+		return errors.Annotate(err, "failed running 'docker login'").Err()
+	}
+	log.Printf("Login completed\nstdout: %s \n stderr %s\n", stdout, stderr)
 	return nil
 }
 
@@ -89,8 +124,8 @@ func (d *Docker) Remove(ctx context.Context) error {
 		return nil
 	}
 	// Use force to avoid any un-related issues.
-	cmd := exec.Command("docker", "rm", "--force", d.Name)
-	out, _, err := runWithTimeout(ctx, cmd, time.Minute)
+	cmd := exec.Command("sudo", "docker", "rm", "--force", d.Name)
+	out, _, err := common.RunWithTimeout(ctx, cmd, time.Minute)
 	if err != nil {
 		log.Printf("Remote container %q: failed with %s", d.Name, err)
 		return errors.Annotate(err, "remove container %q", d.Name).Err()
@@ -132,7 +167,8 @@ func (d *Docker) runDockerImage(ctx context.Context) (string, error) {
 	if len(d.ExecCommand) > 0 {
 		args = append(args, d.ExecCommand...)
 	}
-	so, se, err := runWithTimeout(ctx, exec.Command("docker", args...), time.Hour)
+	cmd := exec.Command("sudo", append([]string{"docker"}, args...)...)
+	so, se, err := common.RunWithTimeout(ctx, cmd, time.Hour)
 	log.Printf("Run docker image %q: output: %s", d.Name, so)
 	if err != nil {
 		return so, errors.Annotate(err, "run docker image %q: %s", d.Name, se).Err()
@@ -168,30 +204,4 @@ func CreateImageNameFromInputInfo(di *api.DutInput_DockerImage, defaultRepoPath,
 		panic("Default repository path or tag for docker image was not passed.")
 	}
 	return CreateImageName(repoPath, tag)
-}
-
-// runWithTimeout runs command with timeout limit.
-func runWithTimeout(ctx context.Context, cmd *exec.Cmd, timeout time.Duration) (stdout string, stderr string, err error) {
-	newCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	cw := make(chan error, 1)
-	var se, so bytes.Buffer
-	cmd.Stderr = &se
-	cmd.Stdout = &so
-	defer func() {
-		stdout = so.String()
-		stderr = se.String()
-	}()
-	go func() {
-		log.Printf("Run cmd: %s", cmd)
-		cw <- cmd.Run()
-	}()
-	select {
-	case e := <-cw:
-		err = errors.Annotate(e, "run with timeout %s", timeout).Err()
-		return
-	case <-newCtx.Done():
-		err = errors.Reason("run with timeout %s: excited timeout", timeout).Err()
-		return
-	}
 }

@@ -27,6 +27,20 @@ import (
 	"infra/cros/cmd/cros-tool-runner/internal/provision"
 )
 
+type runCmd struct {
+	subcommands.CommandRunBase
+	authFlags authcli.Flags
+
+	inputPath     string
+	outputPath    string
+	imagesPath    string
+	dockerKeyFile string
+
+	in                 *api.CrosToolRunnerProvisionRequest
+	crosDutImage       *build_api.ContainerImageInfo
+	crosProvisionImage *build_api.ContainerImageInfo
+}
+
 // Provision executes the provisioning for requested devices.
 func Provision(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
@@ -46,28 +60,24 @@ cros-tool-runner provision -images docker-images.json -input provision_request.j
 			c.Flags.StringVar(&c.inputPath, "input", "", "The input file contains a jsonproto representation of provision requests (CrosToolRunnerProvisionRequest)")
 			c.Flags.StringVar(&c.outputPath, "output", "", "The output file contains a jsonproto representation of provision responses (CrosToolRunnerProvisionResponse)")
 			c.Flags.StringVar(&c.imagesPath, "images", "", "The input file contains a jsonproto representation of containers metadata (ContainerMetadata)")
+			c.Flags.StringVar(&c.dockerKeyFile, "docker_key_file", "", "The input file contains the docker auth key")
 			return c
 		},
 	}
 }
 
-type runCmd struct {
-	subcommands.CommandRunBase
-	authFlags authcli.Flags
-
-	inputPath  string
-	outputPath string
-	imagesPath string
-
-	in                 *api.CrosToolRunnerProvisionRequest
-	crosDutImage       *build_api.ContainerImageInfo
-	crosProvisionImage *build_api.ContainerImageInfo
-}
-
 // Run executes the tool.
 func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
-	out, err := c.innerRun(ctx, a, args, env)
+	token := ""
+	var err error
+	if c.dockerKeyFile != "" {
+		if token, err = dockerAuth(ctx, c.dockerKeyFile); err != nil {
+			log.Printf("Failed in docker auth: %s", err)
+			return 1
+		}
+	}
+	out, err := c.innerRun(ctx, a, args, env, token)
 	// Unexpected error will counted as incorrect request data.
 	// all expected cases has to generate responses.
 	if err != nil && len(out.GetResponses()) == 0 {
@@ -93,7 +103,7 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 	return 0
 }
 
-func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) (*api.CrosToolRunnerProvisionResponse, error) {
+func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env, token string) (*api.CrosToolRunnerProvisionResponse, error) {
 	out := &api.CrosToolRunnerProvisionResponse{}
 	ctx, err := useSystemAuth(ctx, &c.authFlags)
 	if err != nil {
@@ -121,7 +131,8 @@ func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args [
 			result := provision.Run(ctx,
 				device,
 				findContainer(cm, device.GetContainerMetadataKey(), "cros-dut"),
-				findContainer(cm, device.GetContainerMetadataKey(), "cros-provision"))
+				findContainer(cm, device.GetContainerMetadataKey(), "cros-provision"),
+				token)
 			provisionResults[i] = result.Out
 			return result.Err
 		})
