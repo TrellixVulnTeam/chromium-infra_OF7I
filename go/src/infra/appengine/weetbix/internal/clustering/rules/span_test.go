@@ -190,18 +190,18 @@ func TestSpan(t *testing.T) {
 			})
 		})
 		Convey(`Create`, func() {
-			testCreate := func(bc *FailureAssociationRule, user string) error {
-				_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
+			testCreate := func(bc *FailureAssociationRule, user string) (time.Time, error) {
+				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 					return Create(ctx, bc, user)
 				})
-				return err
+				return commitTime.In(time.UTC), err
 			}
 			r := NewRule(100).Build()
 			r.CreationUser = WeetbixSystem
 			r.LastUpdatedUser = WeetbixSystem
 
 			Convey(`Valid`, func() {
-				testExists := func(expectedRule *FailureAssociationRule) {
+				testExists := func(expectedRule FailureAssociationRule) {
 					txn, cancel := span.ReadOnlyTransaction(ctx)
 					defer cancel()
 					rules, err := ReadActive(txn, testProject)
@@ -210,65 +210,66 @@ func TestSpan(t *testing.T) {
 					So(len(rules), ShouldEqual, 1)
 
 					readRule := rules[0]
-					So(readRule.CreationTime, ShouldNotBeZeroValue)
-					So(readRule.LastUpdated, ShouldNotBeZeroValue)
-					So(readRule.LastUpdated, ShouldEqual, readRule.CreationTime)
-					// CreationTime and LastUpdated are set by implementation.
-					// Ignore their values when comparing to expected rules.
-					readRule.LastUpdated = expectedRule.LastUpdated
-					readRule.CreationTime = expectedRule.CreationTime
-					So(readRule, ShouldResemble, expectedRule)
+					So(*readRule, ShouldResemble, expectedRule)
 				}
 
 				Convey(`With Source Cluster`, func() {
 					So(r.SourceCluster.Algorithm, ShouldNotBeEmpty)
 					So(r.SourceCluster.ID, ShouldNotBeNil)
-					err := testCreate(r, WeetbixSystem)
+					commitTime, err := testCreate(r, WeetbixSystem)
 					So(err, ShouldBeNil)
 
-					testExists(r)
+					expectedRule := *r
+					expectedRule.LastUpdated = commitTime
+					expectedRule.PredicateLastUpdated = commitTime
+					expectedRule.CreationTime = commitTime
+					testExists(expectedRule)
 				})
 				Convey(`Without Source Cluster`, func() {
 					// E.g. in case of a manually created rule.
 					r.SourceCluster = clustering.ClusterID{}
 					r.CreationUser = "user@google.com"
 					r.LastUpdatedUser = "user@google.com"
-					err := testCreate(r, "user@google.com")
+					commitTime, err := testCreate(r, "user@google.com")
 					So(err, ShouldBeNil)
 
-					testExists(r)
+					expectedRule := *r
+					expectedRule.LastUpdated = commitTime
+					expectedRule.PredicateLastUpdated = commitTime
+					expectedRule.CreationTime = commitTime
+					testExists(expectedRule)
 				})
 			})
 			Convey(`With invalid Project`, func() {
 				Convey(`Missing`, func() {
 					r.Project = ""
-					err := testCreate(r, WeetbixSystem)
+					_, err := testCreate(r, WeetbixSystem)
 					So(err, ShouldErrLike, "project must be valid")
 				})
 				Convey(`Invalid`, func() {
 					r.Project = "!"
-					err := testCreate(r, WeetbixSystem)
+					_, err := testCreate(r, WeetbixSystem)
 					So(err, ShouldErrLike, "project must be valid")
 				})
 			})
 			Convey(`With invalid Rule Definition`, func() {
 				r.RuleDefinition = "invalid"
-				err := testCreate(r, WeetbixSystem)
+				_, err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "rule definition is not valid")
 			})
 			Convey(`With invalid Bug ID`, func() {
 				r.BugID.System = ""
-				err := testCreate(r, WeetbixSystem)
+				_, err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "bug ID is not valid")
 			})
 			Convey(`With invalid Source Cluster`, func() {
 				So(r.SourceCluster.ID, ShouldNotBeNil)
 				r.SourceCluster.Algorithm = ""
-				err := testCreate(r, WeetbixSystem)
+				_, err := testCreate(r, WeetbixSystem)
 				So(err, ShouldErrLike, "source cluster ID is not valid")
 			})
 			Convey(`With invalid User`, func() {
-				err := testCreate(r, "")
+				_, err := testCreate(r, "")
 				So(err, ShouldErrLike, "user must be valid")
 			})
 		})
@@ -280,9 +281,9 @@ func TestSpan(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(rule, ShouldResemble, expectedRule)
 			}
-			testUpdate := func(bc *FailureAssociationRule, user string) (time.Time, error) {
+			testUpdate := func(bc *FailureAssociationRule, predicateUpdated bool, user string) (time.Time, error) {
 				commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-					return Update(ctx, bc, user)
+					return Update(ctx, bc, predicateUpdated, user)
 				})
 				return commitTime.In(time.UTC), err
 			}
@@ -291,37 +292,57 @@ func TestSpan(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey(`Valid`, func() {
-				r.RuleDefinition = `test = "UpdateTest"`
-				r.BugID = bugs.BugID{System: "monorail", ID: "chromium/651234"}
-				r.IsActive = false
-				r.SourceCluster = clustering.ClusterID{Algorithm: "testname-v1", ID: "00112233445566778899aabbccddeeff"}
-				commitTime, err := testUpdate(r, "testuser@google.com")
-				So(err, ShouldBeNil)
+				Convey(`Update predicate`, func() {
+					r.RuleDefinition = `test = "UpdateTest"`
+					r.BugID = bugs.BugID{System: "monorail", ID: "chromium/651234"}
+					r.IsActive = false
+					r.SourceCluster = clustering.ClusterID{Algorithm: "testname-v1", ID: "00112233445566778899aabbccddeeff"}
+					updatePredicate := true
+					commitTime, err := testUpdate(r, updatePredicate, "testuser@google.com")
+					So(err, ShouldBeNil)
 
-				expectedRule := *r
-				expectedRule.LastUpdated = commitTime
-				expectedRule.LastUpdatedUser = "testuser@google.com"
-				testExists(&expectedRule)
+					expectedRule := *r
+					expectedRule.PredicateLastUpdated = commitTime
+					expectedRule.LastUpdated = commitTime
+					expectedRule.LastUpdatedUser = "testuser@google.com"
+					testExists(&expectedRule)
+				})
+				Convey(`Do not update predicate`, func() {
+					r.BugID = bugs.BugID{System: "monorail", ID: "chromium/651234"}
+					r.SourceCluster = clustering.ClusterID{Algorithm: "testname-v1", ID: "00112233445566778899aabbccddeeff"}
+					updatePredicate := false
+					commitTime, err := testUpdate(r, updatePredicate, "testuser@google.com")
+					So(err, ShouldBeNil)
+
+					expectedRule := *r
+					expectedRule.LastUpdated = commitTime
+					expectedRule.LastUpdatedUser = "testuser@google.com"
+					testExists(&expectedRule)
+				})
 			})
 			Convey(`Invalid`, func() {
 				Convey(`With invalid User`, func() {
-					_, err := testUpdate(r, "")
+					updatePredicate := false
+					_, err := testUpdate(r, updatePredicate, "")
 					So(err, ShouldErrLike, "user must be valid")
 				})
 				Convey(`With invalid Rule Definition`, func() {
 					r.RuleDefinition = "invalid"
-					_, err := testUpdate(r, WeetbixSystem)
+					updatePredicate := true
+					_, err := testUpdate(r, updatePredicate, WeetbixSystem)
 					So(err, ShouldErrLike, "rule definition is not valid")
 				})
 				Convey(`With invalid Bug ID`, func() {
 					r.BugID.System = ""
-					_, err := testUpdate(r, WeetbixSystem)
+					updatePredicate := false
+					_, err := testUpdate(r, updatePredicate, WeetbixSystem)
 					So(err, ShouldErrLike, "bug ID is not valid")
 				})
 				Convey(`With invalid Source Cluster`, func() {
 					So(r.SourceCluster.ID, ShouldNotBeNil)
 					r.SourceCluster.Algorithm = ""
-					_, err := testUpdate(r, WeetbixSystem)
+					updatePredicate := false
+					_, err := testUpdate(r, updatePredicate, WeetbixSystem)
 					So(err, ShouldErrLike, "source cluster ID is not valid")
 				})
 			})

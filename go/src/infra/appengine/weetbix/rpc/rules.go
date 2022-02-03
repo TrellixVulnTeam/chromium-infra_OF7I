@@ -163,6 +163,7 @@ func (*Rules) Create(ctx context.Context, req *pb.CreateRuleRequest) (*pb.Rule, 
 	r.CreationUser = user
 	r.LastUpdated = commitTime.In(time.UTC)
 	r.LastUpdatedUser = user
+	r.PredicateLastUpdated = commitTime.In(time.UTC)
 
 	return createRulePB(r, cfg.Config), nil
 }
@@ -181,6 +182,7 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 
 	user := auth.CurrentUser(ctx).Email
 
+	var predicateUpdated bool
 	var updatedRule *rules.FailureAssociationRule
 	f := func(ctx context.Context) error {
 		rule, err := rules.Read(ctx, project, ruleID)
@@ -199,11 +201,13 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 			err := errors.New("etag mismatch")
 			return appstatus.Attach(err, status.New(codes.Aborted, "the rule was modified since it was last read; the update was not applied."))
 		}
+		updatePredicate := false
 		for _, path := range req.UpdateMask.Paths {
 			// Only limited fields may be modified by the client.
 			switch path {
 			case "rule_definition":
 				rule.RuleDefinition = req.Rule.RuleDefinition
+				updatePredicate = true
 			case "bug":
 				bugID := bugs.BugID{
 					System: req.Rule.Bug.GetSystem(),
@@ -233,15 +237,17 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 				rule.BugID = bugID
 			case "is_active":
 				rule.IsActive = req.Rule.IsActive
+				updatePredicate = true
 			default:
 				return validationError(fmt.Errorf("unsupported field mask: %s", path))
 			}
 		}
 
-		if err := rules.Update(ctx, rule, user); err != nil {
+		if err := rules.Update(ctx, rule, updatePredicate, user); err != nil {
 			return validationError(err)
 		}
 		updatedRule = rule
+		predicateUpdated = updatePredicate
 		return nil
 	}
 	commitTime, err := span.ReadWriteTransaction(ctx, f)
@@ -250,6 +256,9 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 	}
 	updatedRule.LastUpdated = commitTime.In(time.UTC)
 	updatedRule.LastUpdatedUser = user
+	if predicateUpdated {
+		updatedRule.PredicateLastUpdated = commitTime.In(time.UTC)
+	}
 
 	return createRulePB(updatedRule, cfg.Config), nil
 }
@@ -288,11 +297,12 @@ func createRulePB(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) 
 			Algorithm: r.SourceCluster.Algorithm,
 			Id:        r.SourceCluster.ID,
 		},
-		CreateTime:     timestamppb.New(r.CreationTime),
-		CreateUser:     r.CreationUser,
-		LastUpdateTime: timestamppb.New(r.LastUpdated),
-		LastUpdateUser: r.LastUpdatedUser,
-		Etag:           ruleETag(r),
+		CreateTime:              timestamppb.New(r.CreationTime),
+		CreateUser:              r.CreationUser,
+		LastUpdateTime:          timestamppb.New(r.LastUpdated),
+		LastUpdateUser:          r.LastUpdatedUser,
+		PredicateLastUpdateTime: timestamppb.New(r.PredicateLastUpdated),
+		Etag:                    ruleETag(r),
 	}
 }
 

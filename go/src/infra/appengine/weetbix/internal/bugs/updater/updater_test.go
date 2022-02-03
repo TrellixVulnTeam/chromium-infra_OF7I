@@ -171,6 +171,8 @@ func TestRun(t *testing.T) {
 				expected.CreationTime = rule.CreationTime
 				So(rule.LastUpdated, ShouldNotBeZeroValue)
 				expected.LastUpdated = rule.LastUpdated
+				So(rule.PredicateLastUpdated, ShouldNotBeZeroValue)
+				expected.PredicateLastUpdated = rule.PredicateLastUpdated
 
 				So(rule, ShouldResemble, expected)
 				So(len(f.Issues), ShouldEqual, 1)
@@ -303,6 +305,7 @@ func TestRun(t *testing.T) {
 					r.RuleID = ""
 					r.CreationTime = time.Time{}
 					r.LastUpdated = time.Time{}
+					r.PredicateLastUpdated = time.Time{}
 				}
 
 				So(rs, ShouldResemble, []*rules.FailureAssociationRule{

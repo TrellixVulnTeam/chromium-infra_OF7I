@@ -25,22 +25,23 @@ const testProject = "myproject"
 // RuleBuilder provides methods to build a failure asociation rule
 // for testing.
 type RuleBuilder struct {
-	rule *FailureAssociationRule
+	rule FailureAssociationRule
 }
 
 // NewRule starts building a new Rule.
 func NewRule(uniqifier int) *RuleBuilder {
 	ruleIDBytes := sha256.Sum256([]byte(fmt.Sprintf("rule-id%v", uniqifier)))
-	rule := &FailureAssociationRule{
-		Project:         testProject,
-		RuleID:          hex.EncodeToString(ruleIDBytes[0:16]),
-		RuleDefinition:  "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
-		BugID:           bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)},
-		IsActive:        true,
-		CreationTime:    time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
-		CreationUser:    WeetbixSystem,
-		LastUpdated:     time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
-		LastUpdatedUser: "user@google.com",
+	rule := FailureAssociationRule{
+		Project:              testProject,
+		RuleID:               hex.EncodeToString(ruleIDBytes[0:16]),
+		RuleDefinition:       "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
+		BugID:                bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)},
+		IsActive:             true,
+		CreationTime:         time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
+		CreationUser:         WeetbixSystem,
+		LastUpdated:          time.Date(1900, 1, 2, 3, 4, 7, uniqifier, time.UTC),
+		LastUpdatedUser:      "user@google.com",
+		PredicateLastUpdated: time.Date(1900, 1, 2, 3, 4, 6, uniqifier, time.UTC),
 		SourceCluster: clustering.ClusterID{
 			Algorithm: fmt.Sprintf("clusteralg%v", uniqifier),
 			ID:        hex.EncodeToString([]byte(fmt.Sprintf("id%v", uniqifier))),
@@ -99,6 +100,12 @@ func (b *RuleBuilder) WithLastUpdatedUser(user string) *RuleBuilder {
 	return b
 }
 
+// WithPredicateLastUpdated specifies the "predicate last updated" time on the rule.
+func (b *RuleBuilder) WithPredicateLastUpdated(value time.Time) *RuleBuilder {
+	b.rule.PredicateLastUpdated = value
+	return b
+}
+
 // WithRuleDefinition specifies the definition of the rule.
 func (b *RuleBuilder) WithRuleDefinition(definition string) *RuleBuilder {
 	b.rule.RuleDefinition = definition
@@ -113,7 +120,11 @@ func (b *RuleBuilder) WithSourceCluster(value clustering.ClusterID) *RuleBuilder
 }
 
 func (b *RuleBuilder) Build() *FailureAssociationRule {
-	return b.rule
+	// Copy the result, so that calling further methods on the builder does
+	// not change the returned rule.
+	result := new(FailureAssociationRule)
+	*result = b.rule
+	return result
 }
 
 // SetRulesForTesting replaces the set of stored rules to match the given set.
@@ -124,15 +135,16 @@ func SetRulesForTesting(ctx context.Context, rs []*FailureAssociationRule) error
 	_, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		for _, r := range rs {
 			ms := spanutil.InsertMap("FailureAssociationRules", map[string]interface{}{
-				"Project":         r.Project,
-				"RuleId":          r.RuleID,
-				"RuleDefinition":  r.RuleDefinition,
-				"CreationTime":    r.CreationTime,
-				"CreationUser":    r.CreationUser,
-				"LastUpdated":     r.LastUpdated,
-				"LastUpdatedUser": r.LastUpdatedUser,
-				"BugSystem":       r.BugID.System,
-				"BugID":           r.BugID.ID,
+				"Project":              r.Project,
+				"RuleId":               r.RuleID,
+				"RuleDefinition":       r.RuleDefinition,
+				"CreationTime":         r.CreationTime,
+				"CreationUser":         r.CreationUser,
+				"LastUpdated":          r.LastUpdated,
+				"LastUpdatedUser":      r.LastUpdatedUser,
+				"BugSystem":            r.BugID.System,
+				"BugID":                r.BugID.ID,
+				"PredicateLastUpdated": r.PredicateLastUpdated,
 				// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 				"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 				"SourceClusterAlgorithm": r.SourceCluster.Algorithm,

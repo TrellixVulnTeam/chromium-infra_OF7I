@@ -55,6 +55,7 @@ export interface Rule {
     createUser: string;
     lastUpdateTime: string; // RFC 3339 encoded date/time.
     lastUpdateUser: string;
+    predicateLastUpdatedTime: string; // RFC 3339 encoded date/time.
     etag: string;
 }
 

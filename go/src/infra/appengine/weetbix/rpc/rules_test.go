@@ -51,10 +51,10 @@ func TestRules(t *testing.T) {
 
 		srv := &Rules{}
 
-		ruleOne := rules.NewRule(0).
+		ruleOneBuilder := rules.NewRule(0).
 			WithProject(testProject).
-			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/151"}).
-			Build()
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/151"})
+		ruleOne := ruleOneBuilder.Build()
 		ruleTwo := rules.NewRule(1).
 			WithProject("otherproject").
 			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/333"}).
@@ -105,11 +105,12 @@ func TestRules(t *testing.T) {
 						Algorithm: ruleOne.SourceCluster.Algorithm,
 						Id:        ruleOne.SourceCluster.ID,
 					},
-					CreateTime:     timestamppb.New(ruleOne.CreationTime),
-					CreateUser:     ruleOne.CreationUser,
-					LastUpdateTime: timestamppb.New(ruleOne.LastUpdated),
-					LastUpdateUser: ruleOne.LastUpdatedUser,
-					Etag:           ruleETag(ruleOne),
+					CreateTime:              timestamppb.New(ruleOne.CreationTime),
+					CreateUser:              ruleOne.CreationUser,
+					LastUpdateTime:          timestamppb.New(ruleOne.LastUpdated),
+					LastUpdateUser:          ruleOne.LastUpdatedUser,
+					PredicateLastUpdateTime: timestamppb.New(ruleOne.PredicateLastUpdated),
+					Etag:                    ruleETag(ruleOne),
 				})
 			})
 			Convey("Not Exists", func() {
@@ -191,29 +192,59 @@ func TestRules(t *testing.T) {
 			}
 
 			Convey("Success", func() {
-				rule, err := srv.Update(ctx, request)
-				So(err, ShouldBeNil)
+				Convey("Predicate updated", func() {
+					rule, err := srv.Update(ctx, request)
+					So(err, ShouldBeNil)
 
-				storedRule, err := rules.Read(span.Single(ctx), testProject, ruleOne.RuleID)
-				So(err, ShouldBeNil)
+					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleOne.RuleID)
+					So(err, ShouldBeNil)
 
-				So(storedRule.LastUpdated, ShouldNotEqual, ruleOne.LastUpdated)
+					So(storedRule.LastUpdated, ShouldNotEqual, ruleOne.LastUpdated)
 
-				expectedRule := rules.NewRule(0).
-					WithProject(testProject).
-					WithRuleDefinition(`test = "updated"`).
-					WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
-					WithActive(false).
-					// Accept whatever the new last updated time is.
-					WithLastUpdated(storedRule.LastUpdated).
-					WithLastUpdatedUser("someone@example.com").
-					Build()
+					expectedRule := ruleOneBuilder.
+						WithRuleDefinition(`test = "updated"`).
+						WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
+						WithActive(false).
+						// Accept whatever the new last updated time is.
+						WithLastUpdated(storedRule.LastUpdated).
+						WithLastUpdatedUser("someone@example.com").
+						// The predicate last updated time should be the same as
+						// the last updated time.
+						WithPredicateLastUpdated(storedRule.LastUpdated).
+						Build()
 
-				// Verify the rule was correctly updated in the database.
-				So(storedRule, ShouldResemble, expectedRule)
+					// Verify the rule was correctly updated in the database.
+					So(storedRule, ShouldResemble, expectedRule)
 
-				// Verify the returned rule matches what was expected.
-				So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+					// Verify the returned rule matches what was expected.
+					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+				})
+				Convey("Predicate not updated", func() {
+					request.UpdateMask = &fieldmaskpb.FieldMask{
+						Paths: []string{"bug"},
+					}
+
+					rule, err := srv.Update(ctx, request)
+					So(err, ShouldBeNil)
+
+					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleOne.RuleID)
+					So(err, ShouldBeNil)
+
+					So(storedRule.LastUpdated, ShouldNotEqual, ruleOne.LastUpdated)
+
+					expectedRule := ruleOneBuilder.
+						WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
+						// Accept whatever the new last updated time is.
+						WithLastUpdated(storedRule.LastUpdated).
+						WithLastUpdatedUser("someone@example.com").
+						Build()
+
+					// Verify the rule was correctly updated in the database.
+					So(storedRule, ShouldResemble, expectedRule)
+
+					// Verify the returned rule matches what was expected.
+					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+				})
 			})
 			Convey("Concurrent Modification", func() {
 				_, err := srv.Update(ctx, request)
@@ -310,6 +341,9 @@ func TestRules(t *testing.T) {
 					// LastUpdated time should be the same as Creation Time.
 					WithLastUpdated(storedRule.CreationTime).
 					WithLastUpdatedUser("someone@example.com").
+					// PredicateLastUpdated time should be the same as Creation
+					// Time.
+					WithPredicateLastUpdated(storedRule.CreationTime).
 					WithSourceCluster(clustering.ClusterID{
 						Algorithm: testname.AlgorithmName,
 						ID:        strings.Repeat("aa", 16),

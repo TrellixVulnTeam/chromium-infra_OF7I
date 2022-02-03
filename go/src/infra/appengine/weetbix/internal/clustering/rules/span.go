@@ -68,6 +68,18 @@ type FailureAssociationRule struct {
 	LastUpdated time.Time `json:"lastUpdated"`
 	// The user which last updated the rule. Output only.
 	LastUpdatedUser string `json:"lastUpdatedUser"`
+	// The time the rule was last updated in a way that caused the
+	// matched failures to change, i.e. because of a change to RuleDefinition
+	// or IsActive. (By contrast, updating BugID does NOT change
+	// the matched failures, so does NOT update this field.)
+	// When this value changes, it triggers re-clustering.
+	// Compare with RulesVersion on ReclusteringRuns to identify
+	// reclustering state.
+	// Output only.
+	// TODO(crbug.com/1243174): This field was recently added to avoid
+	// changes to the associated bug triggering a re-clustering. It is
+	// not yet the source of truth. Use LastUpdated for now.
+	PredicateLastUpdated time.Time `json:"predicateLastUpdated"`
 	// BugID is the identifier of the bug that the failures are
 	// associated with.
 	BugID bugs.BugID `json:"bugId"`
@@ -188,7 +200,7 @@ func ReadMany(ctx context.Context, project string, ids []string) ([]*FailureAsso
 func readWhere(ctx context.Context, whereClause string, params map[string]interface{}) ([]*FailureAssociationRule, error) {
 	stmt := spanner.NewStatement(`
 		SELECT Project, RuleId, RuleDefinition, BugSystem, BugId,
-		  CreationTime, LastUpdated,
+		  CreationTime, LastUpdated, PredicateLastUpdated,
 		  CreationUser, LastUpdatedUser,
 		  IsActive,
 		  SourceClusterAlgorithm, SourceClusterId
@@ -203,12 +215,13 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 	err := it.Do(func(r *spanner.Row) error {
 		var project, ruleID, ruleDefinition, bugSystem, bugID string
 		var creationTime, lastUpdated time.Time
+		var predicateLastUpdated spanner.NullTime
 		var creationUser, lastUpdatedUser string
 		var isActive spanner.NullBool
 		var sourceClusterAlgorithm, sourceClusterID string
 		err := r.Columns(
 			&project, &ruleID, &ruleDefinition, &bugSystem, &bugID,
-			&creationTime, &lastUpdated,
+			&creationTime, &lastUpdated, &predicateLastUpdated,
 			&creationUser, &lastUpdatedUser,
 			&isActive,
 			&sourceClusterAlgorithm, &sourceClusterID,
@@ -231,6 +244,11 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 				Algorithm: sourceClusterAlgorithm,
 				ID:        sourceClusterID,
 			},
+		}
+		if predicateLastUpdated.Valid {
+			rule.PredicateLastUpdated = predicateLastUpdated.Time
+		} else {
+			rule.PredicateLastUpdated = StartingEpoch
 		}
 		rs = append(rs, rule)
 		return nil
@@ -286,15 +304,16 @@ func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 		return err
 	}
 	ms := spanutil.InsertMap("FailureAssociationRules", map[string]interface{}{
-		"Project":         r.Project,
-		"RuleId":          r.RuleID,
-		"RuleDefinition":  r.RuleDefinition,
-		"CreationTime":    spanner.CommitTimestamp,
-		"CreationUser":    user,
-		"LastUpdated":     spanner.CommitTimestamp,
-		"LastUpdatedUser": user,
-		"BugSystem":       r.BugID.System,
-		"BugId":           r.BugID.ID,
+		"Project":              r.Project,
+		"RuleId":               r.RuleID,
+		"RuleDefinition":       r.RuleDefinition,
+		"PredicateLastUpdated": spanner.CommitTimestamp,
+		"CreationTime":         spanner.CommitTimestamp,
+		"CreationUser":         user,
+		"LastUpdated":          spanner.CommitTimestamp,
+		"LastUpdatedUser":      user,
+		"BugSystem":            r.BugID.System,
+		"BugId":                r.BugID.ID,
 		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
@@ -305,27 +324,32 @@ func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 }
 
 // Update updates an existing failure association rule to have the specified
-// details.
-func Update(ctx context.Context, r *FailureAssociationRule, user string) error {
+// details. Set updatePredicate to true if you changed RuleDefinition
+// or IsActive.
+func Update(ctx context.Context, r *FailureAssociationRule, updatePredicate bool, user string) error {
 	if err := validateRule(r); err != nil {
 		return err
 	}
 	if err := validateUser(user); err != nil {
 		return err
 	}
-	ms := spanutil.UpdateMap("FailureAssociationRules", map[string]interface{}{
-		"Project":         r.Project,
-		"RuleId":          r.RuleID,
-		"RuleDefinition":  r.RuleDefinition,
-		"LastUpdated":     spanner.CommitTimestamp,
-		"LastUpdatedUser": user,
-		"BugSystem":       r.BugID.System,
-		"BugId":           r.BugID.ID,
-		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
-		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
+	update := map[string]interface{}{
+		"Project":                r.Project,
+		"RuleId":                 r.RuleID,
+		"LastUpdated":            spanner.CommitTimestamp,
+		"LastUpdatedUser":        user,
+		"BugSystem":              r.BugID.System,
+		"BugId":                  r.BugID.ID,
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
 		"SourceClusterId":        r.SourceCluster.ID,
-	})
+	}
+	if updatePredicate {
+		update["RuleDefinition"] = r.RuleDefinition
+		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
+		update["IsActive"] = spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive}
+		update["PredicateLastUpdated"] = spanner.CommitTimestamp
+	}
+	ms := spanutil.UpdateMap("FailureAssociationRules", update)
 	span.BufferWrite(ctx, ms)
 	return nil
 }

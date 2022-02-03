@@ -86,6 +86,14 @@ message Rule {
   string last_update_user = 11
     [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // The time the rule was last updated in a way that caused the
+  // matched failures to change, i.e. because of a change to rule_definition
+  // or is_active. (By contrast, updating the associated bug does NOT change
+  // the matched failures, so does NOT update this field.)
+  // Output only.
+  google.protobuf.Timestamp predicate_last_update_time = 13
+    [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // This checksum is computed by the server based on the value of other
   // fields, and may be sent on update requests to ensure the client
   // has an up-to-date value before proceeding.

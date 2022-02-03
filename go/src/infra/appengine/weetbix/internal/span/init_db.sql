@@ -164,6 +164,13 @@ CREATE TABLE FailureAssociationRules (
   -- (e.g. in case of an auto-filed bug which was created and never
   -- modified) this is 'weetbix'. Otherwise, it is an email address.
   LastUpdatedUser STRING(320) NOT NULL,
+  -- The time the rule was last updated in a way that caused the
+  -- matched failures to change, i.e. because of a change to RuleDefinition
+  -- or IsActive. (For comparison, updating BugID does NOT change
+  -- the matched failures, so does NOT update this field.)
+  -- When this value changes, it triggers re-clustering.
+  -- Basis for RulesVersion on ClusteringState and ReclusteringRuns.
+  PredicateLastUpdated TIMESTAMP OPTIONS (allow_commit_timestamp=true),
   -- The bug the failures are associated with (part 1). This is the
   -- bug tracking system containing the bug the failures are associated
   -- with. The only supported values are 'monorail' and 'buganizer'.
@@ -226,9 +233,9 @@ CREATE TABLE ClusteringState (
   -- results in this chunk.
   ConfigVersion TIMESTAMP NOT NULL,
   -- The version of the set of failure association rules used to match test
-  -- results in this chunk. This is the "Last Updated" time of the most
-  -- recently updated failure association rule in the snapshot of failure
-  -- association rules used to match the test results.
+  -- results in this chunk. This is the maximum "Predicate Last Updated" time
+  -- of any failure association rule in the snapshot of failure association
+  -- rules used to match the test results.
   RulesVersion TIMESTAMP NOT NULL,
   -- Serialized ChunkClusters proto containing which test result is in which
   -- cluster.
