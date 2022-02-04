@@ -336,6 +336,9 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		for _, planName := range planNames {
 			resources := collectResourcesForPlan(planName, execArgs.DUT)
 			for _, resource := range resources {
+				if sh := execArgs.DUT.ServoHost; sh != nil && sh.Name == resource && sh.ContainerName != "" {
+					continue
+				}
 				if err := localproxy.RegHost(ctx, resource); err != nil {
 					return errors.Annotate(err, "run plans: create proxy for %q", resource).Err()
 				}
