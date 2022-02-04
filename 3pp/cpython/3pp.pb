@@ -1,6 +1,9 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.40" }
+  source {
+    patch_version: "chromium.40"
+    cpe_base_address: "cpe:/a:python:python"
+  }
 }
 
 create {
@@ -9,7 +12,7 @@ create {
     # Python 2 is officially done, and 2.7.18 is the last official release.
     url {
       download_url: "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz"
-      version: "2.7.18",
+      version: "2.7.18"
       extension: ".tgz"
     }
     unpack_archive: true
@@ -18,7 +21,7 @@ create {
   build {
     tool: "build_support/pip_bootstrap"
     tool: "tools/autoconf"
-    tool: "tools/sed"            # Used by python's makefiles
+    tool: "tools/sed"  # Used by python's makefiles
   }
 }
 
