@@ -210,24 +210,84 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the Chrome WebStore itself',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What is the URL of the Chrome WebStore page that had the problem?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Sync',
     description: 'Problems syncing data',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Enterprise',
     description: 'Policy configuration and deployment issues',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Installation',
     description: 'Problem installing Chrome',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Crashes',
@@ -246,6 +306,32 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something not listed here',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Please select a label to classify your issue:",
+        options: [
+          "Not sure - I don't know",
+          "Type-Feature- Request for new or improved features",
+          "Type-Bug-Regression - Used to work, now broken",
+          "Type-Bug - Software not working correctly",
+          "Cr-UI-I18N - Issue in translating UI to other languages"
+        ],
+        subQuestions: [null, null, null, null, null]
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'API',
@@ -258,12 +344,40 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the JavaScript interpreter',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Developer Tools',
     description: 'Problems with the Developer tool chain/inspector',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
 ];
 
