@@ -15,8 +15,6 @@ import tempfile
 import threading
 import uuid
 
-import six
-
 from . import concurrency
 from . import source
 from . import util
@@ -337,12 +335,12 @@ class Image(collections.namedtuple('_Image', (
         for k, v in affix_list:
           encode_env_item(k, mode, v)
 
-      for k, v in six.iteritems(env):
+      for k, v in env.items():
         encode_env_item(k, 'SET', v)
       encode_env_affix(kwargs.pop('env_prefix', None), 'PREPEND')
       encode_env_affix(kwargs.pop('env_suffix', None), 'APPEND')
 
-      for k, vals in six.iteritems(new_env):
+      for k, vals in new_env.items():
         v = base64.b64encode(':'.join(vals).encode()).decode()
         run_args.extend(['-e', '%s=%s' % (k, v)])
 

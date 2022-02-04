@@ -11,8 +11,6 @@ import shutil
 import stat
 import tempfile
 
-from six.moves import urllib
-
 import requests
 import requests.exceptions
 

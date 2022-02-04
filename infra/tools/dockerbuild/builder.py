@@ -11,8 +11,6 @@ import shutil
 import subprocess
 import sys
 
-import six
-
 from . import build_platform
 from . import concurrency
 from . import util
@@ -46,9 +44,8 @@ class Builder(object):
         function will be used to set the spec version at runtime.
     """
     if arch_map:
-      assert not any(
-          isinstance(v, six.string_types) for v in arch_map.values()), (
-              'arch_map must map str->seq[str]')
+      assert not any(isinstance(v, str) for v in arch_map.values()), (
+          'arch_map must map str->seq[str]')
 
     self._spec = spec
     self._arch_map = arch_map or {}
