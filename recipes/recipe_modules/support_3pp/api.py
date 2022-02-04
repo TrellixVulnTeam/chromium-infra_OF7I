@@ -225,11 +225,8 @@ built (e.g. `version:1.2.3.patch_version1`).
 
 You can also mark the upload as a `universal` package, which will:
   * Omit the `${platform}` suffix from the upload name
-  * Set the target platform for the package to `linux-amd64`, regardless of
-    what platform you build the recipe on. This was chosen arbitrarially to
-    ensure that "universal" packages build consistently. You can override this
-    behavior (and bypass the normal docker environment entirely) by setting
-    the no_docker_env flag to true in your Create.Build message.
+  * Only build the package on the `linux-amd64' platform. This was chosen
+    to ensure that "universal" packages build consistently.
 
 #### Versions
 
@@ -488,13 +485,17 @@ class Support3ppApi(recipe_api.RecipeApi):
         "%s not supported for %s" % (cipd_pkg_name, platform))
 
     create_pb = spec.create[0]
+    tool_plat = tool_platform(self.m, platform, spec)
 
-    # Universal specs using docker always target linux-amd64, for consistency
-    # when running the recipe on different platforms. We change the target
-    # platform here from the native platform so that dep and tool resolutions
-    # occur for linux-amd64.
-    if spec.upload.universal and not create_pb.build.no_docker_env:
-      platform = 'linux-amd64'
+    # See the description of this logic at the top of the file.
+    if spec.upload.universal:
+      if tool_plat != 'linux-amd64':
+        raise UnsupportedPackagePlatform(
+            'Skipping universal package %s when building for %s' %
+            (cipd_pkg_name, platform))
+      if not create_pb.build.no_docker_env:
+        # Always use the native Docker container for universal.
+        platform = 'linux-amd64'
 
     source_pb = create_pb.source
     method = source_pb.WhichOneof('method')
@@ -526,8 +527,7 @@ class Support3ppApi(recipe_api.RecipeApi):
     for tool in create_pb.build.tool:
       tool_cipd_pkg_name, tool_version = parse_name_version(tool)
       if tool_version == 'latest':
-        unpinned_tools.append(self._resolve_for(
-          tool_cipd_pkg_name, tool_platform(self.m, platform, spec)))
+        unpinned_tools.append(self._resolve_for(tool_cipd_pkg_name, tool_plat))
 
     ret = ResolvedSpec(
       self.m, self._cipd_spec_pool, self.package_prefix(create_pb.experimental),

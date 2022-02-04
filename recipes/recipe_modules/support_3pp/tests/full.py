@@ -61,8 +61,8 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
       api.support_3pp.load_packages_from_path(
         builder.join('dup_repo'))
 
-    _, unsupported = api.support_3pp.ensure_uploaded(
-      pkgs, '%s-%s' % (GOOS, GOARCH))
+    cipd_platform = '%s-%s' % (GOOS, GOARCH)
+    _, unsupported = api.support_3pp.ensure_uploaded(pkgs, cipd_platform)
 
     excluded = set()
     if 'unsupported' in pkgs:
@@ -71,11 +71,13 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
       excluded.add('unsupported_no_method')
     if api.platform.is_win and 'tools/posix_tool' in pkgs:
       excluded.add('tools/posix_tool')
+    if GOOS != 'linux':
+      excluded.add('tools/fetch_and_package')
     assert unsupported == excluded, (
         'Expected: %r. Got: %r' %(excluded, unsupported))
 
     # doing it again should hit caches
-    api.support_3pp.ensure_uploaded(pkgs, '%s-%s' % (GOOS, GOARCH))
+    api.support_3pp.ensure_uploaded(pkgs, cipd_platform)
 
 
 def GenTests(api):

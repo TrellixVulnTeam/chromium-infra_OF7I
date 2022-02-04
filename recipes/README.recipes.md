@@ -822,11 +822,8 @@ built (e.g. `version:1.2.3.patch_version1`).
 
 You can also mark the upload as a `universal` package, which will:
   * Omit the `${platform}` suffix from the upload name
-  * Set the target platform for the package to `linux-amd64`, regardless of
-    what platform you build the recipe on. This was chosen arbitrarially to
-    ensure that "universal" packages build consistently. You can override this
-    behavior (and bypass the normal docker environment entirely) by setting
-    the no_docker_env flag to true in your Create.Build message.
+  * Only build the package on the `linux-amd64' platform. This was chosen
+    to ensure that "universal" packages build consistently.
 
 #### Versions
 
@@ -894,7 +891,7 @@ This module uses the following named caches:
   * `osx_sdk` - Cache for `depot_tools/osx_sdk`. Only on Mac.
   * `windows_sdk` - Cache for `depot_tools/windows_sdk`. Only on Windows.
 
-#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#386)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#383)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 &mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#680)(self, packages=(), platform='', force_build=False):**
 
@@ -915,7 +912,7 @@ Args:
 Returns (list[(cipd_pkg, cipd_version)], set[str]) of built CIPD packages
 and their tagged versions, as well as a list of unsupported packages.
 
-&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#416)(self):**
+&mdash; **def [initialize](/recipes/recipe_modules/support_3pp/api.py#413)(self):**
 
 &mdash; **def [load\_packages\_from\_path](/recipes/recipe_modules/support_3pp/api.py#554)(self, base_path, glob_pattern='\*\*/3pp.pb', check_dup=True):**
 
@@ -952,7 +949,7 @@ package name which is already registered. This could occur if you call
 load_packages_from_path multiple times, and one of the later calls tries to
 load a package which was registered under one of the earlier calls.
 
-&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#421)(self, experimental=False):**
+&mdash; **def [package\_prefix](/recipes/recipe_modules/support_3pp/api.py#418)(self, experimental=False):**
 
 Returns the CIPD package name prefix (str), if any is set.
 
@@ -960,18 +957,18 @@ This will prepend 'experimental/' to the currently set prefix if:
   * The recipe is running in experimental mode; OR
   * You pass experimental=True
 
-&mdash; **def [set\_experimental](/recipes/recipe_modules/support_3pp/api.py#449)(self, experimental):**
+&mdash; **def [set\_experimental](/recipes/recipe_modules/support_3pp/api.py#446)(self, experimental):**
 
 Set the experimental mode (bool).
 
-&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#434)(self, prefix):**
+&mdash; **def [set\_package\_prefix](/recipes/recipe_modules/support_3pp/api.py#431)(self, prefix):**
 
 Set the CIPD package name prefix (str).
 
 All CIPDSpecs for built packages (not sources) will have this string
 prepended to them.
 
-&mdash; **def [set\_source\_cache\_prefix](/recipes/recipe_modules/support_3pp/api.py#443)(self, prefix):**
+&mdash; **def [set\_source\_cache\_prefix](/recipes/recipe_modules/support_3pp/api.py#440)(self, prefix):**
 
 Set the CIPD namespace (str) to store the source of the packages.
 ### *recipe_modules* / [windows\_adk](/recipes/recipe_modules/windows_adk)
