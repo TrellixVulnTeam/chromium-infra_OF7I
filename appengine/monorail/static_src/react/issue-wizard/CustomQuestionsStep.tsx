@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import React from 'react'
+import React from 'react';
 import {makeStyles} from '@material-ui/styles';
 import {grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
@@ -62,6 +62,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
           <CustomQuestionSelector
             question={q.question}
             options={q.options}
+            subQuestions={q.subQuestions}
             updateAnswers={(answer: string) => updateAnswer(answer, i)}
           />
         );
