@@ -82,11 +82,11 @@ func createMetric(ctx context.Context, m metrics.Metrics, action *metrics.Action
 	}
 	closer := func(ctx context.Context, e error) {
 		if m == nil {
-			log.Debug(ctx, "error while creating metric, nil metrics")
+			log.Debug(ctx, "forgivable error while creating metric, nil metrics")
 			return
 		}
 		if a == nil {
-			log.Debug(ctx, "error while creating metric, nil action")
+			log.Debug(ctx, "forgivable error while creating metric, nil action")
 			return
 		}
 		a.Status = metrics.ActionStatusUnspecified
