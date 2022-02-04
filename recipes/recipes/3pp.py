@@ -13,16 +13,16 @@ from recipe_engine.config import ConfigList, ConfigGroup, Single, List
 PYTHON_VERSION_COMPATIBILITY = 'PY3'
 
 DEPS = [
-  'recipe_engine/cipd',
-  'recipe_engine/file',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/step',
-
-  'depot_tools/git',
-
-  'support_3pp',
+    'recipe_engine/buildbucket',
+    'recipe_engine/cipd',
+    'recipe_engine/file',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/python',
+    'recipe_engine/step',
+    'depot_tools/git',
+    'depot_tools/tryserver',
+    'support_3pp',
 ]
 
 
@@ -77,6 +77,12 @@ PROPERTIES = {
 
 def RunSteps(api, package_locations, to_build, platform, force_build,
              package_prefix, source_cache_prefix):
+  if api.tryserver.is_tryserver:
+    revision = api.tryserver.gerrit_change_fetch_ref
+    api.support_3pp._experimental = True
+  else:
+    revision = 'refs/heads/main'
+
   # NOTE: We essentially ignore the on-machine CIPD cache here. We do this in
   # order to make sure this builder always operates with the current set of tags
   # on the server... Practically speaking, when messing with these builders it's
@@ -108,7 +114,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
     with api.step.nest('load packages from desired repos'):
       for pl in package_locations:
         repo = pl['repo']
-        ref = pl.get('ref', 'refs/heads/main')
+        ref = pl.get('ref', revision)
         subdir = pl.get('subdir', '')
 
         hash_name = hashlib.sha1(str("%s:%s" %
@@ -173,4 +179,10 @@ def GenTests(api):
       "load packages from desired repos."
       "load package specs.read '%s/3pp.pb'" % pkg,
       api.file.read_text(spec))
+  yield test
+
+  test = (
+      api.test('basic-tryjob') + defaults() +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo'))
   yield test
