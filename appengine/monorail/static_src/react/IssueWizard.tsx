@@ -12,6 +12,8 @@ import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 import {getOs, getBrowser} from './issue-wizard/IssueWizardUtils.tsx'
 
+import {GetQuestionsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
+import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
@@ -30,6 +32,8 @@ export function IssueWizard(): ReactElement {
     });
     const [osName, setOsName] = React.useState(getOs())
     const [browserName, setBrowserName] = React.useState(getBrowser())
+
+  const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
   let page;
   if (activeStep === 0) {
@@ -52,8 +56,9 @@ export function IssueWizard(): ReactElement {
           setBrowserName={setBrowserName}
     />;
    } else if (activeStep === 2) {
-      // TODO: (crbug.com/monorail/10581) get the customQuestions List
-      page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={[]}/>;  }
+
+    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={questionByCategory.get(category)}/>;
+  }
 
   return (
     <>

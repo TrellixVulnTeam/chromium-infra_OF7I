@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 // TODO: create a `monorail/frontend/config/` folder to store all the feature config file
+import {CustomQuestionType} from "./IssueWizardTypes.tsx";
 import {IssueCategory, IssueWizardPersona} from "./IssueWizardTypes.tsx";
 
 export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
@@ -11,36 +12,198 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something is wrong with the user interface (e.g. tabs, context menus, etc...)',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What part of the browser is affected?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Network / Downloading',
     description: 'Problems with accessing remote content',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What specific URL can reproduce the problem?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Audio / Video',
     description: 'Problems playing back sound or movies',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What specific URL can reproduce the problem?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Does this feature work correctly in other browsers?",
+        options: ["Not sure - I don't know", "Yes - This is just a Chromium problem", "No - I can reproduce the problem in another browser"],
+        subQuestions: [
+          null,
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Which other browsers (including versions) also have the problem?",
+          }],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Content',
     description: "Web pages aren't displaying or working properly",
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What part of the browser is affected?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Does the problem occur on multiple sites?",
+        options: ["Not sure - I don't know", "Yes - Please describe below", "No - Just that one URL"],
+        subQuestions: [null,null,null],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Is it a problem with a plugin?",
+        options: ["Not sure - I don't know", "Yes - Those darn plugins", "No - It's the browser itself"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Which plugin?",
+          },
+          null],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Does this feature work correctly in other browsers?",
+        options: ["Not sure - I don't know", "Yes - This is just a Chromium problem", "No - I can reproduce the problem in another browser"],
+        subQuestions: [
+          null,
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Which other browsers (including versions) also have the problem?",
+          }],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Apps',
     description: 'Problems with how the browser deals with apps from the webstore',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "What is the name or URL of that software at https://chrome.google.com/webstore?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Extensions / Themes',
     description: 'Issues related to extensions and themes from the webstore',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "What kind of software had the problem?",
+        options: ["Chrome Extension - Adds new browser functionality", "Chrome Theme - Makes Chrome look awesome"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      },
+      {
+        type: CustomQuestionType.Input,
+        question: "What is the name or URL of that software at https://chrome.google.com/webstore?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ],
   },
   {
     name: 'Webstore',
