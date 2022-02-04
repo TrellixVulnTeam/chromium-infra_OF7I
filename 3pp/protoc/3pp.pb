@@ -8,6 +8,7 @@ create {
   source {
     script { name: "fetch.py" }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:protobuf_project:protobuf"
   }
 }
 
