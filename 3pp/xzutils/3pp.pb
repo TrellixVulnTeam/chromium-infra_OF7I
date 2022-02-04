@@ -6,6 +6,7 @@ create {
       version: "5.2.4"
     }
     unpack_archive: true
+    cpe_base_address: "cpe:/a:xz_project:xz"
   }
   build {}
 }
