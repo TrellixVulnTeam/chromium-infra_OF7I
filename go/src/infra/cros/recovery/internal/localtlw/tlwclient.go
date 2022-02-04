@@ -183,15 +183,41 @@ func (c *tlwClient) Run(ctx context.Context, req *tlw.RunRequest) *tlw.RunResult
 			// representation and logs, not for use for execution.
 			fullCmd = fmt.Sprintf("/bin/sh -c %q", req.GetCommand())
 		}
-		// As container is created and running we can execute the commands.
-		// TODO: Receive timeout from request.
-		if res, err := d.Exec(ctx, containerName, eReq); err != nil {
+		containerIsUp, err := d.IsUp(ctx, containerName)
+		if err != nil {
 			return &tlw.RunResult{
 				Command:  fullCmd,
 				ExitCode: -1,
 				Stderr:   fmt.Sprintf("run: %s", err),
 			}
+		} else if containerIsUp {
+			// As container is created and running we can execute the commands.
+			if res, err := d.Exec(ctx, containerName, eReq); err != nil {
+				return &tlw.RunResult{
+					Command:  fullCmd,
+					ExitCode: -1,
+					Stderr:   fmt.Sprintf("run: %s", err),
+				}
+			} else {
+				return &tlw.RunResult{
+					Command:  fullCmd,
+					ExitCode: res.ExitCode,
+					Stdout:   res.Stdout,
+					Stderr:   res.Stderr,
+				}
+			}
 		} else {
+			// If container is down we will run all command directly by container.
+			// TODO(otabek): Simplify running a container when move outside.
+			containerArgs := createServodContainerArgs(false, nil, eReq.Cmd)
+			res, err := d.Start(ctx, containerName, containerArgs, eReq.Timeout)
+			if err != nil {
+				return &tlw.RunResult{
+					Command:  fullCmd,
+					ExitCode: -1,
+					Stderr:   fmt.Sprintf("run: %s", err),
+				}
+			}
 			return &tlw.RunResult{
 				Command:  fullCmd,
 				ExitCode: res.ExitCode,
@@ -254,6 +280,19 @@ func dockerServodImageName() string {
 	return "us-docker.pkg.dev/chromeos-partner-moblab/common-core/servod:release"
 }
 
+// createServodContainerArgs creates default args for servodContainer.
+func createServodContainerArgs(detached bool, envVar, cmd []string) *docker.ContainerArgs {
+	return &docker.ContainerArgs{
+		Detached:   detached,
+		EnvVar:     envVar,
+		ImageName:  dockerServodImageName(),
+		Network:    defaultDockerNetwork(),
+		Volumes:    []string{"/dev:/dev"},
+		Privileged: true,
+		Exec:       cmd,
+	}
+}
+
 // startServodContainer start servod container if required.
 func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) error {
 	containerName := servoContainerName(dut)
@@ -295,15 +334,8 @@ func (c *tlwClient) startServodContainer(ctx context.Context, dut *tlw.Dut) erro
 			}
 		}
 	}
-	res, err := d.Start(ctx, containerName, &docker.ContainerArgs{
-		Detached:   true,
-		ImageName:  dockerServodImageName(),
-		Network:    defaultDockerNetwork(),
-		EnvVar:     envVar,
-		Volumes:    []string{"/dev:/dev"},
-		Privileged: true,
-		Exec:       []string{"bash", "/start_servod.sh"},
-	}, time.Hour)
+	containerArgs := createServodContainerArgs(true, envVar, []string{"bash", "/start_servod.sh"})
+	res, err := d.Start(ctx, containerName, containerArgs, time.Hour)
 	if err != nil {
 		return errors.Annotate(err, "start servod container").Err()
 	}
