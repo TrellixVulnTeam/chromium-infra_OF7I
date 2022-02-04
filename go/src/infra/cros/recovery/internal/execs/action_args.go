@@ -27,10 +27,9 @@ const (
 type ParsedArgs map[string]string
 
 // AsBool returns the value for the passed key as a boolean. If the
-// key does not exist in the parsed arguments, a default value of
-// false is returned.
-func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string) bool {
-	defaultValue := false
+// key does not exist in the parsed arguments, the passed defaultValue
+// is returned.
+func (parsedArgs ParsedArgs) AsBool(ctx context.Context, key string, defaultValue bool) bool {
 	if value, ok := parsedArgs[key]; ok {
 		if boolVal, err := strconv.ParseBool(value); err == nil {
 			return boolVal

@@ -596,9 +596,9 @@ func servoUpdateServoFirmwareExec(ctx context.Context, args *execs.RunArgs, acti
 	// If the passed in "try_attempt_count" is either 0 or cannot be parsed successfully,
 	// then, we default the count to be 1 to at least try to update it once.
 	tryAttemptCount := fwUpdateMap.AsInt(ctx, "try_attempt_count", 1)
-	tryForceUpdateAfterFail := fwUpdateMap.AsBool(ctx, "try_force_update_after_fail")
-	forceUpdate := fwUpdateMap.AsBool(ctx, "force_update")
-	ignoreVersion := fwUpdateMap.AsBool(ctx, "ignore_version")
+	tryForceUpdateAfterFail := fwUpdateMap.AsBool(ctx, "try_force_update_after_fail", false)
+	forceUpdate := fwUpdateMap.AsBool(ctx, "force_update", false)
+	ignoreVersion := fwUpdateMap.AsBool(ctx, "ignore_version", false)
 	run := args.NewRunner(args.DUT.ServoHost.Name)
 	if forceUpdate {
 		// If requested to update with force then first attempt will be with force

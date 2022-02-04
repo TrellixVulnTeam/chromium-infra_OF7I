@@ -74,7 +74,7 @@ func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	// control whether the value of a DUT Model should, or should not
 	// be present in the list of strings mentioned in the config.
 	const invertResultToken = "invert_result"
-	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken)
+	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
 	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
 		m = strings.TrimSpace(m)
 		if strings.EqualFold(m, args.DUT.Model) {

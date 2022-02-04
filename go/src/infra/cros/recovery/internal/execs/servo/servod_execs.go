@@ -132,7 +132,7 @@ func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	// This token controls whether all the loaded servod commands need
 	// to succeed, or can we greedily return as soon as any one
 	// command succeeds.
-	anyOne := argsMap.AsBool(ctx, "any_one")
+	anyOne := argsMap.AsBool(ctx, "any_one", false)
 	log.Debug(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
 	for _, c := range commands {
 		if _, err := ServodCallHas(ctx, args, c); err != nil {
