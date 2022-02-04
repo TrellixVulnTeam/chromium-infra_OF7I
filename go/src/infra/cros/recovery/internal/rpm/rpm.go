@@ -87,6 +87,6 @@ func validateRequest(req *RPMPowerRequest) error {
 	case "":
 		return errors.Reason("validate request: State cannot be empty.").Err()
 	default:
-		return errors.Reason("validate request: unkown State %s.", req.State).Err()
+		return errors.Reason("validate request: unknown State %s.", req.State).Err()
 	}
 }
