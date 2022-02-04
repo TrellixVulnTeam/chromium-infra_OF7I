@@ -420,6 +420,9 @@ service Fleet {
 
   // GetDeviceData retrieves requested device data from UFS.
   rpc GetDeviceData(GetDeviceDataRequest) returns (GetDeviceDataResponse);
+
+  // CheckFleetPolicyForTest checks whether a given test parameters indicate a valid test
+  rpc CheckFleetTestsPolicy(CheckFleetTestsPolicyRequest) returns (CheckFleetTestsPolicyResponse);
 }
 
 message UpdateMachineLSEDeploymentRequest {
@@ -2268,4 +2271,17 @@ message AttachedDeviceData {
 // Next Tag: 2
 message BrowserDeviceData {
   models.MachineLSE host = 1;
+}
+
+message CheckFleetTestsPolicyRequest {
+  // Test parameters to validate to see if the test is a valid test.
+  string test_name = 1;
+  string board = 2;
+  string model = 3;
+  string image = 4;
+}
+
+message CheckFleetTestsPolicyResponse {
+  // Indicates whether the test parameters are valid for a test.
+  bool is_test_valid = 1;
 }

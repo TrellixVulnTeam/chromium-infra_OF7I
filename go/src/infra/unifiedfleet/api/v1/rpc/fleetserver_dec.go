@@ -2220,3 +2220,20 @@ func (s *DecoratedFleet) GetDeviceData(ctx context.Context, req *GetDeviceDataRe
 	}
 	return
 }
+
+func (s *DecoratedFleet) CheckFleetTestsPolicy(ctx context.Context, req *CheckFleetTestsPolicyRequest) (rsp *CheckFleetTestsPolicyResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CheckFleetTestsPolicy", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CheckFleetTestsPolicy(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CheckFleetTestsPolicy", rsp, err)
+	}
+	return
+}
