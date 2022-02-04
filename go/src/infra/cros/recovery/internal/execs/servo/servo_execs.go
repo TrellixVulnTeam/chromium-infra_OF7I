@@ -98,16 +98,6 @@ func servodStopActionExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	return nil
 }
 
-func servodRestartActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if err := servodStopActionExec(ctx, args, actionArgs); err != nil {
-		log.Debug(ctx, "Servod restart: fail stop servod. Error: %s", err)
-	}
-	if err := servodInitActionExec(ctx, args, actionArgs); err != nil {
-		return errors.Annotate(err, "restart servod").Err()
-	}
-	return nil
-}
-
 func servoDetectUSBKeyExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	res, err := ServodCallGet(ctx, args, "image_usbkey_dev")
 	if err != nil {
@@ -723,7 +713,6 @@ func servoRebootEcOnDUTExec(ctx context.Context, args *execs.RunArgs, actionArgs
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
-	execs.Register("servo_host_servod_restart", servodRestartActionExec)
 	execs.Register("servo_detect_usbkey", servoDetectUSBKeyExec)
 	execs.Register("servo_audit_usbkey", servoAuditUSBKeyExec)
 	execs.Register("servo_v4_root_present", isRootServoPresentExec)
