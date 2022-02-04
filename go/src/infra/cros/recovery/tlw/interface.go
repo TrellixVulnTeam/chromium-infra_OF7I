@@ -202,8 +202,8 @@ type Cr50Phase string
 
 const (
 	Cr50PhaseUnspecified Cr50Phase = "UNSPECIFIED"
-	Cr50PhasePVT         Cr50Phase = "CR50_PHASE_PREPVT"
-	Cr50PhasePREPVT      Cr50Phase = "CR50_PHASE_PVT"
+	Cr50PhasePVT         Cr50Phase = "CR50_PHASE_PVT"
+	Cr50PhasePREPVT      Cr50Phase = "CR50_PHASE_PREPVT"
 )
 
 // Cr50KeyEnv describes key env for cr50 RW version.
