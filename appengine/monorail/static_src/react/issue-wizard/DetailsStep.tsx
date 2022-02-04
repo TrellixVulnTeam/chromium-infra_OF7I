@@ -75,7 +75,7 @@ export default function DetailsStep(props: Props): React.ReactElement {
             <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
 
             <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
-            <TextField id="outlined-basic-1" variant="outlined" onChange={handleChange('oneLineSummary')}/>
+            <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')}/>
 
             <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
             <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')}/>
