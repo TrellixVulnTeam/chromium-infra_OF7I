@@ -37,25 +37,29 @@ type reason int
 
 const (
 	parisNotEnabled reason = iota
-	allLabstationsAreOptedIn
+	allDevicesAreOptedIn
 	noPools
 	wrongPool
 	scoreBelowThreshold
 	scoreTooHigh
 	thresholdZero
 	malformedPolicy
+	nilArgument
+	notALabstation
 )
 
 // ReasonMessageMap maps each reason to a readable description.
 var reasonMessageMap = map[reason]string{
-	parisNotEnabled:          "PARIS is not enabled",
-	allLabstationsAreOptedIn: "All Labstations are opted in",
-	noPools:                  "Labstation has no pools, possibly due to error calling UFS",
-	wrongPool:                "Labstation has a pool not matching opted-in pools",
-	scoreBelowThreshold:      "Random score associated with is below threshold, authorizing new flow",
-	scoreTooHigh:             "Random score associated with task is too high",
-	thresholdZero:            "Route labstation repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set",
-	malformedPolicy:          "Unrecognized policy",
+	parisNotEnabled:      "PARIS is not enabled",
+	allDevicesAreOptedIn: "All devices are opted in",
+	noPools:              "Device has no pools, possibly due to error calling UFS",
+	wrongPool:            "Device has a pool not matching opted-in pools",
+	scoreBelowThreshold:  "Random score associated with is below threshold, authorizing new flow",
+	scoreTooHigh:         "Random score associated with task is too high",
+	thresholdZero:        "Route labstation repair task: a threshold of zero implies that optinAllLabstations should be set, but optinAllLabstations is not set",
+	malformedPolicy:      "Unrecognized policy",
+	nilArgument:          "A required argument was unexpectedly nil",
+	notALabstation:       "Paris not enabled yet for non-labstations",
 }
 
 // UFSErrorPolicy controls how UFS errors are handled.
@@ -103,17 +107,21 @@ func RouteRepairTask(ctx context.Context, botID string, expectedState string, po
 	if !(0.0 <= randFloat && randFloat <= 1.0) {
 		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
-	if heuristics.LooksLikeLabstation(botID) {
-		out, r := routeLabstationRepairTask(ctx, config.Get(ctx).GetParis().GetLabstationRepair(), pools, randFloat)
-		reason, ok := reasonMessageMap[r]
-		if !ok {
-			logging.Infof(ctx, "Unrecognized reason %d", int64(r))
-		}
-		logging.Infof(ctx, "Sending labstation repair to %q because %q", out, reason)
-		return out, nil
+	out, r := routeRepairTaskImpl(
+		ctx,
+		config.Get(ctx).GetParis().GetLabstationRepair(),
+		&dutRoutingInfo{
+			labstation: heuristics.LooksLikeLabstation(botID),
+			pools:      pools,
+		},
+		randFloat,
+	)
+	reason, ok := reasonMessageMap[r]
+	if !ok {
+		logging.Infof(ctx, "Unrecognized reason %d", int64(r))
 	}
-	logging.Infof(ctx, "Non-labstations always use legacy flow")
-	return "", nil
+	logging.Infof(ctx, "Sending device repair to %q because %q", out, reason)
+	return out, nil
 }
 
 // CreateRepairTask kicks off a repair job.
@@ -142,9 +150,25 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 	}
 }
 
+// DUTRoutingInfo is all the deterministic information about a DUT that is necessary to decide
+// whether to use a legacy task or a paris task.
+//
+// For example, we DO need to know whether a DUT is a labstation or not, but we DO NOT need to know
+// what the exact hostname is.
+type dutRoutingInfo struct {
+	labstation bool
+	pools      []string
+}
+
 // RouteLabstationRepairTask takes a repair task for a labstation and routes it.
-// TODO(gregorynisbet): Generalize this to non-labstation tasks.
-func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, pools []string, randFloat float64) (string, reason) {
+func routeRepairTaskImpl(ctx context.Context, r *config.RolloutConfig, info *dutRoutingInfo, randFloat float64) (string, reason) {
+	if info == nil {
+		logging.Errorf(ctx, "info cannot be nil, falling back to legacy")
+		return legacy, nilArgument
+	}
+	if !info.labstation {
+		return legacy, notALabstation
+	}
 	// TODO(gregorynisbet): Log instead of silently falling back to the default error handling policy.
 	ufsErrorPolicy, err := normalizeErrorPolicy(r.GetUfsErrorPolicy())
 	if err != nil {
@@ -155,7 +179,7 @@ func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, poo
 		return legacy, parisNotEnabled
 	}
 	// Check for malformed input data that would cause us to be unable to make a decision.
-	if len(pools) == 0 {
+	if len(info.pools) == 0 {
 		switch ufsErrorPolicy {
 		case ufsErrorPolicyLax:
 			// Do nothing.
@@ -182,7 +206,7 @@ func routeLabstationRepairTask(ctx context.Context, r *config.RolloutConfig, poo
 	if threshold == 0 {
 		return legacy, thresholdZero
 	}
-	if !r.GetOptinAllDuts() && len(r.GetOptinDutPool()) > 0 && isDisjoint(pools, r.GetOptinDutPool()) {
+	if !r.GetOptinAllDuts() && len(r.GetOptinDutPool()) > 0 && isDisjoint(info.pools, r.GetOptinDutPool()) {
 		return legacy, wrongPool
 	}
 	if valueBelowThreshold {

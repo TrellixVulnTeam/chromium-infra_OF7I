@@ -90,10 +90,66 @@ func TestIsDisjoint(t *testing.T) {
 
 }
 
-// TestRouteLabstationRepairTask tests that we correctly make
+// TestRouteRepairTaskImplDUT tests that non-labstation DUTs that would qualify for the Paris flow
+// are still blocked.
+func TestRouteRepairTaskImplDUT(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name      string
+		in        *config.RolloutConfig
+		pools     []string
+		randFloat float64
+		out       string
+		reason    reason
+	}{
+		{
+			name: "good DUT is still blocked",
+			in: &config.RolloutConfig{
+				Enable:          true,
+				OptinAllDuts:    true,
+				RolloutPermille: 1000,
+			},
+			randFloat: 0.5,
+			pools:     []string{"pool"},
+			out:       legacy,
+			reason:    notALabstation,
+		},
+	}
+
+	for i, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			expected := tt.out
+			expectedReason := reasonMessageMap[tt.reason]
+			if expectedReason == "" {
+				t.Errorf("expected reason should be valid reason")
+			}
+			actual, r := routeRepairTaskImpl(
+				ctx,
+				tt.in,
+				&dutRoutingInfo{
+					labstation: false,
+					pools:      tt.pools,
+				},
+				tt.randFloat,
+			)
+			actualReason := reasonMessageMap[r]
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("unexpected diff (-want +got) in subtest %d %q: %s", i, tt.name, diff)
+			}
+			if diff := cmp.Diff(expectedReason, actualReason); diff != "" {
+				t.Errorf("unexpected diff (-want +got) in subtest %d %q: %s", i, tt.name, diff)
+			}
+		})
+	}
+}
+
+// TestRouteRepairTaskImplLabstation tests that we correctly make
 // a decision on whether to use recovery for labstations based on the config
 // file.
-func TestRouteLabstationRepairTask(t *testing.T) {
+func TestRouteRepairTaskImplLabstation(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -266,7 +322,15 @@ func TestRouteLabstationRepairTask(t *testing.T) {
 			if expectedReason == "" {
 				t.Errorf("expected reason should be valid reason")
 			}
-			actual, r := routeLabstationRepairTask(ctx, tt.in, tt.pools, tt.randFloat)
+			actual, r := routeRepairTaskImpl(
+				ctx,
+				tt.in,
+				&dutRoutingInfo{
+					labstation: true,
+					pools:      tt.pools,
+				},
+				tt.randFloat,
+			)
 			actualReason := reasonMessageMap[r]
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("unexpected diff (-want +got) in subtest %d %q: %s", i, tt.name, diff)
@@ -386,7 +450,15 @@ func TestRouteRepairTaskProbability(t *testing.T) {
 	tally := 0
 
 	for i := 0; i < samples; i++ {
-		dest, reason := routeLabstationRepairTask(ctx, rolloutCfg, []string{"pool1"}, rand.Float64())
+		dest, reason := routeRepairTaskImpl(
+			ctx,
+			rolloutCfg,
+			&dutRoutingInfo{
+				labstation: true,
+				pools:      []string{"pool1"},
+			},
+			rand.Float64(),
+		)
 		switch reason {
 		case scoreBelowThreshold:
 			// do nothing
