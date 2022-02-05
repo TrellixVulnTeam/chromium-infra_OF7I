@@ -9,28 +9,107 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
-
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
-
+	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"infra/libs/skylab/inventory"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
+
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 )
 
-var baseExpectedLabels = []string{"conductive:False"}
+func TestConvertAttachedDeviceDutTopologyToHostInfo(t *testing.T) {
+	Convey("When attached device DUT topology is converted to host info the result is correct.", t, func() {
+		associatedHostname := "dummy_associated_hostname"
+		board := "dummy_board"
+		hostname := "dummy_hostname"
+		model := "dummy_model"
+		serialNumber := "1234567890"
+		input := labapi.DutTopology{
+			Id: &labapi.DutTopology_Id{
+				Value: "dummy_dut_topology_id",
+			},
+			Duts: []*labapi.Dut{
+				{
+					Id: &labapi.Dut_Id{
+						Value: "dummy_dut_id",
+					},
+					DutType: &labapi.Dut_Android_{
+						Android: &labapi.Dut_Android{
+							AssociatedHostname: &labapi.IpEndpoint{
+								Address: associatedHostname,
+							},
+							Name:         hostname,
+							SerialNumber: serialNumber,
+							DutModel: &labapi.DutModel{
+								BuildTarget: board,
+								ModelName:   model,
+							},
+						},
+					},
+				},
+			},
+		}
 
-func addBaseExpectedLabels(oldLabels []string) []string {
-	labels := append(baseExpectedLabels, oldLabels...)
-	sort.Strings(labels)
-	return labels
+		got, err := convertDutTopologyToHostInfo(&input)
+
+		So(got, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+
+		want := &skylab_local_state.AutotestHostInfo{
+			Attributes: map[string]string{},
+			Labels: []string{
+				"associated_hostname:" + associatedHostname,
+				"board:" + board,
+				"model:" + model,
+				"name:" + hostname,
+				"serial_number:" + serialNumber,
+			},
+			SerializerVersion: 1,
+		}
+
+		sort.Strings(got.Labels)
+		sort.Strings(want.Labels)
+
+		So(want, ShouldResembleProto, got)
+	})
 }
 
-func TestDutInfoToHostInfoConversion(t *testing.T) {
-	Convey("When a DUT info is converted to a host info the result is correct.", t, func() {
+func TestConvertDutTopologyWithMultipleDutsToHostInfo(t *testing.T) {
+	Convey("When DUT topology contains multiple DUTs, conversion to host info fails.", t, func() {
+		input := labapi.DutTopology{
+			Id: &labapi.DutTopology_Id{
+				Value: "dummy_dut_topology_id",
+			},
+			Duts: []*labapi.Dut{
+				{
+					Id: &labapi.Dut_Id{
+						Value: "dummy_dut_id_1",
+					},
+				},
+				{
+					Id: &labapi.Dut_Id{
+						Value: "dummy_dut_id_2",
+					},
+				},
+			},
+		}
+
+		got, err := convertDutTopologyToHostInfo(&input)
+
+		So(got, ShouldBeNil)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestConvertChromeOsDeviceInfoToHostInfo(t *testing.T) {
+	Convey("When DUT device info is converted to host info the result is correct.", t, func() {
 		board := "dummy_board"
 		sku := "dummy_sku"
 		osType := inventory.SchedulableLabels_OS_TYPE_CROS
-		input := inventory.DeviceUnderTest{
+		dut := inventory.DeviceUnderTest{
 			Common: &inventory.CommonDeviceSpecs{
 				Attributes: []*inventory.KeyValue{
 					keyValue("sku", "dummy_sku"),
@@ -44,27 +123,106 @@ func TestDutInfoToHostInfoConversion(t *testing.T) {
 				},
 			},
 		}
+		input := ufsapi.GetDeviceDataResponse{
+			ResourceType: ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE,
+			Resource: &ufsapi.GetDeviceDataResponse_ChromeOsDeviceData{
+				ChromeOsDeviceData: &ufspb.ChromeOSDeviceData{
+					DutV1: &dut,
+				},
+			},
+		}
 
-		got := hostInfoFromDutInfo(&input)
+		got := hostInfoFromDeviceInfo(&input)
 
 		So(got, ShouldNotBeNil)
-
-		// There's no guarantee on the order.
-		sort.Strings(got.Labels)
 
 		want := &skylab_local_state.AutotestHostInfo{
 			Attributes: map[string]string{
 				"dummy_key": "dummy_value",
 				"sku":       "dummy_sku",
 			},
-			Labels: addBaseExpectedLabels([]string{
+			Labels: []string{
 				"board:dummy_board",
+				"conductive:False",
 				"device-sku:dummy_sku",
 				"os:cros",
 				"platform:dummy_board",
-			}),
+			},
 			SerializerVersion: 1,
 		}
+
+		sort.Strings(got.Labels)
+		sort.Strings(want.Labels)
+
+		So(want, ShouldResembleProto, got)
+	})
+}
+
+func TestConvertAttachedDeviceInfoToHostInfo(t *testing.T) {
+	Convey("When attached device info is converted to host info the result is correct.", t, func() {
+		associatedHostname := "dummy_associated_hostname"
+		board := "dummy_board"
+		hostname := "dummy_hostname"
+		model := "dummy_model"
+		serialNumber := "1234567890"
+		attachedDevice := ufsapi.AttachedDeviceData{
+			LabConfig: &ufspb.MachineLSE{
+				Name:                "dummy_name",
+				MachineLsePrototype: "dummy_machine_lse_prototype",
+				Hostname:            hostname,
+				Lse: &ufspb.MachineLSE_AttachedDeviceLse{
+					AttachedDeviceLse: &ufspb.AttachedDeviceLSE{
+						OsVersion: &ufspb.OSVersion{
+							Value:       "dummy_value",
+							Description: "dummy_description",
+							Image:       "dummy_image",
+						},
+						AssociatedHostname: associatedHostname,
+					},
+				},
+				UpdateTime: &timestamppb.Timestamp{
+					Seconds: 0,
+					Nanos:   0,
+				},
+				Schedulable: true,
+			},
+			Machine: &ufspb.Machine{
+				SerialNumber: serialNumber,
+				Device: &ufspb.Machine_AttachedDevice{
+					AttachedDevice: &ufspb.AttachedDevice{
+						Model:        model,
+						BuildTarget:  board,
+						Manufacturer: "dummy_manufacturer",
+						DeviceType:   ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_PHONE,
+					},
+				},
+			},
+		}
+		input := ufsapi.GetDeviceDataResponse{
+			ResourceType: ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE,
+			Resource: &ufsapi.GetDeviceDataResponse_AttachedDeviceData{
+				AttachedDeviceData: &attachedDevice,
+			},
+		}
+
+		got := hostInfoFromDeviceInfo(&input)
+
+		So(got, ShouldNotBeNil)
+
+		want := &skylab_local_state.AutotestHostInfo{
+			Attributes: map[string]string{},
+			Labels: []string{
+				"associated_hostname:" + associatedHostname,
+				"board:" + board,
+				"model:" + model,
+				"name:" + hostname,
+				"serial_number:" + serialNumber,
+			},
+			SerializerVersion: 1,
+		}
+
+		sort.Strings(got.Labels)
+		sort.Strings(want.Labels)
 
 		So(want, ShouldResembleProto, got)
 	})
@@ -91,7 +249,7 @@ func TestAddBotStateToHostInfo(t *testing.T) {
 			},
 		}
 
-		addDutStateToHostInfo(hostInfo, s)
+		addDeviceStateToHostInfo(hostInfo, s)
 
 		// There's no guarantee on the order.
 		sort.Strings(hostInfo.Labels)

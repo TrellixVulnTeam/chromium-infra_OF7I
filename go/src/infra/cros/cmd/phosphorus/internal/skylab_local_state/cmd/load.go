@@ -17,16 +17,13 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"infra/cros/cmd/phosphorus/internal/botcache"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/inv"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/location"
 	"infra/cros/cmd/phosphorus/internal/skylab_local_state/ufs"
-	"infra/libs/skylab/inventory"
-	"infra/libs/skylab/inventory/autotest/labels"
-	ufspb "infra/unifiedfleet/api/v1/models"
+	androidlbls "infra/libs/skylab/inventory/autotest/attached_device"
+	chromeoslbls "infra/libs/skylab/inventory/autotest/labels"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
 
@@ -118,34 +115,30 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
-	duts, err := getDutsInfo(ctx, client, request.DutName)
+	deviceInfos, err := getAllDevicesInfo(ctx, client, request.DutName)
 	if err != nil {
 		return err
 	}
 
 	resultsDir := location.ResultsDir(request.Config.AutotestDir, request.RunId, request.TestId)
 
-	for _, dut := range duts {
-		bcs := botcache.Store{
-			CacheDir: request.Config.AutotestDir,
-			Name:     *dut.GetCommon().Hostname,
-		}
-		dutState, err := bcs.Load()
+	for _, deviceInfo := range deviceInfos {
+		deviceState, err := getDeviceState(request.Config.AutotestDir, deviceInfo)
 		if err != nil {
 			return err
 		}
-		hostInfo, err := getFullHostInfo(ctx, dut, dutState)
+		hostInfo, err := getFullHostInfo(ctx, deviceInfo, deviceState)
 		if err != nil {
 			return err
 		}
-		if err := writeHostInfo(resultsDir, *dut.GetCommon().Hostname, hostInfo); err != nil {
+		if err := writeHostInfo(resultsDir, getHostname(deviceInfo), hostInfo); err != nil {
 			return err
 		}
 	}
 
 	response := skylab_local_state.LoadResponse{
 		ResultsDir:  resultsDir,
-		DutTopology: createDutTopology(duts),
+		DutTopology: createDutTopology(deviceInfos),
 	}
 
 	return writeJSONPb(c.outputPath, &response)
@@ -185,94 +178,89 @@ func validateLoadRequest(request *skylab_local_state.LoadRequest) error {
 	return nil
 }
 
-// getDutsInfo fetches inventory entry of all DUTs by a resource name from UFS.
-func getDutsInfo(ctx context.Context, client ufsapi.FleetClient, resourceName string) ([]*inventory.DeviceUnderTest, error) {
-	dut, dutFound, err := getDutInfo(ctx, client, resourceName)
+// getAllDevicesInfo fetches inventory entry of all DUTs / attached devices by a resource name from UFS.
+func getAllDevicesInfo(ctx context.Context, client ufsapi.FleetClient, resourceName string) ([]*ufsapi.GetDeviceDataResponse, error) {
+	resp, err := getDeviceInfo(ctx, client, resourceName)
 	if err != nil {
 		return nil, err
 	}
-	if dutFound {
-		// If dut found here, meaning it's a single DUT use case, so we can just return here.
-		return []*inventory.DeviceUnderTest{dut}, nil
+	if resp.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT {
+		return getSchedulingUnitInfo(ctx, client, resp.GetSchedulingUnit().GetMachineLSEs())
 	}
-
-	// If dut not found, then try scheduling unit as it's likely to be a multi-DUT use case.
-	su, suErr := getSchedulingUnit(ctx, client, resourceName)
-	if suErr != nil {
-		return nil, errors.Annotate(suErr, "get DUTs info").Err()
-	}
-
-	var duts []*inventory.DeviceUnderTest
-	// Get DUT info for every DUTs in the scheduling unit.
-	for _, hostname := range su.GetMachineLSEs() {
-		suDut, dutFound, suDutErr := getDutInfo(ctx, client, hostname)
-		if suDutErr != nil {
-			return nil, errors.Annotate(err, "get DUTs info").Err()
-		}
-		if !dutFound {
-			return nil, fmt.Errorf("get DUTs info: dut %s not found from UFS", hostname)
-		}
-		duts = append(duts, suDut)
-	}
-	return duts, nil
+	return appendDeviceData([]*ufsapi.GetDeviceDataResponse{}, resp, resourceName)
 }
 
-// getDutInfo fetches the DUT inventory entry from UFS.
-// The bool in return values indicate if a DUT is found in UFS as this method won't raise an error
-// if the device is not exist.
-func getDutInfo(ctx context.Context, client ufsapi.FleetClient, dutName string) (*inventory.DeviceUnderTest, bool, error) {
+// getSchedulingUnitInfo fetches device info for every DUT / attached device in the scheduling unit.
+func getSchedulingUnitInfo(ctx context.Context, client ufsapi.FleetClient, hostnames []string) ([]*ufsapi.GetDeviceDataResponse, error) {
+	// Get device info for every DUT / attached device in the scheduling unit.
+	var deviceData []*ufsapi.GetDeviceDataResponse
+	for _, hostname := range hostnames {
+		resp, err := getDeviceInfo(ctx, client, hostname)
+		if err != nil {
+			return nil, err
+		}
+		if deviceData, err = appendDeviceData(deviceData, resp, hostname); err != nil {
+			return nil, err
+		}
+	}
+	return deviceData, nil
+}
+
+// getDeviceInfo fetches a device entry from UFS.
+func getDeviceInfo(ctx context.Context, client ufsapi.FleetClient, hostname string) (*ufsapi.GetDeviceDataResponse, error) {
 	osctx := ufs.SetupContext(ctx, ufsutil.OSNamespace)
-	req := &ufsapi.GetChromeOSDeviceDataRequest{
-		Hostname: dutName,
+	req := &ufsapi.GetDeviceDataRequest{
+		Hostname: hostname,
 	}
-	resp, err := client.GetChromeOSDeviceData(osctx, req)
+	resp, err := client.GetDeviceData(osctx, req)
 	if err != nil {
-		// In a multi-DUT use case we may hit not found due to provide a scheduling unit name.
-		// We can forgive this error here and let the upper layer logic to handle it.
-		if status.Code(err) == codes.NotFound {
-			return nil, false, nil
-		}
-		return nil, false, errors.Annotate(err, "get DUT info for %s", dutName).Err()
+		return nil, errors.Annotate(err, "get device info for %s", hostname).Err()
 	}
-	return resp.GetDutV1(), true, nil
+	return resp, nil
 }
 
-// getSchedulingUnit fetches the scheduling unit entry from UFS.
-func getSchedulingUnit(ctx context.Context, client ufsapi.FleetClient, unitName string) (*ufspb.SchedulingUnit, error) {
-	osctx := ufs.SetupContext(ctx, ufsutil.OSNamespace)
-	req := &ufsapi.GetSchedulingUnitRequest{
-		Name: ufsutil.AddPrefix(ufsutil.SchedulingUnitCollection, unitName),
+// appendDeviceData appends a device data response to the list of responses
+// after validation. Returns error if the device type is different from ChromeOs
+// or Android device.
+func appendDeviceData(deviceData []*ufsapi.GetDeviceDataResponse, resp *ufsapi.GetDeviceDataResponse, hostname string) ([]*ufsapi.GetDeviceDataResponse, error) {
+	switch resp.GetResourceType() {
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
+		fallthrough
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
+		return append(deviceData, resp), nil
 	}
-	su, err := client.GetSchedulingUnit(osctx, req)
-	if err != nil {
-		return nil, errors.Annotate(err, "get Scheduling unit info for %s", unitName).Err()
-	}
-
-	return su, nil
+	return nil, fmt.Errorf("invalid device type for %s", hostname)
 }
 
-// hostInfoFromDutInfo extracts attributes and labels from an inventory
+// hostInfoFromDeviceInfo extracts attributes and labels from an inventory
 // entry and assembles them into a host info file proto.
-func hostInfoFromDutInfo(dut *inventory.DeviceUnderTest) *skylab_local_state.AutotestHostInfo {
-	i := skylab_local_state.AutotestHostInfo{
-		Attributes:        map[string]string{},
-		Labels:            labels.Convert(dut.Common.GetLabels()),
+func hostInfoFromDeviceInfo(deviceInfo *ufsapi.GetDeviceDataResponse) *skylab_local_state.AutotestHostInfo {
+	labels := make([]string, 0)
+	attributes := make(map[string]string)
+	switch deviceInfo.GetResourceType() {
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
+		dut := deviceInfo.GetChromeOsDeviceData().GetDutV1()
+		labels = chromeoslbls.Convert(dut.Common.GetLabels())
+		for _, attribute := range dut.Common.GetAttributes() {
+			attributes[attribute.GetKey()] = attribute.GetValue()
+		}
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
+		labels = androidlbls.Convert(deviceInfo.GetAttachedDeviceData())
+	}
+	return &skylab_local_state.AutotestHostInfo{
+		Attributes:        attributes,
+		Labels:            labels,
 		SerializerVersion: currentSerializerVersion,
 	}
-
-	for _, attribute := range dut.Common.GetAttributes() {
-		i.Attributes[attribute.GetKey()] = attribute.GetValue()
-	}
-	return &i
 }
 
 // getDUTTopology fetches the DUT topology from the inventory server
-func getDUTTopology(ctx context.Context, dut *inventory.DeviceUnderTest) (*labapi.DutTopology, error) {
+func getDUTTopology(ctx context.Context, hostname string) (*labapi.DutTopology, error) {
 	invService, err := inv.NewClient()
 	if err != nil {
 		return nil, errors.Annotate(err, "Start InventoryServer client").Err()
 	}
-	dutid := &labapi.DutTopology_Id{Value: *dut.GetCommon().Hostname}
+	dutid := &labapi.DutTopology_Id{Value: hostname}
 	stream, err := invService.Client.GetDutTopology(ctx, &labapi.GetDutTopologyRequest{Id: dutid})
 	if err != nil {
 		return nil, errors.Annotate(err, "InventoryServer.GetDutTopology").Err()
@@ -286,9 +274,9 @@ func getDUTTopology(ctx context.Context, dut *inventory.DeviceUnderTest) (*labap
 	return response.GetSuccess().DutTopology, nil
 }
 
-// addDutStateToHostInfo adds provisionable labels and attributes from
+// addDeviceStateToHostInfo adds provisionable labels and attributes from
 // the bot state to the host info labels and attributes.
-func addDutStateToHostInfo(hostInfo *skylab_local_state.AutotestHostInfo, dutState *lab_platform.DutState) {
+func addDeviceStateToHostInfo(hostInfo *skylab_local_state.AutotestHostInfo, dutState *lab_platform.DutState) {
 	for label, value := range dutState.GetProvisionableLabels() {
 		hostInfo.Labels = append(hostInfo.Labels, label+":"+value)
 	}
@@ -310,11 +298,12 @@ func writeHostInfo(resultsDir string, dutName string, i *skylab_local_state.Auto
 }
 
 // getFullHostInfo aggregates data from local and admin services state into one hostinfo object
-func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
+func getFullHostInfo(ctx context.Context, deviceInfo *ufsapi.GetDeviceDataResponse, deviceState *lab_platform.DutState) (*skylab_local_state.AutotestHostInfo, error) {
 	var hostInfo *skylab_local_state.AutotestHostInfo
 	useDutTopo := os.Getenv("USE_DUT_TOPO")
 	if strings.ToLower(useDutTopo) == "true" {
-		dutTopo, err := getDUTTopology(ctx, dut)
+		hostname := getHostname(deviceInfo)
+		dutTopo, err := getDUTTopology(ctx, hostname)
 		// Output dutTopo to stdout during development
 		log.Printf(proto.MarshalTextString(dutTopo))
 		if err != nil {
@@ -333,25 +322,58 @@ func getFullHostInfo(ctx context.Context, dut *inventory.DeviceUnderTest, dutSta
 
 		// This is done only for testing purposes.
 		// TODO(b/201424819): Remove this part once testing is done.
-		old_hostInfo := hostInfoFromDutInfo(dut)
-		addDutStateToHostInfo(old_hostInfo, dutState)
+		oldHostInfo := hostInfoFromDeviceInfo(deviceInfo)
+		addDeviceStateToHostInfo(oldHostInfo, deviceState)
 		log.Printf("Old Host info:\n")
-		log.Printf(proto.MarshalTextString(old_hostInfo))
+		log.Printf(proto.MarshalTextString(oldHostInfo))
 	} else {
-		hostInfo = hostInfoFromDutInfo(dut)
-		addDutStateToHostInfo(hostInfo, dutState)
+		hostInfo = hostInfoFromDeviceInfo(deviceInfo)
+		addDeviceStateToHostInfo(hostInfo, deviceState)
 	}
 	return hostInfo, nil
 }
 
+// getHostname returns a hostname extracted from GetDeviceDataResponse proto
+func getHostname(deviceInfo *ufsapi.GetDeviceDataResponse) string {
+	if deviceInfo.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE {
+		return deviceInfo.GetChromeOsDeviceData().GetLabConfig().GetHostname()
+	}
+	return deviceInfo.GetAttachedDeviceData().GetLabConfig().GetHostname()
+}
+
+// getBoard returns a board name extracted from GetDeviceDataResponse proto
+func getBoard(deviceInfo *ufsapi.GetDeviceDataResponse) string {
+	if deviceInfo.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE {
+		return deviceInfo.GetChromeOsDeviceData().GetMachine().GetChromeosMachine().GetBuildTarget()
+	}
+	return deviceInfo.GetAttachedDeviceData().GetMachine().GetAttachedDevice().GetBuildTarget()
+}
+
+// getModel returns a DUT model extracted from GetDeviceDataResponse proto
+func getModel(deviceInfo *ufsapi.GetDeviceDataResponse) string {
+	if deviceInfo.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE {
+		return deviceInfo.GetChromeOsDeviceData().GetMachine().GetChromeosMachine().GetModel()
+	}
+	return deviceInfo.GetAttachedDeviceData().GetMachine().GetAttachedDevice().GetModel()
+}
+
+// getDeviceState returns a lab_platform.DutState object with a bot state cached on drone.
+func getDeviceState(autotestDir string, deviceInfo *ufsapi.GetDeviceDataResponse) (*lab_platform.DutState, error) {
+	bcs := botcache.Store{
+		CacheDir: autotestDir,
+		Name:     getHostname(deviceInfo),
+	}
+	return bcs.Load()
+}
+
 // createDutTopology construct a DutTopology will be wrapped into LoadResponse.
-func createDutTopology(duts []*inventory.DeviceUnderTest) []*skylab_local_state.Dut {
+func createDutTopology(deviceInfos []*ufsapi.GetDeviceDataResponse) []*skylab_local_state.Dut {
 	var dt []*skylab_local_state.Dut
-	for _, dut := range duts {
+	for _, deviceInfo := range deviceInfos {
 		dt = append(dt, &skylab_local_state.Dut{
-			Hostname: *dut.GetCommon().Hostname,
-			Board:    *dut.GetCommon().GetLabels().Board,
-			Model:    *dut.GetCommon().GetLabels().Model,
+			Hostname: getHostname(deviceInfo),
+			Board:    getBoard(deviceInfo),
+			Model:    getModel(deviceInfo),
 		})
 	}
 	return dt
@@ -361,9 +383,9 @@ func createDutTopology(duts []*inventory.DeviceUnderTest) []*skylab_local_state.
 func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_state.AutotestHostInfo, error) {
 	// Should always have one dut info as this being called for each dut individually.
 	if len(dutTopo.Duts) != 1 {
-		return nil, fmt.Errorf("Exactly one dut expected but found %d.", len(dutTopo.Duts))
+		return nil, fmt.Errorf("exactly one dut expected but found %d", len(dutTopo.Duts))
 	}
-	dut := dutTopo.Duts[0].GetChromeos()
+	dut := dutTopo.Duts[0]
 
 	// Add attributes
 	attrMap := make(map[string]string)
@@ -372,6 +394,22 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 	// Add labels
 	labels := make([]string, 0)
 
+	switch dut.GetDutType().(type) {
+	case *labapi.Dut_Chromeos:
+		labels = appendChromeOsLabels(labels, dut.GetChromeos())
+	case *labapi.Dut_Android_:
+		labels = appendAndroidLabels(labels, dut.GetAndroid())
+	}
+
+	return &skylab_local_state.AutotestHostInfo{
+		Attributes:        attrMap,
+		Labels:            labels,
+		SerializerVersion: currentSerializerVersion,
+	}, nil
+}
+
+// appendChromeOsLabels appends labels extracted from ChromeOS device.
+func appendChromeOsLabels(labels []string, dut *labapi.Dut_ChromeOS) []string {
 	// - Servo
 	servo := dut.GetServo()
 	if servo != nil {
@@ -379,7 +417,6 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 			labels = append(labels, "servo")
 		}
 	}
-
 	// - Chameleon
 	chameleon := dut.GetChameleon()
 	if chameleon != nil {
@@ -394,10 +431,8 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 			labels = append(labels, lv)
 		}
 	}
-
 	// - RPM
 	// - ExternalCamera
-
 	// - Audio
 	audio := dut.GetAudio()
 	if audio != nil {
@@ -405,13 +440,11 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 			labels = append(labels, "atrus")
 		}
 	}
-
 	// - Wifi
 	wifi := dut.GetWifi()
 	if wifi != nil {
 		labels = append(labels, "wificell")
 	}
-
 	// - Touch
 	touch := dut.GetTouch()
 	if touch != nil {
@@ -419,21 +452,40 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 			labels = append(labels, "mimo")
 		}
 	}
-
 	// - Camerabox
 	camerabox := dut.GetCamerabox()
 	if camerabox != nil {
 		facing := camerabox.GetFacing()
 		labels = append(labels, "camerabox_facing:"+strings.ToLower(facing.String()))
 	}
-
 	// - Cable
 	// - Cellular
+	return labels
+}
 
-	return &skylab_local_state.AutotestHostInfo{
-		Attributes:        attrMap,
-		Labels:            labels,
-		SerializerVersion: currentSerializerVersion,
-	}, nil
-
+// appendAndroidLabels appends labels extracted from Android device.
+func appendAndroidLabels(labels []string, dut *labapi.Dut_Android) []string {
+	// Associated hostname.
+	if hostname := dut.GetAssociatedHostname(); hostname != nil {
+		if hostname.GetAddress() != "" {
+			labels = append(labels, "associated_hostname:"+strings.ToLower(hostname.GetAddress()))
+		}
+	}
+	// Android DUT name.
+	if name := dut.GetName(); name != "" {
+		labels = append(labels, "name:"+strings.ToLower(name))
+	}
+	// Android DUT serial number.
+	if serialNumber := dut.GetSerialNumber(); serialNumber != "" {
+		labels = append(labels, "serial_number:"+strings.ToLower(serialNumber))
+	}
+	// Android DUT model codename.
+	if model := dut.GetDutModel().GetModelName(); model != "" {
+		labels = append(labels, "model:"+strings.ToLower(model))
+	}
+	// Board name
+	if board := dut.GetDutModel().GetBuildTarget(); board != "" {
+		labels = append(labels, "board:"+strings.ToLower(board))
+	}
+	return labels
 }
