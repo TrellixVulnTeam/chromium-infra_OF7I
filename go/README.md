@@ -67,6 +67,14 @@ go install ./cmd/bqupload
 bqupload --help            # infra/go/bin is also in $PATH
 ```
 
+To see what environment is being changed, run `./bootstrap.py` with a
+positional argument that is path to a file. Passing `-` instead of file
+path would print to standard output.
+
+```shell
+./bootstrap.py -
+```
+
 Alternatively `go/env.py` can be used as a wrapping command that sets up an
 environment and invokes some other process. It is particularly useful on
 Windows.
