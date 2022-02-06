@@ -316,7 +316,7 @@ export class RuleSection extends LitElement {
         }
         const event = new CustomEvent<RuleChangedEvent>('rulechanged', {
             detail: {
-                predicateLastUpdated: this.rule.predicateLastUpdatedTime,
+                predicateLastUpdated: this.rule.predicateLastUpdateTime,
             },
         });
         this.dispatchEvent(event);
