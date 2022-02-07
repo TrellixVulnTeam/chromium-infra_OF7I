@@ -6890,6 +6890,18 @@ wheel: <
 
 * *universal*
 
+### 2.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorboard-py3"
+  version: "version:2.7.0"
+>
+```
+
+
+* *universal*
+
 ## **tensorboard-data-server-py3**
 
 ### 0.6.0
@@ -7020,6 +7032,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/tensorflow-estimator-py2_py3"
   version: "version:2.6.0"
+>
+```
+
+
+* *universal*
+
+## **tensorflow-estimator-py3**
+
+### 2.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-estimator-py3"
+  version: "version:2.7.0"
 >
 ```
 
