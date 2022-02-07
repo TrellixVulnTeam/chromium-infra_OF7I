@@ -5,22 +5,25 @@
 package cmd
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 	"testing"
+
+	"infra/libs/skylab/inventory"
+	ufspb "infra/unifiedfleet/api/v1/models"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
 
 	. "github.com/smartystreets/goconvey/convey"
 	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"infra/libs/skylab/inventory"
-	ufspb "infra/unifiedfleet/api/v1/models"
-	ufsapi "infra/unifiedfleet/api/v1/rpc"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 )
 
-func TestConvertAttachedDeviceDutTopologyToHostInfo(t *testing.T) {
+func TestConvertAttachedDeviceDutTopologyToHostInfoForAndroid(t *testing.T) {
 	Convey("When attached device DUT topology is converted to host info the result is correct.", t, func() {
 		associatedHostname := "dummy_associated_hostname"
 		board := "dummy_board"
@@ -66,6 +69,87 @@ func TestConvertAttachedDeviceDutTopologyToHostInfo(t *testing.T) {
 				"model:" + model,
 				"name:" + hostname,
 				"serial_number:" + serialNumber,
+			},
+			SerializerVersion: 1,
+		}
+
+		sort.Strings(got.Labels)
+		sort.Strings(want.Labels)
+
+		So(want, ShouldResembleProto, got)
+	})
+}
+
+func TestConvertAttachedDeviceDutTopologyToHostInfoForChromeOS(t *testing.T) {
+	Convey("When attached device DUT topology is converted to host info the result is correct.", t, func() {
+		board := "dummy_board"
+		model := "dummy_model"
+		servo_address := "dummy_servo_ip_address"
+		servo_port := 12345
+		input := labapi.DutTopology{
+			Id: &labapi.DutTopology_Id{
+				Value: "dummy_dut_topology_id",
+			},
+			Duts: []*labapi.Dut{
+				{
+					Id: &labapi.Dut_Id{
+						Value: "dummy_dut_id",
+					},
+					DutType: &labapi.Dut_Chromeos{
+						Chromeos: &labapi.Dut_ChromeOS{
+							DutModel: &labapi.DutModel{
+								BuildTarget: board,
+								ModelName:   model,
+							},
+							Servo: &labapi.Servo{
+								ServodAddress: &labapi.IpEndpoint{
+									Address: servo_address,
+									Port:    int32(servo_port),
+								},
+							},
+							Chameleon: &labapi.Chameleon{
+								Peripherals: []labapi.Chameleon_Peripheral{
+									labapi.Chameleon_PREIPHERAL_UNSPECIFIED,
+								},
+								AudioBoard: true,
+							},
+							Audio: &labapi.Audio{
+								Atrus: true,
+							},
+							Wifi: &labapi.Wifi{
+								Environment: labapi.Wifi_ENVIRONMENT_UNSPECIFIED,
+							},
+							Touch: &labapi.Touch{
+								Mimo: true,
+							},
+							Camerabox: &labapi.Camerabox{
+								Facing: labapi.Camerabox_FACING_UNSPECIFIED,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		got, err := convertDutTopologyToHostInfo(&input)
+
+		So(got, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+
+		want := &skylab_local_state.AutotestHostInfo{
+			Attributes: map[string]string{
+				"servo_host": servo_address,
+				"servo_port": fmt.Sprintf("%v", servo_port),
+			},
+			Labels: []string{
+				"board:" + board,
+				"model:" + model,
+				"chameleon",
+				"chameleon:" + strings.ToLower(labapi.Chameleon_Peripheral_name[int32(labapi.Chameleon_PREIPHERAL_UNSPECIFIED)]),
+				"audio_board",
+				"atrus",
+				"mimo",
+				"camerabox_facing:" + strings.ToLower(labapi.Camerabox_Facing_name[int32(labapi.Camerabox_FACING_UNSPECIFIED)]),
 			},
 			SerializerVersion: 1,
 		}

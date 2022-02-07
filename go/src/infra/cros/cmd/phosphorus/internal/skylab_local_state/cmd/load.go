@@ -387,18 +387,15 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 	}
 	dut := dutTopo.Duts[0]
 
-	// Add attributes
+	// Add attributes & labels
 	attrMap := make(map[string]string)
-	// Attributes will be added later
-
-	// Add labels
 	labels := make([]string, 0)
 
 	switch dut.GetDutType().(type) {
 	case *labapi.Dut_Chromeos:
-		labels = appendChromeOsLabels(labels, dut.GetChromeos())
+		attrMap, labels = appendChromeOsLabels(attrMap, labels, dut.GetChromeos())
 	case *labapi.Dut_Android_:
-		labels = appendAndroidLabels(labels, dut.GetAndroid())
+		attrMap, labels = appendAndroidLabels(attrMap, labels, dut.GetAndroid())
 	}
 
 	return &skylab_local_state.AutotestHostInfo{
@@ -409,62 +406,74 @@ func convertDutTopologyToHostInfo(dutTopo *labapi.DutTopology) (*skylab_local_st
 }
 
 // appendChromeOsLabels appends labels extracted from ChromeOS device.
-func appendChromeOsLabels(labels []string, dut *labapi.Dut_ChromeOS) []string {
+func appendChromeOsLabels(attrMap map[string]string, labels []string, dut *labapi.Dut_ChromeOS) (map[string]string, []string) {
+	// - DutModel
+	// - DutModel.BuildTarget (Board name)
+	if board := dut.GetDutModel().GetBuildTarget(); board != "" {
+		labels = append(labels, "board:"+strings.ToLower(board))
+	}
+	// - DutModel.ModelName (ChromeOS DUT model name)
+	if model := dut.GetDutModel().GetModelName(); model != "" {
+		labels = append(labels, "model:"+strings.ToLower(model))
+	}
+
 	// - Servo
-	servo := dut.GetServo()
-	if servo != nil {
+	if servo := dut.GetServo(); servo != nil {
 		if servo.GetPresent() {
 			labels = append(labels, "servo")
 		}
+
+		if servoIpEndpoint := servo.GetServodAddress(); servoIpEndpoint != nil {
+			if address := servoIpEndpoint.GetAddress(); address != "" {
+				attrMap["servo_host"] = strings.ToLower(address)
+			}
+			if port := servoIpEndpoint.GetPort(); port != 0 {
+				attrMap["servo_port"] = fmt.Sprintf("%v", port)
+			}
+		}
 	}
 	// - Chameleon
-	chameleon := dut.GetChameleon()
-	if chameleon != nil {
-		labels = append(labels, "chameleon")
-
+	if chameleon := dut.GetChameleon(); chameleon != nil {
 		if chameleon.AudioBoard {
 			labels = append(labels, "audio_board")
 		}
 
-		for _, v := range chameleon.GetPeripherals() {
-			lv := "chameleon:" + strings.ToLower(v.String())
-			labels = append(labels, lv)
+		if chamelonPeriphs := chameleon.GetPeripherals(); len(chamelonPeriphs) > 0 {
+			labels = append(labels, "chameleon")
+			for _, v := range chamelonPeriphs {
+				lv := "chameleon:" + strings.ToLower(v.String())
+				labels = append(labels, lv)
+			}
 		}
 	}
 	// - RPM
 	// - ExternalCamera
 	// - Audio
-	audio := dut.GetAudio()
-	if audio != nil {
+	if audio := dut.GetAudio(); audio != nil {
 		if audio.GetAtrus() {
 			labels = append(labels, "atrus")
 		}
 	}
 	// - Wifi
-	wifi := dut.GetWifi()
-	if wifi != nil {
-		labels = append(labels, "wificell")
-	}
 	// - Touch
-	touch := dut.GetTouch()
-	if touch != nil {
+
+	if touch := dut.GetTouch(); touch != nil {
 		if touch.GetMimo() {
 			labels = append(labels, "mimo")
 		}
 	}
 	// - Camerabox
-	camerabox := dut.GetCamerabox()
-	if camerabox != nil {
+	if camerabox := dut.GetCamerabox(); camerabox != nil {
 		facing := camerabox.GetFacing()
 		labels = append(labels, "camerabox_facing:"+strings.ToLower(facing.String()))
 	}
 	// - Cable
 	// - Cellular
-	return labels
+	return attrMap, labels
 }
 
 // appendAndroidLabels appends labels extracted from Android device.
-func appendAndroidLabels(labels []string, dut *labapi.Dut_Android) []string {
+func appendAndroidLabels(attrMap map[string]string, labels []string, dut *labapi.Dut_Android) (map[string]string, []string) {
 	// Associated hostname.
 	if hostname := dut.GetAssociatedHostname(); hostname != nil {
 		if hostname.GetAddress() != "" {
@@ -487,5 +496,5 @@ func appendAndroidLabels(labels []string, dut *labapi.Dut_Android) []string {
 	if board := dut.GetDutModel().GetBuildTarget(); board != "" {
 		labels = append(labels, "board:"+strings.ToLower(board))
 	}
-	return labels
+	return attrMap, labels
 }
