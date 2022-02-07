@@ -144,6 +144,7 @@ class Builder(object):
             wheel_plat=self._arch_map.get(plat.name, plat.wheel_plat),
         ),)
     return wheel._replace(
+        plat=plat_wheel.plat,
         filename=plat_wheel.default_filename(),
     )
 
@@ -234,7 +235,8 @@ def BuildPackageFromPyPiWheel(system, wheel):
     util.check_run(
         system,
         None,
-        tdir, [
+        tdir,
+        [
             interpreter,
             '-m',
             'pip',
@@ -243,7 +245,7 @@ def BuildPackageFromPyPiWheel(system, wheel):
             '--only-binary=:all:',
             '--abi=%s' % (wheel.abi,),
             '--python-version=%s' % (wheel.pyversion,),
-            '--platform=%s' % (wheel.primary_platform,),
+        ] + ['--platform=%s' % p for p in wheel.platform] + [
             '%s==%s' % (wheel.spec.name, wheel.spec.version),
         ],
         cwd=tdir,
