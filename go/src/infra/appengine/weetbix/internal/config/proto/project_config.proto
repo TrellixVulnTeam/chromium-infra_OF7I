@@ -9,11 +9,17 @@ package weetbix.v1;
 import "google/protobuf/timestamp.proto";
 
 import "infra/appengine/weetbix/internal/config/proto/test_variant_analysis_config.proto";
+import "infra/appengine/weetbix/proto/v1/project.proto";
+
 
 option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
 
 // ProjectConfig is the project-specific configuration data for Weetbix.
 message ProjectConfig {
+
+  // The project data (eg. display name).
+  Project project = 6;
+
   // The monorail configuration to use when filing bugs.
   MonorailProject monorail = 1;
 

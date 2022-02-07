@@ -9,7 +9,7 @@ import "google.golang.org/protobuf/types/descriptorpb"
 func init() {
 	discovery.RegisterDescriptorSetCompressed(
 		[]string{
-			"weetbix.v1.Rules",
+			"weetbix.v1.Projects", "weetbix.v1.Rules",
 		},
 		[]byte{31, 139,
 			8, 0, 0, 0, 0, 0, 0, 255, 228, 253, 123, 120, 100, 199,
@@ -2439,7 +2439,7 @@ func init() {
 // Do NOT modify the returned descriptor.
 func FileDescriptorSet() *descriptorpb.FileDescriptorSet {
 	// We just need ONE of the service names to look up the FileDescriptorSet.
-	ret, err := discovery.GetDescriptorSet("weetbix.v1.Rules")
+	ret, err := discovery.GetDescriptorSet("weetbix.v1.Projects")
 	if err != nil {
 		panic(err)
 	}
