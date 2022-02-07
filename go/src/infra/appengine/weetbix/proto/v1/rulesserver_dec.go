@@ -90,3 +90,20 @@ func (s *DecoratedRules) Update(ctx context.Context, req *UpdateRuleRequest) (rs
 	}
 	return
 }
+
+func (s *DecoratedRules) LookupBug(ctx context.Context, req *LookupBugRequest) (rsp *LookupBugResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "LookupBug", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.LookupBug(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "LookupBug", rsp, err)
+	}
+	return
+}

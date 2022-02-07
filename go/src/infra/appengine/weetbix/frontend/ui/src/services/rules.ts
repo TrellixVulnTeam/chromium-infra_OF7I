@@ -35,6 +35,10 @@ export class RulesService {
     async update(request: UpdateRuleRequest): Promise<Rule> {
         return this.client.call(RulesService.SERVICE, 'Update', request, {});
     }
+
+    async lookupBug(request: LookupBugRequest): Promise<LookupBugResponse> {
+        return this.client.call(RulesService.SERVICE, 'LookupBug', request, {});
+    }
 }
 
 export interface GetRuleRequest {
@@ -112,4 +116,35 @@ export interface RuleToUpdate {
     bug?: AssociatedBugToUpdate;
     isActive?: boolean;
     sourceCluster?: ClusterId;
+}
+
+export interface LookupBugRequest {
+    system: string;
+    id: string;
+}
+
+export interface LookupBugResponse {
+    // The looked up rule.
+    // Format: projects/{project}/rules/{rule_id}.
+    rule: string;
+}
+
+const ruleNameRE = /^projects\/(.*)\/rules\/(.*)$/
+
+// RuleKey represents the key parts of a rule resource name.
+export interface RuleKey {
+    project: string;
+    ruleId: string;
+}
+
+// parseRuleName parses a rule resource name into its key parts.
+export function parseRuleName(name: string):RuleKey {
+    const results = name.match(ruleNameRE)
+    if (results == null) {
+        throw new Error('invalid rule resource name: ' + name)
+    }
+    return {
+        project: results[1],
+        ruleId: results[2],
+    }
 }

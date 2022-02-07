@@ -263,6 +263,28 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 	return createRulePB(updatedRule, cfg.Config), nil
 }
 
+// LookupBug looks up the rule associated with the given bug.
+func (*Rules) LookupBug(ctx context.Context, req *pb.LookupBugRequest) (*pb.LookupBugResponse, error) {
+	bug := bugs.BugID{
+		System: req.System,
+		ID:     req.Id,
+	}
+	if err := bug.Validate(); err != nil {
+		return nil, validationError(err)
+	}
+	rule, err := rules.ReadByBug(span.Single(ctx), bug)
+	if err != nil {
+		if err == rules.NotExistsErr {
+			return nil, appstatus.Error(codes.NotFound, "no rule with that bug exists")
+		}
+		// This will result in an internal error being reported to the caller.
+		return nil, errors.Annotate(err, "reading rule by bug %s:%s", bug.System, bug.ID).Err()
+	}
+	return &pb.LookupBugResponse{
+		Rule: ruleName(rule.Project, rule.RuleID),
+	}, nil
+}
+
 // parseRuleName parses a rule resource name into its constituent ID parts.
 func parseRuleName(name string) (project string, ruleID string, err error) {
 	match := RuleNameRe.FindStringSubmatch(name)
@@ -281,13 +303,13 @@ func parseProjectName(name string) (project string, err error) {
 	return match[1], nil
 }
 
-func createRuleName(project string, ruleID string) string {
+func ruleName(project string, ruleID string) string {
 	return fmt.Sprintf("projects/%s/rules/%s", project, ruleID)
 }
 
 func createRulePB(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) *pb.Rule {
 	return &pb.Rule{
-		Name:           createRuleName(r.Project, r.RuleID),
+		Name:           ruleName(r.Project, r.RuleID),
 		Project:        r.Project,
 		RuleId:         r.RuleID,
 		RuleDefinition: r.RuleDefinition,

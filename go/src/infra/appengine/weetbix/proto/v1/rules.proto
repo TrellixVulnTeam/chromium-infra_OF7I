@@ -34,6 +34,11 @@ service Rules {
   // Updates a rule.
   // Designed to conform to https://google.aip.dev/134.
   rpc Update(UpdateRuleRequest) returns (Rule) {};
+
+  // Looks up the rule associated with a given bug, without knowledge
+  // of the Weetbix project the rule is in.
+  // Designed to conform to https://google.aip.dev/136.
+  rpc LookupBug(LookupBugRequest) returns (LookupBugResponse) {};
 }
 
 // A rule associating failures with a bug.
@@ -146,4 +151,23 @@ message UpdateRuleRequest {
   // If an etag is provided and does not match the current etag of the rule,
   // update will be blocked and an ABORTED error will be returned.
   string etag = 3;
+}
+
+message LookupBugRequest {
+  // System is the bug tracking system of the bug. This is either
+  // "monorail" or "buganizer".
+  string system = 1
+    [(google.api.field_behavior) = REQUIRED];
+
+  // Id is the bug tracking system-specific identity of the bug.
+  // For monorail, the scheme is {project}/{numeric_id}, for
+  // buganizer the scheme is {numeric_id}.
+  string id = 2
+    [(google.api.field_behavior) = REQUIRED];
+}
+
+message LookupBugResponse {
+  // The rule corresponding to the requested bug.
+  // Format: projects/{project}/rules/{rule_id}.
+  string rule = 1;
 }

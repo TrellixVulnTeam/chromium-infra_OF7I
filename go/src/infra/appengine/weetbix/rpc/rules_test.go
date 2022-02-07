@@ -391,5 +391,31 @@ func TestRules(t *testing.T) {
 				})
 			})
 		})
+		Convey("LookupBug", func() {
+			Convey("Exists", func() {
+				request := &pb.LookupBugRequest{
+					System: ruleOne.BugID.System,
+					Id:     ruleOne.BugID.ID,
+				}
+
+				response, err := srv.LookupBug(ctx, request)
+				So(err, ShouldBeNil)
+				So(response, ShouldResembleProto, &pb.LookupBugResponse{
+					Rule: fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleOne.RuleID),
+				})
+			})
+			Convey("Not Exists", func() {
+				request := &pb.LookupBugRequest{
+					System: "monorail",
+					Id:     "notexists/1",
+				}
+
+				response, err := srv.LookupBug(ctx, request)
+				st, ok := appstatus.Get(err)
+				So(ok, ShouldBeTrue)
+				So(st.Code(), ShouldEqual, codes.NotFound)
+				So(response, ShouldBeNil)
+			})
+		})
 	})
 }

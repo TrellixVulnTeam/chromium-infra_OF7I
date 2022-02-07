@@ -6,6 +6,7 @@ import './styles/style.css';
 
 import { Context, Router } from '@vaadin/router';
 import './element/bugs_table.ts';
+import './element/bug_page.ts';
 import './element/cluster_table.ts';
 import './element/cluster_page.ts';
 import './element/new_rule_page.ts';
@@ -21,6 +22,7 @@ const serverRoute = (ctx: Context) => { window.location.pathname = ctx.pathname;
 router.setRoutes([
     { path: '/auth/(.*)', action: serverRoute },  // For logout links.
     { path: '/', component: 'cluster-table' },
+    { path: '/b/:bugTracker/:id', component: 'bug-page' },
     { path: '/p/:project/rules/new', component: 'new-rule-page' },
     { path: '/p/:project/rules/:id', component: 'cluster-page' },
     { path: '/p/:project/clusters/:algorithm/:id', component: 'cluster-page' },

@@ -479,6 +479,115 @@ func (x *UpdateRuleRequest) GetEtag() string {
 	return ""
 }
 
+type LookupBugRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// System is the bug tracking system of the bug. This is either
+	// "monorail" or "buganizer".
+	System string `protobuf:"bytes,1,opt,name=system,proto3" json:"system,omitempty"`
+	// Id is the bug tracking system-specific identity of the bug.
+	// For monorail, the scheme is {project}/{numeric_id}, for
+	// buganizer the scheme is {numeric_id}.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *LookupBugRequest) Reset() {
+	*x = LookupBugRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LookupBugRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LookupBugRequest) ProtoMessage() {}
+
+func (x *LookupBugRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LookupBugRequest.ProtoReflect.Descriptor instead.
+func (*LookupBugRequest) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_rules_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LookupBugRequest) GetSystem() string {
+	if x != nil {
+		return x.System
+	}
+	return ""
+}
+
+func (x *LookupBugRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type LookupBugResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The rule corresponding to the requested bug.
+	// Format: projects/{project}/rules/{rule_id}.
+	Rule string `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule,omitempty"`
+}
+
+func (x *LookupBugResponse) Reset() {
+	*x = LookupBugResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LookupBugResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LookupBugResponse) ProtoMessage() {}
+
+func (x *LookupBugResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LookupBugResponse.ProtoReflect.Descriptor instead.
+func (*LookupBugResponse) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_rules_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LookupBugResponse) GetRule() string {
+	if x != nil {
+		return x.Rule
+	}
+	return ""
+}
+
 var File_infra_appengine_weetbix_proto_v1_rules_proto protoreflect.FileDescriptor
 
 var file_infra_appengine_weetbix_proto_v1_rules_proto_rawDesc = []byte{
@@ -557,27 +666,39 @@ var file_infra_appengine_weetbix_proto_v1_rules_proto_rawDesc = []byte{
 	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x46, 0x69, 0x65, 0x6c, 0x64, 0x4d, 0x61, 0x73, 0x6b, 0x52, 0x0a,
 	0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4d, 0x61, 0x73, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x65, 0x74,
-	0x61, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x65, 0x74, 0x61, 0x67, 0x32, 0xff,
-	0x01, 0x0a, 0x05, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x12, 0x35, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12,
-	0x1a, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
+	0x61, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x65, 0x74, 0x61, 0x67, 0x22, 0x44,
+	0x0a, 0x10, 0x4c, 0x6f, 0x6f, 0x6b, 0x75, 0x70, 0x42, 0x75, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12,
+	0x13, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x02, 0x69, 0x64, 0x22, 0x27, 0x0a, 0x11, 0x4c, 0x6f, 0x6f, 0x6b, 0x75, 0x70, 0x42, 0x75,
+	0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x75, 0x6c,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x75, 0x6c, 0x65, 0x32, 0xcb, 0x02,
+	0x0a, 0x05, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x12, 0x35, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x1a,
+	0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52,
+	0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x77, 0x65, 0x65,
+	0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6c, 0x65, 0x22, 0x00, 0x12, 0x45,
+	0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x1c, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76,
+	0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x12,
+	0x1d, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10,
+	0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6c, 0x65,
+	0x22, 0x00, 0x12, 0x3b, 0x0a, 0x06, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x1d, 0x2e, 0x77,
+	0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
 	0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x77, 0x65,
 	0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6c, 0x65, 0x22, 0x00, 0x12,
-	0x45, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x1c, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e,
-	0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
-	0x12, 0x1d, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x10, 0x2e, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6c,
-	0x65, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x06, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x1d, 0x2e,
-	0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x77,
-	0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6c, 0x65, 0x22, 0x00,
-	0x42, 0x2c, 0x5a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67,
-	0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x4a, 0x0a, 0x09, 0x4c, 0x6f, 0x6f, 0x6b, 0x75, 0x70, 0x42, 0x75, 0x67, 0x12, 0x1c, 0x2e, 0x77,
+	0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x6f, 0x6f, 0x6b, 0x75, 0x70,
+	0x42, 0x75, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x77, 0x65, 0x65,
+	0x74, 0x62, 0x69, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x6f, 0x6f, 0x6b, 0x75, 0x70, 0x42, 0x75,
+	0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x2c, 0x5a, 0x2a, 0x69,
+	0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77,
+	0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76, 0x31, 0x3b,
+	0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -592,7 +713,7 @@ func file_infra_appengine_weetbix_proto_v1_rules_proto_rawDescGZIP() []byte {
 	return file_infra_appengine_weetbix_proto_v1_rules_proto_rawDescData
 }
 
-var file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_infra_appengine_weetbix_proto_v1_rules_proto_goTypes = []interface{}{
 	(*Rule)(nil),                  // 0: weetbix.v1.Rule
 	(*GetRuleRequest)(nil),        // 1: weetbix.v1.GetRuleRequest
@@ -600,31 +721,35 @@ var file_infra_appengine_weetbix_proto_v1_rules_proto_goTypes = []interface{}{
 	(*ListRulesResponse)(nil),     // 3: weetbix.v1.ListRulesResponse
 	(*CreateRuleRequest)(nil),     // 4: weetbix.v1.CreateRuleRequest
 	(*UpdateRuleRequest)(nil),     // 5: weetbix.v1.UpdateRuleRequest
-	(*AssociatedBug)(nil),         // 6: weetbix.v1.AssociatedBug
-	(*ClusterId)(nil),             // 7: weetbix.v1.ClusterId
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil), // 9: google.protobuf.FieldMask
+	(*LookupBugRequest)(nil),      // 6: weetbix.v1.LookupBugRequest
+	(*LookupBugResponse)(nil),     // 7: weetbix.v1.LookupBugResponse
+	(*AssociatedBug)(nil),         // 8: weetbix.v1.AssociatedBug
+	(*ClusterId)(nil),             // 9: weetbix.v1.ClusterId
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil), // 11: google.protobuf.FieldMask
 }
 var file_infra_appengine_weetbix_proto_v1_rules_proto_depIdxs = []int32{
-	6,  // 0: weetbix.v1.Rule.bug:type_name -> weetbix.v1.AssociatedBug
-	7,  // 1: weetbix.v1.Rule.source_cluster:type_name -> weetbix.v1.ClusterId
-	8,  // 2: weetbix.v1.Rule.create_time:type_name -> google.protobuf.Timestamp
-	8,  // 3: weetbix.v1.Rule.last_update_time:type_name -> google.protobuf.Timestamp
-	8,  // 4: weetbix.v1.Rule.predicate_last_update_time:type_name -> google.protobuf.Timestamp
+	8,  // 0: weetbix.v1.Rule.bug:type_name -> weetbix.v1.AssociatedBug
+	9,  // 1: weetbix.v1.Rule.source_cluster:type_name -> weetbix.v1.ClusterId
+	10, // 2: weetbix.v1.Rule.create_time:type_name -> google.protobuf.Timestamp
+	10, // 3: weetbix.v1.Rule.last_update_time:type_name -> google.protobuf.Timestamp
+	10, // 4: weetbix.v1.Rule.predicate_last_update_time:type_name -> google.protobuf.Timestamp
 	0,  // 5: weetbix.v1.ListRulesResponse.rules:type_name -> weetbix.v1.Rule
 	0,  // 6: weetbix.v1.CreateRuleRequest.rule:type_name -> weetbix.v1.Rule
 	0,  // 7: weetbix.v1.UpdateRuleRequest.rule:type_name -> weetbix.v1.Rule
-	9,  // 8: weetbix.v1.UpdateRuleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	11, // 8: weetbix.v1.UpdateRuleRequest.update_mask:type_name -> google.protobuf.FieldMask
 	1,  // 9: weetbix.v1.Rules.Get:input_type -> weetbix.v1.GetRuleRequest
 	2,  // 10: weetbix.v1.Rules.List:input_type -> weetbix.v1.ListRulesRequest
 	4,  // 11: weetbix.v1.Rules.Create:input_type -> weetbix.v1.CreateRuleRequest
 	5,  // 12: weetbix.v1.Rules.Update:input_type -> weetbix.v1.UpdateRuleRequest
-	0,  // 13: weetbix.v1.Rules.Get:output_type -> weetbix.v1.Rule
-	3,  // 14: weetbix.v1.Rules.List:output_type -> weetbix.v1.ListRulesResponse
-	0,  // 15: weetbix.v1.Rules.Create:output_type -> weetbix.v1.Rule
-	0,  // 16: weetbix.v1.Rules.Update:output_type -> weetbix.v1.Rule
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
+	6,  // 13: weetbix.v1.Rules.LookupBug:input_type -> weetbix.v1.LookupBugRequest
+	0,  // 14: weetbix.v1.Rules.Get:output_type -> weetbix.v1.Rule
+	3,  // 15: weetbix.v1.Rules.List:output_type -> weetbix.v1.ListRulesResponse
+	0,  // 16: weetbix.v1.Rules.Create:output_type -> weetbix.v1.Rule
+	0,  // 17: weetbix.v1.Rules.Update:output_type -> weetbix.v1.Rule
+	7,  // 18: weetbix.v1.Rules.LookupBug:output_type -> weetbix.v1.LookupBugResponse
+	14, // [14:19] is the sub-list for method output_type
+	9,  // [9:14] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -709,6 +834,30 @@ func file_infra_appengine_weetbix_proto_v1_rules_proto_init() {
 				return nil
 			}
 		}
+		file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LookupBugRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_weetbix_proto_v1_rules_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LookupBugResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -716,7 +865,7 @@ func file_infra_appengine_weetbix_proto_v1_rules_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_weetbix_proto_v1_rules_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -757,6 +906,10 @@ type RulesClient interface {
 	// Updates a rule.
 	// Designed to conform to https://google.aip.dev/134.
 	Update(ctx context.Context, in *UpdateRuleRequest, opts ...grpc.CallOption) (*Rule, error)
+	// Looks up the rule associated with a given bug, without knowledge
+	// of the Weetbix project the rule is in.
+	// Designed to conform to https://google.aip.dev/136.
+	LookupBug(ctx context.Context, in *LookupBugRequest, opts ...grpc.CallOption) (*LookupBugResponse, error)
 }
 type rulesPRPCClient struct {
 	client *prpc.Client
@@ -796,6 +949,15 @@ func (c *rulesPRPCClient) Create(ctx context.Context, in *CreateRuleRequest, opt
 func (c *rulesPRPCClient) Update(ctx context.Context, in *UpdateRuleRequest, opts ...grpc.CallOption) (*Rule, error) {
 	out := new(Rule)
 	err := c.client.Call(ctx, "weetbix.v1.Rules", "Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rulesPRPCClient) LookupBug(ctx context.Context, in *LookupBugRequest, opts ...grpc.CallOption) (*LookupBugResponse, error) {
+	out := new(LookupBugResponse)
+	err := c.client.Call(ctx, "weetbix.v1.Rules", "LookupBug", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -846,6 +1008,15 @@ func (c *rulesClient) Update(ctx context.Context, in *UpdateRuleRequest, opts ..
 	return out, nil
 }
 
+func (c *rulesClient) LookupBug(ctx context.Context, in *LookupBugRequest, opts ...grpc.CallOption) (*LookupBugResponse, error) {
+	out := new(LookupBugResponse)
+	err := c.cc.Invoke(ctx, "/weetbix.v1.Rules/LookupBug", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RulesServer is the server API for Rules service.
 type RulesServer interface {
 	// Retrieves a rule.
@@ -863,6 +1034,10 @@ type RulesServer interface {
 	// Updates a rule.
 	// Designed to conform to https://google.aip.dev/134.
 	Update(context.Context, *UpdateRuleRequest) (*Rule, error)
+	// Looks up the rule associated with a given bug, without knowledge
+	// of the Weetbix project the rule is in.
+	// Designed to conform to https://google.aip.dev/136.
+	LookupBug(context.Context, *LookupBugRequest) (*LookupBugResponse, error)
 }
 
 // UnimplementedRulesServer can be embedded to have forward compatible implementations.
@@ -880,6 +1055,9 @@ func (*UnimplementedRulesServer) Create(context.Context, *CreateRuleRequest) (*R
 }
 func (*UnimplementedRulesServer) Update(context.Context, *UpdateRuleRequest) (*Rule, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (*UnimplementedRulesServer) LookupBug(context.Context, *LookupBugRequest) (*LookupBugResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LookupBug not implemented")
 }
 
 func RegisterRulesServer(s prpc.Registrar, srv RulesServer) {
@@ -958,6 +1136,24 @@ func _Rules_Update_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Rules_LookupBug_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LookupBugRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RulesServer).LookupBug(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/weetbix.v1.Rules/LookupBug",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RulesServer).LookupBug(ctx, req.(*LookupBugRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Rules_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "weetbix.v1.Rules",
 	HandlerType: (*RulesServer)(nil),
@@ -977,6 +1173,10 @@ var _Rules_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Update",
 			Handler:    _Rules_Update_Handler,
+		},
+		{
+			MethodName: "LookupBug",
+			Handler:    _Rules_LookupBug_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

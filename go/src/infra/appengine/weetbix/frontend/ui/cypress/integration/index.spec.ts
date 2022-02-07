@@ -4,7 +4,7 @@
 
 describe('Index Page', () => {
     beforeEach(() => {
-        cy.visit('/').get('button').click();
+        cy.visit('/').contains('LOGIN').click();
         cy.get('body').contains('Logout');
     })
     it('loads bugs table', () => {

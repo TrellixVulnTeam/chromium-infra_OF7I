@@ -1,45 +1,15 @@
 // Copyright 2021 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+import { setupTestRule } from './test_data';
 
 describe('Rule Section', () => {
     beforeEach(() => {
         // Login.
-        cy.visit('/').get('button').click();
+        cy.visit('/').contains('LOGIN').click();
 
-        cy.request({
-            url: '/api/authState',
-            headers: {
-                'Sec-Fetch-Site': 'same-origin',
-            }
-        }).then((response) => {
-            assert.strictEqual(response.status, 200);
-            const body = response.body;
-            const accessToken = body.accessToken;
-            assert.isString(accessToken);
-            assert.notEqual(accessToken, '');
+        setupTestRule();
 
-            // Set initial rule state.
-            cy.request({
-                method: 'POST',
-                url:  '/prpc/weetbix.v1.Rules/Update',
-                body: {
-                    rule: {
-                        name: 'projects/chromium/rules/ac856b1827dc1cb845486edbf4b80cfa',
-                        ruleDefinition: 'test = "cypress test 1"',
-                        bug: {
-                            system: 'monorail',
-                            id: 'chromium/123',
-                        },
-                        isActive: true,
-                    },
-                    updateMask: 'ruleDefinition,bug,isActive'
-                },
-                headers: {
-                    Authorization: 'Bearer ' + accessToken,
-                },
-            });
-        });
         cy.visit('/p/chromium/rules/ac856b1827dc1cb845486edbf4b80cfa');
     })
     it('loads rule', () => {

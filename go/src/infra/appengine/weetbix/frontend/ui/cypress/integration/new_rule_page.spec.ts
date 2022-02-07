@@ -5,7 +5,7 @@
 describe('New Rule Page', () => {
     beforeEach(() => {
         // Login.
-        cy.visit('/').get('button').click();
+        cy.visit('/').contains('LOGIN').click();
     })
     it('create rule from scratch', () => {
         cy.visit('/p/chromium/rules/new');
