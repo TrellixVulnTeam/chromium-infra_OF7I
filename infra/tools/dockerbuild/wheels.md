@@ -5870,6 +5870,20 @@ wheel: <
 
 * *universal*
 
+## **pyparsing-py3**
+
+### 3.0.7
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyparsing-py3"
+  version: "version:3.0.7"
+>
+```
+
+
+* *universal*
+
 ## **pyperclip**
 
 ### 1.8.0

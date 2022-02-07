@@ -1526,6 +1526,7 @@ SPECS.update({
         Universal('pyopenssl', '19.0.0'),
         Universal('pyparsing', '2.2.0'),
         Universal('pyparsing', '2.4.7'),
+        Universal('pyparsing', '3.0.7', pyversions=['py3']),
         Universal('pyserial', '3.4'),
         Universal('pytest', '3.5.0'),
         Universal('pytest', '3.6.2'),
