@@ -142,14 +142,27 @@ const labstationRepairPlanBody = `
 		]
 	},
 	"cros_ping":{
+		"docs":[
+			"This verifier checks whether a given host is reachable over ping. ",
+			"This should happen as soon as the network driver gets loaded and the network becomes operational."
+		],
 		"recovery_actions":[
 			"rpm_power_cycle"
-		]
+		],
+		"exec_timeout": {
+			"seconds": 300
+		}
 	},
 	"cros_ssh":{
+		"docs":[
+			"This verifier checks whether the host is accessible over ssh."
+		],
 		"recovery_actions":[
 			"rpm_power_cycle"
-		]
+		],
+		"exec_timeout": {
+			"seconds": 120
+		}
 	},
 	"labstation_reboot":{
 		"docs":[

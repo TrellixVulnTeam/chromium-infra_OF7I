@@ -71,6 +71,9 @@ const crosRepairPlanBody = `
 		"exec_name":"cros_is_enrollment_in_clean_state"
 	},
 	"power_info":{
+		"docs": [
+			"Check for the AC power, and battery charging capability."
+		],
 		"conditions":[
 			"cros_is_not_virtual_machine"
 		],
@@ -78,6 +81,9 @@ const crosRepairPlanBody = `
 			"cros_storage_writing",
 			"cros_is_ac_power_connected",
 			"battery_is_good"
+		],
+		"recovery_actions": [
+			"rpm_power_cycle"
 		],
 		"exec_name":"sample_pass"
 	},
