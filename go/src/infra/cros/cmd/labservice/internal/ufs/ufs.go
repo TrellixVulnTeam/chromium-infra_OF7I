@@ -7,6 +7,7 @@ package ufs
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,18 +19,31 @@ import (
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
+type DeviceType int64
+
+const (
+	ChromeOSDevice DeviceType = iota
+	AndroidDevice
+)
+
+type deviceInfo struct {
+	deviceType DeviceType
+	machine    *ufspb.Machine
+	machineLse *ufspb.MachineLSE
+}
+
 // GetDutTopology returns a DutTopology constructed from UFS.
 // The returned error, if any, has gRPC status information.
 func GetDutTopology(ctx context.Context, c ufsapi.FleetClient, id string) (*labapi.DutTopology, error) {
-	dutInfos, err := getDutsInfos(ctx, c, id)
+	deviceInfos, err := getAllDevicesInfo(ctx, c, id)
 	if err != nil {
 		return nil, err
 	}
 	dt := &labapi.DutTopology{
 		Id: &labapi.DutTopology_Id{Value: id},
 	}
-	for _, dinfo := range dutInfos {
-		d, err := makeDutProto(dinfo)
+	for _, deviceInfo := range deviceInfos {
+		d, err := makeDutProto(deviceInfo)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "ID %q: %s", id, err)
 		}
@@ -38,64 +52,101 @@ func GetDutTopology(ctx context.Context, c ufsapi.FleetClient, id string) (*laba
 	return dt, nil
 }
 
-type dutInfo struct {
-	m    *ufspb.Machine
-	mlse *ufspb.MachineLSE
-}
-
-func getDutsInfos(ctx context.Context, c ufsapi.FleetClient, id string) ([]*dutInfo, error) {
-	resp, err := c.GetDeviceData(ctx, &ufsapi.GetDeviceDataRequest{Hostname: id})
+// getAllDevicesInfo fetches inventory entry of all DUTs / attached devices by a resource name.
+func getAllDevicesInfo(ctx context.Context, client ufsapi.FleetClient, resourceName string) ([]*deviceInfo, error) {
+	resp, err := getDeviceData(ctx, client, resourceName)
 	if err != nil {
 		return nil, err
 	}
-	if su := resp.GetSchedulingUnit(); su != nil {
-		infos := []*dutInfo{}
-		for _, name := range su.GetMachineLSEs() {
-			di, err := getDutsInfos(ctx, c, name)
-			if err != nil {
-				return nil, err
-			}
-			infos = append(infos, di...)
+	if resp.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT {
+		return getSchedulingUnitInfo(ctx, client, resp.GetSchedulingUnit().GetMachineLSEs())
+	}
+	deviceInfos, err := appendDeviceInfo([]*deviceInfo{}, resp)
+	if err != nil {
+		return nil, fmt.Errorf("%w for %s", err, resourceName)
+	}
+	return deviceInfos, nil
+}
+
+// getSchedulingUnitInfo fetches device info for every DUT / attached device in the scheduling unit.
+func getSchedulingUnitInfo(ctx context.Context, client ufsapi.FleetClient, hostnames []string) ([]*deviceInfo, error) {
+	// Get device info for every DUT / attached device in the scheduling unit.
+	var deviceInfos []*deviceInfo
+	for _, hostname := range hostnames {
+		resp, err := getDeviceData(ctx, client, hostname)
+		if err != nil {
+			return nil, err
 		}
-		return infos, nil
+		if deviceInfos, err = appendDeviceInfo(deviceInfos, resp); err != nil {
+			return nil, fmt.Errorf("%w for %s", err, hostname)
+		}
 	}
-	if crdd := resp.GetChromeOsDeviceData(); crdd != nil {
-		return []*dutInfo{
-			{
-				m:    crdd.GetMachine(),
-				mlse: crdd.GetLabConfig(),
-			},
-		}, nil
+	return deviceInfos, nil
+}
+
+// getDeviceData fetches a device entry.
+func getDeviceData(ctx context.Context, client ufsapi.FleetClient, id string) (*ufsapi.GetDeviceDataResponse, error) {
+	resp, err := client.GetDeviceData(ctx, &ufsapi.GetDeviceDataRequest{Hostname: id})
+	if err != nil {
+		return nil, err
 	}
-	if ad := resp.GetAttachedDeviceData(); ad != nil {
-		// only handle chrome OS devices right now
-		return []*dutInfo{}, nil
+	return resp, nil
+}
+
+// appendDeviceData appends a device data response to the list of responses
+// after validation. Returns error if the device type is different from ChromeOs
+// or Android device.
+func appendDeviceInfo(deviceInfos []*deviceInfo, resp *ufsapi.GetDeviceDataResponse) ([]*deviceInfo, error) {
+	switch resp.GetResourceType() {
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
+		return append(deviceInfos, &deviceInfo{
+			deviceType: ChromeOSDevice,
+			machine:    resp.GetChromeOsDeviceData().GetMachine(),
+			machineLse: resp.GetChromeOsDeviceData().GetLabConfig(),
+		}), nil
+	case ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
+		return append(deviceInfos, &deviceInfo{
+			deviceType: AndroidDevice,
+			machine:    resp.GetAttachedDeviceData().GetMachine(),
+			machineLse: resp.GetAttachedDeviceData().GetLabConfig(),
+		}), nil
 	}
-	return nil, status.Errorf(codes.NotFound, "DeviceData Hostname %q: %s", id, err)
+	return nil, fmt.Errorf("append device info: invalid device type (%s)", resp.GetResourceType())
 }
 
 // makeDutProto makes a DutTopology Dut protobuf.
-func makeDutProto(di *dutInfo) (*labapi.Dut, error) {
-	lse := di.mlse
+func makeDutProto(di *deviceInfo) (*labapi.Dut, error) {
+	switch di.deviceType {
+	case ChromeOSDevice:
+		return makeChromeOsDutProto(di)
+	case AndroidDevice:
+		return makeAndroidDutProto(di)
+	}
+	return nil, errors.New("make dut proto: invalid device type for " + di.machineLse.GetHostname())
+}
+
+// makeChromeOsDutProto populates DutTopology proto for ChromeOS device.
+func makeChromeOsDutProto(di *deviceInfo) (*labapi.Dut, error) {
+	lse := di.machineLse
 	hostname := lse.GetHostname()
 	if hostname == "" {
-		return nil, errors.New("make dut proto: empty hostname")
+		return nil, errors.New("make chromeos dut proto: empty hostname")
 	}
 	croslse := lse.GetChromeosMachineLse()
 	if croslse == nil {
-		return nil, errors.New("make dut proto: empty chromeos_machine_lse")
+		return nil, errors.New("make chromeos dut proto: empty chromeos_machine_lse")
 	}
 	dlse := croslse.GetDeviceLse()
 	if dlse == nil {
-		return nil, errors.New("make dut proto: empty device_lse")
+		return nil, errors.New("make chromeos dut proto: empty device_lse")
 	}
 	d := dlse.GetDut()
 	if d == nil {
-		return nil, errors.New("make dut proto: empty dut")
+		return nil, errors.New("make chromeos dut proto: empty dut")
 	}
 	p := d.GetPeripherals()
 	if p == nil {
-		return nil, errors.New("make dut proto: empty peripherals")
+		return nil, errors.New("make chromeos dut proto: empty peripherals")
 	}
 
 	return &labapi.Dut{
@@ -106,7 +157,7 @@ func makeDutProto(di *dutInfo) (*labapi.Dut, error) {
 					Address: hostname,
 					Port:    22,
 				},
-				DutModel:  getDutModel(di.m),
+				DutModel:  getDutModel(di),
 				Servo:     getServo(p),
 				Chameleon: getChameleon(p),
 				Audio:     getAudio(p),
@@ -119,10 +170,52 @@ func makeDutProto(di *dutInfo) (*labapi.Dut, error) {
 	}, nil
 }
 
-func getDutModel(m *ufspb.Machine) *labapi.DutModel {
+// makeAndroidDutProto populates DutTopology proto for Android device.
+func makeAndroidDutProto(di *deviceInfo) (*labapi.Dut, error) {
+	machine := di.machine
+	lse := di.machineLse
+	hostname := lse.GetHostname()
+	if hostname == "" {
+		return nil, errors.New("make android dut proto: empty hostname")
+	}
+	androidLse := lse.GetAttachedDeviceLse()
+	if androidLse == nil {
+		return nil, errors.New("make android dut proto: empty attached_device_lse")
+	}
+	associatedHostname := androidLse.GetAssociatedHostname()
+	if associatedHostname == "" {
+		return nil, errors.New("make android dut proto: empty associated_hostname")
+	}
+	serialNumber := machine.GetSerialNumber()
+	if serialNumber == "" {
+		return nil, errors.New("make android dut proto: empty serial_number")
+	}
+	return &labapi.Dut{
+		Id: &labapi.Dut_Id{Value: hostname},
+		DutType: &labapi.Dut_Android_{
+			Android: &labapi.Dut_Android{
+				AssociatedHostname: &labapi.IpEndpoint{
+					Address: associatedHostname,
+				},
+				Name:         hostname,
+				SerialNumber: serialNumber,
+				DutModel:     getDutModel(di),
+			},
+		},
+	}, nil
+}
+
+func getDutModel(di *deviceInfo) *labapi.DutModel {
+	machine := di.machine
+	if di.deviceType == ChromeOSDevice {
+		return &labapi.DutModel{
+			BuildTarget: machine.GetChromeosMachine().GetBuildTarget(),
+			ModelName:   machine.GetChromeosMachine().GetModel(),
+		}
+	}
 	return &labapi.DutModel{
-		BuildTarget: m.GetChromeosMachine().GetBuildTarget(),
-		ModelName:   m.GetChromeosMachine().GetModel(),
+		BuildTarget: machine.GetAttachedDevice().GetBuildTarget(),
+		ModelName:   machine.GetAttachedDevice().GetModel(),
 	}
 }
 
@@ -151,7 +244,7 @@ func getChameleon(p *lab.Peripherals) *labapi.Chameleon {
 }
 
 func mapChameleonPeripherals(p *lab.Peripherals, c *lab.Chameleon) []labapi.Chameleon_Peripheral {
-	res := []labapi.Chameleon_Peripheral{}
+	var res []labapi.Chameleon_Peripheral
 	for _, cp := range c.GetChameleonPeripherals() {
 		m := labapi.Chameleon_PREIPHERAL_UNSPECIFIED
 		switch cp {
@@ -251,7 +344,7 @@ func mapCameraFacing(cf lab.Camerabox_Facing) labapi.Camerabox_Facing {
 }
 
 func getCables(p *lab.Peripherals) []*labapi.Cable {
-	ret := []*labapi.Cable{}
+	var ret []*labapi.Cable
 	for _, c := range p.GetCable() {
 		ret = append(ret, &labapi.Cable{
 			Type: mapCables(c.GetType()),

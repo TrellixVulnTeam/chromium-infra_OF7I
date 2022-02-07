@@ -14,13 +14,12 @@ import (
 	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
-
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
-func TestGetDutTopology_single(t *testing.T) {
+func TestGetChromeOsDutTopology_single(t *testing.T) {
 	t.Parallel()
 	ctx, cf := context.WithCancel(context.Background())
 	defer cf()
@@ -143,16 +142,91 @@ func TestGetDutTopology_single(t *testing.T) {
 	}
 }
 
+func TestGetAndroidDutTopology_single(t *testing.T) {
+	t.Parallel()
+	ctx, cf := context.WithCancel(context.Background())
+	defer cf()
+	hostname := "dummy_hostname"
+	associatedHostname := "dummy_associated_hostname"
+	serialNumber := "1234567890"
+	buildTarget := "dummy_build_target"
+	model := "dummy_model"
+	dutTopologyId := "dummy_android_dut_topology_id"
+	s := &fakeServer{
+		AttachedDeviceData: &ufsapi.AttachedDeviceData{
+			LabConfig: &ufspb.MachineLSE{
+				Hostname: hostname,
+				Lse: &ufspb.MachineLSE_AttachedDeviceLse{
+					AttachedDeviceLse: &ufspb.AttachedDeviceLSE{
+						OsVersion: &ufspb.OSVersion{
+							Value:       "dummy_value",
+							Description: "dummy_description",
+							Image:       "dummy_image",
+						},
+						AssociatedHostname: associatedHostname,
+					},
+				},
+			},
+			Machine: &ufspb.Machine{
+				SerialNumber: serialNumber,
+				Device: &ufspb.Machine_AttachedDevice{
+					AttachedDevice: &ufspb.AttachedDevice{
+						BuildTarget: buildTarget,
+						Model:       model,
+					}},
+			},
+		},
+	}
+	c := newFakeClient(ctx, t, s)
+	got, err := GetDutTopology(ctx, c, dutTopologyId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := &labapi.DutTopology{
+		Id: &labapi.DutTopology_Id{Value: dutTopologyId},
+		Duts: []*labapi.Dut{
+			{
+				Id: &labapi.Dut_Id{Value: hostname},
+				DutType: &labapi.Dut_Android_{
+					Android: &labapi.Dut_Android{
+						AssociatedHostname: &labapi.IpEndpoint{
+							Address: associatedHostname,
+						},
+						Name:         hostname,
+						SerialNumber: serialNumber,
+						DutModel: &labapi.DutModel{
+							BuildTarget: buildTarget,
+							ModelName:   model,
+						},
+					}},
+			},
+		},
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("GetDutTopology() mismatch (-want +got):\n%s", diff)
+	}
+}
+
 type fakeServer struct {
 	ufsapi.UnimplementedFleetServer
 	ChromeOSDeviceData *ufspb.ChromeOSDeviceData
+	AttachedDeviceData *ufsapi.AttachedDeviceData
 }
 
 func (s *fakeServer) GetDeviceData(ctx context.Context, in *ufsapi.GetDeviceDataRequest) (*ufsapi.GetDeviceDataResponse, error) {
+	if s.ChromeOSDeviceData != nil {
+		return &ufsapi.GetDeviceDataResponse{
+			Resource: &ufsapi.GetDeviceDataResponse_ChromeOsDeviceData{
+				ChromeOsDeviceData: proto.Clone(s.ChromeOSDeviceData).(*ufspb.ChromeOSDeviceData),
+			},
+			ResourceType: ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE,
+		}, nil
+	}
 	return &ufsapi.GetDeviceDataResponse{
-		Resource: &ufsapi.GetDeviceDataResponse_ChromeOsDeviceData{
-			ChromeOsDeviceData: proto.Clone(s.ChromeOSDeviceData).(*ufspb.ChromeOSDeviceData),
+		Resource: &ufsapi.GetDeviceDataResponse_AttachedDeviceData{
+			AttachedDeviceData: proto.Clone(s.AttachedDeviceData).(*ufsapi.AttachedDeviceData),
 		},
+		ResourceType: ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE,
 	}, nil
 }
 
