@@ -39,6 +39,7 @@ var tagKeys = map[string]struct{}{
 	"os":                 {},
 	"team_email":         {},
 	"test_name":          {},
+	"target_platform":    {},
 }
 
 func shouldIngestForTestVariants(task *taskspb.IngestTestResults) bool {
