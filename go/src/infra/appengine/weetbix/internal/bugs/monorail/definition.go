@@ -21,6 +21,10 @@ const (
 	DescriptionTemplate = `%s
 
 This bug has been automatically filed by Weetbix in response to a cluster of test failures.`
+
+	LinkTemplate = `See failure impact and configure the failure association rule for this bug at: {bugLink}
+Weetbix rule that created this bug: {ruleLink}
+	`
 )
 
 const (
@@ -102,6 +106,50 @@ func (g *Generator) PrepareNew(description *clustering.ClusterDescription) *mpb.
 		Description: fmt.Sprintf(DescriptionTemplate, description.Description),
 		NotifyType:  mpb.NotifyType_EMAIL,
 	}
+}
+
+// LinkCommentRequest represents a request that adds links to Weetbix to
+// a monorail bug.
+type LinkCommentRequest struct {
+	// The GAE app id, e.g. "chops-weetbix".
+	AppID string
+	// The LUCI Project.
+	Project string
+	// The internal bug name, e.g. "chromium/100".
+	BugName string
+	// The Weetbix Failure Association Rule ID.
+	RuleID string
+}
+
+// PrepareLinkComment prepares a request that adds links to Weetbix to
+// a monorail bug.
+func PrepareLinkComment(request LinkCommentRequest) (*mpb.ModifyIssuesRequest, error) {
+	issueName, err := toMonorailIssueName(request.BugName)
+	if err != nil {
+		return nil, err
+	}
+
+	bugLink := fmt.Sprintf("https://%s.appspot.com/b/%s", request.AppID, request.BugName)
+	ruleLink := fmt.Sprintf("https://%s.appspot.com/p/%s/rules/%s", request.AppID, request.Project, request.RuleID)
+
+	comment := strings.NewReplacer(
+		"{bugLink}", bugLink,
+		"{ruleLink}", ruleLink,
+	).Replace(LinkTemplate)
+
+	result := &mpb.ModifyIssuesRequest{
+		Deltas: []*mpb.IssueDelta{
+			{
+				Issue: &mpb.Issue{
+					Name: issueName,
+				},
+				UpdateMask: &field_mask.FieldMask{},
+			},
+		},
+		NotifyType:     mpb.NotifyType_NO_NOTIFICATION,
+		CommentContent: comment,
+	}
+	return result, nil
 }
 
 func (g *Generator) priorityFieldName() string {

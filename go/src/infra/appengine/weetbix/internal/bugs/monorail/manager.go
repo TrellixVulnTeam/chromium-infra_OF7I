@@ -34,6 +34,10 @@ const monorailPageSize = 100
 // for clusters.
 type BugManager struct {
 	client *Client
+	// The GAE APP ID, e.g. "chops-weetbix".
+	appID string
+	// The LUCI Project.
+	project string
 	// The snapshot of monorail configuration to use for the project.
 	monorailCfg *configpb.MonorailProject
 	// Simulate, if set, tells BugManager not to make mutating changes
@@ -46,9 +50,11 @@ type BugManager struct {
 
 // NewBugManager initialises a new bug manager, using the specified
 // monorail client.
-func NewBugManager(client *Client, monorailCfg *configpb.MonorailProject) *BugManager {
+func NewBugManager(client *Client, appID, project string, monorailCfg *configpb.MonorailProject) *BugManager {
 	return &BugManager{
 		client:      client,
+		appID:       appID,
+		project:     project,
 		monorailCfg: monorailCfg,
 		Simulate:    false,
 	}
@@ -61,21 +67,41 @@ func (m *BugManager) Create(ctx context.Context, request *bugs.CreateRequest) (s
 	if err != nil {
 		return "", errors.Annotate(err, "create issue generator").Err()
 	}
-	req := g.PrepareNew(request.Description)
+	makeReq := g.PrepareNew(request.Description)
+	var bugName string
 	if m.Simulate {
-		logging.Debugf(ctx, "Would create Monorail issue: %s", textPBMultiline.Format(req))
+		logging.Debugf(ctx, "Would create Monorail issue: %s", textPBMultiline.Format(makeReq))
+		bugName = fmt.Sprintf("%s/12345678", m.monorailCfg.Project)
+	} else {
+		// Save the issue in Monorail.
+		issue, err := m.client.MakeIssue(ctx, makeReq)
+		if err != nil {
+			return "", errors.Annotate(err, "create issue in monorail").Err()
+		}
+		bugName, err = fromMonorailIssueName(issue.Name)
+		if err != nil {
+			return "", errors.Annotate(err, "parsing monorail issue name").Err()
+		}
+	}
+
+	linkReq := LinkCommentRequest{
+		AppID:   m.appID,
+		Project: m.project,
+		BugName: bugName,
+		RuleID:  request.RuleID,
+	}
+	modifyReq, err := PrepareLinkComment(linkReq)
+	if err != nil {
+		return "", errors.Annotate(err, "prepare link comment").Err()
+	}
+	if m.Simulate {
+		logging.Debugf(ctx, "Would update Monorail issue: %s", textPBMultiline.Format(modifyReq))
 		return "", bugs.ErrCreateSimulated
 	}
-	// Save the issue in Monorail.
-	issue, err := m.client.MakeIssue(ctx, req)
-	if err != nil {
-		return "", errors.Annotate(err, "create issue in monorail").Err()
+	if err := m.client.ModifyIssues(ctx, modifyReq); err != nil {
+		return "", errors.Annotate(err, "update issue").Err()
 	}
-	bug, err := fromMonorailIssueName(issue.Name)
-	if err != nil {
-		return "", errors.Annotate(err, "parsing monorail issue name").Err()
-	}
-	return bug, err
+	return bugName, nil
 }
 
 type clusterIssue struct {

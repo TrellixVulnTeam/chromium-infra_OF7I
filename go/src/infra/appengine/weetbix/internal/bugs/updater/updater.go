@@ -250,7 +250,14 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	if err != nil {
 		return false, errors.Annotate(err, "obtain failure association rule").Err()
 	}
+
+	ruleID, err := rules.GenerateID()
+	if err != nil {
+		return false, errors.Annotate(err, "generating rule ID").Err()
+	}
+
 	request := &bugs.CreateRequest{
+		RuleID:      ruleID,
 		Description: alg.ClusterDescription(b.projectCfg, failure),
 		Impact:      bugs.ExtractResidualImpact(cs),
 	}
@@ -266,11 +273,6 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	}
 	if err != nil {
 		return false, errors.Annotate(err, "create issue in %v", mgr).Err()
-	}
-
-	ruleID, err := rules.GenerateID()
-	if err != nil {
-		return false, errors.Annotate(err, "generating rule ID").Err()
 	}
 
 	// Create a failure association rule associating the failures with a bug.
@@ -289,6 +291,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	if _, err := span.ReadWriteTransaction(ctx, create); err != nil {
 		return false, errors.Annotate(err, "create bug cluster").Err()
 	}
+
 	return true, nil
 }
 

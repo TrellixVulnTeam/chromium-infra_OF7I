@@ -36,13 +36,13 @@ type AnalysisClient interface {
 // on monorail as the developer themselves rather than the Weetbix service.
 // This leads to bugs errounously being detected as having manual priority
 // changes.
-func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, simulate bool) (retErr error) {
+func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string, simulate bool) (retErr error) {
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
 	}
 
-	ac, err := analysis.NewClient(ctx, projectID)
+	ac, err := analysis.NewClient(ctx, gcpProject)
 	if err != nil {
 		return err
 	}
@@ -71,6 +71,7 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, 
 		}
 
 		opts := updateOptions{
+			appID:              gcpProject,
 			project:            project,
 			analysisClient:     ac,
 			monorailClient:     mc,
@@ -93,6 +94,7 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, projectID string, 
 }
 
 type updateOptions struct {
+	appID              string
 	project            string
 	analysisClient     AnalysisClient
 	monorailClient     *monorail.Client
@@ -122,7 +124,7 @@ func updateAnalysisAndBugsForProject(ctx context.Context, opts updateOptions) er
 	monorailCfg := projectCfg.Config.Monorail
 	mgrs := make(map[string]BugManager)
 
-	mbm := monorail.NewBugManager(opts.monorailClient, monorailCfg)
+	mbm := monorail.NewBugManager(opts.monorailClient, opts.appID, opts.project, monorailCfg)
 	mbm.Simulate = opts.simulateBugUpdates
 	mgrs[bugs.MonorailSystem] = mbm
 

@@ -86,6 +86,7 @@ func TestRun(t *testing.T) {
 		}
 
 		opts := updateOptions{
+			appID:              "chops-weetbix-test",
 			project:            project,
 			analysisClient:     ac,
 			monorailClient:     mc,
@@ -178,6 +179,10 @@ func TestRun(t *testing.T) {
 				So(len(f.Issues), ShouldEqual, 1)
 				So(f.Issues[0].Issue.Name, ShouldEqual, "projects/chromium/issues/100")
 				So(f.Issues[0].Issue.Summary, ShouldContainSubstring, "Failed to connect to 100.1.1.105.")
+				So(len(f.Issues[0].Comments), ShouldEqual, 2)
+				// Expect a link to the bug and the rule.
+				So(f.Issues[0].Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
+				So(f.Issues[0].Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/chromium/rules/"+rule.RuleID)
 			}
 
 			Convey("1d unexpected failures", func() {

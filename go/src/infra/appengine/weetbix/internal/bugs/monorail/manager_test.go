@@ -18,6 +18,7 @@ import (
 
 func NewCreateRequest() *bugs.CreateRequest {
 	cluster := &bugs.CreateRequest{
+		RuleID: "1234567890abcdef1234567890abcdef",
 		Description: &clustering.ClusterDescription{
 			Title:       "ClusterID",
 			Description: "Tests are failing with reason: Some failure reason.",
@@ -39,11 +40,12 @@ func TestManager(t *testing.T) {
 		cl, err := NewClient(UseFakeIssuesClient(ctx, f, user), "myhost")
 		So(err, ShouldBeNil)
 		monorailCfgs := ChromiumTestConfig()
-		bm := NewBugManager(cl, monorailCfgs)
+		bm := NewBugManager(cl, "chops-weetbix-test", "luciproject", monorailCfgs)
 
 		Convey("Create", func() {
 			c := NewCreateRequest()
 			c.Impact = ChromiumHighP2Impact()
+
 			Convey("With reason-based failure cluster", func() {
 				reason := `Expected equality of these values:
 					"Expected_Value"
@@ -82,9 +84,12 @@ func TestManager(t *testing.T) {
 						Label: "Weetbix-Managed",
 					}},
 				})
-				So(len(issue.Comments), ShouldEqual, 1)
+				So(len(issue.Comments), ShouldEqual, 2)
 				So(issue.Comments[0].Content, ShouldContainSubstring, reason)
 				So(issue.Comments[0].Content, ShouldNotContainSubstring, "ClusterIDShouldNotAppearInOutput")
+				// Links to cluster pages should appear in output.
+				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
+				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/luciproject/rules/1234567890abcdef1234567890abcdef")
 				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("With test name failure cluster", func() {
@@ -121,8 +126,11 @@ func TestManager(t *testing.T) {
 						Label: "Weetbix-Managed",
 					}},
 				})
-				So(len(issue.Comments), ShouldEqual, 1)
+				So(len(issue.Comments), ShouldEqual, 2)
 				So(issue.Comments[0].Content, ShouldContainSubstring, "ninja://:blink_web_tests/media/my-suite/my-test.html")
+				// Links to cluster pages should appear in output.
+				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
+				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/luciproject/rules/1234567890abcdef1234567890abcdef")
 				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("Does nothing if in simulation mode", func() {
