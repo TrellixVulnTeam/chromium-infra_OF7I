@@ -12,10 +12,14 @@ describe('Rule Section', () => {
 
         cy.visit('/p/chromium/rules/ac856b1827dc1cb845486edbf4b80cfa');
     })
+
     it('loads rule', () => {
+        cy.get('rule-section').get('[data-cy=rule-title]').contains('Weetbix Cypress Test Bug')
+        cy.get('rule-section').get('[data-cy=rule-status]').contains('Untriaged')
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"')
         cy.get('rule-section').get('[data-cy=rule-enabled]').contains('Yes')
     })
+
     it('edit rule definition', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-edit]').click()
         cy.get('rule-section').get('[data-cy=rule-definition-textbox]').get('textarea').type('{selectall}test = "cypress test 2"')
@@ -23,6 +27,7 @@ describe('Rule Section', () => {
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 2"');
         cy.get('reclustering-progress-indicator').get('[data-cy=reclustering-progress-description]').contains('Weetbix is re-clustering test results')
     })
+
     it('validation error while editing rule definition', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-edit]').click()
         cy.get('rule-section').get('[data-cy=rule-definition-textbox]').get('textarea').type('{selectall}test = "cypress test 2"a')
@@ -31,20 +36,25 @@ describe('Rule Section', () => {
         cy.get('rule-section').get('[data-cy=rule-definition-cancel]').click()
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"');
     })
+
     it('edit bug', () => {
         cy.get('rule-section').get('[data-cy=bug-edit]').click()
-        cy.get('rule-section').get('[data-cy=bug-number-textbox]').get('[type=text]').type('{selectall}124')
+        cy.get('rule-section').get('[data-cy=bug-number-textbox]').get('[type=text]').type('{selectall}920869')
         cy.get('rule-section').get('[data-cy=bug-save]').click()
-        cy.get('rule-section').get('[data-cy=bug]').contains('crbug.com/124');
+        cy.get('rule-section').get('[data-cy=bug]').contains('crbug.com/920869');
+        cy.get('rule-section').get('[data-cy=rule-title]').contains('Weetbix Cypress Alternate Test Bug')
+        cy.get('rule-section').get('[data-cy=rule-status]').contains('Fixed')
     })
+
     it('validation error while editing bug', () => {
         cy.get('rule-section').get('[data-cy=bug-edit]').click()
         cy.get('rule-section').get('[data-cy=bug-number-textbox]').get('[type=text]').type('{selectall}125a')
         cy.get('rule-section').get('[data-cy=bug-save]').click()
         cy.get('rule-section').get('[data-cy=bug-validation-error]').contains('Validation error: not a valid monorail bug ID')
         cy.get('rule-section').get('[data-cy=bug-cancel]').click()
-        cy.get('rule-section').get('[data-cy=bug]').contains('crbug.com/123');
+        cy.get('rule-section').get('[data-cy=bug]').contains('crbug.com/920867');
     })
+
     it('disable and re-enable', () => {
         cy.get('rule-section').get('[data-cy=rule-enabled-toggle]').contains('Disable').click()
         cy.get('rule-section').get('[data-cy=rule-enabled]').contains('No')

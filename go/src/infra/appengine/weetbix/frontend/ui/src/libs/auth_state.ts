@@ -4,11 +4,17 @@
 
 let authState : AuthState | null = null;
 
-// obtainAuthState obtains a current Auth state, for interacting
-// with Weetbix pRPC APIs.
+/**
+ * obtainAuthState obtains a current auth state, for interacting
+ * with pRPC APIs.
+ * @returns the current auth state.
+ */
 export async function obtainAuthState(): Promise<AuthState> {
-    if (authState != null && authState.accessTokenExpiry * 1000 > (Date.now() + 5000)) {
-        // Auth state is still has >=5 seconds of validity.
+    if (authState != null &&
+            authState.accessTokenExpiry * 1000 > (Date.now() + 5000) &&
+            authState.idTokenExpiry * 1000 > (Date.now() + 5000)) {
+        // Auth state is still has >=5 seconds of validity for
+        // both tokens.
         return authState;
     }
 
@@ -23,12 +29,11 @@ export interface AuthState {
     email: string;
     picture: string;
     accessToken: string;
-    /**
-     * Expiration time (unix timestamp) of the access token.
-     *
-     * If zero/undefined, the access token does not expire.
-     */
+    idToken: string;
+    // Expiration time (unix timestamp) of the access token.
+    // If zero/undefined, the access token does not expire.
     accessTokenExpiry: number;
+    idTokenExpiry: number;
 }
 
 export async function queryAuthState(): Promise<AuthState> {

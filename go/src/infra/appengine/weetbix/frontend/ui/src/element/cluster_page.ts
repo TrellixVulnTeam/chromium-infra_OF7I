@@ -82,6 +82,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             }
 
             definitionSection = html`
+            <h1>Cluster <span class="cluster-id">${this.clusterAlgorithm}/${this.clusterId}</span></h1>
             <div class="definition-box-container">
                 <pre class="definition-box">${c.title}</pre>
             </div>
@@ -144,7 +145,6 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             @refreshanalysis=${this.refreshAnalysis}>
         </reclustering-progress-indicator>
         <div id="container">
-            <h1>Cluster <span class="cluster-id">${this.clusterAlgorithm}/${this.clusterId}</span></h1>
             ${definitionSection}
             <h2>Impact</h2>
             ${impactTable}

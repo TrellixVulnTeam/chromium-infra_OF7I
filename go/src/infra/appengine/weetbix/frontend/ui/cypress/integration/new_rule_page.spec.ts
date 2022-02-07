@@ -36,7 +36,8 @@ describe('New Rule Page', () => {
         cy.get('new-rule-page').get('[data-cy=create-button]').click();
         cy.wait('@createRule');
 
-        cy.get('body').contains('ac856b1827dc1cb845486edbf4b80cfa');
+        // Verify the rule page loaded.
+        cy.get('body').contains('Associated Bug');
     })
     it('create rule from cluster', () => {
         // Use an invalid rule to ensure it does not get created in dev by
@@ -69,7 +70,8 @@ describe('New Rule Page', () => {
         cy.get('new-rule-page').get('[data-cy=create-button]').click();
         cy.wait('@createRule');
 
-        cy.get('body').contains('ac856b1827dc1cb845486edbf4b80cfa');
+        // Verify the rule page loaded.
+        cy.get('body').contains('Associated Bug');
     })
     it('displays validation errors', () => {
         cy.visit('/p/chromium/rules/new');

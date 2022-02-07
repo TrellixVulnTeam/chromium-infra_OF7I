@@ -72,7 +72,7 @@ Then use the following commands to deploy:
 ```
 cd frontend/ui
 npm run build
-gae.py upload -A <appid>
+gae.py upload --target-version ${USER} -A <appid>
 ```
 
 For testing, you can use the same Google Cloud instance as the dev instance,

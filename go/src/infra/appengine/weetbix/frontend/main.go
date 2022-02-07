@@ -66,11 +66,17 @@ func prepareTemplates(opts *server.Options) *templates.Bundle {
 				return nil, err
 			}
 
+			config, err := config.Get(ctx)
+			if err != nil {
+				return nil, err
+			}
+
 			return templates.Args{
-				"AuthGroup":       authGroup,
-				"AuthServiceHost": opts.AuthServiceHost,
-				"User":            auth.CurrentUser(ctx).Email,
-				"LogoutURL":       logoutURL,
+				"AuthGroup":        authGroup,
+				"AuthServiceHost":  opts.AuthServiceHost,
+				"MonorailHostname": config.MonorailHostname,
+				"User":             auth.CurrentUser(ctx).Email,
+				"LogoutURL":        logoutURL,
 			}, nil
 		},
 	}

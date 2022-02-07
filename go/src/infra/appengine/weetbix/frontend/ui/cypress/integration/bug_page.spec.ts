@@ -12,7 +12,7 @@ describe('Bug Page', () => {
     })
 
     it('redirects to rule', () => {
-        cy.visit('/b/chromium/123');
+        cy.visit('/b/chromium/920867');
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"');
         cy.get('rule-section').get('[data-cy=rule-enabled]').contains('Yes');
     })

@@ -25,7 +25,7 @@ export function setupTestRule() {
                     ruleDefinition: 'test = "cypress test 1"',
                     bug: {
                         system: 'monorail',
-                        id: 'chromium/123',
+                        id: 'chromium/920867',
                     },
                     isActive: true,
                 },

@@ -22,11 +22,16 @@ type authState struct {
 	// The URL of the user avatar. Optional, default "".
 	Picture string `json:"picture"`
 	// The token that authorizes and authenticates the requests.
+	// Used for authenticating to many LUCI services, including Weetbix.
 	AccessToken string `json:"accessToken"`
 	// Expiration time (unix timestamp) of the access token.
-	//
 	// If zero, the access token does not expire.
 	AccessTokenExpiry int64 `json:"accessTokenExpiry"`
+	// The OAuth ID token. Used for authenticating to Monorail.
+	IDToken string `json:"idToken"`
+	// Expiration time (unix timestamp) of the ID token.
+	// If zero, the access token does not expire.
+	IDTokenExpiry int64 `json:"idTokenExpiry"`
 }
 
 // GetAuthState returns data about the current user and the access token
@@ -55,9 +60,17 @@ func (*Handlers) GetAuthState(ctx *router.Context) {
 			return
 		}
 
-		token, err := session.AccessToken(ctx.Context)
+		accessToken, err := session.AccessToken(ctx.Context)
 		if err != nil {
 			logging.Errorf(ctx.Context, "Obtain access token: %s", err)
+			http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
+			return
+		}
+		idToken, err := session.IDToken(ctx.Context)
+		if err != nil {
+			// If get here when running the server locally, it may mean you need to run
+			// "luci-auth".
+			logging.Errorf(ctx.Context, "Obtain ID token: %s", err)
 			http.Error(ctx.Writer, "Internal server error.", http.StatusInternalServerError)
 			return
 		}
@@ -65,8 +78,10 @@ func (*Handlers) GetAuthState(ctx *router.Context) {
 			Identity:          string(user.Identity),
 			Email:             user.Email,
 			Picture:           user.Picture,
-			AccessToken:       token.AccessToken,
-			AccessTokenExpiry: token.Expiry.Unix(),
+			AccessToken:       accessToken.AccessToken,
+			AccessTokenExpiry: accessToken.Expiry.Unix(),
+			IDToken:           idToken.AccessToken,
+			IDTokenExpiry:     idToken.Expiry.Unix(),
 		}
 	}
 
