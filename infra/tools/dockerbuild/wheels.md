@@ -7605,6 +7605,18 @@ wheel: <
 
 * *universal*
 
+### 3.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/zipp-py3"
+  version: "version:3.7.0"
+>
+```
+
+
+* *universal*
+
 ## **zstandard**
 
 ### 0.16.0

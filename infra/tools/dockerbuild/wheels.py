@@ -1618,6 +1618,7 @@ SPECS.update({
         Universal('yapf', '0.31.0'),
         Universal('zipp', '1.2.0'),
         Universal('zipp', '3.1.0', pyversions=['py3']),
+        Universal('zipp', '3.7.0', pyversions=['py3']),
     ])
 })
 # yapf: enable
