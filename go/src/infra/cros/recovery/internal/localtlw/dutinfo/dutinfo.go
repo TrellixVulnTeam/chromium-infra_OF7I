@@ -107,17 +107,6 @@ func GenerateServodParams(dut *tlw.Dut, o *tlw.ServodOptions) (cmd []string, err
 	return parts, nil
 }
 
-// GetRpmInfo provides hostname and outlet of the device.
-func GetRpmInfo(dut *tlw.Dut) (hostname, outlet string) {
-	if dut != nil && dut.RPMOutlet != nil && dut.RPMOutlet.Name != "" {
-		parts := strings.Split(dut.RPMOutlet.Name, "|")
-		if len(parts) == 2 {
-			return parts[0], parts[1]
-		}
-	}
-	return "", ""
-}
-
 func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	lc := data.GetLabConfig()
 	dut := lc.GetChromeosMachineLse().GetDeviceLse().GetDut()
@@ -233,8 +222,9 @@ func createRPMOutlet(rpm *ufslab.OSRPM, ds *ufslab.DutState) *tlw.RPMOutlet {
 		}
 	}
 	return &tlw.RPMOutlet{
-		Name:  fmt.Sprintf("%s|%s", rpm.GetPowerunitName(), rpm.GetPowerunitOutlet()),
-		State: convertRPMState(ds.GetRpmState()),
+		Hostname: rpm.GetPowerunitName(),
+		Outlet:   rpm.GetPowerunitOutlet(),
+		State:    convertRPMState(ds.GetRpmState()),
 	}
 }
 
@@ -291,7 +281,8 @@ func createWifiRouterHosts(wifi *ufslab.Wifi) []*tlw.WifiRouterHost {
 			State: convertRPMState(ufslab.PeripheralState_UNKNOWN),
 		}
 		if rpm := ufsRouter.GetRpm(); rpm != nil && rpm.GetPowerunitName() != "" && rpm.GetPowerunitOutlet() != "" {
-			tlwRpm.Name = fmt.Sprintf("%s|%s", rpm.GetPowerunitName(), rpm.GetPowerunitOutlet())
+			tlwRpm.Hostname = rpm.GetPowerunitName()
+			tlwRpm.Outlet = rpm.GetPowerunitOutlet()
 		}
 		routers = append(routers, &tlw.WifiRouterHost{
 			Name:      ufsRouter.GetHostname(),
@@ -378,7 +369,7 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 	}
 	if rpm := dut.RPMOutlet; rpm != nil {
 		for us, ls := range rpmStates {
-			if ls == rpm.State {
+			if ls == rpm.GetState() {
 				state.RpmState = us
 			}
 		}

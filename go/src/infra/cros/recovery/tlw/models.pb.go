@@ -26,6 +26,120 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Action represents action expecting to perform on power supplier.
+type RunRPMActionRequest_Action int32
+
+const (
+	RunRPMActionRequest_UNSPECIFIED RunRPMActionRequest_Action = 0
+	// Switch state to ON.
+	RunRPMActionRequest_ON RunRPMActionRequest_Action = 1
+	// Switch state to OFF.
+	RunRPMActionRequest_OFF RunRPMActionRequest_Action = 2
+	// Switch state to OFF and then ON with delay 5 seconds.
+	RunRPMActionRequest_CYCLE RunRPMActionRequest_Action = 3
+)
+
+// Enum value maps for RunRPMActionRequest_Action.
+var (
+	RunRPMActionRequest_Action_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "ON",
+		2: "OFF",
+		3: "CYCLE",
+	}
+	RunRPMActionRequest_Action_value = map[string]int32{
+		"UNSPECIFIED": 0,
+		"ON":          1,
+		"OFF":         2,
+		"CYCLE":       3,
+	}
+)
+
+func (x RunRPMActionRequest_Action) Enum() *RunRPMActionRequest_Action {
+	p := new(RunRPMActionRequest_Action)
+	*p = x
+	return p
+}
+
+func (x RunRPMActionRequest_Action) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RunRPMActionRequest_Action) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_cros_recovery_tlw_models_proto_enumTypes[0].Descriptor()
+}
+
+func (RunRPMActionRequest_Action) Type() protoreflect.EnumType {
+	return &file_infra_cros_recovery_tlw_models_proto_enumTypes[0]
+}
+
+func (x RunRPMActionRequest_Action) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RunRPMActionRequest_Action.Descriptor instead.
+func (RunRPMActionRequest_Action) EnumDescriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{4, 0}
+}
+
+// RPMState describes the state of RPM outlet.
+type RPMOutlet_State int32
+
+const (
+	RPMOutlet_UNSPECIFIED RPMOutlet_State = 0
+	// Configuration for RPM outlet missed which block from execution the
+	// actions.
+	RPMOutlet_MISSING_CONFIG RPMOutlet_State = 1
+	// Configuration for RPM outlet provided but does not working which can be
+	// several reasons.
+	RPMOutlet_WRONG_CONFIG RPMOutlet_State = 2
+	// RPM outlet can successfully perform the actions.
+	RPMOutlet_WORKING RPMOutlet_State = 3
+)
+
+// Enum value maps for RPMOutlet_State.
+var (
+	RPMOutlet_State_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "MISSING_CONFIG",
+		2: "WRONG_CONFIG",
+		3: "WORKING",
+	}
+	RPMOutlet_State_value = map[string]int32{
+		"UNSPECIFIED":    0,
+		"MISSING_CONFIG": 1,
+		"WRONG_CONFIG":   2,
+		"WORKING":        3,
+	}
+)
+
+func (x RPMOutlet_State) Enum() *RPMOutlet_State {
+	p := new(RPMOutlet_State)
+	*p = x
+	return p
+}
+
+func (x RPMOutlet_State) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RPMOutlet_State) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_cros_recovery_tlw_models_proto_enumTypes[1].Descriptor()
+}
+
+func (RPMOutlet_State) Type() protoreflect.EnumType {
+	return &file_infra_cros_recovery_tlw_models_proto_enumTypes[1]
+}
+
+func (x RPMOutlet_State) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RPMOutlet_State.Descriptor instead.
+func (RPMOutlet_State) EnumDescriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{5, 0}
+}
+
 // RunRequest represents result of executed command.
 type RunRequest struct {
 	state         protoimpl.MessageState
@@ -292,6 +406,150 @@ func (x *CallBluetoothPeerResponse) GetFault() bool {
 	return false
 }
 
+// RunRPMActionRequest represents data to perform action on RPM outlet.
+type RunRPMActionRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Hostname of the DUT.
+	Hostname string `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	// Hostname of the RPM power unit, e.g. "chromeos6-row13_14-rack15-rpm2".
+	RpmHostname string `protobuf:"bytes,2,opt,name=rpm_hostname,json=rpmHostname,proto3" json:"rpm_hostname,omitempty"`
+	// Name to locate a specific outlet from a RPM power unit, e.g. ".A7".
+	RpmOutlet string `protobuf:"bytes,3,opt,name=rpm_outlet,json=rpmOutlet,proto3" json:"rpm_outlet,omitempty"`
+	// Expected state to switch on.
+	Action RunRPMActionRequest_Action `protobuf:"varint,4,opt,name=action,proto3,enum=chromeos.recovery.RunRPMActionRequest_Action" json:"action,omitempty"`
+}
+
+func (x *RunRPMActionRequest) Reset() {
+	*x = RunRPMActionRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RunRPMActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunRPMActionRequest) ProtoMessage() {}
+
+func (x *RunRPMActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunRPMActionRequest.ProtoReflect.Descriptor instead.
+func (*RunRPMActionRequest) Descriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RunRPMActionRequest) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *RunRPMActionRequest) GetRpmHostname() string {
+	if x != nil {
+		return x.RpmHostname
+	}
+	return ""
+}
+
+func (x *RunRPMActionRequest) GetRpmOutlet() string {
+	if x != nil {
+		return x.RpmOutlet
+	}
+	return ""
+}
+
+func (x *RunRPMActionRequest) GetAction() RunRPMActionRequest_Action {
+	if x != nil {
+		return x.Action
+	}
+	return RunRPMActionRequest_UNSPECIFIED
+}
+
+// RPMOutlet is remote power management outlet allows perform an action to do
+// OFF/ON/CYCLE on it.
+type RPMOutlet struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Hostname of the RPM power unit, e.g. "chromeos6-row13_14-rack15-rpm2".
+	Hostname string `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	// Name to locate a specific outlet from a RPM power unit, e.g. ".A7".
+	Outlet string `protobuf:"bytes,2,opt,name=outlet,proto3" json:"outlet,omitempty"`
+	// State of the component.
+	State RPMOutlet_State `protobuf:"varint,3,opt,name=state,proto3,enum=chromeos.recovery.RPMOutlet_State" json:"state,omitempty"`
+}
+
+func (x *RPMOutlet) Reset() {
+	*x = RPMOutlet{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RPMOutlet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RPMOutlet) ProtoMessage() {}
+
+func (x *RPMOutlet) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RPMOutlet.ProtoReflect.Descriptor instead.
+func (*RPMOutlet) Descriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RPMOutlet) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *RPMOutlet) GetOutlet() string {
+	if x != nil {
+		return x.Outlet
+	}
+	return ""
+}
+
+func (x *RPMOutlet) GetState() RPMOutlet_State {
+	if x != nil {
+		return x.State
+	}
+	return RPMOutlet_UNSPECIFIED
+}
+
 var File_infra_cros_recovery_tlw_models_proto protoreflect.FileDescriptor
 
 var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
@@ -339,9 +597,37 @@ var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
 	0x69, 0x67, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x74, 0x65, 0x73, 0x74, 0x2e, 0x78, 0x6d, 0x6c, 0x72,
 	0x70, 0x63, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12,
 	0x14, 0x0a, 0x05, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05,
-	0x66, 0x61, 0x75, 0x6c, 0x74, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63,
-	0x72, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77,
-	0x3b, 0x74, 0x6c, 0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x66, 0x61, 0x75, 0x6c, 0x74, 0x22, 0xf1, 0x01, 0x0a, 0x13, 0x52, 0x75, 0x6e, 0x52, 0x50, 0x4d,
+	0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a,
+	0x08, 0x68, 0x6f, 0x73, 0x74, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x68, 0x6f, 0x73, 0x74, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x70, 0x6d,
+	0x5f, 0x68, 0x6f, 0x73, 0x74, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0b, 0x72, 0x70, 0x6d, 0x48, 0x6f, 0x73, 0x74, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1d, 0x0a, 0x0a,
+	0x72, 0x70, 0x6d, 0x5f, 0x6f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x09, 0x72, 0x70, 0x6d, 0x4f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x12, 0x45, 0x0a, 0x06, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x2d, 0x2e, 0x63, 0x68,
+	0x72, 0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e,
+	0x52, 0x75, 0x6e, 0x52, 0x50, 0x4d, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x22, 0x35, 0x0a, 0x06, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0f, 0x0a, 0x0b,
+	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a,
+	0x02, 0x4f, 0x4e, 0x10, 0x01, 0x12, 0x07, 0x0a, 0x03, 0x4f, 0x46, 0x46, 0x10, 0x02, 0x12, 0x09,
+	0x0a, 0x05, 0x43, 0x59, 0x43, 0x4c, 0x45, 0x10, 0x03, 0x22, 0xc6, 0x01, 0x0a, 0x09, 0x52, 0x50,
+	0x4d, 0x4f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x68, 0x6f, 0x73, 0x74, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x68, 0x6f, 0x73, 0x74, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x12, 0x38, 0x0a, 0x05, 0x73,
+	0x74, 0x61, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x22, 0x2e, 0x63, 0x68, 0x72,
+	0x6f, 0x6d, 0x65, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e, 0x52,
+	0x50, 0x4d, 0x4f, 0x75, 0x74, 0x6c, 0x65, 0x74, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05,
+	0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0x4b, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x0f,
+	0x0a, 0x0b, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x12, 0x0a, 0x0e, 0x4d, 0x49, 0x53, 0x53, 0x49, 0x4e, 0x47, 0x5f, 0x43, 0x4f, 0x4e, 0x46, 0x49,
+	0x47, 0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x57, 0x52, 0x4f, 0x4e, 0x47, 0x5f, 0x43, 0x4f, 0x4e,
+	0x46, 0x49, 0x47, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x07, 0x57, 0x4f, 0x52, 0x4b, 0x49, 0x4e, 0x47,
+	0x10, 0x03, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f, 0x73,
+	0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74, 0x6c,
+	0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -356,24 +642,31 @@ func file_infra_cros_recovery_tlw_models_proto_rawDescGZIP() []byte {
 	return file_infra_cros_recovery_tlw_models_proto_rawDescData
 }
 
-var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_infra_cros_recovery_tlw_models_proto_goTypes = []interface{}{
-	(*RunRequest)(nil),                // 0: chromeos.recovery.RunRequest
-	(*ProvisionRequest)(nil),          // 1: chromeos.recovery.ProvisionRequest
-	(*CallBluetoothPeerRequest)(nil),  // 2: chromeos.recovery.CallBluetoothPeerRequest
-	(*CallBluetoothPeerResponse)(nil), // 3: chromeos.recovery.CallBluetoothPeerResponse
-	(*durationpb.Duration)(nil),       // 4: google.protobuf.Duration
-	(*xmlrpc.Value)(nil),              // 5: chromiumos.config.api.test.xmlrpc.Value
+	(RunRPMActionRequest_Action)(0),   // 0: chromeos.recovery.RunRPMActionRequest.Action
+	(RPMOutlet_State)(0),              // 1: chromeos.recovery.RPMOutlet.State
+	(*RunRequest)(nil),                // 2: chromeos.recovery.RunRequest
+	(*ProvisionRequest)(nil),          // 3: chromeos.recovery.ProvisionRequest
+	(*CallBluetoothPeerRequest)(nil),  // 4: chromeos.recovery.CallBluetoothPeerRequest
+	(*CallBluetoothPeerResponse)(nil), // 5: chromeos.recovery.CallBluetoothPeerResponse
+	(*RunRPMActionRequest)(nil),       // 6: chromeos.recovery.RunRPMActionRequest
+	(*RPMOutlet)(nil),                 // 7: chromeos.recovery.RPMOutlet
+	(*durationpb.Duration)(nil),       // 8: google.protobuf.Duration
+	(*xmlrpc.Value)(nil),              // 9: chromiumos.config.api.test.xmlrpc.Value
 }
 var file_infra_cros_recovery_tlw_models_proto_depIdxs = []int32{
-	4, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
-	5, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	5, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	8, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
+	9, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	9, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	0, // 3: chromeos.recovery.RunRPMActionRequest.action:type_name -> chromeos.recovery.RunRPMActionRequest.Action
+	1, // 4: chromeos.recovery.RPMOutlet.state:type_name -> chromeos.recovery.RPMOutlet.State
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_infra_cros_recovery_tlw_models_proto_init() }
@@ -430,19 +723,44 @@ func file_infra_cros_recovery_tlw_models_proto_init() {
 				return nil
 			}
 		}
+		file_infra_cros_recovery_tlw_models_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RunRPMActionRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_cros_recovery_tlw_models_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RPMOutlet); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_cros_recovery_tlw_models_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_infra_cros_recovery_tlw_models_proto_goTypes,
 		DependencyIndexes: file_infra_cros_recovery_tlw_models_proto_depIdxs,
+		EnumInfos:         file_infra_cros_recovery_tlw_models_proto_enumTypes,
 		MessageInfos:      file_infra_cros_recovery_tlw_models_proto_msgTypes,
 	}.Build()
 	File_infra_cros_recovery_tlw_models_proto = out.File

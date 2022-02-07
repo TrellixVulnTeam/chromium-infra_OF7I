@@ -527,59 +527,39 @@ func (c *tlwClient) CopyDirectoryFrom(ctx context.Context, req *tlw.CopyRequest)
 	return nil
 }
 
-// SetPowerSupply manages power supply for requested.
-func (c *tlwClient) SetPowerSupply(ctx context.Context, req *tlw.SetPowerSupplyRequest) *tlw.SetPowerSupplyResponse {
-	if req == nil || req.Resource == "" {
-		return &tlw.SetPowerSupplyResponse{
-			Status: tlw.PowerSupplyResponseStatusError,
-			Reason: "resource is not specified",
-		}
+// RunRPMAction performs power action on RPM outlet per request.
+func (c *tlwClient) RunRPMAction(ctx context.Context, req *tlw.RunRPMActionRequest) error {
+	if req.GetHostname() == "" {
+		return errors.Reason("run rpm action: hostname of DUT is not provided").Err()
 	}
-	dut, err := c.getDevice(ctx, req.Resource)
-	if err != nil {
-		return &tlw.SetPowerSupplyResponse{
-			Status: tlw.PowerSupplyResponseStatusError,
-			Reason: err.Error(),
-		}
+	if req.GetRpmHostname() == "" {
+		return errors.Reason("run rpm action: power unit hostname is not provided").Err()
 	}
-	hostname, outlet := dutinfo.GetRpmInfo(dut)
-	log.Debug(ctx, "Set power supply %s: has rpm info %s:%s.", req.Resource, hostname, outlet)
-	if hostname == "" || outlet == "" {
-		return &tlw.SetPowerSupplyResponse{
-			Status: tlw.PowerSupplyResponseStatusNoConfig,
-			Reason: "power supply config missing or incorrect",
-		}
+	if req.GetRpmOutlet() == "" {
+		return errors.Reason("run rpm action: power unit outlet is not provided").Err()
 	}
 	var s rpm.PowerState
-	switch req.State {
-	case tlw.PowerSupplyActionOn:
+	switch req.GetAction() {
+	case tlw.RunRPMActionRequest_ON:
 		s = rpm.PowerStateOn
-	case tlw.PowerSupplyActionOff:
+	case tlw.RunRPMActionRequest_OFF:
 		s = rpm.PowerStateOff
-	case tlw.PowerSupplyActionCycle:
+	case tlw.RunRPMActionRequest_CYCLE:
 		s = rpm.PowerStateCycle
 	default:
-		return &tlw.SetPowerSupplyResponse{
-			Status: tlw.PowerSupplyResponseStatusError,
-			Reason: fmt.Sprintf("unknown rpm state: %s", string(req.State)),
-		}
+		return errors.Reason("run rpm action: unknown action: %s", req.GetAction().String()).Err()
 	}
-	log.Debug(ctx, "Set power supply %s: state: %q for %s:%s.", req.Resource, s, hostname, outlet)
+	log.Debug(ctx, "Changing state RPM outlet %s:%s to state %q.", req.GetRpmHostname(), req.GetRpmOutlet(), s)
 	rpmReq := &rpm.RPMPowerRequest{
-		Hostname:          dut.Name,
-		PowerUnitHostname: hostname,
-		PowerunitOutlet:   outlet,
+		Hostname:          req.GetHostname(),
+		PowerUnitHostname: req.GetRpmHostname(),
+		PowerunitOutlet:   req.GetRpmOutlet(),
 		State:             s,
 	}
 	if err := rpm.SetPowerState(ctx, rpmReq); err != nil {
-		return &tlw.SetPowerSupplyResponse{
-			Status: tlw.PowerSupplyResponseStatusError,
-			Reason: err.Error(),
-		}
+		return errors.Annotate(err, "run rpm action").Err()
 	}
-	return &tlw.SetPowerSupplyResponse{
-		Status: tlw.PowerSupplyResponseStatusOK,
-	}
+	return nil
 }
 
 // GetCacheUrl provides URL to download requested path to file.

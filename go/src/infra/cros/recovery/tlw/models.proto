@@ -25,14 +25,14 @@ message RunRequest {
 
 // ProvisionRequest provides data to perform provisioning of the device.
 message ProvisionRequest {
-	// Resource name
-	string resource  = 1;
-	// Path to system image.
-	// Path to the GS file.
-	// Example: gs://bucket/file_name
-	string system_image_path = 2;
-	// Prevent reboot during provision OS.
-	bool prevent_reboot = 3;
+  // Resource name
+  string resource = 1;
+  // Path to system image.
+  // Path to the GS file.
+  // Example: gs://bucket/file_name
+  string system_image_path = 2;
+  // Prevent reboot during provision OS.
+  bool prevent_reboot = 3;
 }
 
 // CallBluetoothPeerRequest represents data to run command on bluetooth peer.
@@ -47,4 +47,49 @@ message CallBluetoothPeerRequest {
 message CallBluetoothPeerResponse {
   chromiumos.config.api.test.xmlrpc.Value value = 1;
   bool fault = 2;
+}
+
+// RunRPMActionRequest represents data to perform action on RPM outlet.
+message RunRPMActionRequest {
+  // Hostname of the DUT.
+	string hostname = 1;
+  // Hostname of the RPM power unit, e.g. "chromeos6-row13_14-rack15-rpm2".
+  string rpm_hostname = 2;
+  // Name to locate a specific outlet from a RPM power unit, e.g. ".A7".
+  string rpm_outlet = 3;
+  // Action represents action expecting to perform on power supplier.
+  enum Action {
+    UNSPECIFIED = 0;
+    // Switch state to ON.
+    ON = 1;
+    // Switch state to OFF.
+    OFF = 2;
+    // Switch state to OFF and then ON with delay 5 seconds.
+    CYCLE = 3;
+  }
+  // Expected state to switch on.
+  Action action = 4;
+}
+
+// RPMOutlet is remote power management outlet allows perform an action to do
+// OFF/ON/CYCLE on it.
+message RPMOutlet {
+  // Hostname of the RPM power unit, e.g. "chromeos6-row13_14-rack15-rpm2".
+  string hostname = 1;
+  // Name to locate a specific outlet from a RPM power unit, e.g. ".A7".
+  string outlet = 2;
+  // RPMState describes the state of RPM outlet.
+  enum State {
+    UNSPECIFIED = 0;
+    // Configuration for RPM outlet missed which block from execution the
+    // actions.
+    MISSING_CONFIG = 1;
+    // Configuration for RPM outlet provided but does not working which can be
+    // several reasons.
+    WRONG_CONFIG = 2;
+    // RPM outlet can successfully perform the actions.
+    WORKING = 3;
+  }
+  // State of the component.
+  State state = 3;
 }

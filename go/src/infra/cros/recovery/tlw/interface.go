@@ -41,8 +41,8 @@ type Access interface {
 	CopyDirectoryTo(ctx context.Context, req *CopyRequest) error
 	// CopyDirectoryFrom copies directory from remote device to local, recursively.
 	CopyDirectoryFrom(ctx context.Context, req *CopyRequest) error
-	// SetPowerSupply manages power supply for requested.
-	SetPowerSupply(ctx context.Context, req *SetPowerSupplyRequest) *SetPowerSupplyResponse
+	// RunRPMAction performs power action on RPM outlet per request.
+	RunRPMAction(ctx context.Context, req *RunRPMActionRequest) error
 	// ListResourcesForUnit provides list of resources names related to target unit.
 	// All test and task scheduling against the target unit which can link to 1 or more resources.
 	ListResourcesForUnit(ctx context.Context, unitName string) ([]string, error)
@@ -82,49 +82,6 @@ type CopyRequest struct {
 	PathSource string
 	// Path to destination file or directory.
 	PathDestination string
-}
-
-// PowerSupplyState represents action expecting to perform on power supplier.
-type PowerSupplyAction string
-
-const (
-	PowerSupplyActionUnspecified PowerSupplyAction = "UNSPECIFIED"
-	// Switch state to ON.
-	PowerSupplyActionOn PowerSupplyAction = "ON"
-	// Switch state to OFF.
-	PowerSupplyActionOff PowerSupplyAction = "OFF"
-	// Switch state to OFF and then ON with delay 5 seconds.
-	PowerSupplyActionCycle PowerSupplyAction = "CYCLE"
-)
-
-// SetPowerSupplyRequest represents data to perform state change for power supplier.
-type SetPowerSupplyRequest struct {
-	// Resource name
-	Resource string
-	// Expected state to switch on.
-	State PowerSupplyAction
-}
-
-// PowerSupplyStatus represents response status from attempt to changes state of power supplier.
-type PowerSupplyResponseStatus string
-
-const (
-	PowerSupplyResponseStatusUnspecified PowerSupplyResponseStatus = "UNSPECIFIED"
-	PowerSupplyResponseStatusOK          PowerSupplyResponseStatus = "OK"
-	// RPM config is not present of incorrect.
-	PowerSupplyResponseStatusNoConfig PowerSupplyResponseStatus = "NO_CONFIG"
-	// Request data incorrect or in unexpected state.
-	PowerSupplyResponseStatusBadRequest PowerSupplyResponseStatus = "BAD REQUEST"
-	// Fail to switch to required state.
-	PowerSupplyResponseStatusError PowerSupplyResponseStatus = "ERROR"
-)
-
-// SetPowerSupplyResponse represents data result from performing state change for power supplier.
-type SetPowerSupplyResponse struct {
-	// New state.
-	Status PowerSupplyResponseStatus
-	// Error details
-	Reason string
 }
 
 // ServodMethod represents types of methods supporting by servod daemon.
@@ -431,27 +388,6 @@ type WifiRouterHost struct {
 	Board string
 	// RPM
 	RPMOutlet *RPMOutlet
-}
-
-// RPMState describes the state of RPM outlet.
-type RPMState string
-
-const (
-	RPMStateUnspecified RPMState = "UNSPECIFIED"
-	// Configuration for RPM outlet missed which block from execution the actions.
-	RPMStateMissingConfig RPMState = "MISSING_CONFIG"
-	// Configuration for RPM outlet provided but does not working which can be several reasons.
-	RPMStateWrongConfig RPMState = "WRONG_CONFIG"
-	// RPM outlet can successfully perform the actions.
-	RPMStateWorking RPMState = "WORKING"
-)
-
-// RPMOutlet is wall-power source for DUT which allow us perform action to do OFF/ON/CYCLE on it.
-type RPMOutlet struct {
-	// Name is the resource name.
-	Name string
-	// State of the component.
-	State RPMState
 }
 
 // ServoHost holds info about host to manage servod services and verify connected servo devices.

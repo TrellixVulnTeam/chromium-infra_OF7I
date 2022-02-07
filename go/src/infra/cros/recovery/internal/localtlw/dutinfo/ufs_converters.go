@@ -147,17 +147,17 @@ func convertWifiRouterState(s ufslab.PeripheralState) tlw.WifiRouterState {
 	return tlw.WifiRouterStateUnspecified
 }
 
-var rpmStates = map[ufslab.PeripheralState]tlw.RPMState{
-	ufslab.PeripheralState_WORKING:        tlw.RPMStateWorking,
-	ufslab.PeripheralState_MISSING_CONFIG: tlw.RPMStateMissingConfig,
-	ufslab.PeripheralState_WRONG_CONFIG:   tlw.RPMStateWrongConfig,
+var rpmStates = map[ufslab.PeripheralState]tlw.RPMOutlet_State{
+	ufslab.PeripheralState_WORKING:        tlw.RPMOutlet_WORKING,
+	ufslab.PeripheralState_MISSING_CONFIG: tlw.RPMOutlet_MISSING_CONFIG,
+	ufslab.PeripheralState_WRONG_CONFIG:   tlw.RPMOutlet_WRONG_CONFIG,
 }
 
-func convertRPMState(s ufslab.PeripheralState) tlw.RPMState {
+func convertRPMState(s ufslab.PeripheralState) tlw.RPMOutlet_State {
 	if ns, ok := rpmStates[s]; ok {
 		return ns
 	}
-	return tlw.RPMStateUnspecified
+	return tlw.RPMOutlet_UNSPECIFIED
 }
 
 var cr50Phases = map[ufslab.DutState_CR50Phase]tlw.Cr50Phase{

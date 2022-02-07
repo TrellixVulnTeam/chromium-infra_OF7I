@@ -6,7 +6,6 @@ package rpm
 
 import (
 	"context"
-	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -17,84 +16,41 @@ import (
 
 // hasRpmInfoExec verifies if rpm info is present for DUT.
 func hasRpmInfoExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT.RPMOutlet != nil {
-		name := args.DUT.RPMOutlet.Name
+	if r := args.DUT.RPMOutlet; r != nil {
 		// TODO(otabek@): set fixed number to check and add accept argument value.
-		if name != "" && strings.Contains(name, "|") {
+		if r.GetHostname() != "" && r.GetOutlet() != "" {
 			return nil
 		}
-		args.DUT.RPMOutlet.State = tlw.RPMStateMissingConfig
+		r.State = tlw.RPMOutlet_MISSING_CONFIG
 	}
 	return errors.Reason("has rpm info: not present or incorrect").Err()
 }
 
 // rpmPowerCycleExec performs power cycle the device by RPM.
 func rpmPowerCycleExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	req := &tlw.SetPowerSupplyRequest{
-		Resource: args.DUT.Name,
-		State:    tlw.PowerSupplyActionCycle,
+	if err := args.RPMAction(ctx, args.DUT.Name, args.DUT.RPMOutlet, tlw.RunRPMActionRequest_CYCLE); err != nil {
+		return errors.Annotate(err, "rpm power cycle").Err()
 	}
-	res := args.Access.SetPowerSupply(ctx, req)
-	switch res.Status {
-	case tlw.PowerSupplyResponseStatusOK:
-		log.Debug(ctx, "RPM power cycle finished with success.")
-		return nil
-	case tlw.PowerSupplyResponseStatusNoConfig:
-		args.DUT.RPMOutlet.State = tlw.RPMStateMissingConfig
-		return errors.Reason("rpm power cycle: no config: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusBadRequest:
-		return errors.Reason("rpm power cycle: bad request: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusError:
-		return errors.Reason("rpm power cycle: %s", res.Reason).Err()
-	default:
-		return errors.Reason("rpm power cycle: unexpected status").Err()
-	}
+	log.Debug(ctx, "RPM power cycle finished with success.")
+	return nil
 }
 
 // rpmPowerOffExec performs power off the device by RPM.
 func rpmPowerOffExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	req := &tlw.SetPowerSupplyRequest{
-		Resource: args.DUT.Name,
-		State:    tlw.PowerSupplyActionOff,
+	if err := args.RPMAction(ctx, args.DUT.Name, args.DUT.RPMOutlet, tlw.RunRPMActionRequest_OFF); err != nil {
+		return errors.Annotate(err, "rpm power off").Err()
 	}
-	res := args.Access.SetPowerSupply(ctx, req)
-	switch res.Status {
-	case tlw.PowerSupplyResponseStatusOK:
-		log.Debug(ctx, "RPM power OFF finished with success.")
-		return nil
-	case tlw.PowerSupplyResponseStatusNoConfig:
-		args.DUT.RPMOutlet.State = tlw.RPMStateMissingConfig
-		return errors.Reason("rpm power off: no config: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusBadRequest:
-		return errors.Reason("rpm power off: bad request: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusError:
-		return errors.Reason("rpm power off: %s", res.Reason).Err()
-	default:
-		return errors.Reason("rpm power off: unexpected status").Err()
-	}
+	log.Debug(ctx, "RPM power OFF finished with success.")
+	return nil
 }
 
 // rpmPowerOffExec performs power on the device by RPM.
 func rpmPowerOnExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	req := &tlw.SetPowerSupplyRequest{
-		Resource: args.DUT.Name,
-		State:    tlw.PowerSupplyActionOn,
+	if err := args.RPMAction(ctx, args.DUT.Name, args.DUT.RPMOutlet, tlw.RunRPMActionRequest_ON); err != nil {
+		return errors.Annotate(err, "rpm power on").Err()
 	}
-	res := args.Access.SetPowerSupply(ctx, req)
-	switch res.Status {
-	case tlw.PowerSupplyResponseStatusOK:
-		log.Debug(ctx, "RPM power ON finished with success.")
-		return nil
-	case tlw.PowerSupplyResponseStatusNoConfig:
-		args.DUT.RPMOutlet.State = tlw.RPMStateMissingConfig
-		return errors.Reason("rpm power on: no config: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusBadRequest:
-		return errors.Reason("rpm power on: bad request: %s", res.Reason).Err()
-	case tlw.PowerSupplyResponseStatusError:
-		return errors.Reason("rpm power on: %s", res.Reason).Err()
-	default:
-		return errors.Reason("rpm power on: unexpected status").Err()
-	}
+	log.Debug(ctx, "RPM power ON finished with success.")
+	return nil
 }
 
 func init() {
