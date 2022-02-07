@@ -53,6 +53,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
           customQuestions.push(
             <CustomQuestionTextarea
               question={q.question}
+              tip={q.tip}
               updateAnswers={(answer: string) => updateAnswer(answer, i)}
             />
           );
@@ -61,6 +62,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
         customQuestions.push(
           <CustomQuestionSelector
             question={q.question}
+            tip={q.tip}
             options={q.options}
             subQuestions={q.subQuestions}
             updateAnswers={(answer: string) => updateAnswer(answer, i)}

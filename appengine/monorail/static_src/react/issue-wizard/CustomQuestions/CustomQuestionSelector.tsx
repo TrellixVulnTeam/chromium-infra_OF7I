@@ -18,8 +18,9 @@ const userStyles = makeStyles({
 
 type Props = {
   question: string,
+  tip?: string,
   options: string[],
-  subQuestions: CustomQuestion[],
+  subQuestions: CustomQuestion[] | null,
   updateAnswers: Function,
 }
 
@@ -27,10 +28,10 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
 
   const classes = userStyles();
 
-  const {question, updateAnswers, options, subQuestions} = props;
+  const {question, updateAnswers, options, subQuestions, tip} = props;
   const [selectedOption, setSelectedOption] = React.useState(options[0]);
 
-  const [subQuestion, setSubQuestion] = React.useState(subQuestions[0]);
+  const [subQuestion, setSubQuestion] = React.useState(subQuestions? subQuestions[0] : null);
 
   React.useEffect(() => {
     updateAnswers(options[0]);
@@ -40,7 +41,9 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
     setSelectedOption(option);
     updateAnswers(option);
     const index = options.indexOf(option);
-    setSubQuestion(subQuestions[index]);
+    if (subQuestions !== null) {
+      setSubQuestion(subQuestions[index]);
+    }
   };
 
   const updateSubQuestionAnswer = (answer:string) => {
@@ -64,6 +67,7 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
         renderSubQuestion =
             <CustomQuestionTextarea
               question={subQuestion.question}
+              tip={subQuestion.tip}
               updateAnswers={updateSubQuestionAnswer}
             />;
         break;
@@ -74,6 +78,7 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
   return (
     <>
       <h3>{question}</h3>
+      {tip? <div> {tip} </div> : null}
       <SelectMenu
         optionsList={optionList}
         selectedOption={selectedOption}

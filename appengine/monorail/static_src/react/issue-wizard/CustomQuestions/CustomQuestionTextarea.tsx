@@ -14,6 +14,7 @@ const userStyles = makeStyles({
 
 type Props = {
   question: string,
+  tip?: string,
   updateAnswers: Function,
 }
 
@@ -21,7 +22,7 @@ export default function CustomQuestionTextarea(props: Props): React.ReactElement
 
   const classes = userStyles();
 
-  const {question, updateAnswers} = props;
+  const {question, updateAnswers, tip} = props;
   const [answer, setAnswer] = React.useState('');
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAnswer(e.target.value);
@@ -31,6 +32,7 @@ export default function CustomQuestionTextarea(props: Props): React.ReactElement
   return (
     <>
       <h3>{question}</h3>
+      {tip ? <div> {tip} </div> : null}
       <OutlinedInput
         multiline={true}
         rows={3}

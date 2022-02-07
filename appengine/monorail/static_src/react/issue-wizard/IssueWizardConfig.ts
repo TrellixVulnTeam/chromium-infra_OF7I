@@ -3,8 +3,7 @@
 // found in the LICENSE file.
 
 // TODO: create a `monorail/frontend/config/` folder to store all the feature config file
-import {CustomQuestionType} from "./IssueWizardTypes.tsx";
-import {IssueCategory, IssueWizardPersona} from "./IssueWizardTypes.tsx";
+import {IssueCategory, IssueWizardPersona, CustomQuestionType} from "./IssueWizardTypes.tsx";
 
 export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   {
@@ -294,12 +293,62 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'The browser closes abruptly or I see "Aw, Snap!" pages',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Input,
+        question: "Do you have a Report ID from chrome://crashes?",
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "How much crashes?",
+        options: ["Just one tab", "Just one plugin", "The whole browser"],
+        subQuestions: null,
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Is it a problem with a plugin?",
+        options: ["Not sure - I don't know", "Yes - Those darn plugins", "No - It's the browser itself"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Which plugin?",
+          },
+          null],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ]
   },
   {
     name: 'Security',
     description: 'Issues related to the security of the browser',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    customQuestions: [
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ]
   },
   {
     name: 'Other',
@@ -317,7 +366,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           "Type-Bug - Software not working correctly",
           "Cr-UI-I18N - Issue in translating UI to other languages"
         ],
-        subQuestions: [null, null, null, null, null]
+        subQuestions: null,
       },
       {
         type: CustomQuestionType.Select,
@@ -338,6 +387,113 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with a browser API',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    customQuestions: [
+      {
+        type:CustomQuestionType.Select,
+        question:"Which component does this fall under?",
+        options: [
+          "Not sure - I don't know",
+          "Blink>Animation",
+          "Blink>BackgroundSync",
+          "Blink>Bindings",
+          "Blink>Bluetooth",
+          "Blink>Canvas",
+          "Blink>Compositing",
+          "Blink>CSS",
+          "Blink>DataTransfer",
+          "Blink>DOM",
+          "Blink>Editing",
+          "Blink>FileAPI",
+          "Blink>Focus",
+          "Blink>Fonts",
+          "Blink>Forms",
+          "Blink>Fullscreen",
+          "Blink>GamepadAPI",
+          "Blink>GetUserMedia",
+          "Blink>HitTesting",
+          "Blink>HTML",
+          "Blink>Image",
+          "Blink>Input",
+          "Blink>Internals",
+          "Blink>Javascript",
+          "Blink>Layout",
+          "Blink>Loader",
+          "Blink>Location",
+          "Blink>Media",
+          "Blink>MediaStream",
+          "Blink>MemoryAllocator",
+          "Blink>Messaging",
+          "Blink>Network",
+          "Blink>Paint",
+          "Blink>Payments",
+          "Blink>PerformanceAPIs",
+          "Blink>PermissionsAPI",
+          "Blink>PresentationAPI",
+          "Blink>PushAPI",
+          "Blink>SavePage",
+          "Blink>Scheduling",
+          "Blink>Scroll",
+          "Blink>SecurityFeature",
+          "Blink>ServiceWorker",
+          "Blink>Speech",
+          "Blink>Storage",
+          "Blink>SVG",
+          "Blink>TextAutosize",
+          "Blink>TextEncoding",
+          "Blink>TextSelection",
+          "Blink>USB",
+          "Blink>Vibration",
+          "Blink>ViewSource",
+          "Blink>WebAudio",
+          "Blink>WebComponents",
+          "Blink>WebCrypto",
+          "Blink>WebFonts",
+          "Blink>WebGL",
+          "Blink>WebGPU",
+          "Blink>WebMIDI",
+          "Blink>WebRTC",
+          "Blink>WebShare",
+          "Blink>WebVR",
+          "Blink>WindowDialog",
+          "Blink>Workers",
+          "Blink>XML",
+        ],
+        subQuestions: null,
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Do you have a reduced test case?",
+        options: [" Yes - Please attach the file here", "No - I realize that it is harder to resolve problems that lack test cases"],
+        subQuestions: null,
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Does this feature work correctly in other browsers?",
+        tip: "Tip: Use browserstack.com to compare behavior on different browser versions.",
+        options: ["Not sure - I don't know", "Yes - This is just a Chrome problem", "No - I can reproduce the problem in another browser"],
+        subQuestions: [
+          null,
+          null,
+          {
+            type:CustomQuestionType.Text,
+            question: "Details of interop issue",
+            tip: "Please describe what the behavior is on other browsers and link to any existing bugs.",
+          }
+        ],
+      },
+      {
+        type: CustomQuestionType.Select,
+        question: "Did this work before?",
+        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
+        subQuestions: [
+          null,
+          {
+            type:CustomQuestionType.Input,
+            question: "Latest version when it worked?",
+          },
+          null],
+      }
+    ]
   },
   {
     name: 'JavaScript',
