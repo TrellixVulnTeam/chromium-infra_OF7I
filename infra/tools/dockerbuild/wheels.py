@@ -1182,6 +1182,13 @@ SPECS.update({
             ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
             pyversions=['py3'],
         ),
+        Prebuilt(
+            'tensorflow-io-gcs-filesystem',
+            '0.23.1',
+            ['manylinux-x64-py3', 'mac-x64-cp38', 'windows-x64-py3'],
+            pyversions=['py3'],
+            arch_map={'mac-x64-cp38': ['macosx_10_14_x86_64']},
+        ),
     )
 })
 

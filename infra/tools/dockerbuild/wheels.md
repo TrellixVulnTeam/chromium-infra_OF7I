@@ -7066,6 +7066,22 @@ wheel: <
 
 * *universal*
 
+## **tensorflow-io-gcs-filesystem**
+
+### 0.23.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-io-gcs-filesystem/${vpython_platform}"
+  version: "version:0.23.1"
+>
+```
+
+
+* *mac-x64-cp38*
+* *manylinux-x64-py3*
+* *windows-x64-py3*
+
 ## **tensorflow-probability**
 
 ### 0.12.2
