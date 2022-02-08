@@ -1,0 +1,540 @@
+[
+  {
+    "cmd": [],
+    "name": "read user config"
+  },
+  {
+    "cmd": [
+      "python3",
+      "-u",
+      "RECIPE_MODULE[depot_tools::bot_update]\\resources\\bot_update.py",
+      "--spec-path",
+      "cache_dir = '[CACHE]\\\\git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra-data-config', 'url': 'https://chrome-internal.googlesource.com/infradata/config.git'}]",
+      "--revision_mapping_file",
+      "{\"got_revision\": \"infra-data-config\"}",
+      "--git-cache-dir",
+      "[CACHE]\\git",
+      "--cleanup-dir",
+      "[CLEANUP]\\bot_update",
+      "--output_json",
+      "/path/to/tmp/json",
+      "--revision",
+      "infra-data-config@origin/main"
+    ],
+    "cwd": "[CACHE]\\builder",
+    "env": {
+      "DEPOT_TOOLS_COLLECT_METRICS": "0",
+      "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
+      "GIT_HTTP_LOW_SPEED_TIME": "1800"
+    },
+    "env_suffixes": {
+      "DEPOT_TOOLS_UPDATE": [
+        "0"
+      ],
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "read user config.bot_update",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Some step text@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"did_run\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"fixed_revisions\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra-data-config\": \"origin/main\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"infra-data-config\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"repository\": \"https://fake.org/infra-data-config.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"revision\": \"27767c7058a0f3bf6858c0c825230c6c63ce98d4\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_failure\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"patch_root\": \"infra-data-config\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision\": \"27767c7058a0f3bf6858c0c825230c6c63ce98d4\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"got_revision_cp\": \"refs/heads/main@{#209581}\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"root\": \"infra-data-config\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"source_manifest\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"directories\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"infra-data-config\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"git_checkout\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"repo_url\": \"https://fake.org/infra-data-config.git\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"revision\": \"27767c7058a0f3bf6858c0c825230c6c63ce98d4\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"version\": 0@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"step_text\": \"Some step text\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision@\"27767c7058a0f3bf6858c0c825230c6c63ce98d4\"@@@",
+      "@@@SET_BUILD_PROPERTY@got_revision_cp@\"refs/heads/main@{#209581}\"@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "-u",
+      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "runhooks"
+    ],
+    "cwd": "[CACHE]\\builder",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "read user config.gclient runhooks",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[CACHE]\\builder\\infra-data-config\\test_config"
+    ],
+    "cwd": "[CACHE]\\builder",
+    "infra_step": true,
+    "name": "read user config.Read all the configs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@listdir@[CACHE]\\builder\\infra-data-config\\test_config\\first.cfg@@@",
+      "@@@STEP_LOG_LINE@listdir@[CACHE]\\builder\\infra-data-config\\test_config\\second.cfg@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CACHE]\\builder\\infra-data-config\\test_config\\first.cfg",
+      "/path/to/tmp/tpb"
+    ],
+    "cwd": "[CACHE]\\builder",
+    "infra_step": true,
+    "name": "read user config.Reading test_config",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@first.cfg@name: \"test\"@@@",
+      "@@@STEP_LOG_LINE@first.cfg@arch: ARCH_X86@@@",
+      "@@@STEP_LOG_LINE@first.cfg@customizations {@@@",
+      "@@@STEP_LOG_LINE@first.cfg@  offline_winpe_customization {@@@",
+      "@@@STEP_LOG_LINE@first.cfg@    name: \"test_cust\"@@@",
+      "@@@STEP_LOG_LINE@first.cfg@    offline_customization {@@@",
+      "@@@STEP_LOG_LINE@first.cfg@      name: \"tests\"@@@",
+      "@@@STEP_LOG_LINE@first.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@first.cfg@  }@@@",
+      "@@@STEP_LOG_LINE@first.cfg@}@@@",
+      "@@@STEP_LOG_END@first.cfg@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CACHE]\\builder\\infra-data-config\\test_config\\second.cfg",
+      "/path/to/tmp/tpb"
+    ],
+    "cwd": "[CACHE]\\builder",
+    "infra_step": true,
+    "name": "read user config.Reading test_config (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@second.cfg@name: \"test\"@@@",
+      "@@@STEP_LOG_LINE@second.cfg@arch: ARCH_X86@@@",
+      "@@@STEP_LOG_LINE@second.cfg@customizations {@@@",
+      "@@@STEP_LOG_LINE@second.cfg@  offline_winpe_customization {@@@",
+      "@@@STEP_LOG_LINE@second.cfg@    name: \"test_cust\"@@@",
+      "@@@STEP_LOG_LINE@second.cfg@    offline_customization {@@@",
+      "@@@STEP_LOG_LINE@second.cfg@      name: \"tests\"@@@",
+      "@@@STEP_LOG_LINE@second.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@second.cfg@  }@@@",
+      "@@@STEP_LOG_LINE@second.cfg@}@@@",
+      "@@@STEP_LOG_END@second.cfg@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Initialize the config engine"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\Pkgs\\CIPDPkgs"
+    ],
+    "infra_step": true,
+    "name": "Initialize the config engine.Ensure [CACHE]\\Pkgs\\CIPDPkgs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\Pkgs\\GITPkgs"
+    ],
+    "infra_step": true,
+    "name": "Initialize the config engine.Ensure [CACHE]\\Pkgs\\GITPkgs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\Pkgs\\GCSPkgs"
+    ],
+    "infra_step": true,
+    "name": "Initialize the config engine.Ensure [CACHE]\\Pkgs\\GCSPkgs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM"
+    ],
+    "infra_step": true,
+    "name": "Initialize the config engine.Ensure [CACHE]\\Pkgs\\GCSPkgs\\chrome-gce-images\\WIB-WIM",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CLEANUP]\\configs"
+    ],
+    "infra_step": true,
+    "name": "Initialize the config engine.Ensure [CLEANUP]\\configs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Process the customizations"
+  },
+  {
+    "cmd": [],
+    "name": "Process the customizations.Pin resources from test_cust",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Process the customizations.Pin resources from test_cust (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "arch: ARCH_X86\ncustomizations {\n  offline_winpe_customization {\n    image_src {\n    }\n    offline_customization {\n    }\n  }\n}\n",
+      "[CLEANUP]\\configs\\test-test_cust.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Write config [CLEANUP]\\configs\\test-test_cust.cfg",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@arch: ARCH_X86@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@customizations {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@  offline_winpe_customization {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    image_src {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    offline_customization {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@  }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@}@@@",
+      "@@@STEP_LOG_END@test-test_cust.cfg@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CLEANUP]\\configs\\test-test_cust.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: 0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\configs\\test-test_cust.cfg",
+      "[CLEANUP]\\configs\\0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Copy [CLEANUP]\\configs\\test-test_cust.cfg to [CLEANUP]\\configs\\0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.cfg",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "arch: ARCH_X86\ncustomizations {\n  offline_winpe_customization {\n    image_src {\n    }\n    offline_customization {\n    }\n  }\n}\n",
+      "[CLEANUP]\\configs\\test-test_cust.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Write config [CLEANUP]\\configs\\test-test_cust.cfg (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@arch: ARCH_X86@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@customizations {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@  offline_winpe_customization {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    image_src {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    offline_customization {@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@    }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@  }@@@",
+      "@@@STEP_LOG_LINE@test-test_cust.cfg@}@@@",
+      "@@@STEP_LOG_END@test-test_cust.cfg@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CLEANUP]\\configs\\test-test_cust.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Compute file hash (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: 0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]\\configs\\test-test_cust.cfg",
+      "[CLEANUP]\\configs\\0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.cfg"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.Copy [CLEANUP]\\configs\\test-test_cust.cfg to [CLEANUP]\\configs\\0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.cfg (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::gsutil]\\resources\\gsutil_smart_retry.py",
+      "--",
+      "RECIPE_REPO[depot_tools]\\gsutil.py",
+      "----",
+      "stat",
+      "gs://chrome-gce-images/WIB-WIM/0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.zip"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.gsutil stat gs://chrome-gce-images/WIB-WIM/0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.zip",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[depot_tools::gsutil]\\resources\\gsutil_smart_retry.py",
+      "--",
+      "RECIPE_REPO[depot_tools]\\gsutil.py",
+      "----",
+      "stat",
+      "gs://chrome-gce-images/WIB-WIM/0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.zip"
+    ],
+    "infra_step": true,
+    "name": "Process the customizations.gsutil stat gs://chrome-gce-images/WIB-WIM/0ba325f4cf5356b9864719365a807f2c9d48bf882d333149cebd9d1ec0b64e7b.zip (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Execute customizations"
+  },
+  {
+    "cmd": [
+      "bb",
+      "batch",
+      "-host",
+      "cr-buildbucket.appspot.com"
+    ],
+    "infra_step": true,
+    "name": "Execute customizations.buildbucket.schedule",
+    "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"builder\": \"WinPE Customization Builder\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"properties\": {\"arch\": \"ARCH_X86\", \"customizations\": [{\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}, {\"offline_winpe_customization\": {\"name\": \"test_cust\", \"offline_customization\": [{\"name\": \"tests\"}]}}], \"name\": \"test\"}, \"requestId\": \"0-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"parent_buildbucket_id\", \"value\": \"0\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"scheduleBuild\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"builder\": \"WinPE Customization Builder\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"input\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@            \"customizations\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@              {@@@",
+      "@@@STEP_LOG_LINE@json.output@                \"offline_winpe_customization\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@                  \"name\": \"test_cust\"@@@",
+      "@@@STEP_LOG_LINE@json.output@                }@@@",
+      "@@@STEP_LOG_LINE@json.output@              }@@@",
+      "@@@STEP_LOG_LINE@json.output@            ], @@@",
+      "@@@STEP_LOG_LINE@json.output@            \"name\": \"test\"@@@",
+      "@@@STEP_LOG_LINE@json.output@          }@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@request@{@@@",
+      "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
+      "@@@STEP_LOG_LINE@request@    {@@@",
+      "@@@STEP_LOG_LINE@request@      \"scheduleBuild\": {@@@",
+      "@@@STEP_LOG_LINE@request@        \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@request@          \"builder\": \"WinPE Customization Builder\"@@@",
+      "@@@STEP_LOG_LINE@request@        }, @@@",
+      "@@@STEP_LOG_LINE@request@        \"experimental\": \"NO\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@request@          \"arch\": \"ARCH_X86\", @@@",
+      "@@@STEP_LOG_LINE@request@          \"customizations\": [@@@",
+      "@@@STEP_LOG_LINE@request@            {@@@",
+      "@@@STEP_LOG_LINE@request@              \"offline_winpe_customization\": {@@@",
+      "@@@STEP_LOG_LINE@request@                \"name\": \"test_cust\", @@@",
+      "@@@STEP_LOG_LINE@request@                \"offline_customization\": [@@@",
+      "@@@STEP_LOG_LINE@request@                  {@@@",
+      "@@@STEP_LOG_LINE@request@                    \"name\": \"tests\"@@@",
+      "@@@STEP_LOG_LINE@request@                  }@@@",
+      "@@@STEP_LOG_LINE@request@                ]@@@",
+      "@@@STEP_LOG_LINE@request@              }@@@",
+      "@@@STEP_LOG_LINE@request@            }, @@@",
+      "@@@STEP_LOG_LINE@request@            {@@@",
+      "@@@STEP_LOG_LINE@request@              \"offline_winpe_customization\": {@@@",
+      "@@@STEP_LOG_LINE@request@                \"name\": \"test_cust\", @@@",
+      "@@@STEP_LOG_LINE@request@                \"offline_customization\": [@@@",
+      "@@@STEP_LOG_LINE@request@                  {@@@",
+      "@@@STEP_LOG_LINE@request@                    \"name\": \"tests\"@@@",
+      "@@@STEP_LOG_LINE@request@                  }@@@",
+      "@@@STEP_LOG_LINE@request@                ]@@@",
+      "@@@STEP_LOG_LINE@request@              }@@@",
+      "@@@STEP_LOG_LINE@request@            }@@@",
+      "@@@STEP_LOG_LINE@request@          ], @@@",
+      "@@@STEP_LOG_LINE@request@          \"name\": \"test\"@@@",
+      "@@@STEP_LOG_LINE@request@        }, @@@",
+      "@@@STEP_LOG_LINE@request@        \"requestId\": \"0-00000000-0000-0000-0000-000000001337\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"tags\": [@@@",
+      "@@@STEP_LOG_LINE@request@          {@@@",
+      "@@@STEP_LOG_LINE@request@            \"key\": \"parent_buildbucket_id\", @@@",
+      "@@@STEP_LOG_LINE@request@            \"value\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@request@          }, @@@",
+      "@@@STEP_LOG_LINE@request@          {@@@",
+      "@@@STEP_LOG_LINE@request@            \"key\": \"user_agent\", @@@",
+      "@@@STEP_LOG_LINE@request@            \"value\": \"recipe\"@@@",
+      "@@@STEP_LOG_LINE@request@          }@@@",
+      "@@@STEP_LOG_LINE@request@        ]@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  ]@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LINK@[WinPE Customization Builder] test:test_cust@https://cr-buildbucket.appspot.com/build/0@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

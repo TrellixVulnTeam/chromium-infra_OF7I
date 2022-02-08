@@ -57,9 +57,9 @@ def NEST_WINPE_DEINIT_STEP():
   return 'Deinit WinPE image modification'
 
 
-def NEST_PROCESS_CUST(image):
+def NEST_PROCESS_CUST():
   """ generate process customization header"""
-  return 'Process the customizations in {}'.format(image)
+  return 'Process the customizations'
 
 
 def NEST_PIN_SRCS(cust):
@@ -94,7 +94,7 @@ def json_res(api, success=True, err_msg='Failed step'):
 
 def MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps """
-  return MOCK_CUST_OUTPUT(api, image,
+  return MOCK_CUST_OUTPUT(api,
                           'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                           False) + \
         GEN_WPE_MEDIA(api, arch, image, customization) + \
@@ -106,7 +106,7 @@ def MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
 
 def MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps on an action failure """
-  return MOCK_CUST_OUTPUT(api, image,
+  return MOCK_CUST_OUTPUT(api,
                           'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                           False) + \
          GEN_WPE_MEDIA(api, arch, image, customization) + \
@@ -117,7 +117,7 @@ def MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, customization):
 
 def MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
   """ mock all the winpe init and deinit steps """
-  return MOCK_CUST_OUTPUT(api, image,
+  return MOCK_CUST_OUTPUT(api,
                           'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
                           False) + \
         MOUNT_WIM(api, arch, image, customization) + \
@@ -126,12 +126,12 @@ def MOCK_CUST_IMG_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization):
         CHECK_UMOUNT_WIM(api, image, customization)
 
 
-def MOCK_CUST_OUTPUT(api, image, url, success=True):
+def MOCK_CUST_OUTPUT(api, url, success=True):
   retcode = 1
   if success:
     retcode = 0
   return api.step_data(
-      NEST(NEST_PROCESS_CUST(image), 'gsutil stat {}'.format(url)),
+      NEST(NEST_PROCESS_CUST(), 'gsutil stat {}'.format(url)),
       api.raw_io.stream_output(_gcs_stat.format(url, url)),
       retcode=retcode,
   )
@@ -179,11 +179,11 @@ def DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization, success=True):
       stdout=json_res(api, success))
 
 
-def GIT_PIN_FILE(api, image, cust, refs, path, data):
+def GIT_PIN_FILE(api, cust, refs, path, data):
   """ mock git pin file step """
   return api.step_data(
       NEST(
-          NEST_PROCESS_CUST(image),
+          NEST_PROCESS_CUST(),
           NEST_PIN_SRCS(cust),
           'gitiles log: ' + '{}/{}'.format(refs, path),
       ),
@@ -191,7 +191,7 @@ def GIT_PIN_FILE(api, image, cust, refs, path, data):
   )
 
 
-def GCS_PIN_FILE(api, image, cust, url, pin_url='', success=True):
+def GCS_PIN_FILE(api, cust, url, pin_url='', success=True):
   """ mock gcs pin file action"""
   retcode = 1
   if success:
@@ -199,9 +199,8 @@ def GCS_PIN_FILE(api, image, cust, url, pin_url='', success=True):
   if not pin_url:
     pin_url = url
   return api.step_data(
-      NEST(
-          NEST_PROCESS_CUST(image), NEST_PIN_SRCS(cust),
-          'gsutil stat {}'.format(url)),
+      NEST(NEST_PROCESS_CUST(), NEST_PIN_SRCS(cust),
+           'gsutil stat {}'.format(url)),
       api.raw_io.stream_output(_gcs_stat.format(url, pin_url)),
       retcode=retcode,
   )

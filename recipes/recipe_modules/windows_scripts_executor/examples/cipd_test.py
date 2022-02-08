@@ -32,8 +32,9 @@ key = '835663538df204d1d6ba072b185850ba502e4520fddbfe2262562596511368af'
 
 
 def RunSteps(api, config):
-  api.windows_scripts_executor.init(config)
-  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.init()
+  custs = api.windows_scripts_executor.init_customizations(config)
+  custs = api.windows_scripts_executor.process_customizations(custs)
   api.windows_scripts_executor.download_all_packages(custs)
   # mock existence of cipd files to avoid failures
   api.path.mock_add_paths(

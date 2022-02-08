@@ -35,8 +35,9 @@ key = '4fa9269b1b8ebc0cd8d2c1c2415374819838ffb0a4a541a601ec51749b555096'
 
 
 def RunSteps(api, config):
-  api.windows_scripts_executor.init(config)
-  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.init()
+  custs = api.windows_scripts_executor.init_customizations(config)
+  custs = api.windows_scripts_executor.process_customizations(custs)
   api.windows_scripts_executor.download_all_packages(custs)
   # mock cipd packages to avoid spooking add_file execution
   api.path.mock_add_paths(
@@ -128,13 +129,13 @@ def GenTests(api):
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'network_setup',
                          [ACTION_ADD_STARTNET])) +
          # mock pinning the file to current refs
-         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock failure in gen winpe media step
          t.GEN_WPE_MEDIA(api, arch, image, cust_name, False) +
          t.MOCK_CUST_OUTPUT(
-             api, image, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
-             False) + api.post_process(StatusFailure) +  # recipe should fail
+             api, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key), False) +
+         api.post_process(StatusFailure) +  # recipe should fail
          api.post_process(DropExpectation))
 
   # Missing arch in config. Execution should fail if arch is ARCH_UNSPECIFIED
@@ -159,7 +160,7 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_FAILURE(api, key, arch, image, cust_name) +
          # mock git pin execution
-         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file from git to image execution
          t.ADD_FILE(api, image, cust_name, STARTNET_URL, False)
@@ -189,7 +190,7 @@ def GenTests(api):
          # mock all the init and deinit steps for winpe
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_FILE(api, image, cust_name, STARTNET_URL) +
@@ -216,9 +217,8 @@ def GenTests(api):
          api.properties(
              t.WPE_IMAGE(image, wib.ARCH_X86, cust_name, 'no_change', [])) +
          # mock output check to return true
-         t.MOCK_CUST_OUTPUT(api, image,
-                            'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
-                            True) +
+         t.MOCK_CUST_OUTPUT(
+             api, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key), True) +
          # recipe should pass successfully
          api.post_process(StatusSuccess) + api.post_process(DropExpectation))
 
@@ -266,8 +266,8 @@ def GenTests(api):
       # mock all the init and deinit steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
       # mock git pin file
-      t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
-                     'windows/artifacts/cygwin.exe', 'HEAD') +
+      t.GIT_PIN_FILE(api, cust_name, 'HEAD', 'windows/artifacts/cygwin.exe',
+                     'HEAD') +
       # mock add file to image mount dir step
       t.ADD_FILE(api, image, cust_name, CYGWIN_URL) +
       # assert that the generated image was uploaded
@@ -301,7 +301,7 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, cust_name) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, image, cust_name, 'HEAD',
+         t.GIT_PIN_FILE(api, cust_name, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock add file to image mount dir step
          t.ADD_FILE(api, image, cust_name, STARTNET_URL) +

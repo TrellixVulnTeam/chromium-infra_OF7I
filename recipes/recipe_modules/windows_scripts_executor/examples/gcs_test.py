@@ -34,8 +34,9 @@ key = '9e007120d0ca02d6d82cf2bf23544ba222e9260eded07310393eca73a501842e'
 
 
 def RunSteps(api, config):
-  api.windows_scripts_executor.init(config)
-  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.init()
+  custs = api.windows_scripts_executor.init_customizations(config)
+  custs = api.windows_scripts_executor.process_customizations(custs)
   api.windows_scripts_executor.download_all_packages(custs)
   api.path.mock_add_paths('[CACHE]\\Pkgs\\GCSPkgs\\WinTools\\net\\ping.exe',
                           'FILE')
@@ -81,26 +82,25 @@ def GenTests(api):
               source='WIB-OUT/intermediate-winpe.zip')))
 
   # add unpinned artifact from gcs
-  yield (
-      api.test('Add unpinned binary from gcs', api.platform('win', 64)) +
-      api.properties(
-          t.WPE_IMAGE(image, wib.ARCH_X86, customization,
-                      'add artifact from gcs', [ACTION_ADD_PING])) +
-      # mock all the init and deint steps
-      t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
-      # self pinned gcs artifact
-      t.GCS_PIN_FILE(api, image, customization, 'gs://WinTools/net/ping.exe') +
-      # download the unpinned artifact
-      t.GCS_DOWNLOAD_FILE(api, customization, 'WinTools', 'net/ping.exe') +
-      # add the given file to the image
-      t.ADD_FILE(api, image, customization, PING_URL) +
-      # assert that the generated image was uploaded
-      t.CHECK_GCS_UPLOAD(
-          api, image, customization,
-          '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
-          'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
-      api.post_process(StatusSuccess) +  # recipe should pass
-      api.post_process(DropExpectation))
+  yield (api.test('Add unpinned binary from gcs', api.platform('win', 64)) +
+         api.properties(
+             t.WPE_IMAGE(image, wib.ARCH_X86, customization,
+                         'add artifact from gcs', [ACTION_ADD_PING])) +
+         # mock all the init and deint steps
+         t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, 'x86', image, customization) +
+         # self pinned gcs artifact
+         t.GCS_PIN_FILE(api, customization, 'gs://WinTools/net/ping.exe') +
+         # download the unpinned artifact
+         t.GCS_DOWNLOAD_FILE(api, customization, 'WinTools', 'net/ping.exe') +
+         # add the given file to the image
+         t.ADD_FILE(api, image, customization, PING_URL) +
+         # assert that the generated image was uploaded
+         t.CHECK_GCS_UPLOAD(
+             api, image, customization,
+             '\[CLEANUP\]\\\\{}\\\\workdir\\\\gcs.zip'.format(customization),
+             'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key)) +
+         api.post_process(StatusSuccess) +  # recipe should pass
+         api.post_process(DropExpectation))
 
   # add non-existent artifact from gcs
   yield (api.test('Add non-existent binary from gcs', api.platform('win', 64)) +
@@ -112,7 +112,6 @@ def GenTests(api):
          # non-existent gcs artifact
          t.GCS_PIN_FILE(
              api,
-             image,
              customization,
              'gs://WinTools/net/ping.exe',
              success=False) +
@@ -129,13 +128,13 @@ def GenTests(api):
       api.properties(WPE_IMAGE_WITH_SRC) +
       # mock check for customization output existence
       t.MOCK_CUST_OUTPUT(
-          api, image, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key),
-          False) + t.MOUNT_WIM(api, 'x86', image, customization) +
+          api, 'gs://chrome-gce-images/WIB-WIM/{}.zip'.format(key), False) +
+      t.MOUNT_WIM(api, 'x86', image, customization) +
       t.UMOUNT_WIM(api, image, customization) +
       t.DEINIT_WIM_ADD_CFG_TO_ROOT(api, key, image, customization) +
       t.CHECK_UMOUNT_WIM(api, image, customization) +
       # Pin the given file to another gcs artifact
-      t.GCS_PIN_FILE(api, image, customization,
+      t.GCS_PIN_FILE(api, customization,
                      'gs://chrome-gce-images/WIB-OUT/intermediate-winpe.zip',
                      'gs://chrome-gce-images/WIB-WIM/ffaa037563.zip') +
       # download the artifact from it's original link

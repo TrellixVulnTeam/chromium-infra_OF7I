@@ -25,31 +25,37 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     self._executable_cust = []
     self._config = wib.Image()
 
-  def init(self, config):
+  def init(self):
     """ init initializes all the dirs and sub modules required.
+    """
+    with self.m.step.nest('Initialize the config engine'):
+      self._sources = sources.Source(self.m.path['cache'].join('Pkgs'),
+                                     self.m.step, self.m.path, self.m.file,
+                                     self.m.raw_io, self.m.cipd, self.m.gsutil,
+                                     self.m.gitiles, self.m.git, self.m.archive)
+
+      self._configs_dir = self.m.path['cleanup'].join('configs')
+      helper.ensure_dirs(self.m.file, [self._configs_dir])
+
+  def init_customizations(self, config):
+    """ init_customizations initializes the given config and returns
+        list of customizations
         Args:
-          config: wib.Image proto object representing the image to be created
+          config: wib.Image proto config
     """
     # ensure that arch is specified in the image
     if config.arch == wib.Arch.ARCH_UNSPECIFIED:
       raise self.m.step.StepFailure('Missing arch in config')
+
     arch = wib.Arch.Name(config.arch).replace('ARCH_', '').lower()
 
-    self._sources = sources.Source(self.m.path['cache'].join('Pkgs'),
-                                   self.m.step, self.m.path, self.m.file,
-                                   self.m.raw_io, self.m.cipd, self.m.gsutil,
-                                   self.m.gitiles, self.m.git, self.m.archive)
-
-    self._configs_dir = self.m.path['cleanup'].join('configs')
-    helper.ensure_dirs(self.m.file, [self._configs_dir])
-
-    self._config.CopyFrom(config)
-
+    custs = []  # list of customizations from customizations.py
     # initialize all customizations
     for cust in config.customizations:
       if cust.WhichOneof('customization') == 'offline_winpe_customization':
-        self._customizations.append(
+        custs.append(
             offwinpecust.OfflineWinPECustomization(
+                image=config,
                 cust=cust,
                 arch=arch,
                 scripts=self._scripts,
@@ -61,20 +67,20 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
                 archive=self.m.archive,
                 source=self._sources))
 
-    return self._customizations
+    return custs
 
-  def process_customizations(self):
+  def process_customizations(self, custs):
     """ process_customizations pins all the volatile srcs, generates
         canonnical configs, filters customizations that need to be executed.
         Returns list of customizations that can be executed.
+        Args:
+          custs: List of customizations from customization.py
     """
-    with self.m.step.nest('Process the customizations in {}'.format(
-        self._config.name)):
-      self.pin_customizations(self._customizations)
-      self.gen_canonical_configs(self._customizations)
-      self._customizations = self.filter_executable_customizations(
-          self._customizations)
-      return self._customizations
+    with self.m.step.nest('Process the customizations'):
+      self.pin_customizations(custs)
+      self.gen_canonical_configs(custs)
+      filtered_custs = self.filter_executable_customizations(custs)
+      return filtered_custs
 
   def pin_customizations(self, customizations):
     """ pin_customizations pins all the sources in the customizations
@@ -165,11 +171,11 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
       # create a new image object, with same arch and containing only one
       # customization
       canon_image = wib.Image(
-          arch=self._config.arch, customizations=[cust.get_canonical_cfg()])
+          arch=cust.image().arch, customizations=[cust.get_canonical_cfg()])
       name = cust.name()
       # write the config to disk
       cfg_file = self._configs_dir.join('{}-{}.cfg'.format(
-          self._config.name, name))
+          cust.image().name, name))
       self.m.file.write_proto(
           'Write config {}'.format(cfg_file),
           cfg_file,
@@ -215,8 +221,8 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
         Args:
           customizations: List of Customizations object from customizations.py
     """
-    with self.m.step.nest('execute config {}'.format(self._config.name)):
-      for cust in custs:
+    for cust in custs:
+      with self.m.step.nest('execute config {}'.format(cust.image().name)):
         cust.execute_customization()
 
   def get_executable_configs(self, custs):  # pragma: no cover
@@ -228,8 +234,9 @@ class WindowsPSExecutorAPI(recipe_api.RecipeApi):
     images = []
     for cust in custs:
       image = wib.Image()
-      image.CopyFrom(self._config)
-      image.customizations = []
+      image.CopyFrom(cust.image())
+      for _ in image.customizations:
+        image.customizations.pop()
       image.customizations.append(cust.customization())
       images.append(image)
     return images

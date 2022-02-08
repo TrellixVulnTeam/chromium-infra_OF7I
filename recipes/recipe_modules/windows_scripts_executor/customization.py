@@ -12,11 +12,12 @@ class Customization(object):
       recipes.
   """
 
-  def __init__(self, cust, arch, scripts, configs, step, path, powershell,
-               m_file, archive, source):
+  def __init__(self, image, cust, arch, scripts, configs, step, path,
+               powershell, m_file, archive, source):
     """ __init__ copies common module objects to class references. These are
         commonly used for all customizations
         Args:
+          image: wib.Image proto object
           cust: wib.Customization proto object
           arch: string representing architecture to build the image for
           scripts: path to the scripts resource dir
@@ -27,9 +28,17 @@ class Customization(object):
           archive: module object for recipe_engine/archive
           source: module object for Source from sources.py
     """
+    # generate a copy of image
+    self._image = wib.Image()
+    self._image.CopyFrom(image)
+    # remove all customizations from the image
+    for _ in image.customizations:
+      image.customizations.pop()
     # generate a copy of customization
     self._customization = wib.Customization()
     self._customization.CopyFrom(cust)
+    # Add customization to the image
+    self._image.customizations.append(self._customization)
     self._arch = arch
     self._scripts = scripts
     self._step = step
@@ -50,6 +59,10 @@ class Customization(object):
   def customization(self):
     """customization returns wib.Customization object representing self"""
     return self._customization
+
+  def image(self):
+    """ image returns wib.Image object representing self"""
+    return self._image
 
   def set_key(self, key):
     """ set_key is used to set the identification keys for the customization

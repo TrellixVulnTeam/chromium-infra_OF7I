@@ -36,10 +36,12 @@ def RunSteps(api, image):
     assert (cust.WhichOneof('customization') == 'offline_winpe_customization')
 
   # initialize the image to scripts executor
-  api.windows_scripts_executor.init(image)
+  api.windows_scripts_executor.init()
+
+  custs = api.windows_scripts_executor.init_customizations(image)
 
   # pinning all the refs and generating unique keys
-  custs = api.windows_scripts_executor.process_customizations()
+  custs = api.windows_scripts_executor.process_customizations(custs)
 
   # download all the required refs
   api.windows_scripts_executor.download_all_packages(custs)
@@ -83,8 +85,8 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, wpe_image, wpe_cust) +
          # mock git pin file
-         t.GIT_PIN_FILE(api, wpe_image, wpe_cust, 'HEAD',
-                        'windows/artifacts/startnet.cmd', 'HEAD') +
+         t.GIT_PIN_FILE(api, wpe_cust, 'HEAD', 'windows/artifacts/startnet.cmd',
+                        'HEAD') +
          # mock add file to wpe_image mount dir step
          t.ADD_FILE(api, wpe_image, wpe_cust, STARTNET_URL) +
          # assert that the generated wpe_image was uploaded

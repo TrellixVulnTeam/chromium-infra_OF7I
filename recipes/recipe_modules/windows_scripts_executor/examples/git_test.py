@@ -33,8 +33,9 @@ arch = 'x86'
 
 
 def RunSteps(api, config):
-  api.windows_scripts_executor.init(config)
-  custs = api.windows_scripts_executor.process_customizations()
+  api.windows_scripts_executor.init()
+  custs = api.windows_scripts_executor.init_customizations(config)
+  custs = api.windows_scripts_executor.process_customizations(custs)
   api.windows_scripts_executor.download_all_packages(custs)
   api.windows_scripts_executor.execute_customizations(custs)
 
@@ -77,7 +78,7 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, image, customization, 'HEAD',
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock adding the file to wim
          t.ADD_FILE(api, image, customization, STARTNET_URL) +
@@ -95,7 +96,7 @@ def GenTests(api):
       # mock all the init and deinit steps
       t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
       # mock pin of the git src, should only happen once
-      t.GIT_PIN_FILE(api, image, customization, 'HEAD',
+      t.GIT_PIN_FILE(api, customization, 'HEAD',
                      'windows/artifacts/startnet.cmd', 'HEAD') +
       # mock adding the file to wim
       t.ADD_FILE(api, image, customization, STARTNET_URL) +
@@ -112,10 +113,10 @@ def GenTests(api):
          # mock all the init and deinit steps
          t.MOCK_WPE_INIT_DEINIT_SUCCESS(api, key, arch, image, customization) +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, image, customization, 'HEAD',
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
                         'windows/artifacts/startnet.cmd', 'HEAD') +
          # mock pin of the git src
-         t.GIT_PIN_FILE(api, image, customization, 'HEAD',
+         t.GIT_PIN_FILE(api, customization, 'HEAD',
                         'windows/artifacts/diskpart.txt', 'HEAD') +
          # mock adding the file to wim
          t.ADD_FILE(api, image, customization, STARTNET_URL) +
