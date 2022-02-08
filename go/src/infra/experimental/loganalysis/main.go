@@ -10,9 +10,12 @@ import (
 	"flag"
 	"fmt"
 	"hash/fnv"
+	"html/template"
 	"io/fs"
 	"io/ioutil"
 	"log"
+	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,9 +34,6 @@ import (
 
 const (
 	projectID = "google.com:stainless-prod"
-
-	// All log lines with predictive power higher than the set threshold are highlighted in red.
-	predPowerThreshold = 0.98
 )
 
 // LogsInfo summarises all necessary information of a test result's logs.
@@ -58,19 +58,51 @@ type LogLine struct {
 	PassCount int
 }
 
+// AnalysisStat records all analysis statistics for the given reference tests.
+type AnalysisStat struct {
+	// LogLines for the target analysis test.
+	LogLines []LogLine
+	// Count is the total number of reference logs in the analysis.
+	Count int
+	// Warnings that should be displayed to the user.
+	Warnings []string
+}
+
+// HighlightedLine is a single line that will be displayed to the user.
+type HighlightedLine struct {
+	// Content is the original content of a log line.
+	Content string
+	// Power is the predictive power of a log line.
+	Power float64
+	// Saturation is calculated by the predictive power to achieve the highlighted colour.
+	Saturation int
+}
+
+// WebData lists all analysis data that need to be shown in the website for users.
+type WebData struct {
+	// Warnings are warnings related to smaller number of target reference tests that need to be shown to users.
+	Warnings []string
+	// HighlightedLines are analysis results of target log lines to print out.
+	HighlightedLines []HighlightedLine
+}
+
 var (
 	dateFlag    = flag.String("date", "", "test taken date (in the 'yyyymmdd' format)")
 	test        = flag.String("test", "", "name of the test that was run")
 	taskID      = flag.String("id", "", "task id of the test that was run")
 	requiredNum = flag.Int("number", 20, "total required number of reference test results in each test status (FAIL/GOOD)")
+	port        = flag.String("port", ":3000", "port number of web server (in the ':number' format)")
 
 	taskIDRE = regexp.MustCompile(`[a-z0-9]+`)
 	testRE   = regexp.MustCompile(`tast.(\w+).(\w+)(.(\w+))?$`)
+	portRE   = regexp.MustCompile(`:[0-9]+`)
 
 	removalHex = regexp.MustCompile("( )?[+]?0[xX]([0-9a-fA-F]+)(,)?")
 	removal    = regexp.MustCompile("[0-9\t\n]")
 
 	statuses = []string{"GOOD", "FAIL"}
+
+	tpl *template.Template
 )
 
 func main() {
@@ -97,13 +129,16 @@ func main() {
 	if *requiredNum <= 0 {
 		log.Fatalf("Cannot parse --number: expected a positive integer, got: %v", *requiredNum)
 	}
+	if !portRE.MatchString(*port) {
+		log.Fatalf("Cannot parse --port: expected a :number format string, got: %v", *port)
+	}
 
 	ctx := context.Background()
 	targetLog, err := downloadTargetLog(ctx, date, *test, *taskID)
 	if err != nil {
 		log.Fatalf("Error finding the target log information to download: %v", err)
 	}
-	logLines, err := saveLineStatistics(ctx, targetLog, *test, gcs.LogsName)
+	analysisStat, err := saveLineStatistics(ctx, targetLog, *test, gcs.LogsName)
 	if err != nil {
 		log.Fatalf("Error saving log line statistics: %v", err)
 	}
@@ -113,90 +148,102 @@ func main() {
 	for _, status := range statuses {
 		path := filepath.Join(gcs.StoragePathPrefix, *test, status)
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			log.Fatalf("Error in finding any reference %v test results from all boards for analysis: %v", status, err)
+			log.Fatalf("Error finding any reference %v test results from all boards for analysis: %v", status, err)
 		}
-		var totalCount int
-		logLines, totalCount, err = analyzeTargetBoardLogs(path, targetLog.Board, status, logLines)
+		analysisStat, err = analyzeTargetBoardLogs(path, targetLog.Board, status, analysisStat)
 		if err != nil {
-			log.Fatalf("Error in analyzing reference logs from the target board: %v", err)
+			log.Fatalf("Error analyzing reference logs from the target board: %v", err)
 		}
-		if totalCount < *requiredNum {
-			logLines, totalCount, err = analyzeOtherBoardsLogs(path, targetLog.Board, status, logLines, totalCount, *requiredNum)
+		if analysisStat.Count < *requiredNum {
+			analysisStat, err = analyzeOtherBoardsLogs(path, targetLog.Board, status, *requiredNum, analysisStat)
 			if err != nil {
-				log.Fatalf("Error in analyzing reference logs from other boards: %v", err)
+				log.Fatalf("Error analyzing reference logs from other boards: %v", err)
 			}
 		}
-		if totalCount < *requiredNum {
-			log.Println("Warning: not enough number of reference " + status + " test results overall, expected:" + strconv.Itoa(*requiredNum) + ", got:" + strconv.Itoa(totalCount))
-		}
 		if status == "FAIL" {
-			totalFails = totalCount
+			totalFails = analysisStat.Count
 		} else {
-			totalPasses = totalCount
+			totalPasses = analysisStat.Count
 		}
 	}
-	highlightImportantLines(totalFails, totalPasses, logLines, predPowerThreshold)
+	if totalFails < *requiredNum || totalPasses < *requiredNum {
+		analysisStat.Warnings = append(analysisStat.Warnings, "Analysis might be inaccurate, insufficient (passing and/or failing) references overall.")
+	}
+
+	log.Println("Please delete the local storage of the downloaded logs in this analysis for result accuracy in the future!")
+	tpl = template.Must(template.ParseFiles("demo.html"))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data := WebData{
+			Warnings:         analysisStat.Warnings,
+			HighlightedLines: highlightLines(totalFails, totalPasses, analysisStat.LogLines),
+		}
+		fmt.Println("Loading the highlighter website...")
+		err := tpl.Execute(w, data)
+		if err != nil {
+			log.Println("execute template: ", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	})
+	panic(http.ListenAndServe(*port, nil))
 }
 
-// highlightImportantLines prints and highlights log lines with higher predictive power than the set threshold.
-func highlightImportantLines(totalFails, totalPasses int, logLines []LogLine, threshold float32) {
-	fmt.Println("Please delete the local storage of the downloaded logs in this analysis for result accuracy in the future!")
-	fmt.Println("Highlighted Results:")
+// highlightLines highlights log lines with different colours and saturations based on their predictive powers.
+func highlightLines(totalFails int, totalPasses int, logLines []LogLine) []HighlightedLine {
+	var res []HighlightedLine
 	for _, line := range logLines {
-		if calculatePredictivePower(line.FailCount, line.PassCount, totalFails, totalPasses) > threshold {
-			fmt.Println(string("\033[31m"), line.Original)
-		} else {
-			fmt.Println(string("\033[0m"), line.Original)
-		}
+		predPower := calculatePredictivePower(line.FailCount, line.PassCount, totalFails, totalPasses)
+		// Saturation is calculated to make S in HSL colour change steadily from deep red (power=1.0) to lighter red to grey (power=0.5) to lighter green to deep green (power=0) when the predictive power decreases.
+		saturation := int(math.Floor(math.Abs(predPower-0.5) * 200))
+		// Predictive power is multiplied by 100 and rounded as an integer to show users.
+		res = append(res, HighlightedLine{line.Original, math.Round(predPower * 100), saturation})
 	}
+	return res
 }
 
 // analyzeOtherBoardsLogs updates saved statistics of target log lines referring to test logs from other boards when the number of stored test results from the target board is not enough.
-func analyzeOtherBoardsLogs(destDir, board, status string, logLines []LogLine, totalCount, requiredNum int) ([]LogLine, int, error) {
-	log.Println("Warning: not enough number of reference " + status + " test results from the target board, expected:" + strconv.Itoa(requiredNum) + ", got:" + strconv.Itoa(totalCount))
-	boardsDir, err := ioutil.ReadDir(destDir + "/")
+func analyzeOtherBoardsLogs(path, board, status string, requiredNum int, analysisStat AnalysisStat) (AnalysisStat, error) {
+	analysisStat.Warnings = append(analysisStat.Warnings, "Analysis may be inaccurate, insufficient "+status+" references from the target board (required:"+strconv.Itoa(requiredNum)+", got:"+strconv.Itoa(analysisStat.Count)+").")
+	boardsDir, err := ioutil.ReadDir(path + "/")
 	if err != nil {
-		return nil, 0, errors.Annotate(err, "read storage directory with the specified test name").Err()
+		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "read storage directory with the specified test name").Err()
 	}
 	boardNames := listOtherBoardNames(boardsDir, board)
 	var count int
 	for _, boardName := range boardNames {
-		logLines, count, err = updateLineStatistics(filepath.Join(destDir, boardName), status, logLines)
-		log.Println("Warning: get " + strconv.Itoa(count) + " reference " + status + " test results from board " + boardName + " for the analysis")
-		totalCount += count
+		analysisStat.LogLines, count, err = updateLineStatistics(filepath.Join(path, boardName), status, analysisStat.LogLines)
+		analysisStat.Count += count
 	}
-	return logLines, totalCount, nil
+	return analysisStat, nil
 }
 
 // analyzeTargetBoardLogs updates saved statistics of target log lines referring to test logs from the target board.
-func analyzeTargetBoardLogs(path, board, status string, logLines []LogLine) ([]LogLine, int, error) {
+func analyzeTargetBoardLogs(path, board, status string, analysisStat AnalysisStat) (AnalysisStat, error) {
 	if _, err := os.Stat(filepath.Join(path, board)); os.IsNotExist(err) {
-		log.Println("Warning: 0 reference " + status + " test result from the target board " + board + " for the analysis")
-		return logLines, 0, nil
+		return AnalysisStat{analysisStat.LogLines, 0, analysisStat.Warnings}, nil
 	}
-	logLines, count, err := updateLineStatistics(filepath.Join(path, board), status, logLines)
+	logLines, count, err := updateLineStatistics(filepath.Join(path, board), status, analysisStat.LogLines)
 	if err != nil {
-		return nil, 0, errors.Annotate(err, "update log lines to count matching numbers").Err()
+		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "update log lines to count matching numbers").Err()
 	}
-	return logLines, count, nil
+	return AnalysisStat{logLines, count, analysisStat.Warnings}, nil
 }
 
 // calculatePredictivePower calculates the predictive power of a log line in the target test.
-func calculatePredictivePower(failCount, passCount, totalFails, totalPasses int) float32 {
-	return (float32(failCount) / float32(totalFails)) * (1 - (float32(passCount) / float32(totalPasses)))
+func calculatePredictivePower(failCount, passCount, totalFails, totalPasses int) float64 {
+	return (float64(failCount) / float64(totalFails)) * (1 - (float64(passCount) / float64(totalPasses)))
 }
 
 // saveLineStatistics saves log line statistics for all lines of the target log with the original contents and the corresponding hash codes.
-func saveLineStatistics(ctx context.Context, info LogsInfo, test, logsName string) ([]LogLine, error) {
+func saveLineStatistics(ctx context.Context, info LogsInfo, test, logsName string) (AnalysisStat, error) {
 	contents, err := gcs.ReadFileContents(ctx, gcs.BucketID, gcs.CreateObjectID(info.LogsURL, test, gcs.BucketID, logsName))
 	if err != nil {
-		return nil, errors.Annotate(err, "download log contents").Err()
+		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "download log contents").Err()
 	}
 	var logLines []LogLine
 	for _, line := range strings.Split(string(contents), "\n") {
 		logLines = append(logLines, LogLine{line, hashLine(cleanLogLine(line)), 0, 0})
 	}
-	return logLines, nil
+	return AnalysisStat{logLines, 0, nil}, nil
 }
 
 // updateLineStatistics updates the target log lines' related statistics by counting the matching numbers for each line in the target test result compared with reference files in the given path.

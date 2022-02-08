@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<style>
+    body {
+        padding: 60px;
+        font-size: 14px;
+    }
+    .container {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+    }
+    .log-line {
+        font-family: 'Lucida Console', monospace;
+        flex-grow: 10;
+        width: 500px;
+    }
+    .power {
+        font-family: 'Lucida Console', monospace;
+        color: #ccc;
+        width: 50px;
+    }
+    .warning {
+        border: solid 1px #f88;
+        background-color: #fdd;
+        padding: 10px;
+    }
+</style>
+
+<h1>Highlighter of Failure Logs Analysis</h1>
+{{if .Warnings}}
+    <h3>Warnings:</h3>
+    {{range .Warnings}}
+        <div class="warning">{{.}}<br/></div>
+    {{end}}
+{{end}}
+<h3>Highlighted Results:</h3>
+<ul>
+    {{range .HighlightedLines}}
+        <div class="container">
+            {{if gt .Power 50.0}}
+                <div class="power">{{.Power}}</div>
+                <div class="log-line" style="color: hsl(350, {{.Saturation}}%, 50%)">{{.Content}}</div>
+            {{else}}
+                <div class="power">{{.Power}}</div>
+                <div class="log-line" style="color: hsl(120, {{.Saturation}}%, 25%)">{{.Content}}</div>
+            {{end}}
+        </div>
+    {{end}}
+</ul>
