@@ -105,6 +105,7 @@ func (a *Agent) runOnce(ctx context.Context) error {
 		return errors.Annotate(err, "register with queen").Err()
 	}
 	if s := res.GetStatus(); s != api.ReportDroneResponse_OK {
+		// TODO(ayatane): We should handle the potential unknown UUID error specially.
 		return errors.Reason("register with queen: got unexpected status %v", s).Err()
 	}
 
