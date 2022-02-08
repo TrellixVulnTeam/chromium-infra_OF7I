@@ -76,7 +76,7 @@ func hasEnoughStorageSpaceExec(ctx context.Context, args *execs.RunArgs, actionA
 	if convertErr != nil {
 		return errors.Annotate(convertErr, "has enough storage space: convert stateful path min space").Err()
 	}
-	if err := pathHasEnoughValue(ctx, args, args.ResourceName, path, "disk space", pathMinSpaceInGB); err != nil {
+	if err := PathHasEnoughValue(ctx, args, args.ResourceName, path, SpaceTypeDisk, pathMinSpaceInGB); err != nil {
 		return errors.Annotate(err, "has enough storage space").Err()
 	}
 	return nil
@@ -100,7 +100,7 @@ func hasEnoughInodesExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	if convertErr != nil {
 		return errors.Annotate(convertErr, "has enough storage inodes: convert stateful path min kilo inodes").Err()
 	}
-	err := pathHasEnoughValue(ctx, args, args.ResourceName, path, "inodes", pathMinKiloInodes*1000)
+	err := PathHasEnoughValue(ctx, args, args.ResourceName, path, SpaceTypeInode, pathMinKiloInodes*1000)
 	return errors.Annotate(err, "has enough storage inodes").Err()
 }
 

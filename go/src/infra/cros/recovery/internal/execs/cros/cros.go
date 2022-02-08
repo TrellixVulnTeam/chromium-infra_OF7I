@@ -169,13 +169,21 @@ func IsPathExist(ctx context.Context, args *execs.RunArgs, path string) error {
 	return nil
 }
 
-// pathHasEnoughValue is a helper function that checks the given path's free disk space / inodes is no less than the min disk space /indoes specified.
-func pathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string, path string, typeOfSpace string, minSpaceNeeded float64) error {
+// Different types of disk space used in the calculation for storage space.
+type SpaceType string
+
+const (
+	SpaceTypeDisk  SpaceType = "disk"
+	SpaceTypeInode SpaceType = "inodes"
+)
+
+// PathHasEnoughValue is a helper function that checks the given path's free disk space / inodes is no less than the min disk space /indoes specified.
+func PathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string, path string, typeOfSpace SpaceType, minSpaceNeeded float64) error {
 	if err := IsPathExist(ctx, args, path); err != nil {
 		return errors.Annotate(err, "path has enough value: %s: path: %q not exist", typeOfSpace, path).Err()
 	}
 	var cmd string
-	if typeOfSpace == "disk space" {
+	if typeOfSpace == SpaceTypeDisk {
 		oneMB := math.Pow(10, 6)
 		log.Info(ctx, "Checking for >= %f (GB/inodes) of %s under %s on machine %s", minSpaceNeeded, typeOfSpace, path, dutName)
 		cmd = fmt.Sprintf(`df -PB %.f %s | tail -1`, oneMB, path)
@@ -194,7 +202,7 @@ func pathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string
 		log.Error(ctx, err.Error())
 		return errors.Annotate(err, "path has enough value: %s", typeOfSpace).Err()
 	}
-	if typeOfSpace == "diskspace" {
+	if typeOfSpace == SpaceTypeDisk {
 		mbPerGB := math.Pow(10, 3)
 		free = float64(free) / mbPerGB
 	}
