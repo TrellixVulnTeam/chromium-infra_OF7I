@@ -44,6 +44,7 @@ export type IssueCategory = {
   description: string,
   persona: IssueWizardPersona,
   enabled: boolean,
+  tip?: string,
   customQuestions?: CustomQuestion[],
 };
 

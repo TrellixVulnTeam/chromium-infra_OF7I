@@ -27,10 +27,12 @@ export default function CustomQuestionInput(props: Props): React.ReactElement {
     setAnswer(e.target.value);
     updateAnswers(e.target.value);
   };
-
+  const getInnerHtml = ()=> {
+    return {__html: question};
+  }
   return (
     <>
-      <h3>{question}</h3>
+      <h3 dangerouslySetInnerHTML={getInnerHtml()}/>
       <OutlinedInput
         value={answer}
         onChange={handleChange}

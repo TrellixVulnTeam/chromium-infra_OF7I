@@ -152,7 +152,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     customQuestions: [
       {
         type: CustomQuestionType.Input,
-        question: "What is the name or URL of that software at https://chrome.google.com/webstore?",
+        question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore </a> ?",
       },
       {
         type: CustomQuestionType.Select,
@@ -188,7 +188,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       },
       {
         type: CustomQuestionType.Input,
-        question: "What is the name or URL of that software at https://chrome.google.com/webstore?",
+        question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore</a> ?",
       },
       {
         type: CustomQuestionType.Select,
@@ -293,6 +293,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'The browser closes abruptly or I see "Aw, Snap!" pages',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    tip: 'Please read the instructions on <a href="https://sites.google.com/a/chromium.org/dev/for-testers/bug-reporting-guidelines/reporting-crash-bug" target="_blank">reporting a crash issue</a>',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -335,6 +336,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Issues related to the security of the browser',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">how to report security issues</a>.',
     customQuestions: [
       {
         type: CustomQuestionType.Select,
@@ -390,7 +392,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     customQuestions: [
       {
         type:CustomQuestionType.Select,
-        question:"Which component does this fall under?",
+        question:"Which <a href='https://bugs.chromium.org/p/chromium/adminComponents' target='_blank'>component</a> does this fall under?",
         options: [
           "Not sure - I don't know",
           "Blink>Animation",
@@ -469,7 +471,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Does this feature work correctly in other browsers?",
-        tip: "Tip: Use browserstack.com to compare behavior on different browser versions.",
+        tip: "Tip: Use <a href='https://www.browserstack.com/' target='_blank'>browserstack.com</a> to compare behavior on different browser versions.",
         options: ["Not sure - I don't know", "Yes - This is just a Chrome problem", "No - I can reproduce the problem in another browser"],
         subQuestions: [
           null,
@@ -477,7 +479,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           {
             type:CustomQuestionType.Text,
             question: "Details of interop issue",
-            tip: "Please describe what the behavior is on other browsers and link to any existing bugs.",
+            tip: "Please describe what the behavior is on other browsers and link to any <a href='https://browser-issue-tracker-search.appspot.com/' target='_blank'>existing bugs.</a>",
           }
         ],
       },

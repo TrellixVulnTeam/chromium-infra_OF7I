@@ -29,10 +29,17 @@ export default function CustomQuestionTextarea(props: Props): React.ReactElement
     updateAnswers(e.target.value);
   };
 
+  const getQuestionInnerHtml = ()=> {
+    return {__html: question};
+  }
+
+  const getTipInnerHtml = ()=> {
+    return {__html: tip};
+  }
   return (
     <>
-      <h3>{question}</h3>
-      {tip ? <div> {tip} </div> : null}
+      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()}/>
+      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()}/> : null}
       <OutlinedInput
         multiline={true}
         rows={3}

@@ -75,10 +75,18 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
         break;
     }
   }
+
+  const getQuestionInnerHtml = () => {
+    return {__html: question};
+  }
+
+  const getTipInnerHtml = () => {
+    return {__html: tip};
+  }
   return (
     <>
-      <h3>{question}</h3>
-      {tip? <div> {tip} </div> : null}
+      <h3 dangerouslySetInnerHTML={getQuestionInnerHtml()}/>
+      {tip? <div dangerouslySetInnerHTML={getTipInnerHtml()}/> : null}
       <SelectMenu
         optionsList={optionList}
         selectedOption={selectedOption}

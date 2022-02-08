@@ -9,7 +9,8 @@ import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import SelectMenu from './SelectMenu.tsx';
-import {OS_LIST, BROWSER_LIST} from './IssueWizardConfig.ts'
+import {OS_LIST, BROWSER_LIST, ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts'
+import {getTipByCategory} from './IssueWizardUtils.tsx';
 
 /**
  * The detail step is the second step on the dot
@@ -57,37 +58,43 @@ export default function DetailsStep(props: Props): React.ReactElement {
     const textInput = e.target.value;
     setTextValues({...textValues, [valueName]: textInput});
   };
+  const tipByCategory = getTipByCategory(ISSUE_WIZARD_QUESTIONS);
 
   const nextEnabled =
     (textValues.oneLineSummary.trim() !== '') &&
     (textValues.stepsToReproduce.trim() !== '') &&
     (textValues.describeProblem.trim() !== '');
 
+  const getTipInnerHtml = () => {
+    return {__html: tipByCategory.get(category)};
+  }
   return (
     <>
         <h2 className={classes.grey}>Details for problems with {category}</h2>
-        <form className={classes.root} noValidate autoComplete="off">
 
-            <h3 className={classes.head}>Please confirm that the following version information is correct. <span className={classes.red}>*</span></h3>
-            <h3>Operating System:</h3>
-            <SelectMenu optionsList={OS_LIST} selectedOption={osName} setOption={setOsName} />
-            <h3>Browser:</h3>
-            <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
+        <form className={classes.root} noValidate autoComplete="off">
+          <div dangerouslySetInnerHTML={getTipInnerHtml()}/>
+
+          <h3 className={classes.head}>Please confirm that the following version information is correct. <span className={classes.red}>*</span></h3>
+          <h3>Operating System:</h3>
+          <SelectMenu optionsList={OS_LIST} selectedOption={osName} setOption={setOsName} />
+          <h3>Browser:</h3>
+          <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
 
             <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
             <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')}/>
 
-            <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
-            <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')}/>
+          <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
+          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')}/>
 
-            <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
-            <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
+          <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
+          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
 
-            <h3 className={classes.head}>Additional comments</h3>
-            <TextField multiline rows={3} id="outlined-basic-4" variant="outlined" onChange={handleChange('additionalComments')}/>
+          <h3 className={classes.head}>Additional comments</h3>
+          <TextField multiline rows={3} id="outlined-basic-4" variant="outlined" onChange={handleChange('additionalComments')}/>
 
-            <h3 className={classes.head}>Upload any relevant screenshots</h3>
-            <input type="file" accept="image/*" multiple />
+          <h3 className={classes.head}>Upload any relevant screenshots</h3>
+          <input type="file" accept="image/*" multiple />
         </form>
         <DotMobileStepper nextEnabled={nextEnabled} activeStep={1} setActiveStep={setActiveStep}/>
     </>

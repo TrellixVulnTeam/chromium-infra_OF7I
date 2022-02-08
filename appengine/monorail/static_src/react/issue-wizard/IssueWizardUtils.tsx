@@ -100,3 +100,15 @@ export function GetSelectMenuOptions(optionsList: string[]): SelectMenuOption[] 
   }
   return 'Unknown / Other';
 }
+
+// this function is used to get the tip belong to different issue category
+// used for render detail page
+export function getTipByCategory(categories: IssueCategory[]): Map<string, string> {
+  const tipByCategory = new Map<string, string>();
+  categories.forEach((category) => {
+    if (category.tip) {
+      tipByCategory.set(category.name, category.tip);
+    }
+  })
+  return tipByCategory;
+}
