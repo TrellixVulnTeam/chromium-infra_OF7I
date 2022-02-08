@@ -53,7 +53,7 @@ func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) erro
 // rebootExec reboots the cros DUT.
 func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
-	run := args.NewRunner(args.ResourceName)
+	run := args.NewRunner(args.DUT.Name)
 	out, err := run(ctx, 2*time.Minute, rebootCommand)
 	if execs.NoExitStatusErrorInternal.In(err) {
 		// Client closed connected as rebooting.
