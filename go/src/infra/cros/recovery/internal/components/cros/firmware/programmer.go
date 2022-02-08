@@ -20,6 +20,8 @@ type Programmer interface {
 	ProgramEC(ctx context.Context, imagePath string) error
 	// ProgramAP programs AP firmware to devices by servo.
 	ProgramAP(ctx context.Context, imagePath, gbbHex string) error
+	// ExtractAP extracts AP firmware from device.
+	ExtractAP(ctx context.Context, imagePath string, force bool) error
 }
 
 // NewProgrammer creates programmer to flash device firmware by servo.
@@ -39,6 +41,7 @@ func NewProgrammer(ctx context.Context, run components.Runner, servod components
 	}
 	if st.IsV3() || st.IsV4() {
 		p := &v3Programmer{
+			st:     st,
 			run:    run,
 			servod: servod,
 			log:    log,

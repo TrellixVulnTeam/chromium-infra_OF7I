@@ -51,6 +51,23 @@ func (s *ServoType) IsDualSetup() bool {
 	return s.IsV4() && (s.IsMicro() || s.IsC2D2()) && s.IsCCD()
 }
 
+// SerialnameOption returns servod control string that query serial number
+// of servo component connected to the DUT directly.
+func (s *ServoType) SerialnameOption() string {
+	if s.IsV4() && s.IsMicro() {
+		return "servo_micro_serialname"
+	}
+	if s.IsV4() && s.IsCCD() {
+		return "ccd_serialname"
+	}
+	return "serialname"
+}
+
+// Servo has more than one component.
+func (s *ServoType) IsMultipleServos() bool {
+	return strings.Contains(s.str, "_and_")
+}
+
 // String provide ability to use ToString functionality.
 func (s *ServoType) String() string {
 	return s.str

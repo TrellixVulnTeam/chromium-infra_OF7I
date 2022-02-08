@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"infra/cros/recovery/internal/components/mocks"
@@ -119,6 +118,7 @@ var gbbToIntCases = []struct {
 	{"GBB 0x18", "0x18", 24, false},
 	{"GBB 0x24", "0x24", 36, false},
 	{"GBB 0x39", "0x39", 57, false},
+	{"GBB 0x00000039", "0x00000039", 57, false},
 }
 
 func TestGbbToInt(t *testing.T) {
@@ -134,8 +134,7 @@ func TestGbbToInt(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("%q -> expected to pass by fail %s", cs.name, err)
-				}
-				if !cmp.Equal(got, cs.out) {
+				} else if got != cs.out {
 					t.Errorf("%q -> wanted: %v => got: %v", cs.name, cs.out, got)
 				}
 			}

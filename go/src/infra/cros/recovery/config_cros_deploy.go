@@ -6,9 +6,46 @@ package recovery
 
 const crosDeployPlanBody = `
 "critical_actions": [
+	"cros_remove_default_ap_file_servo_host",
+	"cros_read_gbb_by_servo",
+	"cros_ap_is_dev_signed_by_servo",
 	"device_labels"
 ],
 "actions": {
+	"cros_read_gbb_by_servo":{
+		"docs":[
+			"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."
+		],
+		"exec_timeout": {
+			"seconds":2000
+		},
+		"exec_extra_args":[
+			"in_dev_mode:true",
+			"usb_boot_enabled:true"
+		],
+		"recovery_actions":[
+			"cros_set_gbb_by_servo"
+		]
+	},
+	"cros_ap_is_dev_signed_by_servo":{
+		"docs":[
+			"Verify that AP has dev signed firmware."
+		],
+		"exec_timeout": {
+			"seconds":2000
+		}
+	},
+	"cros_set_gbb_by_servo":{
+		"docs":[
+			"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive."
+		],
+		"exec_timeout": {
+			"seconds":2000
+		},
+		"exec_extra_args":[
+			"gbb_flags:0x18"
+		]
+	},
 	"device_labels":{
 		"dependencies":[
 			"device_sku",

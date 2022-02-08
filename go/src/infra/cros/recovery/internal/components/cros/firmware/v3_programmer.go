@@ -6,9 +6,7 @@ package firmware
 
 import (
 	"context"
-	base_errors "errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -16,10 +14,12 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/components"
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/logger"
 )
 
 type v3Programmer struct {
+	st     *servo.ServoType
 	run    components.Runner
 	servod components.Servod
 	log    logger.Logger
@@ -27,7 +27,7 @@ type v3Programmer struct {
 
 const (
 	// Number of seconds for program EC/BIOS to time out.
-	firmwareProgramTimeout = 1800 * time.Second
+	firmwareProgramTimeout = 30 * time.Minute
 
 	// Tools and commands used for flashing EC.
 	ecProgrammerToolName     = "flash_ec"
@@ -42,7 +42,7 @@ const (
 
 // ProgramEC programs EC firmware to devices by servo.
 func (p *v3Programmer) ProgramEC(ctx context.Context, imagePath string) error {
-	if err := isImageExist(imagePath); err != nil {
+	if err := isFileExist(ctx, imagePath, p.run); err != nil {
 		return errors.Annotate(err, "program ec").Err()
 	}
 	return p.programEC(ctx, imagePath)
@@ -74,7 +74,7 @@ func (p *v3Programmer) programEC(ctx context.Context, imagePath string) error {
 // To set/update GBB flags please provide value in hex representation.
 // E.g. 0x18 to set force boot in DEV-mode and allow to boot from USB-drive in DEV-mode.
 func (p *v3Programmer) ProgramAP(ctx context.Context, imagePath, gbbHex string) error {
-	if err := isImageExist(imagePath); err != nil {
+	if err := isFileExist(ctx, imagePath, p.run); err != nil {
 		return errors.Annotate(err, "program ec").Err()
 	}
 	return p.programAP(ctx, imagePath, gbbHex)
@@ -95,8 +95,49 @@ func (p *v3Programmer) programAP(ctx context.Context, imagePath, gbbHex string) 
 		}
 	}
 	out, err := p.run(ctx, firmwareProgramTimeout, cmd)
-	p.log.Debug("Program AP output: \n%s", out)
+	p.log.Debug("Program AP output:\n%s", out)
 	return errors.Annotate(err, "program ap").Err()
+}
+
+// ExtractAP extracts AP firmware from device.
+func (p *v3Programmer) ExtractAP(ctx context.Context, imagePath string, force bool) error {
+	if imagePath == "" {
+		return errors.Reason("extract ap from dut: path for extracting file is not provided").Err()
+	}
+	if force || isFileExist(ctx, imagePath, p.run) != nil {
+		p.log.Info("Proceed to extract AP from the DUT to %q path", imagePath)
+		pn, err := p.name(ctx)
+		if err != nil {
+			return errors.Annotate(err, "extract ap from dut").Err()
+		}
+		p.log.Debug("Using programmer %q", pn)
+		// Reading AP from the DUT.
+		cmd := fmt.Sprintf("flashrom -p %s -f %s", pn, imagePath)
+		if out, err := p.run(ctx, firmwareProgramTimeout, cmd); err != nil {
+			return errors.Annotate(err, "extract ap from dut: read ap").Err()
+		} else {
+			p.log.Debug("Extract AP: %v", out)
+		}
+	} else {
+		p.log.Info("AP file is present by %q and not need to extract it again", imagePath)
+	}
+	return nil
+}
+
+// name provides the name of programmer need to be used.
+func (p *v3Programmer) name(ctx context.Context) (string, error) {
+	var serialname string
+	if res, err := p.servod.Get(ctx, p.st.SerialnameOption()); err != nil {
+		return "", errors.Annotate(err, "name").Err()
+	} else {
+		serialname = res.GetString_()
+	}
+	if p.st.IsMicro() || p.st.IsC2D2() {
+		return fmt.Sprintf("raiden_debug_spi:serial=%s", serialname), nil
+	} else if p.st.IsCCD() {
+		return fmt.Sprintf("raiden_debug_spi:target=AP,serial=%s", serialname), nil
+	}
+	return "", errors.Reason("name: Not supported servo type").Err()
 }
 
 // ecChip reads ec_chip from servod.
@@ -121,16 +162,10 @@ func gbbToInt(hex string) (int, error) {
 	}
 }
 
-// isImageExist checks is provide image file exists.
-func isImageExist(imagePath string) error {
-	if _, err := os.Stat(imagePath); err == nil {
-		// File exists.
-		return nil
-	} else if base_errors.Is(err, os.ErrNotExist) {
-		return errors.Annotate(err, "image %q exist: file does not exist", imagePath).Err()
-	} else {
-		return errors.Annotate(err, "image %q exist: fail to check", imagePath).Err()
-	}
+// isFileExist checks is provided file exists.
+func isFileExist(ctx context.Context, filepath string, run components.Runner) error {
+	_, err := run(ctx, 30*time.Second, "test", "-f", filepath)
+	return errors.Annotate(err, "if file exist: file %q does not exist", filepath).Err()
 }
 
 // isToolPresent checks if tool is installed on the host.

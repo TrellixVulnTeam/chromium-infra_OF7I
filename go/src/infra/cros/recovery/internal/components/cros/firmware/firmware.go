@@ -17,6 +17,105 @@ import (
 	"infra/cros/recovery/logger"
 )
 
+// ReadAPInfoRequest holds request date to read AP info.
+type ReadAPInfoRequest struct {
+	FilePath string
+	// Force extract AP from the DUT.
+	ForceExtractAPFile bool
+	GBBFlags           bool
+	Keys               bool
+}
+
+// ReadAPInfoResponse holds response of AP info.
+type ReadAPInfoResponse struct {
+	GBBFlagsRaw string
+	GBBFlags    int
+	Keys        []string
+}
+
+// ReadAPInfoByServo read AP info from DUT.
+//
+// AP will be extracted from the DUT to flash back with changes.
+func ReadAPInfoByServo(ctx context.Context, req *ReadAPInfoRequest, run components.Runner, servod components.Servod, log logger.Logger) (*ReadAPInfoResponse, error) {
+	if run == nil || servod == nil || log == nil {
+		return nil, errors.Reason("read ap info: run, servod or logger is not provided").Err()
+	}
+	p, err := NewProgrammer(ctx, run, servod, log)
+	if err != nil {
+		return nil, errors.Annotate(err, "read ap info").Err()
+	}
+	if err := p.ExtractAP(ctx, req.FilePath, req.ForceExtractAPFile); err != nil {
+		return nil, errors.Annotate(err, "read ap info").Err()
+	}
+	res := &ReadAPInfoResponse{}
+	if req.GBBFlags {
+		cmd := fmt.Sprintf("gbb_utility --get --flags %s", req.FilePath)
+		gbbOut, err := run(ctx, 30*time.Second, cmd)
+		if err != nil {
+			return nil, errors.Annotate(err, "read ap info: read flags").Err()
+		}
+		// Parsing output to extract real GBB value.
+		parts := strings.Split(gbbOut, ":")
+		if len(parts) < 2 {
+			return nil, errors.Annotate(err, "read ap info: gbb not found").Err()
+		} else if raw := strings.TrimSpace(parts[1]); raw == "" {
+			return nil, errors.Annotate(err, "read ap info: gbb not found").Err()
+		} else {
+			log.Info("Read GBB raw: %v", raw)
+			res.GBBFlagsRaw = raw
+		}
+		gbb, err := gbbToInt(res.GBBFlagsRaw)
+		if err != nil {
+			return nil, errors.Annotate(err, "read ap info").Err()
+		}
+		log.Debug("Read GBB flags: %v", gbb)
+		res.GBBFlags = gbb
+	}
+	if req.Keys {
+		cmd := fmt.Sprintf("futility show %s |grep \"Key sha1sum:\" |awk '{print $3}'", req.FilePath)
+		out, err := run(ctx, 30*time.Second, cmd)
+		if err != nil {
+			return nil, errors.Annotate(err, "read ap info: read flags").Err()
+		}
+		log.Debug("Read firmware keys: %v", out)
+		res.Keys = strings.Split(out, "\n")
+	}
+	return res, nil
+}
+
+// SetApInfoByServoRequest hols and provides info to update AP.
+type SetApInfoByServoRequest struct {
+	// Path to where AP used or will be extracted
+	FilePath string
+	// Force extract AP from the DUT.
+	ForceExtractAPFile bool
+	UpdateGBBFlags     bool
+	// GBB flags value need to be set to system.
+	// Example: 0x18
+	GBBFlags string
+}
+
+// SetApInfoByServo sets info to AP on the DUT by servo.
+//
+// AP will be extracted from the DUT to flash back with changes.
+func SetApInfoByServo(ctx context.Context, req *SetApInfoByServoRequest, run components.Runner, servod components.Servod, log logger.Logger) error {
+	if run == nil || servod == nil || log == nil {
+		return errors.Reason("set ap info: run, servod or logger is not provided").Err()
+	}
+	p, err := NewProgrammer(ctx, run, servod, log)
+	if err != nil {
+		return errors.Annotate(err, "set ap info").Err()
+	}
+	if err := p.ExtractAP(ctx, req.FilePath, req.ForceExtractAPFile); err != nil {
+		return errors.Annotate(err, "set ap info").Err()
+	}
+	log.Debug("Set AP info: starting flashing AP to the DUT")
+	if err := p.ProgramAP(ctx, req.FilePath, req.GBBFlags); err != nil {
+		return errors.Annotate(err, "set ap info: read flags").Err()
+	}
+	return nil
+}
+
 const (
 	extractFileTimeout = 300 * time.Second
 	ecMonitorFileName  = "npcx_monitor.bin"
