@@ -710,6 +710,34 @@ func servoRebootEcOnDUTExec(ctx context.Context, args *execs.RunArgs, actionArgs
 	return nil
 }
 
+// servoPowerStateResetExec using servod command to reset power state
+// to achieve the behaviour of DUT reboot to recover some servo controls depending on EC console.
+//
+// Some servo controls, like lid_open, requires communicating with DUT through EC UART console.
+// Failure of this kinds of controls can be recovered by rebooting the DUT.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["wait_timeout:x"]
+func servoPowerStateResetExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	// Timeout to wait for resetting the power state. Default to be 1s.
+	waitTimeout := argsMap.AsInt(ctx, "wait_timeout", 1)
+	servod := args.NewServod()
+	if err := servod.Set(ctx, "power_state", "reset"); err != nil {
+		return errors.Annotate(err, "servo power state reset").Err()
+	}
+	time.Sleep(time.Duration(waitTimeout) * time.Second)
+	// Get the lid_open value which requires EC console.
+	lidOpen, err := servodGetString(ctx, args, "lid_open")
+	if err != nil {
+		return errors.Annotate(err, "servo power state reset").Err()
+	}
+	if lidOpen != "yes" && lidOpen != "not_applicable" {
+		return errors.Reason("servo power state reset: still fail to contact EC console after rebooting DUT").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -730,4 +758,5 @@ func init() {
 	execs.Register("servo_fake_disconnect_dut", servoFakeDisconnectDUTExec)
 	execs.Register("servo_servod_cc_toggle", servoServodCCToggleExec)
 	execs.Register("servo_reboot_ec_on_dut", servoRebootEcOnDUTExec)
+	execs.Register("servo_power_state_reset", servoPowerStateResetExec)
 }
