@@ -10,7 +10,7 @@ import (
 	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
 	"infra/chromium/bootstrapper/gerrit"
 	"infra/chromium/bootstrapper/gitiles"
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"

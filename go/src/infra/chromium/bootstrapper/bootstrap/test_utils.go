@@ -5,7 +5,7 @@
 package bootstrap
 
 import (
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/luciexe/exe"

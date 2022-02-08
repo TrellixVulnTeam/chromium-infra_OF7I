@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"infra/chromium/bootstrapper/gerrit"
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 
 	"go.chromium.org/luci/common/errors"
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"

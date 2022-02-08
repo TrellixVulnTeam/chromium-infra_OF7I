@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	bscas "infra/chromium/bootstrapper/cas"
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 
 	"github.com/bazelbuild/remote-apis-sdks/go/pkg/digest"
 	"github.com/bazelbuild/remote-apis-sdks/go/pkg/filemetadata"

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"testing"
 
-	. "infra/chromium/bootstrapper/util"
+	. "infra/chromium/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"

@@ -13,7 +13,7 @@ import (
 	"infra/chromium/bootstrapper/cipd"
 	fakecas "infra/chromium/bootstrapper/fakes/cas"
 	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
-	. "infra/chromium/bootstrapper/util"
+	. "infra/chromium/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"

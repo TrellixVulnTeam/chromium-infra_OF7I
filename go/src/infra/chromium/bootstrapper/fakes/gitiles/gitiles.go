@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"infra/chromium/bootstrapper/gitiles"
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/git"

@@ -20,7 +20,7 @@ import (
 	fakecipd "infra/chromium/bootstrapper/fakes/cipd"
 	fakegitiles "infra/chromium/bootstrapper/fakes/gitiles"
 	"infra/chromium/bootstrapper/gitiles"
-	. "infra/chromium/bootstrapper/util"
+	. "infra/chromium/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"

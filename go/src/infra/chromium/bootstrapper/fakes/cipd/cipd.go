@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	bscipd "infra/chromium/bootstrapper/cipd"
-	"infra/chromium/bootstrapper/util"
+	"infra/chromium/util"
 
 	"go.chromium.org/luci/cipd/client/cipd"
 	"go.chromium.org/luci/cipd/common"
