@@ -221,7 +221,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -318,7 +319,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -345,7 +347,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -358,7 +361,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -404,7 +408,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -421,7 +426,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -436,7 +442,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		]
 	},
 	"pwr_button_supported_models": {
@@ -479,7 +486,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -650,7 +658,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -667,7 +676,8 @@ const servoRepairPlanBody = `
 			"servo_host_servod_stop",
 			"servo_power_delivery_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -695,7 +705,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -709,7 +720,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		]
 	},
 	"update_servo_type_label":{
@@ -727,7 +739,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -739,7 +752,8 @@ const servoRepairPlanBody = `
 			"servo_power_delivery_repair",
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
-			"servo_reboot_ec_on_dut"
+			"servo_reboot_ec_on_dut",
+			"reboot_dut_by_power_state:reset"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -967,5 +981,15 @@ const servoRepairPlanBody = `
 			"It reboots just the embedded controllers on the DUT."
 		],
 		"run_control": 1
+	},
+	"reboot_dut_by_power_state:reset":{
+		"docs":[
+			"Try to reboot DUT by resetting power state command on servod."
+		],
+		"exec_extra_args": [
+			"wait_timeout:1"
+		],
+		"run_control": 1,
+		"exec_name":"servo_power_state_reset"
 	}
 }`
