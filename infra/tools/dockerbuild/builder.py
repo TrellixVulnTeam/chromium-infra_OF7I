@@ -129,6 +129,7 @@ class Builder(object):
     wheel = Wheel(
         spec=spec,
         plat=plat,
+        download_plat=None,
         pyversion=pyversion,
         filename=None,
         md_lines=self.md_data_fn())
@@ -138,12 +139,13 @@ class Builder(object):
     # layout. This can differ from the local platform value if the package was
     # valid and built for multiple platforms, which seems to happen on Mac a
     # lot.
-    plat_wheel = wheel._replace(
-        plat=wheel.plat._replace(
-            wheel_abi=self._abi_map.get(plat.name, plat.wheel_abi),
-            wheel_plat=self._arch_map.get(plat.name, plat.wheel_plat),
-        ),)
+    download_plat = plat._replace(
+        wheel_abi=self._abi_map.get(plat.name, plat.wheel_abi),
+        wheel_plat=self._arch_map.get(plat.name, plat.wheel_plat),
+    )
+    plat_wheel = wheel._replace(plat=download_plat)
     return wheel._replace(
+        download_plat=download_plat,
         filename=plat_wheel.default_filename(),
     )
 
@@ -234,7 +236,8 @@ def BuildPackageFromPyPiWheel(system, wheel):
     util.check_run(
         system,
         None,
-        tdir, [
+        tdir,
+        [
             interpreter,
             '-m',
             'pip',
@@ -243,7 +246,7 @@ def BuildPackageFromPyPiWheel(system, wheel):
             '--only-binary=:all:',
             '--abi=%s' % (wheel.abi,),
             '--python-version=%s' % (wheel.pyversion,),
-            '--platform=%s' % (wheel.primary_platform,),
+        ] + ['--platform=%s' % p for p in wheel.download_platform] + [
             '%s==%s' % (wheel.spec.name, wheel.spec.version),
         ],
         cwd=tdir,

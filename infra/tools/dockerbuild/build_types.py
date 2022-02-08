@@ -61,7 +61,8 @@ class Spec(_Spec):
 
 
 _Wheel = collections.namedtuple(
-    '_Wheel', ('spec', 'plat', 'pyversion', 'filename', 'md_lines'))
+    '_Wheel',
+    ('spec', 'plat', 'download_plat', 'pyversion', 'filename', 'md_lines'))
 
 
 class Wheel(_Wheel):
@@ -96,6 +97,10 @@ class Wheel(_Wheel):
   @property
   def platform(self):
     return ['any'] if self.spec.universal else self.plat.wheel_plat
+
+  @property
+  def download_platform(self):
+    return ['any'] if self.spec.universal else self.download_plat.wheel_plat
 
   @property
   def primary_platform(self):
