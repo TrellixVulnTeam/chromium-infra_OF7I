@@ -13,6 +13,8 @@ import (
 	"log"
 	"math"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -288,9 +290,36 @@ type hook struct {
 	uuid string
 }
 
+// workingDirPrefixLength determines the number of trailing bytes of a dash-abbreviated DUT name to use
+// as a suffix.
+//
+// A non-positive DUT suffix directs drone agent to take the entire DUT name as the suffix.
+// See b:218349208 for details.
+//
+// The length is currently set to 20 conservatively. Values higher than 37 WILL cause tasks to start failing
+// because some generated paths to unix domain sockets within this directory will be too long.
+//
+// The LUCI libraries used by swarming and bbagent impose a maximum length of 104 bytes on the maximum length of a
+// unix domain socket. This limit does not change depending on the operating system, although the underlying length
+// of the unix domain socket does.
+//
+// Current working directories have the following form, where X is a disambiguation suffix and Y is a hostname.
+//
+//   /home/chromeos-test/skylab_bots/YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY.XXXXXXXXX
+//
+// The following is a hostname, appended by the swarming bot.
+//
+//   /w/ir/x/ld/sock.ZZZZZZZZZ
+//
+// This means that 67 bytes total are used for parts of the path that we do not control, leaving 37 for the hostname.
+// All of these details are implementation details though, so let's conservatively pick a lower bound of 20 character,
+// which should be sufficient in practice.
+const workingDirPrefixLength = 20
+
 // StartBot implements state.ControllerHook.
 func (h hook) StartBot(dutID string) (bot.Bot, error) {
-	dir, err := ioutil.TempDir(h.a.WorkingDir, dutID+".")
+	workingDirPrefix := abbreviate(dutID, workingDirPrefixLength)
+	dir, err := ioutil.TempDir(h.a.WorkingDir, workingDirPrefix+".")
 	if err != nil {
 		return nil, errors.Annotate(err, "start bot %v", dutID).Err()
 	}
@@ -328,6 +357,60 @@ func (h hook) ReleaseDUT(dutID string) {
 	//
 	// TODO(ayatane): Log or track errors?
 	_, _ = h.a.Client.ReleaseDuts(ctx, &req)
+}
+
+// truncate returns a suffix of a string of length at most n.
+// truncate returns the entire string if given a non-positive value for n.
+func truncate(str string, n int) string {
+	if n <= 0 {
+		return str
+	}
+	stop := len(str)
+	if n < stop {
+		stop = n
+	}
+	return str[:stop]
+}
+
+// NumericalSuffixes include numbers like 12 and pseudo-numbers like 14a.
+var numericalSuffix = regexp.MustCompile(`[0-9]+[a-z]?\z`)
+
+// abbreviateWord takes a word and unconditionally takes the first character and takes any
+// numeric suffix.
+//
+// E.g. "chromeos4478" --> "c4478"
+func abbreviateWord(word string) string {
+	if len(word) == 0 {
+		return ""
+	}
+	first := word[0]
+	suffix := numericalSuffix.FindString(word)
+	// The suffix and first character might overlap.
+	if len(suffix) == len(word) {
+		return word
+	}
+	return string(first) + suffix
+}
+
+// abbreviate takes a hostname that is dash-delimited and abbreviates each dash-delimited word.
+// If the hostname contains no dashes at all, we abbreviate the raw hostname.
+// dashAbbrev will never return a string longer than n.
+//
+// E.g. abbreviate("abc123-def456", ...) === "a123-d456"
+//      abbreviate("aaaaaaaa", ...) === "aaaaaaaa"
+//
+// See b:218349208 for details. Hostnames that are too long cause the generated names of unix domain sockets
+// to exceed the current 104-byte limit.
+func abbreviate(str string, n int) string {
+	if !strings.Contains(str, "-") {
+		return truncate(str, n)
+	}
+	words := strings.Split(str, "-")
+	for i := range words {
+		words[i] = abbreviateWord(words[i])
+	}
+	out := strings.Join(words, "-")
+	return truncate(out, n)
 }
 
 // fatalError indicates that the agent should terminate its current
