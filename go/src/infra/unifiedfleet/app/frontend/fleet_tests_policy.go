@@ -9,10 +9,22 @@ import (
 
 	api "infra/unifiedfleet/api/v1/rpc"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
+
+	"go.chromium.org/luci/common/logging"
 )
 
 // CheckFleetTestsPolicy returns whether the given the test parameters are for a valid test.
-// TODO - Implement method
 func (fs *FleetServerImpl) CheckFleetTestsPolicy(ctx context.Context, req *api.CheckFleetTestsPolicyRequest) (response *ufsAPI.CheckFleetTestsPolicyResponse, err error) {
-	return nil, nil
+	validTestResponse := &ufsAPI.CheckFleetTestsPolicyResponse{
+		IsTestValid: true,
+	}
+
+	// Check test parameters
+	err = controller.IsValidTest(ctx, req)
+	if err != nil {
+		logging.Errorf(ctx, "Error validating test parameters : %s", err.Error())
+		return nil, err
+	}
+	return validTestResponse, nil
 }

@@ -45,6 +45,10 @@ func InstallHandlers(r *router.Router, mc router.MiddlewareChain) {
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
 	logging.Debugf(ctx, "Check access for %s", rpcName)
+	// Everyone can call the RPC to check fleet test policy
+	if rpcName == "CheckFleetTestsPolicy" {
+		return ctx, nil
+	}
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs", "mdb/hwops-nsi", "mdb/chromeos-labs", "mdb/chromeos-labs-tvcs", "mdb/acs-labs"}
 	if strings.HasPrefix(rpcName, "Import") {
 		group = []string{"mdb/chrome-fleet-software-team"}
