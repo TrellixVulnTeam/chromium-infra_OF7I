@@ -55,6 +55,7 @@ management purposes.
 			cmdInit(defaults),
 			cmdScan(defaults),
 			cmdStatus(defaults),
+			cmdCommit(defaults),
 			cmdUpload(defaults),
 			cmdRebase(defaults),
 

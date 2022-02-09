@@ -16,7 +16,7 @@ func cmdUpload(opts cmdBaseOptions) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "upload",
 		ShortDesc: `Uploads pending changes using "git cl upload".`,
-		LongDesc: `Uploads pending change using "git cl upload".
+		LongDesc: `Uploads pending change using "git cl upload.
 
 Takes the commit message from commit-message.txt file in the migrator project
 directory. Skips running upload hooks. By default assigns reviewers based on

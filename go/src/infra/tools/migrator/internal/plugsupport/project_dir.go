@@ -67,6 +67,12 @@ func (p ProjectDir) StatusReportPath() string {
 	return filepath.Join(string(p), "status.csv")
 }
 
+// CommitReportPath returns the absolute path of the migrator project's CSV
+// commit report file.
+func (p ProjectDir) CommitReportPath() string {
+	return filepath.Join(string(p), "commit.csv")
+}
+
 // UploadReportPath returns the absolute path of the migrator project's CSV
 // upload report file.
 func (p ProjectDir) UploadReportPath() string {
