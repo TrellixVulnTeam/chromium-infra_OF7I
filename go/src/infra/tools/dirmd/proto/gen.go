@@ -4,4 +4,4 @@
 
 package dirmdpb
 
-//go:generate cproto
+//go:generate cproto -proto-path ../../../..
