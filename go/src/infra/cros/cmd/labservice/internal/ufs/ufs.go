@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
@@ -17,6 +18,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
+	ufsutil "infra/unifiedfleet/app/util"
 )
 
 type DeviceType int64
@@ -86,7 +88,9 @@ func getSchedulingUnitInfo(ctx context.Context, client ufsapi.FleetClient, hostn
 
 // getDeviceData fetches a device entry.
 func getDeviceData(ctx context.Context, client ufsapi.FleetClient, id string) (*ufsapi.GetDeviceDataResponse, error) {
-	resp, err := client.GetDeviceData(ctx, &ufsapi.GetDeviceDataRequest{Hostname: id})
+	// Add chromeos namespace to the context for ufs rpc calls
+	osCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs(ufsutil.Namespace, ufsutil.OSNamespace))
+	resp, err := client.GetDeviceData(osCtx, &ufsapi.GetDeviceDataRequest{Hostname: id})
 	if err != nil {
 		return nil, err
 	}
