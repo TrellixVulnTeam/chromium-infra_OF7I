@@ -73,6 +73,12 @@ func (p ProjectDir) UploadReportPath() string {
 	return filepath.Join(string(p), "upload.csv")
 }
 
+// RebaseReportPath returns the absolute path of the migrator project's CSV
+// rebase report file.
+func (p ProjectDir) RebaseReportPath() string {
+	return filepath.Join(string(p), "rebase.csv")
+}
+
 // ProjectLog returns the absolute path of the scan log for a given LUCI
 // project within this migrator project.
 func (p ProjectDir) ProjectLog(projectID string) string {

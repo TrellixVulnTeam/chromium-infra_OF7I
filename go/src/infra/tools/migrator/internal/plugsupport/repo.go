@@ -295,6 +295,13 @@ func (r *repo) create(ctx context.Context, remoteURL, remoteRef string) error {
 	return os.Rename(git.root, r.root)
 }
 
+// fetch fetches the most recent state of the remote ref.
+func (r *repo) fetch(ctx context.Context) error {
+	git := r.git(ctx)
+	git.run("fetch", "--depth", "1", "origin")
+	return git.err
+}
+
 // reset updates the repo to the state as if it was just fetched.
 //
 // Fetches the most recent state of the remote ref, recreates fix_config branch.

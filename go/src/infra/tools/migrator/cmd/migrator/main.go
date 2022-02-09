@@ -56,6 +56,7 @@ management purposes.
 			cmdScan(defaults),
 			cmdStatus(defaults),
 			cmdUpload(defaults),
+			cmdRebase(defaults),
 
 			{}, // spacer
 
