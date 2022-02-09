@@ -30,8 +30,6 @@ const (
 	dateFormat          = "2006-01-02"
 	dateMilestoneFormat = "2006-01-02T15:04:05"
 	histogramEndTag     = "</histogram>"
-	obsoleteStartTag    = "<obsolete"
-	obsoleteEndTag      = "</obsolete>"
 	ownerStartTag       = "<owner"
 	ownerEndTag         = "</owner"
 
@@ -39,16 +37,13 @@ const (
 	firstOwnerTeamError          = `[WARNING] Please list an individual as the primary owner for this metric: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	oneOwnerTeamError            = `[WARNING] Please list an individual as the primary owner for this metric. Note that it's preferred to list at least two owners, where the second is often a team mailing list or a src/path/to/OWNERS reference: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Owners.`
 	noExpiryError                = `[ERROR] Please specify an expiry condition for this histogram: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
-	obsoleteNoExpiryError        = `[WARNING] Please set the expires_after date to be the current milestone`
 	badExpiryError               = `[ERROR] Could not parse histogram expiry. Please format as YYYY-MM-DD or MXX: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	pastExpiryWarning            = `[WARNING] This expiry date is in the past. Did you mean to set an expiry date in the future?`
 	farExpiryWarning             = `[WARNING] It's a best practice to choose an expiry that is at most one year out: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	neverExpiryInfo              = `[INFO] The expiry should only be set to "never" in rare cases. Please double-check that this use of "never" is appropriate: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	neverExpiryError             = `[ERROR] The expiry should only be set to "never" in rare cases. If you believe this use of "never" is appropriate, you must include an XML comment describing why, such as <!-- expires-never: "heartbeat" metric (internal: go/uma-heartbeats) -->: https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Histogram-Expiry.`
 	milestoneFailure             = `[WARNING] Tricium failed to fetch milestone branch date. Please double-check that this milestone is correct, because the tool is currently not able to check for you.`
-	obsoleteDateError            = `[WARNING] When marking a histogram as <obsolete>, please document when the histogram was removed, either as a date including a 2-digit month and 4-digit year, or a milestone in MXX format.`
 	unitsHighResolutionWarning   = `[WARNING] Histograms using microseconds should document whether the metric is reported for all clients or only clients with high-resolution clocks. If your histogram logging macro or function calls HistogramBase::AddTimeMicrosecondsGranularity() under the hood, then the metric is reported for only clients with high-resolution clocks. Separately, samples from clients with low-resolution clocks (e.g. on Windows, see TimeTicks::IsHighResolution()) may be as coarse as ~15.6ms.`
-	removedHistogramError        = `[ERROR] The following had metadata removed from histograms.xml: %v. Instead of removing them, mark unused histograms as <obsolete>, and include the date or milestone when they were removed. (It's ok to delete metadata for histograms that were never recorded, e.g., to fix a typo in the name.) https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries. (You don't need to move newly marked obsolete histograms to obsolete_histograms.xml. However, if you *have* moved histograms across files or converted existing histograms to variants of a patterned one, you'll see this message as a false-positive; feel free to ignore it in that case.)`
 	addedNamespaceWarning        = `[WARNING] Are you sure you want to add the namespace %s to histograms.xml? For most new histograms, it's appropriate to re-use one of the existing top-level histogram namespaces. For histogram names, the namespace is defined as everything preceding the first dot '.' in the name.`
 	singleElementEnumWarning     = `[WARNING] It looks like this is an enumerated histogram that contains only a single bucket. UMA metrics are difficult to interpret in isolation, so please either add one or more additional buckets that can serve as a baseline for comparison, or document what other metric should be used as a baseline during analysis. https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#enum-histograms.`
 	SuffixesDeprecationWarning   = `[WARNING]: The <histogram_suffixes> syntax is deprecated. If you're adding a new list of suffixes, please use patterned histograms instead. If you're modifying an existing list of suffixes, please consider migrating that list to use patterned histograms. See https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#patterned-histograms.`
@@ -64,11 +59,6 @@ var (
 	expiryDatePattern      = regexp.MustCompile(`^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$`)
 	expiryMilestonePattern = regexp.MustCompile(`^M([0-9]{2,3})$`)
 	osxNamespaceDeprecated = regexp.MustCompile(`^OSX$`)
-	// Match years between 1970 and 2999.
-	obsoleteYearPattern = regexp.MustCompile(`19[7-9][0-9]|2([0-9]{3})`)
-	// Match double-digit or spelled-out months.
-	obsoleteMonthPattern     = regexp.MustCompile(`([^0-9](0[1-9]|10|11|12)[^0-9])|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec`)
-	obsoleteMilestonePattern = regexp.MustCompile(`M([0-9]{2,3})`)
 	// Match valid summaries for histograms with units=("microseconds", "us", "usec").
 	highResolutionUnits        = regexp.MustCompile(`^microsec(onds)?|^us$|^usec.*$`)
 	highResolutionUnitsSummary = regexp.MustCompile(`all\suser|(high|low)(\s|-)resolution`)
@@ -77,23 +67,21 @@ var (
 	unitsAttribute             = regexp.MustCompile(`units="[^"]+"`)
 
 	// Now is an alias for time.Now, can be overwritten by tests.
-	now                 = time.Now
-	getMilestoneDate    = getMilestoneDateImpl
-	getCurrentMilestone = getCurrentMilestoneImpl
+	now              = time.Now
+	getMilestoneDate = getMilestoneDateImpl
 
-	tags       = []string{ownerEndTag, obsoleteStartTag, obsoleteEndTag}
+	tags       = []string{ownerEndTag}
 	attributes = []*regexp.Regexp{expiryAttribute, enumAttribute, unitsAttribute}
 )
 
 // histogram contains all info about a UMA histogram.
 type histogram struct {
-	Name     string   `xml:"name,attr"`
-	Enum     string   `xml:"enum,attr"`
-	Units    string   `xml:"units,attr"`
-	Expiry   string   `xml:"expires_after,attr"`
-	Obsolete string   `xml:"obsolete"`
-	Owners   []string `xml:"owner"`
-	Summary  string   `xml:"summary"`
+	Name    string   `xml:"name,attr"`
+	Enum    string   `xml:"enum,attr"`
+	Units   string   `xml:"units,attr"`
+	Expiry  string   `xml:"expires_after,attr"`
+	Owners  []string `xml:"owner"`
+	Summary string   `xml:"summary"`
 }
 
 // metadata contains metadata about histogram tags and required comments.
@@ -153,16 +141,14 @@ func analyzeHistogramFile(f io.Reader, filePath, prevDir string, filesChanged *d
 	log.Printf("ANALYZING File: %s", filePath)
 	var allComments []*tricium.Data_Comment
 	// Analyze added lines in file (if any).
-	comments, newHistograms, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), filePath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
+	comments, newNamespaces, namespaceLineNums := analyzeChangedLines(bufio.NewScanner(f), filePath, filesChanged.addedLines[filePath], singletonEnums, ADDED)
 	allComments = append(allComments, comments...)
 	// Analyze removed lines in file (if any).
 	oldPath := filepath.Join(prevDir, filePath)
 	oldFile := openFileOrDie(oldPath)
 	defer closeFileOrDie(oldFile)
 	var emptySet stringset.Set
-	_, oldHistograms, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), filePath, filesChanged.removedLines[filePath], emptySet, REMOVED)
-	// Identify if any histograms were removed.
-	allComments = append(allComments, generateCommentsForRemovedHistograms(filePath, newHistograms, oldHistograms)...)
+	_, oldNamespaces, _ := analyzeChangedLines(bufio.NewScanner(oldFile), filePath, filesChanged.removedLines[filePath], emptySet, REMOVED)
 	allComments = append(allComments, generateCommentsForAddedNamespaces(filePath, newNamespaces, oldNamespaces, namespaceLineNums)...)
 	return showAllComments(allComments)
 }
@@ -180,10 +166,9 @@ func analyzeHistogramSuffixesFile(f io.Reader, filePath string, filesChanged *di
 
 // analyzeChangedLines analyzes a version of the file and returns:
 // 1. A list of comments generated from analyzing changed histograms.
-// 2. A set containing all the names of histograms in the file.
-// 3. A set containing all the names of namespaces in the file.
-// 4. A map from namespace to line number.
-func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, singletonEnums stringset.Set, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, stringset.Set, map[string]int) {
+// 2. A set containing all the names of namespaces in the file.
+// 3. A map from namespace to line number.
+func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int, singletonEnums stringset.Set, mode changeMode) ([]*tricium.Data_Comment, stringset.Set, map[string]int) {
 	var comments []*tricium.Data_Comment
 	// meta is a struct that holds line numbers of different tags in histogram.
 	var meta *metadata
@@ -193,7 +178,6 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 	var histogramStart int
 	// If any line in the histogram showed up as an added or removed line in the diff.
 	var histogramChanged bool
-	allHistograms := make(stringset.Set)
 	namespaces := make(stringset.Set)
 	namespaceLineNums := make(map[string]int)
 	lineNum := 1
@@ -230,7 +214,6 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 			hist := bytesToHistogram(currHistogram, meta)
 			namespace := parseNamespaceFromHistogramName(hist.Name)
 			namespaces.Add(namespace)
-			allHistograms.Add(hist.Name)
 			if namespaceLineNums[namespace] == 0 {
 				namespaceLineNums[namespace] = histogramStart
 			}
@@ -259,7 +242,7 @@ func analyzeChangedLines(scanner *bufio.Scanner, path string, linesChanged []int
 		}
 		lineNum++
 	}
-	return comments, allHistograms, namespaces, namespaceLineNums
+	return comments, namespaces, namespaceLineNums
 }
 
 func parseNamespaceFromHistogramName(histogramName string) string {
@@ -269,23 +252,17 @@ func parseNamespaceFromHistogramName(histogramName string) string {
 func checkHistogram(path string, hist *histogram, meta *metadata, singletonEnums stringset.Set) []*tricium.Data_Comment {
 	var comments []*tricium.Data_Comment
 	comments = append(comments, checkExpiry(path, hist, meta)...)
-	if comment := checkObsolete(path, hist, meta); comment != nil {
+	if comment := checkOwners(path, hist, meta); comment != nil {
 		comments = append(comments, comment)
 	}
-	// Only do the following checks if the histogram is not obsolete.
-	if hist.Obsolete == "" {
-		if comment := checkOwners(path, hist, meta); comment != nil {
-			comments = append(comments, comment)
-		}
-		if comment := checkUnits(path, hist, meta); comment != nil {
-			comments = append(comments, comment)
-		}
-		if comment := checkEnums(path, hist, meta, singletonEnums); comment != nil {
-			comments = append(comments, comment)
-		}
-		if comment := checkDeprecatedNamespaces(path, hist, meta); comment != nil {
-			comments = append(comments, comment)
-		}
+	if comment := checkUnits(path, hist, meta); comment != nil {
+		comments = append(comments, comment)
+	}
+	if comment := checkEnums(path, hist, meta, singletonEnums); comment != nil {
+		comments = append(comments, comment)
+	}
+	if comment := checkDeprecatedNamespaces(path, hist, meta); comment != nil {
+		comments = append(comments, comment)
 	}
 	return comments
 }
@@ -372,39 +349,11 @@ func checkUnits(path string, hist *histogram, meta *metadata) *tricium.Data_Comm
 	return nil
 }
 
-func checkObsolete(path string, hist *histogram, meta *metadata) *tricium.Data_Comment {
-	if hist.Obsolete != "" &&
-		!obsoleteMilestonePattern.MatchString(hist.Obsolete) &&
-		!(obsoleteYearPattern.MatchString(hist.Obsolete) &&
-			obsoleteMonthPattern.MatchString(hist.Obsolete)) {
-		comment := &tricium.Data_Comment{
-			Category:  category + "/Obsolete",
-			Message:   obsoleteDateError,
-			Path:      path,
-			StartLine: int32(meta.tagMap[obsoleteStartTag]),
-			EndLine:   int32(meta.tagMap[obsoleteEndTag]),
-		}
-		log.Printf("ADDING Comment for %s at line %d: %s", hist.Name, comment.StartLine, "[ERROR]: Obsolete no date")
-		return comment
-	}
-	return nil
-}
-
 func checkExpiry(path string, hist *histogram, meta *metadata) []*tricium.Data_Comment {
 	var commentMessage string
 	var logMessage string
-	if expiry := hist.Expiry; hist.Obsolete != "" {
-		if expiry == "" {
-			milestone, err := getCurrentMilestone()
-			if err != nil {
-				log.Print("Failed to get current milestone")
-				commentMessage = obsoleteNoExpiryError + "."
-			} else {
-				commentMessage = fmt.Sprintf(obsoleteNoExpiryError+", M%d.", milestone)
-			}
-			logMessage = "[WARNING]: No Expiry, Obsolete"
-		}
-	} else if expiry == "" {
+	expiry := hist.Expiry
+	if expiry == "" {
 		commentMessage = noExpiryError
 		logMessage = "[ERROR]: No Expiry"
 	} else if expiry == "never" {
@@ -480,16 +429,6 @@ func getMilestoneDateImpl(milestone int) (time.Time, error) {
 	return milestoneDate, nil
 }
 
-func getCurrentMilestoneImpl() (int, error) {
-	var milestone int
-	url := "https://chromiumdash.appspot.com/fetch_milestone_schedule"
-	newMilestones, err := milestoneRequest(url)
-	if err != nil {
-		return milestone, err
-	}
-	return newMilestones.Milestones[0].Milestone, nil
-}
-
 func milestoneRequest(url string) (milestones, error) {
 	newMilestones := milestones{}
 	milestoneClient := http.Client{
@@ -547,21 +486,6 @@ func checkEnums(path string, hist *histogram, meta *metadata, singletonEnums str
 		}
 	}
 	return nil
-}
-
-func generateCommentsForRemovedHistograms(path string, newHistograms stringset.Set, oldHistograms stringset.Set) []*tricium.Data_Comment {
-	var comments []*tricium.Data_Comment
-	allRemovedHistograms := oldHistograms.Difference(newHistograms).ToSlice()
-	if len(allRemovedHistograms) > 0 {
-		comment := &tricium.Data_Comment{
-			Category: category + "/Removed",
-			Message:  fmt.Sprintf(removedHistogramError, allRemovedHistograms),
-			Path:     path,
-		}
-		comments = append(comments, comment)
-		log.Printf("ADDING Comment: [ERROR]: Removed Histogram")
-	}
-	return comments
 }
 
 func generateCommentsForAddedNamespaces(path string, newNamespaces stringset.Set, oldNamespaces stringset.Set, namespaceLineNums map[string]int) []*tricium.Data_Comment {

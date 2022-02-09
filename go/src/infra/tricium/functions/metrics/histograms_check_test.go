@@ -49,9 +49,6 @@ func analyzeHistogramTestFile(t *testing.T, filePath, patch, prevDir string) []*
 		}
 		return date, err
 	}
-	getCurrentMilestone = func() (int, error) {
-		return 80, nil
-	}
 	filesChanged, err := getDiffsPerFile([]string{filePath}, patch)
 	if err != nil {
 		t.Errorf("Failed to get diffs per file for %s: %v", filePath, err)
@@ -139,20 +136,6 @@ func TestHistogramsCheck(t *testing.T) {
 				StartLine:            3,
 				EndLine:              3,
 				Path:                 "expiry/no_expiry.xml",
-				ShowOnUnchangedLines: true,
-			},
-		})
-	})
-
-	Convey("Analyze XML file with no expiry, obsolete", t, func() {
-		results := analyzeHistogramTestFile(t, "expiry/no_expiry_obsolete.xml", patchPath, inputDir)
-		So(results, ShouldResemble, []*tricium.Data_Comment{
-			{
-				Category:             category + "/Expiry",
-				Message:              obsoleteNoExpiryError + ", M80.",
-				StartLine:            3,
-				EndLine:              3,
-				Path:                 "expiry/no_expiry_obsolete.xml",
 				ShowOnUnchangedLines: true,
 			},
 		})
@@ -338,49 +321,6 @@ func TestHistogramsCheck(t *testing.T) {
 				Path:                 "expiry/milestone/unformatted_milestone.xml",
 				ShowOnUnchangedLines: true,
 			},
-		})
-	})
-
-	// OBSOLETE tests
-
-	Convey("Analyze XML file with no errors and good obslete date", t, func() {
-		results := analyzeHistogramTestFile(t, "obsolete/good_obsolete_date.xml", patchPath, inputDir)
-		So(results, ShouldBeNil)
-	})
-
-	Convey("Analyze XML file with no errors and good obsolete milestone", t, func() {
-		results := analyzeHistogramTestFile(t, "obsolete/good_obsolete_milestone.xml", patchPath, inputDir)
-		So(results, ShouldBeNil)
-	})
-
-	Convey("Analyze XML file with obsolete message and suppressed warnings", t, func() {
-		results := analyzeHistogramTestFile(t, "obsolete/obsolete_suppress_comments.xml", patchPath, inputDir)
-		So(results, ShouldBeNil)
-	})
-
-	Convey("Analyze XML file with no date in obsolete message", t, func() {
-		results := analyzeHistogramTestFile(t, "obsolete/obsolete_no_date.xml", patchPath, inputDir)
-		So(results, ShouldResemble, []*tricium.Data_Comment{
-			{
-				Category:             category + "/Obsolete",
-				Message:              obsoleteDateError,
-				StartLine:            4,
-				EndLine:              6,
-				Path:                 "obsolete/obsolete_no_date.xml",
-				ShowOnUnchangedLines: true,
-			},
-		})
-	})
-
-	Convey("Analyze XML file with badly formatted date in obsolete message", t, func() {
-		fullPath := "obsolete/obsolete_unformatted_date.xml"
-		results := analyzeHistogramTestFile(t, "obsolete/obsolete_unformatted_date.xml", patchPath, inputDir)
-		So(results, ShouldResemble, []*tricium.Data_Comment{
-			makeObsoleteDateError(fullPath, 4, 6),
-			makeObsoleteDateError(fullPath, 14, 16),
-			makeObsoleteDateError(fullPath, 24, 26),
-			makeObsoleteDateError(fullPath, 34, 36),
-			makeObsoleteDateError(fullPath, 44, 46),
 		})
 	})
 
@@ -591,19 +531,6 @@ func TestHistogramsCheck(t *testing.T) {
 	})
 
 	// REMOVED HISTOGRAM tests
-
-	Convey("Analyze XML file with error: histogram deleted", t, func() {
-		results := analyzeHistogramTestFile(t, "rm/remove_histogram.xml", "prevdata/tricium_generated_diff.patch", "prevdata/src")
-		So(results, ShouldResemble, []*tricium.Data_Comment{
-			{
-				Category:             category + "/Removed",
-				Message:              "[ERROR] The following had metadata removed from histograms.xml: [Test.Histogram2]. Instead of removing them, mark unused histograms as <obsolete>, and include the date or milestone when they were removed. (It's ok to delete metadata for histograms that were never recorded, e.g., to fix a typo in the name.) https://chromium.googlesource.com/chromium/src/+/HEAD/tools/metrics/histograms/README.md#Cleaning-Up-Histogram-Entries. (You don't need to move newly marked obsolete histograms to obsolete_histograms.xml. However, if you *have* moved histograms across files or converted existing histograms to variants of a patterned one, you'll see this message as a false-positive; feel free to ignore it in that case.)",
-				Path:                 "rm/remove_histogram.xml",
-				ShowOnUnchangedLines: true,
-			},
-		})
-	})
-
 	Convey("Analyze XML file with no error: only owner line deleted", t, func() {
 		results := analyzeHistogramTestFile(t, "rm/remove_owner_line.xml", "prevdata/tricium_owner_line_diff.patch", "prevdata/src")
 		So(results, ShouldBeNil)
@@ -665,21 +592,6 @@ func TestHistogramsCheck(t *testing.T) {
 		})
 	})
 
-	Convey("Analyze XML file with no errors: made histogram obsolete>", t, func() {
-		results := analyzeHistogramTestFile(t, "namespace/delete_deprecated_namespace.xml", "prevdata/delete_deprecated_namespace.patch", "prevdata/src")
-		So(results, ShouldBeNil)
-	})
-}
-
-func makeObsoleteDateError(path string, startLine int, endLine int) *tricium.Data_Comment {
-	return &tricium.Data_Comment{
-		Category:             category + "/Obsolete",
-		Message:              obsoleteDateError,
-		StartLine:            int32(startLine),
-		EndLine:              int32(endLine),
-		Path:                 path,
-		ShowOnUnchangedLines: true,
-	}
 }
 
 func makeRange(min, max int) []int {
