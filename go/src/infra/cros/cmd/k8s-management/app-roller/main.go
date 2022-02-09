@@ -43,6 +43,7 @@ import (
 	"text/template"
 	"time"
 
+	"cloud.google.com/go/bigquery"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/google"
@@ -51,6 +52,8 @@ import (
 	k8sMetaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	"infra/cros/cmd/k8s-management/app-roller/internal/changelog"
 )
 
 func main() {
@@ -65,6 +68,9 @@ func innerMain() error {
 		serviceAccountJSON = flag.String("service-account-json", "", "Path to JSON file with service account credentials to use")
 		netrcPath          = flag.String("netrc", "", "Path to .netrc file used to access the Gerrit server")
 		appsYAMLURL        = flag.String("apps-yaml-url", "", "URL to a yaml file which includes all applications data")
+		logProject         = flag.String("log-project", "cros-lab-servers", "The cloud project to log resource changes")
+		logDataset         = flag.String("log-dataset", "", "Dataset name of the BigQuery tables")
+		logTable           = flag.String("log-table", "", "BigQuery table name")
 	)
 	flag.Parse()
 
@@ -89,22 +95,27 @@ func innerMain() error {
 		return fmt.Errorf("load apps yaml %q: %s", *appsYAMLURL, err)
 	}
 
-	cluster, err := getClusterName()
+	// clusterName is a global var which is used in lower level functions.
+	clusterName, err = getClusterName()
 	if err != nil {
 		return err
 	}
+
+	ctx, uploadFunc := changelog.WithBQUploader(context.Background(), *logProject, *logDataset, *logTable, *serviceAccountJSON)
+	defer uploadFunc()
+
 	ch := make(chan string, len(apps))
 	var wg sync.WaitGroup
 	for _, a := range apps {
-		if len(a.Clusters) > 0 && !stringInSlice(cluster, a.Clusters) {
-			log.Printf("Skip the rolling of %q to %q", a, cluster)
+		if len(a.Clusters) > 0 && !stringInSlice(clusterName, a.Clusters) {
+			log.Printf("Skip the rolling of %q to %q", a, clusterName)
 			continue
 		}
 
 		wg.Add(1)
 		go func(a app) {
 			defer wg.Done()
-			if err := rolloutApp(a, auth, downloader); err != nil {
+			if err := rolloutApp(ctx, a, auth, downloader); err != nil {
 				log.Printf("Apply %q: %s", a, err)
 				ch <- fmt.Sprintf("%q", a)
 			}
@@ -148,7 +159,7 @@ func loadApps(d downloader, fileURL string) ([]app, error) {
 }
 
 // rolloutApp generates application YAML file and apply to K8s.
-func rolloutApp(a app, auth authn.Authenticator, d downloader) error {
+func rolloutApp(ctx context.Context, a app, auth authn.Authenticator, d downloader) error {
 	yamlTemplate, err := d.download(a.Source)
 	if err != nil {
 		return fmt.Errorf("roll out app %q: %s", a, err)
@@ -166,7 +177,7 @@ func rolloutApp(a app, auth authn.Authenticator, d downloader) error {
 		return fmt.Errorf("roll out app %q: %s", a, err)
 	}
 	for _, d := range yamlDocs {
-		if err := applyToK8s(d); err != nil {
+		if err := applyToK8s(ctx, d); err != nil {
 			return fmt.Errorf("roll out app %q: %s", a, err)
 		}
 	}
@@ -387,15 +398,22 @@ func (g *gcrRepo) allTagsOnImage(auth authn.Authenticator, tag string) ([]string
 }
 
 // applyToK8s applies the generated YAML to K8s.
-func applyToK8s(generatedYAML string) error {
-	// TODO(guocb): log to BigQuery.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func applyToK8s(ctx context.Context, generatedYAML string) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if _, err := k8sApply(ctx, generatedYAML); err != nil {
+	c, err := k8sApply(ctx, generatedYAML)
+	if err != nil {
 		return fmt.Errorf("apply to k8s: %s", err)
+	}
+	if c != nil {
+		changelog.LogChange(ctx, &bqRow{cluster: clusterName, change: *c})
 	}
 	return nil
 }
+
+// clusterName stores the cluster name. It will be initialized in the first call
+// in main().
+var clusterName string
 
 // getClusterName gets the name of current K8s cluster.
 func getClusterName() (string, error) {
@@ -444,4 +462,24 @@ func splitYAMLDoc(content string) ([]string, error) {
 		docs = append(docs, string(s))
 	}
 	return docs, nil
+}
+
+// bqRow is a struct used to upload data to BigQuery.
+type bqRow struct {
+	cluster string
+	change
+}
+
+// Save implements the interface required for BigQuery data uploading.
+func (i *bqRow) Save() (row map[string]bigquery.Value, insertID string, err error) {
+	row = map[string]bigquery.Value{
+		"timestamp": i.timestamp,
+		"cluster":   i.cluster,
+		"namespace": i.namespace,
+		"resource":  i.resource,
+		"before":    i.before,
+		"after":     i.after,
+		"diff":      i.diff,
+	}
+	return row, "", nil
 }
