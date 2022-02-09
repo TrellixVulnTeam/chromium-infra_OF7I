@@ -256,27 +256,11 @@ func (s *scanner) run(ctx context.Context) error {
 
 // filterProjects returns a list of projects that pass `projects_re` filter.
 func (s *scanner) filterProjects(projs []*configpb.Project) ([]*configpb.Project, error) {
-	cfg, err := s.projectDir.LoadConfigFile()
+	filter, err := s.projectDir.LoadProjectFilter()
 	if err != nil {
 		return nil, err
 	}
-
-	if len(cfg.ProjectsRe) == 0 {
-		return projs, nil
-	}
-
-	filter, err := NewFilter(cfg.ProjectsRe)
-	if err != nil {
-		return nil, errors.Annotate(err, "in projects_re").Err()
-	}
-
-	var filtered []*configpb.Project
-	for _, proj := range projs {
-		if filter(proj.Id) {
-			filtered = append(filtered, proj)
-		}
-	}
-	return filtered, nil
+	return filter.Apply(projs), nil
 }
 
 // perProjectContext prepares a context with project logs and reports sink.

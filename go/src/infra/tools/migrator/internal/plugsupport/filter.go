@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"go.chromium.org/luci/common/errors"
+	configpb "go.chromium.org/luci/common/proto/config"
 )
 
 // Filter reports true if we should visit the given project.
@@ -33,4 +34,15 @@ func NewFilter(regexps []string) (Filter, error) {
 		}
 		return false
 	}, nil
+}
+
+// Apply returns projects that passed the filter.
+func (f Filter) Apply(projs []*configpb.Project) []*configpb.Project {
+	var filtered []*configpb.Project
+	for _, proj := range projs {
+		if f(proj.Id) {
+			filtered = append(filtered, proj)
+		}
+	}
+	return filtered
 }

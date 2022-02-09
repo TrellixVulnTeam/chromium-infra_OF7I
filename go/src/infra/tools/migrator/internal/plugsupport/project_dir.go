@@ -118,6 +118,22 @@ func (p ProjectDir) LoadConfigFile() (*migratorpb.Config, error) {
 	return &cfg, nil
 }
 
+// LoadProjectFilter loads the config and parses `projects_re` field there.
+func (p ProjectDir) LoadProjectFilter() (Filter, error) {
+	cfg, err := p.LoadConfigFile()
+	if err != nil {
+		return nil, err
+	}
+	if len(cfg.ProjectsRe) == 0 {
+		return func(string) bool { return true }, nil
+	}
+	filter, err := NewFilter(cfg.ProjectsRe)
+	if err != nil {
+		return nil, errors.Annotate(err, "in projects_re").Err()
+	}
+	return filter, nil
+}
+
 // FindProjectRoot finds a migrator ProjectDir starting from `abspath` and
 // working up towards the filesystem root.
 func FindProjectRoot(abspath string) (ProjectDir, error) {

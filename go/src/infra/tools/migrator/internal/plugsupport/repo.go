@@ -32,6 +32,8 @@ import (
 
 const localBranch = "fix_config"
 
+var errSkipped = errors.New("the repo is skipped by projects_re filter")
+
 type repo struct {
 	projectDir ProjectDir          // the root migrator project directory
 	checkoutID string              // how to name the checkout directory on disk
@@ -58,14 +60,23 @@ func projectsMetadataFile(repoRoot string) string {
 // corresponding &repo{...} if it is a valid git checkout with all necessary
 // metadata.
 //
-// Returns ErrNotExist if there's no checkout there. Any other error indicates
-// there's a checkout, but it appears to be broken.
-func discoverRepo(ctx context.Context, projectDir ProjectDir, checkoutID string) (*repo, error) {
+// Returns ErrNotExist if there's no checkout there or errSkipped if all
+// projects in the repo are skipped by the project filter. Any other error
+// indicates there's a checkout, but it appears to be broken.
+func discoverRepo(ctx context.Context, projectDir ProjectDir, checkoutID string, filter Filter) (*repo, error) {
 	root := projectDir.CheckoutDir(checkoutID)
 	projects, err := readProjectsMetadata(projectsMetadataFile(root))
 	if err != nil {
 		return nil, err
 	}
+
+	// Skip the repo if *all* projects there are skipped by the filter. Keep *all*
+	// projects if at least one project matches the filter: partially skipping
+	// projects in a multi-project repo leads to hard-to-reason-about states.
+	if len(filter.Apply(projects)) == 0 {
+		return nil, errSkipped
+	}
+
 	r := &repo{
 		projectDir: projectDir,
 		checkoutID: checkoutID,
@@ -80,6 +91,11 @@ func discoverRepo(ctx context.Context, projectDir ProjectDir, checkoutID string)
 
 // discoverAllRepos discovers all checked out repositories in the project dir.
 func discoverAllRepos(ctx context.Context, dir ProjectDir) ([]*repo, error) {
+	filter, err := dir.LoadProjectFilter()
+	if err != nil {
+		return nil, err
+	}
+
 	infos, err := ioutil.ReadDir(string(dir))
 	if err != nil {
 		return nil, err
@@ -90,10 +106,10 @@ func discoverAllRepos(ctx context.Context, dir ProjectDir) ([]*repo, error) {
 		if !info.IsDir() || strings.HasPrefix(info.Name(), ".") || strings.HasPrefix(info.Name(), "_") {
 			continue
 		}
-		switch r, err := discoverRepo(ctx, dir, info.Name()); {
+		switch r, err := discoverRepo(ctx, dir, info.Name(), filter); {
 		case err == nil:
 			repos = append(repos, r)
-		case !os.IsNotExist(err):
+		case err != errSkipped && !os.IsNotExist(err):
 			logging.Errorf(ctx, "Error when scanning checkout %q: %s", info.Name(), err)
 		}
 	}
@@ -101,7 +117,11 @@ func discoverAllRepos(ctx context.Context, dir ProjectDir) ([]*repo, error) {
 	return repos, nil
 }
 
-// visitReposInParallel calls the callback for all checked out repositories.
+// visitReposInParallel calls the callback for checked out repositories that
+// contain at least one non-skipped project.
+//
+// Repositories that only contain projects skipped by `projects_re` filter are
+// skipped themselves too.
 //
 // The callback gets a per-repo context with the reports sink configured. The
 // report dump is written into `dumpPath` file and also returned. The callback
