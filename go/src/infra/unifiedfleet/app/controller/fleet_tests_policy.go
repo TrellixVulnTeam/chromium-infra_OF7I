@@ -23,8 +23,12 @@ const (
 func IsValidTest(ctx context.Context, req *api.CheckFleetTestsPolicyRequest) error {
 	logging.Infof(ctx, "Request to check from crosfleet: %s", req)
 	isValidPublicGroupMember, err := isPublicGroupMember(ctx)
+	logging.Infof(ctx, "Service account being validated: %s", auth.CurrentIdentity(ctx).Email())
 	if err != nil {
-		return err
+		// Ignoring error for now till we validate the service account membership check is correct
+		logging.Errorf(ctx, "Request to check public chrome auth group membership failed: %s", err)
+		return nil
+		// return err
 	}
 
 	if !isValidPublicGroupMember {
