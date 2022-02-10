@@ -78,22 +78,24 @@ func Run(ctx context.Context, args *RunArgs) (rErr error) {
 				failReason = rErr.Error()
 			}
 			// Keep this call up to date with NewMetric in execs.go.
-			_, err := args.Metrics.Create(
-				ctx,
-				&metrics.Action{
-					ActionKind:     "run_recovery",
-					StartTime:      start,
-					StopTime:       stop,
-					SwarmingTaskID: args.SwarmingTaskID,
-					BuildbucketID:  args.BuildbucketID,
-					Hostname:       args.UnitName,
-					// TODO(gregorynisbet): add status and FailReason.
-					Status:     status,
-					FailReason: failReason,
-				},
-			)
-			if err != nil {
-				args.Logger.Error("Metrics error during teardown: %s", err)
+			if args.Metrics != nil { // Guard against incorrectly setting up Karte client. See b:217746479 for details.
+				_, mErr := args.Metrics.Create(
+					ctx,
+					&metrics.Action{
+						ActionKind:     "run_recovery",
+						StartTime:      start,
+						StopTime:       stop,
+						SwarmingTaskID: args.SwarmingTaskID,
+						BuildbucketID:  args.BuildbucketID,
+						Hostname:       args.UnitName,
+						// TODO(gregorynisbet): add status and FailReason.
+						Status:     status,
+						FailReason: failReason,
+					},
+				)
+				if mErr != nil {
+					args.Logger.Error("Metrics error during teardown: %s", err)
+				}
 			}
 		})()
 	}

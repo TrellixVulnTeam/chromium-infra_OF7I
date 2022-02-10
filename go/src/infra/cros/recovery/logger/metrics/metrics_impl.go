@@ -30,7 +30,11 @@ func NewLogMetrics(l logger.Logger) Metrics {
 }
 
 // Create marshals an action as JSON and logs it at the debug level.
+// If the method receiver is nil, the behavior is undefined.
 func (m *metrics) Create(ctx context.Context, action *Action) (*Action, error) {
+	if m == nil {
+		return nil, errors.Reason("metrics create: metrics cannot be nil").Err()
+	}
 	a, err := json.MarshalIndent(action, "", "    ")
 	if err != nil {
 		// TODO(gregorynisbet): Check if action is nil.
@@ -42,7 +46,11 @@ func (m *metrics) Create(ctx context.Context, action *Action) (*Action, error) {
 
 // Update marshals an action as JSON and logs it at the debug level.
 // TODO(gregorynisbet): Consider replacing the default implementation with an in-memory implementation of Karte.
+// If the method receiver is nil, the behavior is undefined.
 func (m *metrics) Update(ctx context.Context, action *Action) (*Action, error) {
+	if m == nil {
+		return nil, errors.Reason("metrics update: metrics cannot be nil").Err()
+	}
 	a, err := json.MarshalIndent(action, "", "    ")
 	if err != nil {
 		// TODO(gregorynisbet): Check if action is nil.
@@ -53,6 +61,10 @@ func (m *metrics) Update(ctx context.Context, action *Action) (*Action, error) {
 }
 
 // Search lists the actions matching a given criterion.
+// If the method receiver is nil, the behavior is undefined.
 func (m *metrics) Search(ctx context.Context, q *Query) (*QueryResult, error) {
+	if m == nil {
+		return nil, errors.Reason("metrics search: metrics cannot be nil").Err()
+	}
 	return nil, errors.New("list actions matching: not yet implemented")
 }
