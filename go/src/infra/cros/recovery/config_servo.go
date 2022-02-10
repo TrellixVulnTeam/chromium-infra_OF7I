@@ -167,7 +167,8 @@ const servoRepairPlanBody = `
 			"/mnt/stateful_partition:0.5"
 		],
 		"recovery_actions": [
-			"servo_servod_and_labstation_disk_cleanup"
+			"servo_servod_and_labstation_disk_cleanup",
+			"cros_create_reboot_request"
 		]
 	},
 	"servo_servod_and_labstation_disk_cleanup":{
@@ -201,6 +202,9 @@ const servoRepairPlanBody = `
 			"servo_v3_root_present",
 			"servo_v4_root_present"
 		],
+		"recovery_actions": [
+			"cros_create_reboot_request"
+		],
 		"exec_name":"sample_pass"
 	},
 	"servo_topology": {
@@ -222,7 +226,8 @@ const servoRepairPlanBody = `
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
-			"reboot_dut_by_power_state:reset"
+			"reboot_dut_by_power_state:reset",
+			"cros_create_reboot_request"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -320,7 +325,8 @@ const servoRepairPlanBody = `
 			"servo_fake_disconnect_dut_repair",
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
-			"reboot_dut_by_power_state:reset"
+			"reboot_dut_by_power_state:reset",
+			"cros_create_reboot_request"
 		],
 		"exec_name":"servo_check_servod_control",
 		"allow_fail_after_recovery": true
@@ -991,5 +997,14 @@ const servoRepairPlanBody = `
 		],
 		"run_control": 1,
 		"exec_name":"servo_power_state_reset"
+	},
+	"cros_create_reboot_request":{
+		"docs":[
+			"Try to create reboot flag file request."
+		],
+		"conditions":[
+			"cros_ssh"
+		],
+		"run_control": 1
 	}
 }`
