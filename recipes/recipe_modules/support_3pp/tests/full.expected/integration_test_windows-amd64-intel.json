@@ -5710,7 +5710,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\windows_experiment\\fetch.py",
       "latest"
@@ -5911,7 +5911,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\windows_experiment\\fetch.py",
       "get_url"
@@ -6416,7 +6416,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\checkout\\.3pp\\tools\\windows_experiment\\win_install.py",
       "[START_DIR]\\3pp\\wd\\tools\\windows_experiment\\windows-amd64\\2.0.0.windows.1\\out",
@@ -8630,7 +8630,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]\\3pp\\wd\\build_tools\\git_tool\\windows-amd64\\1.5.0-rc1\\checkout\\.3pp\\build_tools\\git_tool\\test.py",
       "windows",
@@ -10512,7 +10512,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]\\3pp\\wd\\build_tools\\tool\\windows-amd64\\1.5.0-rc1\\checkout\\.3pp\\build_tools\\tool\\test.py",
       "windows",
@@ -12045,7 +12045,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\pkg\\fetch.py",
       "latest"
@@ -12389,7 +12389,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\pkg\\fetch.py",
       "get_url"
@@ -13519,7 +13519,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\pkg_checkout\\fetch.py",
       "latest"
@@ -13863,7 +13863,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]\\builder\\package_repo\\dir_tools\\pkg_checkout\\fetch.py",
       "checkout",

@@ -6049,7 +6049,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_fetch/fetch_and_package/fetch.py",
       "latest"
@@ -6250,7 +6250,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_fetch/fetch_and_package/fetch.py",
       "get_url"
@@ -8841,7 +8841,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/windows_experiment/fetch.py",
       "latest"
@@ -9042,7 +9042,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/windows_experiment/fetch.py",
       "get_url"
@@ -15911,7 +15911,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg/fetch.py",
       "latest"
@@ -16255,7 +16255,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg/fetch.py",
       "get_url"
@@ -17256,7 +17256,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
       "latest"
@@ -17600,7 +17600,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
       "checkout",

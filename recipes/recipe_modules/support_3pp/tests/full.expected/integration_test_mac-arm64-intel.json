@@ -9274,7 +9274,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/windows_experiment/fetch.py",
       "latest"
@@ -9490,7 +9490,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/windows_experiment/fetch.py",
       "get_url"
@@ -12456,7 +12456,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]/3pp/wd/build_tools/git_tool/mac-arm64/1.5.0-rc1/checkout/.3pp/build_tools/git_tool/test.py",
       "mac",
@@ -14507,7 +14507,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]/3pp/wd/build_tools/tool/mac-amd64/1.5.0-rc1/checkout/.3pp/build_tools/tool/test.py",
       "mac",
@@ -16024,7 +16024,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[START_DIR]/3pp/wd/build_tools/tool/mac-arm64/1.5.0-rc1/checkout/.3pp/build_tools/tool/test.py",
       "mac",
@@ -17676,7 +17676,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg/fetch.py",
       "latest"
@@ -18044,7 +18044,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg/fetch.py",
       "get_url"
@@ -19273,7 +19273,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
       "latest"
@@ -19641,7 +19641,7 @@
   },
   {
     "cmd": [
-      "vpython",
+      "vpython3",
       "-u",
       "[CACHE]/builder/package_repo/dir_tools/pkg_checkout/fetch.py",
       "checkout",
