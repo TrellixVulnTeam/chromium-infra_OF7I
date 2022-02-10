@@ -73,12 +73,15 @@ func (s *iServod) Set(ctx context.Context, command string, val interface{}) erro
 }
 
 // Has verifies that command is known.
-func (s *iServod) Has(ctx context.Context, command string) bool {
+// Error is returned if the control is not listed in the doc.
+func (s *iServod) Has(ctx context.Context, command string) error {
 	if command == "" {
-		return false
+		return errors.Reason("has: command not specified").Err()
 	}
-	_, err := s.Call(ctx, "doc", command)
-	return err == nil
+	if _, err := s.Call(ctx, "doc", command); err == nil {
+		return errors.Annotate(err, "has: %q is not know", command).Err()
+	}
+	return nil
 }
 
 // Port provides port used for running servod daemon.

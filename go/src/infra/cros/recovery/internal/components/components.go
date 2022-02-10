@@ -22,7 +22,8 @@ type Servod interface {
 	// Set sets value to provided command.
 	Set(ctx context.Context, cmd string, val interface{}) error
 	// Has verifies that command is known.
-	Has(ctx context.Context, command string) bool
+	// Error is returned if the control is not listed in the doc.
+	Has(ctx context.Context, command string) error
 	// Port provides port used for running servod daemon.
 	Port() int
 }

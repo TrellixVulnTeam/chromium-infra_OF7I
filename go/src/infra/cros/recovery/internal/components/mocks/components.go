@@ -51,10 +51,10 @@ func (mr *MockServodMockRecorder) Get(ctx, cmd interface{}) *gomock.Call {
 }
 
 // Has mocks base method.
-func (m *MockServod) Has(ctx context.Context, command string) bool {
+func (m *MockServod) Has(ctx context.Context, command string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Has", ctx, command)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 

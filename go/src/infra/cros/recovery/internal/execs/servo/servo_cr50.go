@@ -50,7 +50,7 @@ func AverageSbuValue(ctx context.Context, args *execs.RunArgs, sbuControl string
 // voltages for the controls 'servo_dut_sbu1_mv' and
 // 'servo_dut_sbu2_mv'.
 func MaximalAvgSbuValue(ctx context.Context, args *execs.RunArgs, checkCount int) (float64, error) {
-	if _, err := ServodCallHas(ctx, args, servoDutSbu1Cmd); err != nil {
+	if err := args.NewServod().Has(ctx, servoDutSbu1Cmd); err != nil {
 		log.Debug(ctx, "Maximal Average Sbu Value: control %q is not supported, returning -1", servoDutSbu1Cmd)
 		return -1, errors.Annotate(err, "maximal avg sbu value").Err()
 	}

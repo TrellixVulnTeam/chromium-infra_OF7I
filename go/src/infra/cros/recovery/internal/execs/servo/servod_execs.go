@@ -110,7 +110,7 @@ func servodHasExec(ctx context.Context, info *execs.ExecInfo) error {
 		// and does not specify the servod command.
 		return errors.Reason("servod has exec: no command is mentioned for this action.").Err()
 	}
-	if _, err := ServodCallHas(ctx, info.RunArgs, command); err != nil {
+	if err := info.NewServod().Has(ctx, command); err != nil {
 		return errors.Annotate(err, "servod has exec").Err()
 	}
 	log.Debug(ctx, "Servod Has Exec: Command %s is supported by servod", command)
@@ -135,7 +135,7 @@ func servodCanReadAllExec(ctx context.Context, info *execs.ExecInfo) error {
 	anyOne := argsMap.AsBool(ctx, "any_one", false)
 	log.Debug(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
 	for _, c := range commands {
-		if _, err := ServodCallHas(ctx, info.RunArgs, c); err != nil {
+		if err := info.NewServod().Has(ctx, c); err != nil {
 			log.Debug(ctx, "Servod Can Read All Exec: control %q is not loaded, skipping this.", c)
 			if !anyOne {
 				return errors.Annotate(err, "servod can read all exec").Err()

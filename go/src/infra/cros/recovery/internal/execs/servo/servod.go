@@ -60,24 +60,6 @@ func ServodCallGet(ctx context.Context, in *execs.RunArgs, command string) (*tlw
 	return res, nil
 }
 
-// ServodCallHas calls servod with doc method and verify if command is known by servod.
-func ServodCallHas(ctx context.Context, in *execs.RunArgs, command string) (*tlw.CallServodResponse, error) {
-	if command == "" {
-		return nil, errors.Reason("servod call has: command is empty").Err()
-	}
-	res := in.Access.CallServod(ctx, &tlw.CallServodRequest{
-		Resource: in.DUT.Name,
-		Method:   tlw.ServodMethodDoc,
-		Args:     packToXMLRPCValues(command),
-		Options:  defaultServodOptions,
-	})
-	log.Debug(ctx, "Servod call has %q: received %s", command, res.Value.String())
-	if res.Fault {
-		return nil, errors.Reason("servod call has %q: received %s", command, res.Value.GetString_()).Err()
-	}
-	return res, nil
-}
-
 // ServodCallHwInit calls servod with hwinit method and re-initializes all servod controls.
 func ServodCallHwInit(ctx context.Context, in *execs.RunArgs, verbose bool) (*tlw.CallServodResponse, error) {
 	res := in.Access.CallServod(ctx, &tlw.CallServodRequest{

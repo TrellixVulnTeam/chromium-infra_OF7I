@@ -334,7 +334,7 @@ func servoSetExec(ctx context.Context, info *execs.ExecInfo) error {
 // Verify that the DUT is connected to Servo using the 'ppdut5_mv'
 // servod control.
 func servoLowPPDut5Exec(ctx context.Context, info *execs.ExecInfo) error {
-	if _, err := ServodCallHas(ctx, info.RunArgs, servodPPDut5Cmd); err != nil {
+	if err := info.NewServod().Has(ctx, servodPPDut5Cmd); err != nil {
 		return errors.Annotate(err, "servo low ppdut5 exec").Err()
 	}
 	res, err := ServodCallGet(ctx, info.RunArgs, servodPPDut5Cmd)
@@ -559,7 +559,7 @@ func initDutForServoExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Annotate(err, "init dut for servo exec").Err()
 	}
 	usbMuxControl := "usb_mux_oe1"
-	if _, err := ServodCallHas(ctx, info.RunArgs, usbMuxControl); err == nil {
+	if err := info.NewServod().Has(ctx, usbMuxControl); err == nil {
 		if _, err2 := ServodCallSet(ctx, info.RunArgs, usbMuxControl, "on"); err2 != nil {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
@@ -637,7 +637,7 @@ func servoFakeDisconnectDUTExec(ctx context.Context, info *execs.ExecInfo) error
 	uartCmd := servodUartV4Cmd
 	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
 	// As in the (b/204369636), currently blocked by (b/198638900).
-	if _, err := ServodCallHas(ctx, info.RunArgs, uartCmd); err != nil {
+	if err := info.NewServod().Has(ctx, uartCmd); err != nil {
 		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
 		uartCmd = servodUartV4P1Cmd
 		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
@@ -665,7 +665,7 @@ func servoServodCCToggleExec(ctx context.Context, info *execs.ExecInfo) error {
 	uartCmd := servodUartV4Cmd
 	// TODO: (yunzhiyu@): change logic to use unified servod cmd: "root.servo_uart_cmd"
 	// As in the (b/204369636), currently blocked by (b/198638900).
-	if _, err := ServodCallHas(ctx, info.RunArgs, uartCmd); err != nil {
+	if err := info.NewServod().Has(ctx, uartCmd); err != nil {
 		log.Debug(ctx, "Servod control %q is not supported", servodUartCmd)
 		uartCmd = servodUartV4P1Cmd
 		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
