@@ -8,12 +8,15 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/proto"
 	gitpb "go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
@@ -221,6 +224,35 @@ func TestClient(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(contents, ShouldEqual, "fake-contents")
+			})
+
+			Convey("all retries exhausted", func() {
+				ctl := gomock.NewController(t)
+				defer ctl.Finish()
+
+				mockGitilesClient := mock_gitiles.NewMockGitilesClient(ctl)
+				ctx := UseGitilesClientFactory(ctx, func(ctx context.Context, host string) (GitilesClient, error) {
+					return mockGitilesClient, nil
+				})
+				ctx, tc := testclock.UseTime(ctx, time.Time{})
+				tc.SetTimerCallback(func(d time.Duration, t clock.Timer) {
+					if testclock.HasTags(t, "gob-retry") {
+						tc.Add(d) // Fast-forward through sleeps in the test.
+					}
+				})
+				for i := 0; i < 6; i++ {
+					mockGitilesClient.EXPECT().DownloadFile(gomock.Any(), proto.MatcherEqual(&gitilespb.DownloadFileRequest{
+						Project:    "fake/project",
+						Committish: "fake-revision",
+						Path:       "fake-file",
+					})).Return(nil, status.Error(codes.NotFound, "fake transient DownloadFile failure"))
+				}
+
+				client := NewClient(ctx)
+				contents, err := client.DownloadFile(ctx, "fake-host", "fake/project", "fake-revision", "fake-file")
+
+				So(err, ShouldNotBeNil)
+				So(contents, ShouldBeEmpty)
 			})
 
 		})

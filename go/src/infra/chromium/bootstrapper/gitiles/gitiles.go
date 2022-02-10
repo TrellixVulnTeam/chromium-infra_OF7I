@@ -11,6 +11,7 @@ import (
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gitiles"
+	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/retry"
@@ -103,13 +104,13 @@ func (c *Client) FetchLatestRevision(ctx context.Context, host, project, ref str
 }
 
 type downloadFileRetryIterator struct {
-	limited retry.Limited
+	backoff retry.ExponentialBackoff
 }
 
 func (i *downloadFileRetryIterator) Next(ctx context.Context, err error) time.Duration {
 	s, ok := status.FromError(err)
 	if ok && s.Code() == codes.NotFound {
-		return i.limited.Next(ctx, err)
+		return i.backoff.Next(ctx, err)
 	}
 	return retry.Stop
 }
@@ -130,13 +131,17 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 	var response *gitilespb.DownloadFileResponse
 	retryFactory := func() retry.Iterator {
 		return &downloadFileRetryIterator{
-			limited: retry.Limited{
-				Delay:   time.Second,
-				Retries: 3,
+			backoff: retry.ExponentialBackoff{
+				Limited: retry.Limited{
+					Delay:   time.Second,
+					Retries: 5,
+				},
+				Multiplier: 2,
 			},
 		}
 	}
-	err = retry.Retry(ctx, retryFactory, func() error {
+	clockCtx := clock.Tag(ctx, "gob-retry") // used by tests
+	err = retry.Retry(clockCtx, retryFactory, func() error {
 		var err error
 		response, err = gitilesClient.DownloadFile(ctx, request)
 		return err
