@@ -78,20 +78,54 @@ func TestLuciEXEMain(t *testing.T) {
 		}
 		sender := exe.BuildSender(func() {})
 
-		swarmingProps := &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"all_test_binaries": {
-					Kind: &structpb.Value_StringValue{
-						StringValue: "fhueowahfueoah",
-					},
-				},
-				"browser_tests": {
-					Kind: &structpb.Value_StringValue{
-						StringValue: "fhuf8eaj9f0eja90eowahfueoah",
-					},
-				},
+		swarmingProps := jsonToStruct(`{
+			"all_test_binaries": "33b6bb7fa8f8fad5a82f048b1b2b582411638ae6311ee61d243be4bc82ec7bf8/87",
+			"browser_tests": "b2e92f076208f8170d80d73c5723834f7a52af23ca2400a7fe56f3ea39a75713/86"
+		}`)
+
+		genericCompBuildOutputProps := jsonToStruct(`{
+			"got_angle_revision": "701d51b101c8ce1a1a840a7b0dbe3f36dfc1eec9",
+			"got_revision": "04d2ba64ba046c038f8995982ecde0a7f029da1e",
+			"got_revision_cp": "refs/heads/main@{#964359}",
+			"affected_files": {
+				"first_100": ["src/chrome/browser/extensions/extension_message_bubble_controller_unittest.cc"],
+				"total_count": 1}
+		}`)
+
+		genericCompBuildOutputPropsNoSwarming := copyPropertiesStruct(genericCompBuildOutputProps)
+		genericCompBuildOutputPropsWSwarming := copyPropertiesStruct(genericCompBuildOutputProps)
+		genericCompBuildOutputPropsWSwarming.GetFields()[swarmingOutputPropKey] = structpb.NewStructValue(swarmingProps)
+
+		genericCompleteSteps := getSteps([]stepNameStatusPair{
+			{
+				stepName: "builder cache",
+				status:   buildbucket_pb.Status_SUCCESS,
 			},
-		}
+			{
+				stepName: "lookup GN args",
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+			{
+				stepName: "compile (with patch)",
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+			{
+				stepName: swarmingTriggerPropsStepName,
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+			{
+				stepName: "test_pre_run (with patch)",
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+			{
+				stepName: "check_network_annotations (with patch)",
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+			{
+				stepName: "gerrit changes",
+				status:   buildbucket_pb.Status_SUCCESS,
+			},
+		})
 
 		userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
 
@@ -161,22 +195,67 @@ func TestLuciEXEMain(t *testing.T) {
 
 		})
 
+		Convey("copies compilator output properties", func() {
+			Convey("during swarmingPhase", func() {
+				expectedSubBuildOutputProps := copyPropertiesStruct(genericCompBuildOutputPropsWSwarming)
+
+				compBuild := &buildbucket_pb.Build{
+					Status:          buildbucket_pb.Status_STARTED,
+					Id:              12345,
+					SummaryMarkdown: "",
+					Steps:           genericCompleteSteps,
+					Output: &buildbucket_pb.Build_Output{
+						Properties: genericCompBuildOutputPropsWSwarming,
+					},
+				}
+
+				ctx = context.WithValue(
+					ctx,
+					bb.FakeBuildsContextKey,
+					[]bb.FakeGetBuildResponse{{Build: compBuild}})
+				err := luciEXEMain(ctx, input, userArgs, sender)
+
+				So(err, ShouldBeNil)
+				So(input.GetOutput(), ShouldResembleProto, &buildbucket_pb.Build_Output{
+					Properties: expectedSubBuildOutputProps,
+				})
+			})
+			Convey("during localTestPhase", func() {
+				userArgs := []string{"-compilator-id", "12345", "-get-local-tests"}
+				expectedSubBuildOutputProps := copyPropertiesStruct(genericCompBuildOutputPropsNoSwarming)
+
+				compBuild := &buildbucket_pb.Build{
+					Status:          buildbucket_pb.Status_SUCCESS,
+					Id:              12345,
+					SummaryMarkdown: "",
+					Steps:           genericCompleteSteps,
+					Output: &buildbucket_pb.Build_Output{
+						Properties: genericCompBuildOutputPropsNoSwarming,
+					},
+				}
+
+				ctx = context.WithValue(
+					ctx,
+					bb.FakeBuildsContextKey,
+					[]bb.FakeGetBuildResponse{{Build: compBuild}})
+				err := luciEXEMain(ctx, input, userArgs, sender)
+
+				So(err, ShouldBeNil)
+				So(input.GetOutput(), ShouldResembleProto, &buildbucket_pb.Build_Output{
+					Properties: expectedSubBuildOutputProps,
+				})
+			})
+		})
+
 		Convey("sets input Status to SUCCESS when compilator build outputs swarming props but is still running", func() {
+			expectedSubBuildOutputProps := copyPropertiesStruct(genericCompBuildOutputPropsWSwarming)
+
 			compBuild := &buildbucket_pb.Build{
 				Status:          buildbucket_pb.Status_STARTED,
 				Id:              12345,
 				SummaryMarkdown: "",
-				Output: &buildbucket_pb.Build_Output{
-					Properties: &structpb.Struct{
-						Fields: map[string]*structpb.Value{
-							"swarming_trigger_properties": {
-								Kind: &structpb.Value_StructValue{
-									StructValue: swarmingProps,
-								},
-							},
-						},
-					},
-				},
+				Steps:           genericCompleteSteps,
+				Output:          &buildbucket_pb.Build_Output{Properties: genericCompBuildOutputPropsWSwarming},
 			}
 			ctx = context.WithValue(
 				ctx,
@@ -187,25 +266,18 @@ func TestLuciEXEMain(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(input.Status, ShouldResemble, buildbucket_pb.Status_SUCCESS)
 			So(input.GetOutput(), ShouldResembleProto, &buildbucket_pb.Build_Output{
-				Properties: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"swarming_trigger_properties": {
-							Kind: &structpb.Value_StructValue{
-								StructValue: swarmingProps,
-							},
-						},
-					},
-				},
-			})
+				Properties: expectedSubBuildOutputProps})
 		})
 
 		Convey("exits after compilator build successfully ends with no swarming trigger properties", func() {
+			expectedSubBuildOutputProps := copyPropertiesStruct(genericCompBuildOutputPropsNoSwarming)
+
 			compBuild := &buildbucket_pb.Build{
 				Status:          buildbucket_pb.Status_SUCCESS,
 				Id:              12345,
 				SummaryMarkdown: "",
 				Output: &buildbucket_pb.Build_Output{
-					Properties: &structpb.Struct{},
+					Properties: genericCompBuildOutputPropsNoSwarming,
 				},
 			}
 			ctx = context.WithValue(
@@ -218,7 +290,7 @@ func TestLuciEXEMain(t *testing.T) {
 			So(input.Status, ShouldResemble, buildbucket_pb.Status_SUCCESS)
 
 			So(input.GetOutput(), ShouldResembleProto, &buildbucket_pb.Build_Output{
-				Properties: &structpb.Struct{},
+				Properties: expectedSubBuildOutputProps,
 			})
 		})
 
@@ -233,7 +305,7 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "analyze",
 						status:   buildbucket_pb.Status_STARTED,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_STARTED)},
+				}, genericCompBuildOutputProps.GetFields(), buildbucket_pb.Status_STARTED)},
 				{Build: getBuildsWithSteps([]stepNameStatusPair{
 					{
 						stepName: "lookup GN args",
@@ -243,7 +315,7 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "analyze",
 						status:   buildbucket_pb.Status_SUCCESS,
 					},
-				}, map[string]*structpb.Value{}, buildbucket_pb.Status_SUCCESS)},
+				}, genericCompBuildOutputProps.GetFields(), buildbucket_pb.Status_SUCCESS)},
 			}
 			ctx = context.WithValue(
 				ctx,
@@ -429,37 +501,17 @@ func TestLuciEXEMain(t *testing.T) {
 						stepName: "gerrit changes",
 						status:   buildbucket_pb.Status_SUCCESS,
 					},
-				}, map[string]*structpb.Value{
-					"swarming_trigger_properties": {
-						Kind: &structpb.Value_StructValue{StructValue: swarmingProps},
-					},
-				}, buildbucket_pb.Status_SUCCESS)},
+				}, genericCompBuildOutputProps.GetFields(), buildbucket_pb.Status_SUCCESS)},
 			}
 			ctx = context.WithValue(
 				ctx,
 				bb.FakeBuildsContextKey,
 				compBuilds)
 
-			expectedOutputFields := map[string]*structpb.Value{
-				"swarming_trigger_properties": {
-					Kind: &structpb.Value_StructValue{
-						StructValue: swarmingProps,
-					},
-				},
-			}
-
 			Convey("during swarmingPhase", func() {
 				userArgs := []string{"-compilator-id", "12345", "-get-swarming-trigger-props"}
 				err := luciEXEMain(ctx, input, userArgs, sender)
 				So(err, ShouldBeNil)
-
-				expectedOutputProps := &buildbucket_pb.Build_Output{
-					Properties: &structpb.Struct{
-						Fields: expectedOutputFields,
-					},
-				}
-
-				So(input.GetOutput(), ShouldResembleProto, expectedOutputProps)
 				So(input.Status, ShouldResemble, buildbucket_pb.Status_SUCCESS)
 
 				expectedSteps := getSteps([]stepNameStatusPair{
@@ -488,11 +540,6 @@ func TestLuciEXEMain(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(input.GetStartTime(), ShouldResemble, timestamppb.New(now))
-
-				So(input.GetOutput(), ShouldResembleProto, &buildbucket_pb.Build_Output{
-					Properties: &structpb.Struct{},
-				})
-
 				So(input.Status, ShouldResemble, buildbucket_pb.Status_SUCCESS)
 
 				expectedSteps := getSteps([]stepNameStatusPair{

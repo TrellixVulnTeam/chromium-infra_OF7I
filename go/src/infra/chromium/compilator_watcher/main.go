@@ -57,10 +57,23 @@ func luciEXEMain(ctx context.Context, input *buildbucket_pb.Build, userArgs []st
 		return err
 	}
 
-	err = copySteps(ctx, input, parsedArgs, send)
+	compBuild, err := copySteps(ctx, input, parsedArgs, send)
 	if err != nil {
 		return err
 	}
+
+	err = copyOutputProperties(ctx, input, compBuild, parsedArgs, send)
+	if err != nil {
+		return err
+	}
+
+	if parsedArgs.phase == swarmingPhase && swarmingPropsInCompBuildOutput(compBuild) {
+		input.Status = buildbucket_pb.Status_SUCCESS
+	} else {
+		input.Status = compBuild.GetStatus()
+		input.SummaryMarkdown = compBuild.GetSummaryMarkdown()
+	}
+	input.EndTime = timestamppb.New(clock.Now(ctx))
 	send()
 	return nil
 }
@@ -232,14 +245,15 @@ func processErr(ctx context.Context, err error, luciBuild *buildbucket_pb.Build,
 	return err
 }
 
-func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs cmdArgs, send exe.BuildSender) error {
+func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs cmdArgs, send exe.BuildSender) (*buildbucket_pb.Build, error) {
 	// Poll the compilator build until it's complete or the swarming props
 	// are found, while copying over filtered steps depending on the given
 	// phase.
+	// Return the compilator build from the most recent GetBuild call
 
 	bClient, err := bb.NewClient(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cctx, cancel := clock.WithTimeout(ctx, parsedArgs.compPollingTimeoutSec)
@@ -260,7 +274,7 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 					continue
 				}
 			}
-			return err
+			return nil, err
 		}
 		// Reset counter
 		timeoutCounts = 0
@@ -275,32 +289,29 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 			send()
 		}
 
-		if parsedArgs.phase == swarmingPhase {
-			if swarmingProps, ok := compBuild.GetOutput().GetProperties().GetFields()[swarmingOutputPropKey]; ok {
-				err := exe.WriteProperties(
-					luciBuild.Output.Properties,
-					map[string]interface{}{
-						swarmingOutputPropKey: swarmingProps,
-					})
-				if err != nil {
-					return err
-				}
-				luciBuild.Status = buildbucket_pb.Status_SUCCESS
-				luciBuild.EndTime = timestamppb.New(clock.Now(ctx))
-				send()
-				return nil
-			}
+		if protoutil.IsEnded(compBuild.GetStatus()) || (parsedArgs.phase == swarmingPhase && swarmingPropsInCompBuildOutput(compBuild)) {
+			return compBuild, nil
 		}
 
-		if protoutil.IsEnded(compBuild.Status) {
-			luciBuild.Status = compBuild.GetStatus()
-			luciBuild.SummaryMarkdown = compBuild.GetSummaryMarkdown()
-			luciBuild.EndTime = timestamppb.New(clock.Now(ctx))
-			send()
-			return nil
-		}
 		if tr := clock.Sleep(cctx, parsedArgs.compPollingIntervalSec); tr.Err != nil {
-			return tr.Err
+			return compBuild, tr.Err
 		}
 	}
+}
+
+func swarmingPropsInCompBuildOutput(compBuild *buildbucket_pb.Build) bool {
+	_, ok := compBuild.GetOutput().GetProperties().GetFields()[swarmingOutputPropKey]
+	return ok
+}
+
+func copyOutputProperties(ctx context.Context, luciBuild *buildbucket_pb.Build, compBuild *buildbucket_pb.Build, parsedArgs cmdArgs, send exe.BuildSender) error {
+	err := exe.WriteProperties(
+		luciBuild.Output.Properties,
+		compBuild.GetOutput().GetProperties().AsMap())
+	if err != nil {
+		return err
+	}
+
+	send()
+	return nil
 }

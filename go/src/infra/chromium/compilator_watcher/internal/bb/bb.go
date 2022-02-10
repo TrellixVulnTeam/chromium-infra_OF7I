@@ -31,7 +31,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 	if buildResponses := ctx.Value(FakeBuildsContextKey); buildResponses != nil {
 		return &Client{client: &fakeBuildClient{
 			responses: buildResponses.([]FakeGetBuildResponse),
-			callCount: 0}}, nil
+			index:     0}}, nil
 	}
 	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, auth.Options{}).Client()
 	if err != nil {
@@ -95,12 +95,15 @@ type FakeGetBuildResponse struct {
 
 type fakeBuildClient struct {
 	responses []FakeGetBuildResponse
-	callCount int
+	index     int
 }
 
 func (c *fakeBuildClient) GetBuild(ctx context.Context, in *buildbucket_pb.GetBuildRequest, opts ...grpc.CallOption) (*buildbucket_pb.Build, error) {
-	to_return := c.responses[c.callCount]
-	c.callCount += 1
+	to_return := c.responses[c.index]
+	if c.index < len(c.responses)-1 {
+		c.index += 1
+	}
+
 	if to_return.Err != nil {
 		return nil, to_return.Err
 	}
