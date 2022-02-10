@@ -124,6 +124,7 @@ const (
 
 // WaitUntilPingable waiting resource to be pingable.
 func WaitUntilPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, waitTime time.Duration, count int) error {
+	log.Debug(ctx, "Start ping %q for the next %s.", resourceName, waitTime)
 	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
 		return IsPingable(ctx, info, resourceName, count)
 	}, "wait to ping")
@@ -137,6 +138,7 @@ func IsSSHable(ctx context.Context, run execs.Runner) error {
 
 // WaitUntilSSHable waiting resource to be sshable.
 func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Duration) error {
+	log.Debug(ctx, "Start SSH check for the next %s.", waitTime)
 	return retry.WithTimeout(ctx, sshAttemptInteval, waitTime, func() error {
 		return IsSSHable(ctx, run)
 	}, "wait to ssh access")

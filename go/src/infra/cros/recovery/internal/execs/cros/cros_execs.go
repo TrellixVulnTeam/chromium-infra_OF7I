@@ -42,12 +42,12 @@ const (
 
 // pingExec verifies the DUT is pingable.
 func pingExec(ctx context.Context, info *execs.ExecInfo) error {
-	return WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, NormalBootingTime, 2)
+	return WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, info.ActionTimeout, 2)
 }
 
 // sshExec verifies ssh access to the DUT.
 func sshExec(ctx context.Context, info *execs.ExecInfo) error {
-	return WaitUntilSSHable(ctx, info.DefaultRunner(), NormalBootingTime)
+	return WaitUntilSSHable(ctx, info.DefaultRunner(), info.ActionTimeout)
 }
 
 // rebootExec reboots the cros DUT.
