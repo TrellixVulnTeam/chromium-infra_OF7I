@@ -210,6 +210,22 @@ wheel_tryjob("infra-internal:try/Mac ARM64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x64 wheel builder")
 wheel_tryjob("infra-internal:try/Windows-x86 wheel builder")
 
+# Tryjobs for 3pp package builders.
+def tpp_tryjob(builder):
+    luci.cq_tryjob_verifier(
+        builder = builder,
+        cq_group = "infra",
+        # Mark as experimental, so this will not block submit.
+        experiment_percentage = 100,
+        location_regexp = [
+            ".+/[+]/3pp/.+",
+            ".+/[+]/recipes/recipe_modules/support_3pp/.+",
+            ".+/[+]/recipes/recipes/3pp.py",
+        ],
+    )
+
+tpp_tryjob("infra-internal:try/3pp linux-amd64")
+
 # Placeholder tryjob for Buildbucket integration testing
 infra.builder(
     bucket = "try",
