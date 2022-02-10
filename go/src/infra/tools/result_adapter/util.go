@@ -29,6 +29,9 @@ const (
 
 	// Gitiles URL for chromium/src repo.
 	chromiumSrcRepo = "https://chromium.googlesource.com/chromium/src"
+
+	// Gitiles URL for webrtc/src repo.
+	webrtcSrcRepo = "https://webrtc.googlesource.com/src/"
 )
 
 // summaryTmpl is used to generate SummaryHTML in GTest and JTR-based test

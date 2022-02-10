@@ -36,6 +36,7 @@ func main() {
 			cmdGo(),
 			cmdTast(),
 			cmdSkylabTestRunner(),
+			cmdGtestJson(),
 
 			{}, // a separator
 			subcommands.CmdHelp,

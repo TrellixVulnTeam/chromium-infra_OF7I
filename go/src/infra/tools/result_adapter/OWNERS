@@ -1,2 +1,4 @@
 chanli@chromium.org
 preethim@google.com
+per-file *gtest_json*=jleconte@google.com
+per-file *gtest_json*=jansson@google.com
