@@ -10,6 +10,7 @@ import os
 import shutil
 import stat
 import tempfile
+import urllib
 
 import requests
 import requests.exceptions
