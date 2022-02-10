@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/clock/testclock"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/cfgclient"
 	cfgmem "go.chromium.org/luci/config/impl/memory"
@@ -17,94 +21,20 @@ import (
 	"go.chromium.org/luci/server/caching"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	configpb "infra/appengine/weetbix/internal/config/proto"
-	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/luci/common/clock"
-	"go.chromium.org/luci/common/clock/testclock"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 var textPBMultiline = prototext.MarshalOptions{
 	Multiline: true,
 }
 
-func createProjectConfig() *configpb.ProjectConfig {
-	return &configpb.ProjectConfig{
-		Monorail: &configpb.MonorailProject{
-			Project:         "chromium",
-			PriorityFieldId: 10,
-			Priorities: []*configpb.MonorailPriority{
-				{
-					Priority: "0",
-					Threshold: &configpb.ImpactThreshold{
-						TestResultsFailed: &configpb.MetricThreshold{
-							OneDay: proto.Int64(1500),
-						},
-					},
-				},
-				{
-					Priority: "1",
-					Threshold: &configpb.ImpactThreshold{
-						TestResultsFailed: &configpb.MetricThreshold{
-							OneDay: proto.Int64(500),
-						},
-					},
-				},
-			},
-		},
-		BugFilingThreshold: &configpb.ImpactThreshold{
-			TestResultsFailed: &configpb.MetricThreshold{
-				OneDay: proto.Int64(1000),
-			},
-		},
-		Realms: []*configpb.RealmConfig{
-			{
-				Name: "ci",
-				TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
-					UpdateTestVariantTask: &configpb.UpdateTestVariantTask{
-						UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
-						TestVariantStatusUpdateDuration: durationpb.New(6 * time.Hour),
-					},
-					BqExports: []*configpb.BigQueryExport{
-						{
-							Table: &configpb.BigQueryExport_BigQueryTable{
-								CloudProject: "test-hrd",
-								Dataset:      "chromium",
-								Table:        "flaky_test_variants",
-							},
-							Predicate: &pb.AnalyzedTestVariantPredicate{},
-						},
-					},
-				},
-			},
-		},
-		Clustering: &configpb.Clustering{
-			TestNameRules: []*configpb.TestNameClusteringRule{
-				{
-					Name:         "Google Test (Value-parameterized)",
-					Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)\.(?P<case>\w+)/\w+$`,
-					LikeTemplate: `ninja:${target}/%${suite}.${case}%`,
-				},
-				{
-					Name:         "Google Test (Type-parameterized)",
-					Pattern:      `^ninja:(?P<target>[\w/]+:\w+)/` + `(\w+/)?(?P<suite>\w+)/\w+\.(?P<case>\w+)$`,
-					LikeTemplate: `ninja:${target}/%${suite}/%.${case}`,
-				},
-			},
-		},
-	}
-}
-
 func TestProjectConfig(t *testing.T) {
 	t.Parallel()
 
 	Convey("SetTestProjectConfig updates context config", t, func() {
-		projectA := createProjectConfig()
+		projectA := CreatePlaceholderConfig()
 		projectA.LastUpdated = timestamppb.New(time.Now())
 		configs := make(map[string]*configpb.ProjectConfig)
 		configs["a"] = projectA
@@ -120,8 +50,8 @@ func TestProjectConfig(t *testing.T) {
 	})
 
 	Convey("With mocks", t, func() {
-		projectA := createProjectConfig()
-		projectB := createProjectConfig()
+		projectA := CreatePlaceholderConfig()
+		projectB := CreatePlaceholderConfig()
 		projectB.Monorail.PriorityFieldId = 1
 
 		configs := map[config.Set]cfgmem.Files{
@@ -158,8 +88,8 @@ func TestProjectConfig(t *testing.T) {
 			tc.Add(1 * time.Second)
 
 			// Real update.
-			projectC := createProjectConfig()
-			newProjectB := createProjectConfig()
+			projectC := CreatePlaceholderConfig()
+			newProjectB := CreatePlaceholderConfig()
 			newProjectB.Monorail.PriorityFieldId = 2
 			delete(configs, "projects/a")
 			configs["projects/b"]["${appid}.cfg"] = textPBMultiline.Format(newProjectB)
@@ -246,9 +176,9 @@ func TestProjectConfig(t *testing.T) {
 			tc.Add(1 * time.Second)
 
 			// Attempt to update with an invalid config for project B.
-			newProjectA := createProjectConfig()
+			newProjectA := CreatePlaceholderConfig()
 			newProjectA.Monorail.Project = "new-project-a"
-			newProjectB := createProjectConfig()
+			newProjectB := CreatePlaceholderConfig()
 			newProjectB.Monorail.Project = ""
 			configs["projects/a"]["${appid}.cfg"] = textPBMultiline.Format(newProjectA)
 			configs["projects/b"]["${appid}.cfg"] = textPBMultiline.Format(newProjectB)
@@ -284,7 +214,7 @@ func TestProject(t *testing.T) {
 	t.Parallel()
 
 	Convey("Project", t, func() {
-		pjChromium := createProjectConfig()
+		pjChromium := CreatePlaceholderConfig()
 		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pjChromium,
 		}
@@ -310,7 +240,7 @@ func TestRealm(t *testing.T) {
 	t.Parallel()
 
 	Convey("Realm", t, func() {
-		pj := createProjectConfig()
+		pj := CreatePlaceholderConfig()
 		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pj,
 		}

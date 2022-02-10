@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/grpc/appstatus"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/span"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -35,9 +34,9 @@ type Rules struct {
 // NewRules returns a new pb.RulesServer.
 func NewRules() pb.RulesServer {
 	return &pb.DecoratedRules{
-		Prelude:  commonPrelude,
+		Prelude:  checkAllowedPrelude,
 		Service:  &Rules{},
-		Postlude: commonPostlude,
+		Postlude: gRPCifyAndLogPostlude,
 	}
 }
 

@@ -10,13 +10,12 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/config/validation"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 
 	configpb "infra/appengine/weetbix/internal/config/proto"
 )
@@ -126,12 +125,12 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("valid config is valid", t, func() {
-		cfg := createProjectConfig()
+		cfg := CreatePlaceholderConfig()
 		So(validate(cfg), ShouldBeNil)
 	})
 
 	Convey("monorail", t, func() {
-		cfg := createProjectConfig()
+		cfg := CreatePlaceholderConfig()
 		Convey("must be specified", func() {
 			cfg.Monorail = nil
 			So(validate(cfg), ShouldErrLike, "monorail must be specified")
@@ -263,7 +262,7 @@ func TestProjectConfigValidator(t *testing.T) {
 		})
 	})
 	Convey("bug filing threshold", t, func() {
-		cfg := createProjectConfig()
+		cfg := CreatePlaceholderConfig()
 		threshold := cfg.BugFilingThreshold
 		So(threshold, ShouldNotBeNil)
 
@@ -316,7 +315,7 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("realm config", t, func() {
-		cfg := createProjectConfig()
+		cfg := CreatePlaceholderConfig()
 		So(len(cfg.Realms), ShouldEqual, 1)
 		realm := cfg.Realms[0]
 
@@ -418,7 +417,7 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("clustering", t, func() {
-		cfg := createProjectConfig()
+		cfg := CreatePlaceholderConfig()
 		clustering := cfg.Clustering
 
 		Convey("may not be specified", func() {

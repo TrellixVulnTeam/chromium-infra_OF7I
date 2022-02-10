@@ -9,7 +9,6 @@ package weetbix.v1;
 import "google/protobuf/timestamp.proto";
 
 import "infra/appengine/weetbix/internal/config/proto/test_variant_analysis_config.proto";
-import "infra/appengine/weetbix/proto/v1/project.proto";
 
 
 option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
@@ -17,8 +16,8 @@ option go_package = "infra/appengine/weetbix/internal/config/proto;configpb";
 // ProjectConfig is the project-specific configuration data for Weetbix.
 message ProjectConfig {
 
-  // The project data (eg. display name).
-  Project project = 6;
+  // The project metadata (eg. display name).
+  ProjectMetadata project_metadata = 6;
 
   // The monorail configuration to use when filing bugs.
   MonorailProject monorail = 1;
@@ -37,6 +36,14 @@ message ProjectConfig {
 
   // Configuration for how to cluster test results.
   Clustering clustering = 5;
+}
+
+
+// ProjectMetadata provides data about the project that are mostly used in ui.
+message ProjectMetadata {
+
+  // Indicates the preferred display name for the project in the UI.
+  string display_name = 1;
 }
 
 // MonorailProject describes the configuration to use when filing bugs

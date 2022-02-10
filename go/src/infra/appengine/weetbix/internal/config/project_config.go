@@ -9,11 +9,6 @@ import (
 	"fmt"
 	"time"
 
-	configpb "infra/appengine/weetbix/internal/config/proto"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/data/caching/lru"
 	"go.chromium.org/luci/common/errors"
@@ -27,6 +22,10 @@ import (
 	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/caching"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
 // LRU cache, of which only one slot is used (config for all projects

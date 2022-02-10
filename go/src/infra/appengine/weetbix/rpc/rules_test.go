@@ -10,6 +10,19 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/impl/memory"
+	"go.chromium.org/luci/grpc/appstatus"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/authtest"
+	"go.chromium.org/luci/server/secrets"
+	"go.chromium.org/luci/server/secrets/testsecrets"
+	"go.chromium.org/luci/server/span"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/testname"
@@ -18,28 +31,13 @@ import (
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
-
-	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/grpc/appstatus"
-	"go.chromium.org/luci/server/auth"
-	"go.chromium.org/luci/server/auth/authtest"
-	"go.chromium.org/luci/server/secrets"
-	"go.chromium.org/luci/server/secrets/testsecrets"
-	"go.chromium.org/luci/server/span"
-
-	. "go.chromium.org/luci/common/testing/assertions"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestRules(t *testing.T) {
 	Convey("With Server", t, func() {
 		ctx := testutil.SpannerTestContext(t)
 
-		// For user identification and XSRF Tokens.
+		// For user identification.
 		ctx = authtest.MockAuthConfig(ctx)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
 			Identity: "user:someone@example.com",

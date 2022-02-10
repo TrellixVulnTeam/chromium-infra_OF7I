@@ -8,11 +8,14 @@ package weetbix.v1;
 
 option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
 
-import "google/api/field_behavior.proto";
-
 message Project {
+
+    // The resource name of the project which can be used to access the project.
+    // Format: projects/{project}.
+    // See also https://google.aip.dev/122.
+    string name = 1;
 
     // The display name to be used in the project selection page of Weetbix.
     // If not provided, the Title case of the project's Luci project ID will be used.
-    string display_name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+    string display_name = 2;
 }
