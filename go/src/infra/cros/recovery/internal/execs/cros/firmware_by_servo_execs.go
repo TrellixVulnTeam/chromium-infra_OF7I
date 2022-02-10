@@ -15,21 +15,22 @@ import (
 	"infra/cros/recovery/internal/components/cros/firmware"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/tlw"
 )
 
-func readGbbFlagsByServoExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	servod := args.NewServod()
-	run := args.NewRunner(args.DUT.ServoHost.Name)
+func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
+	servod := info.NewServod()
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	req := &firmware.ReadAPInfoRequest{
-		FilePath: defaultAPFilePath(args),
+		FilePath: defaultAPFilePath(info.RunArgs.DUT),
 		GBBFlags: true,
 	}
-	res, err := firmware.ReadAPInfoByServo(ctx, req, run, servod, args.Logger)
+	res, err := firmware.ReadAPInfoByServo(ctx, req, run, servod, info.NewLogger())
 	if err != nil {
 		return errors.Annotate(err, "read gbb flags").Err()
 	}
 	log.Debug(ctx, "Device has GBB flags: %v (%v)", res.GBBFlags, res.GBBFlagsRaw)
-	am := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+	am := info.GetActionArgs(ctx)
 	// FORCE_DEV_SWITCH_ON 0x00000008 -> 8
 	if am.AsBool(ctx, "in_dev_mode", true) {
 		if res.GBBFlags&8 != 8 {
@@ -59,14 +60,14 @@ const (
 	devSignedFirmwareKeyPrefix = "b11d"
 )
 
-func checkIfApHasDevSignedImageExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	servod := args.NewServod()
-	run := args.NewRunner(args.DUT.ServoHost.Name)
+func checkIfApHasDevSignedImageExec(ctx context.Context, info *execs.ExecInfo) error {
+	servod := info.NewServod()
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	req := &firmware.ReadAPInfoRequest{
-		FilePath: defaultAPFilePath(args),
+		FilePath: defaultAPFilePath(info.RunArgs.DUT),
 		Keys:     true,
 	}
-	res, err := firmware.ReadAPInfoByServo(ctx, req, run, servod, args.Logger)
+	res, err := firmware.ReadAPInfoByServo(ctx, req, run, servod, info.NewLogger())
 	if err != nil {
 		return errors.Annotate(err, "ap dev signed").Err()
 	}
@@ -81,9 +82,9 @@ func checkIfApHasDevSignedImageExec(ctx context.Context, args *execs.RunArgs, ac
 }
 
 // Please be sure that.
-func removeAPFileFromServoHostExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.DUT.ServoHost.Name)
-	p := defaultAPFilePath(args)
+func removeAPFileFromServoHostExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	p := defaultAPFilePath(info.RunArgs.DUT)
 	if _, err := run(ctx, 30*time.Second, "rm", "-f", p); err != nil {
 		// Do not fail if we cannot remove the file.
 		log.Info(ctx, "Fail to remove AP file %q from servo-host: %s", p, err)
@@ -91,17 +92,17 @@ func removeAPFileFromServoHostExec(ctx context.Context, args *execs.RunArgs, act
 	return nil
 }
 
-func setGbbFlagsByServoExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	am := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+func setGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
+	am := info.GetActionArgs(ctx)
 	req := &firmware.SetApInfoByServoRequest{
-		FilePath: defaultAPFilePath(args),
+		FilePath: defaultAPFilePath(info.RunArgs.DUT),
 		// Set gbb flags to 0x18 to force dev boot and enable boot from USB.
 		GBBFlags:       am.AsString(ctx, "gbb_flags", ""),
 		UpdateGBBFlags: true,
 	}
-	servod := args.NewServod()
-	run := args.NewRunner(args.DUT.ServoHost.Name)
-	if err := firmware.SetApInfoByServo(ctx, req, run, servod, args.Logger); err != nil {
+	servod := info.NewServod()
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	if err := firmware.SetApInfoByServo(ctx, req, run, servod, info.NewLogger()); err != nil {
 		return errors.Annotate(err, "set gbb flags").Err()
 	}
 	if am.AsBool(ctx, "remove_file", true) {
@@ -121,8 +122,8 @@ func setGbbFlagsByServoExec(ctx context.Context, args *execs.RunArgs, actionArgs
 
 // DefaultAPFilePath provides default path to AP file.
 // Path used to minimize cycle to read AP from the DUT and other operation over it.
-func defaultAPFilePath(args *execs.RunArgs) string {
-	return fmt.Sprintf("/tmp/bios_%v.bin", args.DUT.Name)
+func defaultAPFilePath(d *tlw.Dut) string {
+	return fmt.Sprintf("/tmp/bios_%v.bin", d.Name)
 }
 
 func init() {

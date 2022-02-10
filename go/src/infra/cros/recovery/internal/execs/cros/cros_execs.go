@@ -41,19 +41,19 @@ const (
 )
 
 // pingExec verifies the DUT is pingable.
-func pingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return WaitUntilPingable(ctx, args, args.ResourceName, NormalBootingTime, 2)
+func pingExec(ctx context.Context, info *execs.ExecInfo) error {
+	return WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, NormalBootingTime, 2)
 }
 
 // sshExec verifies ssh access to the DUT.
-func sshExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	return WaitUntilSSHable(ctx, args.NewRunner(args.ResourceName), NormalBootingTime)
+func sshExec(ctx context.Context, info *execs.ExecInfo) error {
+	return WaitUntilSSHable(ctx, info.DefaultRunner(), NormalBootingTime)
 }
 
 // rebootExec reboots the cros DUT.
-func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func rebootExec(ctx context.Context, info *execs.ExecInfo) error {
 	log.Debug(ctx, "Run: %s", rebootCommand)
-	run := args.NewRunner(args.DUT.Name)
+	run := info.NewRunner(info.RunArgs.DUT.Name)
 	out, err := run(ctx, 2*time.Minute, rebootCommand)
 	if execs.NoExitStatusErrorInternal.In(err) {
 		// Client closed connected as rebooting.
@@ -66,10 +66,10 @@ func rebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) e
 }
 
 // isOnStableVersionExec matches device OS version to stable CrOS version.
-func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	expected := args.DUT.StableVersion.CrosImage
+func isOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	expected := info.RunArgs.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
-	fromDevice, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
+	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
@@ -81,10 +81,10 @@ func isOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 }
 
 // notOnStableVersionExec verifies devices OS is not matches stable CrOS version.
-func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	expected := args.DUT.StableVersion.CrosImage
+func notOnStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	expected := info.RunArgs.DUT.StableVersion.CrosImage
 	log.Debug(ctx, "Expected version: %s", expected)
-	fromDevice, err := releaseBuildPath(ctx, args.NewRunner(args.ResourceName))
+	fromDevice, err := releaseBuildPath(ctx, info.DefaultRunner())
 	if err != nil {
 		return errors.Annotate(err, "match os version").Err()
 	}
@@ -96,8 +96,8 @@ func notOnStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs
 }
 
 // isDefaultBootFromDiskExec confirms the resource is set to boot from disk by default.
-func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func isDefaultBootFromDiskExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	defaultBoot, err := run(ctx, time.Minute, "crossystem dev_default_boot")
 	if err != nil {
 		return errors.Annotate(err, "default boot from disk").Err()
@@ -109,8 +109,8 @@ func isDefaultBootFromDiskExec(ctx context.Context, args *execs.RunArgs, actionA
 }
 
 // isNotInDevModeExec confirms that the host is not in dev mode.
-func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func isNotInDevModeExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	devModeResult, err := run(ctx, time.Minute, "crossystem devsw_boot")
 	if err != nil {
 		return errors.Annotate(err, "not in dev mode").Err()
@@ -122,10 +122,12 @@ func isNotInDevModeExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 }
 
 // runShellCommandExec runs a given action exec arguments in shell.
-func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func runShellCommandExec(ctx context.Context, info *execs.ExecInfo) error {
+	// TODO: Convert to single line command and always use linux shell.
+	actionArgs := info.ActionArgs
 	if len(actionArgs) > 0 {
 		log.Debug(ctx, "Run shell command: arguments %s.", actionArgs)
-		run := args.NewRunner(args.ResourceName)
+		run := info.DefaultRunner()
 		if out, err := run(ctx, -1, actionArgs[0], actionArgs[1:]...); err != nil {
 			return errors.Annotate(err, "run shell command").Err()
 		} else {
@@ -149,14 +151,14 @@ func runShellCommandExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 // The test doesn't check various bind mounts; those are expected to
 // fail the same way as their underlying main mounts.  Whether the
 // Linux kernel can guarantee that is untested...
-func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func isFileSystemWritableExec(ctx context.Context, info *execs.ExecInfo) error {
 	// N.B. Order matters here:  Encrypted stateful is loop-mounted from a file in unencrypted stateful,
 	// so we don't test for errors in encrypted stateful if unencrypted fails.
 	testDirs := []string{"/mnt/stateful_partition", "/var/tmp"}
 	for _, testDir := range testDirs {
 		filename := filepath.Join(testDir, "writable_my_test_file")
 		command := fmt.Sprintf("touch %s && rm %s", filename, filename)
-		run := args.NewRunner(args.ResourceName)
+		run := info.DefaultRunner()
 		_, err := run(ctx, time.Minute, command)
 		if err != nil {
 			log.Debug(ctx, "Cannot create a file in %s! \n Probably the FS is read-only", testDir)
@@ -167,8 +169,8 @@ func isFileSystemWritableExec(ctx context.Context, args *execs.RunArgs, actionAr
 }
 
 // hasPythonInterpreterExec confirm the presence of a working Python interpreter.
-func hasPythonInterpreterExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func hasPythonInterpreterExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	_, err := run(ctx, time.Minute, `python -c "import json"`)
 	switch {
 	case err == nil:
@@ -187,8 +189,8 @@ func hasPythonInterpreterExec(ctx context.Context, args *execs.RunArgs, actionAr
 }
 
 // hasCriticalKernelErrorExec confirms we have seen critical file system kernel errors
-func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func hasCriticalKernelErrorExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	// grep for stateful FS errors of the type "EXT4-fs error (device sda1):"
 	command := `dmesg | grep -E "EXT4-fs error \(device $(cut -d ' ' -f 5,9 /proc/$$/mountinfo | grep -e '^/mnt/stateful_partition ' | cut -d ' ' -f 2 | cut -d '/' -f 3)\):"`
 	out, _ := run(ctx, time.Minute, command)
@@ -214,15 +216,15 @@ func hasCriticalKernelErrorExec(ctx context.Context, args *execs.RunArgs, action
 // The file is located in a part of the stateful partition that will be removed if an update finishes successfully.
 // Thus, the presence of the file indicates that a prior update failed.
 // The verifier tests for the existence of the marker file and fails if it still exists.
-func isLastProvisionSuccessfulExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func isLastProvisionSuccessfulExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	_, err := run(ctx, time.Minute, fmt.Sprintf("test -f %s", provisionFailed))
 	return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
 }
 
 // isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
-func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func isNotVirtualMachineExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	out, err := run(ctx, time.Minute, `cat /proc/cpuinfo | grep "model name"`)
 	if err != nil {
 		return errors.Annotate(err, "not virtual machine").Err()
@@ -240,11 +242,11 @@ func isNotVirtualMachineExec(ctx context.Context, args *execs.RunArgs, actionArg
 //
 // Sometimes, update_engine will take a while to update firmware, so we
 // should give this some time to finish. See crbug.com/765686#c38 for details.
-func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func waitForSystemExec(ctx context.Context, info *execs.ExecInfo) error {
 	serviceName := "system-services"
 	// Check the status of an upstart init script
 	cmd := fmt.Sprintf("status %s", serviceName)
-	r := args.NewRunner(args.ResourceName)
+	r := info.DefaultRunner()
 	output, err := r(ctx, time.Minute, cmd)
 	if err != nil {
 		return errors.Annotate(err, "wait for system").Err()
@@ -260,8 +262,8 @@ func waitForSystemExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 // If board/model expected to have GSC tool but it does not have it then need
 // to re-image the host to recover it.
 // If host-info has label 'cr50' then we expect to have GSC tool on the host.
-func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isGscToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	_, err := r(ctx, time.Minute, verify_gsc_cmd)
 	if err != nil {
 		return errors.Annotate(err, "gsc tool present: gsc tool issue detected").Err()
@@ -275,13 +277,13 @@ func isGscToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 // For example, the tool "dfu-programmer" is checked by running the command:
 // "hash dfu-programmer" on the DUT
 // The actionArgs should be in the format of ["tools:dfu-programmer,python,..."]
-func isToolPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	toolMap := execs.ParseActionArgs(ctx, actionArgs, ":")
+func isToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	toolMap := info.GetActionArgs(ctx)
 	toolNames := toolMap.AsStringSlice(ctx, "tools")
 	if len(toolNames) == 0 {
 		return errors.Reason("tool present: tools argument is empty or not provided").Err()
 	}
-	r := args.NewRunner(args.ResourceName)
+	r := info.DefaultRunner()
 	for _, toolName := range toolNames {
 		toolName = strings.TrimSpace(toolName)
 		if toolName == "" {

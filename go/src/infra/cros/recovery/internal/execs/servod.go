@@ -23,6 +23,11 @@ type iServod struct {
 	a   tlw.Access
 }
 
+// DefaultRunner returns runner for current resource name specified per plan.
+func (ei *ExecInfo) NewServod() components.Servod {
+	return ei.RunArgs.NewServod()
+}
+
 // NewServod() returns a struct of type components.Servod that allowes communication with servod service.
 func (a *RunArgs) NewServod() components.Servod {
 	return &iServod{

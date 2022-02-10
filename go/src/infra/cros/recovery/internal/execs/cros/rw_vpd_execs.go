@@ -28,8 +28,8 @@ const (
 )
 
 // areRequiredRWVPDKeysPresentExec confirms that there is no required RW_VPD keys missing on the device.
-func areRequiredRWVPDKeysPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func areRequiredRWVPDKeysPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	for k := range RwVPDMap {
 		cmd := fmt.Sprintf(readRwVPDValuesCmdGlob, k)
 		if _, err := r(ctx, time.Minute, cmd); err != nil {

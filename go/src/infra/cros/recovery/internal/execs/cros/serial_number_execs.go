@@ -19,8 +19,8 @@ const (
 )
 
 // updateSerialNumberToInvExec updates serial number in DUT-info.
-func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func updateSerialNumberToInvExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	sn, err := run(ctx, time.Minute, readSerialNumberCommand)
 	if err != nil {
 		return errors.Annotate(err, "update serial number in DUT-info").Err()
@@ -29,18 +29,18 @@ func updateSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actio
 		return errors.Reason("update serial number in DUT-info: is empty").Err()
 	}
 	log.Debug(ctx, "Update serial_number %q in DUT-info.", sn)
-	args.DUT.SerialNumber = sn
+	info.RunArgs.DUT.SerialNumber = sn
 	return nil
 }
 
 // matchSerialNumberToInvExec matches serial number from the resource to value in the Inventory.
-func matchSerialNumberToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func matchSerialNumberToInvExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	actualSerialNumber, err := run(ctx, time.Minute, readSerialNumberCommand)
 	if err != nil {
 		return errors.Annotate(err, "match serial number to inventory").Err()
 	}
-	expectedSerialNumber := args.DUT.SerialNumber
+	expectedSerialNumber := info.RunArgs.DUT.SerialNumber
 	if actualSerialNumber != expectedSerialNumber {
 		return errors.Reason("match serial number to inventory: failed, expected: %q, but got %q", expectedSerialNumber, actualSerialNumber).Err()
 	}

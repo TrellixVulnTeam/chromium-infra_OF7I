@@ -33,8 +33,8 @@ const (
 //
 // For DUTs that run firmware tests, it's possible that the firmware on the DUT can get corrupted.
 // This verify action checks whether it appears that firmware should be re-flashed using servo.
-func isFirmwareInGoodState(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isFirmwareInGoodState(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	_, err := r(ctx, time.Minute, readAndDumpAPFirmwareCmd)
 	if err != nil {
 		return errors.Annotate(err, "firmware in good state").Err()
@@ -50,16 +50,16 @@ func isFirmwareInGoodState(ctx context.Context, args *execs.RunArgs, actionArgs 
 }
 
 // isOnRWFirmwareStableVersionExec confirms that the DUT is currently running the stable version based on its specification.
-func isOnRWFirmwareStableVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	stableVersion := args.DUT.StableVersion.CrosFirmwareVersion
-	err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), "fwid", stableVersion)
+func isOnRWFirmwareStableVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	stableVersion := info.RunArgs.DUT.StableVersion.CrosFirmwareVersion
+	err := matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), "fwid", stableVersion)
 	return errors.Annotate(err, "on rw firmware stable version").Err()
 }
 
 // isRWFirmwareStableVersionAvailableExec confirms the stable firmware is up to date with the available firmware.
-func isRWFirmwareStableVersionAvailableExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
-	modelFirmware, err := ReadFirmwareManifest(ctx, r, args.DUT.Model)
+func isRWFirmwareStableVersionAvailableExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
+	modelFirmware, err := ReadFirmwareManifest(ctx, r, info.RunArgs.DUT.Model)
 	if err != nil {
 		return errors.Annotate(err, "rw firmware stable version available").Err()
 	}
@@ -67,7 +67,7 @@ func isRWFirmwareStableVersionAvailableExec(ctx context.Context, args *execs.Run
 	if err != nil {
 		return errors.Annotate(err, "rw firmware stable version available").Err()
 	}
-	stableVersion := args.DUT.StableVersion.CrosFirmwareVersion
+	stableVersion := info.RunArgs.DUT.StableVersion.CrosFirmwareVersion
 	if availableVersion != stableVersion {
 		return errors.Reason("rw firmware stable version not available, expected %q, found %q", availableVersion, stableVersion).Err()
 	}

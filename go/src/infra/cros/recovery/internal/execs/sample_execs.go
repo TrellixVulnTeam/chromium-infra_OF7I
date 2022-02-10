@@ -13,22 +13,22 @@ import (
 )
 
 // samplePassActionExec provides example to run action which always pass.
-func samplePassActionExec(ctx context.Context, args *RunArgs, actionArgs []string) error {
+func samplePassActionExec(ctx context.Context, i *ExecInfo) error {
 	return nil
 }
 
 // sampleFailActionExec provides example to run action which always fail.
-func sampleFailActionExec(ctx context.Context, args *RunArgs, actionArgs []string) error {
+func sampleFailActionExec(ctx context.Context, i *ExecInfo) error {
 	return errors.Reason("failed").Err()
 }
 
 // sampleMetricsAction sends a record to the metrics service.
-func sampleMetricsAction(ctx context.Context, args *RunArgs, actionArgs []string) error {
+func sampleMetricsAction(ctx context.Context, ei *ExecInfo) error {
 	// TODO(gregorynisbet): Add more interesting information to the action.
 	action := &metrics.Action{}
-	if args.Metrics != nil {
+	if ei.RunArgs.Metrics != nil {
 		action.StartTime = time.Now()
-		action, _ = args.Metrics.Create(ctx, action)
+		action, _ = ei.RunArgs.Metrics.Create(ctx, action)
 		// TODO(gregorynisbet): Uncomment when update lands.
 		// defer func() { args.Metrics.Update(ctx, action) }()
 	}

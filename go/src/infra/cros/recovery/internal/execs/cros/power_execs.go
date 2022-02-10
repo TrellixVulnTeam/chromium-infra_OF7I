@@ -16,8 +16,8 @@ import (
 )
 
 // isACPowerConnectedExec confirms whether the DUT is connected through AC power.
-func isACPowerConnectedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isACPowerConnectedExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "ac power connected").Err()
@@ -33,16 +33,16 @@ func isACPowerConnectedExec(ctx context.Context, args *execs.RunArgs, actionArgs
 }
 
 // isBatteryExpectedExec confirms whether the DUT is expected to have battery according to inventory.
-func isBatteryExpectedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT.PowerSupplyType != tlw.PowerSupplyTypeBattery {
+func isBatteryExpectedExec(ctx context.Context, info *execs.ExecInfo) error {
+	if info.RunArgs.DUT.PowerSupplyType != tlw.PowerSupplyTypeBattery {
 		return errors.Reason("is battery expected: battery is not expected").Err()
 	}
 	return nil
 }
 
 // isBatteryPresentExec confirms that the DUT has battery.
-func isBatteryPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isBatteryPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery present").Err()
@@ -58,8 +58,8 @@ func isBatteryPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 }
 
 // isBatteryLevelGreaterThanMinimumExec confirms the battery has enough charge.
-func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery has enough charge").Err()
@@ -75,8 +75,8 @@ func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, args *execs.RunAr
 }
 
 // isBatteryChargingExec confirms the battery is charging.
-func isBatteryChargingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isBatteryChargingExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	p, err := power.ReadPowerInfo(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "battery charging").Err()
@@ -92,8 +92,8 @@ func isBatteryChargingExec(ctx context.Context, args *execs.RunArgs, actionArgs 
 }
 
 // isBatteryChargableOrGoodLevelExec confirms the battery either has enough charge or is charging.
-func isBatteryChargableOrGoodLevelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	batteryLevelError, batteryChargingError := isBatteryLevelGreaterThanMinimumExec(ctx, args, actionArgs), isBatteryChargingExec(ctx, args, actionArgs)
+func isBatteryChargableOrGoodLevelExec(ctx context.Context, info *execs.ExecInfo) error {
+	batteryLevelError, batteryChargingError := isBatteryLevelGreaterThanMinimumExec(ctx, info), isBatteryChargingExec(ctx, info)
 	if batteryLevelError != nil && batteryChargingError != nil {
 		multiBatteryError := errors.NewMultiError(batteryLevelError, batteryChargingError)
 		// Log both of batteryLevelError and batteryChargingError

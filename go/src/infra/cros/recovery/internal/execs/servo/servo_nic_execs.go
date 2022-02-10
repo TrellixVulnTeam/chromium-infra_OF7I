@@ -25,12 +25,12 @@ const (
 // servoAuditNICMacAddressExec retrieve and audits the servo NIC MAC address by comparing the mac address
 // cached in the servo side and the mac address from the DUT. In addition, it will attempt to
 // update the value of servo command "macaddr" to the mac address from DUT if these two are not equal.
-func servoAuditNICMacAddressExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func servoAuditNICMacAddressExec(ctx context.Context, info *execs.ExecInfo) error {
 	// This part confirms the path to NIC is located in the path to HUB.
 	// eg.
 	// HUB: /sys/bus/usb/devices/1-1
 	// NIC: /sys/bus/usb/devices/1-1.1
-	r := args.NewRunner(args.ResourceName)
+	r := info.DefaultRunner()
 	hubPath, err := cros.FindSingleUsbDeviceFSDir(ctx, r, hubBasePath, cros.SERVO_DUT_HUB_VID, cros.SERVO_DUT_HUB_PID)
 	if err != nil {
 		return errors.Annotate(err, "servo audit nic mac address").Err()
@@ -51,13 +51,13 @@ func servoAuditNICMacAddressExec(ctx context.Context, args *execs.RunArgs, actio
 	}
 	// get the mac address from the servo cache.
 	// TODO: to use ServodGetString help function.
-	res, err := ServodCallGet(ctx, args, macAddressServoCmd)
+	res, err := ServodCallGet(ctx, info.RunArgs, macAddressServoCmd)
 	if err != nil {
 		return errors.Annotate(err, "servo audit nic mac address").Err()
 	}
 	cachedMacAddressFromServo := res.Value.GetString_()
 	if cachedMacAddressFromServo == "" || cachedMacAddressFromServo != macAddressFromDUT {
-		if _, err := ServodCallSet(ctx, args, macAddressServoCmd, macAddressFromDUT); err != nil {
+		if _, err := ServodCallSet(ctx, info.RunArgs, macAddressServoCmd, macAddressFromDUT); err != nil {
 			log.Debug(ctx, `Fail to update "macaddr" to value: %s`, macAddressFromDUT)
 			return errors.Annotate(err, "servo audit nic mac address").Err()
 		}

@@ -24,8 +24,8 @@ const (
 //
 // This verifier is conditioned on whether the value of servod control
 // 'dut_sbu_voltage_float_fault' is on or not.
-func servoCR50LowSBUExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sbuValue, err := MaximalAvgSbuValue(ctx, args, sbuVoltageTotalCheckCount)
+func servoCR50LowSBUExec(ctx context.Context, info *execs.ExecInfo) error {
+	sbuValue, err := MaximalAvgSbuValue(ctx, info.RunArgs, sbuVoltageTotalCheckCount)
 	if err != nil {
 		return errors.Reason("servo CR50 low sbu exec: could not compute the average SBU voltage value.").Err()
 	}
@@ -42,8 +42,8 @@ func servoCR50LowSBUExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 //
 // Please use condition to verify that 'dut_sbu_voltage_float_fault'
 // has the value 'on'.
-func servoCR50EnumeratedExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sbuValue, err := MaximalAvgSbuValue(ctx, args, sbuVoltageTotalCheckCount)
+func servoCR50EnumeratedExec(ctx context.Context, info *execs.ExecInfo) error {
+	sbuValue, err := MaximalAvgSbuValue(ctx, info.RunArgs, sbuVoltageTotalCheckCount)
 	if err != nil {
 		return errors.Reason("servo CR50 enumerated exec: could not compute the average SBU voltage value.").Err()
 	}

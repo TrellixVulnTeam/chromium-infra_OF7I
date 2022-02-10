@@ -112,8 +112,9 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 }
 
 // IsPingable checks whether the resource is pingable
-func IsPingable(ctx context.Context, args *execs.RunArgs, resourceName string, count int) error {
-	return args.Access.Ping(ctx, resourceName, count)
+// TODO: Create pingable and pass it instead ExecInfo
+func IsPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, count int) error {
+	return info.RunArgs.Access.Ping(ctx, resourceName, count)
 }
 
 const (
@@ -122,9 +123,9 @@ const (
 )
 
 // WaitUntilPingable waiting resource to be pingable.
-func WaitUntilPingable(ctx context.Context, args *execs.RunArgs, resourceName string, waitTime time.Duration, count int) error {
+func WaitUntilPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, waitTime time.Duration, count int) error {
 	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
-		return IsPingable(ctx, args, resourceName, count)
+		return IsPingable(ctx, info, resourceName, count)
 	}, "wait to ping")
 }
 
@@ -156,13 +157,12 @@ func matchCrosSystemValueToExpectation(ctx context.Context, run execs.Runner, su
 
 // IsPathExist checks if a given path exists or not.
 // Raise error if the path does not exist.
-func IsPathExist(ctx context.Context, args *execs.RunArgs, path string) error {
+func IsPathExist(ctx context.Context, run execs.Runner, path string) error {
 	path = strings.ReplaceAll(path, "\\", "\\\\")
 	path = strings.ReplaceAll(path, "$", `\$`)
 	path = strings.ReplaceAll(path, `"`, `\"`)
 	path = strings.ReplaceAll(path, "`", `\`+"`")
-	r := args.NewRunner(args.ResourceName)
-	_, err := r(ctx, time.Minute, fmt.Sprintf(`test -e "%s"`, path))
+	_, err := run(ctx, time.Minute, fmt.Sprintf(`test -e "%s"`, path))
 	if err != nil {
 		return errors.Annotate(err, "path exist").Err()
 	}
@@ -178,8 +178,8 @@ const (
 )
 
 // PathHasEnoughValue is a helper function that checks the given path's free disk space / inodes is no less than the min disk space /indoes specified.
-func PathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string, path string, typeOfSpace SpaceType, minSpaceNeeded float64) error {
-	if err := IsPathExist(ctx, args, path); err != nil {
+func PathHasEnoughValue(ctx context.Context, r execs.Runner, dutName string, path string, typeOfSpace SpaceType, minSpaceNeeded float64) error {
+	if err := IsPathExist(ctx, r, path); err != nil {
 		return errors.Annotate(err, "path has enough value: %s: path: %q not exist", typeOfSpace, path).Err()
 	}
 	var cmd string
@@ -191,7 +191,6 @@ func PathHasEnoughValue(ctx context.Context, args *execs.RunArgs, dutName string
 		// checking typeOfSpace == "inodes"
 		cmd = fmt.Sprintf(`df -Pi %s | tail -1`, path)
 	}
-	r := args.NewRunner(dutName)
 	output, err := r(ctx, time.Minute, cmd)
 	if err != nil {
 		return errors.Annotate(err, "path has enough value: %s", typeOfSpace).Err()

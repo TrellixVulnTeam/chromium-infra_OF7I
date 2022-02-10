@@ -16,35 +16,35 @@ import (
 )
 
 // hasDutNameActionExec verifies that DUT provides name.
-func hasDutNameActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT != nil && args.DUT.Name != "" {
-		log.Debug(ctx, "DUT name: %q", args.DUT.Name)
+func hasDutNameActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if info.RunArgs.DUT != nil && info.RunArgs.DUT.Name != "" {
+		log.Debug(ctx, "DUT name: %q", info.RunArgs.DUT.Name)
 		return nil
 	}
 	return errors.Reason("dut name is empty").Err()
 }
 
 // hasDutBoardActionExec verifies that DUT provides board name.
-func hasDutBoardActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT != nil && args.DUT.Board != "" {
-		log.Debug(ctx, "DUT board name: %q", args.DUT.Board)
+func hasDutBoardActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d != nil && d.Board != "" {
+		log.Debug(ctx, "DUT board name: %q", d.Board)
 		return nil
 	}
 	return errors.Reason("dut board name is empty").Err()
 }
 
 // hasDutModelActionExec verifies that DUT provides model name.
-func hasDutModelActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT != nil && args.DUT.Model != "" {
-		log.Debug(ctx, "DUT model name: %q", args.DUT.Model)
+func hasDutModelActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d != nil && d.Model != "" {
+		log.Debug(ctx, "DUT model name: %q", d.Model)
 		return nil
 	}
 	return errors.Reason("dut model name is empty").Err()
 }
 
 // dutServolessExec verifies that setup is servoless.
-func dutServolessExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT.ServoHost == nil || (args.DUT.ServoHost.Name == "" && args.DUT.ServoHost.ContainerName == "") {
+func dutServolessExec(ctx context.Context, info *execs.ExecInfo) error {
+	if sh := info.RunArgs.DUT.ServoHost; sh == nil || (sh.Name == "" && sh.ContainerName == "") {
 		log.Debug(ctx, "DUT servoless confirmed!")
 		return nil
 	}
@@ -52,8 +52,8 @@ func dutServolessExec(ctx context.Context, args *execs.RunArgs, actionArgs []str
 }
 
 // hasDutDeviceSkuActionExec verifies that DUT has the device sku label.
-func hasDutDeviceSkuActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	deviceSkuLabel := args.DUT.DeviceSku
+func hasDutDeviceSkuActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	deviceSkuLabel := info.RunArgs.DUT.DeviceSku
 	if deviceSkuLabel == "" {
 		return errors.Reason("dut device sku label is empty").Err()
 	}
@@ -64,8 +64,8 @@ func hasDutDeviceSkuActionExec(ctx context.Context, args *execs.RunArgs, actionA
 // dutCheckModelExec checks whether the model name for the current DUT
 // matches any of the values specified in config. It returns an error
 // based on the directive in config to invert the results.
-func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
 	// This token represents the string in config extra arguments that
 	// conveys the expected string value(s) for a DUT attribute.
 	const stringValuesExtraArgToken = "string_values"
@@ -77,8 +77,8 @@ func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
 	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
 		m = strings.TrimSpace(m)
-		if strings.EqualFold(m, args.DUT.Model) {
-			msg := fmt.Sprintf("DUT Model %s found in the list of models in config", args.DUT.Model)
+		if strings.EqualFold(m, info.RunArgs.DUT.Model) {
+			msg := fmt.Sprintf("DUT Model %s found in the list of models in config", info.RunArgs.DUT.Model)
 			log.Debug(ctx, "Dut Check Model Exec :%s.", msg)
 			if invertResultsFlag {
 				return errors.Reason("dut check model exec: %s", msg).Err()
@@ -96,9 +96,9 @@ func dutCheckModelExec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 
 // servoVerifySerialNumberExec verifies that the servo host attached
 // to the DUT has a serial number configured.
-func servoVerifySerialNumberExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT != nil && args.DUT.ServoHost != nil && args.DUT.ServoHost.Servo != nil && args.DUT.ServoHost.Servo.SerialNumber != "" {
-		log.Debug(ctx, "Servo Verify Serial Number : %q", args.DUT.ServoHost.Servo.SerialNumber)
+func servoVerifySerialNumberExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d != nil && d.ServoHost != nil && d.ServoHost.Servo != nil && d.ServoHost.Servo.SerialNumber != "" {
+		log.Debug(ctx, "Servo Verify Serial Number : %q", d.ServoHost.Servo.SerialNumber)
 		return nil
 	}
 	return errors.Reason("servo verify serial number: serial number is not available").Err()

@@ -78,6 +78,11 @@ func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue
 	return defaultValue
 }
 
+// ParseActionArgs returns parsed action arguments with default splitter.
+func (ei *ExecInfo) GetActionArgs(ctx context.Context) ParsedArgs {
+	return ParseActionArgs(ctx, ei.ActionArgs, DefaultSplitter)
+}
+
 // ParseActionArgs parses the action arguments using the splitter, and
 // returns ParsedArgs object containing key and values in the action
 // arguments. If any mal-formed action arguments are found their value

@@ -71,7 +71,11 @@ func TestSetServoStateExec(t *testing.T) {
 					},
 				},
 			}
-			actualErr := setServoStateExec(ctx, args, tt.actionArgs)
+			info := &execs.ExecInfo{
+				RunArgs:    args,
+				ActionArgs: tt.actionArgs,
+			}
+			actualErr := setServoStateExec(ctx, info)
 			if actualErr != nil && tt.expectedErr != nil {
 				if !strings.Contains(actualErr.Error(), tt.expectedErr.Error()) {
 					t.Errorf("Expected error %q, but got %q", tt.expectedErr, actualErr)
@@ -80,7 +84,7 @@ func TestSetServoStateExec(t *testing.T) {
 			if (actualErr == nil && tt.expectedErr != nil) || (actualErr != nil && tt.expectedErr == nil) {
 				t.Errorf("Expected error %q, but got %q", tt.expectedErr, actualErr)
 			}
-			actualServoState := args.DUT.ServoHost.Servo.State
+			actualServoState := info.RunArgs.DUT.ServoHost.Servo.State
 			if actualServoState != tt.expectedServoState {
 				t.Errorf("Expected servo state %q, but got %q", tt.expectedServoState, actualServoState)
 			}

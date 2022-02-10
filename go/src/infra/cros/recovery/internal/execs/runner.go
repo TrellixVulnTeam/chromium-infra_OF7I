@@ -44,6 +44,16 @@ var (
 // on a host, and returns the result as a single line.
 type Runner = components.Runner
 
+// NewRunner returns runner for requested resource specified per plan.
+func (ei *ExecInfo) NewRunner(resource string) Runner {
+	return ei.RunArgs.NewRunner(resource)
+}
+
+// DefaultRunner returns runner for current resource name specified per plan.
+func (ei *ExecInfo) DefaultRunner() Runner {
+	return ei.NewRunner(ei.RunArgs.ResourceName)
+}
+
 // NewRunner returns a function of type Runner that executes a command
 // on a host and returns the results as a single line. This function
 // defines the specific host on which the command will be

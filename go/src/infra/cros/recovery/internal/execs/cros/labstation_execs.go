@@ -22,16 +22,16 @@ const (
 )
 
 // cleanTmpOwnerRequestExec cleans tpm owner requests.
-func cleanTmpOwnerRequestExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func cleanTmpOwnerRequestExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	_, err := run(ctx, time.Minute, "crossystem clear_tpm_owner_request=1")
 	return errors.Annotate(err, "clear tpm owner request").Err()
 }
 
 // validateUptime validate that host is up for more than 6 hours.
-func validateUptime(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func validateUptime(ctx context.Context, info *execs.ExecInfo) error {
 	maxUptime := minLabstationUptime
-	for _, arg := range actionArgs {
+	for _, arg := range info.ActionArgs {
 		if strings.HasPrefix(arg, "min_duration:") {
 			d, err := time.ParseDuration(strings.Split(arg, ":")[1])
 			if err != nil {
@@ -40,7 +40,7 @@ func validateUptime(ctx context.Context, args *execs.RunArgs, actionArgs []strin
 			maxUptime = d
 		}
 	}
-	dur, err := uptime(ctx, args.NewRunner(args.ResourceName))
+	dur, err := uptime(ctx, info.DefaultRunner())
 	if err != nil {
 		return errors.Annotate(err, "validate uptime").Err()
 	}
@@ -57,8 +57,8 @@ const (
 
 // allowedRebootExec checks if DUT is allowed to reboot.
 // If system has /tmp/no_reboot file then reboot is not allowed.
-func allowedRebootExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func allowedRebootExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	cmd := fmt.Sprintf("test %s", noRebootFlagFile)
 	_, err := run(ctx, time.Minute, cmd)
 	if err != nil {

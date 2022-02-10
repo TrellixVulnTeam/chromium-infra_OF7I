@@ -17,17 +17,17 @@ import (
 )
 
 // updateCr50LabelExec will update the DUT's Cr50Phase state into the corresponding Cr50 state.
-func updateCr50LabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func updateCr50LabelExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	// Example of the rwVersion: `0.5.40`
 	rwVersion, err := GetCr50FwVersion(ctx, r, CR50RegionRW)
 	if err != nil {
-		args.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
+		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
 		return errors.Annotate(err, "update cr50 label").Err()
 	}
 	rwVersionComponents := strings.Split(rwVersion, ".")
 	if len(rwVersionComponents) < 2 {
-		args.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
+		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
 		return errors.Reason("update cr50 label: the number of version component in the rw version is incorrect.").Err()
 	}
 	// Check the major version to determine prePVT vs PVT.
@@ -36,27 +36,27 @@ func updateCr50LabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	// marjoRwVersion: integer value of 5.
 	majorRwVersion, err := strconv.ParseInt(rwVersionComponents[1], 10, 64)
 	if err != nil {
-		args.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
+		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhaseUnspecified
 		return errors.Annotate(err, "update cr50 label").Err()
 	}
 	if majorRwVersion%2 != 0 {
 		// PVT image has a odd major version number.
 		// prePVT image has an even major version number.
-		args.DUT.Cr50Phase = tlw.Cr50PhasePVT
+		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhasePVT
 		log.Info(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePVT)
 	} else {
-		args.DUT.Cr50Phase = tlw.Cr50PhasePREPVT
+		info.RunArgs.DUT.Cr50Phase = tlw.Cr50PhasePREPVT
 		log.Info(ctx, "update DUT's Cr50 to be %s", tlw.Cr50PhasePREPVT)
 	}
 	return nil
 }
 
 // updateCr50KeyIdLabelExec will update the DUT's Cr50KeyEnv state into the corresponding Cr50 key id state.
-func updateCr50KeyIdLabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func updateCr50KeyIdLabelExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	roKeyIDString, err := GetCr50FwKeyID(ctx, r, CR50RegionRO)
 	if err != nil {
-		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
+		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
 		return errors.Annotate(err, "update cr50 key id").Err()
 	}
 	// Trim "," due to the remaining of the regular expression.
@@ -67,14 +67,14 @@ func updateCr50KeyIdLabelExec(ctx context.Context, args *execs.RunArgs, actionAr
 	roKeyIDString = strings.Trim(roKeyIDString, ",0x")
 	roKeyID, err := strconv.ParseInt(roKeyIDString, 16, 64)
 	if err != nil {
-		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
+		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvUnspecified
 		return errors.Annotate(err, "update cr50 key id").Err()
 	}
 	if roKeyID&(1<<2) != 0 {
-		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvProd
+		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvProd
 		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvProd)
 	} else {
-		args.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvDev
+		info.RunArgs.DUT.Cr50KeyEnv = tlw.Cr50KeyEnvDev
 		log.Info(ctx, "update DUT's Cr50 Key Env to be %s", tlw.Cr50KeyEnvDev)
 	}
 	return nil

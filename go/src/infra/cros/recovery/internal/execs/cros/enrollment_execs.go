@@ -44,8 +44,8 @@ const (
 //
 // We consider state 1, and first scenario(check_enrollment=1) of state 3
 // as unacceptable state here as they may interfere with normal tests.
-func isEnrollmentInCleanStateExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func isEnrollmentInCleanStateExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	command := fmt.Sprintf(`grep "check_enrollment" %s`, VPD_CACHE)
 	result, err := run(ctx, time.Minute, command)
 	if err == nil {

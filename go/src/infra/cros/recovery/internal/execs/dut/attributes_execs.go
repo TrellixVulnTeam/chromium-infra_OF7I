@@ -15,12 +15,12 @@ import (
 
 // notInPoolExec verifies that DUT is not used in special pools.
 // List of pools which should not be in device pool provided by actionArgs.
-func notInPoolExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if len(actionArgs) == 0 {
+func notInPoolExec(ctx context.Context, info *execs.ExecInfo) error {
+	if len(info.ActionArgs) == 0 {
 		log.Debug(ctx, "Not in pool: no action arguments provided.")
 		return nil
 	}
-	pools := args.DUT.ExtraAttributes["pool"]
+	pools := info.RunArgs.DUT.ExtraAttributes["pool"]
 	if len(pools) == 0 {
 		log.Debug(ctx, "Not in pools: device does not have any pools.")
 		return nil
@@ -29,7 +29,7 @@ func notInPoolExec(ctx context.Context, args *execs.RunArgs, actionArgs []string
 	for _, pool := range pools {
 		poolMap[pool] = true
 	}
-	for _, arg := range actionArgs {
+	for _, arg := range info.ActionArgs {
 		if poolMap[arg] {
 			return errors.Reason("not in pool: dut is in pool %q", arg).Err()
 		}

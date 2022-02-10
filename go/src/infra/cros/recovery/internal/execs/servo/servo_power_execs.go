@@ -31,25 +31,25 @@ const (
 //
 // Ex. the actionArgs should be in the format of:
 // ["retry_count:x", "wait_in_retry:x", "wait_before_retry:x"]
-func servoServodPdRoleToggleExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	pdRoleToggleMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+func servoServodPdRoleToggleExec(ctx context.Context, info *execs.ExecInfo) error {
+	pdRoleToggleMap := info.GetActionArgs(ctx)
 	retryCount := pdRoleToggleMap.AsInt(ctx, "retry_count", 1)
 	waitInRetry := pdRoleToggleMap.AsInt(ctx, "wait_in_retry", 5)
 	log.Debug(ctx, "The wait time for power restore in the middle of retry is being set to: %d", waitInRetry)
 	waitBeforeRetry := pdRoleToggleMap.AsInt(ctx, "wait_before_retry", 1)
 	log.Debug(ctx, "The wait time for power restore before retry is being set to: %d", waitBeforeRetry)
 	// First setting the servod pd_role to the snk position.
-	if _, err := ServodCallSet(ctx, args, servodPdRoleCmd, servodPdRoleValueSnk); err != nil {
+	if _, err := ServodCallSet(ctx, info.RunArgs, servodPdRoleCmd, servodPdRoleValueSnk); err != nil {
 		log.Debug(ctx, "Error setting the servo_pd_role: %q", err.Error())
 	}
 	time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 	toggleErr := retry.LimitCount(ctx, retryCount, 0*time.Second, func() error {
-		if _, err := ServodCallSet(ctx, args, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
+		if _, err := ServodCallSet(ctx, info.RunArgs, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
 			log.Debug(ctx, "Error setting the servo_pd_role: %q", err.Error())
 		}
 		// Waiting a few seconds as it can be change to snk if PD on servo has issue.
 		time.Sleep(time.Duration(waitInRetry) * time.Second)
-		if pdRoleValue, err := servodGetString(ctx, args, servodPdRoleCmd); err != nil {
+		if pdRoleValue, err := servodGetString(ctx, info.RunArgs, servodPdRoleCmd); err != nil {
 			return errors.Annotate(err, "servod pd role toggle").Err()
 		} else if pdRoleValue == servodPdRoleValueSrc {
 			// log the main toggle action succeed.

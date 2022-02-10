@@ -16,18 +16,18 @@ import (
 
 // servoVerifyV3Exec verifies whether the servo attached to the servo
 // host if of type V3.
-func servoVerifyV3Exec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
+func servoVerifyV3Exec(ctx context.Context, info *execs.ExecInfo) error {
 	// We first check that the servo host is not a labstation. The
 	// "-servo" suffix will exist only when the setup is for type V3,
 	// (i.e. there is no labstation present).
 	servoSuffix := "-servo"
-	if !strings.Contains(args.DUT.ServoHost.Name, servoSuffix) {
+	if !strings.Contains(info.RunArgs.DUT.ServoHost.Name, servoSuffix) {
 		return errors.Reason("servo verify v3: servo hostname does not carry suffix %q, this is not V3.", servoSuffix).Err()
 	}
 	// We further verify that the version detected for servo indeed
 	// matches that for "V3". This confirms that the entire setup is
 	// correct.
-	sType, err := WrappedServoType(ctx, args)
+	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
 		log.Debug(ctx, "Servo Verify V3: could not determine the servo type")
 		return errors.Annotate(err, "servo verify v3").Err()
@@ -41,8 +41,8 @@ func servoVerifyV3Exec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 
 // servoVerifyV4Exec verifies whether the servo attached to the servo
 // host if of type V4.
-func servoVerifyV4Exec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sType, err := WrappedServoType(ctx, args)
+func servoVerifyV4Exec(ctx context.Context, info *execs.ExecInfo) error {
+	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
 		log.Debug(ctx, "Servo Verify V4: could not determine the servo type")
 		return errors.Annotate(err, "servo verify v4").Err()
@@ -56,8 +56,8 @@ func servoVerifyV4Exec(ctx context.Context, args *execs.RunArgs, actionArgs []st
 
 // servoVerifyServoMicroExec verifies whether the servo attached to
 // the servo host if of type servo micro.
-func servoVerifyServoMicroExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sType, err := WrappedServoType(ctx, args)
+func servoVerifyServoMicroExec(ctx context.Context, info *execs.ExecInfo) error {
+	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
 		log.Debug(ctx, "Servo Verify Servo Micro: could not determine the servo type")
 		return errors.Annotate(err, "servo verify servo micro").Err()
@@ -71,9 +71,9 @@ func servoVerifyServoMicroExec(ctx context.Context, args *execs.RunArgs, actionA
 
 // servoIsDualSetupConfiguredExec checks whether the servo device has
 // been setup in dual mode.
-func servoIsDualSetupConfiguredExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if args.DUT != nil && args.DUT.ExtraAttributes != nil {
-		if _, ok := args.DUT.ExtraAttributes["servo_setup_dual"]; ok {
+func servoIsDualSetupConfiguredExec(ctx context.Context, info *execs.ExecInfo) error {
+	if info.RunArgs.DUT != nil && info.RunArgs.DUT.ExtraAttributes != nil {
+		if _, ok := info.RunArgs.DUT.ExtraAttributes["servo_setup_dual"]; ok {
 			log.Debug(ctx, "Servo Is Dual Setup Configured: servo device is configured to be in dual-setup mode.")
 			return nil
 		}
@@ -83,8 +83,8 @@ func servoIsDualSetupConfiguredExec(ctx context.Context, args *execs.RunArgs, ac
 
 // servoVerifyDualSetupExec verifies whether the servo attached to the
 // servo host actually exhibits dual setup.
-func servoVerifyDualSetupExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sType, err := WrappedServoType(ctx, args)
+func servoVerifyDualSetupExec(ctx context.Context, info *execs.ExecInfo) error {
+	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
 		return errors.Annotate(err, "servo verify dual setup").Err()
 	}
@@ -96,8 +96,8 @@ func servoVerifyDualSetupExec(ctx context.Context, args *execs.RunArgs, actionAr
 
 // servoVerifyServoCCDExec verifies whether the servo attached to
 // the servo host if of type servo ccd.
-func servoVerifyServoCCDExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	sType, err := WrappedServoType(ctx, args)
+func servoVerifyServoCCDExec(ctx context.Context, info *execs.ExecInfo) error {
+	sType, err := WrappedServoType(ctx, info)
 	if err != nil {
 		log.Debug(ctx, "Servo Verify Servo CCD: could not determine the servo type")
 		return errors.Annotate(err, "servo verify servo type ccd").Err()

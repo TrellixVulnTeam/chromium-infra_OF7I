@@ -20,8 +20,8 @@ const (
 
 // servoHostIsLabstationExec confirms the servo host is a labstation
 // TODO (yunzhiyu@): Revisit when we onboard dockers.
-func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.DUT.ServoHost.Name)
+func servoHostIsLabstationExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	board, err := cros.ReleaseBoard(ctx, r)
 	if err != nil {
 		return errors.Annotate(err, "servo host is labstation").Err()
@@ -33,8 +33,8 @@ func servoHostIsLabstationExec(ctx context.Context, args *execs.RunArgs, actionA
 }
 
 // servoUsesServodContainerExec checks if the servo uses a servod-container.
-func servoUsesServodContainerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if !IsContainerizedServoHost(ctx, args.DUT.ServoHost) {
+func servoUsesServodContainerExec(ctx context.Context, info *execs.ExecInfo) error {
+	if !IsContainerizedServoHost(ctx, info.RunArgs.DUT.ServoHost) {
 		return errors.Reason("servo not using servod container").Err()
 	}
 	return nil

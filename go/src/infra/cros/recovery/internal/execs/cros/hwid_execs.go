@@ -19,8 +19,8 @@ const (
 )
 
 // updateHWIDToInvExec read HWID from the resource and update DUT info.
-func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func updateHWIDToInvExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	hwid, err := run(ctx, time.Minute, readHWIDCommand)
 	if err != nil {
 		return errors.Annotate(err, "update HWID in DUT-info").Err()
@@ -29,18 +29,18 @@ func updateHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 		return errors.Reason("update HWID in DUT-info: is empty").Err()
 	}
 	log.Debug(ctx, "Update HWID %q in DUT-info.", hwid)
-	args.DUT.Hwid = hwid
+	info.RunArgs.DUT.Hwid = hwid
 	return nil
 }
 
 // matchHWIDToInvExec matches HWID from the resource to value in the Inventory.
-func matchHWIDToInvExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func matchHWIDToInvExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	actualHWID, err := run(ctx, time.Minute, readHWIDCommand)
 	if err != nil {
 		return errors.Annotate(err, "match HWID to inventory").Err()
 	}
-	expectedHWID := args.DUT.Hwid
+	expectedHWID := info.RunArgs.DUT.Hwid
 	if actualHWID != expectedHWID {
 		return errors.Reason("match HWID to inventory: failed, expected: %q, but got %q", expectedHWID, actualHWID).Err()
 	}

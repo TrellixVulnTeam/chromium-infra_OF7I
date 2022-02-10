@@ -27,9 +27,9 @@ const (
 )
 
 // createServoInUseFlagExec creates servo in-use flag file.
-func createServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
-	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileCreateSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+func createServoInUseFlagExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
+	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileCreateSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
 		log.Debug(ctx, "Create in-use flag file: %s", err)
 	}
@@ -37,8 +37,8 @@ func createServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionAr
 }
 
 // hasNoServoInUseExec fails if any servo is in-use now.
-func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.ResourceName)
+func hasNoServoInUseExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
 	// Recursively look for the in-use files which are modified less than or exactly X minutes ago.
 	v, _ := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileGlob, inUseFlagFileExpirationMins))
 	if v == "" {
@@ -49,9 +49,9 @@ func hasNoServoInUseExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 }
 
 // removeServoInUseFlagExec removes servo in-use flag file.
-func removeServoInUseFlagExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	run := args.NewRunner(args.DUT.ServoHost.Name)
-	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, args.DUT.ServoHost.ServodPort)); err != nil {
+func removeServoInUseFlagExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
+	if _, err := run(ctx, time.Minute, fmt.Sprintf(inUseFlagFileRemoveSingleGlob, info.RunArgs.DUT.ServoHost.ServodPort)); err != nil {
 		// Print finish result as we ignore any errors.
 		log.Debug(ctx, "Remove in-use file flag: %s", err)
 	}

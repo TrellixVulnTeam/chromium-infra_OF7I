@@ -12,14 +12,14 @@ import (
 )
 
 // setStateBrokenExec sets state as BROKEN.
-func setStateBrokenExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	args.DUT.ChameleonHost.State = tlw.ChameleonStateBroken
+func setStateBrokenExec(ctx context.Context, info *execs.ExecInfo) error {
+	info.RunArgs.DUT.ChameleonHost.State = tlw.ChameleonStateBroken
 	return nil
 }
 
 // setStateWorkingExec sets state as WORKING.
-func setStateWorkingExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	args.DUT.ChameleonHost.State = tlw.ChameleonStateWorking
+func setStateWorkingExec(ctx context.Context, info *execs.ExecInfo) error {
+	info.RunArgs.DUT.ChameleonHost.State = tlw.ChameleonStateWorking
 	return nil
 }
 

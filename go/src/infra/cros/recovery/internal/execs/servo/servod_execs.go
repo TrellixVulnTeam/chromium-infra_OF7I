@@ -18,8 +18,8 @@ import (
 // TODO(otabek@): Extract all commands to constants.
 // NOTE: That is just fake execs for local testing during developing phase. The correct/final execs will be introduced later.
 
-func servodEchoActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	res, err := ServodCallGet(ctx, args, "serialname")
+func servodEchoActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	res, err := ServodCallGet(ctx, info.RunArgs, "serialname")
 	if err != nil {
 		return errors.Annotate(err, "servod echo exec").Err()
 	} else if res.Value.GetString_() == "" {
@@ -28,8 +28,8 @@ func servodEchoActionExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	return nil
 }
 
-func servodLidopenActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	res, err := ServodCallGet(ctx, args, "lid_open")
+func servodLidopenActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	res, err := ServodCallGet(ctx, info.RunArgs, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
 	} else if res.Value.GetString_() == "not_applicable" {
@@ -40,8 +40,8 @@ func servodLidopenActionExec(ctx context.Context, args *execs.RunArgs, actionArg
 	return nil
 }
 
-func servodLidopenRecoveryActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	res, err := ServodCallGet(ctx, args, "lid_open")
+func servodLidopenRecoveryActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	res, err := ServodCallGet(ctx, info.RunArgs, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
 	} else if res.Value.GetString_() == "yes" {
@@ -50,18 +50,18 @@ func servodLidopenRecoveryActionExec(ctx context.Context, args *execs.RunArgs, a
 	}
 	// Fix is to first try to set `no` then 'yes'. Then verify.
 	// TODO(otabek@): Remove when add right execs.
-	res, err = ServodCallSet(ctx, args, "lid_open", "no")
+	res, err = ServodCallSet(ctx, info.RunArgs, "lid_open", "no")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
 	}
-	res, err = ServodCallSet(ctx, args, "lid_open", "yes")
+	res, err = ServodCallSet(ctx, info.RunArgs, "lid_open", "yes")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open recovery").Err()
 	}
 	// Wait 5 seconds to apply effect.
 	log.Debug(ctx, "Servod lid_open recovery: waiting 5 seconds to apply after set lid_open to `yes`.")
 	time.Sleep(5 * time.Second)
-	res, err = ServodCallGet(ctx, args, "lid_open")
+	res, err = ServodCallGet(ctx, info.RunArgs, "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servod lid_open").Err()
 	} else if res.Value.GetString_() == "yes" {
@@ -79,30 +79,30 @@ const (
 	usbkeyBootTimeout = 5 * time.Minute
 )
 
-func servodDUTBootRecoveryModeActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if _, err := ServodCallSet(ctx, args, "power_state", "rec"); err != nil {
+func servodDUTBootRecoveryModeActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if _, err := ServodCallSet(ctx, info.RunArgs, "power_state", "rec"); err != nil {
 		return errors.Annotate(err, "servod boot in recovery-mode").Err()
 	}
-	run := args.NewRunner(args.DUT.Name)
+	run := info.NewRunner(info.RunArgs.DUT.Name)
 	return retry.WithTimeout(ctx, 10*time.Second, usbkeyBootTimeout, func() error {
 		_, err := run(ctx, 30*time.Second, "true")
 		return errors.Annotate(err, "servod boot in recovery-mode: check ssh access").Err()
 	}, "servod boot in recovery-mode: check ssh access")
 }
 
-func servodDUTColdResetActionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if _, err := ServodCallSet(ctx, args, "power_state", "reset"); err != nil {
+func servodDUTColdResetActionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if _, err := ServodCallSet(ctx, info.RunArgs, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servod cold_reset dut").Err()
 	}
 	return retry.WithTimeout(ctx, 5*time.Second, dutBootTimeout, func() error {
-		return args.Access.Ping(ctx, args.DUT.Name, 2)
+		return info.RunArgs.Access.Ping(ctx, info.RunArgs.DUT.Name, 2)
 	}, "servod cold_reset dut: check ping access")
 }
 
 // servodHasExec verifies whether servod supports the command
 // mentioned in action args.
-func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+func servodHasExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
 	command, ok := argsMap[commandToken]
 	log.Debug(ctx, "Servod Has Exec: %s ok :%t", commandToken, ok)
 	if !ok {
@@ -110,7 +110,7 @@ func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string
 		// and does not specify the servod command.
 		return errors.Reason("servod has exec: no command is mentioned for this action.").Err()
 	}
-	if _, err := ServodCallHas(ctx, args, command); err != nil {
+	if _, err := ServodCallHas(ctx, info.RunArgs, command); err != nil {
 		return errors.Annotate(err, "servod has exec").Err()
 	}
 	log.Debug(ctx, "Servod Has Exec: Command %s is supported by servod", command)
@@ -122,8 +122,8 @@ func servodHasExec(ctx context.Context, args *execs.RunArgs, actionArgs []string
 // commands be supported, or any one of them can be supported. This
 // behavior is controlled by the value of 'any_one' extra arg in the
 // config.
-func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	argsMap := execs.ParseActionArgs(ctx, actionArgs, execs.DefaultSplitter)
+func servodCanReadAllExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
 	// The string 'commands' here is the token from config that
 	// signifies the list of commands that servod may need to support.
 	// TODO (vkjoshi@): if more execs need this token, consider
@@ -135,14 +135,14 @@ func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 	anyOne := argsMap.AsBool(ctx, "any_one", false)
 	log.Debug(ctx, "Servod Can Read All Exec: anyOne:%t.", anyOne)
 	for _, c := range commands {
-		if _, err := ServodCallHas(ctx, args, c); err != nil {
+		if _, err := ServodCallHas(ctx, info.RunArgs, c); err != nil {
 			log.Debug(ctx, "Servod Can Read All Exec: control %q is not loaded, skipping this.", c)
 			if !anyOne {
 				return errors.Annotate(err, "servod can read all exec").Err()
 			}
 		} else {
 			log.Debug(ctx, "Servod Can Read All Exec: control %q is loaded.", c)
-			if _, err = ServodCallGet(ctx, args, c); err != nil {
+			if _, err = ServodCallGet(ctx, info.RunArgs, c); err != nil {
 				log.Debug(ctx, "Servod Can Read All Exec: could not read the control %q.", c)
 				if !anyOne {
 					return errors.Annotate(err, "servod can read all exec").Err()
@@ -163,8 +163,8 @@ func servodCanReadAllExec(ctx context.Context, args *execs.RunArgs, actionArgs [
 
 // servodSetActiveDutControllerExec sets the main servo device as the
 // active DUT controller.
-func servodSetActiveDutControllerExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	mainDevice, err := MainServoDevice(ctx, args)
+func servodSetActiveDutControllerExec(ctx context.Context, info *execs.ExecInfo) error {
+	mainDevice, err := MainServoDevice(ctx, info)
 	if err != nil {
 		return errors.Annotate(err, "servod set active dut controller exec").Err()
 	}
@@ -172,11 +172,11 @@ func servodSetActiveDutControllerExec(ctx context.Context, args *execs.RunArgs, 
 		return errors.Reason("servod set active dut controller exec: main device is empty.").Err()
 	}
 	command := "active_dut_controller"
-	_, err = ServodCallSet(ctx, args, command, mainDevice)
+	_, err = ServodCallSet(ctx, info.RunArgs, command, mainDevice)
 	if err != nil {
 		return errors.Annotate(err, "servod set active dut controller exec").Err()
 	}
-	returnedMainDevice, err := servodGetString(ctx, args, command)
+	returnedMainDevice, err := servodGetString(ctx, info.RunArgs, command)
 	if err != nil {
 		return errors.Annotate(err, "servod set active dut controller exec").Err()
 	}

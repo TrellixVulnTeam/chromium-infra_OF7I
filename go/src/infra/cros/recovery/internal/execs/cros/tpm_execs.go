@@ -30,8 +30,8 @@ const (
 // For dev-signed firmware, tpm_kernver reported from
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tpm_kernver may fail due to firmware rollback protection.
-func matchDevTPMKernelVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
+func matchDevTPMKernelVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if err := matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), tpmKernelVersionCommand, devTPMKernelVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm kernel version").Err()
 	}
 	return nil
@@ -42,16 +42,16 @@ func matchDevTPMKernelVersionExec(ctx context.Context, args *execs.RunArgs, acti
 // For dev-signed firmware, tpm_fwver reported from
 // crossystem should always be 0x10001. Firmware update on DUTs with
 // incorrect tmp_fwver may fail due to firmware rollback protection.
-func matchDevTPMFirmwareVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	if err := matchCrosSystemValueToExpectation(ctx, args.NewRunner(args.ResourceName), tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
+func matchDevTPMFirmwareVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	if err := matchCrosSystemValueToExpectation(ctx, info.DefaultRunner(), tpmFirmwareVersionCommand, devTpmFirmwareVersion); err != nil {
 		return errors.Annotate(err, "match dev tpm firmware version").Err()
 	}
 	return nil
 }
 
 // isTPMPresentExec confirms that the given DUT's TPM is present.
-func isTPMPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isTPMPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	rawOutput, err := r(ctx, time.Minute, "cryptohome --action=status")
 	if err != nil {
 		return errors.Annotate(err, "tpm present").Err()
@@ -61,8 +61,8 @@ func isTPMPresentExec(ctx context.Context, args *execs.RunArgs, actionArgs []str
 }
 
 // isTPMInGoodStatusExec confirms that the given DUT's TPM is in good state.
-func isTPMInGoodStatusExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	r := args.NewRunner(args.ResourceName)
+func isTPMInGoodStatusExec(ctx context.Context, info *execs.ExecInfo) error {
+	r := info.DefaultRunner()
 	rawOutput, err := r(ctx, time.Minute, "cryptohome --action=status")
 	if err != nil {
 		return errors.Annotate(err, "tpm in good status").Err()

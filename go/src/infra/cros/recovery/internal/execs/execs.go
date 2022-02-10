@@ -19,7 +19,7 @@ import (
 
 // exec represents an execution function of the action.
 // The single exec can be associated with one or more actions.
-type ExecFunction func(ctx context.Context, args *RunArgs, actionArgs []string) error
+type ExecFunction func(ctx context.Context, i *ExecInfo) error
 
 var (
 	// Map of known exec functions used by recovery engine.
@@ -77,8 +77,7 @@ func Run(ctx context.Context, ei *ExecInfo) error {
 	if !ok {
 		return errors.Reason("exec %q: not found", ei.Name).Err()
 	}
-	// TODO: Pass actionTimeout as new argument.
-	return e(ctx, ei.RunArgs, ei.ActionArgs)
+	return e(ctx, ei)
 }
 
 // Exist check if exec function with name is present.

@@ -14,7 +14,7 @@ import (
 
 // RPMAction perfrom RPM action on RPM outlet.
 // If the outlet missing the state will set to missing config state.
-func (a *RunArgs) RPMAction(ctx context.Context, hostname string, o *tlw.RPMOutlet, action tlw.RunRPMActionRequest_Action) error {
+func (ei *ExecInfo) RPMAction(ctx context.Context, hostname string, o *tlw.RPMOutlet, action tlw.RunRPMActionRequest_Action) error {
 	if o.GetHostname() == "" || o.GetOutlet() == "" {
 		o.State = tlw.RPMOutlet_MISSING_CONFIG
 		return errors.Reason("rpm action: missing outlet config").Err()
@@ -25,6 +25,6 @@ func (a *RunArgs) RPMAction(ctx context.Context, hostname string, o *tlw.RPMOutl
 		RpmOutlet:   o.GetOutlet(),
 		Action:      action,
 	}
-	err := a.Access.RunRPMAction(ctx, req)
+	err := ei.RunArgs.Access.RunRPMAction(ctx, req)
 	return errors.Annotate(err, "rpm action").Err()
 }

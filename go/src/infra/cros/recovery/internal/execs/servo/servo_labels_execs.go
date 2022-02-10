@@ -14,12 +14,12 @@ import (
 )
 
 // updateServoTypeLabelExec updates DUT's servo type to the correct servo type string.
-func updateServoTypeLabelExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	servoType, err := GetServoType(ctx, args)
+func updateServoTypeLabelExec(ctx context.Context, info *execs.ExecInfo) error {
+	servoType, err := GetServoType(ctx, info)
 	if err != nil {
 		return errors.Annotate(err, "update servo type label").Err()
 	}
-	args.DUT.ServoHost.Servo.Type = servoType
+	info.RunArgs.DUT.ServoHost.Servo.Type = servoType
 	log.Info(ctx, "Set DUT's servo type to be: %s", servoType)
 	return nil
 }

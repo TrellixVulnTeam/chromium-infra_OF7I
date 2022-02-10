@@ -22,32 +22,32 @@ const (
 )
 
 // updateProvisionedCrosVersionExec reads OS version from the DUT for provisioned info.
-func updateProvisionedCrosVersionExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	version, err := releaseBuildPath(ctx, args.NewRunner(args.DUT.Name))
+func updateProvisionedCrosVersionExec(ctx context.Context, info *execs.ExecInfo) error {
+	version, err := releaseBuildPath(ctx, info.NewRunner(info.RunArgs.DUT.Name))
 	if err != nil {
 		return errors.Annotate(err, "read os version").Err()
 	}
 	log.Debug(ctx, "ChromeOS version on the dut: %s.", version)
-	if args.DUT.ProvisionedInfo == nil {
-		args.DUT.ProvisionedInfo = &tlw.DUTProvisionedInfo{}
+	if info.RunArgs.DUT.ProvisionedInfo == nil {
+		info.RunArgs.DUT.ProvisionedInfo = &tlw.DUTProvisionedInfo{}
 	}
-	args.DUT.ProvisionedInfo.CrosVersion = version
+	info.RunArgs.DUT.ProvisionedInfo.CrosVersion = version
 	return nil
 }
 
 // updateJobRepoURLExec updates job repo URL for the DUT for provisoned info.
-func updateJobRepoURLExec(ctx context.Context, args *execs.RunArgs, actionArgs []string) error {
-	version := args.DUT.ProvisionedInfo.CrosVersion
+func updateJobRepoURLExec(ctx context.Context, info *execs.ExecInfo) error {
+	version := info.RunArgs.DUT.ProvisionedInfo.CrosVersion
 	if version == "" {
 		return errors.Reason("update job repo url: provisioned version not found").Err()
 	}
 	gsPath := fmt.Sprintf("%s/%s", gsCrOSImageBucket, version)
-	jobRepoURL, err := args.Access.GetCacheUrl(ctx, args.DUT.Name, gsPath)
+	jobRepoURL, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, gsPath)
 	if err != nil {
 		return errors.Annotate(err, "update job repo url").Err()
 	}
 	log.Debug(ctx, "New job repo URL: %s.", jobRepoURL)
-	args.DUT.ProvisionedInfo.JobRepoURL = jobRepoURL
+	info.RunArgs.DUT.ProvisionedInfo.JobRepoURL = jobRepoURL
 	return nil
 }
 
