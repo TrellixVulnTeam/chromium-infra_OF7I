@@ -51,7 +51,7 @@ const DescriptionCommand = `( echo BEGIN; echo PWD; pwd ; echo FIND; find . ; ec
 func main() {
 	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
 	log.Printf("Running version: %s", site.VersionNumber)
-	log.Printf("Running in build-bucket mode")
+	log.Printf("Running in buildbucket mode")
 
 	input := &steps.LabpackInput{}
 	var writeOutputProps func(*steps.LabpackResponse)
