@@ -6,8 +6,10 @@ package cros
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -80,7 +82,62 @@ func updateCr50KeyIdLabelExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+const (
+	// Reboot and exit cmd will reboot the DUT and exit the ssh immediately so that the runner
+	// will not wait for it to finish rebooting
+	dutRebootAndExitCmd = "reboot && exit"
+)
+
+// reflashCr50FwExec reflashes CR50 firmware and reboot AP from DUT side to wake it up.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["flash_timeout:x", "wait_timeout:x"]
+func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	// Timeout for executing the cr 50 fw flash command on the DUT. Default to be 120s.
+	flashTimeout := argsMap.AsInt(ctx, "flash_timeout", 120)
+	// Delay to wait for the fw flash command to be efftive. Default to be 30s.
+	waitTimeout := argsMap.AsInt(ctx, "wait_timeout", 30)
+	// Command to update cr50 firmware with post-reset and reboot the DUT.
+	updateCmd := `gsctool -ap /opt/google/cr50/firmware/cr50.bin.%s`
+	if info.RunArgs.DUT.Cr50Phase == tlw.Cr50PhasePREPVT {
+		updateCmd = fmt.Sprintf(updateCmd, "prepvt")
+	} else {
+		updateCmd = fmt.Sprintf(updateCmd, "prod")
+	}
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	// For "gsctool", we use the traditional runner because the exit code of both 0 and 1
+	// indicates successful execution of the command.
+	//
+	// r.ExitCode == 0: All up to date, no update needed.
+	// r.ExitCode == 1: Update completed, reboot required (errors includes GsctoolRequireRebootError tag).
+	_, err := run(ctx, time.Duration(flashTimeout)*time.Second, updateCmd)
+	if err != nil {
+		errorCode, ok := errors.TagValueIn(execs.ErrCodeTag, err)
+		if !ok {
+			return errors.Annotate(err, "reflash cr 50 fw: cannot find error code").Err()
+		}
+		if errorCode != 1 {
+			return errors.Annotate(err, "reflash cr 50 fw: fail to flash %q", info.RunArgs.DUT.Cr50Phase).Err()
+		}
+	}
+	log.Debug(ctx, "cr 50 fw update successfully.")
+	// reboot the DUT for the reflash of the cr 50 fw to be effective.
+	if out, err := run(ctx, 30*time.Second, "reboot && exit"); err != nil {
+		// Client closed connected as rebooting.
+		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+	} else {
+		log.Debug(ctx, "Stdout: %s", out)
+	}
+	// TODO: (@yunzhiyu & @gregorynisbet)
+	// Record cr50 fw update attempt along with time to Karte.
+	log.Debug(ctx, "waiting for %d seconds to let cr50 fw reflash be effective.", waitTimeout)
+	time.Sleep(time.Duration(waitTimeout) * time.Second)
+	return nil
+}
+
 func init() {
 	execs.Register("cros_update_cr50_label", updateCr50LabelExec)
 	execs.Register("cros_update_cr50_key_id_label", updateCr50KeyIdLabelExec)
+	execs.Register("reflash_cr_50_fw", reflashCr50FwExec)
 }

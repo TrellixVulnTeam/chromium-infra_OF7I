@@ -155,6 +155,7 @@ const (
 )
 
 // Cr50Phase describes different phases of CR50 firmware used on DUT.
+// Label indicating the cr50 image type.
 type Cr50Phase string
 
 const (
@@ -164,6 +165,7 @@ const (
 )
 
 // Cr50KeyEnv describes key env for cr50 RW version.
+// Label indicating the cr50 RW version.
 type Cr50KeyEnv string
 
 const (
