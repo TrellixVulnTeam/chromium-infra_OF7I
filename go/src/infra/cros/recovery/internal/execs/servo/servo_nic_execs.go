@@ -57,7 +57,7 @@ func servoAuditNICMacAddressExec(ctx context.Context, info *execs.ExecInfo) erro
 	}
 	cachedMacAddressFromServo := res.Value.GetString_()
 	if cachedMacAddressFromServo == "" || cachedMacAddressFromServo != macAddressFromDUT {
-		if _, err := ServodCallSet(ctx, info.RunArgs, macAddressServoCmd, macAddressFromDUT); err != nil {
+		if err := info.NewServod().Set(ctx, macAddressServoCmd, macAddressFromDUT); err != nil {
 			log.Debug(ctx, `Fail to update "macaddr" to value: %s`, macAddressFromDUT)
 			return errors.Annotate(err, "servo audit nic mac address").Err()
 		}

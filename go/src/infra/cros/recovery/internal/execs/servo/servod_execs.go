@@ -40,37 +40,6 @@ func servodLidopenActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
-func servodLidopenRecoveryActionExec(ctx context.Context, info *execs.ExecInfo) error {
-	res, err := ServodCallGet(ctx, info.RunArgs, "lid_open")
-	if err != nil {
-		return errors.Annotate(err, "servod lid_open recovery").Err()
-	} else if res.Value.GetString_() == "yes" {
-		log.Debug(ctx, "Servod lid_open recovery: received expected value, skip the recovery execution.")
-		return nil
-	}
-	// Fix is to first try to set `no` then 'yes'. Then verify.
-	// TODO(otabek@): Remove when add right execs.
-	res, err = ServodCallSet(ctx, info.RunArgs, "lid_open", "no")
-	if err != nil {
-		return errors.Annotate(err, "servod lid_open recovery").Err()
-	}
-	res, err = ServodCallSet(ctx, info.RunArgs, "lid_open", "yes")
-	if err != nil {
-		return errors.Annotate(err, "servod lid_open recovery").Err()
-	}
-	// Wait 5 seconds to apply effect.
-	log.Debug(ctx, "Servod lid_open recovery: waiting 5 seconds to apply after set lid_open to `yes`.")
-	time.Sleep(5 * time.Second)
-	res, err = ServodCallGet(ctx, info.RunArgs, "lid_open")
-	if err != nil {
-		return errors.Annotate(err, "servod lid_open").Err()
-	} else if res.Value.GetString_() == "yes" {
-		log.Info(ctx, "Servod lid_open recovery: fixed")
-		return nil
-	}
-	return errors.Reason("servod lid_open recovery: not able to get expected value 'yes' after toggling lid_open attempt").Err()
-}
-
 const (
 	// Time to allow for boot from power off. Among other things, this must account for the 30 second dev-mode
 	// screen delay, time to start the network on the DUT, and the ssh timeout of 120 seconds.
@@ -80,7 +49,7 @@ const (
 )
 
 func servodDUTBootRecoveryModeActionExec(ctx context.Context, info *execs.ExecInfo) error {
-	if _, err := ServodCallSet(ctx, info.RunArgs, "power_state", "rec"); err != nil {
+	if err := info.NewServod().Set(ctx, "power_state", "rec"); err != nil {
 		return errors.Annotate(err, "servod boot in recovery-mode").Err()
 	}
 	run := info.NewRunner(info.RunArgs.DUT.Name)
@@ -91,7 +60,7 @@ func servodDUTBootRecoveryModeActionExec(ctx context.Context, info *execs.ExecIn
 }
 
 func servodDUTColdResetActionExec(ctx context.Context, info *execs.ExecInfo) error {
-	if _, err := ServodCallSet(ctx, info.RunArgs, "power_state", "reset"); err != nil {
+	if err := info.NewServod().Set(ctx, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servod cold_reset dut").Err()
 	}
 	return retry.WithTimeout(ctx, 5*time.Second, dutBootTimeout, func() error {
@@ -172,8 +141,7 @@ func servodSetActiveDutControllerExec(ctx context.Context, info *execs.ExecInfo)
 		return errors.Reason("servod set active dut controller exec: main device is empty.").Err()
 	}
 	command := "active_dut_controller"
-	_, err = ServodCallSet(ctx, info.RunArgs, command, mainDevice)
-	if err != nil {
+	if err = info.NewServod().Set(ctx, command, mainDevice); err != nil {
 		return errors.Annotate(err, "servod set active dut controller exec").Err()
 	}
 	returnedMainDevice, err := servodGetString(ctx, info.RunArgs, command)
@@ -190,7 +158,6 @@ func servodSetActiveDutControllerExec(ctx context.Context, info *execs.ExecInfo)
 func init() {
 	execs.Register("servod_echo", servodEchoActionExec)
 	execs.Register("servod_lidopen", servodLidopenActionExec)
-	execs.Register("servod_lidopen_recover", servodLidopenRecoveryActionExec)
 	execs.Register("servod_dut_rec_mode", servodDUTBootRecoveryModeActionExec)
 	execs.Register("servod_dut_cold_reset", servodDUTColdResetActionExec)
 	execs.Register("servod_has", servodHasExec)

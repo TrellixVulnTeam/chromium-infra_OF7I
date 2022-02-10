@@ -324,8 +324,7 @@ func servoSetExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	command = strings.TrimSpace(command)
 	stringValue = strings.TrimSpace(stringValue)
-	_, err := ServodCallSet(ctx, info.RunArgs, command, stringValue)
-	if err != nil {
+	if err := info.NewServod().Set(ctx, command, stringValue); err != nil {
 		return errors.Annotate(err, "servo match state").Err()
 	}
 	return nil
@@ -560,10 +559,10 @@ func initDutForServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	usbMuxControl := "usb_mux_oe1"
 	if err := info.NewServod().Has(ctx, usbMuxControl); err == nil {
-		if _, err2 := ServodCallSet(ctx, info.RunArgs, usbMuxControl, "on"); err2 != nil {
+		if err2 := info.NewServod().Set(ctx, usbMuxControl, "on"); err2 != nil {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
-		if _, err := ServodCallSet(ctx, info.RunArgs, "image_usbkey_pwr", "off"); err != nil {
+		if err := info.NewServod().Set(ctx, "image_usbkey_pwr", "off"); err != nil {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
 	} else {
@@ -642,7 +641,7 @@ func servoFakeDisconnectDUTExec(ctx context.Context, info *execs.ExecInfo) error
 		uartCmd = servodUartV4P1Cmd
 		log.Debug(ctx, "Using Servod control %q instead", uartCmd)
 	}
-	if _, err := ServodCallSet(ctx, info.RunArgs, uartCmd, disconnectCmd); err != nil {
+	if err := info.NewServod().Set(ctx, uartCmd, disconnectCmd); err != nil {
 		return errors.Annotate(err, "servod fake disconnect servo").Err()
 	}
 	// Formula to cover how long we wait to see the effect
@@ -672,18 +671,18 @@ func servoServodCCToggleExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	// Turning off configuration channel.
 	log.Info(ctx, "Turn off configuration channel and wait %d seconds.", ccOffTimeout)
-	if _, err := ServodCallSet(ctx, info.RunArgs, uartCmd, "cc off"); err != nil {
+	if err := info.NewServod().Set(ctx, uartCmd, "cc off"); err != nil {
 		return errors.Annotate(err, "servod cc toggle").Err()
 	}
 	time.Sleep(time.Duration(ccOffTimeout) * time.Second)
 	// Turning on configuration channel.
 	log.Info(ctx, "Turn on configuration channel and wait %d seconds.", ccOnTimeout)
-	if _, err := ServodCallSet(ctx, info.RunArgs, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
+	if err := info.NewServod().Set(ctx, servodPdRoleCmd, servodPdRoleValueSrc); err != nil {
 		return errors.Annotate(err, "servod cc toggle").Err()
 	}
 	// "servo_dts_mode" is the servod command to enable/disable DTS mode on servo.
 	// It has two value for this cmd: on and off.
-	if _, err := ServodCallSet(ctx, info.RunArgs, "servo_dts_mode", "on"); err != nil {
+	if err := info.NewServod().Set(ctx, "servo_dts_mode", "on"); err != nil {
 		return errors.Annotate(err, "servod cc toggle").Err()
 	}
 	time.Sleep(time.Duration(ccOnTimeout) * time.Second)
@@ -695,16 +694,16 @@ func servoServodCCToggleExec(ctx context.Context, info *execs.ExecInfo) error {
 func servoRebootEcOnDUTExec(ctx context.Context, info *execs.ExecInfo) error {
 	ecUartFlush := "ec_uart_flush"
 	log.Info(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
-	if _, err := ServodCallSet(ctx, info.RunArgs, ecUartFlush, "off"); err != nil {
+	if err := info.NewServod().Set(ctx, ecUartFlush, "off"); err != nil {
 		return errors.Annotate(err, "servod reboot ec on dut").Err()
 	}
 	ecUartCmd := "ec_uart_cmd"
 	log.Info(ctx, `Setting servod command %q to "reboot" value.`, ecUartCmd)
-	if _, err := ServodCallSet(ctx, info.RunArgs, ecUartCmd, "reboot"); err != nil {
+	if err := info.NewServod().Set(ctx, ecUartCmd, "reboot"); err != nil {
 		return errors.Annotate(err, "servod reboot ec on dut").Err()
 	}
 	log.Info(ctx, `Setting servod command %q to "on" value.`, ecUartFlush)
-	if _, err := ServodCallSet(ctx, info.RunArgs, ecUartFlush, "on"); err != nil {
+	if err := info.NewServod().Set(ctx, ecUartFlush, "on"); err != nil {
 		return errors.Annotate(err, "servod reboot ec on dut").Err()
 	}
 	return nil

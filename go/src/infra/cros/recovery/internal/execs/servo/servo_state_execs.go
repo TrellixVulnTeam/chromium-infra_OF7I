@@ -33,7 +33,7 @@ func setServoStateExec(ctx context.Context, info *execs.ExecInfo) error {
 	if servoStateString != strings.ToUpper(servoStateString) {
 		return errors.Reason("set servo state: the servo state string is in wrong format").Err()
 	}
-	log.Info(ctx, "Previous servo state: %s", info.RunArgs.DUT.ServoHost.Servo.State)
+	log.Debug(ctx, "Previous servo state: %s", info.RunArgs.DUT.ServoHost.Servo.State)
 	info.RunArgs.DUT.ServoHost.Servo.State = tlw.ServoState(servoStateString)
 	log.Info(ctx, "Set servo state to be: %s", servoStateString)
 	return nil
