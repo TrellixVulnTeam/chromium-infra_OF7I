@@ -133,14 +133,16 @@ led get-builder -canary 'luci.infra-internal.try:infra-internal-presubmit' | \
   # This is always experimental
   led edit -p '$recipe_engine/runtime={"is_experimental": true}' | \
   # 3pp is py3-only
-  led edit -experiment luci.recipes.use_python3=true |
+  led edit -experiment luci.recipes.use_python3=true | \
   # Add our isolated recipes
   led edit-recipe-bundle | \
   # Add 3pp properties
   led edit \
     -r 3pp \
     -p package_prefix=\"$CIPD_EMAIL\" \
-    "${EXTRA_PROPERTIES[@]}" \
+    "${EXTRA_PROPERTIES[@]}" | \
+  # No 'led' support for setting execution timeout.
+  sed -r 's?(.*)"execution_timeout": .*?\1"execution_timeout": "3h",?' \
   > $TMPFILE
 set +x
 
