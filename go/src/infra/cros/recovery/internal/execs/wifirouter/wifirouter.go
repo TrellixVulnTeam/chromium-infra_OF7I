@@ -14,7 +14,7 @@ import (
 // activeHost finds active host related to the executed plan.
 func activeHost(args *execs.RunArgs) (*tlw.WifiRouterHost, error) {
 	for _, router := range args.DUT.WifiRouterHosts {
-		if router.Name == args.ResourceName {
+		if router.GetName() == args.ResourceName {
 			return router, nil
 		}
 	}

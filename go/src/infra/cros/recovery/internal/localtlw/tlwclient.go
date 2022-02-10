@@ -684,9 +684,9 @@ func (c *tlwClient) cacheDevice(dut *tlw.Dut) {
 		}
 	}
 	for _, router := range dut.WifiRouterHosts {
-		if router != nil && router.Name != "" {
-			c.hostTypes[router.Name] = hostTypeRouter
-			c.hostToParents[router.Name] = name
+		if router != nil && router.GetName() != "" {
+			c.hostTypes[router.GetName()] = hostTypeRouter
+			c.hostToParents[router.GetName()] = name
 		}
 	}
 	if dut.ChameleonHost != nil && dut.ChameleonHost.Name != "" {

@@ -140,6 +140,56 @@ func (RPMOutlet_State) EnumDescriptor() ([]byte, []int) {
 	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{5, 0}
 }
 
+// State of the device.
+type WifiRouterHost_State int32
+
+const (
+	WifiRouterHost_UNSPECIFIED WifiRouterHost_State = 0
+	WifiRouterHost_WORKING     WifiRouterHost_State = 1
+	WifiRouterHost_BROKEN      WifiRouterHost_State = 2
+)
+
+// Enum value maps for WifiRouterHost_State.
+var (
+	WifiRouterHost_State_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "WORKING",
+		2: "BROKEN",
+	}
+	WifiRouterHost_State_value = map[string]int32{
+		"UNSPECIFIED": 0,
+		"WORKING":     1,
+		"BROKEN":      2,
+	}
+)
+
+func (x WifiRouterHost_State) Enum() *WifiRouterHost_State {
+	p := new(WifiRouterHost_State)
+	*p = x
+	return p
+}
+
+func (x WifiRouterHost_State) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WifiRouterHost_State) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_cros_recovery_tlw_models_proto_enumTypes[2].Descriptor()
+}
+
+func (WifiRouterHost_State) Type() protoreflect.EnumType {
+	return &file_infra_cros_recovery_tlw_models_proto_enumTypes[2]
+}
+
+func (x WifiRouterHost_State) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WifiRouterHost_State.Descriptor instead.
+func (WifiRouterHost_State) EnumDescriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{6, 0}
+}
+
 // RunRequest represents result of executed command.
 type RunRequest struct {
 	state         protoimpl.MessageState
@@ -550,6 +600,91 @@ func (x *RPMOutlet) GetState() RPMOutlet_State {
 	return RPMOutlet_UNSPECIFIED
 }
 
+// Router devices
+type WifiRouterHost struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Name name of router device e.g. "chromeos15-row99-rack33-host105-router".
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The state of the wifi router.
+	State WifiRouterHost_State `protobuf:"varint,2,opt,name=state,proto3,enum=chromeos.recovery.WifiRouterHost_State" json:"state,omitempty"`
+	// The model of the router.
+	Model string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	// The board of the router.
+	Board string `protobuf:"bytes,4,opt,name=board,proto3" json:"board,omitempty"`
+	// RPMOutlet the router power connects to if it exists.
+	RPMOutlet *RPMOutlet `protobuf:"bytes,5,opt,name=RPMOutlet,proto3" json:"RPMOutlet,omitempty"`
+}
+
+func (x *WifiRouterHost) Reset() {
+	*x = WifiRouterHost{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WifiRouterHost) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WifiRouterHost) ProtoMessage() {}
+
+func (x *WifiRouterHost) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WifiRouterHost.ProtoReflect.Descriptor instead.
+func (*WifiRouterHost) Descriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WifiRouterHost) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WifiRouterHost) GetState() WifiRouterHost_State {
+	if x != nil {
+		return x.State
+	}
+	return WifiRouterHost_UNSPECIFIED
+}
+
+func (x *WifiRouterHost) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *WifiRouterHost) GetBoard() string {
+	if x != nil {
+		return x.Board
+	}
+	return ""
+}
+
+func (x *WifiRouterHost) GetRPMOutlet() *RPMOutlet {
+	if x != nil {
+		return x.RPMOutlet
+	}
+	return nil
+}
+
 var File_infra_cros_recovery_tlw_models_proto protoreflect.FileDescriptor
 
 var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
@@ -625,9 +760,25 @@ var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
 	0x12, 0x0a, 0x0e, 0x4d, 0x49, 0x53, 0x53, 0x49, 0x4e, 0x47, 0x5f, 0x43, 0x4f, 0x4e, 0x46, 0x49,
 	0x47, 0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x57, 0x52, 0x4f, 0x4e, 0x47, 0x5f, 0x43, 0x4f, 0x4e,
 	0x46, 0x49, 0x47, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x07, 0x57, 0x4f, 0x52, 0x4b, 0x49, 0x4e, 0x47,
-	0x10, 0x03, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f, 0x73,
-	0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74, 0x6c,
-	0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x10, 0x03, 0x22, 0xfe, 0x01, 0x0a, 0x0e, 0x57, 0x69, 0x66, 0x69, 0x52, 0x6f, 0x75, 0x74, 0x65,
+	0x72, 0x48, 0x6f, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x3d, 0x0a, 0x05, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x27, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d,
+	0x65, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e, 0x57, 0x69, 0x66,
+	0x69, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x48, 0x6f, 0x73, 0x74, 0x2e, 0x53, 0x74, 0x61, 0x74,
+	0x65, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x14,
+	0x0a, 0x05, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x62,
+	0x6f, 0x61, 0x72, 0x64, 0x12, 0x3a, 0x0a, 0x09, 0x52, 0x50, 0x4d, 0x4f, 0x75, 0x74, 0x6c, 0x65,
+	0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d, 0x65,
+	0x6f, 0x73, 0x2e, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e, 0x52, 0x50, 0x4d, 0x4f,
+	0x75, 0x74, 0x6c, 0x65, 0x74, 0x52, 0x09, 0x52, 0x50, 0x4d, 0x4f, 0x75, 0x74, 0x6c, 0x65, 0x74,
+	0x22, 0x31, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x0f, 0x0a, 0x0b, 0x55, 0x4e, 0x53,
+	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x57, 0x4f,
+	0x52, 0x4b, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x42, 0x52, 0x4f, 0x4b, 0x45,
+	0x4e, 0x10, 0x02, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f,
+	0x73, 0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74,
+	0x6c, 0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -642,31 +793,35 @@ func file_infra_cros_recovery_tlw_models_proto_rawDescGZIP() []byte {
 	return file_infra_cros_recovery_tlw_models_proto_rawDescData
 }
 
-var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_infra_cros_recovery_tlw_models_proto_goTypes = []interface{}{
 	(RunRPMActionRequest_Action)(0),   // 0: chromeos.recovery.RunRPMActionRequest.Action
 	(RPMOutlet_State)(0),              // 1: chromeos.recovery.RPMOutlet.State
-	(*RunRequest)(nil),                // 2: chromeos.recovery.RunRequest
-	(*ProvisionRequest)(nil),          // 3: chromeos.recovery.ProvisionRequest
-	(*CallBluetoothPeerRequest)(nil),  // 4: chromeos.recovery.CallBluetoothPeerRequest
-	(*CallBluetoothPeerResponse)(nil), // 5: chromeos.recovery.CallBluetoothPeerResponse
-	(*RunRPMActionRequest)(nil),       // 6: chromeos.recovery.RunRPMActionRequest
-	(*RPMOutlet)(nil),                 // 7: chromeos.recovery.RPMOutlet
-	(*durationpb.Duration)(nil),       // 8: google.protobuf.Duration
-	(*xmlrpc.Value)(nil),              // 9: chromiumos.config.api.test.xmlrpc.Value
+	(WifiRouterHost_State)(0),         // 2: chromeos.recovery.WifiRouterHost.State
+	(*RunRequest)(nil),                // 3: chromeos.recovery.RunRequest
+	(*ProvisionRequest)(nil),          // 4: chromeos.recovery.ProvisionRequest
+	(*CallBluetoothPeerRequest)(nil),  // 5: chromeos.recovery.CallBluetoothPeerRequest
+	(*CallBluetoothPeerResponse)(nil), // 6: chromeos.recovery.CallBluetoothPeerResponse
+	(*RunRPMActionRequest)(nil),       // 7: chromeos.recovery.RunRPMActionRequest
+	(*RPMOutlet)(nil),                 // 8: chromeos.recovery.RPMOutlet
+	(*WifiRouterHost)(nil),            // 9: chromeos.recovery.WifiRouterHost
+	(*durationpb.Duration)(nil),       // 10: google.protobuf.Duration
+	(*xmlrpc.Value)(nil),              // 11: chromiumos.config.api.test.xmlrpc.Value
 }
 var file_infra_cros_recovery_tlw_models_proto_depIdxs = []int32{
-	8, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
-	9, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	9, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	0, // 3: chromeos.recovery.RunRPMActionRequest.action:type_name -> chromeos.recovery.RunRPMActionRequest.Action
-	1, // 4: chromeos.recovery.RPMOutlet.state:type_name -> chromeos.recovery.RPMOutlet.State
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	10, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
+	11, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	11, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	0,  // 3: chromeos.recovery.RunRPMActionRequest.action:type_name -> chromeos.recovery.RunRPMActionRequest.Action
+	1,  // 4: chromeos.recovery.RPMOutlet.state:type_name -> chromeos.recovery.RPMOutlet.State
+	2,  // 5: chromeos.recovery.WifiRouterHost.state:type_name -> chromeos.recovery.WifiRouterHost.State
+	8,  // 6: chromeos.recovery.WifiRouterHost.RPMOutlet:type_name -> chromeos.recovery.RPMOutlet
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_infra_cros_recovery_tlw_models_proto_init() }
@@ -747,14 +902,26 @@ func file_infra_cros_recovery_tlw_models_proto_init() {
 				return nil
 			}
 		}
+		file_infra_cros_recovery_tlw_models_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WifiRouterHost); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_cros_recovery_tlw_models_proto_rawDesc,
-			NumEnums:      2,
-			NumMessages:   6,
+			NumEnums:      3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -18,7 +18,7 @@ func setStateBrokenExec(ctx context.Context, args *execs.RunArgs, actionArgs []s
 	if h, err := activeHost(args); err != nil {
 		return errors.Annotate(err, "set state broken").Err()
 	} else {
-		h.State = tlw.WifiRouterStateBroken
+		h.State = tlw.WifiRouterHost_BROKEN
 	}
 	return nil
 }
@@ -28,7 +28,7 @@ func setStateWorkingExec(ctx context.Context, args *execs.RunArgs, actionArgs []
 	if h, err := activeHost(args); err != nil {
 		return errors.Annotate(err, "set state working").Err()
 	} else {
-		h.State = tlw.WifiRouterStateWorking
+		h.State = tlw.WifiRouterHost_WORKING
 	}
 	return nil
 }

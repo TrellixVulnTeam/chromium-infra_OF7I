@@ -367,31 +367,6 @@ type BluetoothPeerHost struct {
 	State BluetoothPeerState
 }
 
-// RouterState describes the state of bluetooth peer device.
-type WifiRouterState string
-
-const (
-	WifiRouterStateUnspecified WifiRouterState = "UNSPECIFIED"
-	// Device and software on it is working as expected.
-	WifiRouterStateWorking WifiRouterState = "WORKING"
-	// Device is broken or not working as expected.
-	WifiRouterStateBroken WifiRouterState = "BROKEN"
-)
-
-// Router devices
-type WifiRouterHost struct {
-	// Name is the resource name.
-	Name string
-	// State of the device.
-	State WifiRouterState
-	// Model
-	Model string
-	// Board
-	Board string
-	// RPM
-	RPMOutlet *RPMOutlet
-}
-
 // ServoHost holds info about host to manage servod services and verify connected servo devices.
 // Example: labstation, servo-host container.
 type ServoHost struct {

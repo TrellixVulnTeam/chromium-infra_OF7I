@@ -442,7 +442,7 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 	case PlanWifiRouter:
 		var resources []string
 		for _, router := range dut.WifiRouterHosts {
-			resources = append(resources, router.Name)
+			resources = append(resources, router.GetName())
 		}
 		return resources
 	}

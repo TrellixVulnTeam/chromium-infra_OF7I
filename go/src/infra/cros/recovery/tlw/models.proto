@@ -93,3 +93,24 @@ message RPMOutlet {
   // State of the component.
   State state = 3;
 }
+
+
+// Router devices
+message WifiRouterHost {
+  // Name name of router device e.g. "chromeos15-row99-rack33-host105-router".
+  string name = 1;
+  // State of the device.
+  enum State {
+    UNSPECIFIED = 0;
+    WORKING = 1;
+    BROKEN = 2;
+  }
+  // The state of the wifi router.
+  State state = 2;
+  // The model of the router.
+  string model = 3;
+  // The board of the router.
+  string board = 4;
+  // RPMOutlet the router power connects to if it exists.
+  RPMOutlet RPMOutlet = 5;
+}
