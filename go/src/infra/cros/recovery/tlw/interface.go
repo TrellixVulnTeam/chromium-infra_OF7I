@@ -194,6 +194,8 @@ type Dut struct {
 	Model string
 	// Hardware identifier.
 	Hwid string
+	// Hardware phase.
+	Phase string
 	// Serial number of the DUT.
 	SerialNumber string
 	// SetupType describes the setup of the DUT, which affects how it is verified/repaired.

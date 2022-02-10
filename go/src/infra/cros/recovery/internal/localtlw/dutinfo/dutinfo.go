@@ -114,6 +114,7 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 	ds := data.GetDutState()
 	dc := data.GetDeviceConfig()
 	machine := data.GetMachine()
+	make := data.GetManufacturingConfig()
 	name := lc.GetName()
 	var battery *tlw.DUTBattery
 	supplyType := tlw.PowerSupplyTypeUnspecified
@@ -158,12 +159,13 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		Board:              machine.GetChromeosMachine().GetBuildTarget(),
 		Model:              machine.GetChromeosMachine().GetModel(),
 		Hwid:               machine.GetChromeosMachine().GetHwid(),
+		Phase:              make.DevicePhase.String()[len("PHASE_"):],
 		SerialNumber:       machine.GetSerialNumber(),
 		SetupType:          setup,
 		State:              dutstate.ConvertFromUFSState(lc.GetResourceState()),
 		PowerSupplyType:    supplyType,
 		Storage:            createDUTStorage(dc, ds),
-		Wifi:               createDUTWifi(data.GetManufacturingConfig(), ds),
+		Wifi:               createDUTWifi(make, ds),
 		WifiRouterHosts:    createWifiRouterHosts(p.GetWifi()),
 		Bluetooth:          createDUTBluetooth(ds, dc),
 		BluetoothPeerHosts: bluetoothPeerHosts,
@@ -192,6 +194,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 	ds := data.GetDutState()
 	dc := data.GetDeviceConfig()
 	machine := data.GetMachine()
+	make := data.GetManufacturingConfig()
 	name := lc.GetName()
 	d := &tlw.Dut{
 		Id:              machine.GetName(),
@@ -199,6 +202,7 @@ func adaptUfsLabstationToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error
 		Board:           machine.GetChromeosMachine().GetBuildTarget(),
 		Model:           machine.GetChromeosMachine().GetModel(),
 		Hwid:            machine.GetChromeosMachine().GetHwid(),
+		Phase:           make.DevicePhase.String()[len("PHASE_"):],
 		SerialNumber:    machine.GetSerialNumber(),
 		SetupType:       tlw.DUTSetupTypeLabstation,
 		PowerSupplyType: tlw.PowerSupplyTypeACOnly,
