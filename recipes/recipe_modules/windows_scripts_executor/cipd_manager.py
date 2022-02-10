@@ -63,10 +63,12 @@ class CIPDManager:
     if not local_path in self._downloads_cache:
       e_file = self._cipd.EnsureFile()
       # cipd expects unix path
-      loc = '/'.join([cipd_src.refs, cipd_src.package, cipd_src.platform])
+      loc = '/'.join([cipd_src.package, cipd_src.platform])
       self.add_src_to_ensurefile(cipd_src, loc, e_file)
+      # add refs to root dir. This will ensure that the root dirs are unique.
+      # cipd will delete older files if the root dir is same
       self._cipd.ensure(
-          self._cache,
+          self._cache.join(cipd_src.refs),
           e_file,
           name="Download {}".format(self.get_cipd_url(cipd_src)))
       self._downloads_cache[local_path] = cipd_src

@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 INSTALL_PACKAGE_CMD = 'Add-WindowsPackage'
+INSTALL_PACKAGE_SCRIPT = 'Add-WindowsPackage.ps1'
 INSTALL_PACKAGE_PATH = '-PackagePath {}'
 INSTALL_PACKAGE_ROOT = '-Path {}'
 INSTALL_PACKAGE_LOG_PATH = '-LogPath "{}"'
@@ -10,6 +11,7 @@ INSTALL_PACKAGE_LOG_LEVEL = '-LogLevel {}'
 
 
 def install_package(powershell,
+                    scripts,
                     awp,
                     package,
                     mnt_dir,
@@ -30,6 +32,6 @@ def install_package(powershell,
 
   return powershell(
       'Install package {}'.format(awp.name),
-      INSTALL_PACKAGE_CMD,
+      scripts.join(INSTALL_PACKAGE_SCRIPT),
       logs=[logs.join(INSTALL_PACKAGE_CMD)],
       args=args)

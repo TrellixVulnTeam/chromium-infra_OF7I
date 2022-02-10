@@ -234,8 +234,8 @@ class OfflineWinPECustomization(customization.Customization):
           awp: actions.AddWindowsPackage proto object
           src: Path to the package on bot disk
     """
-    add_windows_package.install_package(self._powershell, awp, src,
-                                        self._workdir.join('mount'),
+    add_windows_package.install_package(self._powershell, self._scripts, awp,
+                                        src, self._workdir.join('mount'),
                                         self._scratchpad)
 
   def add_file(self, af):
