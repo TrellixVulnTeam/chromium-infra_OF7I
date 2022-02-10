@@ -8,6 +8,7 @@ package execs
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -38,7 +39,7 @@ func Register(name string, f ExecFunction) {
 	knownExecMap[name] = f
 }
 
-// RunArgs holds input arguments for an exec function.
+// RunArgs holds plan input arguments.
 type RunArgs struct {
 	// Resource name targeted by plan.
 	ResourceName string
@@ -58,13 +59,26 @@ type RunArgs struct {
 	BuildbucketID string
 }
 
+// ExecInfo holds all data required to run exec.
+// The struct created every time new for each exec run.
+type ExecInfo struct {
+	RunArgs *RunArgs
+	// Name of exec.
+	Name string
+	// Extra arguments specified per action for exec.
+	ActionArgs []string
+	// Timeout specified per action.
+	ActionTimeout time.Duration
+}
+
 // Run runs exec function provided by this package by name.
-func Run(ctx context.Context, name string, args *RunArgs, actionArgs []string) error {
-	e, ok := knownExecMap[name]
+func Run(ctx context.Context, ei *ExecInfo) error {
+	e, ok := knownExecMap[ei.Name]
 	if !ok {
-		return errors.Reason("exec %q: not found", name).Err()
+		return errors.Reason("exec %q: not found", ei.Name).Err()
 	}
-	return e(ctx, args, actionArgs)
+	// TODO: Pass actionTimeout as new argument.
+	return e(ctx, ei.RunArgs, ei.ActionArgs)
 }
 
 // Exist check if exec function with name is present.

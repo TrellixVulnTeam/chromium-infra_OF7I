@@ -19,7 +19,7 @@ func TestRunExec(t *testing.T) {
 	actionArgs := []string{"action", "args"}
 	t.Run("Incorrect name", func(t *testing.T) {
 		t.Parallel()
-		err := Run(ctx, actionExecWrong, args, actionArgs)
+		err := Run(ctx, &ExecInfo{Name: actionExecWrong, RunArgs: args, ActionArgs: actionArgs})
 		if err == nil {
 			t.Errorf("Expected to fail")
 		}
@@ -29,19 +29,19 @@ func TestRunExec(t *testing.T) {
 	})
 	t.Run("Good sample", func(t *testing.T) {
 		t.Parallel()
-		if err := Run(ctx, actionExecGood, args, actionArgs); err != nil {
+		if err := Run(ctx, &ExecInfo{Name: actionExecGood, RunArgs: args, ActionArgs: actionArgs}); err != nil {
 			t.Errorf("Expected to pass")
 		}
 	})
 	t.Run("Bad sample", func(t *testing.T) {
 		t.Parallel()
-		if err := Run(ctx, actionExecBad, args, actionArgs); err == nil {
+		if err := Run(ctx, &ExecInfo{Name: actionExecBad, RunArgs: args, ActionArgs: actionArgs}); err == nil {
 			t.Errorf("Expected to have status Fail")
 		}
 	})
 	t.Run("Send metrics action", func(t *testing.T) {
 		t.Parallel()
-		if err := Run(ctx, actionExecMetricsAction, args, actionArgs); err != nil {
+		if err := Run(ctx, &ExecInfo{Name: actionExecMetricsAction, RunArgs: args, ActionArgs: actionArgs}); err != nil {
 			t.Errorf("Expected to pass")
 		}
 	})
