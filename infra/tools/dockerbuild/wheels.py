@@ -152,6 +152,18 @@ def select_numpy(_system, wheel):
       pyversions=['py3'],
   )
 
+
+SPECS.update({
+    s.spec.tag: s for s in assert_sorted(
+        'ConditionalWheel',
+        ConditionalWheel(
+            'numpy',
+            '1.2x.supported.1',
+            select_numpy,
+        ),
+    )
+})
+
 # When adding a wheel, please add it to the appropriate section.
 
 # SourceOrPrebuilts. These are for packages on PyPi which have prebuilts for
@@ -167,6 +179,7 @@ _CFFI_DEPENDENCY = SourceOrPrebuilt(
     packaged=[],
 )
 
+_NUMPY_DEPENDENCY = SPECS['numpy-1.2x.supported.1']
 
 # lxml doesn't emmbed dependencies in the repo. Instead it downloads
 # the dependencies' source code in the build script. We use
@@ -659,11 +672,7 @@ SPECS.update({
                     'cmake',
                 ],
                 local=[
-                    ConditionalWheel(
-                        'numpy',
-                        '1.2x.supported.1',
-                        select_numpy,
-                    ),
+                    _NUMPY_DEPENDENCY,
                 ]),
             packaged=(),
             skip_plat=[
@@ -696,11 +705,7 @@ SPECS.update({
                     'Cython>=0.29.21,<3',
                 ],
                 local=[
-                    ConditionalWheel(
-                        'numpy',
-                        '1.2x.supported.1',
-                        select_numpy,
-                    ),
+                    _NUMPY_DEPENDENCY,
                 ],
             ),
             packaged=[
