@@ -54,7 +54,7 @@ def RunSteps(api, inputs):
 
   configs = []
 
-  with api.step.nest('read user config'):
+  with api.step.nest('read user config') as c:
     # download the configs repo
     api.gclient.set_config('infradata_config')
     api.gclient.c.solutions[0].revision = 'origin/main'
@@ -73,18 +73,25 @@ def RunSteps(api, inputs):
           test_data=['first.cfg', 'second.cfg'])
       reqs = []
       for cfg in cfgs:
-        configs.append(
-            api.file.read_proto(
-                name='Reading ' + inputs.config_path,
-                source=cfg,
-                msg_class=wib.Image,
-                codec='TEXTPB',
-                test_proto=t.WPE_IMAGE(
-                    image='test',
-                    arch=wib.ARCH_X86,
-                    customization='test_cust',
-                    sub_customization='tests',
-                    action_list=[])))
+        if str(cfg).endswith('.cfg'):
+          try:
+            configs.append(
+                api.file.read_proto(
+                    name='Reading ' + inputs.config_path,
+                    source=cfg,
+                    msg_class=wib.Image,
+                    codec='TEXTPB',
+                    test_proto=t.WPE_IMAGE(
+                        image='test',
+                        arch=wib.ARCH_X86,
+                        customization='test_cust',
+                        sub_customization='tests',
+                        action_list=[])))
+          except ValueError as e:  #pragma: no cover
+            _, name = api.path.split(cfg)
+            summary = c.step_summary_text
+            summary += 'Failed to read {}: {} <br>'.format(name, e)
+            c.step_summary_text = summary
 
   if not configs:
     # If there are no config files, exit
