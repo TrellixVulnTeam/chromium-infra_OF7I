@@ -138,6 +138,8 @@ func handleBrowserBot(ctx context.Context, c ufsAPI.FleetClient, id string, r sw
 	}
 	return &botInfo{
 		Dimensions: map[string][]string{
+			"ufs_state": {dutstate.ConvertFromUFSState(res.GetBrowserDeviceData().GetHost().GetResourceState()).String()},
+			// Duplicate state to dut_state to reuse analytics logic built for ChromeOS lab
 			"dut_state": {dutstate.ConvertFromUFSState(res.GetBrowserDeviceData().GetHost().GetResourceState()).String()},
 		},
 	}, nil
