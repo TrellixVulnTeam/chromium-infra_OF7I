@@ -7,6 +7,8 @@ package model
 import (
 	"testing"
 
+	gofinditpb "infra/appengine/gofindit/proto"
+
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -49,20 +51,50 @@ func TestDatastoreModel(t *testing.T) {
 			}
 			So(datastore.Put(c, compile_failure), ShouldBeNil)
 
-			compile_failure_keys := []*datastore.Key{datastore.KeyForObj(c, compile_failure)}
 			compile_failure_analysis := &CompileFailureAnalysis{
-				CompileFailures:    compile_failure_keys,
+				CompileFailure:     datastore.KeyForObj(c, compile_failure),
 				CreateTime:         cl.Now(),
 				StartTime:          cl.Now(),
 				EndTime:            cl.Now(),
-				Status:             AnalysisStatus_Completed,
+				Status:             gofinditpb.AnalysisStatus_FOUND,
 				FirstFailedBuildId: 88000998778,
 				LastPassedBuildId:  873929392903,
+				InitialRegressionRange: &gofinditpb.RegressionRange{
+					LassPassed: &gofinditpb.GitilesCommit{
+						GitilesHost:    "host",
+						GitilesProject: "proj",
+						GitilesRef:     "ref",
+						GitilesId:      "id1",
+					},
+					FirstFailed: &gofinditpb.GitilesCommit{
+						GitilesHost:    "host",
+						GitilesProject: "proj",
+						GitilesRef:     "ref",
+						GitilesId:      "id2",
+					},
+					NumberOfRevisions: 10,
+				},
 			}
 			So(datastore.Put(c, compile_failure_analysis), ShouldBeNil)
 
-			rerun_build := &CompileRerunBuild{
+			heuristic_analysis := &CompileHeuristicAnalysis{
 				ParentAnalysis: datastore.KeyForObj(c, compile_failure_analysis),
+				StartTime:      cl.Now(),
+				EndTime:        cl.Now(),
+				Status:         gofinditpb.AnalysisStatus_CREATED,
+			}
+			So(datastore.Put(c, heuristic_analysis), ShouldBeNil)
+
+			nthsection_analysis := &CompileNthSectionAnalysis{
+				ParentAnalysis: datastore.KeyForObj(c, compile_failure_analysis),
+				StartTime:      cl.Now(),
+				EndTime:        cl.Now(),
+				Status:         gofinditpb.AnalysisStatus_CREATED,
+			}
+			So(datastore.Put(c, nthsection_analysis), ShouldBeNil)
+
+			rerun_build := &CompileRerunBuild{
+				ParentAnalysis: datastore.KeyForObj(c, nthsection_analysis),
 				LuciBuild: LuciBuild{
 					BuildId:     88128398584903,
 					Project:     "chromium",

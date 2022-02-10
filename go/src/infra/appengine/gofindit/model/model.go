@@ -8,6 +8,8 @@ package model
 import (
 	"time"
 
+	gofinditpb "infra/appengine/gofindit/proto"
+
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/gae/service/datastore"
 )
@@ -19,16 +21,6 @@ const (
 	BuildFailureType_Test    BuildFailureType = "Test"
 	BuildFailureType_Infra   BuildFailureType = "Infra"
 	BuildFailureType_Other   BuildFailureType = "Other"
-)
-
-type AnalysisStatus string
-
-const (
-	AnalysisStatus_Pending   AnalysisStatus = "Pending"
-	AnalysisStatus_Running   AnalysisStatus = "Running"
-	AnalysisStatus_Completed AnalysisStatus = "Completed"
-	AnalysisStatus_Error     AnalysisStatus = "Error"
-	AnalysisStatus_Skipped   AnalysisStatus = "Skipped"
 )
 
 type GitilesCommit struct {
@@ -92,8 +84,8 @@ type CompileFailure struct {
 // some metadata for the analysis.
 type CompileFailureAnalysis struct {
 	Id int64 `gae:"$id"`
-	// Keys to the CompileFailure
-	CompileFailures []*datastore.Key `gae:"compile_failures"`
+	// Key to the CompileFailure that this analysis analyses.
+	CompileFailure *datastore.Key `gae:"compile_failure"`
 	// Time when the analysis is created.
 	CreateTime time.Time `gae:"create_time"`
 	// Time when the analysis starts to run.
@@ -101,12 +93,14 @@ type CompileFailureAnalysis struct {
 	// Time when the analysis runs to the end.
 	EndTime time.Time `gae:"end_time"`
 	// Status of the analysis
-	Status AnalysisStatus `gae:"status"`
+	Status gofinditpb.AnalysisStatus `gae:"status"`
 	// Id of the build in which the compile failures occurred the first time in
 	// a sequence of consecutive failed builds.
 	FirstFailedBuildId int64 `gae:"first_failed_build_id"`
 	// Id of the latest build in which the failures did not happen.
 	LastPassedBuildId int64 `gae:"last_passed_build_id"`
+	// Initial regression range to find the culprit
+	InitialRegressionRange *gofinditpb.RegressionRange `gae:"initial_regression_range"`
 }
 
 // CompileFailureInRerunBuild is a compile failure in a rerun build.
@@ -119,11 +113,11 @@ type CompileFailureInRerunBuild struct {
 	OutputTargets string `gae:"output_targets"`
 }
 
-// CompileRerunBuild is one rerun build for CompileFailureAnalysis.
+// CompileRerunBuild is one rerun build for CompileNthSectionAnalysis.
 type CompileRerunBuild struct {
 	// Id is the build Id.
 	Id int64 `gae:"$id"`
-	// Key to the parent CompileFailureAnalysis
+	// Key to the parent CompileNthSectionAnalysis.
 	ParentAnalysis *datastore.Key `gae:"$parent"`
 	LuciBuild
 	// Failures occurring in the rerun build.
@@ -150,9 +144,35 @@ type SuspectHint struct {
 
 // Suspect is the suspect of heuristic analysis.
 type Suspect struct {
-	// Key to the CompileFailureAnalysis that results in this suspect.
+	// Key to the CompileFailureHeuristicAnalysis that results in this suspect.
 	ParentAnalysis *datastore.Key `gae:"parent"`
 	// SuspectHint describes the reason why a CL is a suspect.
 	Hint SuspectHint `gae:"hint"`
 	GitilesCommit
+}
+
+// CompileHeuristicAnalysis is heuristic analysis for compile failures.
+type CompileHeuristicAnalysis struct {
+	Id int64 `gae:"$id"`
+	// Key to the parent CompileFailureAnalysis
+	ParentAnalysis *datastore.Key `gae:"parent"`
+	// Time when the analysis starts to run.
+	StartTime time.Time `gae:"start_time"`
+	// Time when the analysis ends.
+	EndTime time.Time `gae:"end_time"`
+	// Status of the analysis
+	Status gofinditpb.AnalysisStatus `gae:"status"`
+}
+
+// CompileNthSectionAnalysis is nth-section analysis for compile failures.
+type CompileNthSectionAnalysis struct {
+	Id int64 `gae:"$id"`
+	// Key to the parent CompileFailureAnalysis
+	ParentAnalysis *datastore.Key `gae:"parent"`
+	// Time when the analysis starts to run.
+	StartTime time.Time `gae:"start_time"`
+	// Time when the analysis ends.
+	EndTime time.Time `gae:"end_time"`
+	// Status of the analysis
+	Status gofinditpb.AnalysisStatus `gae:"status"`
 }
