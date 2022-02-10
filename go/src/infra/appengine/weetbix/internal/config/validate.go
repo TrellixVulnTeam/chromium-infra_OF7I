@@ -305,9 +305,9 @@ func validateMetricThreshold(ctx *validation.Context, t *configpb.MetricThreshol
 		return
 	}
 
-	validateNonNegative(ctx, t.OneDay, "one_day")
-	validateNonNegative(ctx, t.ThreeDay, "three_day")
-	validateNonNegative(ctx, t.SevenDay, "seven_day")
+	validateThresholdValue(ctx, t.OneDay, "one_day")
+	validateThresholdValue(ctx, t.ThreeDay, "three_day")
+	validateThresholdValue(ctx, t.SevenDay, "seven_day")
 }
 
 func validatePriorityHysteresisPercent(ctx *validation.Context, value int64) {
@@ -321,10 +321,13 @@ func validatePriorityHysteresisPercent(ctx *validation.Context, value int64) {
 	ctx.Exit()
 }
 
-func validateNonNegative(ctx *validation.Context, value *int64, fieldName string) {
+func validateThresholdValue(ctx *validation.Context, value *int64, fieldName string) {
 	ctx.Enter(fieldName)
 	if value != nil && *value < 0 {
 		ctx.Errorf("value must be non-negative")
+	}
+	if value != nil && *value >= 1000*1000 {
+		ctx.Errorf("value must be less than one million")
 	}
 	ctx.Exit()
 }

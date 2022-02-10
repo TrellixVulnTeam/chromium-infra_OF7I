@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"strings"
 
+	"google.golang.org/genproto/protobuf/field_mask"
+
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	mpb "infra/monorailv2/api/v3/api_proto"
-
-	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 const (
@@ -236,21 +236,37 @@ func (g *Generator) MakeUpdate(issue *mpb.Issue, comments []*mpb.Comment) *mpb.M
 func (g *Generator) prepareBugVerifiedUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
 	resolved := g.clusterResolved()
 	var status string
-	var comment string
+	var message strings.Builder
 	if resolved {
 		status = VerifiedStatus
-		comment = "No further occurances of the failure cluster have been identified. Weetbix is marking the issue verified."
+
+		oldPriorityIndex := len(g.monorailCfg.Priorities) - 1
+		// A priority index of len(g.monorailCfg.Priorities) indicates
+		// a priority lower than the lowest defined priority (i.e. bug verified.)
+		newPriorityIndex := len(g.monorailCfg.Priorities)
+
+		message.WriteString("Because:\n")
+		message.WriteString(g.priorityDecreaseJustification(oldPriorityIndex, newPriorityIndex))
+		message.WriteString("Weetbix is marking the issue verified.")
 	} else {
 		if issue.GetOwner().GetUser() != "" {
 			status = AssignedStatus
 		} else {
 			status = UntriagedStatus
 		}
-		comment = "Weetbix has identified new occurances of the failure cluster. The bug has been re-opened."
+
+		// A priority index of len(g.monorailCfg.Priorities) indicates
+		// a priority lower than the lowest defined priority (i.e. bug verified.)
+		oldPriorityIndex := len(g.monorailCfg.Priorities)
+		newPriorityIndex := len(g.monorailCfg.Priorities) - 1
+
+		message.WriteString("Because:\n")
+		message.WriteString(g.priorityIncreaseJustification(oldPriorityIndex, newPriorityIndex))
+		message.WriteString("Weetbix has re-opened the bug.")
 	}
 	update.Issue.Status = &mpb.Issue_StatusValue{Status: status}
 	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "status")
-	return comment
+	return message.String()
 }
 
 func prepareManualPriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
@@ -262,15 +278,33 @@ func prepareManualPriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) strin
 }
 
 func (g *Generator) preparePriorityUpdate(issue *mpb.Issue, update *mpb.IssueDelta) string {
+	newPriority := g.clusterPriority()
+
 	update.Issue.FieldValues = []*mpb.FieldValue{
 		{
 			Field: g.priorityFieldName(),
-			Value: g.clusterPriority(),
+			Value: newPriority,
 		},
 	}
 	update.UpdateMask.Paths = append(update.UpdateMask.Paths, "field_values")
-	return fmt.Sprintf("The impact of this bug's test failures has changed. "+
-		"Weetbix has adjusted the bug priority from %v to %v.", g.IssuePriority(issue), g.clusterPriority())
+
+	oldPriority := g.IssuePriority(issue)
+	oldPriorityIndex := g.indexOfPriority(oldPriority)
+	newPriorityIndex := g.indexOfPriority(newPriority)
+
+	if newPriorityIndex < oldPriorityIndex {
+		var message strings.Builder
+		message.WriteString("Because:\n")
+		message.WriteString(g.priorityIncreaseJustification(oldPriorityIndex, newPriorityIndex))
+		message.WriteString(fmt.Sprintf("Weetbix has increased the bug priority from %v to %v.", oldPriority, newPriority))
+		return message.String()
+	} else {
+		var message strings.Builder
+		message.WriteString("Because:\n")
+		message.WriteString(g.priorityDecreaseJustification(oldPriorityIndex, newPriorityIndex))
+		message.WriteString(fmt.Sprintf("Weetbix has decreased the bug priority from %v to %v.", oldPriority, newPriority))
+		return message.String()
+	}
 }
 
 // hasManuallySetPriority returns whether the the given issue has a manually
@@ -388,11 +422,13 @@ func (g *Generator) isCompatibleWithVerified(verified bool) bool {
 	if verified {
 		// The issue is verified. Only reopen if there is enough impact
 		// to exceed the threshold with hysteresis.
-		return !g.impact.MeetsInflatedThreshold(lowestPriority.Threshold, hysteresisPerc)
+		inflatedThreshold := bugs.InflateThreshold(lowestPriority.Threshold, hysteresisPerc)
+		return !g.impact.MeetsThreshold(inflatedThreshold)
 	} else {
 		// The issue is not verified. Only close if the impact falls
 		// below the threshold with hysteresis.
-		return g.impact.MeetsInflatedThreshold(lowestPriority.Threshold, -hysteresisPerc)
+		deflatedThreshold := bugs.InflateThreshold(lowestPriority.Threshold, -hysteresisPerc)
+		return g.impact.MeetsThreshold(deflatedThreshold)
 	}
 }
 
@@ -406,36 +442,144 @@ func (g *Generator) isCompatibleWithPriority(issuePriority string) bool {
 		// one of the configured priorities.
 		return false
 	}
-
-	p := g.monorailCfg.Priorities[index]
-	var nextP *configpb.MonorailPriority
-	if (index - 1) >= 0 {
-		nextP = g.monorailCfg.Priorities[index-1]
-	}
 	hysteresisPerc := g.monorailCfg.PriorityHysteresisPercent
-	// The cluster does not satisfy its current priority if it falls below
-	// the current priority's thresholds, even after deflating them by
-	// the hystersis margin.
-	if !g.impact.MeetsInflatedThreshold(p.Threshold, -hysteresisPerc) {
-		return false
+	lowestAllowedPriority := g.clusterPriorityWithInflatedThresholds(hysteresisPerc)
+	highestAllowedPriority := g.clusterPriorityWithInflatedThresholds(-hysteresisPerc)
+
+	// Check the cluster has a priority no less than lowest priority
+	// and no greater than highest priority allowed by hysteresis.
+	// Note that a lower priority index corresponds to a higher
+	// priority (e.g. P0 <-> index 0, P1 <-> index 1, etc.)
+	return g.indexOfPriority(lowestAllowedPriority) >= index &&
+		index >= g.indexOfPriority(highestAllowedPriority)
+}
+
+// priorityDecreaseJustification outputs a human-readable justification
+// explaining why bug priority was decreased (including to the point where
+// a priority no longer applied, and the issue was marked as verified.)
+//
+// priorityIndex(s) are indices into the per-project priority list:
+//   g.monorailCfg.Priorities
+// The special index len(g.monorailCfg.Priorities) indicates a verified
+// issue, i.e. an issue with so low priority that it does not deserve
+// to be open.
+//
+// Example output:
+// "- Presubmit Runs Failed (1-day) < 15, and
+//  - Test Runs Failed (1-day) < 100"
+func (g *Generator) priorityDecreaseJustification(oldPriorityIndex, newPriorityIndex int) string {
+	if newPriorityIndex <= oldPriorityIndex {
+		// Priority did not change or increased.
+		return ""
 	}
-	// It also does not satisfy its current priority if it meets the
-	// the next priority's priority's thresholds, after inflating them by
-	// the hystersis margin. (Assuming there exists a higher priority.)
-	if nextP != nil && g.impact.MeetsInflatedThreshold(nextP.Threshold, hysteresisPerc) {
-		return false
+
+	// Priority decreased.
+	// To justify the decrease, it is sufficient to explain why we could no
+	// longer meet the criteria for the next-higher priority.
+
+	hysteresisPerc := g.monorailCfg.PriorityHysteresisPercent
+
+	// The next-higher priority level that we failed to meet.
+	failedToMeetThreshold := g.monorailCfg.Priorities[newPriorityIndex-1].Threshold
+	if newPriorityIndex == oldPriorityIndex+1 {
+		// We only dropped one priority level. That means we failed to meet the
+		// old threshold, even after applying hysteresis.
+		failedToMeetThreshold = bugs.InflateThreshold(failedToMeetThreshold, -hysteresisPerc)
 	}
-	return true
+
+	var message strings.Builder
+	explanation := bugs.ExplainThresholdNotMet(failedToMeetThreshold)
+
+	// As there may be multiple ways in which we could have met the
+	// threshold for the next-higher priority (due to the OR-
+	// disjunction of different metric thresholds), we must explain
+	// we did not meet any of them.
+	for i, exp := range explanation {
+		message.WriteString(fmt.Sprintf("- %s (%v-day) < %v", exp.Metric, exp.TimescaleDays, exp.Threshold))
+		if i < (len(explanation) - 1) {
+			message.WriteString(", and")
+		}
+		message.WriteString("\n")
+	}
+	return message.String()
+}
+
+// priorityIncreaseJustification outputs a human-readable justification
+// explaining why bug priority was increased (including for the case
+// where a bug was re-opened.)
+//
+// priorityIndex(s) are indices into the per-project priority list:
+//   g.monorailCfg.Priorities
+// The special index len(g.monorailCfg.Priorities) indicates a verified
+// issue, i.e. an issue with so low priority that it does not deserve
+// to be open.
+//
+// Example output:
+// "- Presubmit Runs Failed (1-day) >= 15"
+func (g *Generator) priorityIncreaseJustification(oldPriorityIndex, newPriorityIndex int) string {
+	if newPriorityIndex >= oldPriorityIndex {
+		// Priority did not change or decreased.
+		return ""
+	}
+
+	// Priority increased.
+	// To justify the increase, we must show that we met the criteria for
+	// each successively higher priority level.
+
+	hysteresisPerc := g.monorailCfg.PriorityHysteresisPercent
+
+	// Visit priorities in increasing priority order.
+	var explanations []bugs.ThresholdExplanation
+	for i := oldPriorityIndex - 1; i >= newPriorityIndex; i-- {
+		metThreshold := g.monorailCfg.Priorities[i].Threshold
+		if i == oldPriorityIndex-1 {
+			// For the first priority step up, we must have also exceeded
+			// hysteresis.
+			metThreshold = bugs.InflateThreshold(metThreshold, hysteresisPerc)
+		}
+
+		// There may be multiple ways in which we could have met the
+		// threshold for the next-higher priority (due to the OR-
+		// disjunction of different metric thresholds). This obtains
+		// just one of the ways in which we met it.
+		explanations = append(explanations, g.impact.ExplainThresholdMet(metThreshold))
+	}
+
+	// Remove redundant explanations.
+	// E.g. "Presubmit Runs Failed (1-day) >= 15"
+	// and "Presubmit Runs Failed (1-day) >= 30" can be merged to just
+	// "Presubmit Runs Failed (1-day) >= 30", because the latter
+	// trivially implies the former.
+	explanations = bugs.MergeThresholdMetExplanations(explanations)
+
+	var message strings.Builder
+	for i, exp := range explanations {
+		message.WriteString(fmt.Sprintf("- %s (%v-day) >= %v", exp.Metric, exp.TimescaleDays, exp.Threshold))
+		if i < (len(explanations) - 1) {
+			message.WriteString(", and")
+		}
+		message.WriteString("\n")
+	}
+	return message.String()
 }
 
 // clusterPriority returns the desired priority of the bug, if no hysteresis
 // is applied.
 func (g *Generator) clusterPriority() string {
+	return g.clusterPriorityWithInflatedThresholds(0)
+}
+
+// clusterPriority returns the desired priority of the bug, if thresholds
+// are inflated or deflated with the given percentage.
+//
+// See bugs.InflateThreshold for the interpretation of inflationPercent.
+func (g *Generator) clusterPriorityWithInflatedThresholds(inflationPercent int64) string {
 	// Default to using the lowest priority.
 	priority := g.monorailCfg.Priorities[len(g.monorailCfg.Priorities)-1]
 	for i := len(g.monorailCfg.Priorities) - 2; i >= 0; i-- {
 		p := g.monorailCfg.Priorities[i]
-		if !g.impact.MeetsThreshold(p.Threshold) {
+		adjustedThreshold := bugs.InflateThreshold(p.Threshold, inflationPercent)
+		if !g.impact.MeetsThreshold(adjustedThreshold) {
 			// A cluster cannot reach a higher priority unless it has
 			// met the thresholds for all lower priorities.
 			break

@@ -39,6 +39,9 @@ func ChromiumTestConfig() *configpb.MonorailProject {
 					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(1000),
 					},
+					TestRunsFailed: &configpb.MetricThreshold{
+						OneDay: proto.Int64(100),
+					},
 				},
 			},
 			{
@@ -47,6 +50,9 @@ func ChromiumTestConfig() *configpb.MonorailProject {
 					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(500),
 					},
+					TestRunsFailed: &configpb.MetricThreshold{
+						OneDay: proto.Int64(50),
+					},
 				},
 			},
 			{
@@ -54,6 +60,9 @@ func ChromiumTestConfig() *configpb.MonorailProject {
 				Threshold: &configpb.ImpactThreshold{
 					TestResultsFailed: &configpb.MetricThreshold{
 						OneDay: proto.Int64(100),
+					},
+					TestRunsFailed: &configpb.MetricThreshold{
+						OneDay: proto.Int64(10),
 					},
 				},
 			},
@@ -94,13 +103,13 @@ func ChromiumP1Impact() *bugs.ClusterImpact {
 	}
 }
 
-// ChromiumLowP0Impact returns cluster impact that is consistent with a P0
-// bug, but if hysteresis is applied, could also be compatible with P1.
-func ChromiumLowP0Impact() *bugs.ClusterImpact {
+// ChromiumLowP1Impact returns cluster impact that is consistent with a P1
+// bug, but if hysteresis is applied, could also be compatible with P2.
+func ChromiumLowP1Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		// (1000 * (1.0 + PriorityHysteresisPercent / 100.0)) - 1
+		// (500 * (1.0 + PriorityHysteresisPercent / 100.0)) - 1
 		TestResultsFailed: bugs.MetricImpact{
-			OneDay: 1099,
+			OneDay: 549,
 		},
 	}
 }
@@ -114,13 +123,13 @@ func ChromiumP2Impact() *bugs.ClusterImpact {
 	}
 }
 
-// ChromiumHighP2Impact returns cluster impact that is consistent with a P2
-// bug, but if hysteresis is applied, could also be compatible with P1.
-func ChromiumHighP2Impact() *bugs.ClusterImpact {
+// ChromiumHighP3Impact returns cluster impact that is consistent with a P3
+// bug, but if hysteresis is applied, could also be compatible with P2.
+func ChromiumHighP3Impact() *bugs.ClusterImpact {
 	return &bugs.ClusterImpact{
-		// (500 / (1.0 + PriorityHysteresisPercent / 100.0)) + 1
+		// (100 / (1.0 + PriorityHysteresisPercent / 100.0)) + 1
 		TestResultsFailed: bugs.MetricImpact{
-			OneDay: 455,
+			OneDay: 91,
 		},
 	}
 }

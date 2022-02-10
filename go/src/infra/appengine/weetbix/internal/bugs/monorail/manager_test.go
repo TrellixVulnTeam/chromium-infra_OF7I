@@ -44,7 +44,7 @@ func TestManager(t *testing.T) {
 
 		Convey("Create", func() {
 			c := NewCreateRequest()
-			c.Impact = ChromiumHighP2Impact()
+			c.Impact = ChromiumLowP1Impact()
 
 			Convey("With reason-based failure cluster", func() {
 				reason := `Expected equality of these values:
@@ -75,7 +75,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "2",
+							Value: "1",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -117,7 +117,7 @@ func TestManager(t *testing.T) {
 						{
 							// Priority field.
 							Field: "projects/chromium/fieldDefs/11",
-							Value: "2",
+							Value: "1",
 						},
 					},
 					Labels: []*mpb.Issue_LabelValue{{
@@ -142,12 +142,12 @@ func TestManager(t *testing.T) {
 		})
 		Convey("Update", func() {
 			c := NewCreateRequest()
-			c.Impact = ChromiumP1Impact()
+			c.Impact = ChromiumP2Impact()
 			bug, err := bm.Create(ctx, c)
 			So(err, ShouldBeNil)
 			So(bug, ShouldEqual, "chromium/100")
 			So(len(f.Issues), ShouldEqual, 1)
-			So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
+			So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "2")
 
 			bugToUpdate := &bugs.BugToUpdate{
 				BugName: bug,
@@ -173,16 +173,23 @@ func TestManager(t *testing.T) {
 			Convey("If impact changed", func() {
 				bugToUpdate.Impact = ChromiumP3Impact()
 				Convey("Does not reduce priority if impact within hysteresis range", func() {
-					bugToUpdate.Impact = ChromiumHighP2Impact()
+					bugToUpdate.Impact = ChromiumHighP3Impact()
 
 					updateDoesNothing()
 				})
 				Convey("Reduces priority in response to reduced impact", func() {
-					bugToUpdate.Impact = ChromiumP2Impact()
+					bugToUpdate.Impact = ChromiumP3Impact()
 					originalNotifyCount := f.Issues[0].NotifyCount
 					err := bm.Update(ctx, bugsToUpdate)
 					So(err, ShouldBeNil)
-					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "2")
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+					So(f.Issues[0].Comments, ShouldHaveLength, 3)
+					So(f.Issues[0].Comments[2].Content, ShouldEqual,
+						"Because:\n"+
+							"- Test Runs Failed (1-day) < 9, and\n"+
+							"- Test Results Failed (1-day) < 90\n"+
+							"Weetbix has decreased the bug priority from 2 to 3.")
 
 					// Does not notify.
 					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount)
@@ -191,11 +198,31 @@ func TestManager(t *testing.T) {
 					updateDoesNothing()
 				})
 				Convey("Does not increase priority if impact within hysteresis range", func() {
-					bugToUpdate.Impact = ChromiumLowP0Impact()
+					bugToUpdate.Impact = ChromiumLowP1Impact()
 
 					updateDoesNothing()
 				})
-				Convey("Increases priority in response to increased impact", func() {
+				Convey("Increases priority in response to increased impact (single-step)", func() {
+					bugToUpdate.Impact = ChromiumP1Impact()
+
+					originalNotifyCount := f.Issues[0].NotifyCount
+					err := bm.Update(ctx, bugsToUpdate)
+					So(err, ShouldBeNil)
+					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "1")
+
+					So(f.Issues[0].Comments, ShouldHaveLength, 3)
+					So(f.Issues[0].Comments[2].Content, ShouldEqual,
+						"Because:\n"+
+							"- Test Results Failed (1-day) >= 550\n"+
+							"Weetbix has increased the bug priority from 2 to 1.")
+
+					// Notified the increase.
+					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount+1)
+
+					// Verify repeated update has no effect.
+					updateDoesNothing()
+				})
+				Convey("Increases priority in response to increased impact (multi-step)", func() {
 					bugToUpdate.Impact = ChromiumP0Impact()
 
 					originalNotifyCount := f.Issues[0].NotifyCount
@@ -203,11 +230,16 @@ func TestManager(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "0")
 
+					expectedComment := "Because:\n" +
+						"- Test Results Failed (1-day) >= 1000\n" +
+						"Weetbix has increased the bug priority from 2 to 0."
+					So(f.Issues[0].Comments, ShouldHaveLength, 3)
+					So(f.Issues[0].Comments[2].Content, ShouldEqual, expectedComment)
+
 					// Notified the increase.
 					So(f.Issues[0].NotifyCount, ShouldEqual, originalNotifyCount+1)
 
 					// Verify repeated update has no effect.
-					updateDoesNothing()
 				})
 				Convey("Does not adjust priority if priority manually set", func() {
 					updateReq := updateBugPriorityRequest(f.Issues[0].Issue.Name, "0")
@@ -278,6 +310,14 @@ func TestManager(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(f.Issues[0].Issue.Status.Status, ShouldEqual, VerifiedStatus)
 
+					expectedComment := "Because:\n" +
+						"- Test Results Failed (1-day) < 45, and\n" +
+						"- Test Results Failed (3-day) < 272, and\n" +
+						"- Test Results Failed (7-day) < 636\n" +
+						"Weetbix is marking the issue verified."
+					So(f.Issues[0].Comments, ShouldHaveLength, 3)
+					So(f.Issues[0].Comments[2].Content, ShouldEqual, expectedComment)
+
 					// Verify repeated update has no effect.
 					updateDoesNothing()
 
@@ -302,6 +342,16 @@ func TestManager(t *testing.T) {
 							So(f.Issues[0].Issue.Status.Status, ShouldEqual, AssignedStatus)
 							So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
 
+							expectedComment := "Because:\n" +
+								"- Test Results Failed (1-day) >= 55\n" +
+								"Weetbix has re-opened the bug.\n\n" +
+								"Because:\n" +
+								"- Test Runs Failed (1-day) < 9, and\n" +
+								"- Test Results Failed (1-day) < 90\n" +
+								"Weetbix has decreased the bug priority from 2 to 3."
+							So(f.Issues[0].Comments, ShouldHaveLength, 5)
+							So(f.Issues[0].Comments[4].Content, ShouldEqual, expectedComment)
+
 							// Verify repeated update has no effect.
 							updateDoesNothing()
 						})
@@ -311,6 +361,16 @@ func TestManager(t *testing.T) {
 							So(err, ShouldBeNil)
 							So(f.Issues[0].Issue.Status.Status, ShouldEqual, UntriagedStatus)
 							So(ChromiumTestIssuePriority(f.Issues[0].Issue), ShouldEqual, "3")
+
+							expectedComment := "Because:\n" +
+								"- Test Results Failed (1-day) >= 55\n" +
+								"Weetbix has re-opened the bug.\n\n" +
+								"Because:\n" +
+								"- Test Runs Failed (1-day) < 9, and\n" +
+								"- Test Results Failed (1-day) < 90\n" +
+								"Weetbix has decreased the bug priority from 2 to 3."
+							So(f.Issues[0].Comments, ShouldHaveLength, 4)
+							So(f.Issues[0].Comments[3].Content, ShouldEqual, expectedComment)
 
 							// Verify repeated update has no effect.
 							updateDoesNothing()
