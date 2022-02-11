@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Run the karte command line tool if it exists.
+
+dir="$(cd -P -- "$(dirname "$0")"/cmd/karte && pwd -P)"
+test -n "$dir" || exit 1
+
+"$dir"/karte "$@"
