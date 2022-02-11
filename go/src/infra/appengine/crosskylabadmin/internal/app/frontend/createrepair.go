@@ -137,7 +137,7 @@ func CreateRepairTask(ctx context.Context, botID string, expectedState string, p
 	}
 	switch taskType {
 	case "paris":
-		url, err := createBuildbucketRepairTask(ctx, botID)
+		url, err := createBuildbucketRepairTask(ctx, botID, expectedState)
 		if err != nil {
 			logging.Errorf(ctx, "Attempted and failed to create buildbucket task: %s", err)
 			logging.Errorf(ctx, "Falling back to legacy flow")
@@ -218,8 +218,8 @@ func routeRepairTaskImpl(ctx context.Context, r *config.RolloutConfig, info *dut
 // CreateBuildbucketRepairTask creates a new repair task for a labstation.
 // Err should be non-nil if and only if a task was created.
 // We rely on this signal to decide whether to fall back to the legacy flow.
-func createBuildbucketRepairTask(ctx context.Context, botID string) (string, error) {
-	logging.Infof(ctx, "Using new repair flow for bot %q", botID)
+func createBuildbucketRepairTask(ctx context.Context, botID string, expectedState string) (string, error) {
+	logging.Infof(ctx, "Using new repair flow for bot %q with expected state %q", botID, expectedState)
 	transport, err := auth.GetRPCTransport(ctx, auth.AsSelf)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to get RPC transport").Err()

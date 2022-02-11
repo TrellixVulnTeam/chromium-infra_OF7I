@@ -22,10 +22,20 @@ import (
 
 const defaultTaskPriority = 24
 
+// ScheduleLabpackTaskParams includes the parameters necessary to schedule a labpack task.
+type ScheduleLabpackTaskParams struct {
+	UnitName         string
+	ExpectedDUTState string
+	Props            *structbuilder.Struct
+	ExtraTags        []string
+	// TODO(gregorynisbet): Support map[string]string as dims value.
+	ExtraDims map[string]string
+}
+
 // Client provides helper methods to interact with buildbucket builds.
 type Client interface {
 	// ScheduleLabpackTask schedules a labpack task.
-	ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error)
+	ScheduleLabpackTask(ctx context.Context, params *ScheduleLabpackTaskParams) (int64, error)
 	// BuildURL constructs the URL to a build with the given ID.
 	BuildURL(buildID int64) string
 }
@@ -88,13 +98,26 @@ func NewHTTPClient(ctx context.Context, f *authcli.Flags) (*http.Client, error) 
 }
 
 // ScheduleLabpackTask creates new task in build bucket with labpack.
-func (c *clientImpl) ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error) {
+func (c *clientImpl) ScheduleLabpackTask(ctx context.Context, params *ScheduleLabpackTaskParams) (int64, error) {
+	if params == nil {
+		return 0, errors.Reason("ScheduleLabpackTask: params cannot be nil").Err()
+	}
 	dims := make(map[string]string)
-	dims["id"] = "crossk-" + unit
+	dims["id"] = "crossk-" + params.UnitName
+	if params.ExpectedDUTState != "" {
+		dims["dut_state"] = params.ExpectedDUTState
+	}
+	for key, value := range params.ExtraDims {
+		if _, ok := dims[key]; !ok {
+			dims[key] = value
+		}
+	}
 
 	tags := []string{
-		fmt.Sprintf("dut-name:%s", unit),
+		fmt.Sprintf("dut-name:%s", params.UnitName),
 	}
+	tags = append(tags, params.ExtraTags...)
+
 	tagPairs, err := splitTagPairs(tags)
 	if err != nil {
 		return -1, err
@@ -106,7 +129,7 @@ func (c *clientImpl) ScheduleLabpackTask(ctx context.Context, unit string, props
 			Bucket:  "labpack_runner",
 			Builder: "labpack_builder",
 		},
-		Properties: props,
+		Properties: params.Props,
 		Tags:       tagPairs,
 		Dimensions: bbDimensions(dims),
 		Priority:   defaultTaskPriority,

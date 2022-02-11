@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	structbuilder "google.golang.org/protobuf/types/known/structpb"
 
 	"infra/cmd/shivas/site"
 	"infra/libs/skylab/buildbucket"
@@ -45,7 +44,7 @@ func TestScheduleRepairBuilder(t *testing.T) {
 type fakeClient struct{}
 
 // ScheduleLabpackTask is a fake method that returns a fixed buildbucket ID of 1.
-func (c *fakeClient) ScheduleLabpackTask(ctx context.Context, unit string, props *structbuilder.Struct) (int64, error) {
+func (c *fakeClient) ScheduleLabpackTask(ctx context.Context, _ *buildbucket.ScheduleLabpackTaskParams) (int64, error) {
 	return 1, nil
 }
 

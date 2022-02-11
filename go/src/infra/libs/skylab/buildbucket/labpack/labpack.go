@@ -31,6 +31,10 @@ type Params struct {
 	NoStepper bool
 	// NoMetrics determines whether metrics recording (Karte) is in effect.
 	NoMetrics bool
+	// ExpectedState is the state that the DUT must be in in order for the task to trigger.
+	// For example, a repair task MUST NOT be eligible to run on a "ready" DUT since that would
+	// be a waste of resources.
+	ExpectedState string
 	// Configuration is a base64-encoded string of the job config.
 	Configuration string
 }
@@ -56,7 +60,11 @@ func ScheduleTask(ctx context.Context, client buildbucket.Client, params *Params
 	if err != nil {
 		return 0, err
 	}
-	taskID, err := client.ScheduleLabpackTask(ctx, params.UnitName, props)
+	taskID, err := client.ScheduleLabpackTask(ctx, &buildbucket.ScheduleLabpackTaskParams{
+		UnitName:         params.UnitName,
+		ExpectedDUTState: params.ExpectedState,
+		Props:            props,
+	})
 	if err != nil {
 		return 0, err
 	}
