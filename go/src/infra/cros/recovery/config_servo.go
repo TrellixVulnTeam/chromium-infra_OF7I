@@ -1040,6 +1040,9 @@ const servoRepairPlanBody = `
 			"Try to reflash cr50 firmware and reboot AP from DUT side to wake it up.",
 			"Reboot after the fw flash is successful."
 		],
+		"dependencies": [
+			"cros_ssh_dut"
+		],
 		"exec_extra_args": [
 			"flash_timeout:120",
 			"wait_timeout:30"
