@@ -45,9 +45,14 @@ func pingExec(ctx context.Context, info *execs.ExecInfo) error {
 	return WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, info.ActionTimeout, 2)
 }
 
-// sshExec verifies ssh access to the DUT.
+// sshExec verifies ssh access to the current plan's device (named by the default resource name).
 func sshExec(ctx context.Context, info *execs.ExecInfo) error {
 	return WaitUntilSSHable(ctx, info.DefaultRunner(), info.ActionTimeout)
+}
+
+// sshDUTExec verifies ssh access to the DUT.
+func sshDUTExec(ctx context.Context, info *execs.ExecInfo) error {
+	return WaitUntilSSHable(ctx, info.NewRunner(info.RunArgs.DUT.Name), info.ActionTimeout)
 }
 
 // rebootExec reboots the cros DUT.
@@ -299,6 +304,7 @@ func isToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
+	execs.Register("cros_ssh_dut", sshDUTExec)
 	execs.Register("cros_reboot", rebootExec)
 	execs.Register("cros_is_on_stable_version", isOnStableVersionExec)
 	execs.Register("cros_not_on_stable_version", notOnStableVersionExec)
