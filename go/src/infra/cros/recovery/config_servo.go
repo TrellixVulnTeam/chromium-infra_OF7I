@@ -228,7 +228,8 @@ const servoRepairPlanBody = `
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
 			"cros_create_reboot_request",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -357,7 +358,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		]
 	},
 	"servo_is_sbu_voltage_issue": {
@@ -372,7 +374,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -420,7 +423,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servod_can_read_all"
 	},
@@ -439,7 +443,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -456,7 +461,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		]
 	},
 	"pwr_button_supported_models": {
@@ -501,7 +507,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_low_ppdut5"
 	},
@@ -674,7 +681,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -693,7 +701,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -723,7 +732,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -739,7 +749,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		]
 	},
 	"update_servo_type_label":{
@@ -759,7 +770,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -773,7 +785,8 @@ const servoRepairPlanBody = `
 			"servo_servod_cc_toggle_repair",
 			"servo_reboot_ec_on_dut",
 			"reboot_dut_by_power_state:reset",
-			"reflash_cr_50_fw_on_dut"
+			"reflash_cr_50_fw_on_dut",
+			"reset_ec_on_dut"
 		],
 		"exec_name":"servo_check_servod_control"
 	},
@@ -1060,5 +1073,30 @@ const servoRepairPlanBody = `
 			"b/216567871"
 		],
 		"exec_name":"sample_pass"
+	},
+	"reset_ec_on_dut":{
+		"docs":[
+			"Try to reset EC from DUT side to wake CR50 up. And then restart the servod."
+		],
+		"conditions": [
+			"is_servo_type_ccd"
+		],
+		"dependencies": [
+			"cros_reset_ec"
+		],
+		"run_control": 1,
+		"exec_name":"servo_host_servod_stop"
+	},
+	"cros_reset_ec":{
+		"docs":[
+			"Try to wake up the device as it will trigger recovering ec, cr50, and other fw."
+		],
+		"dependencies": [
+			"cros_ssh_dut"
+		],
+		"exec_extra_args": [
+			"wait_timeout:30"
+		],
+		"run_control": 1
 	}
 }`
