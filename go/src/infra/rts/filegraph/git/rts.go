@@ -38,7 +38,7 @@ type SelectionStrategy struct {
 // Select calls skipTestFile for each test file that should be skipped.
 // Does not skip files that it does not know about.
 func (s *SelectionStrategy) Select(changedFiles []string, skipFile func(name string) (keepGoing bool)) {
-	s.runQuery(changedFiles, func(name string, af rts.Affectedness) bool {
+	s.RunQuery(changedFiles, func(name string, af rts.Affectedness) bool {
 		if af.Distance <= s.MaxDistance {
 			// This file too close to skip it.
 			return true
@@ -82,7 +82,7 @@ func (s *SelectionStrategy) SelectEval(ctx context.Context, in eval.Input, out *
 	}
 
 	found := 0
-	s.runQuery(changedFiles, func(name string, af rts.Affectedness) (keepGoing bool) {
+	s.RunQuery(changedFiles, func(name string, af rts.Affectedness) (keepGoing bool) {
 		if _, ok := affectedness[name]; ok {
 			affectedness[name] = af
 			found++
@@ -100,10 +100,10 @@ func (s *SelectionStrategy) SelectEval(ctx context.Context, in eval.Input, out *
 
 type rtsCallback func(name string, af rts.Affectedness) (keepGoing bool)
 
-// runQuery walks the file graph from the changed files, along reversed edges
+// RunQuery walks the file graph from the changed files, along reversed edges
 // and calls back for each found file.
 // If a changed file is not in the graph, then it is treated as very affected.
-func (s *SelectionStrategy) runQuery(changedFiles []string, callback rtsCallback) {
+func (s *SelectionStrategy) RunQuery(changedFiles []string, callback rtsCallback) {
 	er := s.EdgeReader
 	if er == nil {
 		er = &EdgeReader{}
