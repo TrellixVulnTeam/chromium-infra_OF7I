@@ -107,15 +107,30 @@ func RouteRepairTask(ctx context.Context, botID string, expectedState string, po
 	if !(0.0 <= randFloat && randFloat <= 1.0) {
 		return "", fmt.Errorf("Route repair task: randfloat %f is not in [0, 1]", randFloat)
 	}
-	out, r := routeRepairTaskImpl(
-		ctx,
-		config.Get(ctx).GetParis().GetLabstationRepair(),
-		&dutRoutingInfo{
-			labstation: heuristics.LooksLikeLabstation(botID),
-			pools:      pools,
-		},
-		randFloat,
-	)
+	var out string
+	var r reason
+	switch {
+	case heuristics.LooksLikeLabstation(botID):
+		out, r = routeRepairTaskImpl(
+			ctx,
+			config.Get(ctx).GetParis().GetLabstationRepair(),
+			&dutRoutingInfo{
+				labstation: heuristics.LooksLikeLabstation(botID),
+				pools:      pools,
+			},
+			randFloat,
+		)
+	default:
+		out, r = routeRepairTaskImpl(
+			ctx,
+			config.Get(ctx).GetParis().GetDutRepair(),
+			&dutRoutingInfo{
+				labstation: heuristics.LooksLikeLabstation(botID),
+				pools:      pools,
+			},
+			randFloat,
+		)
+	}
 	reason, ok := reasonMessageMap[r]
 	if !ok {
 		logging.Infof(ctx, "Unrecognized reason %d", int64(r))
@@ -165,9 +180,6 @@ func routeRepairTaskImpl(ctx context.Context, r *config.RolloutConfig, info *dut
 	if info == nil {
 		logging.Errorf(ctx, "info cannot be nil, falling back to legacy")
 		return legacy, nilArgument
-	}
-	if !info.labstation {
-		return legacy, notALabstation
 	}
 	// TODO(gregorynisbet): Log instead of silently falling back to the default error handling policy.
 	ufsErrorPolicy, err := normalizeErrorPolicy(r.GetUfsErrorPolicy())

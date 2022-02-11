@@ -103,7 +103,7 @@ func TestRouteRepairTaskImplDUT(t *testing.T) {
 		reason    reason
 	}{
 		{
-			name: "good DUT is still blocked",
+			name: "good DUT is NOT blocked",
 			in: &config.RolloutConfig{
 				Enable:          true,
 				OptinAllDuts:    true,
@@ -111,8 +111,8 @@ func TestRouteRepairTaskImplDUT(t *testing.T) {
 			},
 			randFloat: 0.5,
 			pools:     []string{"pool"},
-			out:       legacy,
-			reason:    notALabstation,
+			out:       paris,
+			reason:    scoreBelowThreshold,
 		},
 	}
 
@@ -392,6 +392,20 @@ func TestRouteRepairTask(t *testing.T) {
 			botID:         "foo-labstation1",
 			expectedState: "ready",
 			pools:         nil,
+			randFloat:     1,
+			out:           legacy,
+			hasErr:        false,
+		},
+		{
+			name: "DUT rollout is blocked",
+			in: &config.Paris{
+				DutRepair: &config.RolloutConfig{
+					Enable: false,
+				},
+			},
+			botID:         "foo-host4",
+			expectedState: "ready",
+			pools:         []string{"some-pool"},
 			randFloat:     1,
 			out:           legacy,
 			hasErr:        false,
