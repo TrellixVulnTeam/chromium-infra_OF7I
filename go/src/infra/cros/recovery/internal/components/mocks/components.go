@@ -35,6 +35,26 @@ func (m *MockServod) EXPECT() *MockServodMockRecorder {
 	return m.recorder
 }
 
+// Call mocks base method.
+func (m *MockServod) Call(ctx context.Context, method string, args ...interface{}) (*xmlrpc.Value, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, method}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Call", varargs...)
+	ret0, _ := ret[0].(*xmlrpc.Value)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Call indicates an expected call of Call.
+func (mr *MockServodMockRecorder) Call(ctx, method interface{}, args ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, method}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockServod)(nil).Call), varargs...)
+}
+
 // Get mocks base method.
 func (m *MockServod) Get(ctx context.Context, cmd string) (*xmlrpc.Value, error) {
 	m.ctrl.T.Helper()

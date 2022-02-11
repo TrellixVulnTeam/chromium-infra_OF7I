@@ -83,7 +83,7 @@ const (
 func servodInitActionExec(ctx context.Context, info *execs.ExecInfo) error {
 	req := &tlw.InitServodRequest{
 		Resource: info.RunArgs.DUT.Name,
-		Options:  defaultServodOptions,
+		Options:  &tlw.ServodOptions{RecoveryMode: true},
 	}
 	if err := info.RunArgs.Access.InitServod(ctx, req); err != nil {
 		return errors.Annotate(err, "init servod").Err()
@@ -99,15 +99,14 @@ func servodStopActionExec(ctx context.Context, info *execs.ExecInfo) error {
 }
 
 func servoDetectUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
-	res, err := ServodCallGet(ctx, info.RunArgs, "image_usbkey_dev")
+	servoUsbPath, err := servodGetString(ctx, info.NewServod(), "image_usbkey_dev")
 	if err != nil {
 		info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 		return errors.Annotate(err, "servo detect usb key exec: could not obtain usb path on servo: %q", err).Err()
-	} else if res.Value.GetString_() == "" {
+	} else if servoUsbPath == "" {
 		info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 		return errors.Reason("servo detect usb key exec: the path to usb drive is empty").Err()
 	}
-	servoUsbPath := res.Value.GetString_()
 	log.Debug(ctx, "Servo Detect USB-Key Exec: USB-key path: %s.", servoUsbPath)
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
 	if _, err := run(ctx, time.Minute, fmt.Sprintf("fdisk -l %s", servoUsbPath)); err != nil {
@@ -149,10 +148,11 @@ func runCheckOnHost(ctx context.Context, run execs.Runner, usbPath string, timeo
 
 func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 	dutUsb := ""
-	if cros.IsSSHable(ctx, info.NewRunner(info.RunArgs.DUT.Name)) == nil {
+	dutRunner := info.NewRunner(info.RunArgs.DUT.Name)
+	if cros.IsSSHable(ctx, dutRunner) == nil {
 		log.Debug(ctx, "Servo Audit USB-Key Exec: %q is reachable through SSH", info.RunArgs.DUT.Name)
 		var err error = nil
-		dutUsb, err = GetUSBDrivePathOnDut(ctx, info.RunArgs)
+		dutUsb, err = GetUSBDrivePathOnDut(ctx, dutRunner, info.NewServod())
 		if err != nil {
 			log.Debug(ctx, "Servo Audit USB-Key Exec: could not determine USB-drive path on DUT: %q, error: %q. This is not critical. We will continue the audit by setting the path to empty string.", info.RunArgs.DUT.Name, err)
 		}
@@ -161,7 +161,7 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	if dutUsb != "" {
 		// DUT is reachable, and we found a USB drive on it.
-		state, err := runCheckOnHost(ctx, info.NewRunner(info.RunArgs.DUT.Name), dutUsb, 2*time.Hour)
+		state, err := runCheckOnHost(ctx, dutRunner, dutUsb, 2*time.Hour)
 		if err != nil {
 			return errors.Reason("servo audit usb key exec: could not check DUT usb path %q", dutUsb).Err()
 		}
@@ -173,7 +173,7 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 		// This statement obtains the path of usb drive on
 		// servo-host. It also switches the USB drive on servo
 		// multiplexer to servo-host.
-		result, err := ServodCallGet(ctx, info.RunArgs, servod.ImageUsbkeyDev)
+		servoUsbPath, err := servodGetString(ctx, info.NewServod(), servod.ImageUsbkeyDev)
 		if err != nil {
 			// A dependency has already checked that the Servo USB is
 			// available. But here we again check that no errors
@@ -183,7 +183,7 @@ func servoAuditUSBKeyExec(ctx context.Context, info *execs.ExecInfo) error {
 			info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 			return errors.Annotate(err, "servo audit usb key exec: could not obtain usb path on servo: %q", err).Err()
 		}
-		servoUsbPath := strings.TrimSpace(result.Value.GetString_())
+		servoUsbPath = strings.TrimSpace(servoUsbPath)
 		if servoUsbPath == "" {
 			info.RunArgs.DUT.ServoHost.UsbkeyState = tlw.HardwareStateNotDetected
 			log.Debug(ctx, "Servo Audit USB-Key Exec: cannot continue audit because the path to USB-Drive is empty")
@@ -333,14 +333,14 @@ func servoSetExec(ctx context.Context, info *execs.ExecInfo) error {
 // Verify that the DUT is connected to Servo using the 'ppdut5_mv'
 // servod control.
 func servoLowPPDut5Exec(ctx context.Context, info *execs.ExecInfo) error {
-	if err := info.NewServod().Has(ctx, servodPPDut5Cmd); err != nil {
+	s := info.NewServod()
+	if err := s.Has(ctx, servodPPDut5Cmd); err != nil {
 		return errors.Annotate(err, "servo low ppdut5 exec").Err()
 	}
-	res, err := ServodCallGet(ctx, info.RunArgs, servodPPDut5Cmd)
+	voltageValue, err := servodGetInt(ctx, s, servodPPDut5Cmd)
 	if err != nil {
 		return errors.Annotate(err, "servo low ppdut5 exec").Err()
 	}
-	voltageValue := res.Value.GetInt()
 	if voltageValue < maxPPDut5MVWhenNotConnected {
 		return errors.Reason("servo low ppdut5 exec: the ppdut5_mv value %d is lower than the threshold %d", voltageValue, maxPPDut5MVWhenNotConnected).Err()
 	}
@@ -372,7 +372,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 	// function 'compare', e.g., will it make sense to use a helper
 	// function for this?
 	if expectedValue, ok = argsMap[stringValueExtraArgToken]; ok {
-		controlValue, err := servodGetString(ctx, info.RunArgs, command)
+		controlValue, err := servodGetString(ctx, info.NewServod(), command)
 		if err != nil {
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
@@ -385,7 +385,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return nil
 		}
 	} else if expectedValue, ok = argsMap[intValueExtraArgToken]; ok {
-		controlValue, err := servodGetInt(ctx, info.RunArgs, command)
+		controlValue, err := servodGetInt(ctx, info.NewServod(), command)
 		if err != nil {
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
@@ -401,7 +401,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return nil
 		}
 	} else if expectedValue, ok = argsMap[floatValueExtraArgToken]; ok {
-		controlValue, err := servodGetDouble(ctx, info.RunArgs, command)
+		controlValue, err := servodGetDouble(ctx, info.NewServod(), command)
 		if err != nil {
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
@@ -417,7 +417,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 			return nil
 		}
 	} else if expectedValue, ok = argsMap[boolValueExtraArgToken]; ok {
-		controlValue, err := servodGetBool(ctx, info.RunArgs, command)
+		controlValue, err := servodGetBool(ctx, info.NewServod(), command)
 		if err != nil {
 			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
@@ -435,7 +435,7 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 	}
 	if compare == nil {
 		log.Info(ctx, "Servo Check Servod Control Exec: expected value type not specified in config, or did not match any known types.")
-		controlValue, err := servodGetString(ctx, info.RunArgs, command)
+		controlValue, err := servodGetString(ctx, info.NewServod(), command)
 		if err != nil {
 			return errors.Annotate(err, "Servo Check Servod Control Exec").Err()
 		}
@@ -520,7 +520,7 @@ func servoValidateBatteryChargingExec(ctx context.Context, info *execs.ExecInfo)
 	var lastFullCharge, batteryCapacity int32
 	var getLastFullCharge = func() error {
 		var err error
-		lastFullCharge, err = servodGetInt(ctx, info.RunArgs, batteryFullChargeServodControl)
+		lastFullCharge, err = servodGetInt(ctx, info.NewServod(), batteryFullChargeServodControl)
 		return err
 	}
 	if err := retry.LimitCount(ctx, servodBatteryReadRetryLimit, -1, getLastFullCharge, "get last full charge"); err != nil {
@@ -530,7 +530,7 @@ func servoValidateBatteryChargingExec(ctx context.Context, info *execs.ExecInfo)
 	log.Debug(ctx, "Servo Validate Battery Charging Exec: last full charge is %d", lastFullCharge)
 	var getBatteryCapacity = func() error {
 		var err error
-		batteryCapacity, err = servodGetInt(ctx, info.RunArgs, batteryDesignFullCapacityServodControl)
+		batteryCapacity, err = servodGetInt(ctx, info.NewServod(), batteryDesignFullCapacityServodControl)
 		return err
 	}
 	if err := retry.LimitCount(ctx, servodBatteryReadRetryLimit, -1, getBatteryCapacity, "get battery capacity"); err != nil {
@@ -554,15 +554,16 @@ func servoValidateBatteryChargingExec(ctx context.Context, info *execs.ExecInfo)
 // to default values.
 func initDutForServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	verbose := true
-	if _, err := ServodCallHwInit(ctx, info.RunArgs, verbose); err != nil {
+	s := info.NewServod()
+	if _, err := s.Call(ctx, tlw.ServodMethodHwInit, verbose); err != nil {
 		return errors.Annotate(err, "init dut for servo exec").Err()
 	}
 	usbMuxControl := "usb_mux_oe1"
-	if err := info.NewServod().Has(ctx, usbMuxControl); err == nil {
-		if err2 := info.NewServod().Set(ctx, usbMuxControl, "on"); err2 != nil {
+	if err := s.Has(ctx, usbMuxControl); err == nil {
+		if err2 := s.Set(ctx, usbMuxControl, "on"); err2 != nil {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
-		if err := info.NewServod().Set(ctx, "image_usbkey_pwr", "off"); err != nil {
+		if err := s.Set(ctx, "image_usbkey_pwr", "off"); err != nil {
 			return errors.Annotate(err, "init dut for servo exec").Err()
 		}
 	} else {
@@ -727,7 +728,7 @@ func servoPowerStateResetExec(ctx context.Context, info *execs.ExecInfo) error {
 	}
 	time.Sleep(time.Duration(waitTimeout) * time.Second)
 	// Get the lid_open value which requires EC console.
-	lidOpen, err := servodGetString(ctx, info.RunArgs, "lid_open")
+	lidOpen, err := servodGetString(ctx, info.NewServod(), "lid_open")
 	if err != nil {
 		return errors.Annotate(err, "servo power state reset").Err()
 	}

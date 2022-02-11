@@ -8,10 +8,11 @@ import (
 	"context"
 	"math"
 
+	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/components"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
-
-	"go.chromium.org/luci/common/errors"
 )
 
 const (
@@ -28,13 +29,13 @@ const (
 
 // AverageSbuValue determines the average SBU voltage for the servod
 // control specified in the parameter.
-func AverageSbuValue(ctx context.Context, args *execs.RunArgs, sbuControl string, checkCount int) (float64, error) {
+func AverageSbuValue(ctx context.Context, servod components.Servod, sbuControl string, checkCount int) (float64, error) {
 	var sbuVal float64
 	if checkCount <= 0 {
 		return 0.0, errors.Reason("average sbu value: incorrect checkCount %d, it needs to be greater than 0.", checkCount).Err()
 	}
 	for i := 0; i < checkCount; i++ {
-		if val, err := servodGetDouble(ctx, args, sbuControl); err != nil {
+		if val, err := servodGetDouble(ctx, servod, sbuControl); err != nil {
 			return 0.0, errors.Annotate(err, "average sbu value").Err()
 		} else {
 			sbuVal += val
@@ -50,15 +51,16 @@ func AverageSbuValue(ctx context.Context, args *execs.RunArgs, sbuControl string
 // voltages for the controls 'servo_dut_sbu1_mv' and
 // 'servo_dut_sbu2_mv'.
 func MaximalAvgSbuValue(ctx context.Context, args *execs.RunArgs, checkCount int) (float64, error) {
-	if err := args.NewServod().Has(ctx, servoDutSbu1Cmd); err != nil {
+	s := args.NewServod()
+	if err := s.Has(ctx, servoDutSbu1Cmd); err != nil {
 		log.Debug(ctx, "Maximal Average Sbu Value: control %q is not supported, returning -1", servoDutSbu1Cmd)
 		return -1, errors.Annotate(err, "maximal avg sbu value").Err()
 	}
-	s1, err := AverageSbuValue(ctx, args, servoDutSbu1Cmd, checkCount)
+	s1, err := AverageSbuValue(ctx, s, servoDutSbu1Cmd, checkCount)
 	if err != nil {
 		return 0.0, errors.Annotate(err, "maximal average sbu value").Err()
 	}
-	s2, err := AverageSbuValue(ctx, args, servoDutSbu2Cmd, checkCount)
+	s2, err := AverageSbuValue(ctx, s, servoDutSbu2Cmd, checkCount)
 	if err != nil {
 		return 0.0, errors.Annotate(err, "maximal average sbu value").Err()
 	}

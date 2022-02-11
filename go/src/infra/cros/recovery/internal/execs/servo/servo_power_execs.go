@@ -49,7 +49,7 @@ func servoServodPdRoleToggleExec(ctx context.Context, info *execs.ExecInfo) erro
 		}
 		// Waiting a few seconds as it can be change to snk if PD on servo has issue.
 		time.Sleep(time.Duration(waitInRetry) * time.Second)
-		if pdRoleValue, err := servodGetString(ctx, info.RunArgs, servodPdRoleCmd); err != nil {
+		if pdRoleValue, err := servodGetString(ctx, info.NewServod(), servodPdRoleCmd); err != nil {
 			return errors.Annotate(err, "servod pd role toggle").Err()
 		} else if pdRoleValue == servodPdRoleValueSrc {
 			// log the main toggle action succeed.

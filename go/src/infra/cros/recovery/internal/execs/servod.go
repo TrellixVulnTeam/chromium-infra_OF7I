@@ -36,7 +36,7 @@ func (a *RunArgs) NewServod() components.Servod {
 	}
 }
 
-// Get read value by requested command.
+// Call calls servod method with params.
 func (s *iServod) Call(ctx context.Context, method string, args ...interface{}) (*xmlrpc.Value, error) {
 	res := s.a.CallServod(ctx, &tlw.CallServodRequest{
 		Resource: s.dut.Name,

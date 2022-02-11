@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components"
 	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/localtlw/servod"
@@ -26,12 +27,11 @@ const (
 )
 
 // GetUSBDrivePathOnDut finds and returns the path of USB drive on a DUT.
-func GetUSBDrivePathOnDut(ctx context.Context, args *execs.RunArgs) (string, error) {
+func GetUSBDrivePathOnDut(ctx context.Context, run components.Runner, s components.Servod) (string, error) {
 	// switch USB on servo multiplexer to the DUT-side
-	if _, err := ServodCallSet(ctx, args, servod.ImageUsbkeyDirection, servod.ImageUsbkeyTowardsDUT); err != nil {
+	if err := s.Set(ctx, servod.ImageUsbkeyDirection, servod.ImageUsbkeyTowardsDUT); err != nil {
 		return "", errors.Annotate(err, "get usb drive path on dut: could not switch USB to DUT").Err()
 	}
-	run := args.NewRunner(args.DUT.Name)
 	// A detection delay is required when attaching this USB drive to DUT
 	time.Sleep(usbDetectionDelay * time.Second)
 	if out, err := run(ctx, time.Minute, "ls /dev/sd[a-z]"); err != nil {
@@ -62,7 +62,7 @@ const (
 
 // GetServoType finds and returns the servo type of the DUT's servo.
 func GetServoType(ctx context.Context, info *execs.ExecInfo) (string, error) {
-	servoType, err := servodGetString(ctx, info.RunArgs, servoTypeCmd)
+	servoType, err := servodGetString(ctx, info.NewServod(), servoTypeCmd)
 	if err != nil {
 		return "", errors.Annotate(err, "get servo type").Err()
 	}
