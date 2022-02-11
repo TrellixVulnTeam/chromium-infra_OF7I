@@ -751,12 +751,20 @@ message GetStableVersionRequest {
     string hostname = 3;
 }
 
-// next tag: 5
+// next tag: 6
 message GetStableVersionResponse {
     string crosVersion = 1;
     string firmwareVersion = 2;
     string faftVersion = 3;
     string servoCrosVersion = 4;
+    // Reason is an explanation of *why* this particular stable version
+    // was picked. Possible values are:
+    //
+    // 1) "host-specific"
+    // 2) "board and model"
+    //
+    // This value is intended to be informational, and either logged or presented to an end user.
+    string reason = 5;
 }
 
 message DumpStableVersionToDatastoreRequest {}
