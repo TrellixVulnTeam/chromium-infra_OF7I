@@ -43,7 +43,7 @@ realclean: clean
 
 .PHONY: run
 run:
-	./karteserver -auth-service-host chrome-infra-auth-dev.appspot.com
+	./cmd/karteserver/karteserver -auth-service-host chrome-infra-auth-dev.appspot.com
 
 # Intentionally use the gae.py version that is present on the path. If no such
 # command is available on the path, you are not in the correct environment.
