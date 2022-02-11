@@ -7,6 +7,7 @@ package provision
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,8 +19,17 @@ import (
 	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/cmd/cros-tool-runner/internal/common"
 	"infra/cros/cmd/cros-tool-runner/internal/docker"
 	"infra/cros/cmd/cros-tool-runner/internal/services"
+)
+
+const (
+	// Cros-dut result temp dir.
+	crosDutResultsTempDir = "cros-dut-results"
+
+	// Cros-provision result temp dir.
+	crosProvisionResultsTempDir = "cros-provision-results"
 )
 
 // Result holds result data.
@@ -45,38 +55,51 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 		return res
 	}
 	dutName := res.Out.Id.GetValue()
+	cacheServerInfo := device.GetDut().GetCacheServer()
+	dutSshInfo := device.GetDut().GetChromeos().GetSsh()
 	log.Printf("Preparing for provisioning of %q, with: %s", dutName, device.GetProvisionState())
 
 	// Create separate network to run docker independent.
 	log.Printf("--> Creating the network for %q ...", dutName)
-	networkName := dutName
-	defer func() {
-		docker.RemoveNetwork(ctx, networkName)
-	}()
+	networkName := fmt.Sprintf("%s_network", dutName)
 
 	if err := docker.CreateNetwork(ctx, networkName); err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
 	}
+	defer func() {
+		docker.RemoveNetwork(ctx, networkName)
+	}()
 	log.Printf("--> Network was created for %q ...", dutName)
 
+	// Create temp results dir for cros-dut
+	crosDutResultsDir, err := ioutil.TempDir("", crosDutResultsTempDir)
+	if err != nil {
+		log.Printf("cros-dut results temp directory creation failed with error: %s", err)
+		res.Err = errors.Annotate(err, "create dut service: create temp dir").Err()
+		return res
+	}
+	defer func() { os.RemoveAll(crosDutResultsDir) }()
+
 	log.Printf("--> Starting cros-dut service for %q ...", dutName)
-	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName, token)
-	defer func() {
-		dutService.Remove(ctx)
-	}()
+	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName, cacheServerInfo, dutSshInfo, crosDutResultsDir, token)
 	if err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
 	}
+	defer func() {
+		dutService.Remove(ctx)
+		common.AddContentsToLog("log.txt", crosDutResultsDir, "Reading cros-dut log file.")
+	}()
 	log.Printf("--> Container of cros-dut was started for %q", dutName)
 
-	dir, err := ioutil.TempDir("", "provision-result")
+	// Create temp results dir for cros-provision
+	crosProvisionResultsDir, err := ioutil.TempDir("", crosProvisionResultsTempDir)
 	if err != nil {
 		res.Err = errors.Annotate(err, "run provision: create temp dir").Err()
 		return res
 	}
-	defer func() { os.RemoveAll(dir) }()
+	defer func() { os.RemoveAll(crosProvisionResultsDir) }()
 
 	log.Printf("--> Starting cros-provision service for %q ...", dutName)
 	provisionReq := &api.CrosProvisionRequest{
@@ -87,19 +110,21 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 			Port:    int32(dutService.ServicePort),
 		},
 	}
-	provisionService, err := services.RunProvisionCLI(ctx, crosProvisionContainer, networkName, provisionReq, dir, token)
-	defer func() {
-		if provisionService != nil {
-			provisionService.Remove(ctx)
-		}
-	}()
+
+	provisionService, err := services.RunProvisionCLI(ctx, crosProvisionContainer, networkName, provisionReq, crosProvisionResultsDir, token)
 	if err != nil {
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
 	}
+	defer func() {
+		if provisionService != nil {
+			provisionService.Remove(ctx)
+		}
+		common.AddContentsToLog("log.txt", crosProvisionResultsDir, "Reading cros-provision log file.")
+	}()
 	log.Printf("--> Started cros-provision service for %q", dutName)
 
-	resultFileName := path.Join(dir, services.OutputFileName)
+	resultFileName := path.Join(crosProvisionResultsDir, services.OutputFileName)
 	if _, err := os.Stat(resultFileName); os.IsNotExist(err) {
 		res.Err = errors.Reason("run provision: result not found").Err()
 		return res
@@ -109,7 +134,7 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 		res.Err = errors.Annotate(err, "run provision").Err()
 		return res
 	}
-	log.Printf("Result file %s: found. %s", dutName, out)
+	log.Printf("result file %s: found. %s", dutName, out)
 	if f := out.GetFailure(); f != nil {
 		res.Out.Outcome = &api.CrosProvisionResponse_Failure{
 			Failure: f,
@@ -132,5 +157,7 @@ func readProvisionOutput(filePath string) (*api.CrosProvisionResponse, error) {
 	}
 	out := &api.CrosProvisionResponse{}
 	err = jsonpb.Unmarshal(r, out)
+
+	log.Printf("cros-provision response:" + out.String())
 	return out, errors.Annotate(err, "read output").Err()
 }

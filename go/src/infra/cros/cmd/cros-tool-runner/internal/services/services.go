@@ -14,6 +14,7 @@ import (
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
 	"go.chromium.org/chromiumos/config/go/test/api"
+	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/cmd/cros-tool-runner/internal/docker"
@@ -32,18 +33,26 @@ const (
 	// File names used to interact with cros-provision CLI.
 	InputFileName  = "in.json"
 	OutputFileName = "out.json"
+
+	// Default dut address port
+	DefaultDutAddressPort = "22"
 )
 
 // CreateDutService pulls and starts cros-dut service.
-func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string, t string) (*docker.Docker, error) {
+func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, dutName, networkName string, cacheServer *lab_api.CacheServer, dutSshInfo *lab_api.IpEndpoint, dir string, t string) (*docker.Docker, error) {
 	p, err := createImagePath(image)
 	if err != nil {
-		log.Printf("Create cros-dut service: %s", err)
+		log.Printf("create cros-dut service: %s", err)
 	}
 	r, err := createRegistryName(image)
 	if err != nil {
-		log.Printf("Create cros-dut service: %s", err)
+		log.Printf("create cros-dut service: %s", err)
 	}
+	dutPortToBeUsed := DefaultDutAddressPort
+	if dutSshInfo.GetPort() != 0 {
+		dutPortToBeUsed = string(dutSshInfo.GetPort())
+	}
+	crosDutResultDirName := "/tmp/cros-dut"
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosDutContainerNameTemplate, dutName),
 		RequestedImageName: p,
@@ -53,14 +62,18 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 		FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
 		ExecCommand: []string{
 			"cros-dut",
-			"-dut_name", dutName,
+			"-dut_address", dutSshInfo.GetAddress() + ":" + dutPortToBeUsed,
+			"-cache_address", cacheServer.GetAddress().GetAddress() + ":" + string(cacheServer.GetAddress().GetPort()),
 			"-port", "80",
+		},
+		Volumes: []string{
+			fmt.Sprintf("%s:%s", dir, crosDutResultDirName),
 		},
 		ServicePort: 80,
 		Detach:      true,
 		Network:     networkName,
 	}
-	return startService(ctx, d)
+	return startService(ctx, d, false)
 }
 
 // RunProvisionCLI pulls and starts cros-provision as CLI.
@@ -100,7 +113,7 @@ func RunProvisionCLI(ctx context.Context, image *build_api.ContainerImageInfo, n
 		Detach:  false,
 		Network: networkName,
 	}
-	return startService(ctx, d)
+	return startService(ctx, d, true)
 }
 
 // RunTestCLI pulls and runs cros-test as CLI.
@@ -132,7 +145,7 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 		Detach:  false,
 		Network: networkName,
 	}
-	_, err = startService(ctx, d)
+	_, err = startService(ctx, d, true)
 	return err
 }
 
@@ -170,6 +183,6 @@ func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, 
 		Detach:  false,
 		Network: networkName,
 	}
-	_, err = startService(ctx, d)
+	_, err = startService(ctx, d, true)
 	return err
 }

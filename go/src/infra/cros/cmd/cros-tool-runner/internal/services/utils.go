@@ -20,9 +20,9 @@ import (
 	"infra/cros/cmd/cros-tool-runner/internal/docker"
 )
 
-func startService(ctx context.Context, d *docker.Docker) (*docker.Docker, error) {
+func startService(ctx context.Context, d *docker.Docker, block bool) (*docker.Docker, error) {
 	if err := d.Remove(ctx); err != nil {
-		log.Printf("Fail to clean up container %q. Error: %s", d.Name, err)
+		log.Printf("failed to clean up container %q. Error: %s", d.Name, err)
 	}
 	if err := d.Auth(ctx); err != nil {
 		return d, errors.Annotate(err, "start service").Err()
@@ -30,7 +30,7 @@ func startService(ctx context.Context, d *docker.Docker) (*docker.Docker, error)
 	if err := d.PullImage(ctx); err != nil {
 		return d, errors.Annotate(err, "start service").Err()
 	}
-	if err := d.Run(ctx); err != nil {
+	if err := d.Run(ctx, block); err != nil {
 		return d, errors.Annotate(err, "start service").Err()
 	}
 	return d, nil
@@ -65,7 +65,7 @@ func createImagePath(i *build_api.ContainerImageInfo) (string, error) {
 	// TODO: update logic ow to choose tags.
 	tag := i.GetTags()[0]
 	path := fmt.Sprintf("%s/%s/%s:%s", r.GetHostname(), r.GetProject(), i.GetName(), tag)
-	log.Printf("Container image: %q", path)
+	log.Printf("container image: %q", path)
 	return path, nil
 }
 
@@ -97,6 +97,8 @@ func createProvisionInput(state *api.CrosProvisionRequest, dir string) error {
 	if err := marshaler.Marshal(f, state); err != nil {
 		return errors.Annotate(err, "create input").Err()
 	}
+	log.Printf("cros-provision request:" + state.String())
+
 	err = f.Close()
 	return errors.Annotate(err, "create input").Err()
 }

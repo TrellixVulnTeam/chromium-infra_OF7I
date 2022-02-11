@@ -65,17 +65,17 @@ func useSystemAuth(ctx context.Context, authFlags *authcli.Flags) (context.Conte
 
 // dockerAuth will run the gcloud auth cmd and return the token given.
 func dockerAuth(ctx context.Context, keyfile string) (string, error) {
-	cmd := exec.Command("sudo", "--non-interactive", "gcloud", "auth", "activate-service-account",
+	cmd := exec.Command("gcloud", "auth", "activate-service-account",
 		fmt.Sprintf("--key-file=%v", keyfile))
-	out, _, err := common.RunWithTimeout(ctx, cmd, time.Minute)
+	out, _, err := common.RunWithTimeout(ctx, cmd, time.Minute, true)
 	if err != nil {
 		log.Printf("Failed running gcloud auth: %s", err)
 		return "", errors.Annotate(err, "gcloud auth").Err()
 	}
 	log.Printf("gcloud auth done. Result: %s", out)
 
-	cmd = exec.Command("sudo", "--non-interactive", "gcloud", "auth", "print-access-token")
-	out, _, err = common.RunWithTimeout(ctx, cmd, time.Minute)
+	cmd = exec.Command("gcloud", "auth", "print-access-token")
+	out, _, err = common.RunWithTimeout(ctx, cmd, time.Minute, true)
 	if err != nil {
 		return "", errors.Annotate(err, "failed running 'gcloud auth print-access-token'").Err()
 	}

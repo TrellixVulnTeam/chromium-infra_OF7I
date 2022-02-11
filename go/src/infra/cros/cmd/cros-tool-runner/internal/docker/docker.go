@@ -79,20 +79,21 @@ func (d *Docker) PullImage(ctx context.Context) (err error) {
 // pullImage pulls image by docker-cli.
 // docker-cli has to have permission to download images from required repos.
 func pullImage(ctx context.Context, image string) error {
-	cmd := exec.Command("sudo", "docker", "pull", image)
-	if stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 2*time.Minute); err != nil {
-		log.Printf("Pull image %q: failed with error %s\nstdout: %s \nstderr %s\n", image, err, stdout, stderr)
-
-		return errors.Annotate(err, "pull image").Err()
+	cmd := exec.Command("docker", "pull", image)
+	stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 2*time.Minute, true)
+	common.PrintToLog(fmt.Sprintf("Pull image %q", image), stdout, stderr)
+	if err != nil {
+		log.Printf("pull image %q: failed with error: %s", image, err)
+		return errors.Annotate(err, "Pull image").Err()
 	}
-	log.Printf("Pull image %q: successful pulled.", image)
+	log.Printf("pull image %q: successful pulled.", image)
 	return nil
 }
 
 // Auth with docker registry so that pulling and stuff works.
 func (d *Docker) Auth(ctx context.Context) (err error) {
 	if d.Token == "" {
-		log.Printf("No token was provided so skipping docker auth.")
+		log.Printf("no token was provided so skipping docker auth.")
 		return nil
 	}
 	if d.Registry == "" {
@@ -108,13 +109,14 @@ func (d *Docker) Auth(ctx context.Context) (err error) {
 // auth authorizes the current process to the given registry, using keys on the drone.
 // This will give permissions for pullImage to work :)
 func auth(ctx context.Context, registry string, token string) error {
-	cmd := exec.Command("sudo", "docker", "login", "-u", "oauth2accesstoken",
+	cmd := exec.Command("docker", "login", "-u", "oauth2accesstoken",
 		"-p", token, registry)
-	stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 1*time.Minute)
+	stdout, stderr, err := common.RunWithTimeout(ctx, cmd, 1*time.Minute, true)
+	common.PrintToLog("Login", stdout, stderr)
 	if err != nil {
 		return errors.Annotate(err, "failed running 'docker login'").Err()
 	}
-	log.Printf("Login completed\nstdout: %s \n stderr %s\n", stdout, stderr)
+	log.Printf("login successful!")
 	return nil
 }
 
@@ -124,33 +126,32 @@ func (d *Docker) Remove(ctx context.Context) error {
 		return nil
 	}
 	// Use force to avoid any un-related issues.
-	cmd := exec.Command("sudo", "docker", "rm", "--force", d.Name)
-	out, _, err := common.RunWithTimeout(ctx, cmd, time.Minute)
+	cmd := exec.Command("docker", "rm", "--force", d.Name)
+	stdout, stderr, err := common.RunWithTimeout(ctx, cmd, time.Minute, true)
+	common.PrintToLog(fmt.Sprintf("Remove container %q", d.Name), stdout, stderr)
 	if err != nil {
-		log.Printf("Remote container %q: failed with %s", d.Name, err)
+		log.Printf("remove container %q failed with error: %s", d.Name, err)
 		return errors.Annotate(err, "remove container %q", d.Name).Err()
 	}
-	log.Printf("Remote container %q: done. Result: %s", d.Name, out)
+	log.Printf("remove container %q: done.", d.Name)
 	return nil
 }
 
 // Run docker image.
 // The step will create container and start server inside or execution CLI.
-func (d *Docker) Run(ctx context.Context) error {
-	out, err := d.runDockerImage(ctx)
+func (d *Docker) Run(ctx context.Context, block bool) error {
+	out, err := d.runDockerImage(ctx, block)
 	if err != nil {
 		return errors.Annotate(err, "run docker %q", d.Name).Err()
 	}
 	if d.Detach {
 		d.containerID = strings.TrimSuffix(out, "\n")
 		log.Printf("Run docker %q: container Id: %q.", d.Name, d.containerID)
-	} else {
-		log.Printf("Docker logs %q:\n%s", d.Name, out)
 	}
 	return nil
 }
 
-func (d *Docker) runDockerImage(ctx context.Context) (string, error) {
+func (d *Docker) runDockerImage(ctx context.Context, block bool) (string, error) {
 	args := []string{"run"}
 	if d.Detach {
 		args = append(args, "-d")
@@ -167,13 +168,11 @@ func (d *Docker) runDockerImage(ctx context.Context) (string, error) {
 	if len(d.ExecCommand) > 0 {
 		args = append(args, d.ExecCommand...)
 	}
-	cmd := exec.Command("sudo", append([]string{"docker"}, args...)...)
-	so, se, err := common.RunWithTimeout(ctx, cmd, time.Hour)
-	log.Printf("Run docker image %q: output: %s", d.Name, so)
-	if err != nil {
-		return so, errors.Annotate(err, "run docker image %q: %s", d.Name, se).Err()
-	}
-	return so, nil
+
+	cmd := exec.Command("docker", args...)
+	so, se, err := common.RunWithTimeout(ctx, cmd, time.Hour, block)
+	common.PrintToLog(fmt.Sprintf("Run docker image %q", d.Name), so, se)
+	return so, errors.Annotate(err, "run docker image %q: %s", d.Name, se).Err()
 }
 
 // CreateImageName creates docker image name from repo-path and tag.

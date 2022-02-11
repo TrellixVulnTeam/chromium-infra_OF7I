@@ -73,7 +73,7 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 	var err error
 	if c.dockerKeyFile != "" {
 		if token, err = dockerAuth(ctx, c.dockerKeyFile); err != nil {
-			log.Printf("Failed in docker auth: %s", err)
+			log.Printf("failed in docker auth: %s", err)
 			return 1
 		}
 	}
@@ -81,7 +81,7 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 	// Unexpected error will counted as incorrect request data.
 	// all expected cases has to generate responses.
 	if err != nil && len(out.GetResponses()) == 0 {
-		log.Printf("Run: add error to output, %s", err)
+		log.Printf("run: add error to output, %s", err)
 		out.Responses = []*api.CrosProvisionResponse{
 			{
 				Outcome: &api.CrosProvisionResponse_Failure{
@@ -93,7 +93,7 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 		}
 	}
 	if err := saveOutput(out, c.outputPath); err != nil {
-		log.Printf("Run: %s", err)
+		log.Printf("run: %s", err)
 	}
 	printOutput(out, a)
 	if err != nil {
@@ -188,9 +188,9 @@ func printOutput(out *api.CrosToolRunnerProvisionResponse, a subcommands.Applica
 	if out != nil {
 		s, err := json.MarshalIndent(out, "", "\t")
 		if err != nil {
-			log.Printf("Output: fail to print info. Error: %s", err)
+			log.Printf("output: fail to print info. Error: %s", err)
 		} else {
-			log.Println("Output:")
+			log.Println("output:")
 			fmt.Fprintf(a.GetOut(), "%s\n", s)
 		}
 	}

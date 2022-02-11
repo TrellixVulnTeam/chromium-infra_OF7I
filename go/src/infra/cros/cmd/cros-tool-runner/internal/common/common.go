@@ -7,18 +7,20 @@ package common
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"log"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
 )
 
 // RunWithTimeout runs command with timeout limit.
-func RunWithTimeout(ctx context.Context, cmd *exec.Cmd, timeout time.Duration) (stdout string, stderr string, err error) {
-	newCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	cw := make(chan error, 1)
+func RunWithTimeout(ctx context.Context, cmd *exec.Cmd, timeout time.Duration, block bool) (stdout string, stderr string, err error) {
+	// TODO(b/219094608): Implement timeout usage.
 	var se, so bytes.Buffer
 	cmd.Stderr = &se
 	cmd.Stdout = &so
@@ -26,16 +28,65 @@ func RunWithTimeout(ctx context.Context, cmd *exec.Cmd, timeout time.Duration) (
 		stdout = so.String()
 		stderr = se.String()
 	}()
-	go func() {
-		log.Printf("Run cmd: %s", cmd)
-		cw <- cmd.Run()
-	}()
-	select {
-	case e := <-cw:
-		err = errors.Annotate(e, "run with timeout %s", timeout).Err()
-		return
-	case <-newCtx.Done():
-		err = errors.Reason("run with timeout %s: excited timeout", timeout).Err()
-		return
+
+	log.Printf("Run cmd: %q", cmd)
+	if block {
+		err = cmd.Run()
+	} else {
+		err = cmd.Start()
 	}
+
+	if err != nil {
+		log.Printf("error found with cmd: %q: %s", cmd, err)
+	}
+	return
+}
+
+// PrintToLog prints cmd, stdout, stderr to log
+func PrintToLog(cmd string, stdout string, stderr string) {
+	if cmd != "" {
+		log.Printf("%q command execution.", cmd)
+	}
+	if stdout != "" {
+		log.Printf("stdout: %s", stdout)
+	}
+	if stderr != "" {
+		log.Printf("stderr: %s", stderr)
+	}
+}
+
+// AddContentsToLog adds contents of the file of fileName to log
+func AddContentsToLog(fileName string, rootDir string, msgToAdd string) error {
+	filePath, err := findFile(fileName, rootDir)
+	if err != nil {
+		log.Printf("%s finding file '%s' at '%s' failed:%s", msgToAdd, fileName, filePath, err)
+		return err
+	}
+	fileContents, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Printf("%s reading file '%s' at '%s' failed:%s", msgToAdd, fileName, filePath, err)
+		return err
+	}
+	log.Printf("%s file '%s' info at '%s':\n\n%s\n", msgToAdd, fileName, filePath, string(fileContents))
+	return nil
+}
+
+// findFile finds file path in rootDir of fileName
+func findFile(fileName string, rootDir string) (string, error) {
+	filePath := ""
+	filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && d.Name() == fileName {
+			filePath = path
+		}
+		return nil
+	})
+
+	if filePath != "" {
+		return filePath, nil
+	}
+
+	return "", errors.Reason(fmt.Sprintf("file '%s' not found!", fileName)).Err()
 }
