@@ -126,6 +126,7 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	if out, err := run(ctx, 30*time.Second, "reboot && exit"); err != nil {
 		// Client closed connected as rebooting.
 		log.Debug(ctx, "Client exit as device rebooted: %s", err)
+		return errors.Annotate(err, "reflash cr 50 fw").Err()
 	} else {
 		log.Debug(ctx, "Stdout: %s", out)
 	}
