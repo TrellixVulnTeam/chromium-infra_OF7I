@@ -200,7 +200,7 @@ fi
 # "_sysconfigdata.py" from our current Python, which we need to
 # generate our module list, since it includes our "configure_env"'s
 # CPPFLAGS, LDFLAGS, etc.
-make platform
+make -j $(nproc) platform
 
 # Generate our static module list, "Modules/Setup.local". Python
 # reads this during build and projects it into its Makefile.

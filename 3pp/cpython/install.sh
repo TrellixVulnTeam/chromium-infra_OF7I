@@ -76,7 +76,7 @@ if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
   # builds. This gets seriously horked when loading readline and running the 3pp
   # processes in make to touch stdin, so we redirect it to /dev/null.
   # recipe when attached to a terminal. We don't actually ever want any
-  make install < /dev/null
+  make -j $(nproc) install < /dev/null
 
   INTERP=$(pwd)/host_interp/bin/python
 elif [[ $_3PP_PLATFORM == mac* ]]; then
@@ -209,7 +209,7 @@ export LDLAST
 # "_sysconfigdata.py" from our current Python, which we need to
 # generate our module list, since it includes our "configure_env"'s
 # CPPFLAGS, LDFLAGS, etc.
-make platform
+make -j $(nproc) platform
 
 # Generate our static module list, "Modules/Setup.local". Python
 # reads this during build and projects it into its Makefile.
