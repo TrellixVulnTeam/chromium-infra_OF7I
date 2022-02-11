@@ -12,6 +12,41 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
+// MockisSetSatlabStableVersionRequest_Strategy is a mock of isSetSatlabStableVersionRequest_Strategy interface.
+type MockisSetSatlabStableVersionRequest_Strategy struct {
+	ctrl     *gomock.Controller
+	recorder *MockisSetSatlabStableVersionRequest_StrategyMockRecorder
+}
+
+// MockisSetSatlabStableVersionRequest_StrategyMockRecorder is the mock recorder for MockisSetSatlabStableVersionRequest_Strategy.
+type MockisSetSatlabStableVersionRequest_StrategyMockRecorder struct {
+	mock *MockisSetSatlabStableVersionRequest_Strategy
+}
+
+// NewMockisSetSatlabStableVersionRequest_Strategy creates a new mock instance.
+func NewMockisSetSatlabStableVersionRequest_Strategy(ctrl *gomock.Controller) *MockisSetSatlabStableVersionRequest_Strategy {
+	mock := &MockisSetSatlabStableVersionRequest_Strategy{ctrl: ctrl}
+	mock.recorder = &MockisSetSatlabStableVersionRequest_StrategyMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockisSetSatlabStableVersionRequest_Strategy) EXPECT() *MockisSetSatlabStableVersionRequest_StrategyMockRecorder {
+	return m.recorder
+}
+
+// isSetSatlabStableVersionRequest_Strategy mocks base method.
+func (m *MockisSetSatlabStableVersionRequest_Strategy) isSetSatlabStableVersionRequest_Strategy() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "isSetSatlabStableVersionRequest_Strategy")
+}
+
+// isSetSatlabStableVersionRequest_Strategy indicates an expected call of isSetSatlabStableVersionRequest_Strategy.
+func (mr *MockisSetSatlabStableVersionRequest_StrategyMockRecorder) isSetSatlabStableVersionRequest_Strategy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isSetSatlabStableVersionRequest_Strategy", reflect.TypeOf((*MockisSetSatlabStableVersionRequest_Strategy)(nil).isSetSatlabStableVersionRequest_Strategy))
+}
+
 // MockInventoryClient is a mock of InventoryClient interface.
 type MockInventoryClient struct {
 	ctrl     *gomock.Controller
@@ -375,6 +410,26 @@ func (mr *MockInventoryClientMockRecorder) ResizePool(ctx, in interface{}, opts 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResizePool", reflect.TypeOf((*MockInventoryClient)(nil).ResizePool), varargs...)
 }
 
+// SetSatlabStableVersion mocks base method.
+func (m *MockInventoryClient) SetSatlabStableVersion(ctx context.Context, in *SetSatlabStableVersionRequest, opts ...grpc.CallOption) (*SetSatlabStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SetSatlabStableVersion", varargs...)
+	ret0, _ := ret[0].(*SetSatlabStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetSatlabStableVersion indicates an expected call of SetSatlabStableVersion.
+func (mr *MockInventoryClientMockRecorder) SetSatlabStableVersion(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSatlabStableVersion", reflect.TypeOf((*MockInventoryClient)(nil).SetSatlabStableVersion), varargs...)
+}
+
 // UpdateCachedInventory mocks base method.
 func (m *MockInventoryClient) UpdateCachedInventory(ctx context.Context, in *UpdateCachedInventoryRequest, opts ...grpc.CallOption) (*UpdateCachedInventoryResponse, error) {
 	m.ctrl.T.Helper()
@@ -731,6 +786,21 @@ func (m *MockInventoryServer) ResizePool(arg0 context.Context, arg1 *ResizePoolR
 func (mr *MockInventoryServerMockRecorder) ResizePool(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResizePool", reflect.TypeOf((*MockInventoryServer)(nil).ResizePool), arg0, arg1)
+}
+
+// SetSatlabStableVersion mocks base method.
+func (m *MockInventoryServer) SetSatlabStableVersion(arg0 context.Context, arg1 *SetSatlabStableVersionRequest) (*SetSatlabStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSatlabStableVersion", arg0, arg1)
+	ret0, _ := ret[0].(*SetSatlabStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetSatlabStableVersion indicates an expected call of SetSatlabStableVersion.
+func (mr *MockInventoryServerMockRecorder) SetSatlabStableVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSatlabStableVersion", reflect.TypeOf((*MockInventoryServer)(nil).SetSatlabStableVersion), arg0, arg1)
 }
 
 // UpdateCachedInventory mocks base method.

@@ -329,6 +329,23 @@ func (s *DecoratedInventory) GetStableVersion(ctx context.Context, req *GetStabl
 	return
 }
 
+func (s *DecoratedInventory) SetSatlabStableVersion(ctx context.Context, req *SetSatlabStableVersionRequest) (rsp *SetSatlabStableVersionResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "SetSatlabStableVersion", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.SetSatlabStableVersion(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "SetSatlabStableVersion", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedInventory) DumpStableVersionToDatastore(ctx context.Context, req *DumpStableVersionToDatastoreRequest) (rsp *DumpStableVersionToDatastoreResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

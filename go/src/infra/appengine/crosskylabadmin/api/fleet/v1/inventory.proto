@@ -140,8 +140,12 @@ service Inventory {
 
   // GetStableVersion reads the stable version for a particular DUT from datastore
   //
-  // There is intentionally no RPC for overwtiting the stable version with arbitrary content.
+  // There is intentionally no RPC for overwriting the stable version with arbitrary content.
   rpc GetStableVersion(GetStableVersionRequest) returns (GetStableVersionResponse);
+
+  // SetSatlabStableVersion sets the stable version value (for which CrOSSkylabAdmin is the source of truth),
+  // for satlab devices only.
+  rpc SetSatlabStableVersion(SetSatlabStableVersionRequest) returns (SetSatlabStableVersionResponse);
 
   // DumpStableVersionToDatastore reads the stable version from the LUCI config file
   // and writes it to datastore.
@@ -765,6 +769,36 @@ message GetStableVersionResponse {
     //
     // This value is intended to be informational, and either logged or presented to an end user.
     string reason = 5;
+}
+
+// SatlabBoardAndModelStrategy is a combination of keys that define a stable version entry for Satlab
+// devices. This kind of entry is scoped to a board and model.
+// The satlab ID is requested but currently ignored.
+message SatlabBoardAndModelStrategy {
+  string satlabID = 1;
+  string board = 2;
+  string model = 3;
+}
+
+// SatlabHostnameStrategy is the key used for a Satlab stable version entry that is scoped to a specific host.
+// We request the satlab ID in addition to the hostname for future-proofing reasons.
+message SatlabHostnameStrategy {
+  string satlabID = 1;
+  string hostname = 2;
+}
+
+message SetSatlabStableVersionRequest {
+  oneof strategy {
+    SatlabBoardAndModelStrategy satlabBoardAndModelStrategy = 1;
+    SatlabHostnameStrategy satlabHostnameStrategy = 2;
+  }
+  string crosVersion = 3;
+  string firmwareVersion = 4;
+  // This is the same thing as the "faftVersion", but it uses the newer terminology.
+  string firmwareImage = 5;
+}
+
+message SetSatlabStableVersionResponse {
 }
 
 message DumpStableVersionToDatastoreRequest {}
