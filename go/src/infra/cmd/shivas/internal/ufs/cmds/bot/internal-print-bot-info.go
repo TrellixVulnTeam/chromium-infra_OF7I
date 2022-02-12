@@ -22,8 +22,8 @@ import (
 	suUtil "infra/cmd/shivas/utils/schedulingunit"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/dutstate"
-	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/swarming"
+	"infra/libs/skylab/inventory/swarming/attacheddevice"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -93,18 +93,12 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 
 	if ns == ufsUtil.BrowserNamespace {
 		ctx = utils.SetupContext(ctx, ufsUtil.BrowserNamespace)
-		if bi, err = handleBrowserBot(ctx, ufsClient, args[0], r); err != nil {
+		if bi, err = getBrowserBotInfo(ctx, ufsClient, args[0]); err != nil {
 			return err
 		}
 	} else {
 		ctx = utils.SetupContext(ctx, ufsUtil.OSNamespace)
-		if bi, err = botInfoForDUT(ctx, ufsClient, args[0], c.byHostname, r); err != nil && status.Code(err) == codes.NotFound {
-			// If we cannot found DUT, then assume it's a scheduling unit.
-			var suErr error
-			if bi, suErr = botInfoForSU(ctx, ufsClient, args[0], r); suErr != nil {
-				return errors.Annotate(suErr, "Failed to get DUT or Scheduling unit %s, %s", args[0], err).Err()
-			}
-		} else if err != nil {
+		if bi, err = getOSBotInfo(ctx, ufsClient, args[0], c.byHostname, r); err != nil {
 			return err
 		}
 	}
@@ -125,41 +119,56 @@ type botInfo struct {
 
 type botState map[string][]string
 
-func handleBrowserBot(ctx context.Context, c ufsAPI.FleetClient, id string, r swarming.ReportFunc) (*botInfo, error) {
+func getBrowserBotInfo(ctx context.Context, client ufsAPI.FleetClient, id string) (*botInfo, error) {
 	// id is the hostname by default for browser bots
-	res, err := c.GetDeviceData(ctx, &ufsAPI.GetDeviceDataRequest{
-		Hostname: id,
-	})
+	resp, err := getDeviceData(ctx, client, id, true)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, errors.New(fmt.Sprintf("no browser device data for host %q", id))
 		}
 		return nil, err
 	}
+	state := dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetHost().GetResourceState()).String()
 	return &botInfo{
 		Dimensions: map[string][]string{
-			"ufs_state": {dutstate.ConvertFromUFSState(res.GetBrowserDeviceData().GetHost().GetResourceState()).String()},
+			"ufs_state": {state},
 			// Duplicate state to dut_state to reuse analytics logic built for ChromeOS lab
-			"dut_state": {dutstate.ConvertFromUFSState(res.GetBrowserDeviceData().GetHost().GetResourceState()).String()},
+			"dut_state": {state},
 		},
 	}, nil
 }
 
-func botInfoForSU(ctx context.Context, c ufsAPI.FleetClient, id string, r swarming.ReportFunc) (*botInfo, error) {
-	req := &ufsAPI.GetSchedulingUnitRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, id),
-	}
-	su, err := c.GetSchedulingUnit(ctx, req)
+func getOSBotInfo(ctx context.Context, client ufsAPI.FleetClient, id string, byHostname bool, r swarming.ReportFunc) (*botInfo, error) {
+	resp, err := getDeviceData(ctx, client, id, byHostname)
 	if err != nil {
 		return nil, err
 	}
+	if resp.GetResourceType() == ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT {
+		return getSUBotInfo(ctx, client, resp.GetSchedulingUnit(), r)
+	}
+	botDimensions, err := getBotDimensions(ctx, client, resp, r)
+	if err != nil {
+		return nil, err
+	}
+	botState, err := getBotState(resp)
+	if err != nil {
+		return nil, err
+	}
+	return &botInfo{Dimensions: botDimensions, State: botState}, nil
+}
+
+func getSUBotInfo(ctx context.Context, client ufsAPI.FleetClient, su *ufspb.SchedulingUnit, r swarming.ReportFunc) (*botInfo, error) {
 	var dutsDims []swarming.Dimensions
 	for _, hostname := range su.GetMachineLSEs() {
-		dbi, err := botInfoForDUT(ctx, c, hostname, true, r)
+		resp, err := getDeviceData(ctx, client, hostname, true)
 		if err != nil {
 			return nil, err
 		}
-		dutsDims = append(dutsDims, dbi.Dimensions)
+		botDimensions, err := getBotDimensions(ctx, client, resp, r)
+		if err != nil {
+			return nil, err
+		}
+		dutsDims = append(dutsDims, botDimensions)
 	}
 	return &botInfo{
 		Dimensions: suUtil.SchedulingUnitDimensions(su, dutsDims),
@@ -167,25 +176,28 @@ func botInfoForSU(ctx context.Context, c ufsAPI.FleetClient, id string, r swarmi
 	}, nil
 }
 
-func botInfoForDUT(ctx context.Context, c ufsAPI.FleetClient, id string, byHostname bool, r swarming.ReportFunc) (*botInfo, error) {
-	req := &ufsAPI.GetChromeOSDeviceDataRequest{}
+func getDeviceData(ctx context.Context, client ufsAPI.FleetClient, id string, byHostname bool) (*ufsAPI.GetDeviceDataResponse, error) {
+	req := &ufsAPI.GetDeviceDataRequest{}
 	if byHostname {
 		req.Hostname = id
 	} else {
-		req.ChromeosDeviceId = id
+		req.DeviceId = id
 	}
-	data, err := c.GetChromeOSDeviceData(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return &botInfo{
-		Dimensions: botDimensionsForDUT(data.GetDutV1(), dutstate.Read(ctx, c, data.GetLabConfig().GetName()), r),
-		State:      botStateForDUT(data),
-	}, nil
+	return client.GetDeviceData(ctx, req)
 }
 
-func botStateForDUT(data *ufspb.ChromeOSDeviceData) botState {
-	d := data.GetDutV1()
+func getBotState(deviceData *ufsAPI.GetDeviceDataResponse) (botState, error) {
+	switch deviceData.GetResourceType() {
+	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
+		return getDUTBotState(deviceData.GetChromeOsDeviceData()), nil
+	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
+		return getAttachedDeviceBotState(deviceData.GetAttachedDeviceData()), nil
+	}
+	return nil, fmt.Errorf("get bot state: invalid device type (%s)", deviceData.GetResourceType())
+}
+
+func getDUTBotState(deviceData *ufspb.ChromeOSDeviceData) botState {
+	d := deviceData.GetDutV1()
 	s := make(botState)
 	for _, kv := range d.GetCommon().GetAttributes() {
 		k, v := kv.GetKey(), kv.GetValue()
@@ -197,13 +209,32 @@ func botStateForDUT(data *ufspb.ChromeOSDeviceData) botState {
 	s["wifi_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetWifiState().String()[len("HARDWARE_"):]}
 	s["bluetooth_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetBluetoothState().String()[len("HARDWARE_"):]}
 	s["rpm_state"] = []string{d.GetCommon().GetLabels().GetPeripherals().GetRpmState().String()}
-	s["lab_config_version_index"] = []string{data.GetLabConfig().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
-	s["dut_state_version_index"] = []string{data.GetDutState().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
+	s["lab_config_version_index"] = []string{deviceData.GetLabConfig().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
+	s["dut_state_version_index"] = []string{deviceData.GetDutState().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
 	return s
 }
 
-func botDimensionsForDUT(d *inventory.DeviceUnderTest, ds dutstate.Info, r swarming.ReportFunc) swarming.Dimensions {
-	c := d.GetCommon()
+func getAttachedDeviceBotState(deviceData *ufsAPI.AttachedDeviceData) botState {
+	s := make(botState)
+	s["lab_config_version_index"] = []string{deviceData.GetLabConfig().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
+	s["dut_state_version_index"] = []string{deviceData.GetDutState().GetUpdateTime().AsTime().Format(ufsUtil.TimestampBasedVersionKeyFormat)}
+	return s
+}
+
+func getBotDimensions(ctx context.Context, client ufsAPI.FleetClient, deviceData *ufsAPI.GetDeviceDataResponse, r swarming.ReportFunc) (swarming.Dimensions, error) {
+	switch deviceData.GetResourceType() {
+	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_CHROMEOS_DEVICE:
+		dutState := dutstate.Read(ctx, client, deviceData.GetChromeOsDeviceData().GetLabConfig().GetName())
+		return getDUTBotDimensions(deviceData.GetChromeOsDeviceData(), dutState, r), nil
+	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE:
+		dutState := dutstate.Read(ctx, client, deviceData.GetAttachedDeviceData().GetLabConfig().GetName())
+		return getAttachedDeviceBotDimensions(deviceData.GetAttachedDeviceData(), dutState, r), nil
+	}
+	return nil, fmt.Errorf("append bot dimensions: invalid device type (%s)", deviceData.GetResourceType())
+}
+
+func getDUTBotDimensions(deviceData *ufspb.ChromeOSDeviceData, ds dutstate.Info, r swarming.ReportFunc) swarming.Dimensions {
+	c := deviceData.GetDutV1().GetCommon()
 	dims := swarming.Convert(c.GetLabels())
 	dims["dut_id"] = []string{c.GetId()}
 	dims["dut_name"] = []string{c.GetHostname()}
@@ -214,18 +245,23 @@ func botDimensionsForDUT(d *inventory.DeviceUnderTest, ds dutstate.Info, r swarm
 		dims["serial_number"] = []string{v}
 	}
 	if v := c.GetLocation(); v != nil {
-		dims["location"] = []string{formatLocation(v)}
+		location := fmt.Sprintf("%s-row%d-rack%d-host%d",
+			v.GetLab().GetName(), v.GetRow(), v.GetRack(), v.GetHost())
+		dims["location"] = []string{location}
 	}
 	dims["dut_state"] = []string{string(ds.State)}
 	swarming.Sanitize(dims, r)
 	return dims
 }
 
-func formatLocation(loc *inventory.Location) string {
-	return fmt.Sprintf("%s-row%d-rack%d-host%d",
-		loc.GetLab().GetName(),
-		loc.GetRow(),
-		loc.GetRack(),
-		loc.GetHost(),
-	)
+func getAttachedDeviceBotDimensions(deviceData *ufsAPI.AttachedDeviceData, ds dutstate.Info, r swarming.ReportFunc) swarming.Dimensions {
+	dims := attacheddevice.Convert(deviceData)
+	if v := deviceData.GetMachine().GetLocation(); v != nil {
+		location := fmt.Sprintf("%s-aisle%s-row%s-rack%s-racknumber%s-shelf%s-position%s",
+			v.GetAisle(), v.GetZone(), v.GetRow(), v.GetRack(), v.GetRackNumber(), v.GetShelf(), v.GetPosition())
+		dims["location"] = []string{location}
+	}
+	dims["dut_state"] = []string{string(ds.State)}
+	swarming.Sanitize(dims, r)
+	return dims
 }
