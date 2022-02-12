@@ -167,7 +167,6 @@ func extractAPImage(ctx context.Context, tarballPath string, run components.Runn
 }
 
 const (
-	createDirSafeGlob         = "mkdir -p %s"
 	tarballListTheFileGlob    = "tar tf %s"
 	tarballExtractTheFileGlob = "tar xf %s -C %s %s"
 )
@@ -175,7 +174,7 @@ const (
 // Try extracting the image_candidates from the tarball.
 func extractFromTarball(ctx context.Context, tarballPath, destDirPath string, candidates []string, run components.Runner, log logger.Logger) (string, error) {
 	// Create the firmware_name subdirectory if it doesn't exist
-	if _, err := run(ctx, extractFileTimeout, fmt.Sprintf(createDirSafeGlob, destDirPath)); err != nil {
+	if _, err := run(ctx, extractFileTimeout, "mkdir", "-p", destDirPath); err != nil {
 		return "", errors.Annotate(err, "extract from tarball: fail to create a destination directory %s", destDirPath).Err()
 	}
 	// Generate a list of all tarball files
