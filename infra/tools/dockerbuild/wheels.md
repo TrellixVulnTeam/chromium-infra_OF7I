@@ -3539,6 +3539,18 @@ wheel: <
 
 * *universal*
 
+### 2.7.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/keras-py3"
+  version: "version:2.7.0"
+>
+```
+
+
+* *universal*
+
 ## **keras-nightly-py3**
 
 ### 2.5.0.dev2021032900
