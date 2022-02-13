@@ -722,10 +722,18 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 	}
 
 	// Find LSE for hostname/asset tag
+	req.Hostname = util.RemovePrefix(req.GetHostname())
 	lse, err := getMachineLseIfExists(ctx, req.GetDeviceId(), req.GetHostname())
+	ns := util.GetNamespaceFromCtx(ctx)
+	logging.Infof(ctx, "querying namespace %q", ns)
 	if err != nil {
-		// Try to query and return SchedulingUnit if failed to fetch lse
-		rsp, err = getSchedulingUnitDeviceDataIfExists(ctx, req.GetHostname())
+		if ns == util.BrowserNamespace {
+			// It may be VM bots
+			rsp, err = getBrowserVMDataIfExists(ctx, req.GetHostname())
+		} else {
+			// Try to query and return SchedulingUnit if failed to fetch lse
+			rsp, err = getSchedulingUnitDeviceDataIfExists(ctx, req.GetHostname())
+		}
 		if err != nil {
 			logging.Errorf(ctx, err.Error())
 		}
@@ -779,8 +787,26 @@ func (fs *FleetServerImpl) GetDeviceData(ctx context.Context, req *ufsAPI.GetDev
 	return nil, grpcStatus.Error(codes.NotFound, "no valid device found")
 }
 
+func getBrowserVMDataIfExists(ctx context.Context, hostname string) (*ufsAPI.GetDeviceDataResponse, error) {
+	vm, err := controller.GetVM(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
+	if vm != nil {
+		return &ufsAPI.GetDeviceDataResponse{
+			Resource: &ufsAPI.GetDeviceDataResponse_BrowserDeviceData{
+				BrowserDeviceData: &ufsAPI.BrowserDeviceData{
+					Vm: vm,
+				},
+			},
+			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_BROWSER_DEVICE,
+		}, nil
+	}
+	return nil, fmt.Errorf("failed to get vm for %s", hostname)
+}
+
 func getSchedulingUnitDeviceDataIfExists(ctx context.Context, hostname string) (*ufsAPI.GetDeviceDataResponse, error) {
-	su, err := controller.GetSchedulingUnit(ctx, util.RemovePrefix(hostname))
+	su, err := controller.GetSchedulingUnit(ctx, hostname)
 	if err != nil {
 		return nil, err
 	}
@@ -792,7 +818,7 @@ func getSchedulingUnitDeviceDataIfExists(ctx context.Context, hostname string) (
 			ResourceType: ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT,
 		}, nil
 	}
-	return nil, fmt.Errorf("failed to get scheduling unit")
+	return nil, fmt.Errorf("failed to get scheduling unit for %s", hostname)
 }
 
 func getMachineLseIfExists(ctx context.Context, id, hostname string) (*ufspb.MachineLSE, error) {

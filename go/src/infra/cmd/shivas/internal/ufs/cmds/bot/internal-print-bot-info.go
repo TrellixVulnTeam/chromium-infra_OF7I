@@ -128,7 +128,12 @@ func getBrowserBotInfo(ctx context.Context, client ufsAPI.FleetClient, id string
 		}
 		return nil, err
 	}
-	state := dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetHost().GetResourceState()).String()
+	var state string
+	if resp.GetBrowserDeviceData().GetHost() != nil {
+		state = dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetHost().GetResourceState()).String()
+	} else {
+		state = dutstate.ConvertFromUFSState(resp.GetBrowserDeviceData().GetVm().GetResourceState()).String()
+	}
 	return &botInfo{
 		Dimensions: map[string][]string{
 			"ufs_state": {state},

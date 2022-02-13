@@ -5,9 +5,11 @@
 package util
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/grpc/metadata"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 )
@@ -97,5 +99,20 @@ func TestGetResourcePrefix(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(res, ShouldEqual, "racks")
 		})
+	})
+}
+
+func TestGetIncomingCtxNamespace(t *testing.T) {
+	ctx := context.Background()
+	Convey("Test no metadata set up", t, func() {
+		So(GetIncomingCtxNamespace(ctx), ShouldEqual, BrowserNamespace)
+	})
+	Convey("Test no namespace is setup", t, func() {
+		md := metadata.Pairs("is_test", "true")
+		So(GetIncomingCtxNamespace(metadata.NewIncomingContext(ctx, md)), ShouldEqual, BrowserNamespace)
+	})
+	Convey("Test OSNamespace is set up", t, func() {
+		md := metadata.Pairs(Namespace, OSNamespace)
+		So(GetIncomingCtxNamespace(metadata.NewIncomingContext(ctx, md)), ShouldEqual, OSNamespace)
 	})
 }

@@ -1746,10 +1746,11 @@ func TestGetDeviceData(t *testing.T) {
 	ctx := testingContext()
 	ctx = gologger.StdConfig.Use(ctx)
 	ctx = logging.SetLevel(ctx, logging.Debug)
+	osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 
-	su, _ := inventory.CreateSchedulingUnit(ctx, &ufspb.SchedulingUnit{
+	su, _ := inventory.CreateSchedulingUnit(osCtx, &ufspb.SchedulingUnit{
 		Name: "su-1",
 	})
 
@@ -1764,11 +1765,13 @@ func TestGetDeviceData(t *testing.T) {
 			},
 		},
 	}
-	registration.CreateMachine(ctx, machine)
+	registration.CreateMachine(osCtx, machine)
 
 	machinelse := mockDutMachineLSE("lse-1")
+	// In datastore, the name doesn't contain prefix
+	machinelse.Name = "lse-1"
 	machinelse.Machines = []string{"machine-1"}
-	inventory.CreateMachineLSE(ctx, machinelse)
+	inventory.CreateMachineLSE(osCtx, machinelse)
 
 	adm := &ufspb.Machine{
 		Name: "adm-1",
@@ -1781,18 +1784,60 @@ func TestGetDeviceData(t *testing.T) {
 			},
 		},
 	}
-	registration.CreateMachine(ctx, adm)
+	registration.CreateMachine(osCtx, adm)
 
 	admlse := mockAttachedDeviceMachineLSE("admlse-1")
+	admlse.Name = "admlse-1"
 	admlse.Machines = []string{"adm-1"}
-	inventory.CreateMachineLSE(ctx, admlse)
+	inventory.CreateMachineLSE(osCtx, admlse)
+
+	// Add Browser host/vm
+	inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+		Name:     "browser-host1",
+		Hostname: "browser-host1",
+		Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+		},
+	})
+	vms := []*ufspb.VM{
+		{
+			Name: "browser-vm1",
+			OsVersion: &ufspb.OSVersion{
+				Value: "os-1",
+			},
+			ResourceState: ufspb.State_STATE_SERVING,
+		},
+	}
+	inventory.BatchUpdateVMs(ctx, vms)
 
 	Convey("GetDeviceData", t, func() {
+		Convey("Get Browser Host by hostname - happy path", func() {
+			req := &ufsAPI.GetDeviceDataRequest{
+				Hostname: "browser-host1",
+			}
+			resp, err := tf.Fleet.GetDeviceData(ctx, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_BROWSER_DEVICE)
+			So(resp.GetBrowserDeviceData().GetHost().GetHostname(), ShouldEqual, "browser-host1")
+		})
+
+		Convey("Get Browser VM by hostname - happy path", func() {
+			req := &ufsAPI.GetDeviceDataRequest{
+				Hostname: "browser-vm1",
+			}
+			resp, err := tf.Fleet.GetDeviceData(ctx, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetResourceType(), ShouldEqual, ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_BROWSER_DEVICE)
+			So(resp.GetBrowserDeviceData().GetVm().GetName(), ShouldEqual, "browser-vm1")
+		})
+
 		Convey("Get SchedulingUnit by existing ID - happy path", func() {
 			req := &ufsAPI.GetDeviceDataRequest{
 				Hostname: util.AddPrefix(util.SchedulingUnitCollection, "su-1"),
 			}
-			resp, err := tf.Fleet.GetDeviceData(tf.C, req)
+			resp, err := tf.Fleet.GetDeviceData(osCtx, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			resp.GetSchedulingUnit().Name = util.RemovePrefix(resp.GetSchedulingUnit().Name)
@@ -1804,7 +1849,7 @@ func TestGetDeviceData(t *testing.T) {
 			req := &ufsAPI.GetDeviceDataRequest{
 				Hostname: util.AddPrefix(util.MachineLSECollection, "lse-1"),
 			}
-			resp, err := tf.Fleet.GetDeviceData(tf.C, req)
+			resp, err := tf.Fleet.GetDeviceData(osCtx, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeOsDeviceData().GetLabConfig(), ShouldResembleProto, machinelse)
@@ -1813,7 +1858,6 @@ func TestGetDeviceData(t *testing.T) {
 		})
 
 		Convey("Get ChromeOSDeviceData by existing hostname in os namespace", func() {
-			osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 			machineOs := &ufspb.Machine{
 				Name: "machine-os-1",
 				Device: &ufspb.Machine_ChromeosMachine{
@@ -1828,6 +1872,7 @@ func TestGetDeviceData(t *testing.T) {
 			registration.CreateMachine(osCtx, machineOs)
 
 			machineOsLse := mockDutMachineLSE("lse-os-1")
+			machineOsLse.Name = "lse-os-1"
 			machineOsLse.Machines = []string{"machine-os-1"}
 			inventory.CreateMachineLSE(osCtx, machineOsLse)
 
@@ -1852,7 +1897,7 @@ func TestGetDeviceData(t *testing.T) {
 			req := &ufsAPI.GetDeviceDataRequest{
 				DeviceId: "machine-1",
 			}
-			resp, err := tf.Fleet.GetDeviceData(tf.C, req)
+			resp, err := tf.Fleet.GetDeviceData(osCtx, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeOsDeviceData().GetLabConfig(), ShouldResembleProto, machinelse)
@@ -1864,7 +1909,7 @@ func TestGetDeviceData(t *testing.T) {
 			req := &ufsAPI.GetDeviceDataRequest{
 				Hostname: util.AddPrefix(util.MachineLSECollection, "admlse-1"),
 			}
-			resp, err := tf.Fleet.GetDeviceData(tf.C, req)
+			resp, err := tf.Fleet.GetDeviceData(osCtx, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetAttachedDeviceData().GetLabConfig(), ShouldResembleProto, admlse)
@@ -1873,7 +1918,6 @@ func TestGetDeviceData(t *testing.T) {
 		})
 
 		Convey("Get AttachedDeviceData by existing hostname in os namespace", func() {
-			osCtx, _ := util.SetupDatastoreNamespace(ctx, util.OSNamespace)
 			adm := &ufspb.Machine{
 				Name: "adm-os-1",
 				Device: &ufspb.Machine_AttachedDevice{
@@ -1888,6 +1932,7 @@ func TestGetDeviceData(t *testing.T) {
 			registration.CreateMachine(osCtx, adm)
 
 			admlse := mockAttachedDeviceMachineLSE("admlse-os-1")
+			admlse.Name = "admlse-os-1"
 			admlse.Machines = []string{"adm-os-1"}
 			inventory.CreateMachineLSE(osCtx, admlse)
 
@@ -1912,7 +1957,7 @@ func TestGetDeviceData(t *testing.T) {
 			req := &ufsAPI.GetDeviceDataRequest{
 				DeviceId: "adm-1",
 			}
-			resp, err := tf.Fleet.GetDeviceData(tf.C, req)
+			resp, err := tf.Fleet.GetDeviceData(osCtx, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetAttachedDeviceData().GetLabConfig(), ShouldResembleProto, admlse)

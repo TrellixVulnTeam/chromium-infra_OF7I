@@ -2271,6 +2271,7 @@ message AttachedDeviceData {
 // Next Tag: 2
 message BrowserDeviceData {
   models.MachineLSE host = 1;
+  models.VM vm = 2;
 }
 
 message CheckFleetTestsPolicyRequest {

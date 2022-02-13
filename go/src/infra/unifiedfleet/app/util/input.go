@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/gae/service/info"
 	"google.golang.org/genproto/googleapis/api/annotations"
+	"google.golang.org/grpc/metadata"
 
 	ufspb "infra/unifiedfleet/api/v1/models"
 	chromeosLab "infra/unifiedfleet/api/v1/models/chromeos/lab"
@@ -167,6 +168,38 @@ func IsClientNamespace(namespace string) bool {
 // SetupDatastoreNamespace sets the datastore namespace in the context to access the correct namespace in the datastore
 func SetupDatastoreNamespace(ctx context.Context, namespace string) (context.Context, error) {
 	return info.Namespace(ctx, namespace)
+}
+
+// GetDatastoreNamespace returns the namespace used in context
+func GetDatastoreNamespace(ctx context.Context) string {
+	return info.GetNamespace(ctx)
+}
+
+// GetIncomingCtxNamespace parses namespace in incoming context passed to UFS
+//
+// Only when user specify namespace as OSNamespace, the returned namespace
+// is OSNamespace. Any other case will cause namespace=BrowserNamespace.
+func GetIncomingCtxNamespace(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return BrowserNamespace
+	}
+	namespace, ok := md[Namespace]
+	if !ok {
+		return BrowserNamespace
+	}
+	return namespace[0]
+}
+
+// GetNamespaceFromCtx parses namespace from ctx, either a normal context
+// or an incoming context.
+func GetNamespaceFromCtx(ctx context.Context) string {
+	outNs := GetIncomingCtxNamespace(ctx)
+	datastoreNs := GetDatastoreNamespace(ctx)
+	if outNs == OSNamespace || datastoreNs == OSNamespace {
+		return OSNamespace
+	}
+	return BrowserNamespace
 }
 
 // GetPageSize gets the correct page size for List pagination
