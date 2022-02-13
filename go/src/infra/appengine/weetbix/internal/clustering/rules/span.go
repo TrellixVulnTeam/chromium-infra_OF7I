@@ -90,6 +90,10 @@ type FailureAssociationRule struct {
 	// Whether the bug should be updated by Weetbix, and whether failures
 	// should still be matched against the rule.
 	IsActive bool `json:"isActive"`
+	// Whether this rule should manage the priority and verified status
+	// of the associated bug based on the impact of the cluster defined
+	// by this rule.
+	IsManagingBug bool `json:"isManagingBug"`
 	// The suggested cluster this rule was created from (if any).
 	// Until re-clustering is complete and has reduced the residual impact
 	// of the source cluster, this cluster ID tells bug filing to ignore
@@ -128,9 +132,9 @@ func ReadActive(ctx context.Context, project string) ([]*FailureAssociationRule,
 	return rs, nil
 }
 
-// ReadByBug reads the failure association rule associated with the given bug.
-// If no such failure association rule exists, NotExistsErr will be returned.
-func ReadByBug(ctx context.Context, bugID bugs.BugID) (*FailureAssociationRule, error) {
+// ReadByBug reads the failure association rules associated with the given bug.
+// At most one rule will be returned per project.
+func ReadByBug(ctx context.Context, bugID bugs.BugID) ([]*FailureAssociationRule, error) {
 	whereClause := `BugSystem = @bugSystem and BugId = @bugId`
 	params := map[string]interface{}{
 		"bugSystem": bugID.System,
@@ -138,12 +142,9 @@ func ReadByBug(ctx context.Context, bugID bugs.BugID) (*FailureAssociationRule, 
 	}
 	rs, err := readWhere(ctx, whereClause, params)
 	if err != nil {
-		return nil, errors.Annotate(err, "query rule by id").Err()
+		return nil, errors.Annotate(err, "query rule by bug").Err()
 	}
-	if len(rs) == 0 {
-		return nil, NotExistsErr
-	}
-	return rs[0], nil
+	return rs, nil
 }
 
 // ReadDelta reads the changed failure association rules since the given
@@ -200,17 +201,17 @@ func ReadMany(ctx context.Context, project string, ids []string) ([]*FailureAsso
 }
 
 // readWhere failure association rules matching the given where clause,
-// substituting params for any SQL parameters used in that calsue.
+// substituting params for any SQL parameters used in that clause.
 func readWhere(ctx context.Context, whereClause string, params map[string]interface{}) ([]*FailureAssociationRule, error) {
 	stmt := spanner.NewStatement(`
 		SELECT Project, RuleId, RuleDefinition, BugSystem, BugId,
 		  CreationTime, LastUpdated, PredicateLastUpdated,
 		  CreationUser, LastUpdatedUser,
-		  IsActive,
+		  IsActive, IsManagingBug,
 		  SourceClusterAlgorithm, SourceClusterId
 		FROM FailureAssociationRules
 		WHERE (` + whereClause + `)
-		ORDER BY BugSystem, BugId
+		ORDER BY BugSystem, BugId, Project
 	`)
 	stmt.Params = params
 
@@ -221,13 +222,13 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 		var creationTime, lastUpdated time.Time
 		var predicateLastUpdated spanner.NullTime
 		var creationUser, lastUpdatedUser string
-		var isActive spanner.NullBool
+		var isActive, isManagingBug spanner.NullBool
 		var sourceClusterAlgorithm, sourceClusterID string
 		err := r.Columns(
 			&project, &ruleID, &ruleDefinition, &bugSystem, &bugID,
 			&creationTime, &lastUpdated, &predicateLastUpdated,
 			&creationUser, &lastUpdatedUser,
-			&isActive,
+			&isActive, &isManagingBug,
 			&sourceClusterAlgorithm, &sourceClusterID,
 		)
 		if err != nil {
@@ -244,6 +245,7 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 			LastUpdatedUser: lastUpdatedUser,
 			BugID:           bugs.BugID{System: bugSystem, ID: bugID},
 			IsActive:        isActive.Valid && isActive.Bool,
+			IsManagingBug:   isManagingBug.Valid && isManagingBug.Bool,
 			SourceCluster: clustering.ClusterID{
 				Algorithm: sourceClusterAlgorithm,
 				ID:        sourceClusterID,
@@ -343,6 +345,7 @@ func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 		"BugId":                r.BugID.ID,
 		// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
 		"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
+		"IsManagingBug":          r.IsManagingBug,
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
 		"SourceClusterId":        r.SourceCluster.ID,
 	})
@@ -369,6 +372,7 @@ func Update(ctx context.Context, r *FailureAssociationRule, updatePredicate bool
 		"BugId":                  r.BugID.ID,
 		"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
 		"SourceClusterId":        r.SourceCluster.ID,
+		"IsManagingBug":          r.IsManagingBug,
 	}
 	if updatePredicate {
 		update["RuleDefinition"] = r.RuleDefinition

@@ -98,6 +98,7 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
                 },
                 ruleDefinition: ruleDefinition.value,
                 isActive: true,
+                isManagingBug: true,
                 sourceCluster: this.sourceCluster,
             },
         }

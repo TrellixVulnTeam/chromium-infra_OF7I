@@ -49,17 +49,35 @@ func TestRules(t *testing.T) {
 
 		srv := &Rules{}
 
-		ruleOneBuilder := rules.NewRule(0).
+		ruleManagedBuilder := rules.NewRule(0).
 			WithProject(testProject).
-			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/151"})
-		ruleOne := ruleOneBuilder.Build()
-		ruleTwo := rules.NewRule(1).
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/111"})
+		ruleManaged := ruleManagedBuilder.Build()
+		ruleTwoProject := rules.NewRule(1).
+			WithProject(testProject).
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/222"}).
+			WithBugManaged(false).
+			Build()
+		ruleTwoProjectOther := rules.NewRule(2).
 			WithProject("otherproject").
-			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/333"}).
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/222"}).
+			Build()
+		ruleUnmanagedOther := rules.NewRule(3).
+			WithProject("otherproject").
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/444"}).
+			WithBugManaged(false).
+			Build()
+		ruleManagedOther := rules.NewRule(4).
+			WithProject("otherproject").
+			WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/555"}).
+			WithBugManaged(true).
 			Build()
 		err := rules.SetRulesForTesting(ctx, []*rules.FailureAssociationRule{
-			ruleOne,
-			ruleTwo,
+			ruleManaged,
+			ruleTwoProject,
+			ruleTwoProjectOther,
+			ruleUnmanagedOther,
+			ruleManagedOther,
 		})
 		So(err, ShouldBeNil)
 
@@ -78,43 +96,44 @@ func TestRules(t *testing.T) {
 		Convey("Get", func() {
 			Convey("Exists", func() {
 				request := &pb.GetRuleRequest{
-					Name: fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleOne.RuleID),
+					Name: fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleManaged.RuleID),
 				}
 
 				rule, err := srv.Get(ctx, request)
 				So(err, ShouldBeNil)
-				So(rule, ShouldResembleProto, createRulePB(ruleOne, cfg))
+				So(rule, ShouldResembleProto, createRulePB(ruleManaged, cfg))
 
-				// Also verify createRule works as expected, so we do not need
+				// Also verify createRulePB works as expected, so we do not need
 				// to test that again in later tests.
 				So(rule, ShouldResembleProto, &pb.Rule{
-					Name:           fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleOne.RuleID),
-					Project:        ruleOne.Project,
-					RuleId:         ruleOne.RuleID,
-					RuleDefinition: ruleOne.RuleDefinition,
+					Name:           fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleManaged.RuleID),
+					Project:        ruleManaged.Project,
+					RuleId:         ruleManaged.RuleID,
+					RuleDefinition: ruleManaged.RuleDefinition,
 					Bug: &pb.AssociatedBug{
 						System:   "monorail",
-						Id:       "monorailproject/151",
-						LinkText: "mybug.com/151",
-						Url:      "https://monorailhost.com/p/monorailproject/issues/detail?id=151",
+						Id:       "monorailproject/111",
+						LinkText: "mybug.com/111",
+						Url:      "https://monorailhost.com/p/monorailproject/issues/detail?id=111",
 					},
-					IsActive: true,
+					IsActive:      true,
+					IsManagingBug: true,
 					SourceCluster: &pb.ClusterId{
-						Algorithm: ruleOne.SourceCluster.Algorithm,
-						Id:        ruleOne.SourceCluster.ID,
+						Algorithm: ruleManaged.SourceCluster.Algorithm,
+						Id:        ruleManaged.SourceCluster.ID,
 					},
-					CreateTime:              timestamppb.New(ruleOne.CreationTime),
-					CreateUser:              ruleOne.CreationUser,
-					LastUpdateTime:          timestamppb.New(ruleOne.LastUpdated),
-					LastUpdateUser:          ruleOne.LastUpdatedUser,
-					PredicateLastUpdateTime: timestamppb.New(ruleOne.PredicateLastUpdated),
-					Etag:                    ruleETag(ruleOne),
+					CreateTime:              timestamppb.New(ruleManaged.CreationTime),
+					CreateUser:              ruleManaged.CreationUser,
+					LastUpdateTime:          timestamppb.New(ruleManaged.LastUpdated),
+					LastUpdateUser:          ruleManaged.LastUpdatedUser,
+					PredicateLastUpdateTime: timestamppb.New(ruleManaged.PredicateLastUpdated),
+					Etag:                    ruleETag(ruleManaged),
 				})
 			})
 			Convey("Not Exists", func() {
 				ruleID := strings.Repeat("00", 16)
 				request := &pb.GetRuleRequest{
-					Name: fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleID),
+					Name: fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleID),
 				}
 
 				rule, err := srv.Get(ctx, request)
@@ -130,12 +149,12 @@ func TestRules(t *testing.T) {
 			}
 			Convey("Non-Empty", func() {
 				rs := []*rules.FailureAssociationRule{
-					ruleOne,
+					ruleManaged,
 					rules.NewRule(2).WithProject(testProject).Build(),
 					rules.NewRule(3).WithProject(testProject).Build(),
 					rules.NewRule(4).WithProject(testProject).Build(),
 					// In other project.
-					ruleTwo,
+					ruleManagedOther,
 				}
 				err := rules.SetRulesForTesting(ctx, rs)
 				So(err, ShouldBeNil)
@@ -173,20 +192,21 @@ func TestRules(t *testing.T) {
 		Convey("Update", func() {
 			request := &pb.UpdateRuleRequest{
 				Rule: &pb.Rule{
-					Name:           fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleOne.RuleID),
+					Name:           fmt.Sprintf("projects/%s/rules/%s", ruleManaged.Project, ruleManaged.RuleID),
 					RuleDefinition: `test = "updated"`,
 					Bug: &pb.AssociatedBug{
 						System: "monorail",
 						Id:     "monorailproject/2",
 					},
-					IsActive: false,
+					IsManagingBug: false,
+					IsActive:      false,
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{
 					// On the client side, we use JSON equivalents, i.e. ruleDefinition,
-					// isActive.
-					Paths: []string{"rule_definition", "bug", "is_active"},
+					// bug, isActive, isManagingBug.
+					Paths: []string{"rule_definition", "bug", "is_active", "is_bug_managed"},
 				},
-				Etag: ruleETag(ruleOne),
+				Etag: ruleETag(ruleManaged),
 			}
 
 			Convey("Success", func() {
@@ -194,15 +214,16 @@ func TestRules(t *testing.T) {
 					rule, err := srv.Update(ctx, request)
 					So(err, ShouldBeNil)
 
-					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleOne.RuleID)
+					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleManaged.RuleID)
 					So(err, ShouldBeNil)
 
-					So(storedRule.LastUpdated, ShouldNotEqual, ruleOne.LastUpdated)
+					So(storedRule.LastUpdated, ShouldNotEqual, ruleManaged.LastUpdated)
 
-					expectedRule := ruleOneBuilder.
+					expectedRule := ruleManagedBuilder.
 						WithRuleDefinition(`test = "updated"`).
 						WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
 						WithActive(false).
+						WithBugManaged(false).
 						// Accept whatever the new last updated time is.
 						WithLastUpdated(storedRule.LastUpdated).
 						WithLastUpdatedUser("someone@example.com").
@@ -218,20 +239,52 @@ func TestRules(t *testing.T) {
 					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
 				})
 				Convey("Predicate not updated", func() {
-					request.UpdateMask = &fieldmaskpb.FieldMask{
-						Paths: []string{"bug"},
+					request.UpdateMask.Paths = []string{"bug"}
+
+					rule, err := srv.Update(ctx, request)
+					So(err, ShouldBeNil)
+
+					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleManaged.RuleID)
+					So(err, ShouldBeNil)
+
+					// Check the rule was updated.
+					So(storedRule.LastUpdated, ShouldNotEqual, ruleManaged.LastUpdated)
+
+					expectedRule := ruleManagedBuilder.
+						WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
+						// Accept whatever the new last updated time is.
+						WithLastUpdated(storedRule.LastUpdated).
+						WithLastUpdatedUser("someone@example.com").
+						Build()
+
+					// Verify the rule was correctly updated in the database.
+					So(storedRule, ShouldResemble, expectedRule)
+
+					// Verify the returned rule matches what was expected.
+					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+				})
+				Convey("Re-use of bug managed by another project", func() {
+					request.UpdateMask.Paths = []string{"bug"}
+					request.Rule.Bug = &pb.AssociatedBug{
+						System: ruleManagedOther.BugID.System,
+						Id:     ruleManagedOther.BugID.ID,
 					}
 
 					rule, err := srv.Update(ctx, request)
 					So(err, ShouldBeNil)
 
-					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleOne.RuleID)
+					storedRule, err := rules.Read(span.Single(ctx), testProject, ruleManaged.RuleID)
 					So(err, ShouldBeNil)
 
-					So(storedRule.LastUpdated, ShouldNotEqual, ruleOne.LastUpdated)
+					// Check the rule was updated.
+					So(storedRule.LastUpdated, ShouldNotEqual, ruleManaged.LastUpdated)
 
-					expectedRule := ruleOneBuilder.
-						WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
+					expectedRule := ruleManagedBuilder.
+						// Verify the bug was updated, but that IsManagingBug
+						// was silently set to false, because ruleManagedOther
+						// already controls the bug.
+						WithBug(ruleManagedOther.BugID).
+						WithBugManaged(false).
 						// Accept whatever the new last updated time is.
 						WithLastUpdated(storedRule.LastUpdated).
 						WithLastUpdatedUser("someone@example.com").
@@ -257,7 +310,7 @@ func TestRules(t *testing.T) {
 			})
 			Convey("Rule does not exist", func() {
 				ruleID := strings.Repeat("00", 16)
-				request.Rule.Name = fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleID)
+				request.Rule.Name = fmt.Sprintf("projects/%s/rules/%s", testProject, ruleID)
 
 				rule, err := srv.Update(ctx, request)
 				So(rule, ShouldBeNil)
@@ -274,18 +327,38 @@ func TestRules(t *testing.T) {
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
 					So(st.Message(), ShouldEqual, "bug not in expected monorail project (monorailproject)")
 				})
-				Convey("Re-use of same bug", func() {
+				Convey("Re-use of same bug in same project", func() {
 					// Use the same bug as another rule.
 					request.Rule.Bug = &pb.AssociatedBug{
-						System: ruleTwo.BugID.System,
-						Id:     ruleTwo.BugID.ID,
+						System: ruleTwoProject.BugID.System,
+						Id:     ruleTwoProject.BugID.ID,
 					}
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)
 					st, _ := appstatus.Get(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
-					So(st.Message(), ShouldStartWith, "bug already used by another failure association rule")
+					So(st.Message(), ShouldEqual,
+						fmt.Sprintf("bug already used by a rule in the same project (%s/%s)",
+							ruleTwoProject.Project, ruleTwoProject.RuleID))
+				})
+				Convey("Bug managed by another rule", func() {
+					// Select a bug already managed by another rule.
+					request.Rule.Bug = &pb.AssociatedBug{
+						System: ruleManagedOther.BugID.System,
+						Id:     ruleManagedOther.BugID.ID,
+					}
+					// Request we manage this bug.
+					request.Rule.IsManagingBug = true
+					request.UpdateMask.Paths = []string{"bug", "is_bug_managed"}
+
+					rule, err := srv.Update(ctx, request)
+					So(rule, ShouldBeNil)
+					st, _ := appstatus.Get(err)
+					So(st.Code(), ShouldEqual, codes.InvalidArgument)
+					So(st.Message(), ShouldEqual,
+						fmt.Sprintf("bug already managed by a rule in another project (%s/%s)",
+							ruleManagedOther.Project, ruleManagedOther.RuleID))
 				})
 				Convey("Invalid rule definition", func() {
 					// Use an invalid failure association rule.
@@ -308,7 +381,8 @@ func TestRules(t *testing.T) {
 						System: "monorail",
 						Id:     "monorailproject/2",
 					},
-					IsActive: false,
+					IsActive:      false,
+					IsManagingBug: true,
 					SourceCluster: &pb.ClusterId{
 						Algorithm: testname.AlgorithmName,
 						Id:        strings.Repeat("aa", 16),
@@ -317,42 +391,84 @@ func TestRules(t *testing.T) {
 			}
 
 			Convey("Success", func() {
-				rule, err := srv.Create(ctx, request)
-				So(err, ShouldBeNil)
-
-				storedRule, err := rules.Read(span.Single(ctx), testProject, rule.RuleId)
-				So(err, ShouldBeNil)
-
-				expectedRule := rules.NewRule(0).
+				expectedRuleBuilder := rules.NewRule(0).
 					WithProject(testProject).
-					// Accept the randomly generated rule ID.
-					WithRuleID(rule.RuleId).
 					WithRuleDefinition(`test = "create"`).
-					WithBug(bugs.BugID{System: "monorail", ID: "monorailproject/2"}).
 					WithActive(false).
-					// Accept whatever CreationTime was assigned, as it
-					// is determined by Spanner commit time.
-					// Rule spanner data access code tests already validate
-					// this is populated correctly.
-					WithCreationTime(storedRule.CreationTime).
+					WithBugManaged(true).
 					WithCreationUser("someone@example.com").
-					// LastUpdated time should be the same as Creation Time.
-					WithLastUpdated(storedRule.CreationTime).
 					WithLastUpdatedUser("someone@example.com").
-					// PredicateLastUpdated time should be the same as Creation
-					// Time.
-					WithPredicateLastUpdated(storedRule.CreationTime).
 					WithSourceCluster(clustering.ClusterID{
 						Algorithm: testname.AlgorithmName,
 						ID:        strings.Repeat("aa", 16),
-					}).
-					Build()
+					})
 
-				// Verify the rule was correctly created in the database.
-				So(storedRule, ShouldResemble, expectedRule)
+				Convey("Bug not managed by another rule", func() {
+					// Re-use the same bug as a rule in another project,
+					// where the other rule is not managing the bug.
+					request.Rule.Bug = &pb.AssociatedBug{
+						System: ruleUnmanagedOther.BugID.System,
+						Id:     ruleUnmanagedOther.BugID.ID,
+					}
 
-				// Verify the returned rule matches our expectations.
-				So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+					rule, err := srv.Create(ctx, request)
+					So(err, ShouldBeNil)
+
+					storedRule, err := rules.Read(span.Single(ctx), testProject, rule.RuleId)
+					So(err, ShouldBeNil)
+
+					expectedRule := expectedRuleBuilder.
+						// Accept the randomly generated rule ID.
+						WithRuleID(rule.RuleId).
+						WithBug(ruleUnmanagedOther.BugID).
+						// Accept whatever CreationTime was assigned, as it
+						// is determined by Spanner commit time.
+						// Rule spanner data access code tests already validate
+						// this is populated correctly.
+						WithCreationTime(storedRule.CreationTime).
+						WithLastUpdated(storedRule.CreationTime).
+						WithPredicateLastUpdated(storedRule.CreationTime).
+						Build()
+
+					// Verify the rule was correctly created in the database.
+					So(storedRule, ShouldResemble, expectedRuleBuilder.Build())
+
+					// Verify the returned rule matches our expectations.
+					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+				})
+				Convey("Bug managed by another rule", func() {
+					// Re-use the same bug as a rule in another project,
+					// where that rule is managing the bug.
+					request.Rule.Bug = &pb.AssociatedBug{
+						System: ruleManagedOther.BugID.System,
+						Id:     ruleManagedOther.BugID.ID,
+					}
+
+					rule, err := srv.Create(ctx, request)
+					So(err, ShouldBeNil)
+
+					storedRule, err := rules.Read(span.Single(ctx), testProject, rule.RuleId)
+					So(err, ShouldBeNil)
+
+					expectedRule := expectedRuleBuilder.
+						// Accept the randomly generated rule ID.
+						WithRuleID(rule.RuleId).
+						WithBug(ruleManagedOther.BugID).
+						// Because another rule is managing the bug, this rule
+						// should be silenlty stopped from managing the bug.
+						WithBugManaged(false).
+						// Accept whatever CreationTime was assigned.
+						WithCreationTime(storedRule.CreationTime).
+						WithLastUpdated(storedRule.CreationTime).
+						WithPredicateLastUpdated(storedRule.CreationTime).
+						Build()
+
+					// Verify the rule was correctly created in the database.
+					So(storedRule, ShouldResemble, expectedRuleBuilder.Build())
+
+					// Verify the returned rule matches our expectations.
+					So(rule, ShouldResembleProto, createRulePB(expectedRule, cfg))
+				})
 			})
 			Convey("Validation error", func() {
 				Convey("Invalid bug monorail project", func() {
@@ -362,20 +478,23 @@ func TestRules(t *testing.T) {
 					So(rule, ShouldBeNil)
 					st, _ := appstatus.Get(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
-					So(st.Message(), ShouldEqual, "bug not in expected monorail project (monorailproject)")
+					So(st.Message(), ShouldEqual,
+						"bug not in expected monorail project (monorailproject)")
 				})
-				Convey("Re-use of same bug", func() {
-					// Use the same bug as another rule.
+				Convey("Re-use of same bug in same project", func() {
+					// Use the same bug as another rule, in the same project.
 					request.Rule.Bug = &pb.AssociatedBug{
-						System: ruleTwo.BugID.System,
-						Id:     ruleTwo.BugID.ID,
+						System: ruleTwoProject.BugID.System,
+						Id:     ruleTwoProject.BugID.ID,
 					}
 
 					rule, err := srv.Create(ctx, request)
 					So(rule, ShouldBeNil)
 					st, _ := appstatus.Get(err)
 					So(st.Code(), ShouldEqual, codes.InvalidArgument)
-					So(st.Message(), ShouldStartWith, "bug already used by another failure association rule")
+					So(st.Message(), ShouldEqual,
+						fmt.Sprintf("bug already used by a rule in the same project (%s/%s)",
+							ruleTwoProject.Project, ruleTwoProject.RuleID))
 				})
 				Convey("Invalid rule definition", func() {
 					// Use an invalid failure association rule.
@@ -390,29 +509,48 @@ func TestRules(t *testing.T) {
 			})
 		})
 		Convey("LookupBug", func() {
-			Convey("Exists", func() {
-				request := &pb.LookupBugRequest{
-					System: ruleOne.BugID.System,
-					Id:     ruleOne.BugID.ID,
-				}
-
-				response, err := srv.LookupBug(ctx, request)
-				So(err, ShouldBeNil)
-				So(response, ShouldResembleProto, &pb.LookupBugResponse{
-					Rule: fmt.Sprintf("projects/%s/rules/%s", ruleOne.Project, ruleOne.RuleID),
-				})
-			})
-			Convey("Not Exists", func() {
+			Convey("Exists None", func() {
 				request := &pb.LookupBugRequest{
 					System: "monorail",
 					Id:     "notexists/1",
 				}
 
 				response, err := srv.LookupBug(ctx, request)
-				st, ok := appstatus.Get(err)
-				So(ok, ShouldBeTrue)
-				So(st.Code(), ShouldEqual, codes.NotFound)
-				So(response, ShouldBeNil)
+				So(err, ShouldBeNil)
+				So(response, ShouldResembleProto, &pb.LookupBugResponse{
+					Rules: []string{},
+				})
+			})
+			Convey("Exists One", func() {
+				request := &pb.LookupBugRequest{
+					System: ruleManaged.BugID.System,
+					Id:     ruleManaged.BugID.ID,
+				}
+
+				response, err := srv.LookupBug(ctx, request)
+				So(err, ShouldBeNil)
+				So(response, ShouldResembleProto, &pb.LookupBugResponse{
+					Rules: []string{
+						fmt.Sprintf("projects/%s/rules/%s",
+							ruleManaged.Project, ruleManaged.RuleID),
+					},
+				})
+			})
+			Convey("Exists Many", func() {
+				request := &pb.LookupBugRequest{
+					System: ruleTwoProject.BugID.System,
+					Id:     ruleTwoProject.BugID.ID,
+				}
+
+				response, err := srv.LookupBug(ctx, request)
+				So(err, ShouldBeNil)
+				So(response, ShouldResembleProto, &pb.LookupBugResponse{
+					Rules: []string{
+						// Rules are returned alphabetically by project.
+						fmt.Sprintf("projects/otherproject/rules/%s", ruleTwoProjectOther.RuleID),
+						fmt.Sprintf("projects/testproject/rules/%s", ruleTwoProject.RuleID),
+					},
+				})
 			})
 		})
 	})

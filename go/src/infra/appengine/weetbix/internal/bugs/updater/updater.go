@@ -8,6 +8,10 @@ import (
 	"context"
 	"encoding/hex"
 
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/span"
+
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
@@ -18,10 +22,6 @@ import (
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/server/span"
 )
 
 // BugManager implements bug creation and bug updates for a bug-tracking
@@ -188,6 +188,11 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 			impact = &bugs.ClusterImpact{}
 		}
 
+		// Only update the bug if it is managed by this rule.
+		if !r.IsManagingBug {
+			continue
+		}
+
 		// Only update the bug if re-clustering and analysis ran on the latest
 		// version of this failure association rule. This avoids bugs getting
 		// erroneous priority changes while impact information is incomplete.
@@ -282,6 +287,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		RuleDefinition: rule,
 		BugID:          bugs.BugID{System: system, ID: name},
 		IsActive:       true,
+		IsManagingBug:  true,
 		SourceCluster:  cs.ClusterID,
 	}
 	create := func(ctx context.Context) error {

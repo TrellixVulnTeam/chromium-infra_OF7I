@@ -54,6 +54,7 @@ export interface Rule {
     ruleDefinition: string;
     bug: AssociatedBug;
     isActive: boolean;
+    isManagingBug: boolean;
     sourceCluster: ClusterId;
     createTime: string; // RFC 3339 encoded date/time.
     createUser: string;
@@ -94,6 +95,7 @@ export interface RuleToCreate {
     ruleDefinition: string;
     bug: AssociatedBugToUpdate;
     isActive?: boolean;
+    isManagingBug?: boolean;
     sourceCluster?: ClusterId;
 }
 
@@ -115,6 +117,7 @@ export interface RuleToUpdate {
     ruleDefinition?: string;
     bug?: AssociatedBugToUpdate;
     isActive?: boolean;
+    isManagingBug?: boolean;
     sourceCluster?: ClusterId;
 }
 
@@ -124,9 +127,9 @@ export interface LookupBugRequest {
 }
 
 export interface LookupBugResponse {
-    // The looked up rule.
+    // The looked up rules.
     // Format: projects/{project}/rules/{rule_id}.
-    rule: string;
+    rules?: string[];
 }
 
 const ruleNameRE = /^projects\/(.*)\/rules\/(.*)$/

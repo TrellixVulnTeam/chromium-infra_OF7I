@@ -187,6 +187,11 @@ CREATE TABLE FailureAssociationRules (
   -- this be NULL. This makes it easy to retrofit a NULL_FILTERED index
   -- in future, if it is needed for performance.
   IsActive BOOL,
+  -- Whether this rule should manage the priority and verified status
+  -- of the associated bug based on the impact of the cluster defined
+  -- by this rule.
+  -- The only allowed values are true or NULL (to indicate false).
+  IsManagingBug BOOL,
   -- The suggested cluster this failure association rule was created from
   -- (if any) (part 1).
   -- This is the algorithm component of the suggested cluster this rule
@@ -203,13 +208,18 @@ CREATE TABLE FailureAssociationRules (
   SourceClusterId STRING(32) NOT NULL,
 ) PRIMARY KEY (Project, RuleId);
 
--- The failure association rule associated with a bug. This also enforces
--- the constraint that each rule must have a unique bug, even if the rules
--- are in different LUCI Projects.
+-- The failure association rules associated with a bug. This also
+-- enforces the constraint that there is at most one rule per bug
+-- per project.
+CREATE UNIQUE INDEX FailureAssociationRuleByBugAndProject ON FailureAssociationRules(BugSystem, BugId, Project);
+
+-- Enforces the constraint that only one rule may manage a given bug
+-- at once.
 -- This is required to ensure that automatic bug filing does not attempt to
--- take conflicting actions (e.g. simultaneously increase and decrease priority)
--- on the same bug, because of differing priorities in different projects.
-CREATE UNIQUE INDEX FailureAssociationRuleByBug ON FailureAssociationRules(BugSystem, BugId);
+-- take conflicting actions (i.e. simultaneously increase and decrease
+-- priority) on the same bug, because of differing priorities set by
+-- different rules.
+CREATE UNIQUE NULL_FILTERED INDEX FailureAssociationRuleByManagedBug ON FailureAssociationRules(BugSystem, BugId, IsManagingBug);
 
 -- Clustering state records the clustering state of failed test results, organised
 -- by chunk.

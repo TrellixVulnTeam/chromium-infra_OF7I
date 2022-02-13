@@ -37,6 +37,7 @@ func NewRule(uniqifier int) *RuleBuilder {
 		RuleDefinition:       "reason LIKE \"%exit code 5%\" AND test LIKE \"tast.arc.%\"",
 		BugID:                bugs.BugID{System: "monorail", ID: fmt.Sprintf("chromium/%v", uniqifier)},
 		IsActive:             true,
+		IsManagingBug:        true,
 		CreationTime:         time.Date(1900, 1, 2, 3, 4, 5, uniqifier, time.UTC),
 		CreationUser:         WeetbixSystem,
 		LastUpdated:          time.Date(1900, 1, 2, 3, 4, 7, uniqifier, time.UTC),
@@ -67,6 +68,12 @@ func (b *RuleBuilder) WithRuleID(id string) *RuleBuilder {
 // WithActive specifies whether the rule will be active.
 func (b *RuleBuilder) WithActive(active bool) *RuleBuilder {
 	b.rule.IsActive = active
+	return b
+}
+
+// WithBugManaged specifies whether the rule's bug will be managed by Weetbix.
+func (b *RuleBuilder) WithBugManaged(value bool) *RuleBuilder {
+	b.rule.IsManagingBug = value
 	return b
 }
 
@@ -145,8 +152,9 @@ func SetRulesForTesting(ctx context.Context, rs []*FailureAssociationRule) error
 				"BugSystem":            r.BugID.System,
 				"BugID":                r.BugID.ID,
 				"PredicateLastUpdated": r.PredicateLastUpdated,
-				// IsActive uses the value 'NULL' to indicate false, and true to indicate true.
+				// Uses the value 'NULL' to indicate false, and true to indicate true.
 				"IsActive":               spanner.NullBool{Bool: r.IsActive, Valid: r.IsActive},
+				"IsManagingBug":          spanner.NullBool{Bool: r.IsManagingBug, Valid: r.IsManagingBug},
 				"SourceClusterAlgorithm": r.SourceCluster.Algorithm,
 				"SourceClusterId":        r.SourceCluster.ID,
 			})

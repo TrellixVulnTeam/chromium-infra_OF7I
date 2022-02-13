@@ -123,7 +123,8 @@ func (*Rules) Create(ctx context.Context, req *pb.CreateRuleRequest) (*pb.Rule, 
 			System: req.Rule.Bug.GetSystem(),
 			ID:     req.Rule.Bug.GetId(),
 		},
-		IsActive: req.Rule.GetIsActive(),
+		IsActive:      req.Rule.GetIsActive(),
+		IsManagingBug: req.Rule.GetIsManagingBug(),
 		SourceCluster: clustering.ClusterID{
 			Algorithm: req.Rule.SourceCluster.GetAlgorithm(),
 			ID:        req.Rule.SourceCluster.GetId(),
@@ -135,18 +136,23 @@ func (*Rules) Create(ctx context.Context, req *pb.CreateRuleRequest) (*pb.Rule, 
 	}
 
 	commitTime, err := span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
-		// Verify the bug is not used by another rule.
-		bugRule, err := rules.ReadByBug(ctx, r.BugID)
-		if err != nil && err != rules.NotExistsErr {
+		// Verify the bug is not used by another rule in this project.
+		bugRules, err := rules.ReadByBug(ctx, r.BugID)
+		if err != nil {
 			return err
 		}
-		if err != rules.NotExistsErr {
-			// Note: this validation could disclose the existence of rules
-			// in projects other than those the user may have access to.
-			// This is unavoidable in the context of the bug uniqueness
-			// constraint we current have, which is needed to avoid Weetbix
-			// making conflicting updates to the same bug.
-			return validationError(fmt.Errorf("bug already used by another failure association rule (%s/%s)", bugRule.Project, bugRule.RuleID))
+		for _, otherRule := range bugRules {
+			if otherRule.IsManagingBug {
+				// Avoid conflicts by silently making the bug not managed
+				// by this rule if there is another rule managing it.
+				// Note: this validation implicitly discloses the existence
+				// of rules in projects other than those the user may have
+				// access to.
+				r.IsManagingBug = false
+			}
+			if otherRule.Project == r.Project {
+				return validationError(fmt.Errorf("bug already used by a rule in the same project (%s/%s)", otherRule.Project, otherRule.RuleID))
+			}
 		}
 
 		err = rules.Create(ctx, r, user)
@@ -201,6 +207,8 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 			return appstatus.Attach(err, status.New(codes.Aborted, "the rule was modified since it was last read; the update was not applied."))
 		}
 		updatePredicate := false
+		updatingBug := false
+		updatingManaged := false
 		for _, path := range req.UpdateMask.Paths {
 			// Only limited fields may be modified by the client.
 			switch path {
@@ -216,29 +224,49 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 					return validationError(err)
 				}
 
-				// Verify the bug is not used by another rule.
-				bugRule, err := rules.ReadByBug(ctx, bugID)
-				if err != nil && err != rules.NotExistsErr {
-					// This will result in an internal error being reported
-					// to the caller.
-					return err
-				}
-				bugValid := (err == rules.NotExistsErr) || (bugRule.Project == project && bugRule.RuleID == ruleID)
-				if !bugValid {
-					// Note: this validation could disclose the existence of rules
-					// in projects other than those the user may have access to.
-					// This is unavoidable in the context of the bug uniqueness
-					// constraint we current have, which is needed to avoid Weetbix
-					// making conflicting updates to the same bug.
-					return validationError(fmt.Errorf("bug already used by another failure association rule (%s/%s)", bugRule.Project, bugRule.RuleID))
-				}
-
+				updatingBug = true // Triggers validation.
 				rule.BugID = bugID
 			case "is_active":
 				rule.IsActive = req.Rule.IsActive
 				updatePredicate = true
+			case "is_bug_managed":
+				updatingManaged = true // Triggers validation.
+				rule.IsManagingBug = req.Rule.IsManagingBug
 			default:
 				return validationError(fmt.Errorf("unsupported field mask: %s", path))
+			}
+		}
+
+		if updatingBug || updatingManaged {
+			// Verify the new bug is not used by another rule in the
+			// same project, and that there are not multiple rules
+			// managing the same bug.
+			bugRules, err := rules.ReadByBug(ctx, rule.BugID)
+			if err != nil {
+				// This will result in an internal error being reported
+				// to the caller.
+				return err
+			}
+			for _, otherRule := range bugRules {
+				if otherRule.Project == project && otherRule.RuleID != ruleID {
+					return validationError(fmt.Errorf("bug already used by a rule in the same project (%s/%s)", otherRule.Project, otherRule.RuleID))
+				}
+			}
+			for _, otherRule := range bugRules {
+				if otherRule.Project != project && otherRule.IsManagingBug {
+					if updatingManaged && rule.IsManagingBug {
+						// The caller explicitly requested an update of
+						// IsManagingBug to true, but we cannot do this.
+						return validationError(fmt.Errorf("bug already managed by a rule in another project (%s/%s)", otherRule.Project, otherRule.RuleID))
+					}
+					// If only changing the bug, avoid conflicts by silently
+					// making the bug not managed by this rule if there is
+					// another rule managing it.
+					// Note: this validation implicitly discloses the existence
+					// of rules in projects other than those the user may have
+					// access to.
+					rule.IsManagingBug = false
+				}
 			}
 		}
 
@@ -271,16 +299,17 @@ func (*Rules) LookupBug(ctx context.Context, req *pb.LookupBugRequest) (*pb.Look
 	if err := bug.Validate(); err != nil {
 		return nil, validationError(err)
 	}
-	rule, err := rules.ReadByBug(span.Single(ctx), bug)
+	rules, err := rules.ReadByBug(span.Single(ctx), bug)
 	if err != nil {
-		if err == rules.NotExistsErr {
-			return nil, appstatus.Error(codes.NotFound, "no rule with that bug exists")
-		}
 		// This will result in an internal error being reported to the caller.
 		return nil, errors.Annotate(err, "reading rule by bug %s:%s", bug.System, bug.ID).Err()
 	}
+	ruleNames := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		ruleNames = append(ruleNames, ruleName(rule.Project, rule.RuleID))
+	}
 	return &pb.LookupBugResponse{
-		Rule: ruleName(rule.Project, rule.RuleID),
+		Rules: ruleNames,
 	}, nil
 }
 
@@ -314,6 +343,7 @@ func createRulePB(r *rules.FailureAssociationRule, cfg *configpb.ProjectConfig) 
 		RuleDefinition: r.RuleDefinition,
 		Bug:            createAssociatedBugPB(r.BugID, cfg),
 		IsActive:       r.IsActive,
+		IsManagingBug:  r.IsManagingBug,
 		SourceCluster: &pb.ClusterId{
 			Algorithm: r.SourceCluster.Algorithm,
 			Id:        r.SourceCluster.ID,

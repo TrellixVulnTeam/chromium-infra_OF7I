@@ -42,6 +42,7 @@ service Rules {
 }
 
 // A rule associating failures with a bug.
+// Next ID: 15.
 message Rule {
   // Can be used to refer to this rule, e.g. in RulesService.Get RPC.
   // Format: projects/{project}/rules/{rule_id}.
@@ -68,6 +69,10 @@ message Rule {
   // Whether the bug should be updated by Weetbix, and whether failures
   // should still be matched against the rule.
   bool is_active = 6;
+
+  // Whether Weetbix should manage the priority and verified status
+  // of the associated bug based on the impact established via this rule.
+  bool is_managing_bug = 14;
 
   // The suggested cluster this rule was created from (if any).
   // Until re-clustering is complete and has reduced the residual impact
@@ -167,7 +172,7 @@ message LookupBugRequest {
 }
 
 message LookupBugResponse {
-  // The rule corresponding to the requested bug.
+  // The rules corresponding to the requested bug.
   // Format: projects/{project}/rules/{rule_id}.
-  string rule = 1;
+  repeated string rules = 2;
 }

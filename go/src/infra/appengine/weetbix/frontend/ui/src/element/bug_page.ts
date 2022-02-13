@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css, state } from 'lit-element';
+import { LitElement, TemplateResult, html, customElement, property, css, state } from 'lit-element';
 import { RouterLocation, Router } from '@vaadin/router';
-import { GrpcError, RpcCode } from '@chopsui/prpc-client';
+import { GrpcError } from '@chopsui/prpc-client';
 
-import { LookupBugRequest, getRulesService, parseRuleName } from '../services/rules';
+import { LookupBugRequest, LookupBugResponse, getRulesService, parseRuleName } from '../services/rules';
 import { linkToRule } from '../urlHandling/links';
 
 // BugPage handles the bug endpoint:
@@ -26,6 +26,9 @@ export class BugPage extends LitElement {
 
     @state()
     error: any;
+
+    @state()
+    response: LookupBugResponse | null = null;
 
     onBeforeEnter(location: RouterLocation) {
         // Take the first parameter value only.
@@ -58,9 +61,13 @@ export class BugPage extends LitElement {
                 id: this.id,
             }
             const response = await service.lookupBug(request);
-            const ruleKey = parseRuleName(response.rule);
-            const link = linkToRule(ruleKey.project, ruleKey.ruleId);
-            Router.go(link);
+            this.response = response;
+
+            if (response.rules && response.rules.length === 1) {
+                const ruleKey = parseRuleName(response.rules[0]);
+                const link = linkToRule(ruleKey.project, ruleKey.ruleId);
+                Router.go(link);
+            }
         } catch (e) {
             this.error = e;
         }
@@ -70,18 +77,30 @@ export class BugPage extends LitElement {
         return html`<div id="container">${this.message()}</div>`
     }
 
-    message(): string {
-        if (!this.error) {
-            return `Loading...`;
-        }
-
-        if (this.error instanceof GrpcError) {
-            if (this.error.code == RpcCode.NOT_FOUND) {
-                return `No rule found matching the specified bug (${this.system}:${this.id}).`;
+    message(): TemplateResult {
+        if (this.error) {
+            if (this.error instanceof GrpcError) {
+                return html`Error finding rule for bug (${this.system}:${this.id}): ${this.error.description.trim()}.`;
             }
-            return `Error finding rule for bug (${this.system}:${this.id}): ${this.error.description.trim()}.`;
+            return html`${this.error}`;
         }
-        return `${this.error}`;
+        if (this.response) {
+            if (!this.response.rules) {
+                return html`No rule found matching the specified bug (${this.system}:${this.id}).`;
+            }
+
+            const ruleLink = (ruleName: string): string => {
+                const ruleKey = parseRuleName(ruleName);
+                return linkToRule(ruleKey.project, ruleKey.ruleId);
+            }
+
+            return html`Multiple projects have rules matching the specified bug (${this.system}:${this.id}):
+            <ul>
+                ${this.response.rules.map(r => html`<li><a href="${ruleLink(r)}">${parseRuleName(r).project}</a></li>`)}
+            </ul>
+            `
+        }
+        return html`Loading...`;
     }
 
     static styles = [css`

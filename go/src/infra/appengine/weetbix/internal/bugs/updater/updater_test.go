@@ -158,6 +158,7 @@ func TestRun(t *testing.T) {
 					RuleDefinition:  `reason LIKE "Failed to connect to %.%.%.%."`,
 					BugID:           bugs.BugID{System: "monorail", ID: "chromium/100"},
 					IsActive:        true,
+					IsManagingBug:   true,
 					SourceCluster:   sourceClusterID,
 					CreationUser:    rules.WeetbixSystem,
 					LastUpdatedUser: rules.WeetbixSystem,
@@ -299,8 +300,8 @@ func TestRun(t *testing.T) {
 			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 
-			expectFinalBugClusters := func() {
-				// Check final set of bugs is as expected.
+			expectFinalRules := func() {
+				// Check final set of rules is as expected.
 				rs, err := rules.ReadActive(span.Single(ctx), project)
 				So(err, ShouldBeNil)
 				for _, r := range rs {
@@ -322,6 +323,7 @@ func TestRun(t *testing.T) {
 						BugID:           bugs.BugID{System: "monorail", ID: "chromium/100"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-1"),
 						IsActive:        true,
+						IsManagingBug:   true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
 					},
@@ -331,6 +333,7 @@ func TestRun(t *testing.T) {
 						BugID:           bugs.BugID{System: "monorail", ID: "chromium/101"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-2"),
 						IsActive:        true,
+						IsManagingBug:   true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
 					},
@@ -340,20 +343,21 @@ func TestRun(t *testing.T) {
 						BugID:           bugs.BugID{System: "monorail", ID: "chromium/102"},
 						SourceCluster:   testIDClusterID(compiledCfg, "testname-3"),
 						IsActive:        true,
+						IsManagingBug:   true,
 						CreationUser:    rules.WeetbixSystem,
 						LastUpdatedUser: rules.WeetbixSystem,
 					},
 				})
 				So(len(f.Issues), ShouldEqual, 3)
 			}
-			expectFinalBugClusters()
+			expectFinalRules()
 
 			// Further updates do nothing.
 			originalIssues := monorail.CopyIssuesStore(f)
 			err = updateAnalysisAndBugsForProject(ctx, opts)
 			So(err, ShouldBeNil)
 			So(f, monorail.ShouldResembleIssuesStore, originalIssues)
-			expectFinalBugClusters()
+			expectFinalRules()
 
 			rs, err := rules.ReadActive(span.Single(ctx), project)
 			So(err, ShouldBeNil)
@@ -384,7 +388,7 @@ func TestRun(t *testing.T) {
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, originalPriority)
 					So(issue.Status.Status, ShouldEqual, originalStatus)
 
-					expectFinalBugClusters()
+					expectFinalRules()
 				})
 			})
 			Convey("Re-clustering complete", func() {
@@ -411,6 +415,29 @@ func TestRun(t *testing.T) {
 				})
 				So(err, ShouldBeNil)
 
+				Convey("Cluster impact does not change if bug not managed by rule", func() {
+					// Set IsManagingBug to false on one rule.
+					rs[0].IsManagingBug = false
+					rules.SetRulesForTesting(ctx, rs)
+
+					issue := f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					originalPriority := monorail.ChromiumTestIssuePriority(issue)
+					originalStatus := issue.Status.Status
+					So(originalPriority, ShouldNotEqual, "0")
+
+					// Set P0 impact on the cluster.
+					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumP0Impact())
+					err = updateAnalysisAndBugsForProject(ctx, opts)
+					So(err, ShouldBeNil)
+
+					// Check that the rule priority and status has not changed.
+					So(len(f.Issues), ShouldEqual, 3)
+					issue = f.Issues[0].Issue
+					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
+					So(issue.Status.Status, ShouldEqual, originalStatus)
+					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, originalPriority)
+				})
 				Convey("Increasing cluster impact increases issue priority", func() {
 					issue := f.Issues[2].Issue
 					So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
@@ -425,7 +452,7 @@ func TestRun(t *testing.T) {
 					So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "0")
 
-					expectFinalBugClusters()
+					expectFinalRules()
 				})
 				Convey("Decreasing cluster impact decreases issue priority", func() {
 					issue := f.Issues[0].Issue
@@ -442,7 +469,7 @@ func TestRun(t *testing.T) {
 					So(issue.Status.Status, ShouldEqual, monorail.UntriagedStatus)
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldEqual, "3")
 
-					expectFinalBugClusters()
+					expectFinalRules()
 				})
 				Convey("Deleting cluster closes issue", func() {
 					issue := f.Issues[0].Issue
