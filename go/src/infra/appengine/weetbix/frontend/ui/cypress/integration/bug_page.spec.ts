@@ -13,8 +13,7 @@ describe('Bug Page', () => {
 
     it('redirects if single matching rule found', () => {
         cy.visit('/b/chromium/920867');
-        cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"');
-        cy.get('rule-section').get('[data-cy=rule-enabled]').contains('Yes');
+        cy.get('rule-section').get('[data-cy=bug]').contains('crbug.com/920867');
     })
 
     it('no matching rule exists', () => {
@@ -49,6 +48,5 @@ describe('Bug Page', () => {
         cy.get('body').contains('chromium').click();
 
         cy.get('rule-section').get('[data-cy=rule-definition]').contains('test = "cypress test 1"');
-        cy.get('rule-section').get('[data-cy=rule-enabled]').contains('Yes');
     })
 })

@@ -204,7 +204,7 @@ func TestRules(t *testing.T) {
 				UpdateMask: &fieldmaskpb.FieldMask{
 					// On the client side, we use JSON equivalents, i.e. ruleDefinition,
 					// bug, isActive, isManagingBug.
-					Paths: []string{"rule_definition", "bug", "is_active", "is_bug_managed"},
+					Paths: []string{"rule_definition", "bug", "is_active", "is_managing_bug"},
 				},
 				Etag: ruleETag(ruleManaged),
 			}
@@ -350,7 +350,7 @@ func TestRules(t *testing.T) {
 					}
 					// Request we manage this bug.
 					request.Rule.IsManagingBug = true
-					request.UpdateMask.Paths = []string{"bug", "is_bug_managed"}
+					request.UpdateMask.Paths = []string{"bug", "is_managing_bug"}
 
 					rule, err := srv.Update(ctx, request)
 					So(rule, ShouldBeNil)

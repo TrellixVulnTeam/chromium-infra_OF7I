@@ -229,7 +229,7 @@ func (*Rules) Update(ctx context.Context, req *pb.UpdateRuleRequest) (*pb.Rule, 
 			case "is_active":
 				rule.IsActive = req.Rule.IsActive
 				updatePredicate = true
-			case "is_bug_managed":
+			case "is_managing_bug":
 				updatingManaged = true // Triggers validation.
 				rule.IsManagingBug = req.Rule.IsManagingBug
 			default:

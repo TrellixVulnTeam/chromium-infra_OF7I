@@ -28,8 +28,9 @@ export function setupTestRule() {
                         id: 'chromium/920867',
                     },
                     isActive: true,
+                    isManagingBug: true,
                 },
-                updateMask: 'ruleDefinition,bug,isActive'
+                updateMask: 'ruleDefinition,bug,isActive,isManagingBug'
             },
             headers: {
                 Authorization: 'Bearer ' + accessToken,

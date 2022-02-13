@@ -13,6 +13,8 @@ import { TextArea } from '@material/mwc-textarea';
 import '@material/mwc-textfield';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
+import '@material/mwc-switch';
+import { Switch } from '@material/mwc-switch';
 import '@material/mwc-icon';
 import { BugPicker } from './bug_picker';
 import './bug_picker';
@@ -130,14 +132,20 @@ export class RuleSection extends LitElement {
                     </tr>
                     <tr>
                         <th>Status</th>
-                        <td data-cy="rule-status">${this.issue != null ? html`<span class="bug-status ${bugStatusClass(this.issue.status.status)}">${this.issue.status.status}</span>` : html`...` }</td>
+                        <td data-cy="bug-status">${this.issue != null ? html`<span class="bug-status ${bugStatusClass(this.issue.status.status)}">${this.issue.status.status}</span>` : html`...` }</td>
                     </tr>
                     <tr>
-                        <th>Enabled <mwc-icon class="inline-icon" title="Enabled failure association rules are used to match failures. If a rule is no longer needed, it should be disabled.">help_outline</mwc-icon></th>
-                        <td data-cy="rule-enabled">
-                            ${r.isActive ? "Yes" : "No"}
+                        <th>Bug Updates <mwc-icon class="inline-icon" title="Whether the priority and verified status of the associated bug should be automatically updated based on cluster impact. Only one rule may be set to update a given bug at any one time.">help_outline</mwc-icon></th>
+                        <td data-cy="bug-updates">
+                            <mwc-switch id="bug-updates-toggle" data-cy="bug-updates-toggle" .selected=${r.isManagingBug} @click=${this.toggleManagingBug}></mwc-switch>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Archived <mwc-icon class="inline-icon" title="Archived failure association rules do not match failures. If a rule is no longer needed, it should be archived.">help_outline</mwc-icon></th>
+                        <td data-cy="rule-archived">
+                            ${r.isActive ? "No" : "Yes"}
                             <div class="inline-button">
-                                <mwc-button outlined dense @click="${this.toggleActive}" data-cy="rule-enabled-toggle">${r.isActive ? "Disable" : "Enable"}</mwc-button>
+                                <mwc-button outlined dense @click="${this.toggleArchived}" data-cy="rule-archived-toggle">${r.isActive ? "Archive" : "Restore"}</mwc-button>
                             </div>
                         </td>
                     </tr>
@@ -321,7 +329,7 @@ export class RuleSection extends LitElement {
         this.showSnackbar(e as string);
     }
 
-    async toggleActive() {
+    async toggleArchived() {
         if (!this.rule) {
             throw new Error('invariant violated: toggleActive cannot be called before rule is loaded');
         }
@@ -331,6 +339,31 @@ export class RuleSection extends LitElement {
                 isActive: !this.rule.isActive,
             },
             updateMask: "isActive",
+            etag: this.rule.etag,
+        }
+        try {
+            await this.applyUpdate(request);
+        } catch (err) {
+            this.showSnackbar(err as string);
+        }
+    }
+
+    async toggleManagingBug() {
+        if (!this.rule) {
+            throw new Error('invariant violated: toggleManagingBug cannot be called before rule is loaded');
+        }
+
+        this.requestUpdate();
+        // Revert the automatic toggle caused by the click.
+        const toggle = this.shadowRoot!.getElementById("bug-updates-toggle") as Switch;
+        toggle.selected = this.rule.isManagingBug;
+
+        const request: UpdateRuleRequest = {
+            rule: {
+                name: this.rule.name,
+                isManagingBug: !this.rule.isManagingBug,
+            },
+            updateMask: "isManagingBug",
             etag: this.rule.etag,
         }
         try {
@@ -404,6 +437,7 @@ export class RuleSection extends LitElement {
         .inline-button {
             display: inline-block;
             vertical-align: middle;
+            padding-left: 5px;
         }
         .inline-icon {
             vertical-align: middle;
@@ -451,6 +485,7 @@ export class RuleSection extends LitElement {
         td,th {
             padding: 4px;
             max-width: 80%;
+            height: 28px;
         }
         mwc-textarea, bug-picker {
             margin: 5px 0px;
