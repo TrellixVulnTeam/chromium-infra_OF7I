@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { AuthorizedPrpcClient } from './authorized_client';
+import { AuthorizedPrpcClient } from '../clients/authorized_client';
 
 declare global {
     interface Window { monorailHostname: string | undefined; }

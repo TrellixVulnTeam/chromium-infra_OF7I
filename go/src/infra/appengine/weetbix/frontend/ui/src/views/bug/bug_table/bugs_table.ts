@@ -4,7 +4,7 @@
 
 import { LitElement, html, customElement, property, state } from 'lit-element';
 
-import { getRulesService, ListRulesRequest, Rule } from '../services/rules';
+import { getRulesService, ListRulesRequest, Rule } from '../../../services/rules';
 
 // BugsTable lists the failure association rules configured in Weetbix.
 @customElement('bugs-table')

@@ -11,10 +11,10 @@ import { Snackbar } from '@material/mwc-snackbar';
 import { TextArea } from '@material/mwc-textarea';
 import { BeforeEnterObserver, Router, RouterLocation } from '@vaadin/router';
 
-import { BugPicker } from './bug_picker';
-import './bug_picker';
-import { getRulesService, ClusterId, CreateRuleRequest } from '../services/rules';
-import { linkToRule } from '../urlHandling/links';
+import { BugPicker } from '../../shared_elements/bug_picker';
+import '../../shared_elements/bug_picker';
+import { getRulesService, ClusterId, CreateRuleRequest } from '../../services/rules';
+import { linkToRule } from '../../tools/urlHandling/links';
 
 /**
  * NewRulePage displays a page for creating a new rule in Weetbix.

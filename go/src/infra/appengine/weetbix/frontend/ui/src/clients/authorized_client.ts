@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { PrpcClient } from '@chopsui/prpc-client';
-import { obtainAuthState } from '../libs/auth_state';
+import { obtainAuthState } from '../state/auth_state';
 
 export class AuthorizedPrpcClient {
     client: PrpcClient;

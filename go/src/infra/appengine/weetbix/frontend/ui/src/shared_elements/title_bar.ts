@@ -2,7 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { css, customElement, html, LitElement, property } from 'lit-element';
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    property
+} from 'lit-element';
 
 /**
  * Renders page header, including a sign-in widget, a settings button, and a

@@ -2,17 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import './styles/style.css';
+import '../styles/style.css';
+import './views/bug/bug_page/bug_page.ts';
+import './views/bug/bug_table/bugs_table';
+import './views/cluster/cluster_page/cluster_page.ts';
+import './views/cluster/cluster_table/cluster_table.ts';
+import './views/new_rule/new_rule_page.ts';
+import './views/errors/not_found_page.ts';
+import './shared_elements/title_bar.ts';
 
-import { Context, Router } from '@vaadin/router';
-import './element/bugs_table.ts';
-import './element/bug_page.ts';
-import './element/cluster_table.ts';
-import './element/cluster_page.ts';
-import './element/new_rule_page.ts';
-import './element/not_found_page.ts';
-import './element/title_bar.ts';
-
+import {
+    Context,
+    Router
+} from '@vaadin/router';
 
 const outlet = document.getElementById('outlet');
 const router = new Router(outlet);

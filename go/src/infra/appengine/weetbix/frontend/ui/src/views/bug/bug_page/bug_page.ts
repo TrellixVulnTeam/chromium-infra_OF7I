@@ -6,8 +6,8 @@ import { LitElement, TemplateResult, html, customElement, property, css, state }
 import { RouterLocation, Router } from '@vaadin/router';
 import { GrpcError } from '@chopsui/prpc-client';
 
-import { LookupBugRequest, LookupBugResponse, getRulesService, parseRuleName } from '../services/rules';
-import { linkToRule } from '../urlHandling/links';
+import { LookupBugRequest, LookupBugResponse, getRulesService, parseRuleName } from '../../../services/rules';
+import { linkToRule } from '../../../tools/urlHandling/links';
 
 // BugPage handles the bug endpoint:
 // /b/<bugtracker>/<bugid>

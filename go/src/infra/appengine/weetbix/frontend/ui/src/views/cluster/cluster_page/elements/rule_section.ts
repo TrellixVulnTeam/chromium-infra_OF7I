@@ -16,12 +16,12 @@ import { Snackbar } from '@material/mwc-snackbar';
 import '@material/mwc-switch';
 import { Switch } from '@material/mwc-switch';
 import '@material/mwc-icon';
-import { BugPicker } from './bug_picker';
-import './bug_picker';
+import { BugPicker } from '../../../../shared_elements/bug_picker';
+import '../../../../shared_elements/bug_picker';
 
-import { getRulesService, Rule, UpdateRuleRequest } from '../services/rules';
-import { getIssuesService, Issue, GetIssueRequest } from '../services/monorail';
-import { linkToCluster } from '../urlHandling/links';
+import { getRulesService, Rule, UpdateRuleRequest } from '../../../../services/rules';
+import { getIssuesService, Issue, GetIssueRequest } from '../../../../services/monorail';
+import { linkToCluster } from '../../../../tools/urlHandling/links';
 
 /**
  * RuleSection displays a rule tracked by Weetbix.

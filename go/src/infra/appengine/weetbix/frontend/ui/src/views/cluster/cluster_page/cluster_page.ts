@@ -2,13 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css, state, TemplateResult } from 'lit-element';
-import { BeforeEnterObserver, RouterLocation, Router } from '@vaadin/router';
+import './elements/reclustering_progress_indicator.ts';
+import '../../../shared_elements/failure_table';
+import './elements/rule_section.ts';
 
-import { RuleChangedEvent } from './rule_section';
-import "./failure_table.ts";
-import './reclustering_progress_indicator.ts';
-import './rule_section.ts';
+
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    property,
+    state,
+    TemplateResult
+} from 'lit-element';
+
+import {
+    BeforeEnterObserver,
+    Router,
+    RouterLocation
+} from '@vaadin/router';
+
+import { RuleChangedEvent } from './elements/rule_section';
 
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
@@ -63,10 +78,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         var definitionSection = html`Loading...`;
         if (this.clusterAlgorithm.startsWith("rules-")) {
             definitionSection = html`
-                <rule-section
-                    project=${this.project}
-                    ruleId=${this.clusterId}
-                    @rulechanged=${this.onRuleChanged}>
+                <rule-section project=${this.project} ruleId=${this.clusterId} @rulechanged=${this.onRuleChanged}>
                 </rule-section>
             `;
         } else if (c !== undefined) {
@@ -76,7 +88,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
             } else if (this.clusterAlgorithm.startsWith("reason-")) {
                 criteriaName = "Failure reason-based clustering";
             }
-            let newRuleButton : TemplateResult = html``
+            let newRuleButton: TemplateResult = html``
             if (c.failureAssociationRule) {
                 newRuleButton = html`<mwc-button class="new-rule-button" raised @click=${this.newRuleClicked}>New Rule from Cluster</mwc-button>`;
             }
@@ -138,18 +150,16 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         }
 
         return html`
-        <reclustering-progress-indicator
-            project=${this.project}
-            ?hasrule=${this.clusterAlgorithm.startsWith("rules-")}
-            rulePredicateLastUpdated=${this.rulePredicateLastUpdated}
-            @refreshanalysis=${this.refreshAnalysis}>
+        <reclustering-progress-indicator project=${this.project} ?hasrule=${this.clusterAlgorithm.startsWith("rules-")}
+            rulePredicateLastUpdated=${this.rulePredicateLastUpdated} @refreshanalysis=${this.refreshAnalysis}>
         </reclustering-progress-indicator>
         <div id="container">
             ${definitionSection}
             <h2>Impact</h2>
             ${impactTable}
             <h2>Recent Failures</h2>
-            <failure-table project=${this.project} clusterAlgorithm=${this.clusterAlgorithm} clusterID=${this.clusterId}></failure-table>
+            <failure-table project=${this.project} clusterAlgorithm=${this.clusterAlgorithm} clusterID=${this.clusterId}>
+            </failure-table>
         </div>
         `;
     }

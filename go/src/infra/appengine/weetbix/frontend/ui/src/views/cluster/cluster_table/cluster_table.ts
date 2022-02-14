@@ -10,7 +10,7 @@ import "@material/mwc-icon/mwc-icon";
 import "@material/mwc-list/mwc-list-item";
 import '@material/mwc-select';
 
-import { linkToCluster } from '../urlHandling/links';
+import { linkToCluster } from '../../../tools/urlHandling/links';
 
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
