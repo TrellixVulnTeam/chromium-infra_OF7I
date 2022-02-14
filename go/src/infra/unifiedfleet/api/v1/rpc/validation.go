@@ -128,6 +128,7 @@ func (r *RackRegistrationRequest) Validate() error {
 	if !util.ValidateTags(r.Rack.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.Rack.Name = id
 
 	if r.GetRack().GetChromeBrowserRack() != nil {
 		if r.GetRack().GetChromeBrowserRack().GetSwitchObjects() != nil {
@@ -190,6 +191,7 @@ func (r *CreateChromePlatformRequest) Validate() error {
 	if !util.ValidateTags(r.ChromePlatform.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.ChromePlatformId = id
 	return nil
 }
 
@@ -242,6 +244,7 @@ func (r *CreateMachineLSEPrototypeRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	r.MachineLSEPrototypeId = id
 	return nil
 }
 
@@ -283,6 +286,7 @@ func (r *CreateRackLSEPrototypeRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	r.RackLSEPrototypeId = id
 	return nil
 }
 
@@ -327,6 +331,8 @@ func (r *MachineRegistrationRequest) Validate() error {
 	if !util.ValidateTags(r.Machine.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.Machine.Name = id
+	r.Machine.SerialNumber = strings.TrimSpace(r.Machine.SerialNumber)
 
 	if r.GetMachine().GetChromeBrowserMachine() != nil {
 		if r.GetMachine().GetChromeBrowserMachine().GetNicObjects() != nil {
@@ -374,6 +380,8 @@ func (r *UpdateMachineRequest) Validate() error {
 	if !util.ValidateTags(r.Machine.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.Machine.Name = strings.TrimSpace(r.Machine.GetName())
+	r.Machine.SerialNumber = strings.TrimSpace(r.Machine.SerialNumber)
 	return validateResourceName(machineRegex, MachineNameFormat, r.Machine.GetName())
 }
 
@@ -464,6 +472,7 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if !util.ValidateTags(r.MachineLSE.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.MachineLSEId = id
 	return nil
 }
 
@@ -529,6 +538,8 @@ func (r *CreateVMRequest) Validate() error {
 	if !util.ValidateTags(r.Vm.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.GetVm().MachineLseId = id
+	r.GetVm().Name = strings.TrimSpace(r.GetVm().Name)
 	return nil
 }
 
@@ -593,6 +604,7 @@ func (r *CreateRackLSERequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	r.RackLSEId = id
 	return nil
 }
 
@@ -640,6 +652,7 @@ func (r *CreateNicRequest) Validate() error {
 	if r.GetNic().GetMachine() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
+	r.NicId = id
 	return nil
 }
 
@@ -818,6 +831,7 @@ func (r *CreateKVMRequest) Validate() error {
 	if !util.ValidateTags(r.KVM.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.KVMId = id
 	return nil
 }
 
@@ -882,6 +896,7 @@ func (r *CreateRPMRequest) Validate() error {
 	if !util.ValidateTags(r.RPM.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.RPMId = id
 	return nil
 }
 
@@ -939,6 +954,7 @@ func (r *CreateDracRequest) Validate() error {
 	if r.GetDrac().GetMachine() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
+	r.DracId = id
 	return nil
 }
 
@@ -1011,6 +1027,7 @@ func (r *CreateSwitchRequest) Validate() error {
 	if !util.ValidateTags(r.Switch.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.SwitchId = id
 	return nil
 }
 
@@ -1061,6 +1078,7 @@ func (r *CreateVlanRequest) Validate() error {
 	if !util.ValidateTags(r.Vlan.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.VlanId = id
 	return nil
 }
 
@@ -1114,6 +1132,7 @@ func (r *CreateAssetRequest) Validate() error {
 	if r.GetAsset().GetLocation().GetRack() == "" {
 		return status.Errorf(codes.InvalidArgument, "Rack missing")
 	}
+	r.GetAsset().Name = name
 	return nil
 }
 
@@ -1167,6 +1186,8 @@ func (r *UpdateMachineLSEDeploymentRequest) Validate() error {
 	if r.GetMachineLseDeployment().GetSerialNumber() == "" {
 		return status.Errorf(codes.InvalidArgument, "cannot update a deployment record with empty serial number")
 	}
+	r.MachineLseDeployment.Hostname = strings.TrimSpace(r.MachineLseDeployment.Hostname)
+	r.MachineLseDeployment.SerialNumber = strings.TrimSpace(r.MachineLseDeployment.SerialNumber)
 	return nil
 }
 
@@ -1205,6 +1226,7 @@ func (r *CreateCachingServiceRequest) Validate() error {
 	case !HostnameRegex.MatchString(n):
 		return status.Errorf(codes.InvalidArgument, fmt.Sprintf("secondaryNode: %s", InvalidHostname))
 	}
+	r.CachingServiceId = id
 	return nil
 }
 
@@ -1277,6 +1299,7 @@ func (r *CreateSchedulingUnitRequest) Validate() error {
 	if !util.ValidateTags(r.SchedulingUnit.GetTags()) {
 		return status.Errorf(codes.InvalidArgument, InvalidTags)
 	}
+	r.SchedulingUnitId = id
 	return nil
 }
 
