@@ -8,10 +8,18 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import ssl
 import sys
 import urllib
 
 from six.moves import urllib
+import certifi
+
+# Make sure up-to-date root certificates are used.
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 # https://developer.github.com/v3/repos/releases/#get-the-latest-release

@@ -9,10 +9,18 @@ import argparse
 import json
 import os
 import re
+import ssl
 import sys
 import urllib
 
 from six.moves import urllib
+import certifi
+
+# Make sure up-to-date root certificates are used.
+urllib.request.install_opener(
+    urllib.request.build_opener(
+        urllib.request.HTTPSHandler(
+            context=ssl.create_default_context(cafile=certifi.where()))))
 
 
 # A regex for a name of the release asset to package, available at
