@@ -45,16 +45,19 @@ class TestGit(unittest.TestCase):
     # pre-configured certfile path (for debian/ubuntu systems) isn't present, so
     # we configure it to the CentOS file if it exists.
     centos_cafile = '/etc/pki/tls/certs/ca-bundle.crt'
-    cls._old_GIT_SSL_CAINFO = os.getenv('GIT_SSL_CAINFO')
     if os.path.exists(centos_cafile):
+      cls._old_GIT_SSL_CAINFO = {'value': os.getenv('GIT_SSL_CAINFO')}
       os.putenv('GIT_SSL_CAINFO', centos_cafile)
+    else:
+      cls._old_GIT_SSL_CAINFO = None
 
   @classmethod
   def tearDownClass(cls):
-    if cls._old_GIT_SSL_CAINFO is not None:
-      os.putenv('GIT_SSL_CAINFO', cls._old_GIT_SSL_CAINFO)
-    else:
-      os.unsetenv('GIT_SSL_CAINFO')
+    if cls._old_GIT_SSL_CAINFO:
+      if cls._old_GIT_SSL_CAINFO['value'] is not None:
+        os.putenv('GIT_SSL_CAINFO', cls._old_GIT_SSL_CAINFO['value'])
+      else:
+        os.unsetenv('GIT_SSL_CAINFO')
     # If we fail to delete, that's fine since we're within the workdir, which
     # gets purged with each build.
     shutil.rmtree(cls.tdir, ignore_errors=True)
