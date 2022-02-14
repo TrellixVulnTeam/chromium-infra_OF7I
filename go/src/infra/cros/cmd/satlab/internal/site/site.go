@@ -18,6 +18,12 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
+// DevCrosAdmService is the dev CrOSSkylabAdmin service.
+const DevCrosAdmService = "staging-skylab-bot-fleet.appspot.com"
+
+// ProdCrosAdmService is the prod CrOSSkylabAdmin service.
+const ProdCrosAdmService = "chromeos-skylab-bot-fleet.appspot.com"
+
 // Satlab is just the string "satlab". The literal string "satlab" is used in many
 // places to create resource names.
 const Satlab = "satlab"
@@ -83,6 +89,15 @@ const DefaultNamespace = "os"
 func (f *EnvFlags) Register(fl *flag.FlagSet) {
 	fl.BoolVar(&f.dev, "dev", false, "Run in dev environment.")
 	fl.StringVar(&f.Namespace, "namespace", DefaultNamespace, "namespace where data resides.")
+}
+
+// GetCrosAdmService returns the hostname of the CrOSSkylabAdmin service that is
+// appropriate for the given environment.
+func (f *EnvFlags) GetCrosAdmService() string {
+	if f.dev {
+		return DevCrosAdmService
+	}
+	return ProdCrosAdmService
 }
 
 // DefaultZone is the default value for the zone command line flag.

@@ -17,6 +17,7 @@ import (
 
 	"infra/cros/cmd/satlab/internal/meta"
 	"infra/cros/cmd/satlab/internal/site"
+	"infra/cros/cmd/satlab/internal/stableversion"
 	"infra/cros/cmd/satlab/internal/subcmds"
 )
 
@@ -44,6 +45,8 @@ func getApplication() *cli.Application {
 			// TODO(gregorynisbet): Satlab update DUT is currently disabled. Please uncomment this line
 			//                      once updating DUTs is supported on satlab.
 			// subcmds.UpdateCmd,
+			subcommands.Section("Stable Version"),
+			stableversion.GetStableVersionCmd,
 		},
 	}
 }
