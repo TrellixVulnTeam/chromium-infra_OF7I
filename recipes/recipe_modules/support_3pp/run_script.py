@@ -86,8 +86,8 @@ def run_script(api, *args, **kwargs):
   step_name = str(' '.join([script_name] + list(map(str, args[1:]))))
 
   interpreter = {
-    'py': 'python',
-    'sh': 'bash',
+      'py': 'python3',
+      'sh': 'bash',
   }.get(script_name.rsplit('.', 1)[-1], None)
   assert interpreter is not None, (
       'scriptname must end with either ".sh" or ".py"')
@@ -144,7 +144,7 @@ def run_script(api, *args, **kwargs):
         return api.step(step_name, cmd,
                         stdout=stdout, step_test_data=step_test_data)
 
-    elif interpreter == 'python':
+    elif interpreter == 'python3':
       return api.step(
           step_name, ['vpython3', '-u'] + list(args),
           stdout=stdout,

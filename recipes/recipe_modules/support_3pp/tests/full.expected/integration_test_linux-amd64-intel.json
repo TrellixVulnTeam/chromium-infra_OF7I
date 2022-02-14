@@ -9684,7 +9684,7 @@
       "_3PP_VERSION",
       "1.5.0-rc1",
       "--",
-      "python",
+      "python3",
       "[START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/checkout/.3pp/build_tools/git_tool/test.py",
       "linux",
       "[START_DIR]/3pp/wd/build_tools/git_tool/linux-amd64/1.5.0-rc1/verify/cipd.pkg"
@@ -11368,7 +11368,7 @@
       "_3PP_VERSION",
       "1.5.0-rc1",
       "--",
-      "python",
+      "python3",
       "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/checkout/.3pp/build_tools/tool/test.py",
       "linux",
       "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/verify/cipd.pkg"
