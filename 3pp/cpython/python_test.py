@@ -51,7 +51,7 @@ class TestPython(unittest.TestCase):
     def _make_writable(base, path):
       path = os.path.join(base, path)
       st = os.lstat(path)
-      os.chmod(path, st.st_mode|0660)
+      os.chmod(path, st.st_mode | 0o660)
 
     for dirpath, dirnames, filenames in os.walk(cls.tdir):
       for name in dirnames:
