@@ -20,39 +20,39 @@ import (
 // 1) Cannot parse by loader,
 // 2) Missing dependency, condition or recovery action used in the actions,
 // 3) Used unknown exec function.
-func verifyConfig(t *testing.T, c io.Reader) {
+func verifyConfig(name string, t *testing.T, c io.Reader) {
 	ctx := context.Background()
 	p, err := loader.LoadConfiguration(ctx, c)
 	if err != nil {
-		t.Errorf("expected to pass by failed with error: %s", err)
+		t.Errorf("%q expected to pass by failed with error: %s", name, err)
 	}
 	if p == nil {
-		t.Errorf("default config is empty")
+		t.Errorf("%q default config is empty", name)
 	}
 }
 
 // TestLabstationRepairConfig verifies the labstation repair configuration.
 func TestLabstationRepairConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig(t, LabstationRepairConfig())
+	verifyConfig("labstation-repair", t, LabstationRepairConfig())
 }
 
 // TestLabstationDeployConfig verifies the labstation deploy configuration.
 func TestLabstationDeployConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig(t, LabstationDeployConfig())
+	verifyConfig("labstation-deploy", t, LabstationDeployConfig())
 }
 
 // TestCrosRepairConfig verifies the cros repair configuration.
 func TestCrosRepairConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig(t, CrosRepairConfig())
+	verifyConfig("dut-repair", t, CrosRepairConfig())
 }
 
 // TestCrosDeployConfig verifies the cros deploy configuration.
 func TestCrosDeployConfig(t *testing.T) {
 	t.Parallel()
-	verifyConfig(t, CrosDeployConfig())
+	verifyConfig("dut-deploy", t, CrosDeployConfig())
 }
 
 var generateCases = []struct {
