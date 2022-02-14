@@ -53,8 +53,7 @@ class TestPython(unittest.TestCase):
 
   def test_version(self):
     output = subprocess.check_output([self.python, '--version'],
-                                     stderr=subprocess.STDOUT,
-                                     text=True)
+                                     stderr=subprocess.STDOUT).decode('utf-8')
     self.assertTrue(output.startswith('Python '))
 
     expected_version = os.environ['_3PP_VERSION']

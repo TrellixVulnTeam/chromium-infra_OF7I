@@ -77,9 +77,8 @@ class TestPython(unittest.TestCase):
         fd.close()
 
   def test_version(self):
-    output = subprocess.check_output(
-        [self.python, '--version'],
-        stderr=subprocess.STDOUT)
+    output = subprocess.check_output([self.python, '--version'],
+                                     stderr=subprocess.STDOUT).decode('utf-8')
     self.assertTrue(output.startswith('Python '))
 
     expected_version = os.environ['_3PP_VERSION']
@@ -113,10 +112,12 @@ class TestPython(unittest.TestCase):
         'import sqlite3; '
         'print ".".join(str(x) for x in sqlite3.sqlite_version_info)')
     proc = subprocess.Popen([self.python, '-c', script],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
     stdout, _ = proc.communicate()
     self.assertEqual(proc.returncode, 0)
-    self.assertEqual(stdout.strip(), '3.19.3') # Matches sqlite3 CIPD package.
+    self.assertEqual(stdout.decode('utf-8').strip(),
+                     '3.19.3')  # Matches sqlite3 CIPD package.
 
   def test_psutil_import(self):
     vpython_spec = self._write_file(VPYTHON_SPEC_PSUTIL)
@@ -165,7 +166,7 @@ class TestPython(unittest.TestCase):
     self.assertEqual(
         proc.returncode, 0,
         'Failed to import openssl libraries (return code %d). output:\n%s' %
-        (proc.returncode, stdout))
+        (proc.returncode, stdout.decode('utf-8')))
 
   def test_no_version_script_in_sysconfig(self):
     # On Linux, we use a linker version script to restrict the exported
@@ -180,7 +181,7 @@ class TestPython(unittest.TestCase):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     stdout, _ = proc.communicate()
-    self.assertEqual(proc.returncode, 0, stdout)
+    self.assertEqual(proc.returncode, 0, stdout.decode('utf-8'))
 
 
 if __name__ == '__main__':

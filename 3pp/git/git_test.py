@@ -75,7 +75,8 @@ class TestGit(unittest.TestCase):
     try:
       os.chdir(self.bin_dir)
       out = subprocess.check_output(
-          [os.path.join('.', 'git' + self._exe_suffix), 'version'], text=True)
+          [os.path.join('.', 'git' + self._exe_suffix),
+           'version']).decode('utf-8')
     finally:
       os.chdir(cwd)
     self.assertIn(os.environ['_3PP_VERSION'], out)
