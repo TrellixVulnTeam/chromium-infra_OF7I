@@ -413,7 +413,7 @@ func TestGetStableVersion(t *testing.T) {
 		So(resp.FaftVersion, ShouldEqual, "")
 		So(resp.FirmwareVersion, ShouldEqual, "xxx-labstation-firmware-version")
 		So(resp.ServoCrosVersion, ShouldEqual, "")
-		So(resp.Reason, ShouldContainSubstring, "looked up hostname")
+		So(resp.Reason, ShouldContainSubstring, "looked up non-satlab device hostname")
 	})
 
 	Convey("Test GetStableVersion RPC -- look up beaglebone proper", t, func() {
@@ -519,7 +519,7 @@ func TestGetStableVersion(t *testing.T) {
 		So(resp.FaftVersion, ShouldEqual, "xxx-faft-version")
 		So(resp.FirmwareVersion, ShouldEqual, "xxx-firmware-version")
 		So(resp.ServoCrosVersion, ShouldEqual, "")
-		So(resp.Reason, ShouldContainSubstring, "looked up hostname")
+		So(resp.Reason, ShouldContainSubstring, "looked up non-satlab device hostname")
 	})
 
 	Convey("Test GetStableVersion RPC -- no stable versions exist", t, func() {

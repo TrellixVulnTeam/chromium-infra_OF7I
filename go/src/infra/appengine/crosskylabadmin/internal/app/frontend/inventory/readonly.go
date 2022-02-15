@@ -268,6 +268,7 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
 // NOTE: hostname is explicitly allowed to be "". If hostname is "", then no hostname was provided in the GetStableVersion RPC call
+// ALSO NOTE: If the hostname is "", then we assume that the device is not a satlab device and therefore we should not fall back to satlab.
 func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget string, model string, hostname string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
 
@@ -281,10 +282,22 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 		return out, err
 	}
 
+	if heuristics.LooksLikeSatlabDevice(hostname) {
+		logging.Infof(ctx, "detected satlab hostname %q, ignoring user-provided buildTarget %q and model %q", hostname, buildTarget, model)
+		// TODO(gregorynisbet): Replace the rest of this block with logic for handling a satlab device, instead of
+		//                      treating it identically to a non-satlab device (except for the reason).
+		out, err := getStableVersionImplWithHostname(ctx, ic, hostname)
+		if err == nil {
+			maybeSetReason(out, fmt.Sprintf("looked up satlab device hostname %q", hostname))
+			return out, nil
+		}
+		return out, err
+	}
+	// Default case, not a satlab device.
 	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
 	out, err := getStableVersionImplWithHostname(ctx, ic, hostname)
 	if err == nil {
-		maybeSetReason(out, fmt.Sprintf("looked up hostname %q", hostname))
+		maybeSetReason(out, fmt.Sprintf("looked up non-satlab device hostname %q", hostname))
 		return out, nil
 	}
 	return out, err
