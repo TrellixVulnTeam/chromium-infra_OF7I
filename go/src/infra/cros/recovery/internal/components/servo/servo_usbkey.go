@@ -34,8 +34,11 @@ func USBDrivePath(ctx context.Context, fileCheck bool, run components.Runner, se
 		return "", errors.Reason("usb-drive path: usb-path is empty").Err()
 	}
 	if fileCheck {
-		// TODO: Run fdisk to check if device is exist and responsive
-		return "", errors.Reason("usb-drive path: file check is not implemented").Err()
+		if out, err := run(ctx, time.Minute, "fdisk", "-l", usbPath); err != nil {
+			return "", errors.Annotate(err, "usb-drive path: file check by fdisk").Err()
+		} else {
+			log.Debug("USB-key fdisk check results:\n%s", out)
+		}
 	}
 	return usbPath, nil
 }
