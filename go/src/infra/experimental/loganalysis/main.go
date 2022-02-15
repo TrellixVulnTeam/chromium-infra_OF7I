@@ -5,35 +5,36 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"hash/fnv"
 	"html/template"
-	"io/fs"
 	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"cloud.google.com/go/storage"
 
 	"cloud.google.com/go/bigquery"
 
 	"go.chromium.org/luci/common/errors"
 
 	"google.golang.org/api/iterator"
-
-	"infra/experimental/loganalysis/collection/gcs"
 )
 
 const (
 	projectID = "google.com:stainless-prod"
+	bucketID  = "chromeos-test-logs"
+	logsName  = "log.txt"
+
+	// All downloaded logs from history must be within the bound.
+	searchDaysBound = 30
 )
 
 // LogsInfo summarises all necessary information of a test result's logs.
@@ -46,26 +47,74 @@ type LogsInfo struct {
 	Status string
 }
 
-// LogLine records all necessary information of a log line in the target test result for analysis and comparisons.
-type LogLine struct {
-	// Original is the original record of a log line.
-	Original string
-	// Hash is the hash code of the cleaned log line.
-	Hash uint64
-	// FailCount is the count that the log line matches a failing log among all reference failed test results.
-	FailCount int
-	// PassCount is the count that the log line matches a passing log among all reference good test results.
-	PassCount int
+// logLine records all necessary information of a log line in the target test result for analysis and comparisons.
+type logLine struct {
+	// original is the original record of a log line.
+	original string
+	// hash is the hash code of the cleaned log line.
+	hash uint64
+	// failCount is the count that the log line matches a failing log among all reference failed test results.
+	failCount int
+	// passCount is the count that the log line matches a passing log among all reference good test results.
+	passCount int
 }
 
-// AnalysisStat records all analysis statistics for the given reference tests.
-type AnalysisStat struct {
-	// LogLines for the target analysis test.
-	LogLines []LogLine
-	// Count is the total number of reference logs in the analysis.
-	Count int
+// referenceURLs records all log URLs of reference test results (i.e. logs from other runs of the same test, used for analysis).
+type referenceURLs struct {
+	// failTarget is for failing logs with the same board as the target test.
+	failTarget []string
+	// passTarget is for passing logs with the same board as the target test.
+	passTarget []string
+	// failOther is for failing logs with different boards from the target test.
+	failOther []string
+	// passOther is for passing logs with different boards from the target test.
+	passOther []string
+}
+
+// logSearchOptions lists all the parameters required to find the logs' URLs of all reference tests.
+type logSearchOptions struct {
+	// date is the beginning searching date, which should be the most recent searching date.
+	date time.Time
+	// test name required for the reference tests (i.e. test name of the target test).
+	test string
+	// board of the target test, which should be preferred the same in search.
+	board string
+	// targetTaskID is the task ID of the target test.
+	targetTaskID string
+	// requiredNum is the required number of reference tests in either test status.
+	requiredNum int
+	// searchDaysBound for all reference tests from history.
+	searchDaysBound int
+}
+
+// analysisOptions lists the parameters inserted by the user and required for analysis.
+type analysisOptions struct {
+	// test name of the target and reference tests.
+	test string
+	// logsName of the test for analysis.
+	logsName string
+	// requiredNum is the required number of reference tests in either test status.
+	requiredNum int
+}
+
+// analysisResults that will be used to calculate the predictive powers and finally demostrate to users.
+type analysisResults struct {
+	// logLines for the target analysis test.
+	logLines []logLine
+	// totalFails is the total number of failing reference logs in the analysis.
+	totalFails int
+	// totalPasses is the total number of passing reference logs in the analysis.
+	totalPasses int
 	// Warnings that should be displayed to the user.
-	Warnings []string
+	warnings []string
+}
+
+// logAnalysis records the log line analysis statistics.
+type logAnalysis struct {
+	// hashFileCounts records each log line hash with its corresponding number of occurrence among reference files.
+	hashFileCounts map[uint64]int
+	// logsAnalyzed is the number of logs that have been analyzed.
+	logsAnalyzed int
 }
 
 // HighlightedLine is a single line that will be displayed to the user.
@@ -100,8 +149,6 @@ var (
 	removalHex = regexp.MustCompile("( )?[+]?0[xX]([0-9a-fA-F]+)(,)?")
 	removal    = regexp.MustCompile("[0-9\t\n]")
 
-	statuses = []string{"GOOD", "FAIL"}
-
 	tpl *template.Template
 )
 
@@ -134,98 +181,48 @@ func main() {
 	}
 
 	ctx := context.Background()
-	targetLog, err := downloadTargetLog(ctx, date, *test, *taskID)
+	targetLog, err := loadTargetLog(ctx, date, *test, *taskID)
 	if err != nil {
 		log.Fatalf("Error finding the target log information to download: %v", err)
 	}
-	analysisStat, err := saveLineStatistics(ctx, targetLog, *test, gcs.LogsName)
+	logLines, err := readTargetLogLines(ctx, targetLog, *test, logsName)
 	if err != nil {
 		log.Fatalf("Error saving log line statistics: %v", err)
 	}
-
-	var totalFails int
-	var totalPasses int
-	for _, status := range statuses {
-		path := filepath.Join(gcs.StoragePathPrefix, *test, status)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			log.Fatalf("Error finding any reference %v test results from all boards for analysis: %v", status, err)
-		}
-		analysisStat, err = analyzeTargetBoardLogs(path, targetLog.Board, status, analysisStat)
-		if err != nil {
-			log.Fatalf("Error analyzing reference logs from the target board: %v", err)
-		}
-		if analysisStat.Count < *requiredNum {
-			analysisStat, err = analyzeOtherBoardsLogs(path, targetLog.Board, status, *requiredNum, analysisStat)
-			if err != nil {
-				log.Fatalf("Error analyzing reference logs from other boards: %v", err)
-			}
-		}
-		if status == "FAIL" {
-			totalFails = analysisStat.Count
-		} else {
-			totalPasses = analysisStat.Count
-		}
+	referenceURLs, err := findReferenceLogURLs(ctx, logSearchOptions{date, *test, targetLog.Board, *taskID, *requiredNum, searchDaysBound})
+	if err != nil {
+		log.Fatalf("Error finding log urls of all reference logs: %v", err)
 	}
-	if totalFails < *requiredNum || totalPasses < *requiredNum {
-		analysisStat.Warnings = append(analysisStat.Warnings, "Analysis might be inaccurate, insufficient (passing and/or failing) references overall.")
-	}
+	analysisResults := analyzeAllLogs(ctx, logLines, referenceURLs, analysisOptions{*test, logsName, *requiredNum})
 
-	log.Println("Please delete the local storage of the downloaded logs in this analysis for result accuracy in the future!")
+	log.Println("Loading the highlighter web...")
 	tpl = template.Must(template.ParseFiles("demo.html"))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data := WebData{
-			Warnings:         analysisStat.Warnings,
-			HighlightedLines: highlightLines(totalFails, totalPasses, analysisStat.LogLines),
+			Warnings:         analysisResults.warnings,
+			HighlightedLines: highlightLines(analysisResults.totalFails, analysisResults.totalPasses, analysisResults.logLines),
 		}
-		fmt.Println("Loading the highlighter website...")
+		log.Println("Refresh the web page")
 		err := tpl.Execute(w, data)
 		if err != nil {
-			log.Println("execute template: ", err)
+			log.Println("Error executing template: ", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 	})
-	panic(http.ListenAndServe(*port, nil))
+	log.Fatal(http.ListenAndServe(*port, nil))
 }
 
 // highlightLines highlights log lines with different colours and saturations based on their predictive powers.
-func highlightLines(totalFails int, totalPasses int, logLines []LogLine) []HighlightedLine {
+func highlightLines(totalFails int, totalPasses int, logLines []logLine) []HighlightedLine {
 	var res []HighlightedLine
 	for _, line := range logLines {
-		predPower := calculatePredictivePower(line.FailCount, line.PassCount, totalFails, totalPasses)
+		predPower := calculatePredictivePower(line.failCount, line.passCount, totalFails, totalPasses)
 		// Saturation is calculated to make S in HSL colour change steadily from deep red (power=1.0) to lighter red to grey (power=0.5) to lighter green to deep green (power=0) when the predictive power decreases.
 		saturation := int(math.Floor(math.Abs(predPower-0.5) * 200))
 		// Predictive power is multiplied by 100 and rounded as an integer to show users.
-		res = append(res, HighlightedLine{line.Original, math.Round(predPower * 100), saturation})
+		res = append(res, HighlightedLine{line.original, math.Round(predPower * 100), saturation})
 	}
 	return res
-}
-
-// analyzeOtherBoardsLogs updates saved statistics of target log lines referring to test logs from other boards when the number of stored test results from the target board is not enough.
-func analyzeOtherBoardsLogs(path, board, status string, requiredNum int, analysisStat AnalysisStat) (AnalysisStat, error) {
-	analysisStat.Warnings = append(analysisStat.Warnings, "Analysis may be inaccurate, insufficient "+status+" references from the target board (required:"+strconv.Itoa(requiredNum)+", got:"+strconv.Itoa(analysisStat.Count)+").")
-	boardsDir, err := ioutil.ReadDir(path + "/")
-	if err != nil {
-		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "read storage directory with the specified test name").Err()
-	}
-	boardNames := listOtherBoardNames(boardsDir, board)
-	var count int
-	for _, boardName := range boardNames {
-		analysisStat.LogLines, count, err = updateLineStatistics(filepath.Join(path, boardName), status, analysisStat.LogLines)
-		analysisStat.Count += count
-	}
-	return analysisStat, nil
-}
-
-// analyzeTargetBoardLogs updates saved statistics of target log lines referring to test logs from the target board.
-func analyzeTargetBoardLogs(path, board, status string, analysisStat AnalysisStat) (AnalysisStat, error) {
-	if _, err := os.Stat(filepath.Join(path, board)); os.IsNotExist(err) {
-		return AnalysisStat{analysisStat.LogLines, 0, analysisStat.Warnings}, nil
-	}
-	logLines, count, err := updateLineStatistics(filepath.Join(path, board), status, analysisStat.LogLines)
-	if err != nil {
-		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "update log lines to count matching numbers").Err()
-	}
-	return AnalysisStat{logLines, count, analysisStat.Warnings}, nil
 }
 
 // calculatePredictivePower calculates the predictive power of a log line in the target test.
@@ -233,42 +230,77 @@ func calculatePredictivePower(failCount, passCount, totalFails, totalPasses int)
 	return (float64(failCount) / float64(totalFails)) * (1 - (float64(passCount) / float64(totalPasses)))
 }
 
-// saveLineStatistics saves log line statistics for all lines of the target log with the original contents and the corresponding hash codes.
-func saveLineStatistics(ctx context.Context, info LogsInfo, test, logsName string) (AnalysisStat, error) {
-	contents, err := gcs.ReadFileContents(ctx, gcs.BucketID, gcs.CreateObjectID(info.LogsURL, test, gcs.BucketID, logsName))
-	if err != nil {
-		return AnalysisStat{nil, 0, nil}, errors.Annotate(err, "download log contents").Err()
+// analyzeAllLogs updates saved statistics of target log lines referring to all reference logs.
+func analyzeAllLogs(ctx context.Context, logLines []logLine, urls referenceURLs, analysisOptions analysisOptions) analysisResults {
+	var totalFails int
+	var totalPasses int
+	var warnings []string
+	logLines, totalFails, warnings = analyzeLogsForStatus(ctx, "FAIL", logLines, warnings, urls.failTarget, urls.failOther, analysisOptions)
+	logLines, totalPasses, warnings = analyzeLogsForStatus(ctx, "GOOD", logLines, warnings, urls.passTarget, urls.passOther, analysisOptions)
+	if totalFails < analysisOptions.requiredNum || totalPasses < analysisOptions.requiredNum {
+		warnings = append(warnings, "Analysis might be inaccurate, insufficient (passing and/or failing) references overall.")
 	}
-	var logLines []LogLine
-	for _, line := range strings.Split(string(contents), "\n") {
-		logLines = append(logLines, LogLine{line, hashLine(cleanLogLine(line)), 0, 0})
-	}
-	return AnalysisStat{logLines, 0, nil}, nil
+	return analysisResults{logLines, totalFails, totalPasses, warnings}
 }
 
-// updateLineStatistics updates the target log lines' related statistics by counting the matching numbers for each line in the target test result compared with reference files in the given path.
-func updateLineStatistics(path, status string, logLines []LogLine) ([]LogLine, int, error) {
-	filesInfo, err := ioutil.ReadDir(path + "/")
-	if err != nil {
-		return nil, 0, errors.Annotate(err, "read reference test results' directory").Err()
+// analyzeLogsForStatus updates saved statistics of target log lines referring to reference logs from a specific test status.
+func analyzeLogsForStatus(ctx context.Context, status string, logLines []logLine, warnings, targetURLs, otherURLs []string, analysisOptions analysisOptions) ([]logLine, int, []string) {
+	logAnalysis := newLogAnalysis()
+	logAnalysis.transformLogsToHashes(ctx, targetURLs, analysisOptions)
+	if logAnalysis.logsAnalyzed < analysisOptions.requiredNum {
+		warnings = append(warnings, "Analysis may be inaccurate, insufficient "+status+" references from the target board (required:"+strconv.Itoa(analysisOptions.requiredNum)+", got:"+strconv.Itoa(logAnalysis.logsAnalyzed)+").")
 	}
-	fileCountByHash, err := transformFilesToHashes(path, filesInfo)
-	if err != nil {
-		return nil, 0, errors.Annotate(err, "transform reference files to a map of hashes").Err()
-	}
-	logLines = compareLogLines(logLines, status == "FAIL", fileCountByHash)
-	return logLines, len(filesInfo), nil
+	logAnalysis.transformLogsToHashes(ctx, otherURLs, analysisOptions)
+	logLines = compareLogLines(logLines, status == "FAIL", logAnalysis.hashFileCounts)
+	return logLines, logAnalysis.logsAnalyzed, warnings
 }
 
-// compareLogLines compares log hashes of the target test with the map recorded hashes information of reference tests under a specified test status (FAIL/GOOD).
-func compareLogLines(logLines []LogLine, testFailed bool, fileCountByHash map[uint64]int) []LogLine {
-	var res []LogLine
+// newLogAnalysis creates the initial logAnalysis struct.
+func newLogAnalysis() *logAnalysis {
+	return &logAnalysis{hashFileCounts: make(map[uint64]int), logsAnalyzed: 0}
+}
+
+// transformLogsToHashes transforms all reference test logs to hashes record given a group of log URLs.
+func (a *logAnalysis) transformLogsToHashes(ctx context.Context, urls []string, analysisOptions analysisOptions) {
+	for _, url := range urls {
+		if a.logsAnalyzed >= analysisOptions.requiredNum {
+			break
+		}
+		contents, err := readFileContents(ctx, url, analysisOptions.logsName, analysisOptions.test)
+		if err != nil {
+			log.Println("Warning: cannot read contents of a test log with logsURL: " + url)
+			continue
+		}
+		addSingleLogToHashes(contents, a.hashFileCounts)
+		a.logsAnalyzed += 1
+	}
+}
+
+// addSingleLogToHashes adds a reference log content to a map with the log line hash as key and its count in all same-status reference logs as value.
+func addSingleLogToHashes(contents []byte, hashFileCounts map[uint64]int) {
+	hashesRecord := make(map[uint64]bool)
+	for _, l := range strings.Split(string(contents), "\n") {
+		l = cleanLogLine(l)
+		if l == "" {
+			continue
+		}
+		hash := hashLine(l)
+		if _, exist := hashesRecord[hash]; !exist {
+			hashesRecord[hash] = true
+			hashFileCounts[hash] += 1
+		}
+	}
+}
+
+// compareLogLines compares log hashes of the target test with the recorded hashes information of reference tests under a specified test status (FAIL/GOOD).
+func compareLogLines(logLines []logLine, testFailed bool, hashFileCounts map[uint64]int) []logLine {
+	var res []logLine
 	for _, line := range logLines {
-		if count, exist := fileCountByHash[line.Hash]; exist {
+		if count, exist := hashFileCounts[line.hash]; exist {
 			if testFailed {
-				line.FailCount += count
+				line.failCount += count
 			} else {
-				line.PassCount += count
+				line.passCount += count
 			}
 		}
 		res = append(res, line)
@@ -276,37 +308,17 @@ func compareLogLines(logLines []LogLine, testFailed bool, fileCountByHash map[ui
 	return res
 }
 
-// transformFilesToHashes transforms all reference test logs to a map with the log line hash as key and the corresponding document indexes list as value.
-func transformFilesToHashes(path string, filesInfo []fs.FileInfo) (map[uint64]int, error) {
-	res := make(map[uint64]int)
-	for _, fileInfo := range filesInfo {
-		hashesRecord := make(map[uint64]bool)
-		file, err := os.Open(filepath.Join(path, fileInfo.Name()))
-		if err != nil {
-			return nil, errors.Annotate(err, "open file").Err()
-		}
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			l := cleanLogLine(scanner.Text())
-			if l == "" {
-				continue
-			}
-			hash := hashLine(l)
-			if _, exist := hashesRecord[hash]; !exist {
-				hashesRecord[hash] = true
-				if _, exist := res[hash]; exist {
-					res[hash] += 1
-				} else {
-					res[hash] = 1
-				}
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			return nil, errors.Annotate(err, "scan file").Err()
-		}
+// readTargetLogLines saves log line statistics for all lines of the target log with the original contents and the corresponding hash codes.
+func readTargetLogLines(ctx context.Context, info LogsInfo, test, logsName string) ([]logLine, error) {
+	contents, err := readFileContents(ctx, info.LogsURL, logsName, test)
+	if err != nil {
+		return nil, errors.Annotate(err, "download log contents").Err()
 	}
-	return res, nil
+	var logLines []logLine
+	for _, line := range strings.Split(string(contents), "\n") {
+		logLines = append(logLines, logLine{line, hashLine(cleanLogLine(line)), 0, 0})
+	}
+	return logLines, nil
 }
 
 // cleanLogLine cleans each log line by removing hexadecimals, numbers, tabs and test time prefixes.
@@ -325,23 +337,99 @@ func hashLine(line string) uint64 {
 	return h.Sum64()
 }
 
-// listOtherBoardNames lists board names that saved in the test results' storage while different to the target board.
-func listOtherBoardNames(boards []fs.FileInfo, targetBoardName string) []string {
-	var boardNames []string
-	for _, b := range boards {
-		if b.Name() != targetBoardName {
-			boardNames = append(boardNames, b.Name())
+// findReferenceLogURLs finds the log URLs of all reference logs.
+func findReferenceLogURLs(ctx context.Context, searchOptions logSearchOptions) (referenceURLs, error) {
+	var failTargetURLs []string
+	var passTargetURLs []string
+	var failOtherURLs []string
+	var passOtherURLs []string
+	remainingFails := searchOptions.requiredNum
+	remainingPasses := searchOptions.requiredNum
+	currentDate := searchOptions.date
+	// Terminates log downloads if the number of files for the specified board reaches expectations or if the test searching date is more than the required bound;
+	// otherwise, queries test results with the specific test name from different boards day by day.
+	for (remainingFails > 0 || remainingPasses > 0) && currentDate.After(time.Now().AddDate(0, 0, -searchOptions.searchDaysBound)) {
+		logs, err := findDailyLogsToDownload(ctx, currentDate, searchOptions.date, searchOptions.test, searchOptions.targetTaskID, remainingFails > 0, remainingPasses > 0)
+		if err != nil {
+			return referenceURLs{}, errors.Annotate(err, "find daily reference logs to download").Err()
+		}
+		currentDate = currentDate.AddDate(0, 0, -1)
+		for _, info := range logs {
+			if info.Status != "FAIL" && info.Status != "GOOD" {
+				continue
+			}
+			if info.Board == searchOptions.board {
+				if info.Status == "FAIL" {
+					failTargetURLs = append(failTargetURLs, info.LogsURL)
+					remainingFails -= 1
+				} else {
+					passTargetURLs = append(passTargetURLs, info.LogsURL)
+					remainingPasses -= 1
+				}
+			} else {
+				if info.Status == "FAIL" {
+					failOtherURLs = append(failOtherURLs, info.LogsURL)
+				} else {
+					passOtherURLs = append(passOtherURLs, info.LogsURL)
+				}
+			}
 		}
 	}
-	return boardNames
+	return referenceURLs{failTargetURLs, passTargetURLs, failOtherURLs, passOtherURLs}, nil
 }
 
-// downloadTargetLog downloads the target log for analysis satisfying specific requirements in the specified project.
-func downloadTargetLog(ctx context.Context, date time.Time, test, taskID string) (LogsInfo, error) {
-	nilInfo := LogsInfo{}
+// findDailyLogsToDownload finds daily reference logs satisfying specific requirements using BigQuery.
+func findDailyLogsToDownload(ctx context.Context, currentDate, targetDate time.Time, test, targetTaskID string, requireFailTest, requirePassTest bool) ([]LogsInfo, error) {
 	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
-		return nilInfo, errors.Annotate(err, "create client").Err()
+		return nil, errors.Annotate(err, "create client").Err()
+	}
+	q := client.Query(`
+			SELECT
+				logs_url AS LogsURL,
+				board AS Board,
+				status AS Status
+			FROM ` + "`google.com:stainless-prod.stainless.tests*`" + `
+			WHERE
+				_TABLE_SUFFIX = @currentDate
+				AND ((@requireFailTest AND status = "FAIL")
+					OR (@requirePassTest AND status = "GOOD"))
+				AND logs_url LIKE '/browse/chromeos-test-logs/%'
+				AND test = @test
+				AND (_TABLE_SUFFIX != @targetDate OR task_id != @targetTaskID)
+	`)
+	q.Parameters = []bigquery.QueryParameter{
+		{Name: "currentDate", Value: currentDate.Format("20060102")},
+		{Name: "requireFailTest", Value: requireFailTest},
+		{Name: "requirePassTest", Value: requirePassTest},
+		{Name: "test", Value: test},
+		{Name: "targetDate", Value: targetDate.Format("20060102")},
+		{Name: "targetTaskID", Value: targetTaskID},
+	}
+	logsIterator, err := q.Read(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "read logs information with bigquery").Err()
+	}
+	var logs []LogsInfo
+	for {
+		var info LogsInfo
+		err := logsIterator.Next(&info)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, errors.Annotate(err, "iterate logs").Err()
+		}
+		logs = append(logs, info)
+	}
+	return logs, nil
+}
+
+// loadTargetLog loads the target log for analysis.
+func loadTargetLog(ctx context.Context, date time.Time, test, taskID string) (LogsInfo, error) {
+	client, err := bigquery.NewClient(ctx, projectID)
+	if err != nil {
+		return LogsInfo{}, errors.Annotate(err, "create client").Err()
 	}
 	q := client.Query(`
 			SELECT
@@ -361,7 +449,7 @@ func downloadTargetLog(ctx context.Context, date time.Time, test, taskID string)
 	}
 	logsIterator, err := q.Read(ctx)
 	if err != nil {
-		return nilInfo, errors.Annotate(err, "read logs information with bigquery").Err()
+		return LogsInfo{}, errors.Annotate(err, "read logs information with bigquery").Err()
 	}
 	var logs []LogsInfo
 	for {
@@ -371,15 +459,38 @@ func downloadTargetLog(ctx context.Context, date time.Time, test, taskID string)
 			break
 		}
 		if err != nil {
-			return nilInfo, errors.Annotate(err, "iterate logs").Err()
+			return LogsInfo{}, errors.Annotate(err, "iterate logs").Err()
 		}
 		logs = append(logs, info)
 	}
 	if len(logs) != 1 {
-		return nilInfo, fmt.Errorf("error number of target logs to download: expected a single test result, got: %v", len(logs))
+		return LogsInfo{}, fmt.Errorf("error number of target logs to download: expected a single test result, got: %v", len(logs))
 	}
 	if logs[0].Status != "FAIL" {
-		return nilInfo, fmt.Errorf("error test status: expected a FAIL test, got: %v", logs[0].Status)
+		return LogsInfo{}, fmt.Errorf("error test status: expected a FAIL test, got: %v", logs[0].Status)
 	}
 	return logs[0], nil
+}
+
+// readFileContents reads logs file contents given the basic information of a log.
+func readFileContents(ctx context.Context, logsURL, logsName, test string) ([]byte, error) {
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "create client").Err()
+	}
+	r, err := client.Bucket(bucketID).Object(createObjectID(logsURL, test, bucketID, logsName)).NewReader(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "create reader").Err()
+	}
+	defer r.Close()
+	bytes, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, errors.Annotate(err, "read logs file contents").Err()
+	}
+	return bytes, nil
+}
+
+// createObjectID creates object ID for a log given its basic information.
+func createObjectID(logsURL, test, bucketID, logsName string) string {
+	return strings.TrimPrefix(logsURL, "/browse/"+bucketID+"/") + "/autoserv_test/tast/results/tests/" + test[5:] + "/" + logsName
 }
