@@ -79,7 +79,7 @@ var vidPidServoTypes = map[string]string{
 // GetRootServo fetches the ServoTopologyItem representing the
 // root-servo for a given servo serial number.
 func GetRootServo(ctx context.Context, runner execs.Runner, servoSerial string) (*tlw.ServoTopologyItem, error) {
-	devicePath, err := getRootServoPath(ctx, runner, servoSerial)
+	devicePath, err := GetRootServoPath(ctx, runner, servoSerial)
 	if err != nil {
 		return nil, errors.Annotate(err, "get root servo").Err()
 	}
@@ -133,7 +133,7 @@ func RereadServoFwVersion(ctx context.Context, runner execs.Runner, servo *tlw.S
 }
 
 // Get the path of root servo on servo host.
-func getRootServoPath(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
+func GetRootServoPath(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
 	servoPath, err := runner(ctx, time.Minute, fmt.Sprintf(servodtoolDeviceUSBPathCMD, servoSerial))
 	if err != nil {
 		return "", errors.Annotate(err, "get root servo path: servo not detected").Err()
@@ -245,7 +245,7 @@ func ListOfDevices(ctx context.Context, runner execs.Runner, servoSerial string)
 //    root-servo: .1
 // Later we will join only base path with servo-hub.
 func findServoHub(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
-	rootServoPath, err := getRootServoPath(ctx, runner, servoSerial)
+	rootServoPath, err := GetRootServoPath(ctx, runner, servoSerial)
 	if err != nil {
 		return "", errors.Annotate(err, "find servo hub").Err()
 	}
