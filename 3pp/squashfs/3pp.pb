@@ -1,5 +1,5 @@
 create {
-  platform_re: "linux-.*"
+  platform_re: "linux-amd64"
   source {
     url {
       download_url: "https://github.com/plougher/squashfs-tools/archive/4.4.tar.gz"

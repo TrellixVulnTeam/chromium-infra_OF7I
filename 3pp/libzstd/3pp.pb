@@ -1,5 +1,5 @@
 create {
-  platform_re: "linux-.*"
+  platform_re: "linux-amd64"
   source {
     git {
       repo: "https://github.com/facebook/zstd.git"
