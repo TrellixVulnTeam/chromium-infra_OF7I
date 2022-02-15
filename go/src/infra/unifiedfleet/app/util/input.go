@@ -900,3 +900,37 @@ func ValidateTags(tags []string) bool {
 	}
 	return true
 }
+
+// StrToUFSAttachedDeviceType refers a map between a string to a UFS defined map.
+var StrToUFSAttachedDeviceType = map[string]string{
+	"apple_phone":    "ATTACHED_DEVICE_TYPE_APPLE_PHONE",
+	"android_phone":  "ATTACHED_DEVICE_TYPE_ANDROID_PHONE",
+	"apple_tablet":   "ATTACHED_DEVICE_TYPE_APPLE_TABLET",
+	"android_tablet": "ATTACHED_DEVICE_TYPE_ANDROID_TABLET",
+	"devboard":       "ATTACHED_DEVICE_TYPE_DEVBOARD",
+	"jetstream":      "ATTACHED_DEVICE_TYPE_JETSTREAM",
+}
+
+// ValidAttachedDeviceTypeStr returns a valid str list for attached device type strings.
+func ValidAttachedDeviceTypeStr() []string {
+	ks := make([]string, 0, len(StrToUFSAttachedDeviceType))
+	for k := range StrToUFSAttachedDeviceType {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// IsAttachedDeviceType checks if a string refers to a valid AttachedDeviceType.
+func IsAttachedDeviceType(deviceType string) bool {
+	_, ok := StrToUFSAttachedDeviceType[deviceType]
+	return ok
+}
+
+// ToUFSAttachedDeviceType converts type string to a UFS attached device type enum.
+func ToUFSAttachedDeviceType(deviceType string) ufspb.AttachedDeviceType {
+	v, ok := StrToUFSAttachedDeviceType[deviceType]
+	if !ok {
+		return ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_UNSPECIFIED
+	}
+	return ufspb.AttachedDeviceType(ufspb.AttachedDeviceType_value[v])
+}

@@ -1638,6 +1638,9 @@ Operation will be faster as only name/id will be retrieved from the service.`
 	// SchedulingUnitTypesHelpText help text for asset type filters
 	SchedulingUnitTypesHelpText string = fmt.Sprintf("\nValid type filters [%s]", strings.Join(ufsUtil.ValidSchedulingUnitTypeStr(), ", "))
 
+	// AttachedDeviceTypeHelpText help text for attached device type filters
+	AttachedDeviceTypeHelpText string = fmt.Sprintf("\nValid type filters [%s]", strings.Join(ufsUtil.ValidAttachedDeviceTypeStr(), ", "))
+
 	// AddRPMLongDesc long description for AddRPMCmd
 	AddRPMLongDesc string = `Add a rpm to UFS.
 
@@ -1863,6 +1866,38 @@ The protobuf definition of SchedulingUnit is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/scheduling_unit.proto`
 
 	TriggerCronDescription string = `Triggers a cron job on UFS. Available jobs: ` + CronTriggerAvailableJobsString()
+
+	// GetAttachedDeviceMachineText description for GetAttachedDeviceMachineCmd
+	GetAttachedDeviceMachineText string = `Get attached device machine details by filters.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Example:
+
+shivas get attached-device-machine {name1} {name2}
+shivas get attached-device-machine -devicetype apple_phone -model model1
+shivas get attached-device-machine -state serving -state needs_repair -zone atl97
+
+Also aliased as 'shivas get adm'.
+
+Gets the attached device machine and prints the output in user format.`
+
+	// GetADMText description for GetADMCmd
+	GetADMText string = `Get attached device machine details by filters.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Example:
+
+shivas get adm {name1} {name2}
+shivas get adm -devicetype apple_phone -model model1
+shivas get adm -state serving -state needs_repair -zone atl97
+
+Also aliased as 'shivas get attached-device-machine'.
+
+Gets the attached device machine and prints the output in user format.`
 )
 
 func CronTriggerAvailableJobsString() string {

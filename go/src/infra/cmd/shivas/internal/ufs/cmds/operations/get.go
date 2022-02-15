@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/internal/ufs/subcmds/asset"
+	"infra/cmd/shivas/internal/ufs/subcmds/attacheddevicemachine"
 	"infra/cmd/shivas/internal/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/internal/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/internal/ufs/subcmds/drac"
@@ -42,7 +43,8 @@ var GetCmd = &subcommands.Command{
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm/vm-slots
 	asset/dut/cachingservice/schedulingunit
-	machine-prototype/rack-prototype/platform/vlan/host-deployment`,
+	machine-prototype/rack-prototype/platform/vlan/host-deployment
+	attached-device-machine (aliased as adm/attached-device-machine)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
 		return c
@@ -60,6 +62,8 @@ func (c *get) Run(a subcommands.Application, args []string, env subcommands.Env)
 }
 
 // GetCommands lists all the subcommands under get
+// Aliases:
+//   attacheddevicemachine.GetAttachedDeviceMachineCmd = attacheddevicemachine.GetADMCmd
 func (c getApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
@@ -68,6 +72,8 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		cachingservice.GetCachingServiceCmd,
 		schedulingunit.GetSchedulingUnitCmd,
 		machine.GetMachineCmd,
+		attacheddevicemachine.GetAttachedDeviceMachineCmd,
+		attacheddevicemachine.GetADMCmd,
 		host.GetHostCmd,
 		kvm.GetKVMCmd,
 		rpm.GetRPMCmd,

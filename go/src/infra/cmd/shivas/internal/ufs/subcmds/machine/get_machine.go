@@ -55,11 +55,11 @@ Gets the machine and prints the output in the user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 
-		// Chrome os machine specific filters
 		c.Flags.Var(flag.StringSlice(&c.devicetypes), "devicetype", "Name(s) of a devicetype to filter by. Can be specified multiple times."+cmdhelp.DeviceTypeFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.models), "model", "Name(s) of a model to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.buildTargets), "target", "Name(s) of a build target to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.phases), "phase", "Name(s) of a phase to filter by. Can be specified multiple times.")
+
 		return c
 	},
 }
@@ -170,6 +170,8 @@ func printMachineNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		utils.PrintTableTitle(utils.BrowserMachineTitle, tsv, keysOnly)
 	} else if machine.GetChromeosMachine() != nil {
 		utils.PrintTableTitle(utils.OSMachineTitle, tsv, keysOnly)
+	} else if machine.GetAttachedDevice() != nil {
+		utils.PrintTableTitle(utils.AttachedDeviceMachineTitle, tsv, keysOnly)
 	}
 	utils.PrintMachines(entities, keysOnly)
 	return nil
