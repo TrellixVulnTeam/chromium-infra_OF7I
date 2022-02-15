@@ -19,6 +19,12 @@ const useStyles = makeStyles({
   },
 }, {defaultTheme: theme});
 
+type Props = {
+  nextEnabled: boolean,
+  activeStep: number,
+  setActiveStep: Function,
+  onSubmit?: Function,
+}
 /**
  * `<DotMobileStepper />`
  *
@@ -26,7 +32,9 @@ const useStyles = makeStyles({
  *
  *  @return ReactElement.
  */
-export default function DotsMobileStepper({nextEnabled, activeStep, setActiveStep} : {nextEnabled: boolean, activeStep: number, setActiveStep: Function}) : React.ReactElement {
+export default function DotsMobileStepper(props: Props) : React.ReactElement {
+
+  const {nextEnabled, activeStep, setActiveStep, onSubmit}  = props;
   const classes = useStyles();
 
   const handleNext = () => {
@@ -37,15 +45,21 @@ export default function DotsMobileStepper({nextEnabled, activeStep, setActiveSte
     setActiveStep((prevActiveStep: number) => prevActiveStep - 1);
   };
 
-  let label;
-  let icon;
+  const onSubmitIssue = () => {
+    if (onSubmit) {
+      onSubmit();
+    }
+  }
 
+  let nextButton;
   if (activeStep === 2){
-    label = 'Submit';
-    icon = '';
+    nextButton = (<Button aria-label="nextButton" size="medium" onClick={onSubmitIssue}>{'Submit'}</Button>);
   } else {
-    label = 'Next';
-    icon = <KeyboardArrowRight />;
+    nextButton =
+      (<Button aria-label="nextButton" size="medium" onClick={handleNext} disabled={!nextEnabled}>
+        {'Next'}
+        <KeyboardArrowRight />
+      </Button>);
   }
   return (
     <MobileStepper
@@ -55,12 +69,7 @@ export default function DotsMobileStepper({nextEnabled, activeStep, setActiveSte
       position="static"
       activeStep={activeStep}
       className={classes.root}
-      nextButton={
-        <Button aria-label="nextButton" size="medium" onClick={handleNext} disabled={activeStep === 2 || !nextEnabled}>
-          {label}
-          {icon}
-        </Button>
-      }
+      nextButton={nextButton}
       backButton={
         <Button aria-label="backButton" size="medium" onClick={handleBack} disabled={activeStep === 0}>
           <KeyboardArrowLeft />

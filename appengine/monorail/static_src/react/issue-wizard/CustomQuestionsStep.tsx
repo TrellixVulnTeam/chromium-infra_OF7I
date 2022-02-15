@@ -23,11 +23,12 @@ const userStyles = makeStyles({
 type Props = {
   setActiveStep: Function,
   questions: CustomQuestion[],
+  onSubmit: Function,
 };
 
 export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
-  const {setActiveStep, questions} = props;
+  const {setActiveStep, questions, onSubmit} = props;
   const classes = userStyles();
 
   const customQuestions = new Array();
@@ -77,7 +78,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
     <>
       <h2 className={classes.greyText}>Extra Information about the Issue</h2>
       <div className={classes.root}>{customQuestions}</div>
-      <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep}/>
+      <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep} onSubmit={onSubmit}/>
     </>
   );
 }

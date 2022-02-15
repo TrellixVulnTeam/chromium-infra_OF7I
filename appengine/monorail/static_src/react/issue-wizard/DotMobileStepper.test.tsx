@@ -46,14 +46,4 @@ describe('DotMobileStepper', () => {
     // Next button is not disabled on the second step.
     assert.isFalse(nextButton.disabled);
   });
-
-  it('next button disabled on last step', () => {
-    render(<DotMobileStepper activeStep={2}/>).container;
-
-    // Finds a button on the page with "next" as text using React testing library.
-    const nextButton = screen.getByRole('button', {name: /nextButton/i}) as HTMLButtonElement;
-
-    // Next button is disabled on the second step.
-    assert.isTrue(nextButton.disabled);
-  });
 });

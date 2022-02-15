@@ -10,10 +10,11 @@ import LandingStep from './issue-wizard/LandingStep.tsx';
 import DetailsStep from './issue-wizard/DetailsStep.tsx'
 import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
-import {getOs, getBrowser} from './issue-wizard/IssueWizardUtils.tsx'
+import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
 
 import {GetQuestionsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
+import {prpcClient} from 'prpc-client-instance.js';
 
 /**
  * Base component for the issue filing wizard, wrapper for other components.
@@ -56,8 +57,27 @@ export function IssueWizard(): ReactElement {
           setBrowserName={setBrowserName}
     />;
    } else if (activeStep === 2) {
-
-    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={questionByCategory.get(category)}/>;
+    const onSubmitIssue = () => {
+      const summary = textValues.oneLineSummary;
+      // TODO: (Issue 10627) add the extra detail from custom questions.
+      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, textValues.additionalComments, osName, browserName);
+      const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
+        parent: 'projects/chromium',
+        issue: {
+          summary,
+          status: {
+            status: 'Untriaged',
+          },
+        },
+        description,
+        });
+        response.then(() => {
+          // TODO: (Issue 10628) handle submit quesiton success
+        }, () => {
+          // TODO: (Issue 10628) handel submit question failed
+        });
+    }
+    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={questionByCategory.get(category)} onSubmit={onSubmitIssue}/>;
   }
 
   return (

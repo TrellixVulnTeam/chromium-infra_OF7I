@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {assert} from 'chai';
+import {assert, expect} from 'chai';
 import {IssueWizardPersona, IssueCategory, CustomQuestionType} from '../issue-wizard/IssueWizardTypes.tsx';
-import {GetCategoriesByPersona, GetQuestionsByCategory} from '../issue-wizard/IssueWizardUtils.tsx';
+import {GetCategoriesByPersona, GetQuestionsByCategory, buildIssueDescription} from '../issue-wizard/IssueWizardUtils.tsx';
 
 describe('IssueWizardUtils', () => {
   it('generate the issue categories to user persona map', () => {
@@ -53,4 +53,11 @@ describe('IssueWizardUtils', () => {
     assert.equal(questions?.length, 1);
     assert.equal(questions[0].question, 'q1');
   });
+
+  it('create issue description', () => {
+    const description = buildIssueDescription('reproduce', 'description', 'comments', 'Mac', 'Chrome');
+    expect(description).to.contains('Steps to reproduce the problem:');
+    expect(description).to.contains('Problem Description:');
+    expect(description).to.contains('Additional Comments:');
+  })
 });

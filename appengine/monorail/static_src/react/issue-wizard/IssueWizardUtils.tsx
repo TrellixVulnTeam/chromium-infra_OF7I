@@ -112,3 +112,13 @@ export function getTipByCategory(categories: IssueCategory[]): Map<string, strin
   })
   return tipByCategory;
 }
+
+export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, browser: string): string {
+  const issueDescription =
+    "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n"
+    + "Problem Description:\n" + description.trim() + "\n"
+    + "Additional Comments:\n" + comments.trim() + "\n"
+    + "Browser:" + browser.trim() + "\n"
+    + "OS:" + os.trim();
+  return issueDescription;
+}
