@@ -8,7 +8,7 @@ create {
       }
     }
     patch_dir: "patches"
-    patch_version: "chromium.5"
+    patch_version: "chromium.6"
     cpe_base_address: "cpe:/a:virtualenv:virtualenv"
   }
   build {

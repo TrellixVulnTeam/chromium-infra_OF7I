@@ -1,35 +1,46 @@
-From 8758f18f6627bbe66c0ec3de7914934ca71627cb Mon Sep 17 00:00:00 2001
+From 15660f48204c83ec80bc171d8e5fef93e22ed3f3 Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Mon, 26 Jul 2021 21:35:17 +0000
+Date: Tue, 15 Feb 2022 16:53:55 +1100
 Subject: [PATCH] Copy Windows API and MSVC runtime DLLs to the virtualenv.
 
 ---
- virtualenv.py | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ virtualenv.py | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
 diff --git a/virtualenv.py b/virtualenv.py
-index c7f71e6..23a0e58 100755
+index c7f71e6..aa0a51f 100755
 --- a/virtualenv.py
 +++ b/virtualenv.py
-@@ -1570,6 +1570,24 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
+@@ -25,6 +25,7 @@ import distutils.spawn
+ import distutils.sysconfig
+ import errno
+ import glob
++import itertools
+ import logging
+ import optparse
+ import os
+@@ -1570,6 +1571,27 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                  elif os.path.exists(python_dll_d_dest):
                      logger.info("Removed %s as the source does not exist", python_dll_d_dest)
                      os.unlink(python_dll_d_dest)
 +
 +            # Copy the api-ms-win-*.dll files as well, as they won't be found in sys.path
 +            # otherwise.
++            source_path = os.path.dirname(sys.executable)
++            dest_path = os.path.dirname(py_executable)
 +            for api_dll in glob.iglob(
-+                os.path.join(os.path.dirname(sys.executable), "api-ms-win*.dll")):
++                os.path.join(source_path, "api-ms-win*.dll")):
 +                api_dll_dest = os.path.join(
-+                    os.path.dirname(py_executable), os.path.basename(api_dll))
++                    dest_path, os.path.basename(api_dll))
 +                logger.info("Copying API dll to %s", api_dll_dest)
 +                shutil.copyfile(api_dll, api_dll_dest)
 +
-+            # Same for the vcruntime*.dll files.
-+            for runtime_dll in glob.iglob(
-+                os.path.join(os.path.dirname(sys.executable), "vcruntime*.dll")):
++            # Same for the VC runtime DLLs.
++            for runtime_dll in itertools.chain(
++                glob.iglob(os.path.join(source_path, "vcruntime*.dll")),
++                glob.iglob(os.path.join(source_path, "msvcr*.dll"))):
 +                runtime_dll_dest = os.path.join(
-+                    os.path.dirname(py_executable), os.path.basename(runtime_dll))
++                    dest_path, os.path.basename(runtime_dll))
 +                logger.info("Copying runtime dll to %s", runtime_dll_dest)
 +                shutil.copyfile(runtime_dll, runtime_dll_dest)
 +
@@ -37,5 +48,5 @@ index c7f71e6..23a0e58 100755
              # make a symlink python --> pypy-c
              python_executable = os.path.join(os.path.dirname(py_executable), "python")
 -- 
-2.33.0.309.g3052b89438-goog
+2.35.1.265.g69c8d7142f-goog
 
