@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/span"
 
@@ -219,8 +218,7 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 	rs := []*FailureAssociationRule{}
 	err := it.Do(func(r *spanner.Row) error {
 		var project, ruleID, ruleDefinition, bugSystem, bugID string
-		var creationTime, lastUpdated time.Time
-		var predicateLastUpdated spanner.NullTime
+		var creationTime, lastUpdated, predicateLastUpdated time.Time
 		var creationUser, lastUpdatedUser string
 		var isActive, isManagingBug spanner.NullBool
 		var sourceClusterAlgorithm, sourceClusterID string
@@ -236,25 +234,21 @@ func readWhere(ctx context.Context, whereClause string, params map[string]interf
 		}
 
 		rule := &FailureAssociationRule{
-			Project:         project,
-			RuleID:          ruleID,
-			RuleDefinition:  ruleDefinition,
-			CreationTime:    creationTime,
-			CreationUser:    creationUser,
-			LastUpdated:     lastUpdated,
-			LastUpdatedUser: lastUpdatedUser,
-			BugID:           bugs.BugID{System: bugSystem, ID: bugID},
-			IsActive:        isActive.Valid && isActive.Bool,
-			IsManagingBug:   isManagingBug.Valid && isManagingBug.Bool,
+			Project:              project,
+			RuleID:               ruleID,
+			RuleDefinition:       ruleDefinition,
+			CreationTime:         creationTime,
+			CreationUser:         creationUser,
+			LastUpdated:          lastUpdated,
+			LastUpdatedUser:      lastUpdatedUser,
+			PredicateLastUpdated: predicateLastUpdated,
+			BugID:                bugs.BugID{System: bugSystem, ID: bugID},
+			IsActive:             isActive.Valid && isActive.Bool,
+			IsManagingBug:        isManagingBug.Valid && isManagingBug.Bool,
 			SourceCluster: clustering.ClusterID{
 				Algorithm: sourceClusterAlgorithm,
 				ID:        sourceClusterID,
 			},
-		}
-		if predicateLastUpdated.Valid {
-			rule.PredicateLastUpdated = predicateLastUpdated.Time
-		} else {
-			rule.PredicateLastUpdated = StartingEpoch
 		}
 		rs = append(rs, rule)
 		return nil

@@ -170,7 +170,7 @@ CREATE TABLE FailureAssociationRules (
   -- the matched failures, so does NOT update this field.)
   -- When this value changes, it triggers re-clustering.
   -- Basis for RulesVersion on ClusteringState and ReclusteringRuns.
-  PredicateLastUpdated TIMESTAMP OPTIONS (allow_commit_timestamp=true),
+  PredicateLastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
   -- The bug the failures are associated with (part 1). This is the
   -- bug tracking system containing the bug the failures are associated
   -- with. The only supported values are 'monorail' and 'buganizer'.
