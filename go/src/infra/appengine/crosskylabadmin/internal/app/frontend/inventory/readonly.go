@@ -18,6 +18,7 @@ package inventory
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -272,11 +273,21 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 
 	if hostname == "" {
 		logging.Infof(ctx, "hostname not provided, using buildTarget (%s) and model (%s)", buildTarget, model)
-		return getStableVersionImplNoHostname(ctx, buildTarget, model)
+		out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
+		if err == nil {
+			maybeSetReason(out, fmt.Sprintf("looked up board %q and model %q", buildTarget, model))
+			return out, nil
+		}
+		return out, err
 	}
 
 	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
-	return getStableVersionImplWithHostname(ctx, ic, hostname)
+	out, err := getStableVersionImplWithHostname(ctx, ic, hostname)
+	if err == nil {
+		maybeSetReason(out, fmt.Sprintf("looked up hostname %q", hostname))
+		return out, nil
+	}
+	return out, err
 }
 
 // getStableVersionImplNoHostname returns stableversion information given a buildTarget and model
@@ -300,6 +311,7 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	}
 	// successful early exit if we have a beaglebone servo
 	if buildTarget == beagleboneServo || model == beagleboneServo {
+		maybeSetReason(out, "looks like beaglebone")
 		return out, nil
 	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
@@ -448,4 +460,11 @@ func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostna
 		return out, nil
 	}
 	return "", errors.Reason("unrecognized hostname %q is not a labstation or beaglebone servo", hostname).Err()
+}
+
+// maybeSetReason sets the reason on a stable version response if the response is non-nil and the reason is "".
+func maybeSetReason(resp *fleet.GetStableVersionResponse, msg string) {
+	if resp != nil && resp.GetReason() == "" {
+		resp.Reason = msg
+	}
 }
