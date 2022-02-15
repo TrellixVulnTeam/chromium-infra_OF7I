@@ -1898,6 +1898,63 @@ shivas get adm -state serving -state needs_repair -zone atl97
 Also aliased as 'shivas get attached-device-machine'.
 
 Gets the attached device machine and prints the output in user format.`
+
+	// AddAttachedDeviceMachineText long description for AddAttachedDeviceMachineCmd
+	AddAttachedDeviceMachineText string = `Create an attached device (Hardware asset: Android phone, iOS tablet, etc.) to UFS.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Examples:
+
+shivas add attached-device-machine -name machine1 -zone mtv97 -rack rack1 -serial XXX -man manufacturer1 -devicetype apple_phone -target board1 -model model1
+
+shivas add attached-device-machine -f admrequest.json
+Creates an attached device machine by reading a JSON file input.`
+
+	// AddADMText long description for AddADMCmd
+	AddADMText string = `Create an attached device (Hardware asset: Android phone, iOS tablet, etc.) to UFS.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Examples:
+
+shivas add adm -name machine1 -zone mtv97 -rack rack1 -serial XXX -man manufacturer1 -devicetype apple_phone -target board1 -model model1
+
+shivas add adm -f admrequest.json
+Creates an attached device machine by reading a JSON file input.`
+
+	// ADMRegistrationFileText description for machine registration file input
+	ADMRegistrationFileText string = `[JSON Mode] Path to a file containing machine request specification in JSON format.
+This file must contain required machine field.
+
+Example AttachedDevice machine creation request:
+{
+    "name": "attached-device-machine-example",
+    "location": {
+        "zone": "ZONE_ATLANTA",
+        "aisle": "1",
+        "row": "2",
+        "rack": "Rack-42",
+        "rackNumber": "42",
+        "shelf": "3",
+        "position": "5"
+    },
+    "serialNumber": "XXX",
+    "attached_device": {
+      "manufacturer": "Apple",
+      "device_type": "apple_phone",
+      "build_target": "board1",
+      "model": "model1"
+    }
+  }
+}
+
+
+The protobuf definition can be found here:
+Machine:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 )
 
 func CronTriggerAvailableJobsString() string {

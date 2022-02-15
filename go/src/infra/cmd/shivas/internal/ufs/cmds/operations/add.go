@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/internal/ufs/subcmds/asset"
+	"infra/cmd/shivas/internal/ufs/subcmds/attacheddevicemachine"
 	"infra/cmd/shivas/internal/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/internal/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/internal/ufs/subcmds/drac"
@@ -40,7 +41,8 @@ var AddCmd = &subcommands.Command{
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
 	asset/dut/labstation/cachingservice/schedulingunit
-	machine-prototype/rack-prototype/chromeplatform/vlan`,
+	machine-prototype/rack-prototype/chromeplatform/vlan
+	attached-device-machine (aliased as adm/attached-device-machine)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &add{}
 		return c
@@ -58,6 +60,8 @@ func (c *add) Run(a subcommands.Application, args []string, env subcommands.Env)
 }
 
 // GetCommands lists all the subcommands under add
+// Aliases:
+//   attacheddevicemachine.AddAttachedDeviceMachineCmd = attacheddevicemachine.AddADMCmd
 func (c addApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
@@ -67,6 +71,8 @@ func (c addApp) GetCommands() []*subcommands.Command {
 		cachingservice.AddCachingServiceCmd,
 		schedulingunit.AddSchedulingUnitCmd,
 		machine.AddMachineCmd,
+		attacheddevicemachine.AddAttachedDeviceMachineCmd,
+		attacheddevicemachine.AddADMCmd,
 		host.AddHostCmd,
 		kvm.AddKVMCmd,
 		rpm.AddRPMCmd,
