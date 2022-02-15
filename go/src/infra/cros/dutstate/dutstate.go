@@ -37,6 +37,8 @@ const (
 	RepairFailed State = "repair_failed"
 	// Device prepared to be deployed to the lab.
 	NeedsDeploy State = "needs_deploy"
+	// Device is under deployment
+	Deploying State = "deploying"
 	// Device reserved for analysis or hold by lab
 	Reserved State = "reserved"
 	// Device under manual repair interaction by lab
@@ -150,6 +152,7 @@ var stateToUFS = map[State]ufsProto.State{
 	NeedsRepair:       ufsProto.State_STATE_NEEDS_REPAIR,
 	RepairFailed:      ufsProto.State_STATE_REPAIR_FAILED,
 	NeedsDeploy:       ufsProto.State_STATE_DEPLOYED_PRE_SERVING,
+	Deploying:         ufsProto.State_STATE_DEPLOYING,
 	Reserved:          ufsProto.State_STATE_RESERVED,
 	ManualRepair:      ufsProto.State_STATE_DEPLOYED_TESTING,
 	NeedsManualRepair: ufsProto.State_STATE_DISABLED,
@@ -162,6 +165,7 @@ var stateFromUFS = map[ufsProto.State]State{
 	ufsProto.State_STATE_NEEDS_REPAIR:         NeedsRepair,
 	ufsProto.State_STATE_REPAIR_FAILED:        RepairFailed,
 	ufsProto.State_STATE_DEPLOYED_PRE_SERVING: NeedsDeploy,
+	ufsProto.State_STATE_DEPLOYING:            Deploying,
 	ufsProto.State_STATE_RESERVED:             Reserved,
 	ufsProto.State_STATE_DEPLOYED_TESTING:     ManualRepair,
 	ufsProto.State_STATE_DISABLED:             NeedsManualRepair,
