@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+// LooksLikeSatlabDevice returns whether a hostname or botID appears to be a satlab-managed device.
+// This function exists so that we use the same heuristic everywhere when identifying satlab devices.
+func LooksLikeSatlabDevice(hostname string) bool {
+	h := strings.TrimPrefix(hostname, "crossk-")
+	return strings.HasPrefix(h, "satlab")
+}
+
 // LooksLikeLabstation returns whether a hostname or botID appears to be a labstation or not.
 // This function exists so that we always use the same heuristic everywhere when identifying labstations.
 func LooksLikeLabstation(hostname string) bool {
