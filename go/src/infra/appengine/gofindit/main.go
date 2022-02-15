@@ -67,7 +67,7 @@ func main() {
 				return
 			}
 
-			_, e := compilefailureanalysis.AnalyzeFailure(c.Context, compile_failure, 123, 456)
+			_, e := compilefailureanalysis.AnalyzeFailure(c.Context, compile_failure, 8822580855094649425, 8822572811029823329)
 			if e != nil {
 				logging.Errorf(c.Context, "Got error when analyse failure: %v", e)
 				return

@@ -9,8 +9,10 @@ package compilefailureanalysis
 
 import (
 	"context"
+	"fmt"
 	"infra/appengine/gofindit/compilefailureanalysis/heuristic"
 	"infra/appengine/gofindit/compilefailureanalysis/nthsection"
+	"infra/appengine/gofindit/internal/buildbucket"
 	gfim "infra/appengine/gofindit/model"
 	gfipb "infra/appengine/gofindit/proto"
 
@@ -33,6 +35,7 @@ func AnalyzeFailure(
 		return nil, e
 	}
 
+	logging.Infof(c, "Regression range: %v", regression_range)
 	// Creates a new CompileFailureAnalysis entity in datastore
 	analysis := &gfim.CompileFailureAnalysis{
 		CompileFailure:         datastore.KeyForObj(c, cf),
@@ -70,6 +73,18 @@ func findRegressionRange(
 	first_failed_build_id int64,
 	last_passed_build_id int64,
 ) (*gfipb.RegressionRange, error) {
-	// TODO (nqmtuan) query build bucket and find regression range
-	return &gfipb.RegressionRange{}, nil
+	first_failed_build, err := buildbucket.GetBuild(c, first_failed_build_id)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting build %d: %w", first_failed_build_id, err)
+	}
+
+	last_passed_build, err := buildbucket.GetBuild(c, last_passed_build_id)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting build %d: %w", last_passed_build_id, err)
+	}
+
+	return &gfipb.RegressionRange{
+		FirstFailed: first_failed_build.GetInput().GitilesCommit,
+		LassPassed:  last_passed_build.GetInput().GitilesCommit,
+	}, nil
 }

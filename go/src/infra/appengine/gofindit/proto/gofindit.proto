@@ -8,6 +8,7 @@ package gofindit;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
 
 option go_package = "infra/appengine/gofindit/proto;gofindit";
 
@@ -95,7 +96,7 @@ message UpdateAnalysisProgressRequest {
   // Bot id
   string bot_id = 2;
   // The revision that the bot runs
-  GitilesCommit gitiles_commit = 3;
+  buildbucket.v2.GitilesCommit gitiles_commit = 3;
   // Result of the rerun
   RerunResult rerun_result = 4;
 }
@@ -106,7 +107,7 @@ message UpdateAnalysisProgressResponse {
   // multiple revisions.
   // If this is not set, then there is no further revision to run.
   // The bot can finish and be released.
-  GitilesCommit next_revision_to_run = 1;
+  buildbucket.v2.GitilesCommit next_revision_to_run = 1;
 }
 
 // Analysis result contains result of an analysis
@@ -132,7 +133,7 @@ message Analysis {
   // Result of nth-section analysis
   NthSectionAnalysisResult nth_section_result= 10;
   // Optional, if status = FOUND
-  GitilesCommit culprit = 11;
+  buildbucket.v2.GitilesCommit culprit = 11;
   // Actions we have taken with the culprit.
   // More than one action may be taken, for example, reverting the culprit and
   // commenting on the bug.
@@ -153,7 +154,7 @@ message HeuristicAnalysisResult {
 
 message HeuristicSuspect {
   // A suspect revision of heuristic analysis.
-  GitilesCommit suspect = 1;
+  buildbucket.v2.GitilesCommit suspect = 1;
   // A number from 0.0 to 1.0. The higher the number, the more likely the suspect
   // is indeed the culprit.
   float confidence = 2;
@@ -173,7 +174,7 @@ message NthSectionAnalysisResult {
   // Timestamp for the end time of the nth-section analysis
   google.protobuf.Timestamp end_time = 4;
   // Optional, the culprit GitilesCommit, when status = FOUND
-  GitilesCommit culprit = 5;
+  buildbucket.v2.GitilesCommit culprit = 5;
   // Optional, whether the culprit has been verified, when status = FOUND
   bool verified = 6;
   // Optional, when status = RUNNING.
@@ -231,18 +232,10 @@ enum CulpritActionType {
 
 // Regression range is (last_passed..first_failed]
 message RegressionRange {
-  GitilesCommit lass_passed = 1;
-  GitilesCommit first_failed = 2;
+  buildbucket.v2.GitilesCommit lass_passed = 1;
+  buildbucket.v2.GitilesCommit first_failed = 2;
   // How many revisions between last passed (exclusively) and first failed (inclusively).
   int32 number_of_revisions = 3;
-}
-
-message GitilesCommit {
-  string gitiles_host = 1;
-  string gitiles_project = 2;
-  string gitiles_ref = 3;
-  string gitiles_id = 4;
-  int32 commit_position = 5;
 }
 
 // NthSection run contains information about a single rerun in n-section.

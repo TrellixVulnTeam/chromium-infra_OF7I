@@ -6,14 +6,18 @@ package compilefailureanalysis
 
 import (
 	"context"
-	"infra/appengine/gofindit/model"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/gae/service/datastore"
+
+	"infra/appengine/gofindit/internal/buildbucket"
+	"infra/appengine/gofindit/model"
 )
 
 func TestAnalyzeFailure(t *testing.T) {
@@ -21,6 +25,23 @@ func TestAnalyzeFailure(t *testing.T) {
 	c := memory.Use(context.Background())
 	cl := testclock.New(testclock.TestTimeUTC)
 	c = clock.Set(c, cl)
+
+	// Setup mock for buildbucket
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+	mc := buildbucket.NewMockedClient(c, ctl)
+	c = mc.Ctx
+	res := &bbpb.Build{
+		Input: &bbpb.Build_Input{
+			GitilesCommit: &bbpb.GitilesCommit{
+				Host:    "host",
+				Project: "proj",
+				Id:      "id",
+				Ref:     "ref",
+			},
+		},
+	}
+	mc.Client.EXPECT().GetBuild(gomock.Any(), gomock.Any(), gomock.Any()).Return(res, nil).AnyTimes()
 
 	Convey("AnalyzeFailure analysis is created", t, func() {
 		failed_build := &model.LuciFailedBuild{
