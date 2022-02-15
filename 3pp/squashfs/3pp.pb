@@ -12,6 +12,7 @@ create {
   }
   build {
     dep: "static_libs/libzstd"
+    dep: "static_libs/zlib"
     tool: "tools/sed"
   }
 }
