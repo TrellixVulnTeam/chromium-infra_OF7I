@@ -45,6 +45,8 @@ type LogsInfo struct {
 	Board string
 	// Status is the status of test for the downloaded logs (usually FAIL/GOOD).
 	Status string
+	// Reason is the failure reason of a failing test (or null for a passing test).
+	Reason string
 }
 
 // logLine records all necessary information of a log line in the target test result for analysis and comparisons.
@@ -81,6 +83,8 @@ type logSearchOptions struct {
 	board string
 	// targetTaskID is the task ID of the target test.
 	targetTaskID string
+	// reasonFormat is the format of the target test, which should keep the same for reference tests.
+	reasonFormat string
 	// requiredNum is the required number of reference tests in either test status.
 	requiredNum int
 	// searchDaysBound for all reference tests from history.
@@ -97,7 +101,7 @@ type analysisOptions struct {
 	requiredNum int
 }
 
-// analysisResults that will be used to calculate the predictive powers and finally demostrate to users.
+// analysisResults that will be used to calculate the predictive powers and finally demonstrate to users.
 type analysisResults struct {
 	// logLines for the target analysis test.
 	logLines []logLine
@@ -146,8 +150,10 @@ var (
 	testRE   = regexp.MustCompile(`tast.(\w+).(\w+)(.(\w+))?$`)
 	portRE   = regexp.MustCompile(`:[0-9]+`)
 
-	removalHex = regexp.MustCompile("( )?[+]?0[xX]([0-9a-fA-F]+)(,)?")
-	removal    = regexp.MustCompile("[0-9\t\n]")
+	removal        = regexp.MustCompile("[0-9\t\n]")
+	removalHex     = regexp.MustCompile("( )?[+]?0[xX]([0-9a-fA-F]+)(,)?")
+	removalBracket = regexp.MustCompile(`(\[(.+)\])|(\{(.+)\})|(\((.+)\))|(\<(.+)\>)`)
+	shortenSign    = regexp.MustCompile(`[%]+`)
 
 	tpl *template.Template
 )
@@ -185,15 +191,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error finding the target log information to download: %v", err)
 	}
+	reasonFormat := cleanReasonForFormat(targetLog.Reason)
 	logLines, err := readTargetLogLines(ctx, targetLog, *test, logsName)
 	if err != nil {
 		log.Fatalf("Error saving log line statistics: %v", err)
 	}
-	referenceURLs, err := findReferenceLogURLs(ctx, logSearchOptions{date, *test, targetLog.Board, *taskID, *requiredNum, searchDaysBound})
+	referenceURLs, err := findReferenceLogURLs(ctx, logSearchOptions{date, *test, targetLog.Board, *taskID, reasonFormat, *requiredNum, searchDaysBound})
 	if err != nil {
 		log.Fatalf("Error finding log urls of all reference logs: %v", err)
 	}
 	analysisResults := analyzeAllLogs(ctx, logLines, referenceURLs, analysisOptions{*test, logsName, *requiredNum})
+	if analysisResults.totalFails == 0 || analysisResults.totalPasses == 0 {
+		log.Fatalf("Error due to zero (failing and/or passing) reference tests: got %v failing and %v passing references", analysisResults.totalFails, analysisResults.totalPasses)
+	}
 
 	log.Println("Loading the highlighter web...")
 	tpl = template.Must(template.ParseFiles("demo.html"))
@@ -210,6 +220,17 @@ func main() {
 		}
 	})
 	log.Fatal(http.ListenAndServe(*port, nil))
+}
+
+// cleanReasonForFormat gets the failure reason format of the target test by cleaning useless data.
+func cleanReasonForFormat(reason string) string {
+	reason = strings.ReplaceAll(reason, "\\", "")
+	reason = strings.ReplaceAll(reason, "%", "\\%")
+	reason = strings.ReplaceAll(reason, "_", "\\_")
+	reason = removal.ReplaceAllString(reason, "%")
+	reason = removalBracket.ReplaceAllString(reason, "%")
+	reason = shortenSign.ReplaceAllString(reason, "%")
+	return reason
 }
 
 // highlightLines highlights log lines with different colours and saturations based on their predictive powers.
@@ -323,11 +344,11 @@ func readTargetLogLines(ctx context.Context, info LogsInfo, test, logsName strin
 
 // cleanLogLine cleans each log line by removing hexadecimals, numbers, tabs and test time prefixes.
 func cleanLogLine(line string) string {
-	l := removalHex.ReplaceAllString(line, "")
-	l = removal.ReplaceAllString(l, "")
-	l = strings.TrimPrefix(l, "--T::.Z [::.] ")
-	l = strings.TrimPrefix(l, "--T::.Z ")
-	return l
+	line = removalHex.ReplaceAllString(line, "")
+	line = removal.ReplaceAllString(line, "")
+	line = strings.TrimPrefix(line, "--T::.Z [::.] ")
+	line = strings.TrimPrefix(line, "--T::.Z ")
+	return line
 }
 
 // hashLine transforms a string to a hash code.
@@ -349,7 +370,7 @@ func findReferenceLogURLs(ctx context.Context, searchOptions logSearchOptions) (
 	// Terminates log downloads if the number of files for the specified board reaches expectations or if the test searching date is more than the required bound;
 	// otherwise, queries test results with the specific test name from different boards day by day.
 	for (remainingFails > 0 || remainingPasses > 0) && currentDate.After(time.Now().AddDate(0, 0, -searchOptions.searchDaysBound)) {
-		logs, err := findDailyLogsToDownload(ctx, currentDate, searchOptions.date, searchOptions.test, searchOptions.targetTaskID, remainingFails > 0, remainingPasses > 0)
+		logs, err := findDailyLogsToDownload(ctx, currentDate, searchOptions.date, searchOptions.test, searchOptions.targetTaskID, searchOptions.reasonFormat, remainingFails > 0, remainingPasses > 0)
 		if err != nil {
 			return referenceURLs{}, errors.Annotate(err, "find daily reference logs to download").Err()
 		}
@@ -379,7 +400,7 @@ func findReferenceLogURLs(ctx context.Context, searchOptions logSearchOptions) (
 }
 
 // findDailyLogsToDownload finds daily reference logs satisfying specific requirements using BigQuery.
-func findDailyLogsToDownload(ctx context.Context, currentDate, targetDate time.Time, test, targetTaskID string, requireFailTest, requirePassTest bool) ([]LogsInfo, error) {
+func findDailyLogsToDownload(ctx context.Context, currentDate, targetDate time.Time, test, targetTaskID, reasonFormat string, requireFailTest, requirePassTest bool) ([]LogsInfo, error) {
 	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
 		return nil, errors.Annotate(err, "create client").Err()
@@ -392,7 +413,7 @@ func findDailyLogsToDownload(ctx context.Context, currentDate, targetDate time.T
 			FROM ` + "`google.com:stainless-prod.stainless.tests*`" + `
 			WHERE
 				_TABLE_SUFFIX = @currentDate
-				AND ((@requireFailTest AND status = "FAIL")
+				AND ((@requireFailTest AND status = "FAIL" AND reason LIKE @reasonFormat)
 					OR (@requirePassTest AND status = "GOOD"))
 				AND logs_url LIKE '/browse/chromeos-test-logs/%'
 				AND test = @test
@@ -405,6 +426,7 @@ func findDailyLogsToDownload(ctx context.Context, currentDate, targetDate time.T
 		{Name: "test", Value: test},
 		{Name: "targetDate", Value: targetDate.Format("20060102")},
 		{Name: "targetTaskID", Value: targetTaskID},
+		{Name: "reasonFormat", Value: reasonFormat},
 	}
 	logsIterator, err := q.Read(ctx)
 	if err != nil {
@@ -435,7 +457,8 @@ func loadTargetLog(ctx context.Context, date time.Time, test, taskID string) (Lo
 			SELECT
 				logs_url AS LogsURL,
 				board AS Board,
-				status AS Status
+				status AS Status,
+				reason AS Reason
 			FROM ` + "`google.com:stainless-prod.stainless.tests*`" + `
 			WHERE
 				_TABLE_SUFFIX = @date
