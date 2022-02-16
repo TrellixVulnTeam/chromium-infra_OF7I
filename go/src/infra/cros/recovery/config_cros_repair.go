@@ -194,12 +194,21 @@ const crosRepairPlanActions = `
 },
 "servo_state_is_working":{
 	"docs":[
-		"check the servo's state is ServoStateWorking."
+		"check the servo's state is WORKING."
 	],
 	"exec_name":"servo_match_state",
 	"exec_extra_args":[
 		"state:WORKING"
 	]
+},
+"servo_state_is_not_working":{
+	"docs":[
+		"check the servo's state is not WORKING."
+	],
+	"conditions":[
+		"servo_state_is_working"
+	],
+	"exec_name":"sample_fail"
 },
 "cros_rw_firmware_stable_verion":{
 	"dependencies":[

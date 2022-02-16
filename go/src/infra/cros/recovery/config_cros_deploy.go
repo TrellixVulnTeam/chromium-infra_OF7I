@@ -16,7 +16,7 @@ var crosDeployPlanCriticalActionList = []string{
 }
 
 // List of actions configs for deployment of the ChromeOS.
-const crosDeployPlanActions = `
+var crosDeployPlanActions = `
 "DUT is in dev-mode and allowed to boot from USB-key":{
 	"docs":[
 		"Verify that device is set to boot in DEV mode and enabled to boot from USB-drive."
@@ -49,22 +49,62 @@ const crosDeployPlanActions = `
 },
 "DUT has expected test firmware":{
 	"docs":[
-		"verify that fw on the DUT is match stable version.",
-		"TODO: Need implement",
-		"Need verify that FW on the DUT has dev keys."
+		"Verify that FW on the DUT has dev keys."
 	],
 	"dependencies":[
+		"cros_ssh"
 	],
-	"exec_name":"sample_fail"
+	"exec_name":"cros_has_dev_signed_firmware",
+	"exec_timeout": {
+		"seconds":600
+	},
+	"recovery_actions":[
+		"Update firmware on the DUT and restart by servo",
+		"Update firmware on the DUT and restart by host"
+	]
+},
+"Update firmware on the DUT and restart by servo":{
+	"docs":[
+		"Force update FW on the DUT by factory mode.",
+		"Reboot device by servo"
+	],
+	"conditions":[
+		"servo_state_is_working"
+	],
+	"dependencies":[
+		"cros_ssh"
+	],
+	"exec_name":"cros_run_firmware_update",
+	"exec_extra_args":[
+		"mode:factory",
+		"force:true",
+		"reboot:by_servo"
+	]
+},
+"Update firmware on the DUT and restart by host":{
+	"docs":[
+		"Force update FW on the DUT by factory mode.",
+		"Reboot device by host"
+	],
+	"conditions":[
+		"servo_state_is_not_working"
+	],
+	"dependencies":[
+		"cros_ssh"
+	],
+	"exec_name":"cros_run_firmware_update",
+	"exec_extra_args":[
+		"mode:factory",
+		"force:true",
+		"reboot:by_host"
+	]
 },
 "DUT verify":{
 	"docs":[
-		"Run all repair critcal actions.",
-		"TODO: Need add all critical actions"
+		"Run all repair critcal actions."
 	],
-	"dependencies":[
-	],
-	"exec_name":"sample_fail"
+	"dependencies":[` + joinCriticalList(crosRepairPlanCriticalActionList) + `],
+	"exec_name":"sample_pass"
 },
 "has_test_cros_image":{
 	"docs":[

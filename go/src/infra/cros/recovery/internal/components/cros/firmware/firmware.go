@@ -72,15 +72,39 @@ func ReadAPInfoByServo(ctx context.Context, req *ReadAPInfoRequest, run componen
 		res.GBBFlags = gbb
 	}
 	if req.Keys {
-		cmd := fmt.Sprintf("futility show %s |grep \"Key sha1sum:\" |awk '{print $3}'", req.FilePath)
-		out, err := run(ctx, 30*time.Second, cmd)
-		if err != nil {
-			return nil, errors.Annotate(err, "read ap info: read flags").Err()
+		if keys, err := readAPKeysFromFile(ctx, req.FilePath, run, log); err != nil {
+			return nil, errors.Annotate(err, "read ap info").Err()
+		} else {
+			res.Keys = keys
 		}
-		log.Debug("Read firmware keys: %v", out)
-		res.Keys = strings.Split(out, "\n")
 	}
 	return res, nil
+}
+
+const (
+	DevSignedFirmwareKeyPrefix = "b11d"
+)
+
+// IsDevKeys checks if any of provided keys are dev signed.
+func IsDevKeys(keys []string, log logger.Logger) bool {
+	for _, key := range keys {
+		if strings.HasPrefix(key, DevSignedFirmwareKeyPrefix) {
+			log.Debug("Found dev signed key: %q !", key)
+			return true
+		}
+	}
+	return false
+}
+
+// readAPKeysFromFile read firmware keys from the AP image.
+func readAPKeysFromFile(ctx context.Context, filePath string, run components.Runner, log logger.Logger) ([]string, error) {
+	cmd := fmt.Sprintf("futility show %s |grep \"Key sha1sum:\" |awk '{print $3}'", filePath)
+	out, err := run(ctx, time.Minute, cmd)
+	if err != nil {
+		return nil, errors.Annotate(err, "read ap keys").Err()
+	}
+	log.Debug("Read firmware keys: %v", out)
+	return strings.Split(out, "\n"), nil
 }
 
 // SetApInfoByServoRequest hols and provides info to update AP.

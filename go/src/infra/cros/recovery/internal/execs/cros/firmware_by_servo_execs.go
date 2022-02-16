@@ -7,7 +7,6 @@ package cros
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -56,10 +55,6 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
-const (
-	devSignedFirmwareKeyPrefix = "b11d"
-)
-
 func checkIfApHasDevSignedImageExec(ctx context.Context, info *execs.ExecInfo) error {
 	servod := info.NewServod()
 	run := info.NewRunner(info.RunArgs.DUT.ServoHost.Name)
@@ -72,11 +67,8 @@ func checkIfApHasDevSignedImageExec(ctx context.Context, info *execs.ExecInfo) e
 		return errors.Annotate(err, "ap dev signed").Err()
 	}
 	log.Debug(ctx, "Device has keys: %v", res.Keys)
-	for _, key := range res.Keys {
-		if strings.HasPrefix(key, devSignedFirmwareKeyPrefix) {
-			log.Debug(ctx, "Device has dev signed key: %q !", key)
-			return nil
-		}
+	if firmware.IsDevKeys(res.Keys, info.NewLogger()) {
+		return nil
 	}
 	return errors.Reason("ap dev signed: device is not dev signed").Err()
 }
