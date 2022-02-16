@@ -165,6 +165,11 @@ func TestCreateCombinedTestPlan_manyUnitSuccess(t *testing.T) {
 			Common:    &testplans.TestSuiteCommon{},
 			TestSuite: "VM kevin"},
 	}}
+	kevinTastGceTestCfg := &testplans.TastGceTestCfg{TastGceTest: []*testplans.TastGceTestCfg_TastGceTest{
+		{
+			Common:    &testplans.TestSuiteCommon{},
+			SuiteName: "Gce kevin"},
+	}}
 	testReqs := &testplans.TargetTestRequirementsCfg{
 		PerTargetTestRequirements: []*testplans.PerTargetTestRequirements{
 			{
@@ -178,7 +183,8 @@ func TestCreateCombinedTestPlan_manyUnitSuccess(t *testing.T) {
 					TargetType:  &testplans.TargetCriteria_BuildTarget{BuildTarget: "kevin"}},
 				HwTestCfg:           kevinHWTestCfg,
 				DirectTastVmTestCfg: kevinTastVMTestCfg,
-				VmTestCfg:           kevinVMTestCfg},
+				VmTestCfg:           kevinVMTestCfg,
+				TastGceTestCfg:      kevinTastGceTestCfg},
 		},
 	}
 	sourceTreeTestCfg := &testplans.SourceTreeTestCfg{
@@ -258,6 +264,18 @@ func TestCreateCombinedTestPlan_manyUnitSuccess(t *testing.T) {
 					BuilderName: "kevin-cq",
 					BuildTarget: &chromiumos.BuildTarget{Name: "kevin"}},
 				VmTestCfg: kevinVMTestCfg},
+		},
+		TastGceTestUnits: []*testplans.TastGceTestUnit{
+			{
+				Common: &testplans.TestUnitCommon{
+					BuildPayload: &testplans.BuildPayload{
+						ArtifactsGsBucket: gsBucket,
+						ArtifactsGsPath:   gsPathPrefix + "kevin",
+						FilesByArtifact:   simpleFilesByArtifact(),
+					},
+					BuilderName: "kevin-cq",
+					BuildTarget: &chromiumos.BuildTarget{Name: "kevin"}},
+				TastGceTestCfg: kevinTastGceTestCfg},
 		}}
 	if diff := cmp.Diff(expectedTestPlan, actualTestPlan, protocmp.Transform()); diff != "" {
 		t.Errorf("CreateCombinedTestPlan bad result (-want/+got)\n%s", diff)
