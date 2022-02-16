@@ -56,11 +56,31 @@ type setStableVersionRun struct {
 // Run runs the command, prints the error if there is one, and returns an exit status.
 func (c *setStableVersionRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
+	if err := c.validateArguments(ctx, a, args, env); err != nil {
+		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
+		return 1
+	}
 	if err := c.innerRun(ctx, a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 		return 1
 	}
 	return 0
+}
+
+// ValidateArguments validates the arguments given to the satlab command.
+func (c *setStableVersionRun) validateArguments(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
+	useHostnameStrategy := c.hostname != ""
+	useBoardModelStrategy := (c.board != "") && (c.model != "")
+	if useHostnameStrategy {
+		if useBoardModelStrategy {
+			return errors.Reason("board and model should not be set if hostname is provided").Err()
+		}
+		return nil
+	} // Hostname strategy not set.
+	if !useBoardModelStrategy {
+		return errors.Reason("must use at least one of {board, model} or {hostname} strategy").Err()
+	}
+	return nil
 }
 
 // InnerRun creates a client, sends a GetStableVersion request, and prints the response.

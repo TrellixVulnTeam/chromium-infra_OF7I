@@ -47,6 +47,7 @@ func getApplication() *cli.Application {
 			// subcmds.UpdateCmd,
 			subcommands.Section("Stable Version"),
 			stableversion.GetStableVersionCmd,
+			stableversion.SetStableVersionCmd,
 		},
 	}
 }
