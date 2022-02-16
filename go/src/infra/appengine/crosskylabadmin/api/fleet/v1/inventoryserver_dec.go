@@ -346,6 +346,23 @@ func (s *DecoratedInventory) SetSatlabStableVersion(ctx context.Context, req *Se
 	return
 }
 
+func (s *DecoratedInventory) DeleteSatlabStableVersion(ctx context.Context, req *DeleteSatlabStableVersionRequest) (rsp *DeleteSatlabStableVersionResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteSatlabStableVersion", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteSatlabStableVersion(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteSatlabStableVersion", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedInventory) DumpStableVersionToDatastore(ctx context.Context, req *DumpStableVersionToDatastoreRequest) (rsp *DumpStableVersionToDatastoreResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

@@ -34,3 +34,30 @@ func TestSetSatlabStableVersion(t *testing.T) {
 		t.Errorf("unexpected diff (-want +got): %s", diff)
 	}
 }
+
+// TestDeleteSatlabStableVersion tests that SetSatlabStableVersion returns a not-yet-implemented response.
+func TestDeleteSatlabStableVersion(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	ctx = withSplitInventory(ctx)
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	expected := "rpc error: code = Unimplemented desc = DeleteSatlabStableVersion not yet implemented"
+	_, err := tf.Inventory.DeleteSatlabStableVersion(ctx, &fleet.DeleteSatlabStableVersionRequest{
+		Strategy: &fleet.DeleteSatlabStableVersionRequest_SatlabHostnameDeletionCriterion{
+			SatlabHostnameDeletionCriterion: &fleet.SatlabHostnameDeletionCriterion{
+				Hostname: "satlab-host1",
+			},
+		},
+	})
+
+	actual := ""
+	if err != nil {
+		actual = err.Error()
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", diff)
+	}
+}

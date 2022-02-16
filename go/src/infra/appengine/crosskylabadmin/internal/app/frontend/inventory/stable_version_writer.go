@@ -20,3 +20,11 @@ func (is *ServerImpl) SetSatlabStableVersion(ctx context.Context, req *fleet.Set
 	}()
 	return nil, status.Error(codes.Unimplemented, "SetSatlabStableVersion not yet implemented")
 }
+
+// SetSatlabStableVersion is not yet implemented, but will delete the stable version entry for satlab devices.
+func (is *ServerImpl) DeleteSatlabStableVersion(ctx context.Context, req *fleet.DeleteSatlabStableVersionRequest) (_ *fleet.DeleteSatlabStableVersionResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, status.Error(codes.Unimplemented, "DeleteSatlabStableVersion not yet implemented")
+}

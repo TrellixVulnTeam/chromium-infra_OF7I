@@ -47,6 +47,41 @@ func (mr *MockisSetSatlabStableVersionRequest_StrategyMockRecorder) isSetSatlabS
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isSetSatlabStableVersionRequest_Strategy", reflect.TypeOf((*MockisSetSatlabStableVersionRequest_Strategy)(nil).isSetSatlabStableVersionRequest_Strategy))
 }
 
+// MockisDeleteSatlabStableVersionRequest_Strategy is a mock of isDeleteSatlabStableVersionRequest_Strategy interface.
+type MockisDeleteSatlabStableVersionRequest_Strategy struct {
+	ctrl     *gomock.Controller
+	recorder *MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder
+}
+
+// MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder is the mock recorder for MockisDeleteSatlabStableVersionRequest_Strategy.
+type MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder struct {
+	mock *MockisDeleteSatlabStableVersionRequest_Strategy
+}
+
+// NewMockisDeleteSatlabStableVersionRequest_Strategy creates a new mock instance.
+func NewMockisDeleteSatlabStableVersionRequest_Strategy(ctrl *gomock.Controller) *MockisDeleteSatlabStableVersionRequest_Strategy {
+	mock := &MockisDeleteSatlabStableVersionRequest_Strategy{ctrl: ctrl}
+	mock.recorder = &MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockisDeleteSatlabStableVersionRequest_Strategy) EXPECT() *MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder {
+	return m.recorder
+}
+
+// isDeleteSatlabStableVersionRequest_Strategy mocks base method.
+func (m *MockisDeleteSatlabStableVersionRequest_Strategy) isDeleteSatlabStableVersionRequest_Strategy() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "isDeleteSatlabStableVersionRequest_Strategy")
+}
+
+// isDeleteSatlabStableVersionRequest_Strategy indicates an expected call of isDeleteSatlabStableVersionRequest_Strategy.
+func (mr *MockisDeleteSatlabStableVersionRequest_StrategyMockRecorder) isDeleteSatlabStableVersionRequest_Strategy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "isDeleteSatlabStableVersionRequest_Strategy", reflect.TypeOf((*MockisDeleteSatlabStableVersionRequest_Strategy)(nil).isDeleteSatlabStableVersionRequest_Strategy))
+}
+
 // MockInventoryClient is a mock of InventoryClient interface.
 type MockInventoryClient struct {
 	ctrl     *gomock.Controller
@@ -148,6 +183,26 @@ func (mr *MockInventoryClientMockRecorder) DeleteDuts(ctx, in interface{}, opts 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDuts", reflect.TypeOf((*MockInventoryClient)(nil).DeleteDuts), varargs...)
+}
+
+// DeleteSatlabStableVersion mocks base method.
+func (m *MockInventoryClient) DeleteSatlabStableVersion(ctx context.Context, in *DeleteSatlabStableVersionRequest, opts ...grpc.CallOption) (*DeleteSatlabStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteSatlabStableVersion", varargs...)
+	ret0, _ := ret[0].(*DeleteSatlabStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteSatlabStableVersion indicates an expected call of DeleteSatlabStableVersion.
+func (mr *MockInventoryClientMockRecorder) DeleteSatlabStableVersion(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSatlabStableVersion", reflect.TypeOf((*MockInventoryClient)(nil).DeleteSatlabStableVersion), varargs...)
 }
 
 // DeployDut mocks base method.
@@ -591,6 +646,21 @@ func (m *MockInventoryServer) DeleteDuts(arg0 context.Context, arg1 *DeleteDutsR
 func (mr *MockInventoryServerMockRecorder) DeleteDuts(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDuts", reflect.TypeOf((*MockInventoryServer)(nil).DeleteDuts), arg0, arg1)
+}
+
+// DeleteSatlabStableVersion mocks base method.
+func (m *MockInventoryServer) DeleteSatlabStableVersion(arg0 context.Context, arg1 *DeleteSatlabStableVersionRequest) (*DeleteSatlabStableVersionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSatlabStableVersion", arg0, arg1)
+	ret0, _ := ret[0].(*DeleteSatlabStableVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteSatlabStableVersion indicates an expected call of DeleteSatlabStableVersion.
+func (mr *MockInventoryServerMockRecorder) DeleteSatlabStableVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSatlabStableVersion", reflect.TypeOf((*MockInventoryServer)(nil).DeleteSatlabStableVersion), arg0, arg1)
 }
 
 // DeployDut mocks base method.

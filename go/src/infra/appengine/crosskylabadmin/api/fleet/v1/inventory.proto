@@ -147,6 +147,10 @@ service Inventory {
   // for satlab devices only.
   rpc SetSatlabStableVersion(SetSatlabStableVersionRequest) returns (SetSatlabStableVersionResponse);
 
+  // DeleteSatlabStableVersion deletes the satlab stable version value from CrOSSkylabAdmin which is the source of truth
+  // for satlab devices only.
+  rpc DeleteSatlabStableVersion(DeleteSatlabStableVersionRequest) returns (DeleteSatlabStableVersionResponse);
+
   // DumpStableVersionToDatastore reads the stable version from the LUCI config file
   // and writes it to datastore.
   rpc DumpStableVersionToDatastore(DumpStableVersionToDatastoreRequest) returns (DumpStableVersionToDatastoreResponse);
@@ -799,6 +803,39 @@ message SetSatlabStableVersionRequest {
 }
 
 message SetSatlabStableVersionResponse {
+}
+
+// SatlabBoardModelDeletionCriterion is similar to SatlabBoardAndModelStrategy,
+// but
+//     a) All the fields must be provided for the request to be well-formed.
+//     b) We guarantee that there will be exactly one best match at all times.
+//
+message SatlabBoardModelDeletionCriterion {
+  string satlabID = 1;
+  string board = 2;
+  string model = 3;
+}
+
+// SatlabHostnameDeletionCriterion is similar to SatlabHostnameStrategy,
+// but
+//     a) All the fields must be provided for the request to be well-formed.
+//     b) We guarantee that there will be exactly one best match at all times.
+//
+message SatlabHostnameDeletionCriterion {
+  string satlabID = 1;
+  string hostname = 2;
+}
+
+message DeleteSatlabStableVersionRequest{
+  oneof strategy {
+    SatlabBoardModelDeletionCriterion satlabBoardModelDeletionCriterion = 1;
+    SatlabHostnameDeletionCriterion satlabHostnameDeletionCriterion = 2;
+  }
+}
+
+message DeleteSatlabStableVersionResponse {
+  bool didDelete = 1;
+  string reason = 2;
 }
 
 message DumpStableVersionToDatastoreRequest {}
