@@ -749,7 +749,7 @@ message BatchUpdateDutsResponse {
 message UpdateCachedInventoryRequest {}
 message UpdateCachedInventoryResponse {}
 
-// next tag: 4
+// next tag: 5
 message GetStableVersionRequest {
     // TODO(gregorynisbet): remove support for looking up
     // stable version information by buildTarget + model
@@ -757,6 +757,18 @@ message GetStableVersionRequest {
     string model = 2;
     // NOTE: {hostname} and {buildTarget, model} are alternatives
     string hostname = 3;
+    //
+    // SatlabInformationalQuery identifies whether this request is an information-only request coming
+    // from the satlab CLI.
+    //
+    // Supporting `./satlab get-stable-version -model ... -board ...`, which is necessary for users to be
+    // able to how the stable versions are configured for their devices, requires us to be able to identify
+    // requests for board+model that are intended to be associated with satlab devices.
+    //
+    // In the normal flow, which looks at hostnames only, we distinguish a satlab or non-satlab request using
+    // `heuristics.LooksLikeSatlabDevice(hostname)`.
+    //
+    bool satlabInformationalQuery = 4;
 }
 
 // next tag: 6
