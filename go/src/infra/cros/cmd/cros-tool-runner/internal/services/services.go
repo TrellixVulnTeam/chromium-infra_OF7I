@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
@@ -21,7 +22,7 @@ import (
 )
 
 const (
-	// Dut service running port, docker info.
+	// Dut service container name template for .
 	crosDutContainerNameTemplate = "cros-dut-%s"
 
 	// Provision service running port, docker info.
@@ -48,9 +49,9 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 	if err != nil {
 		log.Printf("create cros-dut service: %s", err)
 	}
-	dutPortToBeUsed := DefaultDutAddressPort
-	if dutSshInfo.GetPort() != 0 {
-		dutPortToBeUsed = string(dutSshInfo.GetPort())
+	dutAddr := endPointToString(dutSshInfo)
+	if dutSshInfo.GetPort() == 0 {
+		dutAddr = fmt.Sprintf("%s:%v", dutAddr, DefaultDutAddressPort)
 	}
 	crosDutResultDirName := "/tmp/cros-dut"
 	d := &docker.Docker{
@@ -62,8 +63,8 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 		FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
 		ExecCommand: []string{
 			"cros-dut",
-			"-dut_address", dutSshInfo.GetAddress() + ":" + dutPortToBeUsed,
-			"-cache_address", cacheServer.GetAddress().GetAddress() + ":" + string(cacheServer.GetAddress().GetPort()),
+			"-dut_address", dutAddr,
+			"-cache_address", endPointToString(cacheServer.GetAddress()),
 			"-port", "80",
 		},
 		Volumes: []string{
@@ -74,6 +75,78 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 		Network:     networkName,
 	}
 	return startService(ctx, d, false)
+}
+
+// CreateDutServicesForHostNetwork pulls and starts cros-dut services in host network.
+func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.ContainerImageInfo, duts []*lab_api.Dut, dir, t string) ([]*docker.Docker, error) {
+	const (
+		DutServerPortRangeStart = 12300
+		DutServerPortRangeEnd   = 12400
+	)
+	p, err := createImagePath(image)
+	if err != nil {
+		return nil, errors.Annotate(err, "create dut services for host network: failed to create image path").Err()
+	}
+	r, err := createRegistryName(image)
+	if err != nil {
+		return nil, errors.Annotate(err, "create dut services for host network: failed to create registry name").Err()
+	}
+
+	currentPort := DutServerPortRangeStart
+	var dockerContainers []*docker.Docker
+	defer func() {
+		for _, d := range dockerContainers {
+			log.Printf("Removing container %s", d.Name)
+			d.Remove(ctx)
+		}
+	}()
+
+	crosDutResultDirName := "/tmp/cros-dut"
+	for _, dut := range duts {
+		dutID := dut.Id.GetValue()
+		containerName := fmt.Sprintf(crosDutContainerNameTemplate, dutID)
+		if dut.CacheServer == nil {
+			return nil, errors.Annotate(err, "create dut services for host network: cache server must be specified in DUT").Err()
+		}
+		success := false
+		for port := currentPort; port < DutServerPortRangeEnd; port++ {
+			d := &docker.Docker{
+				Name:               containerName,
+				RequestedImageName: p,
+				Registry:           r,
+				Token:              t,
+				ExecCommand: []string{
+					"cros-dut",
+					"-dut_name", dutAddress(dut),
+					"-cache_address", endPointToString(dut.CacheServer.GetAddress()),
+					"-port", strconv.Itoa(port),
+				},
+				ServicePort: port,
+				Detach:      true,
+				Network:     "host",
+				Volumes: []string{
+					fmt.Sprintf("%s:%s", path.Join(dir, dutID), crosDutResultDirName),
+				},
+			}
+			log.Printf("start cros-dut service for container %s at port %v", containerName, port)
+			_, err = startService(ctx, d, true)
+			// Keep trying until we find a port to start.
+			if err == nil {
+				success = true
+				dockerContainers = append(dockerContainers, d)
+				break
+			}
+		}
+		if err != nil {
+			return nil, errors.Annotate(err, "create dut services: failed to run cros-dut").Err()
+		}
+		if !success {
+			return nil, errors.Reason("create dut services: no port available to run cros-dut").Err()
+		}
+	}
+	result := dockerContainers
+	dockerContainers = nil
+	return result, nil
 }
 
 // RunProvisionCLI pulls and starts cros-provision as CLI.
@@ -131,12 +204,14 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 		RequestedImageName: p,
 		Registry:           r,
 		Token:              t,
-		// Fallback version used in case when main image fail to pull.
-		FallbackImageName: "gcr.io/chromeos-bot/cros-test:fallback",
 		ExecCommand: []string{
 			"bash",
 			"-c",
-			"sudo chown -R chromeos-test:chromeos-test /tmp/test && cros-test",
+			// It is necessary to do sudo here because /tmp/test is owned by root inside docker
+			// when docker mount /tmp/test. However, the user that is running cros-test is
+			// chromeos-test inside docker. Hence, the user chromeos-test does not have write
+			// permission in /tmp/test. Therefore, we need to change the owner of the directory.
+			"sudo --non-interactive chown -R chromeos-test:chromeos-test /tmp/test && cros-test",
 		},
 		Volumes: []string{
 			fmt.Sprintf("%s:%s", crosTestDir, "/tmp/test/cros-test"),
@@ -185,4 +260,26 @@ func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, 
 	}
 	_, err = startService(ctx, d, true)
 	return err
+}
+
+func dutAddress(dut *lab_api.Dut) string {
+	if dut == nil {
+		return ""
+	}
+	chromeOS := dut.GetChromeos()
+	if chromeOS == nil {
+		return ""
+	}
+	endPoint := chromeOS.GetSsh()
+	return endPointToString(endPoint)
+}
+
+func endPointToString(endPoint *lab_api.IpEndpoint) string {
+	if endPoint == nil {
+		return ""
+	}
+	if endPoint.GetPort() == 0 {
+		return endPoint.GetAddress()
+	}
+	return fmt.Sprintf("%s:%v", endPoint.GetAddress(), endPoint.GetPort())
 }

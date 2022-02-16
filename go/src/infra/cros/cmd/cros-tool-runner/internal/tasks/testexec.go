@@ -109,7 +109,8 @@ func (c *runTestCmd) innerRun(ctx context.Context, a subcommands.Application, ar
 	lookupKey := device.ContainerMetadataKey
 
 	crosTestContainer := findContainer(cm, lookupKey, "cros-test")
-	result, err := testexec.Run(ctx, req, crosTestContainer, token)
+	crosDUTContainer := findContainer(cm, lookupKey, "cros-dut")
+	result, err := testexec.Run(ctx, req, crosTestContainer, crosDUTContainer, token)
 	return result, errors.Annotate(err, "inner run: failed to run tests").Err()
 }
 

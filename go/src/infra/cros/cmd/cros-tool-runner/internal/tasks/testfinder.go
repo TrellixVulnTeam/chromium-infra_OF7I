@@ -34,9 +34,9 @@ type runTestFinderCmd struct {
 // TestFinder execute cros-test-finder to find tests.
 func TestFinder(authOpts auth.Options) *subcommands.Command {
 	const testFinderDesc = `Test Finder,
-	
+
 	Tool used to finds all tests that match the criteria from a list of chromiumos.test.api.TestCase.
-	
+
 	Example:
 	cros-tool-runner test-finder -images docker-images.json -input test_finder_request.json -output test_finder_result.json
 	`

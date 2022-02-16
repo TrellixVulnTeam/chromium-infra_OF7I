@@ -15,6 +15,8 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
+	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
+
 	"go.chromium.org/chromiumos/config/go/test/api"
 	"go.chromium.org/luci/common/errors"
 
@@ -22,7 +24,7 @@ import (
 )
 
 // Run runs tests.
-func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContainer *build_api.ContainerImageInfo, token string) (res *api.CrosToolRunnerTestResponse, err error) {
+func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContainer, crosDUTContainer *build_api.ContainerImageInfo, token string) (res *api.CrosToolRunnerTestResponse, err error) {
 	// Use host network for dev environment which DUT address is in the form localhost:<port>
 	const networkName = "host"
 
@@ -40,6 +42,8 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 	resultDir := path.Join(artifactDir, "cros-test", "artifact")
 	// The input file name.
 	inputFileName := path.Join(crosTestDir, "request.json")
+	// The directory for cros-dut artifacts.
+	crosDUTDir := path.Join(artifactDir, "cros-dut")
 
 	// Setting up directories.
 	if err := os.MkdirAll(crosTestDir, 0755); err != nil {
@@ -51,6 +55,8 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 	}
 	log.Printf("Run test: created the test artifact directory %s", resultDir)
 
+	duts := []*lab_api.Dut{req.PrimaryDut.GetDut()}
+
 	var companions []*api.CrosTestRequest_Device
 	for _, c := range req.GetCompanionDuts() {
 		companions = append(
@@ -58,12 +64,25 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 				Dut: c.GetDut(),
 			},
 		)
+		duts = append(duts, c.GetDut())
 	}
-
+	dutServices, err := services.CreateDutServicesForHostNetwork(ctx, crosDUTContainer, duts, crosDUTDir, token)
+	if err != nil {
+		return nil, errors.Annotate(err, "run test: failed to start DUT servers").Err()
+	}
+	defer func() {
+		for _, d := range dutServices {
+			d.Remove(ctx)
+		}
+	}()
+	for i, c := range companions {
+		c.DutServer = &lab_api.IpEndpoint{Address: "localhost", Port: int32(dutServices[i+1].ServicePort)}
+	}
 	testReq := &api.CrosTestRequest{
 		TestSuites: req.GetTestSuites(),
 		Primary: &api.CrosTestRequest_Device{
-			Dut: req.PrimaryDut.GetDut(),
+			Dut:       req.PrimaryDut.GetDut(),
+			DutServer: &lab_api.IpEndpoint{Address: "localhost", Port: int32(dutServices[0].ServicePort)},
 		},
 		Companions: companions,
 	}
