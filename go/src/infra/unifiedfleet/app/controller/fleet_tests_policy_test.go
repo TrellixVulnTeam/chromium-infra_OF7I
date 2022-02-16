@@ -30,6 +30,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldBeNil)
 		})
 		Convey("Private test name and public auth group member", func() {
@@ -41,8 +42,10 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+			err, ok := err.(*InvalidTestError)
+
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Test name not present in the allowlist")
+			So(ok, ShouldBeTrue)
 		})
 		Convey("Public test name and not a public auth group member", func() {
 			req := &api.CheckFleetTestsPolicyRequest{
@@ -56,6 +59,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			})
 
 			err := IsValidTest(newCtx, req)
+
 			So(err, ShouldBeNil)
 		})
 		Convey("Private test name and not a public auth group member", func() {
@@ -70,6 +74,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			})
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldBeNil)
 		})
 		Convey("Public test and private board", func() {
@@ -81,8 +86,10 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+			err, ok := err.(*InvalidBoardError)
+
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "cannnot run public tests on a private board")
+			So(ok, ShouldBeTrue)
 		})
 		Convey("Public test and private model", func() {
 			req := &api.CheckFleetTestsPolicyRequest{
@@ -93,8 +100,10 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+			err, ok := err.(*InvalidModelError)
+
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "cannnot run public tests on a private model")
+			So(ok, ShouldBeTrue)
 		})
 		Convey("Public test and incorrect image", func() {
 			req := &api.CheckFleetTestsPolicyRequest{
@@ -105,8 +114,10 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+			err, ok := err.(*InvalidImageError)
+
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Image name not present in the allowlist")
+			So(ok, ShouldBeTrue)
 		})
 		Convey("Missing Test names", func() {
 			req := &api.CheckFleetTestsPolicyRequest{
@@ -117,6 +128,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Test name cannot be empty")
 		})
@@ -128,6 +140,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Board cannot be empty")
 		})
@@ -139,6 +152,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Model cannot be empty")
 		})
@@ -150,6 +164,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			}
 
 			err := IsValidTest(ctx, req)
+
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Image cannot be empty")
 		})

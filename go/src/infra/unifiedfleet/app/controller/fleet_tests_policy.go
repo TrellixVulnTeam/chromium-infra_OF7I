@@ -6,13 +6,15 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	api "infra/unifiedfleet/api/v1/rpc"
+
+	grpcStatus "google.golang.org/grpc/status"
 )
 
 const (
@@ -20,61 +22,87 @@ const (
 	PublicUsersToChromeOSAuthGroup = "public-chromium-in-chromeos-builders"
 )
 
+// InvalidBoardError is the error raised when a private board is specified for a public test
+type InvalidBoardError struct {
+	Board string
+}
+
+func (e *InvalidBoardError) Error() string {
+	return fmt.Sprintf("Cannnot run public tests on a private board : %s", e.Board)
+}
+
+// InvalidModelError is the error raised when a private model is specified for a public test
+type InvalidModelError struct {
+	Model string
+}
+
+func (e *InvalidModelError) Error() string {
+	return fmt.Sprintf("Cannnot run public tests on a private model : %s", e.Model)
+}
+
+// InvalidImageError is the error raised when an invalid image is specified for a public test
+type InvalidImageError struct {
+	Image string
+}
+
+func (e *InvalidImageError) Error() string {
+	return fmt.Sprintf("Cannnot run public tests on an image which is not allowlisted : %s", e.Image)
+}
+
+// InvalidTestError is the error raised when an invalid image is specified for a public test
+type InvalidTestError struct {
+	TestName string
+}
+
+func (e *InvalidTestError) Error() string {
+	return fmt.Sprintf("Public user cannnot run the not allowlisted test : %s", e.TestName)
+}
+
 func IsValidTest(ctx context.Context, req *api.CheckFleetTestsPolicyRequest) error {
 	logging.Infof(ctx, "Request to check from crosfleet: %s", req)
-	isValidPublicGroupMember, err := isPublicGroupMember(ctx)
 	logging.Infof(ctx, "Service account being validated: %s", auth.CurrentIdentity(ctx).Email())
+	isMemberInPublicGroup, err := auth.IsMember(ctx, PublicUsersToChromeOSAuthGroup)
 	if err != nil {
 		// Ignoring error for now till we validate the service account membership check is correct
 		logging.Errorf(ctx, "Request to check public chrome auth group membership failed: %s", err)
 		return nil
-		// return err
 	}
 
-	if !isValidPublicGroupMember {
+	if !isMemberInPublicGroup {
 		return nil
 	}
 
 	// Validate if the board and model are public
 	if req.Board == "" {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - Board cannot be empty for public tests.")
+		return grpcStatus.Errorf(codes.InvalidArgument, "Invalid input - Board cannot be empty for public tests.")
 	}
 	if !contains(getValidPublicBoards(), req.Board) {
-		return status.Errorf(codes.InvalidArgument, "cannnot run public tests on a private board : %s", req.Board)
+		return &InvalidBoardError{Board: req.Board}
 	}
 	if req.Model == "" {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - Model cannot be empty for public tests.")
+		return grpcStatus.Errorf(codes.InvalidArgument, "Invalid input - Model cannot be empty for public tests.")
 	}
 	if !contains(getValidPublictModels(), req.Model) {
-		return status.Errorf(codes.InvalidArgument, "cannnot run public tests on a private model : %s", req.Model)
+		return &InvalidModelError{Model: req.Model}
 	}
 
 	// Validate Test Name
 	if req.TestName == "" {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - Test name cannot be empty for public tests.")
+		return grpcStatus.Errorf(codes.InvalidArgument, "Invalid input - Test name cannot be empty for public tests.")
 	}
 	if !contains(getValidPublicTestNames(), req.TestName) {
-		return status.Errorf(codes.InvalidArgument, "Test name not present in the allowlist for public tests : %s", req.TestName)
+		return &InvalidTestError{TestName: req.TestName}
 	}
 
 	// Validate Image
 	if req.Image == "" {
-		return status.Errorf(codes.InvalidArgument, "Invalid input - Image cannot be empty for public tests.")
+		return grpcStatus.Errorf(codes.InvalidArgument, "Invalid input - Image cannot be empty for public tests.")
 	}
 	if !contains(getValidPublicImages(), req.Image) {
-		return status.Errorf(codes.InvalidArgument, "Image name not present in the allowlist for public tests : %s", req.Image)
+		return &InvalidImageError{Image: req.Image}
 	}
 
 	return nil
-}
-
-func isPublicGroupMember(ctx context.Context) (bool, error) {
-	isPublicGroupMember, err := auth.IsMember(ctx, PublicUsersToChromeOSAuthGroup)
-	if err != nil {
-		logging.Errorf(ctx, "Check group %q membership failed while verifying if the test is tiggered by public users: %s", PublicUsersToChromeOSAuthGroup, err.Error())
-		return false, status.Errorf(codes.Internal, "can't check access group membership: %s", err)
-	}
-	return isPublicGroupMember, nil
 }
 
 func getValidPublicTestNames() []string {
