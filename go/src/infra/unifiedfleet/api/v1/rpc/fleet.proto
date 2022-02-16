@@ -2282,7 +2282,24 @@ message CheckFleetTestsPolicyRequest {
   string image = 4;
 }
 
+message TestStatus {
+  enum Code {
+    UNSPECIFIED = 0;
+    OK = 1;
+    NOT_A_PUBLIC_BOARD = 2;
+    NOT_A_PUBLIC_MODEL = 3;
+    NOT_A_PUBLIC_IMAGE = 4;
+    NOT_A_PUBLIC_TEST = 5;
+  }
+  // TestStatus Code will provide information about the validity or invalidity of the test
+  Code code = 1;
+  // message contains a description of the Status
+  string message = 2;
+}
+
 message CheckFleetTestsPolicyResponse {
   // Indicates whether the test parameters are valid for a test.
-  bool is_test_valid = 1;
+  bool is_test_valid = 1 [deprecated=true];
+  // Status of the test with a code and an optional message
+  TestStatus testStatus = 2;
 }
