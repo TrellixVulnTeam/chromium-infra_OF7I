@@ -68,6 +68,16 @@ export function IssueWizard(): ReactElement {
           status: {
             status: 'Untriaged',
           },
+          components: [{
+            component: 'projects/chromium/componentDefs/'+category
+          }],
+          labels: [{
+            label:'via-wizard-'+category
+          }, {
+            label:'Pri-2'
+          }, {
+            label:osName
+          }],
         },
         description,
         });
