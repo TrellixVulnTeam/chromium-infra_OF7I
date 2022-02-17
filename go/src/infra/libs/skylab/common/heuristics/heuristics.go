@@ -47,3 +47,8 @@ func NormalizeBotNameToDeviceName(name string) string {
 // A heuristically valid pool name contains only a-z, A-Z, 0-9, -, and _ .
 // A pool name cannot begin with - and 0-9 .
 var LooksLikeValidPool = regexp.MustCompile(`\A[A-Za-z_][-A-Za-z0-9_]*\z`).MatchString
+
+// NormalizeTextualData lowercases data and removes leading and trailing whitespace.
+func NormalizeTextualData(data string) string {
+	return strings.ToLower(strings.TrimSpace(data))
+}

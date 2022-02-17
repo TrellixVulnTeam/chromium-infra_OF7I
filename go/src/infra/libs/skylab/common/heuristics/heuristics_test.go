@@ -131,3 +131,42 @@ func TestLooksLikeValidPool(t *testing.T) {
 		})
 	}
 }
+
+// TestNormalizeTextualData tests valid and invalid complete IDs.
+func TestNormalizeTextualData(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		in   string
+		out  string
+	}{
+		{
+			name: "empty string",
+			in:   "",
+			out:  "",
+		},
+		{
+			name: "whitespace",
+			in:   " ",
+			out:  "",
+		},
+		{
+			name: "mixed case data",
+			in:   "Aa",
+			out:  "aa",
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			expected := tt.out
+			actual := NormalizeTextualData(tt.in)
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
+}
