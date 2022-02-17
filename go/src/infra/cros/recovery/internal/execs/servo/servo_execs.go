@@ -435,11 +435,14 @@ func servoCheckServodControlExec(ctx context.Context, info *execs.ExecInfo) erro
 	}
 	if compare == nil {
 		log.Info(ctx, "Servo Check Servod Control Exec: expected value type not specified in config, or did not match any known types.")
-		controlValue, err := servodGetString(ctx, info.NewServod(), command)
+		res, err := info.NewServod().Get(ctx, command)
 		if err != nil {
-			return errors.Annotate(err, "Servo Check Servod Control Exec").Err()
+			return errors.Annotate(err, "servo check servod control exec").Err()
 		}
-		log.Info(ctx, "Servo Check Servod Control Exec: for command %q, read the value %q from servod.", command, controlValue)
+		// The value can contain different value types.
+		// Ex.: "double:xxxx.xx"
+		resRawString := strings.TrimSpace(res.String())
+		log.Info(ctx, "Servo Check Servod Control Exec: for command %q, received %q.", command, resRawString)
 	} else if err := compare(ctx); err != nil {
 		return errors.Annotate(err, "servo check servod control exec").Err()
 	}
