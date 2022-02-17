@@ -31,7 +31,6 @@ import (
 const (
 	projectID = "google.com:stainless-prod"
 	bucketID  = "chromeos-test-logs"
-	logsName  = "log.txt"
 
 	// All downloaded logs from history must be within the bound.
 	searchDaysBound = 30
@@ -83,7 +82,7 @@ type logSearchOptions struct {
 	board string
 	// targetTaskID is the task ID of the target test.
 	targetTaskID string
-	// reasonFormat is the format of the target test, which should keep the same for reference tests.
+	// reasonFormat is the format of failure reason to look for, expressed as a LIKE expression, e.g. "could not connect to %.%.%.%".
 	reasonFormat string
 	// requiredNum is the required number of reference tests in either test status.
 	requiredNum int
@@ -145,10 +144,12 @@ var (
 	taskID      = flag.String("id", "", "task id of the test that was run")
 	requiredNum = flag.Int("number", 20, "total required number of reference test results in each test status (FAIL/GOOD)")
 	port        = flag.String("port", ":3000", "port number of web server (in the ':number' format)")
+	logsName    = flag.String("log", "log.txt", "name of the logs file (log.txt/messages in the current version)")
 
-	taskIDRE = regexp.MustCompile(`[a-z0-9]+`)
-	testRE   = regexp.MustCompile(`tast.(\w+).(\w+)(.(\w+))?$`)
-	portRE   = regexp.MustCompile(`:[0-9]+`)
+	taskIDRE   = regexp.MustCompile(`[a-z0-9]+`)
+	testRE     = regexp.MustCompile(`tast.(\w+).(\w+)(.(\w+))?$`)
+	portRE     = regexp.MustCompile(`^:[0-9]+`)
+	logsNameRE = regexp.MustCompile(`[a-zA-Z\-_0-9.]+`)
 
 	removal        = regexp.MustCompile("[0-9\t\n]")
 	removalHex     = regexp.MustCompile("( )?[+]?0[xX]([0-9a-fA-F]+)(,)?")
@@ -185,14 +186,17 @@ func main() {
 	if !portRE.MatchString(*port) {
 		log.Fatalf("Cannot parse --port: expected a :number format string, got: %v", *port)
 	}
+	if !logsNameRE.MatchString(*logsName) {
+		log.Fatalf("Cannot parse --logsName: expected a string as the log file's name, got: %v", *logsName)
+	}
 
 	ctx := context.Background()
 	targetLog, err := loadTargetLog(ctx, date, *test, *taskID)
 	if err != nil {
 		log.Fatalf("Error finding the target log information to download: %v", err)
 	}
-	reasonFormat := cleanReasonForFormat(targetLog.Reason)
-	logLines, err := readTargetLogLines(ctx, targetLog, *test, logsName)
+	reasonFormat := extractReasonFormat(targetLog.Reason)
+	logLines, err := readTargetLogLines(ctx, targetLog, *test, *logsName)
 	if err != nil {
 		log.Fatalf("Error saving log line statistics: %v", err)
 	}
@@ -200,7 +204,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error finding log urls of all reference logs: %v", err)
 	}
-	analysisResults := analyzeAllLogs(ctx, logLines, referenceURLs, analysisOptions{*test, logsName, *requiredNum})
+	analysisResults := analyzeAllLogs(ctx, logLines, referenceURLs, analysisOptions{*test, *logsName, *requiredNum})
 	if analysisResults.totalFails == 0 || analysisResults.totalPasses == 0 {
 		log.Fatalf("Error due to zero (failing and/or passing) reference tests: got %v failing and %v passing references", analysisResults.totalFails, analysisResults.totalPasses)
 	}
@@ -222,14 +226,14 @@ func main() {
 	log.Fatal(http.ListenAndServe(*port, nil))
 }
 
-// cleanReasonForFormat gets the failure reason format of the target test by cleaning useless data.
-func cleanReasonForFormat(reason string) string {
-	reason = strings.ReplaceAll(reason, "\\", "")
-	reason = strings.ReplaceAll(reason, "%", "\\%")
-	reason = strings.ReplaceAll(reason, "_", "\\_")
-	reason = removal.ReplaceAllString(reason, "%")
-	reason = removalBracket.ReplaceAllString(reason, "%")
-	reason = shortenSign.ReplaceAllString(reason, "%")
+// extractReasonFormat extracts a LIKE expression matching similar failure reasons with the target test.
+func extractReasonFormat(reason string) string {
+	reason = strings.ReplaceAll(reason, `\\`, `\\\\`)
+	reason = strings.ReplaceAll(reason, `%`, `\\%`)
+	reason = strings.ReplaceAll(reason, `_`, `\\_`)
+	reason = removal.ReplaceAllString(reason, `%`)
+	reason = removalBracket.ReplaceAllString(reason, `%`)
+	reason = shortenSign.ReplaceAllString(reason, `%`)
 	return reason
 }
 
