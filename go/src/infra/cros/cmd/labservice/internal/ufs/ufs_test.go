@@ -14,6 +14,7 @@ import (
 	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+	"infra/cros/cmd/labservice/internal/ufs/cache"
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
@@ -26,7 +27,7 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 	s := &fakeServer{
 		ChromeOSDeviceData: &ufspb.ChromeOSDeviceData{
 			LabConfig: &ufspb.MachineLSE{
-				Hostname: "mary",
+				Hostname: "200.200.200.200",
 				Lse: &ufspb.MachineLSE_ChromeosMachineLse{
 					ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{
 						ChromeosLse: &ufspb.ChromeOSMachineLSE_DeviceLse{
@@ -80,9 +81,21 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 				},
 			},
 		},
+		CachingServices: &ufsapi.ListCachingServicesResponse{
+			CachingServices: []*ufspb.CachingService{
+				{
+					Name:           "cachingservice/200.200.200.208",
+					Port:           55,
+					ServingSubnets: []string{"200.200.200.200/24"},
+					State:          ufspb.State_STATE_SERVING,
+				},
+			},
+		},
 	}
+	cl := cache.NewLocator()
 	c := newFakeClient(ctx, t, s)
-	got, err := GetDutTopology(ctx, c, "alice")
+	inventory := NewInventory(c, cl)
+	got, err := inventory.GetDutTopology(ctx, "alice")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +103,7 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 		Id: &labapi.DutTopology_Id{Value: "alice"},
 		Duts: []*labapi.Dut{
 			{
-				Id: &labapi.Dut_Id{Value: "mary"},
+				Id: &labapi.Dut_Id{Value: "200.200.200.200"},
 				DutType: &labapi.Dut_Chromeos{
 					Chromeos: &labapi.Dut_ChromeOS{
 						Audio: &labapi.Audio{
@@ -108,7 +121,7 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 							},
 						},
 						Ssh: &labapi.IpEndpoint{
-							Address: "mary",
+							Address: "200.200.200.200",
 							Port:    22,
 						},
 						Wifi: &labapi.Wifi{
@@ -132,6 +145,12 @@ func TestGetChromeOsDutTopology_single(t *testing.T) {
 							BuildTarget: "build-target",
 							ModelName:   "model",
 						},
+					},
+				},
+				CacheServer: &labapi.CacheServer{
+					Address: &labapi.IpEndpoint{
+						Address: "200.200.200.208",
+						Port:    55,
 					},
 				},
 			},
@@ -178,7 +197,8 @@ func TestGetAndroidDutTopology_single(t *testing.T) {
 		},
 	}
 	c := newFakeClient(ctx, t, s)
-	got, err := GetDutTopology(ctx, c, dutTopologyId)
+	inventory := NewInventory(c, cache.NewLocator())
+	got, err := inventory.GetDutTopology(ctx, dutTopologyId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,6 +231,7 @@ type fakeServer struct {
 	ufsapi.UnimplementedFleetServer
 	ChromeOSDeviceData *ufspb.ChromeOSDeviceData
 	AttachedDeviceData *ufsapi.AttachedDeviceData
+	CachingServices    *ufsapi.ListCachingServicesResponse
 }
 
 func (s *fakeServer) GetDeviceData(ctx context.Context, in *ufsapi.GetDeviceDataRequest) (*ufsapi.GetDeviceDataResponse, error) {
@@ -228,6 +249,10 @@ func (s *fakeServer) GetDeviceData(ctx context.Context, in *ufsapi.GetDeviceData
 		},
 		ResourceType: ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_ATTACHED_DEVICE,
 	}, nil
+}
+
+func (s *fakeServer) ListCachingServices(ctx context.Context, in *ufsapi.ListCachingServicesRequest) (*ufsapi.ListCachingServicesResponse, error) {
+	return proto.Clone(s.CachingServices).(*ufsapi.ListCachingServicesResponse), nil
 }
 
 // Make a fake client for testing.
