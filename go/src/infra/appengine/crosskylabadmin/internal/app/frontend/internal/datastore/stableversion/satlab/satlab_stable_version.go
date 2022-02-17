@@ -54,9 +54,9 @@ func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest) (*Sa
 	if req == nil {
 		return nil, errors.Reason("make satlab stable version: request cannot be nil").Err()
 	}
-	hostname := ""
-	board := ""
-	model := ""
+	var hostname string
+	var board string
+	var model string
 	switch v := req.GetStrategy().(type) {
 	case *fleet.SetSatlabStableVersionRequest_SatlabBoardAndModelStrategy:
 		s := v.SatlabBoardAndModelStrategy
@@ -65,11 +65,12 @@ func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest) (*Sa
 	case *fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy:
 		hostname = v.SatlabHostnameStrategy.GetHostname()
 	}
-	base64Req := ""
+	var base64Req string
 	bytes, err := proto.Marshal(req)
-	if err == nil {
-		base64Req = base64.StdEncoding.EncodeToString(bytes)
+	if err != nil {
+		return nil, errors.Annotate(err, "make satlab stable version entry: marshalling proto failed").Err()
 	}
+	base64Req = base64.StdEncoding.EncodeToString(bytes)
 	return &SatlabStableVersionEntry{
 		ID:        makeSatlabStableVersionID(hostname, board, model),
 		Base64Req: base64Req,
