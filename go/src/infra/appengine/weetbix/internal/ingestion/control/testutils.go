@@ -44,7 +44,15 @@ func NewEntry(uniqifier int) *EntryBuilder {
 					Id:     fmt.Sprintf("%s/123123-%v", testProject, uniqifier),
 				},
 				PresubmitRunSucceeded: true,
-				CreationTime:          timestamppb.New(time.Date(2026, time.December, 1, 1, 2, 3, uniqifier*1000, time.UTC)),
+				Owner:                 "automation",
+				Cls: []*pb.Changelist{
+					{
+						Host:     "chromium-review.googlesource.com",
+						Change:   12345,
+						Patchset: 1,
+					},
+				},
+				CreationTime: timestamppb.New(time.Date(2026, time.December, 1, 1, 2, 3, uniqifier*1000, time.UTC)),
 			},
 			LastUpdated: time.Date(2020, time.December, 12, 1, 1, 1, 0, time.UTC),
 		},

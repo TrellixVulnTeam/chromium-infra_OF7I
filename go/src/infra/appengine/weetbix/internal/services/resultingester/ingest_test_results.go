@@ -10,11 +10,6 @@ import (
 	"regexp"
 	"time"
 
-	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
@@ -23,6 +18,10 @@ import (
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/tq"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
@@ -165,6 +164,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	}
 	if payload.PresubmitRunId != nil {
 		opts.PresubmitRunID = payload.PresubmitRunId
+		opts.PresubmitRunOwner = payload.PresubmitRunOwner
+		opts.PresubmitRunCls = payload.PresubmitRunCls
 	}
 	clusterIngestion := i.clustering.Open(opts)
 

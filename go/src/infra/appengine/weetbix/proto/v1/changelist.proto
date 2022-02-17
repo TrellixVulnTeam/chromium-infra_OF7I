@@ -1,0 +1,21 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package weetbix.v1;
+
+option go_package = "infra/appengine/weetbix/proto/v1;weetbixpb";
+
+// A changelist. Currently represents only Gerrit Patchsets.
+message Changelist {
+  // Gerrit hostname, e.g. "chromium-review.googlesource.com".
+  string host = 1;
+
+  // Change number, e.g. 12345.
+  int64 change = 2;
+
+  // Patch set number, e.g. 1.
+  int32 patchset = 3;
+}

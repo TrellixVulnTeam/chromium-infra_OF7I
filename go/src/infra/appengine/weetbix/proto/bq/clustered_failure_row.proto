@@ -9,12 +9,14 @@ package weetbix.bq;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "infra/appengine/weetbix/proto/v1/common.proto";
+import "infra/appengine/weetbix/proto/v1/changelist.proto";
 import "infra/appengine/weetbix/proto/v1/failure_reason.proto";
 
 option go_package = "infra/appengine/weetbix/proto/bq;weetbixpb";
 
 // ClusteredFailureRow represents a row in a BigQuery table for a clustered
 // test failure.
+// Next ID: 31.
 message ClusteredFailureRow {
   // The clustering algorithm which clustered the test failure.
   string cluster_algorithm = 1;
@@ -163,6 +165,19 @@ message ClusteredFailureRow {
   // If the test result was not collected as part of a presubmit run,
   // this is unset.
   weetbix.v1.PresubmitRunId presubmit_run_id = 20;
+
+  // The owner of the presubmit run (if any).
+  // This is the owner of the CL on which CQ+1/CQ+2 was clicked
+  // (even in case of presubmit run with multiple CLs).
+  // There is scope for this field to become an email address if privacy
+  // approval is obtained, until then it is "automation" (for automation
+  // service accounts) and "user" otherwise.
+  string presubmit_run_owner = 29;
+
+  // The changelist(s) (CLs) that were the subject of the presubmit run.
+  // Changelists are sorted in ascending (host, change, patchset) order.
+  // Up to 10 changelists are captured.
+  repeated weetbix.v1.Changelist presubmit_run_cls = 30;
 
   // The invocation from which this test result was ingested. This is
   // the top-level invocation that was ingested, an "invocation" being

@@ -11,6 +11,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.chromium.org/luci/common/errors"
+	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
+	"go.chromium.org/luci/server/span"
+
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	"infra/appengine/weetbix/internal/clustering/reclustering"
 	"infra/appengine/weetbix/internal/clustering/rules"
@@ -18,10 +22,6 @@ import (
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"go.chromium.org/luci/common/errors"
-	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
-	"go.chromium.org/luci/server/span"
 )
 
 // Options represents parameters to the ingestion.
@@ -46,6 +46,14 @@ type Options struct {
 	AutoExonerateBlockingFailures bool
 	// PresubmitRunID is the identity of the presubmit run (if any).
 	PresubmitRunID *pb.PresubmitRunId
+	// PresubmitRunOwner is the the owner of the presubmit
+	// run (if any). This is the owner of the CL on which CQ+1/CQ+2 was
+	// clicked (even in case of presubmit run with multiple CLs).
+	PresubmitRunOwner string
+	// PresubmitRunCls are the Changelists included in the presubmit run
+	// (if any). Changelists must be sorted in ascending
+	// (host, change, patchset) order. Up to 10 changelists may be captured.
+	PresubmitRunCls []*pb.Changelist
 }
 
 // ChunkStore is the interface for the blob store archiving chunks of test

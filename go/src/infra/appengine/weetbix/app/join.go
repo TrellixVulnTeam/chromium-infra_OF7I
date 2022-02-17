@@ -8,18 +8,15 @@ import (
 	"context"
 	"fmt"
 
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
+
 	"infra/appengine/weetbix/internal/ingestion/control"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
-	pb "infra/appengine/weetbix/proto/v1"
-
-	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/server/span"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // JoinBuildResult sets the build result for the given build.
@@ -142,9 +139,11 @@ func createTaskIfNeeded(ctx context.Context, e *control.Entry) {
 				Host: e.BuildResult.Host,
 				Id:   e.BuildResult.Id,
 			},
-			PartitionTime:         proto.Clone(e.PresubmitResult.CreationTime).(*timestamppb.Timestamp),
-			PresubmitRunId:        proto.Clone(e.PresubmitResult.PresubmitRunId).(*pb.PresubmitRunId),
+			PartitionTime:         e.PresubmitResult.CreationTime,
+			PresubmitRunId:        e.PresubmitResult.PresubmitRunId,
 			PresubmitRunSucceeded: e.PresubmitResult.PresubmitRunSucceeded,
+			PresubmitRunOwner:     e.PresubmitResult.Owner,
+			PresubmitRunCls:       e.PresubmitResult.Cls,
 		}
 	} else {
 		task = &taskspb.IngestTestResults{
@@ -152,9 +151,14 @@ func createTaskIfNeeded(ctx context.Context, e *control.Entry) {
 				Host: e.BuildResult.Host,
 				Id:   e.BuildResult.Id,
 			},
-			PartitionTime: proto.Clone(e.BuildResult.CreationTime).(*timestamppb.Timestamp),
+			PartitionTime: e.BuildResult.CreationTime,
 		}
 	}
+
+	// Copy the task to avoid aliasing issues if the caller ever
+	// decides the modify e.PresubmitResult or e.BuildResult
+	// after we return.
+	task = proto.Clone(task).(*taskspb.IngestTestResults)
 
 	resultingester.Schedule(ctx, task)
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-
 	"github.com/golang/protobuf/descriptor"
 	desc "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
@@ -52,6 +51,7 @@ func generateRowSchema() (schema bigquery.Schema, err error) {
 	fdbtc, _ := descriptor.MessageDescriptorProto(&pb.BugTrackingComponent{})
 	fdfr, _ := descriptor.MessageDescriptorProto(&pb.FailureReason{})
 	fdprid, _ := descriptor.MessageDescriptorProto(&pb.PresubmitRunId{})
-	fdset := &desc.FileDescriptorSet{File: []*desc.FileDescriptorProto{fd, fdsp, fdbtc, fdfr, fdprid}}
+	fdcl, _ := descriptor.MessageDescriptorProto(&pb.Changelist{})
+	fdset := &desc.FileDescriptorSet{File: []*desc.FileDescriptorProto{fd, fdsp, fdbtc, fdfr, fdprid, fdcl}}
 	return bqutil.GenerateSchema(fdset, rowMessage)
 }

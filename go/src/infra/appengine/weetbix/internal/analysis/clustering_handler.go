@@ -8,13 +8,13 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/clustering"
 	cpb "infra/appengine/weetbix/internal/clustering/proto"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ClusteringHandler handles test result (re-)clustering events, to
@@ -149,6 +149,8 @@ func entryFromUpdate(project, chunkID string, cluster clustering.ClusterID, fail
 		IsExonerated:         failure.IsExonerated,
 
 		PresubmitRunId:                failure.PresubmitRunId,
+		PresubmitRunOwner:             failure.PresubmitRunOwner,
+		PresubmitRunCls:               failure.PresubmitRunCls,
 		IngestedInvocationId:          failure.IngestedInvocationId,
 		IngestedInvocationResultIndex: failure.IngestedInvocationResultIndex,
 		IngestedInvocationResultCount: failure.IngestedInvocationResultCount,

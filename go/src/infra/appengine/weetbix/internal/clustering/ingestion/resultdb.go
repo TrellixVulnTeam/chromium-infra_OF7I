@@ -8,13 +8,13 @@ import (
 	"regexp"
 	"sort"
 
-	cpb "infra/appengine/weetbix/internal/clustering/proto"
-	"infra/appengine/weetbix/pbutil"
-	pb "infra/appengine/weetbix/proto/v1"
-
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	cpb "infra/appengine/weetbix/internal/clustering/proto"
+	"infra/appengine/weetbix/pbutil"
+	pb "infra/appengine/weetbix/proto/v1"
 )
 
 func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Failure {
@@ -118,12 +118,7 @@ func sortResultsByStartTime(results []*rdbpb.TestResultBundle) []*rdbpb.TestResu
 }
 
 func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options, exonerated bool, testRunID string) *cpb.Failure {
-	var presubmitRunID *pb.PresubmitRunId
-	if opts.PresubmitRunID != nil {
-		// Copy the proto to avoid aliasing the original.
-		presubmitRunID = proto.Clone(opts.PresubmitRunID).(*pb.PresubmitRunId)
-	}
-	return &cpb.Failure{
+	result := &cpb.Failure{
 		TestResultId:                  pbutil.TestResultIDFromResultDB(tr.Name),
 		PartitionTime:                 timestamppb.New(opts.PartitionTime),
 		ChunkIndex:                    -1, // To be populated by chunking.
@@ -144,8 +139,12 @@ func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options
 		TestRunResultIndex:            -1,    // To be populated by caller.
 		TestRunResultCount:            -1,    // To be populated by caller.
 		IsTestRunBlocked:              false, // To be populated by caller.
-		PresubmitRunId:                presubmitRunID,
+		PresubmitRunId:                opts.PresubmitRunID,
+		PresubmitRunOwner:             opts.PresubmitRunOwner,
+		PresubmitRunCls:               opts.PresubmitRunCls,
 	}
+	// Copy the result to avoid the result aliasing any of the protos used as input.
+	return proto.Clone(result).(*cpb.Failure)
 }
 
 func extractBugTrackingComponent(tags []*rdbpb.StringPair) *pb.BugTrackingComponent {

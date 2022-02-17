@@ -11,22 +11,18 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
+	. "go.chromium.org/luci/common/testing/assertions"
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 	"go.chromium.org/luci/server/tq"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/cv"
+	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
-
-	// Needed to ensure task class is registered.
-	_ "infra/appengine/weetbix/internal/services/resultingester"
 )
 
 func TestHandleBuild(t *testing.T) {
@@ -99,10 +95,18 @@ func TestHandleBuild(t *testing.T) {
 					run := &cvv0.Run{
 						Id:         "projects/chromium/runs/123e4567-e89b-12d3-a456-426614174000",
 						Mode:       "FULL_RUN",
+						Owner:      "chromium-autoroll@skia-public.iam.gserviceaccount.com",
 						CreateTime: timestamppb.New(partitionTime),
 						Tryjobs: []*cvv0.Tryjob{
 							tryjob(2),
 							tryjob(14141414),
+						},
+						Cls: []*cvv0.GerritChange{
+							{
+								Host:     "chromium-review.googlesource.com",
+								Change:   12345,
+								Patchset: 1,
+							},
 						},
 					}
 					runs := map[string]*cvv0.Run{
@@ -136,6 +140,14 @@ func TestHandleBuild(t *testing.T) {
 							Id:     "chromium/123e4567-e89b-12d3-a456-426614174000",
 						},
 						PresubmitRunSucceeded: false,
+						PresubmitRunOwner:     "automation",
+						PresubmitRunCls: []*pb.Changelist{
+							{
+								Host:     "chromium-review.googlesource.com",
+								Change:   12345,
+								Patchset: 1,
+							},
+						},
 					})
 				})
 				Convey(`Without presubmit run processed previously`, func() {

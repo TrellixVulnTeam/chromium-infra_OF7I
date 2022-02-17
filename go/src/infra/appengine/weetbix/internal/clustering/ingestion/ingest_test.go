@@ -11,6 +11,15 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/impl/memory"
+	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
+	"go.chromium.org/luci/server/caching"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/clustering"
@@ -26,16 +35,6 @@ import (
 	"infra/appengine/weetbix/internal/testutil"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"go.chromium.org/luci/gae/impl/memory"
-	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
-	"go.chromium.org/luci/server/caching"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestIngest(t *testing.T) {
@@ -50,11 +49,24 @@ func TestIngest(t *testing.T) {
 		ingestor := New(chunkStore, analysis)
 
 		opts := Options{
-			Project:                       "chromium",
-			PartitionTime:                 time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
-			Realm:                         "chromium:ci",
-			InvocationID:                  "build-123456790123456",
-			PresubmitRunID:                &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+			Project:           "chromium",
+			PartitionTime:     time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
+			Realm:             "chromium:ci",
+			InvocationID:      "build-123456790123456",
+			PresubmitRunID:    &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+			PresubmitRunOwner: "automation",
+			PresubmitRunCls: []*pb.Changelist{
+				{
+					Host:     "chromium-review.googlesource.com",
+					Change:   12345,
+					Patchset: 1,
+				},
+				{
+					Host:     "chromium-review.googlesource.com",
+					Change:   67890,
+					Patchset: 2,
+				},
+			},
 			AutoExonerateBlockingFailures: false,
 		}
 		testIngestion := func(input []*rdbpb.TestVariant, expectedCFs []*bqpb.ClusteredFailureRow) {
@@ -489,13 +501,26 @@ func expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTes
 				Value: "v1",
 			},
 		},
-		VariantHash:                   "hash",
-		FailureReason:                 &pb.FailureReason{PrimaryErrorMessage: "Failure reason."},
-		BugTrackingComponent:          &pb.BugTrackingComponent{System: "monorail", Component: "Component>MyComponent"},
-		StartTime:                     timestamppb.New(time.Date(2022, time.February, 12, 0, 0, 0, 0, time.UTC)),
-		Duration:                      durationpb.New(time.Second * 10),
-		IsExonerated:                  false,
-		PresubmitRunId:                &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+		VariantHash:          "hash",
+		FailureReason:        &pb.FailureReason{PrimaryErrorMessage: "Failure reason."},
+		BugTrackingComponent: &pb.BugTrackingComponent{System: "monorail", Component: "Component>MyComponent"},
+		StartTime:            timestamppb.New(time.Date(2022, time.February, 12, 0, 0, 0, 0, time.UTC)),
+		Duration:             durationpb.New(time.Second * 10),
+		IsExonerated:         false,
+		PresubmitRunId:       &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
+		PresubmitRunOwner:    "automation",
+		PresubmitRunCls: []*pb.Changelist{
+			{
+				Host:     "chromium-review.googlesource.com",
+				Change:   12345,
+				Patchset: 1,
+			},
+			{
+				Host:     "chromium-review.googlesource.com",
+				Change:   67890,
+				Patchset: 2,
+			},
+		},
 		IngestedInvocationId:          "build-123456790123456",
 		IngestedInvocationResultIndex: int64(testRunNum*resultsPerTestRun + resultNum),
 		IngestedInvocationResultCount: int64(testRunCount * resultsPerTestRun),

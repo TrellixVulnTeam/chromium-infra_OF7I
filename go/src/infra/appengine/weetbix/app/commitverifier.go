@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/tsmon/field"
@@ -30,6 +31,12 @@ const (
 	bbHost = "cr-buildbucket.appspot.com"
 
 	chromiumProject = "chromium"
+
+	// maximumCLs is the maximum number of CLs to capture from any completed
+	// CV run, after which the CL list is truncated. This avoids CV Runs with
+	// an excessive number of included CLs from storing an excessive amount
+	// of data per failure.
+	maximumCLs = 10
 )
 
 var (
@@ -41,6 +48,9 @@ var (
 		field.String("status"))
 
 	runIDRe = regexp.MustCompile(`^projects/(.*)/runs/(.*)$`)
+
+	// Automation service accounts.
+	automationAccountRE = regexp.MustCompile(`^.*@.*\.iam\.gserviceaccount\.com$`)
 )
 
 // CVRunPubSubHandler accepts and processes CV Pub/Sub messages.
@@ -93,12 +103,19 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 		return false, nil
 	}
 
+	owner := "user"
+	if automationAccountRE.MatchString(run.Owner) {
+		owner = "automation"
+	}
+
 	pr := &ctlpb.PresubmitResult{
 		PresubmitRunId: &pb.PresubmitRunId{
 			System: "luci-cv",
 			Id:     fmt.Sprintf("%s/%s", project, runID),
 		},
 		PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
+		Owner:                 owner,
+		Cls:                   extractRunChangelists(run.Cls),
 		CreationTime:          run.CreateTime,
 	}
 
@@ -119,6 +136,45 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 	}
 
 	return true, nil
+}
+
+func extractRunChangelists(cls []*cvv0.GerritChange) []*pb.Changelist {
+	result := make([]*pb.Changelist, 0, len(cls))
+	for _, cl := range cls {
+		result = append(result, &pb.Changelist{
+			Host:     cl.Host,
+			Change:   cl.Change,
+			Patchset: cl.Patchset,
+		})
+	}
+	// Sort changelists in ascending order by host, then change,
+	// then patchset. This ensures CLs appear in a stable order for
+	// multi-CL CV runs.
+	sortChangelists(result)
+
+	if len(result) > maximumCLs {
+		result = result[:maximumCLs]
+	}
+	return result
+}
+
+func sortChangelists(cls []*pb.Changelist) {
+	less := func(i, j int) bool {
+		if cls[i].Host < cls[j].Host {
+			return true
+		}
+		if cls[i].Host == cls[j].Host &&
+			cls[i].Change < cls[j].Change {
+			return true
+		}
+		if cls[i].Host == cls[j].Host &&
+			cls[i].Change == cls[j].Change &&
+			cls[i].Patchset < cls[j].Patchset {
+			return true
+		}
+		return false
+	}
+	sort.Slice(cls, less)
 }
 
 func extractPubSubRun(r *http.Request) (*cvv1.PubSubRun, error) {
