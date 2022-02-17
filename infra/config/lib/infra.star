@@ -13,11 +13,12 @@ def poller():
         refs = ["refs/heads/main"],
     )
 
-def recipe(name):
+def recipe(name, use_python3 = False):
     """Defines a recipe hosted in the infra.git recipe bundle.
 
     Args:
       name: name of the recipe.
+      use_python3: Run the recipe via py3.
 
     Returns:
       A luci.recipe(...) object.
@@ -26,6 +27,7 @@ def recipe(name):
         name = name,
         recipe = name,
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/infra",
+        use_python3 = use_python3,
     )
 
 def console_view(name, title, repo = None):

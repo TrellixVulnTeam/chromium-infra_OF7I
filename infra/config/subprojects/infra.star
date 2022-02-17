@@ -16,6 +16,7 @@ def ci_builder(
         os,
         cpu = None,
         recipe = None,
+        use_python3 = False,
         console_category = None,
         properties = None,
         extra_dimensions = None,
@@ -25,7 +26,7 @@ def ci_builder(
     infra.builder(
         name = name,
         bucket = "ci",
-        executable = infra.recipe(recipe or "infra_continuous"),
+        executable = infra.recipe(recipe or "infra_continuous", use_python3 = use_python3),
         os = os,
         cpu = cpu,
         triggered_by = [infra.poller()] if infra_triggered else None,
@@ -115,6 +116,7 @@ ci_builder(
     infra_triggered = False,  # No need to build at every commit.
     schedule = "triggered",
     recipe = "docker_image_builder",
+    use_python3 = True,
     console_category = "misc",
     properties = {
         "container_name": "swarm_docker_arm64",
