@@ -175,8 +175,8 @@ from .builder import BuildDependencies
 _CFFI_DEPENDENCY = SourceOrPrebuilt(
     'cffi',
     '1.14.5',
-    patch_version='chromium.6',
-    packaged=[],
+    patch_version='chromium.7',
+    packaged=['windows-x86', 'windows-x64'],
 )
 
 _NUMPY_DEPENDENCY = SPECS['numpy-1.2x.supported.1']
@@ -240,8 +240,12 @@ SPECS.update({
         SourceOrPrebuilt(
             'PyYAML',
             '5.4.1',
-            packaged=(),
+            patch_version='chromium.1',
             skip_auditwheel=True,
+            packaged=[
+                'windows-x86',
+                'windows-x64',
+            ],
         ),
         SourceOrPrebuilt(
             'SQLAlchemy',
@@ -303,17 +307,11 @@ SPECS.update({
         SourceOrPrebuilt(
             'cffi',
             '1.14.5',
-            packaged=(),
-            pyversions=['py2', 'py3'],
-        ),
-        SourceOrPrebuilt(
-            'cffi',
-            '1.14.5',
-            packaged=(),
+            packaged=['windows-x86', 'windows-x64'],
             pyversions=['py2', 'py3'],
             # patch_version is incremented to force a rebuild when fixes are
             # made to the build environment.
-            patch_version='chromium.6',
+            patch_version='chromium.7',
         ),
         SourceOrPrebuilt(
             'coverage',
@@ -348,16 +346,21 @@ SPECS.update({
         SourceOrPrebuilt(
             'coverage',
             '5.5',
-            packaged=(),
+            packaged=['windows-x86', 'windows-x64'],
             pyversions=['py2', 'py3'],
-            patch_version='chromium.2',  # Rebuild for crbug/1233745
+            patch_version='chromium.3',  # Rebuild for crbug/1233745
         ),
         SourceOrPrebuilt(
             'crcmod',
             '1.7',
-            packaged=(),
             pyversions=['py2', 'py3'],
-            patch_version='chromium.2',  # Rebuild for https://crbug.com/1233745
+            # This patch causes us to use the pure-python implementation
+            # on Windows Python 2.7. This is because we do not have a proper
+            # build for this configuration, and there is no pre-built wheel.
+            # See crbug/1297798 for details.
+            patches=('no-compile-windows',),
+            patch_version='chromium.3',  # Rebuild for https://crbug.com/1233745
+            packaged=(),
         ),
         SourceOrPrebuilt(
             'freetype-py',
@@ -778,9 +781,9 @@ SPECS.update({
         SourceOrPrebuilt(
             'psutil',
             '5.8.0',
-            packaged=[],
+            packaged=['windows-x86', 'windows-x64'],
             patches=('cpu-affinity',),
-            patch_version='chromium.2',  # Rebuild for crbug/1233745
+            patch_version='chromium.3',  # Rebuild for crbug/1233745
             pyversions=['py2', 'py3'],
         ),
         SourceOrPrebuilt(
@@ -1744,87 +1747,7 @@ SPECS.update({
         # pathos multiwheel.
         MultiWheel(
             'pathos',
-            '0.2.7.chromium.3',
-            ([
-                Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0', default=False),
-                Mpi4py(
-                    'mpi4py',
-                    '3.0.3',
-                    'version:3.4.1.chromium.4',
-                    packaged=[
-                        'windows-x86',
-                        'windows-x86-py3',
-                        'windows-x64',
-                        'windows-x64-py3',
-                    ],
-                ),
-                SourceOrPrebuilt(
-                    'multiprocess',
-                    '0.70.11.1',
-                    packaged=[],
-                    pyversions=['py2', 'py3'],
-                    skip_auditwheel=True,
-                ),
-                Universal('pathos', '0.2.7'),
-                Universal('pox', '0.2.9'),
-                Universal('ppft', '1.6.6.3', pyversions=['py2']),
-                Universal('pyina', '0.2.4'),
-            ]),
-            pyversions=['py2'],
-            # No 3pp builders for these platforms, so cannot build mpi4py.
-            skip_plat=[
-                'linux-armv6',
-                'linux-mipsel',
-                'linux-mips',
-                'linux-mips64',
-                'mac-arm64',
-                'mac-arm64-cp38',
-            ],
-        ),
-        MultiWheel(
-            'pathos',
-            '0.2.7.chromium.3',
-            ([
-                Universal('dill', '0.3.3'),
-                Universal('klepto', '0.2.0', default=False),
-                Mpi4py(
-                    'mpi4py',
-                    '3.0.3',
-                    'version:3.4.1.chromium.4',
-                    packaged=[
-                        'windows-x86',
-                        'windows-x86-py3',
-                        'windows-x64',
-                        'windows-x64-py3',
-                    ],
-                ),
-                SourceOrPrebuilt(
-                    'multiprocess',
-                    '0.70.11.1',
-                    packaged=[],
-                    pyversions=['py2', 'py3'],
-                    skip_auditwheel=True,
-                ),
-                Universal('pathos', '0.2.7'),
-                Universal('pox', '0.2.9'),
-                Universal('ppft', '1.6.6.3', pyversions=['py3']),
-                Universal('pyina', '0.2.4'),
-            ]),
-            pyversions=['py3'],
-            # No 3pp builders for these platforms, so cannot build mpi4py.
-            skip_plat=[
-                'linux-armv6',
-                'linux-mipsel',
-                'linux-mips',
-                'linux-mips64',
-                'mac-arm64',
-                'mac-arm64-cp38',
-            ],
-        ),
-        MultiWheel(
-            'pathos',
-            '0.2.7.chromium.4',
+            '0.2.7.chromium.5',
             ([
                 Universal('dill', '0.3.3'),
                 Universal('klepto', '0.2.0', default=False),
@@ -1842,9 +1765,10 @@ SPECS.update({
                 SourceOrPrebuilt(
                     'multiprocess',
                     '0.70.11.1',
-                    packaged=[],
                     pyversions=['py2', 'py3'],
+                    patch_version='chromium.1',
                     skip_auditwheel=True,
+                    packaged=['windows-x86', 'windows-x64'],
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),
@@ -1862,7 +1786,7 @@ SPECS.update({
         ),
         MultiWheel(
             'pathos',
-            '0.2.7.chromium.4',
+            '0.2.7.chromium.5',
             ([
                 Universal('dill', '0.3.3'),
                 Universal('klepto', '0.2.0', default=False),
@@ -1880,9 +1804,10 @@ SPECS.update({
                 SourceOrPrebuilt(
                     'multiprocess',
                     '0.70.11.1',
-                    packaged=[],
                     pyversions=['py2', 'py3'],
+                    patch_version='chromium.1',
                     skip_auditwheel=True,
+                    packaged=['windows-x86', 'windows-x64'],
                 ),
                 Universal('pathos', '0.2.7'),
                 Universal('pox', '0.2.9'),

@@ -331,12 +331,12 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 5.4.1
+### 5.4.1.chromium.1
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pyyaml/${vpython_platform}"
-  version: "version:5.4.1"
+  version: "version:5.4.1.chromium.1"
 >
 ```
 
@@ -1266,41 +1266,12 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
-### 1.14.5
+### 1.14.5.chromium.7
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/cffi/${vpython_platform}"
-  version: "version:1.14.5"
->
-```
-
-
-* *linux-arm64*
-* *linux-arm64-py3*
-* *linux-armv6*
-* *linux-mips*
-* *linux-mips64*
-* *linux-mipsel*
-* *mac-arm64*
-* *mac-arm64-cp38*
-* *mac-x64*
-* *mac-x64-cp38*
-* *manylinux-x64*
-* *manylinux-x64-py3*
-* *manylinux-x64-py3.9*
-* *manylinux-x64-ucs2*
-* *windows-x64*
-* *windows-x64-py3*
-* *windows-x86*
-* *windows-x86-py3*
-
-### 1.14.5.chromium.6
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/cffi/${vpython_platform}"
-  version: "version:1.14.5.chromium.6"
+  version: "version:1.14.5.chromium.7"
 >
 ```
 
@@ -1516,12 +1487,12 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
-### 5.5.chromium.2
+### 5.5.chromium.3
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
-  version: "version:5.5.chromium.2"
+  version: "version:5.5.chromium.3"
 >
 ```
 
@@ -1547,12 +1518,12 @@ wheel: <
 
 ## **crcmod**
 
-### 1.7.chromium.2
+### 1.7.chromium.3
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/crcmod/${vpython_platform}"
-  version: "version:1.7.chromium.2"
+  version: "version:1.7.chromium.3"
 >
 ```
 
@@ -4683,35 +4654,12 @@ wheel: <
 
 ## **pathos**
 
-### 0.2.7.chromium.3
+### 0.2.7.chromium.5
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/pathos/${vpython_platform}"
-  version: "version:0.2.7.chromium.3"
->
-```
-
-
-* *linux-arm64*
-* *linux-arm64-py3*
-* *mac-x64*
-* *mac-x64-cp38*
-* *manylinux-x64*
-* *manylinux-x64-py3*
-* *manylinux-x64-py3.9*
-* *manylinux-x64-ucs2*
-* *windows-x64*
-* *windows-x64-py3*
-* *windows-x86*
-* *windows-x86-py3*
-
-### 0.2.7.chromium.4
-
-```protobuf
-wheel: <
-  name: "infra/python/wheels/pathos/${vpython_platform}"
-  version: "version:0.2.7.chromium.4"
+  version: "version:0.2.7.chromium.5"
 >
 ```
 
@@ -5272,12 +5220,12 @@ wheel: <
 * *windows-x64-py3*
 * *windows-x86-py3*
 
-### 5.8.0.chromium.2
+### 5.8.0.chromium.3
 
 ```protobuf
 wheel: <
   name: "infra/python/wheels/psutil/${vpython_platform}"
-  version: "version:5.8.0.chromium.2"
+  version: "version:5.8.0.chromium.3"
 >
 ```
 

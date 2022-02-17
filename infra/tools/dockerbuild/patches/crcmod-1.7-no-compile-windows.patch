@@ -1,0 +1,14 @@
+diff -ur crcmod-1.7.orig/setup.py crcmod-1.7/setup.py
+--- crcmod-1.7.orig/setup.py	2010-06-27 21:48:59.000000000 +1000
++++ crcmod-1.7/setup.py	2022-02-17 15:36:01.904114752 +1100
+@@ -54,6 +54,9 @@
+ ],
+ )
+ 
++if sys.platform == 'win32' and sys.version_info[0] == 2:
++    del setup_dict['ext_modules']
++
+ try:
+     setup(**setup_dict)
+ except KeyboardInterrupt:
+Only in crcmod-1.7: setup.py~
