@@ -26,6 +26,8 @@ var crosRepairPlanCriticalActionList = []string{
 	"rw_vpd",
 	"servo_keyboard",
 	"servo_mac_address",
+	"cros_match_job_repo_url_version_to_inventory",
+	"cros_provisioning_labels_repair",
 	"device_labels",
 }
 
@@ -447,6 +449,38 @@ const crosRepairPlanActions = `
 	"exec_timeout": {
 		"seconds":3000
 	}
+},
+"cros_match_cros_version_to_inventory":{
+	"docs":[
+		"Verify that cros-version match version on the host."
+	],
+	"dependencies":[
+		"cros_ssh"
+	 ],
+	"recovery_actions": [
+		"cros_provisioning_labels_repair"
+	]
+},
+"cros_match_job_repo_url_version_to_inventory":{
+	"docs":[
+		"Verify that job_repo_url matches the version on the host."
+	],
+	"dependencies":[
+		"cros_ssh"
+	 ],
+	"recovery_actions": [
+		"cros_provisioning_labels_repair"
+	]
+},
+"cros_provisioning_labels_repair":{
+	"docs":[
+		"Cleanup the labels and job-repo-url."
+	],
+	"dependencies":[
+		"cros_update_provision_os_version",
+		"cros_update_job_repo_url"
+	 ],
+	"exec_name":"sample_pass"
 }
 `
 
