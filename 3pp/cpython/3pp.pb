@@ -1,7 +1,7 @@
 create {
   verify { test: "python_test.py" }
   source {
-    patch_version: "chromium.41"
+    patch_version: "chromium.42"
     cpe_base_address: "cpe:/a:python:python"
   }
 }

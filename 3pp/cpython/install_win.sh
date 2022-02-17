@@ -30,16 +30,6 @@ mv SourceDir/* "$PREFIX/bin"
 
 "$PREFIX/bin/python.exe" "$(where pip_bootstrap.py)" "$PREFIX/bin"
 
-# Copy the VC runtime into the Python bin directory as well, since
-# wheels we build from source will require it. (Python itself is built
-# with an older Visual Studio version that does not use this runtime).
-if [[ $_3PP_PLATFORM == "windows-amd64" ]]; then
-  VS_PLATFORM="sys64"
-else
-  VS_PLATFORM="sys32"
-fi
-cp "${VSINSTALLDIR}/${VS_PLATFORM}/vcruntime140.dll" "$PREFIX/bin"
-
 # This is full of .exe shims which don't work correctly unless you put
 # python.exe on %PATH% (via a hack in pip_bootstrap.py). Currently (2018/11/12)
 # we don't put python.exe on %PATH% for devs, and we don't use these shims on
