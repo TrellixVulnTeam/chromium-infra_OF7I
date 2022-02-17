@@ -48,3 +48,14 @@
         </div>
     {{end}}
 </ul>
+<h3>Appendices:</h3>
+<h4>Target log:</h4>
+<a href="{{.Target}}">{{.Target}}</a>
+<h4>Passing reference logs:</h4>
+{{range .PassReferences}}
+    <a href="{{.}}">{{.}}<br/></a>
+{{end}}
+<h4>Failing reference logs:</h4>
+{{range .FailReferences}}
+    <a href="{{.}}">{{.}}<br/></a>
+{{end}}

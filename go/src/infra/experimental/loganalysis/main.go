@@ -110,6 +110,10 @@ type analysisResults struct {
 	totalPasses int
 	// Warnings that should be displayed to the user.
 	warnings []string
+	// failURLs are log URLs of all failing reference tests.
+	failURLs []string
+	// passURLs are log URLs of all passing reference tests.
+	passURLs []string
 }
 
 // logAnalysis records the log line analysis statistics.
@@ -118,6 +122,8 @@ type logAnalysis struct {
 	hashFileCounts map[uint64]int
 	// logsAnalyzed is the number of logs that have been analyzed.
 	logsAnalyzed int
+	// successURLs are log URLs of all reference tests whose contents have been successfully read for a test status.
+	successURLs []string
 }
 
 // HighlightedLine is a single line that will be displayed to the user.
@@ -136,6 +142,12 @@ type WebData struct {
 	Warnings []string
 	// HighlightedLines are analysis results of target log lines to print out.
 	HighlightedLines []HighlightedLine
+	// Target is the link of the target log content.
+	Target string
+	// FailReferences are the links of all failing reference logs.
+	FailReferences []string
+	// PassReferences are the links of all passing reference logs.
+	PassReferences []string
 }
 
 var (
@@ -215,6 +227,9 @@ func main() {
 		data := WebData{
 			Warnings:         analysisResults.warnings,
 			HighlightedLines: highlightLines(analysisResults.totalFails, analysisResults.totalPasses, analysisResults.logLines),
+			Target:           transformLogURLToLink(targetLog.LogsURL, *test),
+			FailReferences:   transformURLsToLinks(analysisResults.failURLs, *test),
+			PassReferences:   transformURLsToLinks(analysisResults.passURLs, *test),
 		}
 		log.Println("Refresh the web page")
 		err := tpl.Execute(w, data)
@@ -224,6 +239,20 @@ func main() {
 		}
 	})
 	log.Fatal(http.ListenAndServe(*port, nil))
+}
+
+// transformURLsToLinks transforms log URLs of reference tests to hyperlinks that will show to users.
+func transformURLsToLinks(urls []string, test string) []string {
+	var links []string
+	for _, url := range urls {
+		links = append(links, transformLogURLToLink(url, test))
+	}
+	return links
+}
+
+// transformLogURLToLink transforms a single log URL to a hyperlink of folder that includes the required log file.
+func transformLogURLToLink(url, test string) string {
+	return "https://pantheon.corp.google.com/storage/browser/" + url[8:] + "/autoserv_test/tast/results/tests/" + test[5:]
 }
 
 // extractReasonFormat extracts a LIKE expression matching similar failure reasons with the target test.
@@ -257,19 +286,17 @@ func calculatePredictivePower(failCount, passCount, totalFails, totalPasses int)
 
 // analyzeAllLogs updates saved statistics of target log lines referring to all reference logs.
 func analyzeAllLogs(ctx context.Context, logLines []logLine, urls referenceURLs, analysisOptions analysisOptions) analysisResults {
-	var totalFails int
-	var totalPasses int
 	var warnings []string
-	logLines, totalFails, warnings = analyzeLogsForStatus(ctx, "FAIL", logLines, warnings, urls.failTarget, urls.failOther, analysisOptions)
-	logLines, totalPasses, warnings = analyzeLogsForStatus(ctx, "GOOD", logLines, warnings, urls.passTarget, urls.passOther, analysisOptions)
+	logLines, totalFails, warnings, failURLs := analyzeLogsForStatus(ctx, "FAIL", logLines, warnings, urls.failTarget, urls.failOther, analysisOptions)
+	logLines, totalPasses, warnings, passURLs := analyzeLogsForStatus(ctx, "GOOD", logLines, warnings, urls.passTarget, urls.passOther, analysisOptions)
 	if totalFails < analysisOptions.requiredNum || totalPasses < analysisOptions.requiredNum {
 		warnings = append(warnings, "Analysis might be inaccurate, insufficient (passing and/or failing) references overall.")
 	}
-	return analysisResults{logLines, totalFails, totalPasses, warnings}
+	return analysisResults{logLines, totalFails, totalPasses, warnings, failURLs, passURLs}
 }
 
 // analyzeLogsForStatus updates saved statistics of target log lines referring to reference logs from a specific test status.
-func analyzeLogsForStatus(ctx context.Context, status string, logLines []logLine, warnings, targetURLs, otherURLs []string, analysisOptions analysisOptions) ([]logLine, int, []string) {
+func analyzeLogsForStatus(ctx context.Context, status string, logLines []logLine, warnings, targetURLs, otherURLs []string, analysisOptions analysisOptions) ([]logLine, int, []string, []string) {
 	logAnalysis := newLogAnalysis()
 	logAnalysis.transformLogsToHashes(ctx, targetURLs, analysisOptions)
 	if logAnalysis.logsAnalyzed < analysisOptions.requiredNum {
@@ -277,12 +304,12 @@ func analyzeLogsForStatus(ctx context.Context, status string, logLines []logLine
 	}
 	logAnalysis.transformLogsToHashes(ctx, otherURLs, analysisOptions)
 	logLines = compareLogLines(logLines, status == "FAIL", logAnalysis.hashFileCounts)
-	return logLines, logAnalysis.logsAnalyzed, warnings
+	return logLines, logAnalysis.logsAnalyzed, warnings, logAnalysis.successURLs
 }
 
 // newLogAnalysis creates the initial logAnalysis struct.
 func newLogAnalysis() *logAnalysis {
-	return &logAnalysis{hashFileCounts: make(map[uint64]int), logsAnalyzed: 0}
+	return &logAnalysis{hashFileCounts: make(map[uint64]int), logsAnalyzed: 0, successURLs: []string{}}
 }
 
 // transformLogsToHashes transforms all reference test logs to hashes record given a group of log URLs.
@@ -296,6 +323,7 @@ func (a *logAnalysis) transformLogsToHashes(ctx context.Context, urls []string, 
 			log.Println("Warning: cannot read contents of a test log with logsURL: " + url)
 			continue
 		}
+		a.successURLs = append(a.successURLs, url)
 		addSingleLogToHashes(contents, a.hashFileCounts)
 		a.logsAnalyzed += 1
 	}
