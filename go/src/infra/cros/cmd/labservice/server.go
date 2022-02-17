@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"infra/cros/cmd/labservice/internal/ufs"
-	"infra/cros/cmd/labservice/internal/ufs/cache"
 )
 
 // A server implements the lab service RPCs.
@@ -19,8 +18,6 @@ type server struct {
 	// The client needs a context which is request specific, so the client
 	// needs to be created per incoming request.
 	ufsClientFactory ufs.ClientFactory
-	// Locator is used to cache available caching servers across requests.
-	cacheLocator *cache.Locator
 }
 
 func newServer(c *serverConfig) *server {
@@ -29,7 +26,6 @@ func newServer(c *serverConfig) *server {
 			Service:            c.ufsService,
 			ServiceAccountPath: c.serviceAccountPath,
 		},
-		cacheLocator: cache.NewLocator(),
 	}
 }
 
@@ -49,10 +45,7 @@ func (s *server) GetDutTopology(req *labapi.GetDutTopologyRequest, stream labapi
 	if err != nil {
 		return status.Errorf(codes.Unknown, "%s", err)
 	}
-	// Cache locator is global and shared concurrently,
-	// while ufs client is per request for call context
-	inv := ufs.NewInventory(c, s.cacheLocator)
-	dt, err := inv.GetDutTopology(ctx, id)
+	dt, err := ufs.GetDutTopology(ctx, c, id)
 	if err != nil {
 		// GetDutTopology adds the gRPC status.
 		return err

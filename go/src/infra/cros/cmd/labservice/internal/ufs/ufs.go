@@ -13,13 +13,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"infra/cros/cmd/labservice/internal/ufs/cache"
+	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
+
 	ufspb "infra/unifiedfleet/api/v1/models"
 	lab "infra/unifiedfleet/api/v1/models/chromeos/lab"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
-
-	labapi "go.chromium.org/chromiumos/config/go/test/lab/api"
 )
 
 type DeviceType int64
@@ -29,19 +28,6 @@ const (
 	AndroidDevice
 )
 
-// Inventory builds the DutTopology object from UFS.
-type Inventory struct {
-	client       ufsapi.FleetClient
-	cacheLocator *cache.Locator
-}
-
-func NewInventory(c ufsapi.FleetClient, cl *cache.Locator) *Inventory {
-	return &Inventory{
-		client:       c,
-		cacheLocator: cl,
-	}
-}
-
 type deviceInfo struct {
 	deviceType DeviceType
 	machine    *ufspb.Machine
@@ -50,18 +36,18 @@ type deviceInfo struct {
 
 // GetDutTopology returns a DutTopology constructed from UFS.
 // The returned error, if any, has gRPC status information.
-func (inv *Inventory) GetDutTopology(ctx context.Context, id string) (*labapi.DutTopology, error) {
-	deviceInfos, err := inv.getAllDevicesInfo(ctx, id)
+func GetDutTopology(ctx context.Context, c ufsapi.FleetClient, id string) (*labapi.DutTopology, error) {
+	deviceInfos, err := getAllDevicesInfo(ctx, c, id)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "get dut topology: ID %q: %s", id, err)
+		return nil, err
 	}
 	dt := &labapi.DutTopology{
 		Id: &labapi.DutTopology_Id{Value: id},
 	}
 	for _, deviceInfo := range deviceInfos {
-		d, err := inv.makeDutProto(deviceInfo)
+		d, err := makeDutProto(deviceInfo)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "get dut topology: ID %q: %s", id, err)
+			return nil, status.Errorf(codes.FailedPrecondition, "ID %q: %s", id, err)
 		}
 		dt.Duts = append(dt.Duts, d)
 	}
@@ -69,42 +55,42 @@ func (inv *Inventory) GetDutTopology(ctx context.Context, id string) (*labapi.Du
 }
 
 // getAllDevicesInfo fetches inventory entry of all DUTs / attached devices by a resource name.
-func (inv *Inventory) getAllDevicesInfo(ctx context.Context, resourceName string) ([]*deviceInfo, error) {
-	resp, err := inv.getDeviceData(ctx, resourceName)
+func getAllDevicesInfo(ctx context.Context, client ufsapi.FleetClient, resourceName string) ([]*deviceInfo, error) {
+	resp, err := getDeviceData(ctx, client, resourceName)
 	if err != nil {
 		return nil, err
 	}
 	if resp.GetResourceType() == ufsapi.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT {
-		return inv.getSchedulingUnitInfo(ctx, resp.GetSchedulingUnit().GetMachineLSEs())
+		return getSchedulingUnitInfo(ctx, client, resp.GetSchedulingUnit().GetMachineLSEs())
 	}
 	deviceInfos, err := appendDeviceInfo([]*deviceInfo{}, resp)
 	if err != nil {
-		return nil, fmt.Errorf("get all devices info: %w for %s", err, resourceName)
+		return nil, fmt.Errorf("%w for %s", err, resourceName)
 	}
 	return deviceInfos, nil
 }
 
 // getSchedulingUnitInfo fetches device info for every DUT / attached device in the scheduling unit.
-func (inv *Inventory) getSchedulingUnitInfo(ctx context.Context, hostnames []string) ([]*deviceInfo, error) {
+func getSchedulingUnitInfo(ctx context.Context, client ufsapi.FleetClient, hostnames []string) ([]*deviceInfo, error) {
 	// Get device info for every DUT / attached device in the scheduling unit.
 	var deviceInfos []*deviceInfo
 	for _, hostname := range hostnames {
-		resp, err := inv.getDeviceData(ctx, hostname)
+		resp, err := getDeviceData(ctx, client, hostname)
 		if err != nil {
 			return nil, err
 		}
 		if deviceInfos, err = appendDeviceInfo(deviceInfos, resp); err != nil {
-			return nil, fmt.Errorf("get scheduling unit info: %w for %s", err, hostname)
+			return nil, fmt.Errorf("%w for %s", err, hostname)
 		}
 	}
 	return deviceInfos, nil
 }
 
 // getDeviceData fetches a device entry.
-func (inv *Inventory) getDeviceData(ctx context.Context, id string) (*ufsapi.GetDeviceDataResponse, error) {
+func getDeviceData(ctx context.Context, client ufsapi.FleetClient, id string) (*ufsapi.GetDeviceDataResponse, error) {
 	// Add chromeos namespace to the context for ufs rpc calls
 	osCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs(ufsutil.Namespace, ufsutil.OSNamespace))
-	resp, err := inv.client.GetDeviceData(osCtx, &ufsapi.GetDeviceDataRequest{Hostname: id})
+	resp, err := client.GetDeviceData(osCtx, &ufsapi.GetDeviceDataRequest{Hostname: id})
 	if err != nil {
 		return nil, err
 	}
@@ -133,26 +119,22 @@ func appendDeviceInfo(deviceInfos []*deviceInfo, resp *ufsapi.GetDeviceDataRespo
 }
 
 // makeDutProto makes a DutTopology Dut protobuf.
-func (inv *Inventory) makeDutProto(di *deviceInfo) (*labapi.Dut, error) {
+func makeDutProto(di *deviceInfo) (*labapi.Dut, error) {
 	switch di.deviceType {
 	case ChromeOSDevice:
-		return inv.makeChromeOsDutProto(di)
+		return makeChromeOsDutProto(di)
 	case AndroidDevice:
-		return inv.makeAndroidDutProto(di)
+		return makeAndroidDutProto(di)
 	}
 	return nil, errors.New("make dut proto: invalid device type for " + di.machineLse.GetHostname())
 }
 
 // makeChromeOsDutProto populates DutTopology proto for ChromeOS device.
-func (inv *Inventory) makeChromeOsDutProto(di *deviceInfo) (*labapi.Dut, error) {
+func makeChromeOsDutProto(di *deviceInfo) (*labapi.Dut, error) {
 	lse := di.machineLse
 	hostname := lse.GetHostname()
 	if hostname == "" {
 		return nil, errors.New("make chromeos dut proto: empty hostname")
-	}
-	cs, err := inv.cacheLocator.FindCacheServer(hostname, inv.client)
-	if err != nil {
-		return nil, fmt.Errorf("make chromeos dut proto: %s", err)
 	}
 	croslse := lse.GetChromeosMachineLse()
 	if croslse == nil {
@@ -189,14 +171,11 @@ func (inv *Inventory) makeChromeOsDutProto(di *deviceInfo) (*labapi.Dut, error) 
 				Cables:    getCables(p),
 			},
 		},
-		CacheServer: &labapi.CacheServer{
-			Address: cs,
-		},
 	}, nil
 }
 
 // makeAndroidDutProto populates DutTopology proto for Android device.
-func (inv *Inventory) makeAndroidDutProto(di *deviceInfo) (*labapi.Dut, error) {
+func makeAndroidDutProto(di *deviceInfo) (*labapi.Dut, error) {
 	machine := di.machine
 	lse := di.machineLse
 	hostname := lse.GetHostname()
