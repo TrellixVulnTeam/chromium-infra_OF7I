@@ -102,3 +102,63 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 		})
 	}
 }
+
+// TestGetSatlabStableVersionEntryByID tests putting a record into datastore and retrieving it by its ID.
+func TestGetSatlabStableVersionEntryByID(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		in   *SatlabStableVersionEntry
+		req  *fleet.GetStableVersionRequest
+	}{
+		{
+			name: "hostname",
+			in: &SatlabStableVersionEntry{
+				ID:      "AAA-HOSTNAME-AAA",
+				OS:      "AAA-CROS-AAA",
+				FW:      "AAA-FW-AAA",
+				FWImage: "AAA-FWImage-AAA",
+			},
+			req: &fleet.GetStableVersionRequest{
+				Hostname: "AAA-HOSTNAME-AAA",
+			},
+		},
+		{
+			name: "hostname",
+			in: &SatlabStableVersionEntry{
+				ID:      "AAA-BOARD-AAA|AAA-MODEL-AAA",
+				OS:      "AAA-CROS-AAA",
+				FW:      "AAA-FW-AAA",
+				FWImage: "AAA-FWImage-AAA",
+			},
+			req: &fleet.GetStableVersionRequest{
+				BuildTarget: "AAA-BOARD-AAA",
+				Model:       "AAA-MODEL-AAA",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := gaetesting.TestingContext()
+			datastore.GetTestable(ctx).Consistent(true)
+
+			expected := tt.in
+
+			if err := PutSatlabStableVersionEntry(ctx, tt.in); err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+			actual, err := GetSatlabStableVersionEntryByID(ctx, tt.req)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+
+			if diff := cmp.Diff(expected, actual, cmpopts.IgnoreUnexported(SatlabStableVersionEntry{})); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
+			}
+		})
+	}
+}

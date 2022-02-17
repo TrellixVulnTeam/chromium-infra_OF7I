@@ -24,6 +24,10 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	"infra/appengine/crosskylabadmin/api/fleet/v1"
+
+	// See https://bugs.chromium.org/p/chromium/issues/detail?id=1242998 for details.
+	// TODO(gregorynisbet): Remove this once new behavior is default.
+	_ "go.chromium.org/luci/gae/service/datastore/crbug1242998safeget"
 )
 
 const SatlabStableVersionKind = "satlab_stable_version"
@@ -43,14 +47,6 @@ type SatlabStableVersionEntry struct {
 	OS        string `gae:"os"`
 	FW        string `gae:"fw"`
 	FWImage   string `gae:"fw_image"`
-}
-
-// MakeSatlabStableVersionID takes a hostname, board, and model and combines them into an ID.
-func makeSatlabStableVersionID(hostname string, board string, model string) string {
-	if hostname != "" {
-		return hostname
-	}
-	return fmt.Sprintf("%s|%s", board, model)
 }
 
 // MakeSatlabStableVersionEntry creates a stable version entry from a stable version request.
@@ -89,4 +85,28 @@ func PutSatlabStableVersionEntry(ctx context.Context, entry *SatlabStableVersion
 		return errors.Annotate(err, "put satlab stable version entry").Err()
 	}
 	return nil
+}
+
+// GetSatlabStableVersionEntryByID uses the ID to look up a satlab stable entry.
+func GetSatlabStableVersionEntryByID(ctx context.Context, req *fleet.GetStableVersionRequest) (*SatlabStableVersionEntry, error) {
+	if req == nil {
+		return nil, errors.Reason("get satlab stable version entry by id: request cannot be nil").Err()
+	}
+	id := makeSatlabStableVersionID(req.GetHostname(), req.GetBuildTarget(), req.GetModel())
+	entry := &SatlabStableVersionEntry{ID: id}
+	if err := datastore.Get(ctx, entry); err != nil {
+		return nil, errors.Annotate(err, "get satlab stable version entry").Err()
+	}
+	return entry, nil
+}
+
+// MakeSatlabStableVersionID takes a hostname, board, and model and combines them into an ID.
+func makeSatlabStableVersionID(hostname string, board string, model string) string {
+	if hostname != "" {
+		return hostname
+	}
+	if model != "" && board != "" {
+		return fmt.Sprintf("%s|%s", board, model)
+	}
+	return ""
 }
