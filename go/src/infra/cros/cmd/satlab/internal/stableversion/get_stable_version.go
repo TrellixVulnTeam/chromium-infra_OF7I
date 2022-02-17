@@ -81,6 +81,8 @@ func (c *getStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 		BuildTarget: c.board,
 		Model:       c.model,
 		Hostname:    c.hostname,
+		// Mark ourselves as a satlab informational query so we always get the satlab versions.
+		SatlabInformationalQuery: true,
 	})
 	if err != nil {
 		return errors.Annotate(err, "get stable version").Err()
