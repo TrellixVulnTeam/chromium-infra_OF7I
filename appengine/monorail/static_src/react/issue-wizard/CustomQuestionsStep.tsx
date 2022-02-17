@@ -34,11 +34,12 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
   const customQuestions = new Array();
 
   const [additionalComments, setAdditionalComments] = React.useState('');
-  // TODO: (crbug.com/monorail/10581) load all the custom questions and update answers
-  const answers = Array(questions.length).fill('');
+  const [answers, setAnswers] = React.useState(Array(questions.length).fill(''));
 
   const updateAnswer = (answer: string, index: number) => {
-    answers[index] = answer;
+    const updatedAnswers = answers;
+    updatedAnswers[index] = answer;
+    setAnswers(updatedAnswers);
   }
 
   questions.forEach((q, i) => {
@@ -77,7 +78,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
   });
 
   const onMakeIssue = () => {
-    onSubmit(additionalComments);
+    onSubmit(additionalComments, answers);
   }
 
   return (

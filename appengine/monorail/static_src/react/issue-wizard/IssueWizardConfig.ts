@@ -11,12 +11,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something is wrong with the user interface (e.g. tabs, context menus, etc...)',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Input,
-        question: "What part of the browser is affected?",
-      },
-    ],
+    customQuestions: [],
   },
   {
     name: 'Network / Downloading',

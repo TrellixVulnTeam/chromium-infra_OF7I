@@ -15,6 +15,7 @@ import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWiza
 import {GetQuestionsByCategory, buildIssueLabels} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
+import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
 /**
  * Base component for the issue filing wizard, wrapper for other components.
  * @return Issue wizard JSX.
@@ -57,7 +58,7 @@ export function IssueWizard(): ReactElement {
           setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
-    const onSubmitIssue = (comments: string) => {
+    const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>,) => {
       const summary = textValues.oneLineSummary;
       // TODO: (Issue 10627) add the extra detail from custom questions.
       const labels = buildIssueLabels(category, osName);
@@ -67,6 +68,10 @@ export function IssueWizard(): ReactElement {
           labels: 'Type-Bug-Regression'
         })
       }
+
+      const {expandDescription, expandLabels} =
+        expandDescriptions(category, customQuestionsAnswers, description, labels);
+
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',
         issue: {
@@ -75,11 +80,11 @@ export function IssueWizard(): ReactElement {
             status: 'Untriaged',
           },
           components: [{
-            component: 'projects/chromium/componentDefs/'+category
+            component: 'projects/chromium/componentDefs/'+category.replace(/ \/ /g, '>')
           }],
-          labels: labels,
+          labels: expandLabels,
         },
-        description,
+        description: expandDescription,
         });
         response.then(() => {
           // TODO: (Issue 10628) handle submit quesiton success
