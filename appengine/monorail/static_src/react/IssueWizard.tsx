@@ -11,6 +11,7 @@ import DetailsStep from './issue-wizard/DetailsStep.tsx'
 import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
+import Header from './issue-wizard/Header.tsx'
 
 import {GetQuestionsByCategory, buildIssueLabels} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
@@ -101,6 +102,7 @@ export function IssueWizard(): ReactElement {
     <>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins"></link>
       <div className={styles.container}>
+        <Header />
         {page}
       </div>
     </>
