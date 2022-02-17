@@ -29,7 +29,6 @@ export function IssueWizard(): ReactElement {
       oneLineSummary: '',
       stepsToReproduce: '',
       describeProblem: '',
-      additionalComments: '',
     });
     const [osName, setOsName] = React.useState(getOs())
     const [browserName, setBrowserName] = React.useState(getBrowser())
@@ -58,11 +57,11 @@ export function IssueWizard(): ReactElement {
           setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
-    const onSubmitIssue = () => {
+    const onSubmitIssue = (comments: string) => {
       const summary = textValues.oneLineSummary;
       // TODO: (Issue 10627) add the extra detail from custom questions.
-      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, textValues.additionalComments, osName, browserName);
       const labels = buildIssueLabels(category, osName);
+      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
       if (isRegression) {
         labels.push({
           labels: 'Type-Bug-Regression'

@@ -33,6 +33,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
   const customQuestions = new Array();
 
+  const [additionalComments, setAdditionalComments] = React.useState('');
   // TODO: (crbug.com/monorail/10581) load all the custom questions and update answers
   const answers = Array(questions.length).fill('');
 
@@ -74,11 +75,24 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
         return;
     }
   });
+
+  const onMakeIssue = () => {
+    onSubmit(additionalComments);
+  }
+
   return (
     <>
       <h2 className={classes.greyText}>Extra Information about the Issue</h2>
-      <div className={classes.root}>{customQuestions}</div>
-      <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep} onSubmit={onSubmit}/>
+      <div className={classes.root}>
+        {customQuestions}
+
+        <CustomQuestionTextarea
+          question="Additional comments"
+          updateAnswers={(answer: string) => setAdditionalComments(answer)}
+        />
+
+      </div>
+      <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>
     </>
   );
 }
