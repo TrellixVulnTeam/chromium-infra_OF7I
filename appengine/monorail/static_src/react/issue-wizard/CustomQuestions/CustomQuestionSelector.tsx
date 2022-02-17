@@ -35,7 +35,7 @@ export default function CustomQuestionSelector(props: Props): React.ReactElement
 
   React.useEffect(() => {
     updateAnswers(options[0]);
-  });
+  },[]);
 
   const handleOptionChange = (option: string) => {
     setSelectedOption(option);

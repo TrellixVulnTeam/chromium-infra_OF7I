@@ -11,6 +11,7 @@ import DotMobileStepper from './DotMobileStepper.tsx';
 import SelectMenu from './SelectMenu.tsx';
 import {OS_LIST, BROWSER_LIST, ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts'
 import {getTipByCategory} from './IssueWizardUtils.tsx';
+import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 
 /**
  * The detail step is the second step on the dot
@@ -48,12 +49,24 @@ type Props = {
   setOsName: Function,
   browserName: string
   setBrowserName: Function,
+  setIsRegression: Function,
 };
 
 export default function DetailsStep(props: Props): React.ReactElement {
   const classes = useStyles();
 
-  const {textValues, setTextValues, category, setActiveStep, osName, setOsName, browserName, setBrowserName} = props;
+  const {
+    textValues,
+    setTextValues,
+    category,
+    setActiveStep,
+    osName,
+    setOsName,
+    browserName,
+    setBrowserName,
+    setIsRegression
+  } = props;
+
   const handleChange = (valueName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const textInput = e.target.value;
     setTextValues({...textValues, [valueName]: textInput});
@@ -68,6 +81,7 @@ export default function DetailsStep(props: Props): React.ReactElement {
   const getTipInnerHtml = () => {
     return {__html: tipByCategory.get(category)};
   }
+
   return (
     <>
         <h2 className={classes.grey}>Details for problems with {category}</h2>
@@ -95,6 +109,19 @@ export default function DetailsStep(props: Props): React.ReactElement {
 
           <h3 className={classes.head}>Upload any relevant screenshots</h3>
           <input type="file" accept="image/*" multiple />
+
+          <CustomQuestionSelector
+            question="Did this work before?"
+            options={["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"]}
+            subQuestions={null}
+            updateAnswers={(answer: string) => {
+              if (answer === "Yes - This is a regression") {
+                setIsRegression(true);
+              } else {
+                setIsRegression(false);
+              }
+            }}
+          />
         </form>
         <DotMobileStepper nextEnabled={nextEnabled} activeStep={1} setActiveStep={setActiveStep}/>
     </>

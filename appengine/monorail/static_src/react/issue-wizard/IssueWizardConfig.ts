@@ -16,18 +16,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         type: CustomQuestionType.Input,
         question: "What part of the browser is affected?",
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -40,18 +28,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         type: CustomQuestionType.Input,
         question: "What specific URL can reproduce the problem?",
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -76,18 +52,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
             question: "Which other browsers (including versions) also have the problem?",
           }],
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -130,18 +94,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
             question: "Which other browsers (including versions) also have the problem?",
           }],
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -153,18 +105,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore </a> ?",
-      },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
       }
     ],
   },
@@ -190,18 +130,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         type: CustomQuestionType.Input,
         question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore</a> ?",
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -214,18 +142,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         type: CustomQuestionType.Input,
         question: "What is the URL of the Chrome WebStore page that had the problem?",
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -233,60 +149,21 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems syncing data',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ],
+    customQuestions: [],
   },
   {
     name: 'Enterprise',
     description: 'Policy configuration and deployment issues',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ],
+    customQuestions: [],
   },
   {
     name: 'Installation',
     description: 'Problem installing Chrome',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ],
+    customQuestions: [],
   },
   {
     name: 'Crashes',
@@ -317,18 +194,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           },
           null],
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ]
   },
   {
@@ -337,20 +202,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">how to report security issues</a>.',
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ]
+    customQuestions: []
   },
   {
     name: 'Other',
@@ -370,18 +222,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         ],
         subQuestions: null,
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ],
   },
   {
@@ -483,18 +323,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           }
         ],
       },
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
     ]
   },
   {
@@ -502,40 +330,14 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the JavaScript interpreter',
     persona: IssueWizardPersona.Developer,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ],
+    customQuestions: [],
   },
   {
     name: 'Developer Tools',
     description: 'Problems with the Developer tool chain/inspector',
     persona: IssueWizardPersona.Developer,
     enabled: true,
-    customQuestions: [
-      {
-        type: CustomQuestionType.Select,
-        question: "Did this work before?",
-        options: ["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"],
-        subQuestions: [
-          null,
-          {
-            type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
-          },
-          null],
-      }
-    ],
+    customQuestions: [],
   },
 ];
 

@@ -122,3 +122,11 @@ export function buildIssueDescription(reproduceStep: string, description: string
     + "OS:" + os.trim();
   return issueDescription;
 }
+
+export function buildIssueLabels(category: string, osName: string): Array<any> {
+  return [
+    {label:'via-wizard-'+category},
+    {label:'Pri-2'},
+    {label:osName},
+  ];
+}

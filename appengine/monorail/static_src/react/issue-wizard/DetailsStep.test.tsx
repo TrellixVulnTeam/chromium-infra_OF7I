@@ -17,7 +17,7 @@ describe('DetailsStep', () => {
       stepsToReproduce: '',
       describeProblem: '',
     };
-    const {container} = render(<DetailsStep textValues={textFiled}/>);
+    const {container} = render(<DetailsStep textValues={textFiled} setIsRegression={() => {}}/>);
 
     // this is checking for the first question
     const input = container.querySelector('input');
@@ -35,7 +35,7 @@ describe('DetailsStep', () => {
       describeProblem: '',
     };
 
-    const {container} = render(<DetailsStep category='UI' textValues={textFiled}/>);
+    const {container} = render(<DetailsStep category='UI' textValues={textFiled} setIsRegression={() => {}}/>);
 
     // this is checking the title contains our category
     const title = container.querySelector('h2');

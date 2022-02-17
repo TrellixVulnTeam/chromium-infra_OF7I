@@ -12,10 +12,9 @@ import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
 
-import {GetQuestionsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
+import {GetQuestionsByCategory, buildIssueLabels} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
-
 /**
  * Base component for the issue filing wizard, wrapper for other components.
  * @return Issue wizard JSX.
@@ -24,12 +23,13 @@ export function IssueWizard(): ReactElement {
   const [userPersona, setUserPersona] = React.useState(IssueWizardPersona.EndUser);
   const [activeStep, setActiveStep] = React.useState(0);
   const [category, setCategory] = React.useState('');
+  const [isRegression, setIsRegression] = React.useState(false);
   const [textValues, setTextValues] = React.useState(
     {
       oneLineSummary: '',
       stepsToReproduce: '',
       describeProblem: '',
-      additionalComments: ''
+      additionalComments: '',
     });
     const [osName, setOsName] = React.useState(getOs())
     const [browserName, setBrowserName] = React.useState(getBrowser())
@@ -55,12 +55,19 @@ export function IssueWizard(): ReactElement {
           setOsName={setOsName}
           browserName={browserName}
           setBrowserName={setBrowserName}
+          setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
     const onSubmitIssue = () => {
       const summary = textValues.oneLineSummary;
       // TODO: (Issue 10627) add the extra detail from custom questions.
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, textValues.additionalComments, osName, browserName);
+      const labels = buildIssueLabels(category, osName);
+      if (isRegression) {
+        labels.push({
+          labels: 'Type-Bug-Regression'
+        })
+      }
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',
         issue: {
@@ -71,13 +78,7 @@ export function IssueWizard(): ReactElement {
           components: [{
             component: 'projects/chromium/componentDefs/'+category
           }],
-          labels: [{
-            label:'via-wizard-'+category
-          }, {
-            label:'Pri-2'
-          }, {
-            label:osName
-          }],
+          labels: labels,
         },
         description,
         });
