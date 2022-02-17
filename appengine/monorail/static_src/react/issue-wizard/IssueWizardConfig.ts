@@ -57,7 +57,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     customQuestions: [
       {
         type: CustomQuestionType.Input,
-        question: "What part of the browser is affected?",
+        question: "What specific URL can reproduce the problem?",
       },
       {
         type: CustomQuestionType.Select,
@@ -210,7 +210,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
         question: "Please select a label to classify your issue:",
         options: [
           "Not sure - I don't know",
-          "Type-Feature- Request for new or improved features",
+          "Type-Feature - Request for new or improved features",
           "Type-Bug-Regression - Used to work, now broken",
           "Type-Bug - Software not working correctly",
           "Cr-UI-I18N - Issue in translating UI to other languages"

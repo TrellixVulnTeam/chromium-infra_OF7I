@@ -61,8 +61,10 @@ export function IssueWizard(): ReactElement {
     const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>,) => {
       const summary = textValues.oneLineSummary;
       // TODO: (Issue 10627) add the extra detail from custom questions.
-      const labels = buildIssueLabels(category, osName);
+      const componentPath = 'projects/chromium/componentDefs/' +
+        category.replace(' / ', '>').replace(' ', '>');
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
+      const labels = buildIssueLabels(category, osName);
       if (isRegression) {
         labels.push({
           labels: 'Type-Bug-Regression'
@@ -80,7 +82,7 @@ export function IssueWizard(): ReactElement {
             status: 'Untriaged',
           },
           components: [{
-            component: 'projects/chromium/componentDefs/'+category.replace(/ \/ /g, '>')
+            component: componentPath
           }],
           labels: expandLabels,
         },
