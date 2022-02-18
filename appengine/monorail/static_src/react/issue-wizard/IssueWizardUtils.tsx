@@ -113,6 +113,17 @@ export function getTipByCategory(categories: IssueCategory[]): Map<string, strin
   return tipByCategory;
 }
 
+// this function is used to get the component value for each issue category used for make issue
+export function getCompValByCategory(categories: IssueCategory[]): Map<string, string> {
+  const compValByCategory = new Map<string, string>();
+  categories.forEach((category) => {
+    if (category.component) {
+      compValByCategory.set(category.name, category.component);
+    }
+  })
+  return compValByCategory;
+}
+
 export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, browser: string): string {
   const issueDescription =
     "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n\n"

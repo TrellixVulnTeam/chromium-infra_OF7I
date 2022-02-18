@@ -13,7 +13,7 @@ import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
 import Header from './issue-wizard/Header.tsx'
 
-import {GetQuestionsByCategory, buildIssueLabels} from './issue-wizard/IssueWizardUtils.tsx';
+import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
@@ -71,16 +71,16 @@ export function IssueWizard(props: Props): ReactElement {
           setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
+    const compValByCategory = getCompValByCategory(ISSUE_WIZARD_QUESTIONS);
+
     const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>,) => {
       const summary = textValues.oneLineSummary;
-      // TODO: (Issue 10627) add the extra detail from custom questions.
-      const componentPath = 'projects/chromium/componentDefs/' +
-        category.replace(' / ', '>').replace(' ', '>');
+      const component =  compValByCategory.get(category);
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
       const labels = buildIssueLabels(category, osName);
 
-      const {expandDescription, expandLabels} =
-        expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels);
+      const {expandDescription, expandLabels, compVal} =
+        expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels, component);
 
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',
@@ -90,7 +90,7 @@ export function IssueWizard(props: Props): ReactElement {
             status: 'Untriaged',
           },
           components: [{
-            component: componentPath
+            component: 'projects/chromium/componentDefs/' + compVal
           }],
           labels: expandLabels,
         },

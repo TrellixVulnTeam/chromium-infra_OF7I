@@ -11,6 +11,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something is wrong with the user interface (e.g. tabs, context menus, etc...)',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-UI',
     customQuestions: [],
   },
   {
@@ -18,6 +19,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with accessing remote content',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Internals-Network',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -30,6 +32,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems playing back sound or movies',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Internals-Media',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -54,6 +57,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: "Web pages aren't displaying or working properly",
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: '',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -96,6 +100,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with how the browser deals with apps from the webstore',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Platform-Apps',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -108,6 +113,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Issues related to extensions and themes from the webstore',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Platform-Extensions',
     customQuestions: [
       {
         type: CustomQuestionType.Select,
@@ -132,6 +138,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the Chrome WebStore itself',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Webstore',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -144,6 +151,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems syncing data',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Services-Sync',
     customQuestions: [],
   },
   {
@@ -151,6 +159,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Policy configuration and deployment issues',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Enterprise',
     customQuestions: [],
   },
   {
@@ -158,6 +167,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problem installing Chrome',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Internals-Installer',
     customQuestions: [],
   },
   {
@@ -166,6 +176,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     tip: 'Please read the instructions on <a href="https://sites.google.com/a/chromium.org/dev/for-testers/bug-reporting-guidelines/reporting-crash-bug" target="_blank">reporting a crash issue</a>',
+    component: 'Cr-Stability-Crash',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -197,6 +208,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">how to report security issues</a>.',
+    component: 'Cr-Type-Bug-Security',
     customQuestions: []
   },
   {
@@ -204,6 +216,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Something not listed here',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
+    component: 'Cr-Type-Bug',
     customQuestions: [
       {
         type: CustomQuestionType.Select,
@@ -224,6 +237,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with a browser API',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    component: '',
     customQuestions: [
       {
         type:CustomQuestionType.Select,
@@ -325,6 +339,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the JavaScript interpreter',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    component: 'Cr-Blink',
     customQuestions: [],
   },
   {
@@ -332,6 +347,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     description: 'Problems with the Developer tool chain/inspector',
     persona: IssueWizardPersona.Developer,
     enabled: true,
+    component: 'Cr-Platform-DevTools',
     customQuestions: [],
   },
 ];

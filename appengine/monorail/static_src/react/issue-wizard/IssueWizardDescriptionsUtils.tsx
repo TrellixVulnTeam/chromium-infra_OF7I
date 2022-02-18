@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Chromium project component prefix
+const CR_PREFIX = 'Cr-';
 
 // customized function for add additoinal data base on different categories.
 export function expandDescriptions(
@@ -10,9 +12,11 @@ export function expandDescriptions(
   isRegression: boolean,
   description: string,
   labels: Array<any>,
-  ): {expandDescription:string, expandLabels:Array<any>} {
+  component?: string,
+  ): {expandDescription:string, expandLabels:Array<any>, compVal:string} {
     let expandDescription = description;
     let expandLabels = labels;
+    let compVal = component || '';
     let typeLabel = isRegression ? 'Type-Bug-Regression' : '';
     switch (category) {
       case 'Network / Downloading':
@@ -31,9 +35,10 @@ export function expandDescriptions(
           + "Does this work in other browsers? " + customQuestionsAnswers[3] + "\n\n"
           + expandDescription;
         if (customQuestionsAnswers[1].split(' - ')[0] === 'Yes') {
-          // TODO: get components value
+          compVal = 'Cr-Blink';
           typeLabel = 'Type-Bug';
         } else {
+          compVal = '';
           typeLabel = 'Type-Compat';
         }
         break;
@@ -44,7 +49,11 @@ export function expandDescriptions(
       case 'Extensions / Themes':
         expandDescription = "WebStore page: " + customQuestionsAnswers[1] + "\n\n"
           + expandDescription;
-        // TODO: get components value
+        if (customQuestionsAnswers[0].split(' - ')[0] === 'Chrome Extension') {
+          compVal = 'Cr-Platform-Extensions';
+        } else {
+          compVal = 'Cr-UI-Browser-Themes';
+        }
         break;
       case 'Webstore':
         expandDescription = "WebStore page: " + customQuestionsAnswers[0] + "\n\n"
@@ -62,12 +71,17 @@ export function expandDescriptions(
         if (issueType !== 'Not sure'){
           typeLabel = issueType;
         }
-        // TODO: get components value
+        if (issueType === 'Cr-UI-I18N') {
+          compVal = 'Cr-UI-I18N';
+        }
         break;
       case 'API':
         expandDescription = "Does this work in other browsers? " + customQuestionsAnswers[2] + "\n\n"
           + expandDescription;
-        // TODO: get components value
+        compVal = customQuestionsAnswers[0];
+        if (compVal === "Not sure - I don't know") {
+          compVal = '';
+        }
         break;
       default:
         break;
@@ -79,5 +93,11 @@ export function expandDescriptions(
       });
     }
 
-    return {expandDescription, expandLabels};
+    if (compVal.length > 0) {
+      if (compVal.startsWith(CR_PREFIX)) {
+        compVal = compVal.substring(CR_PREFIX.length);
+        compVal = compVal.replace(/-/g, '>');
+      }
+    }
+    return {expandDescription, expandLabels, compVal};
   }
