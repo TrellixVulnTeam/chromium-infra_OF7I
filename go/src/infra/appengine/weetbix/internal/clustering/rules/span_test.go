@@ -10,14 +10,13 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/testutil"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestSpan(t *testing.T) {
@@ -69,19 +68,28 @@ func TestSpan(t *testing.T) {
 		})
 		Convey(`ReadByBug`, func() {
 			bugID := bugs.BugID{System: "monorail", ID: "monorailproject/1"}
-			Convey(`Not Exists`, func() {
-				rule, err := ReadByBug(span.Single(ctx), bugID)
-				So(err, ShouldEqual, NotExistsErr)
-				So(rule, ShouldBeNil)
+			Convey(`Empty`, func() {
+				rules, err := ReadByBug(span.Single(ctx), bugID)
+				So(err, ShouldBeNil)
+				So(rules, ShouldBeEmpty)
 			})
-			Convey(`Exists`, func() {
-				expectedRule := NewRule(100).WithBug(bugID).Build()
-				err := SetRulesForTesting(ctx, []*FailureAssociationRule{expectedRule})
+			Convey(`Multiple`, func() {
+				expectedRule := NewRule(100).
+					WithProject("testproject").
+					WithBug(bugID).
+					Build()
+				expectedRule2 := NewRule(100).
+					WithProject("testproject2").
+					WithBug(bugID).
+					WithBugManaged(false).
+					Build()
+				expectedRules := []*FailureAssociationRule{expectedRule, expectedRule2}
+				err := SetRulesForTesting(ctx, expectedRules)
 				So(err, ShouldBeNil)
 
-				rule, err := ReadByBug(span.Single(ctx), bugID)
+				rules, err := ReadByBug(span.Single(ctx), bugID)
 				So(err, ShouldBeNil)
-				So(rule, ShouldResemble, expectedRule)
+				So(rules, ShouldResemble, expectedRules)
 			})
 		})
 		Convey(`ReadDelta`, func() {
