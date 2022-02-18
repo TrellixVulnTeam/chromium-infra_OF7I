@@ -21,7 +21,7 @@ import (
 func resetEcExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	// Delay to wait for the ec reset command to be efftive. Default to be 30s.
-	waitTimeout := argsMap.AsInt(ctx, "wait_timeout", 30)
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 30, time.Second)
 	// TODO: (@otabek & @yunzhiyu) Figure out why, in PARIS,
 	// we must add '&& exit' to make ssh proxy return immediately without
 	// waiting for the command to finish execution.
@@ -37,7 +37,7 @@ func resetEcExec(ctx context.Context, info *execs.ExecInfo) error {
 		log.Debug(ctx, "Stdout: %s", out)
 	}
 	log.Debug(ctx, "waiting for %d seconds to let ec reset be effective.", waitTimeout)
-	time.Sleep(time.Duration(waitTimeout) * time.Second)
+	time.Sleep(waitTimeout)
 	return nil
 }
 

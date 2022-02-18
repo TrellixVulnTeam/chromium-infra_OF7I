@@ -95,9 +95,9 @@ const (
 func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	// Timeout for executing the cr 50 fw flash command on the DUT. Default to be 120s.
-	flashTimeout := argsMap.AsInt(ctx, "flash_timeout", 120)
+	flashTimeout := argsMap.AsDuration(ctx, "flash_timeout", 120, time.Second)
 	// Delay to wait for the fw flash command to be efftive. Default to be 30s.
-	waitTimeout := argsMap.AsInt(ctx, "wait_timeout", 30)
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 30, time.Second)
 	// Command to update cr50 firmware with post-reset and reboot the DUT.
 	updateCmd := `gsctool -ap /opt/google/cr50/firmware/cr50.bin.%s`
 	if info.RunArgs.DUT.Cr50Phase == tlw.Cr50PhasePREPVT {
@@ -111,7 +111,7 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	//
 	// r.ExitCode == 0: All up to date, no update needed.
 	// r.ExitCode == 1: Update completed, reboot required (errors includes GsctoolRequireRebootError tag).
-	_, err := run(ctx, time.Duration(flashTimeout)*time.Second, updateCmd)
+	_, err := run(ctx, flashTimeout, updateCmd)
 	if err != nil {
 		errorCode, ok := errors.TagValueIn(execs.ErrCodeTag, err)
 		if !ok {
@@ -133,7 +133,7 @@ func reflashCr50FwExec(ctx context.Context, info *execs.ExecInfo) error {
 	// TODO: (@yunzhiyu & @gregorynisbet)
 	// Record cr50 fw update attempt along with time to Karte.
 	log.Debug(ctx, "waiting for %d seconds to let cr50 fw reflash be effective.", waitTimeout)
-	time.Sleep(time.Duration(waitTimeout) * time.Second)
+	time.Sleep(waitTimeout)
 	return nil
 }
 

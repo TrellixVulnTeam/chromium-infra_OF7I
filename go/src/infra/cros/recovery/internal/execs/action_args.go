@@ -8,6 +8,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"infra/cros/recovery/internal/log"
 )
@@ -64,18 +65,34 @@ func (parsedArgs ParsedArgs) AsStringSlice(ctx context.Context, key string) []st
 }
 
 // AsInt returns the value for the passed key as a int.
-// If the value cannot be interpreted as int, then the passed in defaultValue
-// is being returned.
+// If the value cannot be interpreted as int, then the passed defaultValue is returned.
 func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue int) int {
 	if value, ok := parsedArgs[key]; ok {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
 		}
-		log.Debug(ctx, "Parsed Args As int: value %q for key %q is not a valid integer, returning default value %t.", value, key, defaultValue)
+		log.Debug(ctx, "Parsed Args As int: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
 	} else {
-		log.Debug(ctx, "Parsed Args As int: key %q does not exist in the parsed arguments, returning default value %t.", key, defaultValue)
+		log.Debug(ctx, "Parsed Args As int: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
 	}
 	return defaultValue
+}
+
+// AsDuration returns the value of the passed key as type: time.Duration.
+// If the value cannot be interpreted as int, then the passed defaultValue is returned.
+//
+// @params unit: the unit of the time Duration, can be Nanosecond, Mircrosecond, Millisecond, Second, Minute
+func (parsedArgs ParsedArgs) AsDuration(ctx context.Context, key string, defaultValue int, unit time.Duration) time.Duration {
+	defaultDuration := time.Duration(defaultValue) * unit
+	if value, ok := parsedArgs[key]; ok {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return time.Duration(intVal) * unit
+		}
+		log.Debug(ctx, "Parsed Args As duration: value %q for key %q is not a valid integer, returning default duration %v.", value, key, defaultDuration)
+	} else {
+		log.Debug(ctx, "Parsed Args As duration: key %q does not exist in the parsed arguments, returning default duration %v.", key, defaultDuration)
+	}
+	return defaultDuration
 }
 
 // ParseActionArgs returns parsed action arguments with default splitter.

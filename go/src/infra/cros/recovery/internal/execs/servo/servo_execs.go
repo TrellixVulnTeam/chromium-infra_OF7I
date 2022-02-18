@@ -650,8 +650,8 @@ func servoFakeDisconnectDUTExec(ctx context.Context, info *execs.ExecInfo) error
 	}
 	// Formula to cover how long we wait to see the effect
 	// when we convert params to seconds and then +2 seconds to apply effect.
-	waitFinishExecutionTimeout := (delayMS+timeoutMS)/1000 + 2
-	time.Sleep(time.Duration(waitFinishExecutionTimeout) * time.Second)
+	waitFinishExecutionTimeout := time.Duration(delayMS+timeoutMS)*time.Millisecond + 2*time.Second
+	time.Sleep(waitFinishExecutionTimeout)
 	return nil
 }
 
@@ -724,12 +724,12 @@ func servoRebootEcOnDUTExec(ctx context.Context, info *execs.ExecInfo) error {
 func servoPowerStateResetExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
 	// Timeout to wait for resetting the power state. Default to be 1s.
-	waitTimeout := argsMap.AsInt(ctx, "wait_timeout", 1)
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 1, time.Second)
 	servod := info.NewServod()
 	if err := servod.Set(ctx, "power_state", "reset"); err != nil {
 		return errors.Annotate(err, "servo power state reset").Err()
 	}
-	time.Sleep(time.Duration(waitTimeout) * time.Second)
+	time.Sleep(waitTimeout)
 	// Get the lid_open value which requires EC console.
 	lidOpen, err := servodGetString(ctx, info.NewServod(), "lid_open")
 	if err != nil {
