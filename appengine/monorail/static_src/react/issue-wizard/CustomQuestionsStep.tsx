@@ -10,6 +10,7 @@ import {CustomQuestion, CustomQuestionType} from './IssueWizardTypes.tsx';
 import CustomQuestionInput from './CustomQuestions/CustomQuestionInput.tsx';
 import CustomQuestionTextarea from './CustomQuestions/CustomQuestionTextarea.tsx';
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
+import Alert from '@material-ui/core/Alert';
 
 const userStyles = makeStyles({
   greyText: {
@@ -35,6 +36,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
   const [additionalComments, setAdditionalComments] = React.useState('');
   const [answers, setAnswers] = React.useState(Array(questions.length).fill(''));
+  const [hasError, setHasError] = React.useState(false);
 
   const updateAnswer = (answer: string, index: number) => {
     const updatedAnswers = answers;
@@ -77,13 +79,27 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
     }
   });
 
+  const onSuccess = () => {
+    //redirect to issue list
+    window.location.href='/p/chromium/issues/list?q=reporter%3Ame&can=2';
+  };
+
+  const onFailure = () => {
+    setHasError(true);
+  }
+
   const onMakeIssue = () => {
-    onSubmit(additionalComments, answers);
+    setHasError(false);
+    onSubmit(additionalComments, answers, onSuccess, onFailure);
   }
 
   return (
     <>
       <h2 className={classes.greyText}>Extra Information about the Issue</h2>
+      {hasError
+        ? <Alert severity="error" onClose={() => {setHasError(false)}}>Something went wrong, please try again later.</Alert>
+        : null
+      }
       <div className={classes.root}>
         {customQuestions}
 

@@ -73,7 +73,7 @@ export function IssueWizard(props: Props): ReactElement {
    } else if (activeStep === 2) {
     const compValByCategory = getCompValByCategory(ISSUE_WIZARD_QUESTIONS);
 
-    const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>,) => {
+    const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, onSuccess: Function, onFailure: Function) => {
       const summary = textValues.oneLineSummary;
       const component =  compValByCategory.get(category);
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
@@ -97,9 +97,9 @@ export function IssueWizard(props: Props): ReactElement {
         description: expandDescription,
         });
         response.then(() => {
-          // TODO: (Issue 10628) handle submit quesiton success
+          onSuccess();
         }, () => {
-          // TODO: (Issue 10628) handel submit question failed
+          onFailure();
         });
     }
     page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={questionByCategory.get(category)} onSubmit={onSubmitIssue}/>;
