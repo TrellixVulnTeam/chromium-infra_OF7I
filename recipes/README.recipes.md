@@ -34,7 +34,7 @@
   * [cloudbuildhelper:examples/version_label](#recipes-cloudbuildhelper_examples_version_label) (Python3 ✅)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage) (Python3 ✅)
   * [cv_testing/tryjob](#recipes-cv_testing_tryjob) (Python3 ✅) &mdash; Recipe to test LUCI CQ/CV itself.
-  * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
+  * [depot_tools_builder](#recipes-depot_tools_builder) (Python3 ✅) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
   * [docker:examples/full](#recipes-docker_examples_full) (Python3 ✅)
   * [docker_image_builder](#recipes-docker_image_builder) (Python3 ✅)
   * [fleet_systems/dhcp](#recipes-fleet_systems_dhcp) (Python3 ✅) &mdash; Test chrome-golo repo DHCP configs using dhcpd binaries via docker.
@@ -1363,13 +1363,13 @@ Recipe to test LUCI CQ/CV itself.
 &mdash; **def [RunSteps](/recipes/recipes/cv_testing/tryjob.py#20)(api, properties):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
-[DEPS](/recipes/recipes/depot_tools_builder.py#7): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/depot_tools_builder.py#9): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [zip](#recipe_modules-zip), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Recipe to build windows depot_tools bootstrap zipfile.
 
-&mdash; **def [RunSteps](/recipes/recipes/depot_tools_builder.py#26)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/depot_tools_builder.py#27)(api):**
 ### *recipes* / [docker:examples/full](/recipes/recipe_modules/docker/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/docker/examples/full.py#9): [docker](#recipe_modules-docker), [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1601,15 +1601,15 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 This recipe runs legacy analyzers for the infra repo.
 ### *recipes* / [update\_submodules\_mirror](/recipes/recipes/update_submodules_mirror.py)
 
-[DEPS](/recipes/recipes/update_submodules_mirror.py#10): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipes/update_submodules_mirror.py#12): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [GetSubmodules](/recipes/recipes/update_submodules_mirror.py#177)(api, deps, source_checkout_name, overlays):**
+&mdash; **def [GetSubmodules](/recipes/recipes/update_submodules_mirror.py#179)(api, deps, source_checkout_name, overlays):**
 
-&mdash; **def [RefToRemoteRef](/recipes/recipes/update_submodules_mirror.py#171)(ref):**
+&mdash; **def [RefToRemoteRef](/recipes/recipes/update_submodules_mirror.py#173)(ref):**
 
-&mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#56)(api, source_repo, target_repo, extra_submodules, refs, overlays, internal):**
+&mdash; **def [RunSteps](/recipes/recipes/update_submodules_mirror.py#58)(api, source_repo, target_repo, extra_submodules, refs, overlays, internal):**
 ### *recipes* / [windows\_adk:examples/ensure](/recipes/recipe_modules/windows_adk/examples/ensure.py)
 
 [DEPS](/recipes/recipe_modules/windows_adk/examples/ensure.py#7): [windows\_adk](#recipe_modules-windows_adk), [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]

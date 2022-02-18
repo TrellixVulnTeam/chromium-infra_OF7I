@@ -4,6 +4,8 @@
 
 """Recipe to build windows depot_tools bootstrap zipfile."""
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'depot_tools/git',
     'depot_tools/gsutil',
@@ -21,7 +23,6 @@ DEPS = [
 
 REPO_URL='https://chromium.googlesource.com/chromium/tools/depot_tools.git'
 DOC_UPLOAD_URL='gs://chrome-infra-docs/flat/depot_tools/docs/'
-
 
 def RunSteps(api):
   # prepare the output dir and zip paths
