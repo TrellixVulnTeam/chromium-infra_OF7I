@@ -12,7 +12,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/protobuf/encoding/protojson"
 
+	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/satlab/internal/site"
 )
 
@@ -56,10 +60,6 @@ type setStableVersionRun struct {
 // Run runs the command, prints the error if there is one, and returns an exit status.
 func (c *setStableVersionRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	ctx := cli.GetContext(a, c, env)
-	if err := c.validateArguments(ctx, a, args, env); err != nil {
-		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
-		return 1
-	}
 	if err := c.innerRun(ctx, a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), "%s: %s\n", a.GetName(), err)
 		return 1
@@ -67,23 +67,79 @@ func (c *setStableVersionRun) Run(a subcommands.Application, args []string, env 
 	return 0
 }
 
-// ValidateArguments validates the arguments given to the satlab command.
-func (c *setStableVersionRun) validateArguments(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
+// ProduceRequest creates a request that can be used as a key to set the stable version.
+// If the command line arguments do not unambiguously indicate how to create such a request, we fail.
+//
+func (c *setStableVersionRun) produceRequest(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) (*fleet.SetSatlabStableVersionRequest, error) {
+	req := &fleet.SetSatlabStableVersionRequest{}
 	useHostnameStrategy := c.hostname != ""
 	useBoardModelStrategy := (c.board != "") && (c.model != "")
-	if useHostnameStrategy {
-		if useBoardModelStrategy {
-			return errors.Reason("board and model should not be set if hostname is provided").Err()
+
+	// Validate and populate the strategy field of the request.
+	if err := func() error {
+		if useHostnameStrategy {
+			if useBoardModelStrategy {
+				return errors.Reason("board and model should not be set if hostname is provided").Err()
+			}
+			req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy{
+				SatlabHostnameStrategy: &fleet.SatlabHostnameStrategy{
+					Hostname: c.hostname,
+				},
+			}
+			return nil
+		} // Hostname strategy not set.
+		if !useBoardModelStrategy {
+			return errors.Reason("must use at least one of {board, model} or {hostname} strategy").Err()
+		}
+		req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabBoardAndModelStrategy{
+			SatlabBoardAndModelStrategy: &fleet.SatlabBoardAndModelStrategy{
+				Board: c.board,
+				Model: c.model,
+			},
 		}
 		return nil
-	} // Hostname strategy not set.
-	if !useBoardModelStrategy {
-		return errors.Reason("must use at least one of {board, model} or {hostname} strategy").Err()
+	}(); err != nil {
+		return nil, err
 	}
-	return nil
+
+	// TODO(gregorynisbet): Consider adding validation here instead of on the server side
+	req.CrosVersion = c.os
+	req.FirmwareVersion = c.fw
+	req.FirmwareImage = c.fwImage
+
+	return req, nil
 }
 
 // InnerRun creates a client, sends a GetStableVersion request, and prints the response.
 func (c *setStableVersionRun) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env) error {
-	return errors.Reason("not yet implemented").Err()
+	req, err := c.produceRequest(ctx, a, args, env)
+	if err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	}
+
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	}
+
+	invWithSVClient := fleet.NewInventoryPRPCClient(
+		&prpc.Client{
+			C:       hc,
+			Host:    c.envFlags.GetCrosAdmService(),
+			Options: site.DefaultPRPCOptions,
+		},
+	)
+
+	resp, err := invWithSVClient.SetSatlabStableVersion(ctx, req)
+	if err != nil {
+		return errors.Annotate(err, "get stable version").Err()
+	}
+	out, err := protojson.MarshalOptions{
+		Indent: "  ",
+	}.Marshal(resp)
+	if err != nil {
+		return errors.Annotate(err, "get stable version").Err()
+	}
+	fmt.Fprintf(a.GetOut(), "%s\n", out)
+	return nil
 }
