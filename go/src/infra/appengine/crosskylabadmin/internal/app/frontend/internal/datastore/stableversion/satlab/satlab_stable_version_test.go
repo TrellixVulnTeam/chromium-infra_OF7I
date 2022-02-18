@@ -89,7 +89,7 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 			datastore.GetTestable(ctx).Consistent(true)
 
 			expected := tt.out
-			actual, _ := MakeSatlabStableVersionEntry(tt.in)
+			actual, _ := MakeSatlabStableVersionEntry(tt.in, false)
 			// Ignore the base64-encoded original request field.
 			// It's probably right.
 			if actual != nil {

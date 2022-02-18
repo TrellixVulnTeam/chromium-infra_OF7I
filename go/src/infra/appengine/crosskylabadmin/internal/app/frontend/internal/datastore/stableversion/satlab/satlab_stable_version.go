@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -50,7 +51,7 @@ type SatlabStableVersionEntry struct {
 }
 
 // MakeSatlabStableVersionEntry creates a stable version entry from a stable version request.
-func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest) (*SatlabStableVersionEntry, error) {
+func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest, normalizeCase bool) (*SatlabStableVersionEntry, error) {
 	if req == nil {
 		return nil, errors.Reason("make satlab stable version: request cannot be nil").Err()
 	}
@@ -62,8 +63,15 @@ func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest) (*Sa
 		s := v.SatlabBoardAndModelStrategy
 		board = s.GetBoard()
 		model = s.GetModel()
+		if normalizeCase {
+			board = strings.ToLower(board)
+			model = strings.ToLower(model)
+		}
 	case *fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy:
 		hostname = v.SatlabHostnameStrategy.GetHostname()
+		if normalizeCase {
+			hostname = strings.ToLower(hostname)
+		}
 	}
 	var base64Req string
 	bytes, err := proto.Marshal(req)
@@ -72,7 +80,7 @@ func MakeSatlabStableVersionEntry(req *fleet.SetSatlabStableVersionRequest) (*Sa
 	}
 	base64Req = base64.StdEncoding.EncodeToString(bytes)
 	return &SatlabStableVersionEntry{
-		ID:        makeSatlabStableVersionID(hostname, board, model),
+		ID:        MakeSatlabStableVersionID(hostname, board, model),
 		Base64Req: base64Req,
 		OS:        req.GetCrosVersion(),
 		FW:        req.GetFirmwareVersion(),
@@ -93,7 +101,12 @@ func GetSatlabStableVersionEntryByID(ctx context.Context, req *fleet.GetStableVe
 	if req == nil {
 		return nil, errors.Reason("get satlab stable version entry by id: request cannot be nil").Err()
 	}
-	id := makeSatlabStableVersionID(req.GetHostname(), req.GetBuildTarget(), req.GetModel())
+	id := MakeSatlabStableVersionID(req.GetHostname(), req.GetBuildTarget(), req.GetModel())
+	return GetSatlabStableVersionEntryByRawID(ctx, id)
+}
+
+// GetSatlabStableVersionEntryByRawID uses the ID to look up a satlab stable entry.
+func GetSatlabStableVersionEntryByRawID(ctx context.Context, id string) (*SatlabStableVersionEntry, error) {
 	entry := &SatlabStableVersionEntry{ID: id}
 	if err := datastore.Get(ctx, entry); err != nil {
 		return nil, errors.Annotate(err, "get satlab stable version entry").Err()
@@ -102,7 +115,7 @@ func GetSatlabStableVersionEntryByID(ctx context.Context, req *fleet.GetStableVe
 }
 
 // MakeSatlabStableVersionID takes a hostname, board, and model and combines them into an ID.
-func makeSatlabStableVersionID(hostname string, board string, model string) string {
+func MakeSatlabStableVersionID(hostname string, board string, model string) string {
 	if hostname != "" {
 		return hostname
 	}
