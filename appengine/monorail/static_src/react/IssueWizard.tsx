@@ -78,14 +78,9 @@ export function IssueWizard(props: Props): ReactElement {
         category.replace(' / ', '>').replace(' ', '>');
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
       const labels = buildIssueLabels(category, osName);
-      if (isRegression) {
-        labels.push({
-          labels: 'Type-Bug-Regression'
-        })
-      }
 
       const {expandDescription, expandLabels} =
-        expandDescriptions(category, customQuestionsAnswers, description, labels);
+        expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels);
 
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',

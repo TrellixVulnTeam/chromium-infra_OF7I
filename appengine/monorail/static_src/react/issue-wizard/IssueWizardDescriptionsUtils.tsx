@@ -7,12 +7,13 @@
 export function expandDescriptions(
   category: string,
   customQuestionsAnswers: Array<string>,
+  isRegression: boolean,
   description: string,
   labels: Array<any>,
   ): {expandDescription:string, expandLabels:Array<any>} {
     let expandDescription = description;
     let expandLabels = labels;
-
+    let typeLabel = isRegression ? 'Type-Bug-Regression' : '';
     switch (category) {
       case 'Network / Downloading':
         expandDescription = "Example URL: " + customQuestionsAnswers[0] + "\n\n"
@@ -29,7 +30,12 @@ export function expandDescriptions(
           + "Is it a problem with a plugin? " + customQuestionsAnswers[2] + "\n\n"
           + "Does this work in other browsers? " + customQuestionsAnswers[3] + "\n\n"
           + expandDescription;
-        // TODO: config labels
+        if (customQuestionsAnswers[1].split(' - ')[0] === 'Yes') {
+          // TODO: get components value
+          typeLabel = 'Type-Bug';
+        } else {
+          typeLabel = 'Type-Compat';
+        }
         break;
       case 'App':
         expandDescription = "WebStore page: " + customQuestionsAnswers[0] + "\n\n"
@@ -38,7 +44,7 @@ export function expandDescriptions(
       case 'Extensions / Themes':
         expandDescription = "WebStore page: " + customQuestionsAnswers[1] + "\n\n"
           + expandDescription;
-        // TODO: config labels
+        // TODO: get components value
         break;
       case 'Webstore':
         expandDescription = "WebStore page: " + customQuestionsAnswers[0] + "\n\n"
@@ -51,16 +57,27 @@ export function expandDescriptions(
           + expandDescription;
         break;
       case 'Other':
-        // TODO: config labels
+        typeLabel = "Type-Bug";
+        const issueType = customQuestionsAnswers[0].split(' - ')[0];
+        if (issueType !== 'Not sure'){
+          typeLabel = issueType;
+        }
+        // TODO: get components value
         break;
       case 'API':
         expandDescription = "Does this work in other browsers? " + customQuestionsAnswers[2] + "\n\n"
           + expandDescription;
-        // TODO: config labels
+        // TODO: get components value
         break;
       default:
         break;
-
     }
+
+    if (typeLabel.length > 0) {
+      expandLabels.push({
+        label: typeLabel
+      });
+    }
+
     return {expandDescription, expandLabels};
   }

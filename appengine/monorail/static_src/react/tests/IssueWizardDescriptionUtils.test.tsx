@@ -10,6 +10,7 @@ describe('IssueWizardDescriptionsUtils', () => {
     const {expandDescription, expandLabels} = expandDescriptions(
       'Network / Downloading',
       ['test url'],
+      false,
       'test',
       [],
     )
