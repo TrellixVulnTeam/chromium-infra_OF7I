@@ -44,6 +44,7 @@ require (
 	github.com/klauspost/compress v1.13.5
 	github.com/kr/pretty v0.3.0
 	github.com/kylelemons/godebug v1.1.0
+	github.com/linkedin/goavro/v2 v2.11.0
 	github.com/maruel/subcommands v1.1.1
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
@@ -91,6 +92,7 @@ require (
 	k8s.io/klog/v2 v2.20.0 // indirect
 	k8s.io/metrics v0.22.1
 	k8s.io/utils v0.0.0-20210820185131-d34e5cb4466e // indirect
+	sigs.k8s.io/yaml v1.3.0
 )
 
 // See https://github.com/google/cel-go/issues/441.
