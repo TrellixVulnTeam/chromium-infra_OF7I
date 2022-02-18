@@ -6,7 +6,7 @@ package ninjalog
 
 import (
 	"bytes"
-	"io/ioutil"
+	_ "embed"
 	"reflect"
 	"sort"
 	"strings"
@@ -762,14 +762,12 @@ func TestParseMetadata(t *testing.T) {
 	}
 }
 
-func BenchmarkParse(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/ninja_log")
-	if err != nil {
-		b.Errorf(`ReadFile("testdata/ninja_log")=_, %v; want_, <nil>`, err)
-	}
+//go:embed testdata/ninja_log
+var ninjaLogData []byte
 
+func BenchmarkParse(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, err := Parse(".ninja_log", bytes.NewReader(data))
+		_, err := Parse(".ninja_log", bytes.NewReader(ninjaLogData))
 		if err != nil {
 			b.Errorf(`Parse()=_, %v; want=_, <nil>`, err)
 		}
@@ -777,12 +775,7 @@ func BenchmarkParse(b *testing.B) {
 }
 
 func BenchmarkDedup(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/ninja_log")
-	if err != nil {
-		b.Errorf(`ReadFile("testdata/ninja_log")=_, %v; want_, <nil>`, err)
-	}
-
-	njl, err := Parse(".ninja_log", bytes.NewReader(data))
+	njl, err := Parse(".ninja_log", bytes.NewReader(ninjaLogData))
 	if err != nil {
 		b.Errorf(`Parse()=_, %v; want=_, <nil>`, err)
 	}
@@ -795,12 +788,7 @@ func BenchmarkDedup(b *testing.B) {
 }
 
 func BenchmarkFlow(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/ninja_log")
-	if err != nil {
-		b.Errorf(`ReadFile("testdata/ninja_log")=_, %v; want_, <nil>`, err)
-	}
-
-	njl, err := Parse(".ninja_log", bytes.NewReader(data))
+	njl, err := Parse(".ninja_log", bytes.NewReader(ninjaLogData))
 	if err != nil {
 		b.Errorf(`Parse()=_, %v; want=_, <nil>`, err)
 	}
@@ -814,12 +802,7 @@ func BenchmarkFlow(b *testing.B) {
 }
 
 func BenchmarkToTraces(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/ninja_log")
-	if err != nil {
-		b.Errorf(`ReadFile("testdata/ninja_log")=_, %v; want_, <nil>`, err)
-	}
-
-	njl, err := Parse(".ninja_log", bytes.NewReader(data))
+	njl, err := Parse(".ninja_log", bytes.NewReader(ninjaLogData))
 	if err != nil {
 		b.Errorf(`Parse()=_, %v; want=_, <nil>`, err)
 	}
@@ -832,13 +815,8 @@ func BenchmarkToTraces(b *testing.B) {
 }
 
 func BenchmarkDedupFlowToTraces(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/ninja_log")
-	if err != nil {
-		b.Errorf(`ReadFile("testdata/ninja_log")=_, %v; want_, <nil>`, err)
-	}
-
 	for i := 0; i < b.N; i++ {
-		njl, err := Parse(".ninja_log", bytes.NewReader(data))
+		njl, err := Parse(".ninja_log", bytes.NewReader(ninjaLogData))
 		if err != nil {
 			b.Errorf(`Parse()=_, %v; want=_, <nil>`, err)
 		}
