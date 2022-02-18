@@ -741,6 +741,54 @@ func servoPowerStateResetExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// servoPowerCycleRootServoExec resets(power-cycle) the servo via smart usbhub.
+func servoPowerCycleRootServoExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	// Timeout for resetting the servo. Default to be 30s.
+	resetTimeout := argsMap.AsDuration(ctx, "reset_timeout", 30, time.Second)
+	// Timeout to wait after resetting the servo. Default to be 20s.
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 20, time.Second)
+	run := info.DefaultRunner()
+	var smartUsbhubPresent = false
+	defer func() { info.RunArgs.DUT.ServoHost.SmartUsbhubPresent = smartUsbhubPresent }()
+	servoSerial := info.RunArgs.DUT.ServoHost.Servo.SerialNumber
+	// Get the usb devnum before the reset.
+	preResetDevnum, err := topology.GetServoUsbDevnum(ctx, run, servoSerial)
+	if err != nil {
+		return errors.Annotate(err, "servo power cycle root servo: find the servo").Err()
+	}
+	log.Info(ctx, "Servo usb devnum before reset: %s", preResetDevnum)
+	// Resetting servo.
+	log.Info(ctx, "Resetting servo through smart usbhub.")
+	if _, err := run(ctx, resetTimeout, "servodtool", "device", "-s", servoSerial, "power-cycle"); err != nil {
+		log.Warning(ctx, `Failed to reset servo with serial: %s. Please ignore this error if the DUT is not connected to a smart usbhub`, servoSerial)
+		return errors.Annotate(err, "servo power cycle root servo").Err()
+	}
+	// Since we are able to run the power cycle servodtool command
+	// It implies the smartUsb is present.
+	smartUsbhubPresent = true
+	log.Debug(ctx, "Wait %v for servo to come back from reset.", waitTimeout)
+	time.Sleep(waitTimeout)
+	// Reset authorized flag fror servo-hub for servo v4p1 only.
+	if ResetUsbkeyAuthorized(ctx, run, servoSerial, info.RunArgs.DUT.ServoHost.Servo.Type) != nil {
+		return errors.Annotate(err, "servo power cycle root servo").Err()
+	}
+	// Get the usb devnum after the reset.
+	postResetDevnum, err := topology.GetServoUsbDevnum(ctx, run, servoSerial)
+	if err != nil {
+		return errors.Annotate(err, "servo power cycle root servo: after rest").Err()
+	}
+	log.Info(ctx, "Servo usb devnum after reset: %s", postResetDevnum)
+	if preResetDevnum == "" || postResetDevnum == "" {
+		log.Info(ctx, "Servo reset completed but unable to verify devnum change!")
+	} else if preResetDevnum != postResetDevnum {
+		log.Info(ctx, "Reset servo with serial %s completed successfully!", servoSerial)
+	} else {
+		log.Info(ctx, "Servo reset completed but devnum is still not changed!")
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -762,4 +810,5 @@ func init() {
 	execs.Register("servo_servod_cc_toggle", servoServodCCToggleExec)
 	execs.Register("servo_reboot_ec_on_dut", servoRebootEcOnDUTExec)
 	execs.Register("servo_power_state_reset", servoPowerStateResetExec)
+	execs.Register("servo_power_cycle_root_servo", servoPowerCycleRootServoExec)
 }

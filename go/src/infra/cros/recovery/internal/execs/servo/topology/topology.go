@@ -144,6 +144,19 @@ func GetRootServoPath(ctx context.Context, runner execs.Runner, servoSerial stri
 	return servoPath, nil
 }
 
+// Get the current usb devnum of servo.
+func GetServoUsbDevnum(ctx context.Context, runner execs.Runner, servoSerial string) (string, error) {
+	rootServoPath, err := GetRootServoPath(ctx, runner, servoSerial)
+	if err != nil {
+		return "", errors.Annotate(err, "get servo usb devnum").Err()
+	}
+	devnum, err := runner(ctx, time.Minute, fmt.Sprintf("cat %s/devnum", rootServoPath))
+	if err != nil {
+		return "", errors.Annotate(err, "get servo usb devnum").Err()
+	}
+	return devnum, nil
+}
+
 // Read servo information from a file contained within file-system
 // path to servo. filename is the name of the file from which the
 // information is to be read. servoPath is the complete path to the
