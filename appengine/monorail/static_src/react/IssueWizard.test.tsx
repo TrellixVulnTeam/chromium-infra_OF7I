@@ -10,7 +10,7 @@ import {IssueWizard} from './IssueWizard.tsx';
 
 describe('IssueWizard', () => {
   it('renders', async () => {
-    render(<IssueWizard />);
+    render(<IssueWizard loginUrl="login" userDisplayName="user"/>);
 
     const stepper = document.getElementById("mobile-stepper")
 

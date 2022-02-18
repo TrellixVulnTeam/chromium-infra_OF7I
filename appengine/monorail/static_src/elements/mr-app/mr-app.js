@@ -515,7 +515,7 @@ export class MrApp extends connectStore(LitElement) {
 
     const mount = document.getElementById('reactMount');
 
-    renderWizard(mount);
+    renderWizard(mount, this.loginUrl, this.userDisplayName);
   }
 
   /**

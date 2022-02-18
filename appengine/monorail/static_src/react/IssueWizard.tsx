@@ -21,7 +21,19 @@ import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.ts
  * Base component for the issue filing wizard, wrapper for other components.
  * @return Issue wizard JSX.
  */
-export function IssueWizard(): ReactElement {
+ type Props = {
+  loginUrl: string,
+  userDisplayName: string,
+}
+export function IssueWizard(props: Props): ReactElement {
+  const {loginUrl, userDisplayName} = props;
+
+  React.useEffect(() => {
+    if(!userDisplayName) {
+      window.location.href = loginUrl;
+    }
+  },[loginUrl, userDisplayName]);
+
   const [userPersona, setUserPersona] = React.useState(IssueWizardPersona.EndUser);
   const [activeStep, setActiveStep] = React.useState(0);
   const [category, setCategory] = React.useState('');
@@ -111,9 +123,10 @@ export function IssueWizard(): ReactElement {
 
 /**
  * Renders the issue filing wizard page.
- * @param mount HTMLElement that the React component should be
- *   added to.
+ * @param mount HTMLElement that the React component should be added to.
+ * @param loginUrl redirect to login page
+ * @param userDisplayName login user
  */
-export function renderWizard(mount: HTMLElement): void {
-  ReactDOM.render(<IssueWizard />, mount);
+export function renderWizard(mount: HTMLElement, loginUrl: string, userDisplayName: string): void {
+  ReactDOM.render(<IssueWizard loginUrl={loginUrl} userDisplayName={userDisplayName}/>, mount);
 }
