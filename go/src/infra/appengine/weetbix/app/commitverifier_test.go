@@ -19,11 +19,14 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	cvv0 "go.chromium.org/luci/cv/api/v0"
 	cvv1 "go.chromium.org/luci/cv/api/v1"
+	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/cv"
 	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -35,16 +38,26 @@ func TestHandleCVRun(t *testing.T) {
 	Convey(`Test CVRunPubSubHandler`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx, skdr := tq.TestingContext(ctx, nil)
+		ctx = memory.Use(ctx) // For test config.
 
-		// Setup two ingested builds.
+		projectCfg := config.CreatePlaceholderConfig()
+		configs := map[string]*configpb.ProjectConfig{
+			"testproject": projectCfg,
+		}
+
+		err := config.SetTestProjectConfig(ctx, configs)
+		So(err, ShouldBeNil)
+
+		// Setup two ingested tryjob builds.
 		buildIDs := []int64{87654321, 87654322}
 		for _, buildID := range buildIDs {
 			buildExp := bbv1.LegacyApiCommonBuildMessage{
-				Project:   "chromium",
-				Bucket:    "luci.chromium.try",
+				Project:   "testproject",
+				Bucket:    "luci.testproject.bucket",
 				Id:        buildID,
 				Status:    bbv1.StatusCompleted,
 				CreatedTs: bbv1.FormatTimestamp(time.Now()),
+				Tags:      []string{"user_agent:cq"},
 			}
 			r := &http.Request{Body: makeBBReq(buildExp, bbHost)}
 			err := bbPubSubHandlerImpl(ctx, r)
@@ -52,7 +65,7 @@ func TestHandleCVRun(t *testing.T) {
 		}
 		So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 
-		Convey(`non chromium cv run is ignored`, func() {
+		Convey(`CV run from non-configured project is ignored`, func() {
 			psRun := &cvv1.PubSubRun{
 				Id:     "projects/fake/runs/run_id",
 				Status: cvv1.Run_SUCCEEDED,
@@ -63,10 +76,10 @@ func TestHandleCVRun(t *testing.T) {
 			So(processed, ShouldBeFalse)
 			So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 		})
-		Convey(`Chromium CV run is processed`, func() {
+		Convey(`CV run from configured project is processed`, func() {
 			ctx, skdr := tq.TestingContext(ctx, nil)
 			rID := "id_full_run"
-			fID := fullRunID(rID)
+			fID := fullRunID("testproject", rID)
 
 			processCVRun := func(run *cvv0.Run) (processed bool, tasks []*taskspb.IngestTestResults) {
 				existingTaskCount := len(skdr.Tasks().Payloads())
@@ -110,7 +123,7 @@ func TestHandleCVRun(t *testing.T) {
 				PartitionTime: run.CreateTime,
 				PresubmitRunId: &pb.PresubmitRunId{
 					System: "luci-cv",
-					Id:     chromiumProject + "/" + strings.Split(run.Id, "/")[3],
+					Id:     "testproject/" + strings.Split(run.Id, "/")[3],
 				},
 				PresubmitRunCls: []*pb.Changelist{
 					{
@@ -257,8 +270,8 @@ func tryjob(bID int64) *cvv0.Tryjob {
 	}
 }
 
-func fullRunID(runID string) string {
-	return fmt.Sprintf("projects/%s/runs/%s", chromiumProject, runID)
+func fullRunID(project, runID string) string {
+	return fmt.Sprintf("projects/%s/runs/%s", project, runID)
 }
 
 func expectedTasks(taskTemplate *taskspb.IngestTestResults, buildIDs []int64) []*taskspb.IngestTestResults {

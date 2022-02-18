@@ -15,9 +15,12 @@ import (
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	. "go.chromium.org/luci/common/testing/assertions"
 	cvv0 "go.chromium.org/luci/cv/api/v0"
+	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/tq"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/cv"
 	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -29,9 +32,18 @@ func TestHandleBuild(t *testing.T) {
 	Convey(`With Spanner Test Database`, t, func() {
 		ctx := testutil.SpannerTestContext(t)
 		ctx, skdr := tq.TestingContext(ctx, nil)
+		ctx = memory.Use(ctx) // For test config.
+
+		projectCfg := config.CreatePlaceholderConfig()
+		configs := map[string]*configpb.ProjectConfig{
+			"testproject": projectCfg,
+		}
+
+		err := config.SetTestProjectConfig(ctx, configs)
+		So(err, ShouldBeNil)
 
 		Convey(`Test BuildbucketPubSubHandler`, func() {
-			Convey(`non chromium build is ignored`, func() {
+			Convey(`build from non-configured project is ignored`, func() {
 				buildExp := bbv1.LegacyApiCommonBuildMessage{
 					Project:   "fake",
 					Bucket:    "luci.fake.bucket",
@@ -50,8 +62,8 @@ func TestHandleBuild(t *testing.T) {
 				t := time.Now().Truncate(time.Nanosecond * 1000)
 
 				buildExp := bbv1.LegacyApiCommonBuildMessage{
-					Project:   "chromium",
-					Bucket:    chromiumCIBucket,
+					Project:   "testproject",
+					Bucket:    "luci.testproject.bucket",
 					Id:        87654321,
 					Status:    bbv1.StatusCompleted,
 					CreatedTs: bbv1.FormatTimestamp(t),
@@ -83,17 +95,18 @@ func TestHandleBuild(t *testing.T) {
 				t := time.Date(2025, time.April, 1, 2, 3, 4, 0, time.UTC)
 
 				buildExp := bbv1.LegacyApiCommonBuildMessage{
-					Project:   "chromium",
-					Bucket:    "luci.chromium.try",
+					Project:   "testproject",
+					Bucket:    "luci.testproject.bucket",
 					Id:        14141414,
 					Status:    bbv1.StatusCompleted,
 					CreatedTs: bbv1.FormatTimestamp(t),
+					Tags:      []string{"user_agent:cq"},
 				}
 
 				Convey(`With presubmit run processed previously`, func() {
 					partitionTime := time.Now()
 					run := &cvv0.Run{
-						Id:         "projects/chromium/runs/123e4567-e89b-12d3-a456-426614174000",
+						Id:         "projects/testproject/runs/123e4567-e89b-12d3-a456-426614174000",
 						Mode:       "FULL_RUN",
 						Owner:      "chromium-autoroll@skia-public.iam.gserviceaccount.com",
 						CreateTime: timestamppb.New(partitionTime),
@@ -137,7 +150,7 @@ func TestHandleBuild(t *testing.T) {
 						PartitionTime: timestamppb.New(partitionTime),
 						PresubmitRunId: &pb.PresubmitRunId{
 							System: "luci-cv",
-							Id:     "chromium/123e4567-e89b-12d3-a456-426614174000",
+							Id:     "testproject/123e4567-e89b-12d3-a456-426614174000",
 						},
 						PresubmitRunSucceeded: false,
 						PresubmitRunOwner:     "automation",

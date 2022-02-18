@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/cv"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	pb "infra/appengine/weetbix/proto/v1"
@@ -29,8 +30,6 @@ const (
 	// TODO(chanli@@) Removing the hosts after CVPubSub and GetRun RPC added them.
 	// Host name of buildbucket.
 	bbHost = "cr-buildbucket.appspot.com"
-
-	chromiumProject = "chromium"
 
 	// maximumCLs is the maximum number of CLs to capture from any completed
 	// CV run, after which the CL list is truncated. This avoids CV Runs with
@@ -85,9 +84,19 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 	if err != nil {
 		return false, errors.Annotate(err, "failed to parse run ID").Err()
 	}
-	if project != chromiumProject {
-		// Received a non-chromium run, ignore it.
+
+	if chromiumMilestoneProjectRE.MatchString(project) {
+		// Chromium milestone projects are currently not supported.
 		return false, nil
+	}
+
+	if _, err := config.Project(ctx, project); err != nil {
+		if err == config.NotExistsErr {
+			// Project not configured in Weetbix, ignore it.
+			return false, nil
+		} else {
+			return false, errors.Annotate(err, "get project config").Err()
+		}
 	}
 
 	run, err := getRun(ctx, psRun)
@@ -98,8 +107,7 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 		return false, errors.New("could not get create time for the run")
 	case run.GetMode() != "FULL_RUN":
 		// Not a FULL_RUN, so the CL under test would not be submitted.
-		// Since we're only dealing with Chromium try results for now, ignore the
-		// run.
+		// Ignore the run.
 		return false, nil
 	}
 

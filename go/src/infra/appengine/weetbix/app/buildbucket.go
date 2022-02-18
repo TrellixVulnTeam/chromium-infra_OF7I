@@ -8,20 +8,29 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"infra/appengine/weetbix/internal/config"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 )
 
 const (
+	// chromiumProject is the LUCI project name of the chromium project.
+	chromiumProject = "chromium"
+
 	// chromiumCIBucket is the bucket for chromium ci builds in bb v1 format.
 	chromiumCIBucket = "luci.chromium.ci"
+
+	// cqTag is the tag appended to builds started by LUCI CV.
+	cqTag = "user_agent:cq"
 )
 
 var (
@@ -31,6 +40,10 @@ var (
 		nil,
 		// "success", "ignored", "transient-failure" or "permanent-failure".
 		field.String("status"))
+
+	// chromiumMilestoneProjectPrefix is the LUCI project prefix
+	// of chromium milestone projects, e.g. chromium-m100.
+	chromiumMilestoneProjectRE = regexp.MustCompile(`^(chrome|chromium)-m[0-9]+$`)
 )
 
 // BuildbucketPubSubHandler accepts and process buildbucket Pub/Sub messages.
@@ -55,7 +68,7 @@ func BuildbucketPubSubHandler(ctx *router.Context) {
 }
 
 func bbPubSubHandlerImpl(ctx context.Context, request *http.Request) error {
-	build, err := extractBuild(request)
+	build, err := extractBuild(ctx, request)
 
 	switch {
 	case err != nil:
@@ -85,7 +98,7 @@ type build struct {
 	result *ctlpb.BuildResult
 }
 
-func extractBuild(r *http.Request) (*build, error) {
+func extractBuild(ctx context.Context, r *http.Request) (*build, error) {
 	var msg pubsubMessage
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		return nil, errors.Annotate(err, "could not decode buildbucket pubsub message").Err()
@@ -98,9 +111,6 @@ func extractBuild(r *http.Request) (*build, error) {
 	switch err := json.Unmarshal(msg.Message.Data, &message); {
 	case err != nil:
 		return nil, errors.Annotate(err, "could not parse buildbucket pubsub message data").Err()
-	case message.Build.Project != chromiumProject:
-		// Received a non-chromium build, ignore it.
-		return nil, nil
 	case message.Build.Status != bbv1.StatusCompleted:
 		// Received build that hasn't completed yet, ignore it.
 		return nil, nil
@@ -108,10 +118,37 @@ func extractBuild(r *http.Request) (*build, error) {
 		return nil, errors.New("build did not have created timestamp specified")
 	}
 
+	if chromiumMilestoneProjectRE.MatchString(message.Build.Project) {
+		// Chromium milestone projects are currently not supported.
+		return nil, nil
+	}
+
+	if _, err := config.Project(ctx, message.Build.Project); err != nil {
+		if err == config.NotExistsErr {
+			// Project not configured in Weetbix, ignore it.
+			return nil, nil
+		} else {
+			return nil, errors.Annotate(err, "get project config").Err()
+		}
+	}
+
+	isPresubmit := false
+	for _, tag := range message.Build.Tags {
+		if tag == cqTag {
+			isPresubmit = true
+		}
+	}
+	if message.Build.Project == chromiumProject &&
+		isPresubmit != (message.Build.Bucket != chromiumCIBucket) {
+		logging.Warningf(ctx, "Build %v was detected as isPresubmit:%v by tags, but isPresubmit:%v by bucket.",
+			message.Build.Id, isPresubmit, (message.Build.Bucket != chromiumCIBucket))
+		isPresubmit = message.Build.Bucket != chromiumCIBucket
+	}
+
 	return &build{
 		project:     message.Build.Project,
 		id:          buildID(message.Hostname, message.Build.Id),
-		isPresubmit: message.Build.Bucket != chromiumCIBucket,
+		isPresubmit: isPresubmit,
 		result: &ctlpb.BuildResult{
 			CreationTime: timestamppb.New(bbv1.ParseTimestamp(message.Build.CreatedTs)),
 			Id:           message.Build.Id,
