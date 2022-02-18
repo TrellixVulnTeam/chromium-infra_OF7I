@@ -23,6 +23,9 @@ import (
 func main() {
 	ctx := context.Background()
 
+	if len(os.Args) < 2 {
+		log.Fatalf("not enough arguments passed")
+	}
 	// Check for the presence of "--" between the wrapper & the cmd
 	// bbagent already resolves the cmd to absolute path
 	args := os.Args[1:]

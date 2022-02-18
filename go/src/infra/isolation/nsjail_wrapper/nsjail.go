@@ -40,6 +40,9 @@ var execCommand = exec.Command
 // This function is replaced in the test.
 var setupNsJailLog = func(ctx context.Context) (*os.File, error) {
 	logdogBootstrap, err := bootstrap.Get()
+	if err != nil {
+		return nil, fmt.Errorf("bootstrapping failed: %s", err.Error())
+	}
 	nsjailLog, err := logdogBootstrap.Client.NewStream(ctx, "nsjail", streamclient.ForProcess())
 	if err != nil {
 		return nil, fmt.Errorf("could not open logstream for nsjail: %s", err.Error())
