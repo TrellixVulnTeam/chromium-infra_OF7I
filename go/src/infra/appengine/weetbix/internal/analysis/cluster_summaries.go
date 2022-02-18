@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"google.golang.org/api/iterator"
-
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/api/iterator"
 
 	"infra/appengine/weetbix/internal/bqutil"
 	"infra/appengine/weetbix/internal/clustering"
@@ -38,18 +37,32 @@ type ImpactfulClusterReadOptions struct {
 // ClusterSummary represents a statistical summary of a cluster's failures,
 // and their impact.
 type ClusterSummary struct {
-	ClusterID            clustering.ClusterID `json:"clusterId"`
-	PresubmitRejects1d   Counts               `json:"presubmitRejects1d"`
-	PresubmitRejects3d   Counts               `json:"presubmitRejects3d"`
-	PresubmitRejects7d   Counts               `json:"presubmitRejects7d"`
-	TestRunFails1d       Counts               `json:"testRunFailures1d"`
-	TestRunFails3d       Counts               `json:"testRunFailures3d"`
-	TestRunFails7d       Counts               `json:"testRunFailures7d"`
-	Failures1d           Counts               `json:"failures1d"`
-	Failures3d           Counts               `json:"failures3d"`
-	Failures7d           Counts               `json:"failures7d"`
-	ExampleFailureReason bigquery.NullString  `json:"exampleFailureReason"`
-	ExampleTestID        string               `json:"exampleTestId"`
+	ClusterID clustering.ClusterID `json:"clusterId"`
+	// Distinct user CLs with presubmit rejects.
+	PresubmitRejects1d Counts `json:"presubmitRejects1d"`
+	PresubmitRejects3d Counts `json:"presubmitRejects3d"`
+	PresubmitRejects7d Counts `json:"presubmitRejects7d"`
+	// Distinct test runs failed.
+	TestRunFails1d Counts `json:"testRunFailures1d"`
+	TestRunFails3d Counts `json:"testRunFailures3d"`
+	TestRunFails7d Counts `json:"testRunFailures7d"`
+	// Total test results with unexpected failures.
+	Failures1d           Counts              `json:"failures1d"`
+	Failures3d           Counts              `json:"failures3d"`
+	Failures7d           Counts              `json:"failures7d"`
+	ExampleFailureReason bigquery.NullString `json:"exampleFailureReason"`
+	// Top Test IDs included in the cluster, up to 5. Unless the cluster
+	// is empty, will always include at least one Test ID.
+	TopTestIDs []TopCount `json:"topTestIds"`
+}
+
+// ExampleTestID returns an example Test ID that is part of the cluster, or
+// "" if the cluster is empty.
+func (s *ClusterSummary) ExampleTestID() string {
+	if len(s.TopTestIDs) > 0 {
+		return s.TopTestIDs[0].Value
+	}
+	return ""
 }
 
 // Counts captures the values of an integer-valued metric in different
@@ -69,6 +82,15 @@ type Counts struct {
 	//   (I.E. bug clusters.)
 	// - before impact has been reduced by exoneration.
 	ResidualPreExoneration int64 `json:"residualPreExoneration"`
+}
+
+// TopCount captures the result of the APPROX_TOP_COUNT operator. See:
+// https://cloud.google.com/bigquery/docs/reference/standard-sql/approximate_aggregate_functions#approx_top_count
+type TopCount struct {
+	// Value is the value that was frequently occurring.
+	Value string `json:"value"`
+	// Count is the frequency with which the value occurred.
+	Count int64 `json:"count"`
 }
 
 // NewClient creates a new client for reading clusters. Close() MUST
@@ -175,8 +197,8 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 		selectCounts("failures", "Failures", "3d") +
 		selectCounts("failures", "Failures", "7d") + `
 			example_failure_reason.primary_error_message as ExampleFailureReason,
-			example_test_id as ExampleTestID
-		FROM ` + dataset + `.cluster_summaries
+			top_test_ids as TopTestIDs
+		FROM cluster_summaries
 		WHERE (` + whereFailures + `) OR (` + whereTestRuns + `) OR (` + wherePresubmits + `)
 			OR STRUCT(cluster_algorithm AS Algorithm, cluster_id as ID) IN UNNEST(@alwaysInclude)
 		ORDER BY
@@ -184,6 +206,7 @@ func (c *Client) ReadImpactfulClusters(ctx context.Context, opts ImpactfulCluste
 			test_run_fails_residual_1d DESC,
 			failures_residual_1d DESC
 	`)
+	q.DefaultDatasetID = dataset
 
 	params := []bigquery.QueryParameter{
 		{
@@ -282,11 +305,12 @@ func (c *Client) ReadCluster(ctx context.Context, luciProject string, clusterID 
 		selectCounts("failures", "Failures", "3d") +
 		selectCounts("failures", "Failures", "7d") + `
 			example_failure_reason.primary_error_message as ExampleFailureReason,
-			example_test_id as ExampleTestID
-		FROM ` + dataset + `.cluster_summaries
+			top_test_ids as TopTestIDs
+		FROM cluster_summaries
 		WHERE cluster_algorithm = @clusterAlgorithm
 		  AND cluster_id = @clusterID
 	`)
+	q.DefaultDatasetID = dataset
 	q.Parameters = []bigquery.QueryParameter{
 		{Name: "clusterAlgorithm", Value: clusterID.Algorithm},
 		{Name: "clusterID", Value: clusterID.ID},
@@ -322,6 +346,8 @@ type ClusterFailure struct {
 	TestID                      bigquery.NullString    `json:"testId"`
 	Variant                     []*Variant             `json:"variant"`
 	PresubmitRunID              *PresubmitRunID        `json:"presubmitRunId"`
+	PresubmitRunOwner           bigquery.NullString    `json:"presubmitRunOwner"`
+	PresubmitRunCl              *Changelist            `json:"presubmitRunCl"`
 	PartitionTime               bigquery.NullTimestamp `json:"partitionTime"`
 	IsExonerated                bigquery.NullBool      `json:"isExonerated"`
 	IngestedInvocationID        bigquery.NullString    `json:"ingestedInvocationId"`
@@ -341,6 +367,12 @@ type PresubmitRunID struct {
 	ID     bigquery.NullString `json:"id"`
 }
 
+type Changelist struct {
+	Host     bigquery.NullString `json:"host"`
+	Change   bigquery.NullInt64  `json:"change"`
+	Patchset bigquery.NullInt64  `json:"patchset"`
+}
+
 // ReadClusterFailures reads the latest 2000 groups of failures for a single cluster for the last 7 days.
 // A group of failures are failures that would be grouped together in MILO display, i.e.
 // same ingested_invocation_id, test_id and variant.
@@ -350,31 +382,46 @@ func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, cl
 		return nil, errors.Annotate(err, "getting dataset").Err()
 	}
 	q := c.client.Query(`
+		WITH latest_failures_7d AS (
+			SELECT
+				cluster_algorithm,
+				cluster_id,
+				test_result_system,
+				test_result_id,
+				ARRAY_AGG(cf ORDER BY cf.last_updated DESC LIMIT 1)[OFFSET(0)] as r
+			FROM clustered_failures cf
+			WHERE cf.partition_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+			GROUP BY cluster_algorithm, cluster_id, test_result_system, test_result_id
+			HAVING r.is_included
+		)
 		SELECT
-			realm as Realm,
-			test_id as TestID,
-			ANY_VALUE(variant) as Variant,
-			ANY_VALUE(presubmit_run_id) as PresubmitRunID,
-			partition_time as PartitionTime,
-			ANY_VALUE(is_exonerated) as IsExonerated,
-			ingested_invocation_id as IngestedInvocationID,
-			ANY_VALUE(is_ingested_invocation_blocked) as IsIngestedInvocationBlocked,
-			ARRAY_AGG(DISTINCT test_run_id) as TestRunIds,
-			ANY_VALUE(is_test_run_blocked) as IsTestRunBlocked,
+			r.realm as Realm,
+			r.test_id as TestID,
+			ANY_VALUE(r.variant) as Variant,
+			ANY_VALUE(r.presubmit_run_id) as PresubmitRunID,
+			ANY_VALUE(r.presubmit_run_owner) as PresubmitRunOwner,
+			ANY_VALUE(IF(ARRAY_LENGTH(r.presubmit_run_cls)>0,
+				r.presubmit_run_cls[OFFSET(0)], NULL)) as PresubmitRunCL,
+			r.partition_time as PartitionTime,
+			ANY_VALUE(r.is_exonerated) as IsExonerated,
+			r.ingested_invocation_id as IngestedInvocationID,
+			ANY_VALUE(r.is_ingested_invocation_blocked) as IsIngestedInvocationBlocked,
+			ARRAY_AGG(DISTINCT r.test_run_id) as TestRunIds,
+			ANY_VALUE(r.is_test_run_blocked) as IsTestRunBlocked,
 			count(*) as Count
-		FROM
-			` + dataset + `.clustered_failures_latest_7d
+		FROM latest_failures_7d
 		WHERE cluster_algorithm = @clusterAlgorithm
 		  AND cluster_id = @clusterID
 		GROUP BY
-			realm,
-			ingested_invocation_id,
-			test_id,
-			variant_hash,
-			partition_time			
-		ORDER BY partition_time DESC
+			r.realm,
+			r.ingested_invocation_id,
+			r.test_id,
+			r.variant_hash,
+			r.partition_time
+		ORDER BY r.partition_time DESC
 		LIMIT 2000
 	`)
+	q.DefaultDatasetID = dataset
 	q.Parameters = []bigquery.QueryParameter{
 		{Name: "clusterAlgorithm", Value: clusterID.Algorithm},
 		{Name: "clusterID", Value: clusterID.ID},

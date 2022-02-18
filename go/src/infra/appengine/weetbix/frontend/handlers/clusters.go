@@ -135,7 +135,7 @@ func suggestedClusterTitle(cs *analysis.ClusterSummary, cfg *compiledcfg.Project
 	switch {
 	case alg != nil:
 		example := &clustering.Failure{
-			TestID: cs.ExampleTestID,
+			TestID: cs.ExampleTestID(),
 			Reason: &weetbixpb.FailureReason{
 				PrimaryErrorMessage: cs.ExampleFailureReason.StringVal,
 			},
@@ -143,7 +143,7 @@ func suggestedClusterTitle(cs *analysis.ClusterSummary, cfg *compiledcfg.Project
 		title = alg.ClusterTitle(cfg, example)
 	case cs.ClusterID.IsTestNameCluster():
 		// Fallback for old test name clusters.
-		title = cs.ExampleTestID
+		title = cs.ExampleTestID()
 	case cs.ClusterID.IsFailureReasonCluster():
 		// Fallback for old reason-based clusters.
 		title = cs.ExampleFailureReason.StringVal
@@ -176,7 +176,7 @@ func newCluster(cs *analysis.ClusterSummary, cfg *compiledcfg.ProjectConfig) *Cl
 		alg, _ := algorithms.SuggestingAlgorithm(cs.ClusterID.Algorithm)
 		if alg != nil {
 			example := &clustering.Failure{
-				TestID: cs.ExampleTestID,
+				TestID: cs.ExampleTestID(),
 				Reason: &weetbixpb.FailureReason{
 					PrimaryErrorMessage: cs.ExampleFailureReason.StringVal,
 				},

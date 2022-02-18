@@ -12,6 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/bigquery"
+	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/config/validation"
+	"go.chromium.org/luci/gae/impl/memory"
+	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs"
 	"infra/appengine/weetbix/internal/bugs/monorail"
@@ -27,14 +35,6 @@ import (
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"cloud.google.com/go/bigquery"
-	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/luci/config/validation"
-	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/span"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestRun(t *testing.T) {
@@ -495,21 +495,21 @@ func TestRun(t *testing.T) {
 func makeSuggestedCluster(config *compiledcfg.ProjectConfig, uniqifier int) *analysis.ClusterSummary {
 	testID := fmt.Sprintf("testname-%v", uniqifier)
 	return &analysis.ClusterSummary{
-		ClusterID:     testIDClusterID(config, testID),
-		Failures1d:    analysis.Counts{Residual: 9},
-		Failures3d:    analysis.Counts{Residual: 29},
-		Failures7d:    analysis.Counts{Residual: 69},
-		ExampleTestID: testID,
+		ClusterID:  testIDClusterID(config, testID),
+		Failures1d: analysis.Counts{Residual: 9},
+		Failures3d: analysis.Counts{Residual: 29},
+		Failures7d: analysis.Counts{Residual: 69},
+		TopTestIDs: []analysis.TopCount{{Value: testID, Count: 1}},
 	}
 }
 
 func makeBugCluster(ruleID string) *analysis.ClusterSummary {
 	return &analysis.ClusterSummary{
-		ClusterID:     bugClusterID(ruleID),
-		Failures1d:    analysis.Counts{Residual: 9},
-		Failures3d:    analysis.Counts{Residual: 29},
-		Failures7d:    analysis.Counts{Residual: 69},
-		ExampleTestID: "testname-0",
+		ClusterID:  bugClusterID(ruleID),
+		Failures1d: analysis.Counts{Residual: 9},
+		Failures3d: analysis.Counts{Residual: 29},
+		Failures7d: analysis.Counts{Residual: 69},
+		TopTestIDs: []analysis.TopCount{{Value: "testname-0", Count: 1}},
 	}
 }
 

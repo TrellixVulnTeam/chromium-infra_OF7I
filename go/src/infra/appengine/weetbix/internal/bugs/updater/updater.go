@@ -226,7 +226,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 // failure association rule.
 func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary) (created bool, err error) {
 	failure := &clustering.Failure{
-		TestID: cs.ExampleTestID,
+		TestID: cs.ExampleTestID(),
 	}
 	if cs.ExampleFailureReason.Valid {
 		failure.Reason = &pb.FailureReason{PrimaryErrorMessage: cs.ExampleFailureReason.StringVal}
