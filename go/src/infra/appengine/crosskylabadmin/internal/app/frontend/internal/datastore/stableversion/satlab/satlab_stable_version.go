@@ -114,12 +114,24 @@ func GetSatlabStableVersionEntryByRawID(ctx context.Context, id string) (*Satlab
 	return entry, nil
 }
 
-// MakeSatlabStableVersionID takes a hostname, board, and model and combines them into an ID.
+// MakeSatlabStableVersionIDImpl takes a hostname, board, and model and combines them into an ID.
 func MakeSatlabStableVersionID(hostname string, board string, model string) string {
+	return makeSatlabStableVersionIDImpl(hostname, board, model, true)
+}
+
+// MakeSatlabStableVersionIDImpl takes a hostname, board, and model and combines them into an ID, possibly performing case normalization.
+func makeSatlabStableVersionIDImpl(hostname string, board string, model string, normalizeCase bool) string {
 	if hostname != "" {
+		if normalizeCase {
+			hostname = strings.TrimSpace(strings.ToLower(hostname))
+		}
 		return hostname
 	}
 	if model != "" && board != "" {
+		if normalizeCase {
+			board = strings.TrimSpace(strings.ToLower(board))
+			model = strings.TrimSpace(strings.ToLower(model))
+		}
 		return fmt.Sprintf("%s|%s", board, model)
 	}
 	return ""

@@ -45,7 +45,7 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 			in: &fleet.SetSatlabStableVersionRequest{
 				Strategy: &fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy{
 					SatlabHostnameStrategy: &fleet.SatlabHostnameStrategy{
-						Hostname: "AAA-HOSTNAME-AAA",
+						Hostname: "aaa-hostname-aaa",
 					},
 				},
 				CrosVersion:     "AAA-CROS-AAA",
@@ -53,7 +53,7 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 				FirmwareImage:   "AAA-FWImage-AAA",
 			},
 			out: &SatlabStableVersionEntry{
-				ID:      "AAA-HOSTNAME-AAA",
+				ID:      "aaa-hostname-aaa",
 				OS:      "AAA-CROS-AAA",
 				FW:      "AAA-FW-AAA",
 				FWImage: "AAA-FWImage-AAA",
@@ -64,8 +64,8 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 			in: &fleet.SetSatlabStableVersionRequest{
 				Strategy: &fleet.SetSatlabStableVersionRequest_SatlabBoardAndModelStrategy{
 					SatlabBoardAndModelStrategy: &fleet.SatlabBoardAndModelStrategy{
-						Board: "AAA-BOARD-AAA",
-						Model: "AAA-MODEL-AAA",
+						Board: "aaa-board-aaa",
+						Model: "aaa-model-aaa",
 					},
 				},
 				CrosVersion:     "AAA-CROS-AAA",
@@ -73,7 +73,7 @@ func TestMakeSatlabStableVersionEntry(t *testing.T) {
 				FirmwareImage:   "AAA-FWImage-AAA",
 			},
 			out: &SatlabStableVersionEntry{
-				ID:      "AAA-BOARD-AAA|AAA-MODEL-AAA",
+				ID:      "aaa-board-aaa|aaa-model-aaa",
 				OS:      "AAA-CROS-AAA",
 				FW:      "AAA-FW-AAA",
 				FWImage: "AAA-FWImage-AAA",
@@ -115,19 +115,19 @@ func TestGetSatlabStableVersionEntryByID(t *testing.T) {
 		{
 			name: "hostname",
 			in: &SatlabStableVersionEntry{
-				ID:      "AAA-HOSTNAME-AAA",
+				ID:      "aaa-hostname-aaa",
 				OS:      "AAA-CROS-AAA",
 				FW:      "AAA-FW-AAA",
 				FWImage: "AAA-FWImage-AAA",
 			},
 			req: &fleet.GetStableVersionRequest{
-				Hostname: "AAA-HOSTNAME-AAA",
+				Hostname: "aaa-hostname-aaa",
 			},
 		},
 		{
 			name: "hostname",
 			in: &SatlabStableVersionEntry{
-				ID:      "AAA-BOARD-AAA|AAA-MODEL-AAA",
+				ID:      "aaa-board-aaa|aaa-model-aaa",
 				OS:      "AAA-CROS-AAA",
 				FW:      "AAA-FW-AAA",
 				FWImage: "AAA-FWImage-AAA",
