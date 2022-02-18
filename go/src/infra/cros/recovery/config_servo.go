@@ -169,7 +169,8 @@ const servoRepairPlanBody = `
 		],
 		"recovery_actions": [
 			"servo_servod_and_labstation_disk_cleanup",
-			"cros_create_reboot_request"
+			"cros_create_reboot_request",
+			"servo_host_v3_reboot"
 		]
 	},
 	"servo_servod_and_labstation_disk_cleanup":{
@@ -202,9 +203,6 @@ const servoRepairPlanBody = `
 			"cros_ssh",
 			"servo_v3_root_present",
 			"servo_v4_root_present"
-		],
-		"recovery_actions": [
-			"cros_create_reboot_request"
 		],
 		"exec_name":"sample_pass"
 	},
@@ -269,6 +267,9 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_servo_v3"
 		],
+		"recovery_actions": [
+			"servo_host_v3_reboot"
+		],
 		"exec_name":"sample_pass"
 	},
 	"servo_v4_root_present": {
@@ -277,6 +278,9 @@ const servoRepairPlanBody = `
 		],
 		"conditions": [
 			"is_not_servo_v3"
+		],
+		"recovery_actions": [
+			"cros_create_reboot_request"
 		]
 	},
 	"servo_fw_need_update": {
@@ -1116,5 +1120,20 @@ const servoRepairPlanBody = `
 		},
 		"run_control": 2,
 		"allow_fail_after_recovery": true
+	},
+	"servo_host_v3_reboot":{
+		"docs":[
+			"Try to reboot servo host v3."
+		],
+		"conditions": [
+			"is_servo_v3"
+		],
+		"exec_timeout": {
+			"seconds": 300
+		},
+		"exec_extra_args": [
+			"reboot_timeout:10"
+		],
+		"run_control": 2
 	}
 }`
