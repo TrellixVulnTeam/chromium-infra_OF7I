@@ -117,6 +117,15 @@ func IsPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, 
 	return info.RunArgs.Access.Ping(ctx, resourceName, count)
 }
 
+// IsNotPingable checks whether the resource is not pingable
+func IsNotPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, count int) error {
+	if err := info.RunArgs.Access.Ping(ctx, resourceName, count); err != nil {
+		log.Debug(ctx, "Resource %s is not pingble, but expected.", resourceName)
+		return nil
+	}
+	return errors.Reason("not pingable: is pingable").Err()
+}
+
 const (
 	pingAttemptInteval = 5 * time.Second
 	sshAttemptInteval  = 10 * time.Second
@@ -128,6 +137,13 @@ func WaitUntilPingable(ctx context.Context, info *execs.ExecInfo, resourceName s
 	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
 		return IsPingable(ctx, info, resourceName, count)
 	}, "wait to ping")
+}
+
+// WaitUntilNotPingable waiting resource to be not pingable.
+func WaitUntilNotPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, waitTime time.Duration, count int) error {
+	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
+		return IsNotPingable(ctx, info, resourceName, count)
+	}, "wait to be not pingable")
 }
 
 // IsSSHable checks whether the resource is sshable
@@ -310,4 +326,49 @@ func ServoNICMacAddress(ctx context.Context, r execs.Runner, nicPath string) (st
 	}
 	log.Info(ctx, "Servo NIC MAC address visible from DUT: %s", macAddress)
 	return macAddress, nil
+}
+
+const (
+	// bootIDFile is the file path to the file that contains the boot id information.
+	bootIDFilePath = "/proc/sys/kernel/random/boot_id"
+	// noIDMessage is the default boot id file content if the device does not have a boot id.
+	noIDMessage = "no boot_id available"
+)
+
+// BootID gets a unique ID associated with the current boot.
+//
+// @returns: A string unique to this boot if there is no error.
+func BootID(ctx context.Context, run execs.Runner) (string, error) {
+	bootId, err := run(ctx, 60*time.Second, fmt.Sprintf("cat %s", bootIDFilePath))
+	if err != nil {
+		return "", errors.Annotate(err, "boot id").Err()
+	}
+	if bootId == noIDMessage {
+		return "", errors.Reason("no boot id available").Err()
+	}
+	return bootId, nil
+}
+
+const (
+	// defaultPingRetryCount is the default ping retry count.
+	defaultPingRetryCount = 2
+	// waitDownRebootTime is the time the program will wait for the device to be down.
+	waitDownRebootTime = 120 * time.Second
+	// waitUpRebootTime is the time the program will wait for the device to be up after reboot.
+	waitUpRebootTime = 240 * time.Second
+)
+
+// WaitForRestart will first wait the device to go down and then wait for the device to up.
+func WaitForRestart(ctx context.Context, info *execs.ExecInfo) error {
+	// wait for it to be down.
+	if waitDownErr := WaitUntilNotPingable(ctx, info, info.RunArgs.ResourceName, waitDownRebootTime, defaultPingRetryCount); waitDownErr != nil {
+		log.Debug(ctx, "Servo v3 shut down failed.")
+		return errors.Annotate(waitDownErr, "servo v3 reboot").Err()
+	}
+	// wait down for servo device is successful, then wait for device up.
+	if waitUpErr := WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, waitUpRebootTime, defaultPingRetryCount); waitUpErr != nil {
+		return errors.Annotate(waitUpErr, "servo v3 reboot").Err()
+	}
+	log.Info(ctx, "Servo v3 is up.")
+	return nil
 }

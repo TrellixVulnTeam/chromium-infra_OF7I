@@ -789,6 +789,49 @@ func servoPowerCycleRootServoExec(ctx context.Context, info *execs.ExecInfo) err
 	return nil
 }
 
+const (
+	// rebootCmd is the reboot command that is used to restart the servo v3.
+	rebootCmd = "sync & sleep 5; reboot & sleep 60; reboot -f & sleep 10; reboot -nf & sleep 10; telinit 6"
+	// runCmdInBackgroundCmd will run the cmd in the background and return immediately returns immediately without waiting for the command's completion.
+	runCmdInBackgroundCmd = `( %s ) </dev/null >/dev/null 2>&1 & echo -n $!`
+)
+
+// servoHostV3RebootExec will reboot the servo host v3 and checking whether the reboot succeed by comparing the
+// old reboot id vs the new reboot id after restart.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["reboot_timeout:x"]
+func servoHostV3RebootExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	// Timeout to for executing the reboot command on the labstation.
+	rebootTimeout := argsMap.AsDuration(ctx, "reboot_timeout", 10, time.Second)
+	run := info.DefaultRunner()
+	oldBootId, err := cros.BootID(ctx, run)
+	if err != nil {
+		// When there is no bootid found on the servo v3
+		return cros.WaitForRestart(ctx, info)
+	} else {
+		log.Debug(ctx, "Found old boot id: %s", oldBootId)
+		// when there is a bootid associated, then restart the device with command.
+		if _, err := run(ctx, rebootTimeout, fmt.Sprintf(runCmdInBackgroundCmd, rebootCmd)); err != nil {
+			return errors.Annotate(err, "servo host v3 reboot").Err()
+		}
+		// wait for restart as wait for it to go down and go up again.
+		if restartErr := cros.WaitForRestart(ctx, info); restartErr != nil {
+			return errors.Annotate(restartErr, "servo host v3 reboot").Err()
+		}
+		newBootId, err := cros.BootID(ctx, run)
+		if err != nil {
+			return errors.Annotate(err, "servo host v3 reboot").Err()
+		}
+		if newBootId == oldBootId {
+			return errors.Reason("servo host v3 reboot: reboot fail as new boot id: %s equal to old boot id: %s", newBootId, oldBootId).Err()
+		}
+		log.Info(ctx, "reboot is successful")
+		return nil
+	}
+}
+
 func init() {
 	execs.Register("servo_host_servod_init", servodInitActionExec)
 	execs.Register("servo_host_servod_stop", servodStopActionExec)
@@ -811,4 +854,5 @@ func init() {
 	execs.Register("servo_reboot_ec_on_dut", servoRebootEcOnDUTExec)
 	execs.Register("servo_power_state_reset", servoPowerStateResetExec)
 	execs.Register("servo_power_cycle_root_servo", servoPowerCycleRootServoExec)
+	execs.Register("servo_host_v3_reboot", servoHostV3RebootExec)
 }
