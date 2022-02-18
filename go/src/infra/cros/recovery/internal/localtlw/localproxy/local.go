@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	// Mapping resource to proxy port created for local testing.
+	// Mapping resource of proxy port to host and jumpHost
+	// created for local testing.
 	hostProxyPortMap = map[string]int{}
 	// Incrementally port number used to track which port will be used next.
 	lastUsedProxyPort = 2500
@@ -20,11 +21,11 @@ var (
 
 // RegHost registers the hostname for proxy connections map.
 // If hostname i snot known then new proxy will be created and register to map.
-func RegHost(ctx context.Context, hostname string) error {
+func RegHost(ctx context.Context, hostname string, jumpHostname string) error {
 	if _, ok := hostProxyPortMap[hostname]; !ok {
-		p := newProxy(ctx, hostname, lastUsedProxyPort)
+		p := newProxy(ctx, hostname, lastUsedProxyPort, jumpHostname, lastUsedProxyPort+1)
 		if p.Port() == lastUsedProxyPort {
-			lastUsedProxyPort++
+			lastUsedProxyPort += 2
 		}
 		hostProxyPortMap[hostname] = p.Port()
 	}

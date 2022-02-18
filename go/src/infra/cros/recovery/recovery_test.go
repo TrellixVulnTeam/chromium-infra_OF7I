@@ -344,7 +344,7 @@ func TestRunDUTPlan(t *testing.T) {
 }
 
 func TestLocalproxyFlag(t *testing.T) {
-	if useProxyForSSHAccess {
-		t.Errorf("please keep useProxyForSSHAccess as false")
+	if jumpHostForLocalProxy != "" {
+		t.Errorf("please keep defaultProxyLabDUT as empty for merge code.")
 	}
 }

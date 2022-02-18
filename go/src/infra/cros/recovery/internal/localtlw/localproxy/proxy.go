@@ -22,41 +22,50 @@ var (
 
 // Proxy holds info for active running ssh proxy for requested host.
 type proxy struct {
-	requestHost string
-	port        int
-	cmd         *exec.Cmd
+	host         string
+	hostPort     int
+	jumpHost     string
+	jumpHostPort int
+	cmd          *exec.Cmd
 }
 
 // newProxy creates if not exist or returns existing proxy from pool.
-func newProxy(ctx context.Context, host string, port int) *proxy {
+func newProxy(ctx context.Context, host string, hostPort int, jumpHost string, jumpHostPort int) *proxy {
 	p, ok := proxyPool[host]
 	if !ok {
 		p = &proxy{
-			requestHost: host,
-			port:        port,
+			host:         host,
+			hostPort:     hostPort,
+			jumpHost:     jumpHost,
+			jumpHostPort: jumpHostPort,
 		}
-		p.cmd = exec.CommandContext(ctx, "ssh", "-f", "-N", "-L", fmt.Sprintf("%d:127.0.0.1:22", p.port), fmt.Sprintf("root@%s", p.requestHost))
+		// Ex.: the proxy create command will look something like this:
+		// "ssh -f -N -L jumpHostPort:127.0.0.1:22 -L hostPort:host:22 root@jumpHost"
+		p.cmd = exec.CommandContext(ctx, "ssh", "-f", "-N",
+			"-L", fmt.Sprintf("%d:127.0.0.1:22", p.jumpHostPort),
+			"-L", fmt.Sprintf("%d:%s:22", p.hostPort, p.host),
+			fmt.Sprintf("root@%s", p.jumpHost))
 		initSystemProcAttr(p)
 		stderr, err := p.cmd.StderrPipe()
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("---> local proxy for %q on port %v\n", p.requestHost, p.port)
+		fmt.Printf("---> local proxy for %q on port %v (with jump host of %q on jump host port: %v)\n", p.host, p.hostPort, p.jumpHost, p.jumpHostPort)
 		if err := p.cmd.Start(); err != nil {
 			fmt.Printf("Fail to starte proxy: %s\n", err)
 		}
 		go func() {
 			slurp, _ := io.ReadAll(stderr)
-			fmt.Printf("Logs for %q proxy: %s\n", p.requestHost, slurp)
+			fmt.Printf("Logs for %q proxy: %s\n", p.host, slurp)
 			err := p.cmd.Wait()
 			if err != nil {
-				fmt.Printf("Proxy %q for %q finished with error: %s\n", p.address(), p.requestHost, err)
+				fmt.Printf("Proxy %q for %q finished with error: %s\n", p.address(), p.host, err)
 			} else {
-				fmt.Printf("Proxy %q for %q finished\n", p.address(), p.requestHost)
+				fmt.Printf("Proxy %q for %q finished\n", p.address(), p.host)
 			}
 		}()
 		time.Sleep(time.Second)
-		proxyPool[p.requestHost] = p
+		proxyPool[p.host] = p
 	}
 	return p
 }
@@ -69,10 +78,10 @@ func ClosePool() {
 }
 
 func (p *proxy) address() string {
-	return fmt.Sprintf("root@127.0.0.1:%d", p.port)
+	return fmt.Sprintf("root@127.0.0.1:%d", p.hostPort)
 }
 
 // Port provides proxy port information.
 func (p *proxy) Port() int {
-	return p.port
+	return p.hostPort
 }

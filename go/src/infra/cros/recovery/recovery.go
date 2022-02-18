@@ -28,9 +28,15 @@ import (
 )
 
 const (
-	// Flag to enable create proxy for when running agains device in test
-	// network from workstation. Keep always false when merge it.
-	useProxyForSSHAccess = false
+	// Default DUT used for the jump host proxy between local workstation and
+	// labstation in the Lab.
+	// Since the connection between local and lab is usually unstable after the
+	// device in lab reboot, need a middle DUT for middle proxy bridge.
+	//
+	// If this is empty, then no proxy will be created.
+	// If this is not empty, then create proxy for when running against device in
+	// test network from workstation. Kepp always empty when merge it.
+	jumpHostForLocalProxy = ""
 )
 
 // Run runs the recovery tasks against the provided unit.
@@ -330,18 +336,18 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		BuildbucketID:  args.BuildbucketID,
 	}
 	// As port 22 to connect to the lab is closed and there is work around to
-	// create proxy fro local execution. Creating proxy for all resources used
+	// create proxy for local execution. Creating proxy for all resources used
 	// for this devices. We need created all of them at the beginning as one
 	// plan can have access to current resource or another one.
-	// Always has to be false fro merge code
-	if useProxyForSSHAccess {
+	// Always has to be empty for merge code
+	if jumpHostForLocalProxy != "" {
 		for _, planName := range planNames {
 			resources := collectResourcesForPlan(planName, execArgs.DUT)
 			for _, resource := range resources {
 				if sh := execArgs.DUT.ServoHost; sh != nil && sh.Name == resource && sh.ContainerName != "" {
 					continue
 				}
-				if err := localproxy.RegHost(ctx, resource); err != nil {
+				if err := localproxy.RegHost(ctx, resource, jumpHostForLocalProxy); err != nil {
 					return errors.Annotate(err, "run plans: create proxy for %q", resource).Err()
 				}
 			}
