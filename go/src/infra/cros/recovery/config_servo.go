@@ -17,6 +17,7 @@ const servoRepairPlanBody = `
 	"cros_ping",
 	"cros_ssh",
 	"servo_v3_uptime",
+	"servo_power_cycle_root_servo",
 	"set_state_servo_host_issue",
 	"lock_labstation",
 	"set_state_broken",
@@ -1098,5 +1099,22 @@ const servoRepairPlanBody = `
 			"wait_timeout:30"
 		],
 		"run_control": 1
+	},
+	"servo_power_cycle_root_servo":{
+		"docs":[
+			"Try to reset(power-cycle) the servo via smart usbhub."
+		],
+		"conditions": [
+			"servo_host_is_labstation"
+		],
+		"exec_extra_args": [
+			"reset_timeout:30",
+			"wait_timeout:20"
+		],
+		"exec_timeout": {
+			"seconds": 120
+		},
+		"run_control": 2,
+		"allow_fail_after_recovery": true
 	}
 }`
