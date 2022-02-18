@@ -78,10 +78,8 @@ func (s *iServod) Has(ctx context.Context, command string) error {
 	if command == "" {
 		return errors.Reason("has: command not specified").Err()
 	}
-	if _, err := s.Call(ctx, "doc", command); err == nil {
-		return errors.Annotate(err, "has: %q is not know", command).Err()
-	}
-	return nil
+	_, err := s.Call(ctx, "doc", command)
+	return errors.Annotate(err, "has: %q is not know", command).Err()
 }
 
 // Port provides port used for running servod daemon.
