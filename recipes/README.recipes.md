@@ -64,7 +64,7 @@
   * [recipes_py_continuous](#recipes-recipes_py_continuous)
   * [support_3pp:tests/full](#recipes-support_3pp_tests_full) (Python3 ✅)
   * [tricium_infra](#recipes-tricium_infra)
-  * [update_submodules_mirror](#recipes-update_submodules_mirror)
+  * [update_submodules_mirror](#recipes-update_submodules_mirror) (Python3 ✅)
   * [windows_adk:examples/ensure](#recipes-windows_adk_examples_ensure)
   * [windows_image_builder/offline](#recipes-windows_image_builder_offline) (Python3 ✅)
   * [windows_image_builder/winpe_customization](#recipes-windows_image_builder_winpe_customization) (Python3 ✅)
@@ -1603,7 +1603,7 @@ This recipe runs legacy analyzers for the infra repo.
 
 [DEPS](/recipes/recipes/update_submodules_mirror.py#12): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [GetSubmodules](/recipes/recipes/update_submodules_mirror.py#179)(api, deps, source_checkout_name, overlays):**
 

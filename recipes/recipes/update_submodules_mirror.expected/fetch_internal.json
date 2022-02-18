@@ -79,7 +79,7 @@
       "all",
       "--ignore-dep-type=cipd",
       "--spec",
-      "solutions=[{'url': 'https://chromium.googlesource.com/chromium/src', 'managed': False, 'name': 'src/', 'deps_file': 'DEPS', 'custom_vars': {'checkout_src_internal': True}}]",
+      "solutions=[{'managed': False, 'name': 'src/', 'url': 'https://chromium.googlesource.com/chromium/src', 'deps_file': 'DEPS', 'custom_vars': {'checkout_src_internal': True}}]",
       "--output-json=-"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror",

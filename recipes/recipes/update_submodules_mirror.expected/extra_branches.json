@@ -90,7 +90,7 @@
       "all",
       "--ignore-dep-type=cipd",
       "--spec",
-      "solutions=[{'url': 'https://chromium.googlesource.com/chromium/src', 'managed': False, 'name': 'src/', 'deps_file': 'DEPS'}]",
+      "solutions=[{'managed': False, 'name': 'src/', 'url': 'https://chromium.googlesource.com/chromium/src', 'deps_file': 'DEPS'}]",
       "--output-json=-"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror",
@@ -222,7 +222,7 @@
       "all",
       "--ignore-dep-type=cipd",
       "--spec",
-      "solutions=[{'url': 'https://chromium.googlesource.com/chromium/src', 'managed': False, 'name': 'src/', 'deps_file': 'DEPS'}]",
+      "solutions=[{'managed': False, 'name': 'src/', 'url': 'https://chromium.googlesource.com/chromium/src', 'deps_file': 'DEPS'}]",
       "--output-json=-"
     ],
     "cwd": "[CACHE]/codesearch_update_submodules_mirror",
