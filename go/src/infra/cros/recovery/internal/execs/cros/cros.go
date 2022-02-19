@@ -112,7 +112,7 @@ func uptime(ctx context.Context, run execs.Runner) (*time.Duration, error) {
 }
 
 // IsPingable checks whether the resource is pingable
-// TODO: Create pingable and pass it instead ExecInfo
+// TODO: Migrate usage from components.
 func IsPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, count int) error {
 	return info.RunArgs.Access.Ping(ctx, resourceName, count)
 }
@@ -132,6 +132,7 @@ const (
 )
 
 // WaitUntilPingable waiting resource to be pingable.
+// TODO: Migrate usage from components.
 func WaitUntilPingable(ctx context.Context, info *execs.ExecInfo, resourceName string, waitTime time.Duration, count int) error {
 	log.Debug(ctx, "Start ping %q for the next %s.", resourceName, waitTime)
 	return retry.WithTimeout(ctx, pingAttemptInteval, waitTime, func() error {
@@ -147,12 +148,14 @@ func WaitUntilNotPingable(ctx context.Context, info *execs.ExecInfo, resourceNam
 }
 
 // IsSSHable checks whether the resource is sshable
+// TODO: Migrate usage from components.
 func IsSSHable(ctx context.Context, run execs.Runner) error {
 	_, err := run(ctx, time.Minute, "true")
 	return errors.Annotate(err, "is sshable").Err()
 }
 
 // WaitUntilSSHable waiting resource to be sshable.
+// TODO: Migrate usage from components.
 func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Duration) error {
 	log.Debug(ctx, "Start SSH check for the next %s.", waitTime)
 	return retry.WithTimeout(ctx, sshAttemptInteval, waitTime, func() error {
@@ -161,6 +164,7 @@ func WaitUntilSSHable(ctx context.Context, run execs.Runner, waitTime time.Durat
 }
 
 // matchCrosSystemValueToExpectation reads value from crossystem and compared to expected value.
+// TODO: Migrate usage from components.
 func matchCrosSystemValueToExpectation(ctx context.Context, run execs.Runner, subcommand string, expectedValue string) error {
 	out, err := run(ctx, time.Minute, "crossystem "+subcommand)
 	if err != nil {

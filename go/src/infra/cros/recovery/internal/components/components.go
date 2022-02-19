@@ -15,6 +15,10 @@ import (
 // on a host, and returns the result as a single line.
 type Runner func(context.Context, time.Duration, string, ...string) (string, error)
 
+// Pinger defines the type for a function that will execute a ping command
+// on a host, and returns error if something went wrong.
+type Pinger func(ctx context.Context, count int) error
+
 // Servod defines the interface to communicate with servod daemon.
 type Servod interface {
 	// Call calls servod method with params.

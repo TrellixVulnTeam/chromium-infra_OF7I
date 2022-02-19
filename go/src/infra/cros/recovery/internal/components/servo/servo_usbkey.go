@@ -108,3 +108,32 @@ func ChromeOSImageNameFromUSBDrive(ctx context.Context, usbPath string, run comp
 	}
 	return imageName, nil
 }
+
+// USBVisible specifies who see the USB-drive connected to servo.
+type USBVisible int
+
+const (
+	// USB drive is off.
+	USBVisibleOff USBVisible = 0
+	// USB drive visible for DUT.
+	USBVisibleDUT USBVisible = 1
+	// USB drive visible for servo-host.
+	USBVisibleHost USBVisible = 2
+)
+
+// UpdateUSBVisibility sets direction for USB drive connected to the servo.
+func UpdateUSBVisibility(ctx context.Context, v USBVisible, servod components.Servod) error {
+	switch v {
+	case USBVisibleOff:
+		err := servod.Set(ctx, "image_usbkey_pwr", "off")
+		return errors.Annotate(err, "update usb visibility").Err()
+	case USBVisibleDUT:
+		err := servod.Set(ctx, "image_usbkey_direction", "dut_sees_usbkey")
+		return errors.Annotate(err, "update usb visibility").Err()
+	case USBVisibleHost:
+		err := servod.Set(ctx, "image_usbkey_direction", "servo_sees_usbkey")
+		return errors.Annotate(err, "update usb visibility").Err()
+	default:
+		return errors.Reason("update usb visibility: unsupported %v option", v).Err()
+	}
+}
