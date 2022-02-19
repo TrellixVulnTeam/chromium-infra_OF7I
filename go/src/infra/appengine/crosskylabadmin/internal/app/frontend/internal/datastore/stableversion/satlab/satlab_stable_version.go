@@ -114,7 +114,14 @@ func GetSatlabStableVersionEntryByRawID(ctx context.Context, id string) (*Satlab
 	return entry, nil
 }
 
-// MakeSatlabStableVersionIDImpl takes a hostname, board, and model and combines them into an ID.
+// DeleteSatlabStableVersionEntryByRawID takes an ID and deletes the associated entry.
+func DeleteSatlabStableVersionEntryByRawID(ctx context.Context, id string) error {
+	entry := &SatlabStableVersionEntry{ID: id}
+	err := datastore.Delete(ctx, entry)
+	return errors.Annotate(err, "delete satlab stable version entry").Err()
+}
+
+// MakeSatlabStableVersionID takes a hostname, board, and model and combines them into an ID.
 func MakeSatlabStableVersionID(hostname string, board string, model string) string {
 	return makeSatlabStableVersionIDImpl(hostname, board, model, true)
 }

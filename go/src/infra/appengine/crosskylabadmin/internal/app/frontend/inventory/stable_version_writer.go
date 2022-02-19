@@ -10,8 +10,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/stableversion/satlab"
@@ -45,7 +43,26 @@ func (is *ServerImpl) DeleteSatlabStableVersion(ctx context.Context, req *fleet.
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	return nil, status.Error(codes.Unimplemented, "DeleteSatlabStableVersion not yet implemented")
+	var hostname string
+	var board string
+	var model string
+	switch v := req.GetStrategy().(type) {
+	case *fleet.DeleteSatlabStableVersionRequest_SatlabHostnameDeletionCriterion:
+		hostname = v.SatlabHostnameDeletionCriterion.GetHostname()
+	case *fleet.DeleteSatlabStableVersionRequest_SatlabBoardModelDeletionCriterion:
+		model = v.SatlabBoardModelDeletionCriterion.GetModel()
+		board = v.SatlabBoardModelDeletionCriterion.GetBoard()
+	}
+
+	id := satlab.MakeSatlabStableVersionID(hostname, board, model)
+	if id == "" {
+		return nil, errors.Reason("delete satlab stable version: failed to produce identifier").Err()
+	}
+
+	if err := satlab.DeleteSatlabStableVersionEntryByRawID(ctx, id); err != nil {
+		return nil, errors.Annotate(err, "delete satlab stable version").Err()
+	}
+	return &fleet.DeleteSatlabStableVersionResponse{}, nil
 }
 
 // ValidateSetSatlabStableVersion validates a set satlab stable version request.

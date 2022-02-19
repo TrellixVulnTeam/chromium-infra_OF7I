@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/stableversion/satlab"
@@ -57,21 +58,41 @@ func TestDeleteSatlabStableVersion(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 
-	expected := "rpc error: code = Unimplemented desc = DeleteSatlabStableVersion not yet implemented"
-	_, err := tf.Inventory.DeleteSatlabStableVersion(ctx, &fleet.DeleteSatlabStableVersionRequest{
+	_, sErr := tf.Inventory.SetSatlabStableVersion(ctx, &fleet.SetSatlabStableVersionRequest{
+		Strategy: &fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy{
+			SatlabHostnameStrategy: &fleet.SatlabHostnameStrategy{
+				Hostname: "satlab-host1",
+			},
+		},
+		CrosVersion:     "R12-1234.56.78",
+		FirmwareVersion: "Google_Something.1234.56.0",
+		FirmwareImage:   "something-firmware/R12-1234.56.78",
+	})
+	if sErr != nil {
+		t.Errorf("unexpected error when inserting record: %s", sErr)
+	}
+
+	_, gErr := satlab.GetSatlabStableVersionEntryByRawID(ctx, "satlab-host1")
+	if gErr != nil {
+		t.Errorf("unexpected error retrieving after insertion: %s", gErr)
+	}
+
+	_, dErr := tf.Inventory.DeleteSatlabStableVersion(ctx, &fleet.DeleteSatlabStableVersionRequest{
 		Strategy: &fleet.DeleteSatlabStableVersionRequest_SatlabHostnameDeletionCriterion{
 			SatlabHostnameDeletionCriterion: &fleet.SatlabHostnameDeletionCriterion{
 				Hostname: "satlab-host1",
 			},
 		},
 	})
-
-	actual := ""
-	if err != nil {
-		actual = err.Error()
+	if dErr != nil {
+		t.Errorf("unexpected error deleting record that is present: %s", dErr)
 	}
 
-	if diff := cmp.Diff(expected, actual); diff != "" {
-		t.Errorf("unexpected diff (-want +got): %s", diff)
+	_, err := satlab.GetSatlabStableVersionEntryByRawID(ctx, "satlab-host1")
+	if err == nil {
+		t.Errorf("getting record after deletion should have failed")
+	}
+	if !datastore.IsErrNoSuchEntity(err) {
+		t.Errorf("unexpected error: %s", err)
 	}
 }

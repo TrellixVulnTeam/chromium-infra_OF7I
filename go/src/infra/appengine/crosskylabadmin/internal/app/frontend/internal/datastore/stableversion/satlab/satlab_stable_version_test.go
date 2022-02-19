@@ -162,3 +162,28 @@ func TestGetSatlabStableVersionEntryByID(t *testing.T) {
 		})
 	}
 }
+
+// TestDeleteSatlabStableVersionEntry tests deleting a satlab stable version entry.
+func TestDeleteSatlabStableVersionEntry(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+
+	if err := PutSatlabStableVersionEntry(ctx, &SatlabStableVersionEntry{
+		ID: "aaaa",
+	}); err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if err := DeleteSatlabStableVersionEntryByRawID(ctx, "aaaa"); err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	_, err := GetSatlabStableVersionEntryByRawID(ctx, "aaaa")
+	if err == nil {
+		t.Errorf("unexpected success: getting deleted entry should fail")
+	}
+	if !datastore.IsErrNoSuchEntity(err) {
+		t.Errorf("unexpected error: %s", err)
+	}
+}
