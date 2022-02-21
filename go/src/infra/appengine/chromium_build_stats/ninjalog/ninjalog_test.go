@@ -123,7 +123,7 @@ var (
 
 	metadataTestCase = Metadata{
 		BuildID:  12345,
-		Platform: "linux",
+		Platform: "Linux",
 		Argv:     []string{"../../../scripts/slave/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"},
 		Cwd:      "/b/build/slave/Linux_x64/build/src",
 		Compiler: "goma",
@@ -252,7 +252,7 @@ func TestParseWithMetadata(t *testing.T) {
 287	290	0	obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp	b211d373de72f455
 
 # end of ninja log
-{"build_id": 12345, "platform": "linux", "argv": ["../../../scripts/slave/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"], "cmdline": ["ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j50"], "exit": 0, "step_name": "compile", "env": {"LANG": "en_US.UTF-8", "SHELL": "/bin/bash", "HOME": "/home/chrome-bot", "PWD": "/b/build/slave/Linux_x64/build", "LOGNAME": "chrome-bot", "USER": "chrome-bot", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin" }, "compiler_proxy_info": "/tmp/compiler_proxy.build48-m1.chrome-bot.log.INFO.20140907-203827.14676", "cwd": "/b/build/slave/Linux_x64/build/src", "compiler": "goma"}
+{"build_id": 12345, "platform": "Linux", "argv": ["../../../scripts/slave/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"], "cmdline": ["ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j50"], "exit": 0, "step_name": "compile", "env": {"LANG": "en_US.UTF-8", "SHELL": "/bin/bash", "HOME": "/home/chrome-bot", "PWD": "/b/build/slave/Linux_x64/build", "LOGNAME": "chrome-bot", "USER": "chrome-bot", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin" }, "compiler_proxy_info": "/tmp/compiler_proxy.build48-m1.chrome-bot.log.INFO.20140907-203827.14676", "cwd": "/b/build/slave/Linux_x64/build/src", "compiler": "goma"}
 `))
 	if err != nil {
 		t.Errorf(`Parse()=_, %#v; want=_, <nil>`, err)
@@ -265,8 +265,9 @@ func TestParseWithMetadata(t *testing.T) {
 		Metadata: metadataTestCase,
 	}
 	njl.Metadata.Raw = ""
-	if !reflect.DeepEqual(njl, want) {
-		t.Errorf("Parse()=%#v; want=%#v", njl, want)
+
+	if diff := cmp.Diff(want, njl); diff != "" {
+		t.Errorf("Parse() mismatch (-want, +got):\n%s", diff)
 	}
 }
 
@@ -284,7 +285,7 @@ func TestParseBadMetadata(t *testing.T) {
 142	288	0	PepperFlash/libpepflashplayer.so	1e2c2b7845a4d4fe
 287	290	0	obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp	b211d373de72f455
 # end of ninja log
-{"platform": "linux", "argv": ["/b/build/scripts/slave/upload_goma_logs.py", "--upload-compiler-proxy-info", "--json-status", "/b/build/slave/cache/cipd/goma/jsonstatus", "--ninja-log-outdir", "/b/build/slave/pdfium/build/pdfium/out/debug_xfa_v8", "--ninja-log-compiler", "unknown", "--ninja-log-command", "['ninja', '-C', Path('checkout', 'out','debug_xfa_v8'), '-j', 80]", "--ninja-log-exit-status", "0", "--goma-stats-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "--goma-crash-report-id-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "--build-data-dir", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data", "--buildbot-buildername", "linux_xfa", "--buildbot-mastername", "tryserver.client.pdfium", "--buildbot-slavename", "slave1386-c4"], "cmdline": "['ninja', '-C', Path('checkout','out','debug_xfa_v8'), '-j', 80]", "exit": 0, "env": {"GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json", "BUILDBOT_BUILDERNAME": "linux_xfa", "USER": "chrome-bot", "HOME": "/home/chrome-bot", "BOTO_CONFIG": "/b/build/scripts/slave/../../site_config/.boto", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin", "PYTHONUNBUFFERED": "1", "BUILDBOT_BUILDBOTURL": "https://build.chromium.org/p/tryserver.client.pdfium/", "DISPLAY": ":0.0", "LANG": "en_US.UTF-8", "BUILDBOT_BLAMELIST": "[u'dsinclair@chromium.org']", "BUILDBOT_MASTERNAME": "tryserver.client.pdfium", "GOMACTL_CRASH_REPORT_ID_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "USERNAME": "chrome-bot", "BUILDBOT_GOT_REVISION": "None", "PYTHONPATH": "/b/build/site_config:/b/build/scripts:/b/build/scripts/release:/b/build/third_party:/b/build/third_party/requests_2_10_0:/b/build_internal/site_config:/b/build_internal/symsrc:/b/build/slave:/b/build/third_party/buildbot_slave_8_4:/b/build/third_party/twisted_10_2:", "BUILDBOT_SCHEDULER": "None", "BUILDBOT_REVISION": "", "AWS_CREDENTIAL_FILE": "/b/build/scripts/slave/../../site_config/.boto", "CHROME_HEADLESS": "1", "BUILDBOT_BRANCH": "", "GIT_USER_AGENT": "linux2 git/2.10.2 slave1386-c4.c.chromecompute.google.com.internal", "TESTING_SLAVENAME": "slave1386-c4", "GOMA_DUMP_STATS_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "BUILDBOT_BUILDNUMBER": "2937", "PWD": "/b/build/slave/pdfium/build", "BUILDBOT_SLAVENAME": "slave1386-c4", "BUILDBOT_CLOBBER": "", "PAGER": "cat"}, "compiler_proxy_info": "/tmp/compiler_proxy.slave1386-c4.chrome-bot.log.INFO.20161121-165459.5790", "cwd": "/b/build/slave/pdfium/build", "compiler": "unknown"}
+{"platform": "Linux", "argv": ["/b/build/scripts/slave/upload_goma_logs.py", "--upload-compiler-proxy-info", "--json-status", "/b/build/slave/cache/cipd/goma/jsonstatus", "--ninja-log-outdir", "/b/build/slave/pdfium/build/pdfium/out/debug_xfa_v8", "--ninja-log-compiler", "unknown", "--ninja-log-command", "['ninja', '-C', Path('checkout', 'out','debug_xfa_v8'), '-j', 80]", "--ninja-log-exit-status", "0", "--goma-stats-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "--goma-crash-report-id-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "--build-data-dir", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data", "--buildbot-buildername", "linux_xfa", "--buildbot-mastername", "tryserver.client.pdfium", "--buildbot-slavename", "slave1386-c4"], "cmdline": "['ninja', '-C', Path('checkout','out','debug_xfa_v8'), '-j', 80]", "exit": 0, "env": {"GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json", "BUILDBOT_BUILDERNAME": "linux_xfa", "USER": "chrome-bot", "HOME": "/home/chrome-bot", "BOTO_CONFIG": "/b/build/scripts/slave/../../site_config/.boto", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin", "PYTHONUNBUFFERED": "1", "BUILDBOT_BUILDBOTURL": "https://build.chromium.org/p/tryserver.client.pdfium/", "DISPLAY": ":0.0", "LANG": "en_US.UTF-8", "BUILDBOT_BLAMELIST": "[u'dsinclair@chromium.org']", "BUILDBOT_MASTERNAME": "tryserver.client.pdfium", "GOMACTL_CRASH_REPORT_ID_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "USERNAME": "chrome-bot", "BUILDBOT_GOT_REVISION": "None", "PYTHONPATH": "/b/build/site_config:/b/build/scripts:/b/build/scripts/release:/b/build/third_party:/b/build/third_party/requests_2_10_0:/b/build_internal/site_config:/b/build_internal/symsrc:/b/build/slave:/b/build/third_party/buildbot_slave_8_4:/b/build/third_party/twisted_10_2:", "BUILDBOT_SCHEDULER": "None", "BUILDBOT_REVISION": "", "AWS_CREDENTIAL_FILE": "/b/build/scripts/slave/../../site_config/.boto", "CHROME_HEADLESS": "1", "BUILDBOT_BRANCH": "", "GIT_USER_AGENT": "linux2 git/2.10.2 slave1386-c4.c.chromecompute.google.com.internal", "TESTING_SLAVENAME": "slave1386-c4", "GOMA_DUMP_STATS_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "BUILDBOT_BUILDNUMBER": "2937", "PWD": "/b/build/slave/pdfium/build", "BUILDBOT_SLAVENAME": "slave1386-c4", "BUILDBOT_CLOBBER": "", "PAGER": "cat"}, "compiler_proxy_info": "/tmp/compiler_proxy.slave1386-c4.chrome-bot.log.INFO.20161121-165459.5790", "cwd": "/b/build/slave/pdfium/build", "compiler": "unknown"}
 `))
 	if err != nil {
 		t.Errorf(`Parse()=_, %#v; want=_, <nil>`, err)
@@ -300,8 +301,8 @@ func TestParseBadMetadata(t *testing.T) {
 		Start:    4,
 		Steps:    stepsTestCase,
 	}
-	if !reflect.DeepEqual(njl, want) {
-		t.Errorf("Parse()=%#v; want=%#v", njl, want)
+	if diff := cmp.Diff(want, njl); diff != "" {
+		t.Errorf("Parse() mismatch (-want, +got):\n%s", diff)
 	}
 }
 
@@ -602,6 +603,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["resources/inspector/devtools_extension_api.js"].Seconds()),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -615,6 +617,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["gen/angle/commit_id.py"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -628,6 +631,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["gen/angle/copy_compiler_dll.bat"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -641,6 +645,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["gen/autofill_regex_constants.cc"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -654,6 +659,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["PepperFlash/manifest.json"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -667,6 +673,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["PepperFlash/libpepflashplayer.so"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 		{
 			BuildId:  12345,
@@ -680,6 +687,7 @@ func TestToProto(t *testing.T) {
 			},
 			WeightedDurationSec: (wantWeightedTime["obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp"]).Seconds(),
 			CreatedAt:           createdTime,
+			Os:                  npb.NinjaTask_LINUX,
 		},
 	}
 	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
