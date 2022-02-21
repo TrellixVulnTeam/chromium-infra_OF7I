@@ -124,20 +124,20 @@ var (
 	metadataTestCase = Metadata{
 		BuildID:  12345,
 		Platform: "Linux",
-		Argv:     []string{"../../../scripts/slave/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"},
-		Cwd:      "/b/build/slave/Linux_x64/build/src",
+		Argv:     []string{"../../../scripts/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"},
+		Cwd:      "/b/build/Linux_x64/build/src",
 		Compiler: "goma",
-		Cmdline:  []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j50"},
+		Cmdline:  []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j50"},
 		Exit:     0,
 		StepName: "compile",
 		Env: map[string]string{
 			"LANG":    "en_US.UTF-8",
 			"SHELL":   "/bin/bash",
 			"HOME":    "/home/chrome-bot",
-			"PWD":     "/b/build/slave/Linux_x64/build",
+			"PWD":     "/b/build/Linux_x64/build",
 			"LOGNAME": "chrome-bot",
 			"USER":    "chrome-bot",
-			"PATH":    "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin",
+			"PATH":    "/home/chrome-bot/bin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin",
 		},
 		CompilerProxyInfo: "/tmp/compiler_proxy.build48-m1.chrome-bot.log.INFO.20140907-203827.14676",
 		Jobs:              50,
@@ -252,7 +252,7 @@ func TestParseWithMetadata(t *testing.T) {
 287	290	0	obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp	b211d373de72f455
 
 # end of ninja log
-{"build_id": 12345, "platform": "Linux", "argv": ["../../../scripts/slave/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"], "cmdline": ["ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j50"], "exit": 0, "step_name": "compile", "env": {"LANG": "en_US.UTF-8", "SHELL": "/bin/bash", "HOME": "/home/chrome-bot", "PWD": "/b/build/slave/Linux_x64/build", "LOGNAME": "chrome-bot", "USER": "chrome-bot", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin" }, "compiler_proxy_info": "/tmp/compiler_proxy.build48-m1.chrome-bot.log.INFO.20140907-203827.14676", "cwd": "/b/build/slave/Linux_x64/build/src", "compiler": "goma"}
+{"build_id": 12345, "platform": "Linux", "argv": ["../../../scripts/compile.py", "--target", "Release", "--clobber", "--compiler=goma", "--", "all"], "cmdline": ["ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j50"], "exit": 0, "step_name": "compile", "env": {"LANG": "en_US.UTF-8", "SHELL": "/bin/bash", "HOME": "/home/chrome-bot", "PWD": "/b/build/Linux_x64/build", "LOGNAME": "chrome-bot", "USER": "chrome-bot", "PATH": "/home/chrome-bot/bin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin" }, "compiler_proxy_info": "/tmp/compiler_proxy.build48-m1.chrome-bot.log.INFO.20140907-203827.14676", "cwd": "/b/build/Linux_x64/build/src", "compiler": "goma"}
 `))
 	if err != nil {
 		t.Errorf(`Parse()=_, %#v; want=_, <nil>`, err)
@@ -285,7 +285,7 @@ func TestParseBadMetadata(t *testing.T) {
 142	288	0	PepperFlash/libpepflashplayer.so	1e2c2b7845a4d4fe
 287	290	0	obj/third_party/angle/src/copy_scripts.actions_rules_copies.stamp	b211d373de72f455
 # end of ninja log
-{"platform": "Linux", "argv": ["/b/build/scripts/slave/upload_goma_logs.py", "--upload-compiler-proxy-info", "--json-status", "/b/build/slave/cache/cipd/goma/jsonstatus", "--ninja-log-outdir", "/b/build/slave/pdfium/build/pdfium/out/debug_xfa_v8", "--ninja-log-compiler", "unknown", "--ninja-log-command", "['ninja', '-C', Path('checkout', 'out','debug_xfa_v8'), '-j', 80]", "--ninja-log-exit-status", "0", "--goma-stats-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "--goma-crash-report-id-file", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "--build-data-dir", "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data", "--buildbot-buildername", "linux_xfa", "--buildbot-mastername", "tryserver.client.pdfium", "--buildbot-slavename", "slave1386-c4"], "cmdline": "['ninja', '-C', Path('checkout','out','debug_xfa_v8'), '-j', 80]", "exit": 0, "env": {"GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json", "BUILDBOT_BUILDERNAME": "linux_xfa", "USER": "chrome-bot", "HOME": "/home/chrome-bot", "BOTO_CONFIG": "/b/build/scripts/slave/../../site_config/.boto", "PATH": "/home/chrome-bot/slavebin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin", "PYTHONUNBUFFERED": "1", "BUILDBOT_BUILDBOTURL": "https://build.chromium.org/p/tryserver.client.pdfium/", "DISPLAY": ":0.0", "LANG": "en_US.UTF-8", "BUILDBOT_BLAMELIST": "[u'dsinclair@chromium.org']", "BUILDBOT_MASTERNAME": "tryserver.client.pdfium", "GOMACTL_CRASH_REPORT_ID_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "USERNAME": "chrome-bot", "BUILDBOT_GOT_REVISION": "None", "PYTHONPATH": "/b/build/site_config:/b/build/scripts:/b/build/scripts/release:/b/build/third_party:/b/build/third_party/requests_2_10_0:/b/build_internal/site_config:/b/build_internal/symsrc:/b/build/slave:/b/build/third_party/buildbot_slave_8_4:/b/build/third_party/twisted_10_2:", "BUILDBOT_SCHEDULER": "None", "BUILDBOT_REVISION": "", "AWS_CREDENTIAL_FILE": "/b/build/scripts/slave/../../site_config/.boto", "CHROME_HEADLESS": "1", "BUILDBOT_BRANCH": "", "GIT_USER_AGENT": "linux2 git/2.10.2 slave1386-c4.c.chromecompute.google.com.internal", "TESTING_SLAVENAME": "slave1386-c4", "GOMA_DUMP_STATS_FILE": "/b/build/slave/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "BUILDBOT_BUILDNUMBER": "2937", "PWD": "/b/build/slave/pdfium/build", "BUILDBOT_SLAVENAME": "slave1386-c4", "BUILDBOT_CLOBBER": "", "PAGER": "cat"}, "compiler_proxy_info": "/tmp/compiler_proxy.slave1386-c4.chrome-bot.log.INFO.20161121-165459.5790", "cwd": "/b/build/slave/pdfium/build", "compiler": "unknown"}
+{"platform": "Linux", "argv": ["/b/build/scripts/upload_goma_logs.py", "--upload-compiler-proxy-info", "--json-status", "/b/build/cache/cipd/goma/jsonstatus", "--ninja-log-outdir", "/b/build/pdfium/build/pdfium/out/debug_xfa_v8", "--ninja-log-compiler", "unknown", "--ninja-log-command", "['ninja', '-C', Path('checkout', 'out','debug_xfa_v8'), '-j', 80]", "--ninja-log-exit-status", "0", "--goma-stats-file", "/b/build/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "--goma-crash-report-id-file", "/b/build/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "--build-data-dir", "/b/build/pdfium/.recipe_runtime/tmpOgwx97/build_data", "--buildbot-buildername", "linux_xfa", "--buildbot-mastername", "tryserver.client.pdfium", "--buildbot-botname", "bot1386-c4"], "cmdline": "['ninja', '-C', Path('checkout','out','debug_xfa_v8'), '-j', 80]", "exit": 0, "env": {"GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json", "BUILDBOT_BUILDERNAME": "linux_xfa", "USER": "chrome-bot", "HOME": "/home/chrome-bot", "BOTO_CONFIG": "/b/build/scripts/../../site_config/.boto", "PATH": "/home/chrome-bot/bin:/b/depot_tools:/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin", "PYTHONUNBUFFERED": "1", "BUILDBOT_BUILDBOTURL": "https://build.chromium.org/p/tryserver.client.pdfium/", "DISPLAY": ":0.0", "LANG": "en_US.UTF-8", "BUILDBOT_BLAMELIST": "[u'dsinclair@chromium.org']", "BUILDBOT_MASTERNAME": "tryserver.client.pdfium", "GOMACTL_CRASH_REPORT_ID_FILE": "/b/build/pdfium/.recipe_runtime/tmpOgwx97/build_data/crash_report_id_file", "USERNAME": "chrome-bot", "BUILDBOT_GOT_REVISION": "None", "PYTHONPATH": "/b/build/site_config:/b/build/scripts:/b/build/scripts/release:/b/build/third_party:/b/build/third_party/requests_2_10_0:/b/build_internal/site_config:/b/build_internal/symsrc:/b/build:/b/build/third_party/buildbot_8_4:/b/build/third_party/twisted_10_2:", "BUILDBOT_SCHEDULER": "None", "BUILDBOT_REVISION": "", "AWS_CREDENTIAL_FILE": "/b/build/scripts/../../site_config/.boto", "CHROME_HEADLESS": "1", "BUILDBOT_BRANCH": "", "GIT_USER_AGENT": "linux2 git/2.10.2 bot1386-c4.c.chromecompute.google.com.internal", "TESTING_BOTNAME": "bot1386-c4", "GOMA_DUMP_STATS_FILE": "/b/build/pdfium/.recipe_runtime/tmpOgwx97/build_data/goma_stats_proto", "BUILDBOT_BUILDNUMBER": "2937", "PWD": "/b/build/pdfium/build", "BUILDBOT_BOTNAME": "bot1386-c4", "BUILDBOT_CLOBBER": "", "PAGER": "cat"}, "compiler_proxy_info": "/tmp/compiler_proxy.bot1386-c4.chrome-bot.log.INFO.20161121-165459.5790", "cwd": "/b/build/pdfium/build", "compiler": "unknown"}
 `))
 	if err != nil {
 		t.Errorf(`Parse()=_, %#v; want=_, <nil>`, err)
@@ -702,27 +702,27 @@ func TestGetJobs(t *testing.T) {
 		wantError bool
 	}{
 		{
-			in:       []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j50"},
+			in:       []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j50"},
 			wantJobs: 50,
 		},
 		{
-			in:       []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j", "100"},
+			in:       []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j", "100"},
 			wantJobs: 100,
 		},
 		{
-			in:       []string{"ninja", "-C", "/b/build/slave/Linux_x64-j/build/src/out/Release", "all", "200-j"},
+			in:       []string{"ninja", "-C", "/b/build/Linux_x64-j/build/src/out/Release", "all", "200-j"},
 			wantJobs: 0,
 		},
 		{
-			in:       []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "50"},
+			in:       []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "50"},
 			wantJobs: 0,
 		},
 		{
-			in:        []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j"},
+			in:        []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j"},
 			wantError: true,
 		},
 		{
-			in:        []string{"ninja", "-C", "/b/build/slave/Linux_x64/build/src/out/Release", "all", "-j", "abc"},
+			in:        []string{"ninja", "-C", "/b/build/Linux_x64/build/src/out/Release", "all", "-j", "abc"},
 			wantError: true,
 		},
 	}
