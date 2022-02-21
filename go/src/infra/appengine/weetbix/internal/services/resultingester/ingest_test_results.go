@@ -144,6 +144,13 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return fmt.Errorf("invocation has invalid realm: %q", inv.Realm)
 	}
 
+	realmCfg, err := config.Realm(ctx, inv.Realm)
+	if err != nil && err != config.RealmNotExistsErr {
+		return err
+	}
+	ingestForTestVariantAnalysis := realmCfg != nil &&
+		shouldIngestForTestVariants(realmCfg, payload)
+
 	// Setup clustering ingestion.
 	invID, err := rdbbutil.ParseInvocationName(invName)
 	if err != nil {
@@ -174,7 +181,7 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	// We read test variants from ResultDB in pages, and the func will be called
 	// once per page of test variants.
 	f := func(tvs []*rdbpb.TestVariant) error {
-		if shouldIngestForTestVariants(payload) {
+		if ingestForTestVariantAnalysis {
 			if err := createOrUpdateAnalyzedTestVariants(ctx, inv.Realm, builder, tvs); err != nil {
 				return errors.Annotate(err, "ingesting for test variant analysis").Err()
 			}
@@ -196,10 +203,12 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return errors.Annotate(err, "ingesting for clustering").Err()
 	}
 
-	// Currently only Chromium CI results are ingested.
-	isPreSubmit, contributedToCLSubmission := false, false
-	if err = resultcollector.Schedule(ctx, inv, rdbHost, b.Builder.Builder, isPreSubmit, contributedToCLSubmission); err != nil {
-		return err
+	if ingestForTestVariantAnalysis {
+		isPreSubmit := payload.PresubmitRunId != nil
+		contributedToCLSubmission := payload.PresubmitRunId != nil && payload.PresubmitRunSucceeded
+		if err = resultcollector.Schedule(ctx, inv, rdbHost, b.Builder.Builder, isPreSubmit, contributedToCLSubmission); err != nil {
+			return err
+		}
 	}
 
 	return nil

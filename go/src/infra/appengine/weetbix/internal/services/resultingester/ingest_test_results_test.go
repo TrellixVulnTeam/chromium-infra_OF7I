@@ -12,18 +12,20 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"github.com/golang/mock/gomock"
-	"google.golang.org/genproto/protobuf/field_mask"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
+	. "github.com/smartystreets/goconvey/convey"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
+	"go.chromium.org/luci/common/clock"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/gae/impl/memory"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/tq"
 	_ "go.chromium.org/luci/server/tq/txn/spanner"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
@@ -41,10 +43,6 @@ import (
 	"infra/appengine/weetbix/internal/testutil/insert"
 	"infra/appengine/weetbix/pbutil"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/luci/common/clock"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestSchedule(t *testing.T) {
@@ -69,7 +67,63 @@ func TestSchedule(t *testing.T) {
 
 func TestShouldIngestForTestVariants(t *testing.T) {
 	t.Parallel()
-	Convey(`ci`, t, func() {
+	Convey(`Realm configured`, t, func() {
+		realm := &configpb.RealmConfig{
+			Name: "ci",
+			TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
+				UpdateTestVariantTask: &configpb.UpdateTestVariantTask{
+					UpdateTestVariantTaskInterval:   durationpb.New(time.Hour),
+					TestVariantStatusUpdateDuration: durationpb.New(24 * time.Hour),
+				},
+			},
+		}
+		Convey(`CI`, func() {
+			payload := &taskspb.IngestTestResults{
+				Build: &taskspb.Build{
+					Host: "host",
+					Id:   int64(1),
+				},
+				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+			}
+			So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
+		})
+
+		Convey(`Successful CQ run`, func() {
+			payload := &taskspb.IngestTestResults{
+				PresubmitRunId: &pb.PresubmitRunId{
+					System: "luci-cv",
+					Id:     "chromium/1111111111111-1-1111111111111111",
+				},
+				PresubmitRunSucceeded: true,
+				Build: &taskspb.Build{
+					Host: "host",
+					Id:   int64(2),
+				},
+				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+			}
+			So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
+		})
+
+		Convey(`Failed CQ run`, func() {
+			payload := &taskspb.IngestTestResults{
+				PresubmitRunId: &pb.PresubmitRunId{
+					System: "luci-cv",
+					Id:     "chromium/1111111111111-1-1111111111111111",
+				},
+				PresubmitRunSucceeded: false,
+				Build: &taskspb.Build{
+					Host: "host",
+					Id:   int64(3),
+				},
+				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
+			}
+			So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
+		})
+	})
+	Convey(`Realm not configured`, t, func() {
+		realm := &configpb.RealmConfig{
+			Name: "ci",
+		}
 		payload := &taskspb.IngestTestResults{
 			Build: &taskspb.Build{
 				Host: "host",
@@ -77,39 +131,7 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 			},
 			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
 		}
-		So(shouldIngestForTestVariants(payload), ShouldBeTrue)
-	})
-
-	Convey(`successful cq run`, t, func() {
-		payload := &taskspb.IngestTestResults{
-			PresubmitRunId: &pb.PresubmitRunId{
-				System: "luci-cv",
-				Id:     "chromium/1111111111111-1-1111111111111111",
-			},
-			PresubmitRunSucceeded: true,
-			Build: &taskspb.Build{
-				Host: "host",
-				Id:   int64(2),
-			},
-			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
-		}
-		So(shouldIngestForTestVariants(payload), ShouldBeTrue)
-	})
-
-	Convey(`failed cq run`, t, func() {
-		payload := &taskspb.IngestTestResults{
-			PresubmitRunId: &pb.PresubmitRunId{
-				System: "luci-cv",
-				Id:     "chromium/1111111111111-1-1111111111111111",
-			},
-			PresubmitRunSucceeded: false,
-			Build: &taskspb.Build{
-				Host: "host",
-				Id:   int64(3),
-			},
-			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
-		}
-		So(shouldIngestForTestVariants(payload), ShouldBeFalse)
+		So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
 	})
 }
 

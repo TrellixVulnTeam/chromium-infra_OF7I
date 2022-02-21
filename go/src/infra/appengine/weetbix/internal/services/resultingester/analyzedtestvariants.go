@@ -19,6 +19,7 @@ import (
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/config"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
 	spanutil "infra/appengine/weetbix/internal/span"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
@@ -41,7 +42,13 @@ var tagKeys = map[string]struct{}{
 	"target_platform":    {},
 }
 
-func shouldIngestForTestVariants(task *taskspb.IngestTestResults) bool {
+// shouldIngestForTestVariants returns whether the test results specified
+// by the given IngestTestResults task, with a realm with the given RealmConfig.
+func shouldIngestForTestVariants(realmcfg *configpb.RealmConfig, task *taskspb.IngestTestResults) bool {
+	if realmcfg.GetTestVariantAnalysis().GetUpdateTestVariantTask().GetUpdateTestVariantTaskInterval() == nil {
+		// Test Variant analysis not configured for realm. Skip ingestion.
+		return false
+	}
 	// Ingest results from CI.
 	return task.PresubmitRunId == nil ||
 		// And presubmit results, where the presubmit run succeeded.
@@ -57,14 +64,12 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 
 	rc, err := config.Realm(ctx, realm)
 	switch {
-	case err == config.RealmNotExistsErr:
-		// No configuration for realm. Skip ingestion.
-		return nil
 	case err != nil:
 		return err
 	case rc.GetTestVariantAnalysis().GetUpdateTestVariantTask().GetUpdateTestVariantTaskInterval() == nil:
-		// Test Variant analysis not configured for realm. Skip ingestion.
-		return nil
+		// This should never occur, as shouldIngestForTestVariants() should be called
+		// before this method.
+		return fmt.Errorf("no UpdateTestVariantTask config found for realm %s", realm)
 	}
 
 	ks := testVariantKeySet(realm, tvs)

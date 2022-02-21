@@ -12,7 +12,6 @@ import (
 
 	bbv1 "go.chromium.org/luci/common/api/buildbucket/buildbucket/v1"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
@@ -23,12 +22,6 @@ import (
 )
 
 const (
-	// chromiumProject is the LUCI project name of the chromium project.
-	chromiumProject = "chromium"
-
-	// chromiumCIBucket is the bucket for chromium ci builds in bb v1 format.
-	chromiumCIBucket = "luci.chromium.ci"
-
 	// cqTag is the tag appended to builds started by LUCI CV.
 	cqTag = "user_agent:cq"
 )
@@ -137,12 +130,6 @@ func extractBuild(ctx context.Context, r *http.Request) (*build, error) {
 		if tag == cqTag {
 			isPresubmit = true
 		}
-	}
-	if message.Build.Project == chromiumProject &&
-		isPresubmit != (message.Build.Bucket != chromiumCIBucket) {
-		logging.Warningf(ctx, "Build %v was detected as isPresubmit:%v by tags, but isPresubmit:%v by bucket.",
-			message.Build.Id, isPresubmit, (message.Build.Bucket != chromiumCIBucket))
-		isPresubmit = message.Build.Bucket != chromiumCIBucket
 	}
 
 	return &build{
