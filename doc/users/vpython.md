@@ -294,6 +294,9 @@ Some Recommendations (see below for specifics):
   [Common Specification](#common-specification) (`.vpython`) at the root
   of your script collection.
 
+In all cases except *Script-Specific Specification*, specification will be
+probed only based on the `realpath` of the file.
+
 If you are uncertain about which option is best for your script or project,
 please [contact Chrome Operations](#Contact).
 
@@ -301,6 +304,14 @@ please [contact Chrome Operations](#Contact).
 
 A specification protobuf can be dropped alongside a Python script to implicitly
 pair `vpython` with the script.
+
+If the script is a symbolic link, vpython will:
+
+1. Check for a spec with the name of the link in the directory of the link.
+2. Check for a spec with the name of the target in the directory of the target.
+
+e.g: For symbolic link `/A/B -> /C/D`, vpython will first check `/A/B.vpython`,
+then `/C/D.vpython`.
 
 For a script named `foo.py`, a `vpython` specification would appear in the same
 directory alongside it and be named `foo.py.vpython`.
