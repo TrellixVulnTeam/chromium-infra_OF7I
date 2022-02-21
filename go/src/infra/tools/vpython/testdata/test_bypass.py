@@ -8,4 +8,4 @@ import os
 # Print the "VPYTHON_VENV_ENV_STAMP_PATH" variable. This will be set by
 # "vpython" process. Our test ensures that this is not set for test
 # environments.
-print 'Environment value is [%s]' % (os.getenv('VPYTHON_VENV_ENV_STAMP_PATH'),)
+print('Environment value is [%s]' % (os.getenv('VPYTHON_VENV_ENV_STAMP_PATH'),))

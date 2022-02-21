@@ -5,7 +5,7 @@
 # This empty vpython spec prevents the test_bad_cwd.py script from ever
 # having a vpython spec, even if this repo eventually adds one.
 # [VPYTHON:BEGIN]
-#
+# python_version: "3.8"
 # [VPYTHON:END]
 
 try:
@@ -22,7 +22,7 @@ MY_DIR = os.path.dirname(os.path.abspath(__file__))
 
 os.chdir(os.path.join(MY_DIR, "bad_cwd"))
 
-print "I'm in script A"
+print("I'm in script A")
 sys.stdout.flush()
 
 VPYTHON = os.getenv('_VPYTHON_MAIN_TEST_BINARY')

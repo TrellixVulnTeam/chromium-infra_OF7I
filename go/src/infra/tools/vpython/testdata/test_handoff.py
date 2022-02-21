@@ -18,7 +18,7 @@ import os
 import subprocess
 import sys
 
-print "I'm in script A"
+print("I'm in script A")
 sys.stdout.flush()
 
 MY_DIR = os.path.dirname(os.path.abspath(__file__))

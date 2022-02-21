@@ -114,11 +114,11 @@ func runStartupOverhead(b *testing.B, spec string) {
 }
 
 func BenchmarkStartupOverheadEmptyWheel(b *testing.B) {
-	runStartupOverhead(b, "bench_empty.vpython")
+	runStartupOverhead(b, "empty.vpython")
 }
 
-func BenchmarkStartupOverheadYAMLWheel(b *testing.B) {
-	runStartupOverhead(b, "bench_yaml.vpython")
+func BenchmarkStartupOverheadCertifiWheel(b *testing.B) {
+	runStartupOverhead(b, "bench_certifi.vpython")
 }
 
 type testDelegateParams struct {
@@ -199,11 +199,17 @@ func loadTestCases(t *testing.T, self string) []testCase {
 			continue
 		}
 
+		specPath := script + ".vpython"
+		if _, err := os.Stat(specPath); os.IsNotExist(err) {
+			specPath = filepath.Join(testDataDir, "empty.vpython")
+		}
+
 		testCases = append(testCases, testCase{
 			self:   self,
 			name:   filepath.Base(base),
 			script: script,
 			output: content,
+			spec:   specPath,
 		})
 	}
 	switch {

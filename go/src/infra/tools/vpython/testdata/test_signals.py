@@ -12,16 +12,16 @@ import time
 signalled = False
 def signal_handler(_sig, _frame):
   global signalled
-  print 'Received SIGINT!'
+  print('Received SIGINT!')
   signal.signal(signal.SIGINT, signal.SIG_DFL)
   signalled = True
 signal.signal(signal.SIGINT, signal_handler)
 
 # sys.argv[1] is the path to the file to delete once we've started.
-print 'Waiting for signal...'
+print('Waiting for signal...')
 os.remove(sys.argv[1])
 
 # Loop indefinitely. Our parent process is responsible for killing us.
 while not signalled:
   time.sleep(.1)
-print 'Exiting after confirming signal.'
+print('Exiting after confirming signal.')
