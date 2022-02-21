@@ -12,7 +12,7 @@ import (
 )
 
 func TestAVROCodec(t *testing.T) {
-	if _, err := AVROCodec(); err != nil {
+	if _, err := avroCodec(); err != nil {
 		t.Fatalf("failed to parse AVRO schema: %v", err)
 	}
 }
@@ -51,7 +51,7 @@ func TestToAVRO(t *testing.T) {
 	}()
 	timeNow = func() time.Time { return createdTime }
 
-	got := ToAVRO(&info)
+	got := toAVRO(&info)
 	if diff := cmp.Diff(map[string]interface{}{
 		"build_configs": []map[string]interface{}{},
 		"build_id":      int64(12345),

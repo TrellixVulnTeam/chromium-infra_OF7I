@@ -5,6 +5,7 @@
 package ninjalog
 
 import (
+	"context"
 	"crypto/rand"
 	_ "embed"
 	"encoding/binary"
@@ -14,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"cloud.google.com/go/storage"
 	goavro "github.com/linkedin/goavro/v2"
 	"sigs.k8s.io/yaml"
 )
@@ -25,8 +27,8 @@ var codecOnce sync.Once
 var codec *goavro.Codec
 var codecErr error
 
-// AVROCodec returns codec used to write ninja log with AVRO format.
-func AVROCodec() (*goavro.Codec, error) {
+// avroCodec returns codec used to write ninja log with AVRO format.
+func avroCodec() (*goavro.Codec, error) {
 	codecOnce.Do(func() {
 		jsonSchema, err := yaml.YAMLToJSON(yamlSchema)
 		if err != nil {
@@ -47,8 +49,8 @@ func AVROCodec() (*goavro.Codec, error) {
 // This is overridden in test.
 var timeNow = time.Now
 
-// ToAVRO returns ninja log passed to AVRO codec.
-func ToAVRO(info *NinjaLog) map[string]interface{} {
+// toAVRO returns ninja log passed to AVRO codec.
+func toAVRO(info *NinjaLog) map[string]interface{} {
 	weightedTime := WeightedTime(info.Steps)
 	steps := Dedup(info.Steps)
 
@@ -108,4 +110,41 @@ func ToAVRO(info *NinjaLog) map[string]interface{} {
 		"created_at":    timeNow(),
 	}
 
+}
+
+// WriteNinjaLogToGCS upload ninja log to GCS in avro format.
+func WriteNinjaLogToGCS(ctx context.Context, info *NinjaLog, bucket, filename string) (rerr error) {
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := client.Close(); rerr == nil {
+			rerr = err
+		}
+	}()
+
+	bkt := client.Bucket(bucket)
+	obj := bkt.Object(filename)
+	gcsw := obj.NewWriter(ctx)
+	defer func() {
+		if err := gcsw.Close(); rerr == nil {
+			rerr = err
+		}
+	}()
+
+	codec, err := avroCodec()
+	if err != nil {
+		return err
+	}
+
+	ocfw, err := goavro.NewOCFWriter(goavro.OCFConfig{
+		W:     gcsw,
+		Codec: codec,
+	})
+	if err != nil {
+		return err
+	}
+
+	return ocfw.Append([]interface{}{toAVRO(info)})
 }
