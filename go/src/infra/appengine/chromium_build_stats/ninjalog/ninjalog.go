@@ -144,6 +144,38 @@ type Metadata struct {
 	Error string
 }
 
+func (m *Metadata) getTargets() []string {
+	if len(m.Targets) != 0 {
+		return m.Targets
+	}
+
+	// Parse ninja's commandline to extract build targets, if targets is not given.
+	var targets []string
+
+	// We assume info.Metadata.Cmdline[0] is ninja or ninja.exe
+	for i := 1; i < len(m.Cmdline); i++ {
+		arg := m.Cmdline[i]
+		switch arg {
+		case "-C", "-f", "-j", "-k", "-l", "-d", "-t", "-w":
+			i++
+			continue
+		}
+
+		if arg == "--" {
+			targets = append(targets, m.Cmdline[i+1:]...)
+			break
+		}
+
+		if strings.HasPrefix(arg, "-") {
+			continue
+		}
+
+		targets = append(targets, arg)
+	}
+
+	return targets
+}
+
 // NinjaLog is parsed data of ninja_log file.
 type NinjaLog struct {
 	// Filename is a filename of ninja_log.
@@ -563,38 +595,7 @@ func ToProto(info *NinjaLog) []*npb.NinjaTask {
 		return buildConfigs[i].Key < buildConfigs[j].Key
 	})
 
-	var targets []string
-
-	if len(info.Metadata.Targets) != 0 {
-		targets = info.Metadata.Targets
-	} else {
-		// Parse ninja's commandline to extract build targets, if targets is not given.
-
-		// We assume info.Metadata.Cmdline[0] is ninja or ninja.exe
-		for i := 1; i < len(info.Metadata.Cmdline); i++ {
-			arg := info.Metadata.Cmdline[i]
-			switch arg {
-			case "-C", "-f", "-j", "-k", "-l", "-d", "-t", "-w":
-				i++
-				continue
-			case "--version", "-v", "--verbose", "-n", "-h", "--help":
-				continue
-			}
-
-			if strings.HasPrefix(arg, "-C") ||
-				strings.HasPrefix(arg, "-f") ||
-				strings.HasPrefix(arg, "-j") ||
-				strings.HasPrefix(arg, "-k") ||
-				strings.HasPrefix(arg, "-l") ||
-				strings.HasPrefix(arg, "-d") ||
-				strings.HasPrefix(arg, "-t") ||
-				strings.HasPrefix(arg, "-w") {
-				continue
-			}
-
-			targets = append(targets, arg)
-		}
-	}
+	targets := info.Metadata.getTargets()
 
 	ninjaTasks := make([]*npb.NinjaTask, 0, len(steps))
 
