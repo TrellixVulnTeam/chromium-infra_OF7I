@@ -256,7 +256,7 @@ func TestRealm(t *testing.T) {
 
 		Convey("not found", func() {
 			rj, err := Realm(ctx, "chromium:random")
-			So(err, ShouldErrLike, "no config found for realm chromium:random")
+			So(err, ShouldEqual, RealmNotExistsErr)
 			So(rj, ShouldBeNil)
 		})
 	})

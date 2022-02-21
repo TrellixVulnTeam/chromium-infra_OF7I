@@ -57,6 +57,9 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 
 	rc, err := config.Realm(ctx, realm)
 	switch {
+	case err == config.RealmNotExistsErr:
+		// No configuration for realm. Skip ingestion.
+		return nil
 	case err != nil:
 		return err
 	case rc.GetTestVariantAnalysis().GetUpdateTestVariantTask().GetUpdateTestVariantTaskInterval() == nil:
