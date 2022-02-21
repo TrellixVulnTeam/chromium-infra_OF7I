@@ -5,6 +5,8 @@
 # This is yaml format of avro schema used to store ninjalog to BigQuery.
 # See https://avro.apache.org/docs/current/spec.html about the AVRO schema.
 
+# This should be sync with bqSchema in bigquery.go.
+
 type: record
 name: ninjalog
 fields:
