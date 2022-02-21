@@ -54,7 +54,6 @@ var (
 		"git cl issue",
 		"git cl land",
 		"git cl lint",
-		"git cl map-branches",
 		"git cl owners",
 		"git cl patch",
 		"git cl presubmit",
@@ -68,6 +67,7 @@ var (
 		"git cl upload",
 		"git cl upstream",
 		"git cl web",
+		"git map-branches",
 		"git nav-downstream",
 		"git reparent-branch",
 	)
