@@ -11,12 +11,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-	"google.golang.org/protobuf/proto"
-
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
 	rdbpb "go.chromium.org/luci/resultdb/proto/v1"
 	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
 
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/config"
@@ -61,7 +60,8 @@ func createOrUpdateAnalyzedTestVariants(ctx context.Context, realm, builder stri
 	case err != nil:
 		return err
 	case rc.GetTestVariantAnalysis().GetUpdateTestVariantTask().GetUpdateTestVariantTaskInterval() == nil:
-		return fmt.Errorf("no UpdateTestVariantTask config found for realm %s", realm)
+		// Test Variant analysis not configured for realm. Skip ingestion.
+		return nil
 	}
 
 	ks := testVariantKeySet(realm, tvs)
