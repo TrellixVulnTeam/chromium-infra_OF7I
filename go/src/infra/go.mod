@@ -81,7 +81,7 @@ require (
 	google.golang.org/appengine v1.6.7
 	google.golang.org/appengine/v2 v2.0.1
 	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c
-	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc v1.40.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/fsnotify.v1 v1.4.7
@@ -100,11 +100,12 @@ require (
 // See https://github.com/google/cel-go/issues/441.
 exclude github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f
 
-// The next version uses errors.Is(...) and no longer works on GAE go111.
-replace golang.org/x/net => golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+// The following requirements were added on 2022-02-22 to prevent blocking deployment of
+// go111 applications.
+exclude google.golang.org/grpc v1.44.0
 
 // The next version uses errors.Is(...) and no longer works on GAE go111.
-replace google.golang.org/grpc => google.golang.org/grpc v1.42.0
+replace golang.org/x/net => golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
 
 // More recent versions break sysmon tests, crbug.com/1142700.
 replace github.com/shirou/gopsutil => github.com/shirou/gopsutil v2.20.10-0.20201018091616-3202231bcdbd+incompatible
