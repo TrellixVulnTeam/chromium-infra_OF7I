@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/google/uuid"
+	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 	"google.golang.org/appengine/v2/user"
 
@@ -270,16 +272,22 @@ func uploadNinjaLogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer gr.Close()
-	ninjalog, err := ninjalog.Parse("ninjalog", gr)
+	info, err := ninjalog.Parse("ninjalog", gr)
 	if err != nil {
 		log.Errorf(ctx, "failed to parse ninjalog: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	log.Infof(ctx, "ninjalog metadata: %v", ninjalog.Metadata)
+	log.Infof(ctx, "ninjalog metadata: %v", info.Metadata)
 
-	if err := SendToBigquery(ctx, ninjalog, "user"); err != nil {
+	if err := ninjalog.WriteNinjaLogToGCS(ctx, info, appengine.AppID(ctx)+".appspot.com", "ninjalog_users_avro/"+uuid.NewString()); err != nil {
+		http.Error(w, "failed to write to GCS", http.StatusInternalServerError)
+		log.Errorf(ctx, "failed to write to GCS: %v", err)
+		return
+	}
+
+	if err := SendToBigquery(ctx, info, "user"); err != nil {
 		http.Error(w, "failed to send BigQuery", http.StatusInternalServerError)
 		log.Errorf(ctx, "failed to send BigQuery: %v", err)
 		return

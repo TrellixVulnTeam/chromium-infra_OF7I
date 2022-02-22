@@ -7,7 +7,6 @@ package ninjalog
 import (
 	"context"
 	"crypto/rand"
-	_ "embed"
 	"encoding/binary"
 	"fmt"
 	"sort"
@@ -20,8 +19,69 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//go:embed avro_schema.yaml
-var yamlSchema []byte
+// TODO(crbug.com/1299645): use embed for avro_schema.yaml
+var yamlSchema = []byte(`
+# Copyright 2022 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# This is yaml format of avro schema used to store ninjalog to BigQuery.
+# See https://avro.apache.org/docs/current/spec.html about the AVRO schema.
+
+# This should be sync with bqSchema in bigquery.go.
+
+type: record
+name: ninjalog
+fields:
+  - name: build_id
+    type: long
+  - name: targets
+    type:
+      type: array
+      items: string
+  - name: step_name
+    type: string
+    default: ''
+  - name: jobs
+    type: int
+  - name: os
+    type: string
+  - name: cpu_core
+    type: int
+  - name: build_configs
+    type:
+      type: array
+      items:
+        name: build_config
+        type: record
+        fields:
+          - name: key
+            type: string
+          - name: value
+            type: string
+  - name: log_entries
+    type:
+      type: array
+      items:
+        name: log_entry
+        type: record
+        fields:
+          - name: outputs
+            type:
+              type: array
+              items: string
+          - name: start_duration_sec
+            type: double
+          - name: end_duration_sec
+            type: double
+          - name: weighted_duration_sec
+            type: double
+  # This is also used for time partitioning in BQ table.
+  - name: created_at
+    type:
+      type: long
+      logicalType: timestamp-micros
+`)
 
 var codecOnce sync.Once
 var codec *goavro.Codec

@@ -19,6 +19,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/googleapis/google-cloud-go-testing/storage/stiface"
 	pubsub "google.golang.org/api/pubsub/v1"
+	"google.golang.org/appengine/v2"
 	"google.golang.org/appengine/v2/log"
 
 	"infra/appengine/chromium_build_stats/ninjalog"
@@ -83,6 +84,12 @@ func pubsubHandler(w http.ResponseWriter, req *http.Request) {
 		// In such case, we don't want Pub/Sub to send
 		// notification again.
 		fmt.Fprintln(w, "Error")
+		return
+	}
+
+	if err := ninjalog.WriteNinjaLogToGCS(ctx, info, appengine.AppID(ctx)+".appspot.com", "ninjalog_bots_avro/"+strings.ReplaceAll(filename, "/", "_")); err != nil {
+		http.Error(w, "failed to write to GCS", http.StatusInternalServerError)
+		log.Errorf(ctx, "failed to write to GCS: %v", err)
 		return
 	}
 
