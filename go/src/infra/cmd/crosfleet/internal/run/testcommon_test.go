@@ -5,8 +5,10 @@
 package run
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +18,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"google.golang.org/grpc"
+
+	models "infra/unifiedfleet/api/v1/models"
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
 )
 
 var testValidateArgsData = []struct {
@@ -540,4 +546,261 @@ func TestSecondaryDevices(t *testing.T) {
 			}
 		})
 	}
+}
+
+const (
+	INVALID_BOARD = "Invalid Board"
+	INVALID_MODEL = "Invalid Model"
+	INVALID_IMAGE = "Invalid Image"
+	INVALID_TEST  = "Invalid Test"
+)
+
+var testValidatePublicChromiumOnChromeOsData = []struct {
+	testCommonFlags
+	wantValidationErrString string
+	testNames               []string
+	validTests              []string
+	validModels             []string
+	testCmdName             string
+	status                  bool
+	ufsError                string
+	allowPublicUserAcct     bool
+}{
+	{ // Invalid Board
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve", "kevin"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_BOARD,
+		[]string{"tast.lacros"},
+		nil,
+		nil,
+		"",
+		false,
+		INVALID_BOARD,
+		true,
+	},
+	{ // Invalid Model
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_MODEL,
+		[]string{"tast.lacros"},
+		nil,
+		nil,
+		"",
+		false,
+		INVALID_MODEL,
+		true,
+	},
+	{ // Invalid Image
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve", "kevin"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_IMAGE,
+		[]string{"tast.lacros"},
+		nil,
+		nil,
+		"",
+		false,
+		INVALID_IMAGE,
+		true,
+	},
+	{ // Invalid Test
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_TEST,
+		[]string{"tast.lacros"},
+		nil,
+		nil,
+		"",
+		false,
+		INVALID_TEST,
+		true,
+	},
+	{ // One valid Test
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_TEST,
+		[]string{"tast.lacros", "tast.lacros2"},
+		[]string{"tast.lacros2"},
+		[]string{"eve"},
+		"",
+		true,
+		INVALID_TEST,
+		true,
+	},
+	{ // One valid Model
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{"eve", "kevin"},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		INVALID_MODEL,
+		[]string{"tast.lacros"},
+		[]string{"tast.lacros"},
+		[]string{"kevin"},
+		"",
+		true,
+		INVALID_MODEL,
+		true,
+	},
+	{ // No Models Specified
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		`model is required for public users`,
+		[]string{"tast.lacros"},
+		[]string{"tast.lacros"},
+		nil,
+		"",
+		true,
+		`model is required for public users`,
+		true,
+	},
+	{ // No Models Specified
+		testCommonFlags{
+			board:    "eve",
+			models:   []string{},
+			repeats:  7,
+			pool:     "",
+			image:    "sample-image",
+			release:  "sample-release",
+			priority: 256,
+		},
+		`model is required for public users`,
+		[]string{"tast.lacros"},
+		[]string{"tast.lacros"},
+		nil,
+		"",
+		true,
+		`model is required for public users`,
+		true,
+	},
+}
+
+func TestValidatePublicChromiumTest(t *testing.T) {
+	t.Parallel()
+	for _, tt := range testValidatePublicChromiumOnChromeOsData {
+		tt := tt
+		t.Run(fmt.Sprintf("(%s)", tt.wantValidationErrString), func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, "status", tt.ufsError)
+
+			results, err := tt.testCommonFlags.verifyFleetTestsPolicy(ctx, &fakeUfsClient{}, tt.testCmdName, tt.testNames, true)
+
+			if err != nil {
+				if !strings.Contains(common.ErrToString(err), tt.wantValidationErrString) {
+					t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantValidationErrString, common.ErrToString(err))
+				}
+				return
+			}
+			gotValidationErrString := ""
+			if results.testValidationErrors != nil && len(results.testValidationErrors) != 0 {
+				gotValidationErrString = results.testValidationErrors[0]
+			}
+			if !strings.Contains(gotValidationErrString, tt.wantValidationErrString) {
+				t.Errorf("unexpected error: wanted '%s', got '%s'", tt.wantValidationErrString, gotValidationErrString)
+			}
+			if results.anyValidTests != tt.status {
+				t.Errorf("unexpected error: wanted valid tests : %v", tt.status)
+			}
+			if diff := cmp.Diff(results.validTests, tt.validTests, common.CmpOpts); diff != "" {
+				t.Errorf("unexpected tests (%s)", diff)
+			}
+			if diff := cmp.Diff(results.validModels, tt.validModels, common.CmpOpts); diff != "" {
+				t.Errorf("unexpected models (%s)", diff)
+			}
+		})
+	}
+}
+
+// FakeGetPoolsClient mimics a UFS client and records what it was asked to look up.
+type fakeUfsClient struct {
+	requestCount int
+}
+
+func (f *fakeUfsClient) GetMachineLSE(ctx context.Context, req *ufsapi.GetMachineLSERequest, opts ...grpc.CallOption) (*models.MachineLSE, error) {
+	return nil, nil
+}
+
+func (f *fakeUfsClient) GetMachine(ctx context.Context, req *ufsapi.GetMachineRequest, opts ...grpc.CallOption) (*models.Machine, error) {
+	return nil, nil
+}
+
+// CheckFleetTestsPolicy returns a dummy response.
+func (f *fakeUfsClient) CheckFleetTestsPolicy(ctx context.Context, in *ufsapi.CheckFleetTestsPolicyRequest, opts ...grpc.CallOption) (*ufsapi.CheckFleetTestsPolicyResponse, error) {
+	var status ufsapi.TestStatus_Code
+	response := &ufsapi.CheckFleetTestsPolicyResponse{}
+	f.requestCount++
+	if f.requestCount == 1 {
+		response.TestStatus = &ufsapi.TestStatus{
+			Code: status,
+		}
+		return response, nil
+	}
+	msg := fmt.Sprint(ctx.Value("status"))
+	if ctx.Value("status") != nil && f.requestCount == 2 {
+		if msg == INVALID_BOARD {
+			status = ufsapi.TestStatus_NOT_A_PUBLIC_BOARD
+		} else if msg == INVALID_MODEL {
+			status = ufsapi.TestStatus_NOT_A_PUBLIC_MODEL
+		} else if msg == INVALID_IMAGE {
+			status = ufsapi.TestStatus_NOT_A_PUBLIC_IMAGE
+		} else if msg == INVALID_TEST {
+			status = ufsapi.TestStatus_NOT_A_PUBLIC_TEST
+		}
+		response.TestStatus = &ufsapi.TestStatus{
+			Code:    status,
+			Message: msg,
+		}
+		return response, nil
+	}
+	response.TestStatus = &ufsapi.TestStatus{
+		Code: ufsapi.TestStatus_OK,
+	}
+	return response, nil
 }
