@@ -1,7 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 
-<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-
+<link rel="import" href="../../elements/som-disable-button/som-disable-button.html">
 <link rel="import" href="../../elements/som-rev-range/som-rev-range.html">
 <link rel="import" href="../../elements/som-layout-test-builder-configs-behavior.html">
 
@@ -85,13 +84,7 @@
           <ul>
             <template is="dom-repeat" items="[[extension.reason.tests]]" as="test" sort="_sortTests">
               <li id="test_results">
-                <button id="copy-disable-command"
-                        on-tap="_handleCopyDisableCommandToClipboard"
-                        alt="Disable this test"
-                        title="Copy a command to run from the root of a chromium/src checkout to disable this test.">
-                  <iron-icon class="copy-disable-command-icon" icon="content-copy"></iron-icon>
-                  Disable<sup style="color:#ff0000">BETA</sup>
-                </button>
+                <som-disable-button bugs="[[bugs]]" test-name="[[test.test_name]]"></som-disable-button>
                 <a target="_blank" href$="[[_linkForTest(extension.reason, test.test_name)]]">
                   [[test.test_name]]
                 </a>

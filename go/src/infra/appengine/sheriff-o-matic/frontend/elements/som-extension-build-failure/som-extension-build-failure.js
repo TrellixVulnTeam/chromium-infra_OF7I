@@ -24,6 +24,7 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
         computed: '_computeSuspectedCls(extension)',
       },
       tree: String,
+      bugs: Array,
       _culprits: {
         type: Array,
         computed: '_computeCulprits(extension)',
@@ -249,16 +250,6 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
     });
     return 'test-expectations/' + encodeURIComponent(testName) + '?' +
         modifiers.join('&');
-  }
-
-  _handleCopyDisableCommandToClipboard(evt) {
-    const testName = evt.model.test.test_name;
-    const command = "tools/disable_tests/disable '" + testName + "'";
-
-    navigator.clipboard.writeText(command).then(function() {},
-        function(err) {
-          console.log(err);
-        });
   }
 
   _linkForCL(cl) {
