@@ -8,16 +8,13 @@ build:
 generate: ninjaproto/ninjalog.proto
 	go generate ./...
 
-# Create table with 7 days expiration.
-update-staging: ninjaproto/ninjalog.proto
-	bqschemaupdater -partitioning-expiration 168h -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.ninjalog
-	bqschemaupdater -partitioning-expiration 168h -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats-staging.ninjalog.user
+update-staging:
+	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats-staging -table bots
+	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats-staging -table users
 
-# namiko(TODO): change table name later
-update-prod: ninjaproto/ninjalog.proto
-	bqschemaupdater -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats.ninjalog.ninjalog
-	bqschemaupdater -message-dir ninjaproto -message ninjaproto.NinjaTask -table chromium-build-stats.ninjalog.user
-
+update-prod:
+	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats -table bots
+	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats -table users
 
 deploy-staging:
 	gae.py upload -x -f -A chromium-build-stats-staging --app-dir app
