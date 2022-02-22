@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import json
 import sys
-import six.moves.urllib
+import urllib.request
 
 # pylint: disable=line-too-long
 
@@ -19,4 +19,4 @@ if not d['issue_url']:
   sys.exit(1)
 
 # Print the final URL
-print(six.moves.urllib.request.urlopen(d['issue_url']).geturl())
+print(urllib.request.urlopen(d['issue_url']).geturl())

@@ -3,15 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-
 import argparse
 import json
 import os
 import sys
-import urllib
-
-from six.moves import urllib
+import urllib.request
 
 BASE_URL = 'https://dl.google.com/dl/cloudsdk/channels/rapid'
 

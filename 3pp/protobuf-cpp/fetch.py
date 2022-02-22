@@ -3,15 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-
 import argparse
 import json
 import os
 import sys
-import urllib
-
-from six.moves import urllib
+import urllib.request
 
 # https://developer.github.com/v3/repos/releases/#get-the-latest-release
 # Returns a JSON-loadable text response like:

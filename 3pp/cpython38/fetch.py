@@ -3,8 +3,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-
 import argparse
 import json
 import os
@@ -12,10 +10,9 @@ import re
 import ssl
 import subprocess
 import sys
-import urllib
+import urllib.request
 
 from pkg_resources import parse_version
-from six.moves import urllib
 import certifi
 
 

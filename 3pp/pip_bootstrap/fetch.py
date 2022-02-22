@@ -3,18 +3,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-
 import argparse
 import json
 import os
 import re
 import ssl
 import sys
-import urllib
+import urllib.request
 
-import six
-from six.moves import urllib
 import pkg_resources
 import certifi
 
@@ -72,7 +68,7 @@ def get_download_url(version):
     'wheel': m.group(3),
   }
   download_urls, name = [], []
-  for pkgname, vers in six.iteritems(versions):
+  for pkgname, vers in versions.items():
     url, filename = _get_wheel_url(pkgname, vers)
     download_urls.append(url)
     name.append(filename)

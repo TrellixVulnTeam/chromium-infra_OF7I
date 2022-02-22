@@ -9,10 +9,9 @@ import argparse
 import json
 import os
 import sys
-import urllib
+import urllib.request
 
 from pkg_resources import parse_version
-from six.moves import urllib
 
 
 def _gae_platform():
