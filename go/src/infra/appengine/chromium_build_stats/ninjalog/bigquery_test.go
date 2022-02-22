@@ -76,4 +76,11 @@ func TestUpdateBQTable(t *testing.T) {
 	if err := status.Err(); err != nil {
 		t.Fatalf("failed to finish job successfully: %v", err)
 	}
+
+	transferConfig, err := CreateTransferConfig(ctx, stagingProjectID, testTable)
+	if err != nil {
+		t.Fatalf("failed to create transfer config: %v", err)
+	}
+
+	t.Logf("transferConfig: %s", transferConfig.Name)
 }
