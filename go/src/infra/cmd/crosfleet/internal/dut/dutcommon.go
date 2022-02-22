@@ -7,9 +7,7 @@ package dut
 import (
 	"context"
 	"fmt"
-	"infra/cmd/crosfleet/internal/site"
 	"infra/cmdsupport/cmdlib"
-	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
 	"strings"
 
@@ -18,24 +16,10 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	swarmingapi "go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
 	"google.golang.org/api/option"
 )
 
 const swarmingAPISuffix = "_ah/api/swarming/v1/"
-
-// newUFSClient returns a new client to interact with the Unified Fleet System.
-func newUFSClient(ctx context.Context, ufsService string, authFlags *authcli.Flags) (ufsapi.FleetClient, error) {
-	httpClient, err := cmdlib.NewHTTPClient(ctx, authFlags)
-	if err != nil {
-		return nil, err
-	}
-	return ufsapi.NewFleetPRPCClient(&prpc.Client{
-		C:       httpClient,
-		Host:    ufsService,
-		Options: site.DefaultPRPCOptions,
-	}), nil
-}
 
 // newSwarmingService returns a new service to interact with the Swarming API.
 func newSwarmingService(ctx context.Context, swarmingServicePath string, authFlags *authcli.Flags) (*swarmingapi.Service, error) {

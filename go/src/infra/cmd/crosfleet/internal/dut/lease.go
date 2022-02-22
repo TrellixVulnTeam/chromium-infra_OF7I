@@ -13,6 +13,7 @@ import (
 	"infra/cmd/crosfleet/internal/flagx"
 	crosfleetpb "infra/cmd/crosfleet/internal/proto"
 	"infra/cmd/crosfleet/internal/site"
+	"infra/cmd/crosfleet/internal/ufs"
 	"infra/cmdsupport/cmdlib"
 	"strings"
 	"time"
@@ -119,7 +120,7 @@ func (c *leaseRun) innerRun(a subcommands.Application, env subcommands.Env) erro
 		host := buildbucket.FindDimValInFinalDims("dut_name", leaseInfo.Build)
 		endTime := time.Now().Add(time.Duration(c.durationMins) * time.Minute).Format(time.RFC822)
 		c.printer.WriteTextStdout("Leased %s until %s\n", host, endTime)
-		ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
+		ufsClient, err := ufs.NewUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
 		if err != nil {
 			// Don't fail the command here, since the DUT is already leased.
 			c.printer.WriteTextStderr("Unable to contact UFS to print DUT info: %v", err)

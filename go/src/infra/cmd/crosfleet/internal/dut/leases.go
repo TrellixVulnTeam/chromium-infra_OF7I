@@ -10,6 +10,7 @@ import (
 	"infra/cmd/crosfleet/internal/common"
 	dutinfopb "infra/cmd/crosfleet/internal/proto"
 	"infra/cmd/crosfleet/internal/site"
+	"infra/cmd/crosfleet/internal/ufs"
 	"infra/cmdsupport/cmdlib"
 	"strings"
 	"time"
@@ -63,7 +64,7 @@ func (c *leasesRun) Run(a subcommands.Application, _ []string, env subcommands.E
 
 func (c *leasesRun) innerRun(a subcommands.Application, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
+	ufsClient, err := ufs.NewUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
 	if err != nil {
 		return err
 	}

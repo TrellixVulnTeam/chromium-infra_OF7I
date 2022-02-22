@@ -10,6 +10,7 @@ import (
 	"infra/cmd/crosfleet/internal/common"
 	dutinfopb "infra/cmd/crosfleet/internal/proto"
 	"infra/cmd/crosfleet/internal/site"
+	"infra/cmd/crosfleet/internal/ufs"
 	"infra/cmdsupport/cmdlib"
 	ufsapi "infra/unifiedfleet/api/v1/rpc"
 	ufsutil "infra/unifiedfleet/app/util"
@@ -60,7 +61,7 @@ func (c *infoRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return fmt.Errorf("missing DUT hostname arg")
 	}
 	ctx := cli.GetContext(a, c, env)
-	ufsClient, err := newUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
+	ufsClient, err := ufs.NewUFSClient(ctx, c.envFlags.Env().UFSService, &c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func (c *infoRun) innerRun(a subcommands.Application, args []string, env subcomm
 }
 
 // getDutInfo returns information about the DUT with the given hostname.
-func getDutInfo(ctx context.Context, ufsClient ufsapi.FleetClient, hostname string) (*dutinfopb.DUTInfo, error) {
+func getDutInfo(ctx context.Context, ufsClient ufs.Client, hostname string) (*dutinfopb.DUTInfo, error) {
 	ctx = contextWithOSNamespace(ctx)
 	correctedHostname := correctedHostname(hostname)
 	labSetup, err := ufsClient.GetMachineLSE(ctx, &ufsapi.GetMachineLSERequest{
