@@ -14,46 +14,17 @@ See [infra/go/README.md](../../../../README.md) for preparation.
   $ make build
 ```
 
- to run locally with dev_appserver
- (note: no service account available, so you couldn't
-  fetch file from gs://chrome-goma-log)
-
-```shell
-   $ (cd app; dev_appserver.py app.yaml)
-```
-
-
  to deploy to production
+
 ```shell
   $ make deploy-prod
 ```
-
- and need to [migrate traffic](https://cloud.google.com/appengine/docs/standard/go/migrating-traffic).
-
- NOTE: Check ninja trace data after deploy. If it's not accessible,
- you must forget to generate trace-viewer contents (See the first item of
- this how-to). Re-generate it and deploy again.
 
  to run test
 
 ```shell
   $ make test
 ```
-
- to read go documentation
-
-```shell
-  $ godoc <package>
-  $ godoc <package> <symbol>
-```
-
- (or
-
-```shell
-  $ godoc -http :6060
-```
- and go to http://localhost:6060
- )
 
 ## Operation for BigQuery Table
 
@@ -65,25 +36,13 @@ Setup
 $ bq --project_id=$PROJECT mk ninjalog
 ```
 
-2. Make table
+2. Update BigQuery table config/schema.
 
 ```shell
-# Set 2 year expiration.
-# This is for log table from buildbot.
-$ bq --project_id=$PROJECT mk --time_partitioning_type=DAY \
-    --time_partitioning_expiration=$((3600 * 24 * 365 * 2)) ninjalog.ninjalog
-
-# This is for log table from chromium developer.
-# Set ***540 days*** expiration.
-$ bq --project_id=$PROJECT mk --time_partitioning_type=DAY \
-    --time_partitioning_expiration=$((3600 * 24 * 30 * 18)) ninjalog.user
+$ make update-staging # for staging
+$ make update-prod # for prod
 ```
 
-3. Update schema
-
-```shell
-$ make update-prod # or `make update-staging`
-```
 
 ## ninja log upload from user
 
@@ -106,17 +65,15 @@ SELECT
   WHERE
     key = "target_os") target_os,
   os,
-  SUBSTR(ARRAY_TO_STRING(log_entry.outputs, ", "), 0, 128) outputs,
-  TRUNC(AVG(log_entry.end_duration_sec - log_entry.start_duration_sec), 2) task_duration_avg,
-  TRUNC(SUM(log_entry.end_duration_sec - log_entry.start_duration_sec), 2) task_duration_sum,
-  TRUNC(SUM(weighted_duration_sec), 2) weighted_duration_sum,
+  SUBSTR(ARRAY_TO_STRING(outputs, ", "), 0, 128) outputs,
+  ROUND(AVG(end_duration_sec - start_duration_sec), 2) task_duration_avg,
+  ROUND(SUM(end_duration_sec - start_duration_sec), 2) task_duration_sum,
+  ROUND(SUM(weighted_duration_sec), 2) weighted_duration_sum,
   COUNT(1) cnt
 FROM
-  `chromium-build-stats.ninjalog.user`
+  `chromium-build-stats.ninjalog.users`, UNNEST(log_entries)
 WHERE
-  (_PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
-    -- This is for streaming buffer.
-    OR _PARTITIONTIME IS NULL)
+  created_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
 GROUP BY
   target_os,
   os,
