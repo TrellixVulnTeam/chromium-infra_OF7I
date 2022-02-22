@@ -100,8 +100,11 @@ require (
 // See https://github.com/google/cel-go/issues/441.
 exclude github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f
 
-// The next version uses errors.Is(...) and no longer works on GAE go113.
+// The next version uses errors.Is(...) and no longer works on GAE go111.
 replace golang.org/x/net => golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+
+// The next version uses errors.Is(...) and no longer works on GAE go111.
+replace google.golang.org/grpc => google.golang.org/grpc v1.42.0
 
 // More recent versions break sysmon tests, crbug.com/1142700.
 replace github.com/shirou/gopsutil => github.com/shirou/gopsutil v2.20.10-0.20201018091616-3202231bcdbd+incompatible
