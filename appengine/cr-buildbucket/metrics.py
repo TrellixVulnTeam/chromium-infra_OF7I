@@ -58,7 +58,6 @@ _BUILD_FIELDS = {
 _METRIC_PREFIX_PROD = 'buildbucket/builds/'
 _METRIC_PREFIX_EXPERIMENTAL = 'buildbucket/builds-experimental/'
 
-BUCKETER_24_HR = gae_ts_mon.GeometricBucketer(growth_factor=10**0.05)
 BUCKETER_48_HR = gae_ts_mon.GeometricBucketer(growth_factor=10**0.053)
 BUCKETER_5_SEC = gae_ts_mon.GeometricBucketer(growth_factor=10**0.0374)
 BUCKETER_1K = gae_ts_mon.GeometricBucketer(growth_factor=10**0.031)
@@ -163,10 +162,6 @@ inc_completed_builds = _incrementer(
         'bucket', 'builder', 'result', 'failure_reason', 'cancelation_reason',
         'canary'
     )
-)
-inc_lease_expirations = _incrementer(
-    'lease_expired', 'Build lease expirations',
-    _build_fields('bucket', 'builder', 'status')
 )
 inc_leases = _incrementer(
     'leases', 'Successful build leases or lease extensions',

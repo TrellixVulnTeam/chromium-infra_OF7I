@@ -81,12 +81,6 @@ def on_build_leased(build):  # pragma: no cover
   metrics.inc_leases(build)
 
 
-def on_expired_build_reset(build):  # pragma: no cover
-  assert not ndb.in_transaction()
-  logging.info('Build %s with expired lease was reset', build.key.id())
-  metrics.inc_lease_expirations(build)
-
-
 def on_build_resetting_async(build):  # pragma: no cover
   return notifications.enqueue_notifications_async(build)
 

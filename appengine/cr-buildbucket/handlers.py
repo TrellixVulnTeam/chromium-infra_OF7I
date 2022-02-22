@@ -21,7 +21,6 @@ import access
 import bq
 import bulkproc
 import config
-import expiration
 import model
 import notifications
 import resultdb
@@ -197,12 +196,6 @@ def get_backend_routes():  # pragma: no cover
   prpc_server.add_interceptor(auth.prpc_interceptor)
 
   return [  # pragma: no branch
-      webapp2.Route(r'/internal/cron/buildbucket/expire_build_leases',
-                    expiration.CronExpireBuildLeases),
-      webapp2.Route(r'/internal/cron/buildbucket/expire_builds',
-                    expiration.CronExpireBuilds),
-      webapp2.Route(r'/internal/cron/buildbucket/delete_builds',
-                    expiration.CronDeleteBuilds),
       webapp2.Route(r'/internal/cron/buildbucket/update_buckets',
                     CronUpdateBuckets),
       webapp2.Route(r'/internal/cron/buildbucket/bq-export',
