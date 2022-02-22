@@ -311,12 +311,11 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, model string) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: (%s) and model: (%s)", buildTarget, model)
 	var err error
-	merr := errors.NewMultiError()
 	out := &fleet.GetStableVersionResponse{}
 
 	out.CrosVersion, err = dssv.GetCrosStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		merr = append(merr, err)
+		return nil, errors.Annotate(err, "getStableVersionImplNoHostname").Err()
 	}
 	out.FaftVersion, err = dssv.GetFaftStableVersion(ctx, buildTarget, model)
 	if err != nil {
@@ -329,11 +328,7 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		logging.Errorf(ctx, "getStableVersionImplNoHostname: failed to get firmware version %q %q", buildTarget, model)
-		merr = append(merr, err)
-	}
-	if len(merr) != 0 {
-		return nil, errors.Annotate(merr, "getStableVersionImplNoHostname").Err()
+		logging.Infof(ctx, "firmware version does not exist: %#v", err)
 	}
 	return out, nil
 }
