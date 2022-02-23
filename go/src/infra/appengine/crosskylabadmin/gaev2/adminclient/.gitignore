@@ -1,2 +1,2 @@
-# ignore executable
+# ignore just the adminclient binary in this directory
 adminclient
