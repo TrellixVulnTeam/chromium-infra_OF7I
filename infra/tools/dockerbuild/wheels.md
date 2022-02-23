@@ -7109,6 +7109,18 @@ wheel: <
 
 * *universal*
 
+### 0.15.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/tensorflow-probability-py2_py3"
+  version: "version:0.15.0"
+>
+```
+
+
+* *universal*
+
 ## **termcolor**
 
 ### 1.1.0
