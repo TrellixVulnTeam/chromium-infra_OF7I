@@ -1,5 +1,10 @@
 service: default
 runtime: go116
+app_engine_apis: true
+
+luci_gae_vars:
+  cit-cli-metrics:
+    AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
 
 handlers:
 - url: /(internal|admin)/.*
@@ -9,3 +14,7 @@ handlers:
 
 - url: /.*
   script: auto
+
+entrypoint: >
+  main
+  -auth-service-host ${AUTH_SERVICE_HOST}

@@ -16,14 +16,14 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/jsonpb"
-	"go.chromium.org/luci/appengine/gaeauth/server"
-	"go.chromium.org/luci/appengine/gaemiddleware/standard"
 	"go.chromium.org/luci/auth/identity"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/gaeemulation"
+	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
-	"google.golang.org/appengine"
 )
 
 const (
@@ -34,19 +34,21 @@ const (
 )
 
 func main() {
-	r := router.New()
-	standard.InstallHandlers(r)
+	modules := []module.Module{
+		gaeemulation.NewModuleFromFlags(),
+	}
 
-	m := standard.Base().Extend(
-		auth.Authenticate(&server.OAuth2Method{Scopes: []string{server.EmailScope}}),
-		CheckUploadAllowed,
-	)
-
-	r.GET("/should-upload", m, shouldUploadHandler)
-	r.POST("/upload", m, uploadHandler)
-
-	http.DefaultServeMux.Handle("/", r)
-	appengine.Main()
+	server.Main(nil, modules, func(srv *server.Server) error {
+		mw := router.NewMiddlewareChain(
+			auth.Authenticate(
+				&auth.GoogleOAuth2Method{Scopes: []string{"https://www.googleapis.com/auth/userinfo.email"}},
+			),
+			CheckUploadAllowed,
+		)
+		srv.Routes.Handle("GET", "/should-upload", mw, shouldUploadHandler)
+		srv.Routes.Handle("POST", "/upload", mw, uploadHandler)
+		return nil
+	})
 }
 
 // CheckUploadAllowed continues if the request in coming from a corp machine (proxy
@@ -101,8 +103,7 @@ func uploadHandler(c *router.Context) {
 
 	reportDepotToolsMetrics(c.Context, &metrics)
 
-	ctx := appengine.WithContext(c.Context, c.Request)
-	if err := putMetrics(ctx, &metrics); err != nil {
+	if err := putMetrics(c.Context, &metrics); err != nil {
 		logging.Errorf(c.Context, "Could not write to BQ: %v", err)
 		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -117,6 +118,7 @@ func putMetrics(ctx context.Context, metrics *schema.Metrics) error {
 	if err != nil {
 		return err
 	}
+	defer client.Close()
 
 	up := bq.NewUploader(ctx, client, datasetID, tableID)
 	up.SkipInvalidRows = true
