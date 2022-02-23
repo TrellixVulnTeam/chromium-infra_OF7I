@@ -10,6 +10,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/grpcutil"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/stableversion/satlab"
@@ -106,12 +108,12 @@ func shallowValidateKeyFields(hostname string, board string, model string) error
 		if board == "" && model == "" {
 			return nil
 		}
-		return errors.Reason("shallow validate key fields: cannot use both hostname %q and board/model %q/%q", hostname, board, model).Err()
+		return status.Errorf(codes.FailedPrecondition, "shallow validate key fields: cannot use both hostname %q and board/model %q/%q", hostname, board, model)
 	}
 	if board != "" && model != "" {
 		return nil
 	}
-	return errors.Reason("shallow validate key fields: expected board %q and model %q to both be non-empty", board, model).Err()
+	return status.Errorf(codes.FailedPrecondition, "shallow validate key fields: expected board %q and model %q to both be non-empty", board, model)
 }
 
 // ShallowValidateValueFields validates the value fields, which correspond to fragments of gs:// URLs.
