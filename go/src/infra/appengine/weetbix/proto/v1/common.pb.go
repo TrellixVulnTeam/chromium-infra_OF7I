@@ -87,6 +87,96 @@ func (VerdictStatus) EnumDescriptor() ([]byte, []int) {
 	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
+// ExonerationStatus explains if and why a test failure was
+// exonerated. Exonerated means the failure was ignored and did not
+// have further impact, in terms of causing the build to fail or
+// rejecting the CL being tested in a presubmit run.
+type ExonerationStatus int32
+
+const (
+	// A test failure must not have this status.
+	ExonerationStatus_EXONERATION_STATUS_UNSPECIFIED ExonerationStatus = 0
+	// The test was not exonerated.
+	ExonerationStatus_NOT_EXONERATED ExonerationStatus = 1
+	// The unexpected failure was discounted despite
+	// having an unexpected result and no exoneration recorded
+	// in Result DB. For example, because the build passed or
+	// was cancelled.
+	ExonerationStatus_IMPLICIT ExonerationStatus = 2
+	// The test was marked exonerated in ResultDB, for a reason
+	// other than Weetbix or FindIt failure analysis.
+	// If a test is exonerated in ResultDB for both reasons
+	// other than Weetbix/FindIt and because of Weetbix/FindIt,
+	// this status takes precedence.
+	ExonerationStatus_EXPLICIT ExonerationStatus = 3
+	// The test was exonerated based on Weetbix cluster analysis.
+	// This status is only set if Weetbix is the only explicit
+	// reason(s) given for the exoneration in ResultDB.
+	//
+	// This status is provided to avoid feedback loops in the
+	// cluster analysis performed by Weetbix, by allowing Weetbix to
+	// filter out exoneration decisions based on such analysis from
+	// feeding back into the input of the analysis.
+	//
+	// Example of a situation we want to avoid:
+	// Weetbix detects an impactful cluster of failures
+	// affecting multiple CLs and cause a recipe to exonerate it.
+	// As a result, Weetbix no longer detects the cluster as impactful.
+	// As a result, the cluster is no longer exonerated.
+	// As a result, the impact resumes.
+	//
+	// During the transition from FindIt to Weetbix for failure
+	// exoneration, exonerations caused by FindIt will be treated
+	// the same as exonerations caused by Weetbix, to ensure Weetbix
+	// behaves as if FindIt no longer exists.
+	ExonerationStatus_WEETBIX ExonerationStatus = 4
+)
+
+// Enum value maps for ExonerationStatus.
+var (
+	ExonerationStatus_name = map[int32]string{
+		0: "EXONERATION_STATUS_UNSPECIFIED",
+		1: "NOT_EXONERATED",
+		2: "IMPLICIT",
+		3: "EXPLICIT",
+		4: "WEETBIX",
+	}
+	ExonerationStatus_value = map[string]int32{
+		"EXONERATION_STATUS_UNSPECIFIED": 0,
+		"NOT_EXONERATED":                 1,
+		"IMPLICIT":                       2,
+		"EXPLICIT":                       3,
+		"WEETBIX":                        4,
+	}
+)
+
+func (x ExonerationStatus) Enum() *ExonerationStatus {
+	p := new(ExonerationStatus)
+	*p = x
+	return p
+}
+
+func (x ExonerationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ExonerationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes[1].Descriptor()
+}
+
+func (ExonerationStatus) Type() protoreflect.EnumType {
+	return &file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes[1]
+}
+
+func (x ExonerationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ExonerationStatus.Descriptor instead.
+func (ExonerationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP(), []int{1}
+}
+
 // A range of timestamps.
 type TimeRange struct {
 	state         protoimpl.MessageState
@@ -653,11 +743,18 @@ var file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc = []byte{
 	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0e, 0x0a,
 	0x0a, 0x55, 0x4e, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x0a, 0x12, 0x11, 0x0a,
 	0x0d, 0x56, 0x45, 0x52, 0x44, 0x49, 0x43, 0x54, 0x5f, 0x46, 0x4c, 0x41, 0x4b, 0x59, 0x10, 0x1e,
-	0x12, 0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x32, 0x42, 0x2c,
-	0x5a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e,
-	0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
-	0x76, 0x31, 0x3b, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x32, 0x2a, 0x74,
+	0x0a, 0x11, 0x45, 0x78, 0x6f, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x12, 0x22, 0x0a, 0x1e, 0x45, 0x58, 0x4f, 0x4e, 0x45, 0x52, 0x41, 0x54, 0x49,
+	0x4f, 0x4e, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43,
+	0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x4e, 0x4f, 0x54, 0x5f, 0x45,
+	0x58, 0x4f, 0x4e, 0x45, 0x52, 0x41, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x0c, 0x0a, 0x08, 0x49,
+	0x4d, 0x50, 0x4c, 0x49, 0x43, 0x49, 0x54, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08, 0x45, 0x58, 0x50,
+	0x4c, 0x49, 0x43, 0x49, 0x54, 0x10, 0x03, 0x12, 0x0b, 0x0a, 0x07, 0x57, 0x45, 0x45, 0x54, 0x42,
+	0x49, 0x58, 0x10, 0x04, 0x42, 0x2c, 0x5a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70,
+	0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x77, 0x65, 0x65, 0x74, 0x62, 0x69, 0x78,
+	0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -672,25 +769,26 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_rawDescGZIP() []byte {
 	return file_infra_appengine_weetbix_proto_v1_common_proto_rawDescData
 }
 
-var file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_infra_appengine_weetbix_proto_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_infra_appengine_weetbix_proto_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_infra_appengine_weetbix_proto_v1_common_proto_goTypes = []interface{}{
 	(VerdictStatus)(0),            // 0: weetbix.v1.VerdictStatus
-	(*TimeRange)(nil),             // 1: weetbix.v1.TimeRange
-	(*TestResultId)(nil),          // 2: weetbix.v1.TestResultId
-	(*Variant)(nil),               // 3: weetbix.v1.Variant
-	(*StringPair)(nil),            // 4: weetbix.v1.StringPair
-	(*BugTrackingComponent)(nil),  // 5: weetbix.v1.BugTrackingComponent
-	(*PresubmitRunId)(nil),        // 6: weetbix.v1.PresubmitRunId
-	(*AssociatedBug)(nil),         // 7: weetbix.v1.AssociatedBug
-	(*ClusterId)(nil),             // 8: weetbix.v1.ClusterId
-	nil,                           // 9: weetbix.v1.Variant.DefEntry
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(ExonerationStatus)(0),        // 1: weetbix.v1.ExonerationStatus
+	(*TimeRange)(nil),             // 2: weetbix.v1.TimeRange
+	(*TestResultId)(nil),          // 3: weetbix.v1.TestResultId
+	(*Variant)(nil),               // 4: weetbix.v1.Variant
+	(*StringPair)(nil),            // 5: weetbix.v1.StringPair
+	(*BugTrackingComponent)(nil),  // 6: weetbix.v1.BugTrackingComponent
+	(*PresubmitRunId)(nil),        // 7: weetbix.v1.PresubmitRunId
+	(*AssociatedBug)(nil),         // 8: weetbix.v1.AssociatedBug
+	(*ClusterId)(nil),             // 9: weetbix.v1.ClusterId
+	nil,                           // 10: weetbix.v1.Variant.DefEntry
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_infra_appengine_weetbix_proto_v1_common_proto_depIdxs = []int32{
-	10, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
-	10, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
-	9,  // 2: weetbix.v1.Variant.def:type_name -> weetbix.v1.Variant.DefEntry
+	11, // 0: weetbix.v1.TimeRange.earliest:type_name -> google.protobuf.Timestamp
+	11, // 1: weetbix.v1.TimeRange.latest:type_name -> google.protobuf.Timestamp
+	10, // 2: weetbix.v1.Variant.def:type_name -> weetbix.v1.Variant.DefEntry
 	3,  // [3:3] is the sub-list for method output_type
 	3,  // [3:3] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -806,7 +904,7 @@ func file_infra_appengine_weetbix_proto_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_weetbix_proto_v1_common_proto_rawDesc,
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,

@@ -17,6 +17,11 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
+// weetbixExonerationReason matches exoneration explanations containing
+// "weetbix" or "findit" (in a case-insenstiive way). It is used to
+// detect exonerations based on FindIt or Weetbix analysis.
+var weetbixExonerationReason = regexp.MustCompile(`(?i)(findit|weetbix)`)
+
 func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Failure {
 	var failures []*cpb.Failure
 	for _, tv := range tvs {
@@ -57,9 +62,29 @@ func failuresFromTestVariants(opts Options, tvs []*rdbpb.TestVariant) []*cpb.Fai
 				continue
 			}
 
-			exonerated := len(tv.Exonerations) > 0 ||
-				!hasPass && opts.AutoExonerateBlockingFailures
-			failure := failureFromResult(tv, tr.Result, opts, exonerated, testRun)
+			hasWeetbixExonerations := false
+			hasOtherExonerations := false
+			for _, e := range tv.Exonerations {
+				if weetbixExonerationReason.MatchString(e.ExplanationHtml) {
+					hasWeetbixExonerations = true
+				} else {
+					hasOtherExonerations = true
+				}
+			}
+
+			var exoneration pb.ExonerationStatus
+			switch {
+			case hasOtherExonerations:
+				exoneration = pb.ExonerationStatus_EXPLICIT
+			case hasWeetbixExonerations:
+				exoneration = pb.ExonerationStatus_WEETBIX
+			case !hasPass && opts.AutoExonerateBlockingFailures:
+				exoneration = pb.ExonerationStatus_IMPLICIT
+			default:
+				exoneration = pb.ExonerationStatus_NOT_EXONERATED
+			}
+
+			failure := failureFromResult(tv, tr.Result, opts, exoneration, testRun)
 			failure.IngestedInvocationResultIndex = int64(i)
 			failure.IngestedInvocationResultCount = int64(len(tv.Results))
 			failure.IsIngestedInvocationBlocked = !hasPass
@@ -117,7 +142,7 @@ func sortResultsByStartTime(results []*rdbpb.TestResultBundle) []*rdbpb.TestResu
 	return sortedResults
 }
 
-func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options, exonerated bool, testRunID string) *cpb.Failure {
+func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options, exonerationStatus pb.ExonerationStatus, testRunID string) *cpb.Failure {
 	result := &cpb.Failure{
 		TestResultId:                  pbutil.TestResultIDFromResultDB(tr.Name),
 		PartitionTime:                 timestamppb.New(opts.PartitionTime),
@@ -130,7 +155,7 @@ func failureFromResult(tv *rdbpb.TestVariant, tr *rdbpb.TestResult, opts Options
 		BugTrackingComponent:          extractBugTrackingComponent(tr.Tags),
 		StartTime:                     tr.StartTime,
 		Duration:                      tr.Duration,
-		IsExonerated:                  exonerated,
+		ExonerationStatus:             exonerationStatus,
 		IngestedInvocationId:          opts.InvocationID,
 		IngestedInvocationResultIndex: -1,    // To be populated by caller.
 		IngestedInvocationResultCount: -1,    // To be populated by caller.

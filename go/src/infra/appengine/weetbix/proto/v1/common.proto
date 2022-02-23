@@ -142,3 +142,50 @@ message ClusterId {
   // string of up to 32 lowercase hexadecimal characters.
   string id = 2;
 }
+
+// ExonerationStatus explains if and why a test failure was
+// exonerated. Exonerated means the failure was ignored and did not
+// have further impact, in terms of causing the build to fail or
+// rejecting the CL being tested in a presubmit run.
+enum ExonerationStatus {
+  // A test failure must not have this status.
+  EXONERATION_STATUS_UNSPECIFIED = 0;
+
+  // The test was not exonerated.
+  NOT_EXONERATED = 1;
+
+  // The unexpected failure was discounted despite
+  // having an unexpected result and no exoneration recorded
+  // in Result DB. For example, because the build passed or
+  // was cancelled.
+  IMPLICIT = 2;
+
+  // The test was marked exonerated in ResultDB, for a reason
+  // other than Weetbix or FindIt failure analysis.
+  // If a test is exonerated in ResultDB for both reasons
+  // other than Weetbix/FindIt and because of Weetbix/FindIt,
+  // this status takes precedence.
+  EXPLICIT = 3;
+
+  // The test was exonerated based on Weetbix cluster analysis.
+  // This status is only set if Weetbix is the only explicit
+  // reason(s) given for the exoneration in ResultDB.
+  //
+  // This status is provided to avoid feedback loops in the
+  // cluster analysis performed by Weetbix, by allowing Weetbix to
+  // filter out exoneration decisions based on such analysis from
+  // feeding back into the input of the analysis.
+  //
+  // Example of a situation we want to avoid:
+  // Weetbix detects an impactful cluster of failures
+  // affecting multiple CLs and cause a recipe to exonerate it.
+  // As a result, Weetbix no longer detects the cluster as impactful.
+  // As a result, the cluster is no longer exonerated.
+  // As a result, the impact resumes.
+  //
+  // During the transition from FindIt to Weetbix for failure
+  // exoneration, exonerations caused by FindIt will be treated
+  // the same as exonerations caused by Weetbix, to ensure Weetbix
+  // behaves as if FindIt no longer exists.
+  WEETBIX = 4;
+}

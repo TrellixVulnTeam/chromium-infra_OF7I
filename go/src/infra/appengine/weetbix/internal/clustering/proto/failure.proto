@@ -22,7 +22,7 @@ message Chunk {
 }
 
 // Weetbix internal representation of an unexpected test failure.
-// Next ID: 24.
+// Next ID: 25.
 message Failure {
   // The identity of the test result, as defined by the source system.
   weetbix.v1.TestResultId test_result_id = 1;
@@ -66,10 +66,11 @@ message Failure {
   // The amount of time the test case took to execute.
   google.protobuf.Duration duration = 11;
 
-  // Was the test failure exonerated? Exonerated means the failure
-  // was ignored and did not have further impact, in terms of causing
-  // the build to fail or rejecting the CL being tested in a presubmit run.
-  bool is_exonerated = 12;
+  reserved 12;
+
+  // A status describing whether the test failure was exonerated, and if
+  // so, why it was exonerated.
+  weetbix.v1.ExonerationStatus exoneration_status = 24;
 
   // Identity of the presubmit run that contains this test result.
   // This should be unique per "CQ+1"/"CQ+2" attempt on gerrit.

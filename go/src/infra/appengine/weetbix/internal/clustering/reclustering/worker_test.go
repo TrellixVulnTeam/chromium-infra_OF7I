@@ -14,6 +14,17 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/spanner"
+	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/clock/testclock"
+	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/impl/memory"
+	"go.chromium.org/luci/server/caching"
+	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/analysis/clusteredfailures"
 	"infra/appengine/weetbix/internal/clustering"
@@ -36,19 +47,6 @@ import (
 	"infra/appengine/weetbix/pbutil"
 	bqpb "infra/appengine/weetbix/proto/bq"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	"cloud.google.com/go/spanner"
-
-	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/caching"
-	"go.chromium.org/luci/server/span"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/luci/common/clock/testclock"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 const testProject = "testproject"
@@ -476,7 +474,7 @@ func (b *testResultBuilder) buildFailure() *cpb.Failure {
 		},
 		StartTime:                     timestamppb.New(time.Date(2025, time.March, 2, 2, 2, 2, b.uniqifier, time.UTC)),
 		Duration:                      durationpb.New(time.Duration(b.uniqifier) * time.Second),
-		IsExonerated:                  b.uniqifier%4 == 0,
+		ExonerationStatus:             pb.ExonerationStatus(1 + (b.uniqifier % 4)),
 		IngestedInvocationId:          fmt.Sprintf("invocation-%v", b.uniqifier),
 		IngestedInvocationResultIndex: int64(b.uniqifier + 1),
 		IngestedInvocationResultCount: int64(b.uniqifier*2 + 1),
@@ -534,7 +532,7 @@ func (b *testResultBuilder) buildBQExport(clusterIDs []clustering.ClusterID) []*
 			BugTrackingComponent: &pb.BugTrackingComponent{System: "monorail", Component: "Component>MyComponent"},
 			StartTime:            timestamppb.New(time.Date(2025, time.March, 2, 2, 2, 2, b.uniqifier, time.UTC)),
 			Duration:             durationpb.New(time.Duration(b.uniqifier) * time.Second),
-			IsExonerated:         b.uniqifier%4 == 0,
+			ExonerationStatus:    pb.ExonerationStatus(1 + (b.uniqifier % 4)),
 
 			PresubmitRunId: &pb.PresubmitRunId{
 				System: "luci-cv",

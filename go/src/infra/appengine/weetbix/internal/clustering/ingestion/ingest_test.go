@@ -213,7 +213,7 @@ func TestIngest(t *testing.T) {
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
-			Convey(`Failure with exoneration`, func() {
+			Convey(`Failure with Weetbix exoneration`, func() {
 				tv.Exonerations = []*rdbpb.TestExoneration{
 					{
 						Name:            fmt.Sprintf("invocations/testrun-mytestrun/tests/test-name-%v/exonerations/exon-1", uniqifier),
@@ -221,25 +221,53 @@ func TestIngest(t *testing.T) {
 						Variant:         proto.Clone(tv.Variant).(*rdbpb.Variant),
 						VariantHash:     "hash",
 						ExonerationId:   "exon-1",
-						ExplanationHtml: "<p>Known flake affecting CQ</p>",
+						ExplanationHtml: "<p>FindIt reported this test as being flaky.</p>",
+					},
+					{
+						Name:            fmt.Sprintf("invocations/testrun-mytestrun/tests/test-name-%v/exonerations/exon-1", uniqifier),
+						TestId:          tv.TestId,
+						Variant:         proto.Clone(tv.Variant).(*rdbpb.Variant),
+						VariantHash:     "hash",
+						ExonerationId:   "exon-1",
+						ExplanationHtml: "<p>Weetbix reported this test as being flaky.</p>",
 					},
 				}
-				testnameCF.IsExonerated = true
-				regexpCF.IsExonerated = true
-				ruleCF.IsExonerated = true
+
+				for _, cf := range expectedCFs {
+					cf.ExonerationStatus = pb.ExonerationStatus_WEETBIX
+				}
 
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Contents), ShouldEqual, 1)
 			})
-			Convey(`Failure with auto-exoneration enabled`, func() {
+			Convey(`Failure with explicit exoneration`, func() {
+				tv.Exonerations = []*rdbpb.TestExoneration{
+					{
+						Name:            fmt.Sprintf("invocations/testrun-mytestrun/tests/test-name-%v/exonerations/exon-1", uniqifier),
+						TestId:          tv.TestId,
+						Variant:         proto.Clone(tv.Variant).(*rdbpb.Variant),
+						VariantHash:     "hash",
+						ExonerationId:   "exon-1",
+						ExplanationHtml: "<p>Test failed when tried without patchset</p>",
+					},
+				}
+
+				for _, cf := range expectedCFs {
+					cf.ExonerationStatus = pb.ExonerationStatus_EXPLICIT
+				}
+
+				testIngestion(tvs, expectedCFs)
+				So(len(chunkStore.Contents), ShouldEqual, 1)
+			})
+			Convey(`Failure with implicit exoneration`, func() {
 				// E.g. the containing invocation was a build which was
 				// cancelled or passed.
 				opts.AutoExonerateBlockingFailures = true
 
 				// Update expectations.
-				testnameCF.IsExonerated = true
-				regexpCF.IsExonerated = true
-				ruleCF.IsExonerated = true
+				for _, cf := range expectedCFs {
+					cf.ExonerationStatus = pb.ExonerationStatus_IMPLICIT
+				}
 
 				testIngestion(tvs, expectedCFs)
 				So(len(chunkStore.Contents), ShouldEqual, 1)
@@ -311,7 +339,7 @@ func TestIngest(t *testing.T) {
 					// the test variant had no exoneration and
 					// AutoExonerateBlockingFailures is unset.
 					for _, exp := range expectedCFs {
-						exp.IsExonerated = false
+						exp.ExonerationStatus = pb.ExonerationStatus_NOT_EXONERATED
 					}
 					testIngestion(tvs, expectedCFs)
 					So(len(chunkStore.Contents), ShouldEqual, 1)
@@ -323,7 +351,7 @@ func TestIngest(t *testing.T) {
 					// all attempts of the test failed, and
 					// AutoExonerateBlockingFailures is set.
 					for _, exp := range expectedCFs {
-						exp.IsExonerated = true
+						exp.ExonerationStatus = pb.ExonerationStatus_IMPLICIT
 					}
 					testIngestion(tvs, expectedCFs)
 					So(len(chunkStore.Contents), ShouldEqual, 1)
@@ -352,7 +380,7 @@ func TestIngest(t *testing.T) {
 				//   eligible for auto-exoneration, regardless of the
 				//   value of AutoExonerateBlockingFailures).
 				for _, exp := range expectedCFs {
-					exp.IsExonerated = false
+					exp.ExonerationStatus = pb.ExonerationStatus_NOT_EXONERATED
 				}
 				Convey(`Build failed`, func() {
 					opts.AutoExonerateBlockingFailures = false
@@ -506,7 +534,7 @@ func expectedClusteredFailure(uniqifier, testRunCount, testRunNum, resultsPerTes
 		BugTrackingComponent: &pb.BugTrackingComponent{System: "monorail", Component: "Component>MyComponent"},
 		StartTime:            timestamppb.New(time.Date(2022, time.February, 12, 0, 0, 0, 0, time.UTC)),
 		Duration:             durationpb.New(time.Second * 10),
-		IsExonerated:         false,
+		ExonerationStatus:    pb.ExonerationStatus_NOT_EXONERATED,
 		PresubmitRunId:       &pb.PresubmitRunId{System: "luci-cv", Id: "cq-run-123"},
 		PresubmitRunOwner:    "automation",
 		PresubmitRunCls: []*pb.Changelist{

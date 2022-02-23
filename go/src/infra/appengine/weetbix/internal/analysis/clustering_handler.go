@@ -146,7 +146,7 @@ func entryFromUpdate(project, chunkID string, cluster clustering.ClusterID, fail
 		BugTrackingComponent: failure.BugTrackingComponent,
 		StartTime:            failure.StartTime,
 		Duration:             failure.Duration,
-		IsExonerated:         failure.IsExonerated,
+		ExonerationStatus:    failure.ExonerationStatus,
 
 		PresubmitRunId:                failure.PresubmitRunId,
 		PresubmitRunOwner:             failure.PresubmitRunOwner,

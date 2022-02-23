@@ -16,7 +16,7 @@ option go_package = "infra/appengine/weetbix/proto/bq;weetbixpb";
 
 // ClusteredFailureRow represents a row in a BigQuery table for a clustered
 // test failure.
-// Next ID: 31.
+// Next ID: 32.
 message ClusteredFailureRow {
   // The clustering algorithm which clustered the test failure.
   string cluster_algorithm = 1;
@@ -147,10 +147,11 @@ message ClusteredFailureRow {
   // The amount of time the test case took to execute.
   google.protobuf.Duration duration = 18;
 
-  // Was the test failure exonerated? Exonerated means the failure
-  // was ignored and did not have further impact, in terms of causing
-  // the build to fail or rejecting the CL being tested in a presubmit run.
-  bool is_exonerated = 19;
+  reserved 19;
+
+  // A status describing whether the test failure was exonerated, and if
+  // so, why it was exonerated.
+  weetbix.v1.ExonerationStatus exoneration_status = 31;
 
   // Identity of the presubmit run that contains this test result.
   // This should be unique per "CQ+1"/"CQ+2" attempt on gerrit.
