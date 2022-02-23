@@ -431,6 +431,15 @@ SPECS.update({
             skip_auditwheel=True,
         ),
         SourceOrPrebuilt(
+            'google-crc32c',
+            '1.3.0',
+            packaged=[],
+            # Other platforms not yet tested.
+            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
+            pyversions=['py3'],
+            skip_auditwheel=True,
+        ),
+        SourceOrPrebuilt(
             'greenlet',
             '0.4.15',
             packaged=(
@@ -1417,6 +1426,7 @@ SPECS.update({
         Universal('google-cloud-bigtable', '0.28.1'),
         Universal('google-cloud-core', '0.28.0'),
         Universal('google-cloud-core', '1.5.0'),
+        Universal('google-cloud-core', '2.2.2', pyversions=['py3']),
         Universal('google-cloud-datastore', '1.6.0'),
         Universal('google-cloud-datastore', '2.1.6', pyversions=['py3']),
         Universal('google-cloud-dns', '0.28.0'),
@@ -1436,6 +1446,7 @@ SPECS.update({
         Universal('google-pasta', '0.2.0', pyversions=['py3']),
         Universal('google-resumable-media', '0.3.1'),
         Universal('google-resumable-media', '1.2.0'),
+        Universal('google-resumable-media', '2.2.1', pyversions=['py3']),
         Universal('googleapis-common-protos', '1.52.0'),
         Universal('html5lib', '1.0.1'),
         Universal('httplib2', '0.19.1', pyversions=['py3']),

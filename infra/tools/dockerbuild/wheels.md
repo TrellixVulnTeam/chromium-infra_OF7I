@@ -2509,6 +2509,20 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-core-py3**
+
+### 2.2.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-core-py3"
+  version: "version:2.2.2"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-datastore**
 
 ### 1.6.0
@@ -2760,6 +2774,19 @@ wheel: <
 * *manylinux-x64-py3*
 * *manylinux-x64-py3.9*
 
+### 1.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-crc32c/${vpython_platform}"
+  version: "version:1.3.0"
+>
+```
+
+
+* *manylinux-x64-py3*
+* *manylinux-x64-py3.9*
+
 ## **google-pasta-py3**
 
 ### 0.2.0
@@ -2794,6 +2821,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-resumable-media-py2_py3"
   version: "version:1.2.0"
+>
+```
+
+
+* *universal*
+
+## **google-resumable-media-py3**
+
+### 2.2.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-resumable-media-py3"
+  version: "version:2.2.1"
 >
 ```
 
