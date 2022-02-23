@@ -36,6 +36,7 @@ func newApplication() *cli.Application {
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
 			subcommands.Section("CrosAdm RPCs"),
 			cmds.GetStableVersion,
+			cmds.SetStableVersion,
 			subcommands.Section("UFS RPCs"),
 			cmds.GetMachineLSE,
 		},
