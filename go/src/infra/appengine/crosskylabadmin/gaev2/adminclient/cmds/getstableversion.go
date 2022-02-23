@@ -32,6 +32,7 @@ var GetStableVersion = &subcommands.Command{
 		r.Flags.StringVar(&r.board, "board", "", "the board or build target")
 		r.Flags.StringVar(&r.model, "model", "", "the model")
 		r.Flags.StringVar(&r.hostname, "hostname", "", "the hostname")
+		r.Flags.BoolVar(&r.satlab, "satlab", false, "whether to get the satlab version")
 		return r
 	},
 }
@@ -43,6 +44,7 @@ type getStableVersionRun struct {
 	board     string
 	model     string
 	hostname  string
+	satlab    bool
 }
 
 // Run runs the command, prints the error if there is one, and returns an exit status.
@@ -81,9 +83,10 @@ func (c *getStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 		},
 	)
 	resp, err := invWithSVClient.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
-		BuildTarget: c.board,
-		Model:       c.model,
-		Hostname:    c.hostname,
+		BuildTarget:              c.board,
+		Model:                    c.model,
+		Hostname:                 c.hostname,
+		SatlabInformationalQuery: c.satlab,
 	})
 	if err != nil {
 		return errors.Annotate(err, "get stable version").Err()
