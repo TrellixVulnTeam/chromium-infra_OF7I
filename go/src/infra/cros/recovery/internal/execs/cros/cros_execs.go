@@ -301,6 +301,26 @@ func isToolPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// crosSetGbbFlagsExec sets the GBB flags on the DUT.
+func crosSetGbbFlagsExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	if _, err := run(ctx, info.ActionTimeout, "/usr/share/vboot/bin/set_gbb_flags.sh 0"); err != nil {
+		log.Debug(ctx, "Cros Set Gbb Flags: %s", err)
+		return errors.Annotate(err, "cros set gbb flags").Err()
+	}
+	return nil
+}
+
+// crosSwitchToSecureModeExec disables booting into dev-mode on the DUT.
+func crosSwitchToSecureModeExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	if _, err := run(ctx, info.ActionTimeout, "crossystem", "disable_dev_request=1"); err != nil {
+		log.Debug(ctx, "Cros Switch to Secure Mode %s", err)
+		return errors.Annotate(err, "cros switch to secure mode").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -319,4 +339,6 @@ func init() {
 	execs.Register("cros_wait_for_system", waitForSystemExec)
 	execs.Register("cros_is_gsc_tool_present", isGscToolPresentExec)
 	execs.Register("cros_is_tool_present", isToolPresentExec)
+	execs.Register("cros_set_gbb_flags", crosSetGbbFlagsExec)
+	execs.Register("cros_switch_to_secure_mode", crosSwitchToSecureModeExec)
 }

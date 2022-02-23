@@ -280,6 +280,9 @@ const crosRepairPlanActions = `
 	"dependencies":[
 		"cros_storage_writing"
 	],
+	"recovery_actions": [
+		"cros_switch_to_secure_mode_and_reboot"
+	],
 	"exec_name":"cros_is_not_in_dev_mode"
 },
 "cros_hwid_info":{
@@ -309,6 +312,9 @@ const crosRepairPlanActions = `
 "cros_storage_writing":{
 	"dependencies":[
 		"cros_ssh"
+	],
+	"recovery_actions": [
+		"cros_switch_to_secure_mode_and_reboot"
 	],
 	"exec_name":"cros_is_file_system_writable"
 },
@@ -481,6 +487,37 @@ const crosRepairPlanActions = `
 		"cros_update_job_repo_url"
 	 ],
 	"exec_name":"sample_pass"
+},
+"cros_switch_to_secure_mode_and_reboot":{
+	"docs":[
+		"This repair action utilizes the dependent actions to set the",
+		" GBB flags and disable booting into dev-mode. Then it reboots",
+		" the DUT."
+	],
+	"dependencies":[
+		"cros_set_gbb_flags",
+		"cros_switch_to_secure_mode",
+		"cros_reboot"
+	],
+	"exec_name":"sample_pass"
+},
+"cros_set_gbb_flags":{
+	"docs":[
+		"This action sets the GBB flags."
+	],
+	"exec_timeout": {
+		"seconds":3600
+	},
+	"allow_fail_after_recovery": true
+},
+"cros_switch_to_secure_mode":{
+	"docs":[
+		"This action disables booting into dev-mode."
+	],
+	"exec_timeout": {
+		"seconds":3600
+	},
+	"allow_fail_after_recovery": true
 }
 `
 
