@@ -27,6 +27,7 @@ var GetStableVersion = &subcommands.Command{
 	ShortDesc: `Get the stable version`,
 	CommandRun: func() subcommands.CommandRun {
 		r := &getStableVersionRun{}
+		r.crOSAdminRPCRun.Register(&r.Flags)
 		r.authFlags.Register(&r.Flags, site.DefaultAuthOptions)
 		r.Flags.StringVar(&r.board, "board", "", "the board or build target")
 		r.Flags.StringVar(&r.model, "model", "", "the model")
@@ -37,7 +38,7 @@ var GetStableVersion = &subcommands.Command{
 
 // GetStableVersionRun is the command for adminclient get-stable-version.
 type getStableVersionRun struct {
-	subcommands.CommandRunBase
+	crOSAdminRPCRun
 	authFlags authcli.Flags
 	board     string
 	model     string
@@ -61,16 +62,22 @@ func (c *getStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 		return errors.Annotate(err, "get stable version").Err()
 	}
 
-	// TODO(gregorynisbet): Only set insecure to true if we are looking at a localhost-like address.
-	var options prpc.Options = *site.DefaultPRPCOptions
-	options.Insecure = true
+	host, err := c.GetHost()
+	if err != nil {
+		return errors.Annotate(err, "get stable version").Err()
+	}
+
+	options, err := c.GetOptions()
+	if err != nil {
+		return errors.Annotate(err, "get stable version").Err()
+	}
 
 	invWithSVClient := fleet.NewInventoryPRPCClient(
 		&prpc.Client{
 			C: hc,
 			// TODO(gregorynisbet): Do not hardcode the CrOSSkylabAdmin server.
-			Host:    "127.0.0.1:8800",
-			Options: &options,
+			Host:    host,
+			Options: options,
 		},
 	)
 	resp, err := invWithSVClient.GetStableVersion(ctx, &fleet.GetStableVersionRequest{

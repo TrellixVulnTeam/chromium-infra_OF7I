@@ -15,6 +15,15 @@ import (
 	"go.chromium.org/luci/hardcoded/chromeinfra"
 )
 
+// StagingService is the staging instance of CrOSSkylabAdmin.
+const StagingService = "skylab-staging-bot-fleet.appspot.com"
+
+// ProdService is the prod instance of CrOSSkylabAdmin.
+const ProdService = "chromeos-skylab-bot-fleet.appspot.com"
+
+// LocalService is the local instance of CrOSkylabAdmin.
+const LocalService = "127.0.0.1:8000"
+
 // DefaultPRPCOptions is used for PRPC clients.  If it is nil, the
 // default value is used.  See prpc.Options for details.
 //
