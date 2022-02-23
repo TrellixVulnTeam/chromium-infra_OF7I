@@ -87,16 +87,16 @@ func (c *setStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 
 	req := &fleet.SetSatlabStableVersionRequest{}
 	if c.hostname == "" {
-		req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy{
-			SatlabHostnameStrategy: &fleet.SatlabHostnameStrategy{
-				Hostname: c.hostname,
-			},
-		}
-	} else {
 		req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabBoardAndModelStrategy{
 			SatlabBoardAndModelStrategy: &fleet.SatlabBoardAndModelStrategy{
 				Board: c.board,
 				Model: c.model,
+			},
+		}
+	} else {
+		req.Strategy = &fleet.SetSatlabStableVersionRequest_SatlabHostnameStrategy{
+			SatlabHostnameStrategy: &fleet.SatlabHostnameStrategy{
+				Hostname: c.hostname,
 			},
 		}
 	}
@@ -104,14 +104,21 @@ func (c *setStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 	req.FirmwareVersion = c.fw
 	req.FirmwareImage = c.fwImage
 
+	if out, err := protojson.Marshal(req); err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	} else {
+		// The request is diagnostic info, write to stderr.
+		fmt.Fprintf(a.GetErr(), "%s\n", out)
+	}
+
 	resp, err := invWithSVClient.SetSatlabStableVersion(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "set stable version").Err()
 	}
-	out, err := protojson.Marshal(resp)
-	if err != nil {
+	if out, err := protojson.Marshal(resp); err != nil {
 		return errors.Annotate(err, "set stable version").Err()
+	} else {
+		fmt.Fprintf(a.GetOut(), "%s\n", out)
 	}
-	fmt.Fprintf(a.GetOut(), "%s\n", out)
 	return nil
 }
