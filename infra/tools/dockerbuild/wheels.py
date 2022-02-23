@@ -1252,6 +1252,7 @@ SPECS.update({
         UniversalSource('mozinfo', '0.10'),
         UniversalSource('mozinfo', '1.1.0'),
         UniversalSource('mozinfo', '1.2.2'),
+        UniversalSource('oauth2client', '1.5.2'),
         UniversalSource('oauth2client', '3.0.0'),
         UniversalSource('odictliteral', '1.0.0'),
         UniversalSource('pefile', '2018.8.8'),

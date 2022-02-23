@@ -4342,6 +4342,18 @@ wheel: <
 
 ## **oauth2client**
 
+### 1.5.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/oauth2client-py2_py3"
+  version: "version:1.5.2"
+>
+```
+
+
+* *universal*
+
 ### 3.0.0
 
 ```protobuf
