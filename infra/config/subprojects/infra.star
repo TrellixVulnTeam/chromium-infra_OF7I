@@ -217,8 +217,6 @@ def tpp_tryjob(builder):
     luci.cq_tryjob_verifier(
         builder = builder,
         cq_group = "infra",
-        # Mark as experimental, so this will not block submit.
-        experiment_percentage = 100,
         location_regexp = [
             ".+/[+]/3pp/.+",
             ".+/[+]/recipes/recipe_modules/support_3pp/.+",
