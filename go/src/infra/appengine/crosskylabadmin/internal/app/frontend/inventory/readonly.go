@@ -273,6 +273,9 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
 
 	if hostname == "" {
+		if buildTarget == "" || model == "" {
+			return nil, status.Errorf(codes.FailedPrecondition, "search criteria must be provided.")
+		}
 		logging.Infof(ctx, "hostname not provided, using buildTarget (%s) and model (%s)", buildTarget, model)
 		out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
 		if err == nil {
