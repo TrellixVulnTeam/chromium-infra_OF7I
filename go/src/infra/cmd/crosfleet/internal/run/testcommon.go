@@ -12,11 +12,14 @@ import (
 	"infra/cmd/crosfleet/internal/common"
 	"infra/cmd/crosfleet/internal/flagx"
 	crosfleetpb "infra/cmd/crosfleet/internal/proto"
+	"infra/cmd/crosfleet/internal/ufs"
 	"infra/cmdsupport/cmdlib"
 	"math"
 	"strings"
 	"sync"
 	"time"
+
+	ufsapi "infra/unifiedfleet/api/v1/rpc"
 
 	"go.chromium.org/chromiumos/infra/proto/go/chromiumos"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -73,6 +76,13 @@ type testCommonFlags struct {
 	exitEarly            bool
 	lacrosPath           string
 	secondaryLacrosPaths []string
+}
+
+type fleetValidationResults struct {
+	anyValidTests        bool
+	validTests           []string
+	validModels          []string
+	testValidationErrors []string
 }
 
 // Registers run command-specific flags
@@ -613,4 +623,86 @@ func (c *testCommonFlags) secondaryDevices() []*test_platform.Request_Params_Sec
 		secondary_devices = append(secondary_devices, sd)
 	}
 	return secondary_devices
+}
+
+// verifyFleetTestsPolicy validate tests based on fleet-side permission check.
+//
+// This method calls UFS CheckFleetTestsPolicy RPC for each testName, board, image and model combination.
+// The test run stops if an invalid board or image is specified.
+// After this validation only valid models and tests will be used in the run command.
+func (c *testCommonFlags) verifyFleetTestsPolicy(ctx context.Context, ufsClient ufs.Client, cmdName string,
+	testNames []string, allowPublicUserAccount bool) (*fleetValidationResults, error) {
+	validTestNamesMap := map[string]bool{}
+	validModelsMap := map[string]bool{}
+	results := &fleetValidationResults{}
+
+	// Calling the UFS CheckFleetTestsPolicy with empty test params.
+	// For a user account which runs private tests there is no validation on the UFS side so the CheckFleetTestsPolicy will return a valid test response for empty test params.
+	// If UFS returns an OK status for this RPC then it means that the service account is not something that is used to run public tests so we can skip further validation.
+	// This check is to avoid unnecessary RPC calls to UFS for tests run by service accounts meant for private tests.
+	isPublicTestResponse, err := ufsClient.CheckFleetTestsPolicy(ctx, &ufsapi.CheckFleetTestsPolicyRequest{})
+	if err != nil && !allowPublicUserAccount {
+		return nil, fmt.Errorf("Public user service accounts are not allowed to run %s run(s)",
+			cmdName)
+	}
+	if isPublicTestResponse != nil && isPublicTestResponse.TestStatus.Code == ufsapi.TestStatus_OK {
+		results.anyValidTests = true
+		results.validModels = c.models
+		results.validTests = testNames
+		return results, nil
+	}
+
+	if len(c.models) == 0 {
+		return nil, fmt.Errorf("model is required for public users' crosfleet %s run(s)",
+			cmdName)
+	}
+	for _, model := range c.models {
+		for _, testName := range testNames {
+			resp, err := ufsClient.CheckFleetTestsPolicy(ctx, &ufsapi.CheckFleetTestsPolicyRequest{
+				TestName: testName,
+				Board:    c.board,
+				Model:    model,
+				Image:    c.image,
+			})
+			if err != nil {
+				results.testValidationErrors = append(results.testValidationErrors, err.Error())
+				continue
+			}
+			if resp.TestStatus.Code == ufsapi.TestStatus_OK {
+				results.anyValidTests = true
+				validModelsMap[model] = true
+				validTestNamesMap[testName] = true
+				continue
+			}
+			if resp.TestStatus.Code == ufsapi.TestStatus_NOT_A_PUBLIC_BOARD || resp.TestStatus.Code == ufsapi.TestStatus_NOT_A_PUBLIC_IMAGE {
+				// No tests can be run with Invalid Board or Image so returning early to avoid unnecessary calls to UFS
+				// results.anyValidTests = false
+				return nil, fmt.Errorf(resp.TestStatus.Message)
+			}
+			results.testValidationErrors = append(results.testValidationErrors, resp.TestStatus.Message)
+		}
+	}
+
+	for test := range validTestNamesMap {
+		results.validTests = append(results.validTests, test)
+	}
+	for model := range validModelsMap {
+		results.validModels = append(results.validModels, model)
+	}
+
+	return results, nil
+}
+
+func checkAndPrintFleetValidationErrors(results fleetValidationResults, printer common.CLIPrinter, cmdName string) error {
+	if len(results.testValidationErrors) > 0 {
+		fullErrorMsg := fmt.Sprintf("Encountered the following errors requesting %s run(s):\n%s\n",
+			cmdName, strings.Join(results.testValidationErrors, "\n"))
+		if results.anyValidTests {
+			// Don't fail the command if we were able to request some runs.
+			printer.WriteTextStderr(fullErrorMsg)
+		} else {
+			return fmt.Errorf(fullErrorMsg)
+		}
+	}
+	return nil
 }
