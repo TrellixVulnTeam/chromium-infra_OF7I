@@ -7,13 +7,13 @@ package testname
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlgorithm(t *testing.T) {
@@ -116,11 +116,17 @@ func TestAlgorithm(t *testing.T) {
 			}
 			test(failure, `test LIKE "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%"`)
 		})
-		Convey(`Escaping`, func() {
+		Convey(`Escapes LIKE syntax`, func() {
 			failure := &clustering.Failure{
 				TestID: `ninja://:blink_web_tests/a/b_\%c.html`,
 			}
 			test(failure, `test LIKE "ninja://:blink\\_web\\_tests/%a/b\\_\\\\\\%c.html%"`)
+		})
+		Convey(`Escapes non-graphic Unicode characters`, func() {
+			failure := &clustering.Failure{
+				TestID: "\u0000\r\n\v\u202E\u2066",
+			}
+			test(failure, `test = "\x00\r\n\v\u202e\u2066"`)
 		})
 	})
 	Convey(`Cluster Title`, t, func() {
@@ -140,7 +146,7 @@ func TestAlgorithm(t *testing.T) {
 				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
 			}
 			title := a.ClusterTitle(cfg, failure)
-			So(title, ShouldEqual, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
+			So(title, ShouldEqual, `ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%`)
 		})
 	})
 	Convey(`Cluster Description`, t, func() {
@@ -149,20 +155,26 @@ func TestAlgorithm(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey(`No matching rules`, func() {
-			failure := &clustering.Failure{
-				TestID: "ninja://test_name_one",
+			summary := &clustering.ClusterSummary{
+				Example: clustering.Failure{
+					TestID: "ninja://test_name_one",
+				},
 			}
-			description := a.ClusterDescription(cfg, failure)
+			description, err := a.ClusterDescription(cfg, summary)
+			So(err, ShouldBeNil)
 			So(description.Title, ShouldEqual, "ninja://test_name_one")
 			So(description.Description, ShouldContainSubstring, "ninja://test_name_one")
 		})
 		Convey(`Matching rule`, func() {
-			failure := &clustering.Failure{
-				TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+			summary := &clustering.ClusterSummary{
+				Example: clustering.Failure{
+					TestID: "ninja://:blink_web_tests/virtual/dark-color-scheme/fast/forms/color-scheme/select/select-multiple-hover-unselected.html",
+				},
 			}
-			description := a.ClusterDescription(cfg, failure)
-			So(description.Title, ShouldEqual, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
-			So(description.Description, ShouldContainSubstring, "ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%")
+			description, err := a.ClusterDescription(cfg, summary)
+			So(err, ShouldBeNil)
+			So(description.Title, ShouldEqual, `ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%`)
+			So(description.Description, ShouldContainSubstring, `ninja://:blink\\_web\\_tests/%fast/forms/color-scheme/select/select-multiple-hover-unselected.html%`)
 		})
 	})
 }

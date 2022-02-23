@@ -127,6 +127,10 @@ func TestRun(t *testing.T) {
 			sourceClusterID := reasonClusterID(compiledCfg, "Failed to connect to 100.1.1.99.")
 			suggestedClusters[1].ClusterID = sourceClusterID
 			suggestedClusters[1].ExampleFailureReason = bigquery.NullString{StringVal: "Failed to connect to 100.1.1.105.", Valid: true}
+			suggestedClusters[1].TopTestIDs = []analysis.TopCount{
+				{Value: "network-test-1", Count: 10},
+				{Value: "network-test-2", Count: 10},
+			}
 
 			ignoreRuleID := ""
 			expectCreate := true
@@ -181,9 +185,11 @@ func TestRun(t *testing.T) {
 				So(f.Issues[0].Issue.Name, ShouldEqual, "projects/chromium/issues/100")
 				So(f.Issues[0].Issue.Summary, ShouldContainSubstring, "Failed to connect to 100.1.1.105.")
 				So(len(f.Issues[0].Comments), ShouldEqual, 2)
+				// Expect the bug description to contain the top tests.
+				So(f.Issues[0].Comments[0].Content, ShouldContainSubstring, "network-test-1")
+				So(f.Issues[0].Comments[0].Content, ShouldContainSubstring, "network-test-2")
 				// Expect a link to the bug and the rule.
 				So(f.Issues[0].Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
-				So(f.Issues[0].Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/chromium/rules/"+rule.RuleID)
 			}
 
 			Convey("1d unexpected failures", func() {

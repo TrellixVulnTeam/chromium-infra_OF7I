@@ -22,9 +22,7 @@ const (
 
 This bug has been automatically filed by Weetbix in response to a cluster of test failures.`
 
-	LinkTemplate = `See failure impact and configure the failure association rule for this bug at: {bugLink}
-Weetbix rule that created this bug: {ruleLink}
-	`
+	LinkTemplate = `See failure impact and configure the failure association rule for this bug at: %s`
 )
 
 const (
@@ -117,8 +115,6 @@ type LinkCommentRequest struct {
 	Project string
 	// The internal bug name, e.g. "chromium/100".
 	BugName string
-	// The Weetbix Failure Association Rule ID.
-	RuleID string
 }
 
 // PrepareLinkComment prepares a request that adds links to Weetbix to
@@ -130,12 +126,8 @@ func PrepareLinkComment(request LinkCommentRequest) (*mpb.ModifyIssuesRequest, e
 	}
 
 	bugLink := fmt.Sprintf("https://%s.appspot.com/b/%s", request.AppID, request.BugName)
-	ruleLink := fmt.Sprintf("https://%s.appspot.com/p/%s/rules/%s", request.AppID, request.Project, request.RuleID)
 
-	comment := strings.NewReplacer(
-		"{bugLink}", bugLink,
-		"{ruleLink}", ruleLink,
-	).Replace(LinkTemplate)
+	comment := fmt.Sprintf(LinkTemplate, bugLink)
 
 	result := &mpb.ModifyIssuesRequest{
 		Deltas: []*mpb.IssueDelta{

@@ -35,7 +35,7 @@ type Algorithm interface {
 	ClusterTitle(config *compiledcfg.ProjectConfig, example *clustering.Failure) string
 	// ClusterDescription returns a description of the cluster, for use when
 	// filing bugs, with the help of the given example failure.
-	ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription
+	ClusterDescription(config *compiledcfg.ProjectConfig, summary *clustering.ClusterSummary) (*clustering.ClusterDescription, error)
 }
 
 // AlgorithmsVersion is the version of the set of algorithms used.

@@ -7,13 +7,13 @@ package failurereason
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/rules/lang"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlgorithm(t *testing.T) {
@@ -99,7 +99,7 @@ func TestAlgorithm(t *testing.T) {
 		cfg, err := compiledcfg.NewConfig(cfgpb)
 		So(err, ShouldBeNil)
 
-		Convey(`Hexadecimal`, func() {
+		Convey(`Baseline`, func() {
 			failure := &clustering.Failure{
 				Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
 			}
@@ -119,21 +119,39 @@ func TestAlgorithm(t *testing.T) {
 		cfg, err := compiledcfg.NewConfig(cfgpb)
 		So(err, ShouldBeNil)
 
-		Convey(`Hexadecimal`, func() {
-			failure := &clustering.Failure{
-				Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
+		Convey(`Baseline`, func() {
+			failure := &clustering.ClusterSummary{
+				Example: clustering.Failure{
+					Reason: &pb.FailureReason{PrimaryErrorMessage: "Null pointer exception at ip 0x45637271"},
+				},
+				TopTests: []string{
+					"ninja://test_one",
+					"ninja://test_two",
+					"ninja://test_three",
+				},
 			}
-			description := a.ClusterDescription(cfg, failure)
+			description, err := a.ClusterDescription(cfg, failure)
+			So(err, ShouldBeNil)
 			So(description.Title, ShouldEqual, `Null pointer exception at ip 0x45637271`)
 			So(description.Description, ShouldContainSubstring, `Null pointer exception at ip 0x45637271`)
+			So(description.Description, ShouldContainSubstring, `- ninja://test_one`)
+			So(description.Description, ShouldContainSubstring, `- ninja://test_three`)
+			So(description.Description, ShouldContainSubstring, `- ninja://test_three`)
 		})
 		Convey(`Escaping`, func() {
-			failure := &clustering.Failure{
-				Reason: &pb.FailureReason{PrimaryErrorMessage: `_%"'+[]|` + "\u0000\r\n\v\u202E\u2066 AdafdxAAD17917+/="},
+			summary := &clustering.ClusterSummary{
+				Example: clustering.Failure{
+					Reason: &pb.FailureReason{PrimaryErrorMessage: `_%"'+[]|` + "\u0000\r\n\v\u202E\u2066 AdafdxAAD17917+/="},
+				},
+				TopTests: []string{
+					"\u2066\u202E\v\n\r\u0000",
+				},
 			}
-			description := a.ClusterDescription(cfg, failure)
+			description, err := a.ClusterDescription(cfg, summary)
+			So(err, ShouldBeNil)
 			So(description.Title, ShouldEqual, `_%\"'+[]|\x00\r\n\v\u202e\u2066 AdafdxAAD17917+/=`)
 			So(description.Description, ShouldContainSubstring, `_%\"'+[]|\x00\r\n\v\u202e\u2066 AdafdxAAD17917+/=`)
+			So(description.Description, ShouldContainSubstring, `- \u2066\u202e\v\n\r\x00`)
 		})
 	})
 }

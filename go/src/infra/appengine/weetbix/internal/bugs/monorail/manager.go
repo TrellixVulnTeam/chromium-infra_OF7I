@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"infra/appengine/weetbix/internal/bugs"
-	configpb "infra/appengine/weetbix/internal/config/proto"
-	mpb "infra/monorailv2/api/v3/api_proto"
-
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/protobuf/encoding/prototext"
+
+	"infra/appengine/weetbix/internal/bugs"
+	configpb "infra/appengine/weetbix/internal/config/proto"
+	mpb "infra/monorailv2/api/v3/api_proto"
 )
 
 // monorailRe matches monorail issue names, like
@@ -88,7 +88,6 @@ func (m *BugManager) Create(ctx context.Context, request *bugs.CreateRequest) (s
 		AppID:   m.appID,
 		Project: m.project,
 		BugName: bugName,
-		RuleID:  request.RuleID,
 	}
 	modifyReq, err := PrepareLinkComment(linkReq)
 	if err != nil {

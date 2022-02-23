@@ -6,19 +6,19 @@ package monorail
 
 import (
 	"context"
-	"infra/appengine/weetbix/internal/bugs"
-	"infra/appengine/weetbix/internal/clustering"
-	mpb "infra/monorailv2/api/v3/api_proto"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/protobuf/field_mask"
+
+	"infra/appengine/weetbix/internal/bugs"
+	"infra/appengine/weetbix/internal/clustering"
+	mpb "infra/monorailv2/api/v3/api_proto"
 )
 
 func NewCreateRequest() *bugs.CreateRequest {
 	cluster := &bugs.CreateRequest{
-		RuleID: "1234567890abcdef1234567890abcdef",
 		Description: &clustering.ClusterDescription{
 			Title:       "ClusterID",
 			Description: "Tests are failing with reason: Some failure reason.",
@@ -87,9 +87,8 @@ func TestManager(t *testing.T) {
 				So(len(issue.Comments), ShouldEqual, 2)
 				So(issue.Comments[0].Content, ShouldContainSubstring, reason)
 				So(issue.Comments[0].Content, ShouldNotContainSubstring, "ClusterIDShouldNotAppearInOutput")
-				// Links to cluster pages should appear in output.
+				// Link to cluster page should appear in output.
 				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
-				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/luciproject/rules/1234567890abcdef1234567890abcdef")
 				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("With test name failure cluster", func() {
@@ -128,9 +127,8 @@ func TestManager(t *testing.T) {
 				})
 				So(len(issue.Comments), ShouldEqual, 2)
 				So(issue.Comments[0].Content, ShouldContainSubstring, "ninja://:blink_web_tests/media/my-suite/my-test.html")
-				// Links to cluster pages should appear in output.
+				// Link to cluster page should appear in output.
 				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/b/chromium/100")
-				So(issue.Comments[1].Content, ShouldContainSubstring, "https://chops-weetbix-test.appspot.com/p/luciproject/rules/1234567890abcdef1234567890abcdef")
 				So(issue.NotifyCount, ShouldEqual, 1)
 			})
 			Convey("Does nothing if in simulation mode", func() {

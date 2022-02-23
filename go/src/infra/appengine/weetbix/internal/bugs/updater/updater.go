@@ -225,13 +225,6 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 // and stores the association from bug to failures through a new
 // failure association rule.
 func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary) (created bool, err error) {
-	failure := &clustering.Failure{
-		TestID: cs.ExampleTestID(),
-	}
-	if cs.ExampleFailureReason.Valid {
-		failure.Reason = &pb.FailureReason{PrimaryErrorMessage: cs.ExampleFailureReason.StringVal}
-	}
-
 	alg, err := algorithms.SuggestingAlgorithm(cs.ClusterID.Algorithm)
 	if err == algorithms.ErrAlgorithmNotExist {
 		// The cluster is for an old algorithm that no longer exists, or
@@ -241,6 +234,8 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		return false, nil
 	}
 
+	summary := clusterSummaryFromAnalysis(cs)
+
 	// Double-check the failure matches the cluster. Generating a
 	// failure association rule that does not match the suggested cluster
 	// could result in indefinite creation of new bugs, as the system
@@ -248,10 +243,10 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	// same suggested cluster.
 	// Mismatches should usually be transient as re-clustering will fix
 	// up any incorrect clustering.
-	if hex.EncodeToString(alg.Cluster(b.projectCfg, failure)) != cs.ClusterID.ID {
+	if hex.EncodeToString(alg.Cluster(b.projectCfg, &summary.Example)) != cs.ClusterID.ID {
 		return false, errors.New("example failure did not match cluster ID")
 	}
-	rule, err := b.generateFailureAssociationRule(alg, failure)
+	rule, err := b.generateFailureAssociationRule(alg, &summary.Example)
 	if err != nil {
 		return false, errors.Annotate(err, "obtain failure association rule").Err()
 	}
@@ -261,9 +256,13 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 		return false, errors.Annotate(err, "generating rule ID").Err()
 	}
 
+	description, err := alg.ClusterDescription(b.projectCfg, summary)
+	if err != nil {
+		return false, errors.Annotate(err, "prepare bug description").Err()
+	}
+
 	request := &bugs.CreateRequest{
-		RuleID:      ruleID,
-		Description: alg.ClusterDescription(b.projectCfg, failure),
+		Description: description,
 		Impact:      bugs.ExtractResidualImpact(cs),
 	}
 
@@ -299,6 +298,25 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 	}
 
 	return true, nil
+}
+
+func clusterSummaryFromAnalysis(cs *analysis.ClusterSummary) *clustering.ClusterSummary {
+	example := clustering.Failure{
+		TestID: cs.ExampleTestID(),
+	}
+	if cs.ExampleFailureReason.Valid {
+		example.Reason = &pb.FailureReason{PrimaryErrorMessage: cs.ExampleFailureReason.StringVal}
+	}
+	// A list of 5 commonly occuring tests are included in bugs created
+	// for failure reason clusters, to improve searchability by test name.
+	var topTests []string
+	for _, tt := range cs.TopTestIDs {
+		topTests = append(topTests, tt.Value)
+	}
+	return &clustering.ClusterSummary{
+		Example:  example,
+		TopTests: topTests,
+	}
 }
 
 func (b *BugUpdater) generateFailureAssociationRule(alg algorithms.Algorithm, failure *clustering.Failure) (string, error) {

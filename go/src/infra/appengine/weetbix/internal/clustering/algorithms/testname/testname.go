@@ -79,20 +79,20 @@ const bugDescriptionTemplateExact = `This bug is for all test failures with the 
 
 // ClusterDescription returns a description of the cluster, for use when
 // filing bugs, with the help of the given example failure.
-func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription {
+func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, summary *clustering.ClusterSummary) (*clustering.ClusterDescription, error) {
 	// Get the like expression that defines the cluster.
-	like, ok := clusterLike(config, example)
+	like, ok := clusterLike(config, &summary.Example)
 	if ok {
 		return &clustering.ClusterDescription{
-			Title:       like,
-			Description: fmt.Sprintf(bugDescriptionTemplateLike, like),
-		}
+			Title:       clustering.EscapeToGraphical(like),
+			Description: fmt.Sprintf(bugDescriptionTemplateLike, clustering.EscapeToGraphical(like)),
+		}, nil
 	} else {
 		// No matching clustering rule. Fall back to the exact test name.
 		return &clustering.ClusterDescription{
-			Title:       example.TestID,
-			Description: fmt.Sprintf(bugDescriptionTemplateExact, example.TestID),
-		}
+			Title:       clustering.EscapeToGraphical(summary.Example.TestID),
+			Description: fmt.Sprintf(bugDescriptionTemplateExact, clustering.EscapeToGraphical(summary.Example.TestID)),
+		}, nil
 	}
 }
 
@@ -101,9 +101,9 @@ func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, exampl
 func (a *Algorithm) ClusterTitle(config *compiledcfg.ProjectConfig, example *clustering.Failure) string {
 	like, ok := clusterLike(config, example)
 	if ok {
-		return like
+		return clustering.EscapeToGraphical(like)
 	} else {
-		return example.TestID
+		return clustering.EscapeToGraphical(example.TestID)
 	}
 }
 

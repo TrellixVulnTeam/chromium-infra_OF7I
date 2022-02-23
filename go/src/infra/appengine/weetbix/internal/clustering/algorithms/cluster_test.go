@@ -11,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/clustering/algorithms/failurereason"
 	"infra/appengine/weetbix/internal/clustering/algorithms/rulesalgorithm"
@@ -20,9 +23,6 @@ import (
 	"infra/appengine/weetbix/internal/config/compiledcfg"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	pb "infra/appengine/weetbix/proto/v1"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestCluster(t *testing.T) {

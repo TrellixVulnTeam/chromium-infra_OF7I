@@ -10,11 +10,14 @@
 package failurereason
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"infra/appengine/weetbix/internal/clustering"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
@@ -34,8 +37,16 @@ const AlgorithmVersion = 2
 // of an algorithm has a different name.
 var AlgorithmName = fmt.Sprintf("%sv%v", clustering.FailureReasonAlgorithmPrefix, AlgorithmVersion)
 
-const bugDescriptionTemplate = `This bug is for all test failures where the primary error message is similar to the following (ignoring numbers and hexadecimal values):
-%s`
+// BugTemplate is the template for the content of bugs created for failure
+// reason clusters. A list of test IDs is included to improve searchability
+// by test name.
+var BugTemplate = template.Must(template.New("reasonTemplate").Parse(
+	`This bug is for all test failures where the primary error message is similiar to the following (ignoring numbers and hexadecimal values):
+{{.FailureReason}}
+
+The following test(s) were observed to have matching failures at this time (at most five examples listed):
+{{range .TestIDs}}- {{.}}
+{{end}}`))
 
 // To match any 1 or more digit numbers, or hex values (often appear in temp
 // file names or prints of pointers), which will be replaced.
@@ -67,18 +78,34 @@ func (a *Algorithm) Cluster(config *compiledcfg.ProjectConfig, failure *clusteri
 
 // ClusterDescription returns a description of the cluster, for use when
 // filing bugs, with the help of the given example failure.
-func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, example *clustering.Failure) *clustering.ClusterDescription {
-	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
-		return nil
+func (a *Algorithm) ClusterDescription(config *compiledcfg.ProjectConfig, summary *clustering.ClusterSummary) (*clustering.ClusterDescription, error) {
+	if summary.Example.Reason == nil || summary.Example.Reason.PrimaryErrorMessage == "" {
+		return nil, errors.New("cluster summary must contain example with failure reason")
 	}
+	type templateData struct {
+		FailureReason string
+		TestIDs       []string
+	}
+	var input templateData
+
 	// Quote and escape.
-	primaryError := strconv.QuoteToGraphic(example.Reason.PrimaryErrorMessage)
+	primaryError := strconv.QuoteToGraphic(summary.Example.Reason.PrimaryErrorMessage)
 	// Unquote, so we are left with the escaped error message only.
 	primaryError = primaryError[1 : len(primaryError)-1]
+
+	input.FailureReason = primaryError
+	for _, t := range summary.TopTests {
+		input.TestIDs = append(input.TestIDs, clustering.EscapeToGraphical(t))
+	}
+	var b bytes.Buffer
+	if err := BugTemplate.Execute(&b, input); err != nil {
+		return nil, err
+	}
+
 	return &clustering.ClusterDescription{
 		Title:       primaryError,
-		Description: fmt.Sprintf(bugDescriptionTemplate, primaryError),
-	}
+		Description: b.String(),
+	}, nil
 }
 
 // ClusterTitle returns a title for the cluster containing the given
@@ -87,11 +114,7 @@ func (a *Algorithm) ClusterTitle(config *compiledcfg.ProjectConfig, example *clu
 	if example.Reason == nil || example.Reason.PrimaryErrorMessage == "" {
 		return ""
 	}
-	// Quote and escape.
-	primaryError := strconv.QuoteToGraphic(example.Reason.PrimaryErrorMessage)
-	// Unquote, so we are left with the escaped error message only.
-	primaryError = primaryError[1 : len(primaryError)-1]
-	return primaryError
+	return clustering.EscapeToGraphical(example.Reason.PrimaryErrorMessage)
 }
 
 // FailureAssociationRule returns a failure association rule that
