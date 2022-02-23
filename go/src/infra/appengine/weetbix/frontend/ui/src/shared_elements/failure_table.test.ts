@@ -80,32 +80,32 @@ describe('Extractors', () => {
             shouldExtractIngestedInvocationId: true,
         }, {
             failure: newFailure().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: false,
             shouldExtractIngestedInvocationId: false,
         }, {
             failure: newFailure().testRunBlocked().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: true,
             shouldExtractIngestedInvocationId: true,
         }, {
             failure: newFailure().ingestedInvocationBlocked().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: true,
             shouldExtractIngestedInvocationId: true,
         }, {
             failure: newFailure().exonerate().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: false,
             shouldExtractIngestedInvocationId: false,
         }, {
             failure: newFailure().testRunBlocked().exonerate().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: true,
             shouldExtractIngestedInvocationId: true,
         }, {
             failure: newFailure().ingestedInvocationBlocked().exonerate().build(),
-            filter: 'Without Invocation Retries',
+            filter: 'Without Retrying Test Runs',
             shouldExtractTestRunId: true,
             shouldExtractIngestedInvocationId: true,
         }, {
@@ -334,7 +334,9 @@ class ClusterFailureBuilder {
             realm: 'testproject/testrealm',
             testId: 'ninja://dir/test.param',
             variant: [],
+            presubmitRunCl: { host: 'clproject-review.googlesource.com', change: 123456, patchset: 7 },
             presubmitRunId: { system: 'cv', id: 'presubmitRunId' },
+            presubmitRunOwner: 'user',
             partitionTime: '2021-05-12T19:05:34',
             isExonerated: false,
             ingestedInvocationId: 'ingestedInvocationId',

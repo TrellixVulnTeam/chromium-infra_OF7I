@@ -128,7 +128,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
                 </thead>
                 <tbody class="data">
                     <tr>
-                        <th>Presubmit Runs Failed</th>
+                        <th>User Cls Failed Presubmit</th>
                         <td class="number">${metric(c.presubmitRejects1d)}</td>
                         <td class="number">${metric(c.presubmitRejects3d)}</td>
                         <td class="number">${metric(c.presubmitRejects7d)}</td>

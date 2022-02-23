@@ -125,7 +125,7 @@ export class FailureTable extends LitElement {
     onImpactFilterChanged() {
         const item = this.shadowRoot!.querySelector('#impact-filter [selected]');
         if (item) {
-            const selected = item.getAttribute('value')
+            const selected = item.getAttribute('value');
             this.impactFilter = impactFilters.filter(f => f.name == selected)?.[0] || impactFilters[0];
         }
         this.countAndSortFailures();
@@ -168,6 +168,13 @@ export class FailureTable extends LitElement {
             }
             return `https://ci.chromium.org/ui/inv/${failure.ingestedInvocationId}/test-results?q=${encodeURIComponent(query)}`;
         }
+        const clLink = (cl: Changelist) => {
+            return `https://${cl.host}/c/${cl.change}/${cl.patchset}`;
+        }
+        const clName = (cl: Changelist) => {
+            const host = cl.host.replace("-review.googlesource.com", "")
+            return `${host}/${cl.change}/${cl.patchset}`;
+        }
         const indentStyle = (level: number) => {
             return styleMap({ paddingLeft: (levelIndent * level) + 'px' });
         }
@@ -177,6 +184,7 @@ export class FailureTable extends LitElement {
                 ${group.failure ?
                     html`<td style=${indentStyle(group.level)}>
                         <a href=${failureLink(group.failure)} target="_blank">${group.failure.ingestedInvocationId}</a>
+                        ${group.failure.presubmitRunCl ? html`(<a href=${clLink(group.failure.presubmitRunCl)}>${clName(group.failure.presubmitRunCl)}</a>)` : html``}
                         <span class="variant-info">${ungroupedVariants(group.failure).map(v => `${v.key}: ${v.value}`).join(', ')}</span>
                     </td>` :
                     html`<td class="group" style=${indentStyle(group.level)} @click=${() => this.toggleExpand(group)}>
@@ -229,7 +237,7 @@ export class FailureTable extends LitElement {
                     <tr>
                         <th></th>
                         <th class="sortable" @click=${() => this.toggleSort('presubmitRejects')}>
-                            Presubmit Runs Failed
+                            User Cls Failed Presubmit
                             ${this.sortMetric === 'presubmitRejects' ? html`<mwc-icon>${this.ascending ? 'expand_less' : 'expand_more'}</mwc-icon>` : null}
                         </th>
                         <th class="sortable" @click=${() => this.toggleSort('invocationFailures')}>
@@ -333,7 +341,7 @@ export const impactFilters: ImpactFilter[] = [
         ignoreIngestedInvocationBlocked: false,
         ignoreTestRunBlocked: false,
     }, {
-        name: 'Without Invocation Retries',
+        name: 'Without Retrying Test Runs',
         ignoreExoneration: true,
         ignoreIngestedInvocationBlocked: true,
         ignoreTestRunBlocked: false,
@@ -481,8 +489,8 @@ const rejectedIngestedInvocationIdsExtractor = (impactFilter: ImpactFilter): Fea
     }
 }
 
-// Returns an extractor that returns the id of the presubmit run that was rejected by this failure, if any.
-// The impact filter is taken into account in determining if the presubmit run was rejected by this failure.
+// Returns an extractor that returns the identity of the CL that was rejected by this failure, if any.
+// The impact filter is taken into account in determining if the CL was rejected by this failure.
 const rejectedPresubmitRunIdsExtractor = (impactFilter: ImpactFilter): FeatureExtractor => {
     return f => {
         const values: Set<string> = new Set();
@@ -495,8 +503,8 @@ const rejectedPresubmitRunIdsExtractor = (impactFilter: ImpactFilter): FeatureEx
         if (!impactFilter.ignoreTestRunBlocked && !f.isTestRunBlocked) {
             return values;
         }
-        if (f.presubmitRunId?.id) {
-            values.add(f.presubmitRunId?.id);
+        if (f.presubmitRunCl && f.presubmitRunOwner == 'user') {
+            values.add(f.presubmitRunCl.host + '/' + f.presubmitRunCl.change.toFixed(0));
         }
         return values;
     }
@@ -544,7 +552,9 @@ export interface ClusterFailure {
     realm: string | null;
     testId: string | null;
     variant: Variant[];
+    presubmitRunCl: Changelist | null;
     presubmitRunId: PresubmitRunId | null;
+    presubmitRunOwner: string | null;
     partitionTime: string | null;
     isExonerated: boolean | null;
     ingestedInvocationId: string | null;
@@ -564,6 +574,13 @@ interface Variant {
 interface PresubmitRunId {
     system: string | null;
     id: string | null;
+}
+
+// Changelist represents a gerrit patchset.
+interface Changelist {
+    host: string;
+    change: number;
+    patchset: number;
 }
 
 // Metrics that can be used for sorting FailureGroups.

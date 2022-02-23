@@ -111,7 +111,7 @@ export class ClusterTable extends LitElement {
                         <th>Bug</th>
                         <th>Cluster</th>
                         <th class="sortable" @click=${() => this.sort('presubmitRejects')}>
-                            Presubmit Runs Failed
+                            User Cls Failed Presubmit
                             ${this.sortMetric === 'presubmitRejects' ? html`<mwc-icon>${this.ascending ? 'expand_less' : 'expand_more'}</mwc-icon>` : null}
                         </th>
                         <th class="sortable" @click=${() => this.sort('testRunFailures')}>
