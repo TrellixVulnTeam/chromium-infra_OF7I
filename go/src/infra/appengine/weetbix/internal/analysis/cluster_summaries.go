@@ -28,7 +28,8 @@ type ImpactfulClusterReadOptions struct {
 	Project string
 	// Thresholds is the set of thresholds, which if any are met
 	// or exceeded, should result in the cluster being returned.
-	// Thresholds are applied based on cluster residual impact.
+	// Thresholds are applied based on the residual pre-Weetbix (exoneration)
+	// cluster impact.
 	Thresholds *configpb.ImpactThreshold
 	// AlwaysInclude is the set of clusters to always include.
 	AlwaysInclude []clustering.ClusterID
@@ -70,13 +71,22 @@ func (s *ClusterSummary) ExampleTestID() string {
 type Counts struct {
 	// The statistic value after impact has been reduced by exoneration.
 	Nominal int64 `json:"nominal"`
-	// The statistic value before impact has been reduced by exoneration.
+	// The statistic value before impact has been reduced by Weetbix
+	// exoneration, but after it has been reduced by other exoneration.
+	PreWeetbix int64 `json:"preWeetbix"`
+	// The statistic value before impact has been reduced by any exoneration.
 	PreExoneration int64 `json:"preExoneration"`
 	// The statistic value:
 	// - excluding impact already counted under other higher-priority clusters
 	//   (I.E. bug clusters.)
 	// - after impact has been reduced by exoneration.
 	Residual int64 `json:"residual"`
+	// The statistic value:
+	// - excluding impact already counted under other higher-priority clusters
+	//   (I.E. bug clusters.)
+	// - before impact has been reduced by Weetbix exoneration, but after
+	//   it has been reduced by other exoneration.
+	ResidualPreWeetbix int64 `json:"residualPreWeetbix"`
 	// The statistic value:
 	// - excluding impact already counted under other higher-priority clusters
 	//   (I.E. bug clusters.)
@@ -253,8 +263,10 @@ func valueOrDefault(value *int64, defaultValue int64) int64 {
 func selectCounts(sqlPrefix, fieldPrefix, suffix string) string {
 	return `STRUCT(` +
 		sqlPrefix + `_` + suffix + ` AS Nominal,` +
+		sqlPrefix + `_pre_weetbix_` + suffix + ` AS PreWeetbix,` +
 		sqlPrefix + `_pre_exon_` + suffix + ` AS PreExoneration,` +
 		sqlPrefix + `_residual_` + suffix + ` AS Residual,` +
+		sqlPrefix + `_residual_pre_weetbix_` + suffix + ` AS ResidualPreWeetbix,` +
 		sqlPrefix + `_residual_pre_exon_` + suffix + ` AS ResidualPreExoneration` +
 		`) AS ` + fieldPrefix + suffix + `,`
 }
@@ -265,9 +277,9 @@ func whereThresholdsExceeded(sqlPrefix string, threshold *configpb.MetricThresho
 	if threshold == nil {
 		threshold = &configpb.MetricThreshold{}
 	}
-	sql := sqlPrefix + "_residual_1d > @" + sqlPrefix + "_1d OR " +
-		sqlPrefix + "_residual_3d > @" + sqlPrefix + "_3d OR " +
-		sqlPrefix + "_residual_7d > @" + sqlPrefix + "_7d"
+	sql := sqlPrefix + "_residual_pre_weetbix_1d > @" + sqlPrefix + "_1d OR " +
+		sqlPrefix + "_residual_pre_weetbix_3d > @" + sqlPrefix + "_3d OR " +
+		sqlPrefix + "_residual_pre_weetbix_7d > @" + sqlPrefix + "_7d"
 	parameters := []bigquery.QueryParameter{
 		{
 			Name:  sqlPrefix + "_1d",
@@ -403,7 +415,7 @@ func (c *Client) ReadClusterFailures(ctx context.Context, luciProject string, cl
 			ANY_VALUE(IF(ARRAY_LENGTH(r.presubmit_run_cls)>0,
 				r.presubmit_run_cls[OFFSET(0)], NULL)) as PresubmitRunCL,
 			r.partition_time as PartitionTime,
-			ANY_VALUE(r.is_exonerated) as IsExonerated,
+			ANY_VALUE(r.exoneration_status) <> 'NOT_EXONERATED' as IsExonerated,
 			r.ingested_invocation_id as IngestedInvocationID,
 			ANY_VALUE(r.is_ingested_invocation_blocked) as IsIngestedInvocationBlocked,
 			ARRAY_AGG(DISTINCT r.test_run_id) as TestRunIds,

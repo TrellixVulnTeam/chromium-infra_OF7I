@@ -137,7 +137,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 			if clusterSummary.ClusterID.Algorithm == rulesalgorithm.AlgorithmName {
 				// Use only impact from latest algorithm version.
 				ruleID := clusterSummary.ClusterID.ID
-				impactByRuleID[ruleID] = bugs.ExtractResidualImpact(clusterSummary)
+				impactByRuleID[ruleID] = bugs.ExtractResidualPreWeetbixImpact(clusterSummary)
 			}
 			// Never file another bug for a bug cluster.
 			continue
@@ -155,7 +155,7 @@ func (b *BugUpdater) Run(ctx context.Context, progress *runs.ReclusteringProgres
 		}
 
 		// Only file a bug if the residual impact exceeds the threshold.
-		impact := bugs.ExtractResidualImpact(clusterSummary)
+		impact := bugs.ExtractResidualPreWeetbixImpact(clusterSummary)
 		if !impact.MeetsThreshold(b.projectCfg.Config.BugFilingThreshold) {
 			continue
 		}
@@ -263,7 +263,7 @@ func (b *BugUpdater) createBug(ctx context.Context, cs *analysis.ClusterSummary)
 
 	request := &bugs.CreateRequest{
 		Description: description,
-		Impact:      bugs.ExtractResidualImpact(cs),
+		Impact:      bugs.ExtractResidualPreWeetbixImpact(cs),
 	}
 
 	// For now, the only issue system supported is monorail.

@@ -193,28 +193,28 @@ func TestRun(t *testing.T) {
 			}
 
 			Convey("1d unexpected failures", func() {
-				suggestedClusters[1].Failures1d.Residual = 100
+				suggestedClusters[1].Failures1d.ResidualPreWeetbix = 100
 				test()
 
 				// Further updates do nothing.
 				test()
 			})
 			Convey("3d unexpected failures", func() {
-				suggestedClusters[1].Failures3d.Residual = 300
+				suggestedClusters[1].Failures3d.ResidualPreWeetbix = 300
 				test()
 
 				// Further updates do nothing.
 				test()
 			})
 			Convey("7d unexpected failures", func() {
-				suggestedClusters[1].Failures7d.Residual = 700
+				suggestedClusters[1].Failures7d.ResidualPreWeetbix = 700
 				test()
 
 				// Further updates do nothing.
 				test()
 			})
 			Convey("With existing rule filed", func() {
-				suggestedClusters[1].Failures1d.Residual = 100
+				suggestedClusters[1].Failures1d.ResidualPreWeetbix = 100
 
 				createTime := time.Date(2021, time.January, 5, 12, 30, 0, 0, time.UTC)
 				rule := rules.NewRule(0).
@@ -287,9 +287,9 @@ func TestRun(t *testing.T) {
 				So(len(bugClusters), ShouldEqual, count)
 				So(len(f.Issues), ShouldEqual, count)
 			}
-			suggestedClusters[1].Failures1d.Residual = 200
-			suggestedClusters[2].Failures3d.Residual = 300
-			suggestedClusters[3].Failures7d.Residual = 700
+			suggestedClusters[1].Failures1d.ResidualPreWeetbix = 200
+			suggestedClusters[2].Failures3d.ResidualPreWeetbix = 300
+			suggestedClusters[3].Failures7d.ResidualPreWeetbix = 700
 
 			// Limit to one bug filed each time, so that
 			// we test change throttling.
@@ -384,7 +384,8 @@ func TestRun(t *testing.T) {
 					originalStatus := issue.Status.Status
 					So(originalStatus, ShouldNotEqual, monorail.VerifiedStatus)
 
-					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumClosureImpact())
+					bugs.SetResidualPreWeetbixImpact(
+						bugClusters[0], monorail.ChromiumClosureImpact())
 					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
@@ -406,9 +407,9 @@ func TestRun(t *testing.T) {
 				bugClusters[2].Failures7d = suggestedClusters[3].Failures7d
 
 				// Clear residual impact on suggested clusters
-				suggestedClusters[1].Failures1d.Residual = 0
-				suggestedClusters[2].Failures3d.Residual = 0
-				suggestedClusters[3].Failures7d.Residual = 0
+				suggestedClusters[1].Failures1d.ResidualPreWeetbix = 0
+				suggestedClusters[2].Failures3d.ResidualPreWeetbix = 0
+				suggestedClusters[3].Failures7d.ResidualPreWeetbix = 0
 
 				// Mark reclustering complete.
 				err := runs.SetRunsForTesting(ctx, []*runs.ReclusteringRun{
@@ -433,7 +434,8 @@ func TestRun(t *testing.T) {
 					So(originalPriority, ShouldNotEqual, "0")
 
 					// Set P0 impact on the cluster.
-					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumP0Impact())
+					bugs.SetResidualPreWeetbixImpact(
+						bugClusters[0], monorail.ChromiumP0Impact())
 					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
@@ -449,7 +451,8 @@ func TestRun(t *testing.T) {
 					So(issue.Name, ShouldEqual, "projects/chromium/issues/102")
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "0")
 
-					bugs.SetResidualImpact(bugClusters[2], monorail.ChromiumP0Impact())
+					bugs.SetResidualPreWeetbixImpact(
+						bugClusters[2], monorail.ChromiumP0Impact())
 					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
@@ -465,7 +468,8 @@ func TestRun(t *testing.T) {
 					So(issue.Name, ShouldEqual, "projects/chromium/issues/100")
 					So(monorail.ChromiumTestIssuePriority(issue), ShouldNotEqual, "3")
 
-					bugs.SetResidualImpact(bugClusters[0], monorail.ChromiumP3Impact())
+					bugs.SetResidualPreWeetbixImpact(
+						bugClusters[0], monorail.ChromiumP3Impact())
 					err = updateAnalysisAndBugsForProject(ctx, opts)
 					So(err, ShouldBeNil)
 
@@ -502,9 +506,9 @@ func makeSuggestedCluster(config *compiledcfg.ProjectConfig, uniqifier int) *ana
 	testID := fmt.Sprintf("testname-%v", uniqifier)
 	return &analysis.ClusterSummary{
 		ClusterID:  testIDClusterID(config, testID),
-		Failures1d: analysis.Counts{Residual: 9},
-		Failures3d: analysis.Counts{Residual: 29},
-		Failures7d: analysis.Counts{Residual: 69},
+		Failures1d: analysis.Counts{ResidualPreWeetbix: 9},
+		Failures3d: analysis.Counts{ResidualPreWeetbix: 29},
+		Failures7d: analysis.Counts{ResidualPreWeetbix: 69},
 		TopTestIDs: []analysis.TopCount{{Value: testID, Count: 1}},
 	}
 }
@@ -512,9 +516,9 @@ func makeSuggestedCluster(config *compiledcfg.ProjectConfig, uniqifier int) *ana
 func makeBugCluster(ruleID string) *analysis.ClusterSummary {
 	return &analysis.ClusterSummary{
 		ClusterID:  bugClusterID(ruleID),
-		Failures1d: analysis.Counts{Residual: 9},
-		Failures3d: analysis.Counts{Residual: 29},
-		Failures7d: analysis.Counts{Residual: 69},
+		Failures1d: analysis.Counts{ResidualPreWeetbix: 9},
+		Failures3d: analysis.Counts{ResidualPreWeetbix: 29},
+		Failures7d: analysis.Counts{ResidualPreWeetbix: 69},
 		TopTestIDs: []analysis.TopCount{{Value: "testname-0", Count: 1}},
 	}
 }
@@ -569,21 +573,21 @@ func (f *fakeAnalysisClient) ReadImpactfulClusters(ctx context.Context, opts ana
 		include := containsValue(opts.AlwaysInclude, c.ClusterID)
 		if opts.Thresholds.TestResultsFailed != nil {
 			include = include ||
-				exceedsThreshold(c.Failures1d.Residual, opts.Thresholds.TestResultsFailed.OneDay) ||
-				exceedsThreshold(c.Failures3d.Residual, opts.Thresholds.TestResultsFailed.ThreeDay) ||
-				exceedsThreshold(c.Failures7d.Residual, opts.Thresholds.TestResultsFailed.SevenDay)
+				exceedsThreshold(c.Failures1d.ResidualPreWeetbix, opts.Thresholds.TestResultsFailed.OneDay) ||
+				exceedsThreshold(c.Failures3d.ResidualPreWeetbix, opts.Thresholds.TestResultsFailed.ThreeDay) ||
+				exceedsThreshold(c.Failures7d.ResidualPreWeetbix, opts.Thresholds.TestResultsFailed.SevenDay)
 		}
 		if opts.Thresholds.TestRunsFailed != nil {
 			include = include ||
-				exceedsThreshold(c.TestRunFails1d.Residual, opts.Thresholds.TestRunsFailed.OneDay) ||
-				exceedsThreshold(c.TestRunFails3d.Residual, opts.Thresholds.TestRunsFailed.ThreeDay) ||
-				exceedsThreshold(c.TestRunFails7d.Residual, opts.Thresholds.TestRunsFailed.SevenDay)
+				exceedsThreshold(c.TestRunFails1d.ResidualPreWeetbix, opts.Thresholds.TestRunsFailed.OneDay) ||
+				exceedsThreshold(c.TestRunFails3d.ResidualPreWeetbix, opts.Thresholds.TestRunsFailed.ThreeDay) ||
+				exceedsThreshold(c.TestRunFails7d.ResidualPreWeetbix, opts.Thresholds.TestRunsFailed.SevenDay)
 		}
 		if opts.Thresholds.PresubmitRunsFailed != nil {
 			include = include ||
-				exceedsThreshold(c.PresubmitRejects1d.Residual, opts.Thresholds.PresubmitRunsFailed.OneDay) ||
-				exceedsThreshold(c.PresubmitRejects3d.Residual, opts.Thresholds.PresubmitRunsFailed.ThreeDay) ||
-				exceedsThreshold(c.PresubmitRejects7d.Residual, opts.Thresholds.PresubmitRunsFailed.SevenDay)
+				exceedsThreshold(c.PresubmitRejects1d.ResidualPreWeetbix, opts.Thresholds.PresubmitRunsFailed.OneDay) ||
+				exceedsThreshold(c.PresubmitRejects3d.ResidualPreWeetbix, opts.Thresholds.PresubmitRunsFailed.ThreeDay) ||
+				exceedsThreshold(c.PresubmitRejects7d.ResidualPreWeetbix, opts.Thresholds.PresubmitRunsFailed.SevenDay)
 		}
 		if include {
 			results = append(results, c)
