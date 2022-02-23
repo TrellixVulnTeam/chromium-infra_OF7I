@@ -16,11 +16,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 
 	_ "embed"
@@ -64,13 +62,8 @@ func RunInNsjail(ctx context.Context, command []string) error {
 		return fmt.Errorf("problem retrieving nsjail log file: %s", err.Error())
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		return errors.New("could not obtain working directory")
-	}
-
 	logFd := strconv.FormatUint(uint64(nsjailFile.Fd())+3, 10)
-	nsjailPath := filepath.Join(dir, "nsjail")
+	nsjailPath := "/opt/isolation/nsjail"
 	cmdConfig := append([]string{"--config", configName, "--log_fd", logFd, "--seccomp_log"}, command...)
 	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
 	nsjailCmd.ExtraFiles = []*os.File{nsjailFile}
