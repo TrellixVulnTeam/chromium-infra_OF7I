@@ -81,6 +81,28 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
     }
   });
 
+  const loadFiles = () => {
+    if (!attachments || attachments.length === 0) {
+      return Promise.resolve([]);
+    }
+    const loads = attachments.map(loadLocalFile);
+    return Promise.all(loads);
+  }
+
+  const loadLocalFile = (f: File) => {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => {
+        resolve({filename: f.name, content: btoa(r.result)});
+      };
+      r.onerror = () => {
+        reject(r.error);
+      };
+
+      r.readAsBinaryString(f);
+    });
+  }
+
   const onSuccess = () => {
     //redirect to issue list
     window.location.href='/p/chromium/issues/list?q=reporter%3Ame&can=2';
@@ -92,7 +114,15 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
   const onMakeIssue = () => {
     setHasError(false);
-    onSubmit(additionalComments, answers, onSuccess, onFailure);
+    try {
+      const uploads = loadFiles();
+      uploads.then((files) => {
+        // TODO: add attachments to request
+        onSubmit(additionalComments, answers, onSuccess, onFailure);
+      }, onFailure)
+    } catch (e) {
+      onFailure();
+    }
   }
 
   return (
