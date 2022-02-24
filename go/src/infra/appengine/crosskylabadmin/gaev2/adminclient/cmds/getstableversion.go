@@ -7,6 +7,7 @@ package cmds
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -82,19 +83,29 @@ func (c *getStableVersionRun) innerRun(ctx context.Context, a subcommands.Applic
 			Options: options,
 		},
 	)
-	resp, err := invWithSVClient.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
+
+	req := &fleet.GetStableVersionRequest{
 		BuildTarget:              c.board,
 		Model:                    c.model,
 		Hostname:                 c.hostname,
 		SatlabInformationalQuery: c.satlab,
-	})
+	}
+	out, err := protojson.Marshal(req)
+	if err != nil {
+		return errors.Annotate(err, "set stable version").Err()
+	}
+	// The request is diagnostic info, write to stderr.
+	log.Printf("Request Body: %s", out)
+
+	resp, err := invWithSVClient.GetStableVersion(ctx, req)
 	if err != nil {
 		return errors.Annotate(err, "get stable version").Err()
 	}
-	out, err := protojson.Marshal(resp)
+	out, err = protojson.Marshal(resp)
 	if err != nil {
 		return errors.Annotate(err, "get stable version").Err()
 	}
+	log.Println("Response:")
 	fmt.Fprintf(a.GetOut(), "%s\n", out)
 	return nil
 }
