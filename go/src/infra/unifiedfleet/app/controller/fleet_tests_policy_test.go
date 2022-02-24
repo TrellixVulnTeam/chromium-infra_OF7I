@@ -26,7 +26,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "tast.lacros",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -38,7 +38,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "private",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -52,7 +52,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "tast.lacros",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 			newCtx := auth.WithState(ctx, &authtest.FakeState{
 				Identity: "user:abc@def.com",
@@ -67,7 +67,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "private",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 			ctx := auth.WithState(ctx, &authtest.FakeState{
 				Identity: "user:abc@def.com",
@@ -82,7 +82,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "tast.lacros",
 				Board:    "private",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -96,7 +96,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "tast.lacros",
 				Board:    "eve",
 				Model:    "private",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -110,7 +110,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "tast.lacros",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1-abcd",
+				Image:    "eve-full/R100-14495.0.0-rc1-abcd",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -124,7 +124,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 				TestName: "",
 				Board:    "eve",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -136,7 +136,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			req := &api.CheckFleetTestsPolicyRequest{
 				TestName: "tast.lacros",
 				Model:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)
@@ -148,7 +148,7 @@ func TestIsValidPublicChromiumTest(t *testing.T) {
 			req := &api.CheckFleetTestsPolicyRequest{
 				TestName: "tast.lacros",
 				Board:    "eve",
-				Image:    "R100-14495.0.0-rc1",
+				Image:    "eve-full/R100-14495.0.0-rc1",
 			}
 
 			err := IsValidTest(ctx, req)

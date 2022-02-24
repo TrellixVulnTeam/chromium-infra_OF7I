@@ -37,7 +37,7 @@ type InvalidModelError struct {
 }
 
 func (e *InvalidModelError) Error() string {
-	return fmt.Sprintf("Cannnot run public tests on a private model : %s", e.Model)
+	return fmt.Sprintf("Cannot run public tests on a private model : %s", e.Model)
 }
 
 // InvalidImageError is the error raised when an invalid image is specified for a public test
@@ -46,7 +46,7 @@ type InvalidImageError struct {
 }
 
 func (e *InvalidImageError) Error() string {
-	return fmt.Sprintf("Cannnot run public tests on an image which is not allowlisted : %s", e.Image)
+	return fmt.Sprintf("Cannot run public tests on an image which is not allowlisted : %s", e.Image)
 }
 
 // InvalidTestError is the error raised when an invalid image is specified for a public test
@@ -118,7 +118,7 @@ func getValidPublictModels() []string {
 }
 
 func getValidPublicImages() []string {
-	return []string{"R100-14495.0.0-rc1"}
+	return []string{"eve-full/R100-14495.0.0-rc1", "kevin-full/R100-14495.0.0-rc1"}
 }
 
 func contains(listItems []string, name string) bool {
