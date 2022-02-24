@@ -37,6 +37,7 @@ func newApplication() *cli.Application {
 			subcommands.Section("CrosAdm RPCs"),
 			cmds.GetStableVersion,
 			cmds.SetStableVersion,
+			cmds.DeleteStableVersion,
 			subcommands.Section("UFS RPCs"),
 			cmds.GetMachineLSE,
 		},
