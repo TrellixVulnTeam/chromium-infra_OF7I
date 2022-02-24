@@ -128,6 +128,13 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		return err
 	}
 
+	if b.Infra.GetResultdb().GetInvocation() == "" {
+		// Build does not have a ResultDB invocation to ingest.
+		logging.Debugf(ctx, "Skipping ingestion of build %s-%d because it has no ResultDB invocation.",
+			payload.Build.Host, payload.Build.Id)
+		return nil
+	}
+
 	rdbHost := b.Infra.Resultdb.Hostname
 	invName := b.Infra.Resultdb.Invocation
 	builder := b.Builder.Builder
@@ -255,8 +262,6 @@ func retrieveBuild(ctx context.Context, payload *taskspb.IngestTestResults) (*bb
 	switch {
 	case err != nil:
 		return nil, err
-	case b.GetInfra().GetResultdb() == nil || b.Infra.Resultdb.GetInvocation() == "":
-		return nil, tq.Fatal.Apply(errors.Reason("build %s-%d not have ResultDB invocation", bbHost, id).Err())
 	}
 	return b, nil
 }
