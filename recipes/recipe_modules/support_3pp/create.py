@@ -136,6 +136,10 @@ def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
     else:
       installed_prefix = workdir.checkout
 
+    # List files to be packaged (for debugging).
+    api.file.listdir(
+        'List files to be packaged', installed_prefix, recursive=True)
+
     # Package stage
     cipd_spec.build(installed_prefix,
                     Spec.Create.Package.InstallMode.Name(

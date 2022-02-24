@@ -2440,6 +2440,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/deps/bottom_dep_git/mac-arm64/1.5.0-rc1/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_git",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_git.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -3599,6 +3639,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/deps/bottom_dep_url/mac-arm64/1.2.3/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/bottom_dep_url",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/bottom_dep_url.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -4322,6 +4402,47 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/deps/deep_dep/mac-arm64/1.2.3/checkout",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/deep_dep",
+      "_3PP_PATCH_VERSION": "cr0",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.2.3"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/deep_dep.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {
@@ -5509,6 +5630,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/tools/pkg_override_and_no_latest/mac-arm64/1.1.2/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_override_and_no_latest",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.1.2"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_override_and_no_latest.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -6685,6 +6846,46 @@
     "name": "building tools/posix_tool.run installation.reset XCode",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/tools/posix_tool/mac-arm64/1.2.0/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/posix_tool",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.2.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/posix_tool.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {
@@ -7871,6 +8072,46 @@
     "name": "building tools/windows_experiment.run installation.reset XCode",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/tools/windows_experiment/mac-arm64/2.0.0/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/windows_experiment",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/windows_experiment.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {
@@ -9736,6 +9977,47 @@
     "name": "building build_tools/git_tool.run installation.reset XCode",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/build_tools/git_tool/mac-arm64/1.5.0-rc1/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/git_tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/git_tool.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {
@@ -11695,6 +11977,47 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/build_tools/tool/mac-arm64/1.5.0-rc1/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
+      "_3PP_PATCH_VERSION": "chops.1",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building build_tools/tool.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -13266,6 +13589,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/deps/dep/mac-arm64/1.0.0/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "deps/dep",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "1.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building deps/dep.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -14793,6 +15156,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/tools/pkg/mac-arm64/2.0.0/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -16268,6 +16671,46 @@
     "name": "building tools/pkg_checkout.run installation.reset XCode",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/tools/pkg_checkout/mac-arm64/2.0.0/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "arm64",
+      "GOOS": "darwin",
+      "MACOSX_DEPLOYMENT_TARGET": "11.0",
+      "_3PP_CIPD_PACKAGE_NAME": "tools/pkg_checkout",
+      "_3PP_PLATFORM": "mac-arm64",
+      "_3PP_TOOL_PLATFORM": "mac-arm64",
+      "_3PP_VERSION": "2.0.0"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:ci"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "building tools/pkg_checkout.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {

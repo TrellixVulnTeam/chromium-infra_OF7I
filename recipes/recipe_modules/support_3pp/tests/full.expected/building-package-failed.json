@@ -1597,6 +1597,33 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/1.5.0-rc1/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "name": "building build_tools/tool.List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
       "cipd",
       "pkg-build",
       "-pkg-def",
@@ -2566,6 +2593,33 @@
     "name": "building build_tools/tool (2).run installation.install.sh [START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/out [START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/deps_prefix",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/3pp/wd/build_tools/tool/linux-amd64/v1.4.1/out",
+      "--recursive"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_CIPD_PACKAGE_NAME": "build_tools/tool",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "v1.4.1"
+    },
+    "infra_step": true,
+    "name": "building build_tools/tool (2).List files to be packaged",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@listdir@@@"
     ]
   },
   {
