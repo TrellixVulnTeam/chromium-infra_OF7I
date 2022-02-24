@@ -69,6 +69,9 @@ func main() {
 				// make sure that we log what our environment looks like.
 				if DescribeMyDirectoryAndEnvironment {
 					describeEnvironment(os.Stderr)
+					// Describe the contents of the directory once on the way out too.
+					// We will use this information to decide what to persist.
+					defer describeEnvironment(os.Stderr)
 				}
 
 				// Set the log (via the Go standard library's log package) to Stderr, since we know that stderr is collected
