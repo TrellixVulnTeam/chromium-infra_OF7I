@@ -36,6 +36,7 @@ import (
 	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/freeduts"
 	dsinventory "infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/stableversion"
+	"infra/appengine/crosskylabadmin/internal/app/frontend/internal/datastore/stableversion/satlab"
 	"infra/appengine/crosskylabadmin/internal/app/gitstore"
 	"infra/libs/skylab/common/heuristics"
 	"infra/libs/skylab/inventory"
@@ -115,7 +116,7 @@ func (is *ServerImpl) GetStableVersion(ctx context.Context, req *fleet.GetStable
 		logging.Infof(ctx, "Fall back to legacy flow")
 		ic = nil
 	}
-	return getStableVersionImpl(ctx, ic, req.BuildTarget, req.Model, req.Hostname)
+	return getStableVersionImpl(ctx, ic, req.GetBuildTarget(), req.GetModel(), req.GetHostname(), req.GetSatlabInformationalQuery())
 }
 
 // ReportInventory reports metrics of duts in inventory.
@@ -266,11 +267,87 @@ func freeDUTInfo(d *inventory.DeviceUnderTest) freeduts.DUT {
 	}
 }
 
+// getSatlabStableVersion gets a stable version for a satlab device.
+//
+// It returns a full response if there's no error, and a boolean ok which determines whether the error should cause
+// the request to fail or not.
+func getSatlabStableVersion(ctx context.Context, ic inventoryClient, buildTarget string, model string, hostname string) (resp *fleet.GetStableVersionResponse, ok bool, e error) {
+	logging.Infof(ctx, "using satlab flow board:%q model:%q host:%q", buildTarget, model, hostname)
+
+	if hostnameID := satlab.MakeSatlabStableVersionID(hostname, "", ""); hostnameID != "" {
+		entry, err := satlab.GetSatlabStableVersionEntryByRawID(ctx, hostnameID)
+		switch {
+		case err == nil:
+			reason := fmt.Sprintf("looked up satlab device using id %q", hostnameID)
+			resp := &fleet.GetStableVersionResponse{
+				CrosVersion:     entry.OS,
+				FirmwareVersion: entry.FW,
+				FaftVersion:     entry.FWImage,
+				Reason:          reason,
+			}
+			return resp, true, nil
+		case datastore.IsErrNoSuchEntity(err):
+			// Do nothing. If there is no override for the hostname, it is correct to
+			// move on to the next case, checking by board & model.
+		default:
+			return nil, false, errors.Annotate(err, "get satlab").Err()
+		}
+	}
+
+	if hostname != "" && (buildTarget == "" || model == "") {
+		logging.Infof(ctx, "looking up inventory info for DUT host:%q board:%q model:%q in order to get board and model info", hostname, buildTarget, model)
+		dut, err := getDUT(ctx, ic, hostname)
+		if err != nil {
+			return nil, false, errors.Annotate(err, "get satlab: processing dut %q", hostname).Err()
+		}
+
+		buildTarget = dut.GetCommon().GetLabels().GetBoard()
+		model = dut.GetCommon().GetLabels().GetModel()
+	}
+
+	if boardModelID := satlab.MakeSatlabStableVersionID("", buildTarget, model); boardModelID != "" {
+		entry, err := satlab.GetSatlabStableVersionEntryByRawID(ctx, boardModelID)
+		switch {
+		case err == nil:
+			reason := fmt.Sprintf("looked up satlab device using id %q", boardModelID)
+
+			resp := &fleet.GetStableVersionResponse{
+				CrosVersion:     entry.OS,
+				FirmwareVersion: entry.FW,
+				FaftVersion:     entry.FWImage,
+				Reason:          reason,
+			}
+
+			return resp, true, nil
+		case datastore.IsErrNoSuchEntity(err):
+			// Do nothing.
+		default:
+			return nil, false, errors.Annotate(err, "get satlab").Err()
+		}
+	}
+
+	return nil, true, errors.Reason("get satlab: falling back").Err()
+}
+
 // getStableVersionImpl returns all the stable versions associated with a given buildTarget and model
 // NOTE: hostname is explicitly allowed to be "". If hostname is "", then no hostname was provided in the GetStableVersion RPC call
 // ALSO NOTE: If the hostname is "", then we assume that the device is not a satlab device and therefore we should not fall back to satlab.
-func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget string, model string, hostname string) (*fleet.GetStableVersionResponse, error) {
+func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget string, model string, hostname string, satlabInformationalQuery bool) (*fleet.GetStableVersionResponse, error) {
 	logging.Infof(ctx, "getting stable version for buildTarget: %s and model: %s", buildTarget, model)
+
+	wantSatlab := heuristics.LooksLikeSatlabDevice(hostname) || satlabInformationalQuery
+
+	if wantSatlab {
+		resp, ok, err := getSatlabStableVersion(ctx, ic, buildTarget, model, hostname)
+		switch {
+		case err == nil:
+			return resp, nil
+		case ok:
+			// Do nothing and fall back
+		default:
+			return nil, errors.Annotate(err, "get stable version impl").Err()
+		}
+	}
 
 	if hostname == "" {
 		if buildTarget == "" || model == "" {
@@ -279,28 +356,25 @@ func getStableVersionImpl(ctx context.Context, ic inventoryClient, buildTarget s
 		logging.Infof(ctx, "hostname not provided, using buildTarget (%s) and model (%s)", buildTarget, model)
 		out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
 		if err == nil {
-			maybeSetReason(out, fmt.Sprintf("looked up board %q and model %q", buildTarget, model))
+			msg := "looked up board %q and model %q"
+			if wantSatlab {
+				msg = "wanted satlab, falling back to board %q and model %q"
+			}
+			maybeSetReason(out, fmt.Sprintf(msg, buildTarget, model))
 			return out, nil
 		}
 		return out, err
 	}
 
-	if heuristics.LooksLikeSatlabDevice(hostname) {
-		logging.Infof(ctx, "detected satlab hostname %q, ignoring user-provided buildTarget %q and model %q", hostname, buildTarget, model)
-		// TODO(gregorynisbet): Replace the rest of this block with logic for handling a satlab device, instead of
-		//                      treating it identically to a non-satlab device (except for the reason).
-		out, err := getStableVersionImplWithHostname(ctx, ic, hostname)
-		if err == nil {
-			maybeSetReason(out, fmt.Sprintf("looked up satlab device hostname %q", hostname))
-			return out, nil
-		}
-		return out, err
-	}
 	// Default case, not a satlab device.
 	logging.Infof(ctx, "hostname (%s) provided, ignoring user-provided buildTarget (%s) and model (%s)", hostname, buildTarget, model)
 	out, err := getStableVersionImplWithHostname(ctx, ic, hostname)
 	if err == nil {
-		maybeSetReason(out, fmt.Sprintf("looked up non-satlab device hostname %q", hostname))
+		msg := "looked up non-satlab device hostname %q"
+		if wantSatlab {
+			msg = "falling back to non-satlab path for device %q"
+		}
+		maybeSetReason(out, fmt.Sprintf(msg, hostname))
 		return out, nil
 	}
 	return out, err
