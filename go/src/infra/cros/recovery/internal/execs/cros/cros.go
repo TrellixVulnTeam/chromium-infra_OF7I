@@ -348,7 +348,8 @@ func BootID(ctx context.Context, run execs.Runner) (string, error) {
 		return "", errors.Annotate(err, "boot id").Err()
 	}
 	if bootId == noIDMessage {
-		return "", errors.Reason("no boot id available").Err()
+		log.Debug(ctx, "Boot ID: old boot ID not found, will be assumed empty.")
+		return "", nil
 	}
 	return bootId, nil
 }
@@ -362,17 +363,19 @@ const (
 	waitUpRebootTime = 240 * time.Second
 )
 
-// WaitForRestart will first wait the device to go down and then wait for the device to up.
+// WaitForRestart will first wait the device to go down and then wait
+// for the device to come up.
 func WaitForRestart(ctx context.Context, info *execs.ExecInfo) error {
 	// wait for it to be down.
 	if waitDownErr := WaitUntilNotPingable(ctx, info, info.RunArgs.ResourceName, waitDownRebootTime, defaultPingRetryCount); waitDownErr != nil {
-		log.Debug(ctx, "Servo v3 shut down failed.")
-		return errors.Annotate(waitDownErr, "servo v3 reboot").Err()
+		log.Debug(ctx, "Wait For Restart: device shutdown failed.")
+		return errors.Annotate(waitDownErr, "wait for restart").Err()
 	}
-	// wait down for servo device is successful, then wait for device up.
+	// wait down for servo device is successful, then wait for device
+	// up.
 	if waitUpErr := WaitUntilPingable(ctx, info, info.RunArgs.ResourceName, waitUpRebootTime, defaultPingRetryCount); waitUpErr != nil {
-		return errors.Annotate(waitUpErr, "servo v3 reboot").Err()
+		return errors.Annotate(waitUpErr, "wait for restart").Err()
 	}
-	log.Info(ctx, "Servo v3 is up.")
+	log.Info(ctx, "Device is up.")
 	return nil
 }

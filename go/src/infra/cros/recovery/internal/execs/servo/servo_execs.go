@@ -796,8 +796,9 @@ const (
 	runCmdInBackgroundCmd = `( %s ) </dev/null >/dev/null 2>&1 & echo -n $!`
 )
 
-// servoHostV3RebootExec will reboot the servo host v3 and checking whether the reboot succeed by comparing the
-// old reboot id vs the new reboot id after restart.
+// servoHostV3RebootExec will reboot the servo host v3 and check
+// whether the reboot succeed by comparing the old reboot id and the
+// new reboot id after restart.
 //
 // @params: actionArgs should be in the format of:
 // Ex: ["reboot_timeout:x"]
@@ -808,18 +809,21 @@ func servoHostV3RebootExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
 	oldBootId, err := cros.BootID(ctx, run)
 	if err != nil {
-		// When there is no bootid found on the servo v3
-		return cros.WaitForRestart(ctx, info)
-	} else {
-		log.Debug(ctx, "Found old boot id: %s", oldBootId)
-		// when there is a bootid associated, then restart the device with command.
-		if _, err := run(ctx, rebootTimeout, fmt.Sprintf(runCmdInBackgroundCmd, rebootCmd)); err != nil {
-			return errors.Annotate(err, "servo host v3 reboot").Err()
-		}
-		// wait for restart as wait for it to go down and go up again.
-		if restartErr := cros.WaitForRestart(ctx, info); restartErr != nil {
-			return errors.Annotate(restartErr, "servo host v3 reboot").Err()
-		}
+		log.Debug(ctx, "Servo Host V3 Reboot: (non-critical) could not determine the old boot id, err :%q. Continuing with reboot action.", err)
+	}
+	log.Debug(ctx, "Servo Host V3 Reboot: Old boot id: %q", oldBootId)
+	// Restart the device using the reboot command.
+	if _, err := run(ctx, rebootTimeout, fmt.Sprintf(runCmdInBackgroundCmd, rebootCmd)); err != nil {
+		return errors.Annotate(err, "servo host v3 reboot").Err()
+	}
+	// Wait for the complete restart, i.e. wait for the device to go
+	// down and come up again.
+	if restartErr := cros.WaitForRestart(ctx, info); restartErr != nil {
+		return errors.Annotate(restartErr, "servo host v3 reboot").Err()
+	}
+	// We will compare the old and new boot IDs only when the old boot
+	// ID is known.
+	if oldBootId != "" {
 		newBootId, err := cros.BootID(ctx, run)
 		if err != nil {
 			return errors.Annotate(err, "servo host v3 reboot").Err()
@@ -827,9 +831,9 @@ func servoHostV3RebootExec(ctx context.Context, info *execs.ExecInfo) error {
 		if newBootId == oldBootId {
 			return errors.Reason("servo host v3 reboot: reboot fail as new boot id: %s equal to old boot id: %s", newBootId, oldBootId).Err()
 		}
-		log.Info(ctx, "reboot is successful")
-		return nil
 	}
+	log.Debug(ctx, "Servo Host V3 Reboot: reboot is successful")
+	return nil
 }
 
 func init() {
