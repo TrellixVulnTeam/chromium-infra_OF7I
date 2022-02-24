@@ -223,8 +223,10 @@ func hasCriticalKernelErrorExec(ctx context.Context, info *execs.ExecInfo) error
 // The verifier tests for the existence of the marker file and fails if it still exists.
 func isLastProvisionSuccessfulExec(ctx context.Context, info *execs.ExecInfo) error {
 	run := info.DefaultRunner()
-	_, err := run(ctx, time.Minute, fmt.Sprintf("test -f %s", provisionFailed))
-	return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
+	if _, err := run(ctx, time.Minute, fmt.Sprintf("test -f %s", provisionFailed)); err == nil {
+		return errors.Annotate(err, "last provision successful: last provision on this DUT failed").Err()
+	}
+	return nil
 }
 
 // isNotVirtualMachineExec confirms that the given DUT is not a virtual device.
