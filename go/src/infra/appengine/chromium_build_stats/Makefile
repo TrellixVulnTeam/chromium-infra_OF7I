@@ -5,9 +5,6 @@
 build:
 	go build ./...
 
-generate: ninjaproto/ninjalog.proto
-	go generate ./...
-
 update-staging:
 	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats-staging -table bots
 	go run ./cmd/bqsetup/bqsetup.go -project chromium-build-stats-staging -table users

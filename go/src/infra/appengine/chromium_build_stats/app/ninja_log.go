@@ -287,11 +287,6 @@ func uploadNinjaLogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := SendToBigquery(ctx, info, "user"); err != nil {
-		http.Error(w, "failed to send BigQuery", http.StatusInternalServerError)
-		log.Errorf(ctx, "failed to send BigQuery: %v", err)
-		return
-	}
 	fmt.Fprintln(w, "OK")
 }
 

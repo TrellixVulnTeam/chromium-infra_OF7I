@@ -6,20 +6,13 @@ package ninjalog
 
 import (
 	"bufio"
-	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
-	"math/big"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	npb "infra/appengine/chromium_build_stats/ninjaproto"
 )
 
 // Step is one step in ninja_log file.
@@ -551,75 +544,6 @@ func StatsByType(steps []Step, weighted map[string]time.Duration, typeOf func(St
 		return stats[i].Weighted > stats[j].Weighted
 	})
 	return stats
-}
-
-// createdTimestamp is ptypes function name
-var createdTimestamp = timestamppb.Now
-
-// ToProto converts ninjalog to structs of protocol buffer.
-func ToProto(info *NinjaLog) []*npb.NinjaTask {
-	weightedTime := WeightedTime(info.Steps)
-	steps := Dedup(info.Steps)
-	timestamp := createdTimestamp()
-
-	buildID := info.Metadata.BuildID
-	if buildID == 0 {
-		// Set random number if buildID is not set.
-		// This is mainly for ninjalog from chromium developer.
-		seed, _ := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
-		buildID = seed.Int64()
-	}
-
-	os := npb.NinjaTask_UNKNOWN
-
-	// Parse platform as it is returned from python's platform.system().
-	switch platform := info.Metadata.Platform; {
-	case platform == "Windows" || strings.Contains(platform, "CYGWIN"):
-		os = npb.NinjaTask_WIN
-	case platform == "Linux":
-		os = npb.NinjaTask_LINUX
-	case platform == "Darwin":
-		os = npb.NinjaTask_MAC
-	}
-
-	buildConfigs := make([]*npb.NinjaTask_KeyValue, 0, len(info.Metadata.BuildConfigs))
-	for k, v := range info.Metadata.BuildConfigs {
-		buildConfigs = append(buildConfigs, &npb.NinjaTask_KeyValue{
-			Key:   k,
-			Value: v,
-		})
-	}
-
-	// Configuring order is matter for same key.
-	sort.SliceStable(buildConfigs, func(i, j int) bool {
-		return buildConfigs[i].Key < buildConfigs[j].Key
-	})
-
-	targets := info.Metadata.getTargets()
-
-	ninjaTasks := make([]*npb.NinjaTask, 0, len(steps))
-
-	for _, s := range steps {
-		ninjalog := &npb.NinjaTask{
-			BuildId:      buildID,
-			Targets:      targets,
-			StepName:     info.Metadata.StepName,
-			Jobs:         int64(info.Metadata.Jobs),
-			Os:           os,
-			CpuCore:      info.Metadata.CPUCore,
-			BuildConfigs: buildConfigs,
-			LogEntry: &npb.NinjaTask_LogEntry{
-				Outputs:          append(s.Outs, s.Out),
-				StartDurationSec: s.Start.Seconds(),
-				EndDurationSec:   s.End.Seconds(),
-			},
-			WeightedDurationSec: weightedTime[s.Out].Seconds(),
-			CreatedAt:           timestamp,
-		}
-		sort.Strings(ninjalog.LogEntry.Outputs)
-		ninjaTasks = append(ninjaTasks, ninjalog)
-	}
-	return ninjaTasks
 }
 
 func getJobs(cmdLine []string) (int, error) {

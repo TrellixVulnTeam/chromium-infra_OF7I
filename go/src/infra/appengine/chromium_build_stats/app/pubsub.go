@@ -93,11 +93,6 @@ func pubsubHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := SendToBigquery(ctx, info, "ninjalog"); err != nil {
-		http.Error(w, "failed to send BigQuery", http.StatusInternalServerError)
-		log.Errorf(ctx, "failed to send BigQuery: %v", err)
-		return
-	}
 	fmt.Fprintln(w, "OK")
 }
 
