@@ -62,9 +62,10 @@ func RunInNsjail(ctx context.Context, command []string) error {
 		return fmt.Errorf("problem retrieving nsjail log file: %s", err.Error())
 	}
 
-	logFd := strconv.FormatUint(uint64(nsjailFile.Fd())+3, 10)
+	_ = strconv.FormatUint(uint64(nsjailFile.Fd())+3, 10)
 	nsjailPath := "/opt/isolation/nsjail"
-	cmdConfig := append([]string{"--config", configName, "--log_fd", logFd, "--seccomp_log"}, command...)
+	// cmdConfig := append([]string{"--config", configName, "--log_fd", logFd, "--seccomp_log"}, command...)
+	cmdConfig := append([]string{"-Mo", "--chroot /", "--"}, command...)
 	nsjailCmd := execCommand(nsjailPath, cmdConfig...)
 	nsjailCmd.ExtraFiles = []*os.File{nsjailFile}
 
