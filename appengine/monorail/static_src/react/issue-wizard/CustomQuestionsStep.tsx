@@ -11,6 +11,7 @@ import CustomQuestionInput from './CustomQuestions/CustomQuestionInput.tsx';
 import CustomQuestionTextarea from './CustomQuestions/CustomQuestionTextarea.tsx';
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 import Alert from '@material-ui/core/Alert';
+import AttachmentUploader from './AttachmentUploader.tsx';
 
 const userStyles = makeStyles({
   greyText: {
@@ -35,6 +36,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
   const customQuestions = new Array();
 
   const [additionalComments, setAdditionalComments] = React.useState('');
+  const [attachments, setAttachments] = React.useState([]);
   const [answers, setAnswers] = React.useState(Array(questions.length).fill(''));
   const [hasError, setHasError] = React.useState(false);
 
@@ -107,6 +109,9 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
           question="Additional comments"
           updateAnswers={(answer: string) => setAdditionalComments(answer)}
         />
+
+        <h3>Upload any relevant screenshots</h3>
+        <AttachmentUploader files={attachments} setFiles={setAttachments}/>
 
       </div>
       <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>

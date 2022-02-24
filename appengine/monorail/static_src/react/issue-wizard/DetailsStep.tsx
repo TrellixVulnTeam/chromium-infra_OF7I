@@ -104,9 +104,6 @@ export default function DetailsStep(props: Props): React.ReactElement {
           <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
           <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
 
-          <h3 className={classes.head}>Upload any relevant screenshots</h3>
-          <input type="file" accept="image/*" multiple />
-
           <CustomQuestionSelector
             question="Did this work before?"
             options={["Not applicable or don't know", "Yes - This is a regression", "No - I think it never worked"]}
