@@ -19,6 +19,7 @@ var setServoStateExecTestCases = []struct {
 	testName           string
 	actionArgs         []string
 	expectedServoState tlw.ServoState
+	servoHost          *tlw.ServoHost
 	expectedErr        error
 }{
 	{
@@ -27,6 +28,11 @@ var setServoStateExecTestCases = []struct {
 			"state:SBU_LOW_VOLTAGE",
 		},
 		tlw.ServoStateSBULowVoltage,
+		&tlw.ServoHost{
+			Servo: &tlw.Servo{
+				State: tlw.ServoStateUnspecified,
+			},
+		},
 		nil,
 	},
 	{
@@ -35,7 +41,12 @@ var setServoStateExecTestCases = []struct {
 			"test:SBU_LOW_VOLTAGE",
 		},
 		tlw.ServoStateUnspecified,
-		errors.Reason("set servo state: missing servo state information in the argument").Err(),
+		&tlw.ServoHost{
+			Servo: &tlw.Servo{
+				State: tlw.ServoStateUnspecified,
+			},
+		},
+		errors.Reason("set servo state: state is not provided").Err(),
 	},
 	{
 		"fail: state info is empty",
@@ -43,15 +54,34 @@ var setServoStateExecTestCases = []struct {
 			"state:",
 		},
 		tlw.ServoStateUnspecified,
-		errors.Reason("set servo state: the servo state string is empty").Err(),
+		&tlw.ServoHost{
+			Servo: &tlw.Servo{
+				State: tlw.ServoStateUnspecified,
+			},
+		},
+		errors.Reason("set servo state: state is not provided").Err(),
 	},
 	{
 		"fail: state info in wrong format",
 		[]string{
 			"state:sbu_LOW_VOLTAGE",
 		},
-		tlw.ServoStateUnspecified,
-		errors.Reason("set servo state: the servo state string is in wrong format").Err(),
+		tlw.ServoStateSBULowVoltage,
+		&tlw.ServoHost{
+			Servo: &tlw.Servo{
+				State: tlw.ServoStateUnspecified,
+			},
+		},
+		nil,
+	},
+	{
+		"fail: do not update if servo is not supported in structure",
+		[]string{
+			"state:sbu_LOW_VOLTAGE",
+		},
+		tlw.ServoStateSBULowVoltage,
+		nil,
+		errors.Reason("set servo state: servo is not supported").Err(),
 	},
 }
 
@@ -63,13 +93,7 @@ func TestSetServoStateExec(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
 			args := &execs.RunArgs{
-				DUT: &tlw.Dut{
-					ServoHost: &tlw.ServoHost{
-						Servo: &tlw.Servo{
-							State: tlw.ServoStateUnspecified,
-						},
-					},
-				},
+				DUT: &tlw.Dut{ServoHost: tt.servoHost},
 			}
 			info := &execs.ExecInfo{
 				RunArgs:    args,
@@ -84,9 +108,11 @@ func TestSetServoStateExec(t *testing.T) {
 			if (actualErr == nil && tt.expectedErr != nil) || (actualErr != nil && tt.expectedErr == nil) {
 				t.Errorf("Expected error %q, but got %q", tt.expectedErr, actualErr)
 			}
-			actualServoState := info.RunArgs.DUT.ServoHost.Servo.State
-			if actualServoState != tt.expectedServoState {
-				t.Errorf("Expected servo state %q, but got %q", tt.expectedServoState, actualServoState)
+			if tt.servoHost != nil {
+				actualServoState := tt.servoHost.Servo.State
+				if actualServoState != tt.expectedServoState {
+					t.Errorf("Expected servo state %q, but got %q", tt.expectedServoState, actualServoState)
+				}
 			}
 		})
 	}
