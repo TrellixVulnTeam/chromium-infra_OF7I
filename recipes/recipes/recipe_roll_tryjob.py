@@ -10,6 +10,8 @@ from PB.go.chromium.org.luci.buildbucket.proto.common import (FAILURE,
                                                               GerritChange)
 from PB.recipe_engine.result import RawResult
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/context',
@@ -215,11 +217,12 @@ class RecipesRepo(object):
       if is_triggering_repo:
         with self._api.context(cwd=self._root):
           rev_parse_step = self._api.git(
-              'rev-parse', 'FETCH_HEAD',
+              'rev-parse',
+              'FETCH_HEAD',
               name='read CL revision',
-              stdout=self._api.raw_io.output(),
-              step_test_data=lambda:
-                  self._api.raw_io.test_api.stream_output('deadbeef'))
+              stdout=self._api.raw_io.output_text(),
+              step_test_data=lambda: self._api.raw_io.test_api.
+              stream_output_text('deadbeef'))
           self._cl_revision = rev_parse_step.stdout.strip()
 
   def is_dirty(self, name):
@@ -273,11 +276,11 @@ def _find_footer(api, repo_id):
   all_footers = api.tryserver.get_footers()
 
   if BYPASS_FOOTER in all_footers:
-    api.python.succeeding_step(
+    api.step.empty(
         'BYPASS ENABLED',
-        'Roll tryjob bypassed for %r' % (
-          # It's unlikely that there's more than one value, but just in case...
-          ', '.join(all_footers[BYPASS_FOOTER]),))
+        step_text='Roll tryjob bypassed for %r' % (
+            # It's unlikely that there's more than one value, but just in case.
+            ', '.join(all_footers[BYPASS_FOOTER]),))
     return None, True
 
   found_set = set()
@@ -287,9 +290,10 @@ def _find_footer(api, repo_id):
       found_set.add(name)
 
   if len(found_set) > 1:
-    api.python.failing_step(
+    api.step.empty(
         'Too many footers for %r' % (repo_id,),
-        'Found incompatible footers in CL message:\n' +
+        status=api.step.FAILURE,
+        step_text='Found incompatible footers in CL message:\n' +
         ('\n'.join(' * ' + f for f in sorted(found_set))))
 
   return found_set.pop() if found_set else None, False
@@ -334,7 +338,7 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
     # currently pinned in the downstream repo, instead of going back an
     # arbitrary number of commits. This should always be a valid git revision,
     # so we can also get rid of the "checkout HEAD~" error handling.
-    for ancestor_index in xrange(10):
+    for ancestor_index in range(10):
       ref = 'main~%d' % ancestor_index if ancestor_index else 'main'
       # Check out the parent commit to train against (except for the first
       # iteration of the for loop).
@@ -359,8 +363,9 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
               'rev-parse',
               'HEAD',
               name='get upstream base revision',
-              stdout=api.raw_io.output(),
-              step_test_data=lambda: api.raw_io.test_api.stream_output('abcd'))
+              stdout=api.raw_io.output_text(),
+              step_test_data=lambda: api.raw_io.test_api.stream_output_text(
+                  'abcd'))
           last_non_crashing_revision = rev_parse_step.stdout.strip()
         break
 
@@ -438,7 +443,7 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
       ) % expected_footer
     else:
       msg = 'CL is trivial and message contains no footers for this repo.'
-    api.python.succeeding_step('Roll OK', msg)
+    api.step.empty('Roll OK', step_text=msg)
     return
 
   # trivial roll, but user has footer in CL message.
@@ -613,7 +618,7 @@ def GenTests(api):
           retcode=1) + api.step_data(
               'find last non-crashing upstream revision'
               '.get upstream base revision',
-              stdout=api.raw_io.output('deadbeef')) +
+              stdout=api.raw_io.output_text('deadbeef')) +
          api.step_data('cherry-pick CL onto deadbeef', retcode=1))
 
   # None of the ancestor commits of the upstream repo's main branch are

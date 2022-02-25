@@ -184,9 +184,10 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     # New commit in A repo will need to get rolled into B first. However,
     # it'd also appear as a candidate for C roll, leading to a failure there.
     if ROLL_FAILURE in results and ROLL_SUCCESS not in results:
-      self.m.python.failing_step(
+      self.m.step.empty(
           'roll result',
-          'manual intervention needed: automated roll attempt failed')
+          status=self.m.step.FAILURE,
+          step_text='manual intervention needed: automated roll attempt failed')
 
   def _prepare_checkout(self, project_id, project_url):
     # Keep persistent checkout. Speeds up the roller for large repos
@@ -223,9 +224,11 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       if repo_data.trivial and cl_status == 'commit':
         if (last_roll_elapsed and
             last_roll_elapsed > _ROLL_STALE_THRESHOLD):
-          self.m.python.failing_step(
+          self.m.step.empty(
               'stale roll',
-              'manual intervention needed: automated roll attempt is stale')
+              status=self.m.step.FAILURE,
+              step_text='manual intervention needed: automated roll attempt is '
+              'stale')
 
         return ROLL_SUCCESS
 
@@ -233,9 +236,11 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       if not repo_data.trivial and cl_status != 'closed':
         if (last_roll_elapsed and
             last_roll_elapsed > _ROLL_STALE_THRESHOLD):
-          self.m.python.failing_step(
+          self.m.step.empty(
               'stale roll',
-              'manual intervention needed: automated roll attempt is stale')
+              status=self.m.step.FAILURE,
+              step_text='manual intervention needed: automated roll attempt is '
+              'stale')
 
         return ROLL_SUCCESS
 
@@ -283,7 +288,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     disable_reason = self._get_disable_reason(recipes_cfg_path)
     if disable_reason:
-      rslt = self.m.python.succeeding_step('disabled', disable_reason)
+      rslt = self.m.step.empty('disabled', step_text=disable_reason)
       rslt.presentation.status = self.m.step.WARNING
       return ROLL_SKIP
 
@@ -417,8 +422,10 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     issue_result = issue_step.json.output
 
     if not issue_result['issue'] or not issue_result['issue_url']:
-      self.m.python.failing_step(
-          'git cl upload failed', 'no issue metadata returned')
+      self.m.step.empty(
+          'git cl upload failed',
+          status=self.m.step.FAILURE,
+          step_text='no issue metadata returned')
 
     repo_data = RepoData(
       str(issue_result['issue']),

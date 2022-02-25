@@ -18,7 +18,6 @@ DEPS = [
     'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/properties',
-    'recipe_engine/python',
     'recipe_engine/step',
     'depot_tools/git',
     'depot_tools/tryserver',
@@ -139,10 +138,9 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
       to_build, platform, force_build)
 
     if unsupported:
-      api.python.succeeding_step(
-        '%d packges unsupported for %r' % (len(unsupported), platform),
-        '<br/>' + '<br/>'.join(sorted(unsupported))
-      )
+      api.step.empty(
+          '%d packges unsupported for %r' % (len(unsupported), platform),
+          step_text='<br/>' + '<br/>'.join(sorted(unsupported)))
 
 
 def GenTests(api):

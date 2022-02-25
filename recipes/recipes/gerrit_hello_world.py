@@ -4,6 +4,7 @@
 
 """Pushes a trivial CL to Gerrit to verify git authentication works on LUCI."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'recipe_engine/buildbucket',

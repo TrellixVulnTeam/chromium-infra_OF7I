@@ -19,7 +19,6 @@ DEPS = [
     'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
-    'recipe_engine/python',
     'recipe_engine/raw_io',
     'recipe_engine/step',
 ]
@@ -97,15 +96,15 @@ def _GetHostOsVersions(api, hosts):
       closest_version = min(_IMAGE_VERSIONS, key=lambda x: abs(x - version))
       host_os_map[host] = closest_version
       if closest_version != version:
-        api.python.succeeding_step(
+        api.step.empty(
             'WARNING %s: ' % host,
-            'using \'Ubuntu %s\', no compatible image version \'%s\'' %
-            (closest_version, os))
+            step_text='using \'Ubuntu %s\', no compatible image version \'%s\''
+            % (closest_version, os))
   missing_hosts = set(hosts).difference(host_os_map)
   if missing_hosts:
-    api.python.succeeding_step(
+    api.step.empty(
         'WARNING UFS missing hosts:',
-        '"%s" listed in "zone_host_map.json" but not present in UFS' %
+        step_text='"%s" listed in "zone_host_map.json" but not present in UFS' %
         ', '.join(missing_hosts))
   return host_os_map
 
@@ -142,7 +141,7 @@ def RunSteps(api):
 
   zones_to_test = _GetZonesToTest(api, zone_host_map)
   if not zones_to_test:
-    api.python.succeeding_step('CL does not contain DHCP changes', '')
+    api.step.empty('CL does not contain DHCP changes')
     return
 
   # Determine hosts to test based on zones that have changes.

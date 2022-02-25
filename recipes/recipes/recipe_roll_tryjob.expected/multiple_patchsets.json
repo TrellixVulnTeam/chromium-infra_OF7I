@@ -135,22 +135,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(0)"
-    ],
-    "luci_context": {
-      "realm": {
-        "name": ":"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
+    "cmd": [],
     "name": "BYPASS ENABLED",
     "~followup_annotations": [
       "@@@STEP_TEXT@Roll tryjob bypassed for 'Reasons'@@@"

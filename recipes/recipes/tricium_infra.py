@@ -6,6 +6,8 @@ from recipe_engine import post_process
 
 from PB.recipes.infra import tricium_infra as tricium_infra_pb
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'infra_checkout',
     'depot_tools/bot_update',

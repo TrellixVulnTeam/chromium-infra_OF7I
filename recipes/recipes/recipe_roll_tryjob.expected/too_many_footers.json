@@ -141,23 +141,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
-    "luci_context": {
-      "realm": {
-        "name": "project:try"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
+    "cmd": [],
     "name": "Too many footers for 'depot_tools'",
     "~followup_annotations": [
       "@@@STEP_TEXT@Found incompatible footers in CL message:<br/> * Recipe-Manual-Change<br/> * Recipe-Nontrivial-Roll@@@",
@@ -167,7 +151,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step(\"Too many footers for 'depot_tools'\") (retcode: 1)"
+      "humanReason": "Step(\"Too many footers for 'depot_tools'\") (retcode: 0)"
     },
     "name": "$result"
   }

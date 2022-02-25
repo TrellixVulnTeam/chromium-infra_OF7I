@@ -4,6 +4,8 @@
 
 from PB.recipes.infra import images_pins_roller as images_pins_roller_pb
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'depot_tools/git',
     'depot_tools/git_cl',

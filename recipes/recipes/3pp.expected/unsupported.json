@@ -298,14 +298,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(0)"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
-    },
+    "cmd": [],
     "name": "2 packges unsupported for None",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>prefix/deps/pkg_a<br/>prefix/deps/pkg_b@@@"

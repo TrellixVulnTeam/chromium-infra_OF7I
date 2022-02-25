@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'infra_checkout',
     'depot_tools/bot_update',
@@ -11,7 +13,6 @@ DEPS = [
     'recipe_engine/context',
     'recipe_engine/path',
     'recipe_engine/platform',
-    'recipe_engine/python',
     'recipe_engine/raw_io',
     'recipe_engine/step',
 ]
@@ -32,7 +33,7 @@ def RunSteps(api):
     with api.step.nest('check changes') as presentation:
       changes = _check_changes(api)
       presentation.logs['changes'] = [
-          '%s: %s' % (p, j) for p, j in changes.items()
+          '%s: %s' % (p, j) for p, j in sorted(changes.items())
       ]
 
     _step_auth_tests(api, changes)
@@ -83,7 +84,7 @@ def _has_changed_files(api, path, exclude_dir=None):
       '--cached',
       path,
       name='get change list on %s' % path,
-      stdout=api.m.raw_io.output())
+      stdout=api.m.raw_io.output_text())
   files = result.stdout.splitlines()
 
   # exclude files if exclude_dir is specified.
@@ -107,16 +108,14 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None):
     if python3:
       venv = luci_dir.join('.vpython3')
       py = 'python3'
+      cmd = ['vpython3']
     else:
       venv = luci_dir.join('.vpython')
       py = 'python2'
+      cmd = ['vpython']
 
-    api.python(
-        'run tests %s' % py,
-        'test.py',
-        args=testpy_args,
-        venv=venv,
-        timeout=timeout)
+    cmd += ['-vpython-spec', venv, '-u', 'test.py'] + testpy_args
+    api.step('run tests %s' % py, cmd, timeout=timeout)
 
 
 def _step_auth_tests(api, changes):
@@ -225,9 +224,10 @@ def _steps_check_diffs_on_ui_assets(api):
   diff_check = api.git('diff', '--exit-code', ok_ret='any')
   if diff_check.retcode != 0:
     diff_check.presentation.status = 'FAILURE'
-    api.python.failing_step(
+    api.step.empty(
         'ASSETS DIFF DETECTED',
-        ASSETS_DIFF_FAILURE_MESSAGE)
+        status=api.step.FAILURE,
+        step_text=ASSETS_DIFF_FAILURE_MESSAGE)
 
 
 def GenTests(api):
@@ -245,7 +245,7 @@ def GenTests(api):
   def _step_data_changed_files(directory, files):
     return api.step_data(
         'check changes.get change list on %s' % directory,
-        api.raw_io.stream_output('\n'.join(files)),
+        api.raw_io.stream_output_text('\n'.join(files)),
         stream='stdout')
 
   yield (api.test('ci') + _ci_build() +

@@ -476,23 +476,7 @@
     ]
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
-    "luci_context": {
-      "realm": {
-        "name": "infra:cron"
-      },
-      "resultdb": {
-        "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
-          "update_token": "token"
-        },
-        "hostname": "rdbhost"
-      }
-    },
+    "cmd": [],
     "name": "roll result",
     "~followup_annotations": [
       "@@@STEP_TEXT@manual intervention needed: automated roll attempt failed@@@",
@@ -502,7 +486,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('roll result') (retcode: 1)"
+      "humanReason": "Step('roll result') (retcode: 0)"
     },
     "name": "$result"
   }
