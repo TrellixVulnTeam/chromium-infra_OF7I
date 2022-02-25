@@ -34,6 +34,7 @@ export enum CustomQuestionType {
 export type CustomQuestion = {
   type: CustomQuestionType,
   question: string,
+  answerPrefix?: string,
   tip?: string,
   options?: string[],
   subQuestions?: CustomQuestion[] | null,

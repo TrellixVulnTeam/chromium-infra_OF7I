@@ -5,6 +5,9 @@
 // Chromium project component prefix
 const CR_PREFIX = 'Cr-';
 
+// Customer Question conver to related labels
+const LABELS_PREFIX = 'LABELS: '
+
 // customized function for add additoinal data base on different categories.
 export function expandDescriptions(
   category: string,
@@ -14,78 +17,54 @@ export function expandDescriptions(
   labels: Array<any>,
   component?: string,
   ): {expandDescription:string, expandLabels:Array<any>, compVal:string} {
-    let expandDescription = description;
+    let expandDescription = "";
     let expandLabels = labels;
     let compVal = component || '';
     let typeLabel = isRegression ? 'Type-Bug-Regression' : '';
-    switch (category) {
-      case 'Network / Downloading':
-        expandDescription = "Example URL: " + customQuestionsAnswers[0] + "\n\n"
-          + expandDescription;
-        break;
-      case 'Audio / Video':
-        expandDescription = "Example URL: " + customQuestionsAnswers[0] + "\n\n"
-          + "Does this work in other browsers? \n" + customQuestionsAnswers[1] + "\n\n"
-          + "Contents of chrome://gpu: \n" + customQuestionsAnswers[2] + "\n\n"
-          + expandDescription;
-        break;
-      case 'Content':
-        expandDescription = "Example URL: " + customQuestionsAnswers[0] + "\n\n"
-          + "Is it a problem with a plugin? " + customQuestionsAnswers[2] + "\n\n"
-          + "Does this work in other browsers? " + customQuestionsAnswers[3] + "\n\n"
-          + expandDescription;
-        if (customQuestionsAnswers[1].split(' - ')[0] === 'Yes') {
-          compVal = 'Cr-Blink';
-          typeLabel = 'Type-Bug';
-        } else {
-          compVal = '';
-          typeLabel = 'Type-Compat';
+
+    customQuestionsAnswers.forEach((ans) => {
+      if (ans.startsWith(LABELS_PREFIX)) {
+        const currentAnswer = ans.substring(LABELS_PREFIX.length);
+        switch (category) {
+          case 'Content':
+            if (currentAnswer.split(' - ')[0] === 'Yes') {
+              compVal = 'Cr-Blink';
+              typeLabel = 'Type-Bug';
+            } else {
+              compVal = '';
+              typeLabel = 'Type-Compat';
+            }
+            break;
+          case 'Extensions / Themes':
+            if (currentAnswer.split(' - ')[0] === 'Chrome Extension') {
+              compVal = 'Cr-Platform-Extensions';
+            } else {
+              compVal = 'Cr-UI-Browser-Themes';
+            }
+            break;
+          case 'Other':
+            typeLabel = "Type-Bug";
+            const issueType = currentAnswer.split(' - ')[0];
+            if (issueType !== 'Not sure'){
+              typeLabel = issueType;
+            }
+            if (issueType === 'Cr-UI-I18N') {
+              compVal = 'Cr-UI-I18N';
+            }
+            break;
+          case 'API':
+            compVal = currentAnswer;
+            if (compVal === "Not sure - I don't know") {
+              compVal = '';
+            }
+            break;
         }
-        break;
-      case 'App':
-        expandDescription = "WebStore page: " + customQuestionsAnswers[0] + "\n\n"
-          +expandDescription;
-        break;
-      case 'Extensions / Themes':
-        expandDescription = "WebStore page: " + customQuestionsAnswers[1] + "\n\n"
-          + expandDescription;
-        if (customQuestionsAnswers[0].split(' - ')[0] === 'Chrome Extension') {
-          compVal = 'Cr-Platform-Extensions';
-        } else {
-          compVal = 'Cr-UI-Browser-Themes';
-        }
-        break;
-      case 'Webstore':
-        expandDescription = "WebStore page: " + customQuestionsAnswers[0] + "\n\n"
-          + expandDescription;
-        break;
-      case 'Crashes':
-        expandDescription = "Crashed report ID: " + customQuestionsAnswers[0] + "\n\n"
-          + "How much crashed? " + customQuestionsAnswers[1] + "\n\n"
-          + "Is it a problem with a plugin? " + customQuestionsAnswers[2] + "\n\n"
-          + expandDescription;
-        break;
-      case 'Other':
-        typeLabel = "Type-Bug";
-        const issueType = customQuestionsAnswers[0].split(' - ')[0];
-        if (issueType !== 'Not sure'){
-          typeLabel = issueType;
-        }
-        if (issueType === 'Cr-UI-I18N') {
-          compVal = 'Cr-UI-I18N';
-        }
-        break;
-      case 'API':
-        expandDescription = "Does this work in other browsers? " + customQuestionsAnswers[2] + "\n\n"
-          + expandDescription;
-        compVal = customQuestionsAnswers[0];
-        if (compVal === "Not sure - I don't know") {
-          compVal = '';
-        }
-        break;
-      default:
-        break;
-    }
+      } else {
+        expandDescription = expandDescription + ans + "\n\n";
+      }
+    });
+
+    expandDescription = expandDescription + description;
 
     if (typeLabel.length > 0) {
       expandLabels.push({

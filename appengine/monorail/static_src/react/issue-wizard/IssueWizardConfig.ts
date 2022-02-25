@@ -24,6 +24,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What specific URL can reproduce the problem?",
+        answerPrefix: "Example URL: ",
       },
     ],
   },
@@ -37,10 +38,12 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What specific URL can reproduce the problem?",
+        answerPrefix: "Example URL: ",
       },
       {
         type: CustomQuestionType.Select,
         question: "Does this feature work correctly in other browsers?",
+        answerPrefix: "Does this work in other browsers?\n",
         options: ["Not sure - I don't know", "Yes - This is just a Chromium problem", "No - I can reproduce the problem in another browser"],
         subQuestions: [
           null,
@@ -50,6 +53,11 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
             question: "Which other browsers (including versions) also have the problem?",
           }],
       },
+      {
+        type: CustomQuestionType.Text,
+        question: "Please open a new tab on URL chrome://gpu and paste that text here.",
+        answerPrefix: "Contents of chrome://gpu: \n",
+      }
     ],
   },
   {
@@ -62,16 +70,19 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What specific URL can reproduce the problem?",
+        answerPrefix: "Example URL: ",
       },
       {
         type: CustomQuestionType.Select,
         question: "Does the problem occur on multiple sites?",
+        answerPrefix: "LABELS: ",
         options: ["Not sure - I don't know", "Yes - Please describe below", "No - Just that one URL"],
         subQuestions: [null,null,null],
       },
       {
         type: CustomQuestionType.Select,
         question: "Is it a problem with a plugin?",
+        answerPrefix: "Is it a problem with a plugin? ",
         options: ["Not sure - I don't know", "Yes - Those darn plugins", "No - It's the browser itself"],
         subQuestions: [
           null,
@@ -84,6 +95,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Does this feature work correctly in other browsers?",
+        answerPrefix: "Does this work in other browsers? ",
         options: ["Not sure - I don't know", "Yes - This is just a Chromium problem", "No - I can reproduce the problem in another browser"],
         subQuestions: [
           null,
@@ -105,6 +117,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore </a> ?",
+        answerPrefix: "WebStore page: ",
       }
     ],
   },
@@ -118,6 +131,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "What kind of software had the problem?",
+        answerPrefix: "LABELS: ",
         options: ["Chrome Extension - Adds new browser functionality", "Chrome Theme - Makes Chrome look awesome"],
         subQuestions: [
           null,
@@ -130,6 +144,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore</a> ?",
+        answerPrefix: "WebStore page: ",
       },
     ],
   },
@@ -143,6 +158,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "What is the URL of the Chrome WebStore page that had the problem?",
+        answerPrefix: "WebStore page: ",
       },
     ],
   },
@@ -181,16 +197,19 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Input,
         question: "Do you have a Report ID from chrome://crashes?",
+        answerPrefix: "Crashed report ID: ",
       },
       {
         type: CustomQuestionType.Select,
         question: "How much crashes?",
         options: ["Just one tab", "Just one plugin", "The whole browser"],
+        answerPrefix: "How much crashed? ",
         subQuestions: null,
       },
       {
         type: CustomQuestionType.Select,
         question: "Is it a problem with a plugin?",
+        answerPrefix: "Is it a problem with a plugin? ",
         options: ["Not sure - I don't know", "Yes - Those darn plugins", "No - It's the browser itself"],
         subQuestions: [
           null,
@@ -221,6 +240,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Please select a label to classify your issue:",
+        answerPrefix: "LABELS: ",
         options: [
           "Not sure - I don't know",
           "Type-Feature - Request for new or improved features",
@@ -242,6 +262,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type:CustomQuestionType.Select,
         question:"Which <a href='https://bugs.chromium.org/p/chromium/adminComponents' target='_blank'>component</a> does this fall under?",
+        answerPrefix: "LABELS: ",
         options: [
           "Not sure - I don't know",
           "Blink>Animation",
@@ -314,12 +335,14 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       {
         type: CustomQuestionType.Select,
         question: "Do you have a reduced test case?",
+        answerPrefix: "reduced attachment: ",
         options: [" Yes - Please attach the file here", "No - I realize that it is harder to resolve problems that lack test cases"],
         subQuestions: null,
       },
       {
         type: CustomQuestionType.Select,
         question: "Does this feature work correctly in other browsers?",
+        answerPrefix: "Does this work in other browsers? ",
         tip: "Tip: Use <a href='https://www.browserstack.com/' target='_blank'>browserstack.com</a> to compare behavior on different browser versions.",
         options: ["Not sure - I don't know", "Yes - This is just a Chrome problem", "No - I can reproduce the problem in another browser"],
         subQuestions: [

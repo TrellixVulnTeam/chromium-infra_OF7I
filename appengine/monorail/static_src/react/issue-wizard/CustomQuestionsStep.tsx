@@ -42,7 +42,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
   const updateAnswer = (answer: string, index: number) => {
     const updatedAnswers = answers;
-    updatedAnswers[index] = answer;
+    updatedAnswers[index] = questions[index].answerPrefix + answer;
     setAnswers(updatedAnswers);
   }
 
