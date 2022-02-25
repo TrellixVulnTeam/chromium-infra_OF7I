@@ -53,7 +53,7 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
 
   let nextButton;
   if (activeStep === 2){
-    nextButton = (<Button aria-label="nextButton" size="medium" onClick={onSubmitIssue}>{'Submit'}</Button>);
+    nextButton = (<Button aria-label="nextButton" size="medium" onClick={onSubmitIssue} disabled={!nextEnabled}>{'Submit'}</Button>);
   } else {
     nextButton =
       (<Button aria-label="nextButton" size="medium" onClick={handleNext} disabled={!nextEnabled}>

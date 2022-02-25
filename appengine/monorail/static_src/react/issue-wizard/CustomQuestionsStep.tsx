@@ -39,6 +39,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
   const [attachments, setAttachments] = React.useState([]);
   const [answers, setAnswers] = React.useState(Array(questions.length).fill(''));
   const [hasError, setHasError] = React.useState(false);
+  const [submitEnable, setSubmitEnable] = React.useState(true);
 
   const updateAnswer = (answer: string, index: number) => {
     const updatedAnswers = answers;
@@ -141,10 +142,10 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
         />
 
         <h3>Upload any relevant screenshots</h3>
-        <AttachmentUploader files={attachments} setFiles={setAttachments}/>
+        <AttachmentUploader files={attachments} setFiles={setAttachments} setSubmitEnable={setSubmitEnable}/>
 
       </div>
-      <DotMobileStepper nextEnabled={false} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>
+      <DotMobileStepper nextEnabled={submitEnable} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>
     </>
   );
 }
