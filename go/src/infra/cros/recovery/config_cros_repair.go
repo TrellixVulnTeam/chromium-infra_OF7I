@@ -40,6 +40,9 @@ const crosRepairPlanActions = `
 		"dut_has_board_name",
 		"dut_has_model_name",
 		"cros_ping"
+	],
+	"recovery_actions": [
+		"cros_servo_power_reset_repair"
 	]
 },
 "internal_storage":{
@@ -107,7 +110,8 @@ const crosRepairPlanActions = `
 		"battery_is_good"
 	],
 	"recovery_actions": [
-		"rpm_power_cycle"
+		"rpm_power_cycle",
+		"cros_servo_power_reset_repair"
 	],
 	"exec_name":"sample_pass"
 },
@@ -150,6 +154,9 @@ const crosRepairPlanActions = `
 	"exec_timeout": {
 		"seconds": 45
 	},
+	"recovery_actions": [
+		"cros_servo_power_reset_repair"
+	],
 	"exec_name":"cros_stop_start_ui"
 },
 "rw_vpd":{
@@ -598,6 +605,32 @@ const crosRepairPlanActions = `
 	"exec_timeout": {
 		"seconds": 3600
 	}
+},
+"cros_servo_power_reset_repair":{
+	"docs":[
+		"This repair action will use servod command to reset power_state on the DUT.",
+		"TODO: (blocked by: b/221083688) Collect logs from a successfully repaired DUT."
+    ],
+    "exec_timeout": {
+        "seconds":200
+    },
+    "conditions":[
+        "servod_echo"
+    ],
+    "dependencies":[
+        "servo_power_state_reset",
+        "wait_device_to_boot_after_reset"
+    ],
+    "exec_name":"sample_pass"
+},
+"wait_device_to_boot_after_reset":{
+	"docs":[
+		"Try to wait device to be sshable after the device being rebooted."
+    ],
+    "exec_timeout": {
+        "seconds":150
+    },
+    "exec_name":"cros_ssh"
 }
 `
 
