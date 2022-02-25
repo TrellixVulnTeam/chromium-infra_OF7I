@@ -95,14 +95,14 @@ export default function DetailsStep(props: Props): React.ReactElement {
           <h3>Browser:</h3>
           <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
 
-            <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
-            <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')}/>
+          <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
+          <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')} value={textValues.oneLineSummary}/>
 
           <h3 className={classes.head}>Steps to reproduce problem <span className={classes.red}>*</span></h3>
-          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')}/>
+          <TextField multiline rows={4} id="outlined-basic-2" variant="outlined" onChange={handleChange('stepsToReproduce')} value={textValues.stepsToReproduce}/>
 
           <h3 className={classes.head}>Please describe the problem <span className={classes.red}>*</span></h3>
-          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')}/>
+          <TextField multiline rows={3} id="outlined-basic-3" variant="outlined" onChange={handleChange('describeProblem')} value={textValues.describeProblem}/>
 
           <CustomQuestionSelector
             question="Did this work before?"

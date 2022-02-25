@@ -49,13 +49,27 @@ export function IssueWizard(props: Props): ReactElement {
 
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
+  const reset = () => {
+    setTextValues({
+      oneLineSummary: '',
+      stepsToReproduce: '',
+      describeProblem: '',
+    });
+    setIsRegression(false);
+  }
+
+  const updateCategory = (category: string) => {
+    setCategory(category);
+    reset();
+  }
+
   let page;
   if (activeStep === 0) {
     page = <LandingStep
         userPersona={userPersona}
         setUserPersona={setUserPersona}
         category={category}
-        setCategory={setCategory}
+        setCategory={updateCategory}
         setActiveStep={setActiveStep}
         />;
       } else if (activeStep === 1) {
