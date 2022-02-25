@@ -104,7 +104,16 @@ func servoVerifySerialNumberExec(ctx context.Context, info *execs.ExecInfo) erro
 	return errors.Reason("servo verify serial number: serial number is not available").Err()
 }
 
+// servoHostPresentExec verifies that servo host present under DUT.
+func servoHostPresentExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d == nil || d.ServoHost == nil {
+		return errors.Reason("servo host present: data is not present").Err()
+	}
+	return nil
+}
+
 func init() {
+	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
 	execs.Register("dut_has_board_name", hasDutBoardActionExec)
 	execs.Register("dut_has_model_name", hasDutModelActionExec)

@@ -133,6 +133,7 @@ const crosRepairPlanActions = `
 },
 "servo_keyboard":{
 	"conditions":[
+		"dut_servo_host_present",
 		"servo_state_is_working",
 		"is_servo_keyboard_image_tool_present"
 	],
@@ -148,6 +149,7 @@ const crosRepairPlanActions = `
 },
 "servo_mac_address":{
 	"conditions":[
+		"dut_servo_host_present",
 		"is_not_servo_v3",
 		"servod_control_exist_for_mac_address"
 	],
@@ -170,6 +172,9 @@ const crosRepairPlanActions = `
 	"docs":[
 		"set servo's 'init_usb_keyboard' command to 'on' value."
 	],
+	"dependencies":[
+		"dut_servo_host_present"
+	],
 	"exec_name":"servo_set",
 	"exec_extra_args":[
 		"command:init_usb_keyboard",
@@ -179,6 +184,9 @@ const crosRepairPlanActions = `
 "is_servo_keyboard_image_tool_present":{
 	"docs":[
 		"check if the servo keyboard image specified by the name of dfu-programmer can be found in DUT cli."
+	],
+	"dependencies":[
+		"dut_servo_host_present"
 	],
 	"exec_name":"cros_is_tool_present",
 	"exec_extra_args":[
@@ -197,6 +205,9 @@ const crosRepairPlanActions = `
 "servo_state_is_working":{
 	"docs":[
 		"check the servo's state is WORKING."
+	],
+	"dependencies":[
+		"dut_servo_host_present"
 	],
 	"exec_name":"servo_match_state",
 	"exec_extra_args":[
@@ -433,6 +444,7 @@ const crosRepairPlanActions = `
 		"USB-drive contains stable image on it."
 	],
 	"dependencies":[
+		"dut_servo_host_present",
 		"servo_state_is_working"
 	],
 	"exec_name":"servo_usbkey_has_stable_image",
@@ -449,6 +461,7 @@ const crosRepairPlanActions = `
 		"Download the image can take longer if labstation download parallel a few images."
 	],
 	"dependencies":[
+		"dut_servo_host_present",
 		"servo_state_is_working"
 	],
 	"exec_name":"servo_download_image_to_usb",
