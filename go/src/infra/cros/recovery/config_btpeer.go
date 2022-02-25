@@ -7,7 +7,7 @@ package recovery
 const btpeerRepairPlanBody = `
 "critical_actions": [
 	"btpeer_state_broken",
-	"cros_ping",
+	"Device is pingable",
 	"cros_ssh",
 	"check_server",
 	"btpeer_state_working"
@@ -18,6 +18,12 @@ const btpeerRepairPlanBody = `
 			"To check if devices is responsive we request not empty list of detected statuses."
 		],
 		"exec_name":"btpeer_get_detected_statuses"
+	},
+	"Device is pingable":{
+		"exec_timeout": {
+			"seconds":15
+		},
+		"exec_name":"cros_ping"
 	}
 }
 `

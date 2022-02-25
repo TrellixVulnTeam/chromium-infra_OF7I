@@ -7,7 +7,7 @@ package recovery
 const chameleonPlanBody = `
 "critical_actions": [
 	"Mark as bad",
-	"cros_ping",
+	"Device is pingable",
 	"cros_ssh",
 	"Mark as good"
 ],
@@ -17,6 +17,12 @@ const chameleonPlanBody = `
 	},
 	"Mark as good":{
 		"exec_name":"chameleon_state_working"
+	},
+	"Device is pingable":{
+		"exec_timeout": {
+			"seconds":15
+		},
+		"exec_name":"cros_ping"
 	}
 }
 `

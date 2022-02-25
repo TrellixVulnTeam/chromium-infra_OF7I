@@ -52,6 +52,9 @@ const crosRepairPlanActions = `
 	"exec_name":"sample_pass"
 },
 "device_system_info":{
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"dependencies":[
 		"cros_default_boot",
 		"cros_boot_in_normal_mode",
@@ -63,10 +66,20 @@ const crosRepairPlanActions = `
 	"exec_name":"sample_pass"
 },
 "has_python":{
+	"docs":[
+		"Verify that device has python on it.",
+		"The Reven boards does not have python. TBD"
+	],
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"dependencies":[
 		"cros_storage_writing"
 	],
-	"exec_name":"cros_has_python_interpreter_working"
+	"exec_name":"cros_has_python_interpreter_working",
+	"recovery_actions": [
+		"install_stable_os"
+	]
 },
 "last_provision_successful":{
 	"dependencies":[
@@ -85,6 +98,7 @@ const crosRepairPlanActions = `
 		"Check for the AC power, and battery charging capability."
 	],
 	"conditions":[
+		"is_not_flex_board",
 		"cros_is_not_virtual_machine"
 	],
 	"dependencies":[
@@ -99,6 +113,7 @@ const crosRepairPlanActions = `
 },
 "tpm_info":{
 	"conditions":[
+		"is_not_flex_board",
 		"cros_is_not_virtual_machine",
 		"cros_is_tpm_present"
 	],
@@ -118,6 +133,9 @@ const crosRepairPlanActions = `
 	"exec_name":"sample_pass"
 },
 "firmware_check":{
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"dependencies":[
 		"cros_storage_writing",
 		"cros_is_firmware_in_good_state",
@@ -137,6 +155,9 @@ const crosRepairPlanActions = `
 "rw_vpd":{
 	"docs":[
 		"Verify that keys: 'should_send_rlz_ping', 'gbind_attribute', 'ubind_attribute' are present in vpd RW_VPD partition."
+	],
+	"conditions":[
+		"is_not_flex_board"
 	],
 	"exec_name":"cros_are_required_rw_vpd_keys_present",
 	"allow_fail_after_recovery": true
@@ -283,11 +304,17 @@ const crosRepairPlanActions = `
 	"dependencies":[
 		"cros_storage_writing"
 	],
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"exec_name":"cros_match_dev_tpm_firmware_version"
 },
 "cros_tpm_kernver_match":{
 	"dependencies":[
 		"cros_storage_writing"
+	],
+	"conditions":[
+		"is_not_flex_board"
 	],
 	"exec_name":"cros_match_dev_tpm_kernel_version"
 },
@@ -295,9 +322,15 @@ const crosRepairPlanActions = `
 	"dependencies":[
 		"cros_storage_writing"
 	],
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"exec_name":"cros_is_default_boot_from_disk"
 },
 "cros_boot_in_normal_mode":{
+	"conditions":[
+		"is_not_flex_board"
+	],
 	"dependencies":[
 		"cros_storage_writing"
 	],
@@ -308,6 +341,7 @@ const crosRepairPlanActions = `
 },
 "cros_hwid_info":{
 	"conditions":[
+		"is_not_flex_board",
 		"dut_has_hwid_info"
 	],
 	"dependencies":[
@@ -317,6 +351,7 @@ const crosRepairPlanActions = `
 },
 "cros_serial_number_info":{
 	"conditions":[
+		"is_not_flex_board",
 		"dut_has_serial_number_info"
 	],
 	"dependencies":[
@@ -453,7 +488,7 @@ const crosRepairPlanActions = `
 	"docs":[
 		"USB-drive contains stable image on it."
 	],
-	"dependencies":[
+	"conditions":[
 		"dut_servo_host_present",
 		"servo_state_is_working"
 	],
@@ -541,6 +576,28 @@ const crosRepairPlanActions = `
 		"seconds":3600
 	},
 	"allow_fail_after_recovery": true
+},
+"is_not_flex_board": {
+	"docs": [
+		"Verify that device is belong Reven models"
+	],
+	"exec_extra_args": [
+		"string_values:reven",
+		"invert_result:true"
+	],
+	"exec_name":"dut_check_board"
+},
+"install_stable_os":{
+	"docs":[
+		"Install stable OS on the device."
+	],
+	"conditions": [
+		"has_stable_version_cros_image"
+	],
+	"exec_name": "cros_provision",
+	"exec_timeout": {
+		"seconds": 3600
+	}
 }
 `
 

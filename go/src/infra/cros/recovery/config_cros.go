@@ -99,14 +99,28 @@ const crosClosePlanBody = `
 	},
 	"Remove request to reboot is servo is good":{
 		"conditions":[
+			"is_not_flex_board",
 			"servo_state_is_working"
 		],
 		"exec_name":"cros_remove_reboot_request",
 		"allow_fail_after_recovery": true
 	},
 	"Remove in-use flag on servo-host":{
+		"conditions":[
+			"is_not_flex_board"
+		],
 		"exec_name":"cros_remove_servo_in_use",
 		"allow_fail_after_recovery": true
+	},
+	"is_not_flex_board": {
+		"docs": [
+			"Verify that device is belong Reven models"
+		],
+		"exec_extra_args": [
+			"string_values:x1c",
+			"invert_result:true"
+		],
+		"exec_name":"dut_check_model"
 	}
 }
 `
