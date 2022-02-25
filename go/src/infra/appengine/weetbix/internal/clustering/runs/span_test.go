@@ -9,15 +9,14 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"go.chromium.org/luci/server/span"
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
 	"infra/appengine/weetbix/internal/clustering/rules"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/testutil"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestSpan(t *testing.T) {
@@ -277,7 +276,7 @@ func TestSpan(t *testing.T) {
 			Convey(`With invalid Attempt Timestamp`, func() {
 				r.AttemptTimestamp = time.Time{}
 				err := testCreate(r)
-				So(err, ShouldErrLike, "attempt timestamp must be set")
+				So(err, ShouldErrLike, "attempt timestamp must be valid")
 			})
 			Convey(`With invalid Algorithms Version`, func() {
 				r.AlgorithmsVersion = 0

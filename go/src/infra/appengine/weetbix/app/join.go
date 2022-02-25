@@ -10,6 +10,8 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/tsmon/field"
+	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/span"
 	"google.golang.org/protobuf/proto"
 
@@ -17,6 +19,43 @@ import (
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	"infra/appengine/weetbix/internal/services/resultingester"
 	"infra/appengine/weetbix/internal/tasks/taskspb"
+)
+
+// For presubmit builds, proceeding to ingestion is not unconditional:
+// we must wait for the build to be notified over both a CV and Buildbucket.
+// We define the following metrics to monitor the performance of that join.
+var (
+	cvPresubmitBuildCounter = metric.NewCounter(
+		"weetbix/ingestion/join/cv_presubmit_builds_input",
+		"The number of unique presubmit builds for which CV Run Completion was received.",
+		nil,
+		// The LUCI Project.
+		field.String("project"))
+
+	bbPresubmitBuildCounter = metric.NewCounter(
+		"weetbix/ingestion/join/bb_presubmit_builds_input",
+		"The number of unique presubmit build for which buildbucket build completion was received.",
+		nil,
+		// The LUCI Project.
+		field.String("project"))
+
+	outputPresubmitBuildCounter = metric.NewCounter(
+		"weetbix/ingestion/join/presubmit_builds_output",
+		"The number of presubmit builds which were successfully joined and for which ingestion was queued.",
+		nil,
+		// The LUCI Project.
+		field.String("project"))
+)
+
+// For CI builds, no actual join needs to occur. So it is sufficient to
+// monitor total flow.
+var (
+	outputCIBuildCounter = metric.NewCounter(
+		"weetbix/ingestion/join/ci_builds_output",
+		"The number of CI builds for which ingestion was queued.",
+		nil,
+		// The LUCI Project.
+		field.String("project"))
 )
 
 // JoinBuildResult sets the build result for the given build.
@@ -33,8 +72,10 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 		return errors.New("build result must be specified")
 	}
 	var saved bool
+	var joined bool
 	f := func(ctx context.Context) error {
 		saved = false
+		joined = false
 		entries, err := control.Read(ctx, project, []string{buildID})
 		if err != nil {
 			return err
@@ -61,7 +102,7 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 			return err
 		}
 		saved = true
-		createTaskIfNeeded(ctx, entry)
+		joined = createTaskIfNeeded(ctx, entry)
 		return nil
 	}
 	if _, err := span.ReadWriteTransaction(ctx, f); err != nil {
@@ -69,6 +110,18 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 	}
 	if !saved {
 		logging.Warningf(ctx, "build result for ingestion %q was dropped as one was already recorded", buildID)
+	}
+
+	// Export metrics.
+	if saved && isPresubmit {
+		bbPresubmitBuildCounter.Add(ctx, 1, project)
+	}
+	if joined {
+		if isPresubmit {
+			outputPresubmitBuildCounter.Add(ctx, 1, project)
+		} else {
+			outputCIBuildCounter.Add(ctx, 1, project)
+		}
 	}
 	return nil
 }
@@ -85,8 +138,10 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 		return errors.New("presubmit result must be specified")
 	}
 	var buildIDsSkipped []string
+	var buildsOutput int64
 	f := func(ctx context.Context) error {
 		buildIDsSkipped = nil
+		buildsOutput = 0
 		entries, err := control.Read(ctx, project, buildIDs)
 		if err != nil {
 			return err
@@ -113,7 +168,10 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 			if err := control.InsertOrUpdate(ctx, entry); err != nil {
 				return err
 			}
-			createTaskIfNeeded(ctx, entry)
+			created := createTaskIfNeeded(ctx, entry)
+			if created {
+				buildsOutput++
+			}
 		}
 		return nil
 	}
@@ -123,13 +181,19 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 	if len(buildIDsSkipped) > 0 {
 		logging.Warningf(ctx, "presubmit result for builds %v were dropped as one was already recorded", buildIDsSkipped)
 	}
+
+	// Export metrics.
+	cvPresubmitBuildCounter.Add(ctx, int64(len(buildIDs)-len(buildIDsSkipped)), project)
+	if buildsOutput > 0 {
+		outputPresubmitBuildCounter.Add(ctx, buildsOutput, project)
+	}
 	return nil
 }
 
 // createTaskIfNeeded creates the task if all necessary data for the ingestion is available.
-func createTaskIfNeeded(ctx context.Context, e *control.Entry) {
+func createTaskIfNeeded(ctx context.Context, e *control.Entry) bool {
 	if e.BuildResult == nil || (e.IsPresubmit && e.PresubmitResult == nil) {
-		return
+		return false
 	}
 
 	var task *taskspb.IngestTestResults
@@ -161,4 +225,5 @@ func createTaskIfNeeded(ctx context.Context, e *control.Entry) {
 	task = proto.Clone(task).(*taskspb.IngestTestResults)
 
 	resultingester.Schedule(ctx, task)
+	return true
 }

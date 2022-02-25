@@ -6,6 +6,13 @@ package updater
 
 import (
 	"context"
+	"time"
+
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/tsmon/field"
+	"go.chromium.org/luci/common/tsmon/metric"
+	"go.chromium.org/luci/common/tsmon/types"
 
 	"infra/appengine/weetbix/internal/analysis"
 	"infra/appengine/weetbix/internal/bugs"
@@ -13,9 +20,25 @@ import (
 	"infra/appengine/weetbix/internal/clustering/runs"
 	"infra/appengine/weetbix/internal/config"
 	"infra/appengine/weetbix/internal/config/compiledcfg"
+)
 
-	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/logging"
+var (
+	// statusGauge reports the status of the bug updater job.
+	// Reports either "success" or "failure".
+	statusGauge = metric.NewString("weetbix/bug_updater/status",
+		"Whether automatic bug updates are succeeding, by LUCI Project.",
+		nil,
+		// The LUCI project.
+		field.String("project"),
+	)
+
+	durationGauge = metric.NewFloat("weetbix/bug_updater/duration",
+		"How long it is taking to update bugs, by LUCI Project.",
+		&types.MetricMetadata{
+			Units: types.Seconds,
+		},
+		// The LUCI project.
+		field.String("project"))
 )
 
 // AnalysisClient is an interface for building and accessing cluster analysis.
@@ -37,6 +60,22 @@ type AnalysisClient interface {
 // This leads to bugs errounously being detected as having manual priority
 // changes.
 func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string, simulate bool) (retErr error) {
+	projectCfg, err := config.Projects(ctx)
+	if err != nil {
+		return err
+	}
+
+	statusByProject := make(map[string]string)
+	for project := range projectCfg {
+		// Until each project succeeds, report "failure".
+		statusByProject[project] = "failure"
+	}
+	defer func() {
+		for project, status := range statusByProject {
+			statusGauge.Set(ctx, status, project)
+		}
+	}()
+
 	mc, err := monorail.NewClient(ctx, monorailHost)
 	if err != nil {
 		return err
@@ -52,10 +91,6 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string,
 		}
 	}()
 
-	projectCfg, err := config.Projects(ctx)
-	if err != nil {
-		return err
-	}
 	projectsWithDataset, err := ac.ProjectsWithDataset(ctx)
 	if err != nil {
 		return errors.Annotate(err, "querying projects with dataset").Err()
@@ -65,6 +100,7 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string,
 	// In future, the 10 minute GAE request limit may mean we need to
 	// parallelise these tasks or fan them out as separate tasks.
 	for project := range projectCfg {
+		start := time.Now()
 		if _, ok := projectsWithDataset[project]; !ok {
 			// Dataset not provisioned for project.
 			continue
@@ -85,7 +121,11 @@ func UpdateAnalysisAndBugs(ctx context.Context, monorailHost, gcpProject string,
 			err = errors.Annotate(err, "in project %v", project).Err()
 			logging.Errorf(ctx, "Updating analysis and bugs: %s", err)
 			errs = append(errs, err)
+		} else {
+			statusByProject[project] = "success"
 		}
+		elapsed := time.Since(start)
+		durationGauge.Set(ctx, elapsed.Seconds(), project)
 	}
 	if len(errs) > 0 {
 		return errors.NewMultiError(errs...)

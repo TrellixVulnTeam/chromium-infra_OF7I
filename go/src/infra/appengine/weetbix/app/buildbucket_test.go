@@ -52,8 +52,10 @@ func TestHandleBuild(t *testing.T) {
 					CreatedTs: bbv1.FormatTimestamp(time.Now()),
 				}
 				r := &http.Request{Body: makeBBReq(buildExp, "bb-hostname")}
-				err := bbPubSubHandlerImpl(ctx, r)
+				project, processed, err := bbPubSubHandlerImpl(ctx, r)
 				So(err, ShouldBeNil)
+				So(processed, ShouldBeFalse)
+				So(project, ShouldEqual, "fake")
 				So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 			})
 
@@ -70,8 +72,10 @@ func TestHandleBuild(t *testing.T) {
 				}
 				r := &http.Request{Body: makeBBReq(buildExp, "bb-hostname")}
 
-				err := bbPubSubHandlerImpl(ctx, r)
+				project, processed, err := bbPubSubHandlerImpl(ctx, r)
 				So(err, ShouldBeNil)
+				So(processed, ShouldBeTrue)
+				So(project, ShouldEqual, "testproject")
 
 				So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 				task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
@@ -85,8 +89,10 @@ func TestHandleBuild(t *testing.T) {
 
 				Convey(`repeated processing does not lead to further ingestion tasks`, func() {
 					r := &http.Request{Body: makeBBReq(buildExp, "bb-hostname")}
-					err := bbPubSubHandlerImpl(ctx, r)
+					project, processed, err := bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
+					So(processed, ShouldBeTrue)
+					So(project, ShouldEqual, "testproject")
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 				})
 			})
@@ -129,16 +135,19 @@ func TestHandleBuild(t *testing.T) {
 
 					// Process presubmit run.
 					r := &http.Request{Body: makeCVChromiumRunReq(run.Id)}
-					processed, err := cvPubSubHandlerImpl(ctx, r)
+					project, processed, err := cvPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
 					So(processed, ShouldBeTrue)
+					So(project, ShouldEqual, "testproject")
 
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 
 					// Process build.
 					r = &http.Request{Body: makeBBReq(buildExp, bbHost)}
-					err = bbPubSubHandlerImpl(ctx, r)
+					project, processed, err = bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
+					So(processed, ShouldBeTrue)
+					So(project, ShouldEqual, "testproject")
 
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 					task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
@@ -165,8 +174,10 @@ func TestHandleBuild(t *testing.T) {
 				})
 				Convey(`Without presubmit run processed previously`, func() {
 					r := &http.Request{Body: makeBBReq(buildExp, bbHost)}
-					err := bbPubSubHandlerImpl(ctx, r)
+					project, processed, err := bbPubSubHandlerImpl(ctx, r)
 					So(err, ShouldBeNil)
+					So(processed, ShouldBeTrue)
+					So(project, ShouldEqual, "testproject")
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 				})
 			})

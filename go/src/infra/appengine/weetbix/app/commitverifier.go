@@ -40,10 +40,12 @@ const (
 
 var (
 	cvRunCounter = metric.NewCounter(
-		"weetbix/cv_pubsub/runs",
-		"The number of CV runs received by Weetbix from PubSub",
+		"weetbix/ingestion/pubsub/cv_runs",
+		"The number of CV runs received by Weetbix from PubSub.",
 		nil,
-		// "success", "transient-failure" or "permanent-failure".
+		// The LUCI Project.
+		field.String("project"),
+		// "success", "transient-failure", "permanent-failure" or "ignored".
 		field.String("status"))
 
 	runIDRe = regexp.MustCompile(`^projects/(.*)/runs/(.*)$`)
@@ -55,11 +57,12 @@ var (
 // CVRunPubSubHandler accepts and processes CV Pub/Sub messages.
 func CVRunPubSubHandler(ctx *router.Context) {
 	status := "unknown"
+	project := "unknown"
 	defer func() {
 		// Closure for late binding.
-		cvRunCounter.Add(ctx.Context, 1, status)
+		cvRunCounter.Add(ctx.Context, 1, project, status)
 	}()
-	processed, err := cvPubSubHandlerImpl(ctx.Context, ctx.Request)
+	project, processed, err := cvPubSubHandlerImpl(ctx.Context, ctx.Request)
 
 	switch {
 	case err != nil:
@@ -74,41 +77,41 @@ func CVRunPubSubHandler(ctx *router.Context) {
 	ctx.Writer.WriteHeader(http.StatusOK)
 }
 
-func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed bool, err error) {
+func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project string, processed bool, err error) {
 	psRun, err := extractPubSubRun(request)
 	if err != nil {
-		return false, errors.Annotate(err, "failed to extract run").Err()
+		return "unknown", false, errors.Annotate(err, "failed to extract run").Err()
 	}
 
 	project, runID, err := parseRunID(psRun.Id)
 	if err != nil {
-		return false, errors.Annotate(err, "failed to parse run ID").Err()
+		return "unknown", false, errors.Annotate(err, "failed to parse run ID").Err()
 	}
 
 	if chromiumMilestoneProjectRE.MatchString(project) {
 		// Chromium milestone projects are currently not supported.
-		return false, nil
+		return project, false, nil
 	}
 
 	if _, err := config.Project(ctx, project); err != nil {
 		if err == config.NotExistsErr {
 			// Project not configured in Weetbix, ignore it.
-			return false, nil
+			return project, false, nil
 		} else {
-			return false, errors.Annotate(err, "get project config").Err()
+			return project, false, errors.Annotate(err, "get project config").Err()
 		}
 	}
 
 	run, err := getRun(ctx, psRun)
 	switch {
 	case err != nil:
-		return false, errors.Annotate(err, "failed to get run").Err()
+		return project, false, errors.Annotate(err, "failed to get run").Err()
 	case run.GetCreateTime() == nil:
-		return false, errors.New("could not get create time for the run")
+		return project, false, errors.New("could not get create time for the run")
 	case run.GetMode() != "FULL_RUN":
 		// Not a FULL_RUN, so the CL under test would not be submitted.
 		// Ignore the run.
-		return false, nil
+		return project, false, nil
 	}
 
 	owner := "user"
@@ -140,10 +143,10 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (processed 
 	}
 
 	if err := JoinPresubmitResult(ctx, project, buildIDs, pr); err != nil {
-		return true, errors.Annotate(err, "joining presubmit results").Err()
+		return project, true, errors.Annotate(err, "joining presubmit results").Err()
 	}
 
-	return true, nil
+	return project, true, nil
 }
 
 func extractRunChangelists(cls []*cvv0.GerritChange) []*pb.Changelist {

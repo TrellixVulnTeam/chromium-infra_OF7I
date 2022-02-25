@@ -60,8 +60,10 @@ func TestHandleCVRun(t *testing.T) {
 				Tags:      []string{"user_agent:cq"},
 			}
 			r := &http.Request{Body: makeBBReq(buildExp, bbHost)}
-			err := bbPubSubHandlerImpl(ctx, r)
+			project, processed, err := bbPubSubHandlerImpl(ctx, r)
 			So(err, ShouldBeNil)
+			So(processed, ShouldBeTrue)
+			So(project, ShouldEqual, "testproject")
 		}
 		So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 
@@ -71,9 +73,10 @@ func TestHandleCVRun(t *testing.T) {
 				Status: cvv1.Run_SUCCEEDED,
 			}
 			r := &http.Request{Body: makeCVRunReq(psRun)}
-			processed, err := cvPubSubHandlerImpl(ctx, r)
+			project, processed, err := cvPubSubHandlerImpl(ctx, r)
 			So(err, ShouldBeNil)
 			So(processed, ShouldBeFalse)
+			So(project, ShouldEqual, "fake")
 			So(len(skdr.Tasks().Payloads()), ShouldEqual, 0)
 		})
 		Convey(`CV run from configured project is processed`, func() {
@@ -89,8 +92,9 @@ func TestHandleCVRun(t *testing.T) {
 				}
 				ctx = cv.UseFakeClient(ctx, runs)
 				r := &http.Request{Body: makeCVChromiumRunReq(fID)}
-				processed, err := cvPubSubHandlerImpl(ctx, r)
+				project, processed, err := cvPubSubHandlerImpl(ctx, r)
 				So(err, ShouldBeNil)
+				So(project, ShouldEqual, "testproject")
 
 				tasks = make([]*taskspb.IngestTestResults, 0,
 					len(skdr.Tasks().Payloads())-existingTaskCount)

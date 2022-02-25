@@ -100,6 +100,7 @@ func (m *BugManager) Create(ctx context.Context, request *bugs.CreateRequest) (s
 	if err := m.client.ModifyIssues(ctx, modifyReq); err != nil {
 		return "", errors.Annotate(err, "update issue").Err()
 	}
+	bugs.BugsCreatedCounter.Add(ctx, 1, m.project, "monorail")
 	return bugName, nil
 }
 
@@ -132,6 +133,7 @@ func (m *BugManager) Update(ctx context.Context, bugsToUpdate []*bugs.BugToUpdat
 				if err := m.client.ModifyIssues(ctx, req); err != nil {
 					return errors.Annotate(err, "failed to update to issue %s", ci.issue.Name).Err()
 				}
+				bugs.BugsUpdatedCounter.Add(ctx, 1, m.project, "monorail")
 			}
 		}
 	}

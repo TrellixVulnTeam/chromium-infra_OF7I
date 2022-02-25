@@ -16,8 +16,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/tsmon/field"
 	"go.chromium.org/luci/common/tsmon/metric"
+	"go.chromium.org/luci/common/tsmon/types"
 	"go.chromium.org/luci/server/span"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"infra/appengine/weetbix/internal/clustering/algorithms"
@@ -31,22 +31,40 @@ import (
 )
 
 var (
-	orchestratorCounter = metric.NewCounter(
-		"weetbix/reclustering/orchestrator",
-		"The status of the Weetbix reclustering orchestrator by LUCI project.",
-		nil,
+	workersGauge = metric.NewInt("weetbix/clustering/reclustering/worker_count",
+		"The number of workers performing reclustering, by LUCI Project.",
+		&types.MetricMetadata{
+			Units: "workers",
+		},
 		// The LUCI project.
 		field.String("project"),
-		// The status of the orchestrator run. This covers only the
-		// orchestrator and not the success/failure of workers.
-		// "disabled", "success", "transient-failure" or "permanent-failure".
-		field.String("status"),
-		// The number of workers allocated to recluster the project.
-		field.Int("workers"),
-		// The progress achieved by the previous orchestrator run. Value
-		// out of 1000. If this is less than 1000 for a while, this may
-		// be an indication that re-clustering is slow and falling behind.
-		field.Int("progress"))
+	)
+
+	progressGauge = metric.NewFloat("weetbix/clustering/reclustering/progress",
+		"The progress re-clustering, measured from 0 to 1, by LUCI Project.",
+		&types.MetricMetadata{
+			Units: "completions",
+		},
+		// The LUCI project.
+		field.String("project"),
+	)
+
+	ageGauge = metric.NewFloat("weetbix/clustering/reclustering/age",
+		"Age of the last completed re-clustering, by LUCI Project. "+
+			"Not reported until at least one re-clustering completes.",
+		&types.MetricMetadata{
+			Units: types.Seconds,
+		},
+		// The LUCI project.
+		field.String("project"),
+	)
+
+	// statusGauge reports the status of the orchestrator run. This covers
+	// only the orchestrator and not the success/failure of workers.
+	// Valid values are: "disabled", "success", "failure".
+	statusGauge = metric.NewString("weetbix/clustering/reclustering/orchestrator_status",
+		"Whether the orchestrator is enabled and succeeding.",
+		nil)
 )
 
 // CronHandler is the entry-point to the orchestrator that creates
@@ -62,8 +80,15 @@ func CronHandler(ctx context.Context) error {
 }
 
 func orchestrate(ctx context.Context) error {
+	status := "failure"
+	defer func() {
+		// Closure for late binding.
+		statusGauge.Set(ctx, status)
+	}()
+
 	projectCfg, err := config.Projects(ctx)
 	if err != nil {
+		status = "failure"
 		return errors.Annotate(err, "get projects config").Err()
 	}
 	var projects []string
@@ -77,35 +102,30 @@ func orchestrate(ctx context.Context) error {
 
 	cfg, err := config.Get(ctx)
 	if err != nil {
-		reportStatus(ctx, projects, "transient-failure")
+		status = "failure"
 		return errors.Annotate(err, "get service config").Err()
 	}
 
 	workers := int(cfg.ReclusteringWorkers)
 	intervalMinutes := int(cfg.ReclusteringIntervalMinutes)
 	if workers <= 0 {
-		reportStatus(ctx, projects, "disabled")
+		status = "disabled"
 		logging.Warningf(ctx, "Reclustering is disabled because configured worker count is zero.")
 		return nil
 	}
 	if intervalMinutes <= 0 {
-		reportStatus(ctx, projects, "disabled")
+		status = "disabled"
 		logging.Warningf(ctx, "Reclustering is disabled because configured reclustering interval is zero.")
 		return nil
 	}
 
 	err = orchestrateWithOptions(ctx, projects, workers, intervalMinutes)
-	return err
-}
-
-// reportStatus reports the given orchestrator run status as the metric value
-// for all the specified projects.
-func reportStatus(ctx context.Context, projects []string, status string) {
-	for _, project := range projects {
-		workers := 0
-		progress := 0
-		orchestratorCounter.Add(ctx, 1, project, status, workers, progress)
+	if err != nil {
+		status = "failure"
+		return err
 	}
+	status = "success"
+	return nil
 }
 
 func orchestrateWithOptions(ctx context.Context, projects []string, workers, intervalMins int) error {
@@ -121,7 +141,6 @@ func orchestrateWithOptions(ctx context.Context, projects []string, workers, int
 
 	workerCounts, err := projectWorkerCounts(ctx, projects, workers)
 	if err != nil {
-		reportStatus(ctx, projects, "transient-failure")
 		return err
 	}
 
@@ -188,47 +207,63 @@ func projectWorkerCounts(ctx context.Context, projects []string, workers int) (m
 // orchestrateProject starts a new reclustering run for the given project,
 // with the specified start and end time, and number of workers.
 func orchestrateProject(ctx context.Context, project string, attemptStart, attemptEnd time.Time, workers int) error {
-	status := "transient-failure"
-	progress := 0
-	defer func() {
-		orchestratorCounter.Add(ctx, 1, project, status, workers, progress)
-	}()
-
 	projectCfg, err := config.Project(ctx, project)
 	if err != nil {
 		return errors.Annotate(err, "get project config").Err()
 	}
 	configVersion := projectCfg.LastUpdated.AsTime()
 
+	var metrics *metrics
 	_, err = span.ReadWriteTransaction(ctx, func(ctx context.Context) error {
 		var err error
-		progress, err = createProjectRun(ctx, project, attemptStart, attemptEnd, configVersion, workers)
+		metrics, err = createProjectRun(ctx, project, attemptStart, attemptEnd, configVersion, workers)
 		return err
 	})
 	if err != nil {
 		return errors.Annotate(err, "create run").Err()
 	}
+
+	// Export metrics.
+	progressGauge.Set(ctx, float64(metrics.progress)/1000.0, project)
+	workersGauge.Set(ctx, int64(workers), project)
+	if metrics.ageInSeconds != nil {
+		// Only report time since last completion once there is a last completion.
+		ageGauge.Set(ctx, *metrics.ageInSeconds, project)
+	}
+
 	err = scheduleWorkers(ctx, project, attemptStart, attemptEnd, workers)
 	if err != nil {
 		return errors.Annotate(err, "schedule workers").Err()
 	}
-	status = "success"
 	return nil
+}
+
+type metrics struct {
+	// ageInSeconds is the time since the last completed re-clustering.
+	// Only reported if there has been re-clustering completed.
+	ageInSeconds *float64
+	// progress, measured from 0.0 to 1.0.
+	progress float64
 }
 
 // createProjectRun creates a new run entry for a project, returning whether
 // the previous run achieved its re-clustering goal (and any errors).
-func createProjectRun(ctx context.Context, project string, attemptStart, attemptEnd, latestConfigVersion time.Time, workers int) (progress int, err error) {
+func createProjectRun(ctx context.Context, project string, attemptStart, attemptEnd, latestConfigVersion time.Time, workers int) (*metrics, error) {
+	lastComplete, err := runs.ReadLastComplete(ctx, project)
+	if err != nil {
+		return nil, errors.Annotate(err, "read last complete run").Err()
+	}
+
 	lastRun, err := runs.ReadLast(ctx, project)
 	if err != nil {
-		return 0, errors.Annotate(err, "read last run").Err()
+		return nil, errors.Annotate(err, "read last run").Err()
 	}
 
 	// run.Progress is a value between 0 and 1000 * lastRun.ShardCount.
-	progress = int(lastRun.Progress / lastRun.ShardCount)
+	progress := int(lastRun.Progress / lastRun.ShardCount)
 
 	if lastRun.AttemptTimestamp.After(attemptStart) {
-		return progress, errors.New("an attempt which overlaps the proposed attempt already exists")
+		return nil, errors.New("an attempt which overlaps the proposed attempt already exists")
 	}
 	newRun := &runs.ReclusteringRun{
 		Project:          project,
@@ -240,7 +275,7 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 	if progress == 1000 {
 		rulesVersion, err := rules.ReadVersion(ctx, project)
 		if err != nil {
-			return progress, err
+			return nil, err
 		}
 		// Trigger re-clustering on rule predicate changes,
 		// as only the rule predicate matters for determining
@@ -272,9 +307,17 @@ func createProjectRun(ctx context.Context, project string, attemptStart, attempt
 	}
 	err = runs.Create(ctx, newRun)
 	if err != nil {
-		return progress, errors.Annotate(err, "create new run").Err()
+		return nil, errors.Annotate(err, "create new run").Err()
 	}
-	return progress, err
+	metrics := &metrics{
+		progress: float64(progress) / 1000.0,
+	}
+	if lastComplete.AttemptTimestamp != runs.StartingEpoch {
+		// Only report time since last completion once there is a last completion.
+		metrics.ageInSeconds = new(float64)
+		*metrics.ageInSeconds = lastComplete.AttemptTimestamp.Sub(lastRun.AttemptTimestamp).Seconds()
+	}
+	return metrics, err
 }
 
 // scheduleWorkers creates reclustering tasks for the given project

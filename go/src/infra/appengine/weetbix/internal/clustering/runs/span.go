@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/server/span"
 
@@ -51,6 +50,9 @@ type ReclusteringRun struct {
 // NotFound is the error returned by Read if the row could not be found.
 var NotFound = errors.New("reclustering run row not found")
 
+// StartingEpoch is the earliest valid run attempt time.
+var StartingEpoch = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+
 // Read reads the run with the given attempt timestamp in the given LUCI
 // project. If the row does not exist, the error NotFound is returned.
 func Read(ctx context.Context, projectID string, attemptTimestamp time.Time) (*ReclusteringRun, error) {
@@ -71,7 +73,7 @@ func Read(ctx context.Context, projectID string, attemptTimestamp time.Time) (*R
 // ReadLast reads the last run in the given LUCI project. If no row exists,
 // a fake run is returned with the following details:
 // - Project matching the requested Project ID.
-// - AttemptTimestamp of 1900-01-01 00:00:00 UTC.
+// - AttemptTimestamp of StartingEpoch.
 // - AlgorithmsVersion of 1.
 // - ConfigVersion of clusteringcfg.StartingEpoch.
 // - RulesVersion of rules.StartingEpoch.
@@ -120,7 +122,7 @@ func ReadLastComplete(ctx context.Context, projectID string) (*ReclusteringRun, 
 func fakeLastRow(projectID string) *ReclusteringRun {
 	return &ReclusteringRun{
 		Project:           projectID,
-		AttemptTimestamp:  time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC),
+		AttemptTimestamp:  StartingEpoch,
 		AlgorithmsVersion: 1,
 		ConfigVersion:     config.StartingEpoch,
 		RulesVersion:      rules.StartingEpoch,
@@ -202,8 +204,8 @@ func validateRun(r *ReclusteringRun) error {
 	switch {
 	case !config.ProjectRe.MatchString(r.Project):
 		return errors.New("project must be valid")
-	case r.AttemptTimestamp.IsZero():
-		return errors.New("attempt timestamp must be set")
+	case r.AttemptTimestamp.Before(StartingEpoch):
+		return errors.New("attempt timestamp must be valid")
 	case r.AlgorithmsVersion <= 0:
 		return errors.New("algorithms version must be valid")
 	case r.ConfigVersion.Before(config.StartingEpoch):
