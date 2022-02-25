@@ -33,7 +33,22 @@ func setStateWorkingExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+func matchWifirouterBoardAndModelExec(ctx context.Context, info *execs.ExecInfo) error {
+	if wifiRouterHost, err := activeHost(info.RunArgs); err != nil {
+		return errors.Annotate(err, "match wifirouter board and model").Err()
+	} else {
+		argsMap := info.GetActionArgs(ctx)
+		board := argsMap.AsString(ctx, "board", "")
+		model := argsMap.AsString(ctx, "model", "")
+		if (board == "" || board == wifiRouterHost.GetBoard()) && (model == "" || model == wifiRouterHost.GetModel()) {
+			return nil
+		}
+	}
+	return errors.Reason("wifirouter %q board model not matching %q", info.RunArgs.ResourceName, info.ActionArgs).Err()
+}
+
 func init() {
 	execs.Register("wifirouter_state_broken", setStateBrokenExec)
 	execs.Register("wifirouter_state_working", setStateWorkingExec)
+	execs.Register("is_wifirouter_board_model_matching", matchWifirouterBoardAndModelExec)
 }
