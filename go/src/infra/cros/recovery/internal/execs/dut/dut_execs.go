@@ -61,19 +61,22 @@ func hasDutDeviceSkuActionExec(ctx context.Context, info *execs.ExecInfo) error 
 	return nil
 }
 
+const (
+	// This token represents the string in config extra arguments that
+	// conveys the expected string value(s) for a DUT attribute.
+	stringValuesExtraArgToken = "string_values"
+	// This token represents whether the success-status of an exec
+	// should be inverted. For example, using this flag, we can
+	// control whether the value of a DUT Model should, or should not
+	// be present in the list of strings mentioned in the config.
+	invertResultToken = "invert_result"
+)
+
 // dutCheckModelExec checks whether the model name for the current DUT
 // matches any of the values specified in config. It returns an error
 // based on the directive in config to invert the results.
 func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 	argsMap := info.GetActionArgs(ctx)
-	// This token represents the string in config extra arguments that
-	// conveys the expected string value(s) for a DUT attribute.
-	const stringValuesExtraArgToken = "string_values"
-	// This token represents whether the success-status of an exec
-	// should be inverted. For example, using this flag, we can
-	// control whether the value of a DUT Model should, or should not
-	// be present in the list of strings mentioned in the config.
-	const invertResultToken = "invert_result"
 	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
 	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
 		m = strings.TrimSpace(m)
@@ -92,6 +95,31 @@ func dutCheckModelExec(ctx context.Context, info *execs.ExecInfo) error {
 		return nil
 	}
 	return errors.Reason("dut check model exec: %s", msg).Err()
+}
+
+// dutCheckBoardExec checks whether the board name for the current DUT
+// matches any of the values specified in config. It returns an error
+// based on the directive in config to invert the results.
+func dutCheckBoardExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	invertResultsFlag := argsMap.AsBool(ctx, invertResultToken, false)
+	for _, m := range argsMap.AsStringSlice(ctx, stringValuesExtraArgToken) {
+		m = strings.TrimSpace(m)
+		if strings.EqualFold(m, info.RunArgs.DUT.Board) {
+			msg := fmt.Sprintf("DUT Board %s found in the list of boards in config", info.RunArgs.DUT.Model)
+			log.Debug(ctx, "Dut Check Board Exec :%s.", msg)
+			if invertResultsFlag {
+				return errors.Reason("dut check board exec: %s", msg).Err()
+			}
+			return nil
+		}
+	}
+	msg := "No matching board found"
+	log.Debug(ctx, "Dut Check Board Exec: %s", msg)
+	if invertResultsFlag {
+		return nil
+	}
+	return errors.Reason("dut check board exec: %s", msg).Err()
 }
 
 // servoVerifySerialNumberExec verifies that the servo host attached
@@ -119,6 +147,7 @@ func init() {
 	execs.Register("dut_has_model_name", hasDutModelActionExec)
 	execs.Register("dut_has_device_sku", hasDutDeviceSkuActionExec)
 	execs.Register("dut_check_model", dutCheckModelExec)
+	execs.Register("dut_check_board", dutCheckBoardExec)
 	execs.Register("dut_servoless", dutServolessExec)
 	execs.Register("servo_has_serial", servoVerifySerialNumberExec)
 }
