@@ -23,6 +23,7 @@ var crosRepairPlanCriticalActionList = []string{
 	"tools_checks",
 	"hardware_audit",
 	"firmware_check",
+	"stop_start_ui",
 	"rw_vpd",
 	"servo_keyboard",
 	"servo_mac_address",
@@ -123,6 +124,15 @@ const crosRepairPlanActions = `
 		"cros_rw_firmware_stable_verion"
 	],
 	"exec_name":"sample_pass"
+},
+"stop_start_ui":{
+	"docs": [
+		"Check the command 'stop ui' won't crash the DUT."
+	],
+	"exec_timeout": {
+		"seconds": 45
+	},
+	"exec_name":"cros_stop_start_ui"
 },
 "rw_vpd":{
 	"docs":[
