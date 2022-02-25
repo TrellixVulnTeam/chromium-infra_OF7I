@@ -72,10 +72,21 @@ def RunSteps(api, go_version_variant):
                               for f in files):
             api.python('python cq tests', 'test.py',
                        ['test', 'infra_internal/services/cq'])
+        if internal and (api.platform.is_linux or api.platform.is_mac) and any(
+            f.startswith('infra_internal/appengine/chromiumdash')
+            for f in files):
+          cwd = api.path['checkout'].join('appengine', 'chromiumdash')
+          gae_env = {
+              'GAE_RUNTIME': 'python3',
+              'GAE_APPLICATION': 'testbed-test',
+          }
+          with api.context(cwd=cwd, env=gae_env):
+            api.step('chromiumdash python3 tests', [
+                'vpython3', '-m', 'pytest', '--ignore=gae_ts_mon/',
+                '--ignore=go/'
+            ])
 
       if not internal and api.platform.is_linux and api.platform.bits == 64:
-        # TODO(phajdan.jr): should we make recipe tests run on other platforms?
-        # TODO(tandrii): yes, they should run on Mac as well.
         api.python(
             'recipe test',
             co.path.join('infra', 'recipes', 'recipes.py'),
@@ -176,6 +187,9 @@ def GenTests(api):
     test('infra_internal_with_cq', internal=True) +
     diff('infra_internal/services/cq/cq.py')
   )
+
+  yield (test('infra_internal_with_chromium_dash', internal=True) +
+         diff('infra_internal/appengine/chromiumdash/foo.py'))
 
   yield (
     test('only_cipd_build') +
