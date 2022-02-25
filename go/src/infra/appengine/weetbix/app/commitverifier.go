@@ -108,10 +108,6 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 		return project, false, errors.Annotate(err, "failed to get run").Err()
 	case run.GetCreateTime() == nil:
 		return project, false, errors.New("could not get create time for the run")
-	case run.GetMode() != "FULL_RUN":
-		// Not a FULL_RUN, so the CL under test would not be submitted.
-		// Ignore the run.
-		return project, false, nil
 	}
 
 	owner := "user"
@@ -125,6 +121,7 @@ func cvPubSubHandlerImpl(ctx context.Context, request *http.Request) (project st
 			Id:     fmt.Sprintf("%s/%s", project, runID),
 		},
 		PresubmitRunSucceeded: run.Status == cvv0.Run_SUCCEEDED,
+		Mode:                  run.GetMode(),
 		Owner:                 owner,
 		Cls:                   extractRunChangelists(run.Cls),
 		CreationTime:          run.CreateTime,

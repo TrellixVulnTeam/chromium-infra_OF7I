@@ -50,9 +50,11 @@ func shouldIngestForTestVariants(realmcfg *configpb.RealmConfig, task *taskspb.I
 		return false
 	}
 	// Ingest results from CI.
-	return task.PresubmitRunId == nil ||
-		// And presubmit results, where the presubmit run succeeded.
-		(task.PresubmitRunId != nil && task.PresubmitRunSucceeded)
+	return task.PresubmitRun == nil ||
+		// And presubmit results, where the presubmit run succeeded
+		// and the run was a FULL_RUN.
+		(task.PresubmitRun != nil && task.PresubmitRun.PresubmitRunSucceeded &&
+			task.PresubmitRun.Mode == "FULL_RUN")
 }
 
 // createOrUpdateAnalyzedTestVariants looks for new analyzed test variants or

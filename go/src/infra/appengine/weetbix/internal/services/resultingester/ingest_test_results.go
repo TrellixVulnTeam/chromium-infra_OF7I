@@ -100,11 +100,6 @@ func RegisterTaskHandler(srv *server.Server) error {
 
 // Schedule enqueues a task to ingest test results from a build.
 func Schedule(ctx context.Context, task *taskspb.IngestTestResults) {
-	// Note that currently we don't need to deduplicate tasks, because for
-	// Chromium use case Weetbix only ingest test results of the try builds that
-	// contribute to CL submission, so each build should be processed only once.
-	// This may not be true in ChromeOS use case where Weetbix ingests test
-	// of all try builds.
 	tq.MustAddTask(ctx, &tq.Task{
 		Title:   fmt.Sprintf("%s-%d", task.Build.Host, task.Build.Id),
 		Payload: task,
@@ -176,10 +171,10 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 		// to fail.
 		AutoExonerateBlockingFailures: b.Status != bbpb.Status_FAILURE,
 	}
-	if payload.PresubmitRunId != nil {
-		opts.PresubmitRunID = payload.PresubmitRunId
-		opts.PresubmitRunOwner = payload.PresubmitRunOwner
-		opts.PresubmitRunCls = payload.PresubmitRunCls
+	if payload.PresubmitRun != nil {
+		opts.PresubmitRunID = payload.PresubmitRun.PresubmitRunId
+		opts.PresubmitRunOwner = payload.PresubmitRun.Owner
+		opts.PresubmitRunCls = payload.PresubmitRun.Cls
 	}
 	clusterIngestion := i.clustering.Open(opts)
 
@@ -211,8 +206,8 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 	}
 
 	if ingestForTestVariantAnalysis {
-		isPreSubmit := payload.PresubmitRunId != nil
-		contributedToCLSubmission := payload.PresubmitRunId != nil && payload.PresubmitRunSucceeded
+		isPreSubmit := payload.PresubmitRun != nil
+		contributedToCLSubmission := payload.PresubmitRun != nil && payload.PresubmitRun.PresubmitRunSucceeded
 		if err = resultcollector.Schedule(ctx, inv, rdbHost, b.Builder.Builder, isPreSubmit, contributedToCLSubmission); err != nil {
 			return err
 		}
@@ -231,6 +226,9 @@ func validateRequest(ctx context.Context, payload *taskspb.IngestTestResults) er
 		return tq.Fatal.Apply(fmt.Errorf("partition time (%v) is too long ago", t))
 	} else if t.After(now.Add(ingestionLatest)) {
 		return tq.Fatal.Apply(fmt.Errorf("partition time (%v) is too far in the future", t))
+	}
+	if payload.Build == nil {
+		return tq.Fatal.Apply(errors.New("build must be specified"))
 	}
 	return nil
 }

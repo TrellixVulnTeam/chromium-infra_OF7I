@@ -34,6 +34,7 @@ import (
 	"infra/appengine/weetbix/internal/clustering/ingestion"
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
+	ctrlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	"infra/appengine/weetbix/internal/resultdb"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/testvariantupdator"
@@ -51,7 +52,7 @@ func TestSchedule(t *testing.T) {
 		ctx, skdr := tq.TestingContext(ctx, nil)
 
 		task := &taskspb.IngestTestResults{
-			Build:         &taskspb.Build{},
+			Build:         &ctrlpb.BuildResult{},
 			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
 		}
 		expected := proto.Clone(task).(*taskspb.IngestTestResults)
@@ -67,7 +68,7 @@ func TestSchedule(t *testing.T) {
 
 func TestShouldIngestForTestVariants(t *testing.T) {
 	t.Parallel()
-	Convey(`Realm configured`, t, func() {
+	Convey(`With realm config`, t, func() {
 		realm := &configpb.RealmConfig{
 			Name: "ci",
 			TestVariantAnalysis: &configpb.TestVariantAnalysisConfig{
@@ -77,61 +78,41 @@ func TestShouldIngestForTestVariants(t *testing.T) {
 				},
 			},
 		}
-		Convey(`CI`, func() {
-			payload := &taskspb.IngestTestResults{
-				Build: &taskspb.Build{
-					Host: "host",
-					Id:   int64(1),
-				},
-				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
-			}
-			So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
-		})
-
-		Convey(`Successful CQ run`, func() {
-			payload := &taskspb.IngestTestResults{
-				PresubmitRunId: &pb.PresubmitRunId{
-					System: "luci-cv",
-					Id:     "chromium/1111111111111-1-1111111111111111",
-				},
-				PresubmitRunSucceeded: true,
-				Build: &taskspb.Build{
-					Host: "host",
-					Id:   int64(2),
-				},
-				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
-			}
-			So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
-		})
-
-		Convey(`Failed CQ run`, func() {
-			payload := &taskspb.IngestTestResults{
-				PresubmitRunId: &pb.PresubmitRunId{
-					System: "luci-cv",
-					Id:     "chromium/1111111111111-1-1111111111111111",
-				},
-				PresubmitRunSucceeded: false,
-				Build: &taskspb.Build{
-					Host: "host",
-					Id:   int64(3),
-				},
-				PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
-			}
-			So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
-		})
-	})
-	Convey(`Realm not configured`, t, func() {
-		realm := &configpb.RealmConfig{
-			Name: "ci",
-		}
 		payload := &taskspb.IngestTestResults{
-			Build: &taskspb.Build{
+			Build: &ctrlpb.BuildResult{
 				Host: "host",
 				Id:   int64(1),
 			},
 			PartitionTime: timestamppb.New(time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC)),
 		}
-		So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
+		Convey(`CI`, func() {
+			So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
+		})
+		Convey(`CQ run`, func() {
+			payload.PresubmitRun = &ctrlpb.PresubmitResult{
+				PresubmitRunId: &pb.PresubmitRunId{
+					System: "luci-cv",
+					Id:     "chromium/1111111111111-1-1111111111111111",
+				},
+				PresubmitRunSucceeded: true,
+				Mode:                  "FULL_RUN",
+			}
+			Convey(`Successful full run`, func() {
+				So(shouldIngestForTestVariants(realm, payload), ShouldBeTrue)
+			})
+			Convey(`Successful dry run`, func() {
+				payload.PresubmitRun.Mode = "DRY_RUN"
+				So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
+			})
+			Convey(`Failed run`, func() {
+				payload.PresubmitRun.PresubmitRunSucceeded = false
+				So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
+			})
+		})
+		Convey(`Test Variant analysis not configured`, func() {
+			realm.TestVariantAnalysis = nil
+			So(shouldIngestForTestVariants(realm, payload), ShouldBeFalse)
+		})
 	})
 }
 
@@ -173,7 +154,7 @@ func TestIngestTestResults(t *testing.T) {
 
 		Convey(`partition time`, func() {
 			payload := &taskspb.IngestTestResults{
-				Build: &taskspb.Build{
+				Build: &ctrlpb.BuildResult{
 					Host: "host",
 					Id:   13131313,
 				},
@@ -246,7 +227,7 @@ func TestIngestTestResults(t *testing.T) {
 			testutil.MustApply(ctx, ms...)
 
 			payload := &taskspb.IngestTestResults{
-				Build: &taskspb.Build{
+				Build: &ctrlpb.BuildResult{
 					Host: "host",
 					Id:   bID,
 				},

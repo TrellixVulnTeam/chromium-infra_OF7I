@@ -199,23 +199,14 @@ func createTaskIfNeeded(ctx context.Context, e *control.Entry) bool {
 	var task *taskspb.IngestTestResults
 	if e.IsPresubmit {
 		task = &taskspb.IngestTestResults{
-			Build: &taskspb.Build{
-				Host: e.BuildResult.Host,
-				Id:   e.BuildResult.Id,
-			},
-			PartitionTime:         e.PresubmitResult.CreationTime,
-			PresubmitRunId:        e.PresubmitResult.PresubmitRunId,
-			PresubmitRunSucceeded: e.PresubmitResult.PresubmitRunSucceeded,
-			PresubmitRunOwner:     e.PresubmitResult.Owner,
-			PresubmitRunCls:       e.PresubmitResult.Cls,
+			PartitionTime: e.PresubmitResult.CreationTime,
+			Build:         e.BuildResult,
+			PresubmitRun:  e.PresubmitResult,
 		}
 	} else {
 		task = &taskspb.IngestTestResults{
-			Build: &taskspb.Build{
-				Host: e.BuildResult.Host,
-				Id:   e.BuildResult.Id,
-			},
 			PartitionTime: e.BuildResult.CreationTime,
+			Build:         e.BuildResult,
 		}
 	}
 

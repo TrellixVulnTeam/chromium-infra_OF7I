@@ -33,8 +33,13 @@ message PresubmitResult {
   weetbix.v1.PresubmitRunId presubmit_run_id = 1;
 
   // Whether the presubmit run succeeded. This field should be ignored if
-  // presubmit_run_id is not set.
+  // presubmit_run_id is not set. If this is false, it could mean
+  // the presubmit run failed, or was cancelled.
   bool presubmit_run_succeeded = 2;
+
+  // The presubmit run mode. Defined by LUCI CV.
+  // Valid values include "FULL_RUN", "DRY_RUN" and "QUICK_DRY_RUN".
+  string mode = 6;
 
   // The owner of the presubmit run (if any).
   // This is the owner of the CL on which CQ+1/CQ+2 was clicked

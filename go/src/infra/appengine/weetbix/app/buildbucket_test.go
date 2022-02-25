@@ -22,6 +22,7 @@ import (
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/cv"
+	controlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
@@ -80,11 +81,12 @@ func TestHandleBuild(t *testing.T) {
 				So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 				task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
 				So(task, ShouldResembleProto, &taskspb.IngestTestResults{
-					Build: &taskspb.Build{
-						Host: "bb-hostname",
-						Id:   87654321,
-					},
 					PartitionTime: timestamppb.New(t),
+					Build: &controlpb.BuildResult{
+						Host:         "bb-hostname",
+						Id:           87654321,
+						CreationTime: timestamppb.New(t),
+					},
 				})
 
 				Convey(`repeated processing does not lead to further ingestion tasks`, func() {
@@ -152,23 +154,28 @@ func TestHandleBuild(t *testing.T) {
 					So(len(skdr.Tasks().Payloads()), ShouldEqual, 1)
 					task := skdr.Tasks().Payloads()[0].(*taskspb.IngestTestResults)
 					So(task, ShouldResembleProto, &taskspb.IngestTestResults{
-						Build: &taskspb.Build{
-							Host: bbHost,
-							Id:   14141414,
-						},
 						PartitionTime: timestamppb.New(partitionTime),
-						PresubmitRunId: &pb.PresubmitRunId{
-							System: "luci-cv",
-							Id:     "testproject/123e4567-e89b-12d3-a456-426614174000",
+						Build: &controlpb.BuildResult{
+							Host:         bbHost,
+							Id:           14141414,
+							CreationTime: timestamppb.New(t),
 						},
-						PresubmitRunSucceeded: false,
-						PresubmitRunOwner:     "automation",
-						PresubmitRunCls: []*pb.Changelist{
-							{
-								Host:     "chromium-review.googlesource.com",
-								Change:   12345,
-								Patchset: 1,
+						PresubmitRun: &controlpb.PresubmitResult{
+							PresubmitRunId: &pb.PresubmitRunId{
+								System: "luci-cv",
+								Id:     "testproject/123e4567-e89b-12d3-a456-426614174000",
 							},
+							PresubmitRunSucceeded: false,
+							Owner:                 "automation",
+							Mode:                  "FULL_RUN",
+							Cls: []*pb.Changelist{
+								{
+									Host:     "chromium-review.googlesource.com",
+									Change:   12345,
+									Patchset: 1,
+								},
+							},
+							CreationTime: timestamppb.New(partitionTime),
 						},
 					})
 				})

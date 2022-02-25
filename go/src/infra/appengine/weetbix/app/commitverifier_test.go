@@ -28,11 +28,16 @@ import (
 	"infra/appengine/weetbix/internal/config"
 	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/internal/cv"
+	controlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	_ "infra/appengine/weetbix/internal/services/resultingester" // Needed to ensure task class is registered.
 	"infra/appengine/weetbix/internal/tasks/taskspb"
 	"infra/appengine/weetbix/internal/testutil"
 	pb "infra/appengine/weetbix/proto/v1"
 )
+
+// bbCreateTime is the create time assigned to buildbucket builds, for testing.
+// Must be in microsecond precision as that is the precision of buildbucket.
+var bbCreateTime = time.Date(2025, time.December, 1, 2, 3, 4, 5000, time.UTC)
 
 func TestHandleCVRun(t *testing.T) {
 	Convey(`Test CVRunPubSubHandler`, t, func() {
@@ -56,7 +61,7 @@ func TestHandleCVRun(t *testing.T) {
 				Bucket:    "luci.testproject.bucket",
 				Id:        buildID,
 				Status:    bbv1.StatusCompleted,
-				CreatedTs: bbv1.FormatTimestamp(time.Now()),
+				CreatedTs: bbv1.FormatTimestamp(bbCreateTime),
 				Tags:      []string{"user_agent:cq"},
 			}
 			r := &http.Request{Body: makeBBReq(buildExp, bbHost)}
@@ -125,19 +130,23 @@ func TestHandleCVRun(t *testing.T) {
 			}
 			expectedTaskTemplate := &taskspb.IngestTestResults{
 				PartitionTime: run.CreateTime,
-				PresubmitRunId: &pb.PresubmitRunId{
-					System: "luci-cv",
-					Id:     "testproject/" + strings.Split(run.Id, "/")[3],
-				},
-				PresubmitRunCls: []*pb.Changelist{
-					{
-						Host:     "chromium-review.googlesource.com",
-						Change:   12345,
-						Patchset: 1,
+				PresubmitRun: &controlpb.PresubmitResult{
+					PresubmitRunId: &pb.PresubmitRunId{
+						System: "luci-cv",
+						Id:     "testproject/" + strings.Split(run.Id, "/")[3],
 					},
+					Cls: []*pb.Changelist{
+						{
+							Host:     "chromium-review.googlesource.com",
+							Change:   12345,
+							Patchset: 1,
+						},
+					},
+					PresubmitRunSucceeded: true,
+					Mode:                  "FULL_RUN",
+					Owner:                 "user",
+					CreationTime:          run.CreateTime,
 				},
-				PresubmitRunSucceeded: true,
-				PresubmitRunOwner:     "user",
 			}
 			Convey(`Baseline`, func() {
 				processed, tasks := processCVRun(run)
@@ -151,16 +160,18 @@ func TestHandleCVRun(t *testing.T) {
 					So(tasks, ShouldBeEmpty)
 				})
 			})
-			Convey(`Dry run is ignored`, func() {
+			Convey(`Dry run`, func() {
 				run.Mode = "DRY_RUN"
+				expectedTaskTemplate.PresubmitRun.Mode = "DRY_RUN"
 
 				processed, tasks := processCVRun(run)
-				So(processed, ShouldBeFalse)
-				So(tasks, ShouldBeEmpty)
+				So(processed, ShouldBeTrue)
+				So(sortTasks(tasks), ShouldResembleProto,
+					sortTasks(expectedTasks(expectedTaskTemplate, buildIDs)))
 			})
 			Convey(`CV Run owned by Automation`, func() {
 				run.Owner = "chromium-autoroll@skia-public.iam.gserviceaccount.com"
-				expectedTaskTemplate.PresubmitRunOwner = "automation"
+				expectedTaskTemplate.PresubmitRun.Owner = "automation"
 
 				processed, tasks := processCVRun(run)
 				So(processed, ShouldBeTrue)
@@ -180,7 +191,7 @@ func TestHandleCVRun(t *testing.T) {
 			})
 			Convey(`Failing Run`, func() {
 				run.Status = cvv0.Run_FAILED
-				expectedTaskTemplate.PresubmitRunSucceeded = false
+				expectedTaskTemplate.PresubmitRun.PresubmitRunSucceeded = false
 
 				processed, tasks := processCVRun(run)
 				So(processed, ShouldBeTrue)
@@ -189,7 +200,7 @@ func TestHandleCVRun(t *testing.T) {
 			})
 			Convey(`Cancelled Run`, func() {
 				run.Status = cvv0.Run_CANCELLED
-				expectedTaskTemplate.PresubmitRunSucceeded = false
+				expectedTaskTemplate.PresubmitRun.PresubmitRunSucceeded = false
 
 				processed, tasks := processCVRun(run)
 				So(processed, ShouldBeTrue)
@@ -217,7 +228,7 @@ func TestHandleCVRun(t *testing.T) {
 					},
 				}
 				// Must appear in sorted order.
-				expectedTaskTemplate.PresubmitRunCls = []*pb.Changelist{
+				expectedTaskTemplate.PresubmitRun.Cls = []*pb.Changelist{
 					{
 						Host:     "host1",
 						Change:   200,
@@ -282,9 +293,10 @@ func expectedTasks(taskTemplate *taskspb.IngestTestResults, buildIDs []int64) []
 	res := make([]*taskspb.IngestTestResults, 0, len(buildIDs))
 	for _, buildID := range buildIDs {
 		t := proto.Clone(taskTemplate).(*taskspb.IngestTestResults)
-		t.Build = &taskspb.Build{
-			Host: bbHost,
-			Id:   buildID,
+		t.Build = &controlpb.BuildResult{
+			Host:         bbHost,
+			Id:           buildID,
+			CreationTime: timestamppb.New(bbCreateTime),
 		}
 		res = append(res, t)
 	}
