@@ -129,6 +129,13 @@ func (i *resultIngester) ingestTestResults(ctx context.Context, payload *taskspb
 			payload.Build.Host, payload.Build.Id)
 		return nil
 	}
+	if payload.PresubmitRun != nil && payload.PresubmitRun.Mode != "FULL_RUN" {
+		// CQ Dry Runs currently add a lot of noise to the analysis, which
+		// the analysis is not yet set up to deal with. Skip for now.
+		logging.Debugf(ctx, "Skipping ingestion of build %s-%d because it was a CQ Dry Run.",
+			payload.Build.Host, payload.Build.Id)
+		return nil
+	}
 
 	rdbHost := b.Infra.Resultdb.Hostname
 	invName := b.Infra.Resultdb.Invocation
