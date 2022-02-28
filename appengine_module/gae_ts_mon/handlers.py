@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import os
+import six
 import time
 
 from google.appengine.api import runtime as apiruntime
@@ -269,11 +270,17 @@ def report_memory(handler):
   min_delta = 0.5
 
   def dispatch_and_report(*args, **kwargs):
-    before = apiruntime.runtime.memory_usage().current()
+    if six.PY2:
+      before = apiruntime.runtime.memory_usage().current()
+    else:  # pragma: no cover
+      before = apiruntime.runtime.memory_usage().current
     try:
       return handler(*args, **kwargs)
     finally:
-      after = apiruntime.runtime.memory_usage().current()
+      if six.PY2:
+        after = apiruntime.runtime.memory_usage().current()
+      else:  # pragma: no cover
+        after = apiruntime.runtime.memory_usage().current
       if after >= before + min_delta:  # pragma: no cover
         logging.debug('Memory usage: %.1f -> %.1f MB; delta: %.1f MB', before,
                       after, after - before)
