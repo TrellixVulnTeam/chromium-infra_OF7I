@@ -3,7 +3,7 @@
     "cmd": [],
     "name": "1 step per recipe keeps a recipe engine crash away",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@$recipe_engine/cq/output@{\"reuse\": [{\"modeRegexp\": \"DRY_RUN\"}]}@@@"
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/cq/output@{\"reusability\": {\"modeAllowlist\": [\"DRY_RUN\"]}, \"reuse\": [{\"modeRegexp\": \"DRY_RUN\"}]}@@@"
     ]
   },
   {
