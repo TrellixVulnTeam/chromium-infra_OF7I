@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z,go.chromium.org/luci/cv/api/recipe/v1;recipe',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"c\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\x12\x10\n\x08run_mode\x18\x05 \x01(\t\"\xfb\x01\n\x06Output\x12\x1b\n\x13triggered_build_ids\x18\x01 \x03(\x03\x12&\n\x05retry\x18\x02 \x01(\x0e\x32\x17.cq.recipe.Output.Retry\x12&\n\x05reuse\x18\x03 \x03(\x0b\x32\x17.cq.recipe.Output.Reuse\x1a*\n\x05Reuse\x12\x13\n\x0bmode_regexp\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x65ny\x18\x02 \x01(\x08\"X\n\x05Retry\x12\x1c\n\x18OUTPUT_RETRY_UNSPECIFIED\x10\x00\x12\x18\n\x14OUTPUT_RETRY_ALLOWED\x10\x01\x12\x17\n\x13OUTPUT_RETRY_DENIED\x10\x02\x42.Z,go.chromium.org/luci/cv/api/recipe/v1;recipeb\x06proto3'
+  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"c\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\x12\x10\n\x08run_mode\x18\x05 \x01(\t\"\xda\x02\n\x06Output\x12\x1b\n\x13triggered_build_ids\x18\x01 \x03(\x03\x12&\n\x05retry\x18\x02 \x01(\x0e\x32\x17.cq.recipe.Output.Retry\x12*\n\x05reuse\x18\x03 \x03(\x0b\x32\x17.cq.recipe.Output.ReuseB\x02\x18\x01\x12\x32\n\x0breusability\x18\x04 \x01(\x0b\x32\x1d.cq.recipe.Output.Reusability\x1a*\n\x05Reuse\x12\x13\n\x0bmode_regexp\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x65ny\x18\x02 \x01(\x08\x1a%\n\x0bReusability\x12\x16\n\x0emode_allowlist\x18\x04 \x03(\t\"X\n\x05Retry\x12\x1c\n\x18OUTPUT_RETRY_UNSPECIFIED\x10\x00\x12\x18\n\x14OUTPUT_RETRY_ALLOWED\x10\x01\x12\x17\n\x13OUTPUT_RETRY_DENIED\x10\x02\x42.Z,go.chromium.org/luci/cv/api/recipe/v1;recipeb\x06proto3'
 )
 
 
@@ -49,8 +49,8 @@ _OUTPUT_RETRY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=326,
-  serialized_end=414,
+  serialized_start=421,
+  serialized_end=509,
 )
 _sym_db.RegisterEnumDescriptor(_OUTPUT_RETRY)
 
@@ -149,8 +149,39 @@ _OUTPUT_REUSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=282,
-  serialized_end=324,
+  serialized_start=338,
+  serialized_end=380,
+)
+
+_OUTPUT_REUSABILITY = _descriptor.Descriptor(
+  name='Reusability',
+  full_name='cq.recipe.Output.Reusability',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='mode_allowlist', full_name='cq.recipe.Output.Reusability.mode_allowlist', index=0,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=382,
+  serialized_end=419,
 )
 
 _OUTPUT = _descriptor.Descriptor(
@@ -181,11 +212,18 @@ _OUTPUT = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
+      serialized_options=b'\030\001', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='reusability', full_name='cq.recipe.Output.reusability', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
-  nested_types=[_OUTPUT_REUSE, ],
+  nested_types=[_OUTPUT_REUSE, _OUTPUT_REUSABILITY, ],
   enum_types=[
     _OUTPUT_RETRY,
   ],
@@ -196,12 +234,14 @@ _OUTPUT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=163,
-  serialized_end=414,
+  serialized_end=509,
 )
 
 _OUTPUT_REUSE.containing_type = _OUTPUT
+_OUTPUT_REUSABILITY.containing_type = _OUTPUT
 _OUTPUT.fields_by_name['retry'].enum_type = _OUTPUT_RETRY
 _OUTPUT.fields_by_name['reuse'].message_type = _OUTPUT_REUSE
+_OUTPUT.fields_by_name['reusability'].message_type = _OUTPUT_REUSABILITY
 _OUTPUT_RETRY.containing_type = _OUTPUT
 DESCRIPTOR.message_types_by_name['Input'] = _INPUT
 DESCRIPTOR.message_types_by_name['Output'] = _OUTPUT
@@ -222,13 +262,22 @@ Output = _reflection.GeneratedProtocolMessageType('Output', (_message.Message,),
     # @@protoc_insertion_point(class_scope:cq.recipe.Output.Reuse)
     })
   ,
+
+  'Reusability' : _reflection.GeneratedProtocolMessageType('Reusability', (_message.Message,), {
+    'DESCRIPTOR' : _OUTPUT_REUSABILITY,
+    '__module__' : 'go.chromium.org.luci.cv.api.recipe.v1.cq_pb2'
+    # @@protoc_insertion_point(class_scope:cq.recipe.Output.Reusability)
+    })
+  ,
   'DESCRIPTOR' : _OUTPUT,
   '__module__' : 'go.chromium.org.luci.cv.api.recipe.v1.cq_pb2'
   # @@protoc_insertion_point(class_scope:cq.recipe.Output)
   })
 _sym_db.RegisterMessage(Output)
 _sym_db.RegisterMessage(Output.Reuse)
+_sym_db.RegisterMessage(Output.Reusability)
 
 
 DESCRIPTOR._options = None
+_OUTPUT.fields_by_name['reuse']._options = None
 # @@protoc_insertion_point(module_scope)
