@@ -7,3 +7,4 @@ package weetbixpb
 //go:generate cproto
 //go:generate svcdec -type RulesServer
 //go:generate svcdec -type ProjectsServer
+//go:generate svcdec -type InitDataGeneratorServer

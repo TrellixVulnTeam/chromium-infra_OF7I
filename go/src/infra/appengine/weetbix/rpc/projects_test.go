@@ -1,3 +1,7 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package rpc
 
 import (
@@ -36,8 +40,8 @@ func TestProjects(t *testing.T) {
 
 		Convey("When a list of projects is provided", func() {
 			// Setup
-			projectChromium := config.CreatePlaceholderConfig()
-			projectChrome := config.CreatePlaceholderConfigWithKey("chrome")
+			projectChromium := config.CreatePlaceholderProjectConfig()
+			projectChrome := config.CreatePlaceholderProjectConfigWithKey("chrome")
 			configs := make(map[string]*configpb.ProjectConfig)
 			configs["chromium"] = projectChromium
 			configs["chrome"] = projectChrome
@@ -53,10 +57,12 @@ func TestProjects(t *testing.T) {
 				{
 					Name:        "projects/chrome",
 					DisplayName: "Chrome",
+					Project:     "chrome",
 				},
 				{
 					Name:        "projects/chromium",
 					DisplayName: "Chromium",
+					Project:     "chromium",
 				},
 			}}
 			sort.Slice(expected.Projects, func(i, j int) bool {
@@ -70,7 +76,7 @@ func TestProjects(t *testing.T) {
 
 		Convey("When a displayName is empty", func() {
 			// Setup
-			emptyKeyProject := config.CreatePlaceholderConfigWithKey("")
+			emptyKeyProject := config.CreatePlaceholderProjectConfigWithKey("")
 			configs := make(map[string]*configpb.ProjectConfig)
 			configs["chrome"] = emptyKeyProject
 			config.SetTestProjectConfig(ctx, configs)
@@ -84,6 +90,7 @@ func TestProjects(t *testing.T) {
 				{
 					Name:        "projects/chrome",
 					DisplayName: "Chrome",
+					Project:     "chrome",
 				},
 			}}
 			So(err, ShouldBeNil)

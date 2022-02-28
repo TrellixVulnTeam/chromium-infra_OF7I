@@ -1,3 +1,6 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 package config
 
 import (
@@ -11,14 +14,16 @@ import (
 	pb "infra/appengine/weetbix/proto/v1"
 )
 
-// Creates a placeholder project with the given key as the project key.
+// createPlaceholderProjectWithKey Creates a placeholder project
+// with the given key as the project key.
 func createPlaceholderProjectWithKey(key string) *configpb.ProjectMetadata {
 	return &configpb.ProjectMetadata{
 		DisplayName: strings.Title(key),
 	}
 }
 
-// Creates a placeholder Monorail project with default values and a key.
+// createPlaceholderProjectWithKey Creates a placeholder Monorail project
+// with default values and a key.
 func createPlaceholderMonorailProjectWithKey(key string) *configpb.MonorailProject {
 	return &configpb.MonorailProject{
 		Project:         key,
@@ -97,7 +102,7 @@ func createPlaceholderRealmsWithKey(key string) []*configpb.RealmConfig {
 }
 
 // Creates a project config with the specified key.
-func CreatePlaceholderConfigWithKey(key string) *configpb.ProjectConfig {
+func CreatePlaceholderProjectConfigWithKey(key string) *configpb.ProjectConfig {
 	return &configpb.ProjectConfig{
 		ProjectMetadata:    createPlaceholderProjectWithKey(key),
 		Monorail:           createPlaceholderMonorailProjectWithKey(key),
@@ -108,7 +113,7 @@ func CreatePlaceholderConfigWithKey(key string) *configpb.ProjectConfig {
 }
 
 // Creates a placeholder project config with key "chromium".
-func CreatePlaceholderConfig() *configpb.ProjectConfig {
+func CreatePlaceholderProjectConfig() *configpb.ProjectConfig {
 	defaulyKey := "chromium"
 	return &configpb.ProjectConfig{
 		ProjectMetadata:    createPlaceholderProjectWithKey(defaulyKey),

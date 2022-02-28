@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
-	configpb "infra/appengine/weetbix/internal/config/proto"
-
-	"google.golang.org/protobuf/types/known/durationpb"
-
 	luciproto "go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/config/validation"
+	"google.golang.org/protobuf/types/known/durationpb"
 
+	"infra/appengine/weetbix/internal/clustering/algorithms/testname/rules"
+	configpb "infra/appengine/weetbix/internal/config/proto"
 	"infra/appengine/weetbix/pbutil"
 )
 

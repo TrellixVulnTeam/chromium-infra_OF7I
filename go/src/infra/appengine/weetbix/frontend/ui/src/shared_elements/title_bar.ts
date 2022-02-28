@@ -3,11 +3,11 @@
 // found in the LICENSE file.
 
 import {
-    css,
-    customElement,
-    html,
-    LitElement,
-    property
+  css,
+  customElement,
+  html,
+  LitElement,
+  property,
 } from 'lit-element';
 
 /**
@@ -23,6 +23,25 @@ export class TitleBar extends LitElement {
   @property()
   logoutUrl = "";
 
+  @property()
+  project: string | null = "";
+
+  getToolsBarItems() {
+    if (this.project !== "") {
+      return html`
+      <div id="secondary-container">
+        <ul>
+          <li><a href="/p/${this.project}/clusters">Clusters</a></li>
+          <li><a href="/p/${this.project}/bugs">Bugs</a></li>
+          <li><a href="/p/${this.project}/rules/new" data-cy="new-rule-link">New Rule</a></li>
+        </ul>
+      </div>
+      `;
+    } else {
+      return html``;
+    }
+  }
+
   protected render() {
     return html`
     <div id="container">
@@ -36,13 +55,7 @@ export class TitleBar extends LitElement {
         ${this.email} | <a href=${this.logoutUrl}>Logout</a>
       </div>
     </div>
-    <div id="secondary-container">
-      <ul>
-        <li><a href="/">Clusters</a></li>
-        <li><a href="/bugs">Bugs</a></li>
-        <li><a href="/p/chromium/rules/new" data-cy="new-rule-link">New Rule</a></li>
-      </ul>
-    </div>
+    ${this.getToolsBarItems()}
     <slot></slot>
     `;
   }

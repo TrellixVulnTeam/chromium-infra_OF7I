@@ -35,7 +35,7 @@ func TestHandleBuild(t *testing.T) {
 		ctx, skdr := tq.TestingContext(ctx, nil)
 		ctx = memory.Use(ctx) // For test config.
 
-		projectCfg := config.CreatePlaceholderConfig()
+		projectCfg := config.CreatePlaceholderProjectConfig()
 		configs := map[string]*configpb.ProjectConfig{
 			"testproject": projectCfg,
 		}

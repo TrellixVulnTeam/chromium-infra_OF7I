@@ -5,7 +5,7 @@
 import { AuthorizedPrpcClient } from '../clients/authorized_client';
 
 export function getRulesService() : RulesService {
-    let client = new AuthorizedPrpcClient();
+    const client = new AuthorizedPrpcClient();
     return new RulesService(client);
 }
 

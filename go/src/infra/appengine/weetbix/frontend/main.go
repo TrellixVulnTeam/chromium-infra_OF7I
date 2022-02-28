@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/cron"
 	"go.chromium.org/luci/server/encryptedcookies"
+	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
@@ -25,9 +26,6 @@ import (
 	spanmodule "go.chromium.org/luci/server/span"
 	"go.chromium.org/luci/server/templates"
 	"go.chromium.org/luci/server/tq"
-
-	// Store auth sessions in the datastore.
-	_ "go.chromium.org/luci/server/encryptedcookies/session/datastore"
 
 	"infra/appengine/weetbix/app"
 	"infra/appengine/weetbix/frontend/handlers"
@@ -154,6 +152,8 @@ func main() {
 		srv.PRPC.HackFixFieldMasksForJSON = true
 
 		weetbixpb.RegisterRulesServer(srv.PRPC, rpc.NewRules())
+		weetbixpb.RegisterProjectsServer(srv.PRPC, rpc.NewProjectsServer())
+		weetbixpb.RegisterInitDataGeneratorServer(srv.PRPC, rpc.NewInitDataGeneratorServer())
 		adminpb.RegisterAdminServer(srv.PRPC, admin.CreateServer())
 
 		// GAE crons.

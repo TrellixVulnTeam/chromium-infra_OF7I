@@ -1,4 +1,5 @@
 {
     "baseUrl": "http://localhost:8800",
-    "includeShadowDom": true
+    "includeShadowDom": true,
+    "defaultCommandTimeout": 7000
 }

@@ -1,3 +1,7 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package rpc
 
 import (
@@ -30,7 +34,8 @@ func createProjectPbs(projectConfigs map[string]*configpb.ProjectConfig) []*pb.P
 	projectsPbs := make([]*pb.Project, 0, len(projectConfigs))
 	for key, projectConfig := range projectConfigs {
 		var usedDisplayName string
-		if projectConfig.ProjectMetadata.DisplayName != "" {
+		projectMetadata := projectConfig.ProjectMetadata
+		if projectMetadata != nil && projectMetadata.DisplayName != "" {
 			usedDisplayName = projectConfig.ProjectMetadata.DisplayName
 		} else {
 			usedDisplayName = strings.Title(key)
@@ -38,6 +43,7 @@ func createProjectPbs(projectConfigs map[string]*configpb.ProjectConfig) []*pb.P
 		projectsPbs = append(projectsPbs, &pb.Project{
 			Name:        fmt.Sprintf("projects/%s", key),
 			DisplayName: usedDisplayName,
+			Project:     key,
 		})
 	}
 	return projectsPbs

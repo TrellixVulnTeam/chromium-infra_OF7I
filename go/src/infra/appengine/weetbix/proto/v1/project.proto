@@ -18,4 +18,7 @@ message Project {
     // The display name to be used in the project selection page of Weetbix.
     // If not provided, the Title case of the project's Luci project ID will be used.
     string display_name = 2;
+
+    // The project id in luci, e.g. "chromium".
+    string project = 3;
 }

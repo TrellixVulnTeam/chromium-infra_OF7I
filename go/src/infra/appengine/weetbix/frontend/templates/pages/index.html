@@ -7,11 +7,12 @@
   <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
   <script>
     window.monorailHostname = '{{.MonorailHostname}}';
+    window.email = '{{.User}}';
+    window.logoutUrl = '{{.LogoutURL}}';
   </script>
 </head>
 
 <body>
-  <title-bar email="{{.User}}" logouturl="{{.LogoutURL}}"></title-bar>
   <div id="outlet"></div>
   <script src="/static/main.js"></script>
 </body>

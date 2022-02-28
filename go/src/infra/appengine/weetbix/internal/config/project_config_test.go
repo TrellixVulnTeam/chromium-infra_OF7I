@@ -34,7 +34,7 @@ func TestProjectConfig(t *testing.T) {
 	t.Parallel()
 
 	Convey("SetTestProjectConfig updates context config", t, func() {
-		projectA := CreatePlaceholderConfig()
+		projectA := CreatePlaceholderProjectConfig()
 		projectA.LastUpdated = timestamppb.New(time.Now())
 		configs := make(map[string]*configpb.ProjectConfig)
 		configs["a"] = projectA
@@ -50,8 +50,8 @@ func TestProjectConfig(t *testing.T) {
 	})
 
 	Convey("With mocks", t, func() {
-		projectA := CreatePlaceholderConfig()
-		projectB := CreatePlaceholderConfig()
+		projectA := CreatePlaceholderProjectConfig()
+		projectB := CreatePlaceholderProjectConfig()
 		projectB.Monorail.PriorityFieldId = 1
 
 		configs := map[config.Set]cfgmem.Files{
@@ -88,8 +88,8 @@ func TestProjectConfig(t *testing.T) {
 			tc.Add(1 * time.Second)
 
 			// Real update.
-			projectC := CreatePlaceholderConfig()
-			newProjectB := CreatePlaceholderConfig()
+			projectC := CreatePlaceholderProjectConfig()
+			newProjectB := CreatePlaceholderProjectConfig()
 			newProjectB.Monorail.PriorityFieldId = 2
 			delete(configs, "projects/a")
 			configs["projects/b"]["${appid}.cfg"] = textPBMultiline.Format(newProjectB)
@@ -176,9 +176,9 @@ func TestProjectConfig(t *testing.T) {
 			tc.Add(1 * time.Second)
 
 			// Attempt to update with an invalid config for project B.
-			newProjectA := CreatePlaceholderConfig()
+			newProjectA := CreatePlaceholderProjectConfig()
 			newProjectA.Monorail.Project = "new-project-a"
-			newProjectB := CreatePlaceholderConfig()
+			newProjectB := CreatePlaceholderProjectConfig()
 			newProjectB.Monorail.Project = ""
 			configs["projects/a"]["${appid}.cfg"] = textPBMultiline.Format(newProjectA)
 			configs["projects/b"]["${appid}.cfg"] = textPBMultiline.Format(newProjectB)
@@ -214,7 +214,7 @@ func TestProject(t *testing.T) {
 	t.Parallel()
 
 	Convey("Project", t, func() {
-		pjChromium := CreatePlaceholderConfig()
+		pjChromium := CreatePlaceholderProjectConfig()
 		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pjChromium,
 		}
@@ -240,7 +240,7 @@ func TestRealm(t *testing.T) {
 	t.Parallel()
 
 	Convey("Realm", t, func() {
-		pj := CreatePlaceholderConfig()
+		pj := CreatePlaceholderProjectConfig()
 		configs := map[string]*configpb.ProjectConfig{
 			"chromium": pj,
 		}

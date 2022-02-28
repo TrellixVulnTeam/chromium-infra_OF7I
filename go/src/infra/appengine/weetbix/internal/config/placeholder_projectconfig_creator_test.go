@@ -1,3 +1,7 @@
+// Copyright 2022 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package config
 
 import (
@@ -11,7 +15,7 @@ func TestCreatePlaceholderProject(t *testing.T) {
 
 	Convey("Given a project creator", t, func() {
 		Convey("When using the default values", func() {
-			projectConfig := CreatePlaceholderConfig()
+			projectConfig := CreatePlaceholderProjectConfig()
 
 			So(projectConfig.ProjectMetadata.DisplayName, ShouldEqual, "Chromium")
 			So(projectConfig.Monorail.Project, ShouldEqual, "chromium")
@@ -21,7 +25,7 @@ func TestCreatePlaceholderProject(t *testing.T) {
 		Convey("When using a key", func() {
 			chromeOsKey := "chromeos"
 
-			projectConfig := CreatePlaceholderConfigWithKey(chromeOsKey)
+			projectConfig := CreatePlaceholderProjectConfigWithKey(chromeOsKey)
 
 			So(projectConfig.ProjectMetadata.DisplayName, ShouldEqual, strings.Title(chromeOsKey))
 			So(projectConfig.Monorail.Project, ShouldEqual, chromeOsKey)

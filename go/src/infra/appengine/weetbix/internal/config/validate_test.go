@@ -20,20 +20,6 @@ import (
 	configpb "infra/appengine/weetbix/internal/config/proto"
 )
 
-var sampleConfigStr = `
-	monorail_hostname: "monorail-test.appspot.com"
-	chunk_gcs_bucket: "my-chunk-bucket"
-	reclustering_workers: 50
-	reclustering_interval_minutes: 5
-`
-
-// createConfig returns a new valid Config for testing.
-func createConfig() *configpb.Config {
-	var cfg configpb.Config
-	So(prototext.Unmarshal([]byte(sampleConfigStr), &cfg), ShouldBeNil)
-	return &cfg
-}
-
 func TestServiceConfigValidator(t *testing.T) {
 	t.Parallel()
 
@@ -54,12 +40,16 @@ func TestServiceConfigValidator(t *testing.T) {
 	})
 
 	Convey("valid config is valid", t, func() {
-		cfg := createConfig()
+		cfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
+
 		So(validate(cfg), ShouldBeNil)
 	})
 
 	Convey("monorail hostname", t, func() {
-		cfg := createConfig()
+		cfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
+
 		Convey("must be specified", func() {
 			cfg.MonorailHostname = ""
 			So(validate(cfg), ShouldErrLike, "empty value is not allowed")
@@ -70,19 +60,25 @@ func TestServiceConfigValidator(t *testing.T) {
 		})
 	})
 	Convey("chunk GCS bucket", t, func() {
-		cfg := createConfig()
+		cfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
+
 		Convey("must be specified", func() {
 			cfg.ChunkGcsBucket = ""
 			So(validate(cfg), ShouldErrLike, "empty chunk_gcs_bucket is not allowed")
 		})
 		Convey("must be correctly formed", func() {
-			cfg := createConfig()
+			cfg, err := CreatePlaceholderConfig()
+			So(err, ShouldBeNil)
+
 			cfg.ChunkGcsBucket = "my bucket"
 			So(validate(cfg), ShouldErrLike, `invalid chunk_gcs_bucket: "my bucket"`)
 		})
 	})
 	Convey("reclustering workers", t, func() {
-		cfg := createConfig()
+		cfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
+
 		Convey("less than zero", func() {
 			cfg.ReclusteringWorkers = -1
 			So(validate(cfg), ShouldErrLike, `value is less than zero`)
@@ -93,7 +89,9 @@ func TestServiceConfigValidator(t *testing.T) {
 		})
 	})
 	Convey("reclustering interval", t, func() {
-		cfg := createConfig()
+		cfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
+
 		Convey("less than zero", func() {
 			cfg.ReclusteringIntervalMinutes = -1
 			So(validate(cfg), ShouldErrLike, `value is less than zero`)
@@ -125,12 +123,12 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("valid config is valid", t, func() {
-		cfg := CreatePlaceholderConfig()
+		cfg := CreatePlaceholderProjectConfig()
 		So(validate(cfg), ShouldBeNil)
 	})
 
 	Convey("monorail", t, func() {
-		cfg := CreatePlaceholderConfig()
+		cfg := CreatePlaceholderProjectConfig()
 		Convey("must be specified", func() {
 			cfg.Monorail = nil
 			So(validate(cfg), ShouldErrLike, "monorail must be specified")
@@ -262,7 +260,7 @@ func TestProjectConfigValidator(t *testing.T) {
 		})
 	})
 	Convey("bug filing threshold", t, func() {
-		cfg := CreatePlaceholderConfig()
+		cfg := CreatePlaceholderProjectConfig()
 		threshold := cfg.BugFilingThreshold
 		So(threshold, ShouldNotBeNil)
 
@@ -315,7 +313,7 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("realm config", t, func() {
-		cfg := CreatePlaceholderConfig()
+		cfg := CreatePlaceholderProjectConfig()
 		So(len(cfg.Realms), ShouldEqual, 1)
 		realm := cfg.Realms[0]
 
@@ -417,7 +415,7 @@ func TestProjectConfigValidator(t *testing.T) {
 	})
 
 	Convey("clustering", t, func() {
-		cfg := CreatePlaceholderConfig()
+		cfg := CreatePlaceholderProjectConfig()
 		clustering := cfg.Clustering
 
 		Convey("may not be specified", func() {

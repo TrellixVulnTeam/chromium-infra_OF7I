@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-describe('Index Page', () => {
+describe('Clusters Page', () => {
     beforeEach(() => {
         cy.visit('/').contains('LOGIN').click();
         cy.get('body').contains('Logout');
+        // The default project we will use will be `chromium`.
+        cy.visit("/p/chromium/clusters")
     })
     it('loads bugs table', () => {
         // Navigate to the bug cluster page

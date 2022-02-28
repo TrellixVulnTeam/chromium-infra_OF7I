@@ -8,15 +8,15 @@ import (
 	"context"
 	"testing"
 
-	"go.chromium.org/luci/gae/impl/memory"
-
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/luci/gae/impl/memory"
 )
 
 func TestConfig(t *testing.T) {
 	Convey("SetTestConfig updates context config", t, func() {
-		sampleCfg := createConfig()
+		sampleCfg, err := CreatePlaceholderConfig()
+		So(err, ShouldBeNil)
 
 		ctx := memory.Use(context.Background())
 		SetTestConfig(ctx, sampleCfg)
