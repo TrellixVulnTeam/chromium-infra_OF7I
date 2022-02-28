@@ -9,6 +9,7 @@ from recipe_engine import recipe_api
 
 from PB.recipes.infra import images_builder as images_builder_pb
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'recipe_engine/buildbucket',
@@ -297,7 +298,7 @@ def _roll_built_images(api, notify, images, meta):
     (None, None) if didn't create a CL (because nothing has changed).
     (Issue number, Issue URL) if created a CL.
   """
-  repo_id = sha256(notify.repo).hexdigest()[:8]
+  repo_id = sha256(notify.repo.encode('utf-8')).hexdigest()[:8]
   with api.step.nest('upload roll CL') as roll:
     num, url = api.cloudbuildhelper.do_roll(
         repo_url=notify.repo,

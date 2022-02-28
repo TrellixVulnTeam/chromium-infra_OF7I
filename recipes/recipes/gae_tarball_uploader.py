@@ -13,6 +13,8 @@ from PB.recipe_engine.result import RawResult
 
 from PB.recipes.infra import gae_tarball_uploader as pb
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'depot_tools/git',
 
@@ -143,12 +145,12 @@ def _validate_input_commit(commit, p):
     else:  # pragma: no cover
       raise AssertionError('Should not happen, validated props already')
     if got != want:
-      raise ValueError('Expecting repo %r, but got %r' % (want, got))
+      raise ValueError('Expecting repo %s, but got %s' % (want, got))
 
   ref = commit.ref or 'refs/heads/main'
   if p.allowed_refs and not any(ref.startswith(pfx) for pfx in p.allowed_refs):
-    raise ValueError(
-        'Ref should start with any of %r, but got %r' % (p.allowed_refs, ref))
+    raise ValueError('Ref should start with any of [%s], but got %s' %
+                     (', '.join(map(str, p.allowed_refs)), ref))
 
 
 def _checkout(api, p):

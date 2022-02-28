@@ -17,6 +17,8 @@ To build a new package for all platforms:
 3. Update Puppet configs to use 'release:<name>' as a version.
 """
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'conda',
   'recipe_engine/buildbucket',

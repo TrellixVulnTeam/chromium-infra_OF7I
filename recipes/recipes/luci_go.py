@@ -6,6 +6,8 @@ import textwrap
 
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'depot_tools/osx_sdk',
     'infra_checkout',
@@ -179,7 +181,8 @@ def GenTests(api):
       patch_set=2,
   ) + api.properties(run_lint=True) + api.step_data(
       'get change list',
-      stdout=api.raw_io.output(textwrap.dedent("""\
+      stdout=api.raw_io.output_text(
+          textwrap.dedent("""\
       client/cmd/isolate/lib/batch_archive.go
       client/cmd/isolate/lib/archive.go
       client/cmd/isolated/lib/archive.go
