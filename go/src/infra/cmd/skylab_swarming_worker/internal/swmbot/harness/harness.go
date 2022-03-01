@@ -9,15 +9,15 @@ package harness
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/resultsdir"
-	ufspb "infra/unifiedfleet/api/v1/models"
+	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/ufsdutinfo"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // closer interface to wrap Close method with providing context.
@@ -83,16 +83,18 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 			}
 		}
 		// Load DUT's info(e.g. labels, attributes, stable_versions) from UFS/inventory.
-		d, sv := dh.loadUFSDUTInfo(ctx)
-		// Load DUT's info from dut state file on drone.
-		dh.loadLocalDUTInfo(ctx)
-		// Convert DUT's info into autotest/labpack friendly format, a.k.a host_info_store.
-		hi := dh.makeHostInfo(d, sv)
-		dh.addLocalStateToHostInfo(hi)
-		// Make a sub-dir for each DUT, which will be consumed by lucifer later.
-		dh.makeDUTResultsDir(i.TaskResultsDir)
-		// Copying host_info_store file into DUT's result dir.
-		dh.exposeHostInfo(hi)
+		dut, sv := dh.loadUFSDUTInfo(ctx)
+		if dh.DeviceType == ChromeOSDevice {
+			// Load DUT's info from dut state file on drone.
+			dh.loadLocalDUTInfo(ctx)
+			// Convert DUT's info into autotest/labpack friendly format, a.k.a host_info_store.
+			hi := dh.makeHostInfo(dut, sv)
+			dh.addLocalStateToHostInfo(hi)
+			// Make a sub-dir for each DUT, which will be consumed by lucifer later.
+			dh.makeDUTResultsDir(i.TaskResultsDir)
+			// Copying host_info_store file into DUT's result dir.
+			dh.exposeHostInfo(hi)
+		}
 		if dh.err != nil {
 			return nil, errors.Annotate(dh.err, "open DUTharness").Err()
 		}
@@ -112,33 +114,31 @@ func (i *Info) makeTaskResultsDir() error {
 	return nil
 }
 
+// loadDUTHarnesses populates DUT harness for single DUT or list of DUT harnesses for scheduling unit.
 func (i *Info) loadDUTHarnesses(ctx context.Context) error {
-	if !i.Info.IsSchedulingUnit {
-		i.DUTs = append(i.DUTs, makeDUTHarnessWithId(i.Info))
-		return nil
+	if i.Info.IsSchedulingUnit {
+		return i.loadSUHarnesses(ctx)
 	}
-	su, err := getSchedulingUnitFromUFS(ctx, i.Info, i.Info.BotDUTID)
-	if err != nil {
-		return errors.Annotate(err, "Failed to get Scheduling unit from UFS").Err()
-	}
-	for _, hostname := range su.GetMachineLSEs() {
-		// If the bot is hosting a scheduling unit, we only know hostname of each
-		// DUTs instead of their id.
-		i.DUTs = append(i.DUTs, makeDUTHarnessWithHostname(i.Info, hostname))
-	}
+	i.DUTs = append(i.DUTs, makeDUTHarnessWithId(i.Info))
 	return nil
 }
 
-// Get a SchedulingUnit from UFS, unlike a DeviceUnderTest, a SchedulingUnit doesn't
-// have ID field, so both dut_id and dut_name swarming dimensions are referred from
-// name field of SchedulingUnit.
-func getSchedulingUnitFromUFS(ctx context.Context, b *swmbot.Info, name string) (*ufspb.SchedulingUnit, error) {
-	client, err := swmbot.UFSClient(ctx, b)
+// loadSUHarnesses populates DUT harness for every single DUT in scheduling unit.
+func (i *Info) loadSUHarnesses(ctx context.Context) error {
+	// Get a SchedulingUnit from UFS, unlike a DeviceUnderTest, a SchedulingUnit doesn't
+	// have ID field, so both dut_id and dut_name swarming dimensions are referred from
+	// name field of SchedulingUnit.
+	su, err := ufsdutinfo.GetDeviceData(ctx, i.Info, &ufsAPI.GetDeviceDataRequest{Hostname: i.Info.BotDUTID})
 	if err != nil {
-		return nil, errors.Annotate(err, "Get SchedulingUnit from UFS: initialize UFS client").Err()
+		return errors.Annotate(err, "failed to get scheduling unit data from UFS").Err()
 	}
-	req := &ufsAPI.GetSchedulingUnitRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.SchedulingUnitCollection, name),
+	switch su.GetResourceType() {
+	case ufsAPI.GetDeviceDataResponse_RESOURCE_TYPE_SCHEDULING_UNIT:
+		for _, hostname := range su.GetSchedulingUnit().GetMachineLSEs() {
+			i.DUTs = append(i.DUTs, makeDUTHarnessWithHostname(i.Info, hostname))
+		}
+	default:
+		return fmt.Errorf("load DUT harness: invalid DUT type - %s", su.GetResourceType())
 	}
-	return client.GetSchedulingUnit(swmbot.SetupContext(ctx, ufsUtil.OSNamespace), req)
+	return nil
 }
