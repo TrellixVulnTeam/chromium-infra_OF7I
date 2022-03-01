@@ -13,21 +13,13 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/cros"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/internal/retry"
 )
 
 const (
-	// Default reboot command for ChromeOS devices.
-	// Each command set sleep 1 second to wait for reaction of the command from left part.
-	rebootCommand = "(echo begin 1; sync; echo end 1 \"$?\")& sleep 1;" +
-		"(echo begin 2; reboot; echo end 2 \"$?\")& sleep 1;" +
-		// Force reboot is not calling shutdown.
-		"(echo begin 3; reboot -f; echo end 3 \"$?\")& sleep 1;" +
-		// Force reboot without sync.
-		"(echo begin 4; reboot -nf; echo end 4 \"$?\")& sleep 1;" +
-		// telinit 6 sets run level for process initialized, which is equivalent to reboot.
-		"(echo begin 5; telinit 6; echo end 5 \"$?\")"
 	// PROVISION_FAILED - A flag file to indicate provision failures.  The
 	// file is created at the start of any AU procedure (see
 	// `ChromiumOSProvisioner._prepare_host()`).  The file's location in
@@ -57,16 +49,9 @@ func sshDUTExec(ctx context.Context, info *execs.ExecInfo) error {
 
 // rebootExec reboots the cros DUT.
 func rebootExec(ctx context.Context, info *execs.ExecInfo) error {
-	log.Debug(ctx, "Run: %s", rebootCommand)
-	run := info.NewRunner(info.RunArgs.DUT.Name)
-	out, err := run(ctx, 2*time.Minute, rebootCommand)
-	if execs.NoExitStatusErrorInternal.In(err) {
-		// Client closed connected as rebooting.
-		log.Debug(ctx, "Client exit as device rebooted: %s", err)
-	} else if err != nil {
+	if err := cros.Reboot(ctx, info.NewRunner(info.RunArgs.DUT.Name), 2*time.Minute); err != nil {
 		return errors.Annotate(err, "cros reboot").Err()
 	}
-	log.Debug(ctx, "Stdout: %s", out)
 	return nil
 }
 
@@ -324,6 +309,66 @@ func crosSwitchToSecureModeExec(ctx context.Context, info *execs.ExecInfo) error
 	return nil
 }
 
+// enrollmentCleanupExec cleans up the enrollment state on the
+// ChromeOS device.
+func enrollmentCleanupExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	run := info.NewRunner(info.RunArgs.DUT.Name)
+	// 1. Reset VPD enrollment state
+	repairTimeout := argsMap.AsDuration(ctx, "repair_timeout", 120, time.Second)
+	log.Debug(ctx, "enrollment cleanup: using repair timeout :%s", repairTimeout)
+	run(ctx, repairTimeout, "/usr/sbin/update_rw_vpd check_enrollment", "0")
+	// 2. clear tpm owner state
+	clearTpmOwnerTimeout := argsMap.AsDuration(ctx, "clear_tpm_owner_timeout", 60, time.Second)
+	log.Debug(ctx, "enrollment cleanup: using clear tpm owner timeout :%s", clearTpmOwnerTimeout)
+	if _, err := run(ctx, clearTpmOwnerTimeout, "crossystem", "clear_tpm_owner_request=1"); err != nil {
+		log.Debug(ctx, "enrollment cleanup: unable to clear TPM.")
+		return errors.Annotate(err, "enrollment cleanup").Err()
+	}
+	filesToRemove := []string{
+		"/home/chronos/.oobe_completed",
+		"/home/chronos/Local\\ State",
+		"/var/cache/shill/default.profile",
+	}
+	dirsToRemove := []string{
+		"/home/.shadow/*",
+		filepath.Join("/var/cache/shill/default.profile", "*"),
+		"/var/lib/whitelist/*", // nocheck
+		"/var/cache/app_pack",
+		"/var/lib/tpm",
+	}
+	// We do not care about any errors that might be returned by the
+	// following two command executions.
+	fileDeletionTimeout := argsMap.AsDuration(ctx, "file_deletion_timeout", 120, time.Second)
+	run(ctx, fileDeletionTimeout, "sudo", "rm", "-rf", strings.Join(filesToRemove, " "), strings.Join(dirsToRemove, " "))
+	run(ctx, fileDeletionTimeout, "sync")
+	rebootTimeout := argsMap.AsDuration(ctx, "reboot_timeout", 10, time.Second)
+	log.Debug(ctx, "enrollment cleanup: using reboot timeout :%s", rebootTimeout)
+	if err := SimpleReboot(ctx, run, rebootTimeout, info); err != nil {
+		return errors.Annotate(err, "enrollment cleanup").Err()
+	}
+	// Finally, we will read the TPM status, and will check whether it
+	// has been cleared or not.
+	tpmTimeout := argsMap.AsDuration(ctx, "tpm_timeout", 150, time.Second)
+	log.Debug(ctx, "enrollment cleanup: using tpm timeout :%s", tpmTimeout)
+	retry.WithTimeout(ctx, time.Second, tpmTimeout, func() error {
+		tpmStatus := NewTpmStatus(ctx, run, repairTimeout)
+		if tpmStatus.hasSuccess() {
+			return nil
+		}
+		return errors.Reason("enrollment cleanup: failed to read TPM status.").Err()
+	}, "wait to read tpm status")
+	tpmStatus := NewTpmStatus(ctx, run, repairTimeout)
+	isOwned, err := tpmStatus.isOwned()
+	if err != nil {
+		return errors.Reason("enrollment cleanup: failed to read TPM status.").Err()
+	}
+	if isOwned {
+		return errors.Reason("enrollment cleanup: failed to clear TPM.").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("cros_ping", pingExec)
 	execs.Register("cros_ssh", sshExec)
@@ -344,4 +389,5 @@ func init() {
 	execs.Register("cros_is_tool_present", isToolPresentExec)
 	execs.Register("cros_set_gbb_flags", crosSetGbbFlagsExec)
 	execs.Register("cros_switch_to_secure_mode", crosSwitchToSecureModeExec)
+	execs.Register("cros_enrollment_cleanup", enrollmentCleanupExec)
 }

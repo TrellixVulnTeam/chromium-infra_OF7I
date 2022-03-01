@@ -94,7 +94,29 @@ const crosRepairPlanActions = `
 	"dependencies":[
 		"cros_storage_writing"
 	],
+	"recovery_actions": [
+		"tpm_enrollment_cleanup_and_reboot"
+	],
 	"exec_name":"cros_is_enrollment_in_clean_state"
+},
+"tpm_enrollment_cleanup_and_reboot":{
+	"docs":[
+		"Cleanup the enrollment state."
+	],
+	"dependencies":[
+		"cros_ssh"
+	],
+	"exec_extra_args": [
+		"repair_timeout:120",
+		"clear_tpm_owner_timeout:60",
+		"file_deletion_timeout:120",
+		"reboot_timeout:10",
+		"tpm_timeout:150"
+	],
+	"exec_timeout": {
+		"seconds":600
+	},
+	"exec_name":"cros_enrollment_cleanup"
 },
 "power_info":{
 	"docs": [
