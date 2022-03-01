@@ -17,6 +17,8 @@ import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory} from './
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
+import SubmitSuccessStep from './issue-wizard/SubmitSuccessStep.tsx';
+
 /**
  * Base component for the issue filing wizard, wrapper for other components.
  * @return Issue wizard JSX.
@@ -37,7 +39,7 @@ export function IssueWizard(props: Props): ReactElement {
   const [userPersona, setUserPersona] = React.useState(IssueWizardPersona.EndUser);
   const [activeStep, setActiveStep] = React.useState(0);
   const [category, setCategory] = React.useState('');
-  const [newIssueLink, setNewIssueLink] = React.useState('');
+  const [newIssueID, setnewIssueID] = React.useState('');
   const [isRegression, setIsRegression] = React.useState(false);
   const [textValues, setTextValues] = React.useState(
     {
@@ -118,11 +120,10 @@ export function IssueWizard(props: Props): ReactElement {
         setActiveStep={setActiveStep}
         questions={questionByCategory.get(category)}
         onSubmit={onSubmitIssue}
-        setNewIssueLink={setNewIssueLink}
+        setnewIssueID={setnewIssueID}
       />;
   } else if (activeStep === 3) {
-    // TODO: load the confirmation page
-    page = (<div>{newIssueLink}</div>);
+    page = <SubmitSuccessStep issueID={newIssueID}/>;
   }
 
   return (

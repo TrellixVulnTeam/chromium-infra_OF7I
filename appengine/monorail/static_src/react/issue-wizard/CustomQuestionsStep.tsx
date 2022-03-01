@@ -45,12 +45,12 @@ type Props = {
   setActiveStep: Function,
   questions: CustomQuestion[],
   onSubmit: Function,
-  setNewIssueLink: Function,
+  setnewIssueID: Function,
 };
 
 export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
-  const {setActiveStep, questions, onSubmit, setNewIssueLink} = props;
+  const {setActiveStep, questions, onSubmit, setnewIssueID} = props;
   const classes = userStyles();
 
   const customQuestions = new Array();
@@ -129,8 +129,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
     //redirect to issue
     setIsSubmitting(false);
     const issueId = response.name.split('/')[3];
-    const issueLink = '/p/chromium/issues/detail?id=' + issueId;
-    setNewIssueLink(issueLink);
+    setnewIssueID(issueId);
     setActiveStep(3);
   };
 
