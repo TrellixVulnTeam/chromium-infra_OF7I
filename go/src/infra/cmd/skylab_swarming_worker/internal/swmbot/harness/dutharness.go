@@ -9,22 +9,29 @@ import (
 	"log"
 
 	"go.chromium.org/luci/common/errors"
-
 	"infra/libs/skylab/inventory"
 
 	"infra/libs/skylab/autotest/hostinfo"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
-	h_hostinfo "infra/cmd/skylab_swarming_worker/internal/swmbot/harness/hostinfo"
+	harnessHostinfo "infra/cmd/skylab_swarming_worker/internal/swmbot/harness/hostinfo"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/labelupdater"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/localdutinfo"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/resultsdir"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/ufsdutinfo"
 )
 
+type DeviceType int64
+
+const (
+	DeviceTypeUnknown DeviceType = iota
+	ChromeOSDevice
+)
+
 // DUTHarness holds information about a DUT's harness
 type DUTHarness struct {
 	BotInfo      *swmbot.Info
+	DeviceType   DeviceType
 	DUTID        string
 	DUTHostname  string
 	ResultsDir   string
@@ -51,9 +58,20 @@ func (dh *DUTHarness) Close(ctx context.Context) error {
 	return nil
 }
 
-func makeDUTHarness(b *swmbot.Info) *DUTHarness {
+func makeDUTHarnessWithId(b *swmbot.Info) *DUTHarness {
 	return &DUTHarness{
 		BotInfo: b,
+		DUTID:   b.BotDUTID,
+		labelUpdater: &labelupdater.LabelUpdater{
+			BotInfo: b,
+		},
+	}
+}
+
+func makeDUTHarnessWithHostname(b *swmbot.Info, hostname string) *DUTHarness {
+	return &DUTHarness{
+		BotInfo:     b,
+		DUTHostname: hostname,
 		labelUpdater: &labelupdater.LabelUpdater{
 			BotInfo: b,
 		},
@@ -89,23 +107,27 @@ func (dh *DUTHarness) loadUFSDUTInfo(ctx context.Context) (*inventory.DeviceUnde
 	} else {
 		dh.err = errors.Reason("Both DUTID and DUTHostname field is empty.").Err()
 	}
-	if dh.err != nil {
-		return nil, nil
+	if dh.err == nil {
+		switch s.DeviceType {
+		case ufsdutinfo.ChromeOSDevice:
+			// We overwrite DeviceType, DUTHostname and DUTID based on UFS data because in
+			// single DUT tasks we don't have DUTHostname when we start, and in the
+			// scheduling_unit (multi-DUT) tasks we don't have DeviceType and DUTID when we start.
+			dh.DeviceType = ChromeOSDevice
+			dh.DUTHostname = s.DUT.GetCommon().GetHostname()
+			dh.DUTID = s.DUT.GetCommon().GetId()
+			dh.closers = append(dh.closers, s)
+			return s.DUT, s.StableVersions
+		}
 	}
-	// We overwrite both DUTHostname and DUTID based on UFS data because in
-	// single DUT tasks we don't have DUTHostname when we start, and in the
-	// scheduling_unit (multi-DUT) tasks we don't have DUTID when we start.
-	dh.DUTHostname = s.DUT.GetCommon().GetHostname()
-	dh.DUTID = s.DUT.GetCommon().GetId()
-	dh.closers = append(dh.closers, s)
-	return s.DUT, s.StableVersions
+	return nil, nil
 }
 
 func (dh *DUTHarness) makeHostInfo(d *inventory.DeviceUnderTest, stableVersion map[string]string) *hostinfo.HostInfo {
 	if dh.err != nil {
 		return nil
 	}
-	hip := h_hostinfo.FromDUT(d, stableVersion)
+	hip := harnessHostinfo.FromDUT(d, stableVersion)
 	dh.closers = append(dh.closers, hip)
 	return hip.HostInfo
 }
@@ -114,7 +136,7 @@ func (dh *DUTHarness) addLocalStateToHostInfo(hi *hostinfo.HostInfo) {
 	if dh.err != nil {
 		return
 	}
-	hib := h_hostinfo.BorrowLocalDUTState(hi, dh.LocalState)
+	hib := harnessHostinfo.BorrowLocalDUTState(hi, dh.LocalState)
 	dh.closers = append(dh.closers, hib)
 }
 
@@ -135,7 +157,7 @@ func (dh *DUTHarness) exposeHostInfo(hi *hostinfo.HostInfo) {
 	if dh.err != nil {
 		return
 	}
-	hif, err := h_hostinfo.Expose(hi, dh.ResultsDir, dh.DUTHostname)
+	hif, err := harnessHostinfo.Expose(hi, dh.ResultsDir, dh.DUTHostname)
 	if err != nil {
 		dh.err = err
 		return

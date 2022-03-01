@@ -114,10 +114,7 @@ func (i *Info) makeTaskResultsDir() error {
 
 func (i *Info) loadDUTHarnesses(ctx context.Context) error {
 	if !i.Info.IsSchedulingUnit {
-		d := makeDUTHarness(i.Info)
-		// For single DUT bot, the BotDUTID is the device's id field in UFS.
-		d.DUTID = i.Info.BotDUTID
-		i.DUTs = append(i.DUTs, d)
+		i.DUTs = append(i.DUTs, makeDUTHarnessWithId(i.Info))
 		return nil
 	}
 	su, err := getSchedulingUnitFromUFS(ctx, i.Info, i.Info.BotDUTID)
@@ -125,11 +122,9 @@ func (i *Info) loadDUTHarnesses(ctx context.Context) error {
 		return errors.Annotate(err, "Failed to get Scheduling unit from UFS").Err()
 	}
 	for _, hostname := range su.GetMachineLSEs() {
-		d := makeDUTHarness(i.Info)
 		// If the bot is hosting a scheduling unit, we only know hostname of each
 		// DUTs instead of their id.
-		d.DUTHostname = hostname
-		i.DUTs = append(i.DUTs, d)
+		i.DUTs = append(i.DUTs, makeDUTHarnessWithHostname(i.Info, hostname))
 	}
 	return nil
 }
