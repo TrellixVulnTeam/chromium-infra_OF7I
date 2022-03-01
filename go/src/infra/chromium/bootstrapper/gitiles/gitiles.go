@@ -7,17 +7,13 @@ package gitiles
 import (
 	"context"
 	"fmt"
-	"time"
+	"infra/chromium/bootstrapper/gob"
 
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/api/gitiles"
-	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
-	"go.chromium.org/luci/common/retry"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // Client provides the gitiles-oriented operations required for bootstrapping.
@@ -96,23 +92,18 @@ func (c *Client) FetchLatestRevision(ctx context.Context, host, project, ref str
 		Committish: ref,
 		PageSize:   1,
 	}
-	response, err := gitilesClient.Log(ctx, request)
+
+	var response *gitilespb.LogResponse
+	err = gob.Retry(ctx, "Log", func() error {
+		var err error
+		response, err = gitilesClient.Log(ctx, request)
+		return err
+	})
 	if err != nil {
 		return "", err
 	}
+
 	return response.Log[0].GetId(), nil
-}
-
-type downloadFileRetryIterator struct {
-	backoff retry.ExponentialBackoff
-}
-
-func (i *downloadFileRetryIterator) Next(ctx context.Context, err error) time.Duration {
-	s, ok := status.FromError(err)
-	if ok && s.Code() == codes.NotFound {
-		return i.backoff.Next(ctx, err)
-	}
-	return retry.Stop
 }
 
 // DownloadFile returns the contents of the file at the given path at the given
@@ -129,23 +120,11 @@ func (c *Client) DownloadFile(ctx context.Context, host, project, revision, path
 	}
 
 	var response *gitilespb.DownloadFileResponse
-	retryFactory := func() retry.Iterator {
-		return &downloadFileRetryIterator{
-			backoff: retry.ExponentialBackoff{
-				Limited: retry.Limited{
-					Delay:   time.Second,
-					Retries: 5,
-				},
-				Multiplier: 2,
-			},
-		}
-	}
-	clockCtx := clock.Tag(ctx, "gob-retry") // used by tests
-	err = retry.Retry(clockCtx, retryFactory, func() error {
+	err = gob.Retry(ctx, "DownloadFile", func() error {
 		var err error
 		response, err = gitilesClient.DownloadFile(ctx, request)
 		return err
-	}, retry.LogCallback(ctx, "DownloadFile"))
+	})
 	if err != nil {
 		return "", err
 	}

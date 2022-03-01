@@ -7,6 +7,7 @@ package gerrit
 import (
 	"context"
 	"errors"
+	"infra/chromium/bootstrapper/gob"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,6 +16,8 @@ import (
 	gerritpb "go.chromium.org/luci/common/proto/gerrit"
 	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestGerritClientForHost(t *testing.T) {
@@ -71,6 +74,7 @@ func TestGetChangeInfo(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctx = gob.CtxForTest(ctx)
 
 	Convey("Client.getChangeInfo", t, func() {
 
@@ -121,12 +125,20 @@ func TestGetChangeInfo(t *testing.T) {
 					},
 				},
 			}
+			matcher := proto.MatcherEqual(&gerritpb.GetChangeRequest{
+				Project: "fake/project",
+				Number:  123,
+				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
+			})
+			// Check that potentially transient errors are retried
 			mockGerritClient.EXPECT().
-				GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
-					Project: "fake/project",
-					Number:  123,
-					Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
-				})).
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.NotFound, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.Unavailable, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
 				Return(mockChangeInfo, nil)
 
 			client := NewClient(ctx)
@@ -174,6 +186,7 @@ func TestGetTargetRef(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctx = gob.CtxForTest(ctx)
 
 	Convey("Client.GetTargetRef", t, func() {
 
@@ -212,12 +225,20 @@ func TestGetTargetRef(t *testing.T) {
 					},
 				},
 			}
+			matcher := proto.MatcherEqual(&gerritpb.GetChangeRequest{
+				Project: "fake/project",
+				Number:  123,
+				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
+			})
+			// Check that potentially transient errors are retried
 			mockGerritClient.EXPECT().
-				GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
-					Project: "fake/project",
-					Number:  123,
-					Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
-				})).
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.NotFound, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.Unavailable, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
 				Return(mockChangeInfo, nil)
 
 			client := NewClient(ctx)
@@ -234,6 +255,7 @@ func TestGetRevision(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctx = gob.CtxForTest(ctx)
 
 	Convey("Client.GetRevision", t, func() {
 
@@ -272,12 +294,20 @@ func TestGetRevision(t *testing.T) {
 					},
 				},
 			}
+			matcher := proto.MatcherEqual(&gerritpb.GetChangeRequest{
+				Project: "fake/project",
+				Number:  123,
+				Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
+			})
+			// Check that potentially transient errors are retried
 			mockGerritClient.EXPECT().
-				GetChange(gomock.Any(), proto.MatcherEqual(&gerritpb.GetChangeRequest{
-					Project: "fake/project",
-					Number:  123,
-					Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
-				})).
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.NotFound, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.Unavailable, "fake transient GetChange failure"))
+			mockGerritClient.EXPECT().
+				GetChange(gomock.Any(), matcher).
 				Return(mockChangeInfo, nil)
 
 			client := NewClient(ctx)
@@ -324,6 +354,7 @@ func TestGetAffectedFileInfo(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctx = gob.CtxForTest(ctx)
 
 	Convey("Client.GetAffectedFileInfo", t, func() {
 
@@ -388,12 +419,20 @@ func TestGetAffectedFileInfo(t *testing.T) {
 			ctx := UseGerritClientFactory(ctx, func(ctx context.Context, host string) (GerritClient, error) {
 				return mockGerritClient, nil
 			})
+			matcher := proto.MatcherEqual(&gerritpb.ListFilesRequest{
+				Project:    "fake/project",
+				Number:     123,
+				RevisionId: "1",
+			})
+			// Check that potentially transient errors are retried
 			mockGerritClient.EXPECT().
-				ListFiles(gomock.Any(), proto.MatcherEqual(&gerritpb.ListFilesRequest{
-					Project:    "fake/project",
-					Number:     123,
-					RevisionId: "1",
-				})).
+				ListFiles(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.NotFound, "fake transient ListFiles failure"))
+			mockGerritClient.EXPECT().
+				ListFiles(gomock.Any(), matcher).
+				Return(nil, status.Error(codes.Unavailable, "fake transient ListFiles failure"))
+			mockGerritClient.EXPECT().
+				ListFiles(gomock.Any(), matcher).
 				Return(&gerritpb.ListFilesResponse{
 					Files: map[string]*gerritpb.FileInfo{
 						"fake-file": {

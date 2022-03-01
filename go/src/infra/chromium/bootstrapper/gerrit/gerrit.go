@@ -7,6 +7,7 @@ package gerrit
 import (
 	"context"
 	"fmt"
+	"infra/chromium/bootstrapper/gob"
 	"strconv"
 
 	"go.chromium.org/luci/auth"
@@ -96,10 +97,15 @@ func (c *Client) getChangeInfo(ctx context.Context, host, project string, change
 		return nil, err
 	}
 
-	changeInfo, err := gerritClient.GetChange(ctx, &gerritpb.GetChangeRequest{
-		Project: project,
-		Number:  change,
-		Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
+	var changeInfo *gerritpb.ChangeInfo
+	err = gob.Retry(ctx, "GetChange", func() error {
+		var err error
+		changeInfo, err = gerritClient.GetChange(ctx, &gerritpb.GetChangeRequest{
+			Project: project,
+			Number:  change,
+			Options: []gerritpb.QueryOption{gerritpb.QueryOption_ALL_REVISIONS},
+		})
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -164,14 +170,21 @@ func (c *Client) GetAffectedFileInfo(ctx context.Context, host, project string, 
 	if err != nil {
 		return nil, err
 	}
-	response, err := gerritClient.ListFiles(ctx, &gerritpb.ListFilesRequest{
-		Project:    project,
-		Number:     change,
-		RevisionId: strconv.FormatInt(patchset, 10),
+
+	var response *gerritpb.ListFilesResponse
+	err = gob.Retry(ctx, "ListFiles", func() error {
+		var err error
+		response, err = gerritClient.ListFiles(ctx, &gerritpb.ListFilesRequest{
+			Project:    project,
+			Number:     change,
+			RevisionId: strconv.FormatInt(patchset, 10),
+		})
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	info, ok := response.Files[file]
 	if !ok {
 		return nil, nil
