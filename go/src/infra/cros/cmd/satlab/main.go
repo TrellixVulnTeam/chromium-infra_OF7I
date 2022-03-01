@@ -49,6 +49,8 @@ func getApplication() *cli.Application {
 			stableversion.GetStableVersionCmd,
 			stableversion.SetStableVersionCmd,
 			stableversion.DeleteStableVersionCmd,
+			subcommands.Section("Utils"),
+			subcmds.IsSatlabRemoteAccessCmd,
 		},
 	}
 }
