@@ -12,6 +12,8 @@ import CustomQuestionTextarea from './CustomQuestions/CustomQuestionTextarea.tsx
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 import Alert from '@material-ui/core/Alert';
 import AttachmentUploader from './AttachmentUploader.tsx';
+import Modal from '@material-ui/core/Modal';
+import Box from '@material-ui/core/Box';
 
 const userStyles = makeStyles({
   greyText: {
@@ -20,17 +22,35 @@ const userStyles = makeStyles({
   root: {
     width: '100%',
   },
+  modalBox: {
+    position: 'absolute',
+    top: '40%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    padding: '10px',
+  },
+  modalTitle: {
+    fontSize: '20px',
+    margin: '5px 0px',
+  },
+  modalContext: {
+    fontSize: '15px',
+  },
 });
 
 type Props = {
   setActiveStep: Function,
   questions: CustomQuestion[],
   onSubmit: Function,
+  setNewIssueLink: Function,
 };
 
 export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
-  const {setActiveStep, questions, onSubmit} = props;
+  const {setActiveStep, questions, onSubmit, setNewIssueLink} = props;
   const classes = userStyles();
 
   const customQuestions = new Array();
@@ -40,6 +60,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
   const [answers, setAnswers] = React.useState(Array(questions.length).fill(''));
   const [hasError, setHasError] = React.useState(false);
   const [submitEnable, setSubmitEnable] = React.useState(true);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const updateAnswer = (answer: string, index: number) => {
     const updatedAnswers = answers;
@@ -104,17 +125,23 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
     });
   }
 
-  const onSuccess = () => {
-    //redirect to issue list
-    window.location.href='/p/chromium/issues/list?q=reporter%3Ame&can=2';
+  const onSuccess = (response: Issue) => {
+    //redirect to issue
+    setIsSubmitting(false);
+    const issueId = response.name.split('/')[3];
+    const issueLink = '/p/chromium/issues/detail?id=' + issueId;
+    setNewIssueLink(issueLink);
+    setActiveStep(3);
   };
 
   const onFailure = () => {
+    setIsSubmitting(false);
     setHasError(true);
   }
 
   const onMakeIssue = () => {
     setHasError(false);
+    setIsSubmitting(true);
     try {
       const uploads = loadFiles();
       uploads.then((files) => {
@@ -146,6 +173,12 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
 
       </div>
       <DotMobileStepper nextEnabled={submitEnable} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>
+      <Modal open={isSubmitting} >
+        <Box className={classes.modalBox}>
+          <p className={classes.modalTitle}>Thanks for your support!</p>
+          <p>Bug Submitting...</p>
+        </Box>
+      </Modal>
     </>
   );
 }

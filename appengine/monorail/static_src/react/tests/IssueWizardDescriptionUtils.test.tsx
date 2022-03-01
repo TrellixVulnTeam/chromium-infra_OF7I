@@ -5,7 +5,7 @@
 import {assert, expect} from 'chai';
 import {expandDescriptions} from 'react/issue-wizard/IssueWizardDescriptionsUtils.tsx';
 
-describe.only('IssueWizardDescriptionsUtils', () => {
+describe('IssueWizardDescriptionsUtils', () => {
   it('get expandDescription and labels', () => {
     const {expandDescription, expandLabels} = expandDescriptions(
       'Network / Downloading',

@@ -37,7 +37,7 @@ describe('IssueWizard Attachment Uploader', () => {
       {name: '2.txt'},
       {name: '3.txt'},
     ];
-    render(<AttachmentUploader files={files} setFiles={(f: Array<any>)=>{files = f;}}/>)
+    render(<AttachmentUploader files={files} setFiles={(f: Array<any>)=>{files = f;}} setSubmitEnable={()=>{}}/>)
     const items = document.querySelectorAll('li');
     assert.equal(items.length, 3);
 

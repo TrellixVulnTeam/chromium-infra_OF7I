@@ -37,6 +37,7 @@ export function IssueWizard(props: Props): ReactElement {
   const [userPersona, setUserPersona] = React.useState(IssueWizardPersona.EndUser);
   const [activeStep, setActiveStep] = React.useState(0);
   const [category, setCategory] = React.useState('');
+  const [newIssueLink, setNewIssueLink] = React.useState('');
   const [isRegression, setIsRegression] = React.useState(false);
   const [textValues, setTextValues] = React.useState(
     {
@@ -44,8 +45,8 @@ export function IssueWizard(props: Props): ReactElement {
       stepsToReproduce: '',
       describeProblem: '',
     });
-    const [osName, setOsName] = React.useState(getOs())
-    const [browserName, setBrowserName] = React.useState(getBrowser())
+  const [osName, setOsName] = React.useState(getOs());
+  const [browserName, setBrowserName] = React.useState(getBrowser());
 
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
@@ -110,13 +111,18 @@ export function IssueWizard(props: Props): ReactElement {
         },
         description: expandDescription,
         });
-        response.then(() => {
-          onSuccess();
-        }, () => {
-          onFailure();
-        });
+        response.then(onSuccess, onFailure);
     }
-    page = <CustomQuestionsStep setActiveStep={setActiveStep} questions={questionByCategory.get(category)} onSubmit={onSubmitIssue}/>;
+    page =
+      <CustomQuestionsStep
+        setActiveStep={setActiveStep}
+        questions={questionByCategory.get(category)}
+        onSubmit={onSubmitIssue}
+        setNewIssueLink={setNewIssueLink}
+      />;
+  } else if (activeStep === 3) {
+    // TODO: load the confirmation page
+    page = (<div>{newIssueLink}</div>);
   }
 
   return (
