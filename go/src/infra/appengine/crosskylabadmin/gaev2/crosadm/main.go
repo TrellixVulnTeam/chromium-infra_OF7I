@@ -16,6 +16,7 @@ import (
 
 	"infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/internal/app/frontend"
+	"infra/appengine/crosskylabadmin/internal/app/frontend/inventory"
 )
 
 // Main is the entrypoint for the GAEv2 version of CrOSSkylabAdmin.
@@ -36,7 +37,16 @@ func main() {
 // Install the CrOSSkylabAdminServices into a prpc registrar.
 func installServices(r prpc.Registrar) {
 	fleet.RegisterTrackerServer(r, &fleet.DecoratedTracker{
-		Service: &frontend.TrackerServerImpl{},
+		Service: &frontend.TrackerServerImpl{
+			SwarmingFactory: nil,
+		},
+		Prelude: frontend.CheckAccess,
+	})
+	// The primary use case for this API is the stable version API.
+	fleet.RegisterInventoryServer(r, &fleet.DecoratedInventory{
+		Service: &inventory.ServerImpl{
+			TrackerFactory: frontend.TrackerFactory,
+		},
 		Prelude: frontend.CheckAccess,
 	})
 }
