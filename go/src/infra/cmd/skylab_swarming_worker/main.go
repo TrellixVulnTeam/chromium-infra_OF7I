@@ -162,7 +162,9 @@ func mainInner(a *args) error {
 
 func setStateForDUTs(i *harness.Info, state dutstate.State) {
 	for _, dh := range i.DUTs {
-		dh.LocalState.HostState = state
+		if dh.DeviceType == harness.ChromeOSDevice {
+			dh.LocalState.HostState = state
+		}
 	}
 }
 
@@ -193,6 +195,11 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 	//			performance limitation.
 	var errs []error
 	for _, dh := range i.DUTs {
+
+		if dh.DeviceType != harness.ChromeOSDevice {
+			log.Printf("Skipping unsupported device: %s", getDutId(dh))
+			continue
+		}
 		ta := lucifer.TaskArgs{
 			// Swarming task number 5670d0e630f66c10 failed due to a path length that was too long (108 chars).
 			// Let's kick the can down the road and use a shorter suffix for the abort socket.
@@ -206,7 +213,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 		if luciferErr != nil {
 			// Attempt to parse results regardless of lucifer errors.
 			luciferErr = errors.Annotate(luciferErr, "run lucifer task").Err()
-			log.Printf("Encountered error on %s. Error: %s", dh.DUTHostname, luciferErr)
+			log.Printf("Encountered error on %s. Error: %s", getDutId(dh), luciferErr)
 			errs = append(errs, luciferErr)
 		}
 	}
@@ -353,4 +360,12 @@ func runAuditTask(ctx context.Context, dh *harness.DUTHarness, actions string, t
 		return errors.Annotate(err, "run audit task").Err()
 	}
 	return nil
+}
+
+func getDutId(dh *harness.DUTHarness) string {
+	dutId := dh.DUTHostname
+	if dutId == "" {
+		dutId = dh.DUTID
+	}
+	return dutId
 }
