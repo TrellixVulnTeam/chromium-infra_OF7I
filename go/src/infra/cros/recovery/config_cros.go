@@ -51,7 +51,7 @@ func CrosDeployConfig() io.Reader {
 		{
 			name:      "servo",
 			body:      servoRepairPlanBody,
-			allowFail: true,
+			allowFail: false,
 		},
 		{
 			name:      "cros",
