@@ -216,3 +216,16 @@ update_submodules_mirror(
     target_repo = "https://chromium.googlesource.com/codesearch/chromium/tools/build",
     triggered_by = build.poller(),
 )
+
+# Runs every four hours (at predictable times).
+# TODO(gavinmak): Generalize and add an initializer when using more boards.
+builder(
+    name = "codesearch-gen-chromiumos-amd64-generic",
+    executable = luci.recipe(
+        name = "chromiumos_codesearch",
+        cipd_package = "infra/recipe_bundles/chromium.googlesource.com/chromiumos/infra/recipes",
+    ),
+    builder_group_property_name = "builder_group",
+    execution_timeout = 9 * time.hour,
+    category = "gen",
+)
