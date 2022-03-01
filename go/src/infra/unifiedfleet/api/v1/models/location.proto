@@ -63,7 +63,7 @@ enum Lab {
 }
 
 // Zone refers to the different network zones under chrome org
-// Next tag: 27
+// Next tag: 25
 enum Zone {
     ZONE_UNSPECIFIED = 0;
     ZONE_ATLANTA = 1; // "atl" Building ? Room ?
@@ -75,9 +75,6 @@ enum Zone {
     ZONE_CHROMEOS6 = 7; // "chromeos6" // US-MTV-2081 // Prometheus
     ZONE_CHROMEOS7 = 8; // "chromeos7" // US-MTV-946 // Lindavista
     ZONE_CHROMEOS8 = 21; // "chromeos8" // US-PAO-EM25 // Room 113
-    ZONE_CHROMEOS10 = 22; // "chromeos10" // US-PAO-EM25 // Room 114
-    ZONE_CHROMEOS12 = 23; // "chromeos12" // US-PAO-EM25 // Room 116
-    ZONE_CHROMEOS14 = 24; // "chromeos14" // US-PAO-EM25 // Room 117
     ZONE_CHROMEOS15 = 10; // "chromeos15" // US-MTV-946 // Lindavista
     ZONE_ATL97 = 11; // "atl97" //  US-ATL-MET1 // Room ?
     ZONE_IAD97 = 12; // "iad97" // Building ? Room ?
@@ -89,6 +86,7 @@ enum Zone {
     ZONE_SATLAB = 18; // "satlab" // zone for satlab duts
     ZONE_BROWSER_GOOGLER_DESK = 19; // "desk" // for browser assets given to googlers
     ZONE_JETSTREAM_B946 = 20; // US-MTV-946-1-1E1
-    ZONE_SFO36_NETWORK = 25; // "sfo36_network" // US-PAO-EM25 // Room 115
-    ZONE_SFO36 = 27; // "sfo36" // US-PAO-EM25 // Room 105
+    ZONE_SFO36_NETWORK = 22; // "sfo36_network" // US-PAO-EM25 // Room 115
+    ZONE_SFO36_BROWSER = 23; // "sfo36_browser" // US-PAO-EM25 // Room 105
+    ZONE_SFO36_OS = 24; // "sfo36_os" // US-PAO-EM25 // Room 114, 116, 117
 }
