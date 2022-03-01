@@ -159,13 +159,13 @@ adhoc_builder(
 adhoc_builder(
     name = "gsutil-hello-world-bionic-64",
     os = "Ubuntu-18.04",
-    executable = infra.recipe("gsutil_hello_world"),
+    executable = infra.recipe("gsutil_hello_world", use_python3 = True),
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
     name = "gsutil-hello-world-win10-64",
     os = "Windows-10",
-    executable = infra.recipe("gsutil_hello_world"),
+    executable = infra.recipe("gsutil_hello_world", use_python3 = True),
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(

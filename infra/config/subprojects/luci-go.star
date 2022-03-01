@@ -46,11 +46,12 @@ def try_builder(
         in_cq = True,
         experiment_percentage = None,
         owner_whitelist = None,
-        mode_allowlist = None):
+        mode_allowlist = None,
+        use_python3 = False):
     infra.builder(
         name = name,
         bucket = "try",
-        executable = infra.recipe(recipe or "luci_go"),
+        executable = infra.recipe(recipe or "luci_go", use_python3 = use_python3),
         os = os,
         properties = properties,
     )
@@ -111,6 +112,7 @@ try_builder(
         "infra": "try",
         "manifests": ["infra/build/images/deterministic/luci"],
     },
+    use_python3 = True,
 )
 
 try_builder(
@@ -124,6 +126,7 @@ try_builder(
     },
     owner_whitelist = ["project-infra-tryjob-access"],
     mode_allowlist = [cq.MODE_ANALYZER_RUN],
+    use_python3 = True,
 )
 
 try_builder(

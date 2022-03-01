@@ -48,11 +48,12 @@ def try_builder(
         recipe = None,
         experiment_percentage = None,
         properties = None,
-        in_cq = True):
+        in_cq = True,
+        use_python3 = False):
     infra.builder(
         name = name,
         bucket = "try",
-        executable = infra.recipe(recipe or "infra_repo_trybot"),
+        executable = infra.recipe(recipe or "infra_repo_trybot", use_python3 = use_python3),
         os = os,
         cpu = cpu,
         properties = properties,
@@ -104,6 +105,7 @@ ci_builder(
         "infra": "ci",
         "manifests": ["infra/build/images/deterministic"],
     },
+    use_python3 = True,
 )
 
 # Builds arm64-flavored docker images for swarm_docker.
@@ -146,6 +148,7 @@ try_builder(
         "analyzers": ["Copyright", "Eslint", "Gosec", "Spellchecker", "InclusiveLanguageCheck"],
     },
     in_cq = False,
+    use_python3 = True,
 )
 
 # Experimental trybot for building docker images out of infra.git CLs.
@@ -160,6 +163,7 @@ try_builder(
         "infra": "try",
         "manifests": ["infra/build/images/deterministic"],
     },
+    use_python3 = True,
 )
 
 # Presubmit trybot.

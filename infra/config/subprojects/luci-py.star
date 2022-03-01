@@ -20,11 +20,12 @@ def try_builder(
         recipe = None,
         experiment_percentage = None,
         properties = None,
-        in_cq = True):
+        in_cq = True,
+        use_python3 = False):
     infra.builder(
         name = name,
         bucket = "try",
-        executable = infra.recipe(recipe or "luci_py"),
+        executable = infra.recipe(recipe or "luci_py", use_python3 = use_python3),
         os = os,
         properties = properties,
     )
@@ -55,6 +56,7 @@ try_builder(
         "analyzers": ["Spellchecker"],
     },
     in_cq = False,
+    use_python3 = True,
 )
 
 try_builder(
