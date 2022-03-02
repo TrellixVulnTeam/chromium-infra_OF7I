@@ -43,7 +43,8 @@ const crosRepairPlanActions = `
 	],
 	"recovery_actions": [
 		"cros_servo_power_reset_repair",
-		"Trigger kernel panic to reset the whole board and try ssh to DUT"
+		"Trigger kernel panic to reset the whole board and try ssh to DUT",
+		"cros_servo_cr50_reboot_repair"
 	]
 },
 "internal_storage":{
@@ -134,7 +135,8 @@ const crosRepairPlanActions = `
 	],
 	"recovery_actions": [
 		"rpm_power_cycle",
-		"cros_servo_power_reset_repair"
+		"cros_servo_power_reset_repair",
+		"cros_servo_cr50_reboot_repair"
 	],
 	"exec_name":"sample_pass"
 },
@@ -178,7 +180,8 @@ const crosRepairPlanActions = `
 		"seconds": 45
 	},
 	"recovery_actions": [
-		"cros_servo_power_reset_repair"
+		"cros_servo_power_reset_repair",
+		"cros_servo_cr50_reboot_repair"
 	],
 	"exec_name":"cros_stop_start_ui"
 },
@@ -681,6 +684,52 @@ const crosRepairPlanActions = `
 		"retry_interval:2"
 	],
 	"exec_name":"servo_trigger_kernel_panic"
+},
+"cros_servo_cr50_reboot_repair":{
+	"docs":[
+		"Repair a Chrome Device by resetting cr50 by servo.",
+		"Then, using servo to initialize dut again.",
+		"TODO: (blocked by: b/221083688) Collect logs from a successfully repaired DUT."
+	],
+	"conditions":[
+		"dut_servo_host_present",
+		"servod_echo",
+		"servo_host_is_labstation",
+		"servod_has_control_cr50_reboot"
+	],
+	"dependencies":[
+		"servo_power_state_cr50_reset",
+		"sleep_1_second",
+		"init_dut_for_servo",
+		"wait_device_to_boot_after_reset"
+	],
+	"exec_name": "sample_pass"
+},
+"servod_has_control_cr50_reboot":{
+	"docs":[
+		"Checks whether the servod has the command control: cr50_reboot."
+	],
+	"exec_extra_args": [
+		"command:cr50_reboot"
+	],
+	"exec_name":"servo_check_servod_control"
+},
+"servo_power_state_cr50_reset":{
+	"docs":[
+		"Repair a ChromeOS Device by resetting cr50 by servo."
+	],
+	"exec_extra_args": [
+		"command:power_state",
+		"string_value:cr50_reset"
+	],
+	"exec_name":"servo_set",
+	"allow_fail_after_recovery": true
+},
+"sleep_1_second":{
+	"exec_extra_args": [
+		"sleep:1"
+	],
+	"exec_name":"sample_sleep"
 }
 `
 

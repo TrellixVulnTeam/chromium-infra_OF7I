@@ -316,16 +316,16 @@ func servoSetExec(ctx context.Context, info *execs.ExecInfo) error {
 	m := info.GetActionArgs(ctx)
 	command, existed := m["command"]
 	if !existed {
-		return errors.Reason("servo match state: command not found in the argument").Err()
+		return errors.Reason("servo set state: command not found in the argument").Err()
 	}
 	stringValue, existed := m["string_value"]
 	if !existed {
-		return errors.Reason("servo match state: string value not found in the argument").Err()
+		return errors.Reason("servo set state: string value not found in the argument").Err()
 	}
 	command = strings.TrimSpace(command)
 	stringValue = strings.TrimSpace(stringValue)
 	if err := info.NewServod().Set(ctx, command, stringValue); err != nil {
-		return errors.Annotate(err, "servo match state").Err()
+		return errors.Annotate(err, "servo set state").Err()
 	}
 	return nil
 }
