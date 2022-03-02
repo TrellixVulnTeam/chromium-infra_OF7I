@@ -60,7 +60,7 @@ func TestDatastoreModel(t *testing.T) {
 				FirstFailedBuildId: 88000998778,
 				LastPassedBuildId:  873929392903,
 				InitialRegressionRange: &gofinditpb.RegressionRange{
-					LassPassed: &buildbucketpb.GitilesCommit{
+					LastPassed: &buildbucketpb.GitilesCommit{
 						Host:    "host",
 						Project: "proj",
 						Ref:     "ref",

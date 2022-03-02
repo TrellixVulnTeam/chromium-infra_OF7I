@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 
 	"infra/appengine/gofindit/internal/buildbucket"
+	"infra/appengine/gofindit/internal/gitiles"
 	"infra/appengine/gofindit/model"
 )
 
@@ -31,6 +32,7 @@ func TestAnalyzeFailure(t *testing.T) {
 	defer ctl.Finish()
 	mc := buildbucket.NewMockedClient(c, ctl)
 	c = mc.Ctx
+	c = gitiles.MockedGitilesClientContext(c)
 	res := &bbpb.Build{
 		Input: &bbpb.Build_Input{
 			GitilesCommit: &bbpb.GitilesCommit{

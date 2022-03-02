@@ -232,7 +232,7 @@ enum CulpritActionType {
 
 // Regression range is (last_passed..first_failed]
 message RegressionRange {
-  buildbucket.v2.GitilesCommit lass_passed = 1;
+  buildbucket.v2.GitilesCommit last_passed = 1;
   buildbucket.v2.GitilesCommit first_failed = 2;
   // How many revisions between last passed (exclusively) and first failed (inclusively).
   int32 number_of_revisions = 3;

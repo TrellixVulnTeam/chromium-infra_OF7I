@@ -85,6 +85,6 @@ func findRegressionRange(
 
 	return &gfipb.RegressionRange{
 		FirstFailed: first_failed_build.GetInput().GitilesCommit,
-		LassPassed:  last_passed_build.GetInput().GitilesCommit,
+		LastPassed:  last_passed_build.GetInput().GitilesCommit,
 	}, nil
 }
