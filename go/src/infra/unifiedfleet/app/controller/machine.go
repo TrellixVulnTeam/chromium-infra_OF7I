@@ -361,6 +361,14 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 			oldMachine.ResourceState = machine.GetResourceState()
 		case "description":
 			oldMachine.GetChromeBrowserMachine().Description = machine.GetChromeBrowserMachine().GetDescription()
+		case "admManufacturer":
+			oldMachine.GetAttachedDevice().Manufacturer = machine.GetAttachedDevice().GetManufacturer()
+		case "admDeviceType":
+			oldMachine.GetAttachedDevice().DeviceType = machine.GetAttachedDevice().GetDeviceType()
+		case "admBuildTarget":
+			oldMachine.GetAttachedDevice().BuildTarget = machine.GetAttachedDevice().GetBuildTarget()
+		case "admModel":
+			oldMachine.GetAttachedDevice().Model = machine.GetAttachedDevice().GetModel()
 		}
 	}
 	// For partial update, validate kvm interface just before updating in case
@@ -1022,6 +1030,22 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 			case "description":
 				if machine.GetChromeBrowserMachine() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - browser machine cannot be empty/nil.")
+				}
+			case "admManufacturer":
+				if machine.GetAttachedDevice() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - attached device machine cannot be empty/nil.")
+				}
+			case "admDeviceType":
+				if machine.GetAttachedDevice() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - attached device machine cannot be empty/nil.")
+				}
+			case "admBuildTarget":
+				if machine.GetAttachedDevice() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - attached device machine cannot be empty/nil.")
+				}
+			case "admModel":
+				if machine.GetAttachedDevice() == nil {
+					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - attached device machine cannot be empty/nil.")
 				}
 			case "tags":
 			case "serialNumber":

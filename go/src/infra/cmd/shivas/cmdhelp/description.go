@@ -1955,6 +1955,76 @@ Example AttachedDevice machine creation request:
 The protobuf definition can be found here:
 Machine:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
+
+	// UpdateAttachedDeviceMachineText long description for UpdateADMCmd
+	UpdateAttachedDeviceMachineText string = `Update an attached device machine by name to UFS.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Examples:
+shivas update attached-device-machine -f admrequest.json
+Update an attached device machine by reading a JSON file input.
+
+shivas update attached-device-machine -name machine1 -serial XXX_NEW
+Update serial number connected to the attached device machine.
+
+shivas update attached-device-machine -name machine1 -devicetype android_phone -man manufacturer_new
+Update device type and manufacturer of the attached device machine.
+
+shivas update attached-device-machine -name machine1 -tags -
+Delete tags of an existing attached-device-machine entry.
+`
+
+	// UpdateADMText long description for UpdateADMCmd
+	UpdateADMText string = `Update an attached device machine by name to UFS.
+
+This cmd requires the user to set the NAMESPACE in env. Otherwise, it will
+default to operate in the browser lab namespace.
+
+Examples:
+shivas update adm -f admrequest.json
+Update an attached device machine by reading a JSON file input.
+
+shivas update adm -name machine1 -serial XXX_NEW
+Update serial number connected to the attached device machine.
+
+shivas update adm -name machine1 -devicetype android_phone -man manufacturer_new
+Update device type and manufacturer of the attached device machine.
+
+shivas update adm -name machine1 -tags -
+Delete tags of an existing adm entry.
+`
+
+	// ADMFileText description for attached device machine file input
+	ADMFileText string = `Path to a file containing attached device machine specification in JSON format.
+This file must contain one attached device machine JSON message
+
+Example attached device machine:
+
+{
+  "name": "attached-device-machine-example",
+  "location": {
+      "zone": "ZONE_ATLANTA",
+      "aisle": "1",
+      "row": "2",
+      "rack": "Rack-42",
+      "rackNumber": "42",
+      "shelf": "3",
+      "position": "5"
+  },
+  "serialNumber": "XXX",
+  "attached_device": {
+    "manufacturer": "Apple",
+    "device_type": "apple_phone",
+    "build_target": "board1",
+    "model": "model1"
+  },
+  "tags": ["apple", "256g"],
+}
+
+The protobuf definition of machine is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
 )
 
 func CronTriggerAvailableJobsString() string {

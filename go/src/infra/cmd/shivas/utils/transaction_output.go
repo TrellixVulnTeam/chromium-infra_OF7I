@@ -49,6 +49,26 @@ func PrintExistingMachine(ctx context.Context, ic ufsAPI.FleetClient, name strin
 	return res, nil
 }
 
+// PrintExistingAttachedDeviceMachine prints the old attached device machine in update/delete operations.
+func PrintExistingAttachedDeviceMachine(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.Machine, error) {
+	res, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, name),
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "Failed to get attached device machine").Err()
+	}
+	if res == nil {
+		return nil, errors.Reason("The returned resp is empty").Err()
+	}
+	if res.GetAttachedDevice() == nil {
+		return nil, errors.Reason("Machine %s is not an attached device machine.", name).Err()
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The attached device machine before delete/update:")
+	PrintProtoJSON(res, !NoEmitMode(false))
+	return res, nil
+}
+
 // PrintExistingDrac prints the old drac in update/delete operations
 func PrintExistingDrac(ctx context.Context, ic ufsAPI.FleetClient, name string) error {
 	res, err := ic.GetDrac(ctx, &ufsAPI.GetDracRequest{

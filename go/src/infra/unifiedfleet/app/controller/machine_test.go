@@ -851,6 +851,46 @@ func TestUpdateMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, PermissionDenied)
 		})
+
+		Convey("Partial Update attached device machine", func() {
+			machine := &ufspb.Machine{
+				Name: "adm-1",
+				Device: &ufspb.Machine_AttachedDevice{
+					AttachedDevice: &ufspb.AttachedDevice{
+						DeviceType:   ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_APPLE_PHONE,
+						Manufacturer: "test-man",
+						BuildTarget:  "test-target",
+						Model:        "test-model",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			machine1 := &ufspb.Machine{
+				Name: "adm-1",
+				Device: &ufspb.Machine_AttachedDevice{
+					AttachedDevice: &ufspb.AttachedDevice{
+						DeviceType:   ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_PHONE,
+						Manufacturer: "test-man-1",
+						BuildTarget:  "test-target-1",
+						Model:        "test-model-1",
+					},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{
+				"admManufacturer",
+				"admDeviceType",
+				"admBuildTarget",
+				"admModel",
+			}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetAttachedDevice().GetDeviceType(), ShouldEqual, ufspb.AttachedDeviceType_ATTACHED_DEVICE_TYPE_ANDROID_PHONE)
+			So(resp.GetAttachedDevice().GetManufacturer(), ShouldEqual, "test-man-1")
+			So(resp.GetAttachedDevice().GetBuildTarget(), ShouldEqual, "test-target-1")
+			So(resp.GetAttachedDevice().GetModel(), ShouldEqual, "test-model-1")
+		})
 	})
 }
 
