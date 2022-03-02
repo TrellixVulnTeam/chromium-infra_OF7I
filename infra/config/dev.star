@@ -153,7 +153,7 @@ def adhoc_builder(
 adhoc_builder(
     name = "gerrit-hello-world-bionic-64",
     os = "Ubuntu-18.04",
-    executable = infra.recipe("gerrit_hello_world"),
+    executable = infra.recipe("gerrit_hello_world", use_python3 = True),
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
@@ -174,6 +174,7 @@ adhoc_builder(
     executable = luci.recipe(
         name = "futures:examples/background_helper",
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
+        use_python3 = True,
     ),
     schedule = "with 10m interval",
 )
@@ -183,6 +184,7 @@ adhoc_builder(
     executable = luci.recipe(
         name = "futures:examples/background_helper",
         cipd_package = "infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py",
+        use_python3 = True,
     ),
     schedule = "with 10m interval",
 )

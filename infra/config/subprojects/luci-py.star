@@ -21,7 +21,7 @@ def try_builder(
         experiment_percentage = None,
         properties = None,
         in_cq = True,
-        use_python3 = False):
+        use_python3 = True):
     infra.builder(
         name = name,
         bucket = "try",
@@ -56,7 +56,6 @@ try_builder(
         "analyzers": ["Spellchecker"],
     },
     in_cq = False,
-    use_python3 = True,
 )
 
 try_builder(

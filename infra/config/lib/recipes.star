@@ -49,7 +49,7 @@ def simulation_tester(
     luci.builder(
         name = name,
         bucket = "ci",
-        executable = infra.recipe("recipe_simulation"),
+        executable = infra.recipe("recipe_simulation", use_python3 = True),
         properties = properties,
         dimensions = {
             "os": "Ubuntu-18.04",
