@@ -32,15 +32,6 @@ const (
 	TimestampBasedVersionKeyFormat string = "2006-01-02 15:04:05.000 UTC"
 )
 
-// satlabRegex regular expression to get the hive value from a DUT hostname.
-var satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
-
-// gtransitRegex regular expression to identify a gTransit DUT hostname.
-var gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+`)
-
-// gtransitHive hive value for a gTransit DUT.
-const gtransitHive string = "cros-mtv1950-144"
-
 // Key is a type for use in adding values to context. It is not recommended to use plain string as key.
 type Key string
 
@@ -174,6 +165,21 @@ func ProtoEqual(i, j proto.Message) bool {
 	return cmp.Equal(i, j, opt)
 }
 
+var (
+	// satlabRegex regular expression to get the hive value from a DUT hostname.
+	satlabRegex = regexp.MustCompile(`^satlab-[^-]+`)
+
+	// gtransitRegex regular expression to identify a gTransit DUT hostname.
+	gtransitRegex = regexp.MustCompile(`^cros-mtv1950-144-rack[\d]+`)
+
+	// dcLabRegex is the regular expression to identify DUTs in the data center
+	// like labs, e.g. SFO36. The DUT name is in pattern of 'cr<SITE>-xxx'.
+	dcLabRegex = regexp.MustCompile(`^cr[^-]+`)
+)
+
+// gtransitHive hive value for a gTransit DUT.
+const gtransitHive string = "cros-mtv1950-144"
+
 // GetHiveForDut returns the hive value for a DUT.
 //
 // hive value is derived from the DUT hostname.
@@ -181,6 +187,10 @@ func GetHiveForDut(hostname string) string {
 	// gTransit DUTs.
 	if gtransitRegex.MatchString(hostname) {
 		return gtransitHive
+	}
+	if h := dcLabRegex.FindString(hostname); h != "" {
+		// We use the part of 'cr<SITE>' as the hive.
+		return h
 	}
 	// Satlab DUTs.
 	if satlabRegex.MatchString(hostname) {
