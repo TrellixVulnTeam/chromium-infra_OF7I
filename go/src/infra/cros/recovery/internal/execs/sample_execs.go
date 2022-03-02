@@ -6,10 +6,12 @@ package execs
 
 import (
 	"context"
-	"infra/cros/recovery/logger/metrics"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+
+	"infra/cros/recovery/internal/log"
+	"infra/cros/recovery/logger/metrics"
 )
 
 // samplePassActionExec provides example to run action which always pass.
@@ -20,6 +22,23 @@ func samplePassActionExec(ctx context.Context, i *ExecInfo) error {
 // sampleFailActionExec provides example to run action which always fail.
 func sampleFailActionExec(ctx context.Context, i *ExecInfo) error {
 	return errors.Reason("failed").Err()
+}
+
+// sampleSleepExec pauses/sleeps the program for the time duration
+// in seconds specified by the actionArgs.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["sleep:x"]
+func sampleSleepExec(ctx context.Context, i *ExecInfo) error {
+	argsMap := i.GetActionArgs(ctx)
+	// Timeout to wait for resetting the power state. Default to be 0s.
+	sleepTimeout := argsMap.AsDuration(ctx, "sleep", 0, time.Second)
+	if sleepTimeout <= 0*time.Second {
+		return errors.Reason("sample sleep: provided time duration %v is less than or equal to 0s", sleepTimeout).Err()
+	}
+	log.Debug(ctx, "Sample Sleep: planning to sleep %v.", sleepTimeout)
+	time.Sleep(sleepTimeout)
+	return nil
 }
 
 // sampleMetricsAction sends a record to the metrics service.
@@ -42,5 +61,6 @@ func sampleMetricsAction(ctx context.Context, ei *ExecInfo) error {
 func init() {
 	Register("sample_pass", samplePassActionExec)
 	Register("sample_fail", sampleFailActionExec)
+	Register("sample_sleep", sampleSleepExec)
 	Register("sample_metrics_action", sampleMetricsAction)
 }
