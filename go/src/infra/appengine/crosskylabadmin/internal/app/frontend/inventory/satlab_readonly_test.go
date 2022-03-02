@@ -15,6 +15,7 @@
 package inventory
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -72,6 +73,84 @@ func TestGetStableVersionRPCForSatlabDeviceUsingBoardAndModel(t *testing.T) {
 		BuildTarget:              "b",
 		Model:                    "m",
 		SatlabInformationalQuery: true,
+	})
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	expectedResponse := &fleet.GetStableVersionResponse{
+		CrosVersion:     "o",
+		FirmwareVersion: "fw",
+		FaftVersion:     "i",
+		Reason:          `looked up satlab device using id "b|m"`,
+	}
+	actualResponse := resp
+	if diff := cmp.Diff(expectedResponse, actualResponse, protocmp.Transform()); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", diff)
+	}
+}
+
+// TestGetStableVersionRPCForSatlabDeviceUsingBoardAndModelWithHostnameLookup tests the happy path of extracting a satlab stable version using its board and model.
+//
+// TODO(gregorynisbet): Refactor this test as described in b:222337299.
+//
+func TestGetStableVersionRPCForSatlabDeviceUsingBoardAndModelWithHostnameLookup(t *testing.T) {
+	// t.Parallel() -- This test overrides getDUT. It can't be parallelized.
+
+	board := "b"
+	model := "m"
+	hostname := "satlab-h1"
+
+	oldGetDUTOverrideForTests := getDUTOverrideForTests
+	getDUTOverrideForTests = func(_ context.Context, _ inventoryClient, _ string) (*inventory.DeviceUnderTest, error) {
+		return &inventory.DeviceUnderTest{
+			Common: &inventory.CommonDeviceSpecs{
+				Labels: &inventory.SchedulableLabels{
+					Board: strptr("b"),
+					Model: strptr("m"),
+				},
+			},
+		}, nil
+	}
+	defer func() {
+		getDUTOverrideForTests = oldGetDUTOverrideForTests
+	}()
+
+	ctx := testingContext()
+	datastore.GetTestable(ctx).Consistent(true)
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	modelBoardID := satlab.MakeSatlabStableVersionID("", board, model)
+
+	_, err := satlab.GetSatlabStableVersionEntryByRawID(ctx, modelBoardID)
+	if !datastore.IsErrNoSuchEntity(err) {
+		t.Errorf("error should be no such entity: %s", err)
+	}
+
+	satlab.PutSatlabStableVersionEntry(ctx, &satlab.SatlabStableVersionEntry{
+		ID:      modelBoardID,
+		OS:      "o",
+		FW:      "fw",
+		FWImage: "i",
+	})
+
+	expected := &satlab.SatlabStableVersionEntry{
+		ID:      modelBoardID,
+		OS:      "o",
+		FW:      "fw",
+		FWImage: "i",
+	}
+	actual, err := satlab.GetSatlabStableVersionEntryByRawID(ctx, modelBoardID)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if diff := cmp.Diff(expected, actual, cmpopts.IgnoreUnexported(satlab.SatlabStableVersionEntry{})); diff != "" {
+		t.Errorf("unexpected diff (-want +got): %s", err)
+	}
+
+	resp, err := tf.Inventory.GetStableVersion(ctx, &fleet.GetStableVersionRequest{
+		Hostname: hostname,
 	})
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)

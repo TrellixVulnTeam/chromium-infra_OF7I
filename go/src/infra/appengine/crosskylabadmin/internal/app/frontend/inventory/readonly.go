@@ -478,8 +478,16 @@ func getServoHostHostname(dut *inventory.DeviceUnderTest) (string, error) {
 	return "", errors.Reason("no \"servo_host\" attribute for hostname %q", dut.GetCommon().GetHostname()).Err()
 }
 
+// getDUTOverrideForTests is an override for tests only.
+//
+// Do not set this variable for any other purpose.
+var getDUTOverrideForTests func(context.Context, inventoryClient, string) (*inventory.DeviceUnderTest, error) = nil
+
 // getDUT returns the DUT associated with a particular hostname from datastore
 func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
+	if getDUTOverrideForTests != nil {
+		return getDUTOverrideForTests(ctx, ic, hostname)
+	}
 	if ic == nil {
 		return nil, errors.Reason("Inventory Client cannot be nil").Err()
 	}
