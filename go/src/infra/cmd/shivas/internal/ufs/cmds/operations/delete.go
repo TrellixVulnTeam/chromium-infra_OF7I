@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/internal/ufs/subcmds/asset"
+	"infra/cmd/shivas/internal/ufs/subcmds/attacheddevicemachine"
 	"infra/cmd/shivas/internal/ufs/subcmds/cachingservice"
 	"infra/cmd/shivas/internal/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/internal/ufs/subcmds/drac"
@@ -57,6 +58,9 @@ func (c *delete) Run(a subcommands.Application, args []string, env subcommands.E
 }
 
 // GetCommands lists all the subcommands under delete
+//
+// Aliases:
+//   attacheddevicemachine.DeleteAttachedDeviceMachineCmd = attacheddevicemachine.DeleteADMCmd
 func (c deleteApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
@@ -64,6 +68,8 @@ func (c deleteApp) GetCommands() []*subcommands.Command {
 		dut.DeleteDUTCmd,
 		schedulingunit.DeleteSchedulingUnitCmd,
 		machine.DeleteMachineCmd,
+		attacheddevicemachine.DeleteAttachedDeviceMachineCmd,
+		attacheddevicemachine.DeleteADMCmd,
 		host.DeleteHostCmd,
 		kvm.DeleteKVMCmd,
 		rpm.DeleteRPMCmd,

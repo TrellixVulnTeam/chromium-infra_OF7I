@@ -2025,6 +2025,21 @@ Example attached device machine:
 
 The protobuf definition of machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/unifiedfleet/api/v1/models/machine.proto`
+
+	// DeleteAttachedDeviceMachineText long description for DeleteADMCmd
+	DeleteAttachedDeviceMachineText string = `Delete an attached device machine (Hardware asset: Android Phone, iPad, etc.).
+
+Example:
+shivas delete attached-device-machine {Machine Name}
+Deletes the given attached device machine based on machine name.
+`
+	// DeleteADMText long description for DeleteADMCmd
+	DeleteADMText string = `Delete an attached device machine (Hardware asset: Android Phone, iPad, etc.).
+
+Example:
+shivas delete adm {Machine Name}
+Deletes the given attached device machine based on machine name.
+`
 )
 
 func CronTriggerAvailableJobsString() string {
