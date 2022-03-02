@@ -71,8 +71,12 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 	if err := i.makeTaskResultsDir(); err != nil {
 		return nil, errors.Annotate(err, "create task result directory").Err()
 	}
-	if err := i.loadDUTHarnesses(ctx); err != nil {
-		return nil, errors.Annotate(err, "load DUTHarness").Err()
+	if i.Info.IsSchedulingUnit {
+		if err := i.loadDutHarnessesFromSU(ctx); err != nil {
+			return nil, errors.Annotate(err, "load DUTHarness from scheduling unit").Err()
+		}
+	} else {
+		i.DUTs = append(i.DUTs, makeDUTHarnessWithId(i.Info))
 	}
 	for _, dh := range i.DUTs {
 		for _, o := range o {
@@ -114,17 +118,8 @@ func (i *Info) makeTaskResultsDir() error {
 	return nil
 }
 
-// loadDUTHarnesses populates DUT harness for single DUT or list of DUT harnesses for scheduling unit.
-func (i *Info) loadDUTHarnesses(ctx context.Context) error {
-	if i.Info.IsSchedulingUnit {
-		return i.loadSUHarnesses(ctx)
-	}
-	i.DUTs = append(i.DUTs, makeDUTHarnessWithId(i.Info))
-	return nil
-}
-
-// loadSUHarnesses populates DUT harness for every single DUT in scheduling unit.
-func (i *Info) loadSUHarnesses(ctx context.Context) error {
+// loadDutHarnessesFromSU populates DUT harness for every single DUT in scheduling unit.
+func (i *Info) loadDutHarnessesFromSU(ctx context.Context) error {
 	// Get a SchedulingUnit from UFS, unlike a DeviceUnderTest, a SchedulingUnit doesn't
 	// have ID field, so both dut_id and dut_name swarming dimensions are referred from
 	// name field of SchedulingUnit.
