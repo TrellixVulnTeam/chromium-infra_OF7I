@@ -42,7 +42,8 @@ const crosRepairPlanActions = `
 		"cros_ping"
 	],
 	"recovery_actions": [
-		"cros_servo_power_reset_repair"
+		"cros_servo_power_reset_repair",
+		"Trigger kernel panic to reset the whole board and try ssh to DUT"
 	]
 },
 "internal_storage":{
@@ -632,27 +633,54 @@ const crosRepairPlanActions = `
 	"docs":[
 		"This repair action will use servod command to reset power_state on the DUT.",
 		"TODO: (blocked by: b/221083688) Collect logs from a successfully repaired DUT."
-    ],
-    "exec_timeout": {
-        "seconds":200
-    },
-    "conditions":[
-        "servod_echo"
-    ],
-    "dependencies":[
-        "servo_power_state_reset",
-        "wait_device_to_boot_after_reset"
-    ],
-    "exec_name":"sample_pass"
+	],
+	"exec_timeout": {
+		"seconds":200
+	},
+	"conditions":[
+		"servod_echo"
+	],
+	"dependencies":[
+		"servo_power_state_reset",
+		"wait_device_to_boot_after_reset"
+	],
+	"exec_name":"sample_pass"
 },
 "wait_device_to_boot_after_reset":{
 	"docs":[
 		"Try to wait device to be sshable after the device being rebooted."
-    ],
-    "exec_timeout": {
-        "seconds":150
-    },
-    "exec_name":"cros_ssh"
+	],
+	"exec_timeout": {
+		"seconds":150
+	},
+	"exec_name":"cros_ssh"
+},
+"Trigger kernel panic to reset the whole board and try ssh to DUT":{
+	"docs":[
+		"This repair action repairs a Chrome device by sending a system request to the kernel.",
+		"TODO: (blocked by: b/221083688) Collect logs from a successfully repaired DUT."
+	],
+	"conditions":[
+		"servod_echo"
+	],
+	"dependencies":[
+		"Trigger kernel panic by servod",
+		"wait_device_to_boot_after_reset"
+	],
+	"exec_name":"sample_pass"
+},
+"Trigger kernel panic by servod":{
+	"docs":[
+		"This repair action repairs a Chrome device by sending a system request to the kernel."
+	],
+	"conditions":[
+		"servod_echo"
+	],
+	"exec_extra_args":[
+		"count:3",
+		"retry_interval:2"
+	],
+	"exec_name":"servo_trigger_kernel_panic"
 }
 `
 
