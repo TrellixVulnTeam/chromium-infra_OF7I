@@ -28,3 +28,5 @@ PROPERTIES = {
             kind=str,
             default='latest'),
 }
+
+PYTHON_VERSION_COMPATIBILITY = 'PY3'

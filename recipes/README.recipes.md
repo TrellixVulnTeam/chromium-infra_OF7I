@@ -15,7 +15,7 @@
   * [provenance](#recipe_modules-provenance) (Python3 ✅)
   * [recipe_autoroller](#recipe_modules-recipe_autoroller) (Python3 ✅)
   * [support_3pp](#recipe_modules-support_3pp) (Python3 ✅) &mdash; Allows uniform cross-compiliation, version tracking and archival for third-party software packages (libs+tools) for distribution via CIPD.
-  * [windows_adk](#recipe_modules-windows_adk)
+  * [windows_adk](#recipe_modules-windows_adk) (Python3 ✅)
   * [windows_scripts_executor](#recipe_modules-windows_scripts_executor) (Python3 ✅)
   * [windows_sdk](#recipe_modules-windows_sdk) (Python3 ✅)
   * [zip](#recipe_modules-zip) (Python3 ✅)
@@ -975,7 +975,7 @@ Set the CIPD namespace (str) to store the source of the packages.
 
 [DEPS](/recipes/recipe_modules/windows_adk/__init__.py#5): [powershell](#recipe_modules-powershell), [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [WindowsADKApi](/recipes/recipe_modules/windows_adk/api.py#15)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
