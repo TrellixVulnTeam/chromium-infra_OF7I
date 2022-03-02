@@ -4,6 +4,8 @@
 
 import {CustomQuestion, IssueCategory, SelectMenuOption, IssueWizardPersona} from "./IssueWizardTypes";
 
+
+const CHROME_VERSION_REX = /chrome\/(\d|\.)+/i;
 // this function is used to get the issue list belong to different persona
 // when a user group is selected a list of related issue categories will show up
 export function GetCategoriesByPersona (categories: IssueCategory[]): Map<IssueWizardPersona, SelectMenuOption[]> {
@@ -42,6 +44,7 @@ export function GetSelectMenuOptions(optionsList: string[]): SelectMenuOption[] 
   });
   return selectMenuOptionList;
 }
+
 /**
  * Detects the user's operating system.
  */
@@ -68,39 +71,6 @@ export function GetSelectMenuOptions(optionsList: string[]): SelectMenuOption[] 
 
 }
 
-/**
- * Detects the user's browser.
- */
- export function getBrowser() {
-  const userAgent = window.navigator.userAgent;
-  if (userAgent.indexOf("Firefox") > -1) {
-    return "Mozilla Firefox";
-    // "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0"
-  } else if (userAgent.indexOf("SamsungBrowser") > -1) {
-    return "Samsung Internet";
-    // "Mozilla/5.0 (Linux; Android 9; SAMSUNG SM-G955F Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/9.4 Chrome/67.0.3396.87 Mobile Safari/537.36
-  } else if (userAgent.indexOf("Opera") > -1 || userAgent.indexOf("OPR") > -1) {
-    return "Opera";
-    // "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 OPR/57.0.3098.106"
-  } else if (userAgent.indexOf("Trident") > -1) {
-    return "Microsoft Internet Explorer";
-    // "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; Zoom 3.6.0; wbx 1.0.0; rv:11.0) like Gecko"
-  } else if (userAgent.indexOf("Edge") > -1) {
-    return "Microsoft Edge (Legacy)";
-    // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
-  } else if (userAgent.indexOf("Edg") > -1) {
-    return "Microsoft Edge (Chromium)";
-    // Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.64
-  } else if (userAgent.indexOf("Chrome") > -1) {
-    return "Google Chrome or Chromium";
-    // "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/66.0.3359.181 Chrome/66.0.3359.181 Safari/537.36"
-  } else if (userAgent.indexOf("Safari") > -1) {
-    return "Apple Safari";
-    // "Mozilla/5.0 (iPhone; CPU iPhone OS 11_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1 980x1306"
-  }
-  return 'Unknown / Other';
-}
-
 // this function is used to get the tip belong to different issue category
 // used for render detail page
 export function getTipByCategory(categories: IssueCategory[]): Map<string, string> {
@@ -124,20 +94,37 @@ export function getCompValByCategory(categories: IssueCategory[]): Map<string, s
   return compValByCategory;
 }
 
-export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, browser: string): string {
+export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, chromeVersion: string): string {
   const issueDescription =
     "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n\n"
     + "Problem Description:\n" + description.trim() + "\n\n"
     + "Additional Comments:\n" + comments.trim() + "\n\n"
-    + "Browser:" + browser.trim() + "\n\n"
+    + "Chrome version:" + chromeVersion.trim() + "\n\n"
     + "OS:" + os.trim();
   return issueDescription;
 }
 
-export function buildIssueLabels(category: string, osName: string): Array<any> {
-  return [
+export function buildIssueLabels(category: string, osName: string, chromeVersion: string): Array<any> {
+  const labels = [
     {label:'via-wizard-'+category},
     {label:'Pri-2'},
     {label:osName},
   ];
+  const mainChromeVersion = chromeVersion.split('.').length > 0 ? chromeVersion.split('.')[0] : null;
+  if (mainChromeVersion !== null) {
+    labels.push({
+      label:'Needs-Triage-M'+mainChromeVersion
+    });
+  }
+  return labels;
+}
+
+
+export function getChromeVersion() {
+  const userAgent = window.navigator.userAgent;
+  var browser= userAgent.match(CHROME_VERSION_REX) || [];
+  if (browser.length > 0) {
+    return browser[0].split('/')[1];
+  }
+  return '';
 }

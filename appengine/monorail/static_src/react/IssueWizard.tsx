@@ -10,7 +10,7 @@ import LandingStep from './issue-wizard/LandingStep.tsx';
 import DetailsStep from './issue-wizard/DetailsStep.tsx'
 import {IssueWizardPersona} from './issue-wizard/IssueWizardTypes.tsx';
 import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
-import {getOs, getBrowser, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
+import {getOs, getChromeVersion, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
 import Header from './issue-wizard/Header.tsx'
 
 import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory} from './issue-wizard/IssueWizardUtils.tsx';
@@ -46,9 +46,9 @@ export function IssueWizard(props: Props): ReactElement {
       oneLineSummary: '',
       stepsToReproduce: '',
       describeProblem: '',
+      chromeVersion: getChromeVersion(),
+      osName: getOs(),
     });
-  const [osName, setOsName] = React.useState(getOs());
-  const [browserName, setBrowserName] = React.useState(getBrowser());
 
   const questionByCategory = GetQuestionsByCategory(ISSUE_WIZARD_QUESTIONS);
 
@@ -57,6 +57,8 @@ export function IssueWizard(props: Props): ReactElement {
       oneLineSummary: '',
       stepsToReproduce: '',
       describeProblem: '',
+      chromeVersion: getChromeVersion(),
+      osName: getOs(),
     });
     setIsRegression(false);
   }
@@ -81,10 +83,6 @@ export function IssueWizard(props: Props): ReactElement {
           setTextValues={setTextValues}
           category={category}
           setActiveStep={setActiveStep}
-          osName={osName}
-          setOsName={setOsName}
-          browserName={browserName}
-          setBrowserName={setBrowserName}
           setIsRegression={setIsRegression}
     />;
    } else if (activeStep === 2) {
@@ -93,8 +91,8 @@ export function IssueWizard(props: Props): ReactElement {
     const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, onSuccess: Function, onFailure: Function) => {
       const summary = textValues.oneLineSummary;
       const component =  compValByCategory.get(category);
-      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, osName, browserName);
-      const labels = buildIssueLabels(category, osName);
+      const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, textValues.osName, textValues.chromeVersion);
+      const labels = buildIssueLabels(category, textValues.osName, textValues.chromeVersion);
 
       const {expandDescription, expandLabels, compVal} =
         expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels, component);

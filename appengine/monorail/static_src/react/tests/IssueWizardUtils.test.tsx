@@ -4,9 +4,9 @@
 
 import {assert, expect} from 'chai';
 import {IssueWizardPersona, IssueCategory, CustomQuestionType} from '../issue-wizard/IssueWizardTypes.tsx';
-import {GetCategoriesByPersona, GetQuestionsByCategory, buildIssueDescription} from '../issue-wizard/IssueWizardUtils.tsx';
+import {GetCategoriesByPersona, GetQuestionsByCategory, buildIssueDescription, getChromeVersion} from '../issue-wizard/IssueWizardUtils.tsx';
 
-describe('IssueWizardUtils', () => {
+describe.only('IssueWizardUtils', () => {
   it('generate the issue categories to user persona map', () => {
     const categories: IssueCategory[]= [
       {
@@ -59,5 +59,27 @@ describe('IssueWizardUtils', () => {
     expect(description).to.contains('Steps to reproduce the problem:');
     expect(description).to.contains('Problem Description:');
     expect(description).to.contains('Additional Comments:');
-  })
+  });
+
+  it('test the chrome version regex match', () => {
+    const navigatorMock = {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36'
+    };
+    Object.defineProperty(window, 'navigator', {
+        value: navigatorMock
+      });
+    const chrome_version = getChromeVersion();
+    assert(chrome_version, '98.0.4758.109');
+  });
+
+  it('test the chrome version regex not match', () => {
+    const navigatorMock = {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36'
+    };
+    Object.defineProperty(window, 'navigator', {
+        value: navigatorMock
+      });
+    const chrome_version = getChromeVersion();
+    assert.equal(chrome_version.length, 0);
+  });
 });

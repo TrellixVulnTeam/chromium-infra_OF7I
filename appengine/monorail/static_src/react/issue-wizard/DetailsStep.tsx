@@ -9,7 +9,7 @@ import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import SelectMenu from './SelectMenu.tsx';
-import {OS_LIST, BROWSER_LIST, ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts'
+import {OS_LIST, ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts'
 import {getTipByCategory} from './IssueWizardUtils.tsx';
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 
@@ -37,6 +37,13 @@ const useStyles = makeStyles((theme: Theme) =>
     grey: {
         color: grey[600],
     },
+    inlineStyle: {
+      display: 'inline-flex',
+      alignItems: 'center',
+    },
+    inlineTitle: {
+      marginRight: '10px',
+    }
   }), {defaultTheme: theme}
 );
 
@@ -47,8 +54,6 @@ type Props = {
   setActiveStep: Function,
   osName: string,
   setOsName: Function,
-  browserName: string
-  setBrowserName: Function,
   setIsRegression: Function,
 };
 
@@ -60,10 +65,6 @@ export default function DetailsStep(props: Props): React.ReactElement {
     setTextValues,
     category,
     setActiveStep,
-    osName,
-    setOsName,
-    browserName,
-    setBrowserName,
     setIsRegression
   } = props;
 
@@ -71,6 +72,10 @@ export default function DetailsStep(props: Props): React.ReactElement {
     const textInput = e.target.value;
     setTextValues({...textValues, [valueName]: textInput});
   };
+
+  const selectOs = (os: string) => {
+    setTextValues({...textValues, 'osName': os});
+  }
   const tipByCategory = getTipByCategory(ISSUE_WIZARD_QUESTIONS);
 
   const nextEnabled =
@@ -81,7 +86,6 @@ export default function DetailsStep(props: Props): React.ReactElement {
   const getTipInnerHtml = () => {
     return {__html: tipByCategory.get(category)};
   }
-
   return (
     <>
         <h2 className={classes.grey}>Details for problems with {category}</h2>
@@ -90,10 +94,14 @@ export default function DetailsStep(props: Props): React.ReactElement {
           <div dangerouslySetInnerHTML={getTipInnerHtml()}/>
 
           <h3 className={classes.head}>Please confirm that the following version information is correct. <span className={classes.red}>*</span></h3>
-          <h3>Operating System:</h3>
-          <SelectMenu optionsList={OS_LIST} selectedOption={osName} setOption={setOsName} />
-          <h3>Browser:</h3>
-          <SelectMenu optionsList={BROWSER_LIST} selectedOption={browserName} setOption={setBrowserName} />
+          <div className={classes.inlineStyle}>
+            <h3 className={classes.inlineTitle}>Operating System:</h3>
+            <SelectMenu optionsList={OS_LIST} selectedOption={textValues.osName} setOption={selectOs} />
+          </div>
+          <div className={classes.inlineStyle}>
+            <h3 className={classes.inlineTitle}>Chrome version: </h3>
+            <TextField variant="outlined" onChange={handleChange('chromeVersion')} value={textValues.chromeVersion}/>
+          </div>
 
           <h3 className={classes.head}>Please enter a one line summary <span className={classes.red}>*</span></h3>
           <TextField id="outlined-basic-1" variant="outlined" inputProps={{maxLength: 100}} onChange={handleChange('oneLineSummary')} value={textValues.oneLineSummary}/>
