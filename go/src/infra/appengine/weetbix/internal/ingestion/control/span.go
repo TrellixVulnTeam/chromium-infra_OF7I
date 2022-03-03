@@ -9,15 +9,19 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/spanner"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/server/span"
+	"google.golang.org/protobuf/proto"
+
 	"infra/appengine/weetbix/internal/config"
 	ctlpb "infra/appengine/weetbix/internal/ingestion/control/proto"
 	spanutil "infra/appengine/weetbix/internal/span"
-
-	"cloud.google.com/go/spanner"
-	"github.com/golang/protobuf/proto"
-	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/server/span"
 )
+
+// PresubmitJoinStatsHours is the number of previous hours
+// ReadPresubmitJoinStats reads statistics for.
+const PresubmitJoinStatsHours = 24
 
 // Entry is an ingestion control record, used to de-duplicate build ingestions
 // and synchronise them with presubmit results (if required).
@@ -47,6 +51,9 @@ type Entry struct {
 
 	// LastUpdated is the Spanner commit time the row was last updated.
 	LastUpdated time.Time
+
+	// CreationTime is the Spanner commit time the row was created.
+	CreationTime time.Time
 }
 
 // Read reads ingestion control records for the specified build IDs.
@@ -70,21 +77,24 @@ func Read(ctx context.Context, project string, buildIDs []string) ([]*Entry, err
 		"IsPresubmit",
 		"PresubmitResult",
 		"LastUpdated",
+		"CreationTime",
 	}
 	entryByBuildID := make(map[string]*Entry)
 	rows := span.Read(ctx, "IngestionControl", spanner.KeySetFromKeys(keys...), cols)
 	f := func(r *spanner.Row) error {
 		var buildID string
 		var buildResultBytes []byte
-		var isPresubmit bool
+		var isPresubmit spanner.NullBool
 		var presubmitResultBytes []byte
 		var lastUpdated time.Time
+		var creationTime spanner.NullTime
 
 		err := r.Columns(&buildID,
 			&buildResultBytes,
 			&isPresubmit,
 			&presubmitResultBytes,
-			&lastUpdated)
+			&lastUpdated,
+			&creationTime)
 		if err != nil {
 			return errors.Annotate(err, "read IngestionControl row").Err()
 		}
@@ -104,12 +114,14 @@ func Read(ctx context.Context, project string, buildIDs []string) ([]*Entry, err
 		}
 
 		entryByBuildID[buildID] = &Entry{
-			Project:         project,
-			BuildID:         buildID,
-			BuildResult:     buildResult,
-			IsPresubmit:     isPresubmit,
+			Project:     project,
+			BuildID:     buildID,
+			BuildResult: buildResult,
+			// IsPresubmit uses NULL to indicate false.
+			IsPresubmit:     isPresubmit.Valid && isPresubmit.Bool,
 			PresubmitResult: presubmitResult,
 			LastUpdated:     lastUpdated,
+			CreationTime:    creationTime.Time,
 		}
 		return nil
 	}
@@ -127,24 +139,115 @@ func Read(ctx context.Context, project string, buildIDs []string) ([]*Entry, err
 	return result, nil
 }
 
-// InsertOrUpdate creates or updates an ingestion control record to
-// match the specified details. To avoid clobbering an existing record,
-// this should be performed in the same transaction as a Read() of
-// the record.
-func InsertOrUpdate(ctx context.Context, e *Entry) error {
+// Update updates an existing ingestion control record to match the
+// specified details.
+func Update(ctx context.Context, e *Entry) error {
 	if err := validateEntry(e); err != nil {
 		return err
 	}
-	m := spanutil.InsertOrUpdateMap("IngestionControl", map[string]interface{}{
+	m := spanutil.UpdateMap("IngestionControl", map[string]interface{}{
 		"Project":         e.Project,
 		"BuildId":         e.BuildID,
 		"BuildResult":     e.BuildResult,
-		"IsPresubmit":     e.IsPresubmit,
+		"IsPresubmit":     spanner.NullBool{Valid: e.IsPresubmit, Bool: e.IsPresubmit},
 		"PresubmitResult": e.PresubmitResult,
 		"LastUpdated":     spanner.CommitTimestamp,
 	})
 	span.BufferWrite(ctx, m)
 	return nil
+}
+
+// Create creates an ingestion control record with the specified details.
+func Create(ctx context.Context, e *Entry) error {
+	if err := validateEntry(e); err != nil {
+		return err
+	}
+	m := spanutil.InsertMap("IngestionControl", map[string]interface{}{
+		"Project":         e.Project,
+		"BuildId":         e.BuildID,
+		"BuildResult":     e.BuildResult,
+		"IsPresubmit":     spanner.NullBool{Valid: e.IsPresubmit, Bool: e.IsPresubmit},
+		"PresubmitResult": e.PresubmitResult,
+		"LastUpdated":     spanner.CommitTimestamp,
+		"CreationTime":    spanner.CommitTimestamp,
+	})
+	span.BufferWrite(ctx, m)
+	return nil
+}
+
+// PresubmitJoinStatistics captures indicators of how well CV Run completions
+// are being joined with buildbucket build completions.
+type PresubmitJoinStatistics struct {
+	// TotalBuildsByHour captures the total number of presubmit builds notified
+	// to ingestion, either by way of a CV run completion notification and/or
+	// buildbucket completion notification, by hours since the control
+	// record for the build was first created. Index 0 indicates the period
+	// from ]-1 hour, now], index 1 indicates [-2 hour, -1 hour] and so on.
+	TotalBuildsByHour []int64
+	// AwaitingBuildByHour is the number of presubmit builds which are
+	// not ingested because they are pending a build completion notification
+	// from buildbucket, by hours since the control record for the
+	// build was first created. See TotalBuildsByHour for how to index into
+	// this slice.
+	AwaitingBuildByHour []int64
+	// AwaitingPresubmitResultByHour is the number of presubmit builds which
+	// are not ingested because they are pending a presubmit run completion
+	// notification, by hours since the control record for the build was
+	// first created. See TotalBuildsByHour for how to index into
+	// this slice.
+	AwaitingPresubmitResultByHour []int64
+}
+
+// ReadPresubmitJoinStatistics reads indicators of how well CV Run completions
+// are being joined with buildbucket build completions. The last 24 hours of
+// data for each project is returned.
+func ReadPresubmitJoinStatistics(ctx context.Context) (map[string]PresubmitJoinStatistics, error) {
+	stmt := spanner.NewStatement(`
+		SELECT
+		  project,
+		  TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), CreationTime, HOUR) as hour,
+		  COUNT(*) as total,
+		  COUNTIF(NOT HasBuildResult) as no_build_result,
+		  COUNTIF(NOT HasPresubmitResult) as no_presubmit_result
+		FROM IngestionControl@{FORCE_INDEX=IngestionControlByIsPresubmit, spanner_emulator.disable_query_null_filtered_index_check=true}
+		WHERE IsPresubmit
+		  AND CreationTime >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @hours HOUR)
+		GROUP BY project, hour
+	`)
+	stmt.Params["hours"] = PresubmitJoinStatsHours
+
+	result := make(map[string]PresubmitJoinStatistics)
+	it := span.Query(ctx, stmt)
+	err := it.Do(func(r *spanner.Row) error {
+		var project string
+		var hour int64
+		var total, noBuildResult, noPresubmitResult int64
+
+		err := r.Columns(&project, &hour, &total, &noBuildResult, &noPresubmitResult)
+		if err != nil {
+			return errors.Annotate(err, "read row").Err()
+		}
+
+		stats, ok := result[project]
+		if !ok {
+			stats = PresubmitJoinStatistics{
+				// Add zero data for all hours.
+				TotalBuildsByHour:             make([]int64, PresubmitJoinStatsHours),
+				AwaitingBuildByHour:           make([]int64, PresubmitJoinStatsHours),
+				AwaitingPresubmitResultByHour: make([]int64, PresubmitJoinStatsHours),
+			}
+		}
+		stats.TotalBuildsByHour[hour] = total
+		stats.AwaitingBuildByHour[hour] = noBuildResult
+		stats.AwaitingPresubmitResultByHour[hour] = noPresubmitResult
+
+		result[project] = stats
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "query presubmit join stats by project").Err()
+	}
+	return result, nil
 }
 
 func validateEntry(e *Entry) error {

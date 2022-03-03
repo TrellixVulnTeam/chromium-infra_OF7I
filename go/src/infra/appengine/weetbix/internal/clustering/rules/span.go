@@ -318,6 +318,36 @@ func ReadVersion(ctx context.Context, projectID string) (Version, error) {
 	return result, nil
 }
 
+// ReadTotalActiveRules reads the number active rules, for each LUCI Project.
+// Only returns entries for projects that have any rules (at all). Combine
+// with config if you need zero entries for projects that are defined but
+// have no rules.
+func ReadTotalActiveRules(ctx context.Context) (map[string]int64, error) {
+	stmt := spanner.NewStatement(`
+		SELECT
+		  project,
+		  COUNTIF(IsActive) as active_rules,
+		FROM FailureAssociationRules
+		GROUP BY project
+	`)
+	result := make(map[string]int64)
+	it := span.Query(ctx, stmt)
+	err := it.Do(func(r *spanner.Row) error {
+		var project string
+		var activeRules int64
+		err := r.Columns(&project, &activeRules)
+		if err != nil {
+			return errors.Annotate(err, "read row").Err()
+		}
+		result[project] = activeRules
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "query total active rules by project").Err()
+	}
+	return result, nil
+}
+
 // Create inserts a new failure association rule with the specified details.
 func Create(ctx context.Context, r *FailureAssociationRule, user string) error {
 	if err := validateRule(r); err != nil {

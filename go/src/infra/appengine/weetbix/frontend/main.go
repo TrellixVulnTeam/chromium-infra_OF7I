@@ -34,6 +34,7 @@ import (
 	"infra/appengine/weetbix/internal/analyzedtestvariants"
 	"infra/appengine/weetbix/internal/clustering/reclustering/orchestrator"
 	"infra/appengine/weetbix/internal/config"
+	"infra/appengine/weetbix/internal/metrics"
 	"infra/appengine/weetbix/internal/services/reclustering"
 	"infra/appengine/weetbix/internal/services/resultcollector"
 	"infra/appengine/weetbix/internal/services/resultingester"
@@ -162,6 +163,7 @@ func main() {
 		cron.RegisterHandler("export-test-variants", testvariantbqexporter.ScheduleTasks)
 		cron.RegisterHandler("purge-test-variants", analyzedtestvariants.Purge)
 		cron.RegisterHandler("reclustering", orchestrator.CronHandler)
+		cron.RegisterHandler("global-metrics", metrics.GlobalMetrics)
 
 		// Pub/Sub subscription endpoints.
 		srv.Routes.POST("/_ah/push-handlers/buildbucket", nil, app.BuildbucketPubSubHandler)

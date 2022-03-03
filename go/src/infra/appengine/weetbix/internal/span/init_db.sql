@@ -307,13 +307,22 @@ CREATE TABLE IngestionControl (
   BuildId STRING(1024) NOT NULL,
   -- The build result.
   BuildResult BYTES(MAX),
+  -- Whether the record has any build result.
+  -- Used in index to speed-up to some statistical queries.
+  HasBuildResult BOOL NOT NULL AS (BuildResult IS NOT NULL) STORED,
   -- Is the build part of a presubmit run? If yes, then ingestion should
   -- wait for the presubmit result to be populated before commencing ingestion.
-  IsPresubmit BOOL NOT NULL,
+  -- Use 'true' to indicate true and NULL to indicate false.
+  IsPresubmit BOOL,
   -- The presubmit result.
   PresubmitResult BYTES(MAX),
-  -- The Spanner commit timestamp of when the row was last updated.
+  -- Whether the record has any presubmit result.
+  -- Used in index to speed-up to some statistical queries.
+  HasPresubmitResult BOOL NOT NULL AS (PresubmitResult IS NOT NULL) STORED,
+  -- The Spanner commit time the row was last updated.
   LastUpdated TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
+  -- The Spanner commit time the rule was created.
+  CreationTime TIMESTAMP OPTIONS (allow_commit_timestamp=true),
 ) PRIMARY KEY (Project, BuildId)
 -- 90 days retention, plus some margin (10 days) to ensure ingestion records
 -- are always retained longer than the ingested results (acknowledging
@@ -324,6 +333,11 @@ CREATE TABLE IngestionControl (
 -- https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/issues/32
 -- but **should** be applied to real Spanner instances.
 --, ROW DELETION POLICY (OLDER_THAN(LastUpdated, INTERVAL 100 DAY));
+
+-- Used to speed-up querying join statistics for presubmit runs.
+CREATE NULL_FILTERED INDEX IngestionControlByIsPresubmit
+  ON IngestionControl(IsPresubmit, Project, BuildId)
+  STORING (HasBuildResult, HasPresubmitResult, LastUpdated, CreationTime);
 
 -- Stores transactional tasks reminders.
 -- See https://go.chromium.org/luci/server/tq. Scanned by tq-sweeper-spanner.

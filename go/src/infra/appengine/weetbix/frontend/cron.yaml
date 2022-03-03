@@ -25,3 +25,6 @@ cron:
   # The actual reclustering interval is specified in the system config
   # as reclustering_interval_minutes. This just triggers the orchestrator.
   schedule: every 1 minutes synchronized
+- description: "Global metrics reporting."
+  url: /internal/cron/global-metrics
+  schedule: every 10 minutes synchronized

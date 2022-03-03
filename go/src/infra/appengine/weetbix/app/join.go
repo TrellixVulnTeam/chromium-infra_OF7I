@@ -81,6 +81,7 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 			return err
 		}
 		entry := entries[0]
+		exists := entry != nil
 		// Record does not exist.
 		if entry == nil {
 			entry = &control.Entry{
@@ -98,8 +99,14 @@ func JoinBuildResult(ctx context.Context, project, buildID string, isPresubmit b
 			return nil
 		}
 		entry.BuildResult = br
-		if err := control.InsertOrUpdate(ctx, entry); err != nil {
-			return err
+		if exists {
+			if err := control.Update(ctx, entry); err != nil {
+				return err
+			}
+		} else {
+			if err := control.Create(ctx, entry); err != nil {
+				return err
+			}
 		}
 		saved = true
 		joined = createTaskIfNeeded(ctx, entry)
@@ -148,6 +155,7 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 		}
 		for i, entry := range entries {
 			buildID := buildIDs[i]
+			exists := entry != nil
 			if entry == nil {
 				entry = &control.Entry{
 					Project:     project,
@@ -165,8 +173,14 @@ func JoinPresubmitResult(ctx context.Context, project string, buildIDs []string,
 				return nil
 			}
 			entry.PresubmitResult = pr
-			if err := control.InsertOrUpdate(ctx, entry); err != nil {
-				return err
+			if exists {
+				if err := control.Update(ctx, entry); err != nil {
+					return err
+				}
+			} else {
+				if err := control.Create(ctx, entry); err != nil {
+					return err
+				}
 			}
 			created := createTaskIfNeeded(ctx, entry)
 			if created {

@@ -169,9 +169,10 @@ func TestSpan(t *testing.T) {
 				nil,
 			})
 		})
-		Convey(`ReadLastUpdated`, func() {
+		Convey(`ReadVersion`, func() {
 			Convey(`Empty`, func() {
-				SetRulesForTesting(ctx, nil)
+				err := SetRulesForTesting(ctx, nil)
+				So(err, ShouldBeNil)
 
 				timestamp, err := ReadVersion(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
@@ -202,13 +203,46 @@ func TestSpan(t *testing.T) {
 						WithLastUpdated(reference.Add(-2 * time.Hour)).
 						Build(),
 				}
-				SetRulesForTesting(ctx, rulesToCreate)
+				err := SetRulesForTesting(ctx, rulesToCreate)
+				So(err, ShouldBeNil)
 
 				version, err := ReadVersion(span.Single(ctx), testProject)
 				So(err, ShouldBeNil)
 				So(version, ShouldResemble, Version{
 					Predicates: reference.Add(-1 * time.Second),
 					Total:      reference,
+				})
+			})
+		})
+		Convey(`ReadTotalActiveRules`, func() {
+			Convey(`Empty`, func() {
+				err := SetRulesForTesting(ctx, nil)
+				So(err, ShouldBeNil)
+
+				result, err := ReadTotalActiveRules(span.Single(ctx))
+				So(err, ShouldBeNil)
+				So(result, ShouldResemble, map[string]int64{})
+			})
+			Convey(`Multiple`, func() {
+				rulesToCreate := []*FailureAssociationRule{
+					// Two active and one inactive rule for Project A.
+					NewRule(0).WithProject("project-a").WithActive(true).Build(),
+					NewRule(1).WithProject("project-a").WithActive(false).Build(),
+					NewRule(2).WithProject("project-a").WithActive(true).Build(),
+					// One inactive rule for Project B.
+					NewRule(3).WithProject("project-b").WithActive(false).Build(),
+					// One active rule for Project C.
+					NewRule(4).WithProject("project-c").WithActive(true).Build(),
+				}
+				err := SetRulesForTesting(ctx, rulesToCreate)
+				So(err, ShouldBeNil)
+
+				result, err := ReadTotalActiveRules(span.Single(ctx))
+				So(err, ShouldBeNil)
+				So(result, ShouldResemble, map[string]int64{
+					"project-a": 2,
+					"project-b": 0,
+					"project-c": 1,
 				})
 			})
 		})

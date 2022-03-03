@@ -54,7 +54,8 @@ func NewEntry(uniqifier int) *EntryBuilder {
 				},
 				CreationTime: timestamppb.New(time.Date(2026, time.December, 1, 1, 2, 3, uniqifier*1000, time.UTC)),
 			},
-			LastUpdated: time.Date(2020, time.December, 12, 1, 1, 1, 0, time.UTC),
+			LastUpdated:  time.Date(2020, time.December, 12, 1, 1, 1, uniqifier*1000, time.UTC),
+			CreationTime: time.Date(2020, time.December, 11, 1, 1, 1, uniqifier*1000, time.UTC),
 		},
 	}
 }
@@ -95,6 +96,12 @@ func (b *EntryBuilder) WithLastUpdated(lastUpdated time.Time) *EntryBuilder {
 	return b
 }
 
+// WithCreationTime specifies the created time for the entry.
+func (b *EntryBuilder) WithCreationTime(value time.Time) *EntryBuilder {
+	b.record.CreationTime = value
+	return b
+}
+
 // Build constructs the entry.
 func (b *EntryBuilder) Build() *Entry {
 	return b.record
@@ -114,6 +121,7 @@ func SetEntriesForTesting(ctx context.Context, es []*Entry) (time.Time, error) {
 				"IsPresubmit":     r.IsPresubmit,
 				"PresubmitResult": r.PresubmitResult,
 				"LastUpdated":     r.LastUpdated,
+				"CreationTime":    r.CreationTime,
 			})
 			span.BufferWrite(ctx, ms)
 		}
