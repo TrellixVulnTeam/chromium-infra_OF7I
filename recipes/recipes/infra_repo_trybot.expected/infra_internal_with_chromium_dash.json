@@ -256,7 +256,7 @@
     },
     "name": "get change list",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@change list@infra_internal/appengine/chromiumdash/foo.py@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/chromiumdash/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },

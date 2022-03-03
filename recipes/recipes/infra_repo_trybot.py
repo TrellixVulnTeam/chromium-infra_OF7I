@@ -73,8 +73,7 @@ def RunSteps(api, go_version_variant):
             api.python('python cq tests', 'test.py',
                        ['test', 'infra_internal/services/cq'])
         if internal and (api.platform.is_linux or api.platform.is_mac) and any(
-            f.startswith('infra_internal/appengine/chromiumdash')
-            for f in files):
+            f.startswith('appengine/chromiumdash') for f in files):
           cwd = api.path['checkout'].join('appengine', 'chromiumdash')
           gae_env = {
               'GAE_RUNTIME': 'python3',
@@ -189,7 +188,7 @@ def GenTests(api):
   )
 
   yield (test('infra_internal_with_chromium_dash', internal=True) +
-         diff('infra_internal/appengine/chromiumdash/foo.py'))
+         diff('appengine/chromiumdash/foo.py'))
 
   yield (
     test('only_cipd_build') +
