@@ -44,6 +44,9 @@ func Upload(ctx context.Context, gsClient gsClient, params *Params) error {
 	if params.MaxConcurrentJobs <= 0 {
 		return errors.Reason("upload: max jobs must be positive").Err()
 	}
+	if params.SourceDir == "" {
+		return errors.Reason("upload: source dir cannot be empty").Err()
+	}
 	dirWriter := gs.NewDirWriter(gsClient, params.MaxConcurrentJobs)
 	if err := dirWriter.WriteDir(ctx, params.SourceDir, lucigs.Path(params.GSURL)); err != nil {
 		return errors.Annotate(err, "upload: upload main directory").Err()

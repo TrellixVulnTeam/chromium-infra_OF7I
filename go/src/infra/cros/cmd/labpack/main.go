@@ -83,17 +83,29 @@ func main() {
 				// for the process as a whole. This will also indirectly influence lg.
 				log.SetOutput(os.Stderr)
 
+				logRoot, logRootErr := getBestLogRoot()
+				if logRootErr != nil {
+					// TODO(gregorynisbet): make this error fatal.
+					lg.Error("UNEXPECTED ERROR: failed to get log root: %s", logRootErr)
+				}
+
 				// TODO(gregorynisbet): Remove canary.
 				// Write a labpack canary file with contents that are unique.
-				err := ioutil.WriteFile("./_labpack_canary", []byte("46182c32-2c9d-4abd-a029-54a71c90261e"), 0b110_110_110)
-				if err == nil {
-					lg.Info("successfully wrote canary file")
-				} else {
-					lg.Error("failed to write canary file: %s", err)
+				if logRootErr == nil {
+					err := ioutil.WriteFile(
+						fmt.Sprintf("%s/%s", logRoot, "_labpack_canary"),
+						[]byte("46182c32-2c9d-4abd-a029-54a71c90261e"),
+						0b110_110_110,
+					)
+					if err == nil {
+						lg.Info("successfully wrote canary file")
+					} else {
+						lg.Error("failed to write canary file: %s", err)
+					}
 				}
 
 				res := &steps.LabpackResponse{Success: true}
-				err = internalRun(ctx, input, state, lg)
+				err := internalRun(ctx, input, state, lg, logRoot)
 				if err != nil {
 					res.Success = false
 					res.FailReason = err.Error()
@@ -133,9 +145,7 @@ func main() {
 					ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 					defer cancel()
 					if err := upload.Upload(ctx, client, &upload.Params{
-						// TODO(gregorynisbet): Change this to the log root.
-						SourceDir: ".",
-						// TODO(gregorynisbet): Allow this parameter to be overridden from outside.
+						SourceDir:         logRoot,
 						GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
 						MaxConcurrentJobs: 10,
 					}); err != nil {
@@ -152,7 +162,7 @@ func main() {
 }
 
 // internalRun main entry point to execution received request.
-func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger) (err error) {
+func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State, lg logger.Logger, logRoot string) (err error) {
 	// Catching the panic here as luciexe just set a step as fail and but not exit execution.
 	defer func() {
 		if r := recover(); r != nil {
@@ -188,13 +198,6 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	cr, err := getConfiguration(in.GetConfiguration(), lg)
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
-	}
-
-	// TODO(gregorynisbet): Consider falling back to a temporary directory
-	//                      if we for some reason cannot get our working directory.
-	logRoot, err := os.Getwd()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot get working dir: %s\n", logRoot)
 	}
 
 	runArgs := &recovery.RunArgs{
@@ -259,4 +262,25 @@ func describeEnvironment(stderr io.Writer) error {
 	command.Stdout = stderr
 	err := command.Run()
 	return errors.Annotate(err, "describe environment").Err()
+}
+
+// getBestLogRoot gets the current working directory as an absolute path or
+// falls back to a temporary directory if this is impossible.
+func getBestLogRoot() (string, error) {
+	logRoot, err := os.Getwd()
+	if err == nil {
+		fmt.Fprintf(os.Stderr, "using current working directory\n")
+		return logRoot, nil
+	} else {
+		fmt.Fprintf(os.Stderr, "failed to get current working directory\n")
+	}
+	logRoot, err = ioutil.TempDir("", "_labpack-*")
+	if err == nil {
+		fmt.Fprintf(os.Stderr, "falling back to temporary directory\n")
+		return logRoot, nil
+	} else {
+		fmt.Fprintf(os.Stderr, "somehow we also failed to get a temporary directory\n")
+	}
+	fmt.Fprintf(os.Stderr, "no valid log root\n")
+	return "", errors.Reason("get best log root: cannot find current directory or create temporary directory").Err()
 }
