@@ -2259,6 +2259,20 @@ wheel: <
 
 * *universal*
 
+## **google-api-core-py3**
+
+### 1.31.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-api-core-py3"
+  version: "version:1.31.5"
+>
+```
+
+
+* *universal*
+
 ## **google-api-python-client**
 
 ### 1.12.8
@@ -2635,6 +2649,20 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-pubsub-py3**
+
+### 2.9.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-pubsub-py3"
+  version: "version:2.9.0"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-resource-manager**
 
 ### 0.28.0
@@ -2991,6 +3019,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/grpc-google-iam-v1-py2_py3"
   version: "version:0.11.4"
+>
+```
+
+
+* *universal*
+
+## **grpc-google-iam-v1-py3**
+
+### 0.12.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/grpc-google-iam-v1-py3"
+  version: "version:0.12.3"
 >
 ```
 
