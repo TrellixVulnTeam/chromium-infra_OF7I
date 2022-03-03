@@ -132,14 +132,6 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	if err != nil {
 		return errors.Annotate(err, "internal run").Err()
 	}
-
-	// TODO(gregorynisbet): Consider falling back to a temporary directory
-	//                      if we for some reason cannot get our working directory.
-	logRoot, err := os.Getwd()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot get working dir: %s\n", logRoot)
-	}
-
 	runArgs := &recovery.RunArgs{
 		UnitName:              in.GetUnitName(),
 		TaskName:              task,
@@ -152,7 +144,6 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 		ConfigReader:          cr,
 		SwarmingTaskID:        state.Infra().GetSwarming().GetTaskId(),
 		BuildbucketID:         state.Infra().GetBackend().GetTask().GetId().GetId(),
-		LogRoot:               logRoot,
 	}
 	lg.Debug("Labpack: started recovery engine.")
 	if err := recovery.Run(ctx, runArgs); err != nil {

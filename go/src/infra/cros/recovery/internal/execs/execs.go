@@ -40,10 +40,6 @@ func Register(name string, f ExecFunction) {
 }
 
 // RunArgs holds plan input arguments.
-//
-// Keep this type up to date with recovery.go:RunArgs .
-// Also update recovery.go:runDUTPlans .
-//
 type RunArgs struct {
 	// Resource name targeted by plan.
 	ResourceName string
@@ -61,8 +57,6 @@ type RunArgs struct {
 	SwarmingTaskID string
 	// BuildbucketID is the ID of the buildbucket build we're running under.
 	BuildbucketID string
-	// LogRoot is an absolute path to a directory that contains logs.
-	LogRoot string
 }
 
 // ExecInfo holds all data required to run exec.
