@@ -436,7 +436,7 @@ const servoRepairPlanBody = `
 	"cr50_testlab": {
 		"conditions": [
 			"is_not_servo_v3",
-			"is_servo_v4_type_c"
+			"is_servo_main_ccd_cr50"
 		],
 		"exec_extra_args": [
 			"command:cr50_testlab",
@@ -451,7 +451,8 @@ const servoRepairPlanBody = `
 			"reflash_cr_50_fw_on_dut",
 			"reset_ec_on_dut"
 		],
-		"exec_name":"servo_check_servod_control"
+		"exec_name":"servo_check_servod_control",
+		"allow_fail_after_recovery": true
 	},
 	"init_dut_for_servo": {
 		"conditions": [
@@ -719,6 +720,7 @@ const servoRepairPlanBody = `
 			"servo_warm_reset_pin_for_servo_v3",
 			"servo_warm_reset_pin_for_servo_micro"
 		],
+		"allow_fail_after_recovery": true,
 		"exec_name":"sample_pass"
 	},
 	"servo_cold_reset_pin": {
