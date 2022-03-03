@@ -34,12 +34,23 @@ var crosRepairPlanCriticalActionList = []string{
 
 // List of actions configs for repair of the ChromeOS.
 const crosRepairPlanActions = `
+"Device is pingable": {
+	"dependencies":[
+		"dut_has_name",
+		"dut_has_board_name",
+		"dut_has_model_name"
+	],
+	"exec_name": "cros_ping",
+	"exec_timeout": {
+		"seconds":15
+	}
+},
 "cros_ssh":{
 	"dependencies":[
 		"dut_has_name",
 		"dut_has_board_name",
 		"dut_has_model_name",
-		"cros_ping"
+		"Device is pingable"
 	],
 	"recovery_actions": [
 		"cros_servo_power_reset_repair",
@@ -134,7 +145,7 @@ const crosRepairPlanActions = `
 		"battery_is_good"
 	],
 	"recovery_actions": [
-		"rpm_power_cycle",
+		"Power cycle DUT by RPM and wait",
 		"cros_servo_power_reset_repair",
 		"cros_servo_cr50_reboot_repair"
 	],
@@ -527,7 +538,7 @@ const crosRepairPlanActions = `
 	],
 	"exec_name":"servo_usbkey_has_stable_image",
 	"exec_timeout": {
-		"seconds":90
+		"seconds":120
 	},
 	"recovery_actions":[
 		"Download stable image to USB-key"
@@ -658,6 +669,15 @@ const crosRepairPlanActions = `
 	},
 	"exec_name":"cros_ssh"
 },
+"Wait DUT to be pingable after reset":{
+	"docs":[
+		"Wait DUT to be pingable after some action on it."
+	],
+	"exec_timeout": {
+		"seconds":150
+	},
+	"exec_name":"cros_ping"
+},
 "Trigger kernel panic to reset the whole board and try ssh to DUT":{
 	"docs":[
 		"This repair action repairs a Chrome device by sending a system request to the kernel.",
@@ -730,6 +750,71 @@ const crosRepairPlanActions = `
 		"sleep:1"
 	],
 	"exec_name":"sample_sleep"
+},
+"Read BIOS from DUT by servo":{
+	"docs":[
+		"Read GBB flags from the DUT by servo.",
+		"Set 40 minutes as some FW BIOS is too big and take time to flash it."
+	],
+	"dependencies":[
+		"dut_servo_host_present",
+		"servo_state_is_working"
+	],
+	"exec_name":"cros_read_gbb_by_servo",
+	"exec_timeout": {
+		"seconds":2400
+	}
+},
+"Switch DUT to dev mode":{
+	"docs":[
+		"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive.",
+		"Reboot and wait for device to be back."
+	],
+	"dependencies":[
+		"Set GBB flags to 0x18 by servo",
+		"Wait DUT to be pingable after reset"
+	],
+	"exec_name":"sample_pass"
+},
+"Set GBB flags to 0x18 by servo":{
+	"docs":[
+		"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive.",
+		"Set 40 minutes as some FW BIOS is too big and take time to flash it."
+	],
+	"dependencies":[
+		"Read BIOS from DUT by servo"
+	],
+	"exec_name":"cros_set_gbb_by_servo",
+	"exec_extra_args":[
+		"gbb_flags:0x18"
+	],
+	"exec_timeout": {
+		"seconds":2400
+	}
+},
+"Power cycle DUT by RPM and wait":{
+	"docs":[
+		"Perfrom RPM cycle and wait to device to boot back."
+	],
+	"conditions": [
+		"has_rpm_info"
+	],
+	"dependencies":[
+		"Power cycle DUT by RPM",
+		"Wait DUT to be pingable after reset"
+	],
+	"exec_name":"sample_pass",
+	"run_control": 1
+},
+"Power cycle DUT by RPM":{
+	"docs":[
+		"Power cycle the DUT by RPM outlet."
+	],
+	"conditions": [
+		"has_rpm_info"
+	],
+	"exec_name":"rpm_power_cycle",
+	"run_control": 1
 }
 `
 

@@ -400,7 +400,7 @@ const servoRepairPlanBody = `
 		"exec_name":"sample_fail"
 	},
 	"is_servo_main_ccd_cr50": {
-		"conditions": [
+		"dependencies": [
 			"is_servo_v4",
 			"is_servo_type_ccd"
 		]

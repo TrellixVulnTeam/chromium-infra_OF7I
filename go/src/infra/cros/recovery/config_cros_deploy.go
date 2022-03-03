@@ -8,10 +8,11 @@ package recovery
 var crosDeployPlanCriticalActionList = []string{
 	"Clean up",
 	"Servo has USB-key with require image",
-	"DUT is in dev-mode and allowed to boot from USB-key",
+	"Device is pingable before deploy",
 	"DUT has expected OS version",
 	"DUT has expected test firmware",
 	"Collect DUT labels",
+	"Deployment checks",
 	"DUT verify",
 }
 
@@ -30,15 +31,60 @@ var crosDeployPlanActions = `
 		"usb_boot_enabled:true"
 	],
 	"recovery_actions":[
-		"cros_set_gbb_by_servo"
+		"Set GBB flags to 0x18 by servo"
 	]
+},
+"Device is pingable before deploy":{
+	"docs":[
+		"Verify that device is present in setup.",
+		"All devices is pingable by default even they have prod images on them.",
+		"If device is not pingable then device is off on not connected"
+	],
+	"exec_name":"cros_ping",
+	"exec_timeout": {
+		"seconds":15
+	},
+	"recovery_actions":[
+		"Cold reset DUT by servo and wait to boot",
+		"Power cycle DUT by RPM and wait",
+		"Set GBB flags to 0x18 by servo",
+		"Install OS in DEV mode"
+	]
+},
+"Cold reset DUT by servo and wait to boot":{
+	"docs":[
+		"Verify that device has stable version OS on it and version is match."
+	],
+	"dependencies":[
+		"dut_servo_host_present",
+		"servo_state_is_working",
+		"Cold reset DUT by servo",
+		"Wait DUT to be pingable after reset"
+	],
+	"exec_name":"sample_pass",
+	"run_control": 1
+},
+"Cold reset DUT by servo":{
+	"docs":[
+		"Verify that device has stable version OS on it and version is match."
+	],
+	"dependencies":[
+		"dut_servo_host_present",
+		"servo_state_is_working"
+	],
+	"exec_name":"servo_set",
+	"exec_extra_args":[
+		"command:power_state",
+		"string_value:reset"
+	],
+	"run_control": 1
 },
 "DUT has expected OS version":{
 	"docs":[
 		"Verify that device has stable version OS on it and version is match."
 	],
 	"dependencies":[
-		"cros_ssh",
+		"Device is pingable before deploy",
 		"has_stable_version_cros_image",
 		"has_test_cros_image"
 	],
@@ -59,11 +105,11 @@ var crosDeployPlanActions = `
 		"seconds":600
 	},
 	"recovery_actions":[
-		"Update firmware on the DUT and restart by servo",
-		"Update firmware on the DUT and restart by host"
+		"Update DUT firmware with factory mode and restart by servo",
+		"Update DUT firmware with factory mode and restart by host"
 	]
 },
-"Update firmware on the DUT and restart by servo":{
+"Update DUT firmware with factory mode and restart by servo":{
 	"docs":[
 		"Force update FW on the DUT by factory mode.",
 		"Reboot device by servo"
@@ -81,7 +127,7 @@ var crosDeployPlanActions = `
 		"reboot:by_servo"
 	]
 },
-"Update firmware on the DUT and restart by host":{
+"Update DUT firmware with factory mode and restart by host":{
 	"docs":[
 		"Force update FW on the DUT by factory mode.",
 		"Reboot device by host"
@@ -98,6 +144,29 @@ var crosDeployPlanActions = `
 		"force:true",
 		"reboot:by_host"
 	]
+},
+"Deployment checks":{
+	"docs":[
+		"Run some specif checks as part of deployment.",
+		"TODO: Need finished analysis to create final list"
+	],
+	"dependencies":[
+		"Verify boot in recovery mode",
+		"Verify RPM config (not critical)"
+	],
+	"exec_name":"sample_fail"
+},
+"Verify boot in recovery mode":{
+	"docs":[
+		"TODO: Not implemented yet!"
+	],
+	"exec_name":"sample_fail"
+},
+"Verify RPM config (not critical)":{
+	"docs":[
+		"TODO: Not implemented yet!"
+	],
+	"exec_name":"sample_fail"
 },
 "DUT verify":{
 	"docs":[
@@ -118,6 +187,9 @@ var crosDeployPlanActions = `
 		"Install S on the device from USB-key when device is in DEV-mode.",
 		"TODO: Need implement"
 	],
+	"dependencies":[
+		"Set GBB flags to 0x18 by servo"
+	],
 	"exec_name":"sample_fail"
 },
 "Clean up":{
@@ -128,17 +200,6 @@ var crosDeployPlanActions = `
 		"cros_remove_default_ap_file_servo_host"
 	],
 	"exec_name":"sample_pass"
-},
-"cros_set_gbb_by_servo":{
-	"docs":[
-		"Force to set GBB flags to 0x18 to boot in DEV mode and enable to boot from USB-drive."
-	],
-	"exec_timeout": {
-		"seconds":2000
-	},
-	"exec_extra_args":[
-		"gbb_flags:0x18"
-	]
 },
 "Collect DUT labels":{
 	"dependencies":[
