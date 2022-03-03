@@ -15,18 +15,15 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/golang/protobuf/jsonpb"
-	luciauth "go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
-	lucigs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/luciexe/build"
-	serverauth "go.chromium.org/luci/server/auth"
 
 	"infra/cros/cmd/labpack/internal/site"
 	steps "infra/cros/cmd/labpack/internal/steps"
@@ -37,7 +34,6 @@ import (
 	"infra/cros/recovery/logger"
 	"infra/cros/recovery/logger/metrics"
 	"infra/cros/recovery/tasknames"
-	"infra/cros/recovery/upload"
 )
 
 // LuciexeProtocolPassthru should always be set to false in checked-in code.
@@ -66,7 +62,6 @@ func main() {
 	} else {
 		build.Main(input, &writeOutputProps, &mergeOutputProps,
 			func(ctx context.Context, args []string, state *build.State) error {
-
 				// TODO(otabek@): Add custom logger.
 				lg := logger.NewLogger()
 
@@ -83,55 +78,14 @@ func main() {
 				// for the process as a whole. This will also indirectly influence lg.
 				log.SetOutput(os.Stderr)
 
-				// TODO(gregorynisbet): Remove canary.
-				// Write a labpack canary file with contents that are unique.
-				err := ioutil.WriteFile("./_labpack_canary", []byte("46182c32-2c9d-4abd-a029-54a71c90261e"), 0b110_110_110)
-				if err == nil {
-					lg.Info("successfully wrote canary file")
-				} else {
-					lg.Error("failed to write canary file: %s", err)
-				}
-
-				// Construct the client that we will need to push the logs first.
-				// Eventually, we will make this error fatal. However, for right now, we will
-				// just log whether we succeeded or failed to build the client.
-				rt, err := serverauth.GetRPCTransport(ctx, serverauth.AsSelf)
-				if err == nil {
-					lg.Info("successfully authed!")
-				} else {
-					lg.Error("failed to auth: %s", err)
-				}
-				client, err := lucigs.NewProdClient(ctx, rt)
-				if err == nil {
-					lg.Info("successfully created client")
-				} else {
-					lg.Error("failed to create client: %s", err)
-				}
-
 				res := &steps.LabpackResponse{Success: true}
-				err = internalRun(ctx, input, state, lg)
+				err := internalRun(ctx, input, state, lg)
 				if err != nil {
 					res.Success = false
 					res.FailReason = err.Error()
 					lg.Debug("Finished with err: %s", err)
 				}
 				writeOutputProps(res)
-
-				// Actually persist the logs
-				swarmingTaskID := state.Infra().GetSwarming().GetTaskId()
-				if swarmingTaskID == "" {
-					// Failed to get the swarming task, log and move on.
-					lg.Error("Swarming task is empty!")
-				} else {
-					if err := upload.Upload(ctx, client, &upload.Params{
-						SourceDir:         ".",
-						GSURL:             fmt.Sprintf("gs://chromeos-autotest-results/swarming-%s", swarmingTaskID),
-						MaxConcurrentJobs: 10,
-					}); err != nil {
-						lg.Error("uploading logs: %s", err)
-					}
-				}
-
 				// if err is nil then will marked as SUCCESS
 				return err
 			},
@@ -166,7 +120,7 @@ func internalRun(ctx context.Context, in *steps.LabpackInput, state *build.State
 	var metrics metrics.Metrics
 	if !in.GetNoMetrics() {
 		var err error
-		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(luciauth.Options{}))
+		metrics, err = karte.NewMetrics(ctx, kclient.ProdConfig(auth.Options{}))
 		if err == nil {
 			lg.Info("internal run: metrics client successfully created.")
 		} else {
