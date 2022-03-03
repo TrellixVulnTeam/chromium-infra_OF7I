@@ -343,6 +343,52 @@ func TestRunDUTPlan(t *testing.T) {
 	})
 }
 
+// TestVerify is a smoke test for the verify method.
+// TODO(gregorynisbet): Add fake TLW client so we can test a successful path.
+func TestVerify(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		in   *RunArgs
+		good bool
+	}{
+		{
+			"nil",
+			nil,
+			false,
+		},
+		{
+			"empty",
+			&RunArgs{},
+			false,
+		},
+		{
+			"missing tlw client",
+			&RunArgs{
+				UnitName: "a",
+				LogRoot:  "b",
+			},
+			false,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			expected := tt.good
+			e := tt.in.verify()
+			actual := (e == nil)
+
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("unexpected diff (-want +got): %s", diff)
+			}
+		})
+	}
+}
+
 func TestLocalproxyFlag(t *testing.T) {
 	if jumpHostForLocalProxy != "" {
 		t.Errorf("please keep defaultProxyLabDUT as empty for merge code.")

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
@@ -334,6 +335,7 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		Metrics:        args.Metrics,
 		SwarmingTaskID: args.SwarmingTaskID,
 		BuildbucketID:  args.BuildbucketID,
+		LogRoot:        args.LogRoot,
 	}
 	// As port 22 to connect to the lab is closed and there is work around to
 	// create proxy for local execution. Creating proxy for all resources used
@@ -458,6 +460,10 @@ func collectResourcesForPlan(planName string, dut *tlw.Dut) []string {
 }
 
 // RunArgs holds input arguments for recovery process.
+//
+// Keep this type up to date with internal/execs/execs.go:RunArgs .
+// Also update recovery.go:runDUTPlans .
+//
 type RunArgs struct {
 	// Access to the lab TLW layer.
 	Access tlw.Access
@@ -482,17 +488,25 @@ type RunArgs struct {
 	SwarmingTaskID string
 	// BuildbucketID is the ID of the buildbucket build
 	BuildbucketID string
+	// LogRoot is an absolute path to a directory.
+	// All logs produced by actions or verifiers must be deposited there.
+	LogRoot string
 }
 
 // verify verifies input arguments.
 func (a *RunArgs) verify() error {
-	if a == nil {
+	switch {
+	case a == nil:
 		return errors.Reason("is empty").Err()
-	} else if a.UnitName == "" {
+	case a.UnitName == "":
 		return errors.Reason("unit name is not provided").Err()
-	} else if a.Access == nil {
+	case a.Access == nil:
 		return errors.Reason("access point is not provided").Err()
+	case a.LogRoot == "":
+		// TODO(gregorynisbet): Upgrade this to a real error.
+		fmt.Fprintf(os.Stderr, "%s\n", "log root cannot be empty!\n")
 	}
+	fmt.Fprintf(os.Stderr, "log root is %q\n", a.LogRoot)
 	return nil
 }
 
