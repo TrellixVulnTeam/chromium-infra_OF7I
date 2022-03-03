@@ -15,7 +15,7 @@ import "infra/unifiedfleet/api/v1/models/chromeos/lab/dut_state.proto";
 
 // This proto defines setup labels in lab config of a DUT.
 
-// Peripherals of device. Next Tag: 16
+// Peripherals of device. Next Tag: 17
 message Peripherals {
   Servo servo = 1;
   Chameleon chameleon = 2;
@@ -44,6 +44,7 @@ message Peripherals {
   // Indicate if the DUT's front camera supports region of interest
   // Deprecated.
   bool camera_roi_front = 15 [deprecated=true];
+  repeated BluetoothPeer bluetooth_peers = 16;
 }
 
 // NOTE: RPM cannot be used as there's a same message in api/v1/models/peripherals.proto
@@ -185,4 +186,19 @@ message Camerabox {
   }
   Facing facing = 1;
   Light light = 2;
+}
+
+// RaspberryPi models hardware without an assumption of how
+// it will be used, e.g. Bluetooth peers, audio testing, etc.
+message RaspberryPi {
+  string hostname = 1;
+  PeripheralState state = 2;
+}
+
+// BluetoothPeer is hardware that is used as a Bluetooth peer.
+// It models function rather than hardware.
+message BluetoothPeer {
+  oneof device {
+    RaspberryPi raspberry_pi = 1;
+  }
 }
