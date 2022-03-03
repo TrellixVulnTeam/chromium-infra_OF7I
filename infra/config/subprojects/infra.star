@@ -223,8 +223,6 @@ def tpp_tryjob(builder):
         cq_group = "infra",
         location_regexp = [
             ".+/[+]/3pp/.+",
-            ".+/[+]/recipes/recipe_modules/support_3pp/.+",
-            ".+/[+]/recipes/recipes/3pp.py",
         ],
     )
 
