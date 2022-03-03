@@ -145,7 +145,7 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
       const uploads = loadFiles();
       uploads.then((files) => {
         // TODO: add attachments to request
-        onSubmit(additionalComments, answers, onSuccess, onFailure);
+        onSubmit(additionalComments, answers, files, onSuccess, onFailure);
       }, onFailure)
     } catch (e) {
       onFailure();

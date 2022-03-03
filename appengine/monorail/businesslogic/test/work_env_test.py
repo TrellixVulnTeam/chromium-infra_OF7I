@@ -1454,14 +1454,18 @@ class WorkEnvTest(unittest.TestCase):
         summary='sum',
         status='New',
         field_values=[input_fv])
+    attachments = [
+      ('README.md', 'readme content', 'text/plain'),
+      ('hello.txt', 'hello content', 'text/plain')]
     with self.work_env as we:
-      actual_issue = we.MakeIssue(input_issue, 'description', False)
+      actual_issue = we.MakeIssue(
+        input_issue, 'description', False, attachments)
     self.assertEqual(actual_issue.project_id, 789)
     self.assertEqual(actual_issue.summary, 'sum')
     self.assertEqual(actual_issue.status, 'New')
     self.assertEqual(actual_issue.reporter_id, 111)
     self.assertEqual(actual_issue.field_values, [input_fv])
-
+    self.assertEqual(2, actual_issue.attachment_count)
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(

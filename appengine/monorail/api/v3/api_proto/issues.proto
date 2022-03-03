@@ -446,7 +446,7 @@ message MakeIssueFromTemplateRequest {
 }
 
 // The request message for MakeIssue.
-// Next available tag: 5
+// Next available tag: 6
 message MakeIssueRequest {
   // The name of the project the issue should belong to.
   string parent = 1 [
@@ -458,4 +458,6 @@ message MakeIssueRequest {
   string description = 3;
   // The type of notification the creation should trigger.
   NotifyType notify_type = 4;
+  // The attachment that will be attached to each new issue.
+  repeated AttachmentUpload uploads = 5;
 }

@@ -88,7 +88,7 @@ export function IssueWizard(props: Props): ReactElement {
    } else if (activeStep === 2) {
     const compValByCategory = getCompValByCategory(ISSUE_WIZARD_QUESTIONS);
 
-    const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, onSuccess: Function, onFailure: Function) => {
+    const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, attachments: Array<any>,onSuccess: Function, onFailure: Function) => {
       const summary = textValues.oneLineSummary;
       const component =  compValByCategory.get(category);
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, textValues.osName, textValues.chromeVersion);
@@ -96,7 +96,6 @@ export function IssueWizard(props: Props): ReactElement {
 
       const {expandDescription, expandLabels, compVal} =
         expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels, component);
-
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',
         issue: {
@@ -110,6 +109,7 @@ export function IssueWizard(props: Props): ReactElement {
           labels: expandLabels,
         },
         description: expandDescription,
+        uploads: attachments,
         });
         response.then(onSuccess, onFailure);
     }

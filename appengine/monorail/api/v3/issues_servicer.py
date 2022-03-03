@@ -234,10 +234,14 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     ingested_issue = self.converter.IngestIssue(
         request.issue, project_id)
     send_email = self.converter.IngestNotifyType(request.notify_type)
-
+    ingested_attachments = self.converter.IngestAttachmentUploads(
+      request.uploads)
     with work_env.WorkEnv(mc, self.services) as we:
       created_issue = we.MakeIssue(
-          ingested_issue, request.description, send_email)
+          ingested_issue,
+          request.description,
+          send_email,
+          attachment_uploads=ingested_attachments)
       starred_issue = we.StarIssue(created_issue, True)
 
     return self.converter.ConvertIssue(starred_issue)

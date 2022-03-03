@@ -486,10 +486,13 @@ class IssuesServicerTest(unittest.TestCase):
         cc_users=[issue_objects_pb2.Issue.UserValue(user='users/222')],
         labels=[issue_objects_pb2.Issue.LabelValue(label='foo-bar')]
     )
+
     request = issues_pb2.MakeIssueRequest(
         parent='projects/chicken',
         issue=request_issue,
-        description='description'
+        description='description',
+        uploads=[issues_pb2.AttachmentUpload(
+            filename='mowgli.gif', content='cute dog')],
     )
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
@@ -500,6 +503,20 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(response.cc_users[0].user, 'users/222')
     self.assertEqual(response.labels[0].label, 'foo-bar')
     self.assertEqual(response.star_count, 1)
+    self.assertEqual(response.attachment_count, 1)
+
+    unValid_request = issues_pb2.MakeIssueRequest(
+        parent='projects/chicken',
+        issue=request_issue,
+        description='description',
+        uploads=[issues_pb2.AttachmentUpload(
+            filename='mowgli.gif')],
+    )
+    with self.assertRaisesRegexp(
+      exceptions.InputException,
+      'Uploaded atachment missing filename or content'):
+      self.CallWrapped(self.issues_svcr.MakeIssue, mc, unValid_request)
+
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')

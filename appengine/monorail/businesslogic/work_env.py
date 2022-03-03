@@ -1212,7 +1212,12 @@ class WorkEnv(object):
 
     return tracker_pb2.Issue()
 
-  def MakeIssue(self, issue, description, send_email):
+  def MakeIssue(
+    self,
+    issue,
+    description,
+    send_email,
+    attachment_uploads=None):
     # type: (tracker_pb2.Issue, str, bool) -> tracker_pb2.Issue
     """Check restricted field permissions and create issue.
 
@@ -1220,7 +1225,8 @@ class WorkEnv(object):
       issue: Data for the created issue in a Protocol Bugger.
       description: Description for the initial description comment created.
       send_email: Whether this issue creation should email people.
-
+      attachment_uploads: List of AttachmentUpload tuples to be attached to the
+        new issue.
     Returns:
       The created Issue PB.
 
@@ -1246,6 +1252,7 @@ class WorkEnv(object):
         description,
         blocked_on=issue.blocked_on_iids,
         blocking=issue.blocking_iids,
+        attachments=attachment_uploads,
         dangling_blocked_on=issue.dangling_blocked_on_refs,
         dangling_blocking=issue.dangling_blocking_refs,
         send_email=send_email)
