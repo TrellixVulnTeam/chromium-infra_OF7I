@@ -17,8 +17,8 @@ import (
 // Boot device from servo USB drive when device is in DEV mode.
 func devModeBootFromServoUSBDriveExec(ctx context.Context, info *execs.ExecInfo) error {
 	am := info.GetActionArgs(ctx)
-	waitBootTimeout := time.Duration(am.AsInt(ctx, "boot_timeout", 1))
-	waitBootInterval := time.Duration(am.AsInt(ctx, "retry_interval", 1))
+	waitBootTimeout := am.AsDuration(ctx, "boot_timeout", 1, time.Second)
+	waitBootInterval := am.AsDuration(ctx, "retry_interval", 1, time.Second)
 	servod := info.NewServod()
 	run := info.NewRunner(info.RunArgs.DUT.Name)
 	ping := info.NewPinger(info.RunArgs.DUT.Name)
@@ -26,6 +26,14 @@ func devModeBootFromServoUSBDriveExec(ctx context.Context, info *execs.ExecInfo)
 	return errors.Annotate(err, "dev-mode boot from servo usb-drive").Err()
 }
 
+// Install ChromeOS from servo USB drive when booted from it.
+func runChromeosInstallCommandWhenBootFromUSBDriveExec(ctx context.Context, info *execs.ExecInfo) error {
+	run := info.DefaultRunner()
+	err := cros.RunInstallOSCommand(ctx, info.ActionTimeout, run, info.NewLogger())
+	return errors.Annotate(err, "run install os after boot from USB-drive").Err()
+}
+
 func init() {
 	execs.Register("cros_dev_mode_boot_from_servo_usb_drive", devModeBootFromServoUSBDriveExec)
+	execs.Register("cros_run_chromeos_install_command_after_boot_usbdrive", runChromeosInstallCommandWhenBootFromUSBDriveExec)
 }

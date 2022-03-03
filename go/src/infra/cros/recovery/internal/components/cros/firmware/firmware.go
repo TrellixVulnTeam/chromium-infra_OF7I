@@ -44,6 +44,12 @@ func ReadAPInfoByServo(ctx context.Context, req *ReadAPInfoRequest, run componen
 	if err != nil {
 		return nil, errors.Annotate(err, "read ap info").Err()
 	}
+	defer func() {
+		if cerr := p.Close(ctx); cerr != nil {
+			log.Debug("Close programmer fail: %s", cerr)
+		}
+	}()
+	p.Prepare(ctx)
 	if err := p.ExtractAP(ctx, req.FilePath, req.ForceExtractAPFile); err != nil {
 		return nil, errors.Annotate(err, "read ap info").Err()
 	}
@@ -130,14 +136,18 @@ func SetApInfoByServo(ctx context.Context, req *SetApInfoByServoRequest, run com
 	if err != nil {
 		return errors.Annotate(err, "set ap info").Err()
 	}
+	defer func() {
+		if cerr := p.Close(ctx); cerr != nil {
+			log.Debug("Close programmer fail: %s", cerr)
+		}
+	}()
+	p.Prepare(ctx)
 	if err := p.ExtractAP(ctx, req.FilePath, req.ForceExtractAPFile); err != nil {
 		return errors.Annotate(err, "set ap info").Err()
 	}
 	log.Debug("Set AP info: starting flashing AP to the DUT")
-	if err := p.ProgramAP(ctx, req.FilePath, req.GBBFlags); err != nil {
-		return errors.Annotate(err, "set ap info: read flags").Err()
-	}
-	return nil
+	err = p.ProgramAP(ctx, req.FilePath, req.GBBFlags)
+	return errors.Annotate(err, "set ap info: read flags").Err()
 }
 
 const (

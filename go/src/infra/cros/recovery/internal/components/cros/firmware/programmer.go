@@ -16,12 +16,16 @@ import (
 
 // Programmer represent interface to flash EC/AP to the ChromeOS devices by servo.
 type Programmer interface {
+	// Prepare programmer for actions.
+	Prepare(ctx context.Context) error
 	// ProgramEC programs EC firmware to devices by servo.
 	ProgramEC(ctx context.Context, imagePath string) error
 	// ProgramAP programs AP firmware to devices by servo.
 	ProgramAP(ctx context.Context, imagePath, gbbHex string) error
 	// ExtractAP extracts AP firmware from device.
 	ExtractAP(ctx context.Context, imagePath string, force bool) error
+	// Close closes programming resources.
+	Close(ctx context.Context) error
 }
 
 // NewProgrammer creates programmer to flash device firmware by servo.

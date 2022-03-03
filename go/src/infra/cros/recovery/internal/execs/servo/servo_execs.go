@@ -337,12 +337,12 @@ func servoLowPPDut5Exec(ctx context.Context, info *execs.ExecInfo) error {
 	if err := s.Has(ctx, servodPPDut5Cmd); err != nil {
 		return errors.Annotate(err, "servo low ppdut5 exec").Err()
 	}
-	voltageValue, err := servodGetInt(ctx, s, servodPPDut5Cmd)
+	voltageValue, err := servodGetDouble(ctx, s, servodPPDut5Cmd)
 	if err != nil {
 		return errors.Annotate(err, "servo low ppdut5 exec").Err()
 	}
 	if voltageValue < maxPPDut5MVWhenNotConnected {
-		return errors.Reason("servo low ppdut5 exec: the ppdut5_mv value %d is lower than the threshold %d", voltageValue, maxPPDut5MVWhenNotConnected).Err()
+		return errors.Reason("servo low ppdut5 exec: the ppdut5_mv value %v is lower than the threshold %d", voltageValue, maxPPDut5MVWhenNotConnected).Err()
 	}
 	// TODO: (vkjoshi@): add metrics to collect the value of the
 	// servod control ppdut5_mv when it is below a certain threshold.

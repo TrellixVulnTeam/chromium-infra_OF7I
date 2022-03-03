@@ -18,11 +18,20 @@ import (
 	"infra/cros/recovery/logger"
 )
 
+// servodStateRecord holds state of servod before apply preparation of programmer.
+type servodStateRecord struct {
+	cmd string
+	val interface{}
+}
+
 type v3Programmer struct {
 	st     *servo.ServoType
 	run    components.Runner
 	servod components.Servod
 	log    logger.Logger
+
+	// Servod state before execution.
+	servodState []*servodStateRecord
 }
 
 const (
@@ -112,8 +121,8 @@ func (p *v3Programmer) ExtractAP(ctx context.Context, imagePath string, force bo
 		}
 		p.log.Debug("Using programmer %q", pn)
 		// Reading AP from the DUT.
-		cmd := fmt.Sprintf("flashrom -p %s -f %s", pn, imagePath)
-		if out, err := p.run(ctx, firmwareProgramTimeout, cmd); err != nil {
+		args := []string{"-p", pn, "-f", "-r", imagePath}
+		if out, err := p.run(ctx, firmwareProgramTimeout, "flashrom", args...); err != nil {
 			return errors.Annotate(err, "extract ap from dut: read ap").Err()
 		} else {
 			p.log.Debug("Extract AP: %v", out)
@@ -138,6 +147,69 @@ func (p *v3Programmer) name(ctx context.Context) (string, error) {
 		return fmt.Sprintf("raiden_debug_spi:target=AP,serial=%s", serialname), nil
 	}
 	return "", errors.Reason("name: Not supported servo type").Err()
+}
+
+// Prepare programmer for actions.
+func (p *v3Programmer) Prepare(ctx context.Context) error {
+	err := p.setServodState(ctx)
+	return errors.Annotate(err, "prepare").Err()
+}
+
+func (p *v3Programmer) setServodState(ctx context.Context) error {
+	p.log.Debug("Set servod state to prepare programmer.")
+	for _, s := range p.servodStateList() {
+		sp := strings.Split(s, ":")
+		if len(sp) != 2 {
+			return errors.Reason("prepare servod state: state %q is incorrect", s).Err()
+		}
+		command := sp[0]
+		val := sp[1]
+		if cs, err := p.servod.Get(ctx, command); err != nil {
+			return errors.Annotate(err, "prepare servod state: read servod state").Err()
+		} else if val != cs.GetString_() {
+			// If value is different then we need to save it so later we can restore it.
+			r := &servodStateRecord{
+				cmd: command,
+				val: cs.GetString_(),
+			}
+			p.servodState = append(p.servodState, r)
+		}
+		if err := p.servod.Set(ctx, command, val); err != nil {
+			return errors.Annotate(err, "prepare servod state: set servod state").Err()
+		}
+	}
+	return nil
+}
+
+func (p *v3Programmer) restoreServodState(ctx context.Context) error {
+	for _, s := range p.servodState {
+		if err := p.servod.Set(ctx, s.cmd, s.val); err != nil {
+			return errors.Annotate(err, "prepare servod state: set servod state").Err()
+		}
+	}
+	return nil
+}
+
+func (p *v3Programmer) servodStateList() []string {
+	if p.st.IsCCD() {
+		return nil
+	}
+	return []string{
+		"spi2_vref:pp3300", //Need verify as in some cases it can be pp1800
+		"spi2_buf_en:on",
+		"spi2_buf_on_flex_en:on",
+		"spi_hold:off",
+		"cold_reset:on",
+		"usbpd_reset:on",
+	}
+}
+
+// Close closes programming resources.
+func (p *v3Programmer) Close(ctx context.Context) error {
+	if err := p.restoreServodState(ctx); err != nil {
+		return errors.Annotate(err, "close").Err()
+	}
+	return nil
 }
 
 // ecChip reads ec_chip from servod.

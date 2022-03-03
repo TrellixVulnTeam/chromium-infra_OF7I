@@ -31,7 +31,7 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 	log.Debug(ctx, "Device has GBB flags: %v (%v)", res.GBBFlags, res.GBBFlagsRaw)
 	am := info.GetActionArgs(ctx)
 	// FORCE_DEV_SWITCH_ON 0x00000008 -> 8
-	if am.AsBool(ctx, "in_dev_mode", true) {
+	if am.AsBool(ctx, "validate_in_dev_mode", false) {
 		if res.GBBFlags&8 != 8 {
 			return errors.Reason("read gbb flags: device is not forced to boot to dev mode").Err()
 		}
@@ -39,7 +39,7 @@ func readGbbFlagsByServoExec(ctx context.Context, info *execs.ExecInfo) error {
 		log.Info(ctx, "Not expected GBB flags for dev-mode")
 	}
 	// FORCE_DEV_BOOT_USB 0x00000010 -> 16
-	if am.AsBool(ctx, "usb_boot_enabled", true) {
+	if am.AsBool(ctx, "validate_usb_boot_enabled", false) {
 		if res.GBBFlags&16 != 16 {
 			return errors.Reason("read gbb flags: usb boot in dev mode is not enabled").Err()
 		}

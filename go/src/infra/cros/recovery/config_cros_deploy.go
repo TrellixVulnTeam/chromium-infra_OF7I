@@ -27,8 +27,9 @@ var crosDeployPlanActions = `
 	},
 	"exec_name":"cros_read_gbb_by_servo",
 	"exec_extra_args":[
-		"in_dev_mode:true",
-		"usb_boot_enabled:true"
+		"validate_in_dev_mode:true",
+		"validate_usb_boot_enabled:true",
+		"remove_file:false"
 	],
 	"recovery_actions":[
 		"Set GBB flags to 0x18 by servo"
@@ -45,7 +46,6 @@ var crosDeployPlanActions = `
 		"seconds":15
 	},
 	"recovery_actions":[
-		"Cold reset DUT by servo and wait to boot",
 		"Power cycle DUT by RPM and wait",
 		"Set GBB flags to 0x18 by servo",
 		"Install OS in DEV mode"
@@ -184,13 +184,39 @@ var crosDeployPlanActions = `
 },
 "Install OS in DEV mode":{
 	"docs":[
-		"Install S on the device from USB-key when device is in DEV-mode.",
+		"Install OS on the device from USB-key when device is in DEV-mode.",
 		"TODO: Need implement"
 	],
 	"dependencies":[
-		"Set GBB flags to 0x18 by servo"
+		"Set GBB flags to 0x18 by servo",
+		"Boot DUT from USB in DEV mode",
+		"Run install after boot from USB-drive",
+		"Cold reset DUT by servo and wait to boot",
+		"wait_device_to_boot_after_reset"
 	],
-	"exec_name":"sample_fail"
+	"exec_name":"sample_pass"
+},
+"Boot DUT from USB in DEV mode":{
+	"docs":[
+		"Restart and try to boot from USB-drive"
+	],
+	"exec_name":"cros_dev_mode_boot_from_servo_usb_drive",
+	"exec_extra_args":[
+		"boot_timeout:180",
+		"retry_interval:2"
+	],
+	"exec_timeout": {
+		"seconds":300
+	}
+},
+"Run install after boot from USB-drive":{
+	"docs":[
+		"Perform install process"
+	],
+	"exec_name":"cros_run_chromeos_install_command_after_boot_usbdrive",
+	"exec_timeout": {
+		"seconds":1200
+	}
 },
 "Clean up":{
 	"docs":[

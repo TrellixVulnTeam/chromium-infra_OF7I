@@ -761,6 +761,9 @@ const crosRepairPlanActions = `
 		"servo_state_is_working"
 	],
 	"exec_name":"cros_read_gbb_by_servo",
+	"exec_extra_args":[
+		"remove_file:false"
+	],
 	"exec_timeout": {
 		"seconds":2400
 	}

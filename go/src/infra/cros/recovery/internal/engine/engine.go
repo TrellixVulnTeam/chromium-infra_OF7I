@@ -152,6 +152,13 @@ func (r *recoveryEngine) runAction(ctx context.Context, actionName string, enabl
 		}
 	}
 	log.Info(ctx, "Action %q: started.", actionName)
+	defer func() {
+		if rErr != nil {
+			log.Debug(ctx, "Action %q: finished with error %s.", actionName, rErr)
+		} else {
+			log.Debug(ctx, "Action %q: finished.", actionName)
+		}
+	}()
 	a := r.getAction(actionName)
 	if aErr, ok := r.actionResultFromCache(actionName); ok {
 		if aErr == nil {

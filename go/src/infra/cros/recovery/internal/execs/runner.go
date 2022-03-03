@@ -71,9 +71,10 @@ func (a *RunArgs) NewRunner(host string) Runner {
 			Command:  cmd,
 			Args:     args,
 		})
+		a.Logger.Debug("Run %q completed with exit code %d", r.Command, r.ExitCode)
 		exitCode := r.ExitCode
 		if exitCode != 0 {
-			errAnnotator := errors.Reason("runner: command %q completed with exit code %d", cmd, r.ExitCode)
+			errAnnotator := errors.Reason("runner: command %q completed with exit code %d", r.Command, r.ExitCode)
 			errCodeTagValue := errors.TagValue{Key: ErrCodeTag, Value: exitCode}
 			errAnnotator.Tag(errCodeTagValue)
 			// different kinds of internal errors
