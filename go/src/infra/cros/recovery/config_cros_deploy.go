@@ -85,11 +85,11 @@ var crosDeployPlanActions = `
 	],
 	"dependencies":[
 		"Device is pingable before deploy",
-		"has_stable_version_cros_image",
-		"has_test_cros_image"
+		"has_stable_version_cros_image"
 	],
 	"exec_name":"cros_is_on_stable_version",
 	"recovery_actions":[
+		"install_stable_os",
 		"Install OS in DEV mode"
 	]
 },
@@ -240,25 +240,6 @@ var crosDeployPlanActions = `
 	],
 	"exec_name":"servo_update_servo_type_label",
 	"allow_fail_after_recovery": true
-},
-"device_sku":{
-	"docs":[
-		"Update the device_sku label from the device if not present in inventory data."
-	],
-	"conditions":[
-		"dut_does_not_have_device_sku"
-	],
-	"exec_name":"cros_update_device_sku",
-	"allow_fail_after_recovery": true
-},
-"dut_does_not_have_device_sku":{
-	"docs":[
-		"Confirm that the DUT itself does not have device_sku label."
-	],
-	"conditions":[
-		"dut_has_device_sku"
-	],
-	"exec_name":"sample_fail"
 },
 `
 
