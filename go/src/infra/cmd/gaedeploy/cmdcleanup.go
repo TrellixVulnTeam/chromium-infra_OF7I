@@ -61,7 +61,11 @@ func (c *cmdCleanupRun) exec(ctx context.Context) error {
 
 	mods, err := gcloud.List(ctx, c.appID, "")
 	if err != nil {
-		return errors.Annotate(err, "failed to app versions").Err()
+		return errors.Annotate(err, "failed to list app versions").Err()
+	}
+	if len(mods) == 0 {
+		logging.Warningf(ctx, "No GAE modules found, probably a new app")
+		return nil
 	}
 
 	// Visit modules in deterministic order, cleanup each one separately.

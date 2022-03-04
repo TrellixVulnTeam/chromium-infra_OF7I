@@ -6,6 +6,7 @@
 package gcloud
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -32,8 +33,8 @@ type Version struct {
 
 // List lists deployed versions of an app.
 //
-// Wraps `gcloud app versions list` command. If `module` is given, limits the
-// output only to that module, otherwise lists all modules.
+// Wraps `gcloud app versions list` command. If no matching module is found,
+// returns nil. If empty `module` is given, returns all modules.
 func List(ctx context.Context, appID, module string) (Modules, error) {
 	cmdLine := []string{
 		"gcloud", "app", "versions", "list",
@@ -47,16 +48,17 @@ func List(ctx context.Context, appID, module string) (Modules, error) {
 	logging.Infof(ctx, "Running: %v", cmdLine)
 
 	cmd := exec.CommandContext(ctx, cmdLine[0], cmdLine[1:]...)
-	cmd.Stderr = os.Stderr
-
-	stdout, err := cmd.StdoutPipe()
+	stdout, err := cmd.Output()
+	if exitErr, _ := err.(*exec.ExitError); exitErr != nil {
+		if bytes.Contains(exitErr.Stderr, []byte("not found")) {
+			logging.Warningf(ctx, "%s", exitErr.Stderr)
+			return nil, nil
+		}
+		logging.Errorf(ctx, "%s", exitErr.Stderr)
+	}
 	if err != nil {
-		return nil, errors.Annotate(err, "failed to open stdout pipe").Err()
+		return nil, errors.Annotate(err, "failed to execute gcloud command").Err()
 	}
-	if err := cmd.Start(); err != nil {
-		return nil, errors.Annotate(err, "gcloud call failed to start").Err()
-	}
-	defer cmd.Wait() // release resources no matter what
 
 	// Note: this is a subset of fields we care about.
 	var listing []struct {
@@ -67,11 +69,8 @@ func List(ctx context.Context, appID, module string) (Modules, error) {
 			Datetime string `json:"datetime"` // "2020-03-20 17:42:19-07:00"
 		} `json:"last_deployed_time"`
 	}
-	if err := json.NewDecoder(stdout).Decode(&listing); err != nil {
+	if err := json.Unmarshal(stdout, &listing); err != nil {
 		return nil, errors.Annotate(err, "bad JSON in gcloud output").Err()
-	}
-	if err := cmd.Wait(); err != nil {
-		return nil, errors.Annotate(err, "gcloud call failed").Err()
 	}
 
 	// Convert to our preferred format.
