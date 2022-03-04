@@ -477,7 +477,7 @@ If you don't provide an explicit specification (recommended),
 [Specification Probing](#specification-probing) will be used to determine which
 specification your script should use.
 
-### Propagating VirutalEnv
+### Propagating VirtualEnv
 
 If your script is invoking another Python script, it will likely work without
 modification. This is because `vpython` adds its VirtualEnv's `bin/` directory
