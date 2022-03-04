@@ -6,18 +6,15 @@ per-file cros_flash*=bpastene@chromium.org
 
 per-file depot_tools_builder.py=iannucci@chromium.org
 
-per-file git_cache_updater.py=tandrii@chromium.org
 
 per-file goma_hello_world.py=tikuta@chromium.org
 per-file goma_hello_world.py=yyanagisawa@chromium.org
 per-file goma_hello_world.py=vadimsh@chromium.org
 
 per-file gsubtreed.py=iannucci@chromium.org
-per-file gsubtreed.py=tandrii@chromium.org
 
 # For Go changes.
 per-file infra_*.py=iannucci@chromium.org
-per-file infra_*.py=tandrii@chromium.org
 per-file infra_*.py=vadimsh@chromium.org
 # For Python changes.
 per-file infra_*.py=dtu@google.com
@@ -31,7 +28,6 @@ per-file infra_*.py=zhangtiff@google.com
 per-file lkgr_finder.py=machenbach@chromium.org
 
 per-file luci*.py=iannucci@chromium.org
-per-file luci*.py=tandrii@chromium.org
 per-file luci*.py=vadimsh@chromium.org
 
 per-file recipe_autoroller.py=iannucci@chromium.org
@@ -39,7 +35,6 @@ per-file recipe_autoroller.py=iannucci@chromium.org
 per-file recipe_roll_tryjob.py=martiniss@chromium.org
 
 per-file recipe_simulation.py=iannucci@chromium.org
-per-file recipe_simulation.py=tandrii@chromium.org
 
 per-file sheriff-o-matic-wct.py=seanmccullough@chromium.org
 
