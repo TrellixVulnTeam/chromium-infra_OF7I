@@ -313,6 +313,34 @@
     ]
   },
   {
+    "cmd": [
+      "git",
+      "-c",
+      "core.quotePath=false",
+      "diff",
+      "--name-only",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/builder/0f38554a22313466508b9c8b803b851e8834a1e7",
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "git diff to find changed files"
+  },
+  {
     "cmd": [],
     "name": "remove unused repos"
   },
@@ -376,6 +404,13 @@
     "name": "remove unused repos.rm deadbeef",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "compute affected packages",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@all packages@@@"
     ]
   },
   {

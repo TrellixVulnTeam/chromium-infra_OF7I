@@ -18,6 +18,7 @@ DEPS = [
     'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/properties',
+    'recipe_engine/raw_io',
     'recipe_engine/step',
     'depot_tools/git',
     'depot_tools/tryserver',
@@ -128,6 +129,21 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
           checkout_path = checkout_path.join(*subdir.split('/'))
         api.support_3pp.load_packages_from_path(checkout_path)
 
+    tryserver_affected_files = []
+    if api.tryserver.is_tryserver:
+      tryserver_affected_files = api.git(
+          '-c',
+          'core.quotePath=false',
+          'diff',
+          '--name-only',
+          'HEAD~',
+          name='git diff to find changed files',
+          stdout=api.raw_io.output_text()).stdout.split()
+      tryserver_affected_files = [
+          checkout_path.join(*f.split('/')) for f in tryserver_affected_files
+      ]
+      assert (tryserver_affected_files != [])
+
     with api.step.nest('remove unused repos'):
       leftovers = current_repos - actual_repos
       for hash_name in sorted(leftovers):
@@ -135,11 +151,14 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
                         package_repos.join(hash_name))
 
     _, unsupported = api.support_3pp.ensure_uploaded(
-      to_build, platform, force_build)
+        to_build,
+        platform,
+        force_build=force_build,
+        tryserver_affected_files=tryserver_affected_files)
 
     if unsupported:
       api.step.empty(
-          '%d packges unsupported for %r' % (len(unsupported), platform),
+          '%d packages unsupported for %r' % (len(unsupported), platform),
           step_text='<br/>' + '<br/>'.join(sorted(unsupported)))
 
 
@@ -182,5 +201,8 @@ def GenTests(api):
   test = (
       api.test('basic-tryjob') + defaults() +
       api.buildbucket.try_build('infra') +
-      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo'))
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.override_step_data(
+          'git diff to find changed files',
+          stdout=api.raw_io.output_text('support_3pp/a/3pp.pb')))
   yield test

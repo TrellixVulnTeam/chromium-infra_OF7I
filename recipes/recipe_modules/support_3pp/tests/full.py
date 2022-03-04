@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from recipe_engine import post_process
+from recipe_engine.config import List
 from recipe_engine.recipe_api import Property
 
 from RECIPE_MODULES.infra.support_3pp.resolved_spec import PACKAGE_EPOCH
@@ -10,17 +11,17 @@ from RECIPE_MODULES.infra.support_3pp.resolved_spec import PACKAGE_EPOCH
 PYTHON_VERSION_COMPATIBILITY = "PY3"
 
 DEPS = [
-  'recipe_engine/buildbucket',
-  'recipe_engine/cipd',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/raw_io',
-  'recipe_engine/step',
-
-  'support_3pp',
+    'recipe_engine/buildbucket',
+    'recipe_engine/cipd',
+    'recipe_engine/file',
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/raw_io',
+    'recipe_engine/step',
+    'depot_tools/tryserver',
+    'support_3pp',
 ]
 
 KEY_PATH = ('projects/chops-kms/locations/global/keyRings/'
@@ -28,16 +29,18 @@ KEY_PATH = ('projects/chops-kms/locations/global/keyRings/'
             'cryptoKeyVersions/1')
 
 PROPERTIES = {
-  'GOOS': Property(),
-  'GOARCH': Property(),
-  'experimental': Property(kind=bool, default=False),
-  'load_dupe': Property(kind=bool, default=False),
-  'package_prefix': Property(default='3pp'),
-  'source_cache_prefix': Property(default='sources'),
+    'GOOS': Property(),
+    'GOARCH': Property(),
+    'experimental': Property(kind=bool, default=False),
+    'load_dupe': Property(kind=bool, default=False),
+    'package_prefix': Property(default='3pp'),
+    'source_cache_prefix': Property(default='sources'),
+    'tryserver_affected_files': Property(kind=List(str), default=[]),
 }
 
+
 def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
-             source_cache_prefix):
+             source_cache_prefix, tryserver_affected_files):
   # set a cache directory to be similar to what the actual 3pp recipe does.
   # TODO(iannucci): just move the 3pp recipe into the recipe_module here...
   with api.cipd.cache_dir(api.path.mkdtemp()):
@@ -49,7 +52,8 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
     api.step('echo package_prefix', ['echo', api.support_3pp.package_prefix()])
 
     # do a checkout in `builder`
-    pkgs = api.support_3pp.load_packages_from_path(builder.join('package_repo'))
+    checkout_path = builder.join('package_repo')
+    pkgs = api.support_3pp.load_packages_from_path(checkout_path)
 
     if 'build_tools/tool' in pkgs:
       # For the test, also explicitly build 'build_tools/tool@1.5.0-rc1',
@@ -62,7 +66,11 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
         builder.join('dup_repo'))
 
     cipd_platform = '%s-%s' % (GOOS, GOARCH)
-    _, unsupported = api.support_3pp.ensure_uploaded(pkgs, cipd_platform)
+    tryserver_affected_files = [
+        checkout_path.join(*f.split('/')) for f in tryserver_affected_files
+    ]
+    _, unsupported = api.support_3pp.ensure_uploaded(
+        pkgs, cipd_platform, tryserver_affected_files=tryserver_affected_files)
 
     excluded = set()
     if 'unsupported' in pkgs:
@@ -76,8 +84,9 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
     assert unsupported == excluded, (
         'Expected: %r. Got: %r' %(excluded, unsupported))
 
-    # doing it again should hit caches
-    api.support_3pp.ensure_uploaded(pkgs, cipd_platform)
+    if not tryserver_affected_files:
+      # doing it again should hit caches
+      api.support_3pp.ensure_uploaded(pkgs, cipd_platform)
 
 
 def GenTests(api):
@@ -822,3 +831,81 @@ def GenTests(api):
       + api.post_process(post_process.StatusSuccess)
       + api.post_process(post_process.DropExpectation)
   )
+
+  pkgs = sorted(
+      dict(
+          a='''
+    create {
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+          b='''
+    create {
+      build { tool: 'prefix/deps/a' }
+      source { script { name: "fetch.py" } }
+    }
+    create { build { dep: 'prefix/deps/c' } }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+          c='''
+    create {
+      build { dep: 'prefix/deps/a' }
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+          unaffected='''
+    create {
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+      ).items())
+  test = (
+      api.test('tryjob') + api.platform('linux', 64) + api.properties(
+          GOOS='linux',
+          GOARCH='amd64',
+          use_new_checkout=True,
+          tryserver_affected_files=['a/3pp.pb']) +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.step_data('find package specs',
+                    api.file.glob_paths([n + '/3pp.pb' for n, _ in pkgs])))
+  for pkg, spec in pkgs:
+    test += api.step_data(
+        mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
+        api.file.read_text(spec))
+  yield test
+
+  pkgs = sorted(
+      dict(
+          a='''
+    create {
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+          b='''
+    create {
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',
+      ).items())
+  test = (
+      api.test('tryjob-fullrebuild') + api.platform('linux', 64) +
+      api.properties(
+          GOOS='linux',
+          GOARCH='amd64',
+          use_new_checkout=True,
+          tryserver_affected_files=['file_outside_package']) +
+      api.buildbucket.try_build('infra') +
+      api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
+      api.step_data('find package specs',
+                    api.file.glob_paths([n + '/3pp.pb' for n, _ in pkgs])))
+  for pkg, spec in pkgs:
+    test += api.step_data(
+        mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
+        api.file.read_text(spec))
+  yield test

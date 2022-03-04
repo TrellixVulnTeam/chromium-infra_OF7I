@@ -296,6 +296,7 @@ This module uses the following named caches:
 """
 
 import hashlib
+import itertools
 import re
 
 from google.protobuf import json_format as jsonpb
@@ -385,6 +386,10 @@ class Support3ppApi(recipe_api.RecipeApi):
     super(Support3ppApi, self).__init__(**kwargs)
     # map of <cipd package name> -> (pkg_dir, Spec)
     self._loaded_specs = {}
+    # all of the base_paths that have been loaded via load_packages_from_path.
+    self._package_roots = set()
+    # map of <package directory> -> <cipd package name>
+    self._pkg_dir_to_pkg_name = {}
     # map of (name, platform) -> ResolvedSpec
     self._resolved_packages = {}
     # map of (name, version, platform) -> CIPDSpec
@@ -589,6 +594,7 @@ class Support3ppApi(recipe_api.RecipeApi):
     load a package which was registered under one of the earlier calls.
     """
 
+    self._package_roots.add(base_path)
     known_package_specs = self.m.file.glob_paths('find package specs',
                                                  base_path, glob_pattern)
 
@@ -638,6 +644,8 @@ class Support3ppApi(recipe_api.RecipeApi):
                                        [pkg_dir], self.m.path['start_dir'],
                                        'deadbeef').encode('utf-8'))
           self._loaded_specs[cipd_pkg_name] = (pkg_dir, pkg_spec)
+          self._pkg_dir_to_pkg_name[self.m.path.dirname(
+              spec_path)] = cipd_pkg_name
 
         discovered.add(cipd_pkg_name)
 
@@ -677,7 +685,46 @@ class Support3ppApi(recipe_api.RecipeApi):
                                     base_path=base_path,
                                     test_data='deadbeef')
 
-  def ensure_uploaded(self, packages=(), platform='', force_build=False):
+  def _ComputeAffectedPackages(self, tryserver_affected_files):
+    reverse_deps = {}  # cipd_pkg_name -> Set[cipd_pkg_name]
+    for cipd_pkg_name, dir_spec in self._loaded_specs.items():
+      for create_msg in dir_spec[1].create:
+        for dep in itertools.chain(create_msg.build.dep, create_msg.build.tool):
+          reverse_deps.setdefault(dep, set()).add(cipd_pkg_name)
+
+    affected_packages = set()
+
+    def _AddDependenciesRecurse(pkg_name):
+      if pkg_name in affected_packages:
+        # All reverse deps are already added.
+        return
+      for dep in reverse_deps.get(pkg_name, []):
+        _AddDependenciesRecurse(dep)
+      affected_packages.add(pkg_name)
+
+    for f in tryserver_affected_files:
+      # Map each affected file to a package. If there are files under the
+      # 3pp root that cannot be mapped to a package, conservatively rebuild
+      # everything.
+      found_pkg = False
+      for pkg_dir, pkg_name in self._pkg_dir_to_pkg_name.items():
+        if pkg_dir.is_parent_of(f):
+          _AddDependenciesRecurse(pkg_name)
+          found_pkg = True
+          break
+      if not found_pkg and any(
+          dir.is_parent_of(f) for dir in self._package_roots):
+        # The file is under a package root, but not corresponding to a
+        # particular package.
+        return []
+
+    return list(sorted(affected_packages))
+
+  def ensure_uploaded(self,
+                      packages=(),
+                      platform='',
+                      force_build=False,
+                      tryserver_affected_files=()):
     """Executes entire {fetch,build,package,verify,upload} pipeline for all the
     packages listed, targeting the given platform.
 
@@ -691,10 +738,23 @@ class Support3ppApi(recipe_api.RecipeApi):
       * force_build (bool) - If True, all applicable packages and their
         dependencies will be built, regardless of the presence in CIPD.
         The source and built packages will not be uploaded to CIPD.
+      * tryserver_affected_files (seq[Path]) - If given, run in tryserver mode
+        where the specified files (which must correspond to paths that were
+        passed to load_packages_from_path) have been modified in the CL. All
+        affected packages, and any that depend on them (recursively) are built.
+        If any files are modified which cannot be mapped to a specific package,
+        all packages are rebuilt. Overrides 'packages', and forces
+        force_build=True (packages are never uploaded in this mode).
 
     Returns (list[(cipd_pkg, cipd_version)], set[str]) of built CIPD packages
     and their tagged versions, as well as a list of unsupported packages.
     """
+    if tryserver_affected_files:
+      force_build = True
+      with self.m.step.nest('compute affected packages') as p:
+        packages = self._ComputeAffectedPackages(tryserver_affected_files)
+        p.step_text = ','.join(packages) if packages else 'all packages'
+
     unsupported = set()
 
     explicit_build_plan = []
