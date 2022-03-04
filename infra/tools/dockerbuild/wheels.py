@@ -435,7 +435,10 @@ SPECS.update({
             '1.3.0',
             packaged=[],
             # Other platforms not yet tested.
-            only_plat=['manylinux-x64-py3', 'manylinux-x64-py3.9'],
+            only_plat=[
+                'manylinux-x64-py3', 'manylinux-x64-py3.9', 'mac-x64-cp38',
+                'mac-arm64-cp38'
+            ],
             pyversions=['py3'],
             skip_auditwheel=True,
         ),
