@@ -50,6 +50,8 @@ type Access interface {
 	GetDut(ctx context.Context, resourceName string) (*Dut, error)
 	// UpdateDut updates DUT info into inventory.
 	UpdateDut(ctx context.Context, dut *Dut) error
+	// Version provides versions for requested requested device and type of versions.
+	Version(ctx context.Context, req *VersionRequest) (*VersionResponse, error)
 	// GetCacheUrl provides URL to download requested path to file.
 	// URL will use to download image to USB-drive and provisioning.
 	GetCacheUrl(ctx context.Context, resourceName, filePath string) (string, error)

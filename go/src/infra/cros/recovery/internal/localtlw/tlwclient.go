@@ -634,6 +634,13 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 	return dut, errors.Annotate(err, "get dut").Err()
 }
 
+// Version provides versions for requested requested device and type of versions.
+func (c *tlwClient) Version(ctx context.Context, req *tlw.VersionRequest) (*tlw.VersionResponse, error) {
+	// TODO: Request version. If Cros to CSA if not then from local logic.
+	// TODO: Cache result to avoid double request to the service.
+	return nil, errors.Reason("version: not implemented yet!").Err()
+}
+
 // getDevice receives device from inventory.
 func (c *tlwClient) getDevice(ctx context.Context, name string) (*tlw.Dut, error) {
 	if dutName, ok := c.hostToParents[name]; ok {

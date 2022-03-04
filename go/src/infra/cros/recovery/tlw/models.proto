@@ -37,8 +37,11 @@ message ProvisionRequest {
 
 // CallBluetoothPeerRequest represents data to run command on bluetooth peer.
 message CallBluetoothPeerRequest {
-  string Resource = 1;
+  // Resource name
+  string resource = 1;
+  // Method called on service.
   string method = 2;
+  // Arguments provided to the service.
   repeated chromiumos.config.api.test.xmlrpc.Value args = 3;
 }
 
@@ -52,7 +55,7 @@ message CallBluetoothPeerResponse {
 // RunRPMActionRequest represents data to perform action on RPM outlet.
 message RunRPMActionRequest {
   // Hostname of the DUT.
-	string hostname = 1;
+  string hostname = 1;
   // Hostname of the RPM power unit, e.g. "chromeos6-row13_14-rack15-rpm2".
   string rpm_hostname = 2;
   // Name to locate a specific outlet from a RPM power unit, e.g. ".A7".
@@ -94,7 +97,6 @@ message RPMOutlet {
   State state = 3;
 }
 
-
 // Router devices
 message WifiRouterHost {
   // Name name of router device e.g. "chromeos15-row99-rack33-host105-router".
@@ -113,4 +115,26 @@ message WifiRouterHost {
   string board = 4;
   // RPMOutlet the router power connects to if it exists.
   RPMOutlet RPMOutlet = 5;
+}
+
+// VersionRequest holds data for version service request.
+message VersionRequest {
+  // Resource name of device.
+  string resource = 1;
+  // VersionType represents type of devices requesting the stable version.
+  enum VersionType {
+    UNSPECIFIED = 0;
+    // Chrome OS.
+    CROS = 1;
+    // AP/PCAP peripheral.
+    WIFI_ROUTER = 2;
+  }
+  // Version type describe type of versions and device type associated with that.
+  VersionType type = 2;
+}
+
+// VersionResponse holds data received from service.
+message VersionResponse {
+  // All version values.
+  map<string, string> value = 1;
 }

@@ -33,3 +33,16 @@ type Servod interface {
 	// Port provides port used for running servod daemon.
 	Port() int
 }
+
+// CrosVersion holds information for ChromeOS devices.
+type CrosVersionInfo struct {
+	OSImage   string
+	FWImage   string
+	FWversion string
+}
+
+// Versioner defines the interface to receive versions information per request.
+type Versioner interface {
+	// Cros return version info for request Chrome OS device.
+	Cros(ctx context.Context, resource string) (*CrosVersionInfo, error)
+}
