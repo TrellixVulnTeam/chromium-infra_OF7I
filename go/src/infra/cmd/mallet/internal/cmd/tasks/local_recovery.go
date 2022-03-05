@@ -43,6 +43,7 @@ For now only running in testing mode.`,
 		c.envFlags.Register(&c.Flags)
 		// TODO(otabek@) Add more details with instruction how to get default config as example.
 		c.Flags.StringVar(&c.configFile, "config", "", "Path to the custom json config file.")
+		c.Flags.StringVar(&c.logRoot, "log-root", "", "Path to the custom json config file.")
 		c.Flags.BoolVar(&c.onlyVerify, "only-verify", false, "Block recovery actions and run only verifiers.")
 		c.Flags.BoolVar(&c.updateInventory, "update-inv", false, "Update UFS at the end execution.")
 		c.Flags.BoolVar(&c.deployTask, "deploy", false, "Trigger deploy task.")
@@ -57,6 +58,7 @@ type localRecoveryRun struct {
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 
+	logRoot         string
 	configFile      string
 	onlyVerify      bool
 	updateInventory bool
@@ -135,6 +137,17 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		return errors.Annotate(err, "local recovery: create tlw access").Err()
 	}
 	defer access.Close(ctx)
+	// TODO(gregorynisbet): Clean up the logs, include the current timestamp, or generally
+	// do something smarter than just setting the logs to "./logs".
+	logRoot := c.logRoot
+	if logRoot == "" {
+		logRoot = "./logs"
+	}
+
+	if err := os.MkdirAll(logRoot, 0b110_110_110); err != nil {
+		return errors.Annotate(err, "local recovery").Err()
+	}
+
 	in := &recovery.RunArgs{
 		UnitName:              unit,
 		Access:                access,
@@ -143,6 +156,7 @@ func (c *localRecoveryRun) innerRun(a subcommands.Application, args []string, en
 		EnableUpdateInventory: c.updateInventory,
 		ShowSteps:             c.showSteps,
 		TaskName:              tn,
+		LogRoot:               logRoot,
 	}
 	if c.configFile != "" {
 		in.ConfigReader, err = os.Open(c.configFile)
