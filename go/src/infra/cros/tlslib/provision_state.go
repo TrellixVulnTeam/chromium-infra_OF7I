@@ -191,7 +191,7 @@ func (p *provisionState) verifyOSProvision() error {
 }
 
 const (
-	fetchUngzipConvertCmd = `curl -S -s -v -# -C - --retry 3 --retry-delay 60 %[1]s | gzip -d | dd of=%[2]s obs=2M
+	fetchUngzipConvertCmd = `curl --keepalive-time 20 -S -s -v -# -C - --retry 3 --retry-delay 60 %[1]s | gzip -d | dd of=%[2]s obs=2M
 pipestatus=("${PIPESTATUS[@]}")
 if [[ "${pipestatus[0]}" -ne 0 ]]; then
   echo "$(date --rfc-3339=seconds) ERROR: Fetching %[1]s failed." >&2
@@ -211,7 +211,7 @@ func (p *provisionState) installKernel(ctx context.Context, pi partitionInfo) er
 	if err != nil {
 		return fmt.Errorf("install kernel: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveKernel))
+	return runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveKernel))
 }
 
 // installRoot updates rootPartition on disk.
@@ -220,7 +220,7 @@ func (p *provisionState) installRoot(ctx context.Context, pi partitionInfo) erro
 	if err != nil {
 		return fmt.Errorf("install root: failed to get GS Cache URL, %s", err)
 	}
-	return runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
+	return runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.inactiveRoot))
 }
 
 // installMiniOS updates miniOS Partitions on disk.
@@ -230,10 +230,10 @@ func (p *provisionState) installMiniOS(ctx context.Context, pi partitionInfo) er
 		return fmt.Errorf("install miniOS: failed to get GS Cache URL, %s", err)
 	}
 	// Write to both A + B miniOS partitions.
-	if err := runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSA)); err != nil {
+	if err := runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSA)); err != nil {
 		return fmt.Errorf("install miniOS: failed to write to A partition, %s", err)
 	}
-	if err := runCmd(p.c, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSB)); err != nil {
+	if err := runCmdRetry(ctx, p.c, 5, fmt.Sprintf(fetchUngzipConvertCmd, url, pi.miniOSB)); err != nil {
 		return fmt.Errorf("install miniOS: failed to write to B partition, %s", err)
 	}
 	return nil

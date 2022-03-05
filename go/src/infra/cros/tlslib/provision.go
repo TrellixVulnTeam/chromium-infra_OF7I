@@ -353,6 +353,31 @@ func runCmd(c *ssh.Client, cmd string) error {
 	return nil
 }
 
+// runCmdRetry is runCmd with retries with context.
+func runCmdRetry(ctx context.Context, c *ssh.Client, retryLimit uint, cmd string) error {
+	var err error
+	for ; retryLimit != 0; retryLimit-- {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("runCmdRetry: timeout reached, %w", err)
+		default:
+		}
+		retryErr := runCmd(c, cmd)
+		if retryErr == nil {
+			return nil
+		}
+
+		// Wrap the retry errors.
+		if err == nil {
+			err = retryErr
+		} else {
+			err = fmt.Errorf("%s, %w", err, retryErr)
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return err
+}
+
 // runCmdOutput interprets the given string command in a shell and returns stdout.
 func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 	s, err := c.NewSession()
