@@ -128,10 +128,13 @@ func (p *provisionState) provisionOS(ctx context.Context) error {
 		p.revertPostInstall(pi)
 		return fmt.Errorf("provisionOS: failed to set next kernel, %s", err)
 	}
-	if err := clearTPM(p.c); err != nil {
-		p.revertPostInstall(pi)
+
+	if board, err := getBoard(p.c); err == nil && strings.HasPrefix(board, "reven") {
+		log.Printf("provisionOS: skip clearing TPM owner for board=%s, %s", board, err)
+	} else if err := clearTPM(p.c); err != nil {
 		return fmt.Errorf("provisionOS: failed to clear TPM owner, %s", err)
 	}
+
 	if p.preventReboot {
 		log.Printf("provisionOS: reboot prevented by request")
 	} else if err := rebootDUT(ctx, p.c); err != nil {
@@ -271,9 +274,9 @@ func (p *provisionState) postInstall(pi partitionInfo) error {
 		"tmpmnt=$(mktemp -d)",
 		fmt.Sprintf("mount -o ro %s ${tmpmnt}", pi.inactiveRoot),
 		fmt.Sprintf("${tmpmnt}/postinst %s", pi.inactiveRoot),
-		"{ umount ${tmpmnt} || true; }",
-		"{ rmdir ${tmpmnt} || true; }",
-	}, " && "))
+		"umount ${tmpmnt}",
+		"rmdir ${tmpmnt}",
+	}, "; "))
 }
 
 func (p *provisionState) revertStatefulInstall() {

@@ -7,7 +7,6 @@ package tlslib
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -445,16 +444,24 @@ func runLabMachineAutoReboot(c *ssh.Client) {
 var reBuilderPath = regexp.MustCompile(`CHROMEOS_RELEASE_BUILDER_PATH=(.*)`)
 
 func getBuilderPath(c *ssh.Client) (string, error) {
-	// Read the /etc/lsb-release file.
+	return readLsbRelease(c, reBuilderPath)
+}
+
+var reBoard = regexp.MustCompile(`CHROMEOS_RELEASE_BOARD=(.*)`)
+
+func getBoard(c *ssh.Client) (string, error) {
+	return readLsbRelease(c, reBoard)
+}
+
+func readLsbRelease(c *ssh.Client, r *regexp.Regexp) (string, error) {
 	lsbRelease, err := runCmdOutput(c, "cat /etc/lsb-release")
 	if err != nil {
-		return "", fmt.Errorf("get builder path: %s", err)
+		return "", fmt.Errorf("read lsb release: failed to read lsb-release")
 	}
 
-	// Find the os version within the /etc/lsb-release file.
-	match := reBuilderPath.FindStringSubmatch(lsbRelease)
+	match := r.FindStringSubmatch(lsbRelease)
 	if match == nil {
-		return "", errors.New("get builder path: no builder path found in lsb-release")
+		return "", fmt.Errorf("read lsb release: no match found in lsb-release for %s", r.String())
 	}
 	return match[1], nil
 }
