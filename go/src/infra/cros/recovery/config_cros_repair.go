@@ -30,9 +30,12 @@ var crosRepairPlanCriticalActionList = []string{
 	"cros_match_job_repo_url_version_to_inventory",
 	"cros_provisioning_labels_repair",
 	"device_labels",
+	"Collect dmesg logs from DUT",
 }
 
 // List of actions configs for repair of the ChromeOS.
+// These are all the actions that are available; in order to be run, an action
+// must be reachable from a critical action.
 const crosRepairPlanActions = `
 "Device is pingable": {
 	"dependencies":[
@@ -818,6 +821,16 @@ const crosRepairPlanActions = `
 	],
 	"exec_name":"rpm_power_cycle",
 	"run_control": 1
+},
+"Collect dmesg logs from DUT": {
+	"docs": [
+		"Collect the entire output of dmesg"
+	],
+	"conditions": [],
+	"dependencies": [],
+	"exec_name": "cros_dmesg",
+	"recovery_actions": [],
+	"allow_fail_after_recovery": true
 }
 `
 
