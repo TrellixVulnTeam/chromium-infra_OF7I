@@ -51,7 +51,7 @@ var (
 	runIDRe = regexp.MustCompile(`^projects/(.*)/runs/(.*)$`)
 
 	// Automation service accounts.
-	automationAccountRE = regexp.MustCompile(`^.*@.*\.iam\.gserviceaccount\.com$`)
+	automationAccountRE = regexp.MustCompile(`^.*@.*\.gserviceaccount\.com$`)
 )
 
 // CVRunPubSubHandler accepts and processes CV Pub/Sub messages.

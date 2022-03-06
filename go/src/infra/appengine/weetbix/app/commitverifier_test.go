@@ -178,6 +178,15 @@ func TestHandleCVRun(t *testing.T) {
 				So(sortTasks(tasks), ShouldResembleProto,
 					sortTasks(expectedTasks(expectedTaskTemplate, buildIDs)))
 			})
+			Convey(`CV Run owned by Automation 2`, func() {
+				run.Owner = "3su6n15k.default@developer.gserviceaccount.com"
+				expectedTaskTemplate.PresubmitRun.Owner = "automation"
+
+				processed, tasks := processCVRun(run)
+				So(processed, ShouldBeTrue)
+				So(sortTasks(tasks), ShouldResembleProto,
+					sortTasks(expectedTasks(expectedTaskTemplate, buildIDs)))
+			})
 			Convey(`With non-buildbucket tryjob`, func() {
 				// Should be ignored.
 				run.Tryjobs = append(run.Tryjobs, &cvv0.Tryjob{
