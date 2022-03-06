@@ -893,7 +893,7 @@ This module uses the following named caches:
 
 #### **class [Support3ppApi](/recipes/recipe_modules/support_3pp/api.py#384)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#723)(self, packages=(), platform='', force_build=False, tryserver_affected_files=()):**
+&mdash; **def [ensure\_uploaded](/recipes/recipe_modules/support_3pp/api.py#736)(self, packages=(), platform='', force_build=False, tryserver_affected_files=()):**
 
 Executes entire {fetch,build,package,verify,upload} pipeline for all the
 packages listed, targeting the given platform.

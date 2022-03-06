@@ -111,6 +111,7 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
     api.support_3pp.set_source_cache_prefix(source_cache_prefix)
 
     actual_repos = set()
+    tryserver_affected_files = []
     with api.step.nest('load packages from desired repos'):
       for pl in package_locations:
         repo = pl['repo']
@@ -122,26 +123,27 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
         actual_repos.add(hash_name)
 
         checkout_path = package_repos.join(hash_name)
-        api.git.checkout(
-          repo, ref, checkout_path, submodules=False)
+        api.git.checkout(repo, ref, checkout_path, submodules=False)
 
+        package_path = checkout_path
         if subdir:
-          checkout_path = checkout_path.join(*subdir.split('/'))
-        api.support_3pp.load_packages_from_path(checkout_path)
+          package_path = package_path.join(*subdir.split('/'))
+        api.support_3pp.load_packages_from_path(package_path)
 
-    tryserver_affected_files = []
+        if api.tryserver.is_tryserver:
+          repo_tryserver_affected_files = api.git(
+              '-c',
+              'core.quotePath=false',
+              'diff',
+              '--name-only',
+              'HEAD~',
+              name='git diff to find changed files',
+              stdout=api.raw_io.output_text()).stdout.split()
+          tryserver_affected_files += [
+              checkout_path.join(*f.split('/'))
+              for f in repo_tryserver_affected_files
+          ]
     if api.tryserver.is_tryserver:
-      tryserver_affected_files = api.git(
-          '-c',
-          'core.quotePath=false',
-          'diff',
-          '--name-only',
-          'HEAD~',
-          name='git diff to find changed files',
-          stdout=api.raw_io.output_text()).stdout.split()
-      tryserver_affected_files = [
-          checkout_path.join(*f.split('/')) for f in tryserver_affected_files
-      ]
       assert (tryserver_affected_files != [])
 
     with api.step.nest('remove unused repos'):
@@ -203,6 +205,6 @@ def GenTests(api):
       api.buildbucket.try_build('infra') +
       api.tryserver.gerrit_change_target_ref('refs/branch-heads/foo') +
       api.override_step_data(
-          'git diff to find changed files',
+          'load packages from desired repos.git diff to find changed files',
           stdout=api.raw_io.output_text('support_3pp/a/3pp.pb')))
   yield test

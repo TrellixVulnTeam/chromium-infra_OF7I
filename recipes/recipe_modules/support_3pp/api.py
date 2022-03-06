@@ -594,7 +594,7 @@ class Support3ppApi(recipe_api.RecipeApi):
     load a package which was registered under one of the earlier calls.
     """
 
-    self._package_roots.add(base_path)
+    self._package_roots.add(self._NormalizePath(base_path))
     known_package_specs = self.m.file.glob_paths('find package specs',
                                                  base_path, glob_pattern)
 
@@ -644,8 +644,9 @@ class Support3ppApi(recipe_api.RecipeApi):
                                        [pkg_dir], self.m.path['start_dir'],
                                        'deadbeef').encode('utf-8'))
           self._loaded_specs[cipd_pkg_name] = (pkg_dir, pkg_spec)
-          self._pkg_dir_to_pkg_name[self.m.path.dirname(
-              spec_path)] = cipd_pkg_name
+
+          self._pkg_dir_to_pkg_name[self._NormalizePath(
+              self.m.path.dirname(spec_path))] = cipd_pkg_name
 
         discovered.add(cipd_pkg_name)
 
@@ -685,12 +686,20 @@ class Support3ppApi(recipe_api.RecipeApi):
                                     base_path=base_path,
                                     test_data='deadbeef')
 
+  # Ensures that the given path is resolved using the longest matching
+  # Path root. This avoids confusion about whether the paths passed to
+  # this module are rooted in 'cache' vs 'checkout'.
+  def _NormalizePath(self, p):
+    return self.m.path.abs_to_path(str(p))
+
   def _ComputeAffectedPackages(self, tryserver_affected_files):
     reverse_deps = {}  # cipd_pkg_name -> Set[cipd_pkg_name]
     for cipd_pkg_name, dir_spec in self._loaded_specs.items():
       for create_msg in dir_spec[1].create:
         for dep in itertools.chain(create_msg.build.dep, create_msg.build.tool):
-          reverse_deps.setdefault(dep, set()).add(cipd_pkg_name)
+          # Some packages depend on themselves for cross-compiling, ignore this.
+          if dep != cipd_pkg_name:
+            reverse_deps.setdefault(dep, set()).add(cipd_pkg_name)
 
     affected_packages = set()
 
@@ -706,14 +715,18 @@ class Support3ppApi(recipe_api.RecipeApi):
       # Map each affected file to a package. If there are files under the
       # 3pp root that cannot be mapped to a package, conservatively rebuild
       # everything.
+
+      # Re-normalize the affected file path, as we did for the package
+      # directories in load_packages_from_path().
+      resolved_file = self._NormalizePath(f)
       found_pkg = False
       for pkg_dir, pkg_name in self._pkg_dir_to_pkg_name.items():
-        if pkg_dir.is_parent_of(f):
+        if pkg_dir.is_parent_of(resolved_file):
           _AddDependenciesRecurse(pkg_name)
           found_pkg = True
           break
       if not found_pkg and any(
-          dir.is_parent_of(f) for dir in self._package_roots):
+          dir.is_parent_of(resolved_file) for dir in self._package_roots):
         # The file is under a package root, but not corresponding to a
         # particular package.
         return []

@@ -338,7 +338,10 @@
         "hostname": "rdbhost"
       }
     },
-    "name": "git diff to find changed files"
+    "name": "load packages from desired repos.git diff to find changed files",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [],
