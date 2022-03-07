@@ -7,13 +7,80 @@ definitions.
 
 [support_3pp]: /recipes/README.recipes.md#recipe_modules-support_3pp
 
-# Building stuff locally
+# Writing and testing new package definitions
 
-TODO(crbug.com/1171499): run_locally might not work.
-See [./run_locally.sh]. You can pass `help` as the first argument for the
-lowdown.
-run_locally.sh requires docker to be installed. For googlers, please refer
-to go/docker.
+To go along with the support_3pp documentation above, this section will
+give some higher-level advice on writing package definitions.
+
+## Package requirements
+
+3pp packages are designed to be hermetic, meaning that they should typically
+not depend on any other 3pp package at runtime. This means that any library
+dependencies other than the core system libraries (more on this below) should
+be statically linked. This may require giving appropriate options to a
+configure script, or in some more extreme cases, patching the build system.
+
+3pp packages are also designed to be relocatable, meaning that they can be
+deployed to any location on disk. Be aware if the package hardcodes any
+paths into the compiled code or into configuration files; if so, you may
+need to patch it to avoid this.
+
+### System libraries
+
+Packages may depend on system libraries. Currently, we target the following:
+
+* Linux: [manylinux2014](https://www.python.org/dev/peps/pep-0599/) for
+         linux-amd64. For other Linux targets, we follow
+         [dockcross](https://github.com/dockcross/dockcross) latest.
+* macOS: Version 10.11 (mac-amd64), Version 11.0 (mac-arm64)
+* Windows: Windows 7
+
+## Naming conventions
+
+For infra 3pp, we use the `static_libs` prefix for static libraries, and the
+`tools` prefix for executables. `build_support` is used infrequently; this is
+for packages which are for consumption only by the 3pp build system itself.
+
+## Versioning
+
+Package version tags in CIPD are immutable. Therefore, in order to trigger a
+new build of a package, the version number must change. If the upstream
+(source) version of a package is staying the same, but you are making a change
+to the build script/environment or applying patches, add (or increment) the
+patch_version field in the spec to give it a new version string.
+
+## Platforms
+
+3pp supports multiple architectures of Windows, Mac, and Linux. It is generally
+best to use platform_re to only build packages on platforms where they are
+actually needed. This reduces the amount of time spent debugging failures,
+both now and later.
+
+## Testing
+
+### Try jobs
+The preferred way to test package definitions is to upload your CL to
+Gerrit and do a CQ dry run. This will trigger the 3pp try builders which
+run on all platforms. The try jobs do not upload the built packages anywhere,
+but you can inspect the build status to see which files would be packaged,
+and any error messages.
+
+### Building stuff locally
+
+See [./run_locally.sh](./run_locally.sh). You can pass `help` as the first
+argument for the lowdown.
+
+For Linux, run_locally.sh requires docker to be installed. For googlers, please
+refer to go/docker.
+
+Building the package locally will allow you to actually inspect the package
+output, if needed, as well as upload it to the experimental/ prefix in CIPD.
+
+### run_remotely
+
+[./run_remotely.sh](./run_remotely.sh) is another option which works similar to
+the try jobs, but gives you more control over the Swarming task definition.
+You may want to use run_remotely if you want to tweak recipe code or properties.
 
 # CIPD Sources
 
@@ -25,7 +92,7 @@ Sometimes this is done via http or ftp.
 
 To ingest a new tarball/zip:
   * Download the official tarball release from the software site.
-    * pick one that is compressed with gzip, bzip2, or is a zip file.
+    * pick one that is compressed with gzip, bzip2, xz, zstd, or is a zip file.
     * If there's no such tarball, consider expanding compression support
       in the `recipe_engine/archive` module.
   * Put the tarball in an empty directory by itself (don't unpack it). The
