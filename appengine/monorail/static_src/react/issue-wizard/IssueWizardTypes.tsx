@@ -13,11 +13,11 @@ export enum IssueWizardPersona {
 export const ISSUE_WIZARD_PERSONAS_DETAIL  = Object.freeze({
   [IssueWizardPersona.EndUser]: {
     name: 'End User',
-    description: 'I am a user trying to do something on a website.',
+    description: 'I am trying to use a website.',
   },
   [IssueWizardPersona.Developer]: {
     name: 'Web Developer',
-    description: 'I am a web developer trying to build something.',
+    description: 'I am trying to build something on a website.',
   },
   [IssueWizardPersona.Contributor]: {
     name: 'Chromium Contributor',

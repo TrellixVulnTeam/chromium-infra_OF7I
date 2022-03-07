@@ -103,7 +103,7 @@ export default function LandingStep(props: Props) {
     return (
       <div>
         <div className={classes.subheader}>
-          Want to explain the problem yourself?
+          Prefer to file an issue manually?
         </div>
         <div>
           It's usually best to work through this short wizard so that your issue is given the labels needed for the right team to see it.

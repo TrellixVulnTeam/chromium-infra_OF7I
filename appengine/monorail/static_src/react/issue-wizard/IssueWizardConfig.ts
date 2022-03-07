@@ -8,7 +8,7 @@ import {IssueCategory, IssueWizardPersona, CustomQuestionType} from "./IssueWiza
 export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   {
     name: 'UI',
-    description: 'Something is wrong with the user interface (e.g. tabs, context menus, etc...)',
+    description: 'Problems with the user interface (e.g. tabs, context menus, etc...)',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: 'Cr-UI',
@@ -55,21 +55,21 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       },
       {
         type: CustomQuestionType.Text,
-        question: "Please open a new tab on URL chrome://gpu and paste that text here.",
+        question: "Please open chrome://gpu in a new Chrome tab and paste the report here.",
         answerPrefix: "Contents of chrome://gpu: \n",
       }
     ],
   },
   {
     name: 'Content',
-    description: "Web pages aren't displaying or working properly",
+    description: "Problems with webpages not working correctly",
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: '',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
-        question: "What specific URL can reproduce the problem?",
+        question: "What specific URL has a problem?",
         answerPrefix: "Example URL: ",
       },
       {
@@ -109,21 +109,21 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   },
   {
     name: 'Apps',
-    description: 'Problems with how the browser deals with apps from the webstore',
+    description: 'Issues with Webstore apps',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: 'Cr-Platform-Apps',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
-        question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore </a> ?",
-        answerPrefix: "WebStore page: ",
+        question: "What is the link to that software in <a href='https://chrome.google.com/webstore' target='_blank'>the Chrome Webstore </a>?",
+        answerPrefix: "Webstore page: ",
       }
     ],
   },
   {
     name: 'Extensions / Themes',
-    description: 'Issues related to extensions and themes from the webstore',
+    description: 'Issues with Webstore extensions and themes',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: 'Cr-Platform-Extensions',
@@ -137,34 +137,34 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           null,
           {
             type:CustomQuestionType.Input,
-            question: "Latest version when it worked?",
+            question: "Do you know the latest version where it worked?",
           },
           null],
       },
       {
         type: CustomQuestionType.Input,
-        question: "What is the name or URL of that software at <a href='https://chrome.google.com/webstore' target='_blank'>https://chrome.google.com/webstore</a> ?",
+        question: "What is the link to that software in <a href='https://chrome.google.com/webstore' target='_blank'>the Chrome Webstore</a>?",
         answerPrefix: "WebStore page: ",
       },
     ],
   },
   {
     name: 'Webstore',
-    description: 'Problems with the Chrome WebStore itself',
+    description: 'Problems with the Chrome Webstore itself',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: 'Cr-Webstore',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
-        question: "What is the URL of the Chrome WebStore page that had the problem?",
-        answerPrefix: "WebStore page: ",
+        question: "What is the URL of the Chrome WesStore page that had the problem?",
+        answerPrefix: "Webstore page: ",
       },
     ],
   },
   {
     name: 'Sync',
-    description: 'Problems syncing data',
+    description: 'Problems syncing data to a Google account',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     component: 'Cr-Services-Sync',
@@ -201,7 +201,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
       },
       {
         type: CustomQuestionType.Select,
-        question: "How much crashes?",
+        question: "How severe is the crash?",
         options: ["Just one tab", "Just one plugin", "The whole browser"],
         answerPrefix: "How much crashed? ",
         subQuestions: null,
@@ -223,10 +223,10 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
   },
   {
     name: 'Security',
-    description: 'Issues related to the security of the browser',
+    description: 'Problems with the browser security',
     persona: IssueWizardPersona.EndUser,
     enabled: true,
-    tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">how to report security issues</a>.',
+    tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">reporting security issues</a>.',
     component: 'Cr-Type-Bug-Security',
     customQuestions: []
   },
