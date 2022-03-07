@@ -11,9 +11,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 
+	_go "go.chromium.org/chromiumos/config/go"
 	build_api "go.chromium.org/chromiumos/config/go/build/api"
 	lab_api "go.chromium.org/chromiumos/config/go/test/lab/api"
 
@@ -102,9 +104,7 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 		return nil, errors.Annotate(err, "run test: failed to read test output").Err()
 	}
 
-	return &api.CrosToolRunnerTestResponse{
-		TestCaseResults: out.TestCaseResults,
-	}, err
+	return prepareTestResponse(artifactDir, out.TestCaseResults)
 }
 
 // writeTestInput writes a CrosTestRequest json.
@@ -129,4 +129,22 @@ func readTestOutput(filePath string) (*api.CrosTestResponse, error) {
 	out := &api.CrosTestResponse{}
 	err = jsonpb.Unmarshal(r, out)
 	return out, errors.Annotate(err, "read output").Err()
+}
+
+// prepareTestResponse prepares a response for test execution.
+func prepareTestResponse(resultRootDir string, testCaseResults []*api.TestCaseResult) (res *api.CrosToolRunnerTestResponse, err error) {
+	var results []*api.TestCaseResult
+	for _, t := range testCaseResults {
+		resultDir := strings.Replace(t.ResultDirPath.Path, services.CrosTestRootDirInsideDocker, resultRootDir, 1)
+		results = append(results, &api.TestCaseResult{
+			TestCaseId:    t.TestCaseId,
+			ResultDirPath: &_go.StoragePath{Path: resultDir},
+			Verdict:       t.Verdict,
+			Reason:        t.Reason,
+			TestHarness:   t.TestHarness,
+		})
+	}
+	return &api.CrosToolRunnerTestResponse{
+		TestCaseResults: results,
+	}, nil
 }

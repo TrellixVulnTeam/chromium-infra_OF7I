@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -37,6 +38,12 @@ const (
 
 	// Default dut address port
 	DefaultDutAddressPort = "22"
+
+	// Root directory for the cros-test artifacts inside docker.
+	CrosTestRootDirInsideDocker = "/tmp/test"
+
+	// Root directory for the cros-test-finder artifacts inside docker.
+	CrosTestFinderRootDirInsideDocker = "/tmp/test"
 )
 
 // CreateDutService pulls and starts cros-dut service.
@@ -199,6 +206,11 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 	if err != nil {
 		return errors.Annotate(err, "failed to create registry path for cros-test").Err()
 	}
+	// It is necessary to do sudo here because /tmp/test is owned by root inside docker
+	// when docker mount /tmp/test. However, the user that is running cros-test is
+	// chromeos-test inside docker. Hence, the user chromeos-test does not have write
+	// permission in /tmp/test. Therefore, we need to change the owner of the directory.
+	cmd := fmt.Sprintf("sudo --non-interactive chown -R chromeos-test:chromeos-test %s && cros-test", CrosTestRootDirInsideDocker)
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosTestContainerNameTemplate, os.Getpid(), time.Now().Unix()),
 		RequestedImageName: p,
@@ -207,15 +219,12 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 		ExecCommand: []string{
 			"bash",
 			"-c",
-			// It is necessary to do sudo here because /tmp/test is owned by root inside docker
-			// when docker mount /tmp/test. However, the user that is running cros-test is
-			// chromeos-test inside docker. Hence, the user chromeos-test does not have write
-			// permission in /tmp/test. Therefore, we need to change the owner of the directory.
-			"sudo --non-interactive chown -R chromeos-test:chromeos-test /tmp/test && cros-test",
+
+			cmd,
 		},
 		Volumes: []string{
-			fmt.Sprintf("%s:%s", crosTestDir, "/tmp/test/cros-test"),
-			fmt.Sprintf("%s:%s", resultDir, "/tmp/test/results"),
+			fmt.Sprintf("%s:%s", crosTestDir, filepath.Join(CrosTestRootDirInsideDocker, "cros-test")),
+			fmt.Sprintf("%s:%s", resultDir, filepath.Join(CrosTestRootDirInsideDocker, "results")),
 		},
 		Detach:  false,
 		Network: networkName,
@@ -253,7 +262,7 @@ func RunTestFinderCLI(ctx context.Context, image *build_api.ContainerImageInfo, 
 			"cros-test-finder",
 		},
 		Volumes: []string{
-			fmt.Sprintf("%s:%s", crosTestFinderDir, "/tmp/test/cros-test-finder"),
+			fmt.Sprintf("%s:%s", crosTestFinderDir, filepath.Join(CrosTestFinderRootDirInsideDocker, "cros-test-finder")),
 		},
 		Detach:  false,
 		Network: networkName,
