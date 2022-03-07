@@ -524,6 +524,10 @@ class Support3ppApi(recipe_api.RecipeApi):
     # Recursively resolve all deps
     deps = []
     for dep_cipd_pkg_name in create_pb.build.dep:
+      if dep_cipd_pkg_name not in self._loaded_specs:
+        raise self.m.step.StepFailure(
+            'No spec was found for dep "%s" of package "%s"' %
+            (dep_cipd_pkg_name, cipd_pkg_name))
       deps.append(self._resolve_for(dep_cipd_pkg_name, platform))
 
     # Recursively resolve all unpinned tools. Pinned tools are always
@@ -531,6 +535,10 @@ class Support3ppApi(recipe_api.RecipeApi):
     unpinned_tools = []
     for tool in create_pb.build.tool:
       tool_cipd_pkg_name, tool_version = parse_name_version(tool)
+      if tool_cipd_pkg_name not in self._loaded_specs:
+        raise self.m.step.StepFailure(
+            'No spec was found for tool "%s" of package "%s"' %
+            (tool_cipd_pkg_name, cipd_pkg_name))
       if tool_version == 'latest':
         unpinned_tools.append(self._resolve_for(tool_cipd_pkg_name, tool_plat))
 
@@ -773,22 +781,26 @@ class Support3ppApi(recipe_api.RecipeApi):
     explicit_build_plan = []
     packages = packages or list(self._loaded_specs.keys())
     platform = platform or platform_for_host(self.m)
-    for pkg in packages:
-      cipd_pkg_name, version = parse_name_version(pkg)
-      try:
-        resolved = self._resolve_for(cipd_pkg_name, platform)
-      except UnsupportedPackagePlatform:
-        unsupported.add(pkg)
-        continue
-      explicit_build_plan.append((resolved, version))
+    with self.m.step.nest('compute build plan'):
+      for pkg in packages:
+        cipd_pkg_name, version = parse_name_version(pkg)
+        if cipd_pkg_name not in self._loaded_specs:
+          raise self.m.step.StepFailure(
+              'No spec found for requested package "%s"' % cipd_pkg_name)
+        try:
+          resolved = self._resolve_for(cipd_pkg_name, platform)
+        except UnsupportedPackagePlatform:
+          unsupported.add(pkg)
+          continue
+        explicit_build_plan.append((resolved, version))
 
-    expanded_build_plan = set()
-    for spec, version in explicit_build_plan:
-      expanded_build_plan.add((spec, version))
-      # Anything pulled in either via deps or tools dependencies should be
-      # explicitly built at 'latest'.
-      for sub_spec in spec.all_possible_deps_and_tools:
-        expanded_build_plan.add((sub_spec, 'latest'))
+      expanded_build_plan = set()
+      for spec, version in explicit_build_plan:
+        expanded_build_plan.add((spec, version))
+        # Anything pulled in either via deps or tools dependencies should be
+        # explicitly built at 'latest'.
+        for sub_spec in spec.all_possible_deps_and_tools:
+          expanded_build_plan.add((sub_spec, 'latest'))
 
     ret = []
     with self.m.step.defer_results():

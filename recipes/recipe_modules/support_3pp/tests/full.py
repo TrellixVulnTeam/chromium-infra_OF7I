@@ -35,12 +35,13 @@ PROPERTIES = {
     'load_dupe': Property(kind=bool, default=False),
     'package_prefix': Property(default='3pp'),
     'source_cache_prefix': Property(default='sources'),
+    'to_build': Property(kind=List(str), default=[]),
     'tryserver_affected_files': Property(kind=List(str), default=[]),
 }
 
 
 def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
-             source_cache_prefix, tryserver_affected_files):
+             source_cache_prefix, to_build, tryserver_affected_files):
   # set a cache directory to be similar to what the actual 3pp recipe does.
   # TODO(iannucci): just move the 3pp recipe into the recipe_module here...
   with api.cipd.cache_dir(api.path.mkdtemp()):
@@ -69,6 +70,7 @@ def RunSteps(api, GOOS, GOARCH, experimental, load_dupe, package_prefix,
     tryserver_affected_files = [
         checkout_path.join(*f.split('/')) for f in tryserver_affected_files
     ]
+    pkgs = to_build if to_build else pkgs
     _, unsupported = api.support_3pp.ensure_uploaded(
         pkgs, cipd_platform, tryserver_affected_files=tryserver_affected_files)
 
@@ -908,4 +910,75 @@ def GenTests(api):
     test += api.step_data(
         mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
         api.file.read_text(spec))
+  yield test
+
+  pkgs = sorted(
+      dict(
+          a='''
+    create {
+      source { script { name: "fetch.py" } }
+      build { dep: "missing_dep" }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',).items())
+  test = (
+      api.test('missing-dep') + api.platform('linux', 64) +
+      api.properties(GOOS='linux', GOARCH='amd64') +
+      api.buildbucket.ci_build() +
+      api.step_data('find package specs',
+                    api.file.glob_paths([n + '/3pp.pb' for n, _ in pkgs])))
+  for pkg, spec in pkgs:
+    test += api.step_data(
+        mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
+        api.file.read_text(spec))
+  test += (
+      api.step_data('compute build plan') +
+      api.post_process(post_process.StatusFailure))
+  yield test
+
+  pkgs = sorted(
+      dict(
+          a='''
+    create {
+      source { script { name: "fetch.py" } }
+      build { tool: "missing_tool" }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',).items())
+  test = (
+      api.test('missing-tool') + api.platform('linux', 64) +
+      api.properties(GOOS='linux', GOARCH='amd64') +
+      api.buildbucket.ci_build() +
+      api.step_data('find package specs',
+                    api.file.glob_paths([n + '/3pp.pb' for n, _ in pkgs])))
+  for pkg, spec in pkgs:
+    test += api.step_data(
+        mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
+        api.file.read_text(spec))
+  test += (
+      api.step_data('compute build plan') +
+      api.post_process(post_process.StatusFailure))
+  yield test
+
+  pkgs = sorted(
+      dict(
+          a='''
+    create {
+      source { script { name: "fetch.py" } }
+    }
+    upload { pkg_prefix: "prefix/deps" }
+    ''',).items())
+  test = (
+      api.test('missing-pkg') + api.platform('linux', 64) +
+      api.properties(GOOS='linux', GOARCH='amd64', to_build=['prefix/deps/b']) +
+      api.buildbucket.ci_build() +
+      api.step_data('find package specs',
+                    api.file.glob_paths([n + '/3pp.pb' for n, _ in pkgs])))
+  for pkg, spec in pkgs:
+    test += api.step_data(
+        mk_name('load package specs', 'read \'%s/3pp.pb\'' % pkg),
+        api.file.read_text(spec))
+  test += (
+      api.step_data('compute build plan') +
+      api.post_process(post_process.StatusFailure))
   yield test

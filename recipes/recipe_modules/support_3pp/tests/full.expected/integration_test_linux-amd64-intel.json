@@ -1389,6 +1389,10 @@
   },
   {
     "cmd": [],
+    "name": "compute build plan"
+  },
+  {
+    "cmd": [],
     "name": "building deps/bottom_dep_git"
   },
   {
@@ -15842,6 +15846,10 @@
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LINK@3pp/tools/pkg_checkout/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/tools/pkg_checkout/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
+  },
+  {
+    "cmd": [],
+    "name": "compute build plan (2)"
   },
   {
     "name": "$result"

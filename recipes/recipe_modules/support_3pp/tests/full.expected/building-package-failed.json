@@ -163,6 +163,10 @@
   },
   {
     "cmd": [],
+    "name": "compute build plan"
+  },
+  {
+    "cmd": [],
     "name": "building pkg/dep",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"

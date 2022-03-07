@@ -107,6 +107,10 @@
   },
   {
     "cmd": [],
+    "name": "compute build plan"
+  },
+  {
+    "cmd": [],
     "name": "building deps/bottom_dep_git"
   },
   {
@@ -160,6 +164,10 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
+  },
+  {
+    "cmd": [],
+    "name": "compute build plan (2)"
   },
   {
     "name": "$result"

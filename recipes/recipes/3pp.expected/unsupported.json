@@ -299,6 +299,10 @@
   },
   {
     "cmd": [],
+    "name": "compute build plan"
+  },
+  {
+    "cmd": [],
     "name": "2 packages unsupported for None",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>prefix/deps/pkg_a<br/>prefix/deps/pkg_b@@@"

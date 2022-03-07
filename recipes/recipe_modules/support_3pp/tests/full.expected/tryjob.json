@@ -392,6 +392,10 @@
   },
   {
     "cmd": [],
+    "name": "compute build plan"
+  },
+  {
+    "cmd": [],
     "name": "building prefix/deps/a"
   },
   {

@@ -417,6 +417,10 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "compute build plan"
+  },
+  {
     "name": "$result"
   }
 ]
