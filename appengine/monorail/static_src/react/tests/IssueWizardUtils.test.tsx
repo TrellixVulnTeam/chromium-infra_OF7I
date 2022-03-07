@@ -6,7 +6,7 @@ import {assert, expect} from 'chai';
 import {IssueWizardPersona, IssueCategory, CustomQuestionType} from '../issue-wizard/IssueWizardTypes.tsx';
 import {GetCategoriesByPersona, GetQuestionsByCategory, buildIssueDescription, getChromeVersion} from '../issue-wizard/IssueWizardUtils.tsx';
 
-describe.only('IssueWizardUtils', () => {
+describe('IssueWizardUtils', () => {
   it('generate the issue categories to user persona map', () => {
     const categories: IssueCategory[]= [
       {
