@@ -87,6 +87,8 @@ type tlwClient struct {
 	hostTypes map[string]hostType
 	// Map to provide name if the DUT host as value and other hosts as key.
 	hostToParents map[string]string
+	// Map of version requested and received.
+	versionMap map[string]*tlw.VersionResponse
 }
 
 // New build new local TLW Access instance.
@@ -634,11 +636,41 @@ func (c *tlwClient) GetDut(ctx context.Context, name string) (*tlw.Dut, error) {
 	return dut, errors.Annotate(err, "get dut").Err()
 }
 
-// Version provides versions for requested requested device and type of versions.
+// Version provides versions for requested device and type of versions.
 func (c *tlwClient) Version(ctx context.Context, req *tlw.VersionRequest) (*tlw.VersionResponse, error) {
-	// TODO: Request version. If Cros to CSA if not then from local logic.
-	// TODO: Cache result to avoid double request to the service.
-	return nil, errors.Reason("version: not implemented yet!").Err()
+	if req == nil || req.Resource == "" {
+		return nil, errors.Reason("version: request is not provided").Err()
+	}
+	// Creating cache key for versions based on hostname which is targeted.
+	versionKey := fmt.Sprintf("%s|%s", req.GetType(), req.Resource)
+	if v, ok := c.versionMap[versionKey]; ok {
+		return v, nil
+	}
+	dut, err := c.getDevice(ctx, req.Resource)
+	if err != nil {
+		return nil, errors.Annotate(err, "version").Err()
+	}
+	res := &tlw.VersionResponse{}
+	switch req.GetType() {
+	case tlw.VersionRequest_CROS:
+		gv, err := c.getStableVersion(ctx, dut)
+		if err != nil {
+			log.Info(ctx, "version: failed to receive stable-version for %q. Error: %s", dut.Name, err)
+		} else {
+			res.Value = map[string]string{
+				"os_image":   gv.CrosImage,
+				"fw_image":   gv.CrosFirmwareVersion,
+				"fw_version": gv.CrosFirmwareImage,
+			}
+		}
+	case tlw.VersionRequest_WIFI_ROUTER:
+		// TODO: need implement
+		res.Value = map[string]string{
+			"os_image": "gale-test-ap-tryjob/R92-13982.81.0-b4959409",
+		}
+	}
+	c.versionMap[versionKey] = res
+	return res, nil
 }
 
 // getDevice receives device from inventory.
