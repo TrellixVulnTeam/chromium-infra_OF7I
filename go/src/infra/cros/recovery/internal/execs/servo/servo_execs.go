@@ -13,6 +13,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros"
 	"infra/cros/recovery/internal/execs/cros/battery"
@@ -693,23 +694,26 @@ func servoServodCCToggleExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
-// servoRebootEcOnDUTExec will reboot EC on DUT using servod command.
-// It reboots just the embedded controllers on the DUT.
-func servoRebootEcOnDUTExec(ctx context.Context, info *execs.ExecInfo) error {
-	ecUartFlush := "ec_uart_flush"
-	log.Info(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
-	if err := info.NewServod().Set(ctx, ecUartFlush, "off"); err != nil {
-		return errors.Annotate(err, "servod reboot ec on dut").Err()
+// servoSetEcUartCmdExec will set "ec_uart_cmd" to the specific value based on the passed in parameter.
+// Before and after the set of the "ec_uart_cmd", it will toggle the value of "ec_uart_flush".
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["wait_timeout:x", "value:xxxx"]
+func servoSetEcUartCmdExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	// Timeout to wait for setting the ec_uart_cmd. Default to be 1s.
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 1, time.Second)
+	// The value of 'pd dualrole' postfix for the servod command 'ec_uart_cmd'
+	value := argsMap.AsString(ctx, "value", "")
+	if value == "" {
+		return errors.Reason("servo set ec uart cmd: the passed in value cannot be empty").Err()
 	}
-	ecUartCmd := "ec_uart_cmd"
-	log.Info(ctx, `Setting servod command %q to "reboot" value.`, ecUartCmd)
-	if err := info.NewServod().Set(ctx, ecUartCmd, "reboot"); err != nil {
-		return errors.Annotate(err, "servod reboot ec on dut").Err()
+	servod := info.NewServod()
+	if err := servo.SetEcUartCmd(ctx, servod, value); err != nil {
+		return errors.Annotate(err, "servo set ec uart cmd").Err()
 	}
-	log.Info(ctx, `Setting servod command %q to "on" value.`, ecUartFlush)
-	if err := info.NewServod().Set(ctx, ecUartFlush, "on"); err != nil {
-		return errors.Annotate(err, "servod reboot ec on dut").Err()
-	}
+	log.Debug(ctx, "Servo Set Ec Uart Cmd: Wait %v.", waitTimeout)
+	time.Sleep(waitTimeout)
 	return nil
 }
 
@@ -855,7 +859,7 @@ func init() {
 	execs.Register("servo_update_servo_firmware", servoUpdateServoFirmwareExec)
 	execs.Register("servo_fake_disconnect_dut", servoFakeDisconnectDUTExec)
 	execs.Register("servo_servod_cc_toggle", servoServodCCToggleExec)
-	execs.Register("servo_reboot_ec_on_dut", servoRebootEcOnDUTExec)
+	execs.Register("servo_set_ec_uart_cmd", servoSetEcUartCmdExec)
 	execs.Register("servo_power_state_reset", servoPowerStateResetExec)
 	execs.Register("servo_power_cycle_root_servo", servoPowerCycleRootServoExec)
 	execs.Register("servo_host_v3_reboot", servoHostV3RebootExec)

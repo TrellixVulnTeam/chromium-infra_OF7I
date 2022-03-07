@@ -1020,6 +1020,11 @@ const servoRepairPlanBody = `
 			"Try to reboot EC on DUT using servod command.",
 			"It reboots just the embedded controllers on the DUT."
 		],
+		"exec_extra_args": [
+			"wait_timeout:1",
+			"value:reboot"
+		],
+		"exec_name":"servo_set_ec_uart_cmd",
 		"run_control": 1
 	},
 	"reboot_dut_by_power_state:reset":{
