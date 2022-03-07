@@ -75,15 +75,61 @@ func (p *powerSupplyInfo) HasBattery() (bool, error) {
 	return false, errors.Reason("has battery: no found").Err()
 }
 
+const (
+	// Known battery charging states.
+	batteryStateCharging    = "Charging"
+	batteryStateDischarging = "Discharging"
+	batteryStateFull        = "Full"
+)
+
+// IsBatterySupportedState confirms the DUT's battery state is supported.
+func (p *powerSupplyInfo) IsBatterySupportedState() (bool, error) {
+	state, err := p.batteryState()
+	if err != nil {
+		return false, errors.Annotate(err, "battery supported state").Err()
+	}
+	switch state {
+	case batteryStateCharging, batteryStateDischarging, batteryStateFull:
+		return true, nil
+	}
+	return false, errors.Annotate(err, "battery supported state: unknown state %q", state).Err()
+}
+
 // IsBatteryDischarging confirms the DUT's battery is discharging.
 func (p *powerSupplyInfo) IsBatteryDischarging() (bool, error) {
+	state, err := p.batteryState()
+	if err != nil {
+		return false, errors.Annotate(err, "battery discharging").Err()
+	}
+	return state == batteryStateDischarging, nil
+}
+
+// IsBatteryCharging confirms the DUT's battery is charging.
+func (p *powerSupplyInfo) IsBatteryCharging() (bool, error) {
+	state, err := p.batteryState()
+	if err != nil {
+		return false, errors.Annotate(err, "battery charging").Err()
+	}
+	return state == batteryStateCharging, nil
+}
+
+// IsBatteryFull confirms the DUT's battery is full.
+func (p *powerSupplyInfo) IsBatteryFull() (bool, error) {
+	state, err := p.batteryState()
+	if err != nil {
+		return false, errors.Annotate(err, "battery full").Err()
+	}
+	return state == batteryStateFull, nil
+}
+
+func (p *powerSupplyInfo) batteryState() (string, error) {
 	if battery, ok := p.powerInfo["Battery"]; ok {
 		if charging_state, ok := battery["state"]; ok {
-			return charging_state == "Discharging", nil
+			return charging_state, nil
 		}
-		return false, errors.Reason("battery discharging: no battery's state info found").Err()
+		return "", errors.Reason("check battery state: no battery's state info found").Err()
 	}
-	return false, errors.Reason("battery discharging: no battery info found").Err()
+	return "", errors.Reason("check battery state: no battery info found").Err()
 }
 
 // BatteryLevel returns the DUT's battery battery level.
