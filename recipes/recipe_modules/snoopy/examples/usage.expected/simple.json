@@ -1,0 +1,83 @@
+[
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/snoopy",
+      "-ensure-file",
+      "infra/tools/snoopy_broker/${platform} git_revision:788e713bac8e8cbb060876f52b925204c340cec4",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:788\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/snoopy_broker/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-stage",
+      "-stage",
+      "start",
+      "-recipe",
+      "snoopy:examples/usage"
+    ],
+    "name": "report_stage"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-stage",
+      "-stage",
+      "fetch",
+      "-backend-url",
+      "http://test.local"
+    ],
+    "name": "report_stage (2)"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "example/cipd/package",
+      "-iid",
+      "fakeiid",
+      "-backend-url",
+      "http://test.local"
+    ],
+    "name": "report_cipd"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/snoopy/snoopy_broker",
+      "-report-gcs",
+      "-digest",
+      "deadbeef",
+      "-gcs-uri",
+      "gs://bucket/path/to/binary",
+      "-backend-url",
+      "http://test.local"
+    ],
+    "name": "report_gcs"
+  },
+  {
+    "name": "$result"
+  }
+]
