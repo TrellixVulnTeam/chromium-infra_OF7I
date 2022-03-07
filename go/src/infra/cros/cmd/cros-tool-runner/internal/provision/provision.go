@@ -79,7 +79,6 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 		res.Err = errors.Annotate(err, "create dut service: create temp dir").Err()
 		return res
 	}
-	defer func() { os.RemoveAll(crosDutResultsDir) }()
 
 	log.Printf("--> Starting cros-dut service for %q ...", dutName)
 	dutService, err := services.CreateDutService(ctx, crosDutContainer, dutName, networkName, cacheServerInfo, dutSshInfo, crosDutResultsDir, token)
@@ -99,7 +98,6 @@ func Run(ctx context.Context, device *api.CrosToolRunnerProvisionRequest_Device,
 		res.Err = errors.Annotate(err, "run provision: create temp dir").Err()
 		return res
 	}
-	defer func() { os.RemoveAll(crosProvisionResultsDir) }()
 
 	log.Printf("--> Starting cros-provision service for %q ...", dutName)
 	provisionReq := &api.CrosProvisionRequest{
