@@ -28,18 +28,6 @@ import (
 	"infra/cros/recovery/tlw"
 )
 
-const (
-	// Default DUT used for the jump host proxy between local workstation and
-	// labstation in the Lab.
-	// Since the connection between local and lab is usually unstable after the
-	// device in lab reboot, need a middle DUT for middle proxy bridge.
-	//
-	// If this is empty, then no proxy will be created.
-	// If this is not empty, then create proxy for when running against device in
-	// test network from workstation. Kepp always empty when merge it.
-	jumpHostForLocalProxy = ""
-)
-
 // Run runs the recovery tasks against the provided unit.
 // Process includes:
 //   - Verification of input data.
@@ -336,13 +324,14 @@ func runDUTPlans(ctx context.Context, dut *tlw.Dut, config *planpb.Configuration
 		SwarmingTaskID: args.SwarmingTaskID,
 		BuildbucketID:  args.BuildbucketID,
 		LogRoot:        args.LogRoot,
+		// JumpHost: -- We explicitly do NOT pass the jump host to execs directly.
 	}
 	// As port 22 to connect to the lab is closed and there is work around to
 	// create proxy for local execution. Creating proxy for all resources used
 	// for this devices. We need created all of them at the beginning as one
 	// plan can have access to current resource or another one.
 	// Always has to be empty for merge code
-	if jumpHostForLocalProxy != "" {
+	if jumpHostForLocalProxy := args.DevJumpHost; jumpHostForLocalProxy != "" {
 		for _, planName := range planNames {
 			resources := collectResourcesForPlan(planName, execArgs.DUT)
 			for _, resource := range resources {
@@ -491,6 +480,9 @@ type RunArgs struct {
 	// LogRoot is an absolute path to a directory.
 	// All logs produced by actions or verifiers must be deposited there.
 	LogRoot string
+	// JumpHost is the host to use as a SSH proxy between ones dev environment and the lab,
+	// if necessary. An empty JumpHost means do not use a jump host.
+	DevJumpHost string
 }
 
 // verify verifies input arguments.

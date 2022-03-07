@@ -388,9 +388,3 @@ func TestVerify(t *testing.T) {
 		})
 	}
 }
-
-func TestLocalproxyFlag(t *testing.T) {
-	if jumpHostForLocalProxy != "" {
-		t.Errorf("please keep defaultProxyLabDUT as empty for merge code.")
-	}
-}
