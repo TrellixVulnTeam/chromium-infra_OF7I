@@ -325,7 +325,7 @@ const servoRepairPlanBody = `
 		],
 		"exec_extra_args": [
 			"command:servo_pd_role",
-			"expected_string_value:snk"
+			"expected_string_value:src"
 		],
 		"recovery_actions": [
 			"servo_power_delivery_repair",
