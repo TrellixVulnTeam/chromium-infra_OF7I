@@ -29,6 +29,7 @@ const userStyles = makeStyles({
     alignItems: 'center',
     justifyContent: 'flex-start',
     width: '100%',
+    fontSize: '12px',
   },
 
   button: {
@@ -125,7 +126,7 @@ export default function AttachmentUploader(props: Props): React.ReactElement {
             files?.map((f, i) => (
               <li>
                 {f.name}
-                <Button onClick={onRemoveFile(i)}> remove</Button>
+                <Button onClick={onRemoveFile(i)}> X</Button>
               </li>
             ))
           }
