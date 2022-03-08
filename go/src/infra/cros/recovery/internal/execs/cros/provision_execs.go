@@ -7,6 +7,7 @@ package cros
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -53,12 +54,16 @@ func downloadImageToUSBExec(ctx context.Context, info *execs.ExecInfo) error {
 	osImagePath := argsMap.AsString(ctx, "os_image_path", fmt.Sprintf("%s/%s", osImageBucket, osImageName))
 	log.Debug(ctx, "Used OS image path: %s", osImagePath)
 	// Requesting convert GC path to caches service path.
-	jobRepoURL, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, osImagePath)
+	// Example: `http://Addr:8082/download/chromeos-image-archive/board-release/R99-XXXXX.XX.0/`
+	downloadPath, err := info.RunArgs.Access.GetCacheUrl(ctx, info.RunArgs.DUT.Name, osImagePath)
 	if err != nil {
 		return errors.Annotate(err, "download image to usb-drive").Err()
 	}
-	// Cache service path is not specify the file.
-	image := fmt.Sprintf("%s/chromiumos_test_image.bin", jobRepoURL)
+	// Path provided by TLS cannot be used for downloading and/or extracting the image file.
+	// But we can utilize the address of caching service and apply some string manipulation to construct the URL that can be used for this.
+	// Example: `http://Addr:8082/extract/chromeos-image-archive/board-release/R99-XXXXX.XX.0/chromiumos_test_image.tar.xz?file=chromiumos_test_image.bin`
+	extractPath := strings.Replace(downloadPath, "/download/", "/extract/", 1)
+	image := fmt.Sprintf("%s/chromiumos_test_image.tar.xz?file=chromiumos_test_image.bin", extractPath)
 	log.Debug(ctx, "Download image for USB-drive: %s", image)
 	err = info.NewServod().Set(ctx, "download_image_to_usb_dev", image)
 	return errors.Annotate(err, "download image to usb-drive").Err()
