@@ -866,7 +866,7 @@ const servoRepairPlanBody = `
 		"conditions": [
 			"is_not_servo_v3"
 		],
-		"exec_name": "servo_has_serial"
+		"exec_name": "dut_servo_has_serial"
 	},
 	"set_state_no_ssh": {
 		"exec_extra_args": [

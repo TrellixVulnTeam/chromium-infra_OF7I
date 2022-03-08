@@ -242,6 +242,54 @@ func (VersionRequest_VersionType) EnumDescriptor() ([]byte, []int) {
 	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{7, 0}
 }
 
+// LoopbackState representes states for loopback dongle.
+type DUTAudio_LoopbackState int32
+
+const (
+	DUTAudio_LOOPBACK_UNSPECIFIED DUTAudio_LoopbackState = 0
+	// Device and software on it is working as expected.
+	DUTAudio_LOOPBACK_WORKING DUTAudio_LoopbackState = 1
+)
+
+// Enum value maps for DUTAudio_LoopbackState.
+var (
+	DUTAudio_LoopbackState_name = map[int32]string{
+		0: "LOOPBACK_UNSPECIFIED",
+		1: "LOOPBACK_WORKING",
+	}
+	DUTAudio_LoopbackState_value = map[string]int32{
+		"LOOPBACK_UNSPECIFIED": 0,
+		"LOOPBACK_WORKING":     1,
+	}
+)
+
+func (x DUTAudio_LoopbackState) Enum() *DUTAudio_LoopbackState {
+	p := new(DUTAudio_LoopbackState)
+	*p = x
+	return p
+}
+
+func (x DUTAudio_LoopbackState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DUTAudio_LoopbackState) Descriptor() protoreflect.EnumDescriptor {
+	return file_infra_cros_recovery_tlw_models_proto_enumTypes[4].Descriptor()
+}
+
+func (DUTAudio_LoopbackState) Type() protoreflect.EnumType {
+	return &file_infra_cros_recovery_tlw_models_proto_enumTypes[4]
+}
+
+func (x DUTAudio_LoopbackState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DUTAudio_LoopbackState.Descriptor instead.
+func (DUTAudio_LoopbackState) EnumDescriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{9, 0}
+}
+
 // RunRequest represents result of executed command.
 type RunRequest struct {
 	state         protoimpl.MessageState
@@ -748,7 +796,8 @@ type VersionRequest struct {
 
 	// Resource name of device.
 	Resource string `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
-	// Version type describe type of versions and device type associated with that.
+	// Version type describe type of versions and device type associated with
+	// that.
 	Type VersionRequest_VersionType `protobuf:"varint,2,opt,name=type,proto3,enum=chromeos.recovery.VersionRequest_VersionType" json:"type,omitempty"`
 }
 
@@ -845,6 +894,83 @@ func (x *VersionResponse) GetValue() map[string]string {
 		return x.Value
 	}
 	return nil
+}
+
+// CrosAudio holds infor for audio information of the DUT.
+type DUTAudio struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Indicate if the DUT is housed in an audio box to record / replay audio
+	// for audio testing.
+	InBox bool `protobuf:"varint,1,opt,name=in_box,json=inBox,proto3" json:"in_box,omitempty"`
+	// Indicate if the DUT is connected to Atrus speakermic
+	Atrus bool `protobuf:"varint,2,opt,name=atrus,proto3" json:"atrus,omitempty"`
+	// Indicate if the DUT is connected to chameleon through static audio cable
+	StaticCable bool `protobuf:"varint,3,opt,name=static_cable,json=staticCable,proto3" json:"static_cable,omitempty"`
+	// Audio loopback dongle is plugged in.
+	LoopbackState DUTAudio_LoopbackState `protobuf:"varint,4,opt,name=loopback_state,json=loopbackState,proto3,enum=chromeos.recovery.DUTAudio_LoopbackState" json:"loopback_state,omitempty"`
+}
+
+func (x *DUTAudio) Reset() {
+	*x = DUTAudio{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DUTAudio) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DUTAudio) ProtoMessage() {}
+
+func (x *DUTAudio) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_cros_recovery_tlw_models_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DUTAudio.ProtoReflect.Descriptor instead.
+func (*DUTAudio) Descriptor() ([]byte, []int) {
+	return file_infra_cros_recovery_tlw_models_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DUTAudio) GetInBox() bool {
+	if x != nil {
+		return x.InBox
+	}
+	return false
+}
+
+func (x *DUTAudio) GetAtrus() bool {
+	if x != nil {
+		return x.Atrus
+	}
+	return false
+}
+
+func (x *DUTAudio) GetStaticCable() bool {
+	if x != nil {
+		return x.StaticCable
+	}
+	return false
+}
+
+func (x *DUTAudio) GetLoopbackState() DUTAudio_LoopbackState {
+	if x != nil {
+		return x.LoopbackState
+	}
+	return DUTAudio_LOOPBACK_UNSPECIFIED
 }
 
 var File_infra_cros_recovery_tlw_models_proto protoreflect.FileDescriptor
@@ -958,7 +1084,22 @@ var file_infra_cros_recovery_tlw_models_proto_rawDesc = []byte{
 	0x75, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
 	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
-	0x02, 0x38, 0x01, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f,
+	0x02, 0x38, 0x01, 0x22, 0xed, 0x01, 0x0a, 0x08, 0x44, 0x55, 0x54, 0x41, 0x75, 0x64, 0x69, 0x6f,
+	0x12, 0x15, 0x0a, 0x06, 0x69, 0x6e, 0x5f, 0x62, 0x6f, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x05, 0x69, 0x6e, 0x42, 0x6f, 0x78, 0x12, 0x14, 0x0a, 0x05, 0x61, 0x74, 0x72, 0x75, 0x73,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x61, 0x74, 0x72, 0x75, 0x73, 0x12, 0x21, 0x0a,
+	0x0c, 0x73, 0x74, 0x61, 0x74, 0x69, 0x63, 0x5f, 0x63, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x08, 0x52, 0x0b, 0x73, 0x74, 0x61, 0x74, 0x69, 0x63, 0x43, 0x61, 0x62, 0x6c, 0x65,
+	0x12, 0x50, 0x0a, 0x0e, 0x6c, 0x6f, 0x6f, 0x70, 0x62, 0x61, 0x63, 0x6b, 0x5f, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x29, 0x2e, 0x63, 0x68, 0x72, 0x6f, 0x6d,
+	0x65, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e, 0x44, 0x55, 0x54,
+	0x41, 0x75, 0x64, 0x69, 0x6f, 0x2e, 0x4c, 0x6f, 0x6f, 0x70, 0x62, 0x61, 0x63, 0x6b, 0x53, 0x74,
+	0x61, 0x74, 0x65, 0x52, 0x0d, 0x6c, 0x6f, 0x6f, 0x70, 0x62, 0x61, 0x63, 0x6b, 0x53, 0x74, 0x61,
+	0x74, 0x65, 0x22, 0x3f, 0x0a, 0x0d, 0x4c, 0x6f, 0x6f, 0x70, 0x62, 0x61, 0x63, 0x6b, 0x53, 0x74,
+	0x61, 0x74, 0x65, 0x12, 0x18, 0x0a, 0x14, 0x4c, 0x4f, 0x4f, 0x50, 0x42, 0x41, 0x43, 0x4b, 0x5f,
+	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x14, 0x0a,
+	0x10, 0x4c, 0x4f, 0x4f, 0x50, 0x42, 0x41, 0x43, 0x4b, 0x5f, 0x57, 0x4f, 0x52, 0x4b, 0x49, 0x4e,
+	0x47, 0x10, 0x01, 0x42, 0x1d, 0x5a, 0x1b, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x63, 0x72, 0x6f,
 	0x73, 0x2f, 0x72, 0x65, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2f, 0x74, 0x6c, 0x77, 0x3b, 0x74,
 	0x6c, 0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
@@ -975,41 +1116,44 @@ func file_infra_cros_recovery_tlw_models_proto_rawDescGZIP() []byte {
 	return file_infra_cros_recovery_tlw_models_proto_rawDescData
 }
 
-var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_infra_cros_recovery_tlw_models_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_infra_cros_recovery_tlw_models_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_infra_cros_recovery_tlw_models_proto_goTypes = []interface{}{
 	(RunRPMActionRequest_Action)(0),   // 0: chromeos.recovery.RunRPMActionRequest.Action
 	(RPMOutlet_State)(0),              // 1: chromeos.recovery.RPMOutlet.State
 	(WifiRouterHost_State)(0),         // 2: chromeos.recovery.WifiRouterHost.State
 	(VersionRequest_VersionType)(0),   // 3: chromeos.recovery.VersionRequest.VersionType
-	(*RunRequest)(nil),                // 4: chromeos.recovery.RunRequest
-	(*ProvisionRequest)(nil),          // 5: chromeos.recovery.ProvisionRequest
-	(*CallBluetoothPeerRequest)(nil),  // 6: chromeos.recovery.CallBluetoothPeerRequest
-	(*CallBluetoothPeerResponse)(nil), // 7: chromeos.recovery.CallBluetoothPeerResponse
-	(*RunRPMActionRequest)(nil),       // 8: chromeos.recovery.RunRPMActionRequest
-	(*RPMOutlet)(nil),                 // 9: chromeos.recovery.RPMOutlet
-	(*WifiRouterHost)(nil),            // 10: chromeos.recovery.WifiRouterHost
-	(*VersionRequest)(nil),            // 11: chromeos.recovery.VersionRequest
-	(*VersionResponse)(nil),           // 12: chromeos.recovery.VersionResponse
-	nil,                               // 13: chromeos.recovery.VersionResponse.ValueEntry
-	(*durationpb.Duration)(nil),       // 14: google.protobuf.Duration
-	(*xmlrpc.Value)(nil),              // 15: chromiumos.config.api.test.xmlrpc.Value
+	(DUTAudio_LoopbackState)(0),       // 4: chromeos.recovery.DUTAudio.LoopbackState
+	(*RunRequest)(nil),                // 5: chromeos.recovery.RunRequest
+	(*ProvisionRequest)(nil),          // 6: chromeos.recovery.ProvisionRequest
+	(*CallBluetoothPeerRequest)(nil),  // 7: chromeos.recovery.CallBluetoothPeerRequest
+	(*CallBluetoothPeerResponse)(nil), // 8: chromeos.recovery.CallBluetoothPeerResponse
+	(*RunRPMActionRequest)(nil),       // 9: chromeos.recovery.RunRPMActionRequest
+	(*RPMOutlet)(nil),                 // 10: chromeos.recovery.RPMOutlet
+	(*WifiRouterHost)(nil),            // 11: chromeos.recovery.WifiRouterHost
+	(*VersionRequest)(nil),            // 12: chromeos.recovery.VersionRequest
+	(*VersionResponse)(nil),           // 13: chromeos.recovery.VersionResponse
+	(*DUTAudio)(nil),                  // 14: chromeos.recovery.DUTAudio
+	nil,                               // 15: chromeos.recovery.VersionResponse.ValueEntry
+	(*durationpb.Duration)(nil),       // 16: google.protobuf.Duration
+	(*xmlrpc.Value)(nil),              // 17: chromiumos.config.api.test.xmlrpc.Value
 }
 var file_infra_cros_recovery_tlw_models_proto_depIdxs = []int32{
-	14, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
-	15, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
-	15, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	16, // 0: chromeos.recovery.RunRequest.timeout:type_name -> google.protobuf.Duration
+	17, // 1: chromeos.recovery.CallBluetoothPeerRequest.args:type_name -> chromiumos.config.api.test.xmlrpc.Value
+	17, // 2: chromeos.recovery.CallBluetoothPeerResponse.value:type_name -> chromiumos.config.api.test.xmlrpc.Value
 	0,  // 3: chromeos.recovery.RunRPMActionRequest.action:type_name -> chromeos.recovery.RunRPMActionRequest.Action
 	1,  // 4: chromeos.recovery.RPMOutlet.state:type_name -> chromeos.recovery.RPMOutlet.State
 	2,  // 5: chromeos.recovery.WifiRouterHost.state:type_name -> chromeos.recovery.WifiRouterHost.State
-	9,  // 6: chromeos.recovery.WifiRouterHost.RPMOutlet:type_name -> chromeos.recovery.RPMOutlet
+	10, // 6: chromeos.recovery.WifiRouterHost.RPMOutlet:type_name -> chromeos.recovery.RPMOutlet
 	3,  // 7: chromeos.recovery.VersionRequest.type:type_name -> chromeos.recovery.VersionRequest.VersionType
-	13, // 8: chromeos.recovery.VersionResponse.value:type_name -> chromeos.recovery.VersionResponse.ValueEntry
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	15, // 8: chromeos.recovery.VersionResponse.value:type_name -> chromeos.recovery.VersionResponse.ValueEntry
+	4,  // 9: chromeos.recovery.DUTAudio.loopback_state:type_name -> chromeos.recovery.DUTAudio.LoopbackState
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_infra_cros_recovery_tlw_models_proto_init() }
@@ -1126,14 +1270,26 @@ func file_infra_cros_recovery_tlw_models_proto_init() {
 				return nil
 			}
 		}
+		file_infra_cros_recovery_tlw_models_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DUTAudio); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_cros_recovery_tlw_models_proto_rawDesc,
-			NumEnums:      4,
-			NumMessages:   10,
+			NumEnums:      5,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

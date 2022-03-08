@@ -158,12 +158,18 @@ func adaptUfsDutToTLWDut(data *ufspb.ChromeOSDeviceData) (*tlw.Dut, error) {
 		RPMOutlet:          createRPMOutlet(p.GetRpm(), ds),
 		Cr50Phase:          convertCr50Phase(ds.GetCr50Phase()),
 		Cr50KeyEnv:         convertCr50KeyEnv(ds.GetCr50KeyEnv()),
-		AudioLoopbackState: convertAudioLoopbackState(ds.GetAudioLoopbackDongle()),
-		DeviceSku:          machine.GetChromeosMachine().GetSku(),
+		Audio: &tlw.DUTAudio{
+			LoopbackState: convertAudioLoopbackState(ds.GetAudioLoopbackDongle()),
+		},
+		DeviceSku: machine.GetChromeosMachine().GetSku(),
 		ExtraAttributes: map[string][]string{
 			ExtraAttributesPools: dut.GetPools(),
 		},
 		ProvisionedInfo: &tlw.DUTProvisionedInfo{},
+	}
+	if audio := p.GetAudio(); audio != nil {
+		d.Audio.InBox = audio.AudioBox
+		d.Audio.StaticCable = audio.AudioCable
 	}
 	if p.GetServo().GetServoSetup() == ufslab.ServoSetupType_SERVO_SETUP_DUAL_V4 {
 		d.ExtraAttributes[ExtraAttributesServoSetup] = []string{ExtraAttributesServoSetupDual}
@@ -445,7 +451,7 @@ func getUFSDutComponentStateFromSpecs(dutID string, dut *tlw.Dut) *ufslab.DutSta
 			state.WorkingBluetoothBtpeer += 1
 		}
 	}
-	if dut.AudioLoopbackState == tlw.AudioLoopbackStateWorking {
+	if dut.Audio != nil && dut.Audio.GetLoopbackState() == tlw.DUTAudio_LOOPBACK_WORKING {
 		state.AudioLoopbackDongle = ufslab.PeripheralState_WORKING
 	} else {
 		state.AudioLoopbackDongle = ufslab.PeripheralState_UNKNOWN

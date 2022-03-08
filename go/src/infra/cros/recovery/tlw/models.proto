@@ -129,7 +129,8 @@ message VersionRequest {
     // AP/PCAP peripheral.
     WIFI_ROUTER = 2;
   }
-  // Version type describe type of versions and device type associated with that.
+  // Version type describe type of versions and device type associated with
+  // that.
   VersionType type = 2;
 }
 
@@ -137,4 +138,23 @@ message VersionRequest {
 message VersionResponse {
   // All version values.
   map<string, string> value = 1;
+}
+
+// CrosAudio holds infor for audio information of the DUT.
+message DUTAudio {
+  // Indicate if the DUT is housed in an audio box to record / replay audio
+  // for audio testing.
+  bool in_box = 1;
+  // Indicate if the DUT is connected to Atrus speakermic
+  bool atrus = 2;
+  // Indicate if the DUT is connected to chameleon through static audio cable
+  bool static_cable = 3;
+  // LoopbackState representes states for loopback dongle.
+  enum LoopbackState {
+    LOOPBACK_UNSPECIFIED = 0;
+    // Device and software on it is working as expected.
+    LOOPBACK_WORKING = 1;
+  }
+  // Audio loopback dongle is plugged in.
+  LoopbackState loopback_state = 4;
 }

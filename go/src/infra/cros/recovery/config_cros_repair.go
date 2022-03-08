@@ -812,6 +812,15 @@ const crosRepairPlanActions = `
 	"exec_name":"sample_pass",
 	"run_control": 1
 },
+"Is not in audio box":{
+	"docs":[
+		"Verify that setup is not audio box"
+	],
+	"dependencies":[
+		"dut_is_in_audio_box"
+	],
+	"exec_name":"sample_fail"
+},
 "Power cycle DUT by RPM":{
 	"docs":[
 		"Power cycle the DUT by RPM outlet."

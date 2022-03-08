@@ -140,6 +140,14 @@ func servoHostPresentExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// dutInAudioBoxExec checks if DUT is in audio box.
+func dutInAudioBoxExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d == nil || d.Audio == nil || !d.Audio.GetInBox() {
+		return errors.Reason("is audio box: is not in audio-box").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
@@ -149,5 +157,6 @@ func init() {
 	execs.Register("dut_check_model", dutCheckModelExec)
 	execs.Register("dut_check_board", dutCheckBoardExec)
 	execs.Register("dut_servoless", dutServolessExec)
-	execs.Register("servo_has_serial", servoVerifySerialNumberExec)
+	execs.Register("dut_is_in_audio_box", dutInAudioBoxExec)
+	execs.Register("dut_servo_has_serial", servoVerifySerialNumberExec)
 }
