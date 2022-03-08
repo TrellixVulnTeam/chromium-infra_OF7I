@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import {createTheme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/styles';
 import MobileStepper from '@material-ui/core/MobileStepper';
@@ -50,6 +50,24 @@ export default function DotsMobileStepper(props: Props) : React.ReactElement {
       onSubmit();
     }
   }
+
+  const onBrowserBackButtonEvent = (e: MouseEvent|SubmitEvent|KeyboardEvent) => {
+    e.preventDefault();
+    if (activeStep === 0) {
+      window.history.back();
+    } else {
+      setActiveStep(activeStep-1);
+    }
+  }
+
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.pathname);
+    console.log(window.history);
+    window.addEventListener('popstate', onBrowserBackButtonEvent);
+    return () => {
+      window.removeEventListener('popstate', onBrowserBackButtonEvent);
+    };
+  }, [activeStep]);
 
   let nextButton;
   if (activeStep === 2){
