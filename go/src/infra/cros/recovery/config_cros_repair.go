@@ -319,13 +319,26 @@ const crosRepairPlanActions = `
 	"conditions":[
 		"cros_is_battery_expected",
 		"cros_is_not_virtual_machine",
-		"cros_is_battery_present"
+		"Battery is expected on device",
+		"Battery is present on device"
 	],
 	"dependencies":[
 		"cros_storage_writing",
 		"cros_is_battery_chargable_or_good_level"
 	],
 	"exec_name":"cros_audit_battery"
+},
+"Battery is expected on device":{
+	"docs":[
+		"Verifies that device is expected to have battery based on DUT info."
+	],
+	"exec_name":"dut_has_battery"
+},
+"Battery is present on device":{
+	"docs":[
+		"Verifies if battery present is reported as present in power supply info."
+	],
+	"exec_name":"cros_is_battery_present"
 },
 "wifi_audit":{
 	"docs":[

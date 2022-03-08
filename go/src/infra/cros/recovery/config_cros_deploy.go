@@ -147,14 +147,34 @@ var crosDeployPlanActions = `
 },
 "Deployment checks":{
 	"docs":[
-		"Run some specif checks as part of deployment.",
-		"TODO: Need finished analysis to create final list"
+		"Run some specif checks as part of deployment."
 	],
 	"dependencies":[
+		"Verify battery charging level",
 		"Verify boot in recovery mode",
 		"Verify RPM config (not critical)"
 	],
-	"exec_name":"sample_fail"
+	"exec_name":"sample_pass"
+},
+"Verify battery charging level":{
+	"docs":[
+		"Battery will be checked that it can be charged to the 80% as if device cannot then probably device is not fully prepared for deployment.",
+		"If battery is not charged, then we will re-check every 15 minutes for 8 time to allows to charge the battery.",
+		"Dues overheat battery in audio boxes mostly it deployed "
+	],
+	"conditions":[
+		"Is not in audio box",
+		"Battery is expected on device",
+		"Battery is present on device"
+	],
+	"exec_name":"cros_battery_changable_to_expected_level",
+	"exec_extra_args":[
+		"charge_retry_count:8",
+		"charge_retry_interval:900"
+	],
+	"exec_timeout": {
+		"seconds":9000
+	}
 },
 "Verify boot in recovery mode":{
 	"docs":[
@@ -164,7 +184,13 @@ var crosDeployPlanActions = `
 },
 "Verify RPM config (not critical)":{
 	"docs":[
-		"TODO: Not implemented yet!"
+		"TODO: Not implemented yet!",
+		"Not applicable for cr50 servos based on b/205728276"
+	],
+	"conditions":[
+		"dut_servo_host_present",
+		"servo_state_is_working",
+		"is_servo_main_ccd_cr50"
 	],
 	"exec_name":"sample_fail"
 },

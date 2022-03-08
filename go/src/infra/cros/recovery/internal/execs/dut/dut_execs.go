@@ -148,6 +148,14 @@ func dutInAudioBoxExec(ctx context.Context, info *execs.ExecInfo) error {
 	return nil
 }
 
+// hasBatteryExec checks if DUT is expected to have a battery.
+func hasBatteryExec(ctx context.Context, info *execs.ExecInfo) error {
+	if d := info.RunArgs.DUT; d == nil || d.Battery == nil {
+		return errors.Reason("has battery: data is not present").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("dut_servo_host_present", servoHostPresentExec)
 	execs.Register("dut_has_name", hasDutNameActionExec)
@@ -159,4 +167,5 @@ func init() {
 	execs.Register("dut_servoless", dutServolessExec)
 	execs.Register("dut_is_in_audio_box", dutInAudioBoxExec)
 	execs.Register("dut_servo_has_serial", servoVerifySerialNumberExec)
+	execs.Register("dut_has_battery", hasBatteryExec)
 }

@@ -78,6 +78,20 @@ func (parsedArgs ParsedArgs) AsInt(ctx context.Context, key string, defaultValue
 	return defaultValue
 }
 
+// AsFloat64 returns the value for the passed key as a float64.
+// If the value cannot be interpreted as int, then the passed defaultValue is returned.
+func (parsedArgs ParsedArgs) AsFloat64(ctx context.Context, key string, defaultValue float64) float64 {
+	if value, ok := parsedArgs[key]; ok {
+		if val, err := strconv.ParseFloat(value, 64); err == nil {
+			return val
+		}
+		log.Debug(ctx, "Parsed Args As Float64: value %q for key %q is not a valid integer, returning default value %d.", value, key, defaultValue)
+	} else {
+		log.Debug(ctx, "Parsed Args As Float64: key %q does not exist in the parsed arguments, returning default value %d.", key, defaultValue)
+	}
+	return defaultValue
+}
+
 // AsDuration returns the value of the passed key as type: time.Duration.
 // If the value cannot be interpreted as int, then the passed defaultValue is returned.
 //
