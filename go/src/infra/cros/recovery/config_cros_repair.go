@@ -836,7 +836,7 @@ const crosRepairPlanActions = `
 	"docs":[
 		"Verify that setup is not audio box"
 	],
-	"dependencies":[
+	"conditions":[
 		"dut_is_in_audio_box"
 	],
 	"exec_name":"sample_fail"
