@@ -709,11 +709,9 @@ func servoSetEcUartCmdExec(ctx context.Context, info *execs.ExecInfo) error {
 		return errors.Reason("servo set ec uart cmd: the passed in value cannot be empty").Err()
 	}
 	servod := info.NewServod()
-	if err := servo.SetEcUartCmd(ctx, servod, value); err != nil {
+	if err := servo.SetEcUartCmd(ctx, servod, value, waitTimeout); err != nil {
 		return errors.Annotate(err, "servo set ec uart cmd").Err()
 	}
-	log.Debug(ctx, "Servo Set Ec Uart Cmd: Wait %v.", waitTimeout)
-	time.Sleep(waitTimeout)
 	return nil
 }
 

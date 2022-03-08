@@ -43,6 +43,9 @@ const crosRepairPlanActions = `
 		"dut_has_board_name",
 		"dut_has_model_name"
 	],
+	"recovery_actions": [
+		"Restore AC detection by EC console"
+	],
 	"exec_name": "cros_ping",
 	"exec_timeout": {
 		"seconds":15
@@ -150,7 +153,8 @@ const crosRepairPlanActions = `
 	"recovery_actions": [
 		"Power cycle DUT by RPM and wait",
 		"cros_servo_power_reset_repair",
-		"cros_servo_cr50_reboot_repair"
+		"cros_servo_cr50_reboot_repair",
+		"Restore AC detection by EC console"
 	],
 	"exec_name":"sample_pass"
 },
@@ -856,6 +860,21 @@ const crosRepairPlanActions = `
 	"exec_name": "cros_dmesg",
 	"recovery_actions": [],
 	"allow_fail_after_recovery": true
+},
+"Restore AC detection by EC console":{
+	"docs":[
+		"Try to recover AC detection through servod's ec control"
+	],
+	"conditions": [
+		"cros_is_battery_expected"
+	],
+	"exec_extra_args":[
+		"wait_timeout:120"
+	],
+	"exec_timeout": {
+		"seconds":600
+	},
+	"exec_name":"servo_recover_ac_power"
 }
 `
 

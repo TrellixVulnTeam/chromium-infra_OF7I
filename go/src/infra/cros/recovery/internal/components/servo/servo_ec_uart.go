@@ -6,6 +6,7 @@ package servo
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/luci/common/errors"
 
@@ -15,7 +16,7 @@ import (
 
 // SetEcUartCmd will set "ec_uart_cmd" to the specific value based on the passed in parameter.
 // Before and after the set of the "ec_uart_cmd", it will toggle the value of "ec_uart_flush".
-func SetEcUartCmd(ctx context.Context, servod components.Servod, value string) error {
+func SetEcUartCmd(ctx context.Context, servod components.Servod, value string, waitTimeout time.Duration) error {
 	const ecUartFlush = "ec_uart_flush"
 	log.Info(ctx, `Setting servod command %q to "off" value.`, ecUartFlush)
 	if err := servod.Set(ctx, ecUartFlush, "off"); err != nil {
@@ -30,5 +31,7 @@ func SetEcUartCmd(ctx context.Context, servod components.Servod, value string) e
 	if err := servod.Set(ctx, ecUartFlush, "on"); err != nil {
 		return errors.Annotate(err, "set ec uart cmd").Err()
 	}
+	log.Debug(ctx, "Set Ec Uart Cmd: Waiting %v after setting of %q.", waitTimeout, ecUartCmd)
+	time.Sleep(waitTimeout)
 	return nil
 }

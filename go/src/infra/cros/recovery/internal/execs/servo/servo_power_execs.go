@@ -10,6 +10,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/servo"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 	"infra/cros/recovery/internal/retry"
@@ -62,6 +63,63 @@ func servoServodPdRoleToggleExec(ctx context.Context, info *execs.ExecInfo) erro
 	return errors.Annotate(toggleErr, "servod pd role toggle").Err()
 }
 
+// servoRecoverAcPowerExec recovers AC detection if AC is not detected.
+//
+// The fix based on toggle PD negotiating on EC level of DUT.
+// Repair works only for the DUT which has EC and battery.
+//
+// @params: actionArgs should be in the format of:
+// Ex: ["wait_timeout:x"]
+func servoRecoverAcPowerExec(ctx context.Context, info *execs.ExecInfo) error {
+	argsMap := info.GetActionArgs(ctx)
+	// Timeout to wait for recovering the ac power through ec. Default to be 120s.
+	waitTimeout := argsMap.AsDuration(ctx, "wait_timeout", 120, time.Second)
+	servod := info.NewServod()
+	// Make sure ec is available and we can interact with that.
+	if _, err := servodGetString(ctx, servod, "ec_board"); err != nil {
+		log.Debug(ctx, "Servo recover ac power: cannot get ec board with error: %s", err)
+		// if EC is off it will fail to execute any EC command
+		// to wake it up we do cold-reboot then we will have active ec connection for ~30 seconds.
+		if err := servod.Set(ctx, "power_state", "reset"); err != nil {
+			return errors.Annotate(err, "servo recover ac power").Err()
+		}
+	}
+	if batteryIsCharging, err := servodGetBool(ctx, servod, "battery_is_charging"); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	} else if batteryIsCharging {
+		log.Debug(ctx, "Servo recover ac power: battery is charging")
+		return nil
+	}
+	// Simple off-on not always working stable in all cases as source-sink not working too in another cases.
+	// To cover more cases here we do both toggle to recover PD negotiation.
+	// Source/sink switching CC lines to make DUT work as supplying or consuming power (between Rp and Rd).
+	if err := servo.SetEcUartCmd(ctx, servod, "pd dualrole off", time.Second); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	}
+	if err := servo.SetEcUartCmd(ctx, servod, "pd dualrole on", time.Second); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	}
+	if err := servo.SetEcUartCmd(ctx, servod, "pd dualrole source", time.Second); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	}
+	if err := servo.SetEcUartCmd(ctx, servod, "pd dualrole sink", time.Second); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	}
+	// Wait to reinitialize PD negotiation and charge a little bit.
+	log.Debug(ctx, "Servo recover ac power: Wait %v", waitTimeout)
+	time.Sleep(waitTimeout)
+	if err := servod.Set(ctx, "power_state", "reset"); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	}
+	if batteryIsCharging, err := servodGetBool(ctx, servod, "battery_is_charging"); err != nil {
+		return errors.Annotate(err, "servo recover ac power").Err()
+	} else if !batteryIsCharging {
+		return errors.Annotate(err, "servo recover ac power: battery is not charging after recovery").Err()
+	}
+	return nil
+}
+
 func init() {
 	execs.Register("servo_servod_toggle_pd_role", servoServodPdRoleToggleExec)
+	execs.Register("servo_recover_ac_power", servoRecoverAcPowerExec)
 }
