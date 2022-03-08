@@ -1,4 +1,4 @@
-import marked from 'marked';
+import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
 /** @type {Set} Projects that default Markdown rendering to true. */
@@ -76,7 +76,7 @@ const HTML_ESCAPE_MAP = Object.freeze({
  * @return {string} Same text content after escaping HTML characters.
  */
 const escapeHtml = (text) => {
-  return text.replace(/[&<>"'`=\/]/g, (s) => {
+  return text.replace(/[<>"'`]/g, (s) => {
     return HTML_ESCAPE_MAP[s];
   });
 };
@@ -113,10 +113,6 @@ const isEmailLink = (string) => {
  * @type {Object}
  */
 const renderer = {
-  html(text) {
-    // Do not render HTML, instead escape HTML and render as plaintext.
-    return escapeHtml(text);
-  },
   link(href, title, text) {
     // Overrides default link rendering by adding icon and destination on hover.
     // TODO(crbug.com/monorail/9316): Add shared-styles/MD_STYLES to all
@@ -149,7 +145,8 @@ export const renderMarkdown = (raw) => {
   // autolinking.
   // TODO(crbug.com/monorail/9310): Integrate autolink
   const preprocessed = replaceBoldTag(raw);
-  const converted = marked(preprocessed);
+  const escaped = escapeHtml(preprocessed);
+  const converted = marked(escaped);
   const sanitized = DOMPurify.sanitize(converted, SANITIZE_OPTIONS);
   return sanitized.toString();
 };
