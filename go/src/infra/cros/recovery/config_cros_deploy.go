@@ -201,17 +201,9 @@ var crosDeployPlanActions = `
 	"dependencies":[` + joinCriticalList(crosRepairPlanCriticalActionList) + `],
 	"exec_name":"sample_pass"
 },
-"has_test_cros_image":{
-	"docs":[
-		"Verify that device has test OS image on it.",
-		"TODO: Need implement"
-	],
-	"exec_name":"sample_fail"
-},
 "Install OS in DEV mode":{
 	"docs":[
-		"Install OS on the device from USB-key when device is in DEV-mode.",
-		"TODO: Need implement"
+		"Install OS on the device from USB-key when device is in DEV-mode."
 	],
 	"dependencies":[
 		"Set GBB flags to 0x18 by servo",
