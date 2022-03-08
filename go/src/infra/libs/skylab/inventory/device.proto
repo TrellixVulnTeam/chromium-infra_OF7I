@@ -453,6 +453,7 @@ message Peripherals {
   // Next Tag: 12
   enum WifiFeature {
     UNKNOWN = 0;
+    // TODO add peripheral_wifi_features test in exporting_adapter_test.go when more enums are available
   }
   // Feature collections from UFS peripheral.wifi and peripheral.wifi.wifiRouters.
   repeated WifiFeature peripheral_wifi_features = 32;

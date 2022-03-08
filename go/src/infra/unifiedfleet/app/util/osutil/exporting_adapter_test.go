@@ -105,6 +105,24 @@ var lse = ufspb.MachineLSE{
 									Wificell:    true,
 									AntennaConn: chromeosLab.Wifi_CONN_CONDUCTIVE,
 									Router:      chromeosLab.Wifi_ROUTER_802_11AX,
+									// TODO: add valid enums when non Wifi_UNKNONW enum is available
+									// The UNKNONWN enum are testing periperal_wifi_features does not include "UNKNOWN" labels.
+									Features: []chromeosLab.Wifi_Feature{
+										chromeosLab.Wifi_UNKNOWN,
+									},
+									WifiRouters: []*chromeosLab.WifiRouter{
+										{
+											Features: []chromeosLab.WifiRouter_Feature{
+												chromeosLab.WifiRouter_UNKNOWN,
+												chromeosLab.WifiRouter_UNKNOWN,
+											},
+										},
+										{
+											Features: []chromeosLab.WifiRouter_Feature{
+												chromeosLab.WifiRouter_UNKNOWN,
+											},
+										},
+									},
 								},
 								Touch: &chromeosLab.Touch{
 									Mimo: true,
@@ -206,6 +224,7 @@ var devUFSState = chromeosLab.DutState{
 	WifiState:              chromeosLab.HardwareState_HARDWARE_ACCEPTABLE,
 	BluetoothState:         chromeosLab.HardwareState_HARDWARE_NORMAL,
 	RpmState:               chromeosLab.PeripheralState_WORKING,
+	WifiPeripheralState:    chromeosLab.PeripheralState_WORKING,
 }
 
 var labstationMachine = ufspb.Machine{
@@ -475,6 +494,7 @@ common {
 			servo_state: BROKEN
 			servo_type: "v3"
 			rpm_state: WORKING
+			peripheral_wifi_state: WORKING
 			smart_usbhub: true
 			storage_state: HARDWARE_NORMAL,
 			servo_usb_state: HARDWARE_NEED_REPLACEMENT,
@@ -583,6 +603,7 @@ common {
           wifi_state: HARDWARE_ACCEPTABLE
           bluetooth_state: HARDWARE_NORMAL
           rpm_state: WORKING
+          peripheral_wifi_state: WORKING
 		}
 		platform:""
         test_coverage_hints {

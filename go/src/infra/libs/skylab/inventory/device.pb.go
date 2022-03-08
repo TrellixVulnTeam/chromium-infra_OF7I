@@ -1448,7 +1448,7 @@ func (Peripherals_CameraboxLight) EnumDescriptor() ([]byte, []int) {
 type Peripherals_WifiFeature int32
 
 const (
-	Peripherals_UNKNOWN Peripherals_WifiFeature = 0
+	Peripherals_UNKNOWN Peripherals_WifiFeature = 0 // TODO add peripheral_wifi_features test in exporting_adapter_test.go when more enums are available
 )
 
 // Enum value maps for Peripherals_WifiFeature.

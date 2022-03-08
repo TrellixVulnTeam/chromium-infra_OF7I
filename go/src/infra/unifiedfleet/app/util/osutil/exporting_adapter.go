@@ -137,6 +137,30 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *chromeosLab.Perip
 		} else {
 			p.Router_802_11Ax = &falseValue
 		}
+
+		uniqFeatures := make(map[inventory.Peripherals_WifiFeature]bool)
+		// Collect wifi features
+		for _, wifiFeature := range wifi.GetFeatures() {
+			if wifiFeature != chromeosLab.Wifi_UNKNOWN {
+				v1Feature := inventory.Peripherals_WifiFeature(inventory.Peripherals_WifiFeature_value[wifiFeature.String()])
+				if uniqFeatures[v1Feature] == false {
+					uniqFeatures[v1Feature] = true
+					p.PeripheralWifiFeatures = append(p.PeripheralWifiFeatures, v1Feature)
+				}
+			}
+		}
+		// Collect wifirouters features
+		for _, wifiRouter := range wifi.GetWifiRouters() {
+			for _, routerFeature := range wifiRouter.GetFeatures() {
+				if routerFeature != chromeosLab.WifiRouter_UNKNOWN {
+					v1Feature := inventory.Peripherals_WifiFeature(inventory.Peripherals_WifiFeature_value[routerFeature.String()])
+					if uniqFeatures[v1Feature] == false {
+						uniqFeatures[v1Feature] = true
+						p.PeripheralWifiFeatures = append(p.PeripheralWifiFeatures, v1Feature)
+					}
+				}
+			}
+		}
 	}
 
 	if touch := d.GetTouch(); touch != nil {
@@ -465,6 +489,7 @@ func setDutState(l *inventory.SchedulableLabels, s *chromeosLab.DutState) {
 	p.WifiState = setHardwareState(s.GetWifiState())
 	p.BluetoothState = setHardwareState(s.GetBluetoothState())
 	p.RpmState = setPeripheralState(s.GetRpmState())
+	p.PeripheralWifiState = setPeripheralState(s.GetWifiPeripheralState())
 
 	if n := s.GetWorkingBluetoothBtpeer(); n > 0 {
 		p.WorkingBluetoothBtpeer = &n
