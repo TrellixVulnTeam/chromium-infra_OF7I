@@ -2,18 +2,35 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, property, css, state } from 'lit-element';
-import { GrpcError, RpcCode } from '@chopsui/prpc-client';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import '@material/mwc-icon';
+
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    property,
+    state
+} from 'lit-element';
+import { Ref } from 'react';
+import { NavigateFunction } from 'react-router-dom';
+import { URLSearchParams } from 'url';
+
+import {
+    GrpcError,
+    RpcCode
+} from '@chopsui/prpc-client';
 import { Snackbar } from '@material/mwc-snackbar';
 import { TextArea } from '@material/mwc-textarea';
-import { BeforeEnterObserver, Router, RouterLocation } from '@vaadin/router';
 
+import {
+    ClusterId,
+    CreateRuleRequest,
+    getRulesService
+} from '../../services/rules';
 import { BugPicker } from '../../shared_elements/bug_picker';
-import '../../shared_elements/bug_picker';
-import { getRulesService, ClusterId, CreateRuleRequest } from '../../services/rules';
 import { linkToRule } from '../../tools/urlHandling/links';
 
 /**
@@ -23,9 +40,25 @@ import { linkToRule } from '../../tools/urlHandling/links';
  * page in Weetbix from a failure (e.g. from a failure in MILO).
  */
 @customElement('new-rule-page')
-export class NewRulePage extends LitElement implements BeforeEnterObserver {
+export class NewRulePage extends LitElement {
     @property()
     project = '';
+
+    @property()
+    ruleString!: string | null;
+
+    @property()
+    sourceAlg!: string | null;
+
+    @property()
+    sourceId!: string | null;
+
+    @property({ attribute: false })
+    ref: Ref<NewRulePage> | null = null;
+
+    navigate!: NavigateFunction;
+
+    searchParams!: URLSearchParams;
 
     @state()
     validationMessage = '';
@@ -34,22 +67,19 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
     defaultRule = '';
 
     @state()
-    sourceCluster : ClusterId = { algorithm: '', id: '' };
+    sourceCluster: ClusterId = { algorithm: '', id: '' };
 
     @state()
     snackbarError = '';
 
-    onBeforeEnter(location: RouterLocation) {
-        // Take the first parameter value only.
-        this.project = typeof location.params.project == 'string' ? location.params.project : location.params.project[0];
-        let search = new URLSearchParams(location.search)
-        let rule = search.get('rule')
+    updateRuleAndClusterFromSearch() {
+        let rule = this.ruleString;
         if (rule) {
             this.defaultRule = rule;
             console.log(rule);
         }
-        let sourceClusterAlg = search.get('sourceAlg');
-        let sourceClusterID = search.get('sourceId');
+        let sourceClusterAlg = this.sourceAlg;
+        let sourceClusterID = this.sourceId;
         if (sourceClusterAlg && sourceClusterID) {
             this.sourceCluster = {
                 algorithm: sourceClusterAlg,
@@ -60,7 +90,7 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
 
     connectedCallback() {
         super.connectedCallback();
-
+        this.updateRuleAndClusterFromSearch();
         this.validationMessage = '';
         this.snackbarError = '';
     }
@@ -107,7 +137,8 @@ export class NewRulePage extends LitElement implements BeforeEnterObserver {
         try {
             const rule = await service.create(request);
             this.validationMessage = JSON.stringify(rule);
-            Router.go(linkToRule(rule.project, rule.ruleId));
+            // Apparently .<>? doesn't work with a function
+             this.navigate(linkToRule(rule.project, rule.ruleId));
         } catch (e) {
             let handled = false;
             if (e instanceof GrpcError) {

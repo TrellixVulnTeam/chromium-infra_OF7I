@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import './elements/reclustering_progress_indicator';
 import './elements/reclustering_progress_indicator.ts';
 import '../../../shared_elements/failure_table';
 import './elements/rule_section.ts';
-
 
 import {
     css,
@@ -16,20 +16,17 @@ import {
     state,
     TemplateResult
 } from 'lit-element';
-
-import {
-    BeforeEnterObserver,
-    Router,
-    RouterLocation
-} from '@vaadin/router';
+import { Ref } from 'react';
+import { NavigateFunction } from 'react-router-dom';
 
 import { RuleChangedEvent } from './elements/rule_section';
 
 // ClusterPage lists the clusters tracked by Weetbix.
 @customElement('cluster-page')
-export class ClusterPage extends LitElement implements BeforeEnterObserver {
+export class ClusterPage extends LitElement {
+
     @property({ attribute: false })
-    location!: RouterLocation;
+    ref: Ref<ClusterPage> | null = null;
 
     @property()
     project: string = '';
@@ -40,6 +37,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     @property()
     clusterId: string = '';
 
+    navigate!: NavigateFunction;
+
     @state()
     cluster: Cluster | undefined;
 
@@ -49,22 +48,8 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
     // the correct re-clustering status.
     rulePredicateLastUpdated: string = '';
 
-    onBeforeEnter(location: RouterLocation) {
-        // Take the first parameter value only.
-        this.project = typeof location.params.project == 'string' ? location.params.project : location.params.project[0];
-        if (location.params.algorithm) {
-            // Via /p/:project/clusters/:algorithm/:id.
-            this.clusterAlgorithm = typeof location.params.algorithm == 'string' ? location.params.algorithm : location.params.algorithm[0];
-        } else {
-            // /p/:project/rules/:id.
-            this.clusterAlgorithm = 'rules-v1';
-        }
-        this.clusterId = typeof location.params.id == 'string' ? location.params.id : location.params.id[0];
-    }
-
     connectedCallback() {
         super.connectedCallback();
-
         this.rulePredicateLastUpdated = "";
         this.refreshAnalysis();
     }
@@ -174,7 +159,7 @@ export class ClusterPage extends LitElement implements BeforeEnterObserver {
         const sourceIdEncoded = encodeURIComponent(this.clusterId);
 
         const newRuleURL = `/p/${projectEncoded}/rules/new?rule=${ruleEncoded}&sourceAlg=${sourceAlgEncoded}&sourceId=${sourceIdEncoded}`;
-        Router.go(newRuleURL);
+        this.navigate(newRuleURL);
     }
 
     // Called when the rule displayed in the rule section is loaded

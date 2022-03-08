@@ -11,12 +11,13 @@ import "@material/mwc-list/mwc-list-item";
 import '@material/mwc-select';
 
 import { linkToCluster } from '../../../tools/urlHandling/links';
-import { RouterLocation } from '@vaadin/router';
 
 // ClusterTable lists the clusters tracked by Weetbix.
 @customElement('cluster-table')
 export class ClusterTable extends LitElement {
-    private project!: string;
+
+    @property()
+    project = '';
 
     @property({ type: Number })
     days: number = 1;
@@ -36,9 +37,6 @@ export class ClusterTable extends LitElement {
     @state()
     clusters: Cluster[] | undefined;
 
-    onBeforeEnter(location: RouterLocation) {
-        this.project = typeof location.params.project == 'string' ? location.params.project : location.params.project[0];
-    }
     connectedCallback() {
         super.connectedCallback()
         fetch(`/api/projects/${encodeURIComponent(this.project)}/clusters`)

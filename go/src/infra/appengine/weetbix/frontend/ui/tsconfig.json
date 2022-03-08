@@ -10,6 +10,7 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
+        "jsx": "react",
         "plugins": [
             {
                 "name": "ts-lit-plugin",
@@ -18,6 +19,6 @@
         ]
     },
     "include": [
-        "src/**/*.ts",
+        "src/**/*.ts", "index.tsx", "src/layouts/base.tsx", "src/views/errors/not_found_page.tsx",
     ],
 }

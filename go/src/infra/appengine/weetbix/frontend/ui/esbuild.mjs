@@ -2,7 +2,7 @@ import  { sassPlugin } from 'esbuild-sass-plugin';
 import esbuild from 'esbuild';
 
 esbuild.build({
-    entryPoints: ['src/index.ts'],
+    entryPoints: ['index.tsx'],
     bundle: true,
     outfile: 'dist/main.js',
     minify: true,

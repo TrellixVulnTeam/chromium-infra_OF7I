@@ -1,10 +1,21 @@
 // Copyright 2022 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-import { customElement, html, css, LitElement, state } from "lit-element";
-import { Project, ListProjectsRequest, getProjectsService } from '../../services/project';
+import './elements/project_card';
 
-import './elements/project_card'
+// found in the LICENSE file.
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    state
+} from 'lit-element';
+
+import {
+    getProjectsService,
+    ListProjectsRequest,
+    Project
+} from '../../services/project';
 
 /**
  *  Represents the home page where the user selects their project.

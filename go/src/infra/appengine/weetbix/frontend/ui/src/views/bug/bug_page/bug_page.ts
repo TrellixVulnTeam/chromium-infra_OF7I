@@ -2,11 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, TemplateResult, html, customElement, property, css, state } from 'lit-element';
-import { RouterLocation, Router } from '@vaadin/router';
+import {
+    css,
+    customElement,
+    html,
+    LitElement,
+    property,
+    state,
+    TemplateResult
+} from 'lit-element';
+import { Ref } from 'react';
+import { NavigateFunction } from 'react-router-dom';
+
 import { GrpcError } from '@chopsui/prpc-client';
 
-import { LookupBugRequest, LookupBugResponse, getRulesService, parseRuleName } from '../../../services/rules';
+import {
+    getRulesService,
+    LookupBugRequest,
+    LookupBugResponse,
+    parseRuleName
+} from '../../../services/rules';
 import { linkToRule } from '../../../tools/urlHandling/links';
 
 // BugPage handles the bug endpoint:
@@ -15,8 +30,17 @@ import { linkToRule } from '../../../tools/urlHandling/links';
 // It redirects to the page for the rule associated with the bug (if any).
 @customElement('bug-page')
 export class BugPage extends LitElement {
+
     @property({ attribute: false })
-    location!: RouterLocation;
+    ref: Ref<BugPage> | null = null;
+
+    @property()
+    bugTracker = '';
+
+    @property()
+    bugId = '';
+
+    navigate!: NavigateFunction;
 
     @property()
     system: string = '';
@@ -30,16 +54,9 @@ export class BugPage extends LitElement {
     @state()
     response: LookupBugResponse | null = null;
 
-    onBeforeEnter(location: RouterLocation) {
-        // Take the first parameter value only.
-        const bugTracker = typeof location.params.bugTracker == 'string' ? location.params.bugTracker : location.params.bugTracker[0];
-        const id = typeof location.params.id == 'string' ? location.params.id : location.params.id[0];
-        this.setBug(bugTracker, id);
-    }
-
     connectedCallback() {
         super.connectedCallback();
-
+        this.setBug(this.bugTracker, this.bugId);
         this.fetch();
     }
 
@@ -53,7 +70,7 @@ export class BugPage extends LitElement {
         }
     }
 
-    async fetch() : Promise<void> {
+    async fetch(): Promise<void> {
         const service = getRulesService();
         try {
             const request: LookupBugRequest = {
@@ -66,7 +83,7 @@ export class BugPage extends LitElement {
             if (response.rules && response.rules.length === 1) {
                 const ruleKey = parseRuleName(response.rules[0]);
                 const link = linkToRule(ruleKey.project, ruleKey.ruleId);
-                Router.go(link);
+                this.navigate(link);
             }
         } catch (e) {
             this.error = e;

@@ -2,23 +2,20 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { LitElement, html, customElement, state } from 'lit-element';
+import { LitElement, html, customElement, state, property } from 'lit-element';
 
 import { getRulesService, ListRulesRequest, Rule } from '../../../services/rules';
-import { BeforeEnterObserver, RouterLocation } from '@vaadin/router';
 
 // BugsTable lists the failure association rules configured in Weetbix.
 @customElement('bugs-table')
-export class BugsTable extends LitElement implements BeforeEnterObserver {
+export class BugsTable extends LitElement {
 
-    private project!: string;
+    @property()
+    project!: string;
 
     @state()
     rules: Rule[] | undefined;
 
-    onBeforeEnter(location: RouterLocation) {
-        this.project = location.params['project'] as string;
-    }
 
     connectedCallback() {
         super.connectedCallback();
