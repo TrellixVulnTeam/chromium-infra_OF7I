@@ -9,15 +9,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
 	"infra/appengine/gofindit/model"
+	"infra/appengine/gofindit/util"
 
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/server/auth"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 )
@@ -96,29 +95,5 @@ func (cl *GitilesClient) sendRequest(c context.Context, url string, params map[s
 	req.URL.RawQuery = q.Encode()
 
 	logging.Infof(c, "Sending request to gitiles %s", req.URL.String())
-
-	c, cancel := context.WithTimeout(c, 30*time.Second)
-	defer cancel()
-
-	transport, err := auth.GetRPCTransport(c, auth.AsSelf)
-
-	client := &http.Client{
-		Transport: transport,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-	status := resp.StatusCode
-	if status != http.StatusOK {
-		return "", fmt.Errorf("Bad response code from gitiles: %v", status)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("Cannot get response body %w", err)
-	}
-	return string(body), nil
+	return util.SendHttpRequest(c, req, 30*time.Second)
 }

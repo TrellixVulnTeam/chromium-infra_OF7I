@@ -62,10 +62,10 @@ func (c *Client) GetBuild(ctx context.Context, req *bbpb.GetBuildRequest) (*bbpb
 	return c.Client.GetBuild(ctx, req)
 }
 
-func GetBuild(c context.Context, bbid int64) (*bbpb.Build, error) {
-	// For now, just query all fields
+func GetBuild(c context.Context, bbid int64, mask *bbpb.BuildMask) (*bbpb.Build, error) {
 	q := &bbpb.GetBuildRequest{
-		Id: bbid,
+		Id:   bbid,
+		Mask: mask,
 	}
 
 	cl, err := NewClient(c, bbHost)

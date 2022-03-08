@@ -73,12 +73,12 @@ func findRegressionRange(
 	first_failed_build_id int64,
 	last_passed_build_id int64,
 ) (*gfipb.RegressionRange, error) {
-	first_failed_build, err := buildbucket.GetBuild(c, first_failed_build_id)
+	first_failed_build, err := buildbucket.GetBuild(c, first_failed_build_id, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting build %d: %w", first_failed_build_id, err)
 	}
 
-	last_passed_build, err := buildbucket.GetBuild(c, last_passed_build_id)
+	last_passed_build, err := buildbucket.GetBuild(c, last_passed_build_id, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting build %d: %w", last_passed_build_id, err)
 	}
