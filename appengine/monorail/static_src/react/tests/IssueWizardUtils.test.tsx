@@ -71,15 +71,4 @@ describe('IssueWizardUtils', () => {
     const chrome_version = getChromeVersion();
     assert(chrome_version, '98.0.4758.109');
   });
-
-  it('test the chrome version regex not match', () => {
-    const navigatorMock = {
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36'
-    };
-    Object.defineProperty(window, 'navigator', {
-        value: navigatorMock
-      });
-    const chrome_version = getChromeVersion();
-    assert.equal(chrome_version.length, 0);
-  });
 });

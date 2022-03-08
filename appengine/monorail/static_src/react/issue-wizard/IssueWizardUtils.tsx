@@ -143,5 +143,5 @@ export function getChromeVersion() {
   if (browser.length > 0) {
     return browser[0].split('/')[1];
   }
-  return '';
+  return "<Copy from:'about:version'>";
 }

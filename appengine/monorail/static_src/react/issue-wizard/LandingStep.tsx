@@ -147,7 +147,9 @@ export default function LandingStep(props: Props) {
                     name="warningCheck"
                   />
                 }
-                label="By checking this box, I'm acknowledging that I have searched for existing issues that already report this problem."
+                label={
+                  <p>By checking this box, I'm acknowledging that I have searched for <a href="/p/chromium/issues/list" target="_blank">existing issues</a> that already report this problem.</p>
+                }
               />
             </div>
           </div>

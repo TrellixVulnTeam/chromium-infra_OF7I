@@ -174,8 +174,8 @@ export default function CustomQuestionsStep(props: Props): React.ReactElement {
       <DotMobileStepper nextEnabled={submitEnable} activeStep={2} setActiveStep={setActiveStep} onSubmit={onMakeIssue}/>
       <Modal open={isSubmitting} >
         <Box className={classes.modalBox}>
-          <p className={classes.modalTitle}>Thanks for your support!</p>
-          <p>Bug Submitting...</p>
+          <p className={classes.modalTitle}>Thanks for contributing to Chromium!</p>
+          <p>Stay put, we're filing your issue!</p>
         </Box>
       </Modal>
     </>
