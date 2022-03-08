@@ -8,6 +8,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -23,7 +24,6 @@ import (
 	"infra/cmd/mallet/internal/site"
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/recovery"
-	rlogger "infra/cros/recovery/logger"
 	"infra/cros/recovery/tasknames"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -242,6 +242,6 @@ func (l *recoveryLogger) DedentLogging() {
 
 // Apply indent to the string.
 func (l *recoveryLogger) indentString(v string) string {
-	indent := rlogger.GetIndent(l.indentation, "  ")
+	indent := strings.Repeat("  ", l.indentation)
 	return indent + v
 }
