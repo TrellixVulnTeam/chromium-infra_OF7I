@@ -68,6 +68,15 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 		)
 		duts = append(duts, c.GetDut())
 	}
+
+	for _, dut := range duts {
+		crosDUTDirForDut := path.Join(crosDUTDir, dut.Id.GetValue())
+		if os.MkdirAll(crosDUTDirForDut, 0755) != nil {
+			return nil, errors.Annotate(err, "run test: failed to create cros-dut directory %s", crosDUTDirForDut).Err()
+		}
+		log.Printf("Run test: created the cros-dut artifact directory %s", crosDUTDirForDut)
+	}
+
 	dutServices, err := services.CreateDutServicesForHostNetwork(ctx, crosDUTContainer, duts, crosDUTDir, token)
 	if err != nil {
 		return nil, errors.Annotate(err, "run test: failed to start DUT servers").Err()

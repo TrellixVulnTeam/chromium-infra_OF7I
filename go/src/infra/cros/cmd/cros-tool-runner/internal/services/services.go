@@ -56,10 +56,7 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 	if err != nil {
 		log.Printf("create cros-dut service: %s", err)
 	}
-	dutAddr := endPointToString(dutSshInfo)
-	if dutSshInfo.GetPort() == 0 {
-		dutAddr = fmt.Sprintf("%s:%v", dutAddr, DefaultDutAddressPort)
-	}
+
 	crosDutResultDirName := "/tmp/cros-dut"
 	d := &docker.Docker{
 		Name:               fmt.Sprintf(crosDutContainerNameTemplate, dutName),
@@ -70,7 +67,7 @@ func CreateDutService(ctx context.Context, image *build_api.ContainerImageInfo, 
 		FallbackImageName: "gcr.io/chromeos-bot/cros-dut:fallback",
 		ExecCommand: []string{
 			"cros-dut",
-			"-dut_address", dutAddr,
+			"-dut_address", endPointToString(dutSshInfo),
 			"-cache_address", endPointToString(cacheServer.GetAddress()),
 			"-port", "80",
 		},
@@ -111,6 +108,7 @@ func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.Conta
 	crosDutResultDirName := "/tmp/cros-dut"
 	for _, dut := range duts {
 		dutID := dut.Id.GetValue()
+
 		containerName := fmt.Sprintf(crosDutContainerNameTemplate, dutID)
 		if dut.CacheServer == nil {
 			return nil, errors.Annotate(err, "create dut services for host network: cache server must be specified in DUT").Err()
@@ -124,7 +122,7 @@ func CreateDutServicesForHostNetwork(ctx context.Context, image *build_api.Conta
 				Token:              t,
 				ExecCommand: []string{
 					"cros-dut",
-					"-dut_name", dutAddress(dut),
+					"-dut_address", dutAddress(dut),
 					"-cache_address", endPointToString(dut.CacheServer.GetAddress()),
 					"-port", strconv.Itoa(port),
 				},
@@ -288,7 +286,7 @@ func endPointToString(endPoint *lab_api.IpEndpoint) string {
 		return ""
 	}
 	if endPoint.GetPort() == 0 {
-		return endPoint.GetAddress()
+		return fmt.Sprintf("%s:%v", endPoint.GetAddress(), DefaultDutAddressPort)
 	}
 	return fmt.Sprintf("%s:%v", endPoint.GetAddress(), endPoint.GetPort())
 }
