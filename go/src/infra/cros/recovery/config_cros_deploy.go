@@ -121,6 +121,9 @@ var crosDeployPlanActions = `
 	"dependencies":[
 		"cros_ssh"
 	],
+	"exec_timeout": {
+		"seconds":300
+	},
 	"exec_name":"cros_run_firmware_update",
 	"exec_extra_args":[
 		"mode:factory",
@@ -139,6 +142,9 @@ var crosDeployPlanActions = `
 	"dependencies":[
 		"cros_ssh"
 	],
+	"exec_timeout": {
+		"seconds":300
+	},
 	"exec_name":"cros_run_firmware_update",
 	"exec_extra_args":[
 		"mode:factory",
