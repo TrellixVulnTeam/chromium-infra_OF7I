@@ -17,7 +17,8 @@ const BLOCKLIST = new Set(['sheriffbot@sheriffbot-1182.iam.gserviceaccount.com',
                           'bugdroid1@chromium.org',
                           'bugdroid@chops-service-accounts.iam.gserviceaccount.com',
                           'gitwatcher-staging.google.com@appspot.gserviceaccount.com',
-                          'gitwatcher.google.com@appspot.gserviceaccount.com']);
+                          'gitwatcher.google.com@appspot.gserviceaccount.com',
+                          'Git Watcher']);
 
 /**
  * Determines whether content should be rendered as Markdown.
