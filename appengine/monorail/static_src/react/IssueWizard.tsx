@@ -13,7 +13,7 @@ import CustomQuestionsStep from './issue-wizard/CustomQuestionsStep.tsx';
 import {getOs, getChromeVersion, buildIssueDescription} from './issue-wizard/IssueWizardUtils.tsx'
 import Header from './issue-wizard/Header.tsx'
 
-import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory} from './issue-wizard/IssueWizardUtils.tsx';
+import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory, getLabelsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
 import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
@@ -87,15 +87,24 @@ export function IssueWizard(props: Props): ReactElement {
     />;
    } else if (activeStep === 2) {
     const compValByCategory = getCompValByCategory(ISSUE_WIZARD_QUESTIONS);
+    const labelsByCategory = getLabelsByCategory(ISSUE_WIZARD_QUESTIONS);
 
     const onSubmitIssue = (comments: string, customQuestionsAnswers: Array<string>, attachments: Array<any>,onSuccess: Function, onFailure: Function) => {
       const summary = textValues.oneLineSummary;
       const component =  compValByCategory.get(category);
       const description = buildIssueDescription(textValues.stepsToReproduce, textValues.describeProblem, comments, textValues.osName, textValues.chromeVersion);
-      const labels = buildIssueLabels(category, textValues.osName, textValues.chromeVersion);
+      const labels = buildIssueLabels(category, textValues.osName, textValues.chromeVersion, labelsByCategory.get(category));
 
       const {expandDescription, expandLabels, compVal} =
         expandDescriptions(category, customQuestionsAnswers, isRegression, description, labels, component);
+
+      const componentsArray = [];
+      if (compVal.length > 0) {
+        componentsArray.push({
+          component: 'projects/chromium/componentDefs/' + compVal
+        })
+      }
+
       const response = prpcClient.call('monorail.v3.Issues', 'MakeIssue', {
         parent: 'projects/chromium',
         issue: {
@@ -103,9 +112,7 @@ export function IssueWizard(props: Props): ReactElement {
           status: {
             status: 'Untriaged',
           },
-          components: [{
-            component: 'projects/chromium/componentDefs/' + compVal
-          }],
+          components: componentsArray,
           labels: expandLabels,
         },
         description: expandDescription,

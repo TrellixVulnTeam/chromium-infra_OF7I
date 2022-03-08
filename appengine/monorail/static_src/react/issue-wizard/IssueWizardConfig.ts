@@ -192,7 +192,7 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     tip: 'Please read the instructions on <a href="https://sites.google.com/a/chromium.org/dev/for-testers/bug-reporting-guidelines/reporting-crash-bug" target="_blank">reporting a crash issue</a>',
-    component: 'Cr-Stability-Crash',
+    component: '',
     customQuestions: [
       {
         type: CustomQuestionType.Input,
@@ -219,7 +219,8 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           },
           null],
       },
-    ]
+    ],
+    labels: ['Stability-Crash'],
   },
   {
     name: 'Security',
@@ -227,8 +228,9 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
     persona: IssueWizardPersona.EndUser,
     enabled: true,
     tip: 'Please follow the instructions for <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" target="_blank">reporting security issues</a>.',
-    component: 'Cr-Type-Bug-Security',
-    customQuestions: []
+    component: '',
+    customQuestions: [],
+    labels: ['Restrict-View-SecurityTeam'],
   },
   {
     name: 'Other',
@@ -330,13 +332,6 @@ export const ISSUE_WIZARD_QUESTIONS: IssueCategory[] = [
           "Blink>Workers",
           "Blink>XML",
         ],
-        subQuestions: null,
-      },
-      {
-        type: CustomQuestionType.Select,
-        question: "Do you have a reduced test case?",
-        answerPrefix: "reduced attachment: ",
-        options: [" Yes - Please attach the file here", "No - I realize that it is harder to resolve problems that lack test cases"],
         subQuestions: null,
       },
       {

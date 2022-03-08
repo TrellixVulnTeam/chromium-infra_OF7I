@@ -48,6 +48,7 @@ export type IssueCategory = {
   tip?: string,
   component?: string,
   customQuestions?: CustomQuestion[],
+  labels?: Array<string>,
 };
 
 export type SelectMenuOption = {

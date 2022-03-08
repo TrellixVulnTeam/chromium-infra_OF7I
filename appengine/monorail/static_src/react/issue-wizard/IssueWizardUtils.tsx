@@ -94,6 +94,17 @@ export function getCompValByCategory(categories: IssueCategory[]): Map<string, s
   return compValByCategory;
 }
 
+export function getLabelsByCategory(categories: IssueCategory[]): Map<string, Array<string>> {
+  const labelsByCategory = new Map<string, Array<string>>();
+  categories.forEach((category) => {
+    if (category.labels) {
+      labelsByCategory.set(category.name, category.labels);
+    }
+  })
+  return labelsByCategory;
+}
+
+
 export function buildIssueDescription(reproduceStep: string, description: string, comments: string, os: string, chromeVersion: string): string {
   const issueDescription =
     "Steps to reproduce the problem:\n" + reproduceStep.trim() + "\n\n"
@@ -104,7 +115,7 @@ export function buildIssueDescription(reproduceStep: string, description: string
   return issueDescription;
 }
 
-export function buildIssueLabels(category: string, osName: string, chromeVersion: string): Array<any> {
+export function buildIssueLabels(category: string, osName: string, chromeVersion: string, configLabels: Array<string> | null | undefined): Array<any> {
   const labels = [
     {label:'via-wizard-'+category},
     {label:'Pri-2'},
@@ -115,6 +126,12 @@ export function buildIssueLabels(category: string, osName: string, chromeVersion
     labels.push({
       label:'Needs-Triage-M'+mainChromeVersion
     });
+  }
+
+  if (configLabels) {
+    configLabels.forEach((v) => {
+      labels.push({label: v});
+    })
   }
   return labels;
 }

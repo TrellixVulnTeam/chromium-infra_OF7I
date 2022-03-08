@@ -42,6 +42,10 @@ export function expandDescriptions(
               compVal = 'Cr-UI-Browser-Themes';
             }
             break;
+          case 'Security':
+            if (typeLabel === '') {
+              typeLabel = 'Type-Bug-Security';
+            }
           case 'Other':
             typeLabel = "Type-Bug";
             const issueType = currentAnswer.split(' - ')[0];
