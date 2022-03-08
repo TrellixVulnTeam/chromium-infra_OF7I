@@ -97,13 +97,16 @@ func (e *DeviceEntity) updateDutState(p *lab.DutState) (changehistory.Changes, e
 
 // UpdatePayload sets the proto data to the entity.
 func (e *DeviceEntity) UpdatePayload(p proto.Message, t time.Time) (changes changehistory.Changes, err error) {
-	if v, ok := p.(*lab.ChromeOSDevice); ok {
+	switch v := p.(type) {
+	case *lab.ChromeOSDevice:
 		changes, err = e.updateLabConfig(v)
-	} else if v, ok := p.(*lab.DutState); ok {
+	case *lab.DutState:
 		changes, err = e.updateDutState(v)
+	default:
+		return nil, fmt.Errorf("inventory/datastore: unknown payload type to update: %T", v)
 	}
 	e.Updated = t
-	return
+	return changes, err
 }
 
 func (e *DeviceEntity) String() string {
