@@ -15,6 +15,13 @@ import (
 	"infra/cros/recovery/internal/log"
 )
 
+var stopRetryLoopTag = errors.BoolTag{Key: errors.NewTagKey("break retry loop")}
+
+// LoopBreakTag returns tags to break to retry loop per request.
+func LoopBreakTag() errors.BoolTag {
+	return stopRetryLoopTag
+}
+
 // TODO(otabek@): Migrate to custom logger interface.
 // Note: Context is required for all retries and will be used with new logger in further CLs.
 
@@ -29,6 +36,12 @@ func WithTimeout(ctx context.Context, interval, duration time.Duration, f func()
 		if err = f(); err == nil {
 			log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
 			return
+		}
+		if stopRetryLoopTag.In(err) {
+			log.Debug(ctx, "Retry %q: stopped per request", opName)
+			// Removing tag from the error to void recursion stop.
+			stopRetryLoopTag.Off().Apply(err)
+			break
 		}
 		log.Debug(ctx,
 			"Retry %q: attempt %d (used %0.2f of %0.2f seconds), error: %s",
@@ -55,6 +68,12 @@ func LimitCount(ctx context.Context, count int, interval time.Duration, f func()
 		if err = f(); err == nil {
 			log.Debug(ctx, getSuccessMessage(opName, attempts, startTime))
 			return
+		}
+		if stopRetryLoopTag.In(err) {
+			log.Debug(ctx, "Retry %q: stopped per request", opName)
+			// Removing tag from the error to void recursion stop.
+			stopRetryLoopTag.Off().Apply(err)
+			break
 		}
 		log.Debug(ctx, "Retry %q: attempts %d of %d, error: %s", opName, attempts, count, err)
 		if attempts >= count {
