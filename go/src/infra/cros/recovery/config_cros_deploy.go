@@ -89,7 +89,7 @@ var crosDeployPlanActions = `
 	],
 	"exec_name":"cros_is_on_stable_version",
 	"recovery_actions":[
-		"install_stable_os",
+		"Quick provision OS",
 		"Install OS in DEV mode"
 	]
 },

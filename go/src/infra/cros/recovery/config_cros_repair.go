@@ -97,7 +97,7 @@ const crosRepairPlanActions = `
 	],
 	"exec_name":"cros_has_python_interpreter_working",
 	"recovery_actions": [
-		"install_stable_os"
+		"Quick provision OS"
 	]
 },
 "last_provision_successful":{
@@ -647,12 +647,15 @@ const crosRepairPlanActions = `
 	],
 	"exec_name":"dut_check_board"
 },
-"install_stable_os":{
+"Quick provision OS":{
 	"docs":[
 		"Install stable OS on the device."
 	],
 	"conditions": [
 		"has_stable_version_cros_image"
+	],
+	"dependencies":[
+		"cros_ssh"
 	],
 	"exec_name": "cros_provision",
 	"exec_timeout": {
