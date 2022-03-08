@@ -2273,6 +2273,18 @@ wheel: <
 
 * *universal*
 
+### 2.5.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-api-core-py3"
+  version: "version:2.5.0"
+>
+```
+
+
+* *universal*
+
 ## **google-api-python-client**
 
 ### 1.12.8
@@ -2383,6 +2395,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-auth-py2_py3"
   version: "version:1.35.0"
+>
+```
+
+
+* *universal*
+
+## **google-auth-py3**
+
+### 2.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-auth-py3"
+  version: "version:2.6.0"
 >
 ```
 
@@ -2621,6 +2647,20 @@ wheel: <
 
 * *universal*
 
+## **google-cloud-logging-py3**
+
+### 3.0.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-logging-py3"
+  version: "version:3.0.0"
+>
+```
+
+
+* *universal*
+
 ## **google-cloud-monitoring**
 
 ### 0.28.0
@@ -2739,6 +2779,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-cloud-storage-py2_py3"
   version: "version:1.6.0"
+>
+```
+
+
+* *universal*
+
+## **google-cloud-storage-py3**
+
+### 2.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-cloud-storage-py3"
+  version: "version:2.1.0"
 >
 ```
 
@@ -2865,6 +2919,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/google-resumable-media-py3"
   version: "version:2.2.1"
+>
+```
+
+
+* *universal*
+
+### 2.3.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-resumable-media-py3"
+  version: "version:2.3.0"
 >
 ```
 
@@ -5191,6 +5257,18 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/protobuf-py3"
   version: "version:3.19.3"
+>
+```
+
+
+* *universal*
+
+### 3.19.4
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/protobuf-py3"
+  version: "version:3.19.4"
 >
 ```
 
