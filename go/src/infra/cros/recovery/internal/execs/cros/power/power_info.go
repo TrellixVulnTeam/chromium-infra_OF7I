@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO: Remove and use components/cros/power instead!
+
 package power
 
 import (
@@ -88,8 +90,12 @@ func (p *powerSupplyInfo) IsBatterySupportedState() (bool, error) {
 	if err != nil {
 		return false, errors.Annotate(err, "battery supported state").Err()
 	}
-	switch state {
-	case batteryStateCharging, batteryStateDischarging, batteryStateFull:
+	switch {
+	case strings.HasPrefix(state, batteryStateCharging):
+		fallthrough
+	case strings.HasPrefix(state, batteryStateDischarging):
+		fallthrough
+	case strings.HasPrefix(state, batteryStateFull):
 		return true, nil
 	}
 	return false, errors.Annotate(err, "battery supported state: unknown state %q", state).Err()
@@ -101,7 +107,7 @@ func (p *powerSupplyInfo) IsBatteryDischarging() (bool, error) {
 	if err != nil {
 		return false, errors.Annotate(err, "battery discharging").Err()
 	}
-	return state == batteryStateDischarging, nil
+	return strings.HasPrefix(state, batteryStateDischarging), nil
 }
 
 // IsBatteryCharging confirms the DUT's battery is charging.
@@ -110,7 +116,7 @@ func (p *powerSupplyInfo) IsBatteryCharging() (bool, error) {
 	if err != nil {
 		return false, errors.Annotate(err, "battery charging").Err()
 	}
-	return state == batteryStateCharging, nil
+	return strings.HasPrefix(state, batteryStateCharging), nil
 }
 
 // IsBatteryFull confirms the DUT's battery is full.
@@ -119,7 +125,7 @@ func (p *powerSupplyInfo) IsBatteryFull() (bool, error) {
 	if err != nil {
 		return false, errors.Annotate(err, "battery full").Err()
 	}
-	return state == batteryStateFull, nil
+	return strings.HasPrefix(state, batteryStateFull), nil
 }
 
 func (p *powerSupplyInfo) batteryState() (string, error) {
