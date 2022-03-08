@@ -14,7 +14,7 @@ import {getOs, getChromeVersion, buildIssueDescription} from './issue-wizard/Iss
 import Header from './issue-wizard/Header.tsx'
 
 import {GetQuestionsByCategory, buildIssueLabels, getCompValByCategory, getLabelsByCategory} from './issue-wizard/IssueWizardUtils.tsx';
-import {ISSUE_WIZARD_QUESTIONS} from './issue-wizard/IssueWizardConfig.ts';
+import {ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER} from './issue-wizard/IssueWizardConfig.ts';
 import {prpcClient} from 'prpc-client-instance.js';
 import {expandDescriptions} from './issue-wizard/IssueWizardDescriptionsUtils.tsx';
 import SubmitSuccessStep from './issue-wizard/SubmitSuccessStep.tsx';
@@ -44,7 +44,7 @@ export function IssueWizard(props: Props): ReactElement {
   const [textValues, setTextValues] = React.useState(
     {
       oneLineSummary: '',
-      stepsToReproduce: '',
+      stepsToReproduce: ISSUE_REPRODUCE_PLACEHOLDER,
       describeProblem: '',
       chromeVersion: getChromeVersion(),
       osName: getOs(),
@@ -55,7 +55,7 @@ export function IssueWizard(props: Props): ReactElement {
   const reset = () => {
     setTextValues({
       oneLineSummary: '',
-      stepsToReproduce: '',
+      stepsToReproduce: ISSUE_REPRODUCE_PLACEHOLDER,
       describeProblem: '',
       chromeVersion: getChromeVersion(),
       osName: getOs(),

@@ -437,3 +437,5 @@ export const BROWSER_LIST = [
     description: '',
   },
 ]
+
+export const ISSUE_REPRODUCE_PLACEHOLDER = '1.\n2.\n3.';

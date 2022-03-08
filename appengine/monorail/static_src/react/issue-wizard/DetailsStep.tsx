@@ -9,7 +9,7 @@ import TextField from '@material-ui/core/TextField';
 import {red, grey} from '@material-ui/core/colors';
 import DotMobileStepper from './DotMobileStepper.tsx';
 import SelectMenu from './SelectMenu.tsx';
-import {OS_LIST, ISSUE_WIZARD_QUESTIONS} from './IssueWizardConfig.ts'
+import {OS_LIST, ISSUE_WIZARD_QUESTIONS, ISSUE_REPRODUCE_PLACEHOLDER} from './IssueWizardConfig.ts'
 import {getTipByCategory} from './IssueWizardUtils.tsx';
 import CustomQuestionSelector from './CustomQuestions/CustomQuestionSelector.tsx';
 
@@ -80,6 +80,7 @@ export default function DetailsStep(props: Props): React.ReactElement {
 
   const nextEnabled =
     (textValues.oneLineSummary.trim() !== '') &&
+    (textValues.stepsToReproduce.trim() !== ISSUE_REPRODUCE_PLACEHOLDER) &&
     (textValues.stepsToReproduce.trim() !== '') &&
     (textValues.describeProblem.trim() !== '');
 
