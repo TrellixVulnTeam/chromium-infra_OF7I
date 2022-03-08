@@ -158,8 +158,8 @@ var crosDeployPlanActions = `
 	],
 	"dependencies":[
 		"Verify battery charging level",
-		"Verify boot in recovery mode",
-		"Verify RPM config (not critical)"
+		"Verify RPM config (not critical)",
+		"Verify boot in recovery mode"
 	],
 	"exec_name":"sample_pass"
 },
@@ -185,9 +185,11 @@ var crosDeployPlanActions = `
 },
 "Verify boot in recovery mode":{
 	"docs":[
-		"TODO: Not implemented yet!"
+		"TODO: Not implemented yet!",
+		"Allow to fail till it is ready"
 	],
-	"exec_name":"sample_fail"
+	"exec_name":"sample_fail",
+	"allow_fail_after_recovery": true
 },
 "Verify RPM config (not critical)":{
 	"docs":[
