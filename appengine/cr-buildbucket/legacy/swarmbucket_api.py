@@ -17,12 +17,9 @@ import gae_ts_mon
 
 from legacy import api
 from legacy import api_common
-from go.chromium.org.luci.buildbucket.proto import build_pb2
-from go.chromium.org.luci.buildbucket.proto import builder_pb2
 import config
 import errors
 import flatten_swarmingcfg
-import sequence
 import swarming
 import swarmingcfg
 import user
@@ -232,27 +229,3 @@ class SwarmbucketApi(remote.Service):
       raise endpoints.BadRequestException(
           'invalid build request: %s' % ex.message
       )
-
-  @swarmbucket_api_method(SetNextBuildNumberRequest, message_types.VoidMessage)
-  def set_next_build_number(self, request):
-    """Sets the build number that will be used for the next build."""
-    bucket_id = api.convert_bucket(request.bucket)
-    if not user.has_perm(user.PERM_BUILDERS_SET_NUM, bucket_id):
-      raise endpoints.ForbiddenException('access denied')
-
-    project, bucket = config.parse_bucket_id(bucket_id)
-    if not config.Builder.make_key(project, bucket, request.builder).get():
-      raise endpoints.BadRequestException(
-          'builder "%s" not found in bucket "%s"' %
-          (request.builder, bucket_id)
-      )
-
-    builder_id = builder_pb2.BuilderID(
-        project=project, bucket=bucket, builder=request.builder
-    )
-    seq_name = sequence.builder_seq_name(builder_id)
-    try:
-      sequence.set_next(seq_name, request.next_number)
-    except ValueError as ex:
-      raise endpoints.BadRequestException(str(ex))
-    return message_types.VoidMessage()

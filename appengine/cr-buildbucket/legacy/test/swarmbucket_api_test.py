@@ -386,26 +386,3 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     }
 
     self.call_api('get_task_def', req, status=403)
-
-  def test_set_next_build_number(self):
-    seq = sequence.NumberSequence(id='chromium/try/linux', next_number=10)
-    seq.put()
-    req = {
-        'bucket': 'luci.chromium.try',
-        'builder': 'linux',
-        'next_number': 20,
-    }
-
-    self.call_api('set_next_build_number', req, status=403)
-    self.assertEqual(seq.key.get().next_number, 10)
-
-    self.perms['chromium/try'].append(user.PERM_BUILDERS_SET_NUM)
-    self.call_api('set_next_build_number', req)
-    self.assertEqual(seq.key.get().next_number, 20)
-
-    req['next_number'] = 10
-    self.call_api('set_next_build_number', req, status=400)
-    self.assertEqual(seq.key.get().next_number, 20)
-
-    req['builder'] = 'does not exist'
-    self.call_api('set_next_build_number', req, status=400)

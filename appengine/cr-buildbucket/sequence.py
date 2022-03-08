@@ -93,33 +93,6 @@ def generate_async(seq_name, count):
   raise ndb.Return(number)
 
 
-def set_next(seq_name, next_number):
-  """Sets the next number to generate.
-
-  Args:
-    name: name of the sequence.
-    next_number: the next number. Cannot be less than the number
-      that would be generated otherwise.
-
-  Raises:
-    ValueError if the supplied number is too small.
-  """
-  _migrate_entity_async(seq_name).get_result()
-
-  @ndb.transactional
-  def txn():
-    assert isinstance(next_number, int)
-    seq = NumberSequence.get_by_id(seq_name) or NumberSequence(id=seq_name)
-    if next_number == seq.next_number:
-      return
-    elif next_number < seq.next_number:
-      raise ValueError('next number must be at least %d' % seq.next_number)
-    seq.next_number = next_number
-    seq.put()
-
-  txn()
-
-
 def builder_seq_name(builder_id):  # pragma: no cover
   """Returns name of a number sequence for the builder.
 
