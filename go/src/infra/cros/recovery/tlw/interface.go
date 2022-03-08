@@ -7,6 +7,7 @@ package tlw
 
 import (
 	"context"
+	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 
@@ -124,6 +125,7 @@ type CallServodRequest struct {
 	Method   ServodMethod
 	Args     []*xmlrpc.Value
 	Options  *ServodOptions
+	Timeout  time.Duration
 }
 
 // CallServodResponse represents result data from running command on servod.

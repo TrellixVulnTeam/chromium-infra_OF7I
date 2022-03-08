@@ -432,7 +432,7 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 			return fail(err)
 		}
 		rpc := tlw_xmlrpc.New(addr, dut.ServoHost.ServodPort)
-		if val, err := servod.Call(ctx, rpc, req.Method, req.Args); err != nil {
+		if val, err := servod.Call(ctx, rpc, req.Timeout, req.Method, req.Args); err != nil {
 			return fail(err)
 		} else {
 			return &tlw.CallServodResponse{
@@ -451,7 +451,7 @@ func (c *tlwClient) CallServod(ctx context.Context, req *tlw.CallServodRequest) 
 		if err != nil {
 			return fail(err)
 		}
-		if val, err := s.Call(ctx, c.sshPool, req.Method, req.Args); err != nil {
+		if val, err := s.Call(ctx, c.sshPool, req.Timeout, req.Method, req.Args); err != nil {
 			return fail(err)
 		} else {
 			return &tlw.CallServodResponse{
@@ -487,7 +487,8 @@ func (c *tlwClient) CallBluetoothPeer(ctx context.Context, req *tlw.CallBluetoot
 	if err != nil {
 		return fail(err)
 	}
-	val, err := s.Call(ctx, c.sshPool, req.GetMethod(), req.GetArgs())
+	// TODO: Change bluetooth peer's CallBluetoothPeerRequest to include timeout.
+	val, err := s.Call(ctx, c.sshPool, 30*time.Second, req.GetMethod(), req.GetArgs())
 	if err != nil {
 		return fail(err)
 	}

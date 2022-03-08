@@ -274,11 +274,11 @@ func newParams(args []interface{}) ([]param, error) {
 
 // NewCall creates a XML-RPC call.
 func NewCall(method string, args ...interface{}) Call {
-	return NewCallTimeout(method, defaultRPCTimeout, args...)
+	return NewCallTimeout(defaultRPCTimeout, method, args...)
 }
 
 // NewCallTimeout creates a XML-RPC call.
-func NewCallTimeout(method string, timeout time.Duration, args ...interface{}) Call {
+func NewCallTimeout(timeout time.Duration, method string, args ...interface{}) Call {
 	return Call{
 		method:  method,
 		args:    args,

@@ -11,7 +11,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cros/recovery/internal/components"
-	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/log"
 )
 
@@ -50,17 +49,16 @@ func AverageSbuValue(ctx context.Context, servod components.Servod, sbuControl s
 // MaximalAvgSbuValue determines the larger of the average SBU
 // voltages for the controls 'servo_dut_sbu1_mv' and
 // 'servo_dut_sbu2_mv'.
-func MaximalAvgSbuValue(ctx context.Context, args *execs.RunArgs, checkCount int) (float64, error) {
-	s := args.NewServod()
-	if err := s.Has(ctx, servoDutSbu1Cmd); err != nil {
+func MaximalAvgSbuValue(ctx context.Context, servod components.Servod, checkCount int) (float64, error) {
+	if err := servod.Has(ctx, servoDutSbu1Cmd); err != nil {
 		log.Debug(ctx, "Maximal Average Sbu Value: control %q is not supported, returning -1", servoDutSbu1Cmd)
 		return -1, errors.Annotate(err, "maximal avg sbu value").Err()
 	}
-	s1, err := AverageSbuValue(ctx, s, servoDutSbu1Cmd, checkCount)
+	s1, err := AverageSbuValue(ctx, servod, servoDutSbu1Cmd, checkCount)
 	if err != nil {
 		return 0.0, errors.Annotate(err, "maximal average sbu value").Err()
 	}
-	s2, err := AverageSbuValue(ctx, s, servoDutSbu2Cmd, checkCount)
+	s2, err := AverageSbuValue(ctx, servod, servoDutSbu2Cmd, checkCount)
 	if err != nil {
 		return 0.0, errors.Annotate(err, "maximal average sbu value").Err()
 	}

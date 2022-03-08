@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"time"
 
 	"go.chromium.org/chromiumos/config/go/api/test/xmlrpc"
 	"go.chromium.org/luci/common/errors"
@@ -19,20 +20,17 @@ import (
 
 // Local implementation of components.Servod.
 type iServod struct {
-	dut *tlw.Dut
-	a   tlw.Access
-}
-
-// DefaultRunner returns runner for current resource name specified per plan.
-func (ei *ExecInfo) NewServod() components.Servod {
-	return ei.RunArgs.NewServod()
+	dut     *tlw.Dut
+	a       tlw.Access
+	timeout time.Duration
 }
 
 // NewServod() returns a struct of type components.Servod that allowes communication with servod service.
-func (a *RunArgs) NewServod() components.Servod {
+func (ei *ExecInfo) NewServod() components.Servod {
 	return &iServod{
-		dut: a.DUT,
-		a:   a.Access,
+		dut:     ei.RunArgs.DUT,
+		a:       ei.RunArgs.Access,
+		timeout: ei.ActionTimeout,
 	}
 }
 
@@ -43,6 +41,7 @@ func (s *iServod) Call(ctx context.Context, method string, args ...interface{}) 
 		Method:   method,
 		Args:     packToXMLRPCValues(args...),
 		Options:  &tlw.ServodOptions{RecoveryMode: true},
+		Timeout:  s.timeout,
 	})
 	if res.Fault {
 		return nil, errors.Reason("call %q", method).Err()

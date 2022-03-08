@@ -571,6 +571,9 @@ const servoRepairPlanBody = `
 			"Will detect the path to USB Drive on servo-host.",
 			"Verify that usb-key is responsive"
 		],
+		"exec_timeout": {
+			"seconds":120
+		},
 		"allow_fail_after_recovery": true
 	},
 	"servo_audit_usbkey": {

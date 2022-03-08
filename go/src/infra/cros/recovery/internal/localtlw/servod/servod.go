@@ -128,7 +128,7 @@ func (s *servod) Stop(ctx context.Context, pool *sshpool.Pool) error {
 }
 
 // Call performs execution commands by servod daemon by XMLRPC connection.
-func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
+func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, timeout time.Duration, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
 	if s.proxy == nil {
 		p, err := newProxy(pool, s.host, s.port)
 		if err != nil {
@@ -146,7 +146,7 @@ func (s *servod) Call(ctx context.Context, pool *sshpool.Pool, method string, ar
 		return nil, errors.Annotate(err, "call servod %q", newAddr).Err()
 	}
 	c := xmlrpc.New(host, port)
-	return Call(ctx, c, method, args)
+	return Call(ctx, c, timeout, method, args)
 }
 
 // Close closes using resource.
@@ -160,12 +160,12 @@ func (s *servod) Close() error {
 }
 
 // Call calls xmlrpc service with provided method and arguments.
-func Call(ctx context.Context, c *xmlrpc.XMLRpc, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
+func Call(ctx context.Context, c *xmlrpc.XMLRpc, timeout time.Duration, method string, args []*xmlrpc_value.Value) (r *xmlrpc_value.Value, rErr error) {
 	var iArgs []interface{}
 	for _, ra := range args {
 		iArgs = append(iArgs, ra)
 	}
-	call := xmlrpc.NewCall(method, iArgs...)
+	call := xmlrpc.NewCallTimeout(timeout, method, iArgs...)
 	val := &xmlrpc_value.Value{}
 	if err := c.Run(ctx, call, val); err != nil {
 		return nil, errors.Annotate(err, "call servod %q: %s", c.Addr(), method).Err()

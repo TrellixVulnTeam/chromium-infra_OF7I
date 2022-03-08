@@ -58,7 +58,7 @@ func SetPowerState(ctx context.Context, req *RPMPowerRequest) error {
 	}
 	c := xmlrpc.New(rpmServiceHost, rpmServicePort)
 	// We need to convert PowerState type back to string here as xmlrpc.NewValue cannot recognize the customized type during unpack.
-	call := xmlrpc.NewCallTimeout("set_power_via_rpm", setPowerTimeout, req.Hostname, req.PowerUnitHostname, req.PowerunitOutlet, req.HydraHostname, string(req.State))
+	call := xmlrpc.NewCallTimeout(setPowerTimeout, "set_power_via_rpm", req.Hostname, req.PowerUnitHostname, req.PowerunitOutlet, req.HydraHostname, string(req.State))
 	result := &xmlrpc_value.Value{}
 	if err := c.Run(ctx, call, result); err != nil {
 		return errors.Annotate(err, "set power state").Err()
