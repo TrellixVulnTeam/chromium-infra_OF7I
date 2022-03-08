@@ -46,6 +46,7 @@ var crosDeployPlanActions = `
 		"seconds":15
 	},
 	"recovery_actions":[
+		"Cold reset DUT by servo and wait to boot",
 		"Power cycle DUT by RPM and wait",
 		"Set GBB flags to 0x18 by servo",
 		"Install OS in DEV mode"
