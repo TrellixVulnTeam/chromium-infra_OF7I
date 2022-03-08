@@ -184,15 +184,19 @@ var crosDeployPlanActions = `
 },
 "Verify RPM config (not critical)":{
 	"docs":[
-		"TODO: Not implemented yet!",
+		"Verify RPM configs and set RPM state",
 		"Not applicable for cr50 servos based on b/205728276"
 	],
 	"conditions":[
 		"dut_servo_host_present",
 		"servo_state_is_working",
-		"is_servo_main_ccd_cr50"
+		"is_servo_main_ccd_cr50",
+		"has_rpm_info"
 	],
-	"exec_name":"sample_fail"
+	"exec_name": "rpm_audit",
+	"exec_timeout": {
+		"seconds": 600
+	}
 },
 "DUT verify":{
 	"docs":[
