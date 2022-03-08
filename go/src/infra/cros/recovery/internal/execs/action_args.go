@@ -50,7 +50,7 @@ func (parsedArgs ParsedArgs) AsString(ctx context.Context, key, defaultValue str
 		log.Debug(ctx, "Parsed Args As String: value %q found for key %q", value, key)
 		return value
 	}
-	log.Debug(ctx, "Parsed Args As String: key %q not found, default value of empty string returned")
+	log.Debug(ctx, "Parsed Args As String: key %q not found, default value of empty string returned", key)
 	return defaultValue
 }
 
