@@ -220,15 +220,16 @@ var crosDeployPlanActions = `
 },
 "Boot DUT from USB in DEV mode":{
 	"docs":[
-		"Restart and try to boot from USB-drive"
+		"Restart and try to boot from USB-drive",
+		"First boot in dev mode can take time so set boot time to 10 minutes."
 	],
 	"exec_name":"cros_dev_mode_boot_from_servo_usb_drive",
 	"exec_extra_args":[
-		"boot_timeout:180",
+		"boot_timeout:600",
 		"retry_interval:2"
 	],
 	"exec_timeout": {
-		"seconds":300
+		"seconds":900
 	}
 },
 "Run install after boot from USB-drive":{
