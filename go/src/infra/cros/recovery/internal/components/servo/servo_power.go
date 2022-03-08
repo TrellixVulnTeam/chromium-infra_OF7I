@@ -29,20 +29,32 @@ const (
 	servodPdRoleValueSrc = "src"
 )
 
+func ServodPdRoleCmd() string {
+	return servodPdRoleCmd
+}
+
+func ServodPdRoleValueSnk() string {
+	return servodPdRoleValueSnk
+}
+
+func ServodPdRoleValueSrc() string {
+	return servodPdRoleValueSrc
+}
+
 type PDRole struct {
 	role string
 }
 
 var (
-	PD_ON  = PDRole{servodPdRoleValueSrc}
-	PD_OFF = PDRole{servodPdRoleValueSnk}
+	PD_ON  = PDRole{ServodPdRoleValueSrc()}
+	PD_OFF = PDRole{ServodPdRoleValueSnk()}
 )
 
 // SetPDRole sets the power-delivery role for servo to the passed
 // role-value if the power-delivery control is supported by servod.
 func SetPDRole(ctx context.Context, servod components.Servod, role PDRole, pd_required bool) error {
-	if err := servod.Has(ctx, servodPdRoleCmd); err != nil {
-		msg := fmt.Sprintf("control %q is not supported, cannot set target role %q", servodPdRoleCmd, role)
+	if err := servod.Has(ctx, ServodPdRoleCmd()); err != nil {
+		msg := fmt.Sprintf("control %q is not supported, cannot set target role %q", ServodPdRoleCmd(), role)
 		log.Info(ctx, "Set PD Role: %q", msg)
 		if pd_required {
 			log.Debug(ctx, "Set PD Role: PD is not supported by this servo, but is required.")
@@ -50,7 +62,7 @@ func SetPDRole(ctx context.Context, servod components.Servod, role PDRole, pd_re
 		}
 		return nil
 	}
-	currentRole, err := ServodGetString(ctx, servod, servodPdRoleCmd)
+	currentRole, err := GetString(ctx, servod, ServodPdRoleCmd())
 	if err != nil {
 		log.Debug(ctx, "Set PD Role: could not determine current PD role")
 		errors.Annotate(err, "set PD role").Err()
@@ -60,7 +72,7 @@ func SetPDRole(ctx context.Context, servod components.Servod, role PDRole, pd_re
 		log.Debug(ctx, "Set PD Role: PD role is already %q", role)
 		return nil
 	}
-	if err := servod.Set(ctx, servodPdRoleCmd, role.role); err != nil {
+	if err := servod.Set(ctx, ServodPdRoleCmd(), role.role); err != nil {
 		log.Debug(ctx, "Set PD Role: %q", err.Error())
 		return errors.Annotate(err, "set PD role").Err()
 	}

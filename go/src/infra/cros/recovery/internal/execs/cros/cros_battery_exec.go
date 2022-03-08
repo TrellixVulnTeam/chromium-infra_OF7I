@@ -34,7 +34,7 @@ func isBatteryCanChangeToExpectedLevelExec(ctx context.Context, info *execs.Exec
 		log.Info("Unexpected battery status. Please verify that DUT prepared for deployment.")
 		return errors.Reason("battery can charge to expected level: Unexpected battery status.").Err()
 	}
-	batteryExpectedLevel := argsMap.AsFloat64(ctx, "battery_expected_level", float64(minimumBatteryLevel))
+	batteryExpectedLevel := argsMap.AsFloat64(ctx, "battery_expected_level", float64(MinimumBatteryLevel))
 	batteryChargingPerRetry := argsMap.AsFloat64(ctx, "battery_charge_per_retry", 4.0)
 	var lastChargedLevel float64
 	// help function to check that battery level reached expected level.

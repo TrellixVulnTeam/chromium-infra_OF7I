@@ -27,8 +27,12 @@ const (
 	// this file exists, it indicates that we've tried and failed in a
 	// previous attempt to update.
 	provisionFailed = "/var/tmp/provision_failed"
+	// TODO (vkjoshi@): Migrate the constants (such as
+	// MinimumBatteryLevel) and helper functions from
+	// internal/execs/cros package to internal/components/cros. Bug
+	// b/223061820 captures this task.
 	// The percentage of the battery that is considered to be not enough.
-	minimumBatteryLevel = 80
+	MinimumBatteryLevel = 80
 	verify_gsc_cmd      = "gsctool -a -f"
 )
 

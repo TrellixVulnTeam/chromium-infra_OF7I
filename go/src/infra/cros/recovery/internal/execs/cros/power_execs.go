@@ -68,8 +68,8 @@ func isBatteryLevelGreaterThanMinimumExec(ctx context.Context, info *execs.ExecI
 	if err != nil {
 		return errors.Annotate(err, "battery has enough charge").Err()
 	}
-	if currentLevel < minimumBatteryLevel {
-		return errors.Reason("battery has enough charge: battery's current level is less than the minimum level: %d", minimumBatteryLevel).Err()
+	if currentLevel < MinimumBatteryLevel {
+		return errors.Reason("battery has enough charge: battery's current level is less than the minimum level: %d", MinimumBatteryLevel).Err()
 	}
 	return nil
 }
