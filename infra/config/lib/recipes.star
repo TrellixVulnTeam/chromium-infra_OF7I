@@ -82,7 +82,7 @@ def roll_trybots(upstream, downstream, cq_group, os = "Ubuntu"):
         luci.builder(
             name = name,
             bucket = "try",
-            executable = infra.recipe("recipe_roll_tryjob"),
+            executable = infra.recipe("recipe_roll_tryjob", use_python3 = True),
             properties = {
                 "upstream_id": upstream,
                 "upstream_url": _repo_url(upstream),
