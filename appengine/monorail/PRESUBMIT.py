@@ -8,7 +8,8 @@ def CheckChange(input_api, output_api):
   results = []
   results += input_api.canned_checks.CheckDoNotSubmit(input_api, output_api)
   results += input_api.canned_checks.CheckChangeHasNoTabs(input_api, output_api)
-  results += CheckNpmAudit(input_api, output_api)
+  # NPM audit presubmit disabled. See: crbug.com/monorail/10572
+  # results += CheckNpmAudit(input_api, output_api)
   return results
 
 
