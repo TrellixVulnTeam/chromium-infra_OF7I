@@ -101,7 +101,7 @@ def ci_builder(
     infra.builder(
         name = name,
         bucket = "ci",
-        executable = infra.recipe(recipe),
+        executable = infra.recipe(recipe, use_python3 = True),
         os = os,
         cpu = "x86-64",
         pool = "luci.chromium.ci",
