@@ -34,7 +34,6 @@ import buildtags
 import config
 import creation
 import errors
-import fix_builds
 import flatten_swarmingcfg
 import model
 import search
@@ -1135,13 +1134,6 @@ class BuildBucketApi(remote.Service):
     if ':' in request.tag_key:
       raise endpoints.BadRequestException('invalid tag_key')
     backfill_tag_index.launch(request.tag_key)
-    return message_types.VoidMessage()
-
-  @buildbucket_api_method(message_types.VoidMessage, message_types.VoidMessage)
-  @auth.require(auth.is_admin)
-  def fix_builds(self, _request):  # pragma: no cover
-    """Fixes all builds."""
-    fix_builds.launch()
     return message_types.VoidMessage()
 
 
