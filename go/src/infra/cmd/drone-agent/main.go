@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -49,7 +50,7 @@ var (
 	workingDirPath = filepath.Join(os.Getenv("HOME"), "skylab_bots")
 	// hive value of the drone agent.  This is used for DUT/drone affinity.
 	// A drone is assigned DUTs with same hive value.
-	hive = os.Getenv("DRONE_AGENT_HIVE")
+	hive = initializeHive(os.Getenv("DRONE_AGENT_HIVE"), os.Getenv("DOCKER_DRONE_SERVER_NAME"))
 )
 
 func main() {
@@ -141,4 +142,22 @@ func getIntEnv(key string, defaultValue int) int {
 		return defaultValue
 	}
 	return n
+}
+
+// dcLabRegex is the regular expression to identify the Drone server is in a
+// data center like lab, e.g. SFO36, in which the server name is like
+// 'cr<SITE>-xxx'. If matched, we use the part of 'cr<SITE>' as the hive.
+var dcLabRegex = regexp.MustCompile(`^cr[^-]+`)
+
+// initializeHive returns the hive for the agent.
+// If hive is not specified, we try to guess it from the hostname.
+// The input args are from some envvars, but we don't get them from inside
+// the function, so we can keep all code using envvars in a single code block at
+// the head of this file for better readability.
+func initializeHive(explicitHive, hostname string) string {
+	if explicitHive != "" {
+		return explicitHive
+	}
+	log.Printf("Hive not explicitly specified, now guess it by hostname %q", hostname)
+	return dcLabRegex.FindString(hostname)
 }
