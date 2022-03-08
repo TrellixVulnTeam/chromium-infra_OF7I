@@ -12,6 +12,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
+	"infra/cros/recovery/internal/components/linux"
 	"infra/cros/recovery/internal/execs"
 	"infra/cros/recovery/internal/execs/cros/storage"
 	"infra/cros/recovery/internal/log"
@@ -77,7 +78,7 @@ func hasEnoughStorageSpaceExec(ctx context.Context, info *execs.ExecInfo) error 
 	if convertErr != nil {
 		return errors.Annotate(convertErr, "has enough storage space: convert stateful path min space").Err()
 	}
-	if err := PathHasEnoughValue(ctx, info.DefaultRunner(), info.RunArgs.ResourceName, path, SpaceTypeDisk, pathMinSpaceInGB); err != nil {
+	if err := linux.PathHasEnoughValue(ctx, info.DefaultRunner(), info.RunArgs.ResourceName, path, linux.SpaceTypeDisk, pathMinSpaceInGB); err != nil {
 		return errors.Annotate(err, "has enough storage space").Err()
 	}
 	return nil
@@ -101,7 +102,7 @@ func hasEnoughInodesExec(ctx context.Context, info *execs.ExecInfo) error {
 	if convertErr != nil {
 		return errors.Annotate(convertErr, "has enough storage inodes: convert stateful path min kilo inodes").Err()
 	}
-	err := PathHasEnoughValue(ctx, info.DefaultRunner(), info.RunArgs.ResourceName, path, SpaceTypeInode, pathMinKiloInodes*1000)
+	err := linux.PathHasEnoughValue(ctx, info.DefaultRunner(), info.RunArgs.ResourceName, path, linux.SpaceTypeInode, pathMinKiloInodes*1000)
 	return errors.Annotate(err, "has enough storage inodes").Err()
 }
 
