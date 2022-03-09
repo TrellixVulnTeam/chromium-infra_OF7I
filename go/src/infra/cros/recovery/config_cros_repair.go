@@ -11,7 +11,6 @@ import (
 )
 
 var crosRepairPlan = &planpb.Plan{
-	Name: "cros",
 	CriticalActions: []string{
 		"dut_state_repair_failed",
 		"cros_ssh",

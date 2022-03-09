@@ -20,33 +20,51 @@ func copyPlan(plan *planpb.Plan, allowFail bool) *planpb.Plan {
 
 // CrosRepairConfig provides config for repair cros setup in the lab task.
 func CrosRepairConfig() io.Reader {
-	plans := []*planpb.Plan{
-		copyPlan(servoRepairPlan, true),
-		copyPlan(crosRepairPlan, false),
-		copyPlan(chameleonPlan, true),
-		copyPlan(btpeerRepairPlan, true),
-		copyPlan(wifiRouterRepairPlan, true),
-		copyPlan(crosClosePlan, true),
-	}
-	return mustCreateConfigratuionJSON(plans)
+	c := &planpb.Configuration{
+		PlanNames: []string{
+			PlanServo,
+			PlanCrOS,
+			PlanChameleon,
+			PlanBluetoothPeer,
+			PlanWifiRouter,
+			PlanClosing,
+		},
+		Plans: map[string]*planpb.Plan{
+			PlanServo:         copyPlan(servoRepairPlan, true),
+			PlanCrOS:          copyPlan(crosRepairPlan, false),
+			PlanChameleon:     copyPlan(chameleonPlan, true),
+			PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
+			PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
+			PlanClosing:       copyPlan(crosClosePlan, true),
+		}}
+	return mustCreateConfigJSON(c)
 }
 
 // CrosDeployConfig provides config for deploy cros setup in the lab task.
 func CrosDeployConfig() io.Reader {
-	plans := []*planpb.Plan{
-		copyPlan(servoRepairPlan, false),
-		copyPlan(crosDeployPlan, false),
-		copyPlan(chameleonPlan, true),
-		copyPlan(btpeerRepairPlan, true),
-		copyPlan(wifiRouterRepairPlan, true),
-		copyPlan(crosClosePlan, true),
+	c := &planpb.Configuration{
+		PlanNames: []string{
+			PlanServo,
+			PlanCrOS,
+			PlanChameleon,
+			PlanBluetoothPeer,
+			PlanWifiRouter,
+			PlanClosing,
+		},
+		Plans: map[string]*planpb.Plan{
+			PlanServo:         copyPlan(servoRepairPlan, false),
+			PlanCrOS:          copyPlan(crosDeployPlan, false),
+			PlanChameleon:     copyPlan(chameleonPlan, true),
+			PlanBluetoothPeer: copyPlan(btpeerRepairPlan, true),
+			PlanWifiRouter:    copyPlan(wifiRouterRepairPlan, true),
+			PlanClosing:       copyPlan(crosClosePlan, true),
+		},
 	}
-	return mustCreateConfigratuionJSON(plans)
+	return mustCreateConfigJSON(c)
 }
 
 // crosClosePlan provides plan to close cros repair/deploy tasks.
 var crosClosePlan = &planpb.Plan{
-	Name: "close",
 	CriticalActions: []string{
 		"Remove in-use flag on servo-host",
 		"Remove request to reboot is servo is good",

@@ -11,7 +11,6 @@ import (
 )
 
 var servoRepairPlan = &planpb.Plan{
-	Name: "servo",
 	CriticalActions: []string{
 		"set_state_missing_config",
 		"servo_host_info",

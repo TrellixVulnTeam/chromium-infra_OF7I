@@ -13,7 +13,6 @@ import (
 )
 
 var crosDeployPlan = &planpb.Plan{
-	Name: "cros",
 	CriticalActions: []string{
 		"Set needs_deploy state",
 		"Clean up",

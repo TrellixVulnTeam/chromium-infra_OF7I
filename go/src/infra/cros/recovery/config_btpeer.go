@@ -11,7 +11,6 @@ import (
 )
 
 var btpeerRepairPlan = &planpb.Plan{
-	Name: "bluetooth_peer",
 	CriticalActions: []string{
 		"btpeer_state_broken",
 		"Device is pingable",

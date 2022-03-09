@@ -11,7 +11,6 @@ import (
 )
 
 var chameleonPlan = &planpb.Plan{
-	Name: "chameleon",
 	CriticalActions: []string{
 		"Mark as bad",
 		"Device is pingable",

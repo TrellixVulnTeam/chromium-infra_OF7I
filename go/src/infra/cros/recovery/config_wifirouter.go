@@ -19,7 +19,6 @@ const galeOsName = "gale-test-ap-tryjob/R92-13982.81.0-b4959409"
 var osNameArg = fmt.Sprintf("os_name:%s", galeOsName)
 
 var wifiRouterRepairPlan = &planpb.Plan{
-	Name: "wifi_router",
 	CriticalActions: []string{
 		"wifirouter_state_broken",
 		"Device is pingable",
