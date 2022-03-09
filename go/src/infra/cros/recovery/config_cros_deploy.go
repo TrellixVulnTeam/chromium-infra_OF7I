@@ -260,7 +260,13 @@ var crosDeployPlanActions = `
 	"exec_name":"sample_pass"
 },
 "Collect DUT labels":{
+	"docs":[
+		"Updating device info in inventory."
+	],
 	"dependencies":[
+		"cros_ssh",
+		"cros_update_hwid_to_inventory",
+		"cros_update_serial_number_inventory",
 		"device_sku",
 		"servo_type_label"
 	],
