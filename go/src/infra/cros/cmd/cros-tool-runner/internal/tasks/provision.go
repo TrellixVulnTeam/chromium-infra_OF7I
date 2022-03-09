@@ -6,8 +6,6 @@ package tasks
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,7 +21,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"golang.org/x/sync/errgroup"
 
-	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/cros-tool-runner/internal/provision"
 )
 
@@ -77,6 +74,8 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 			return 1
 		}
 	}
+
+	returnCode := 0
 	out, err := c.innerRun(ctx, a, args, env, token)
 	// Unexpected error will counted as incorrect request data.
 	// all expected cases has to generate responses.
@@ -91,16 +90,15 @@ func (c *runCmd) Run(a subcommands.Application, args []string, env subcommands.E
 				},
 			},
 		}
+		returnCode = 1
 	}
+
+	// Always try to save output.
 	if err := saveOutput(out, c.outputPath); err != nil {
-		log.Printf("run: %s", err)
+		log.Printf("run: error while saving output, %s", err)
+		returnCode = 1
 	}
-	printOutput(out, a)
-	if err != nil {
-		cmdlib.PrintError(a, err)
-		return 1
-	}
-	return 0
+	return returnCode
 }
 
 func (c *runCmd) innerRun(ctx context.Context, a subcommands.Application, args []string, env subcommands.Env, token string) (*api.CrosToolRunnerProvisionResponse, error) {
@@ -182,16 +180,4 @@ func saveOutput(out *api.CrosToolRunnerProvisionResponse, outputPath string) err
 		}
 	}
 	return nil
-}
-
-func printOutput(out *api.CrosToolRunnerProvisionResponse, a subcommands.Application) {
-	if out != nil {
-		s, err := json.MarshalIndent(out, "", "\t")
-		if err != nil {
-			log.Printf("output: fail to print info. Error: %s", err)
-		} else {
-			log.Println("output:")
-			fmt.Fprintf(a.GetOut(), "%s\n", s)
-		}
-	}
 }
