@@ -162,9 +162,7 @@ func mainInner(a *args) error {
 
 func setStateForDUTs(i *harness.Info, state dutstate.State) {
 	for _, dh := range i.DUTs {
-		if dh.DeviceType == harness.ChromeOSDevice {
-			dh.LocalState.HostState = state
-		}
+		dh.LocalState.HostState = state
 	}
 }
 
@@ -198,6 +196,7 @@ func luciferFlow(ctx context.Context, a *args, i *harness.Info, annotWriter writ
 
 		if dh.DeviceType != harness.ChromeOSDevice {
 			log.Printf("Skipping unsupported device: %s", getDutId(dh))
+			dh.LocalState.HostState = dutstate.Ready
 			continue
 		}
 		ta := lucifer.TaskArgs{
