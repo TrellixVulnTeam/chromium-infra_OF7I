@@ -230,6 +230,15 @@ func processErr(ctx context.Context, err error, luciBuild *buildbucket_pb.Build,
 	if err == nil {
 		return nil
 	}
+	// We want the status to show CANCELED instead of INFRA_FAILURE so
+	// the orchestrator can handle a CANCELED status differently.
+	if errors.Unwrap(err) == context.Canceled {
+		luciBuild.SummaryMarkdown = "compilator_watcher context was canceled. Probably due to the parent orchestrator build being canceled."
+		luciBuild.Status = buildbucket_pb.Status_CANCELED
+		// Returning an err would automatically set the build status to FAILURE
+		// See runUserCode() in https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/luciexe/exe/exe.go
+		return nil
+	}
 	// This enforces the triggered sub_build to have an INFRA_FAILURE
 	// status
 	err = exe.InfraErrorTag.Apply(err)
@@ -263,11 +272,17 @@ func copySteps(ctx context.Context, luciBuild *buildbucket_pb.Build, parsedArgs 
 
 	var timeoutCounts int64 = 0
 	for {
+		// Check for context err like a timeout or cancelation before
+		// continuing with the for loop
+		if cctx.Err() != nil {
+			return nil, cctx.Err()
+		}
+
 		compBuild, err := bClient.GetBuild(cctx, parsedArgs.compilatorID)
 
 		// Check that the err is from the GetBuild call, not the
 		// timeout set for polling
-		if err != nil && cctx.Err() == nil {
+		if err != nil {
 			if grpcutil.Code(err) == codes.DeadlineExceeded {
 				if timeoutCounts < parsedArgs.maxConsecutiveGetBuildTimeouts {
 					timeoutCounts += 1

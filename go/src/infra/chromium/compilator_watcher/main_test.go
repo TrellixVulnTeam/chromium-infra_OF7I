@@ -247,6 +247,35 @@ func TestLuciEXEMain(t *testing.T) {
 			})
 		})
 
+		Convey("cancel context sets status to CANCELED and returns no err", func() {
+			compBuild := &buildbucket_pb.Build{
+				Status:          buildbucket_pb.Status_CANCELED,
+				Id:              12345,
+				SummaryMarkdown: "",
+				Steps:           genericCompleteSteps,
+				Output:          &buildbucket_pb.Build_Output{},
+			}
+
+			ctx = context.WithValue(
+				ctx,
+				bb.FakeBuildsContextKey,
+				[]bb.FakeGetBuildResponse{{Build: compBuild}})
+
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			errC := make(chan error)
+			go func() {
+				errC <- luciEXEMain(ctx, input, userArgs, sender)
+			}()
+
+			cancel()
+			err := <-errC
+
+			So(err, ShouldBeNil)
+			So(input.Status, ShouldResemble, buildbucket_pb.Status_CANCELED)
+		})
+
 		Convey("sets input Status to SUCCESS when compilator build outputs swarming props but is still running", func() {
 			expectedSubBuildOutputProps := copyPropertiesStruct(genericCompBuildOutputPropsWSwarming)
 
