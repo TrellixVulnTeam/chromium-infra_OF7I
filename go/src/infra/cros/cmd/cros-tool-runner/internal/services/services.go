@@ -44,6 +44,10 @@ const (
 
 	// Root directory for the cros-test-finder artifacts inside docker.
 	CrosTestFinderRootDirInsideDocker = "/tmp/test"
+
+	// Directories inside root dir
+	CrosTestDirInsideDocker        = "/tmp/test/cros-test"
+	CrosTestResultsDirInsideDocker = "/tmp/test/results"
 )
 
 // CreateDutService pulls and starts cros-dut service.
@@ -221,8 +225,8 @@ func RunTestCLI(ctx context.Context, image *build_api.ContainerImageInfo, networ
 			cmd,
 		},
 		Volumes: []string{
-			fmt.Sprintf("%s:%s", crosTestDir, filepath.Join(CrosTestRootDirInsideDocker, "cros-test")),
-			fmt.Sprintf("%s:%s", resultDir, filepath.Join(CrosTestRootDirInsideDocker, "results")),
+			fmt.Sprintf("%s:%s", crosTestDir, CrosTestDirInsideDocker),
+			fmt.Sprintf("%s:%s", resultDir, CrosTestResultsDirInsideDocker),
 		},
 		Detach:  false,
 		Network: networkName,

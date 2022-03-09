@@ -113,7 +113,7 @@ func Run(ctx context.Context, req *api.CrosToolRunnerTestRequest, crosTestContai
 		return nil, errors.Annotate(err, "run test: failed to read test output").Err()
 	}
 
-	return prepareTestResponse(artifactDir, out.TestCaseResults)
+	return prepareTestResponse(resultDir, out.TestCaseResults)
 }
 
 // writeTestInput writes a CrosTestRequest json.
@@ -144,7 +144,12 @@ func readTestOutput(filePath string) (*api.CrosTestResponse, error) {
 func prepareTestResponse(resultRootDir string, testCaseResults []*api.TestCaseResult) (res *api.CrosToolRunnerTestResponse, err error) {
 	var results []*api.TestCaseResult
 	for _, t := range testCaseResults {
-		resultDir := strings.Replace(t.ResultDirPath.Path, services.CrosTestRootDirInsideDocker, resultRootDir, 1)
+		// Create the full path to results in the test environment. For example:
+		// 		t.ResultDirPath.Path = "/tmp/test/results/tauto"
+		// 		services.CrosTestResultsDirInsideDocker = "/tmp/test/results"
+		// 		resultRootDir = "home/chromeos-test/skylab_bots/c6-r6-r4-h3.393573271/w/ir/x/w/output_dir/cros-test/artifact"
+		// Replace the `/tmp/test/results/` (from `t.ResultDirPath.Path`) with the `resultRootDir`, thus making the full resolved path to the logs for that test.
+		resultDir := strings.Replace(t.ResultDirPath.Path, services.CrosTestResultsDirInsideDocker, resultRootDir, 1)
 		results = append(results, &api.TestCaseResult{
 			TestCaseId:    t.TestCaseId,
 			ResultDirPath: &_go.StoragePath{Path: resultDir},
