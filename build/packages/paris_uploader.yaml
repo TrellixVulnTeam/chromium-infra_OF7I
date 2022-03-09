@@ -1,0 +1,10 @@
+package: chromiumos/infra/paris-uploader/${platform}
+description: The paris uploader uploads a directory to Google Storage for Paris tasks.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/paris-uploader
+root: ../../go/bin
+data:
+  - file: paris-uploader${exe_suffix}
+  - version_file: .versions/paris-uploader${exe_suffix}.cipd_version
